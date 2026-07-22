@@ -46,22 +46,58 @@ export const AllocateLinesAction: Component<
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [issues, setIssues] = createSignal<Issue[]>([]);
+  // Something changed server-side this run, so the grid must refetch and the
+  // selection clear — but deferred to close() (see below).
+  const [committed, setCommitted] = createSignal(false);
 
   const placeholders = () =>
     props.selectedLines().filter(line => line.type === 'UNALLOCATED_STOCK');
   const zeroQuantity = () =>
     placeholders().filter(line => line.numberOfPacks === 0);
 
-  const openConfirm = () => {
-    setPhase('confirm');
+  // The report phase is a results notice, not a confirmation — title it so
+  // (an error present, e.g. "not allocated due to insufficient stock" ⇒ "Can't
+  // do that!"; otherwise the neutral "Additional info"), never "Are you sure?".
+  const dialogTitle = () =>
+    phase() === 'report'
+      ? issues().some(issue => issue.severity === 'error')
+        ? t('heading.cannot-do-that')
+        : t('heading.additional-info')
+      : t('heading.are-you-sure');
+
+  // Confirm FIRST only when zero-quantity placeholders are selected — those are
+  // REMOVED by allocation, the one outcome worth confirming (spec S3). Every
+  // other selection (placeholders with quantity, a real line + a placeholder for
+  // the same item, …) allocates straight away with no "Are you sure?" — old-app
+  // parity (it never confirms allocation) — surfacing only the result notice.
+  const onAllocate = () => {
     setIssues([]);
-    setOpen(true);
+    if (zeroQuantity().length > 0) {
+      setPhase('confirm');
+      setOpen(true);
+    } else {
+      void run();
+    }
   };
-  const close = () => setOpen(false);
+  const close = () => {
+    setOpen(false);
+    setPhase('confirm'); // reset for the next run (also clears the button spinner)
+    // Refetch the grid + clear the selection only as the dialog closes. Doing it
+    // mid-run clears the selection, which unmounts this action (it lives in the
+    // selection-gated bulk bar) and would kill the report dialog before the user
+    // sees it — the outcome must be a modal notice, never a toast (spec S6, D19).
+    if (committed()) {
+      setCommitted(false);
+      props.onCommitted();
+    }
+  };
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('working');
+    // The run mutates server-side; defer the refetch + selection-clear to
+    // close() so clearing the selection can't unmount the report dialog.
+    setCommitted(true);
     const found: Issue[] = [];
     let allocated = 0;
     const partial = { count: 0, reasons: new Set<string>() };
@@ -77,8 +113,8 @@ export const AllocateLinesAction: Component<
       // earlier in the loop may already be allocated server-side; refetch on a
       // mid-loop failure so the grid isn't left stale, then bail.
       if (result.kind !== 'success') {
-        if (allocated > 0 || partial.count > 0 || failed.count > 0)
-          props.onCommitted();
+        // Transport/unexpected — the global modal already surfaced it. Earlier
+        // lines may already be allocated server-side; close() refetches + clears.
         return close();
       }
       const response = result.data.allocateOutboundShipmentUnallocatedLine;
@@ -144,10 +180,13 @@ export const AllocateLinesAction: Component<
         severity: 'info',
         message: tPlural('messages.allocated-lines', allocated),
       });
-    props.onCommitted();
+    // Do NOT clear the selection here — that unmounts this action and kills the
+    // report before it shows. A clean run closes (close() refetches + clears);
+    // a run with issues shows the report, then refetches + clears on close.
     if (found.length === 0) return close();
     setIssues(found);
     setPhase('report');
+    setOpen(true); // ensure the report shows even when we skipped the confirm
   };
 
   return (
@@ -157,7 +196,8 @@ export const AllocateLinesAction: Component<
         icon={<ZapIcon />}
         data-testid="allocate-lines-button"
         disabled={props.disabled || placeholders().length === 0}
-        onClick={openConfirm}
+        loading={phase() === 'working'}
+        onClick={onAllocate}
       >
         {t('button.allocate-lines')}
       </Button>
@@ -168,7 +208,7 @@ export const AllocateLinesAction: Component<
           onClose={close}
           icon={<ZapIcon />}
           testId="confirmation-modal"
-          title={t('heading.are-you-sure')}
+          title={dialogTitle()}
           description={
             <Switch>
               <Match when={phase() !== 'report'}>

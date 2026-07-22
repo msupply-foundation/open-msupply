@@ -20,8 +20,8 @@ import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
 import {
   BarIcon,
   FileIcon,
+  ReplenishmentIcon,
   SidebarIcon,
-  SuppliersIcon,
   TruckIcon,
 } from '../../../ui/icons';
 import { storeContext } from '../../../store/storeContext';
@@ -80,7 +80,7 @@ const CATEGORIES: readonly CategoryDef[] = [
     titleKey: 'replenishment',
     subContexts: ['Replenishment'],
     gate: 'primary',
-    icon: () => <SuppliersIcon />,
+    icon: () => <ReplenishmentIcon />,
   },
   {
     titleKey: 'heading.other',

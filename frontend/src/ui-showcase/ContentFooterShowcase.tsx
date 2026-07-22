@@ -1,4 +1,4 @@
-import { createSignal, For, Show, type JSX } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
@@ -11,21 +11,8 @@ import {
   TrashIcon,
   XCircleIcon,
 } from '../ui/icons';
+import { Card, PageBody, PageFrame, Stack } from './common';
 import styles from './ContentFooterShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 const DEMO_ROWS = ['OS-001024', 'OS-001025', 'OS-001026'];
 
@@ -42,7 +29,7 @@ export const ContentFooterShowcase = () => {
   const clear = () => setPicked(new Set<string>());
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Detail-page bar — History / Cancel / Save"
         lead={
@@ -61,8 +48,8 @@ export const ContentFooterShowcase = () => {
           </>
         }
       >
-        <div class={styles.pageFrame}>
-          <div class={styles.pageBody} aria-hidden="true" />
+        <PageFrame>
+          <PageBody />
           <ContentFooter>
             <Button variant="secondary" icon={<ClockIcon />}>
               History
@@ -86,7 +73,7 @@ export const ContentFooterShowcase = () => {
               />
             </ContentFooterActions>
           </ContentFooter>
-        </div>
+        </PageFrame>
       </Card>
 
       <Card
@@ -102,7 +89,7 @@ export const ContentFooterShowcase = () => {
           </>
         }
       >
-        <div class={styles.pageFrame}>
+        <PageFrame>
           <ul class={styles.demoRows}>
             <For each={DEMO_ROWS}>
               {id => (
@@ -161,8 +148,8 @@ export const ContentFooterShowcase = () => {
               </ContentFooterActions>
             </Show>
           </ContentFooter>
-        </div>
+        </PageFrame>
       </Card>
-    </div>
+    </Stack>
   );
 };

@@ -150,16 +150,18 @@ export type InitialiseSiteResult = {
 }) | ({
   __typename: "SyncErrorNode";
 } & {
+  variant: "CONNECTION_ERROR" | "SITE_UUID_IS_BEING_CHANGED" | "SITE_NAME_NOT_FOUND" | "INCORRECT_PASSWORD" | "HARDWARE_ID_MISMATCH" | "SITE_HAS_NO_STORE" | "SITE_AUTH_TIMEOUT" | "INTEGRATION_TIMEOUT_REACHED" | "INVALID_URL" | "UNKNOWN" | "API_VERSION_INCOMPATIBLE" | "CENTRAL_V6_NOT_CONFIGURED" | "V6_API_VERSION_INCOMPATIBLE" | "INTEGRATION_ERROR" | "V7_UPGRADE_FAILED";
   fullError: string;
 }) | ({
   __typename: "SyncErrorV7Node";
 } & {
+  variantV7: "DATABASE_ERROR" | "SYNC_RECORD_SERIALIZE_ERROR" | "RECORD_NOT_FOUND" | "SYNC_VERSION_MISMATCH" | "NOT_A_CENTRAL_SERVER" | "AUTHENTICATION" | "INVALID_SITE_NAME_OR_PASSWORD" | "TOKEN_ALREADY_ALLOCATED" | "TOKEN_NOT_FOUND" | "HARDWARE_ID_MISMATCH" | "FAILED_TO_GET_HARDWARE_ID" | "MISSING_AUTH_HEADER" | "SITE_LOCK_ERROR" | "CONNECTION_ERROR" | "PARSING_ERROR" | "INTEGRATION_TIMEOUT_REACHED" | "SITE_ID_NOT_SET" | "GET_CURRENT_SITE_ID_ERROR" | "SITE_ID_MISMATCH" | "SITE_IS_NOT_V7" | "WAITING_FOR_CENTRAL_V7_UPGRADE" | "REQUEST_SITE_AUTH_ERROR" | "OTHER";
   fullError: string;
 });
 };
 
 export const InitialiseSite = {
-  query: "mutation initialiseSite($input: SyncSettingsInput!) {\n  initialiseSite(input: $input) {\n    ... on SyncSettingsNode {\n      __typename\n      username\n    }\n    ... on SyncErrorNode {\n      __typename\n      fullError\n    }\n    ... on SyncErrorV7Node {\n      __typename\n      fullError\n    }\n  }\n}",
+  query: "mutation initialiseSite($input: SyncSettingsInput!) {\n  initialiseSite(input: $input) {\n    ... on SyncSettingsNode {\n      __typename\n      username\n    }\n    ... on SyncErrorNode {\n      __typename\n      variant\n      fullError\n    }\n    ... on SyncErrorV7Node {\n      __typename\n      variantV7: variant\n      fullError\n    }\n  }\n}",
 } as TypedDocument<InitialiseSiteResult, InitialiseSiteVariables>;
 
 export type ManualSyncVariables = Record<string, never>;
