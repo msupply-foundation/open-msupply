@@ -34,6 +34,8 @@ export interface AlertProps {
   icon?: Component<IconProps>;
   children: JSX.Element;
   class?: string;
+  /** `data-testid` for the alert panel (locale-stable test hook, e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 /*
@@ -49,6 +51,7 @@ export const Alert = (props: AlertProps) => (
   <div
     class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
     data-severity={props.severity}
+    data-testid={props.testId}
     role="alert"
   >
     <span class={styles.icon} aria-hidden="true">

@@ -13,11 +13,23 @@ export interface SplitButtonOption {
    * past/current status in a
    *  status-change menu that lists every status for context. */
   disabled?: boolean;
+  /**
+   * Explanation shown as a native tooltip when the entry is disabled — the
+   * "disable with reason" convention (prefer disabling with an explanation over
+   * hiding an unavailable option; ui-surface cross-cutting).
+   */
+  title?: string;
 }
 
 interface SplitButtonProps {
   /** Leading icon for the main action. */
   icon?: JSX.Element;
+  /**
+   * Tone (ui-standards #btn-split): 'primary' (filled action blue, default) for
+   * a dominant action, or 'secondary' (outlined) for a supporting toolbar split
+   * (e.g. Export). Ghost/danger don't apply to split buttons.
+   */
+  variant?: 'primary' | 'secondary';
   options: SplitButtonOption[];
   /**
    * Controlled selected value; omit for uncontrolled (defaults to first
@@ -33,8 +45,21 @@ interface SplitButtonProps {
    * SplitButton/ExportSelector).
    */
   onAction?: (value: string) => void;
+  /**
+   * Menu picks SELECT ONLY (update the main button's action) instead of also
+   * running it — the status-change convention: pick "Shipped" from the menu,
+   * then the main "Confirm Shipped" click acts. Default false (pick acts,
+   * like the export selector).
+   */
+  menuSelectsOnly?: boolean;
   /** Accessible name for the caret trigger (it has no visible text). */
   menuLabel?: string;
+  /**
+   * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main
+   * button, `<testId>-dropdown` on the caret, and `<testId>-option-<value>`
+   * on each menu item (e.g. `status-change-button`, `export-csv`).
+   */
+  testId?: string;
 }
 
 /*
@@ -63,14 +88,18 @@ export const SplitButton = (props: SplitButtonProps) => {
   const pick = (value: string) => {
     setInternal(value);
     props.onValueChange?.(value);
-    props.onAction?.(value);
+    if (!props.menuSelectsOnly) props.onAction?.(value);
   };
 
+  const variant = () => props.variant ?? 'primary';
+
   return (
-    <div class={styles.split}>
+    <div class={styles.split} data-variant={variant()}>
       <button
         type="button"
         class={styles.main}
+        data-variant={variant()}
+        data-testid={props.testId ? `${props.testId}-main` : undefined}
         onClick={() => props.onAction?.(selectedValue())}
         onPointerDown={mainRipple.onPointerDown}
       >
@@ -84,6 +113,8 @@ export const SplitButton = (props: SplitButtonProps) => {
       <DropdownMenu.Root placement="bottom-end" gutter={4}>
         <DropdownMenu.Trigger
           class={styles.caret}
+          data-variant={variant()}
+          data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
           aria-label={props.menuLabel ?? 'More options'}
           onPointerDown={caretRipple.onPointerDown}
         >
@@ -99,10 +130,16 @@ export const SplitButton = (props: SplitButtonProps) => {
               {option => (
                 <DropdownMenu.Item
                   class={styles.item}
+                  data-testid={
+                    props.testId
+                      ? `${props.testId}-option-${option.value}`
+                      : undefined
+                  }
                   data-current={
                     option.value === selectedValue() ? 'true' : undefined
                   }
                   disabled={option.disabled}
+                  title={option.disabled ? option.title : undefined}
                   onSelect={() => {
                     if (!option.disabled) pick(option.value);
                   }}

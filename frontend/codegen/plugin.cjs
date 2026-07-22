@@ -69,6 +69,10 @@ const SCALAR_MAP = {
   Float: "number",
   NaiveDate: "string",
   DateTime: "string",
+  // The server serializes the JSON scalar as arbitrary JSON values (objects,
+  // arrays, strings, ...), so `unknown` is the only honest type — callers
+  // narrow at the boundary.
+  JSON: "unknown",
 };
 
 /** PascalCase a name (operation/fragment names are usually camelCase). */

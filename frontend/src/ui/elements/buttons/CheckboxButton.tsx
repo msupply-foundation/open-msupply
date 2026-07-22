@@ -3,24 +3,26 @@ import { CheckIcon } from '../../icons';
 import styles from './CheckboxButton.module.css';
 
 export interface CheckboxButtonProps extends Omit<
-  JSX.ButtonHTMLAttributes<HTMLButtonElement>,
+  JSX.LabelHTMLAttributes<HTMLLabelElement>,
   'onChange'
 > {
   /** Checked state — caller-owned; flip it in onChange. */
   checked: boolean;
-  /** Fired when the button is clicked, with the NEXT checked state. */
+  /** Fired when the control is clicked, with the NEXT checked state. */
   onChange: (checked: boolean) => void;
   /** The label beside the box. */
   children: JSX.Element;
+  disabled?: boolean;
 }
 
 /*
- * CheckboxButton — a pill button with a checkbox inside it: clicking anywhere
- * on the button toggles the box (Open mSupply's on-hold control). It IS a
- * checkbox to assistive tech (role="checkbox" + aria-checked), rendered as a
- * button-shaped target so the whole pill is clickable — the "own the simple"
- * way to get OMS's look without a library. The caller owns the checked state
- * and flips it in onChange. Space/Enter toggle it (native <button>).
+ * CheckboxButton — a pill with a checkbox inside it: clicking anywhere on the
+ * pill toggles the box (Open mSupply's on-hold control). A NATIVE
+ * <input type="checkbox"> wrapped in its <label> — the input is visually
+ * hidden but real, so assistive tech gets a true checkbox and the e2e
+ * test-hook contract ("contains the checkbox <input>", e2e/TESTIDS.md) holds.
+ * The caller owns the checked state and flips it in onChange. Space toggles it
+ * (native checkbox semantics); focus ring drawn on the pill via :has().
  */
 export const CheckboxButton = (props: CheckboxButtonProps) => {
   const [local, rest] = splitProps(props, [
@@ -28,21 +30,26 @@ export const CheckboxButton = (props: CheckboxButtonProps) => {
     'onChange',
     'children',
     'class',
+    'disabled',
   ]);
   return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={local.checked}
-      data-checked={local.checked ? '' : undefined}
+    <label
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
-      onClick={() => local.onChange(!local.checked)}
+      data-checked={local.checked ? '' : undefined}
+      data-disabled={local.disabled ? '' : undefined}
       {...rest}
     >
+      <input
+        type="checkbox"
+        class={styles.input}
+        checked={local.checked}
+        disabled={local.disabled}
+        onChange={() => local.onChange(!local.checked)}
+      />
       <span class={styles.box} aria-hidden="true">
         <CheckIcon class={styles.check} />
       </span>
       <span class={styles.label}>{local.children}</span>
-    </button>
+    </label>
   );
 };

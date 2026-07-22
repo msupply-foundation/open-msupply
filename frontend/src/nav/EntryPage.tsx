@@ -9,6 +9,6 @@ import type { LocaleKey } from '../intl';
 export const EntryPage: Component<{ labelKey: LocaleKey }> = props => (
   <section>
     <h2>{t(props.labelKey)}</h2>
-    <p>{t('app.nothing-here')}</p>
+    <p>{t('error.no-results')}</p>
   </section>
 );

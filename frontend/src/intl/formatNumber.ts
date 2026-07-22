@@ -50,6 +50,38 @@ export const round = (value: number | undefined | null, dp = 0): string => {
   }).format(value);
 };
 
+/**
+ * The characters a locale uses to write a number — what NumberField (and the
+ * coming Currency field) needs to gate keystrokes and parse user text. Derived
+ * from formatToParts rather than hard-coded per locale, so adding a locale to
+ * LOCALE_META can't silently desync the input layer.
+ */
+export type NumberSymbols = {
+  decimal: string;
+  group: string;
+  minusSign: string;
+};
+
+const symbolsCache = new Map<string, NumberSymbols>();
+
+export const getNumberSymbols = (locale: SupportedLocale): NumberSymbols => {
+  const key = LOCALE_META[locale].numberLocale;
+  const cached = symbolsCache.get(key);
+  if (cached) return cached;
+  const parts = intlNumberFormat(locale, {
+    useGrouping: true,
+  }).formatToParts(-12345.6);
+  const part = (type: Intl.NumberFormatPartTypes, fallback: string) =>
+    parts.find(p => p.type === type)?.value ?? fallback;
+  const symbols: NumberSymbols = {
+    decimal: part('decimal', '.'),
+    group: part('group', ','),
+    minusSign: part('minusSign', '-'),
+  };
+  symbolsCache.set(key, symbols);
+  return symbols;
+};
+
 // Parse a locale-formatted number string back to a Number. Strips grouping
 // separators, normalises the decimal char, converts Arabic-Indic digits to
 // Latin, and drops anything else. Returns NaN on empty input.

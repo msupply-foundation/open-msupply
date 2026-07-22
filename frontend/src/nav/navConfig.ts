@@ -20,140 +20,140 @@ export type NavItem = {
 };
 
 export const navConfig: NavItem[] = [
-  { labelKey: 'nav.dashboard', path: 'dashboard' },
+  { labelKey: 'dashboard', path: 'dashboard' },
   {
-    labelKey: 'nav.replenishment',
+    labelKey: 'replenishment',
     path: 'replenishment',
     children: [
       {
-        labelKey: 'nav.replenishment.purchase-order',
+        labelKey: 'label.purchase-orders',
         path: 'replenishment/purchase-order',
       },
       {
-        labelKey: 'nav.replenishment.internal-order',
+        labelKey: 'internal-order',
         path: 'replenishment/internal-order',
       },
       {
-        labelKey: 'nav.replenishment.inbound-shipment',
+        labelKey: 'inbound-shipment',
         path: 'replenishment/inbound-shipment',
       },
       {
-        labelKey: 'nav.replenishment.supplier-return',
+        labelKey: 'supplier-returns',
         path: 'replenishment/supplier-return',
       },
       {
-        labelKey: 'nav.replenishment.r-and-r-forms',
+        labelKey: 'r-and-r-forms',
         path: 'replenishment/r-and-r-forms',
       },
       {
-        labelKey: 'nav.replenishment.suppliers',
+        labelKey: 'suppliers',
         path: 'replenishment/suppliers',
       },
     ],
   },
   {
-    labelKey: 'nav.inventory',
+    labelKey: 'inventory',
     path: 'inventory',
     children: [
-      { labelKey: 'nav.inventory.stock', path: 'inventory/stock' },
-      { labelKey: 'nav.inventory.locations', path: 'inventory/locations' },
-      { labelKey: 'nav.inventory.stocktakes', path: 'inventory/stocktakes' },
+      { labelKey: 'stock', path: 'inventory/stock' },
+      { labelKey: 'locations', path: 'inventory/locations' },
+      { labelKey: 'stocktakes', path: 'inventory/stocktakes' },
       {
-        labelKey: 'nav.inventory.stock-movement',
+        labelKey: 'label.stock-movement',
         path: 'inventory/stock-movement',
       },
     ],
   },
   {
-    labelKey: 'nav.distribution',
+    labelKey: 'distribution',
     path: 'distribution',
     children: [
       {
-        labelKey: 'nav.distribution.customer-requisition',
+        labelKey: 'customer-requisition',
         path: 'distribution/customer-requisition',
       },
       {
-        labelKey: 'nav.distribution.outbound-shipment',
+        labelKey: 'outbound-shipment',
         path: 'distribution/outbound-shipment',
       },
       {
-        labelKey: 'nav.distribution.customer-return',
+        labelKey: 'customer-returns',
         path: 'distribution/customer-return',
       },
       {
-        labelKey: 'nav.distribution.customers',
+        labelKey: 'customers',
         path: 'distribution/customers',
       },
     ],
   },
   {
-    labelKey: 'nav.dispensary',
+    labelKey: 'dispensary',
     path: 'dispensary',
     children: [
-      { labelKey: 'nav.dispensary.patients', path: 'dispensary/patients' },
+      { labelKey: 'patients', path: 'dispensary/patients' },
       {
-        labelKey: 'nav.dispensary.prescription',
+        labelKey: 'prescriptions',
         path: 'dispensary/prescription',
       },
-      { labelKey: 'nav.dispensary.encounter', path: 'dispensary/encounter' },
-      { labelKey: 'nav.dispensary.clinicians', path: 'dispensary/clinicians' },
+      { labelKey: 'encounter', path: 'dispensary/encounter' },
+      { labelKey: 'clinicians', path: 'dispensary/clinicians' },
     ],
   },
   {
-    labelKey: 'nav.cold-chain',
+    labelKey: 'cold-chain',
     path: 'cold-chain',
     children: [
-      { labelKey: 'nav.cold-chain.equipment', path: 'cold-chain/equipment' },
-      { labelKey: 'nav.cold-chain.monitoring', path: 'cold-chain/monitoring' },
-      { labelKey: 'nav.cold-chain.sensors', path: 'cold-chain/sensors' },
+      { labelKey: 'equipment', path: 'cold-chain/equipment' },
+      { labelKey: 'monitoring', path: 'cold-chain/monitoring' },
+      { labelKey: 'sensors', path: 'cold-chain/sensors' },
     ],
   },
   {
-    labelKey: 'nav.programs',
+    labelKey: 'programs',
     path: 'programs',
     children: [
       {
-        labelKey: 'nav.programs.immunisation-programs',
+        labelKey: 'label.programs-immunisations',
         path: 'programs/immunisation-programs',
       },
     ],
   },
   {
-    labelKey: 'nav.catalogue',
+    labelKey: 'catalogue',
     path: 'catalogue',
     children: [
-      { labelKey: 'nav.catalogue.assets', path: 'catalogue/assets' },
-      { labelKey: 'nav.catalogue.items', path: 'catalogue/items' },
+      { labelKey: 'assets', path: 'catalogue/assets' },
+      { labelKey: 'items', path: 'catalogue/items' },
       {
-        labelKey: 'nav.catalogue.master-lists',
+        labelKey: 'label.master-lists',
         path: 'catalogue/master-lists',
       },
     ],
   },
   {
-    labelKey: 'nav.manage',
+    labelKey: 'manage',
     path: 'manage',
     children: [
-      { labelKey: 'nav.manage.stores', path: 'manage/stores' },
+      { labelKey: 'stores', path: 'manage/stores' },
       {
-        labelKey: 'nav.manage.indicators-demographics',
+        labelKey: 'indicators-demographics',
         path: 'manage/indicators-demographics',
       },
       {
-        labelKey: 'nav.manage.global-preferences',
+        labelKey: 'global-preferences',
         path: 'manage/global-preferences',
       },
-      { labelKey: 'nav.manage.equipment', path: 'manage/equipment' },
-      { labelKey: 'nav.manage.campaigns', path: 'manage/campaigns' },
-      { labelKey: 'nav.manage.sites', path: 'manage/sites' },
-      { labelKey: 'nav.manage.reports', path: 'manage/reports' },
-      { labelKey: 'nav.manage.sync-message', path: 'manage/sync-message' },
-      { labelKey: 'nav.manage.plugins', path: 'manage/plugins' },
+      { labelKey: 'manage-equipment', path: 'manage/equipment' },
+      { labelKey: 'campaigns', path: 'manage/campaigns' },
+      { labelKey: 'sites', path: 'manage/sites' },
+      { labelKey: 'reports', path: 'manage/reports' },
+      { labelKey: 'sync-message', path: 'manage/sync-message' },
+      { labelKey: 'plugins', path: 'manage/plugins' },
     ],
   },
-  { labelKey: 'nav.reports', path: 'reports' },
-  { labelKey: 'nav.settings', path: 'settings' },
-  { labelKey: 'nav.help', path: 'help' },
+  { labelKey: 'reports', path: 'reports' },
+  { labelKey: 'settings', path: 'settings' },
+  { labelKey: 'help', path: 'help' },
 ];
 
 // Flattened list of every destination (sections + inner entries) — used to

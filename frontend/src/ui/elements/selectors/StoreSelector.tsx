@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For, Show } from 'solid-js';
+import { createSignal, createMemo, onMount, For, Show } from 'solid-js';
 import { TextField } from '../inputs/TextField';
 import { StatusChip } from '../feedback/StatusChip';
 import { Button } from '../buttons/Button';
@@ -20,7 +20,9 @@ export type StoreOption = {
  * (already-ordered) stores and reports the chosen id via onConfirm; the host
  * decides where it lives (in the app it fills the store-selection Dialog) and
  * what confirming does. Selection is select-then-Continue (double-click a row
- * confirms directly); the effective selection falls back to default → last-used
+ * confirms directly; arrow keys move the highlighted row and Enter anywhere in
+ * the panel confirms it — spec startup S3 › keyboard, AC-SL9); the effective
+ * selection falls back to default → last-used
  * → first visible so Continue is always actionable.
  *
  * Colour independence: the Default / Last-used markers are StatusChips (dot +
@@ -34,6 +36,60 @@ export const StoreSelector = (props: {
 }) => {
   const [query, setQuery] = createSignal('');
   const [selected, setSelected] = createSignal<string | undefined>();
+
+  // Focus the search on mount so the keyboard path works from the moment the
+  // panel appears: type to filter, Enter to confirm — no click needed first.
+  let searchInput: HTMLInputElement | undefined;
+  onMount(() => searchInput?.focus());
+
+  // Arrow up/down moves the selection through the visible rows (clamped at the
+  // ends). Focus follows only when it's already on a row, so arrowing from the
+  // search field keeps the caret there; the moved-to row is scrolled into view.
+  const moveSelection = (delta: 1 | -1, from: HTMLElement) => {
+    const rows = visible();
+    const current = rows.findIndex(s => s.id === selectedId());
+    const next = rows[current === -1 ? 0 : current + delta];
+    if (!next) return;
+    setSelected(next.id);
+    const button = document.querySelector<HTMLButtonElement>(
+      `[data-store-id="${next.id}"]`
+    );
+    button?.scrollIntoView({ block: 'nearest' });
+    if (from.closest('[data-store-id]')) button?.focus();
+  };
+
+  // Enter anywhere in the panel confirms: the focused row if the key landed on
+  // one, otherwise the highlighted (aria-selected) row — so typing a search and
+  // hitting Enter continues without reaching for Continue. preventDefault stops
+  // the row/Continue <button>s also firing their click activation.
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.isComposing) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveSelection(e.key === 'ArrowDown' ? 1 : -1, e.target as HTMLElement);
+      return;
+    }
+    if (e.key !== 'Enter') return;
+    const row = (e.target as HTMLElement).closest('[data-store-id]');
+    const id = row?.getAttribute('data-store-id') ?? selectedId();
+    if (!id) return;
+    e.preventDefault();
+    props.onConfirm(id);
+  };
+
+  // Android soft keyboards (GBoard) report Enter with isComposing=true while
+  // predictive text is underlining the word — and never end the composition —
+  // so the keydown guard above swallows it. The IME-agnostic Enter signal is
+  // beforeinput `insertLineBreak` (a CJK commit-Enter emits
+  // `insertCompositionText` instead, so this only fires for a real Enter).
+  // Desktop Enter never reaches here: the keydown handler's preventDefault
+  // stops the input events, so this can't double-confirm.
+  const handleBeforeInput = (e: InputEvent) => {
+    if (e.inputType !== 'insertLineBreak') return;
+    e.preventDefault();
+    const id = selectedId();
+    if (id) props.onConfirm(id);
+  };
 
   const visible = createMemo(() => {
     const q = query().trim().toLowerCase();
@@ -58,24 +114,35 @@ export const StoreSelector = (props: {
   });
 
   return (
-    <div class={styles.panel}>
-      <p class={styles.instructions}>{t('store.select-instructions')}</p>
+    <div
+      class={styles.panel}
+      onKeyDown={handleKeyDown}
+      onBeforeInput={handleBeforeInput}
+    >
+      <p class={styles.instructions}>
+        {t('messages.select-store-instructions')}
+      </p>
 
       <TextField
-        label={t('store.search')}
+        ref={searchInput}
+        label={t('placeholder.search-by-name')}
         hideLabel
         width="full"
         value={query()}
-        placeholder={t('store.search-placeholder')}
+        placeholder={t('placeholder.search-by-name-or-code')}
         onInput={e => setQuery(e.currentTarget.value)}
       />
 
       <div class={styles.listPanel}>
         <Show
           when={visible().length > 0}
-          fallback={<div class={styles.empty}>{t('store.no-results')}</div>}
+          fallback={<div class={styles.empty}>{t('error.no-results')}</div>}
         >
-          <ul class={styles.list} role="listbox" aria-label={t('store.select')}>
+          <ul
+            class={styles.list}
+            role="listbox"
+            aria-label={t('heading.select-store')}
+          >
             <For each={visible()}>
               {store => (
                 <li>
@@ -85,6 +152,7 @@ export const StoreSelector = (props: {
                     role="option"
                     aria-selected={store.id === selectedId()}
                     data-active={store.id === selectedId() ? '' : undefined}
+                    data-store-id={store.id}
                     onClick={() => setSelected(store.id)}
                     onDblClick={() => props.onConfirm(store.id)}
                   >
@@ -92,13 +160,13 @@ export const StoreSelector = (props: {
                     <span class={styles.tags}>
                       <Show when={store.id === props.defaultStoreId}>
                         <StatusChip
-                          label={t('store.default')}
+                          label={t('label.default')}
                           colour="var(--status-new)"
                         />
                       </Show>
                       <Show when={store.id === props.lastUsedStoreId}>
                         <StatusChip
-                          label={t('store.last-used')}
+                          label={t('label.last-used')}
                           colour="var(--status-verified)"
                         />
                       </Show>
@@ -119,7 +187,7 @@ export const StoreSelector = (props: {
           disabled={!selectedId()}
           onClick={() => selectedId() && props.onConfirm(selectedId()!)}
         >
-          {t('store.continue')}
+          {t('button.continue')}
         </Button>
       </div>
     </div>

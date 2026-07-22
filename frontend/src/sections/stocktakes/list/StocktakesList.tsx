@@ -17,14 +17,13 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getBooleanCell,
+  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../../ui/elements/table/Pagination';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -38,6 +37,7 @@ import { CreateStocktakeModal } from './CreateStocktakeModal';
 import {
   CreateInitialStocktakeAction,
   DeleteStocktakesAction,
+  ExportStocktakesAction,
 } from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
@@ -65,26 +65,31 @@ type StocktakesListState = {
   first: number;
 };
 
-// Default sort: by stocktake number, newest (highest) first — matches Open
-// mSupply's default and puts the most recent stocktakes at the top. URL-backed,
-// so a user's own header click overrides it (and is shareable/restorable).
+// Default sort: by created date, newest first — matches Open mSupply's list
+// default (Stocktake/ListView useStocktakeList falls back to createdDatetime
+// desc) and puts the most recent stocktakes at the top. URL-backed, so a user's
+// own header click overrides it (and is shareable/restorable).
 const DEFAULT_STATE: StocktakesListState = {
   filter: {},
-  sort: [{ key: 'stocktakeNumber', desc: true }],
+  sort: [{ key: 'createdDatetime', desc: true }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
 };
 
 // Status → chip label + colour token (spread straight into StatusChip). NEW is
 // the neutral grey, FINALISED the terminal "done" green (tokens.css
-// --status-*).
-const statusMeta = (status: StocktakeRow['status']) =>
-  status === 'FINALISED'
-    ? {
-        label: t('stocktake.status.finalised'),
-        colour: 'var(--status-finalised)',
-      }
-    : { label: t('stocktake.status.new'), colour: 'var(--status-new)' };
+// --status-*). A locked stocktake is still status NEW, so it keeps the NEW
+// colour but reads "New (On Hold)" — the lock is folded into the Status column
+// (spec/stocktakes S1: there is no separate Locked column), conveyed by text
+// (not colour alone). Matches OMS's ListView status accessorFn.
+const statusMeta = (row: Pick<StocktakeRow, 'status' | 'isLocked'>) => {
+  if (row.status === 'FINALISED')
+    return { label: t('status.finalised'), colour: 'var(--status-finalised)' };
+  return {
+    label: row.isLocked ? t('label.stocktake-on-hold') : t('status.new'),
+    colour: 'var(--status-new)',
+  };
+};
 
 const StocktakesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -105,24 +110,22 @@ const StocktakesList: Component = () => {
 
   // Column config (order/sizing/pinning/visibility), resolved default → global
   // → user and by breakpoint band (kdd/table-state). On COMPACT (narrow
-  // viewport) the default shows only #, status, description and stocktake date
-  // — comment/created/locked start hidden to fit; on base (wide) all columns
-  // show (no default override). Bands don't share, so the compact default
-  // doesn't touch base. "Show" semantics: only the hidden columns are listed,
-  // as false. (User edits persist to app data; the store's global config can
-  // override.)
+  // viewport) the default hides the stocktake number (defaultHideOnMobile in
+  // OMS) so status + description lead the card; on base (wide) all columns show
+  // (no default override). Bands don't share, so the compact default doesn't
+  // touch base. "Show" semantics: only the hidden columns are listed, as false.
+  // (User edits persist to app data; the store's global config can override.)
   const tableConfig = createTableConfig({
     tableId: 'stocktakes',
     defaultConfig: {
       compact: {
         // On a narrow viewport, default to CARD view (ui-standards § tables
-        // auto-below-600) and hide the denser columns; the user can switch back
-        // to table via the toolbar.
+        // auto-below-600) and hide the number; the user can switch back to
+        // table via the toolbar. Created + Comment stay visible (they are not
+        // defaultHideOnMobile in OMS).
         viewMode: 'card',
         columnVisibility: {
-          comment: false,
-          createdDatetime: false,
-          isLocked: false,
+          stocktakeNumber: false,
         },
       },
     },
@@ -250,49 +253,35 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('stocktake.column.status'),
-      cell: info => (
-        <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />
-      ),
+      header: t('label.status'),
+      cell: info => <StatusChip {...statusMeta(info.row.original)} />,
       // Card view: the status chip is the top-right badge.
       meta: { card: { region: 'badge' } },
     },
     {
       c: { key: 'description' },
-      sortKey: 'description',
-      header: t('stocktake.column.description'),
+      // Not sortable — matches OMS's list (Description has no sort control) and
+      // the spec column table.
+      header: t('label.description'),
       // Card view: the description flows in the secondary area. Wraps to 2
       // lines.
       meta: { wrapLines: 2 },
     },
     {
-      c: { key: 'comment' },
-      sortKey: 'comment',
-      header: t('stocktake.column.comment'),
-    },
-    {
-      c: { key: 'stocktakeDate' },
-      sortKey: 'stocktakeDate',
-      header: t('stocktake.column.stocktake-date'),
-      ...getDateCell(),
-    },
-    {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('stocktake.column.created'),
+      header: t('label.created'),
       ...getDateCell(),
     },
     {
-      c: { key: 'isLocked' },
-      header: t('stocktake.column.locked'),
-      ...getBooleanCell(),
+      c: { key: 'comment' },
+      // Not sortable — matches OMS's list column set.
+      header: t('label.comment'),
+      ...getCommentCell(),
     },
   ];
 
-  const crumbs = () => [
-    { label: t('nav.inventory') },
-    { label: t('nav.inventory.stocktakes') },
-  ];
+  const crumbs = () => [{ label: t('inventory') }, { label: t('stocktakes') }];
 
   return (
     <Page
@@ -303,11 +292,17 @@ const StocktakesList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
-              onClick={() => setCreateOpen(true)}
               data-testid="new-stocktake-button"
+              onClick={() => setCreateOpen(true)}
             >
-              {t('stocktake.new')}
+              {t('label.new-stocktake')}
             </Button>
+            {/* Export the stocktakes list (all pages of the current filter) as
+                CSV or Excel (spec/stocktakes S1). */}
+            <ExportStocktakesAction
+              storeId={params.storeId}
+              filter={() => query().filter}
+            />
           </HeaderButtons>
           <Toolbar>
             <FilterBar
@@ -319,30 +314,16 @@ const StocktakesList: Component = () => {
         </Header>
       }
       contentFooter={
-        // The page's one contextual footer band (matching Open mSupply):
-        // pagination normally, replaced by the selection action bar while rows
-        // are selected.
-        <Show
-          when={selectedIds().length > 0}
-          fallback={
-            <ContentFooter>
-              <Pagination
-                offset={query().offset}
-                pageSize={query().first}
-                total={totalCount()}
-                onOffsetChange={offset => setQuery({ ...query(), offset })}
-                onPageSizeChange={first =>
-                  setQuery({ ...query(), first, offset: 0 })
-                }
-              />
-            </ContentFooter>
-          }
-        >
-          <ContentFooter>
+        // The page's one contextual footer band: the selection action bar while
+        // rows are selected, otherwise nothing (pagination now renders as an
+        // overlay INSIDE the DataTable — see the `pagination` prop below —
+        // matching the stocktake detail view; kdd/table-state).
+        <Show when={selectedIds().length > 0}>
+          <ContentFooter testId="actions-footer">
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
             <strong data-testid="selected-rows-count">
-              {t('stocktake.selected', { count: selectedIds().length })}
+              {selectedIds().length} {t('label.selected')}
             </strong>
             <DeleteStocktakesAction
               storeId={params.storeId}
@@ -355,7 +336,7 @@ const StocktakesList: Component = () => {
                 icon={<CloseIcon />}
                 onClick={() => setSelectedIds([])}
               >
-                {t('common.clear')}
+                {t('label.clear-selection')}
               </Button>
             </ContentFooterActions>
           </ContentFooter>
@@ -374,9 +355,7 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={
-          hasStocktake() ? t('stocktake.empty') : t('stocktake.empty-store')
-        }
+        emptyMessage={t('error.no-stocktakes')}
         // The empty-state action flips on whether the store has ANY stocktake
         // (mirrors OMS): a store with none is offered the once-per-store INITIAL
         // (opening-balance) create — a plain confirm, no mode controls; a store
@@ -389,7 +368,7 @@ const StocktakesList: Component = () => {
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('stocktake.new')}
+              {t('button.create-a-new-one')}
             </Button>
           ) : (
             <Button
@@ -397,7 +376,7 @@ const StocktakesList: Component = () => {
               data-testid="nothing-here-create-button"
               onClick={() => setInitialOpen(true)}
             >
-              {t('stocktake.create.initial-action')}
+              {t('button.initial-stocktake')}
             </Button>
           )
         }
@@ -406,6 +385,26 @@ const StocktakesList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
+        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
+        // not in a page footer band — consistent with the stocktake detail view
+        // (kdd/table-state). State stays page-owned/URL-backed.
+        pagination={{
+          offset: query().offset,
+          pageSize: query().first,
+          total: totalCount(),
+          onOffsetChange: offset => setQuery({ ...query(), offset }),
+          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        }}
       />
       <CreateStocktakeModal
         open={createOpen()}

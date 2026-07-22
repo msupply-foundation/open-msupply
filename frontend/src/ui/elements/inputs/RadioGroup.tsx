@@ -7,7 +7,7 @@ export interface RadioOption {
   /** Optional muted second line under the label. */
   description?: string;
   disabled?: boolean;
-  /** Test id on the option's radio input (cross-FE test-id contract). */
+  /** `data-testid` for the radio input (locale-stable test hook, e2e/TESTIDS.md). */
   testId?: string;
 }
 
@@ -34,10 +34,11 @@ interface RadioGroupProps {
  * Radio group — built on the plain browser <input type="radio"> (NO headless
  * library). A radio group is the "own the simple" case: a shared `name` gives
  * the browser single-select grouping, roving arrow-key focus, and the
- * radiogroup/radio ARIA for free — nothing to buy. We style the native control
- * with `accent-color` (the brand orange dot/ring) and lay out the label beside
- * it; the <fieldset>/<legend> carry the group semantics. Matches the current
- * app's radios.
+ * radiogroup/radio ARIA for free — nothing to buy. We draw the control
+ * ourselves (`appearance: none` — brand rim + dot with a transparent gap;
+ * `accent-color` painted the gap white in both schemes, see the CSS module)
+ * and lay out the label beside it; the <fieldset>/<legend> carry the group
+ * semantics. Matches the current app's radios.
  */
 export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
   // One shared name per group instance so the native radios single-select
@@ -69,8 +70,8 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
                 type="radio"
                 class={styles.input}
                 name={name}
-                value={option.value}
                 data-testid={option.testId}
+                value={option.value}
                 checked={props.value === option.value}
                 disabled={props.disabled || option.disabled}
                 onChange={() => props.onChange?.(option.value)}

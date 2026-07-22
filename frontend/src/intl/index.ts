@@ -16,6 +16,8 @@ export { loadDictionary, invalidateCustomTranslations } from './loadDictionary';
 // Detection / switching
 export { detectLocale, getUserLocale } from './detectLocale';
 export { changeLanguage, initialiseLocale } from './changeLanguage';
+export { getCurrencyInfo, homeCurrency, setHomeCurrency } from './currency';
+export type { CurrencyInfo, CurrencyDisplay } from './currency';
 
 // Formatting
 export {
@@ -32,6 +34,7 @@ export {
   localisedDistanceToNow,
   getDisplayAge,
 } from './formatDateTime';
+export { formatFileSize } from './formatFileSize';
 
 // Metadata / misc helpers
 export {

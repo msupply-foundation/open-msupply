@@ -55,6 +55,21 @@
   font-weight: var(--weight-bold);
 }
 
+/* Collapsible sections (SidePanelSection composes the shared Accordion):
+   ONE heading convention per panel — the trigger/content take exactly the
+   plain .title/content boxes, so a heading reads the same whether or not it
+   collapses. These strip the Accordion's own standalone spacing; scoped under
+   .section so they beat the Accordion module's single-class rules regardless
+   of bundle order. */
+.section .sectionTrigger {
+  margin-block-end: var(--space-3);
+  padding: 0;
+}
+
+.section .sectionContent {
+  padding: 0;
+}
+
 /* Field rows: a <dl> of dt/dd pairs — label inline-start, value inline-end. */
 .section dl {
   display: grid;
@@ -82,4 +97,27 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+/* The section holding the record-actions cluster pins at the panel's end
+   (the original app keeps it in a non-scrolling footer row): the panel is a
+   scrolling flex column, so margin-block-start: auto glues the section to the
+   foot when content is short, and sticky keeps it visible over the content
+   when the panel scrolls. Opaque background for the content passing beneath;
+   the divider comes from the .section + .section rule. */
+.section:has(> .actions) {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  margin-block-start: auto;
+  background: var(--surface-raised);
+}
+
+/* Record actions (the registry's record-actions section): one action per
+   row, each button sized to its label and aligned inline-start. */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
 }

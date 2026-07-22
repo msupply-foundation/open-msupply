@@ -4,3 +4,4 @@
 // initial-stocktake create offered from the empty state.
 export { DeleteStocktakesAction } from './DeleteStocktakesAction';
 export { CreateInitialStocktakeAction } from './CreateInitialStocktakeAction';
+export { ExportStocktakesAction } from './ExportStocktakesAction';

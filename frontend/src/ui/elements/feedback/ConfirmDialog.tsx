@@ -1,4 +1,4 @@
-import { type JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import { CheckIcon, HelpIcon, XCircleIcon } from '../../icons';
 import { Button } from '../buttons/Button';
 import { Dialog } from './Dialog';
@@ -19,34 +19,45 @@ export interface ConfirmDialogProps {
  * Cancel/OK pattern (secondary-tone buttons, as in the current app's blue
  * dialog actions). The owning component keeps `open` state, renders this, and
  * handles onConfirm. Ported from the RnD prototype's ConfirmDialog.
+ *
+ * Gated by <Show> on `open` so the <dialog testid="confirmation-modal"> isn't
+ * in the DOM at all while closed — a closed-but-mounted confirm coexists with
+ * other actions' confirms under the same testid, which trips the shared e2e
+ * suite's strict-mode locator (and needlessly keeps a hidden dialog live). The
+ * owner keeps the `open` state, so unmounting loses nothing.
  */
 export const ConfirmDialog = (props: ConfirmDialogProps) => (
-  <Dialog
-    open={props.open}
-    onClose={props.onClose}
-    icon={<HelpIcon />}
-    title={props.title ?? 'Are you sure?'}
-    description={props.message}
-    actions={
-      <>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          onClick={props.onClose}
-        >
-          {props.cancelLabel ?? 'Cancel'}
-        </Button>
-        <Button
-          variant="secondary"
-          icon={<CheckIcon />}
-          onClick={() => {
-            props.onConfirm();
-            props.onClose();
-          }}
-        >
-          {props.confirmLabel ?? 'OK'}
-        </Button>
-      </>
-    }
-  />
+  <Show when={props.open}>
+    <Dialog
+      open
+      onClose={props.onClose}
+      icon={<HelpIcon />}
+      testId="confirmation-modal"
+      title={props.title ?? 'Are you sure?'}
+      description={props.message}
+      actions={
+        <>
+          <Button
+            variant="secondary"
+            icon={<XCircleIcon />}
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          >
+            {props.cancelLabel ?? 'Cancel'}
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<CheckIcon />}
+            data-testid="confirmation-modal-ok"
+            onClick={() => {
+              props.onConfirm();
+              props.onClose();
+            }}
+          >
+            {props.confirmLabel ?? 'OK'}
+          </Button>
+        </>
+      }
+    />
+  </Show>
 );

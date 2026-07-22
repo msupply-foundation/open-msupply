@@ -1,21 +1,12 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# App-specific R8/ProGuard keep rules. Capacitor core and its plugins ship
+# their own consumer rules (bridge, @PluginMethod, Plugin subclasses), so only
+# this app's reflection/JNI surface needs listing here.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# JNI: the prebuilt libremote_server_android.so binds its symbols to this
+# class's fully qualified name (Java_org_openmsupply_client_RemoteServer_*),
+# and the Rust side may look the class up at runtime — never rename or strip.
+-keep class org.openmsupply.client.RemoteServer { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Readable release stack traces (class names stay obfuscated; the mapping file
+# under app/build/outputs/mapping/release/ de-obfuscates the rest).
+-keepattributes SourceFile,LineNumberTable

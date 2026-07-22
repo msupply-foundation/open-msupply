@@ -7,6 +7,11 @@ import styles from './LanguageSelector.module.css';
 interface LanguageSelectorProps {
   language: string;
   onSelect: (value: string) => void;
+  /**
+   * Where the menu opens relative to the trigger. Default `top-start` — the
+   * footer home opens upward; a header host wants `bottom-end`.
+   */
+  placement?: DropdownMenu.DropdownMenuRootProps['placement'];
 }
 
 // The options come from the intl module's single source of truth
@@ -24,14 +29,14 @@ const labelFor = (value: string) =>
  * analogue of the RnD prototype's Radix DropdownMenu version — same reasoning.
  */
 export const LanguageSelector = (props: LanguageSelectorProps) => (
-  <DropdownMenu.Root placement="top-start" gutter={8}>
-    <DropdownMenu.Trigger class={styles.trigger} title={t('language.select')}>
+  <DropdownMenu.Root placement={props.placement ?? 'top-start'} gutter={8}>
+    <DropdownMenu.Trigger class={styles.trigger} title={t('select-language')}>
       <TranslateIcon class={styles.icon} />
       <span class={styles.triggerText}>{labelFor(props.language)}</span>
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
       <DropdownMenu.Content class={styles.content}>
-        <div class={styles.heading}>{t('language.select')}</div>
+        <div class={styles.heading}>{t('select-language')}</div>
         <For each={languageOptions}>
           {option => (
             <DropdownMenu.Item
@@ -43,7 +48,7 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
             >
               <span class={styles.itemLabel}>{option.label}</span>
               <Show when={LOCALE_META[option.value].dir === 'rtl'}>
-                <span class={styles.rtlTag}>{t('language.rtl')}</span>
+                <span class={styles.rtlTag}>{t('label.rtl')}</span>
               </Show>
             </DropdownMenu.Item>
           )}

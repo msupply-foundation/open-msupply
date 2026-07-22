@@ -76,8 +76,10 @@ export const setUserTableConfig = (
 };
 
 // A LayeredConfig is empty when no band holds any (non-empty) TableConfig
-// field.
-const isEmptyLayeredConfig = (config: LayeredConfig): boolean =>
+// field. Exported so the promote-to-global path (createTableConfig) applies the
+// SAME "nothing to save" rule this module uses to drop a user entry — one
+// definition, no drift.
+export const isEmptyLayeredConfig = (config: LayeredConfig): boolean =>
   Object.values(config).every(
     band => !band || Object.values(band).every(field => field == null)
   );

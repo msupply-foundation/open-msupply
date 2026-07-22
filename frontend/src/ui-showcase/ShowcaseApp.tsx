@@ -1,27 +1,39 @@
-import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  Show,
+} from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { sections, categories } from './sections';
-import { MenuBar, type MenuBarState } from '../ui/layout/AppShell/MenuBar';
-import { ShellFullScreenContext } from '../ui/layout/AppShell/shellContext';
+import { AppShell } from '../ui/layout/AppShell/AppShell';
 import type { NavItem, NavLeaf } from '../ui/layout/AppShell/navModel';
-import type { LocaleKey } from '../intl';
-import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
-import { MenuIcon } from '../ui/icons';
+import { Page } from '../ui/layout/Page/Page';
+import { Header } from '../ui/layout/Header/Header';
+import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { ThemeToggle } from '../ui/elements/buttons/ThemeToggle';
-import styles from './ShowcaseApp.module.css';
+import { isRtl, locale, type LocaleKey } from '../intl';
 
 /*
- * Storybook shell: the REAL MenuBar (dogfooding the library's main menu — one
- * expandable section per category from the registry) beside a main column of
- * header strip + active section panel. Everything in src/ui-showcase/ is demo
- * scaffolding — the reusable library (src/ui/) and the app never import from
- * here; the ONLY entry is the dev-only #/showcase branch in src/index.tsx,
- * which is dead-code-eliminated from production builds (see README.md here).
+ * Storybook shell: the showcase dogfoods the REAL app chrome — it renders the
+ * library's own <AppShell> (docked MenuBar + the orange app footer with its
+ * store / user / language cells) wrapping a <Page> whose header is the real
+ * <Header>, so a showcase view is composed EXACTLY like an app page and only
+ * the body content differs. AppShell takes the section registry as its nav
+ * model (its `upper` override); the footer's store/user cells are inert demo
+ * placeholders (there is no store or session here). The one app-chrome control
+ * the real app lacks — a dark-mode ThemeToggle — lives in the page header's
+ * button cluster. Everything in src/ui-showcase/ is demo scaffolding — the
+ * reusable library (src/ui/) and the app never import from here; the ONLY entry
+ * is the dev-only #/showcase branch in src/index.tsx, dead-code-eliminated from
+ * production builds (see README.md here).
  *
  * The active section lives in the URL hash (#/showcase/buttons) so views are
- * linkable — the MenuBar's onSelect just writes the hash and a hashchange
- * listener owns the state, no routing library (the app's real router is not
- * in play here; see kdd/showcase-harness).
+ * linkable — AppShell's onNavigate just writes the hash and a hashchange
+ * listener owns the state, no routing library (the app's real router is not in
+ * play here; see kdd/showcase-harness).
  */
 
 /* The showcase's nav model: one expandable section per category, plus any
@@ -68,21 +80,13 @@ export function ShowcaseApp() {
 
   const active = () => sections.find(s => s.id === activeId())!;
 
-  // The MenuBar is controlled by its host — the same state block AppShell
-  // keeps for the real app (rail collapse, overlay open/close).
-  const [railCollapsed, setRailCollapsed] = createSignal(false);
-  const [overlayOpen, setOverlayOpen] = createSignal(false);
-  const [fullScreen, setFullScreen] = createSignal(false);
-  const isOverlay = useIsNavOverlay();
-  const nav: MenuBarState = {
-    railCollapsed,
-    toggleRail: () => setRailCollapsed(c => !c),
-    overlayOpen,
-    openOverlay: () => setOverlayOpen(true),
-    closeOverlay: () => setOverlayOpen(false),
-  };
+  // Document direction/lang, driven by the locale signal — mirrors App.tsx
+  // (the app's single owner), which doesn't run in the showcase branch. Here
+  // so the footer's LanguageSelector demonstrates RTL layout + locale
+  // formatting (numbers, dates) across every section.
   createEffect(() => {
-    if (!isOverlay()) setOverlayOpen(false);
+    document.documentElement.dir = isRtl() ? 'rtl' : 'ltr';
+    document.documentElement.lang = locale();
   });
 
   // The hash stays the single source of truth: selecting a menu item writes
@@ -91,56 +95,71 @@ export function ShowcaseApp() {
     window.location.hash = `#/showcase/${leaf.id}`;
   };
 
+  // The menu highlight is driven by the active section's id; AppShell reads
+  // only `.id` off `selected`, so the label is a formality (cast, as above).
+  const selectedLeaf = (): NavLeaf => ({
+    id: activeId(),
+    labelKey: active().label as LocaleKey,
+    to: `/showcase/${activeId()}`,
+  });
+
+  // The page header's breadcrumb stands in for the app's route trail: the
+  // section's category is the root crumb and the section its (h1) leaf —
+  // top-level sections (Icons) are a single crumb. The leading orange icon is
+  // the category's (or the top-level section's own).
+  const crumbs = () => {
+    const s = active();
+    const cat = categories.find(c => c.id === s.category);
+    return cat
+      ? [{ label: cat.label }, { label: s.label }]
+      : [{ label: s.label }];
+  };
+  // A memo so the two reads Breadcrumb makes of `icon` (its truthiness gate +
+  // the insertion) share ONE element rather than building the icon subtree
+  // twice (kdd/solid-reactivity-pitfalls §3).
+  const crumbIcon = createMemo(() => {
+    const s = active();
+    const Icon = s.topLevel
+      ? s.icon
+      : categories.find(c => c.id === s.category)?.icon;
+    return Icon ? <Dynamic component={Icon} /> : undefined;
+  });
+
   return (
-    // Provide the same shell-level full-screen context the real AppShell does,
-    // so a section that's a real page (Table) full-screens properly — the
-    // showcase chrome (menu + header strip) hides and the page's
-    // footer/pagination/selection stay.
-    <ShellFullScreenContext.Provider
-      value={{ isFullScreen: fullScreen, setFullScreen }}
+    <AppShell
+      // The showcase's own menu (section registry) replaces the app's navModel;
+      // it has no lower cluster, so `lower` is omitted.
+      upper={showcaseNav}
+      selected={selectedLeaf()}
+      onNavigate={select}
+      // The footer's store/user cells are inert demo placeholders — there is no
+      // store or session in the standalone showcase; the language cell is live.
+      storeName="Demo store"
+      onStoreClick={() => {}}
+      username="Developer"
+      onLogout={() => {}}
     >
-      <div class={styles.shell}>
-        <Show when={!fullScreen()}>
-          <MenuBar
-            nav={nav}
-            isOverlay={isOverlay()}
-            upper={showcaseNav}
-            selectedId={activeId()}
-            onSelect={select}
-          />
-        </Show>
-        <div class={styles.main}>
-          <Show when={!fullScreen()}>
-            <header class={styles.header}>
-              {/* No library Header here (that's a page-region component), so
-                  the shell renders its own overlay hamburger. */}
-              <Show when={isOverlay()}>
-                <button
-                  type="button"
-                  class={styles.hamburger}
-                  onClick={nav.openOverlay}
-                  aria-label="Open section menu"
-                  aria-expanded={overlayOpen()}
-                >
-                  <MenuIcon />
-                </button>
-              </Show>
-              <h1 class={styles.title}>Open mSupply — UI library</h1>
-              <ThemeToggle />
-            </header>
-          </Show>
-          <main
-            class={`${styles.panel} ${active().fill ? styles.panelFill : ''}`}
-          >
-            {/* A fill section (e.g. Table) is a real full-height page that owns the whole
-                region — no section title, no panel padding/scroll. */}
-            <Show when={!active().fill}>
-              <h2 class={styles.sectionTitle}>{active().label}</h2>
-            </Show>
-            <Dynamic component={active().component} />
-          </main>
-        </div>
-      </div>
-    </ShellFullScreenContext.Provider>
+      {/* A `fill` section (Table) is a real full-height page that composes its
+          OWN <Page> + <Header>, so it drops straight into the shell's content
+          slot. Every other section is body content the showcase wraps in a
+          <Page> whose header carries the breadcrumb + the dark-mode toggle. */}
+      <Show
+        when={!active().fill}
+        fallback={<Dynamic component={active().component} />}
+      >
+        <Page
+          header={
+            <Header>
+              <Breadcrumb icon={crumbIcon()} crumbs={crumbs()} />
+              <HeaderButtons>
+                <ThemeToggle />
+              </HeaderButtons>
+            </Header>
+          }
+        >
+          <Dynamic component={active().component} />
+        </Page>
+      </Show>
+    </AppShell>
   );
 }

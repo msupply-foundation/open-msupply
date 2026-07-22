@@ -55,9 +55,10 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
         variant="secondary"
         icon={<TrashIcon />}
         disabled={props.disabled}
+        data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
       >
-        {t('common.delete')}
+        {t('button.delete-lines')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -95,15 +96,18 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<TrashIcon />}
-      title={t('stocktake.lines.delete-title')}
+      testId="confirmation-modal"
+      title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={t('stocktake.lines.delete-confirm', { count })}>
+        <Switch
+          fallback={tPlural('messages.confirm-delete-stocktake_lines', count)}
+        >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.delete-success')}
+            {tPlural('messages.deleted-lines', count)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -118,18 +122,20 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
                 variant="secondary"
                 icon={<TrashIcon />}
                 loading={phase() === 'working'}
+                data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >
-                {t('common.delete')}
+                {t('button.delete-lines')}
               </Button>
             </>
           }
@@ -138,18 +144,20 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -159,7 +167,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>

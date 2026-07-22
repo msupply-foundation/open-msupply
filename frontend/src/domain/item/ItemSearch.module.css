@@ -1,0 +1,24 @@
+/* One item option row: "code - name" takes the free space at the inline-start,
+   the total (Σ packs * packSize + unit) pins to the inline-end. Mirrors the
+   real OMS item picker's three-part row, collapsed to label + total. */
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.total {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}

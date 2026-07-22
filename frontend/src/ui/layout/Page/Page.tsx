@@ -1,5 +1,6 @@
-import { Show, type JSX } from 'solid-js';
+import { children, createEffect, onCleanup, Show, type JSX } from 'solid-js';
 import { useFullScreen } from '../AppShell/shellContext';
+import { useIsCompact } from '../../utils/createMediaQuery';
 import { SidePanel } from '../SidePanel/SidePanel';
 import styles from './Page.module.css';
 
@@ -76,13 +77,40 @@ export const Page = (props: PageProps) => {
   // remain), matching Open mSupply. Outside a shell (no provider)
   // useFullScreen() is undefined, so the header always shows there.
   const fullScreen = useFullScreen();
+  // Resolve the JSX-element prop ONCE (kdd/solid-reactivity-pitfalls §3): it's
+  // read both by the <Show> test and the insertion below, and each raw access
+  // of a JSX prop getter builds a brand-new subtree — the test's copy would be
+  // discarded but still executed (doubled onMounts/refs, live computations on
+  // detached DOM). children() memoizes so both reads share one instance.
+  const panelContent = children(() => props.sidePanelContent);
+
+  // Below the compact breakpoint the OPEN panel is a full-screen overlay
+  // (Page.module.css, spec ui-standards/layout.md → page regions, D27).
+  // While it's active: the covered main column is `inert` (unreachable by
+  // keyboard and assistive tech — the overlay isn't a dialog yet, so without
+  // this focus could tab into the hidden content) and Esc closes the panel.
+  // Interim treatment; the drawer-with-dialog-semantics end-state replaces it
+  // once a Drawer exists.
+  const isCompact = useIsCompact();
+  const overlayActive = () =>
+    isCompact() && props.sidePanelOpen === true && !!panelContent();
+
+  createEffect(() => {
+    if (!overlayActive()) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') props.onSidePanelClose?.();
+    };
+    document.addEventListener('keydown', onKey);
+    onCleanup(() => document.removeEventListener('keydown', onKey));
+  });
+
   return (
     // Top level is a ROW: the main column (header / body / footer) beside the
     // details panel, so the panel spans the WHOLE page height (alongside the
     // header and footer too), pushing all of them when it opens — not just the
     // body band.
     <div class={styles.page}>
-      <div class={styles.main}>
+      <div class={styles.main} inert={overlayActive()}>
         <Show when={!fullScreen?.isFullScreen()}>{props.header}</Show>
         <div class={styles.middle}>
           <div
@@ -93,16 +121,23 @@ export const Page = (props: PageProps) => {
         </div>
         {props.contentFooter}
       </div>
-      {/* Details panel, baked into the frame: full page height, shown while content is provided
-          AND open. The frame owns the SidePanel chrome (header, title, close); the page supplies
-          only the content + title + the open boolean. */}
-      <Show when={props.sidePanelContent && props.sidePanelOpen !== false}>
-        <SidePanel
-          label={props.sidePanelTitle}
-          onClose={props.onSidePanelClose}
+      {/* Details panel, baked into the frame: full page height, MOUNTED while content is
+          provided and merely COLLAPSED (width 0, clipped) while closed — open/close never
+          remounts the content (kdd/state-management: no remounts), and panel state (scroll,
+          in-progress edits) survives. The frame owns the SidePanel chrome (header, title,
+          close); the page supplies only the content + title + the open boolean. */}
+      <Show when={panelContent()}>
+        <div
+          class={styles.panelSlot}
+          data-closed={props.sidePanelOpen === false ? '' : undefined}
         >
-          {props.sidePanelContent}
-        </SidePanel>
+          <SidePanel
+            label={props.sidePanelTitle}
+            onClose={props.onSidePanelClose}
+          >
+            {panelContent()}
+          </SidePanel>
+        </div>
       </Show>
     </div>
   );

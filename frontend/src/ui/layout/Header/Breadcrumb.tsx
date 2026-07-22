@@ -40,7 +40,7 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1;
 
   return (
-    <nav class={styles.breadcrumb} aria-label={t('breadcrumb.label')}>
+    <nav class={styles.breadcrumb} aria-label={t('label.breadcrumb')}>
       <Show when={props.icon}>
         <span class={styles.icon} aria-hidden="true">
           {props.icon}

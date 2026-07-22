@@ -1,10 +1,11 @@
 import { t } from '../../../intl';
 import {
   FilterSelect,
-  FilterTextInput,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { DateRangeField } from '../../../ui/elements/inputs/DateRangeField';
+import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import type { StocktakesVariables } from './stocktakes.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no
@@ -12,10 +13,30 @@ import type { StocktakesVariables } from './stocktakes.generated';
 // through the FilterBar; there is no parallel value model and no mapper.
 export type StocktakeFilter = NonNullable<StocktakesVariables['filter']>;
 
+// A picked calendar day widened to an inclusive instant in the viewer's local
+// zone — start-of-day for the lower bound, end-of-day for the upper — because
+// the `createdDatetime` field is a `DateTime`, not a plain calendar date, so a
+// bare `YYYY-MM-DD` is not a valid value for it (mirrors the reports
+// DateRange widening in json-forms/schema.ts `toDatetimeFilter`). `stocktakeDate`
+// needs none of this: it is a `NaiveDate`, so the picked dates pass through as-is.
+const dayStart = (iso: string) => new Date(`${iso}T00:00:00`).toISOString();
+const dayEnd = (iso: string) => new Date(`${iso}T23:59:59.999`).toISOString();
+
+// The inverse read-back for the Created chip: recover the LOCAL calendar day
+// the user picked from the stored UTC instant. A naive `.slice(0, 10)` reads the
+// UTC day, which is off by one for any device behind/ahead of UTC once the
+// widened start-of-day instant crosses the date line (e.g. NZ, UTC+12: local
+// 2026-07-15T00:00 is stored as 2026-07-14T12:00Z, and slicing gives the wrong
+// 14th). utcToLocalParts converts back with the same device-tz getters the
+// widening used, so pick → store → display round-trips to the same day.
+const localDay = (utc: string | null | undefined) =>
+  utcToLocalParts(utc)?.date ?? null;
+
 /*
- * Type-driven, EXHAUSTIVE filter definitions for the stocktakes list (the
- * spec's deliberate-filters requirement, preserved from the reference
- * vertical). The map passed to `constructFilters` is keyed by EVERY key of the
+ * Type-driven, EXHAUSTIVE filter definitions for the stocktakes list. The list
+ * surfaces only Status + Created (aligned to the real client — see the
+ * dismissed section below). The map passed to `constructFilters` is keyed by
+ * EVERY key of the
  * generated StocktakeFilterInput: a key maps to a definition to expose it, or
  * `null` to dismiss it (not user-facing). Being a Record over all of
  * `StocktakeFilter`, it can't compile with a key missing — when the schema
@@ -46,15 +67,16 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
   // ─ user-facing, in display order
   // ─────────────────────────────────────────────
   status: {
-    label: () => t('stocktake.filter.status'),
+    label: () => t('label.status'),
     render: props => (
       <FilterSelect
-        label={t('stocktake.filter.status')}
+        label={t('label.status')}
+        testId={props.testId}
         value={props.filter().status?.equalTo ?? ''}
         options={[
-          { value: '', label: t('filter.any') },
-          { value: 'NEW', label: t('stocktake.status.new') },
-          { value: 'FINALISED', label: t('stocktake.status.finalised') },
+          { value: '', label: t('label.any') },
+          { value: 'NEW', label: t('status.new') },
+          { value: 'FINALISED', label: t('status.finalised') },
         ]}
         // The server honours status.equalTo, NOT equalAny (equalAny is in the
         // schema input but the resolver ignores it). '' clears (→ null so the
@@ -66,89 +88,51 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
       />
     ),
   },
-  description: {
-    label: () => t('stocktake.filter.description'),
+  // Created — a `DatetimeFilterInput` over the `DateTime` field: a picked day is
+  // widened to an inclusive instant (day-start … day-end) in the viewer's local
+  // zone, because a bare calendar date is not a valid DateTime. Same
+  // empty/one-sided handling as above. The value the field shows is recovered
+  // from the stored UTC instant back to the LOCAL day (localDay, not a bare
+  // slice — see its note) so pick → store → display round-trips to the same day.
+  createdDatetime: {
+    label: () => t('label.created'),
     render: props => (
-      <FilterTextInput
-        label={t('stocktake.filter.description')}
-        placeholder={t('stocktake.filter.contains')}
-        value={props.filter().description?.like ?? ''}
-        // Blank box → null, never { like: '' }: an empty `like` would wrongly
-        // match (the server treats "" as a real substring).
-        onInput={value =>
-          props.setPartialFilter({
-            description: value ? { like: value } : null,
-          })
-        }
-      />
-    ),
-  },
-  comment: {
-    label: () => t('stocktake.filter.comment'),
-    render: props => (
-      <FilterTextInput
-        label={t('stocktake.filter.comment')}
-        placeholder={t('stocktake.filter.contains')}
-        value={props.filter().comment?.like ?? ''}
-        onInput={value =>
-          props.setPartialFilter({ comment: value ? { like: value } : null })
-        }
-      />
-    ),
-  },
-  isLocked: {
-    label: () => t('stocktake.filter.locked'),
-    render: props => (
-      <FilterSelect
-        label={t('stocktake.filter.locked')}
-        value={
-          props.filter().isLocked == null
-            ? ''
-            : props.filter().isLocked
-              ? 'true'
-              : 'false'
-        }
-        options={[
-          { value: '', label: t('filter.any') },
-          { value: 'true', label: t('common.yes') },
-          { value: 'false', label: t('common.no') },
-        ]}
-        onChange={value =>
-          props.setPartialFilter({
-            isLocked: value === '' ? null : value === 'true',
-          })
-        }
-      />
-    ),
-  },
-  stocktakeNumber: {
-    label: () => t('stocktake.filter.number'),
-    render: props => (
-      <FilterTextInput
-        label={t('stocktake.filter.number')}
-        placeholder={t('stocktake.filter.equals')}
-        // stocktakeNumber is an integer; the control edits a string. Show it
-        // as text, and parse on input below. `?? ''` keeps the box blank when
-        // unset.
-        value={props.filter().stocktakeNumber?.equalTo?.toString() ?? ''}
-        // Server honours stocktakeNumber.equalTo (verified). Parse the string
-        // to an int; a blank or non-numeric box clears to null (chip stays, no
-        // filter applied) — never { equalTo: NaN }, which would serialise to
-        // null and silently mismatch.
-        onInput={value => {
-          const n = Number.parseInt(value, 10);
-          props.setPartialFilter({
-            stocktakeNumber: Number.isNaN(n) ? null : { equalTo: n },
-          });
+      <DateRangeField
+        label={t('label.created')}
+        hideLabel
+        size="small"
+        testId={props.testId}
+        value={{
+          start: localDay(props.filter().createdDatetime?.afterOrEqualTo),
+          end: localDay(props.filter().createdDatetime?.beforeOrEqualTo),
         }}
+        onChange={({ start, end }) =>
+          props.setPartialFilter({
+            createdDatetime:
+              start || end
+                ? {
+                    ...(start ? { afterOrEqualTo: dayStart(start) } : {}),
+                    ...(end ? { beforeOrEqualTo: dayEnd(end) } : {}),
+                  }
+                : null,
+          })
+        }
       />
     ),
   },
 
   // ─ dismissed (not user-facing)
-  // ─────────────────────────────────────────────── Date-range filter —
-  // trivially expressible (render a date-range control), but the styled control
-  // is not built yet, so it stays deferred; the decision is on record here.
+  // ───────────────────────────────────────────────
+  // Aligned to the real client (Stocktake/ListView): its list surfaces ONLY
+  // Status + Created, so Description / Comment / Locked / Number / Stocktake-date
+  // are dismissed here even though the schema declares them (they stay
+  // contract-declared and could be re-surfaced — see spec/stocktakes README's
+  // "List filter set aligned to the real client"). The fields remain filterable
+  // on the wire; we simply don't offer a control.
+  description: null,
+  comment: null,
+  isLocked: null,
+  stocktakeNumber: null,
   stocktakeDate: null,
   // Program stocktake — a boolean the schema exposes, but not surfaced as a
   // list filter for now (dismissed by product decision).
@@ -158,7 +142,6 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
   id: null,
   userId: null,
   programId: null,
-  createdDatetime: null,
   finalisedDatetime: null,
 });
 

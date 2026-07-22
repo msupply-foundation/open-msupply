@@ -1,8 +1,18 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Match, Show, Switch, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { MSupplyGuyLogo, ChevronDownIcon } from '../../icons';
+import {
+  MSupplyGuyLogo,
+  ChevronDownIcon,
+  AlertTriangleIcon,
+} from '../../icons';
+import { Badge } from '../../elements/feedback/Badge';
 import { t } from '../../../intl';
-import type { NavItem, NavLeaf } from './navModel';
+import {
+  SYNC_NAV_ID,
+  type NavBadge,
+  type NavItem,
+  type NavLeaf,
+} from './navModel';
 import styles from './MenuBar.module.css';
 
 export interface MenuBarState {
@@ -26,6 +36,10 @@ interface MenuBarProps {
   lower?: NavItem[];
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
+  /** Status badge for the Sync entry (spec/chrome § sync indicator). */
+  syncBadge?: NavBadge;
+  /** Dim the Sync entry's icon while the latest run is errored. */
+  syncIconDimmed?: boolean;
 }
 
 /*
@@ -44,6 +58,8 @@ const TopLeaf = (props: {
   item: NavItem;
   selected: boolean;
   onSelect: () => void;
+  badge?: NavBadge;
+  iconDimmed?: boolean;
 }) => (
   <li class={styles.item}>
     <button
@@ -53,11 +69,43 @@ const TopLeaf = (props: {
       title={t(props.item.labelKey)}
       onClick={props.onSelect}
     >
-      <span class={styles.icon}>
+      <span
+        class={styles.icon}
+        data-dimmed={props.iconDimmed ? 'true' : undefined}
+      >
         <Dynamic component={props.item.icon} />
       </span>
       <span class={styles.chevronSlot} aria-hidden="true" />
       <span class={styles.label}>{t(props.item.labelKey)}</span>
+      {/* Non-keyed <Show>/<Match> children run once per truthiness flip; the
+          badge's fields must be read via the accessor in attribute positions
+          so a changing count re-renders (kdd/solid-reactivity-pitfalls §3). */}
+      <Switch>
+        <Match when={props.badge?.kind === 'alert' && props.badge}>
+          {alert => (
+            // The current app's alert marker is a bare error-coloured glyph,
+            // not a pill; the title carries the meaning for hover/AT.
+            <span
+              class={`${styles.badge} ${styles.alertBadge}`}
+              role="img"
+              aria-label={alert().title}
+              title={alert().title}
+            >
+              <AlertTriangleIcon />
+            </span>
+          )}
+        </Match>
+        <Match when={props.badge?.kind === 'count' && props.badge}>
+          {count => (
+            <Badge
+              class={styles.badge}
+              label={count().label}
+              tone={count().tone}
+              title={count().title}
+            />
+          )}
+        </Match>
+      </Switch>
       <Show when={props.selected}>
         <EndChevron />
       </Show>
@@ -130,6 +178,8 @@ const NavGroup = (props: {
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
   class?: string;
+  syncBadge?: NavBadge;
+  syncIconDimmed?: boolean;
 }) => (
   <ul class={`${styles.navList} ${props.class ?? ''}`}>
     <For each={props.items}>
@@ -140,6 +190,10 @@ const NavGroup = (props: {
             <TopLeaf
               item={item}
               selected={item.id === props.selectedId}
+              badge={item.id === SYNC_NAV_ID ? props.syncBadge : undefined}
+              iconDimmed={
+                item.id === SYNC_NAV_ID ? props.syncIconDimmed : undefined
+              }
               onSelect={() =>
                 props.onSelect({
                   id: item.id,
@@ -166,6 +220,8 @@ const NavLists = (props: {
   lower?: NavItem[];
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
+  syncBadge?: NavBadge;
+  syncIconDimmed?: boolean;
 }) => (
   <>
     <NavGroup
@@ -180,6 +236,8 @@ const NavLists = (props: {
         selectedId={props.selectedId}
         onSelect={props.onSelect}
         class={styles.lower}
+        syncBadge={props.syncBadge}
+        syncIconDimmed={props.syncIconDimmed}
       />
     </Show>
   </>
@@ -207,7 +265,7 @@ export const MenuBar = (props: MenuBarProps) => {
         <nav
           class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
-          aria-label={t('shell.main-navigation')}
+          aria-label={t('label.menu')}
         >
           <div class={styles.logoArea}>
             <button
@@ -216,8 +274,8 @@ export const MenuBar = (props: MenuBarProps) => {
               onClick={props.nav.toggleRail}
               aria-label={
                 props.nav.railCollapsed()
-                  ? t('shell.expand-menu')
-                  : t('shell.collapse-menu')
+                  ? t('button.open-the-menu')
+                  : t('button.close-the-menu')
               }
               aria-expanded={!props.nav.railCollapsed()}
             >
@@ -229,6 +287,8 @@ export const MenuBar = (props: MenuBarProps) => {
             lower={props.lower}
             selectedId={props.selectedId}
             onSelect={select}
+            syncBadge={props.syncBadge}
+            syncIconDimmed={props.syncIconDimmed}
           />
         </nav>
       }
@@ -242,7 +302,7 @@ export const MenuBar = (props: MenuBarProps) => {
       <nav
         class={styles.overlayPanel}
         data-open={props.nav.overlayOpen() ? 'true' : 'false'}
-        aria-label={t('shell.main-navigation')}
+        aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
         <div class={styles.logoArea}>
@@ -253,6 +313,8 @@ export const MenuBar = (props: MenuBarProps) => {
           lower={props.lower}
           selectedId={props.selectedId}
           onSelect={select}
+          syncBadge={props.syncBadge}
+          syncIconDimmed={props.syncIconDimmed}
         />
       </nav>
     </Show>

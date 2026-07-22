@@ -1,0 +1,18 @@
+/*
+ * FormRow — a two-up (or N-up) field row (see FormRow.tsx). Flex-wrap so items
+ * stack when the row can't hold them at their min width; each item shares the
+ * width equally and can shrink below its intrinsic size (min-inline-size: 0).
+ * align-items: start keeps a short control (a checkbox) top-aligned with a
+ * taller sibling rather than stretching or centring it.
+ */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+}
+
+.row > * {
+  flex: 1 1 var(--form-row-min, 10rem);
+  min-inline-size: 0;
+}

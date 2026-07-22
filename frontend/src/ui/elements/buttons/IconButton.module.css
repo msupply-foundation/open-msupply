@@ -44,7 +44,7 @@
 
 /* Bordered variant — an outlined box (input-edge border + white fill). */
 .iconButton[data-bordered] {
-  border-color: var(--input-border);
+  border-color: var(--color-border-value);
   background: var(--bg-white);
 }
 

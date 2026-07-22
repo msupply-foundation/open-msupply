@@ -40,7 +40,7 @@ export const EmptyState = (props: EmptyStateProps) => (
   <div class={styles.empty} data-testid={props['data-testid']}>
     <Show when={props.graphic !== false}>
       <NothingHereIcon class={styles.graphic} />
-      <p class={styles.title}>{props.title ?? t('messages.nothing-here')}</p>
+      <p class={styles.title}>{props.title ?? t('error.no-results')}</p>
     </Show>
     <p class={styles.message}>{props.message}</p>
     {props.children}

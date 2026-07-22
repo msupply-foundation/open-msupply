@@ -12,4 +12,9 @@
   gap: var(--space-3);
   justify-content: flex-end;
   margin-inline-start: auto;
+  /* Reserve one button's height even when every button is conditionally
+     hidden (e.g. the side panel's More reopen button while the panel is
+     open) — otherwise the header's first flex line shrinks to breadcrumb
+     height and the whole header jitters as buttons come and go. */
+  min-block-size: var(--nav-item-height);
 }

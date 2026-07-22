@@ -1,0 +1,106 @@
+/*
+ * Switch — native checkbox (role="switch") hidden but present for a11y; a
+ * custom track + sliding thumb styled beside the label. On/off is the thumb
+ * position + track fill. rem/em sizing; colours from tokens (only px are the
+ * focus outline + the thumb's shadow offsets, already px in the token).
+ */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  /* Contain the visually-hidden native input (.input, position:absolute): with
+     no positioned ancestor it escapes to document space and stretches the
+     viewport's scrollHeight — a second, document-level scrollbar (same fix as
+     TextField's .labelHidden). */
+  position: relative;
+}
+
+.root[data-disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Visually hidden native control (still focusable + announced). */
+.input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The track: a pill that flips from the muted grey to the brand tone when on. */
+.track {
+  position: relative;
+  flex-shrink: 0;
+  inline-size: 2.25rem;
+  block-size: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--gray-light);
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+/* The thumb: a circle riding inside the track, sliding to the inline-end when
+   on (logical translate → RTL-safe). */
+.thumb {
+  position: absolute;
+  inset-block-start: 0.125rem;
+  inset-inline-start: 0.125rem;
+  inline-size: 1rem;
+  block-size: 1rem;
+  border-radius: 50%;
+  background: var(--primary-contrast);
+  box-shadow: var(--shadow-1);
+  transition: transform 140ms ease;
+}
+
+.input:checked + .track {
+  background: var(--secondary-main);
+}
+
+.input:checked + .track .thumb {
+  transform: translateX(1rem);
+}
+
+:dir(rtl) .input:checked + .track .thumb {
+  transform: translateX(-1rem);
+}
+
+.input:focus-visible + .track {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Caution variant — an orange "on" for a setting to be careful with (e.g. "on
+   hold"). Off stays neutral grey. Higher specificity than the default checked
+   rule and placed after the other .track-subject rules so specificity ascends. */
+.root[data-variant='caution'] .input:checked + .track {
+  background: var(--primary-main);
+}
+
+.label {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+}
+
+@media (pointer: coarse) {
+  .root {
+    min-block-size: var(--touch-target);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .thumb {
+    transition: none;
+  }
+}

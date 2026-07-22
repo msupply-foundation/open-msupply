@@ -1,18 +1,19 @@
 import type { Component } from 'solid-js';
 import type { IconProps } from '../../icons';
 import {
-  HomeIcon,
+  DashboardIcon,
   TruckIcon,
   StockIcon,
   CustomersIcon,
   ThermometerIcon,
   FileIcon,
-  ListIcon,
+  CatalogueIcon,
   SlidersIcon,
   ReportsIcon,
   SettingsIcon,
   HelpIcon,
-  DownloadIcon,
+  ReplenishmentIcon,
+  SyncIcon,
 } from '../../icons';
 import type { LocaleKey } from '../../../intl';
 import {
@@ -36,6 +37,19 @@ export interface NavLeaf {
   to: string;
 }
 
+// A small status marker on a nav entry (the sync indicator). A count rides a
+// Badge pill (meaning in the label text; tone only escalates it); an alert is
+// the current app's bare error-coloured alert glyph (spec/chrome § sync
+// indicator).
+export type NavBadge =
+  | {
+      kind: 'count';
+      label: string;
+      tone: 'neutral' | 'warning' | 'error';
+      title?: string;
+    }
+  | { kind: 'alert'; title: string };
+
 export interface NavItem {
   id: string;
   labelKey: LocaleKey;
@@ -48,14 +62,14 @@ export interface NavItem {
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
 // only (spec DIVERGENCES D4).
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
-  dashboard: HomeIcon,
-  replenishment: DownloadIcon,
+  dashboard: DashboardIcon,
+  replenishment: ReplenishmentIcon,
   inventory: StockIcon,
   distribution: TruckIcon,
   dispensary: CustomersIcon,
   'cold-chain': ThermometerIcon,
   programs: FileIcon,
-  catalogue: ListIcon,
+  catalogue: CatalogueIcon,
   manage: SlidersIcon,
   reports: ReportsIcon,
   settings: SettingsIcon,
@@ -63,14 +77,10 @@ const SECTION_ICONS: Record<string, Component<IconProps>> = {
 };
 
 // Sections pinned to the block-end lower cluster (matching the current app);
-// everything else scrolls in the upper list.
-const LOWER_IDS = new Set([
-  'catalogue',
-  'manage',
-  'reports',
-  'settings',
-  'help',
-]);
+// everything else scrolls in the upper list. Reports stays in the upper list,
+// as its last entry (spec/chrome § sidebar order: … Dispensary · Reports ·
+// Catalogue).
+const LOWER_IDS = new Set(['catalogue', 'manage', 'settings', 'help']);
 
 const toNavItem = (item: NavConfigItem): NavItem => ({
   id: item.path,
@@ -86,10 +96,28 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
 
 const items = navConfig.map(toNavItem);
 
+// The Sync entry is chrome, not a destination (spec/chrome § sync indicator):
+// it opens the sync modal in place, so it lives here — NOT in navConfig, which
+// would generate a route for it. Pinned between Settings and Help per the
+// chrome frame layout.
+export const SYNC_NAV_ID = 'sync';
+const syncNavItem: NavItem = {
+  id: SYNC_NAV_ID,
+  labelKey: 'sync',
+  to: 'sync',
+  icon: SyncIcon,
+};
+
 export const upperNav: NavItem[] = items.filter(
   item => !LOWER_IDS.has(item.id)
 );
-export const lowerNav: NavItem[] = items.filter(item => LOWER_IDS.has(item.id));
+const lower = items.filter(item => LOWER_IDS.has(item.id));
+lower.splice(
+  lower.findIndex(item => item.id === 'help'),
+  0,
+  syncNavItem
+);
+export const lowerNav: NavItem[] = lower;
 
 // Every selectable destination as a flat NavLeaf list (top-level leaves + all
 // children) — used to derive the menu highlight from the current route.

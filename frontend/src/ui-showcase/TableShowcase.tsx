@@ -5,9 +5,13 @@ import {
   type SortState,
   type TabAndCardGroup,
   ALL_TABS,
-  sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
-import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import {
+  getCurrencyCell,
+  getNumberCell,
+} from '../ui/elements/table/tableHelpers';
+import { getChipListCell } from '../ui/elements/table/ChipListCell';
+import { getBooleanCell } from '../ui/elements/table/BooleanCell';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
@@ -46,6 +50,9 @@ type Batch = {
   expiry: string;
   stock: number;
   price: number;
+  lists: string[];
+  onHold: boolean;
+  approved: boolean;
 };
 
 const NAMES = [
@@ -74,6 +81,9 @@ const SUPPLIERS = [
   'Global Meds',
   'CarePoint',
 ];
+// Master-list-style tags for the chip-list cell demo; row i carries the first
+// 0–4 of these, so the column shows blank cells, single chips, and clipping.
+const LISTS = ['General list', 'Immunisation', 'HIV care', 'Essential meds'];
 
 // Deterministic 60-row dataset (enough to paginate + scroll).
 const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
@@ -86,6 +96,10 @@ const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
   expiry: `${String(1 + (i % 28)).padStart(2, '0')}/${String(1 + (i % 12)).padStart(2, '0')}/2027`,
   stock: ((i * 137) % 900) + 20,
   price: Number((((i * 7) % 300) / 100 + 0.02).toFixed(2)),
+  lists: LISTS.slice(0, i % (LISTS.length + 1)),
+  // Different cadences so the two flag columns show distinct marker/blank mixes.
+  onHold: i % 4 === 0,
+  approved: i % 3 !== 0,
 }));
 
 type SortKey =
@@ -112,7 +126,7 @@ const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   },
   {
     key: 'supply',
-    labelKey: 'table.demo-card-group.supply',
+    labelKey: 'label.supply',
     icon: () => <TruckIcon />,
   },
   {
@@ -206,29 +220,51 @@ export const TableShowcase = () => {
   // in every tab. The rest split across the three groups. Switch the tab strip
   // (or card view) to see the secondary column filter.
   const columns = (): Column<Batch, SortKey, GroupKey>[] => [
-    // name + batch: ALL_TABS anchors (every tab; not a card group). Grouped
-    // parent → shared value or [multiple] (a group's rows share a name but
-    // differ on batch → [multiple]).
+    // name + batch: ALL_TABS anchors (shown in every tab; not a card group).
     {
       c: { key: 'name' },
       sortKey: 'name',
       header: 'Item',
       meta: { card: { region: 'primary' } },
       tabsAndCardGroups: ALL_TABS,
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: 'Batch',
       tabsAndCardGroups: ALL_TABS,
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'category' },
       sortKey: 'category',
       header: 'Category',
       meta: { card: { region: 'badge' } },
+      tabsAndCardGroups: ['details'],
+    },
+    // Chip-list cell (registry "chip-list cell"): string[] → outlined chips,
+    // blank when empty, clipped at the cell edge with the full list on hover.
+    {
+      c: { key: 'lists' },
+      header: 'Lists',
+      ...getChipListCell(),
+      tabsAndCardGroups: ['details'],
+    },
+    // Boolean cell (registry "boolean cell (flag in a table)"): one component,
+    // three displays. A marker shows only when set (blank otherwise) and
+    // carries an accessible name for assistive tech — not an aria-hidden glyph
+    // alone (ui-standards § assistive-tech parity / D8). 'dot' is the default;
+    // 'check' suits a flag where a tick reads better (e.g. approved); 'yesNo'
+    // (text for both states) is used elsewhere, e.g. the stocktakes Locked col.
+    {
+      c: { key: 'onHold' },
+      header: 'On hold',
+      ...getBooleanCell({ label: 'On hold' }), // dot (default)
+      tabsAndCardGroups: ['details'],
+    },
+    {
+      c: { key: 'approved' },
+      header: 'Approved',
+      ...getBooleanCell({ display: 'check', label: 'Approved' }),
       tabsAndCardGroups: ['details'],
     },
     {
@@ -242,7 +278,6 @@ export const TableShowcase = () => {
       sortKey: 'supplier',
       header: 'Supplier',
       tabsAndCardGroups: ['supply'],
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'location' },
@@ -250,7 +285,6 @@ export const TableShowcase = () => {
       header: 'Location',
       meta: { wrapLines: 2 },
       tabsAndCardGroups: ['supply'],
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'stock' },
@@ -260,11 +294,11 @@ export const TableShowcase = () => {
       tabsAndCardGroups: ['supply', 'pricing'],
     },
     {
+      // Currency cell: symbol + 2 dp, right-aligned; SUM when grouped.
       c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
-      ...getNumberCell(),
-      cell: info => `$${info.getValue<number>().toFixed(2)}`,
+      ...getCurrencyCell(),
       tabsAndCardGroups: ['pricing'],
     },
   ];
@@ -384,11 +418,14 @@ export const TableShowcase = () => {
         rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
+        // Row presentation hooks, on DISTINCT rows so each reads clearly:
+        // low-stock rows stand in for read-only records (data-dimmed →
+        // opacity); one well-stocked row stands in for "awaiting an action"
+        // (semantic data-tone → info token). In a real vertical they live on
+        // different tables (rowDimmed: the list; rowTone: detail lines).
+        rowDimmed={r => r.stock < 40}
+        rowTone={r => (r.price === 0.09 ? 'info' : undefined)}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
-        rowGroup={{
-          columnId: 'category',
-          labelKey: 'table.demo-card-group.details',
-        }}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}
