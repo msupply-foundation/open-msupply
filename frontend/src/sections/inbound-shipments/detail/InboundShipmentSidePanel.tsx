@@ -84,6 +84,7 @@ export const InboundShipmentSidePanel: Component<
       <SidePanelSection
         value="additional-info"
         title={t('heading.additional-info')}
+        collapsible
       >
         <Show when={props.donorTracking}>
           <FieldRow label={t('label.donor')}>
@@ -136,6 +137,7 @@ export const InboundShipmentSidePanel: Component<
       <SidePanelSection
         value="related-documents"
         title={t('heading.related-documents')}
+        collapsible
       >
         <Show
           when={props.node.purchaseOrder || props.node.requisition}
@@ -170,7 +172,11 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Charges ------------------------------------------------------------ */}
-      <SidePanelSection value="charges" title={t('heading.charges')}>
+      <SidePanelSection
+        value="charges"
+        title={t('heading.charges')}
+        collapsible
+      >
         <FieldRow label={t('label.sub-total')}>
           <span>{money(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
@@ -261,6 +267,7 @@ export const InboundShipmentSidePanel: Component<
         <SidePanelSection
           value="transport-details"
           title={t('heading.transport-details')}
+          collapsible
         >
           <FieldRow label={t('label.shipping-method')}>
             <span>{props.node.shippingMethod?.method ?? '—'}</span>
@@ -278,29 +285,32 @@ export const InboundShipmentSidePanel: Component<
         </SidePanelSection>
       </Show>
 
-      {/* Record actions — pinned at the panel's end (spec S3 side-panel top,
-          rendered last per SidePanelActions convention). */}
-      <SidePanelActions>
-        {/* Delete only while New (client narrowing). */}
-        <Show when={props.node.status === 'NEW'}>
-          <DeleteInboundShipmentAction
-            storeId={props.storeId}
-            invoiceId={props.node.id}
-            isExternal={props.isExternal}
-            disabled={false}
-            onDeleted={props.onDeleted}
-          />
-        </Show>
-        <DuplicateInboundShipmentAction invoiceId={props.node.id} />
-        <Button
-          variant="secondary"
-          icon={<CopyIcon />}
-          data-testid="copy-to-clipboard-button"
-          onClick={copyToClipboard}
-        >
-          {copied() ? t('message.copy-success') : t('button.copy-to-clipboard')}
-        </Button>
-      </SidePanelActions>
+      {/* Record actions — pinned at the panel's end. */}
+      <SidePanelSection value="actions" title={t('heading.actions')}>
+        <SidePanelActions>
+          {/* Delete only while New (client narrowing). */}
+          <Show when={props.node.status === 'NEW'}>
+            <DeleteInboundShipmentAction
+              storeId={props.storeId}
+              invoiceId={props.node.id}
+              isExternal={props.isExternal}
+              disabled={false}
+              onDeleted={props.onDeleted}
+            />
+          </Show>
+          <DuplicateInboundShipmentAction invoiceId={props.node.id} />
+          <Button
+            variant="secondary"
+            icon={<CopyIcon />}
+            data-testid="copy-to-clipboard-button"
+            onClick={copyToClipboard}
+          >
+            {copied()
+              ? t('message.copy-success')
+              : t('button.copy-to-clipboard')}
+          </Button>
+        </SidePanelActions>
+      </SidePanelSection>
 
       <DefaultDonorModal
         open={donorOpen()}
