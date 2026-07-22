@@ -5,9 +5,9 @@ import { ChevronDownIcon } from '../../icons';
 import styles from './Accordion.module.css';
 
 export interface AccordionProps {
-  /** Controlled: key(s) of the currently-open item(s). */
+  /** Controlled: semantic key(s) of the currently-open item(s) (see AccordionItem.value). */
   value?: string[];
-  /** Uncontrolled: key(s) open on first render. */
+  /** Uncontrolled: semantic key(s) open on first render. */
   defaultValue?: string[];
   onValueChange?: (value: string[]) => void;
   /** Allow more than one item open at once (a shared group of independent items). */
@@ -58,7 +58,11 @@ export const Accordion = (props: AccordionProps) => (
 const ItemValueContext = createContext<string>();
 
 export interface AccordionItemProps {
-  /** A unique key for this item within its Accordion. */
+  /**
+   * The item's semantic key (kebab-case identifier, never translated copy),
+   * unique within its Accordion — its open-state identity and the source of
+   * the `accordion-trigger-<value>` testid. Same split as `TabDef.value`.
+   */
   value: string;
   disabled?: boolean;
   class?: string;

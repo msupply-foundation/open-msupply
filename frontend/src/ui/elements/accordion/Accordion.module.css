@@ -10,17 +10,30 @@
   border-block-start: 1px solid var(--color-divider);
 }
 
+/* font-size: inherit — a trigger is functionally a button, not a display
+   heading; without this the browser's default h2/h3 UA size would make it
+   look oversized against the surrounding body copy (this app has no global
+   heading reset — see src/index.css). Consumers get sensible ambient sizing
+   for free; override via the trigger's own `class` if a consumer wants
+   something else. */
 .header {
   margin: 0;
+  font-size: inherit;
 }
 
+/* Inline-flush: the trigger's label (and the content below it, via
+   .contentInner) aligns with whatever surrounds the accordion in its host —
+   any inline inset here would misalign section headings against sibling
+   content. Block padding stays for the row rhythm and divider breathing room.
+   The focus ring sits OUTSIDE the box (positive offset) so flush text never
+   overlaps it — the SidePanel disclosure convention. */
 .trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   inline-size: 100%;
-  padding: var(--space-3) var(--space-1);
+  padding: var(--space-3) 0;
   border: 0;
   background: none;
   color: var(--text-body);
@@ -32,7 +45,7 @@
 
 .trigger:focus-visible {
   outline: 2px solid var(--primary-main);
-  outline-offset: -2px;
+  outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
@@ -99,7 +112,7 @@
 }
 
 .contentInner {
-  padding: 0 var(--space-1) var(--space-3);
+  padding: 0 0 var(--space-3);
 }
 
 @media (prefers-reduced-motion: reduce) {

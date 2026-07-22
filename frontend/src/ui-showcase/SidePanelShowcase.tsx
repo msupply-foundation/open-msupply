@@ -61,7 +61,7 @@ export const SidePanelShowcase = () => {
         </Button>
         <div class={styles.panelHolder} data-open={open() ? 'true' : 'false'}>
           <SidePanel label="Shipment details">
-            <SidePanelSection title="Additional info">
+            <SidePanelSection value="additional-info" title="Additional info">
               <dl>
                 <dt>Status</dt>
                 <dd>New</dd>
@@ -73,16 +73,20 @@ export const SidePanelShowcase = () => {
                 <dd>(none)</dd>
               </dl>
             </SidePanelSection>
-            <SidePanelSection title="Related documents">
+            <SidePanelSection
+              value="related-documents"
+              title="Related documents"
+            >
               <dl>
                 <dt>Requisition</dt>
                 <dd>RQ-0042</dd>
               </dl>
             </SidePanelSection>
-            <SidePanelSection title="Comment">
+            <SidePanelSection value="comment" title="Comment">
               <p>Placeholder — comments land with the Feedback work.</p>
             </SidePanelSection>
             <SidePanelSection
+              value="related-documents-collapsible"
               title="Related documents (collapsible)"
               collapsible
             >
@@ -96,7 +100,7 @@ export const SidePanelShowcase = () => {
             {/* Record actions (the registry's record-actions section):
                 SidePanelActions stacks them one per row, aligned
                 inline-start, each button sized to its label. */}
-            <SidePanelSection title="Actions">
+            <SidePanelSection value="actions" title="Actions">
               <SidePanelActions>
                 <Button icon={<TrashIcon />} onClick={() => {}}>
                   Delete
@@ -107,6 +111,7 @@ export const SidePanelShowcase = () => {
               </SidePanelActions>
             </SidePanelSection>
             <SidePanelSection
+              value="history"
               title="History (collapsed by default)"
               collapsible
               defaultOpen={false}

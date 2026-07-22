@@ -55,47 +55,19 @@
   font-weight: var(--weight-bold);
 }
 
-/* Collapsible mode: the h2 wraps a full-width disclosure button. It inherits
-   the heading's type/colour so the section still reads as a heading; only the
-   chevron marks the expand/collapse affordance. */
-.disclosure {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  inline-size: 100%;
+/* Collapsible sections (SidePanelSection composes the shared Accordion):
+   ONE heading convention per panel — the trigger/content take exactly the
+   plain .title/content boxes, so a heading reads the same whether or not it
+   collapses. These strip the Accordion's own standalone spacing; scoped under
+   .section so they beat the Accordion module's single-class rules regardless
+   of bundle order. */
+.section .sectionTrigger {
+  margin-block-end: var(--space-3);
   padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
 }
 
-.disclosure:focus-visible {
-  outline: 2px solid var(--primary-main);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* Chevron points up when open, down when collapsed — the accordion convention
-   (a down chevron reads as "expand", flipping up once expanded). Up/down is
-   symmetric, so no RTL mirroring needed. */
-.disclosureChevron {
-  flex-shrink: 0;
-  color: var(--gray-dark);
-  transition: transform 140ms ease;
-}
-
-.disclosureChevron[data-open='true'] {
-  transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .disclosureChevron {
-    transition: none;
-  }
+.section .sectionContent {
+  padding: 0;
 }
 
 /* Field rows: a <dl> of dt/dd pairs — label inline-start, value inline-end. */
