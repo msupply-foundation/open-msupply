@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import solid from 'eslint-plugin-solid/configs/typescript';
 import commentLength from 'eslint-plugin-comment-length';
+import compat from 'eslint-plugin-compat';
 import globals from 'globals';
 
 /*
@@ -66,10 +67,17 @@ export default tseslint.config(
     ],
   },
 
-  // Application source — browser environment + Solid JSX.
+  // Application source — browser environment + Solid JSX. compat flags Web
+  // APIs unsupported by the minimum browser (browserslist in package.json —
+  // Chromium 138, the newest WebView installable on Android 9).
   {
     files: ['src/**/*.{ts,tsx}'],
-    extends: [js.configs.recommended, tseslint.configs.recommended, solid],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      solid,
+      compat.configs['flat/recommended'],
+    ],
     languageOptions: {
       globals: globals.browser,
       parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
