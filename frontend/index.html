@@ -26,11 +26,14 @@
         var MIN_CHROMIUM = 138;
         try {
           var ua = navigator.userAgent;
+          // Only Chromium is versioned against the floor — a browser
+          // without the token (Firefox, Safari) is never warned.
           var chrome = ua.match(/Chrome\/(\d+)/);
-          var major = chrome ? parseInt(chrome[1], 10) : 0;
+          if (!chrome) return;
+          var major = parseInt(chrome[1], 10);
           if (major >= MIN_CHROMIUM) return;
 
-          var signature = chrome ? String(major) : 'non-chromium';
+          var signature = String(major);
           var KEY = 'oms-browser-warning-dismissed';
           var dismissed = null;
           try {
@@ -71,18 +74,13 @@
           message.style.cssText = 'margin:0 0 1.25rem;';
           message.appendChild(
             document.createTextNode(
-              chrome
-                ? 'This browser is running Chromium ' +
-                    major +
-                    ', which is older than the version Open mSupply supports' +
-                    ' (Chromium ' +
-                    MIN_CHROMIUM +
-                    ' or newer). The app may' +
-                    ' not work correctly. Please update your browser.'
-                : 'Open mSupply supports Chromium-based browsers (version ' +
-                    MIN_CHROMIUM +
-                    ' or newer), such as Google Chrome. The' +
-                    ' app may not work correctly in this browser.'
+              'This browser is running Chromium ' +
+                major +
+                ', which is older than the version Open mSupply supports' +
+                ' (Chromium ' +
+                MIN_CHROMIUM +
+                ' or newer). The app may not work correctly.' +
+                ' Please update your browser.'
             )
           );
           panel.appendChild(message);
@@ -104,7 +102,7 @@
               )
             );
             panel.appendChild(update);
-          } else if (chrome) {
+          } else {
             var hint = document.createElement('p');
             hint.style.cssText =
               'margin:0 0 1.25rem;font-size:0.9rem;opacity:0.8;';
