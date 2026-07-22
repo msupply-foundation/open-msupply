@@ -5,8 +5,10 @@ import { StatsPanel } from '../ui/elements/dashboard/StatsPanel';
 import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
 import { Button } from '../ui/elements/buttons/Button';
-import { PlusCircleIcon, StockIcon } from '../ui/icons';
-import { Card, Stack } from './common';
+import { PlusCircleIcon, StockIcon, ThermometerIcon } from '../ui/icons';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { Lead } from './common';
 import styles from './StatisticsShowcase.module.css';
 
 /*
@@ -22,7 +24,7 @@ import styles from './StatisticsShowcase.module.css';
  * MemoryRouter: links resolve and are clickable without navigating the app.
  */
 
-/* Reusable demo cards — one is shown alone under "DashboardCard", all three
+/* Reusable demo cards — one is shown alone under "DashboardCard", all four
    under "Composition". Labels/values mirror the current app's dashboard. */
 const ReplenishmentCard = () => (
   <DashboardCard
@@ -123,153 +125,168 @@ const InventoryCard = () => (
   </DashboardCard>
 );
 
+const ColdChainCard = () => (
+  <DashboardCard title="Cold Chain">
+    <StatsPanel
+      title="Temperature sensors"
+      titleHref="/demo"
+      icon={<ThermometerIcon />}
+      state={{ status: 'ready' }}
+    >
+      <Statistic
+        label="Sensors in breach"
+        value="1"
+        href="/demo"
+        alert
+        alertLabel="Needs attention"
+      />
+      <Statistic label="Sensors offline" value="2" href="/demo" />
+    </StatsPanel>
+  </DashboardCard>
+);
+
+/*
+ * The component cards read best at the form measure, but the closing
+ * composition demo needs the whole panel so its CardGrid has room to wrap —
+ * so the measure wraps only the component cards, and the composition card
+ * sits beside (not inside) it at full width. Measure is a per-group content
+ * choice, not page geometry (see ContentContainer.tsx).
+ */
 const Demo = () => (
-  <Stack>
-    <Card
-      title="SectionTitle — iconed action-tone panel heading"
-      lead={
-        <>
-          Hand-rolled, pure CSS — an <code>&lt;h3&gt;</code> with an optional
-          leading icon and text in the action tone (
-          <code>--secondary-main</code>
-          ), extracted from StatsPanel so the iconed panel heading is defined
-          once. The icon inherits <code>currentColor</code>, so it always tracks
-          the title; with <code>href</code> the text becomes a router{' '}
-          <code>&lt;A&gt;</code> into the unfiltered list, and the icon stays{' '}
-          <em>outside</em> the link so it's never part of the accessible name.
-          Mirrors the current app's blue box-iconed panel titles.
-        </>
-      }
-    >
-      <div class={styles.titleList}>
-        <SectionTitle
-          title="Inbound Shipments"
-          href="/demo"
-          icon={<StockIcon />}
-        />
-        <SectionTitle title="Expiring stock" icon={<StockIcon />} />
-      </div>
-    </Card>
+  <Stack gap="lg">
+    <ContentContainer size="form" align="start">
+      <Stack gap="lg">
+        <DashboardCard title="SectionTitle — iconed action-tone panel heading">
+          <Lead>
+            Hand-rolled, pure CSS — an <code>&lt;h3&gt;</code> with an optional
+            leading icon and text in the action tone (
+            <code>--secondary-main</code>
+            ), extracted from StatsPanel so the iconed panel heading is defined
+            once. The icon inherits <code>currentColor</code>, so it always
+            tracks the title; with <code>href</code> the text becomes a router{' '}
+            <code>&lt;A&gt;</code> into the unfiltered list, and the icon stays{' '}
+            <em>outside</em> the link so it's never part of the accessible name.
+            Mirrors the current app's blue box-iconed panel titles.
+          </Lead>
+          <div class={styles.titleList}>
+            <SectionTitle
+              title="Inbound Shipments"
+              href="/demo"
+              icon={<StockIcon />}
+            />
+            <SectionTitle title="Expiring stock" icon={<StockIcon />} />
+          </div>
+        </DashboardCard>
 
-    <Card
-      title="Statistic — value, label, link (+ alert / info)"
-      lead={
-        <>
-          Hand-rolled over a semantic router <code>&lt;A&gt;</code>, so the link
-          role and accessible name (value + label) come for free — no library. A
-          big value sits in a right-aligned column so labels line up down a
-          panel, matching the current app. <code>alert</code> raises a red
-          "needs attention" <code>StatusChip</code> beneath (the value stays
-          normal), and <code>info</code> adds a brand-toned tooltip marker — the
-          meaning is carried by the chip's text and the marker,{' '}
-          <em>never by colour alone</em> (accessibility § colour independence).
-        </>
-      }
-    >
-      <div class={styles.statList}>
-        <Statistic label="Not delivered" value="15" href="/demo" />
-        <Statistic
-          label="Emergency"
-          value="2"
-          href="/demo"
-          alert
-          alertLabel="Needs attention"
-        />
-        <Statistic
-          label="Products at risk of being out of stock"
-          value="1"
-          href="/demo"
-          info="The info marker explains the count in a tooltip."
-        />
-        <Statistic
-          label="Batches expiring in between 30 days and 90 days"
-          value="128"
-          href="/demo"
-        />
-      </div>
-    </Card>
+        <DashboardCard title="Statistic — value, label, link (+ alert / info)">
+          <Lead>
+            Hand-rolled over a semantic router <code>&lt;A&gt;</code>, so the
+            link role and accessible name (value + label) come for free — no
+            library. A big value sits in a right-aligned column so labels line
+            up down a panel, matching the current app. <code>alert</code> raises
+            a red "needs attention" <code>StatusChip</code> beneath (the value
+            stays normal), and <code>info</code> adds a brand-toned tooltip
+            marker — the meaning is carried by the chip's text and the marker,{' '}
+            <em>never by colour alone</em> (accessibility § colour
+            independence).
+          </Lead>
+          <div class={styles.statList}>
+            <Statistic label="Not delivered" value="15" href="/demo" />
+            <Statistic
+              label="Emergency"
+              value="2"
+              href="/demo"
+              alert
+              alertLabel="Needs attention"
+            />
+            <Statistic
+              label="Products at risk of being out of stock"
+              value="1"
+              href="/demo"
+              info="The info marker explains the count in a tooltip."
+            />
+            <Statistic
+              label="Batches expiring in between 30 days and 90 days"
+              value="128"
+              href="/demo"
+            />
+          </div>
+        </DashboardCard>
 
-    <Card
-      title="StatsPanel — ready / loading / error states"
-      lead={
-        <>
-          Hand-rolled inner card grouping Statistics as a vertical list, with a{' '}
-          <code>SectionTitle</code> heading. Each panel owns its own loading /
-          error state from its count query, so one forbidden family errors in
-          place without touching its siblings: <code>loading</code> (
-          <code>aria-busy</code>) and <code>error</code> both replace the stats
-          with a muted text line — the current app's understated treatment, and
-          the repo's content-loading standard (a short text, not a skeleton or
-          spinner).
-        </>
-      }
-    >
-      <div class={styles.panels}>
-        <StatsPanel
-          title="Inbound Shipments"
-          titleHref="/demo"
-          icon={<StockIcon />}
-          state={{ status: 'ready' }}
-        >
-          <Statistic label="Today" value="0" href="/demo" />
-          <Statistic label="This week" value="0" href="/demo" />
-          <Statistic label="Not delivered" value="15" href="/demo" />
-        </StatsPanel>
-        <StatsPanel
-          title="Expiring stock"
-          icon={<StockIcon />}
-          state={{ status: 'loading', loadingMessage: 'Loading…' }}
-        />
-        <StatsPanel
-          title="Stock levels"
-          icon={<StockIcon />}
-          state={{
-            status: 'error',
-            errorMessage: 'You do not have permission to view stock counts',
-          }}
-        />
-      </div>
-    </Card>
+        <DashboardCard title="StatsPanel — ready / loading / error states">
+          <Lead>
+            Hand-rolled inner card grouping Statistics as a vertical list, with
+            a <code>SectionTitle</code> heading. Each panel owns its own loading
+            / error state from its count query, so one forbidden family errors
+            in place without touching its siblings: <code>loading</code> (
+            <code>aria-busy</code>) and <code>error</code> both replace the
+            stats with a muted text line — the current app's understated
+            treatment, and the repo's content-loading standard (a short text,
+            not a skeleton or spinner).
+          </Lead>
+          <div class={styles.panels}>
+            <StatsPanel
+              title="Inbound Shipments"
+              titleHref="/demo"
+              icon={<StockIcon />}
+              state={{ status: 'ready' }}
+            >
+              <Statistic label="Today" value="0" href="/demo" />
+              <Statistic label="This week" value="0" href="/demo" />
+              <Statistic label="Not delivered" value="15" href="/demo" />
+            </StatsPanel>
+            <StatsPanel
+              title="Expiring stock"
+              icon={<StockIcon />}
+              state={{ status: 'loading', loadingMessage: 'Loading…' }}
+            />
+            <StatsPanel
+              title="Stock levels"
+              icon={<StockIcon />}
+              state={{
+                status: 'error',
+                errorMessage: 'You do not have permission to view stock counts',
+              }}
+            />
+          </div>
+        </DashboardCard>
 
-    <Card
-      title="DashboardCard — titled card of panels + footer action"
-      lead={
-        <>
-          Hand-rolled card (<code>--surface-raised</code>,{' '}
-          <code>--radius-lg</code>, <code>shadow[2]</code>) — the outer
-          dashboard tile: an <code>&lt;h2&gt;</code> title, a column of
-          StatsPanels, and an optional <code>footer</code> action pinned to the
-          bottom edge. Presentational only — the section owns the data, the
-          display gates and what fills the footer. Equal-height, so cards across
-          a row line up however many stats each holds.
-        </>
-      }
-    >
-      <div class={styles.widgetFrame}>
-        <ReplenishmentCard />
-      </div>
-    </Card>
+        <DashboardCard title="DashboardCard — titled card of panels + footer action">
+          <Lead>
+            Hand-rolled card (<code>--surface-raised</code>,{' '}
+            <code>--radius-lg</code>, <code>shadow[2]</code>) — the outer
+            dashboard tile: an <code>&lt;h2&gt;</code> title, a column of
+            StatsPanels, and an optional <code>footer</code> action pinned to
+            the bottom edge. Presentational only — the section owns the data,
+            the display gates and what fills the footer. Equal-height, so cards
+            across a row line up however many stats each holds.
+          </Lead>
+          <div class={styles.widgetFrame}>
+            <ReplenishmentCard />
+          </div>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
 
-    <Card
-      title="Composition — CardGrid laying out DashboardCards"
-      lead={
-        <>
-          <code>CardGrid</code> is a generic intrinsic grid (ui-standards §
-          Layout): <code>repeat(auto-fit, minmax(minColumnWidth, 1fr))</code> —
-          it fits as many equal columns of at least <code>minColumnWidth</code>{' '}
-          as the width allows and wraps the rest, with{' '}
-          <em>no breakpoint maths</em> (principle #7, intrinsic-first). It
-          renders nothing on its own, so it's shown here doing its real job —
-          laying out DashboardCards. Resize the panel to watch them reflow.
-        </>
-      }
-    >
-      <CardGrid>
+    <DashboardCard title="Composition — CardGrid laying out DashboardCards">
+      <Lead>
+        <code>CardGrid</code> is a generic intrinsic grid (ui-standards §
+        Layout): <code>repeat(auto-fit, minmax(minColumnWidth, 1fr))</code> — it
+        fits as many equal columns of at least <code>minColumnWidth</code> as
+        the width allows and wraps the rest, with <em>no breakpoint maths</em>{' '}
+        (principle #7, intrinsic-first). It renders nothing on its own, so it's
+        shown here doing its real job — laying out DashboardCards. Resize the
+        panel to watch them reflow. Columns here are also capped (
+        <code>maxColumnWidth="26rem"</code>), so cards hold a dashboard-tile
+        width instead of growing to share spare row space.
+      </Lead>
+      <CardGrid maxColumnWidth="26rem">
         <ReplenishmentCard />
         <DistributionCard />
         <InventoryCard />
+        <ColdChainCard />
       </CardGrid>
-    </Card>
+    </DashboardCard>
   </Stack>
 );
 
