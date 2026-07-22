@@ -41,18 +41,13 @@ const CAMPAIGNS = [
 ];
 
 /*
- * Storybook of the form-layout vocabulary (kdd/form-layout) — the whole stock
- * detail form, the way a real vertical assembles it:
- *
- *   Page                        ← the normal Page frame (geometry only)
- *   └─ ContentContainer         ← the reading-column measure (caps + centres)
- *      └─ Stack                 ← vertical rhythm between the sibling blocks
- *         ├─ IdentityHeader     ← record name + muted subtitle
- *         └─ FormColumns        ← the row of section stacks (wraps to one column)
- *            └─ FormColumn      ← one vertical stack of sections
- *               └─ FormSection  ← a titled group: heading + rule + field stack
- *                  ├─ <field>   ← one-per-line at full width (the default)
- *                  └─ FormRow   ← the two-up rows (opt-in pairing)
+ * Pages › Detail form: the whole stock detail form, the way a real vertical
+ * assembles it from the form-layout vocabulary (kdd/form-layout). The
+ * element-by-element anatomy — including the nesting tree — lives on the
+ * Layout Elements › Form layout page (FormLayoutShowcase.tsx,
+ * #/showcase/form-layout); this page is the assembled result, deliberately
+ * free of explanatory chrome. Keep that page's ANATOMY tree in step when the
+ * assembly here changes.
  *
  * Every control is a standard src/ui input — the layout adds arrangement only,
  * never styling. Editable fields are inputs; read-only facts are LabelledValue

@@ -6,6 +6,7 @@
  * that page's own CSS module rather than growing single-use components here.
  */
 export { Stack } from './Stack';
+export { AnatomyTree, type AnatomyNode } from './AnatomyTree';
 export { Card } from './Card';
 export { Row } from './Row';
 export { Col } from './Col';

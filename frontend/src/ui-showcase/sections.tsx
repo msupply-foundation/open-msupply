@@ -26,6 +26,7 @@ import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
 import { CardGridShowcase } from './CardGridShowcase';
 import { ChartsShowcase } from './ChartsShowcase';
+import { FormLayoutShowcase } from './FormLayoutShowcase';
 import { FormsShowcase } from './FormsShowcase';
 
 export type SectionCategory = 'components' | 'layout' | 'pages';
@@ -134,12 +135,6 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
-    id: 'dialog',
-    label: 'Dialog / Modal',
-    component: DialogShowcase,
-    category: 'components',
-  },
-  {
     id: 'display',
     label: 'Display',
     component: DisplayShowcase,
@@ -182,9 +177,21 @@ export const sections: SectionDef[] = [
     category: 'layout',
   },
   {
+    id: 'dialog',
+    label: 'Dialog / Modal',
+    component: DialogShowcase,
+    category: 'layout',
+  },
+  {
     id: 'card-grid',
     label: 'Card grid',
     component: CardGridShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'form-layout',
+    label: 'Form layout',
+    component: FormLayoutShowcase,
     category: 'layout',
   },
   // The Pages group: full-page `fill` demos of the elements assembled into a

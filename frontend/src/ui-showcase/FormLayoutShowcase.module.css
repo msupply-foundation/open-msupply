@@ -1,0 +1,30 @@
+/* Stand-in content for the form-layout anatomy demos — tinted labelled blocks
+   that make an element's box visible. The demo is about the arrangement the
+   layout element provides; the blocks are its lorem-ipsum content (same
+   convention as the CardGrid demo's placeholder cards). */
+.stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(
+    in srgb,
+    var(--primary-main) 12%,
+    var(--surface-raised)
+  );
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+/* A block standing in for a whole FormSection inside the columns demo —
+   given real height so the columns have something to stack and wrap. */
+.sectionStub {
+  min-block-size: 5rem;
+}
+
+/* Blocks in the Stack-rhythm demo — given equal width so the three gap
+   presets read side by side as columns. */
+.rhythmStub {
+  min-inline-size: 9rem;
+}
