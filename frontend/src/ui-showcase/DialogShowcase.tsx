@@ -11,7 +11,11 @@ import {
   StoreSelector,
   type StoreOption,
 } from '../ui/elements/selectors/StoreSelector';
-import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../ui/icons';
+import {
+  CancelButton,
+  SaveButton,
+} from '../ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '../ui/icons';
 import { Lead, Note, Row } from './common';
 import styles from './DialogShowcase.module.css';
 
@@ -69,13 +73,7 @@ export const DialogShowcase = () => {
             Escape both cancel. Watch focus return to the Save button on close.
           </Lead>
           <Row>
-            <Button
-              variant="secondary"
-              icon={<SaveIcon />}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Save
-            </Button>
+            <SaveButton onClick={() => setConfirmOpen(true)} />
             <span class={styles.outcome} role="status">
               {outcome()}
             </span>
@@ -130,13 +128,7 @@ export const DialogShowcase = () => {
             }
             actions={
               <>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
+                <CancelButton onClick={() => setDialogOpen(false)} />
                 <Button
                   icon={<PlusCircleIcon />}
                   onClick={() => setDialogOpen(false)}
@@ -194,19 +186,8 @@ export const DialogShowcase = () => {
             }
             actions={
               <>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={() => setWorkbenchOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  icon={<SaveIcon />}
-                  onClick={() => setWorkbenchOpen(false)}
-                >
-                  Save
-                </Button>
+                <CancelButton onClick={() => setWorkbenchOpen(false)} />
+                <SaveButton onClick={() => setWorkbenchOpen(false)} />
               </>
             }
           >

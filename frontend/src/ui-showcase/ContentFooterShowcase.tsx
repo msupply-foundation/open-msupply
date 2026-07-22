@@ -7,13 +7,10 @@ import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterAc
 import { Button } from '../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import {
-  ClockIcon,
-  CopyIcon,
-  MinusCircleIcon,
-  SaveIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '../ui/icons';
+  CancelButton,
+  SaveButton,
+} from '../ui/elements/buttons/StandardButtons';
+import { ClockIcon, CopyIcon, MinusCircleIcon, TrashIcon } from '../ui/icons';
 import { Lead, PageBody, PageFrame } from './common';
 import styles from './ContentFooterShowcase.module.css';
 
@@ -55,16 +52,8 @@ export const ContentFooterShowcase = () => {
                 History
               </Button>
               <ContentFooterActions>
-                <Button variant="secondary" icon={<XCircleIcon />}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="secondary"
-                  icon={<SaveIcon />}
-                  onClick={() => setConfirmSave(true)}
-                >
-                  Save
-                </Button>
+                <CancelButton />
+                <SaveButton onClick={() => setConfirmSave(true)} />
                 <ConfirmDialog
                   open={confirmSave()}
                   onClose={() => setConfirmSave(false)}
@@ -112,12 +101,8 @@ export const ContentFooterShowcase = () => {
                       History
                     </Button>
                     <ContentFooterActions>
-                      <Button variant="secondary" icon={<XCircleIcon />}>
-                        Cancel
-                      </Button>
-                      <Button variant="secondary" icon={<SaveIcon />}>
-                        Save
-                      </Button>
+                      <CancelButton />
+                      <SaveButton />
                     </ContentFooterActions>
                   </>
                 }

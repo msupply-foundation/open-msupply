@@ -12,7 +12,8 @@ import {
 import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { Button } from '../ui/elements/buttons/Button';
-import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
+import { CancelButton } from '../ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterMultiSelect,
@@ -358,13 +359,7 @@ export const SelectorsShowcase = () => {
             widthRem={34}
             actions={
               <>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
+                <CancelButton onClick={() => setDialogOpen(false)} />
                 <Button
                   icon={<PlusCircleIcon />}
                   onClick={() => setDialogOpen(false)}

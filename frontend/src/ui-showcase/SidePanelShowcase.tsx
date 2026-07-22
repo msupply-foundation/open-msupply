@@ -102,10 +102,18 @@ export const SidePanelShowcase = () => {
                 inline-start, each button sized to its label. */}
               <SidePanelSection value="actions" title="Actions">
                 <SidePanelActions>
-                  <Button icon={<TrashIcon />} onClick={() => {}}>
+                  <Button
+                    variant="danger"
+                    icon={<TrashIcon />}
+                    onClick={() => {}}
+                  >
                     Delete
                   </Button>
-                  <Button icon={<CopyIcon />} onClick={() => {}}>
+                  <Button
+                    variant="secondary"
+                    icon={<CopyIcon />}
+                    onClick={() => {}}
+                  >
                     Make a copy
                   </Button>
                 </SidePanelActions>

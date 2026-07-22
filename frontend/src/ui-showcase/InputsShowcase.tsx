@@ -17,7 +17,7 @@ import {
   DateRangeField,
   type IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
-import { Button } from '../ui/elements/buttons/Button';
+import { SaveButton } from '../ui/elements/buttons/StandardButtons';
 import { Select } from '../ui/elements/selectors/Select';
 import {
   getCurrencyInfo,
@@ -381,14 +381,12 @@ export const InputsShowcase = () => {
                   onChange={setRaceValue}
                   helperText="Type and click Save without tabbing out"
                 />
-                <Button
+                <SaveButton
                   onClick={() => {
                     setSavedValue(raceValue());
                     setRaceSaves(n => n + 1);
                   }}
-                >
-                  Save
-                </Button>
+                />
               </div>
               <output class={styles.valueReadout}>
                 saved:{' '}

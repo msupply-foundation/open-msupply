@@ -8,12 +8,10 @@ import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
 import {
-  ClockIcon,
-  PlusCircleIcon,
-  SaveIcon,
-  TruckIcon,
-  XCircleIcon,
-} from '../ui/icons';
+  CancelButton,
+  SaveButton,
+} from '../ui/elements/buttons/StandardButtons';
+import { ClockIcon, PlusCircleIcon, TruckIcon } from '../ui/icons';
 import {
   AnatomyTree,
   Intro,
@@ -158,12 +156,8 @@ export const PageLayoutShowcase = () => (
                   History
                 </Button>
                 <ContentFooterActions>
-                  <Button variant="secondary" icon={<XCircleIcon />}>
-                    Cancel
-                  </Button>
-                  <Button variant="secondary" icon={<SaveIcon />}>
-                    Save
-                  </Button>
+                  <CancelButton />
+                  <SaveButton />
                 </ContentFooterActions>
               </ContentFooter>
             </PageFrame>
