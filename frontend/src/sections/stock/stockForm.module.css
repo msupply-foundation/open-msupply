@@ -1,15 +1,15 @@
-/* The stock two-column field form, shared by the detail Details tab (S2) and the
- * new-stock modal (S3). A section-local layout module (the shared library has no
- * detail-form scaffold; the stocktakes edit-modal precedent allows a section
- * CSS module). Values are rem/tokens only — no colour literals, no px spacing. */
+/* Section-local pieces of the stock forms (S2 detail / S3 new-stock). The form
+ * arrangement itself is the shared sectioned edit form (ContentContainer +
+ * FormColumns/FormSection/FormRow — spec/ui-standards detail-views); this
+ * module carries only the bits around it. Values are rem/tokens only — no
+ * colour literals, no px spacing. */
 
-.card {
+/* The vertical stack inside the content measure: identity header / alerts /
+ * item row / divider / form columns. */
+.stack {
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 1rem);
-  max-width: 60rem;
-  margin-inline: auto;
-  width: 100%;
 }
 
 /* Identity header: the item NAME as a heading, with CODE + UNIT stacked below
@@ -24,37 +24,12 @@
   color: var(--text-secondary);
 }
 
-/*
- * The two-column field grid. Fields are DIRECT children (no per-column wrapper),
- * so the two columns share the parent's grid rows: with column-major flow over a
- * fixed row count = the LEFT column's field count, field left[i] and field
- * right[i] land in the same grid row and therefore line up — even when a control
- * is shorter than its neighbour (e.g. the On-hold checkbox). `align-items:start`
- * top-aligns each field within its (max-height) row. A subgrid would be cleaner
- * but isn't safe on the older fleet WebViews, hence the fixed row count.
- *
- * ⚠️ Keep --form-rows in sync with the number of fields in the FIRST (left)
- * column of the consuming form; the stock detail form (S2) has 10. The right
- * column may have fewer (some fields are preference-gated) — that only leaves
- * trailing rows of column 2 empty, which is fine.
- */
-.twoCol {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-flow: column;
-  grid-template-rows: repeat(var(--form-rows, 10), auto);
-  gap: var(--space-4, 1rem) var(--space-6, 1.5rem);
-  align-items: start;
-}
-
-/* Narrow viewport: collapse to a single column in DOM order (left group then
- * right group), row flow. */
-@media (max-width: 48rem) {
-  .twoCol {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-flow: row;
-    grid-template-rows: auto;
-  }
+/* The divider between the item row and the field form (S3). */
+.divider {
+  border: 0;
+  border-block-start: 1px solid var(--color-divider);
+  margin: 0;
+  width: 100%;
 }
 
 .itemRow {

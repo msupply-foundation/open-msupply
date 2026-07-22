@@ -19,6 +19,11 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
+import { FormColumns } from '../../../ui/layout/Form/FormColumns';
+import { FormColumn } from '../../../ui/layout/Form/FormColumn';
+import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { FormRow } from '../../../ui/layout/Form/FormRow';
 import {
   Tabs,
   TabList,
@@ -39,6 +44,7 @@ import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { LocationSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
+import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
@@ -89,6 +95,10 @@ interface Edit {
   manufacturer: { id: string; name: string } | null;
   donorId: string | null;
   donorName: string | null;
+  // Campaign and program are one mutually-exclusive field (the campaign-or-
+  // program lookup) — never both set at once.
+  campaignId: string | null;
+  programId: string | null;
 }
 
 const seedEdit = (line: StockLineDetailFragment): Edit => ({
@@ -112,6 +122,8 @@ const seedEdit = (line: StockLineDetailFragment): Edit => ({
     : null,
   donorId: line.donor?.id ?? null,
   donorName: line.donor?.name ?? null,
+  campaignId: line.campaign?.id ?? null,
+  programId: line.program?.id ?? null,
 });
 
 const StockLineDetailView: Component = () => {
@@ -133,6 +145,8 @@ const StockLineDetailView: Component = () => {
     manufacturer: null,
     donorId: null,
     donorName: null,
+    campaignId: null,
+    programId: null,
   });
   const [seededId, setSeededId] = createSignal<string>();
   const [saving, setSaving] = createSignal(false);
@@ -237,7 +251,9 @@ const StockLineDetailView: Component = () => {
       (edit.location?.id ?? null) !== (l.location?.id ?? null) ||
       edit.volumePerPack !== l.volumePerPack ||
       (edit.manufacturer?.id ?? null) !== (l.manufacturer?.id ?? null) ||
-      (edit.donorId ?? null) !== (l.donor?.id ?? null)
+      (edit.donorId ?? null) !== (l.donor?.id ?? null) ||
+      edit.campaignId !== (l.campaign?.id ?? null) ||
+      edit.programId !== (l.program?.id ?? null)
     );
   });
 
@@ -267,6 +283,15 @@ const StockLineDetailView: Component = () => {
     }
     if ((edit.donorId ?? null) !== (l.donor?.id ?? null))
       patch.donorId = { value: edit.donorId };
+    if (
+      edit.campaignId !== (l.campaign?.id ?? null) ||
+      edit.programId !== (l.program?.id ?? null)
+    ) {
+      // One mutually-exclusive choice over two wire fields: always send both
+      // wrappers so choosing one side clears the other.
+      patch.campaignId = { value: edit.campaignId };
+      patch.programId = { value: edit.programId };
+    }
     return patch;
   };
 
@@ -409,7 +434,7 @@ const StockLineDetailView: Component = () => {
               }
             >
               <TabPanel value="details">
-                <div class={formStyles.card}>
+                <ContentContainer size="form" class={formStyles.stack}>
                   {/* Identity header: item name as a heading, code + unit as a
                       muted subtitle below it. */}
                   <div class={formStyles.identity}>
@@ -432,166 +457,239 @@ const StockLineDetailView: Component = () => {
                     {message => <Alert severity="error">{message()}</Alert>}
                   </Show>
 
-                  {/* Standard labelled inputs (label above the control), two
-                      columns that wrap to a single column on narrow viewports
-                      (stockForm.module.css). Read-only fields (quantities, pack
-                      size, total volume, supplier, VVM) render as disabled
-                      inputs; editable fields as the live controls. Field order
-                      is the spec/stock S2 table, left column then right. */}
-                  {/* --form-rows = the LEFT column's field count (10), so
-                      column-major flow lands left[i] and right[i] in the same
-                      grid row and the two columns' rows line up. Read-only fields
-                      (quantities, pack size, total volume, supplier, VVM) render
-                      as LabelledValue (label-above value, no input chrome) to
-                      read as info rather than editable; editable fields are the
-                      live inputs. Order is the spec/stock S2 table, left then
-                      right. */}
-                  <div
-                    class={formStyles.twoCol}
-                    style={{ '--form-rows': '10' }}
-                  >
-                    <LabelledValue label={t('label.pack-qty')}>
-                      {qtyValue(l().totalNumberOfPacks, sohUnits())}
-                    </LabelledValue>
-                    <LabelledValue label={t('label.available-packs')}>
-                      {qtyValue(l().availableNumberOfPacks, availUnits())}
-                    </LabelledValue>
-                    <LabelledValue label={t('label.available-stock')}>
-                      {qtyValue(availUnits(), availUnits())}
-                    </LabelledValue>
-                    <LabelledValue label={t('label.soh')}>
-                      {qtyValue(sohUnits(), sohUnits())}
-                    </LabelledValue>
-                    <CurrencyField
-                      label={t('label.cost-price')}
-                      width="full"
-                      value={edit.costPricePerPack}
-                      onChange={v => setEdit('costPricePerPack', v ?? 0)}
-                    />
-                    <CurrencyField
-                      label={t('label.sell-price')}
-                      width="full"
-                      value={edit.sellPricePerPack}
-                      onChange={v => setEdit('sellPricePerPack', v ?? 0)}
-                    />
-                    <TextField
-                      label={t('label.batch')}
-                      width="full"
-                      value={edit.batch}
-                      onInput={e => setEdit('batch', e.currentTarget.value)}
-                    />
-                    <TextField
-                      label={t('label.barcode')}
-                      width="full"
-                      value={edit.barcode}
-                      onInput={e => setEdit('barcode', e.currentTarget.value)}
-                    />
-                    <DateField
-                      label={t('label.manufacture-date')}
-                      max={localTodayIso()}
-                      value={edit.manufactureDate}
-                      onChange={v => setEdit('manufactureDate', v)}
-                    />
-                    <LabelledValue label={t('label.pack-size')}>
-                      {formatNumber(l().packSize)}
-                    </LabelledValue>
-                    <DateField
-                      label={t('label.expiry-date')}
-                      value={edit.expiryDate}
-                      onChange={v => setEdit('expiryDate', v)}
-                    />
-                    <Checkbox
-                      label={t('label.on-hold')}
-                      checked={edit.onHold}
-                      onChange={v => setEdit('onHold', v)}
-                    />
-                    <LocationSelect
-                      label={t('label.location')}
-                      locations={locations()}
-                      loading={allLocations.loading}
-                      value={edit.location?.id}
-                      placeholder={t('label.none')}
-                      onChange={loc =>
-                        setEdit(
-                          'location',
-                          loc
-                            ? { id: loc.id, code: loc.code, name: loc.name }
-                            : null
-                        )
-                      }
-                    />
-                    <NumberField
-                      label={t('label.volume-per-pack')}
-                      width="full"
-                      decimalLimit={10}
-                      value={edit.volumePerPack}
-                      onChange={v => setEdit('volumePerPack', v ?? 0)}
-                    />
-                    <LabelledValue label={t('label.total-volume')}>
-                      {formatNumber(l().totalVolume)}
-                    </LabelledValue>
-                    <NameSearch
-                      label={t('label.manufacturer')}
-                      storeId={params.storeId}
-                      role="manufacturer"
-                      selected={
-                        edit.manufacturer
-                          ? {
-                              id: edit.manufacturer.id,
-                              name: edit.manufacturer.name,
-                              code: '',
-                              isSupplier: false,
-                              isDonor: false,
-                              isOnHold: false,
-                              isStore: false,
-                            }
-                          : undefined
-                      }
-                      placeholder={t('label.none')}
-                      onSelect={name =>
-                        setEdit(
-                          'manufacturer',
-                          name ? { id: name.id, name: name.name } : null
-                        )
-                      }
-                    />
-                    <LabelledValue label={t('label.supplier')}>
-                      {supplierText(l())}
-                    </LabelledValue>
-                    <Show when={showVvmField()}>
-                      {/* Read-only here — changes go through the VVM history
-                          flow (spec/stock S2 / AC-V2). */}
-                      <LabelledValue label={t('label.vvm-status')}>
-                        {l().vvmStatus?.description ?? '—'}
-                      </LabelledValue>
-                    </Show>
-                    <Show when={prefs().allowTrackingOfStockByDonor}>
-                      <NameSearch
-                        label={t('label.donor')}
-                        storeId={params.storeId}
-                        role="donor"
-                        selected={
-                          edit.donorId
-                            ? {
-                                id: edit.donorId,
-                                name: edit.donorName ?? '',
-                                code: '',
-                                isSupplier: false,
-                                isDonor: true,
-                                isOnHold: false,
-                                isStore: false,
+                  {/* The sectioned edit form (spec/ui-standards detail-views):
+                      titled sections in two column stacks that wrap to one when
+                      squeezed. Editable fields are live inputs (label above);
+                      read-only facts are LabelledValue in field variant (no
+                      input chrome). Sections and rows per spec/stock S2 Layout;
+                      h3 headings nest under the identity header's h2. */}
+                  <FormColumns>
+                    <FormColumn>
+                      <FormSection
+                        headingLevel="h3"
+                        title={t('heading.stock-levels')}
+                      >
+                        <FormRow>
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.pack-qty')}
+                          >
+                            {qtyValue(l().totalNumberOfPacks, sohUnits())}
+                          </LabelledValue>
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.available-packs')}
+                          >
+                            {qtyValue(l().availableNumberOfPacks, availUnits())}
+                          </LabelledValue>
+                        </FormRow>
+                        <FormRow>
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.available-stock')}
+                          >
+                            {qtyValue(availUnits(), availUnits())}
+                          </LabelledValue>
+                          <LabelledValue variant="field" label={t('label.soh')}>
+                            {qtyValue(sohUnits(), sohUnits())}
+                          </LabelledValue>
+                        </FormRow>
+                      </FormSection>
+
+                      <FormSection
+                        headingLevel="h3"
+                        title={t('heading.batches-and-dates')}
+                      >
+                        <TextField
+                          label={t('label.batch')}
+                          width="full"
+                          value={edit.batch}
+                          onInput={e => setEdit('batch', e.currentTarget.value)}
+                        />
+                        <TextField
+                          label={t('label.barcode')}
+                          width="full"
+                          value={edit.barcode}
+                          onInput={e =>
+                            setEdit('barcode', e.currentTarget.value)
+                          }
+                        />
+                        <FormRow>
+                          <DateField
+                            label={t('label.expiry-date')}
+                            width="full"
+                            value={edit.expiryDate}
+                            onChange={v => setEdit('expiryDate', v)}
+                          />
+                          <DateField
+                            label={t('label.manufacture-date')}
+                            width="full"
+                            max={localTodayIso()}
+                            value={edit.manufactureDate}
+                            onChange={v => setEdit('manufactureDate', v)}
+                          />
+                        </FormRow>
+                        <Show when={showVvmField()}>
+                          {/* Read-only here — changes go through the VVM history
+                              flow (spec/stock S2 / AC-V2). */}
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.vvm-status')}
+                          >
+                            {l().vvmStatus?.description ?? '—'}
+                          </LabelledValue>
+                        </Show>
+                      </FormSection>
+
+                      <FormSection
+                        headingLevel="h3"
+                        title={t('heading.pricing')}
+                      >
+                        <FormRow>
+                          <CurrencyField
+                            label={t('label.cost-price')}
+                            width="full"
+                            value={edit.costPricePerPack}
+                            onChange={v => setEdit('costPricePerPack', v ?? 0)}
+                          />
+                          <CurrencyField
+                            label={t('label.sell-price')}
+                            width="full"
+                            value={edit.sellPricePerPack}
+                            onChange={v => setEdit('sellPricePerPack', v ?? 0)}
+                          />
+                        </FormRow>
+                      </FormSection>
+                    </FormColumn>
+
+                    <FormColumn>
+                      <FormSection
+                        headingLevel="h3"
+                        title={t('heading.storage-and-pack')}
+                      >
+                        <LocationSelect
+                          label={t('label.location')}
+                          locations={locations()}
+                          loading={allLocations.loading}
+                          value={edit.location?.id}
+                          placeholder={t('label.none')}
+                          onChange={loc =>
+                            setEdit(
+                              'location',
+                              loc
+                                ? { id: loc.id, code: loc.code, name: loc.name }
+                                : null
+                            )
+                          }
+                        />
+                        <FormRow>
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.pack-size')}
+                          >
+                            {formatNumber(l().packSize)}
+                          </LabelledValue>
+                          <Checkbox
+                            label={t('label.on-hold')}
+                            checked={edit.onHold}
+                            onChange={v => setEdit('onHold', v)}
+                          />
+                        </FormRow>
+                        <FormRow>
+                          <NumberField
+                            label={t('label.volume-per-pack')}
+                            width="full"
+                            decimalLimit={10}
+                            value={edit.volumePerPack}
+                            onChange={v => setEdit('volumePerPack', v ?? 0)}
+                          />
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.total-volume')}
+                          >
+                            {formatNumber(l().totalVolume)}
+                          </LabelledValue>
+                        </FormRow>
+                      </FormSection>
+
+                      <FormSection
+                        headingLevel="h3"
+                        title={t('heading.supply-chain')}
+                      >
+                        <NameSearch
+                          label={t('label.manufacturer')}
+                          storeId={params.storeId}
+                          role="manufacturer"
+                          selected={
+                            edit.manufacturer
+                              ? {
+                                  id: edit.manufacturer.id,
+                                  name: edit.manufacturer.name,
+                                  code: '',
+                                  isSupplier: false,
+                                  isDonor: false,
+                                  isOnHold: false,
+                                  isStore: false,
+                                }
+                              : undefined
+                          }
+                          placeholder={t('label.none')}
+                          onSelect={name =>
+                            setEdit(
+                              'manufacturer',
+                              name ? { id: name.id, name: name.name } : null
+                            )
+                          }
+                        />
+                        <LabelledValue
+                          variant="field"
+                          label={t('label.supplier')}
+                        >
+                          {supplierText(l())}
+                        </LabelledValue>
+                        <FormRow>
+                          <Show when={prefs().allowTrackingOfStockByDonor}>
+                            <NameSearch
+                              label={t('label.donor')}
+                              storeId={params.storeId}
+                              role="donor"
+                              selected={
+                                edit.donorId
+                                  ? {
+                                      id: edit.donorId,
+                                      name: edit.donorName ?? '',
+                                      code: '',
+                                      isSupplier: false,
+                                      isDonor: true,
+                                      isOnHold: false,
+                                      isStore: false,
+                                    }
+                                  : undefined
                               }
-                            : undefined
-                        }
-                        placeholder={t('label.none')}
-                        onSelect={name => {
-                          setEdit('donorId', name?.id ?? null);
-                          setEdit('donorName', name?.name ?? null);
-                        }}
-                      />
-                    </Show>
-                  </div>
-                </div>
+                              placeholder={t('label.none')}
+                              onSelect={name => {
+                                setEdit('donorId', name?.id ?? null);
+                                setEdit('donorName', name?.name ?? null);
+                              }}
+                            />
+                          </Show>
+                          <CampaignOrProgramSelect
+                            label={t('label.campaign')}
+                            storeId={params.storeId}
+                            itemId={l().itemId}
+                            campaignId={edit.campaignId ?? undefined}
+                            programId={edit.programId ?? undefined}
+                            placeholder={t('label.none')}
+                            onChange={v => {
+                              setEdit('campaignId', v?.campaign?.id ?? null);
+                              setEdit('programId', v?.program?.id ?? null);
+                            }}
+                          />
+                        </FormRow>
+                      </FormSection>
+                    </FormColumn>
+                  </FormColumns>
+                </ContentContainer>
               </TabPanel>
 
               <Show when={showVvmTab()}>
