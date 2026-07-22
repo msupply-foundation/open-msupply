@@ -43,7 +43,7 @@ export const DisplayShowcase = () => {
       ? undefined
       : String(CURRENT_PACKS - (adjustBy() ?? 0));
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Stat comparison tile — current → adjusted preview">
           <Lead>

@@ -45,7 +45,7 @@ export const IconsShowcase = () => {
   const [colour, setColour] = createSignal('body');
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <Intro>
           Every icon in <code>src/ui/icons</code>. Each is a plain SVG that

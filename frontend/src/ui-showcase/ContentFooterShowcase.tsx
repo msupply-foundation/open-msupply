@@ -32,7 +32,7 @@ export const ContentFooterShowcase = () => {
   const clear = () => setPicked(new Set<string>());
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Detail-page bar — History / Cancel / Save">
           <Lead>

@@ -57,7 +57,7 @@ export const DialogShowcase = () => {
   const [chosen, setChosen] = createSignal('');
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Confirm dialog — Save → are you sure?">
           <Lead>

@@ -35,7 +35,7 @@ const VARIANTS: {
 ];
 
 export const TypographyShowcase = () => (
-  <ContentContainer size="form">
+  <ContentContainer size="form" align="start">
     <Stack gap="lg">
       <DashboardCard title="The type scale">
         <Lead>

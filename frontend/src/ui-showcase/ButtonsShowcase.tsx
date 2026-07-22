@@ -1,6 +1,5 @@
 import { createSignal, Show } from 'solid-js';
-import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
-import { Stack } from '../ui/layout/Stack/Stack';
+import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Button } from '../ui/elements/buttons/Button';
 import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
@@ -46,8 +45,7 @@ export const ButtonsShowcase = () => {
   const [lastStandard, setLastStandard] = createSignal<string | null>(null);
 
   return (
-    <ContentContainer size="prose">
-      <Stack gap="lg">
+    <CardGrid minColumnWidth="32rem" maxColumnWidth="40rem">
         <DashboardCard title="Standard buttons — pre-composed for common actions">
           <Lead>
             The handful of actions that recur in nearly every dialog and form,
@@ -384,7 +382,6 @@ export const ButtonsShowcase = () => {
           </Row>
           <Note>The shipment is {onHold() ? 'on hold' : 'not on hold'}.</Note>
         </DashboardCard>
-      </Stack>
-    </ContentContainer>
+    </CardGrid>
   );
 };

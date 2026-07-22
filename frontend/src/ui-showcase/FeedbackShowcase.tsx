@@ -24,7 +24,7 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
 
 export const FeedbackShowcase = () => {
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Status chips">
           <Lead>

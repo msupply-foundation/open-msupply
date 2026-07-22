@@ -15,7 +15,7 @@ import { FormPreview, Lead } from './common';
  * create-stocktake modal.
  */
 export const InsetPanelShowcase = () => (
-  <ContentContainer size="form">
+  <ContentContainer size="form" align="start">
     <Stack gap="lg">
       <DashboardCard title="Inset panel — recessed grouping">
         <Lead>

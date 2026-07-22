@@ -21,7 +21,7 @@ export const SidePanelShowcase = () => {
   const isOverlay = useIsNavOverlay();
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Details panel — slide it out over the page">
           <Lead>

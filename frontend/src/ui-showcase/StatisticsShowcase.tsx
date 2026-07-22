@@ -126,7 +126,7 @@ const InventoryCard = () => (
 );
 
 const Demo = () => (
-  <ContentContainer size="form">
+  <ContentContainer size="form" align="start">
     <Stack gap="lg">
       <DashboardCard title="SectionTitle — iconed action-tone panel heading">
         <Lead>
