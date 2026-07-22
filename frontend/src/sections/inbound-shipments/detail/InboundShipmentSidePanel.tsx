@@ -81,7 +81,10 @@ export const InboundShipmentSidePanel: Component<
   return (
     <>
       {/* Additional info ---------------------------------------------------- */}
-      <SidePanelSection title={t('heading.additional-info')}>
+      <SidePanelSection
+        value="additional-info"
+        title={t('heading.additional-info')}
+      >
         <Show when={props.donorTracking}>
           <FieldRow label={t('label.donor')}>
             <span
@@ -130,7 +133,10 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Related documents -------------------------------------------------- */}
-      <SidePanelSection title={t('heading.related-documents')}>
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+      >
         <Show
           when={props.node.purchaseOrder || props.node.requisition}
           fallback={<span>{t('messages.no-related-documents')}</span>}
@@ -164,7 +170,7 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Charges ------------------------------------------------------------ */}
-      <SidePanelSection title={t('heading.charges')}>
+      <SidePanelSection value="charges" title={t('heading.charges')}>
         <FieldRow label={t('label.sub-total')}>
           <span>{money(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
@@ -252,7 +258,10 @@ export const InboundShipmentSidePanel: Component<
 
       {/* Transport details (transfers only, read-only) ---------------------- */}
       <Show when={isTransfer()}>
-        <SidePanelSection title={t('heading.transport-details')}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+        >
           <FieldRow label={t('label.shipping-method')}>
             <span>{props.node.shippingMethod?.method ?? '—'}</span>
           </FieldRow>
