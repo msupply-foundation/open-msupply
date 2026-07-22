@@ -50,6 +50,15 @@ query storeContext($storeId: String!) {
       shipmentsEnabled
       maxDays
     }
+    # Dashboard display gates + label slots (spec/dashboard › display gates):
+    # the alert / look-back / expiry thresholds that show or hide the gated
+    # stats and fill their label slots. useProcurementFunctionality above also
+    # gates the dashboard's external-inbound panel.
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
+    firstThresholdForExpiringItems
+    secondThresholdForExpiringItems
   }
   me {
     ... on UserNode {
