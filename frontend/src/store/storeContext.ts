@@ -4,6 +4,7 @@ import {
   StoreContext,
   type StoreContextResult,
 } from '../api/storeContext.generated';
+import { authUser } from '../auth/authContext';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
 // Callers invoke refetchStoreContext directly — on store entry, and from
@@ -132,10 +133,7 @@ const inboundShipmentPreferences = () => {
 // the safe OFF/empty while the context is unresolved so a gated surface never
 // flashes in before its preference is known (the same rule as the other
 // *Preferences accessors). Reactive — a post-sync refetch re-gates in place.
-//
-// NOTE (spec gap): dispensary-mode gating of the WHOLE surface (AC-G1) needs
-// the active store's `storeMode`, which no query currently fetches — see the
-// implementation flags. This accessor covers only the sub-gates.
+// The WHOLE-surface dispensary gate (AC-G1) is `isDispensary` below.
 const patientPreferences = () => {
   const prefs = storeContext()?.preferences;
   const store = storeContext()?.storePreferences;
@@ -143,6 +141,22 @@ const patientPreferences = () => {
     programModule: store?.omProgramModule ?? false,
     genderOptions: prefs?.genderOptions ?? [],
   };
+};
+
+// The entered store's dispensary gate (spec/patients § configuration gates ›
+// AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
+// group (ShellLayout) and its routes (the patients section's route guard). The
+// store's mode rides the me/login response's store list
+// (UserStoreNode.storeMode), so it is known before any store is entered; the
+// entered store is the one `currentStoreId` names. Every gated surface renders
+// under StoreGuardLayout, which withholds its children until the context has
+// loaded, so callers read a settled value. Safe default OFF (not dispensary)
+// while the store is unresolved, so the patient surface never shows for a
+// non-dispensary store. Reactive — reads authUser + currentStoreId.
+const isDispensary = (): boolean => {
+  const storeId = currentStoreId();
+  const store = authUser()?.stores.nodes.find(s => s.id === storeId);
+  return store?.storeMode === 'DISPENSARY';
 };
 
 // A server UserPermission name as it arrives in the store-context query
@@ -176,6 +190,7 @@ export {
   stockPreferences,
   inboundShipmentPreferences,
   patientPreferences,
+  isDispensary,
   hasPermission,
 };
 export type { UserPermission };

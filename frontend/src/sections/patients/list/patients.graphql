@@ -29,8 +29,10 @@ query patients(
           ... on ProgramEnrolmentConnector {
             __typename
             nodes {
-              id
-              name
+              # `type` is the registry name shown on the chip (AC-G2 column). The
+              # document `name` carries a `p/{patientId}/` prefix, so it is NOT
+              # used for display; `type` is the clean program/registry name.
+              type
               programEnrolmentId
             }
           }

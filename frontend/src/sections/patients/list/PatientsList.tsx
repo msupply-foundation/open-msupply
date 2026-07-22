@@ -15,8 +15,8 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getBooleanCell,
   getDateCell,
+  getFlagCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { getChipListCell } from '../../../ui/elements/table/ChipListCell';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -125,10 +125,12 @@ const PatientsList: Component = () => {
     navigate(`/${params.storeId}/dispensary/patients/${row.id}`);
 
   // The program-enrolments chip column (program module only, AC-G2): one chip
-  // per enrolment as "{program name} ({enrolment id})".
+  // per enrolment as "{registry name} ({enrolment id})". The registry name is
+  // the enrolment `type`; the document `name` carries a `p/{patientId}/` prefix
+  // and is never shown.
   const enrolmentLabels = (row: PatientRow): string[] =>
     row.programEnrolments.nodes.map(n =>
-      n.programEnrolmentId ? `${n.name} (${n.programEnrolmentId})` : n.name
+      n.programEnrolmentId ? `${n.type} (${n.programEnrolmentId})` : n.type
     );
 
   const columns = (): Column<PatientRow, SortKey>[] => [
@@ -189,7 +191,7 @@ const PatientsList: Component = () => {
     {
       c: { key: 'isDeceased' },
       header: t('label.deceased'),
-      ...getBooleanCell(),
+      ...getFlagCell(t('label.deceased')),
     },
   ];
 

@@ -113,8 +113,7 @@ export type PatientsResult = {
   __typename: "ProgramEnrolmentConnector";
 } & {
   nodes: Array<{
-  id: string;
-  name: string;
+  type: string;
   programEnrolmentId: string | null;
 }>;
 });
@@ -123,5 +122,5 @@ export type PatientsResult = {
 };
 
 export const Patients = {
-  query: "query patients($storeId: String!, $filter: PatientFilterInput, $sort: [PatientSortInput!], $page: PaginationInput) {\n  patients(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PatientConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        code2\n        name\n        firstName\n        lastName\n        gender\n        dateOfBirth\n        nextOfKinName\n        isDeceased\n        createdDatetime\n        programEnrolments {\n          ... on ProgramEnrolmentConnector {\n            __typename\n            nodes {\n              id\n              name\n              programEnrolmentId\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query patients($storeId: String!, $filter: PatientFilterInput, $sort: [PatientSortInput!], $page: PaginationInput) {\n  patients(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PatientConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        code2\n        name\n        firstName\n        lastName\n        gender\n        dateOfBirth\n        nextOfKinName\n        isDeceased\n        createdDatetime\n        programEnrolments {\n          ... on ProgramEnrolmentConnector {\n            __typename\n            nodes {\n              type\n              programEnrolmentId\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PatientsResult, PatientsVariables>;
