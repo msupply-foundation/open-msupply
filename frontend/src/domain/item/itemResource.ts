@@ -1,6 +1,6 @@
 import { graphqlFetch } from '../../api/graphql';
 import { ItemsWithStock, type ItemsWithStockResult } from './item.generated';
-import type { Page } from '../search/createPaginatedSearch';
+import type { Page } from '../../ui/utils/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
 // "code - name" and a total (Σ batch packs * packSize) + unit; id feeds the
@@ -12,6 +12,10 @@ export type ItemOption = {
   unitName: string | null;
   /** Total units in store = Σ availableBatches (totalNumberOfPacks * packSize). */
   totalUnits: number;
+  /** Whether the item is a vaccine — gates the doses / VVM display downstream. */
+  isVaccine: boolean;
+  /** The item's configured doses-per-unit — the doses-display multiplier. */
+  doses: number;
 };
 
 type ItemNode = Extract<
@@ -40,6 +44,35 @@ const totalUnitsOf = (node: ItemNode): number =>
  * exclusions — e.g. after "OK & next" adds an item, the next search excludes
  * it — without recreating the search primitive.
  */
+/**
+ * Resolve one item by id — the label restore for a picker reopened with only a
+ * stored id (e.g. the report argument form re-opened from URL arguments,
+ * spec/reports S3). Reuses the search operation with an id filter; undefined
+ * when the id doesn't resolve (the picker just shows empty).
+ */
+export const fetchItemById = async (
+  storeId: string,
+  id: string
+): Promise<ItemOption | undefined> => {
+  const result = await graphqlFetch(ItemsWithStock, {
+    storeId,
+    filter: { id: { equalTo: id } },
+    page: { first: 1 },
+  });
+  if (result.kind !== 'success') return undefined;
+  const node = result.data.items.nodes[0];
+  if (!node) return undefined;
+  return {
+    id: node.id,
+    code: node.code,
+    name: node.name,
+    unitName: node.unitName,
+    totalUnits: totalUnitsOf(node),
+    isVaccine: node.isVaccine,
+    doses: node.doses,
+  };
+};
+
 export const itemPageFetcher =
   (storeId: string, excludeItemIds: () => string[], pageSize: number) =>
   async (
@@ -71,6 +104,8 @@ export const itemPageFetcher =
         name: node.name,
         unitName: node.unitName,
         totalUnits: totalUnitsOf(node),
+        isVaccine: node.isVaccine,
+        doses: node.doses,
       })),
       totalCount: items.totalCount,
     };

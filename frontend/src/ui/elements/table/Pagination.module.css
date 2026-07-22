@@ -50,18 +50,20 @@
 .pager {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  /* The ONLY spacing between pager items — no per-button margin (that stacked
+     with this gap and left the 1/‹ and ›/N pairs too far apart). Tight, since
+     these are compact controls. */
+  gap: 0.125rem;
 }
 
 /* Circular pager buttons, matching the current app's MUI Pagination: 2rem circle,
-   transparent by default, subtle grey-tint fill for the active page (not a bold pill). */
+   transparent by default. */
 .pageButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 2rem;
   height: 2rem;
-  margin: 0 0.1875rem;
   padding: 0 var(--space-1);
   border: none;
   border-radius: 1rem;
@@ -71,8 +73,8 @@
   cursor: pointer;
 }
 
-/* The arrow icons (first/prev/next/last) are drawn larger than the page-number text
-   so they read as chunky, clear controls (the MUI paths are filled, so size = weight). */
+/* The prev/next arrow icons are drawn larger than the page-number text so they
+   read as chunky, clear controls (the MUI paths are filled, so size = weight). */
 .pageButton svg {
   width: 1.375rem;
   height: 1.375rem;
@@ -87,19 +89,18 @@
   background: color-mix(in srgb, var(--text-body) 4%, transparent);
 }
 
-/* The current page — a subtle grey tint, dark text (matches OMS's rgba(0,0,0,0.08)). */
-.pageButtonActive {
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
-}
-
-.pageButtonActive:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--text-body) 12%, transparent);
-}
-
-.gap {
+/* The current page — a plain display (not editable). A compact box carrying the
+   subtle grey tint the active page used to have, matching the pager buttons'
+   footprint so the row stays aligned. */
+.pageCurrent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.5rem;
-  color: var(--text-secondary);
+  min-inline-size: 2rem;
+  block-size: 2rem;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+  color: var(--text-body);
+  font-size: var(--text-xs);
 }

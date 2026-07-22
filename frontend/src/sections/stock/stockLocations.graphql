@@ -1,0 +1,20 @@
+# The store's locations WITH their location type, shared by the stock detail
+# (S2) and new-stock (S3) location pickers so the picker can be restricted to
+# the item's location type when the item sets one (spec/stock S2/S3 › location
+# lookup restricted to the item's location type). The domain plain-location
+# fetch is code+name only (volume-blind, no type), so stock reads its own shape.
+query stockLocations($storeId: String!) {
+  locations(storeId: $storeId) {
+    ... on LocationConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        locationType {
+          id
+        }
+      }
+    }
+  }
+}

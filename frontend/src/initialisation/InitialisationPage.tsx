@@ -10,11 +10,13 @@ import {
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
+import { isCentralServer } from '../api/serverInfo';
 import { toSyncOverview, type SyncOverview } from './syncStatus';
 import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { Text } from '../ui/elements/typography/Text';
 import {
   DEFAULT_SYNC_INTERVAL_SECONDS,
   SYNC_POLL_INTERVAL_MS,
@@ -45,7 +47,7 @@ export const InitialisationPage: Component<{
   onCleanup(() => disposeWatch?.());
 
   const handleStatus = (status: SyncStatusFragment | null | undefined) => {
-    const next = toSyncOverview(status);
+    const next = toSyncOverview(status, isCentralServer());
     if (!next) return;
     setOverview(next);
     if (next.errorMessage != null) {
@@ -235,6 +237,10 @@ export const InitialisationPage: Component<{
         >
           <Button onClick={() => void retry()}>{t('button.retry')}</Button>
         </Show>
+        {/* Spec S2 layout item 9 (AC-VN1): the app version closes the card. */}
+        <Text variant="bodySmall">
+          <strong>{t('label.app-version')}</strong> {APP_VERSION}
+        </Text>
       </form>
     </div>
   );

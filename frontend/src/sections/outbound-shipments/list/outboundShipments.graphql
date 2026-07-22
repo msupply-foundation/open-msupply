@@ -1,0 +1,97 @@
+# Outbound shipments list view (spec/outbound-shipments S1). Filter / sort /
+# pagination are the GraphQL input types so URL state maps straight onto them
+# (kdd/type-safety). The type filter is pinned to OUTBOUND_SHIPMENT by the view;
+# the server forces the store scope and excludes cancellation reversals
+# (contract.md § the list).
+query outboundShipments(
+  $storeId: String!
+  $filter: InvoiceFilterInput
+  $sort: [InvoiceSortInput!]
+  $page: PaginationInput
+) {
+  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        otherPartyName
+        status
+        invoiceNumber
+        createdDatetime
+        theirReference
+        comment
+        colour
+        pricing {
+          totalAfterTax
+        }
+      }
+    }
+  }
+}
+
+# Create a shipment for a customer (S2). The id is client-generated so the
+# create can navigate to the new shipment. Typed rejections (AC-C2) are
+# selected so the modal can translate them; anything else is non-typed and goes
+# to the global error modal.
+mutation insertOutboundShipment($storeId: String!, $input: InsertOutboundShipmentInput!) {
+  insertOutboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertOutboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Bulk delete from the list (AC-D3). Per-row server enforcement: each id's
+# response is DeleteResponse or a typed error; the UI pre-checks deletability
+# (SHIPPED+ disables the action) so an error here is a race.
+mutation deleteOutboundShipments($storeId: String!, $ids: [String!]) {
+  batchOutboundShipment(
+    storeId: $storeId
+    input: { deleteOutboundShipments: $ids }
+  ) {
+    deleteOutboundShipments {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteOutboundShipmentError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Duplicate a shipment (AC-X1/X2): any shipment (incl. SHIPPED) copies into a
+# fresh NEW one whose stock lines became placeholders; inactive-catalogue items
+# are skipped and counted.
+mutation duplicateOutboundShipment($storeId: String!, $id: String!) {
+  duplicateOutboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DuplicateOutboundShipmentNode {
+      invoice {
+        id
+      }
+      skippedItemCount
+    }
+    ... on DuplicateOutboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

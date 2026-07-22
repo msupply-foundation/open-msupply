@@ -43,6 +43,20 @@ export const ChevronDownIcon = (props: IconProps) => (
   </Fill>
 );
 
+/* Directional (prev/next) — mirror in RTL via data-flip-rtl (index.css). Used
+   by the date-picker month navigation. */
+export const ChevronLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <polyline points="15 18 9 12 15 6" />
+  </Stroke>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <polyline points="9 18 15 12 9 6" />
+  </Stroke>
+);
+
 export const CheckIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <polyline points="20 6 9 17 4 12" />
@@ -56,32 +70,23 @@ export const CheckCircleIcon = (props: IconProps) => (
   </Stroke>
 );
 
+// Side-panel reopen affordance (the current app's SidebarIcon — a window
+// frame with the inline-start pane marked; spec ui-standards/layout.md →
+// page regions).
+export const SidebarIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="9" y1="3" x2="9" y2="21" />
+  </Stroke>
+);
+
 export const CloseIcon = (props: IconProps) => (
   <Fill viewBox="0 0 21 20" {...props}>
     <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
   </Fill>
 );
 
-// Row-grouping state icons (Tabler folder / folders). GroupedIcon = a single
-// folder (rows are grouped into one parent); UngroupedIcon = stacked folders
-// (the "multiple", ungrouped state). Used by the DataTable's group-by control
-// (see rowGroup).
-export const GroupedIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
-  </Stroke>
-);
-
-export const UngroupedIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
-    <path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
-  </Stroke>
-);
-
-// A double chevron (stacked). Points down as-is; the row-group "expand all"
-// header control uses it, flipped to point up (rotate 180deg) for "collapse
-// all" — like Open mSupply.
+// A double chevron (stacked), pointing down. Used by the sync showcase.
 export const ChevronsDownIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M7 7l5 5l5 -5" />
@@ -116,8 +121,17 @@ export const PlusCircleIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Export / download */
+/* Export / download — arrow pointing down into the tray */
 export const DownloadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </Stroke>
+);
+
+/* Import / upload — arrow pointing up out of the tray */
+export const UploadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
@@ -249,6 +263,16 @@ export const InfoIcon = (props: IconProps) => (
   </Fill>
 );
 
+/* Outline circle-i (the current app's InfoOutlineIcon) — the dashboard's stat
+   tooltip marker. Stroke sibling of AlertCircleIcon, with the dot on top. */
+export const InfoOutlineIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </Stroke>
+);
+
 /**
  * --- Navigation icons (from the current app; added as the menu bar needs
  * them) ---
@@ -285,6 +309,21 @@ export const ThermometerIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Reports-page category headings (spec ui-standards/conventions.md → icons):
+   bar chart (Stock & Items) and suppliers (Replenishment); Distribution and
+   Programs/Other reuse TruckIcon and FileIcon. */
+export const BarIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" {...props}>
+    <path d="M14 2H10C9.44771 2 9 2.44772 9 3V21C9 21.5523 9.44771 22 10 22H14C14.5523 22 15 21.5523 15 21V3C15 2.44772 14.5523 2 14 2ZM13 20H11V4H13V20ZM18 7H22C22.5523 7 23 7.44772 23 8V21C23 21.5523 22.5523 22 22 22H18C17.4477 22 17 21.5523 17 21V8C17 7.44772 17.4477 7 18 7ZM6 12H2C1.44772 12 1 12.4477 1 13V21C1 21.5523 1.44772 22 2 22H6C6.55228 22 7 21.5523 7 21V13C7 12.4477 6.55228 12 6 12ZM19 9V20H21V9H19ZM5 20H3V14H5V20Z" />
+  </Fill>
+);
+
+export const SuppliersIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 20 20" {...props}>
+    <path d="M.89 10.532l.006-.016.01-.021 2.89-6.508c.402-.905 1.298-1.488 2.287-1.487h7.833c.99 0 1.887.583 2.287 1.487l2.892 6.508.006.015c.01.02.018.043.025.065l-.031-.08c.018.04.032.082.044.124l.011.049c.011.054.017.11.017.165V15c0 1.38-1.12 2.5-2.5 2.5H3.333c-1.38 0-2.5-1.12-2.5-2.5v-4.167l.007-.104c.005-.04.013-.08.023-.118l.002-.007.024-.072zM2.5 15c0 .46.373.833.833.833h13.334c.46 0 .833-.373.833-.833v-3.334h-3.72l-1.42 2.13c-.155.231-.415.37-.693.37H8.333c-.278 0-.538-.139-.693-.37l-1.42-2.13H2.5V15zM13.917 4.167H6.083c-.33 0-.63.194-.763.495L2.948 10h3.719c.238 0 .464.102.62.278l.073.093L8.78 12.5h2.44l1.42-2.129c.155-.232.415-.371.693-.371h3.717l-2.37-5.338c-.134-.301-.433-.496-.763-.495z" />
+  </Fill>
+);
+
 /* Programs */
 export const FileIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -293,6 +332,15 @@ export const FileIcon = (props: IconProps) => (
     <line x1="16" y1="13" x2="8" y2="13" />
     <line x1="16" y1="17" x2="8" y2="17" />
     <polyline points="10 9 9 9 8 9" />
+  </Stroke>
+);
+
+/* Upload zone glyph — a document with an up-arrow (drag & drop target). */
+export const FileUploadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l7 7v11a2 2 0 0 1-2 2h-3" />
+    <polyline points="17 16 12 11 7 16" />
+    <line x1="12" y1="11" x2="12" y2="23" />
   </Stroke>
 );
 

@@ -18,11 +18,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { InfoIcon, PlusCircleIcon } from '../../../ui/icons';
-import {
-  DataTable,
-  type Column,
-  sharedOrMultiple,
-} from '../../../ui/elements/table/DataTable';
+import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCurrencyCell,
   getDateCell,
@@ -217,12 +213,10 @@ const CustomerReturnDetailView: Component = () => {
       c: { key: 'itemName' },
       header: t('label.name'),
       meta: { card: { region: 'primary' }, wrapLines: 2 },
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'batch' },
       header: t('label.batch'),
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'expiryDate' },
@@ -367,10 +361,6 @@ const CustomerReturnDetailView: Component = () => {
                         </Button>
                       )
                     }
-                    rowGroup={{
-                      columnId: 'item.code',
-                      labelKey: 'label.name',
-                    }}
                     config={tableConfig.config()}
                     setConfig={tableConfig.setConfig}
                   />

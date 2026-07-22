@@ -9,7 +9,6 @@ import {
 import { subscribe } from './subscription';
 import { checkAuth } from '../auth/authContext';
 import { refetchStoreContext, currentStoreId } from '../store/storeContext';
-import { locationsResource } from '../domain/location/locationResource';
 import { masterListsResource } from '../domain/masterList/masterListResource';
 import { invalidateCustomTranslations } from '../intl';
 
@@ -47,10 +46,12 @@ let wasSyncing = false;
 // the app is open completes, re-read the session user (store list), the
 // entered store's preferences + permissions, the shared caches, and custom
 // translations — by direct call (kdd/explicit-composition), no re-login.
+// Locations are NOT a shared cache anymore — each view fetches them locally (a
+// fresh view mount re-reads, and the stocktake detail view refetches after every
+// line save), so there is no global locations cache to refresh here.
 const onRunCompleted = () => {
   void checkAuth();
   if (currentStoreId() != null) void refetchStoreContext(currentStoreId());
-  void locationsResource.refetch();
   void masterListsResource.refetch();
   void invalidateCustomTranslations();
 };

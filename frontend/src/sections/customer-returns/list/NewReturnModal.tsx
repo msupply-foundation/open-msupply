@@ -90,7 +90,6 @@ const Body: Component<{ onClose: () => void }> = props => {
         storeId={params.storeId}
         label={t('label.customer-name')}
         placeholder={t('placeholder.search-by-name')}
-        openOnFocus
         testId="customer-search-input"
         onChange={customer => {
           if (customer) void create(customer.id);

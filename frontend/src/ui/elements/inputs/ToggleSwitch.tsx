@@ -8,6 +8,12 @@ export interface ToggleSwitchProps {
   /** Reports the new on/off state. */
   onChange?: (checked: boolean) => void;
   disabled?: boolean;
+  /**
+   * Tone of the "on" state: 'default' (action blue) or 'caution' (brand
+   * orange), for a setting to be careful with (e.g. "on hold"). Off is always
+   * neutral grey — state is never conveyed by colour alone (the thumb moves).
+   */
+  variant?: 'default' | 'caution';
   id?: string;
   class?: string;
   /** Test id on the native input (cross-FE test-id contract). */
@@ -33,6 +39,7 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
     <label
       class={props.class ? `${styles.root} ${props.class}` : styles.root}
       data-disabled={props.disabled ? '' : undefined}
+      data-variant={props.variant ?? 'default'}
     >
       <input
         id={inputId()}

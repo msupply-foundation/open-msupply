@@ -66,6 +66,20 @@
   pointer-events: none;
 }
 
+/* The active panel fills its parent as a flex column: inside a fill-body Page
+   (a flex column with min-block-size 0) the panel becomes the flex child, so a
+   single fill-and-scroll child (a DataTable) claims the full region and scrolls
+   internally — the same contract the Page body gives its own direct child.
+   Inert where the parent isn't a flex column (e.g. the standalone showcase),
+   so it costs nothing there. Only the active panel is in the DOM (Kobalte
+   unmounts the rest), so exactly one panel ever fills. */
+.panel {
+  flex: 1;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* A panel is a tab stop only when it has no tabbable child (Kobalte manages
    this), so when it IS focused the ring must be visible — SC 2.4.7. The
    prototype suppressed it; deliberate deviation. */

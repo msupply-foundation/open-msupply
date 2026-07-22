@@ -10,17 +10,25 @@ import {
   SearchIcon,
   XCircleIcon,
 } from '../../../../ui/icons';
-import { LocationSelect } from '../../../../domain/location';
+import {
+  LocationVolumeSelect,
+  type LocationWithVolume,
+} from '../../../../domain/location';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
 import type { LineErrors } from '../lines/stocktakeLineErrors';
+import type { StocktakeLineFragment } from '../lines/stocktakeDetail.generated';
 
 export interface ChangeLocationActionProps {
   storeId: string;
   selectedIds: () => string[];
   disabled: boolean;
+  /** The store's locations with capacity (fetched by the detail view). */
+  locations: LocationWithVolume[];
+  /** The current lines page — the selected ones' volumes size the picker. */
+  rows: StocktakeLineFragment[];
   /** Apply what committed in place (no refetch). */
   onCommit: (commit: LineEditCommit) => void;
   /**
@@ -74,6 +82,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorCount, setErrorCount] = createSignal(0);
 
+  // The volume the whole move will occupy = Σ (volumePerPack × countedPacks)
+  // over the selected lines, sizing the picker's Available filter so it surfaces
+  // locations that can hold the entire selection (spec/stocktakes AC-VL2).
+  const requiredVolume = () => {
+    const selected = new Set(props.selectedIds());
+    return props.rows
+      .filter(r => selected.has(r.id))
+      .reduce(
+        (sum, r) =>
+          sum + (r.volumePerPack ?? 0) * (r.countedNumberOfPacks ?? 0),
+        0
+      );
+  };
+
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('working');
@@ -104,9 +126,11 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             <>
               <p>{t('messages.confirm-change-location')}</p>
               <FieldRow label={t('label.location')}>
-                <LocationSelect
+                <LocationVolumeSelect
                   label={t('label.location')}
                   hideLabel
+                  locations={props.locations}
+                  volumeRequired={requiredVolume()}
                   value={locationId() ?? undefined}
                   onChange={l => setLocationId(l?.id ?? null)}
                 />
