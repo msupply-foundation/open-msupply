@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
 import { dateToIsoDate } from './dateTimeConvert';
+import { locale } from '../../../intl';
 import styles from './DatePickerPanel.module.css';
 
 export interface DateRange {
@@ -88,7 +89,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
   );
 
   const monthShort = (i: number) =>
-    new Date(2000, i, 1).toLocaleDateString(undefined, { month: 'short' });
+    new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'short' });
 
   const disabled = (day: Date): boolean => {
     if (props.min && dateToIsoDate(day) < dateToIsoDate(props.min)) return true;
@@ -124,7 +125,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               class={styles.headingBtn}
               onClick={() => setView('month')}
             >
-              {ctx.month.toLocaleDateString(undefined, { month: 'long' })}
+              {ctx.month.toLocaleDateString(locale(), { month: 'long' })}
             </button>
             <button
               type="button"
@@ -196,11 +197,11 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
                 {weekday => (
                   <Calendar.HeadCell
                     class={styles.weekday}
-                    abbr={weekday().toLocaleDateString(undefined, {
+                    abbr={weekday().toLocaleDateString(locale(), {
                       weekday: 'long',
                     })}
                   >
-                    {weekday().toLocaleDateString(undefined, {
+                    {weekday().toLocaleDateString(locale(), {
                       weekday: 'narrow',
                     })}
                   </Calendar.HeadCell>

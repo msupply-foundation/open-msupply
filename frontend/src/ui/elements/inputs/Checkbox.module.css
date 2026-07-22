@@ -68,8 +68,8 @@
 
 /* Checked — fill with the brand tone, show the check. */
 .input:checked + .box {
-  background: var(--primary-main);
-  border-color: var(--primary-main);
+  background: var(--secondary-main);
+  border-color: var(--secondary-main);
 }
 
 .input:checked + .box .check {
@@ -79,7 +79,7 @@
 /* Focus-visible ring on the box (the input itself is hidden). */
 .input:focus-visible + .box {
   outline: none;
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 

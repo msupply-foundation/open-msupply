@@ -28,6 +28,8 @@ import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { stocktakePreferences } from '../../../store/storeContext';
 import { PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
 import { t, tPlural } from '../../../intl';
+import { localisedDate } from '../../../intl/formatDateTime';
+import { userDisplayName } from '../../../auth/authContext';
 import { shallowEqual } from '../../../typeHelpers';
 import { dayBefore } from '../../../intl/dateArithmetic';
 import {
@@ -232,7 +234,18 @@ export const CreateStocktakeModal = (props: {
       expiryDate,
       includeAllItems,
     } = form();
-    const base = { id: crypto.randomUUID(), comment: generatedComment() };
+    // Seed a default description on every create mode (spec AC-C9): the server
+    // fabricates no default, so the client composes one — the user's display
+    // name and today's date, both in the active locale. Editable in place
+    // afterward; nothing re-derives it.
+    const base = {
+      id: crypto.randomUUID(),
+      comment: generatedComment(),
+      description: t('stocktake.description-template', {
+        username: userDisplayName(),
+        date: localisedDate(new Date()),
+      }),
+    };
     switch (type) {
       case 'full':
         return { ...base, isAllItemsStocktake: includeAllItems };

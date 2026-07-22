@@ -25,7 +25,7 @@ import {
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, InfoIcon, TruckIcon } from '../../../ui/icons';
+import { CloseIcon, InfoIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -61,6 +61,7 @@ import type { InboundEditFields } from './inboundShipmentEdit';
 import type { InboundLineFilter } from './inboundShipmentLineFilter';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
@@ -113,7 +114,14 @@ const InboundShipmentDetailView: Component = () => {
   const filter = () => query().filter;
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  // Details-panel open state: responsive default (open on very wide viewports —
+  // ≥1536px — closed otherwise), with the user's explicit open/close choice
+  // persisted across reloads (spec ui-standards/layout.md → page regions).
+  // Shared helper so this inherits the reference-vertical behaviour rather than
+  // a bare createSignal. The header's More button opens it; the panel's own
+  // close button closes it — both go through setSidePanelOpen, so both count as
+  // an explicit choice.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [lineErrors, setLineErrors] = createSignal<InboundLineErrors>(
     new Map()
   );
@@ -509,10 +517,15 @@ const InboundShipmentDetailView: Component = () => {
                       invoiceId={node().id}
                       sort={reportSort()}
                     />
+                    {/* More — the closed-panel reopen affordance, at the end
+                        of the app-bar page-action cluster (spec ui-standards/
+                        layout.md → page regions). Shows ONLY while the panel is
+                        closed; uses the sidebar glyph (not the info icon), and
+                        reopening counts as the user's explicit open choice. */}
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"
-                        icon={<InfoIcon />}
+                        icon={<SidebarIcon />}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -660,13 +673,17 @@ const InboundShipmentDetailView: Component = () => {
               </TabPanel>
               <Show when={isExternal()}>
                 <TabPanel value="financial">
-                  <InboundFinancialPanel rows={rows()} />
+                  <InboundFinancialPanel node={node()} rows={rows()} />
                 </TabPanel>
                 <TabPanel value="currency">
-                  <InboundCurrencyPanel node={node()} />
+                  <InboundCurrencyPanel
+                    node={node()}
+                    disabled={isDisabled()}
+                    onSave={saveField}
+                  />
                 </TabPanel>
                 <TabPanel value="delivery">
-                  <InboundDeliveryPanel rows={rows()} />
+                  <InboundDeliveryPanel node={node()} rows={rows()} />
                 </TabPanel>
               </Show>
               <TabPanel value="documents">
