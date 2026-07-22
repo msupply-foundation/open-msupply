@@ -126,7 +126,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       {/* 1 — Additional info: entered by · created · picked date (backdating
           control, disabled with the reason outside its gate) · colour ·
           comment. */}
-      <SidePanelSection title={t('label.additional-info')} collapsible>
+      <SidePanelSection
+        value="additional-info"
+        title={t('label.additional-info')}
+        collapsible
+      >
         <FieldRow label={t('label.entered-by')}>
           <Text variant="body">{props.node.user?.username ?? '—'}</Text>
         </FieldRow>
@@ -170,7 +174,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* 2 — Related documents: the originating customer requisition. */}
-      <SidePanelSection title={t('heading.related-documents')} collapsible>
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+        collapsible
+      >
         <Show
           when={requisition()}
           fallback={
@@ -189,7 +197,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           panel): service charges group · items sell price group · grand
           total · foreign currency. Disabled edit affordances stay visible,
           dimmed — never hidden. */}
-      <SidePanelSection title={t('heading.invoice-details')} collapsible>
+      <SidePanelSection
+        value="invoice-details"
+        title={t('heading.invoice-details')}
+        collapsible
+      >
         {/* Service charges: info bubble + the S5 edit action (dimmed once
             read-only); one row per service line, then sub total / effective
             tax / total. Service tax is edited per line in S5. */}
@@ -325,7 +337,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
       {/* 4 — Transport details: shipping method · expected delivery ·
           transport reference. */}
-      <SidePanelSection title={t('heading.transport-details')} collapsible>
+      <SidePanelSection
+        value="transport-details"
+        title={t('heading.transport-details')}
+        collapsible
+      >
         <FieldRow label={t('label.shipping-method')}>
           <ShippingMethodSelect
             label={t('label.shipping-method')}
@@ -375,7 +391,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       {/* Record actions, pinned at the panel's end (spec S3 § record
           actions): Delete · Make a copy · Copy to clipboard — secondary-tone
           buttons, matching the stocktakes side panel. */}
-      <SidePanelSection title={t('heading.actions')}>
+      <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           <DeleteShipmentAction
             shipmentId={props.node.id}

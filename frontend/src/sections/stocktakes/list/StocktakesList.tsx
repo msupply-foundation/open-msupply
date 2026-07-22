@@ -21,7 +21,6 @@ import {
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
-import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
@@ -66,26 +65,31 @@ type StocktakesListState = {
   first: number;
 };
 
-// Default sort: by stocktake number, newest (highest) first — matches Open
-// mSupply's default and puts the most recent stocktakes at the top. URL-backed,
-// so a user's own header click overrides it (and is shareable/restorable).
+// Default sort: by created date, newest first — matches Open mSupply's list
+// default (Stocktake/ListView useStocktakeList falls back to createdDatetime
+// desc) and puts the most recent stocktakes at the top. URL-backed, so a user's
+// own header click overrides it (and is shareable/restorable).
 const DEFAULT_STATE: StocktakesListState = {
   filter: {},
-  sort: [{ key: 'stocktakeNumber', desc: true }],
+  sort: [{ key: 'createdDatetime', desc: true }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
 };
 
 // Status → chip label + colour token (spread straight into StatusChip). NEW is
 // the neutral grey, FINALISED the terminal "done" green (tokens.css
-// --status-*).
-const statusMeta = (status: StocktakeRow['status']) =>
-  status === 'FINALISED'
-    ? {
-        label: t('status.finalised'),
-        colour: 'var(--status-finalised)',
-      }
-    : { label: t('status.new'), colour: 'var(--status-new)' };
+// --status-*). A locked stocktake is still status NEW, so it keeps the NEW
+// colour but reads "New (On Hold)" — the lock is folded into the Status column
+// (spec/stocktakes S1: there is no separate Locked column), conveyed by text
+// (not colour alone). Matches OMS's ListView status accessorFn.
+const statusMeta = (row: Pick<StocktakeRow, 'status' | 'isLocked'>) => {
+  if (row.status === 'FINALISED')
+    return { label: t('status.finalised'), colour: 'var(--status-finalised)' };
+  return {
+    label: row.isLocked ? t('label.stocktake-on-hold') : t('status.new'),
+    colour: 'var(--status-new)',
+  };
+};
 
 const StocktakesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -106,24 +110,22 @@ const StocktakesList: Component = () => {
 
   // Column config (order/sizing/pinning/visibility), resolved default → global
   // → user and by breakpoint band (kdd/table-state). On COMPACT (narrow
-  // viewport) the default shows only #, status, description and stocktake date
-  // — comment/created/locked start hidden to fit; on base (wide) all columns
-  // show (no default override). Bands don't share, so the compact default
-  // doesn't touch base. "Show" semantics: only the hidden columns are listed,
-  // as false. (User edits persist to app data; the store's global config can
-  // override.)
+  // viewport) the default hides the stocktake number (defaultHideOnMobile in
+  // OMS) so status + description lead the card; on base (wide) all columns show
+  // (no default override). Bands don't share, so the compact default doesn't
+  // touch base. "Show" semantics: only the hidden columns are listed, as false.
+  // (User edits persist to app data; the store's global config can override.)
   const tableConfig = createTableConfig({
     tableId: 'stocktakes',
     defaultConfig: {
       compact: {
         // On a narrow viewport, default to CARD view (ui-standards § tables
-        // auto-below-600) and hide the denser columns; the user can switch back
-        // to table via the toolbar.
+        // auto-below-600) and hide the number; the user can switch back to
+        // table via the toolbar. Created + Comment stay visible (they are not
+        // defaultHideOnMobile in OMS).
         viewMode: 'card',
         columnVisibility: {
-          comment: false,
-          createdDatetime: false,
-          isLocked: false,
+          stocktakeNumber: false,
         },
       },
     },
@@ -252,31 +254,18 @@ const StocktakesList: Component = () => {
       c: { key: 'status' },
       sortKey: 'status',
       header: t('label.status'),
-      cell: info => (
-        <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />
-      ),
+      cell: info => <StatusChip {...statusMeta(info.row.original)} />,
       // Card view: the status chip is the top-right badge.
       meta: { card: { region: 'badge' } },
     },
     {
       c: { key: 'description' },
-      sortKey: 'description',
+      // Not sortable — matches OMS's list (Description has no sort control) and
+      // the spec column table.
       header: t('label.description'),
       // Card view: the description flows in the secondary area. Wraps to 2
       // lines.
       meta: { wrapLines: 2 },
-    },
-    {
-      c: { key: 'comment' },
-      sortKey: 'comment',
-      header: t('label.comment'),
-      ...getCommentCell(),
-    },
-    {
-      c: { key: 'stocktakeDate' },
-      sortKey: 'stocktakeDate',
-      header: t('label.stocktake-date'),
-      ...getDateCell(),
     },
     {
       c: { key: 'createdDatetime' },
@@ -285,11 +274,10 @@ const StocktakesList: Component = () => {
       ...getDateCell(),
     },
     {
-      c: { key: 'isLocked' },
-      header: t('label.locked'),
-      // Yes/No text — the Locked column shows both states (spec/stocktakes
-      // ui-surface S1 col 6). A tick/dot would only mark the locked state.
-      ...getBooleanCell({ display: 'yesNo' }),
+      c: { key: 'comment' },
+      // Not sortable — matches OMS's list column set.
+      header: t('label.comment'),
+      ...getCommentCell(),
     },
   ];
 

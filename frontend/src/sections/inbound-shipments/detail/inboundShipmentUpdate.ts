@@ -1,4 +1,5 @@
-import { graphqlFetch } from '../../../api/graphql';
+import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import { translateServerError } from '../../../intl/intlUtils';
 import {
   UpdateInboundShipment,
   UpdateInboundShipmentExternal,
@@ -19,16 +20,39 @@ import {
 // check gates every twinned mutation on every call). `isExternal` is derived
 // once from the shipment and threaded through, so the view never picks the
 // wrong twin.
+//
+// The server rejects an action two ways (contract → typed vs non-typed
+// rejections): a TYPED member inside the response union (read
+// `error.description`), or an UNTYPED top-level `Bad user input` whose Rust
+// variant name is in `extensions.details`. Every runner opts into
+// `returnGraphqlErrors` so the untyped kind comes back as a `graphqlError`
+// result we translate and surface inline — WITHOUT it, an untyped rejection
+// trips the global unexpected-error modal (a full-page crash), which is exactly
+// the S7 "never a toast, surfaced inline" contract broken. Unauthenticated /
+// unexpected / transport failures still route globally (graphqlFetch keeps
+// those; only Forbidden shifts to the caller under returnGraphqlErrors — a
+// mutation the user can't perform then reads as an inline rejection, acceptable
+// for these edit surfaces).
 
 export const isExternalShipment = (info: {
   purchaseOrderId?: string | null;
 }): boolean => info.purchaseOrderId != null;
 
+// A top-level (untyped) rejection carries the Rust variant name in
+// `extensions.details`; translate it to a human message (falls back to a
+// sentence-cased form of the identifier), else the bare GraphQL message.
+const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
+  const detail = errors[0]?.extensions?.details;
+  if (typeof detail === 'string' && detail.length > 0)
+    return translateServerError(detail);
+  return errors[0]?.message ?? translateServerError('UnknownError');
+};
+
 // A header/status update. Returns a discriminated result so a caller can
 // surface the server's verdict inline (spec S7 → action verdicts): buffered
 // field saves ignore the 'error' case (the UI disables the field when not
-// editable, so a rejection there is unexpected), while the status control and
-// currency/charges panel show `message` in place.
+// editable, so a rejection there is unexpected), while the status control,
+// received-date field, and currency/charges panel show `message` in place.
 export type InboundUpdateResult =
   | { kind: 'saved'; node: InboundInfoFragment }
   | { kind: 'error'; message: string }
@@ -40,24 +64,33 @@ export const updateInboundShipment = async (
   input: UpdateInboundShipmentVariables['input']
 ): Promise<InboundUpdateResult> => {
   // Branch (not a document union) so graphqlFetch infers each twin's types.
-  const response = isExternal
-    ? await graphqlFetch(UpdateInboundShipmentExternal, {
-        storeId,
-        input,
-      }).then(r =>
-        r.kind === 'success' ? r.data.updateInboundShipmentExternal : undefined
+  const result = isExternal
+    ? await graphqlFetch(
+        UpdateInboundShipmentExternal,
+        { storeId, input },
+        { returnGraphqlErrors: true }
       )
-    : await graphqlFetch(UpdateInboundShipment, { storeId, input }).then(r =>
-        r.kind === 'success' ? r.data.updateInboundShipment : undefined
+    : await graphqlFetch(
+        UpdateInboundShipment,
+        { storeId, input },
+        { returnGraphqlErrors: true }
       );
-  if (!response) return { kind: 'failed' };
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response =
+    'updateInboundShipmentExternal' in result.data
+      ? result.data.updateInboundShipmentExternal
+      : result.data.updateInboundShipment;
   if (response.__typename === 'InvoiceNode')
     return { kind: 'saved', node: response };
   return { kind: 'error', message: response.error.description };
 };
 
 // Convenience for the buffered field/colour/hold saves: route the (unexpected)
-// rejection path away and hand back the fresh node on success.
+// rejection path away and hand back the fresh node on success. Callers that
+// need the rejection message (e.g. backdating the received date) call
+// `updateInboundShipment` directly and read its `error` case.
 export const saveInboundShipmentFields = async (
   storeId: string,
   isExternal: boolean,
@@ -75,26 +108,47 @@ export type BatchOutcome = {
   applied: boolean;
   /** Per-line failures, keyed by the line id the failure is about. */
   errors: InboundLineErrors;
+  /**
+   * A batch-level rejection that aborted the whole (all-or-nothing) batch — an
+   * untyped `Bad user input` top-level error (e.g. a future manufacture date or
+   * a pack size below one). Not keyed to a line, so the caller shows it as the
+   * modal's banner rather than a row indicator.
+   */
+  message?: string;
 };
 
 // Run a line/service-line batch (insert/update/delete + insert-from-internal-
 // order), picking the plain vs external twin. All-or-nothing by default
-// (continueOnError omitted). Transport/NodeError → null (global modal already
-// showed it). Otherwise returns which ops applied and any per-line errors.
+// (continueOnError omitted). Transport/unexpected → null (the global modal
+// already showed it). An untyped top-level rejection → a batch-level `message`.
+// Otherwise returns which ops applied and any per-line errors.
 export const runInboundBatch = async (
   storeId: string,
   isExternal: boolean,
   input: BatchInboundShipmentVariables['input']
 ): Promise<BatchOutcome | null> => {
-  const batch = isExternal
-    ? await graphqlFetch(BatchInboundShipmentExternal, { storeId, input }).then(
-        r =>
-          r.kind === 'success' ? r.data.batchInboundShipmentExternal : undefined
+  const result = isExternal
+    ? await graphqlFetch(
+        BatchInboundShipmentExternal,
+        { storeId, input },
+        { returnGraphqlErrors: true }
       )
-    : await graphqlFetch(BatchInboundShipment, { storeId, input }).then(r =>
-        r.kind === 'success' ? r.data.batchInboundShipment : undefined
+    : await graphqlFetch(
+        BatchInboundShipment,
+        { storeId, input },
+        { returnGraphqlErrors: true }
       );
-  if (!batch) return null;
+  if (result.kind === 'graphqlError')
+    return {
+      applied: false,
+      errors: new Map(),
+      message: untypedRejectionMessage(result.errors),
+    };
+  if (result.kind !== 'success') return null;
+  const batch =
+    'batchInboundShipmentExternal' in result.data
+      ? result.data.batchInboundShipmentExternal
+      : result.data.batchInboundShipment;
   return summariseBatch(batch);
 };
 
@@ -146,42 +200,49 @@ const summariseBatch = (batch: BatchResultFragment): BatchOutcome => {
 };
 
 // Delete a whole shipment (side panel). Picks the twin; returns the server's
-// rejection message on a typed error, or undefined on success/transport-fail
-// (the latter already surfaced globally).
+// rejection message on a typed error OR an untyped top-level rejection, or
+// undefined on success/transport-fail (the latter already surfaced globally).
 export const deleteInboundShipment = async (
   storeId: string,
   isExternal: boolean,
   id: string
 ): Promise<{ ok: boolean; message?: string }> => {
-  const response = isExternal
-    ? await graphqlFetch(DeleteInboundShipmentExternal, {
-        storeId,
-        input: { id },
-      }).then(r =>
-        r.kind === 'success' ? r.data.deleteInboundShipmentExternal : undefined
+  const result = isExternal
+    ? await graphqlFetch(
+        DeleteInboundShipmentExternal,
+        { storeId, input: { id } },
+        { returnGraphqlErrors: true }
       )
-    : await graphqlFetch(DeleteInboundShipment, {
-        storeId,
-        input: { id },
-      }).then(r =>
-        r.kind === 'success' ? r.data.deleteInboundShipment : undefined
+    : await graphqlFetch(
+        DeleteInboundShipment,
+        { storeId, input: { id } },
+        { returnGraphqlErrors: true }
       );
-  if (!response) return { ok: false };
+  if (result.kind === 'graphqlError')
+    return { ok: false, message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { ok: false };
+  const response =
+    'deleteInboundShipmentExternal' in result.data
+      ? result.data.deleteInboundShipmentExternal
+      : result.data.deleteInboundShipment;
   if (response.__typename === 'DeleteResponse') return { ok: true };
   return { ok: false, message: response.error.description };
 };
 
 // Bulk-add empty stock lines from a master list (spec AC-ML1). Returns the
-// count added, or a rejection message.
+// count added, or a rejection message (typed member OR untyped top-level).
 export const addFromMasterList = async (
   storeId: string,
   shipmentId: string,
   masterListId: string
 ): Promise<{ ok: boolean; added?: number; message?: string }> => {
-  const result = await graphqlFetch(AddToInboundShipmentFromMasterList, {
-    storeId,
-    input: { shipmentId, masterListId },
-  });
+  const result = await graphqlFetch(
+    AddToInboundShipmentFromMasterList,
+    { storeId, input: { shipmentId, masterListId } },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { ok: false, message: untypedRejectionMessage(result.errors) };
   if (result.kind !== 'success') return { ok: false };
   const response = result.data.addToInboundShipmentFromMasterList;
   if (response.__typename === 'InvoiceLineConnector')
