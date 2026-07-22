@@ -1,4 +1,5 @@
 import {
+  createMemo,
   createResource,
   createSignal,
   For,
@@ -14,6 +15,8 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
+import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { Select } from '../../../../ui/elements/selectors/Select';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { PlusCircleIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
 import {
@@ -34,18 +37,24 @@ export interface ServiceLineModalProps {
   onSaved: () => void;
 }
 
-// The service-charge modal (spec S6): a small table of service lines (name,
-// before-tax total, note) with Add charge (disabled when no service item
-// exists or the shipment isn't editable). Service lines carry a charge only —
-// no item/batch/stock (rules → service lines). Saved as one batch on OK.
+// The service-charge modal (spec S6): a table of service lines. Each line names
+// a SERVICE item (a lookup, not free text — rules → service lines), carries a
+// note, a before-tax amount, and its own tax rate; the after-tax total is
+// derived (amount × (1 + tax/100)). Add charges is disabled when no service
+// item exists or the shipment isn't editable. Saved as one batch on OK.
 type DraftRow = {
   id: string;
+  itemId: string;
   name: string;
   totalBeforeTax: number;
+  taxPercentage: number;
   note: string;
   isNew: boolean;
   deleted: boolean;
 };
+
+const lineTotalAfterTax = (row: DraftRow): number =>
+  row.totalBeforeTax * (1 + (row.taxPercentage || 0) / 100);
 
 export const ServiceLineModal: Component<ServiceLineModalProps> = props => (
   <Show when={props.open}>
@@ -58,7 +67,8 @@ const Body: Component<ServiceLineModalProps> = props => {
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
-  // Existing service lines + the store's service items (for a default item id).
+  // Existing service lines + the store's visible service items (the Name
+  // column's lookup options; first is the default for a new charge).
   const [loaded] = createResource(async () => {
     const [linesResult, itemsResult] = await Promise.all([
       graphqlFetch(InboundServiceLines, {
@@ -78,36 +88,57 @@ const Body: Component<ServiceLineModalProps> = props => {
     setRows(
       lines.map(line => ({
         id: line.id,
+        itemId: line.itemId,
         name: line.itemName,
         totalBeforeTax: line.totalBeforeTax,
+        taxPercentage: line.taxPercentage ?? 0,
         note: line.note ?? '',
         isNew: false,
         deleted: false,
       }))
     );
-    const serviceItemId =
+    const serviceItems =
       itemsResult.kind === 'success' &&
       itemsResult.data.items.__typename === 'ItemConnector'
-        ? itemsResult.data.items.nodes[0]?.id
-        : undefined;
-    return { serviceItemId };
+        ? itemsResult.data.items.nodes
+        : [];
+    return { serviceItems };
   });
 
-  const serviceItemId = () => loaded()?.serviceItemId;
+  const serviceItems = () => loaded()?.serviceItems ?? [];
+  const itemOptions = createMemo(() =>
+    serviceItems().map(item => ({ value: item.id, label: item.name }))
+  );
   const visibleRows = () => rows.filter(r => !r.deleted);
 
   const addCharge = () => {
+    const first = serviceItems()[0];
+    if (!first) return;
     setRows(
       produce(draft =>
         draft.push({
           id: crypto.randomUUID(),
-          name: t('label.service-charge'),
+          itemId: first.id,
+          name: first.name,
           totalBeforeTax: 0,
+          taxPercentage: 0,
           note: '',
           isNew: true,
           deleted: false,
         })
       )
+    );
+  };
+
+  const selectItem = (index: number, itemId: string) => {
+    const item = serviceItems().find(i => i.id === itemId);
+    if (!item) return;
+    setRows(
+      index,
+      produce(row => {
+        row.itemId = item.id;
+        row.name = item.name;
+      })
     );
   };
 
@@ -124,17 +155,22 @@ const Body: Component<ServiceLineModalProps> = props => {
       .map(r => ({
         id: r.id,
         invoiceId: props.invoiceId,
-        itemId: serviceItemId(),
+        itemId: r.itemId,
         name: r.name,
         totalBeforeTax: r.totalBeforeTax,
+        taxPercentage: r.taxPercentage,
         note: r.note || undefined,
       }));
+    // Update takes tax as the TaxInput wrapper (`tax: { percentage }`), unlike
+    // insert's flat `taxPercentage` — mirror the generated input shapes.
     const update = rows
       .filter(r => !r.isNew && !r.deleted)
       .map(r => ({
         id: r.id,
+        itemId: r.itemId,
         name: r.name,
         totalBeforeTax: r.totalBeforeTax,
+        tax: { percentage: r.taxPercentage },
         note: r.note,
       }));
     const del = rows
@@ -172,15 +208,16 @@ const Body: Component<ServiceLineModalProps> = props => {
       dismissable={!saving()}
       onClose={props.onClose}
       title={t('heading.service-charges')}
-      testId="service-line-modal"
+      testId="service-charges-modal"
+      widthRem={60}
       headerActions={
         <Button
           icon={<PlusCircleIcon />}
-          disabled={props.disabled || !serviceItemId()}
+          disabled={props.disabled || serviceItems().length === 0}
           data-testid="add-charge-button"
           onClick={addCharge}
         >
-          {t('label.add-charge')}
+          {t('label.add-charges')}
         </Button>
       }
       actionsLead={
@@ -193,6 +230,7 @@ const Body: Component<ServiceLineModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
@@ -226,29 +264,45 @@ const Body: Component<ServiceLineModalProps> = props => {
                     'margin-block-end': 'var(--space-2)',
                   }}
                 >
-                  <TextField
+                  <Select
                     label={t('label.name')}
-                    value={row.name}
+                    options={itemOptions()}
+                    value={row.itemId}
+                    disabled={props.disabled}
+                    onValueChange={itemId => selectItem(index(), itemId)}
+                  />
+                  <TextField
+                    label={t('label.comment')}
+                    value={row.note}
                     disabled={props.disabled}
                     onInput={e =>
-                      setRows(index(), 'name', e.currentTarget.value)
+                      setRows(index(), 'note', e.currentTarget.value)
                     }
                   />
                   <CurrencyField
-                    label={t('label.total-before-tax')}
+                    label={t('label.amount')}
                     value={row.totalBeforeTax}
                     disabled={props.disabled}
                     onChange={value =>
                       setRows(index(), 'totalBeforeTax', value ?? 0)
                     }
                   />
-                  <TextField
-                    label={t('label.note')}
-                    value={row.note}
+                  <NumberField
+                    label={t('label.tax')}
+                    value={row.taxPercentage}
+                    min={0}
+                    max={100}
+                    decimalLimit={2}
+                    endAdornment="%"
                     disabled={props.disabled}
-                    onInput={e =>
-                      setRows(index(), 'note', e.currentTarget.value)
+                    onChange={value =>
+                      setRows(index(), 'taxPercentage', value ?? 0)
                     }
+                  />
+                  <CurrencyField
+                    label={t('label.total')}
+                    value={lineTotalAfterTax(row)}
+                    disabled
                   />
                   <IconButton
                     icon={<TrashIcon />}
