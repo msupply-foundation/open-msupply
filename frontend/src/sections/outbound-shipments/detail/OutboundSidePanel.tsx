@@ -6,6 +6,7 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
+import { A } from '@solidjs/router';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -186,9 +187,13 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           }
         >
           {req => (
-            <Text variant="body">
+            // TODO: link the specific requisition
+            // (…/customer-requisition/${req().id}) once the requisitions
+            // vertical exists — until then the path below is the nav
+            // placeholder EntryPage, so this links the section generically.
+            <A href={`/${props.storeId}/distribution/customer-requisition`}>
               {t('label.requisition')} #{req().requisitionNumber}
-            </Text>
+            </A>
           )}
         </Show>
       </SidePanelSection>
