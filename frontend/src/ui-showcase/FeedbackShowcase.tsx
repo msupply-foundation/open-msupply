@@ -3,6 +3,7 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
+import { Comment } from '../ui/elements/feedback/Comment';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
 import styles from './FeedbackShowcase.module.css';
 
@@ -138,6 +139,28 @@ export const FeedbackShowcase = () => {
             shipment line are counted in packs, not units. This one prefers{' '}
             <code>top-start</code> and flips below when there's no room above.
           </Popover>
+        </div>
+      </Card>
+
+      <Card
+        title="Comment — a note behind an icon"
+        lead={
+          <>
+            The list table's comment column (and any note that hides behind an
+            icon): a quiet <code>MessageSquareIcon</code> that reveals its text
+            in a popover — a bold heading over the body — on hover / focus, and
+            on click / tap too (so it opens on touch). A thin wrapper over{' '}
+            <code>Popover</code>; renders nothing when there is no comment, so a
+            cell can drop it in unconditionally.
+          </>
+        }
+      >
+        <div class={styles.popoverRow}>
+          <Comment comment="Split delivery agreed with the customer — second carton follows on Thursday's flight to Buka." />
+          <span>
+            ← hover or tap the icon. An empty comment renders nothing:{' '}
+          </span>
+          <Comment comment={null} />
         </div>
       </Card>
     </div>

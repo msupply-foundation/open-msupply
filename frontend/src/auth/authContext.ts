@@ -21,6 +21,18 @@ export type AuthUser = UserInfoFragment;
 const [user, setUser] = createSignal<AuthUser | undefined>(undefined);
 export const authUser = user;
 
+// A human display name for the current user: first + last name when set,
+// falling back to the login username. The GraphQL UserNode carries no single
+// `name` field (unlike the real app's cookie-sourced user.name), so we compose
+// one from the parts the UserInfo fragment fetches. Empty string when no user
+// is loaded. Reactive (reads authUser) so call sites stay live across login.
+export const userDisplayName = (): string => {
+  const u = user();
+  if (!u) return '';
+  const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+  return fullName || u.username;
+};
+
 // Spec (Unexpected logout): set when any GraphQL call returns unauthenticated —
 // reported by graphqlFetch. Cleared by a successful login.
 const [unauthenticated, setUnauthenticated] = createSignal(false);

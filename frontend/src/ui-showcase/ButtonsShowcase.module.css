@@ -56,3 +56,11 @@
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
+
+/* Statically shows Button's focus ring in the showcase — the real :focus-visible
+   only appears on keyboard focus, so this mirrors it (same tokens, tracks theme)
+   for a persistent "Focus" swatch. Doc-only; not a component style. */
+.focusDemo {
+  outline: 3px solid var(--secondary-main);
+  outline-offset: 0.125rem;
+}

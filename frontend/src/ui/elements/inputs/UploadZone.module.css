@@ -12,6 +12,11 @@
   gap: 0.5rem;
   width: 100%;
   padding: 2rem 1.5rem;
+  /* Contain the visually-hidden native input (.hiddenInput, position:absolute):
+     with no positioned ancestor it escapes to document space and stretches the
+     viewport's scrollHeight — a second, document-level scrollbar (same fix as
+     TextField's .labelHidden). */
+  position: relative;
   border: 2px dashed var(--secondary-main);
   border-radius: 1rem;
   background: color-mix(in srgb, var(--secondary-main) 7%, transparent);

@@ -99,6 +99,19 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     name
   }
+  # Campaign / program (ungated field, spec/stocktakes S4 — like manufacturer, no
+  # store-preference gate). The line-editor's Other tab pairs them in ONE picker:
+  # campaigns (store-wide) plus the item's programs, mutually exclusive. Both are
+  # read as nodes for the picker's current label; written via campaignId/programId
+  # on save. Selecting a campaign clears the program and vice versa.
+  campaign {
+    id
+    name
+  }
+  program {
+    id
+    name
+  }
 }
 
 query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
@@ -393,6 +406,17 @@ query stockLinesByItem(
           name
         }
         manufacturer(storeId: $storeId) {
+          id
+          name
+        }
+        # Seed a new-batch draft's campaign/program from the stock line it opts in
+        # (ungated, like manufacturer — spec S4). Nodes so the picker can label the
+        # seeded value; the editor writes campaignId/programId on save.
+        campaign {
+          id
+          name
+        }
+        program {
           id
           name
         }

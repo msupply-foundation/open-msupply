@@ -13,9 +13,14 @@ import {
   type GenerateResult,
 } from '../reportFiles';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
+import { timezoneArgument } from '../json-forms/schema';
 import { listReportsByContext, type Report } from './reportsResource';
 import type { ReportContext } from './reportsResource';
-import { generateReport, type PrintFormat, type ReportSort } from './generateReport';
+import {
+  generateReport,
+  type PrintFormat,
+  type ReportSort,
+} from './generateReport';
 import { reportLabel } from './reportLabel';
 
 // S4 — the record-screen report selector (spec/reports S4). The reports
@@ -103,11 +108,15 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     const report = selected();
     if (!report) return;
     setPhase('generating');
+    // The user's timezone travels even when the report has no argument form —
+    // shipped templates read `arguments.timezone` unconditionally, and the
+    // captured client sends `{ timezone }` alone on this path (AC-R11). Form
+    // args, when present, already contain it and win on key collision.
     const result = await generateReport({
       reportId: report.id,
       dataId: props.dataId,
       format,
-      args,
+      args: { ...timezoneArgument(), ...args },
       sort: props.sort,
     });
     await deliver(result, format);
@@ -175,10 +184,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
           </>
         }
       >
-        <Show
-          when={!reports.loading}
-          fallback={<Spinner center />}
-        >
+        <Show when={!reports.loading} fallback={<Spinner center />}>
           <Show
             when={options().length > 0}
             fallback={<div>{t('error.no-forms-available')}</div>}
@@ -195,7 +201,9 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             />
           </Show>
           <Show when={phase() === 'error'}>
-            <Alert severity="error">{t('messages.error-printing-report')}</Alert>
+            <Alert severity="error">
+              {t('messages.error-printing-report')}
+            </Alert>
           </Show>
           <Show when={busy()}>
             <Spinner center />

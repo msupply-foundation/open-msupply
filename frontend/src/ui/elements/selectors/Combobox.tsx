@@ -84,8 +84,21 @@ interface ComboboxProps<T> {
    * can't take a pass-through attribute.
    */
   inputTestId?: string;
+  /**
+   * Replace the option list with a "Loading…" row (and suppress "no matches").
+   * Pass it only when there's nothing sensible to show: a server-mode caller
+   * holding rows it can still present (e.g. AsyncCombobox's client-filtered
+   * interim list while a refetch is pending) keeps this false so the list isn't
+   * blanked mid-keystroke.
+   */
   loading?: boolean;
   disabled?: boolean;
+  /**
+   * Whether a committed selection can be cleared (the clear button). Default
+   * true; pass false for a field that must always hold a value — e.g. an
+   * outbound shipment's customer, changeable but never emptied.
+   */
+  clearable?: boolean;
   // --- Server mode ------------------------------------------------------
   // Passing `onInputChange` switches the combobox to SERVER mode: the caller
   // owns filtering (it (re)fetches `items` from the input), so the built-in
@@ -316,10 +329,11 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           aria-label={props.hideLabel ? props.label : undefined}
           aria-invalid={props.error ? 'true' : undefined}
         />
-        <Show when={selected() !== null}>
+        <Show when={(props.clearable ?? true) && selected() !== null}>
           <button
             type="button"
             class={styles.clear}
+            disabled={props.disabled}
             aria-label="Clear selection"
             onClick={() => {
               handleChange(null);

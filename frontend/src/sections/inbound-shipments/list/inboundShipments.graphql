@@ -1,0 +1,95 @@
+# Inbound-shipment LIST screen (spec/inbound-shipments S1) + list bulk delete.
+# `type` is BOTH a node filter and the permission selector (contract →
+# permissions): the two inbound scopes are disjoint buckets — INBOUND_SHIPMENT
+# is purchaseOrderId IS NULL (manual/transfer), INBOUND_SHIPMENT_EXTERNAL is
+# PO-linked — so the full set is the union of both. Requesting a scope the user
+# lacks refuses the WHOLE list, so the caller passes only the query scopes it
+# holds (see InboundShipmentsList). The store scope is forced server-side.
+
+fragment InboundRow on InvoiceNode {
+  id
+  invoiceNumber
+  otherPartyName
+  otherPartyId
+  # A non-null `store` marks a supplier that is itself another store in the
+  # system (internal, building icon) vs an external supplier (truck) — spec S1
+  # column 1, matching the NameSearch truck-vs-building convention.
+  otherParty(storeId: $storeId) {
+    store {
+      id
+    }
+  }
+  status
+  onHold
+  inboundType
+  colour
+  comment
+  theirReference
+  createdDatetime
+  deliveredDatetime
+  purchaseOrderId
+  requisition {
+    id
+    requisitionNumber
+  }
+  purchaseOrder {
+    id
+    number
+  }
+  pricing {
+    totalAfterTax
+  }
+}
+
+query inboundShipments(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: InvoiceFilterInput
+  $sort: [InvoiceSortInput!]
+  $type: [InvoiceTypeInput!]
+) {
+  invoices(
+    storeId: $storeId
+    page: $page
+    filter: $filter
+    sort: $sort
+    type: $type
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundRow
+      }
+    }
+  }
+}
+
+# Bulk delete from the list (spec AC-L3). One batch, all-or-nothing by default
+# (spec AC-BA1). Per-id typed error surfaces on DeleteInboundShipmentError.
+mutation deleteInboundShipments(
+  $storeId: String!
+  $ids: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipment(
+    storeId: $storeId
+    input: { deleteInboundShipments: $ids }
+  ) {
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
