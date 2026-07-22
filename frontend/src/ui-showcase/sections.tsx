@@ -24,6 +24,7 @@ import { SidePanelShowcase } from './SidePanelShowcase';
 import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
 import { CardGridShowcase } from './CardGridShowcase';
+import { ChartsShowcase } from './ChartsShowcase';
 import { FormsShowcase } from './FormsShowcase';
 
 export type SectionCategory = 'components' | 'layout';
@@ -119,6 +120,12 @@ export const sections: SectionDef[] = [
     id: 'statistics',
     label: 'Statistics',
     component: StatisticsShowcase,
+    category: 'components',
+  },
+  {
+    id: 'charts',
+    label: 'Charts',
+    component: ChartsShowcase,
     category: 'components',
   },
   {
