@@ -25,7 +25,10 @@ describe('backdatingGate (AC-B1)', () => {
         shipmentsEnabled: false,
         panelDisabled: false,
       })
-    ).toEqual({ enabled: false, reasonKey: 'messages.backdating-not-enabled' });
+    ).toEqual({
+      enabled: false,
+      reasonKey: 'messages.received-date-backdating-not-enabled',
+    });
   });
 
   it('is disabled with the "only new" reason past NEW (preference on, still editable)', () => {

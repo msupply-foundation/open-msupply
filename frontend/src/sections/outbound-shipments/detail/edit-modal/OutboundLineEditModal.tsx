@@ -100,11 +100,12 @@ export const OutboundLineEditModal = (
 
 // Resolve the shared distribution warnings (src/domain/allocation
 // deriveIssueWarnings) to the editor's inline banner strings. The mapping —
-// over-allocation surfaced (AC-AL3) and ONE banner per skipped category
-// (AC-AL2), never collapsed — is the pure issueWarningMessages (unit-tested in
-// ./allocationWarnings); here we only resolve its message keys via t(). The
-// shortfall is NOT reported here — outbound surfaces it as the dedicated
-// placeholder notice (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
+// over-allocation surfaced (AC-AL3) and every skipped category reported
+// (AC-AL2) — is the pure issueWarningMessages (unit-tested in
+// ./allocationWarnings); here we only resolve its keys/params via t(), reusing
+// the same ported vocabulary the bulk allocate report uses. The shortfall is
+// NOT reported here — outbound surfaces it as the dedicated placeholder notice
+// (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
 const warningMessages = (
   derived: readonly IssueWarning[],
   requestedUnits: number
@@ -115,7 +116,9 @@ const warningMessages = (
           quantity: formatNumber(message.quantity),
           issueQuantity: formatNumber(message.issueQuantity),
         })
-      : t(message.key)
+      : t(message.key, {
+          reasons: message.reasons.map(reason => t(reason)).join(', '),
+        })
   );
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {

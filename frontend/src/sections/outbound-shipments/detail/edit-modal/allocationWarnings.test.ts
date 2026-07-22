@@ -10,7 +10,7 @@ describe('issueWarningMessages (AC-AL2/AL3)', () => {
     ]);
   });
 
-  it('maps EACH skipped category to its own banner — never collapsed (AC-AL2)', () => {
+  it('reports every skipped category, reusing the ported label tokens (AC-AL2)', () => {
     const derived: IssueWarning[] = [
       {
         kind: 'skipped-barred',
@@ -18,18 +18,26 @@ describe('issueWarningMessages (AC-AL2/AL3)', () => {
       },
     ];
     expect(issueWarningMessages(derived, 0)).toEqual([
-      { key: 'messages.stock-on-hold' },
-      { key: 'messages.stock-expired' },
-      { key: 'messages.stock-unusable-vvm' },
+      {
+        key: 'messages.allocated-lines-skipped-line-reasons',
+        reasons: [
+          'label.on-hold',
+          'label.expired',
+          'label.unusable-vvm-status',
+        ],
+      },
     ]);
   });
 
-  it('maps a single skip reason', () => {
+  it('reports a single skip reason', () => {
     const derived: IssueWarning[] = [
       { kind: 'skipped-barred', reasons: ['on-hold'] },
     ];
     expect(issueWarningMessages(derived, 0)).toEqual([
-      { key: 'messages.stock-on-hold' },
+      {
+        key: 'messages.allocated-lines-skipped-line-reasons',
+        reasons: ['label.on-hold'],
+      },
     ]);
   });
 
@@ -38,14 +46,17 @@ describe('issueWarningMessages (AC-AL2/AL3)', () => {
     expect(issueWarningMessages(derived, 20)).toEqual([]);
   });
 
-  it('combines over-allocation and per-category skips', () => {
+  it('combines over-allocation and skipped categories', () => {
     const derived: IssueWarning[] = [
       { kind: 'over-allocated', units: 2 },
       { kind: 'skipped-barred', reasons: ['expired'] },
     ];
     expect(issueWarningMessages(derived, 8)).toEqual([
       { key: 'messages.over-allocated', quantity: 10, issueQuantity: 8 },
-      { key: 'messages.stock-expired' },
+      {
+        key: 'messages.allocated-lines-skipped-line-reasons',
+        reasons: ['label.expired'],
+      },
     ]);
   });
 

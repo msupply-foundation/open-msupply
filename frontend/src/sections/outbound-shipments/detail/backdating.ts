@@ -4,7 +4,8 @@
 // returned message KEYS via t() and owns the stocktake-conflict query).
 
 export type BackdatingReasonKey =
-  'messages.backdating-not-enabled' | 'messages.picked-date-not-new';
+  | 'messages.received-date-backdating-not-enabled'
+  | 'messages.picked-date-not-new';
 
 export interface BackdatingGate {
   enabled: boolean;
@@ -26,7 +27,10 @@ export const backdatingGate = (opts: {
   const enabled = !opts.panelDisabled && opts.shipmentsEnabled && isNew;
   if (enabled || opts.panelDisabled) return { enabled };
   if (!opts.shipmentsEnabled)
-    return { enabled, reasonKey: 'messages.backdating-not-enabled' };
+    return {
+      enabled,
+      reasonKey: 'messages.received-date-backdating-not-enabled',
+    };
   if (!isNew) return { enabled, reasonKey: 'messages.picked-date-not-new' };
   return { enabled };
 };
