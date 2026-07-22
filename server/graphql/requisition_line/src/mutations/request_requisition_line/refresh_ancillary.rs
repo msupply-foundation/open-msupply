@@ -107,6 +107,7 @@ fn map_response(
                         requisition_line_row: row,
                         requisition_row: Default::default(),
                         item_row: Default::default(),
+                        months_of_stock_row: Default::default(),
                     })
                 })
                 .collect();

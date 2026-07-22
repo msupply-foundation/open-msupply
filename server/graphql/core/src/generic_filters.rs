@@ -1,6 +1,6 @@
 use async_graphql::{InputObject, InputType};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{DateFilter, DatetimeFilter, EqualFilter, StringFilter};
+use repository::{DateFilter, DatetimeFilter, EqualFilter, FloatFilter, StringFilter};
 
 // simple string filter
 #[derive(InputObject, Clone)]
@@ -102,6 +102,29 @@ impl From<DateFilterInput> for DateFilter {
             equal_to: f.equal_to,
             before_or_equal_to: f.before_or_equal_to,
             after_or_equal_to: f.after_or_equal_to,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct FloatFilterInput {
+    pub equal_to: Option<f64>,
+    pub below_or_equal_to: Option<f64>,
+    pub above_or_equal_to: Option<f64>,
+    /// Strict less-than (exclusive)
+    pub below_than: Option<f64>,
+    /// Strict greater-than (exclusive)
+    pub above_than: Option<f64>,
+}
+
+impl From<FloatFilterInput> for FloatFilter {
+    fn from(f: FloatFilterInput) -> Self {
+        FloatFilter {
+            equal_to: f.equal_to,
+            below_or_equal_to: f.below_or_equal_to,
+            above_or_equal_to: f.above_or_equal_to,
+            below_than: f.below_than,
+            above_than: f.above_than,
         }
     }
 }

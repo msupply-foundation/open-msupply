@@ -9,7 +9,9 @@ use graphql_core::{
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
 use repository::{EqualFilter, ItemType, PaginationOption, StringFilter};
-use repository::{ItemCondition, ItemFilter, ItemSort, ItemSortField};
+use repository::{
+    ItemCondition, ItemFilter, ItemNotInRecordFilter, ItemNotInRecordType, ItemSort, ItemSortField,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     item::get_items,
@@ -31,6 +33,30 @@ pub struct ItemSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::ItemNotInRecordType")]
+pub enum ItemNotInRecordTypeInput {
+    Stocktake,
+    Requisition,
+    Invoice,
+}
+
+#[derive(InputObject, Clone)]
+pub struct ItemNotInRecordFilterInput {
+    pub record: ItemNotInRecordTypeInput,
+    pub id: String,
+}
+
+impl From<ItemNotInRecordFilterInput> for ItemNotInRecordFilter {
+    fn from(f: ItemNotInRecordFilterInput) -> Self {
+        ItemNotInRecordFilter {
+            record: ItemNotInRecordType::from(f.record),
+            id: f.id,
+        }
+    }
 }
 
 #[derive(InputObject, Clone)]
@@ -66,6 +92,8 @@ pub struct ItemFilterInput {
     pub with_recent_consumption: Option<bool>,
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
     pub universal_code: Option<StringFilterInput>,
+    /// Excludes items already present as a line on the given record
+    pub not_in_record: Option<ItemNotInRecordFilterInput>,
 
     /// Dynamic filter condition AST, currently supporting property conditions
     /// on keys visible for the "item" table scope, e.g.
@@ -153,6 +181,7 @@ impl ItemFilterInput {
             with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
             universal_code,
+            not_in_record,
             // Parsed and validated in the resolver, not here (to_domain is infallible)
             dynamic_filter: _,
         } = self;
@@ -178,6 +207,7 @@ impl ItemFilterInput {
             with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
             universal_code: universal_code.map(StringFilter::from),
+            not_in_record: not_in_record.map(ItemNotInRecordFilter::from),
             // Parsed from the JSON `dynamicFilter` input in the resolver (a
             // serde error there must surface as BadUserInput, so the infallible
             // to_domain can't do it)

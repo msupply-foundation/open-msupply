@@ -336,6 +336,7 @@ mod test {
                 item: mock_item_a(),
                 donor: None,
                 reason_option: Some(mock_reason_option()),
+                campaign: None,
             })
         }));
 
