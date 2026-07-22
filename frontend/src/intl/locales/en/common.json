@@ -3303,5 +3303,8 @@
   "error.pack-size-min": "Pack size must be at least 1.",
   "button.new": "New",
   "messages.no-ledger-entries": "There are no ledger entries to display.",
-  "messages.no-vvm-history": "There is no VVM status history to display."
+  "messages.no-vvm-history": "There is no VVM status history to display.",
+  "heading.batches-and-dates": "Batches and dates",
+  "heading.storage-and-pack": "Storage & pack",
+  "heading.supply-chain": "Supply chain"
 }
