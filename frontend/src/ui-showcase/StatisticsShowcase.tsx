@@ -1,5 +1,4 @@
 import { MemoryRouter, Route } from '@solidjs/router';
-import type { JSX } from 'solid-js';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatsPanel } from '../ui/elements/dashboard/StatsPanel';
@@ -7,6 +6,7 @@ import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
 import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, StockIcon } from '../ui/icons';
+import { Card, Stack } from './common';
 import styles from './StatisticsShowcase.module.css';
 
 /*
@@ -21,19 +21,6 @@ import styles from './StatisticsShowcase.module.css';
  * Statistic and SectionTitle render router <A>s, so the whole demo sits in a
  * MemoryRouter: links resolve and are clickable without navigating the app.
  */
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* Reusable demo cards — one is shown alone under "DashboardCard", all three
    under "Composition". Labels/values mirror the current app's dashboard. */
@@ -137,7 +124,7 @@ const InventoryCard = () => (
 );
 
 const Demo = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="SectionTitle — iconed action-tone panel heading"
       lead={
@@ -283,7 +270,7 @@ const Demo = () => (
         <InventoryCard />
       </CardGrid>
     </Card>
-  </div>
+  </Stack>
 );
 
 export const StatisticsShowcase = () => (

@@ -1,4 +1,4 @@
-import { createSignal, Show, type JSX } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import { Button } from '../ui/elements/buttons/Button';
 import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { IconButton } from '../ui/elements/buttons/IconButton';
@@ -19,21 +19,8 @@ import {
   SettingsIcon,
   MaximiseIcon,
 } from '../ui/icons';
+import { Card, Note, Row, Stack } from './common';
 import styles from './ButtonsShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 const EXPORT_OPTIONS = [
   { value: 'csv', label: 'Export CSV' },
@@ -56,7 +43,7 @@ export const ButtonsShowcase = () => {
   const [lastStandard, setLastStandard] = createSignal<string | null>(null);
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Standard buttons — pre-composed for common actions"
         lead={
@@ -78,14 +65,14 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <OkButton onClick={() => setLastStandard('OK')} />
           <CancelButton onClick={() => setLastStandard('Cancel')} />
           <SaveButton onClick={() => setLastStandard('Save')} />
           <OkAndNextButton onClick={() => setLastStandard('OK & next')} />
           <SaveAndNextButton onClick={() => setLastStandard('Save & next')} />
-        </div>
-        <p class={styles.note}>
+        </Row>
+        <Note>
           <Show
             when={lastStandard()}
             fallback="Click one of the standard buttons…"
@@ -96,7 +83,7 @@ export const ButtonsShowcase = () => {
               </>
             )}
           </Show>
-        </p>
+        </Note>
       </Card>
 
       <Card
@@ -115,13 +102,13 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button icon={<PlusCircleIcon />}>New shipment</Button>
           <Button>Save changes</Button>
           <Button icon={<PlusCircleIcon />} disabled>
             Disabled
           </Button>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -136,7 +123,7 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button variant="secondary" icon={<SaveIcon />}>
             Print
           </Button>
@@ -147,7 +134,7 @@ export const ButtonsShowcase = () => {
           <Button variant="secondary" disabled>
             Disabled
           </Button>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -163,7 +150,7 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button variant="ghost">View details</Button>
           <Button variant="ghost" icon={<CopyIcon />}>
             Duplicate
@@ -174,11 +161,11 @@ export const ButtonsShowcase = () => {
           <Button variant="ghost" disabled>
             Disabled
           </Button>
-        </div>
-        <p class={styles.note}>
+        </Row>
+        <Note>
           The <strong>Edit</strong> button here is the <code>size="small"</code>{' '}
           variant (the dense/inline size) — the others are the default medium.
-        </p>
+        </Note>
       </Card>
 
       <Card
@@ -195,14 +182,14 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button variant="danger" icon={<TrashIcon />}>
             Delete shipment
           </Button>
           <Button variant="danger" disabled>
             Disabled
           </Button>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -217,12 +204,12 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button icon={<SaveIcon />}>Medium</Button>
           <Button size="small" icon={<SaveIcon />}>
             Small
           </Button>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -239,12 +226,12 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button>Default</Button>
           <Button class={styles.focusDemo}>Focus</Button>
           <Button loading>Saving…</Button>
           <Button disabled>Disabled</Button>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -262,7 +249,7 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <Button collapsible icon={<PlusCircleIcon />}>
             New shipment
           </Button>
@@ -270,7 +257,7 @@ export const ButtonsShowcase = () => {
             Export
           </Button>
           <Button icon={<SaveIcon />}>Save changes</Button>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -289,7 +276,7 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           {/* Bare (toolbar-style) */}
           <IconButton icon={<SettingsIcon />} label="Column settings" />
           <IconButton icon={<MaximiseIcon />} label="Full screen" />
@@ -316,7 +303,7 @@ export const ButtonsShowcase = () => {
             variant="danger"
             disabled
           />
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -337,7 +324,7 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <SplitButton
             icon={<DownloadIcon />}
             options={EXPORT_OPTIONS}
@@ -351,8 +338,8 @@ export const ButtonsShowcase = () => {
             menuLabel="Export options"
             onAction={value => setLastExport(value)}
           />
-        </div>
-        <p class={styles.note}>
+        </Row>
+        <Note>
           <Show
             when={lastExport()}
             fallback="Click the button or pick a format…"
@@ -363,7 +350,7 @@ export const ButtonsShowcase = () => {
               </>
             )}
           </Show>
-        </p>
+        </Note>
       </Card>
 
       <Card
@@ -380,7 +367,7 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <SplitButton
             icon={<SaveIcon />}
             options={STATUS_OPTIONS}
@@ -400,8 +387,8 @@ export const ButtonsShowcase = () => {
             menuLabel="Change status"
             onAction={value => setConfirmedStatus(value)}
           />
-        </div>
-        <p class={styles.note}>
+        </Row>
+        <Note>
           <Show
             when={confirmedStatus()}
             fallback="Pick a status from the caret — it only re-targets; the main button confirms."
@@ -412,7 +399,7 @@ export const ButtonsShowcase = () => {
               </>
             )}
           </Show>
-        </p>
+        </Note>
       </Card>
 
       <Card
@@ -430,18 +417,16 @@ export const ButtonsShowcase = () => {
           </>
         }
       >
-        <div class={styles.row}>
+        <Row>
           <CheckboxButton checked={onHold()} onChange={setOnHold}>
             Hold
           </CheckboxButton>
           <CheckboxButton checked disabled onChange={() => {}}>
             Hold (disabled)
           </CheckboxButton>
-        </div>
-        <p class={styles.note}>
-          The shipment is {onHold() ? 'on hold' : 'not on hold'}.
-        </p>
+        </Row>
+        <Note>The shipment is {onHold() ? 'on hold' : 'not on hold'}.</Note>
       </Card>
-    </div>
+    </Stack>
   );
 };
