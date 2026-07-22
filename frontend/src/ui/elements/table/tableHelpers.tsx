@@ -3,6 +3,7 @@ import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
+import { CheckIcon } from '../../icons';
 import type { Column } from './columnTypes';
 import { differenceInMonths } from 'date-fns';
 import styles from './tableHelpers.module.css';
@@ -87,6 +88,27 @@ export const getBooleanCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     info.getValue<boolean>() ? t('messages.yes') : t('messages.no'),
+});
+
+// Boolean flag (spec/ui-standards/components.md › "Boolean cell (flag in a
+// table)"): a centred marker when the value is set, blank otherwise — for a
+// column where the fact is the flag, not a Yes/No word (e.g. the patient list's
+// Deceased column). The marker carries the state's accessible name — never an
+// aria-hidden glyph alone (spec/ui-standards/accessibility › assistive-tech
+// parity) — so the caller passes the label (e.g. t('label.deceased')).
+export const getFlagCell = <T,>(
+  label: string,
+  meta?: Meta
+): CellFragment<T> => ({
+  meta: { align: 'center', ...meta },
+  cell: info =>
+    info.getValue<boolean>() ? (
+      <span role="img" aria-label={label} title={label}>
+        <CheckIcon />
+      </span>
+    ) : (
+      EMPTY_CELL
+    ),
 });
 
 // Comment: the resolved string value behind a comment icon + popover (blank →

@@ -31,8 +31,8 @@ export interface PatientSearchProps {
 }
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
-// then the derived name. Code and name are separately-marked nodes
-// (e2e/TESTIDS.md item-option-code / -name).
+// then the derived name. Code, date of birth, and name are separately-marked
+// nodes (e2e/TESTIDS.md item-option-code / -dob / -name).
 const renderRow = (patient: PatientOption): JSX.Element => (
   <span
     style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
@@ -44,7 +44,9 @@ const renderRow = (patient: PatientOption): JSX.Element => (
       {patient.code}
     </span>
     {patient.dateOfBirth ? (
-      <span>{localisedDate(patient.dateOfBirth)}</span>
+      <span data-testid="item-option-dob">
+        {localisedDate(patient.dateOfBirth)}
+      </span>
     ) : null}
     <span data-testid="item-option-name">{patient.name}</span>
   </span>
@@ -57,6 +59,11 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * shows the derived name. A thin binding over AsyncCombobox: it supplies the
  * search fetcher + the option row; the combobox owns the input/listbox/paging.
  *
+ * The empty query is gated (spec/patients S4): an unqueried picker does NOT list
+ * every site patient — it shows the `messages.type-to-search` hint ("Start
+ * typing to search") in place of results and issues no request until text is
+ * typed. The same hint is the no-results state for a query with no matches.
+ *
  * Consumed by other surfaces (prescriptions, next-of-kin). The allow-create /
  * allow-edit inline affordances (spec/patients AC-S6) are added by their
  * consuming verticals when built — see the implementation flags.
@@ -68,10 +75,15 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     class={props.class}
     disabled={props.disabled}
     error={props.error}
-    placeholder={props.placeholder ?? t('messages.type-to-search')}
+    placeholder={props.placeholder}
     inputTestId={props.inputTestId ?? 'patient-search-input'}
+    noResultsMessage={t('messages.type-to-search')}
     clearable={props.clearable}
-    fetchPage={patientSearchPageFetcher(props.storeId)}
+    fetchPage={(search, offset) =>
+      search.trim() === ''
+        ? Promise.resolve({ nodes: [], totalCount: 0 })
+        : patientSearchPageFetcher(props.storeId)(search, offset)
+    }
     itemToString={patient => patient.name}
     itemToValue={patient => patient.id}
     renderItem={renderRow}

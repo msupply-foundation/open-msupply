@@ -417,7 +417,7 @@
   "error.failed-to-save-vaccine-course": "Failed to save vaccine course",
   "error.fetch-notifications": "Unable to display cold chain notifications",
   "error.field-must-be-specified": "{{field}} must be specified",
-  "error.field-required": "This filter is required.",
+  "error.field-required": "This field is required.",
   "error.finalise-reduced-below-zero": "Stock reserved in new outbound shipments, prescriptions, or another stocktake. Some reductions are greater than the number of packs available.",
   "error.finalise-snapshot-mismatch": "The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments, prescriptions, or another stocktake. Please delete the affected lines and try again.",
   "error.foreign-key-error": "Database error",
