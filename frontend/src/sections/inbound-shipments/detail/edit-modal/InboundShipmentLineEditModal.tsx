@@ -47,6 +47,12 @@ export interface LineEditPrefs {
   donor: boolean;
   /** Vaccines-in-doses preference — gates the Doses-per-unit field (H5). */
   doses: boolean;
+  /**
+   * Authorisation-required preference — gates the per-batch Auth status field.
+   * Authorisation is PO-linked-only, so the field also needs `isExternal`
+   * (spec ui-surface col 16 / rules → authorisation is external-scope-only).
+   */
+  authorisation: boolean;
 }
 
 export interface InboundShipmentLineEditModalProps {
@@ -102,6 +108,8 @@ type DraftBatch = {
   sellPricePerPack: number;
   note: string;
   vvmStatusId: string | null;
+  /** Line authorisation status (spec col 16); null on shipments without it. */
+  status: InboundLineFragment['status'];
   donorId: string | null;
   donorName: string | null;
   shippedNumberOfPacks: number | undefined;
@@ -120,6 +128,33 @@ type DraftBatch = {
   sellOverridden: boolean;
 };
 
+// The three authorisation states a line can hold (the fragment's non-null set).
+type AuthStatus = NonNullable<DraftBatch['status']>;
+
+// Each auth state's dot colour (spec col 16), tokens only: amber awaiting,
+// green approved, red rejected. A leading dot lets the state read at a glance,
+// the way the invoice-status Select does.
+const AUTH_STATUS_COLOUR: Record<AuthStatus, string> = {
+  PENDING: 'var(--color-warning)',
+  PASSED: 'var(--success-main)',
+  REJECTED: 'var(--error-main)',
+};
+
+// A small coloured status dot for a Select option adornment — rem-sized, token
+// colour (mirrors the showcase's invoice-status dot).
+const StatusDot = (props: { colour: string }) => (
+  <span
+    aria-hidden="true"
+    style={{
+      display: 'inline-block',
+      width: '0.5rem',
+      height: '0.5rem',
+      'border-radius': '50%',
+      background: props.colour,
+    }}
+  />
+);
+
 const emptyBatch = (): DraftBatch => ({
   id: crypto.randomUUID(),
   isNew: true,
@@ -134,6 +169,9 @@ const emptyBatch = (): DraftBatch => ({
   sellPricePerPack: 0,
   note: '',
   vvmStatusId: null,
+  // A new line can't carry a status on insert (the server assigns Pending when
+  // authorisation is required); null here, shown read-only as Pending.
+  status: null,
   donorId: null,
   donorName: null,
   shippedNumberOfPacks: undefined,
@@ -161,6 +199,7 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   sellPricePerPack: line.sellPricePerPack,
   note: line.note ?? '',
   vvmStatusId: line.vvmStatusId ?? null,
+  status: line.status,
   donorId: line.donor?.id ?? null,
   donorName: line.donor?.name ?? null,
   shippedNumberOfPacks: line.shippedNumberOfPacks ?? undefined,
@@ -468,6 +507,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         manufactureDate: { value: b.manufactureDate },
         note: { value: b.note || null },
         vvmStatusId: { value: b.vvmStatusId },
+        // Line authorisation status — sent as a plain value (not a {value}
+        // patch), only on a PO-linked shipment that requires authorisation.
+        // The line's current value goes on every save: unchanged lines are a
+        // no-op, an edited one is the real change (AC-E6 blocks a change once
+        // Received but allows the no-op). Omitted elsewhere so a manual
+        // shipment never carries it.
+        ...(props.prefs.authorisation && props.isExternal
+          ? { status: b.status ?? undefined }
+          : {}),
         donorId: { value: b.donorId },
         shippedNumberOfPacks: b.shippedNumberOfPacks,
         shippedPackSize: b.shippedPackSize,
@@ -674,6 +722,68 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    // Auth status (Batch tab) — the line's authorisation state, editable when
+    // the store requires authorisation of PO-linked shipments (spec ui-surface
+    // col 16 / S4 per-batch fields). The same change is available in bulk from
+    // the detail table's row-selection Approve/Reject/Pending actions. AC-E6
+    // governs when a change is allowed (blocked once Received, a no-op to the
+    // same value excepted); we submit and surface any rejection inline rather
+    // than pre-gating. A brand-new batch can't carry a status on insert (the
+    // server assigns Pending), so it stays read-only (shown as Pending) until
+    // saved.
+    ...(props.prefs.authorisation && props.isExternal
+      ? [
+          {
+            c: { id: 'authStatus' },
+            header: t('label.auth-status'),
+            tabsAndCardGroups: ['batch'],
+            cell: info => {
+              const b = info.row.original;
+              // The styled Kobalte Select (not a Combobox — no point searching
+              // a fixed three-value list). Default size + hideLabel keeps it in
+              // line with the neighbouring per-batch fields, and the coloured
+              // option dots — which a native <option> can't render — read the
+              // state at a glance. A brand-new line can't carry a status on
+              // insert (the server assigns Pending), so it stays read-only.
+              return (
+                <Select
+                  label={t('label.auth-status')}
+                  hideLabel
+                  value={b.status ?? 'PENDING'}
+                  disabled={b.isNew}
+                  options={[
+                    {
+                      value: 'PENDING',
+                      label: t('label.pending'),
+                      adornment: (
+                        <StatusDot colour={AUTH_STATUS_COLOUR.PENDING} />
+                      ),
+                    },
+                    {
+                      value: 'PASSED',
+                      label: t('label.passed'),
+                      adornment: (
+                        <StatusDot colour={AUTH_STATUS_COLOUR.PASSED} />
+                      ),
+                    },
+                    {
+                      value: 'REJECTED',
+                      label: t('label.rejected'),
+                      adornment: (
+                        <StatusDot colour={AUTH_STATUS_COLOUR.REJECTED} />
+                      ),
+                    },
+                  ]}
+                  // Fixed 3-option list ⇒ the string out is one of the union.
+                  onValueChange={v =>
+                    updateBatch(b.id, 'status', v as AuthStatus)
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     // Doses per unit (H5) — read-only item attribute, gated by the vaccines-in-
     // doses preference and shown only for a vaccine item.
     ...(props.prefs.doses && item()?.isVaccine

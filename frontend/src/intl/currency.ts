@@ -64,12 +64,12 @@ export const getCurrencyInfo = (
  * runs an English UI with Kip): the locale drives only separators, digits and
  * symbol placement.
  *
- * TODO: wire to the real store — the schema already exposes
- * `UserStoreNode.homeCurrencyCode`; add it to the auth UserInfo fragment's
- * stores nodes (src/api/auth.graphql + pnpm codegen) and call
- * `setHomeCurrency(store.homeCurrencyCode)` from StoreGuardLayout's entry
- * effect. Until then this stays at the USD seed (the showcase drives it from
- * a mock selector).
+ * Wired from the entered store: StoreGuardLayout's entry effect calls
+ * `setHomeCurrency(store.homeCurrencyCode)` (`UserStoreNode.homeCurrencyCode`,
+ * carried on the auth UserInfo fragment's stores nodes) on every store switch.
+ * The `'USD'` seed here is only the pre-entry default (and what the showcase
+ * drives from its mock selector); a store without a configured code also
+ * falls back to it via setHomeCurrency below.
  */
 const [homeCurrency, setHomeCurrencySignal] = createSignal('USD');
 export { homeCurrency };
