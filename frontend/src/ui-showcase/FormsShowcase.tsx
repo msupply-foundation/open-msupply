@@ -18,7 +18,14 @@ import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import { Select } from '../ui/elements/selectors/Select';
 import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
+import { Alert } from '../ui/elements/feedback/Alert';
+import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  SaveButton,
+} from '../ui/elements/buttons/StandardButtons';
 import { CopyIcon, PlusCircleIcon } from '../ui/icons';
 
 const LOCATIONS = [
@@ -41,18 +48,13 @@ const CAMPAIGNS = [
 ];
 
 /*
- * Storybook of the form-layout vocabulary (kdd/form-layout) — the whole stock
- * detail form, the way a real vertical assembles it:
- *
- *   Page                        ← the normal Page frame (geometry only)
- *   └─ ContentContainer         ← the reading-column measure (caps + centres)
- *      └─ Stack                 ← vertical rhythm between the sibling blocks
- *         ├─ IdentityHeader     ← record name + muted subtitle
- *         └─ FormColumns        ← the row of section stacks (wraps to one column)
- *            └─ FormColumn      ← one vertical stack of sections
- *               └─ FormSection  ← a titled group: heading + rule + field stack
- *                  ├─ <field>   ← one-per-line at full width (the default)
- *                  └─ FormRow   ← the two-up rows (opt-in pairing)
+ * Pages › Detail form: the whole stock detail form, the way a real vertical
+ * assembles it from the form-layout vocabulary (kdd/form-layout). The
+ * element-by-element anatomy — including the nesting tree — lives on the
+ * Layout Elements › Form layout page (FormLayoutShowcase.tsx,
+ * #/showcase/form-layout); this page is the assembled result, deliberately
+ * free of explanatory chrome. Keep that page's ANATOMY tree in step when the
+ * assembly here changes.
  *
  * Every control is a standard src/ui input — the layout adds arrangement only,
  * never styling. Editable fields are inputs; read-only facts are LabelledValue
@@ -101,6 +103,14 @@ export const FormsShowcase = () => {
               ]}
             />
           </Header>
+        }
+        contentFooter={
+          <ContentFooter>
+            <ContentFooterActions>
+              <CancelButton />
+              <SaveButton />
+            </ContentFooterActions>
+          </ContentFooter>
         }
       >
         <TabPanel value="details">
@@ -247,6 +257,10 @@ export const FormsShowcase = () => {
                   </FormSection>
                 </FormColumn>
               </FormColumns>
+              <Alert severity="info">
+                See the anatomy of this page on the{' '}
+                <a href="#/showcase/form-layout">"Form layout" page</a>.
+              </Alert>
             </Stack>
           </ContentContainer>
         </TabPanel>

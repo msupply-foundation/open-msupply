@@ -1,3 +1,6 @@
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import {
   ConsumptionHistoryChart,
   StockEvolutionChart,
@@ -5,7 +8,7 @@ import {
   type ConsumptionHistoryPoint,
   type StockEvolutionPoint,
 } from '../ui/elements/charts';
-import { Card, Row, Stack } from './common';
+import { Lead, Row } from './common';
 
 // --- Sample data, shaped like the wire nodes the real charts consume. ---
 
@@ -64,11 +67,10 @@ const stockData: StockEvolutionPoint[] = (() => {
 })();
 
 export const ChartsShowcase = () => (
-  <Stack>
-    <Card
-      title="Target quantity"
-      lead={
-        <>
+  <ContentContainer size="form" align="start">
+    <Stack gap="lg">
+      <DashboardCard title="Target quantity">
+        <Lead>
           The target-quantity breakdown (original <code>StockDistribution</code>
           ) — a month-marker axis (0 → target months, each cell a month of AMC,
           the reorder threshold and target MOS called out) above horizontal
@@ -76,51 +78,42 @@ export const ChartsShowcase = () => (
           target. When stock exceeds the target the axis shrinks and the stock
           bar fills the row. With no average monthly consumption it shows an{' '}
           <em>Unable to calculate</em> line instead (second panel).
-        </>
-      }
-    >
-      <Row>
-        <TargetQuantityBreakdown
-          averageMonthlyConsumption={15.5}
-          availableStockOnHand={21}
-          suggestedQuantity={0}
-          thresholdMonths={1}
-          targetMonths={3}
-        />
-        <TargetQuantityBreakdown
-          averageMonthlyConsumption={0}
-          availableStockOnHand={0}
-          suggestedQuantity={0}
-          thresholdMonths={1}
-          targetMonths={3}
-        />
-      </Row>
-    </Card>
+        </Lead>
+        <Row>
+          <TargetQuantityBreakdown
+            averageMonthlyConsumption={15.5}
+            availableStockOnHand={21}
+            suggestedQuantity={0}
+            thresholdMonths={1}
+            targetMonths={3}
+          />
+          <TargetQuantityBreakdown
+            averageMonthlyConsumption={0}
+            availableStockOnHand={0}
+            suggestedQuantity={0}
+            thresholdMonths={1}
+            targetMonths={3}
+          />
+        </Row>
+      </DashboardCard>
 
-    <Card
-      title="Consumption History (monthly)"
-      lead={
-        <>
+      <DashboardCard title="Consumption History (monthly)">
+        <Lead>
           Bars for monthly consumption, coloured by historic / current /
           projected, with a moving-average line overlaid, plus a per-band hover
           cursor + tooltip. Hover a bar to see the per-month readout.
-        </>
-      }
-    >
-      <ConsumptionHistoryChart data={consumptionData} />
-    </Card>
+        </Lead>
+        <ConsumptionHistoryChart data={consumptionData} />
+      </DashboardCard>
 
-    <Card
-      title="Stock evolution (past & projected)"
-      lead={
-        <>
+      <DashboardCard title="Stock evolution (past & projected)">
+        <Lead>
           Stock-on-hand bars split past vs projected, with dashed min / max
           threshold lines drawn as two SVG paths. Same composition shape as
           above.
-        </>
-      }
-    >
-      <StockEvolutionChart data={stockData} />
-    </Card>
-  </Stack>
+        </Lead>
+        <StockEvolutionChart data={stockData} />
+      </DashboardCard>
+    </Stack>
+  </ContentContainer>
 );
