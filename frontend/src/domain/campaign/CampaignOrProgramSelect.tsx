@@ -60,7 +60,6 @@ export const CampaignOrProgramSelect = (
     () => ({ storeId: props.storeId, itemId: props.itemId }),
     ({ storeId, itemId }) => fetchItemPrograms(storeId, itemId)
   );
-
   // Read programs WITHOUT ever suspending. This picker renders inside the
   // already-open line-edit modal, itself under the detail view's <Suspense>
   // boundary — so suspending here would collapse that boundary and remount the

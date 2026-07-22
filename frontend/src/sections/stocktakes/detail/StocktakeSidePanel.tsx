@@ -40,7 +40,11 @@ export interface StocktakeSidePanelProps {
 
 export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
   <>
-    <SidePanelSection title={t('heading.additional-info')}>
+    <SidePanelSection
+      value="additional-info"
+      title={t('heading.additional-info')}
+      collapsible
+    >
       {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
         the same inline-start as the editable inputs below them (no mixed <dl>/FieldRow widths).
         Read-only rows render a plain value; editable ones a buffered field. */}
@@ -92,7 +96,7 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
     {/* Record-level actions (spec/stocktakes/ui-surface.md §S3): Delete — gated
         on NEW+unlocked (the same `disabled` gate the fields use; the backend is
         the final authority) — and Copy to clipboard, always available. */}
-    <SidePanelSection title={t('heading.actions')}>
+    <SidePanelSection value="actions" title={t('heading.actions')}>
       <SidePanelActions>
         <DeleteStocktakeAction
           storeId={props.storeId}

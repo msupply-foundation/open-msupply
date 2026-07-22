@@ -84,7 +84,11 @@ export const CustomerReturnSidePanel: Component<
 
   return (
     <>
-      <SidePanelSection title={t('heading.additional-info')} collapsible>
+      <SidePanelSection
+        value="additional-info"
+        title={t('heading.additional-info')}
+        collapsible
+      >
         <FieldRow label={t('label.edited-by')}>
           <Text variant="body">{props.node.user?.username ?? '—'}</Text>
         </FieldRow>
@@ -117,7 +121,11 @@ export const CustomerReturnSidePanel: Component<
       {/* Related documents (rules § creation — the originating-shipment link is
           permanent; contract § manual vs transfer): a dated, attributed link to
           the outbound shipment a manual return was created from. */}
-      <SidePanelSection title={t('heading.related-documents')} collapsible>
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+        collapsible
+      >
         <Show
           when={props.node.originalShipment}
           fallback={
@@ -148,7 +156,7 @@ export const CustomerReturnSidePanel: Component<
       {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
           return) and Copy to clipboard — the shared SidePanelActions layout and
           secondary-button tone, matching the stocktake detail. */}
-      <SidePanelSection title={t('heading.actions')}>
+      <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           <Button
             variant="secondary"
