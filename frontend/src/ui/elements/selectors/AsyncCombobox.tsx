@@ -46,6 +46,8 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Whether the selection can be cleared (default true). */
+  clearable?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -148,6 +150,7 @@ export const AsyncCombobox = <T,>(
       class={props.class}
       disabled={props.disabled}
       error={props.error}
+      clearable={props.clearable}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       items={items()}

@@ -54,6 +54,7 @@ export type ItemsWithStockVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    dynamicFilter?: unknown | null;
   } | null;
   page?: {
     first?: number | null;

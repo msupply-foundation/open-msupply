@@ -43,7 +43,7 @@
 
 .trigger:focus-visible,
 .enumTrigger:focus-visible {
-  outline: 2px solid var(--primary-main);
+  outline: 2px solid var(--secondary-main);
   outline-offset: -2px;
 }
 
@@ -81,7 +81,7 @@
 /* Focus glow per the TextField input spec (the prototype only recoloured the
    border). */
 .textFilter:focus-within {
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 
@@ -124,7 +124,7 @@
 }
 
 .remove:focus-visible {
-  outline: 2px solid var(--primary-main);
+  outline: 2px solid var(--secondary-main);
   outline-offset: -2px;
 }
 
@@ -186,8 +186,8 @@
 }
 
 .checkboxItem[data-checked] .checkbox {
-  background: var(--primary-main);
-  border-color: var(--primary-main);
+  background: var(--secondary-main);
+  border-color: var(--secondary-main);
 }
 
 .indicator {

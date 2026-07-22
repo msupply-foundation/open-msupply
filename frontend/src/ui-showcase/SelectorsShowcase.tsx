@@ -1,4 +1,4 @@
-import { createSignal, For, type JSX } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
 import { Combobox } from '../ui/elements/selectors/Combobox';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
@@ -21,21 +21,8 @@ import {
   type Filter,
 } from '../ui/elements/selectors/FilterBar';
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
+import { Card, Stack } from './common';
 import styles from './SelectorsShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /**
  * A coloured status dot — the kind of rich option a native <option> can't
@@ -216,7 +203,7 @@ export const SelectorsShowcase = () => {
   };
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Styled drop-down — Kobalte Select"
         lead={
@@ -529,6 +516,6 @@ export const SelectorsShowcase = () => {
           </span>
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };

@@ -35,12 +35,13 @@ export interface ItemSearchProps {
   hideLabel?: boolean;
   /** Read-only: show the selected item but don't allow searching/changing it. */
   disabled?: boolean;
+  error?: string;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
 }
 
-// One option row: "code - name" at the inline-start, "{total} {unit}" at the
-// end (unit falls back to the generic "units" when the item has no unit name).
+// One option row: "code - name" at the inline-start, "{total} Units" at the
+// end — a fixed, localised "Units" label for every item (see the note below).
 // Code and name are separately-marked nodes (e2e/TESTIDS.md item-option-code /
 // -name) so the suites can read either regardless of the datafile's format.
 const renderRow = (item: ItemOption): JSX.Element => (
@@ -51,7 +52,9 @@ const renderRow = (item: ItemOption): JSX.Element => (
       <span data-testid="item-option-name">{item.name}</span>
     </span>
     <span class={styles.total}>
-      {formatNumber(item.totalUnits)} {item.unitName ?? t('label.unit-plural')}
+      {/* Fixed, localised "Units" label for every item (old-app parity — the
+          item's own unitName is untranslatable catalogue data). */}
+      {formatNumber(item.totalUnits)} {t('label.units')}
     </span>
   </span>
 );
@@ -77,6 +80,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       label={props.label}
       hideLabel={props.hideLabel}
       disabled={props.disabled}
+      error={props.error}
       class={props.class}
       placeholder={props.placeholder}
       // Every ItemSearch IS the contract's item search — the fixed id is

@@ -46,7 +46,7 @@
   --color-border-value: #e4e4eb;
   --color-divider: #eaeaea;
   --outline-main: #555770;
-  --input-border: #e4e4e7; /* input field edge (company spec default border) */
+  --input-border: #c0c0c4; /* input field edge (ui-standards #field default border) */
 
   /* backgrounds (theme.ts → palette.background) */
   --bg-white: #fff;
@@ -78,9 +78,12 @@
   --drawer-selected-bg: #fff;
   --drawer-hover-bg: #fafafc;
 
-  /* login page (theme.ts → mixins.gradient.primary, palette.background.login,
-     typography.login.color) */
+  /* login / initialisation pages (theme.ts → mixins.gradient.primary/secondary,
+     palette.background.login, typography.login.color) — Login uses primary
+     (orange), Initialisation uses secondary (blue); real OMS deliberately
+     gives the two screens different hero gradients. */
   --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --gradient-secondary: linear-gradient(156deg, #78a3fc 4%, #3e7bfa 96%);
   --bg-login: #f2f2f5;
   --login-hero-text: #fafafa;
 
@@ -97,7 +100,7 @@
   --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
 
   /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
-  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.25);
+  --focus-ring: 0 0 0 0.1875rem rgba(62, 123, 250, 0.25); /* action blue (#3e7bfa) */
   --focus-ring-error: 0 0 0 0.1875rem rgba(230, 53, 53, 0.2);
 
   /* Scrim behind the mobile nav overlay / modals */
@@ -173,14 +176,43 @@
   --footer-height: 2rem; /* 32px */
   --touch-target: 3rem; /* 48px — spec target */
 
+  /* --- Buttons (ui-standards #btn-sizes) ------------------------------ */
+  --button-height: 2.25rem; /* 36px — medium (default) */
+  --button-height-sm: 1.75rem; /* 28px — small (dense/inline) */
+
   /* --- Inputs (company design spec) ----------------------------------- */
   --input-height: 2.5rem; /* 40px default */
   --input-height-sm: 2.25rem; /* 36px small */
+  /* Font size on touch — an ABSOLUTE 16px, the one input exception to the
+     rem-only rule (px, not rem). iOS Safari zooms the page on focus when a
+     field's font is under 16px, and that threshold is absolute, so this must
+     hold even below 600px where index.css shrinks the root to 85%. Applied to
+     default-size fields on coarse pointers (ui-standards #field-touch-sizing);
+     the small variant stays dense. */
+  --input-font-touch: 16px;
+  /* Small-field text (ui-standards "Text Fields — Size Variations"): 13px, a
+     notch under the 14px default (--text-sm) so a small input + its label read
+     denser. Its own token rather than --text-xs (12px, helper/caption) — the
+     spec picks 13px specifically for small fields. */
+  --input-font-sm: 0.8125rem; /* 13px */
+  /* Vertical gap between a field's stacked parts — label → control → helper
+     (ui-standards .form-field gap). 0.375rem (6px) is off the --space scale
+     (which steps 0.25 / 0.5 / 0.75), so it's its own input token. */
+  --input-field-gap: 0.375rem; /* 6px */
   --input-padding-x: 0.75rem; /* 12px horizontal */
   --input-radius: 0.375rem; /* 6px */
   --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */
   --input-max-short: 25rem; /* 400px — codes, short text */
   --input-max-long: 37.5rem; /* 600px — names, descriptions */
+
+  /* --- Content measure (reading column caps for ContentContainer) ------ */
+  /* Max inline size a block of content stretches to before it stops growing
+     and centres in the page body — so a two-column form or a column of prose
+     stays readable on wide monitors instead of sprawling edge to edge. The
+     body owns the edge padding; these cap only the growth. */
+  --measure-form: 58rem; /* ~928px — a comfortable two-column form */
+  --measure-prose: 40rem; /* ~640px — single-column reading text */
+  --measure-wide: 80rem; /* ~1280px — wide dashboards / dense forms */
 }
 
 /*
@@ -248,10 +280,12 @@
   --drawer-selected-bg: #2a2a38;
   --drawer-hover-bg: #21212b;
 
-  /* Login — the gradient hero panel is brand-invariant (like --primary-main,
-     orange kept for brand integrity), so gradient + hero text stay; only the
-     form panel background goes dark (matches the drawer surface). */
+  /* Login / Initialisation — the gradient hero panels are brand-invariant
+     (like --primary-main, colours kept for brand integrity), so both
+     gradients + hero text stay; only the form panel background goes dark
+     (matches the drawer surface). */
   --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --gradient-secondary: linear-gradient(156deg, #78a3fc 4%, #3e7bfa 96%);
   --bg-login: #191921;
   --login-hero-text: #fafafa;
 
@@ -271,7 +305,7 @@
   --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
 
   /* Stronger focus glows + darker scrim read better on dark */
-  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
+  --focus-ring: 0 0 0 0.1875rem rgba(91, 141, 239, 0.45); /* action blue (#5b8def, dark) */
   --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
   --overlay-scrim: rgba(0, 0, 0, 0.6);
 

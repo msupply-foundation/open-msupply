@@ -209,6 +209,7 @@ export type InboundShipmentsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    dynamicFilter?: unknown | null;
   } | null;
   sort?: Array<{
     key: "type" | "otherPartyName" | "invoiceNumber" | "comment" | "status" | "createdDatetime" | "invoiceDatetime" | "allocatedDatetime" | "pickedDatetime" | "shippedDatetime" | "deliveredDatetime" | "verifiedDatetime" | "theirReference" | "transportReference";

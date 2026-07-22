@@ -1,4 +1,4 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal } from 'solid-js';
 import {
   SidePanel,
   SidePanelActions,
@@ -7,21 +7,8 @@ import {
 import { Button } from '../ui/elements/buttons/Button';
 import { CopyIcon, TrashIcon } from '../ui/icons';
 import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
+import { Card, Stack } from './common';
 import styles from './SidePanelShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 export const SidePanelShowcase = () => {
   const [open, setOpen] = createSignal(false);
@@ -31,7 +18,7 @@ export const SidePanelShowcase = () => {
   const isOverlay = useIsNavOverlay();
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Details panel — slide it out over the page"
         lead={
@@ -124,6 +111,6 @@ export const SidePanelShowcase = () => {
           </SidePanel>
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };
