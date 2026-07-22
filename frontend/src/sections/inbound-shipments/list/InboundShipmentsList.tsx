@@ -288,7 +288,6 @@ const InboundShipmentsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      sortKey: 'comment',
       header: t('label.comment'),
       ...getCommentCell(),
     },
@@ -333,7 +332,7 @@ const InboundShipmentsList: Component = () => {
             >
               <SplitButton
                 icon={<PlusCircleIcon />}
-                testId="new-shipment"
+                testId="new-shipment-button"
                 menuLabel={t('button.new-shipment')}
                 options={[
                   { value: 'manual', label: t('button.new-shipment') },
@@ -367,18 +366,41 @@ const InboundShipmentsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
             </strong>
-            {/* Delete — only while every selected row is New (spec S1). */}
-            <Show when={allSelectedNew()}>
+            {/* Delete — enabled only while every selected row is New (spec S1) */}
+            <span
+              title={
+                allSelectedNew() ? undefined : t('messages.delete-only-new')
+              }
+            >
               <DeleteInboundShipmentsAction
                 storeId={params.storeId}
                 selectedIds={selectedIds}
                 onDeleted={onDeleted}
+                disabled={!allSelectedNew()}
               />
-            </Show>
-            {/* Make a copy — single selection only (spec AC-L4). */}
-            <Show when={singleSelectedId()}>
-              {id => <DuplicateInboundShipmentAction invoiceId={id()} />}
-            </Show>
+            </span>
+            {/* Make a copy — enabled only for a single selection (spec AC-L4);
+                shown disabled-with-reason otherwise (M5). Number/supplier come
+                from the (only) selected row; when multi-selected the action is
+                disabled so the confirm never opens. */}
+            <span
+              title={
+                singleSelectedId() ? undefined : t('messages.copy-single-only')
+              }
+            >
+              <DuplicateInboundShipmentAction
+                invoiceId={singleSelectedId() ?? selectedIds()[0] ?? ''}
+                number={() =>
+                  rows().find(r => r.id === selectedIds()[0])?.invoiceNumber ??
+                  0
+                }
+                supplierName={() =>
+                  rows().find(r => r.id === selectedIds()[0])?.otherPartyName ??
+                  ''
+                }
+                disabled={!singleSelectedId()}
+              />
+            </span>
             <ContentFooterActions>
               <Button
                 variant="secondary"
