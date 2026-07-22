@@ -20,6 +20,7 @@ import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { locationsRoutes } from './sections/locations';
+import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
@@ -43,6 +44,7 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stocktakes': stocktakesRoutes,
   'inventory/locations': locationsRoutes,
+  'distribution/customer-return': customerReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,

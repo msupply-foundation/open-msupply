@@ -16,6 +16,13 @@ export type ItemOption = {
   isVaccine: boolean;
   /** The item's configured doses-per-unit — the doses-display multiplier. */
   doses: number;
+  /** Default pack size — a new inbound line's starting pack size (AC-H6). */
+  defaultPackSize: number;
+  /**
+   * The store's default sell price per pack (0 when no store properties) —
+   * prefills a new inbound line's cost AND sell price (AC-H6).
+   */
+  defaultSellPricePerPack: number;
 };
 
 type ItemNode = Extract<
@@ -70,6 +77,9 @@ export const fetchItemById = async (
     totalUnits: totalUnitsOf(node),
     isVaccine: node.isVaccine,
     doses: node.doses,
+    defaultPackSize: node.defaultPackSize,
+    defaultSellPricePerPack:
+      node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
   };
 };
 
@@ -106,6 +116,9 @@ export const itemPageFetcher =
         totalUnits: totalUnitsOf(node),
         isVaccine: node.isVaccine,
         doses: node.doses,
+        defaultPackSize: node.defaultPackSize,
+        defaultSellPricePerPack:
+          node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
       })),
       totalCount: items.totalCount,
     };

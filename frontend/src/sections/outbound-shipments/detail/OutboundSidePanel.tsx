@@ -21,10 +21,11 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
+import { CheckIcon, CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
+import { PickedDateField } from './PickedDateField';
 import { isDeletable, statusLabel } from '../outboundStatus';
 import type { OutboundNode } from './outboundUpdate';
 import type { OutboundFieldEdit } from './outboundEdit';
@@ -36,6 +37,8 @@ import type { OutboundFieldEdit } from './outboundEdit';
 
 export interface OutboundSidePanelProps {
   node: OutboundNode;
+  /** For the backdating control's stocktake-conflict check (AC-B4). */
+  storeId: string;
   disabled: boolean;
   /** The shared edit buffer (comment + transport reference live here). */
   edit: OutboundFieldEdit;
@@ -45,6 +48,7 @@ export interface OutboundSidePanelProps {
     tax?: { percentage: number | null };
     expectedDeliveryDate?: { value: string | null };
     shippingMethodId?: { value: string | null };
+    backdatedDatetime?: string | null;
   }) => void;
   /** Open the service-charges editor (S5). */
   onEditServiceCharges: () => void;
@@ -122,7 +126,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       {/* 1 — Additional info: entered by · created · picked date (backdating
           control, disabled with the reason outside its gate) · colour ·
           comment. */}
-      <SidePanelSection title={t('label.additional-info')} collapsible>
+      <SidePanelSection
+        value="additional-info"
+        title={t('label.additional-info')}
+        collapsible
+      >
         <FieldRow label={t('label.entered-by')}>
           <Text variant="body">{props.node.user?.username ?? '—'}</Text>
         </FieldRow>
@@ -132,14 +140,17 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Text>
         </FieldRow>
         <FieldRow label={t('label.picked-date')}>
-          {/* Backdating (rules.md § backdating) is preference-gated and NEW-
-              only; the dev preference is off, so this build renders the value
-              read-only — the control slots in here when the gate opens. */}
-          <Text variant="body">
-            {props.node.pickedDatetime
-              ? localisedDate(props.node.pickedDatetime)
-              : '—'}
-          </Text>
+          {/* Backdating control (rules.md § backdating, AC-B1..B4): editable
+              while NEW with the backdating preference on, otherwise disabled
+              with the reason (pref off / past NEW). */}
+          <PickedDateField
+            storeId={props.storeId}
+            node={props.node}
+            disabled={props.disabled}
+            onBackdate={backdatedDatetime =>
+              props.onSaveField({ backdatedDatetime })
+            }
+          />
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <ColourTagPicker
@@ -163,7 +174,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* 2 — Related documents: the originating customer requisition. */}
-      <SidePanelSection title={t('heading.related-documents')} collapsible>
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+        collapsible
+      >
         <Show
           when={requisition()}
           fallback={
@@ -182,7 +197,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           panel): service charges group · items sell price group · grand
           total · foreign currency. Disabled edit affordances stay visible,
           dimmed — never hidden. */}
-      <SidePanelSection title={t('heading.invoice-details')} collapsible>
+      <SidePanelSection
+        value="invoice-details"
+        title={t('heading.invoice-details')}
+        collapsible
+      >
         {/* Service charges: info bubble + the S5 edit action (dimmed once
             read-only); one row per service line, then sub total / effective
             tax / total. Service tax is edited per line in S5. */}
@@ -318,7 +337,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
       {/* 4 — Transport details: shipping method · expected delivery ·
           transport reference. */}
-      <SidePanelSection title={t('heading.transport-details')} collapsible>
+      <SidePanelSection
+        value="transport-details"
+        title={t('heading.transport-details')}
+        collapsible
+      >
         <FieldRow label={t('label.shipping-method')}>
           <ShippingMethodSelect
             label={t('label.shipping-method')}
@@ -366,8 +389,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* Record actions, pinned at the panel's end (spec S3 § record
-          actions): Delete · Make a copy · Copy to clipboard. */}
-      <SidePanelSection title={t('label.actions')}>
+          actions): Delete · Make a copy · Copy to clipboard — secondary-tone
+          buttons, matching the stocktakes side panel. */}
+      <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           <DeleteShipmentAction
             shipmentId={props.node.id}
@@ -377,18 +401,19 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             shipmentId={() => props.node.id}
             number={() => props.node.invoiceNumber}
             customerName={() => props.node.otherParty.name}
-            variant="panel"
           />
-          <Button icon={<CopyIcon />} onClick={copyToClipboard}>
-            {t('button.copy-to-clipboard')}
+          {/* Copy to clipboard — the button itself briefly swaps to a "copied"
+              confirmation (matching the stocktakes CopyStocktakeAction);
+              in-place feedback, never a toast. */}
+          <Button
+            variant="secondary"
+            icon={copied() ? <CheckIcon /> : <CopyIcon />}
+            onClick={copyToClipboard}
+          >
+            {copied()
+              ? t('message.copy-success')
+              : t('button.copy-to-clipboard')}
           </Button>
-          {/* role="status" so the confirmation is announced by assistive
-              tech. */}
-          <span role="status">
-            <Show when={copied()}>
-              <Text variant="bodySmall">{t('message.copy-success')}</Text>
-            </Show>
-          </span>
         </SidePanelActions>
       </SidePanelSection>
     </>

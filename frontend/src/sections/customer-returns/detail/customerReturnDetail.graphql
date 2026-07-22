@@ -1,0 +1,207 @@
+# A single customer return with its lines, for the detail view
+# (spec/customer-returns S3). The return-level fields feed the toolbar (customer /
+# reference / kind banner), the status footer (status / hold / the step
+# datetimes), and the side panel (edited-by / colour / comment / related
+# documents). The SAME fragment is what updateCustomerReturn returns, so a
+# header save reflects in place with no refetch (kdd/state-management).
+#
+# linkedShipment vs originalShipment are two DIFFERENT links
+# (spec/customer-returns/contract.md § manual vs transfer): linkedShipment set ⇔
+# transfer return (kind + editability); originalShipment = the outbound shipment
+# a manual return was created from (the side panel's related document).
+fragment CustomerReturnInfo on InvoiceNode {
+  id
+  invoiceNumber
+  status
+  onHold
+  colour
+  comment
+  theirReference
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  receivedDatetime
+  verifiedDatetime
+  otherPartyId
+  otherPartyName
+  user {
+    username
+  }
+  linkedShipment {
+    id
+  }
+  originalShipment {
+    id
+    invoiceNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
+}
+
+# ONE fragment, both directions: the detail row AND what updateCustomerReturnLines
+# returns, so a line save replaces the node's lines with no remapping and no
+# refetch. Line-display fields per spec/customer-returns/ui-surface.md S3.
+fragment CustomerReturnLine on InvoiceLineNode {
+  id
+  itemName
+  itemCode
+  item {
+    id
+    code
+    unitName
+  }
+  batch
+  expiryDate
+  packSize
+  numberOfPacks
+  sellPricePerPack
+  note
+  itemVariantId
+  volumePerPack
+  reasonOption {
+    id
+    type
+    reason
+  }
+  stockLine {
+    id
+  }
+}
+
+query customerReturnDetail($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...CustomerReturnInfo
+      lines {
+        totalCount
+        nodes {
+          ...CustomerReturnLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Return-level edits: header fields (customer / reference / comment / colour),
+# the hold toggle, and the status advance (RECEIVED / VERIFIED — the wire can
+# express no other target; forward-only is partly structural,
+# spec/customer-returns/contract.md § status lifecycle). Success returns the
+# CustomerReturnInfo fragment, merged over the node with no refetch. The typed
+# errors are ONLY the customer-change pair; every status-advance rejection
+# (no lines / on hold / not editable / reverse) is a NON-typed GraphQL error the
+# caller opts into via returnGraphqlErrors and maps by extensions.details.
+mutation updateCustomerReturn(
+  $storeId: String!
+  $input: UpdateCustomerReturnInput!
+) {
+  updateCustomerReturn(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...CustomerReturnInfo
+    }
+    ... on UpdateCustomerReturnError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The one line-save call (spec/customer-returns/rules.md § line rules): the
+# item's WHOLE batch set each save — quantity > 0 upserts, an existing line at
+# zero deletes, a new line at zero is dropped server-side. The response union has
+# NO error member (contract wire trap) — every rejection arrives as a top-level
+# GraphQL error (returnGraphqlErrors + extensions.details). Success returns the
+# whole invoice with its lines; the view replaces the node wholesale.
+mutation updateCustomerReturnLines(
+  $storeId: String!
+  $input: UpdateCustomerReturnLinesInput!
+) {
+  updateCustomerReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      ...CustomerReturnInfo
+      lines {
+        totalCount
+        nodes {
+          ...CustomerReturnLine
+        }
+      }
+    }
+  }
+}
+
+# Draft lines for the return-items modal (spec/customer-returns/contract.md §
+# draft-line generation): existingLinesInput { returnId, itemId } pulls the
+# return's EXISTING lines for one item (per-item editing);
+# outboundShipmentLineIds builds NEW drafts from outbound-shipment lines
+# (the from-shipment flow — no entry point until the outbound-shipments section
+# exists; supported here for that wiring). numberOfPacksIssued is only present
+# on from-shipment drafts.
+query generateCustomerReturnLines(
+  $storeId: String!
+  $input: GenerateCustomerReturnLinesInput!
+) {
+  generateCustomerReturnLines(storeId: $storeId, input: $input) {
+    ... on GeneratedCustomerReturnLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        batch
+        expiryDate
+        packSize
+        numberOfPacksReturned
+        numberOfPacksIssued
+        note
+        reasonId
+        itemVariantId
+        volumePerPack
+        itemCode
+        itemName
+        item {
+          id
+          code
+          unitName
+        }
+      }
+    }
+  }
+}
+
+# The Log tab (spec/customer-returns/acceptance.md AC-G1): the return's activity
+# history — creation, status changes, deletion — keyed by recordId. Sorted
+# client-side by datetime (no server sort dependency).
+query customerReturnLog($storeId: String!, $recordId: String!) {
+  activityLogs(
+    storeId: $storeId
+    filter: { recordId: { equalTo: $recordId } }
+    page: { first: 1000 }
+  ) {
+    ... on ActivityLogConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        type
+        datetime
+        to
+        from
+        user {
+          username
+        }
+      }
+    }
+  }
+}

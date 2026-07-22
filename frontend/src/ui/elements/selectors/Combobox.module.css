@@ -183,6 +183,15 @@
   font-weight: var(--weight-medium);
 }
 
+/* A listed-but-disabled option (aria-disabled — e.g. an on-hold customer):
+   dimmed alongside its textual marker, never colour-alone — same treatment
+   as Select's .item[data-disabled]. Visible for context, not selectable; no
+   pointer affordance. */
+.item[data-disabled] {
+  color: var(--gray-main);
+  cursor: default;
+}
+
 .status {
   padding: var(--space-2);
   color: var(--text-secondary);

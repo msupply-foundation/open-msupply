@@ -46,7 +46,18 @@ query inboundPrograms($storeId: String!) {
 }
 
 # The lines of a linked internal order — the add-from-internal-order picker
-# (spec AC-IO1). Each pulled line pre-fills the item + requested quantity.
+# (spec S7 / AC-IO1). Each pulled line pre-fills the item + requested quantity;
+# the picker multi-selects, adding every chosen line in one batch.
+fragment InternalOrderLineRow on RequisitionLineNode {
+  id
+  itemName
+  requestedQuantity
+  item {
+    id
+    code
+  }
+}
+
 query internalOrderLines($storeId: String!, $requisitionId: String!) {
   requisition(storeId: $storeId, id: $requisitionId) {
     __typename
@@ -55,13 +66,7 @@ query internalOrderLines($storeId: String!, $requisitionId: String!) {
       requisitionNumber
       lines {
         nodes {
-          id
-          itemName
-          requestedQuantity
-          item {
-            id
-            code
-          }
+          ...InternalOrderLineRow
         }
       }
     }
@@ -92,25 +97,41 @@ query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
   }
 }
 
-# A supplier's open internal orders (request requisitions) — offered as an
-# optional link step during manual creation (spec S2), when the store allows
-# manually linking internal orders to inbound shipments.
+# A supplier's linkable internal orders (request requisitions) — offered as an
+# optional link step during manual creation (spec S2 → Link internal order
+# modal), when the store allows manually linking internal orders to inbound
+# shipments. Only SENT request requisitions for the chosen supplier are
+# linkable (a draft hasn't been sent to the supplier yet); newest-created first.
+fragment LinkInternalOrderRow on RequisitionNode {
+  id
+  requisitionNumber
+  createdDatetime
+  theirReference
+  comment
+  user {
+    username
+  }
+  program {
+    id
+    name
+  }
+}
+
 query supplierInternalOrders($storeId: String!, $otherPartyId: String!) {
   requisitions(
     storeId: $storeId
     filter: {
       type: { equalTo: REQUEST }
+      status: { equalTo: SENT }
       otherPartyId: { equalTo: $otherPartyId }
     }
-    sort: [{ key: requisitionNumber, desc: true }]
+    sort: [{ key: createdDatetime, desc: true }]
   ) {
     ... on RequisitionConnector {
       __typename
       totalCount
       nodes {
-        id
-        requisitionNumber
-        status
+        ...LinkInternalOrderRow
       }
     }
   }
