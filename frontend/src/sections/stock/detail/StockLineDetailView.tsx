@@ -381,7 +381,10 @@ const StockLineDetailView: Component = () => {
         {l => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
-              fillBody
+              // Fill (no body padding, child fills the region) is for the
+              // self-scrolling table tabs; the Details form tab keeps the
+              // standard padded scrolling body.
+              fillBody={activeTab() !== 'details'}
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs(l())} />
@@ -461,14 +464,11 @@ const StockLineDetailView: Component = () => {
                       titled sections in two column stacks that wrap to one when
                       squeezed. Editable fields are live inputs (label above);
                       read-only facts are LabelledValue in field variant (no
-                      input chrome). Sections and rows per spec/stock S2 Layout;
-                      h3 headings nest under the identity header's h2. */}
+                      input chrome). Sections and rows per spec/stock S2
+                      Layout. */}
                   <FormColumns>
                     <FormColumn>
-                      <FormSection
-                        headingLevel="h3"
-                        title={t('heading.stock-levels')}
-                      >
+                      <FormSection title={t('heading.stock-levels')}>
                         <FormRow>
                           <LabelledValue
                             variant="field"
@@ -496,10 +496,7 @@ const StockLineDetailView: Component = () => {
                         </FormRow>
                       </FormSection>
 
-                      <FormSection
-                        headingLevel="h3"
-                        title={t('heading.batches-and-dates')}
-                      >
+                      <FormSection title={t('heading.batches-and-dates')}>
                         <TextField
                           label={t('label.batch')}
                           width="full"
@@ -541,10 +538,7 @@ const StockLineDetailView: Component = () => {
                         </Show>
                       </FormSection>
 
-                      <FormSection
-                        headingLevel="h3"
-                        title={t('heading.pricing')}
-                      >
+                      <FormSection title={t('heading.pricing')}>
                         <FormRow>
                           <CurrencyField
                             label={t('label.cost-price')}
@@ -563,10 +557,7 @@ const StockLineDetailView: Component = () => {
                     </FormColumn>
 
                     <FormColumn>
-                      <FormSection
-                        headingLevel="h3"
-                        title={t('heading.storage-and-pack')}
-                      >
+                      <FormSection title={t('heading.storage-and-pack')}>
                         <LocationSelect
                           label={t('label.location')}
                           locations={locations()}
@@ -612,10 +603,7 @@ const StockLineDetailView: Component = () => {
                         </FormRow>
                       </FormSection>
 
-                      <FormSection
-                        headingLevel="h3"
-                        title={t('heading.supply-chain')}
-                      >
+                      <FormSection title={t('heading.supply-chain')}>
                         <NameSearch
                           label={t('label.manufacturer')}
                           storeId={params.storeId}

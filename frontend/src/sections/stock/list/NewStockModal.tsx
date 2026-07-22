@@ -314,11 +314,10 @@ const NewStockContent = (props: {
         <Show when={chosenItem()}>
           <hr class={formStyles.divider} />
           {/* The sectioned edit form (spec/ui-standards detail-views): S2's
-              sections adapted to this field set (spec/stock S3 Layout). h3
-              headings nest under the dialog title's h2. */}
+              sections adapted to this field set (spec/stock S3 Layout). */}
           <FormColumns>
             <FormColumn>
-              <FormSection headingLevel="h3" title={t('heading.stock-levels')}>
+              <FormSection title={t('heading.stock-levels')}>
                 <FormRow>
                   {/* NumberField's default min is 0 (no negatives), so the pack
                       count can't go negative from the input (spec AC-N2). */}
@@ -345,10 +344,7 @@ const NewStockContent = (props: {
                 </FormRow>
               </FormSection>
 
-              <FormSection
-                headingLevel="h3"
-                title={t('heading.batches-and-dates')}
-              >
+              <FormSection title={t('heading.batches-and-dates')}>
                 <TextField
                   label={t('label.batch')}
                   width="full"
@@ -404,7 +400,7 @@ const NewStockContent = (props: {
                 </Show>
               </FormSection>
 
-              <FormSection headingLevel="h3" title={t('heading.pricing')}>
+              <FormSection title={t('heading.pricing')}>
                 <FormRow>
                   <CurrencyField
                     label={t('label.cost-price')}
@@ -435,10 +431,7 @@ const NewStockContent = (props: {
             </FormColumn>
 
             <FormColumn>
-              <FormSection
-                headingLevel="h3"
-                title={t('heading.storage-and-pack')}
-              >
+              <FormSection title={t('heading.storage-and-pack')}>
                 <LocationSelect
                   label={t('label.location')}
                   locations={locations()}
@@ -468,7 +461,7 @@ const NewStockContent = (props: {
                 </FormRow>
               </FormSection>
 
-              <FormSection headingLevel="h3" title={t('heading.supply-chain')}>
+              <FormSection title={t('heading.supply-chain')}>
                 <NameSearch
                   label={t('label.manufacturer')}
                   storeId={props.storeId}
