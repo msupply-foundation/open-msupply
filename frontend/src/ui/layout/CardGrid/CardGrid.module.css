@@ -5,7 +5,7 @@
      viewport. No breakpoints. */
   grid-template-columns: repeat(
     auto-fit,
-    minmax(min(var(--card-grid-min, 20rem), 100%), 1fr)
+    minmax(min(var(--card-grid-min, 20rem), 100%), var(--card-grid-max, 1fr))
   );
   gap: var(--space-5);
   align-items: start;
