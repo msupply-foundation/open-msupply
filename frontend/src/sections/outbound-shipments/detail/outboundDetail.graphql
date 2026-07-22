@@ -373,7 +373,9 @@ query customerMasterLists($storeId: String!, $customerNameId: String!) {
 # Stocktake-conflict check for backdating (AC-B4): any stocktake counted on or
 # after the chosen backdated date — its reissued lines would predate stock
 # counts already on record. (The old client's named outboundStocktakeCountAfterDate
-# query is absent on this server; this is the equivalent stocktakes date filter.)
+# query is absent on this server; this is the SAME stocktakes date filter that
+# query wrapped — verified against the old client's PickedDateInput: identical
+# stocktakeDate afterOrEqualTo, deliberately no status scoping.)
 query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {
   stocktakes(
     storeId: $storeId

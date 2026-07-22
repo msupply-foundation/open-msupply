@@ -352,7 +352,17 @@ const ServiceChargesContent = (
     >
       <Show
         when={rows().length > 0}
-        fallback={<p>{t('error.no-service-charges')}</p>}
+        fallback={
+          <p>
+            {/* Distinct empty states: no default service item assigned to
+                the store (so Add charge is disabled — the current client's
+                !defaultServiceItem message) vs simply no charges added yet
+                (the same line the inbound service modal shows). */}
+            {!defaultServiceItem() && !serviceItems.loading
+              ? t('error.no-service-charges')
+              : t('messages.no-service-charges')}
+          </p>
+        }
       >
         <DataTable
           columns={columns()}
