@@ -1,22 +1,7 @@
-import type { JSX } from 'solid-js';
 import { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { TextField } from '../ui/elements/inputs/TextField';
-import styles from './InsetPanelShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
+import { Card, FormPreview, Stack } from './common';
 
 /*
  * Storybook of the InsetPanel layout element: a recessed grey panel that
@@ -27,7 +12,7 @@ const Card = (props: {
  * create-stocktake modal.
  */
 export const InsetPanelShowcase = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="Inset panel — recessed grouping"
       lead={
@@ -41,7 +26,7 @@ export const InsetPanelShowcase = () => (
         </>
       }
     >
-      <div class={styles.formPreview}>
+      <FormPreview>
         <InsetPanel hint="Counts items matching the filters below.">
           <FieldRow label="Master list">
             <TextField label="Master list" hideLabel placeholder="Any" />
@@ -50,7 +35,7 @@ export const InsetPanelShowcase = () => (
             <TextField label="Location" hideLabel placeholder="Any" />
           </FieldRow>
         </InsetPanel>
-      </div>
+      </FormPreview>
     </Card>
-  </div>
+  </Stack>
 );

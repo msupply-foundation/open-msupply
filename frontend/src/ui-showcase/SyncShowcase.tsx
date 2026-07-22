@@ -1,4 +1,3 @@
-import type { JSX } from 'solid-js';
 import { ProgressList } from '../ui/sync/ProgressList';
 import {
   ChevronsDownIcon,
@@ -6,28 +5,14 @@ import {
   ClockIcon,
   DownloadIcon,
 } from '../ui/icons';
-import styles from './SyncShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
+import { Card, Col, Stack } from './common';
 
 /*
  * Demos for the sync-specific components (src/ui/sync) — this section mirrors
  * that folder group, as every showcase section mirrors its ui/ group.
  */
 export const SyncShowcase = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="Progress list — determinate sync steps"
       lead={
@@ -46,7 +31,7 @@ export const SyncShowcase = () => (
         </>
       }
     >
-      <div class={styles.stepperStack}>
+      <Col gap="lg">
         <ProgressList
           steps={[
             {
@@ -112,7 +97,7 @@ export const SyncShowcase = () => (
             },
           ]}
         />
-      </div>
+      </Col>
     </Card>
-  </div>
+  </Stack>
 );
