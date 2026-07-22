@@ -16,11 +16,9 @@ const EXPORT_OPTIONS = [
 ];
 
 /*
- * Dogfooding prototype (2026-07-23): this page trials the app's own
- * DashboardCard as the demo-section container (in place of the showcase
- * Card), with the page column as ContentContainer + Stack and the lead as a
- * standalone <Lead>. If the look holds up, the pattern rolls out to every
- * card page; if not, the showcase Card stays.
+ * The first page converted to the dogfooded chrome pattern (2026-07-23, now
+ * showcase-wide — see kdd/showcase-harness): page column is ContentContainer
+ * + app Stack, demo sections are the app's DashboardCard with a <Lead> child.
  */
 export const HeaderShowcase = () => (
   <ContentContainer size="form">

@@ -1,10 +1,13 @@
 import { createSignal } from 'solid-js';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
 import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { ReportsIcon, StockIcon, TruckIcon, PrinterIcon } from '../ui/icons';
-import { Card, Note, Stack } from './common';
+import { Lead, Note } from './common';
 import styles from './DisplayShowcase.module.css';
 
 /* A small self-contained HTML document (no scripts) to show the sandboxed
@@ -40,105 +43,95 @@ export const DisplayShowcase = () => {
       ? undefined
       : String(CURRENT_PACKS - (adjustBy() ?? 0));
   return (
-    <Stack>
-      <Card
-        title="Stat comparison tile — current → adjusted preview"
-        lead={
-          <>
+    <ContentContainer size="form">
+      <Stack gap="lg">
+        <DashboardCard title="Stat comparison tile — current → adjusted preview">
+          <Lead>
             A labelled tile showing a value beside its adjusted/preview
             counterpart (the stock adjustment modal's Available packs / Packs on
             hand). The preview side is{' '}
             <strong>blank until there is an input</strong>. An optional sub-note
             carries secondary context (e.g. the dose equivalent).
-          </>
-        }
-      >
-        <div style={{ 'max-width': '18rem', 'margin-bottom': '1rem' }}>
-          <NumberField
-            label="Reduce packs by"
-            value={adjustBy()}
-            onChange={setAdjustBy}
-          />
-        </div>
-        <div class={styles.grid}>
-          <StatComparisonTile
-            label="Available packs"
-            current={String(CURRENT_PACKS)}
-            adjusted={adjusted()}
-          />
-          <StatComparisonTile
-            label="Packs on hand"
-            current={String(CURRENT_PACKS)}
-            currentNote="6,000 doses"
-            adjusted={adjusted()}
-            adjustedNote={
-              adjusted() === undefined
-                ? undefined
-                : `${Number(adjusted()) * 50} doses`
-            }
-          />
-        </div>
-      </Card>
-      <Card
-        title="Widget card — clickable dashboard tile"
-        lead={
-          <>
+          </Lead>
+          <div style={{ 'max-width': '18rem', 'margin-bottom': '1rem' }}>
+            <NumberField
+              label="Reduce packs by"
+              value={adjustBy()}
+              onChange={setAdjustBy}
+            />
+          </div>
+          <div class={styles.grid}>
+            <StatComparisonTile
+              label="Available packs"
+              current={String(CURRENT_PACKS)}
+              adjusted={adjusted()}
+            />
+            <StatComparisonTile
+              label="Packs on hand"
+              current={String(CURRENT_PACKS)}
+              currentNote="6,000 doses"
+              adjusted={adjusted()}
+              adjustedNote={
+                adjusted() === undefined
+                  ? undefined
+                  : `${Number(adjusted()) * 50} doses`
+              }
+            />
+          </div>
+        </DashboardCard>
+        <DashboardCard title="Widget card — clickable dashboard tile">
+          <Lead>
             A titled card where the <strong>whole surface</strong> is one
             interactive element — an <code>&lt;a href&gt;</code> (router
             navigation) or a <code>&lt;button&gt;</code> (<code>onClick</code>).
             One focusable control, the title as its accessible name, the icon
             decorative. Hover lifts it; keyboard focus shows the ring. Lay them
             in an intrinsic grid for a dashboard.
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <WidgetCard
-            title="Reports"
-            subtitle="Generate and print"
-            icon={<ReportsIcon />}
-            onClick={() => setLastClicked('Reports')}
-          />
-          <WidgetCard
-            title="Stock on hand"
-            subtitle="Current inventory"
-            icon={<StockIcon />}
-            onClick={() => setLastClicked('Stock on hand')}
-          />
-          <WidgetCard
-            title="Distribution"
-            subtitle="Outbound shipments"
-            icon={<TruckIcon />}
-            onClick={() => setLastClicked('Distribution')}
-          />
-          <WidgetCard
-            title="Print queue"
-            subtitle="This one is a link (href)"
-            icon={<PrinterIcon />}
-            href="#/showcase/icons"
-          />
-        </div>
-        <Note role="status">
-          {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
-        </Note>
-      </Card>
+          </Lead>
+          <div class={styles.grid}>
+            <WidgetCard
+              title="Reports"
+              subtitle="Generate and print"
+              icon={<ReportsIcon />}
+              onClick={() => setLastClicked('Reports')}
+            />
+            <WidgetCard
+              title="Stock on hand"
+              subtitle="Current inventory"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Stock on hand')}
+            />
+            <WidgetCard
+              title="Distribution"
+              subtitle="Outbound shipments"
+              icon={<TruckIcon />}
+              onClick={() => setLastClicked('Distribution')}
+            />
+            <WidgetCard
+              title="Print queue"
+              subtitle="This one is a link (href)"
+              icon={<PrinterIcon />}
+              href="#/showcase/icons"
+            />
+          </div>
+          <Note role="status">
+            {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
+          </Note>
+        </DashboardCard>
 
-      <Card
-        title="Document frame — sandboxed report output"
-        lead={
-          <>
+        <DashboardCard title="Document frame — sandboxed report output">
+          <Lead>
             A sandboxed <code>&lt;iframe&gt;</code> for server-rendered HTML
             documents. Fills its container, shows a centred Spinner until the
             load event, and sandboxes to <code>allow-same-origin</code> by
             default (the document may load same-origin images but runs no
             scripts). This one is driven by <code>srcdoc</code>.
-          </>
-        }
-      >
-        <div class={styles.frameHolder}>
-          <DocumentFrame title="Stock on hand report" srcdoc={REPORT_HTML} />
-        </div>
-      </Card>
-    </Stack>
+          </Lead>
+          <div class={styles.frameHolder}>
+            <DocumentFrame title="Stock on hand report" srcdoc={REPORT_HTML} />
+          </div>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
   );
 };

@@ -30,7 +30,7 @@ const Level = (props: { nodes: AnatomyNode[] }) => (
 /**
  * The nesting diagram at the top of an anatomy page: which element sits
  * inside which, with a one-clause note on what each owns. Explanatory chrome
- * around the demos (same class as Card/Intro), rendered as nested lists so
+ * around the demos (same class as Intro/Lead), rendered as nested lists so
  * the hierarchy is real semantics, not ASCII art.
  */
 export const AnatomyTree = (props: { nodes: AnatomyNode[] }) => (

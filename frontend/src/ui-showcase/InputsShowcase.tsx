@@ -1,4 +1,7 @@
 import { createSignal, type JSX } from 'solid-js';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { NumberField } from '../ui/elements/inputs/NumberField';
@@ -22,7 +25,7 @@ import {
   locale,
   setHomeCurrency,
 } from '../intl';
-import { Card, FormPreview, Stack } from './common';
+import { FormPreview, Lead } from './common';
 import styles from './InputsShowcase.module.css';
 
 // Mock source for the home-currency selector: the currencies old OMS shipped
@@ -128,11 +131,10 @@ export const InputsShowcase = () => {
   const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
 
   return (
-    <Stack>
-      <Card
-        title="Text field states"
-        lead={
-          <>
+    <ContentContainer size="form">
+      <Stack gap="lg">
+        <DashboardCard title="Text field states">
+          <Lead>
             The company-spec text input: a plain HTML <code>&lt;input&gt;</code>{' '}
             + CSS, no library — label, helper/error message, required marker,
             two heights and the short/long width caps. Every colour is a theme
@@ -140,59 +142,55 @@ export const InputsShowcase = () => {
             for dark alongside <code>--focus-ring</code>). Click into a field
             for the blue focus ring; error and required are never conveyed by
             colour alone.
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <Field caption="Default">
-            <TextField
-              label="Item Code"
-              placeholder="e.g. AMX500"
-              helperText="Click to focus — blue ring appears"
-            />
-          </Field>
-          <Field caption="Filled">
-            <TextField label="Batch Number" value="B2487-594" />
-          </Field>
-          <Field caption="Required">
-            <TextField
-              label="Supplier Name"
-              required
-              placeholder="Enter supplier name"
-              helperText="Asterisk on label — not placeholder"
-            />
-          </Field>
-          <Field caption="Error">
-            <TextField
-              label="Quantity"
-              value="-50"
-              error="Quantity must be positive"
-            />
-          </Field>
-          <Field caption="Disabled">
-            <TextField
-              label="Notes"
-              placeholder="Add notes…"
-              disabled
-              helperText="Grey fill, muted border — not interactive"
-            />
-          </Field>
-          <Field caption="Small · long" class={styles.fullRow}>
-            <TextField
-              label="Description"
-              size="small"
-              width="long"
-              placeholder="Longer free-text field"
-              helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
-            />
-          </Field>
-        </div>
-      </Card>
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Default">
+              <TextField
+                label="Item Code"
+                placeholder="e.g. AMX500"
+                helperText="Click to focus — blue ring appears"
+              />
+            </Field>
+            <Field caption="Filled">
+              <TextField label="Batch Number" value="B2487-594" />
+            </Field>
+            <Field caption="Required">
+              <TextField
+                label="Supplier Name"
+                required
+                placeholder="Enter supplier name"
+                helperText="Asterisk on label — not placeholder"
+              />
+            </Field>
+            <Field caption="Error">
+              <TextField
+                label="Quantity"
+                value="-50"
+                error="Quantity must be positive"
+              />
+            </Field>
+            <Field caption="Disabled">
+              <TextField
+                label="Notes"
+                placeholder="Add notes…"
+                disabled
+                helperText="Grey fill, muted border — not interactive"
+              />
+            </Field>
+            <Field caption="Small · long" class={styles.fullRow}>
+              <TextField
+                label="Description"
+                size="small"
+                width="long"
+                placeholder="Longer free-text field"
+                helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
+              />
+            </Field>
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Size variations — default & small"
-        lead={
-          <>
+        <DashboardCard title="Size variations — default & small">
+          <Lead>
             Two sizes (ui-standards "Text Fields — Size Variations"):{' '}
             <strong>default</strong> (2.5rem / 40px, 14px text) for standalone
             form fields, modals and drawers; <code>size="small"</code> (2.25rem
@@ -203,104 +201,96 @@ export const InputsShowcase = () => {
             point). The one <code>size</code> prop flows to{' '}
             <code>NumberField</code>, <code>CurrencyField</code> and the date
             fields — compare each pair below.
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <Field caption="Default — 40px · 14px">
-            <TextField label="Item Name" value="Amoxicillin 500mg" />
-          </Field>
-          <Field caption="Small — 36px · 13px">
-            <TextField
-              label="Item Name"
-              size="small"
-              value="Amoxicillin 500mg"
-            />
-          </Field>
-          <Field caption="Default — number">
-            <NumberField
-              label="Pack size"
-              value={packSize()}
-              onChange={setPackSize}
-            />
-          </Field>
-          <Field caption="Small — number">
-            <NumberField
-              label="Pack size"
-              size="small"
-              value={packSize()}
-              onChange={setPackSize}
-            />
-          </Field>
-          <Field caption="Default — date">
-            <DateField label="Expiry" value={expiry()} onChange={setExpiry} />
-          </Field>
-          <Field caption="Small — date">
-            <DateField
-              label="Expiry"
-              size="small"
-              value={expiry()}
-              onChange={setExpiry}
-            />
-          </Field>
-        </div>
-      </Card>
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Default — 40px · 14px">
+              <TextField label="Item Name" value="Amoxicillin 500mg" />
+            </Field>
+            <Field caption="Small — 36px · 13px">
+              <TextField
+                label="Item Name"
+                size="small"
+                value="Amoxicillin 500mg"
+              />
+            </Field>
+            <Field caption="Default — number">
+              <NumberField
+                label="Pack size"
+                value={packSize()}
+                onChange={setPackSize}
+              />
+            </Field>
+            <Field caption="Small — number">
+              <NumberField
+                label="Pack size"
+                size="small"
+                value={packSize()}
+                onChange={setPackSize}
+              />
+            </Field>
+            <Field caption="Default — date">
+              <DateField label="Expiry" value={expiry()} onChange={setExpiry} />
+            </Field>
+            <Field caption="Small — date">
+              <DateField
+                label="Expiry"
+                size="small"
+                value={expiry()}
+                onChange={setExpiry}
+              />
+            </Field>
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Multi-line text — native <textarea>"
-        lead={
-          <>
+        <DashboardCard title="Multi-line text — native <textarea>">
+          <Lead>
             The TextField spec on a plain HTML <code>&lt;textarea&gt;</code> —
             same border, focus ring, label and helper/error wiring. The{' '}
             <code>rows</code> prop sets the visible lines (default 4, as the old
             OMS TextArea); the height is fixed — longer content scrolls, no
             resize grip. Defaults to full width (<code>width</code> caps it, as
             TextField).
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <Field caption="Default (4 rows)">
-            <TextArea
-              label="Comment"
-              placeholder="Add a comment…"
-              helperText="Four visible lines by default — longer content scrolls"
-            />
-          </Field>
-          <Field caption="rows={2} · filled">
-            <TextArea
-              label="Notes"
-              rows={2}
-              value={
-                'Damaged carton on arrival.\nPhotos attached to the claim.'
-              }
-            />
-          </Field>
-          <Field caption="Error">
-            <TextArea
-              label="Reason"
-              rows={2}
-              required
-              value=""
-              error="A reason is required"
-            />
-          </Field>
-          <Field caption="Disabled">
-            <TextArea
-              label="Instructions"
-              rows={2}
-              placeholder="No instructions"
-              disabled
-              helperText="Grey fill, muted border — not interactive"
-            />
-          </Field>
-        </div>
-      </Card>
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Default (4 rows)">
+              <TextArea
+                label="Comment"
+                placeholder="Add a comment…"
+                helperText="Four visible lines by default — longer content scrolls"
+              />
+            </Field>
+            <Field caption="rows={2} · filled">
+              <TextArea
+                label="Notes"
+                rows={2}
+                value={
+                  'Damaged carton on arrival.\nPhotos attached to the claim.'
+                }
+              />
+            </Field>
+            <Field caption="Error">
+              <TextArea
+                label="Reason"
+                rows={2}
+                required
+                value=""
+                error="A reason is required"
+              />
+            </Field>
+            <Field caption="Disabled">
+              <TextArea
+                label="Instructions"
+                rows={2}
+                placeholder="No instructions"
+                disabled
+                helperText="Grey fill, muted border — not interactive"
+              />
+            </Field>
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Number field — numeric input over TextField"
-        lead={
-          <>
+        <DashboardCard title="Number field — numeric input over TextField">
+          <Lead>
             The old OMS NumericTextInput rebuilt: a TextField (always{' '}
             <code>type="text"</code> — never <code>type="number"</code>) with
             the numeric machinery around it. Typing is gated to valid numeric
@@ -312,114 +302,110 @@ export const InputsShowcase = () => {
             parent-owned <code>value</code> live: watch it track keystrokes,
             arrow keys (Shift = ×10) and blur. Separators follow the app
             language (try French or Arabic).
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <Field caption="Integer · groups on blur">
-            <NumberField
-              label="Quantity"
-              value={qty()}
-              onChange={setQty}
-              helperText="Type 1234567, then blur — grouping appears"
-            />
-            <ValueReadout value={qty()} />
-          </Field>
-          <Field caption="2 dp · padded (currency-shaped)">
-            <NumberField
-              label="Cost price"
-              value={cost()}
-              onChange={setCost}
-              decimalLimit={2}
-              decimalMin={2}
-              step={0.5}
-              helperText="Blur pads to 2 dp — the Currency field's base"
-            />
-            <ValueReadout value={cost()} />
-          </Field>
-          <Field caption="Negative allowed · 1 dp">
-            <NumberField
-              label="Adjustment"
-              value={adjustment()}
-              onChange={setAdjustment}
-              allowNegative
-              decimalLimit={1}
-              helperText="A lone '-' commits nothing until a digit lands"
-            />
-            <ValueReadout value={adjustment()} />
-          </Field>
-          <Field caption="Clamped 1–100 · step 5">
-            <NumberField
-              label="Pack size"
-              value={packSize()}
-              onChange={setPackSize}
-              min={1}
-              max={100}
-              step={5}
-              helperText="Type 500: the value clamps at once, the text on blur"
-            />
-            <ValueReadout value={packSize()} />
-          </Field>
-          <Field caption="noFormatting">
-            <NumberField
-              label="Year"
-              value={year()}
-              onChange={setYear}
-              max={9999}
-              noFormatting
-              helperText="No grouping — still a number (leading 0s drop on blur); zero-keeping codes want TextField"
-            />
-            <ValueReadout value={year()} />
-          </Field>
-          <Field caption='Disabled · width="short" override'>
-            <NumberField
-              label="Total (computed)"
-              value={1234567.891}
-              onChange={() => {}}
-              decimalLimit={2}
-              disabled
-              width="short"
-              helperText="Grey fill — displays the formatted value. Numeric fields default to the compact width cap; wide totals opt up to 'short'."
-            />
-          </Field>
-          <Field
-            caption="Click Save straight from the field"
-            class={styles.fullRow}
-          >
-            <div class={styles.saveRow}>
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Integer · groups on blur">
               <NumberField
-                label="Counted packs"
-                value={raceValue()}
-                onChange={setRaceValue}
-                helperText="Type and click Save without tabbing out"
+                label="Quantity"
+                value={qty()}
+                onChange={setQty}
+                helperText="Type 1234567, then blur — grouping appears"
               />
-              <Button
-                onClick={() => {
-                  setSavedValue(raceValue());
-                  setRaceSaves(n => n + 1);
-                }}
-              >
-                Save
-              </Button>
-            </div>
-            <output class={styles.valueReadout}>
-              saved:{' '}
-              <code>
-                {savedValue() === undefined
-                  ? 'undefined'
-                  : JSON.stringify(savedValue())}
-              </code>{' '}
-              ({raceSaves()} save{raceSaves() === 1 ? '' : 's'}) — eager commits
-              + synchronous signals mean Save never sees a stale value
-            </output>
-          </Field>
-        </div>
-      </Card>
+              <ValueReadout value={qty()} />
+            </Field>
+            <Field caption="2 dp · padded (currency-shaped)">
+              <NumberField
+                label="Cost price"
+                value={cost()}
+                onChange={setCost}
+                decimalLimit={2}
+                decimalMin={2}
+                step={0.5}
+                helperText="Blur pads to 2 dp — the Currency field's base"
+              />
+              <ValueReadout value={cost()} />
+            </Field>
+            <Field caption="Negative allowed · 1 dp">
+              <NumberField
+                label="Adjustment"
+                value={adjustment()}
+                onChange={setAdjustment}
+                allowNegative
+                decimalLimit={1}
+                helperText="A lone '-' commits nothing until a digit lands"
+              />
+              <ValueReadout value={adjustment()} />
+            </Field>
+            <Field caption="Clamped 1–100 · step 5">
+              <NumberField
+                label="Pack size"
+                value={packSize()}
+                onChange={setPackSize}
+                min={1}
+                max={100}
+                step={5}
+                helperText="Type 500: the value clamps at once, the text on blur"
+              />
+              <ValueReadout value={packSize()} />
+            </Field>
+            <Field caption="noFormatting">
+              <NumberField
+                label="Year"
+                value={year()}
+                onChange={setYear}
+                max={9999}
+                noFormatting
+                helperText="No grouping — still a number (leading 0s drop on blur); zero-keeping codes want TextField"
+              />
+              <ValueReadout value={year()} />
+            </Field>
+            <Field caption='Disabled · width="short" override'>
+              <NumberField
+                label="Total (computed)"
+                value={1234567.891}
+                onChange={() => {}}
+                decimalLimit={2}
+                disabled
+                width="short"
+                helperText="Grey fill — displays the formatted value. Numeric fields default to the compact width cap; wide totals opt up to 'short'."
+              />
+            </Field>
+            <Field
+              caption="Click Save straight from the field"
+              class={styles.fullRow}
+            >
+              <div class={styles.saveRow}>
+                <NumberField
+                  label="Counted packs"
+                  value={raceValue()}
+                  onChange={setRaceValue}
+                  helperText="Type and click Save without tabbing out"
+                />
+                <Button
+                  onClick={() => {
+                    setSavedValue(raceValue());
+                    setRaceSaves(n => n + 1);
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+              <output class={styles.valueReadout}>
+                saved:{' '}
+                <code>
+                  {savedValue() === undefined
+                    ? 'undefined'
+                    : JSON.stringify(savedValue())}
+                </code>{' '}
+                ({raceSaves()} save{raceSaves() === 1 ? '' : 's'}) — eager
+                commits + synchronous signals mean Save never sees a stale value
+              </output>
+            </Field>
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Currency field — money over NumberField"
-        lead={
-          <>
+        <DashboardCard title="Currency field — money over NumberField">
+          <Lead>
             A NumberField whose decimal rules and symbol come from the currency,
             all derived from <code>Intl</code> — no hand-maintained table (the
             old OMS table had drifted: it gave KMF 2 decimals; ISO says 0). The
@@ -430,109 +416,101 @@ export const InputsShowcase = () => {
             below until the store wiring lands (TODO in{' '}
             <code>src/intl/currency.ts</code>). Symbol placement follows the app
             language: switch to French and the € moves after the number.
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <Field caption="Mock store home currency" class={styles.fullRow}>
-            <Select
-              label="Store home currency"
-              options={MOCK_STORE_CURRENCIES.map(code => ({
-                value: code,
-                label: `${code} — ${getCurrencyInfo(code, locale()).symbol}`,
-              }))}
-              value={homeCurrency()}
-              onValueChange={setHomeCurrency}
-            />
-          </Field>
-          <Field caption="Follows home currency">
-            <CurrencyField
-              label="Sell price"
-              value={price()}
-              onChange={setPrice}
-              helperText="No currency prop — switches with the selector above"
-            />
-            <ValueReadout value={price()} />
-          </Field>
-          <Field caption='Explicit currency="EUR"'>
-            <CurrencyField
-              label="Supplier price"
-              value={eurPrice()}
-              onChange={setEurPrice}
-              currency="EUR"
-              helperText="Fixed foreign currency — in French, € trails"
-            />
-            <ValueReadout value={eurPrice()} />
-          </Field>
-          <Field caption="Zero-decimal currency (JPY)">
-            <CurrencyField
-              label="Cost"
-              value={yenPrice()}
-              onChange={setYenPrice}
-              currency="JPY"
-              helperText="0 minor units — the decimal point isn't typeable"
-            />
-            <ValueReadout value={yenPrice()} />
-          </Field>
-          <Field caption="decimalLimit={4} override">
-            <CurrencyField
-              label="Cost per unit"
-              value={unitCost()}
-              onChange={setUnitCost}
-              decimalLimit={4}
-              helperText="4 dp in any home currency — blur pads to its minor units"
-            />
-            <ValueReadout value={unitCost()} />
-          </Field>
-          <Field caption='currencyDisplay="code"'>
-            <CurrencyField
-              label="Amount (SBD)"
-              value={sbdPrice()}
-              onChange={setSbdPrice}
-              currency="SBD"
-              currencyDisplay="code"
-              helperText='Where "$" would be ambiguous, show the ISO code'
-            />
-            <ValueReadout value={sbdPrice()} />
-          </Field>
-        </div>
-      </Card>
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Mock store home currency" class={styles.fullRow}>
+              <Select
+                label="Store home currency"
+                options={MOCK_STORE_CURRENCIES.map(code => ({
+                  value: code,
+                  label: `${code} — ${getCurrencyInfo(code, locale()).symbol}`,
+                }))}
+                value={homeCurrency()}
+                onValueChange={setHomeCurrency}
+              />
+            </Field>
+            <Field caption="Follows home currency">
+              <CurrencyField
+                label="Sell price"
+                value={price()}
+                onChange={setPrice}
+                helperText="No currency prop — switches with the selector above"
+              />
+              <ValueReadout value={price()} />
+            </Field>
+            <Field caption='Explicit currency="EUR"'>
+              <CurrencyField
+                label="Supplier price"
+                value={eurPrice()}
+                onChange={setEurPrice}
+                currency="EUR"
+                helperText="Fixed foreign currency — in French, € trails"
+              />
+              <ValueReadout value={eurPrice()} />
+            </Field>
+            <Field caption="Zero-decimal currency (JPY)">
+              <CurrencyField
+                label="Cost"
+                value={yenPrice()}
+                onChange={setYenPrice}
+                currency="JPY"
+                helperText="0 minor units — the decimal point isn't typeable"
+              />
+              <ValueReadout value={yenPrice()} />
+            </Field>
+            <Field caption="decimalLimit={4} override">
+              <CurrencyField
+                label="Cost per unit"
+                value={unitCost()}
+                onChange={setUnitCost}
+                decimalLimit={4}
+                helperText="4 dp in any home currency — blur pads to its minor units"
+              />
+              <ValueReadout value={unitCost()} />
+            </Field>
+            <Field caption='currencyDisplay="code"'>
+              <CurrencyField
+                label="Amount (SBD)"
+                value={sbdPrice()}
+                onChange={setSbdPrice}
+                currency="SBD"
+                currencyDisplay="code"
+                helperText='Where "$" would be ambiguous, show the ISO code'
+              />
+              <ValueReadout value={sbdPrice()} />
+            </Field>
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Field row — inline label + control"
-        lead={
-          <>
+        <DashboardCard title="Field row — inline label + control">
+          <Lead>
             A compact form row: a bold label on the inline-start, the control
             filling the inline-end — the app's dense dialog/panel layout (the
             create-stocktake filter rows). Hand-rolled layout only; the wrapped
             control keeps its own look but hides its own label (via{' '}
             <code>hideLabel</code>) so this row is the single visible label,
             announced to assistive tech. RTL-safe (logical properties).
-          </>
-        }
-      >
-        <FormPreview>
-          <FieldRow label="Master list">
-            <TextField label="Master list" hideLabel placeholder="Any" />
-          </FieldRow>
-          <FieldRow label="Location">
-            <TextField label="Location" hideLabel placeholder="Any" />
-          </FieldRow>
-          <FieldRow label="Expiring before">
-            <DateField
-              label="Expiring before"
-              hideLabel
-              value={expiringBefore()}
-              onChange={setExpiringBefore}
-            />
-          </FieldRow>
-        </FormPreview>
-      </Card>
+          </Lead>
+          <FormPreview>
+            <FieldRow label="Master list">
+              <TextField label="Master list" hideLabel placeholder="Any" />
+            </FieldRow>
+            <FieldRow label="Location">
+              <TextField label="Location" hideLabel placeholder="Any" />
+            </FieldRow>
+            <FieldRow label="Expiring before">
+              <DateField
+                label="Expiring before"
+                hideLabel
+                value={expiringBefore()}
+                onChange={setExpiringBefore}
+              />
+            </FieldRow>
+          </FormPreview>
+        </DashboardCard>
 
-      <Card
-        title="Radio group — native <input type=radio>"
-        lead={
-          <>
+        <DashboardCard title="Radio group — native <input type=radio>">
+          <Lead>
             Single choice among fixed options — the "own the simple" case with{' '}
             <strong>no</strong> library. A shared <code>name</code> gives the
             browser single-select grouping, roving arrow-key focus and the
@@ -543,88 +521,80 @@ export const InputsShowcase = () => {
             can be individually <code>disabled</code>, and{' '}
             <code>indentRem</code> lines a sub-group up under a sibling control.
             This is the create-stocktake type + include-all choice.
-          </>
-        }
-      >
-        <FormPreview>
-          <RadioGroup
-            label="Stocktake type"
-            value={stocktakeType()}
-            onChange={setStocktakeType}
-            options={[
-              {
-                value: 'full',
-                label: 'Full stocktake',
-                description: 'Counts every item in the store.',
-              },
-              {
-                value: 'filtered',
-                label: 'Filtered stocktake',
-                description: 'Counts items matching the filters.',
-              },
-              {
-                value: 'blank',
-                label: 'Blank stocktake',
-                description: 'Creates an empty stocktake.',
-              },
-            ]}
-          />
-          <div class={styles.radioSubgroup}>
+          </Lead>
+          <FormPreview>
             <RadioGroup
-              label="Which items"
-              value={includeAll()}
-              onChange={setIncludeAll}
-              indentRem={0.2}
+              label="Stocktake type"
+              value={stocktakeType()}
+              onChange={setStocktakeType}
               options={[
-                { value: 'soh', label: 'Items with stock on hand' },
-                // Disabled to show the per-option disabled state (as the modal
-                // greys "All items").
                 {
-                  value: 'all',
-                  label: 'All items',
-                  disabled: stocktakeType() === 'blank',
+                  value: 'full',
+                  label: 'Full stocktake',
+                  description: 'Counts every item in the store.',
+                },
+                {
+                  value: 'filtered',
+                  label: 'Filtered stocktake',
+                  description: 'Counts items matching the filters.',
+                },
+                {
+                  value: 'blank',
+                  label: 'Blank stocktake',
+                  description: 'Creates an empty stocktake.',
                 },
               ]}
             />
-          </div>
-        </FormPreview>
-      </Card>
+            <div class={styles.radioSubgroup}>
+              <RadioGroup
+                label="Which items"
+                value={includeAll()}
+                onChange={setIncludeAll}
+                indentRem={0.2}
+                options={[
+                  { value: 'soh', label: 'Items with stock on hand' },
+                  // Disabled to show the per-option disabled state (as the modal
+                  // greys "All items").
+                  {
+                    value: 'all',
+                    label: 'All items',
+                    disabled: stocktakeType() === 'blank',
+                  },
+                ]}
+              />
+            </div>
+          </FormPreview>
+        </DashboardCard>
 
-      <Card
-        title="Checkbox — native <input type=checkbox>"
-        lead={
-          <>
+        <DashboardCard title="Checkbox — native <input type=checkbox>">
+          <Lead>
             A labelled checkbox on the native control — no library. The real
             input is visually hidden (kept for a11y + as the state owner); a
             styled box + check glyph read the <code>:checked</code> /{' '}
             <code>:focus-visible</code> state off it. The label click toggles
             it; an <code>error</code> shows an icon + message (never colour
             alone). Label typography matches TextField.
-          </>
-        }
-      >
-        <FormPreview>
-          <Checkbox
-            label="Count items with zero stock"
-            checked={countZero()}
-            onChange={setCountZero}
-          />
-          <Checkbox
-            label="I have physically counted every line"
-            checked={confirmed()}
-            onChange={setConfirmed}
-            error={
-              confirmed() ? undefined : 'Confirm the count before finalising.'
-            }
-          />
-          <Checkbox label="Disabled option" disabled checked />
-        </FormPreview>
-      </Card>
+          </Lead>
+          <FormPreview>
+            <Checkbox
+              label="Count items with zero stock"
+              checked={countZero()}
+              onChange={setCountZero}
+            />
+            <Checkbox
+              label="I have physically counted every line"
+              checked={confirmed()}
+              onChange={setConfirmed}
+              error={
+                confirmed() ? undefined : 'Confirm the count before finalising.'
+              }
+            />
+            <Checkbox label="Disabled option" disabled checked />
+          </FormPreview>
+        </DashboardCard>
 
-      <Card
-        title="Toggle switch — on/off toggle (role=switch)"
-        lead={
-          <>
+        <DashboardCard title="Toggle switch — on/off toggle (role=switch)">
+          <Lead>
             The native checkbox re-cast as a switch (<code>role="switch"</code>
             ): a custom track + sliding thumb, the state carried by the thumb
             position. Space toggles it; the label click toggles it. For a binary
@@ -632,29 +602,25 @@ export const InputsShowcase = () => {
             The <code>on</code> state is the action blue by default;{' '}
             <code>variant="caution"</code> makes it brand orange for a setting
             to be careful with (e.g. putting stock on hold).
-          </>
-        }
-      >
-        <FormPreview>
-          <ToggleSwitch
-            label="Show finalised stocktakes"
-            checked={showFinalised()}
-            onChange={setShowFinalised}
-          />
-          <ToggleSwitch
-            label="On hold"
-            variant="caution"
-            checked={onHold()}
-            onChange={setOnHold}
-          />
-          <ToggleSwitch label="Disabled switch" disabled checked />
-        </FormPreview>
-      </Card>
+          </Lead>
+          <FormPreview>
+            <ToggleSwitch
+              label="Show finalised stocktakes"
+              checked={showFinalised()}
+              onChange={setShowFinalised}
+            />
+            <ToggleSwitch
+              label="On hold"
+              variant="caution"
+              checked={onHold()}
+              onChange={setOnHold}
+            />
+            <ToggleSwitch label="Disabled switch" disabled checked />
+          </FormPreview>
+        </DashboardCard>
 
-      <Card
-        title="Date & time — headless (corvu)"
-        lead={
-          <>
+        <DashboardCard title="Date & time — headless (corvu)">
+          <Lead>
             <code>DateField</code>, <code>DateRangeField</code>,{' '}
             <code>DateTimeField</code> and <code>TimeField</code>: a popover
             date picker on <strong>corvu</strong>'s headless calendar (our own
@@ -671,98 +637,97 @@ export const InputsShowcase = () => {
             time in <strong>one input</strong>, storing a{' '}
             <strong>UTC instant</strong> while the user edits{' '}
             <strong>local wall-clock</strong> time.
-          </>
-        }
-      >
-        <div class={styles.grid}>
-          <Field caption="Date — type or pick">
-            <DateField
-              label="Expiry date"
-              value={expiry()}
-              onChange={setExpiry}
-              helperText={`Type e.g. 12 Aug 2027, or pick. Stored: ${
-                expiry() ?? '(empty)'
-              }`}
-            />
-          </Field>
-          <Field caption="Short format (dd/MM/yyyy)">
-            <DateField
-              label="Invoice date"
-              format="dd/MM/yyyy"
-              value={invoiceDate()}
-              onChange={setInvoiceDate}
-              helperText={`Type 23/04/2023. Stored: ${
-                invoiceDate() ?? '(empty)'
-              }`}
-            />
-          </Field>
-          <Field caption="Bounded — future unselectable">
-            <DateField
-              label="Manufacture date"
-              max={todayIso()}
-              value={manufacture()}
-              onChange={setManufacture}
-              helperText={`max = today; later dates greyed out. Stored: ${
-                manufacture() ?? '(empty)'
-              }`}
-            />
-          </Field>
-          <Field caption="Time — 12h am/pm (Kobalte)">
-            <TimeField
-              label="Cut-off time"
-              value={cutoff()}
-              onChange={setCutoff}
-              hourCycle={12}
-              helperText={`Stored (HH:mm): ${cutoff() ?? '(empty)'}`}
-            />
-          </Field>
-          <Field caption="Date range">
-            <DateRangeField
-              label="Report period"
-              value={period()}
-              onChange={setPeriod}
-              helperText={`${period().start ?? '…'} → ${period().end ?? '…'}`}
-            />
-          </Field>
-          <Field caption="Required">
-            <DateField
-              label="Count date"
-              required
-              value={countDate()}
-              onChange={setCountDate}
-              helperText="Asterisk on label — not placeholder"
-            />
-          </Field>
-          <Field caption="Error">
-            <DateField
-              label="Expiry date"
-              value="2020-01-01"
-              error="Date is in the past"
-            />
-          </Field>
-          <Field caption="Disabled">
-            <DateField
-              label="Locked date"
-              value="2026-07-17"
-              disabled
-              helperText="Grey fill — not interactive"
-            />
-          </Field>
-          <Field
-            caption="Date & time — local edit, UTC store"
-            class={styles.fullRow}
-          >
-            <DateTimeField
-              label="Appointment"
-              value={appointment()}
-              onChange={setAppointment}
-              helperText={`You edit local wall-clock; stored as UTC: ${
-                appointment() ?? '(empty)'
-              }`}
-            />
-          </Field>
-        </div>
-      </Card>
-    </Stack>
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Date — type or pick">
+              <DateField
+                label="Expiry date"
+                value={expiry()}
+                onChange={setExpiry}
+                helperText={`Type e.g. 12 Aug 2027, or pick. Stored: ${
+                  expiry() ?? '(empty)'
+                }`}
+              />
+            </Field>
+            <Field caption="Short format (dd/MM/yyyy)">
+              <DateField
+                label="Invoice date"
+                format="dd/MM/yyyy"
+                value={invoiceDate()}
+                onChange={setInvoiceDate}
+                helperText={`Type 23/04/2023. Stored: ${
+                  invoiceDate() ?? '(empty)'
+                }`}
+              />
+            </Field>
+            <Field caption="Bounded — future unselectable">
+              <DateField
+                label="Manufacture date"
+                max={todayIso()}
+                value={manufacture()}
+                onChange={setManufacture}
+                helperText={`max = today; later dates greyed out. Stored: ${
+                  manufacture() ?? '(empty)'
+                }`}
+              />
+            </Field>
+            <Field caption="Time — 12h am/pm (Kobalte)">
+              <TimeField
+                label="Cut-off time"
+                value={cutoff()}
+                onChange={setCutoff}
+                hourCycle={12}
+                helperText={`Stored (HH:mm): ${cutoff() ?? '(empty)'}`}
+              />
+            </Field>
+            <Field caption="Date range">
+              <DateRangeField
+                label="Report period"
+                value={period()}
+                onChange={setPeriod}
+                helperText={`${period().start ?? '…'} → ${period().end ?? '…'}`}
+              />
+            </Field>
+            <Field caption="Required">
+              <DateField
+                label="Count date"
+                required
+                value={countDate()}
+                onChange={setCountDate}
+                helperText="Asterisk on label — not placeholder"
+              />
+            </Field>
+            <Field caption="Error">
+              <DateField
+                label="Expiry date"
+                value="2020-01-01"
+                error="Date is in the past"
+              />
+            </Field>
+            <Field caption="Disabled">
+              <DateField
+                label="Locked date"
+                value="2026-07-17"
+                disabled
+                helperText="Grey fill — not interactive"
+              />
+            </Field>
+            <Field
+              caption="Date & time — local edit, UTC store"
+              class={styles.fullRow}
+            >
+              <DateTimeField
+                label="Appointment"
+                value={appointment()}
+                onChange={setAppointment}
+                helperText={`You edit local wall-clock; stored as UTC: ${
+                  appointment() ?? '(empty)'
+                }`}
+              />
+            </Field>
+          </div>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
   );
 };

@@ -1,5 +1,6 @@
-/* Only what Text doesn't own: colour and the gap above the demo. */
+/* Only what Text doesn't own: the muted colour. Spacing comes from the card
+   body's flex gap — a margin here would add to it (flex margins don't
+   collapse). */
 .note {
-  margin-block-start: var(--space-4);
   color: var(--text-secondary);
 }

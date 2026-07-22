@@ -9,7 +9,6 @@ import { FormRow } from '../ui/layout/Form/FormRow';
 import { TextField } from '../ui/elements/inputs/TextField';
 import {
   AnatomyTree,
-  Col,
   FormPreview,
   Intro,
   Lead,
@@ -113,7 +112,7 @@ export const FormLayoutShowcase = () => (
           live: this card spans the <code>wide</code> column, and every card
           below sits in a nested <code>form</code>-width container.
         </Lead>
-        <Col gap="sm">
+        <Stack gap="sm">
           <ContentContainer size="prose">
             <div class={styles.stub}>prose · caps at 40rem</div>
           </ContentContainer>
@@ -123,7 +122,7 @@ export const FormLayoutShowcase = () => (
           <ContentContainer size="wide">
             <div class={styles.stub}>wide · caps at 80rem</div>
           </ContentContainer>
-        </Col>
+        </Stack>
       </DashboardCard>
 
       <ContentContainer size="form">
