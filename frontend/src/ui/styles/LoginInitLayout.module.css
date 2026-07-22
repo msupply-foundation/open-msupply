@@ -1,12 +1,15 @@
 /*
- * Login — recreated from the current app's LoginLayout: a 50/50 split. The
- * gradient hero disappears below the compact breakpoint (the breakpoint
- * decides WHICH element renders — principle #7); type on the hero scales
- * fluidly with clamp() instead of the original's four breakpoint steps.
- * Colours are all tokens (--gradient-primary / --bg-login / --login-hero-text
- * were added to the theme contract for this page). One deliberate deviation:
- * the original fades the version line to opacity 0.4, which fails AA contrast
- * — we use --text-secondary at full opacity instead.
+ * Shared shell for the two pre-session pages that carry real visual surface —
+ * Login and Initialisation (kdd/page-composition's "Login's gradient hero"
+ * precedent, now shared rather than duplicated since both screens use the
+ * identical 50/50 split). A gradient hero disappears below the compact
+ * breakpoint (the breakpoint decides WHICH element renders — principle #7);
+ * hero type scales fluidly with clamp() instead of discrete breakpoint steps.
+ * Colours are all tokens (--gradient-primary/-secondary / --bg-login /
+ * --login-hero-text). The two screens deliberately use DIFFERENT hero
+ * gradients in real OMS (theme.ts: Login → gradient.primary/orange,
+ * Initialise → gradient.secondary/blue) — .hero defaults to primary for
+ * Login; Initialisation adds .heroSecondary to switch it.
  */
 
 .page {
@@ -25,13 +28,17 @@
   color: var(--login-hero-text);
 }
 
+.heroSecondary {
+  background-image: var(--gradient-secondary);
+}
+
 /* Original steps 30→48→64px across sm/md/lg; 5vw passes through all three. */
 .heroHeading {
   margin: 0;
   font-size: clamp(1.875rem, 5vw, 4rem);
   font-weight: var(--weight-bold);
   line-height: normal;
-  white-space: pre-line; /* the strapline breaks are in the copy itself */
+  white-space: pre-line; /* line breaks are in the copy itself */
 }
 
 /* Original: 45px below the heading, 14→20px, semibold */
@@ -39,6 +46,7 @@
   margin: 2.8125rem 0 0;
   font-size: clamp(0.875rem, 1.5vw, 1.25rem);
   font-weight: 600;
+  white-space: pre-line;
 }
 
 .panel {

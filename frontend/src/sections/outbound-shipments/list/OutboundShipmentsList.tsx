@@ -28,7 +28,6 @@ import {
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../../ui/elements/table/Pagination';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -238,13 +237,13 @@ const OutboundShipmentsList: Component = () => {
       ...getDateCell(),
     },
     {
+      // Reference is not sortable (ui-surface S1 columns table).
       c: { key: 'theirReference' },
-      sortKey: 'theirReference',
       header: t('label.reference'),
     },
     {
+      // Comment is the shared comment cell — not sortable (ui-surface S1).
       c: { key: 'comment' },
-      sortKey: 'comment',
       header: t('label.comment'),
     },
     {
@@ -292,22 +291,7 @@ const OutboundShipmentsList: Component = () => {
         </Header>
       }
       contentFooter={
-        <Show
-          when={selectedIds().length > 0}
-          fallback={
-            <ContentFooter>
-              <Pagination
-                offset={query().offset}
-                pageSize={query().first}
-                total={totalCount()}
-                onOffsetChange={offset => setQuery({ ...query(), offset })}
-                onPageSizeChange={first =>
-                  setQuery({ ...query(), first, offset: 0 })
-                }
-              />
-            </ContentFooter>
-          }
-        >
+        <Show when={selectedIds().length > 0}>
           <ContentFooter testId="actions-footer">
             <strong data-testid="selected-rows-count">
               {tPlural('label.items-selected', selectedIds().length)}
@@ -369,6 +353,16 @@ const OutboundShipmentsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
+        // matching the stocktakes list (kdd/table-state). State stays
+        // page-owned / URL-backed.
+        pagination={{
+          offset: query().offset,
+          pageSize: query().first,
+          total: totalCount(),
+          onOffsetChange: offset => setQuery({ ...query(), offset }),
+          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        }}
       />
       <CustomerSearchModal
         open={createOpen()}

@@ -4,10 +4,16 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { Select } from '../../../../ui/elements/selectors/Select';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { XCircleIcon } from '../../../../ui/icons';
-import { InternalOrderLines } from '../inboundShipmentLookups.generated';
+import {
+  DataTable,
+  type Column,
+} from '../../../../ui/elements/table/DataTable';
+import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  InternalOrderLines,
+  type InternalOrderLineRowFragment,
+} from '../inboundShipmentLookups.generated';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 
 export interface AddFromInternalOrderModalProps {
@@ -20,9 +26,12 @@ export interface AddFromInternalOrderModalProps {
   onAdded: () => void;
 }
 
-// Pull a single line from the shipment's linked internal order (spec AC-IO1):
-// pre-fills the item + requested quantity, creating its stock line immediately.
-// Reachable only through the batch's insertFromInternalOrderLines member.
+// Pull lines from the shipment's linked internal order (spec S7 / AC-IO1). A
+// multi-select table of the order's lines — pick one OR many and add them in a
+// single action; each becomes a stock line pre-filled with the item + requested
+// quantity, stock created immediately (server side). Reachable only through the
+// batch's insertFromInternalOrderLines member (an array), so several selected
+// lines go up in one batch call.
 export const AddFromInternalOrderModal: Component<
   AddFromInternalOrderModalProps
 > = props => (
@@ -32,7 +41,7 @@ export const AddFromInternalOrderModal: Component<
 );
 
 const Body: Component<AddFromInternalOrderModalProps> = props => {
-  const [lineId, setLineId] = createSignal<string>();
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
@@ -46,17 +55,32 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
       ? result.data.requisition.lines.nodes
       : [];
   });
-  const lines = () => data() ?? [];
+  const lines = (): InternalOrderLineRowFragment[] => data() ?? [];
 
+  const columns = (): Column<InternalOrderLineRowFragment, never>[] => [
+    {
+      c: { accessor: row => row.item.code, id: 'code' },
+      header: t('label.code'),
+    },
+    { c: { key: 'itemName' }, header: t('label.name') },
+    {
+      c: { key: 'requestedQuantity' },
+      header: t('label.requested-quantity'),
+      ...getNumberCell(),
+    },
+  ];
+
+  // Add every selected order line in one batch (each → one stock line).
   const add = async () => {
-    const id = lineId();
-    if (!id || saving()) return;
+    const ids = selectedIds();
+    if (ids.length === 0 || saving()) return;
     setSaving(true);
     setErrorMessage(undefined);
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
-      insertFromInternalOrderLines: [
-        { invoiceId: props.invoiceId, requisitionLineId: id },
-      ],
+      insertFromInternalOrderLines: ids.map(requisitionLineId => ({
+        invoiceId: props.invoiceId,
+        requisitionLineId,
+      })),
     });
     setSaving(false);
     if (!outcome) return props.onClose();
@@ -73,7 +97,8 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
       open
       dismissable={!saving()}
       onClose={props.onClose}
-      title={t('label.add-from-internal-order')}
+      size="large"
+      title={t('header.add-lines-from-internal-order')}
       testId="add-internal-order-modal"
       actionsLead={
         <Show when={errorMessage()}>
@@ -85,6 +110,7 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
@@ -92,33 +118,35 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
           <Button
             data-testid="dialog-button-ok"
             loading={saving()}
-            disabled={!lineId()}
+            disabled={selectedIds().length === 0}
             onClick={() => void add()}
           >
-            {t('button.ok')}
+            {t('button.select')}
           </Button>
         </>
       }
     >
-      <Show when={!data.loading} fallback={<Spinner center />}>
-        <Show
-          when={lines().length > 0}
-          fallback={
-            <Alert severity="info">{t('error.no-inbound-items')}</Alert>
-          }
-        >
-          <Select
-            label={t('label.item')}
-            value={lineId()}
-            onValueChange={setLineId}
-            options={lines().map(line => ({
-              value: line.id,
-              label: `${line.item.code} — ${line.itemName}`,
-              description: `${t('label.requested-quantity')}: ${line.requestedQuantity}`,
-            }))}
-          />
-        </Show>
-      </Show>
+      <DataTable
+        columns={columns()}
+        rows={lines()}
+        rowKey={r => r.id}
+        loading={data.loading}
+        showFullScreen={false}
+        emptyMessage={t('error.no-internal-order-items')}
+        enableSelection
+        selectedIds={selectedIds()}
+        onSelectionChange={setSelectedIds}
+        // Clicking anywhere on the row toggles its selection (multi-select),
+        // not just the checkbox; the checkbox still toggles independently (its
+        // click doesn't propagate — see TableRow).
+        onRowClick={row =>
+          setSelectedIds(ids =>
+            ids.includes(row.id)
+              ? ids.filter(id => id !== row.id)
+              : [...ids, row.id]
+          )
+        }
+      />
     </Dialog>
   );
 };
