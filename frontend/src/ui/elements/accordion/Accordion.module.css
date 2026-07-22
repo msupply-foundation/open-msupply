@@ -1,0 +1,127 @@
+/*
+ * A vertical stack of disclosure sections. Items separate with a hairline
+ * divider (SidePanel's `.section + .section` convention); the trigger row and
+ * chevron follow the same "accordion convention" as SidePanel's collapsible
+ * sections — up/down rotate, no RTL mirroring needed (see
+ * ui/layout/SidePanel/SidePanel.module.css).
+ */
+
+.item + .item {
+  border-block-start: 1px solid var(--color-divider);
+}
+
+/* font-size: inherit — a trigger is functionally a button, not a display
+   heading; without this the browser's default h2/h3 UA size would make it
+   look oversized against the surrounding body copy (this app has no global
+   heading reset — see src/index.css). Consumers get sensible ambient sizing
+   for free; override via the trigger's own `class` if a consumer wants
+   something else. */
+.header {
+  margin: 0;
+  font-size: inherit;
+}
+
+/* Inline-flush: the trigger's label (and the content below it, via
+   .contentInner) aligns with whatever surrounds the accordion in its host —
+   any inline inset here would misalign section headings against sibling
+   content. Block padding stays for the row rhythm and divider breathing room.
+   The focus ring sits OUTSIDE the box (positive offset) so flush text never
+   overlaps it — the SidePanel disclosure convention. */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  inline-size: 100%;
+  padding: var(--space-3) 0;
+  border: 0;
+  background: none;
+  color: var(--text-body);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  text-align: start;
+  cursor: pointer;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--gray-dark);
+  transition: transform 140ms ease;
+}
+
+/* Disabled convention matches Button: cursor reverts to default, label + icon
+   grey out (colour alone never carries the state — the DOM disabled attribute
+   also blocks focus/click). */
+.trigger:disabled {
+  cursor: default;
+}
+
+.trigger:disabled,
+.trigger:disabled .chevron {
+  color: var(--gray-light);
+}
+
+.header[data-expanded] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Kobalte drives the open/close animation itself: it measures the content's
+   natural height into --kb-accordion-content-height and toggles the element's
+   inline animation-name on/off around that measurement, so the height rule
+   must live in a keyframe animation keyed off data-expanded/data-closed, NOT
+   an always-on `height` (an always-on rule would pin the element to 0 at the
+   moment Kobalte measures it, so it would never see a real height). Once the
+   animation finishes, height reverts to the cascade's default (auto, since no
+   other rule sets it) — so later content changes still reflow correctly. */
+.content {
+  overflow: hidden;
+}
+
+.content[data-expanded] {
+  animation: accordion-open 200ms ease;
+}
+
+.content[data-closed] {
+  animation: accordion-close 200ms ease;
+}
+
+@keyframes accordion-open {
+  from {
+    height: 0;
+  }
+
+  to {
+    height: var(--kb-accordion-content-height);
+  }
+}
+
+@keyframes accordion-close {
+  from {
+    height: var(--kb-accordion-content-height);
+  }
+
+  to {
+    height: 0;
+  }
+}
+
+.contentInner {
+  padding: 0 0 var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+
+  .content[data-expanded],
+  .content[data-closed] {
+    animation: none;
+  }
+}

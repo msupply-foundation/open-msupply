@@ -6,13 +6,20 @@ import {
   type Component,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { StockIcon, CentralIcon, type IconProps } from '../../icons';
+import { HomeIcon, CentralIcon, type IconProps } from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
 import { UserMenu } from './UserMenu';
 import { ShellNavContext, ShellFullScreenContext } from './shellContext';
-import { upperNav, lowerNav, type NavLeaf } from './navModel';
+import {
+  upperNav,
+  lowerNav,
+  SYNC_NAV_ID,
+  type NavBadge,
+  type NavItem,
+  type NavLeaf,
+} from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
 import styles from './AppShell.module.css';
 
@@ -26,6 +33,28 @@ export interface AppShellProps {
   selected: NavLeaf;
   /** The user picked a menu item. */
   onNavigate: (leaf: NavLeaf) => void;
+  /**
+   * The menu-bar nav model. Defaults to the app's own navModel (upper list +
+   * pinned lower cluster). A host with a different menu supplies its own — the
+   * showcase passes its section registry (MenuBar's contract). Overriding
+   * `upper` replaces the WHOLE model, so `lower` then comes only from the
+   * caller (never the app's lower cluster); pass it too if that host wants a
+   * pinned block-end group.
+   */
+  upper?: NavItem[];
+  lower?: NavItem[];
+  /**
+   * The user activated the sidebar's Sync entry — the chrome's sync affordance
+   * (spec/chrome § sync indicator: opens the sync modal in place, no
+   * navigation). Only consulted with the default nav model, whose lower
+   * cluster carries the chrome Sync entry; a host-supplied menu (`upper`
+   * override) navigates every leaf normally, even one with the same id.
+   */
+  onSyncOpen?: () => void;
+  /** The Sync entry's status badge (spec/chrome § sync indicator). */
+  syncBadge?: NavBadge;
+  /** Dim the Sync entry's icon while the latest run is errored. */
+  syncIconDimmed?: boolean;
   /**
    * The active store's name, shown in the bottom bar (spec: store selector).
    */
@@ -104,6 +133,13 @@ export const AppShell = (props: AppShellProps) => {
   const [fullScreen, setFullScreen] = createSignal(false);
   const isOverlay = useIsNavOverlay();
 
+  // Menu nav model — the app's own navModel by default; a host (the showcase)
+  // can supply its own. Overriding `upper` replaces the whole model, so
+  // `lower` comes only from the caller (a host with its whole menu in one
+  // list gets no lower cluster), never the app's default lowerNav.
+  const menuUpper = () => props.upper ?? upperNav;
+  const menuLower = () => (props.upper ? props.lower : lowerNav);
+
   const nav: MenuBarState = {
     railCollapsed,
     toggleRail: () => setRailCollapsed(c => !c),
@@ -135,10 +171,20 @@ export const AppShell = (props: AppShellProps) => {
             <MenuBar
               nav={nav}
               isOverlay={isOverlay()}
-              upper={upperNav}
-              lower={lowerNav}
+              upper={menuUpper()}
+              lower={menuLower()}
               selectedId={props.selected.id}
-              onSelect={props.onNavigate}
+              // The Sync entry opens the modal in place — never navigates
+              // (spec/chrome AC-CH8). Chrome behaviour, so it applies only to
+              // the app's own nav model: a host-supplied menu (the showcase)
+              // may use the same id as an ordinary destination.
+              onSelect={leaf =>
+                !props.upper && leaf.id === SYNC_NAV_ID
+                  ? props.onSyncOpen?.()
+                  : props.onNavigate(leaf)
+              }
+              syncBadge={props.syncBadge}
+              syncIconDimmed={props.syncIconDimmed}
             />
           </Show>
           <div class={styles.main}>
@@ -156,7 +202,7 @@ export const AppShell = (props: AppShellProps) => {
                 data-central={props.isCentralServer ? '' : undefined}
               >
                 <FooterCell
-                  icon={StockIcon}
+                  icon={HomeIcon}
                   label={props.storeName}
                   onClick={props.onStoreClick}
                 />
@@ -173,7 +219,7 @@ export const AppShell = (props: AppShellProps) => {
                   <span class={styles.footerDivider} aria-hidden="true" />
                   <FooterCell
                     icon={CentralIcon}
-                    label={t('shell.footer.central-server')}
+                    label={t('label.central-server')}
                   />
                 </Show>
               </footer>

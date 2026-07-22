@@ -10,17 +10,25 @@ import {
   SearchIcon,
   XCircleIcon,
 } from '../../../../ui/icons';
-import { LocationSelect } from '../../../../domain/location';
+import {
+  LocationVolumeSelect,
+  type LocationWithVolume,
+} from '../../../../domain/location';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
 import type { LineErrors } from '../lines/stocktakeLineErrors';
+import type { StocktakeLineFragment } from '../lines/stocktakeDetail.generated';
 
 export interface ChangeLocationActionProps {
   storeId: string;
   selectedIds: () => string[];
   disabled: boolean;
+  /** The store's locations with capacity (fetched by the detail view). */
+  locations: LocationWithVolume[];
+  /** The current lines page — the selected ones' volumes size the picker. */
+  rows: StocktakeLineFragment[];
   /** Apply what committed in place (no refetch). */
   onCommit: (commit: LineEditCommit) => void;
   /**
@@ -55,9 +63,10 @@ export const ChangeLocationAction: Component<
         variant="secondary"
         icon={<MapPinIcon />}
         disabled={props.disabled}
+        data-testid="change-location-button"
         onClick={() => setOpen(true)}
       >
-        {t('stocktake.lines.change-location')}
+        {t('button.change-location')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -72,6 +81,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
   const [locationId, setLocationId] = createSignal<string | null>(null);
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorCount, setErrorCount] = createSignal(0);
+
+  // The volume the whole move will occupy = Σ (volumePerPack × countedPacks)
+  // over the selected lines, sizing the picker's Available filter so it surfaces
+  // locations that can hold the entire selection (spec/stocktakes AC-VL2).
+  const requiredVolume = () => {
+    const selected = new Set(props.selectedIds());
+    return props.rows
+      .filter(r => selected.has(r.id))
+      .reduce(
+        (sum, r) =>
+          sum + (r.volumePerPack ?? 0) * (r.countedNumberOfPacks ?? 0),
+        0
+      );
+  };
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
@@ -95,18 +118,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MapPinIcon />}
-      title={t('stocktake.lines.change-location')}
+      testId="confirmation-modal"
+      title={t('button.change-location')}
       description={
         <Switch
           fallback={
             <>
-              <p>{t('stocktake.lines.change-location-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.location')}>
-                <LocationSelect
-                  label={t('stocktake.line-edit.location')}
+              <p>{t('messages.confirm-change-location')}</p>
+              <FieldRow label={t('label.location')}>
+                <LocationVolumeSelect
+                  label={t('label.location')}
                   hideLabel
+                  locations={props.locations}
+                  volumeRequired={requiredVolume()}
                   value={locationId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.location-none')}
                   onChange={l => setLocationId(l?.id ?? null)}
                 />
               </FieldRow>
@@ -114,11 +139,11 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.change-location-success')}
+            {tPlural('messages.changed-location', props.selectedIds().length)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -133,18 +158,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
                 variant="primary"
                 icon={<CheckIcon />}
                 loading={phase() === 'working'}
+                data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
-                {t('common.apply')}
+                {t('button.apply')}
               </Button>
             </>
           }
@@ -153,18 +180,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -174,7 +203,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>

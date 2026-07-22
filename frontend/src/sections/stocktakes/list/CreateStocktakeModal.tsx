@@ -19,9 +19,17 @@ import {
   masterListsResource,
   MasterListSelect,
 } from '../../../domain/masterList';
-import { locationsResource, LocationSelect } from '../../../domain/location';
+import {
+  fetchLocations,
+  LocationSelect,
+  type Location,
+} from '../../../domain/location';
+import { VvmStatusSelect } from '../../../domain/vvmStatus';
+import { stocktakePreferences } from '../../../store/storeContext';
 import { PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
-import { t } from '../../../intl';
+import { t, tPlural } from '../../../intl';
+import { localisedDate } from '../../../intl/formatDateTime';
+import { userDisplayName } from '../../../auth/authContext';
 import { shallowEqual } from '../../../typeHelpers';
 import { dayBefore } from '../../../intl/dateArithmetic';
 import {
@@ -51,6 +59,7 @@ type FormState = {
   type: StocktakeType;
   masterListId: string;
   locationId: string;
+  vvmStatusId: string;
   expiryDate: string;
   includeAllItems: boolean;
 };
@@ -59,6 +68,7 @@ const EMPTY_FORM: FormState = {
   type: 'full',
   masterListId: '',
   locationId: '',
+  vvmStatusId: '',
   expiryDate: '',
   includeAllItems: false,
 };
@@ -66,13 +76,13 @@ const EMPTY_FORM: FormState = {
 const TYPE_OPTIONS: readonly {
   value: StocktakeType;
   labelKey:
-    | 'stocktake.create.type-full'
-    | 'stocktake.create.type-filtered'
-    | 'stocktake.create.type-blank';
+    | 'stocktake.create-full'
+    | 'stocktake.create-filtered'
+    | 'stocktake.create-blank';
 }[] = [
-  { value: 'full', labelKey: 'stocktake.create.type-full' },
-  { value: 'filtered', labelKey: 'stocktake.create.type-filtered' },
-  { value: 'blank', labelKey: 'stocktake.create.type-blank' },
+  { value: 'full', labelKey: 'stocktake.create-full' },
+  { value: 'filtered', labelKey: 'stocktake.create-filtered' },
+  { value: 'blank', labelKey: 'stocktake.create-blank' },
 ];
 
 export const CreateStocktakeModal = (props: {
@@ -81,6 +91,17 @@ export const CreateStocktakeModal = (props: {
 }) => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
+
+  // Locations for the picker, fetched locally (the domain widget owns no cache —
+  // spec/ui-standards/components.md). Volume-blind here: the picker only scopes
+  // which stock to count, so capacity is irrelevant. Read WITHOUT suspending
+  // (this modal renders under AppShell's <Suspense>; a pending read there would
+  // remount + reset the form — see the estimate resource below).
+  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const locations = (): Location[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   const [form, setForm] = createSignal<FormState>(EMPTY_FORM);
   const [creating, setCreating] = createSignal(false);
@@ -187,21 +208,17 @@ export const CreateStocktakeModal = (props: {
     const masterList = masterListsResource
       .noSuspense()
       .find(m => m.id === masterListId);
-    const location = locationsResource
-      .noSuspense()
-      .find(l => l.id === locationId);
+    const location = locations().find(l => l.id === locationId);
     if (masterList)
       parts.push(
-        t('stocktake.create.comment-master-list', { name: masterList.name })
+        t('stocktake.master-list-template', { masterList: masterList.name })
       );
     if (location)
-      parts.push(
-        t('stocktake.create.comment-location', { code: location.code })
-      );
+      parts.push(t('stocktake.location-template', { location: location.code }));
     if (expiryDate)
-      parts.push(t('stocktake.create.comment-expiry', { date: expiryDate }));
+      parts.push(t('stocktake.expires-before-template', { date: expiryDate }));
     return parts.length
-      ? t('stocktake.create.comment', { parts: parts.join(', ') })
+      ? t('stocktake.comment-template', { filters: parts.join(', ') })
       : undefined;
   };
 
@@ -209,9 +226,26 @@ export const CreateStocktakeModal = (props: {
   // fields; the id is client-generated so the create can navigate to the new
   // stocktake.
   const buildInput = (): InsertStocktakeVariables['input'] => {
-    const { type, masterListId, locationId, expiryDate, includeAllItems } =
-      form();
-    const base = { id: crypto.randomUUID(), comment: generatedComment() };
+    const {
+      type,
+      masterListId,
+      locationId,
+      vvmStatusId,
+      expiryDate,
+      includeAllItems,
+    } = form();
+    // Seed a default description on every create mode (spec AC-C9): the server
+    // fabricates no default, so the client composes one — the user's display
+    // name and today's date, both in the active locale. Editable in place
+    // afterward; nothing re-derives it.
+    const base = {
+      id: crypto.randomUUID(),
+      comment: generatedComment(),
+      description: t('stocktake.description-template', {
+        username: userDisplayName(),
+        date: localisedDate(new Date()),
+      }),
+    };
     switch (type) {
       case 'full':
         return { ...base, isAllItemsStocktake: includeAllItems };
@@ -220,6 +254,9 @@ export const CreateStocktakeModal = (props: {
           ...base,
           masterListId: masterListId || undefined,
           locationId: locationId || undefined,
+          // VVM status filter — gated by manageVvmStatusForStock (the field only
+          // appears when the pref is on, so vvmStatusId is otherwise always '').
+          vvmStatusId: vvmStatusId || undefined,
           expiresBefore: expiryDate ? dayBefore(expiryDate) : undefined,
           includeAllMasterListItems: includeAllItems,
         };
@@ -259,12 +296,12 @@ export const CreateStocktakeModal = (props: {
   const includeAllOptions = () => [
     {
       value: 'soh',
-      label: t('stocktake.create.items-with-stock'),
+      label: t('stocktake.items-with-soh'),
       testId: 'stocktake-items-with-soh',
     },
     {
       value: 'all',
-      label: t('stocktake.create.items-all'),
+      label: t('label.all-items'),
       disabled: allItemsDisabled(),
       testId: 'stocktake-all-items',
     },
@@ -278,7 +315,7 @@ export const CreateStocktakeModal = (props: {
     <Dialog
       open={props.open}
       testId="create-stocktake-modal"
-      title={t('stocktake.create.title')}
+      title={t('label.new-stocktake')}
       icon={<PlusCircleIcon />}
       // Blocking while the mutation is in flight (no scrim/Escape exit until
       // it resolves).
@@ -297,20 +334,15 @@ export const CreateStocktakeModal = (props: {
         <Show
           when={!isBlank()}
           fallback={
-            <Alert severity="success">
-              <span data-testid="blank-stocktake-notice">
-                {t('stocktake.create.estimate-none')}
-              </span>
+            <Alert severity="success" testId="blank-stocktake-notice">
+              {t('message.create-blank-stocktake')}
             </Alert>
           }
         >
-          <Alert severity="info">
-            <span data-testid="stocktake-line-estimate">
-              <Show
-                when={!countLoading()}
-                fallback={t('stocktake.create.estimate-loading')}
-              >
-                {t('stocktake.create.estimate', { count: estimatedLines() })}
+          <Alert severity="info" testId="stocktake-line-estimate">
+            <span>
+              <Show when={!countLoading()} fallback={t('messages.counting')}>
+                {tPlural('message.lines-estimated', estimatedLines())}
               </Show>
             </span>
           </Alert>
@@ -327,7 +359,7 @@ export const CreateStocktakeModal = (props: {
               data-testid="dialog-button-cancel"
               onClick={close}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
           </Show>
           <Button
@@ -336,7 +368,7 @@ export const CreateStocktakeModal = (props: {
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('stocktake.create.action')}
+            {t('button.ok')}
           </Button>
         </>
       }
@@ -356,7 +388,7 @@ export const CreateStocktakeModal = (props: {
       {/* A grey inset panel per mode, each with its own hint line (matches OMS). */}
       <Switch>
         <Match when={form().type === 'full'}>
-          <InsetPanel hint={t('stocktake.create.full-hint')}>
+          <InsetPanel hint={t('stocktake.description-full')}>
             <RadioGroup
               options={includeAllOptions()}
               value={includeAllValue()}
@@ -369,14 +401,14 @@ export const CreateStocktakeModal = (props: {
         </Match>
 
         <Match when={form().type === 'filtered'}>
-          <InsetPanel hint={t('stocktake.create.filtered-hint')}>
+          <InsetPanel hint={t('stocktake.description-filters')}>
             {/* Master list row + the include-all sub-choice beneath it (OMS layout). */}
-            <FieldRow label={t('stocktake.filter.master-list')}>
+            <FieldRow label={t('label.master-list')}>
               <MasterListSelect
-                label={t('stocktake.filter.master-list')}
+                label={t('label.master-list')}
                 hideLabel
                 disabled={creating()}
-                placeholder={t('filter.any')}
+                placeholder={t('label.any')}
                 value={form().masterListId || undefined}
                 onChange={id => setForm({ ...form(), masterListId: id ?? '' })}
               />
@@ -395,19 +427,38 @@ export const CreateStocktakeModal = (props: {
                 }
               />
             </FieldRow>
-            <FieldRow label={t('stocktake.filter.location')}>
+            <FieldRow label={t('label.location')}>
               <LocationSelect
-                label={t('stocktake.filter.location')}
+                label={t('label.location')}
                 hideLabel
+                locations={locations()}
+                loading={locationsData.loading}
                 disabled={creating()}
-                placeholder={t('filter.any')}
+                placeholder={t('label.any')}
                 value={form().locationId || undefined}
                 onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
             </FieldRow>
-            <FieldRow label={t('stocktake.create.expiring-before')}>
+            {/* VVM status filter — gated by manageVvmStatusForStock
+                (spec/stocktakes › store-preference gates). Sits between location
+                and expiry, matching the reference create flow. */}
+            <Show when={stocktakePreferences().manageVvmStatusForStock}>
+              <FieldRow label={t('label.vvm-status')}>
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  disabled={creating()}
+                  placeholder={t('label.any')}
+                  value={form().vvmStatusId || undefined}
+                  onChange={s =>
+                    setForm({ ...form(), vvmStatusId: s?.id ?? '' })
+                  }
+                />
+              </FieldRow>
+            </Show>
+            <FieldRow label={t('label.items-expiring-before')}>
               <TextField
-                label={t('stocktake.create.expiring-before')}
+                label={t('label.items-expiring-before')}
                 hideLabel
                 type="date"
                 disabled={creating()}
@@ -421,7 +472,7 @@ export const CreateStocktakeModal = (props: {
         </Match>
 
         <Match when={form().type === 'blank'}>
-          <InsetPanel hint={t('stocktake.create.blank-hint')}>
+          <InsetPanel hint={t('stocktake.description-blank')}>
             {null}
           </InsetPanel>
         </Match>

@@ -1,6 +1,9 @@
-# Locations for the current store — an app-wide lookup backed by a store-scoped cache
-# (locationsResource): fetched once per store, shared by every consumer (the stocktake
-# create form's location picker, and future verticals). code + name label the option.
+# Locations for the current store, two shapes for two picker roles (see
+# spec/ui-standards/components.md → Location lookup — plain vs volume-aware).
+#
+# `locations` — code + name only. Backs the volume-BLIND picker (LocationSelect),
+# used where a location is merely referenced (scoping a stocktake count, a list
+# filter). No capacity fetched.
 query locations($storeId: String!) {
   locations(storeId: $storeId) {
     ... on LocationConnector {
@@ -9,6 +12,34 @@ query locations($storeId: String!) {
         id
         code
         name
+      }
+    }
+  }
+}
+
+# `locationsWithVolume` — additionally `volume` / `volumeUsed` / `stock.totalCount`.
+# Backs the volume-AWARE picker (LocationVolumeSelect), used where stock is
+# associated with a location (stocktake line editor, bulk change-location): it
+# shows each location's % used and offers the All / Empty / Available fullness
+# filter. `volumeUsed` is the server-computed sum of `volumePerPack × packs` over
+# the location's stock, so it must be re-read where volume is shown rather than
+# cached — the consuming route/view fetches this locally and passes it down.
+query locationsWithVolume($storeId: String!) {
+  locations(storeId: $storeId) {
+    ... on LocationConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        volume
+        volumeUsed
+        stock {
+          ... on StockLineConnector {
+            __typename
+            totalCount
+          }
+        }
       }
     }
   }

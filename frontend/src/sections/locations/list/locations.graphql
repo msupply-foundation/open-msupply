@@ -1,0 +1,146 @@
+# Locations list view (spec/locations S1). Filter / sort / pagination are
+# carried as the GraphQL input types (LocationFilterInput, LocationSortInput,
+# PaginationInput) so the URL state maps straight onto them with no remapping
+# (kdd/type-safety). Named locationsList — the volume-blind/aware PICKER reads
+# live in src/domain/location (operation name `locations`), and operation names
+# are global to codegen.
+#
+# The node selection carries everything S1 and S2 show: identity + editable
+# fields, the server-derived volumeUsed (read-only everywhere — AC-V1),
+# stock.totalCount (the fullness display suppresses a misleading "0% used" when
+# stock is present without volume data — AC-V2), and the location type shown as
+# name + temperature range.
+query locationsList(
+  $storeId: String!
+  $filter: LocationFilterInput
+  $sort: [LocationSortInput!]
+  $page: PaginationInput
+) {
+  locations(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on LocationConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        onHold
+        volume
+        volumeUsed
+        stock {
+          ... on StockLineConnector {
+            __typename
+            totalCount
+          }
+        }
+        locationType {
+          id
+          name
+          minTemperature
+          maxTemperature
+        }
+      }
+    }
+  }
+}
+
+# The location-type picker's options (consumed read, owned by the catalogue/item
+# API — spec/locations/contract.md § contract surface). Sorted by name so the
+# dropdown is stable.
+query locationTypes($storeId: String!) {
+  locationTypes(storeId: $storeId, sort: [{ key: name }]) {
+    ... on LocationTypeConnector {
+      __typename
+      nodes {
+        id
+        name
+        minTemperature
+        maxTemperature
+      }
+    }
+  }
+}
+
+# Create (spec/locations FL2). The id is client-generated (rules.md § identity).
+# Typed errors are selected so the modal can show the duplicate-code rejection
+# inline (AC-C4); every other member falls back to its description. Each
+# reachable member gets an inline fragment so the generated union is exact
+# (the codegen plugin types only fragmented branches).
+mutation insertLocation($storeId: String!, $input: InsertLocationInput!) {
+  insertLocation(storeId: $storeId, input: $input) {
+    __typename
+    ... on LocationNode {
+      id
+    }
+    ... on InsertLocationError {
+      error {
+        __typename
+        description
+        ... on UniqueValueViolation {
+          field
+        }
+        ... on RecordAlreadyExist {
+          __typename
+        }
+      }
+    }
+  }
+}
+
+# Edit (spec/locations FL3). The client MUST send the location's full current
+# field set every time — updateLocation's locationTypeId is NOT partial: an
+# omitted/null value CLEARS the stored type (contract.md ⚠️ wire trap; AC-E4).
+mutation updateLocation($storeId: String!, $input: UpdateLocationInput!) {
+  updateLocation(storeId: $storeId, input: $input) {
+    __typename
+    ... on LocationNode {
+      id
+    }
+    ... on UpdateLocationError {
+      error {
+        __typename
+        description
+        ... on UniqueValueViolation {
+          field
+        }
+        ... on RecordBelongsToAnotherStore {
+          __typename
+        }
+        ... on RecordNotFound {
+          __typename
+        }
+      }
+    }
+  }
+}
+
+# Delete (spec/locations FL4). There is no batch mutation: a multi-select delete
+# is N independent calls, aggregated client-side (AC-D3). LocationInUse is the
+# only reachable typed error (contract.md); it reports the referencing stock and
+# invoice lines that block the delete (AC-D2). Not-found / wrong-store /
+# movement-history failures arrive as plain GraphQL errors, not union members.
+mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
+  deleteLocation(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteLocationError {
+      error {
+        __typename
+        description
+        ... on LocationInUse {
+          stockLines {
+            ... on StockLineConnector {
+              __typename
+              totalCount
+            }
+          }
+          invoiceLines {
+            totalCount
+          }
+        }
+      }
+    }
+  }
+}

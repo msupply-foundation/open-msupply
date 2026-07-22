@@ -11,14 +11,21 @@ import { ButtonsShowcase } from './ButtonsShowcase';
 import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
+import { DialogShowcase } from './DialogShowcase';
+import { DisplayShowcase } from './DisplayShowcase';
+import { DocumentUploadShowcase } from './DocumentUploadShowcase';
 import { SyncShowcase } from './SyncShowcase';
-import { StoreLoginShowcase } from './StoreLoginShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
+import { AccordionShowcase } from './AccordionShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
+import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
+import { CardGridShowcase } from './CardGridShowcase';
+import { ChartsShowcase } from './ChartsShowcase';
+import { FormsShowcase } from './FormsShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -26,8 +33,7 @@ export type SectionDef = {
   id: string;
   label: string;
   component: Component;
-  /** Which menu-bar group the section lists under. Omitted for a top-level
-   * section (see `topLevel`). */
+  /** Which menu-bar group the section lists under. */
   category?: SectionCategory;
   /**
    * Render this section as its own top-level menu entry (a leaf link), not
@@ -99,21 +105,51 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
+    id: 'accordion',
+    label: 'Accordion',
+    component: AccordionShowcase,
+    category: 'components',
+  },
+  {
     id: 'feedback',
     label: 'Feedback',
     component: FeedbackShowcase,
     category: 'components',
   },
   {
-    id: 'sync',
-    label: 'Sync',
-    component: SyncShowcase,
+    id: 'statistics',
+    label: 'Statistics',
+    component: StatisticsShowcase,
     category: 'components',
   },
   {
-    id: 'store-login',
-    label: 'Store login',
-    component: StoreLoginShowcase,
+    id: 'charts',
+    label: 'Charts',
+    component: ChartsShowcase,
+    category: 'components',
+  },
+  {
+    id: 'dialog',
+    label: 'Dialog / Modal',
+    component: DialogShowcase,
+    category: 'components',
+  },
+  {
+    id: 'display',
+    label: 'Display',
+    component: DisplayShowcase,
+    category: 'components',
+  },
+  {
+    id: 'document-upload',
+    label: 'Document upload',
+    component: DocumentUploadShowcase,
+    category: 'components',
+  },
+  {
+    id: 'sync',
+    label: 'Sync',
+    component: SyncShowcase,
     category: 'components',
   },
   {
@@ -146,6 +182,19 @@ export const sections: SectionDef[] = [
     label: 'Inset panel',
     component: InsetPanelShowcase,
     category: 'layout',
+  },
+  {
+    id: 'card-grid',
+    label: 'Card grid',
+    component: CardGridShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'forms',
+    label: 'Forms',
+    component: FormsShowcase,
+    category: 'layout',
+    fill: true,
   },
   // A standalone reference page, listed as its own top-level menu entry rather
   // than inside a category group.

@@ -21,7 +21,7 @@ fi
 SO=android/app/src/main/jniLibs/arm64-v8a/libremote_server_android.so
 if [ ! -f "$SO" ]; then
   echo "NOTE: $SO not present — this APK will carry NO embedded server (host/remote backend only)." >&2
-  echo "For a standalone APK, build the library from the legacy repo (fe-auth-contract branch, cargo ndk — see kdd/android/android-spec.md) and copy it there first." >&2
+  echo "For a standalone APK, build the library from the legacy repo (develop branch, cargo ndk — see kdd/android/android-spec.md) and copy it there first." >&2
 fi
 
 # gradle needs a JDK even if none is on PATH; fall back to the sdkman install

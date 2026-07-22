@@ -20,6 +20,14 @@ import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { customersRoutes, suppliersRoutes } from './sections/names';
+import { locationsRoutes } from './sections/locations';
+import { customerReturnsRoutes } from './sections/customer-returns';
+import { stockRoutes } from './sections/stock';
+import { outboundShipmentsRoutes } from './sections/outbound-shipments';
+import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { reportsRoutes } from './sections/reports';
+import { settingsRoutes } from './sections/settings';
+import { helpRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -38,6 +46,14 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stocktakes': stocktakesRoutes,
   'distribution/customers': customersRoutes,
   'replenishment/suppliers': suppliersRoutes,
+  'inventory/locations': locationsRoutes,
+  'distribution/customer-return': customerReturnsRoutes,
+  'inventory/stock': stockRoutes,
+  'distribution/outbound-shipment': outboundShipmentsRoutes,
+  'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  reports: reportsRoutes,
+  settings: settingsRoutes,
+  help: helpRoutes,
 };
 
 export const App: Component = () => {
@@ -87,7 +103,7 @@ export const App: Component = () => {
       <Switch>
         <Match when={phase() === 'loading'}>
           <div class={styles.page}>
-            <p>{t('app.loading')}</p>
+            <p>{t('loading')}</p>
           </div>
         </Match>
         <Match when={phase() === 'initialisation'}>
@@ -95,7 +111,16 @@ export const App: Component = () => {
         </Match>
         <Match when={phase() === 'operational'}>
           <Show when={authUser()} fallback={<LoginPage />}>
-            <Router>
+            {/* base matches Vite's `base` config so the same build can be
+                mounted at a non-root path (e.g. the demo server's /spec
+                track). import.meta.env.BASE_URL always ends in "/" (Vite's
+                convention); solid-router's own root-route resolution
+                doesn't strip that before concatenating an absolute `to`
+                (e.g. navigate(`/${id}`) in StoreGuardLayout), producing a
+                double slash — "/spec//id" — that fails to match any route
+                and drops the base entirely. Trimmed here, once, at the
+                source. */}
+            <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
               {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}
@@ -103,7 +128,7 @@ export const App: Component = () => {
                 <Route path="/" component={ShellLayout}>
                   <Route
                     path="/"
-                    component={() => <EntryPage labelKey="nav.dashboard" />}
+                    component={() => <EntryPage labelKey="dashboard" />}
                   />
                   <For each={Object.entries(sectionRoutes)}>
                     {([path, routes]) => (
@@ -124,7 +149,7 @@ export const App: Component = () => {
                   </For>
                   <Route
                     path="*"
-                    component={() => <EntryPage labelKey="app.not-found" />}
+                    component={() => <EntryPage labelKey="heading.not-found" />}
                   />
                 </Route>
               </Route>

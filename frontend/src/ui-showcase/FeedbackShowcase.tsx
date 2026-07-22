@@ -1,35 +1,12 @@
-import { createSignal, For, type JSX } from 'solid-js';
+import { For } from 'solid-js';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
-import { Dialog } from '../ui/elements/feedback/Dialog';
-import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../ui/elements/feedback/Popover';
-import { Button } from '../ui/elements/buttons/Button';
-import { TextField } from '../ui/elements/inputs/TextField';
-import {
-  CheckCircleIcon,
-  HelpIcon,
-  MessageSquareIcon,
-  PlusCircleIcon,
-  SaveIcon,
-  XCircleIcon,
-} from '../ui/icons';
+import { Comment } from '../ui/elements/feedback/Comment';
+import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
+import { Card, Col, Row, Stack } from './common';
 import styles from './FeedbackShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* Chip colours come from the --status-* contract tokens (with dark
    overrides) — never literals here, per the no-hard-coded-colours rule. */
@@ -43,12 +20,8 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
 ];
 
 export const FeedbackShowcase = () => {
-  const [confirmOpen, setConfirmOpen] = createSignal(false);
-  const [outcome, setOutcome] = createSignal('');
-  const [dialogOpen, setDialogOpen] = createSignal(false);
-
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Status chips"
         lead={
@@ -62,11 +35,11 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <div class={styles.chipRow}>
+        <Row gap="sm">
           <For each={STATUS_CHIPS}>
             {chip => <StatusChip label={chip.label} colour={chip.colour} />}
           </For>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -80,12 +53,12 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <div class={styles.chipRow}>
+        <Row gap="sm">
           <Badge label="3" title="3 records to push" />
           <Badge label="99+" title="250 records to push" />
           <Badge label="42" tone="warning" title="42 records to push" />
           <Badge label="!" tone="error" title="Sync error" />
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -101,7 +74,7 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <div class={styles.alertStack}>
+        <Col gap="sm" align="start">
           <Alert severity="error">
             Cannot delete: this shipment has already been shipped.
           </Alert>
@@ -116,97 +89,7 @@ export const FeedbackShowcase = () => {
             Last successful sync 09:37 (completed in 1 second) — the untinted
             notice, glyph overridden by intent.
           </Alert>
-        </div>
-      </Card>
-
-      <Card
-        title="Confirm dialog — Save → are you sure?"
-        lead={
-          <>
-            Native <code>&lt;dialog&gt;</code> + <code>showModal()</code>, no
-            library — the platform gives the focus trap (top layer + inert
-            page), focus restore, Escape and <code>::backdrop</code>; the RnD
-            prototype bought Radix for exactly this contract, and the "hard to
-            drive from React" objection doesn't exist in Solid. Scrim click and
-            Escape both cancel. Watch focus return to the Save button on close.
-          </>
-        }
-      >
-        <Button
-          variant="secondary"
-          icon={<SaveIcon />}
-          onClick={() => setConfirmOpen(true)}
-        >
-          Save
-        </Button>
-        <span class={styles.outcome} role="status">
-          {outcome()}
-        </span>
-        <ConfirmDialog
-          open={confirmOpen()}
-          onClose={() => {
-            setConfirmOpen(false);
-            setOutcome(o =>
-              o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o
-            );
-          }}
-          message="Save changes to this shipment? This is the standard Cancel/OK preset — ConfirmDialog is a thin composition over Dialog."
-          onConfirm={() => setOutcome('Saved ✓')}
-        />
-      </Card>
-
-      <Card
-        title="Dialog — custom content, footer and actions"
-        lead={
-          <>
-            The base <code>&lt;Dialog&gt;</code> takes a required{' '}
-            <code>title</code> (its accessible name), optional icon /
-            description, free-form children, an optional bottom-pinned{' '}
-            <code>footer</code> band and an <code>actions</code> row.{' '}
-            <code>widthRem</code> sets a steady width and{' '}
-            <code>minBodyHeightRem</code> reserves height so the box doesn't
-            jump as content changes — the slack falls above the footer, so
-            footer + actions stay on the bottom edge. The browser moves focus to
-            the first control and Tab cycles inside while the page behind is
-            inert. (Opening a Combobox / Select <em>inside</em> a dialog needs
-            extra care — see the "in a dialog" card under Selectors.)
-          </>
-        }
-      >
-        <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(true)}>
-          New shipment
-        </Button>
-        <Dialog
-          open={dialogOpen()}
-          onClose={() => setDialogOpen(false)}
-          icon={<PlusCircleIcon />}
-          title="New shipment"
-          description="Give the shipment a reference."
-          widthRem={34}
-          minBodyHeightRem={16}
-          footer={
-            <Alert severity="info">A new draft shipment will be created.</Alert>
-          }
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                icon={<PlusCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Create
-              </Button>
-            </>
-          }
-        >
-          <TextField label="Reference" placeholder="e.g. PO-1042" />
-        </Dialog>
+        </Col>
       </Card>
 
       <Card
@@ -245,6 +128,28 @@ export const FeedbackShowcase = () => {
           </Popover>
         </div>
       </Card>
-    </div>
+
+      <Card
+        title="Comment — a note behind an icon"
+        lead={
+          <>
+            The list table's comment column (and any note that hides behind an
+            icon): a quiet <code>MessageSquareIcon</code> that reveals its text
+            in a popover — a bold heading over the body — on hover / focus, and
+            on click / tap too (so it opens on touch). A thin wrapper over{' '}
+            <code>Popover</code>; renders nothing when there is no comment, so a
+            cell can drop it in unconditionally.
+          </>
+        }
+      >
+        <div class={styles.popoverRow}>
+          <Comment comment="Split delivery agreed with the customer — second carton follows on Thursday's flight to Buka." />
+          <span>
+            ← hover or tap the icon. An empty comment renders nothing:{' '}
+          </span>
+          <Comment comment={null} />
+        </div>
+      </Card>
+    </Stack>
   );
 };

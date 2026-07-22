@@ -1,6 +1,8 @@
 import { createSignal } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../../intl';
+import { localisedDate } from '../../../../intl/formatDateTime';
+import { userDisplayName } from '../../../../auth/authContext';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../../ui/elements/buttons/Button';
@@ -39,7 +41,13 @@ export const CreateInitialStocktakeAction = (props: {
       input: {
         id: crypto.randomUUID(),
         isInitialStocktake: true,
-        comment: t('stocktake.create.initial-comment'),
+        comment: t('stocktake.comment-initial-stocktake-template'),
+        // Same client-composed default description as the regular create flow
+        // (spec AC-C9) — every create mode seeds it.
+        description: t('stocktake.description-template', {
+          username: userDisplayName(),
+          date: localisedDate(new Date()),
+        }),
       },
     });
     if (result.kind !== 'success') {
@@ -61,8 +69,8 @@ export const CreateInitialStocktakeAction = (props: {
       dismissable={!creating()}
       onClose={props.onClose}
       icon={<PlusCircleIcon />}
-      title={t('stocktake.create.initial-title')}
-      description={t('stocktake.create.initial-confirm')}
+      title={t('heading.create-initial-stocktake')}
+      description={t('messages.confirm-create-initial-stocktake')}
       actions={
         <>
           <Button
@@ -71,7 +79,7 @@ export const CreateInitialStocktakeAction = (props: {
             disabled={creating()}
             onClick={props.onClose}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
           <Button
             variant="secondary"
@@ -79,7 +87,7 @@ export const CreateInitialStocktakeAction = (props: {
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('stocktake.create.action')}
+            {t('button.ok')}
           </Button>
         </>
       }

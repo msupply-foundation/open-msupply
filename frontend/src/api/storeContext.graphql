@@ -4,14 +4,52 @@ query storeContext($storeId: String!) {
   storePreferences(storeId: $storeId) {
     id
     packToOne
+    # Inbound-shipment gates (spec/inbound-shipments › store-preference gates):
+    # foreign-currency issuing and manual internal-order linking.
+    issueInForeignCurrency
+    manuallyLinkInternalOrderToInboundShipment
     omProgramModule
     vaccineModule
+    # Threshold defaults the reports argument form seeds (spec/reports/rules
+    # "Arguments" — defaults are client-seeded from store preferences).
+    monthsOverstock
+    monthsUnderstock
+    monthsItemsExpire
+    stocktakeFrequency
+    monthlyConsumptionLookBackPeriod
+    monthsLeadTime
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
-  # refresh keeps it current.
+  # refresh keeps it current. The stocktake AND stock display gates
+  # (spec/stocktakes + spec/stock › store-preference gates) ride here too —
+  # global state, read by the detail line table, line editor, create modal, and
+  # the whole stock vertical (list/detail/new-stock/adjust).
   preferences(storeId: $storeId) {
     syncRecordsDisplayThreshold
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    allowTrackingOfStockByDonor
+    # spec/stock: the VVM status FIELD (S2/S3) shows when this OR
+    # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
+    # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.
+    # (sortByVvmStatusThenExpiry is also an outbound gate — one shared field.)
+    sortByVvmStatusThenExpiry
+    # Outbound display/affordance gates (spec/outbound-shipments § store
+    # preference gates) — same global PreferencesNode, read by the list filter,
+    # status crumbs, line editor, and allocation policy.
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    invoiceStatusOptions
+    # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
+    # creation option), authorisation lock, and the backdating window.
+    useProcurementFunctionality
+    externalInboundShipmentLinesMustBeAuthorised
+    backdating {
+      inventoryAdjustmentsEnabled
+      shipmentsEnabled
+      maxDays
+    }
   }
   me {
     ... on UserNode {

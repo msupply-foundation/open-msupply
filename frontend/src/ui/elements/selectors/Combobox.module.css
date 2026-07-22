@@ -8,7 +8,7 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--input-field-gap);
   min-width: 0;
   max-width: var(--input-max-long);
 }
@@ -16,21 +16,8 @@
 .label {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  line-height: 1.3;
+  line-height: 1; /* ui-standards .field-label — tight, sits close to the control */
   color: var(--text-body);
-}
-
-/* Visually hidden but present for assistive tech (used with a FieldRow's visible label). */
-.labelHidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
 }
 
 .control {
@@ -46,7 +33,7 @@
 }
 
 .control:focus-within {
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 
@@ -57,6 +44,14 @@
 
 .control[data-error]:focus-within {
   box-shadow: var(--focus-ring-error);
+}
+
+/* Disabled: the same muted fill the disabled TextField uses (its
+   `.input:disabled`), so a read-only lookup — the locked item in edit mode, or
+   the customer field once the shipment is read-only / requisition-sourced —
+   reads as read-only rather than as an editable white field. */
+.control:has(.input:disabled) {
+  background: var(--bg-input);
 }
 
 .searchIcon {
@@ -109,6 +104,13 @@
   color: var(--text-body);
 }
 
+/* Disabled field: the clear button stays visible but dimmed and inert (the
+   field is read-only, so its value can't be cleared). */
+.clear:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .toggle {
   padding-inline-end: var(--space-3);
 }
@@ -138,6 +140,15 @@
   z-index: 50;
 }
 
+/* Sticky in-dropdown header (e.g. the location fullness filter): a
+   non-shrinking row above the scrolling listbox, with a hairline divider. */
+.listboxHeader {
+  flex: none;
+  padding-block-end: var(--space-2);
+  margin-block-end: var(--space-2);
+  border-block-end: 1px solid var(--color-border-value);
+}
+
 .listbox {
   display: flex;
   flex-direction: column;
@@ -145,6 +156,10 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  /* The listbox owns the scroll (min-height:0 lets a flex child shrink below
+     its content so it actually scrolls within .content's max-height); server
+     mode fetches the next page from its onScroll near the bottom. */
+  min-height: 0;
   overflow-y: auto;
   outline: none;
 }
@@ -166,6 +181,15 @@
 
 .item[data-selected] {
   font-weight: var(--weight-medium);
+}
+
+/* A listed-but-disabled option (aria-disabled — e.g. an on-hold customer):
+   dimmed alongside its textual marker, never colour-alone — same treatment
+   as Select's .item[data-disabled]. Visible for context, not selectable; no
+   pointer affordance. */
+.item[data-disabled] {
+  color: var(--gray-main);
+  cursor: default;
 }
 
 .status {
@@ -201,6 +225,11 @@
 @media (pointer: coarse) {
   .control {
     min-height: var(--touch-target);
+  }
+
+  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
+  .input {
+    font-size: var(--input-font-touch);
   }
 
   .item {

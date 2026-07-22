@@ -1,42 +1,38 @@
-import { Index, Show } from 'solid-js';
+import { Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import type { SyncOverview, SyncStep } from './syncStatus';
-import { Alert } from '../ui/elements/feedback/Alert';
+import type { SyncOverview } from '../sections/sync-modal/syncStatus';
+import { syncStepIcon } from '../sections/sync-modal/syncStepIcons';
+import { ProgressList, type ProgressStep } from '../ui/sync/ProgressList';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-// Spec (Initialization Logic): common component listing the sync steps and
-// their progress.
-const stepStatus = (step: SyncStep): string => {
-  if (step.finished) return t('sync.status.done');
-  if (!step.started) return t('sync.status.pending');
-  if (step.done != null && step.total != null)
-    return t('sync.status.progress', { done: step.done, total: step.total });
-  return t('sync.status.in-progress');
-};
-
-// toSyncOverview builds a fresh overview (and fresh step objects) on every
-// status tick, so nothing here may key on object identity: non-keyed <Show>
-// plus position-keyed <Index> update the existing DOM in place instead of
-// remounting the whole list each tick.
+// Spec (Initialization Logic): the first-sync phase list, rendered as the
+// shared determinate progress list (ui/sync ProgressList) in the secondary
+// (initialisation) tone. Steps arrive as fresh objects every status tick, so
+// ProgressList's position-keyed <Index> updates the rows in place. Icon choice
+// is the shared sections/sync-modal/syncStepIcons map (by step kind), the same
+// substrate the sync modal itself uses — not a page-local copy.
 export const SyncProgress: Component<{
   overview: SyncOverview | undefined;
 }> = props => (
-  <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>}>
+  <Show
+    when={props.overview}
+    fallback={<p>{t('messages.waiting-for-sync-status')}</p>}
+  >
     {overview => (
       <div class={styles.stack}>
-        <ul class={styles.list}>
-          <Index each={overview().steps}>
-            {step => (
-              <li>
-                {t(step().label)}: {stepStatus(step())}
-              </li>
-            )}
-          </Index>
-        </ul>
-        <Show when={overview().errorMessage}>
-          <Alert severity="error">{overview().errorMessage}</Alert>
-        </Show>
+        <ProgressList
+          variant="secondary"
+          error={overview().error != null}
+          steps={overview().steps.map((s): ProgressStep => ({
+            label: t(s.label),
+            started: s.started,
+            finished: s.finished,
+            done: s.done,
+            total: s.total,
+            icon: syncStepIcon[s.kind],
+          }))}
+        />
       </div>
     )}
   </Show>

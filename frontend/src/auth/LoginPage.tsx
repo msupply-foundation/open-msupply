@@ -7,7 +7,7 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
-import styles from './Login.module.css';
+import styles from '../ui/styles/LoginInitLayout.module.css';
 
 type SubmitState =
   | { kind: 'idle' }
@@ -43,8 +43,8 @@ export const LoginPage: Component = () => {
     // Spec (Authentication Logic): the button is always clickable; validation
     // errors show on submit.
     const errors = {
-      username: username().trim() === '' ? t('login.username-required') : '',
-      password: password().trim() === '' ? t('login.password-required') : '',
+      username: username().trim() === '' ? t('error.username-required') : '',
+      password: password().trim() === '' ? t('error.password-required') : '',
     };
     setFieldErrors(errors);
     if (errors.username !== '' || errors.password !== '') return;
@@ -56,23 +56,25 @@ export const LoginPage: Component = () => {
 
   return (
     <div class={styles.page}>
-      <section class={styles.hero} aria-label={t('login.about')}>
-        <h1 class={styles.heroHeading}>{t('login.hero-title')}</h1>
-        <p class={styles.heroBody}>{t('login.hero-body')}</p>
+      <section class={styles.hero} aria-label={t('label.about-open-msupply')}>
+        <h1 class={styles.heroHeading}>{t('login.heading')}</h1>
+        <p class={styles.heroBody}>{t('login.body')}</p>
       </section>
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
             class={styles.form}
-            aria-label={t('login.title')}
+            aria-label={t('button.login')}
             onSubmit={submit}
           >
             <MSupplyGuyLogo class={styles.logo} />
             <TextField
-              label={t('login.username')}
+              label={t('heading.username')}
               width="full"
+              type="text"
               name="username"
+              data-testid="login-username-input"
               autocomplete="username"
               autofocus
               value={username()}
@@ -80,10 +82,11 @@ export const LoginPage: Component = () => {
               onInput={e => setUsername(e.currentTarget.value)}
             />
             <TextField
-              label={t('login.password')}
+              label={t('heading.password')}
               width="full"
               type="password"
               name="password"
+              data-testid="login-password-input"
               autocomplete="current-password"
               value={password()}
               error={fieldErrors().password || undefined}
@@ -97,16 +100,17 @@ export const LoginPage: Component = () => {
                 type="submit"
                 icon={<ArrowRightIcon />}
                 iconPosition="end"
+                data-testid="login-button"
                 disabled={submitting()}
               >
-                {submitting() ? t('login.submitting') : t('login.submit')}
+                {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
             </div>
           </form>
         </div>
         <footer class={styles.panelFooter}>
           <p class={styles.version}>
-            <strong>{t('login.version')}</strong> 0.0.0
+            <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
           <LanguageSelector
             language={locale()}

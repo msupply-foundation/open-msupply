@@ -38,6 +38,53 @@
   background: var(--bg-white);
 }
 
+/* The details-panel slot. When CLOSED the panel stays MOUNTED but collapses to
+   zero inline size with its paint clipped — the panel keeps its natural width
+   inside the clip, so its content keeps real layout boxes (form state survives
+   open/close with no remount, and the shared e2e suites can assert on panel
+   content before opening it — the behaviour the current app exhibits). */
+.panelSlot {
+  display: flex;
+  min-block-size: 0;
+}
+
+.panelSlot[data-closed] {
+  inline-size: 0;
+  overflow: hidden;
+}
+
+/* Inside the clipped slot the panel must KEEP its natural width (not shrink
+   with the 0-width container) so its content keeps real layout boxes. */
+.panelSlot[data-closed] > * {
+  flex: 0 0 auto;
+  max-inline-size: none;
+}
+
+/* Phone widths: the OPEN panel becomes a full-screen overlay over the page
+   region instead of a docked column that would squeeze the body to a sliver
+   (spec ui-standards/layout.md → page regions, D27). The closed state keeps
+   the docked clip rules above (zero-width, natural-width content inside), so
+   the no-remount contract is untouched. 599 = the compact breakpoint in
+   breakpoints.ts minus 1 (CSS can't read JS tokens — same constant as
+   index.css). Page.tsx pairs this with `inert` on the covered main column
+   and Esc-to-close. */
+@media (max-width: 599px) {
+  .page {
+    position: relative;
+  }
+
+  .panelSlot {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+  }
+
+  .panelSlot:not([data-closed]) > * {
+    inline-size: 100%;
+    border-inline-start: none;
+  }
+}
+
 /* Fill mode (Page fillBody): the body stops scrolling and becomes a flex column with no
    padding, so a single self-scrolling child (e.g. the DataTable) fills the region and
    owns its own scroll + sticky headers. */
@@ -46,4 +93,20 @@
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+}
+
+/* Tabbed fill-body page: <Tabs> renders as display:contents, so the active tab
+   panel is the direct flex child of the body — it must be the "single filling
+   child" the fill mode expects, or its own scrolling content (the DataTable,
+   the documents list) overflows the clipped body with no way to scroll. Give
+   it the fill + a column context so that inner child gets a bounded height.
+   overflow: auto lets a panel whose content is NOT itself a scroller (the
+   documents list) scroll within that bounded height; it's inert for a
+   self-scrolling child like the DataTable, which fills the panel exactly. */
+.bodyFill [role='tabpanel'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
 }

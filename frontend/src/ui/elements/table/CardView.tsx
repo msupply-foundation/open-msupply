@@ -59,6 +59,12 @@ const cellInGroup = <T,>(cell: TanCell<T, unknown>, key: string): boolean =>
 // (kdd/edit-line-card-table), the secondary area is ordered by group — each
 // group as its own ROW (icon + its fields); ALL_TABS / ungrouped cells follow,
 // unlabelled.
+//
+// Each card is a full-width table ROW (a <tr> with a single <td>) so card view
+// shares the SAME <table> as table view — one scroll container, the header row
+// simply hidden. In card view the table has no header and every row is one
+// <td>, so it's effectively a one-column table: the cell fills the width with
+// no colSpan needed, and the card content wraps rather than scrolling.
 export function CardView<T>(props: {
   table: Table<T>;
   tabsAndCardGroups?: TabAndCardGroup<string>[];
@@ -69,41 +75,57 @@ export function CardView<T>(props: {
   // always have ≥1 row here — no empty branch.
   const rows = () => props.table.getRowModel().rows;
   return (
-    <div class={styles.cardGrid}>
-      <For each={rows()}>
-        {row => {
-          const cells = () => row.getVisibleCells();
-          const inRegion = (region: 'primary' | 'badge') =>
-            cells().filter(c => cellCardRegion(c) === region);
-          // The "secondary area": every visible cell with NO explicit card
-          // region.
-          const secondaryCells = () =>
-            cells().filter(c => cellCardRegion(c) === undefined);
-          return (
-            <div
-              class={`${styles.card} ${props.onRowClick ? styles.rowClickable : ''}`}
-              data-selected={row.getIsSelected() ? '' : undefined}
-              onClick={() => props.onRowClick?.(row.original)}
-            >
-              <div class={styles.cardHeader}>
-                <Show when={props.enableSelection}>
-                  <input
-                    type="checkbox"
-                    class={styles.cardSelect}
-                    aria-label={t('table.select-row')}
-                    checked={row.getIsSelected()}
-                    onChange={row.getToggleSelectedHandler()}
-                    onClick={event => event.stopPropagation()}
-                  />
-                </Show>
-                <div class={styles.cardIdentity}>
-                  <For each={inRegion('primary')}>
+    <For each={rows()}>
+      {row => {
+        const cells = () => row.getVisibleCells();
+        const inRegion = (region: 'primary' | 'badge') =>
+          cells().filter(c => cellCardRegion(c) === region);
+        // The "secondary area": every visible cell with NO explicit card
+        // region.
+        const secondaryCells = () =>
+          cells().filter(c => cellCardRegion(c) === undefined);
+        return (
+          <tr
+            class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
+            data-selected={row.getIsSelected() ? '' : undefined}
+            data-testid="table-row"
+            onClick={() => props.onRowClick?.(row.original)}
+          >
+            <td class={styles.cardCell}>
+              <div class={styles.card}>
+                <div class={styles.cardHeader}>
+                  <Show when={props.enableSelection}>
+                    <input
+                      type="checkbox"
+                      class={styles.cardSelect}
+                      aria-label={t('table.select-row')}
+                      data-testid="select-row-checkbox"
+                      checked={row.getIsSelected()}
+                      onChange={row.getToggleSelectedHandler()}
+                      onClick={event => event.stopPropagation()}
+                    />
+                  </Show>
+                  <div class={styles.cardIdentity}>
+                    <For each={inRegion('primary')}>
+                      {cell => (
+                        // meta.card.label (optional): a muted caption above
+                        // the cell, same style as a secondary field's label —
+                        // for an unlabelled cell (e.g. an input).
+                        <LabelledValue label={cellCardLabel(cell)}>
+                          <div class={styles.cardPrimary}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </div>
+                        </LabelledValue>
+                      )}
+                    </For>
+                  </div>
+                  <For each={inRegion('badge')}>
                     {cell => (
-                      // meta.card.label (optional): a muted caption above
-                      // the cell, same style as a secondary field's label —
-                      // for an unlabelled cell (e.g. an input).
                       <LabelledValue label={cellCardLabel(cell)}>
-                        <div class={styles.cardPrimary}>
+                        <div class={styles.cardBadge}>
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
@@ -113,42 +135,57 @@ export function CardView<T>(props: {
                     )}
                   </For>
                 </div>
-                <For each={inRegion('badge')}>
-                  {cell => (
-                    <LabelledValue label={cellCardLabel(cell)}>
-                      <div class={styles.cardBadge}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </div>
-                    </LabelledValue>
-                  )}
-                </For>
-              </div>
-              {/* The secondary area — every cell with no explicit card region. When grouped:
+                {/* The secondary area — every cell with no explicit card region. When grouped:
                     each group is its own ROW (a .cardFields flow led by the group ICON),
                     skipping groups with nothing visible (pass 1); then a final row for cells in
                     NO group — ALL_TABS anchors + un-annotated columns — with no icon (pass 2).
                     Ungrouped tables render one flat row. A cell is "in a group" only via a real
                     tab key; ALL_TABS never counts as a card group. */}
-              <Show when={secondaryCells().length > 0}>
-                {/* Pass 1 — one row per group. */}
-                <For each={props.tabsAndCardGroups}>
-                  {group => {
-                    const groupCells = () =>
-                      secondaryCells().filter(c => cellInGroup(c, group.key));
-                    return (
-                      <Show when={groupCells().length > 0}>
+                <Show when={secondaryCells().length > 0}>
+                  {/* Pass 1 — one row per group. */}
+                  <For each={props.tabsAndCardGroups}>
+                    {group => {
+                      const groupCells = () =>
+                        secondaryCells().filter(c => cellInGroup(c, group.key));
+                      return (
+                        <Show when={groupCells().length > 0}>
+                          <div class={styles.cardFields}>
+                            <Show when={group.icon}>
+                              {icon => (
+                                <span class={styles.cardGroupIcon}>
+                                  {icon()()}
+                                </span>
+                              )}
+                            </Show>
+                            <For each={groupCells()}>
+                              {cell => (
+                                <LabelledValue label={columnHeaderText(cell)}>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
+                                </LabelledValue>
+                              )}
+                            </For>
+                          </div>
+                        </Show>
+                      );
+                    }}
+                  </For>
+                  {/* Pass 2 — the ungrouped row: cells in no real group (ALL_TABS anchors +
+                      un-annotated), and the whole set when the table isn't grouped. No icon. */}
+                  <Show
+                    when={secondaryCells().filter(
+                      c =>
+                        !(props.tabsAndCardGroups ?? []).some(g =>
+                          cellInGroup(c, g.key)
+                        )
+                    )}
+                  >
+                    {ungrouped => (
+                      <Show when={ungrouped().length > 0}>
                         <div class={styles.cardFields}>
-                          <Show when={group.icon}>
-                            {icon => (
-                              <span class={styles.cardGroupIcon}>
-                                {icon()()}
-                              </span>
-                            )}
-                          </Show>
-                          <For each={groupCells()}>
+                          <For each={ungrouped()}>
                             {cell => (
                               <LabelledValue label={columnHeaderText(cell)}>
                                 {flexRender(
@@ -160,41 +197,14 @@ export function CardView<T>(props: {
                           </For>
                         </div>
                       </Show>
-                    );
-                  }}
-                </For>
-                {/* Pass 2 — the ungrouped row: cells in no real group (ALL_TABS anchors +
-                      un-annotated), and the whole set when the table isn't grouped. No icon. */}
-                <Show
-                  when={secondaryCells().filter(
-                    c =>
-                      !(props.tabsAndCardGroups ?? []).some(g =>
-                        cellInGroup(c, g.key)
-                      )
-                  )}
-                >
-                  {ungrouped => (
-                    <Show when={ungrouped().length > 0}>
-                      <div class={styles.cardFields}>
-                        <For each={ungrouped()}>
-                          {cell => (
-                            <LabelledValue label={columnHeaderText(cell)}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </LabelledValue>
-                          )}
-                        </For>
-                      </div>
-                    </Show>
-                  )}
+                    )}
+                  </Show>
                 </Show>
-              </Show>
-            </div>
-          );
-        }}
-      </For>
-    </div>
+              </div>
+            </td>
+          </tr>
+        );
+      }}
+    </For>
   );
 }

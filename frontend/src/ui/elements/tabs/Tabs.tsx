@@ -115,7 +115,12 @@ export const TabList = (props: { tabs: TabDef[] }) => {
     <KTabs.List ref={listEl} class={styles.list} data-tab-bar="">
       <For each={props.tabs}>
         {tab => (
-          <KTabs.Trigger value={tab.value} class={styles.trigger}>
+          <KTabs.Trigger
+            value={tab.value}
+            class={styles.trigger}
+            // tab-<value> per e2e/TESTIDS.md: value lowercased, spaces → '-'
+            data-testid={`tab-${tab.value.toLowerCase().replace(/\s+/g, '-')}`}
+          >
             {tab.label}
           </KTabs.Trigger>
         )}
