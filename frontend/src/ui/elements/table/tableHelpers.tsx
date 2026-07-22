@@ -1,5 +1,4 @@
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
-import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
@@ -82,12 +81,8 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   },
 });
 
-// Booleans: resolved value → localised Yes/No.
-export const getBooleanCell = <T,>(meta?: Meta): CellFragment<T> => ({
-  meta: { ...meta },
-  cell: info =>
-    info.getValue<boolean>() ? t('messages.yes') : t('messages.no'),
-});
+// Booleans live in their own cell component (dot / check / yes-no variants,
+// with the accessible-name treatment) — see BooleanCell + getBooleanCell.
 
 // Comment: the resolved string value behind a comment icon + popover (blank →
 // nothing). The Comment component renders null when there's no value, so an

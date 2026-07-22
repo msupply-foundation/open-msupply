@@ -11,6 +11,7 @@ import {
   getNumberCell,
 } from '../ui/elements/table/tableHelpers';
 import { getChipListCell } from '../ui/elements/table/ChipListCell';
+import { getBooleanCell } from '../ui/elements/table/BooleanCell';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
@@ -50,6 +51,8 @@ type Batch = {
   stock: number;
   price: number;
   lists: string[];
+  onHold: boolean;
+  approved: boolean;
 };
 
 const NAMES = [
@@ -94,6 +97,9 @@ const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
   stock: ((i * 137) % 900) + 20,
   price: Number((((i * 7) % 300) / 100 + 0.02).toFixed(2)),
   lists: LISTS.slice(0, i % (LISTS.length + 1)),
+  // Different cadences so the two flag columns show distinct marker/blank mixes.
+  onHold: i % 4 === 0,
+  approved: i % 3 !== 0,
 }));
 
 type SortKey =
@@ -241,6 +247,24 @@ export const TableShowcase = () => {
       c: { key: 'lists' },
       header: 'Lists',
       ...getChipListCell(),
+      tabsAndCardGroups: ['details'],
+    },
+    // Boolean cell (registry "boolean cell (flag in a table)"): one component,
+    // three displays. A marker shows only when set (blank otherwise) and
+    // carries an accessible name for assistive tech — not an aria-hidden glyph
+    // alone (ui-standards § assistive-tech parity / D8). 'dot' is the default;
+    // 'check' suits a flag where a tick reads better (e.g. approved); 'yesNo'
+    // (text for both states) is used elsewhere, e.g. the stocktakes Locked col.
+    {
+      c: { key: 'onHold' },
+      header: 'On hold',
+      ...getBooleanCell({ label: 'On hold' }), // dot (default)
+      tabsAndCardGroups: ['details'],
+    },
+    {
+      c: { key: 'approved' },
+      header: 'Approved',
+      ...getBooleanCell({ display: 'check', label: 'Approved' }),
       tabsAndCardGroups: ['details'],
     },
     {

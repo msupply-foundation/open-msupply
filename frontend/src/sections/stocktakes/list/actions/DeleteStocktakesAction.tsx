@@ -1,10 +1,10 @@
-import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
 import { DeleteStocktakes } from '../stocktakes.generated';
 
 export interface DeleteStocktakesActionProps {
@@ -19,24 +19,26 @@ export interface DeleteStocktakesActionProps {
 }
 
 // The stocktakes-list delete action — its footer button + a confirm → deleting
-// → success | error dialog, extracted as a self-contained component (peer of
-// the detail-view actions, kdd/action-modal).
+// → error dialog, extracted as a self-contained component (peer of the
+// detail-view actions, kdd/action-modal).
 //
 // The backend is the source of truth for what can be deleted — we don't
 // pre-check status client-side. The batch is ATOMIC: if any stocktake can't be
 // deleted (e.g. a finalised one → CannotEditStocktake) the whole batch fails
 // and NOTHING is deleted, so on error we show OUR translated message (not the
-// server's English description) with just a Close. While deleting, the dialog
-// is blocking (no scrim/Escape) and Cancel is hidden. Success reports the
-// count; the list clears selection + re-queries (onDeleted).
+// server's English description) with just a Close — the selection is kept so
+// the footer (and this dialog) stay mounted. While deleting, the dialog is
+// blocking (no scrim/Escape) and Cancel is hidden. Success closes the dialog
+// and hands back to the list (clear selection + re-query, onDeleted) — closure
+// is the confirmation, no announcement follows (ui-standards controls.md
+// § dialogs / § action feedback).
 //
-// Unlike the detail LINE actions this KEEPS success/error phases in the modal:
-// the list has no rows to stamp per-line errors onto, so the outcome (a count,
-// or the atomic can't-delete message) is shown in the dialog itself. Same
-// mount-while-open shape though — the phase lives in <Body>, fresh on every
-// open, and the selected ids are read straight from props (like the line
-// actions).
-type Phase = 'confirm' | 'deleting' | 'success' | 'error';
+// Unlike the detail LINE actions this KEEPS the error phase in the modal: the
+// list has no rows to stamp per-line errors onto, so the atomic can't-delete
+// message is shown in the dialog itself. Same mount-while-open shape though —
+// the phase lives in <Body>, fresh on every open, and the selected ids are
+// read straight from props (like the line actions).
+type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteStocktakesAction: Component<
   DeleteStocktakesActionProps
@@ -61,9 +63,8 @@ export const DeleteStocktakesAction: Component<
 
 const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  // Count snapshotted on open (Body mounts once per open) so the
-  // success/confirm message can't shift if the selection changes behind the
-  // dialog.
+  // Count snapshotted on open (Body mounts once per open) so the confirm
+  // message can't shift if the selection changes behind the dialog.
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -87,10 +88,12 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
       setPhase('error');
       return;
     }
-    // Success: hand back to the list (clear selection + re-query behind the
-    // dialog), then report.
+    // Success: close (closure is the confirmation — ui-standards controls.md
+    // § dialogs), then hand back to the list. onDeleted clears the selection,
+    // which unmounts the selection-gated footer this dialog lives in — so it
+    // must come last, after the dialog is already closed.
+    props.onClose();
     props.onDeleted();
-    setPhase('success');
   };
 
   return (
@@ -107,19 +110,18 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={tPlural('messages.confirm-delete-stocktakes', count)}>
-          <Match when={phase() === 'error'}>
-            <Alert severity="error">
-              {t('messages.cannot-delete-finalised-stocktakes')}
-            </Alert>
-          </Match>
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-stocktakes', count)}
-          </Match>
-        </Switch>
+        <Show
+          when={phase() === 'error'}
+          fallback={tPlural('messages.confirm-delete-stocktakes', count)}
+        >
+          <Alert severity="error">
+            {t('messages.cannot-delete-finalised-stocktakes')}
+          </Alert>
+        </Show>
       }
       actions={
-        <Switch
+        <Show
+          when={phase() === 'error'}
           fallback={
             // confirm / deleting: Cancel (hidden while deleting) + the loading
             // Delete.
@@ -145,25 +147,14 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
-          <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
-          </Match>
-        </Switch>
+          <Button
+            variant="secondary"
+            icon={<XCircleIcon />}
+            onClick={props.onClose}
+          >
+            {t('button.cancel')}
+          </Button>
+        </Show>
       }
     />
   );

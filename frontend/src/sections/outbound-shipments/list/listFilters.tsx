@@ -206,6 +206,8 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
   receivedDatetime: null,
   verifiedDatetime: null,
   createdOrBackdatedDatetime: null,
+  // Programmatic filter, not a specced list filter.
+  dynamicFilter: null,
 });
 
 export const filterFields = (): Filter<OutboundFilter>[] => FILTERS;
