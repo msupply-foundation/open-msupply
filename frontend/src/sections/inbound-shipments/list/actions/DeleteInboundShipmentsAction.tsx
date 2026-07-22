@@ -11,6 +11,8 @@ export interface DeleteInboundShipmentsActionProps {
   storeId: string;
   selectedIds: () => string[];
   onDeleted: () => void;
+  /** Shown disabled (with a reason tooltip on the wrapper) when true. */
+  disabled?: boolean;
 }
 
 // The inbound-shipments-list bulk delete (spec AC-L3): footer button + a
@@ -33,6 +35,7 @@ export const DeleteInboundShipmentsAction: Component<
         variant="secondary"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
+        disabled={props.disabled}
         onClick={() => setOpen(true)}
       >
         {t('button.delete')}

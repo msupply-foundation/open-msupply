@@ -23,7 +23,10 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
+import {
+  SplitButton,
+  type SplitButtonOption,
+} from '../../../ui/elements/buttons/SplitButton';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { CloseIcon, InfoIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
 import {
@@ -52,10 +55,9 @@ import {
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import {
   isExternalShipment,
-  saveInboundShipmentFields,
+  updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
 import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import type { InboundLineFilter } from './inboundShipmentLineFilter';
@@ -227,24 +229,28 @@ const InboundShipmentDetailView: Component = () => {
   };
 
   // Header field save → updateInboundShipment (twin by isExternal) → splice.
+  // Returns the server's inline verdict so a field that can legitimately be
+  // rejected while enabled (the received date — backdating window/direction,
+  // spec S7/AC-B) can show it; buffered fire-and-forget callers ignore it.
   const saveField = async (
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
-  ) => {
+  ): Promise<{ ok: boolean; message?: string }> => {
     const node = current();
-    if (!node) return;
-    const saved = await saveInboundShipmentFields(
-      params.storeId,
-      isExternal(),
-      {
-        id: node.id,
-        ...patch,
-      }
-    );
-    if (saved) {
-      mutate(prev => (prev ? { ...prev, ...saved } : prev));
+    if (!node) return { ok: false };
+    const result = await updateInboundShipment(params.storeId, isExternal(), {
+      id: node.id,
+      ...patch,
+    });
+    if (result.kind === 'saved') {
+      mutate(prev => (prev ? { ...prev, ...result.node } : prev));
       // A tax/currency/charge change cascades to line costs — refetch the page.
       void refetchLines();
+      return { ok: true };
     }
+    // 'error' → server's inline verdict; 'failed' → already surfaced globally.
+    return result.kind === 'error'
+      ? { ok: false, message: result.message }
+      : { ok: false };
   };
 
   const edit = createDebouncedEdit<InboundEditFields>({
@@ -330,26 +336,56 @@ const InboundShipmentDetailView: Component = () => {
   ];
 
   // Add-item split button options — master list & internal order gated (spec
-  // AC-ML1 / AC-PG4). "Add from internal order" is deferred (flagged).
+  // AC-ML1 / AC-PG4).
   const addOptions = () => {
     const node = current();
-    const opts = [{ value: 'item', label: t('button.add-item') }];
-    if (node && node.status === 'NEW' && !isExternal())
-      opts.push({
-        value: 'masterList',
-        label: t('label.add-from-master-list'),
-      });
-    // Add-from-internal-order — store allows the manual link, the shipment has
-    // a linked internal order, and it isn't a transfer (spec AC-PG4 / AC-IO1).
-    if (
-      node?.requisition &&
-      prefs().manuallyLinkInternalOrderToInboundShipment &&
-      kindOf(node) !== 'transfer'
-    )
+    const opts: SplitButtonOption[] = [
+      { value: 'item', label: t('button.add-item') },
+    ];
+    // Add from master list — only while New and not PO-linked (spec AC-ML1).
+    // Disabled-with-reason rather than hidden (M5 / ui-surface cross-cutting).
+    const masterListReason = !node
+      ? undefined
+      : isExternal()
+        ? t('messages.master-list-not-on-po')
+        : node.status !== 'NEW'
+          ? t('messages.master-list-only-when-new')
+          : undefined;
+    opts.push({
+      value: 'masterList',
+      label: t('label.add-from-master-list'),
+      disabled: !!masterListReason,
+      title: masterListReason,
+    });
+    // Add-from-internal-order — store allows the manual link, the shipment is
+    // still editable, and it carries a MANUALLY linked internal order (spec
+    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment, NOT kind:
+    // any requisition-linked shipment is inboundType FROM_REQUISITION, which
+    // kindOf() calls 'transfer', so the old `kindOf(node) !== 'transfer'` gate
+    // could never coexist with `node.requisition` — the option was dead code
+    // (H4). An INCOMING transfer has linkedShipment (arrives pre-populated, no
+    // order-line pull); a manual link has a requisition but no linkedShipment.
+    // Offered only when the store enables manual IO linking (a preference
+    // gate → offer-shaping, omitted otherwise). When offered, disable-with-reason for
+    // the per-shipment state (M5): needs a manually linked internal order and an
+    // editable shipment.
+    if (prefs().manuallyLinkInternalOrderToInboundShipment) {
+      const ioReason = !node
+        ? undefined
+        : !node.requisition
+          ? t('messages.internal-order-add-needs-order')
+          : node.linkedShipment
+            ? t('messages.internal-order-add-not-on-transfer')
+            : isDisabled()
+              ? t('error.inbound-shipment-not-editable')
+              : undefined;
       opts.push({
         value: 'internalOrder',
         label: t('label.add-from-internal-order'),
+        disabled: !!ioReason,
+        title: ioReason,
       });
+    }
     return opts;
   };
   const onAddAction = (value: string) => {
@@ -365,6 +401,24 @@ const InboundShipmentDetailView: Component = () => {
         c: { accessor: line => line.itemCode, id: 'itemCode' },
         sortKey: 'itemCode',
         header: t('label.code'),
+        // A line that arrived via another store's transfer (linkedInvoiceId
+        // set) can't be independently deleted; flag its code in the error tone
+        // so the provenance is visible (spec AC-E9 / M9). Inline token colour
+        // matches the linked-order cell's inline-style precedent in this table.
+        cell: info => {
+          const line = info.row.original;
+          return (
+            <span
+              style={
+                line.linkedInvoiceId
+                  ? { color: 'var(--error-main)' }
+                  : undefined
+              }
+            >
+              {line.itemCode}
+            </span>
+          );
+        },
       },
       {
         c: { key: 'itemName' },
@@ -392,12 +446,16 @@ const InboundShipmentDetailView: Component = () => {
         header: t('label.expiry'),
         ...getDateCell(),
       },
-      // VVM status — gated by the store preference.
+      // VVM status — gated by the store preference; shown for vaccine items
+      // only, blank otherwise (VVM applies to vaccines, spec AC-PG1 / M1).
       ...(prefs().manageVvmStatusForStock
         ? [
             {
               c: {
-                accessor: line => line.vvmStatus?.description ?? '',
+                accessor: line =>
+                  line.item?.isVaccine
+                    ? (line.vvmStatus?.description ?? '')
+                    : '',
                 id: 'vvmStatus',
               },
               header: t('label.vvm-status'),
@@ -409,24 +467,107 @@ const InboundShipmentDetailView: Component = () => {
         sortKey: 'locationName',
         header: t('label.location'),
       },
+      // Unit name (spec S1 line-table col 9 / L3).
+      {
+        c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
+        header: t('label.unit'),
+      },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: t('label.pack-size'),
         ...getNumberCell(),
       },
+      // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
+      // doses, blank for a non-vaccine item.
+      ...(prefs().manageVaccinesInDoses
+        ? [
+            {
+              c: {
+                accessor: line => {
+                  const it = line.item;
+                  return it?.isVaccine ? it.doses : '';
+                },
+                id: 'dosesPerUnit',
+              },
+              header: t('label.doses-per-unit'),
+              ...getNumberCell(),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
       {
         c: { key: 'numberOfPacks' },
         header: t('label.pack-quantity'),
         ...getNumberCell(),
         meta: { align: 'right', card: { region: 'badge' } },
       },
-      // Auth status — gated by the authorisation preference.
+      // Difference (H6) — supplier-shipped packs minus received packs; blank
+      // when nothing was recorded as shipped.
+      {
+        c: {
+          accessor: line =>
+            line.shippedNumberOfPacks != null
+              ? line.shippedNumberOfPacks - line.numberOfPacks
+              : '',
+          id: 'difference',
+        },
+        header: t('label.difference'),
+        ...getNumberCell(),
+      },
+      // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
+      ...(isManual
+        ? [
+            {
+              c: {
+                accessor: line => line.packSize * line.numberOfPacks,
+                id: 'unitQuantity',
+              },
+              header: t('label.unit-quantity'),
+              ...getNumberCell(),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
+      // Doses (H5) — units received × doses per unit; vaccines-in-doses pref,
+      // vaccine items only.
+      ...(prefs().manageVaccinesInDoses
+        ? [
+            {
+              c: {
+                accessor: line => {
+                  const it = line.item;
+                  return it?.isVaccine
+                    ? line.numberOfPacks * line.packSize * it.doses
+                    : '';
+                },
+                id: 'doses',
+              },
+              header: t('label.doses'),
+              ...getNumberCell(),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
+      // Auth status — gated by the authorisation preference. Header "Auth
+      // status" (not the generic "Status"); values humanised from the raw
+      // PENDING/PASSED/REJECTED enum (spec col 16 / M6).
       ...(prefs().externalInboundShipmentLinesMustBeAuthorised
         ? [
             {
-              c: { accessor: line => line.status ?? '', id: 'authStatus' },
-              header: t('label.status'),
+              c: {
+                accessor: line => {
+                  switch (line.status) {
+                    case 'PENDING':
+                      return t('label.pending');
+                    case 'PASSED':
+                      return t('label.passed');
+                    case 'REJECTED':
+                      return t('label.rejected');
+                    default:
+                      return '';
+                  }
+                },
+                id: 'authStatus',
+              },
+              header: t('label.auth-status'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -471,6 +612,20 @@ const InboundShipmentDetailView: Component = () => {
         header: t('label.manufacture-date'),
         ...getDateCell(),
       },
+      // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
+      // only; a line carries a campaign OR a program (mutually exclusive).
+      ...(isManual
+        ? [
+            {
+              c: {
+                accessor: line =>
+                  line.campaign?.name ?? line.program?.name ?? '',
+                id: 'campaignProgram',
+              },
+              header: t('label.campaign'),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
       { c: { key: 'note' }, header: t('label.note') },
     ];
   };
@@ -508,7 +663,7 @@ const InboundShipmentDetailView: Component = () => {
                       <SplitButton
                         options={addOptions()}
                         value="item"
-                        testId="add-item"
+                        testId="add-item-button"
                         menuLabel={t('button.add-item')}
                         onAction={onAddAction}
                       />
@@ -709,11 +864,17 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 existingItemIds={existingItemIds()}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
-                costLocked={isExternal() || supplierIsStore(node())}
+                // Cost price is read-only only when the shipment carries a
+                // source link — a purchase order or a linked shipment (a
+                // transfer) — NOT merely because the supplier is another store
+                // (spec rules → header fields / AC-H1). A manual internal-
+                // supplier shipment keeps cost editable.
+                costLocked={isExternal() || !!node().linkedShipment}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,
                   donor: prefs().allowTrackingOfStockByDonor,
+                  doses: prefs().manageVaccinesInDoses,
                 }}
                 onSaved={onLinesChanged}
                 onRequestNext={advanceToNextItem}
