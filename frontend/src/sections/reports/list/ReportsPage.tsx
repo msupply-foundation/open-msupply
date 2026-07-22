@@ -212,6 +212,7 @@ const ReportsPage: Component = () => {
   const sidePanelContent = (
     <>
       <SidePanelSection
+        value="notification-preferences"
         title={t('heading.notification-preferences')}
         collapsible
       >
@@ -230,7 +231,7 @@ const ReportsPage: Component = () => {
           />
         </div>
       </SidePanelSection>
-      <SidePanelSection title={t('heading.custom')} collapsible>
+      <SidePanelSection value="custom" title={t('heading.custom')} collapsible>
         <div style={stackStyle}>
           <PrefField
             label={t('label.stocktake-frequency')}
