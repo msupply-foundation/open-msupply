@@ -1,0 +1,116 @@
+/* Renders in the (wide) line-editor modal, so give it a modal-like width —
+   that keeps the month axis physically roomy even when its percentage width
+   shrinks under a large stock-on-hand. */
+.stockDist {
+  width: 100%;
+  max-width: 46rem;
+  font-size: 0.75rem;
+}
+
+.calcError {
+  margin: 0;
+  max-width: 28rem;
+  font-size: var(--text-sm);
+  color: var(--error-main);
+}
+
+/* The month-marker axis above the bars: 0 → target months, each cell a month
+   of consumption; its width shrinks when stock exceeds the target. Cells clip
+   horizontally so a label never bleeds into its neighbour, but their content
+   WRAPS so the numbers stay fully readable; equal-height cells keep the
+   baseline (cell bottom border) straight. */
+.monthAxis {
+  display: flex;
+  align-items: stretch;
+}
+
+/* The origin line. Its "0" label sits just OUTSIDE the axis (to its left) on
+   the value baseline — an origin marker, not content of the first month cell. */
+.monthEdge {
+  position: relative;
+  flex: 0 0 1px;
+  border-inline-start: 1px solid var(--gray-dark);
+}
+
+.monthEdgeLabel {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 100%;
+  padding-inline-end: 0.2rem;
+  color: var(--gray-dark);
+  line-height: 1.2;
+}
+
+.monthCell {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 3.6rem;
+  overflow: hidden;
+  padding-inline-end: 0.4rem;
+  text-align: end;
+  border-inline-end: 1px solid var(--gray-dark);
+  border-block-end: 1px solid var(--gray-dark);
+}
+
+.monthAdditional {
+  color: var(--primary-main);
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+.monthValue {
+  margin-block-start: auto;
+  color: var(--gray-dark);
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+/* The value bars (stock on hand, suggested order) proportioned to target. */
+.valueBars {
+  display: flex;
+  align-items: flex-start;
+  margin-block-start: var(--space-2);
+}
+
+.divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 2.8rem;
+  background: var(--gray-dark);
+}
+
+.valueBar {
+  min-width: 0;
+}
+
+.valueFill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.25rem;
+}
+
+.sohFill {
+  background: var(--gray-main);
+}
+
+.suggestedFill {
+  background: var(--primary-light);
+}
+
+.valueNum {
+  font-weight: var(--weight-bold);
+  color: var(--primary-contrast);
+}
+
+.valueLabel {
+  padding-block-start: var(--space-2);
+  padding-inline-end: 0.6rem;
+  text-align: end;
+  color: var(--text-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
