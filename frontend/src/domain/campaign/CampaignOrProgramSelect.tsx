@@ -60,13 +60,18 @@ export const CampaignOrProgramSelect = (
     () => ({ storeId: props.storeId, itemId: props.itemId }),
     ({ storeId, itemId }) => fetchItemPrograms(storeId, itemId)
   );
-  // No-suspend read (mirrors storeScopedResource.noSuspense): reading
-  // `programs()` — OR `programs.latest` — trips an ancestor <Suspense> on the
-  // FIRST pending read, collapsing the boundary to its fallback and remounting
-  // whatever renders this picker. In a line-edit modal that tears down the
-  // native <dialog>, which loses the top layer on re-attach and drops into the
-  // page flow (kdd/solid-reactivity-pitfalls › No remounts on interaction).
-  // Gate on state: keep the prior value while refreshing, `[]` until first ready.
+  // Read programs WITHOUT ever suspending. This picker renders inside the
+  // already-open line-edit modal, itself under the detail view's <Suspense>
+  // boundary — so suspending here would collapse that boundary and remount the
+  // whole page subtree, which detaches the open <dialog>: it loses the top
+  // layer (no backdrop, background not inert), so the modal looks broken on the
+  // Other tab (kdd/solid-reactivity-pitfalls › No remounts on interaction,
+  // rule 1). Crucially `programs.latest` is NOT enough: `.latest` STILL suspends
+  // on the FIRST pending read (before any value exists) — the exact case here,
+  // since this per-item resource first fetches when the Other tab mounts. So we
+  // gate on `.state` (reading state/latest never suspends): only surface a value
+  // once ready/refreshing, else `[]`. Same technique as storeScopedResource's
+  // noSuspense(). `programs.loading` still drives the Combobox spinner below.
   const programList = (): ItemProgram[] =>
     programs.state === 'ready' || programs.state === 'refreshing'
       ? (programs.latest ?? [])

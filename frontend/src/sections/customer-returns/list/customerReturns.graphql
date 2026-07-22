@@ -1,0 +1,100 @@
+# Customer-returns list view (spec/customer-returns S1). A customer return is an
+# InvoiceNode; the list is the shared invoices query pinned to
+# type CUSTOMER_RETURN (the fetcher merges the type filter in — the URL-backed
+# filter carries only the user's own choices). Filter / sort / pagination are
+# carried as the GraphQL input types (InvoiceFilterInput, InvoiceSortInput,
+# PaginationInput) so URL state maps straight onto them (kdd/type-safety).
+# linkedShipment distinguishes a transfer return from a manual one — it drives
+# which rows are read-only (spec/customer-returns/rules.md § manual vs transfer).
+query customerReturns(
+  $storeId: String!
+  $filter: InvoiceFilterInput
+  $sort: [InvoiceSortInput!]
+  $page: PaginationInput
+) {
+  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        otherPartyName
+        status
+        invoiceNumber
+        createdDatetime
+        comment
+        theirReference
+        colour
+        onHold
+        linkedShipment {
+          id
+        }
+      }
+    }
+  }
+}
+
+# Manual creation (spec/customer-returns/rules.md § manual, from scratch): pick a
+# customer → an EMPTY NEW return exists immediately (no lines — items are added on
+# the detail). The two typed rejections (customer not visible / not a customer)
+# surface inline in the create modal; everything else is non-typed and falls
+# through the generic error path (spec/customer-returns/contract.md § creation).
+mutation insertCustomerReturn($storeId: String!, $input: CustomerReturnInput!) {
+  insertCustomerReturn(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertCustomerReturnError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The list Name cell's colour-swatch setter (spec/customer-returns/ui-surface.md
+# S1): a header-level updateCustomerReturn carrying only the colour. Success
+# returns the row fields the list re-splices; a typed error here is unexpected
+# (the swatch is disabled on read-only rows) → routed to the global modal.
+mutation updateCustomerReturnColour(
+  $storeId: String!
+  $id: String!
+  $colour: String!
+) {
+  updateCustomerReturn(storeId: $storeId, input: { id: $id, colour: $colour }) {
+    __typename
+    ... on InvoiceNode {
+      id
+      colour
+    }
+    ... on UpdateCustomerReturnError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Bulk delete (spec/customer-returns/acceptance.md AC-D1/D2). There is no batch
+# mutation for customer returns — the list's bulk action runs one delete per
+# selected id. Every rejection (not editable, wrong store, …) is NON-typed: the
+# three declared error members are dead schema
+# (spec/customer-returns/contract.md § deletion — wire trap), so the action reads
+# only DeleteResponse and treats a graphqlError result as that row failing.
+mutation deleteCustomerReturn($storeId: String!, $id: String!) {
+  deleteCustomerReturn(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteCustomerReturnError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

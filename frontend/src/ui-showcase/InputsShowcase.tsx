@@ -22,6 +22,7 @@ import {
   locale,
   setHomeCurrency,
 } from '../intl';
+import { Card, FormPreview, Stack } from './common';
 import styles from './InputsShowcase.module.css';
 
 // Mock source for the home-currency selector: the currencies old OMS shipped
@@ -73,20 +74,6 @@ const Field = (props: {
     <span class={styles.caption}>{props.caption}</span>
     {props.children}
   </div>
-);
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
 );
 
 /*
@@ -141,7 +128,7 @@ export const InputsShowcase = () => {
   const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Text field states"
         lead={
@@ -524,7 +511,7 @@ export const InputsShowcase = () => {
           </>
         }
       >
-        <div class={styles.formPreview}>
+        <FormPreview>
           <FieldRow label="Master list">
             <TextField label="Master list" hideLabel placeholder="Any" />
           </FieldRow>
@@ -539,7 +526,7 @@ export const InputsShowcase = () => {
               onChange={setExpiringBefore}
             />
           </FieldRow>
-        </div>
+        </FormPreview>
       </Card>
 
       <Card
@@ -559,7 +546,7 @@ export const InputsShowcase = () => {
           </>
         }
       >
-        <div class={styles.formPreview}>
+        <FormPreview>
           <RadioGroup
             label="Stocktake type"
             value={stocktakeType()}
@@ -600,7 +587,7 @@ export const InputsShowcase = () => {
               ]}
             />
           </div>
-        </div>
+        </FormPreview>
       </Card>
 
       <Card
@@ -616,7 +603,7 @@ export const InputsShowcase = () => {
           </>
         }
       >
-        <div class={styles.formPreview}>
+        <FormPreview>
           <Checkbox
             label="Count items with zero stock"
             checked={countZero()}
@@ -631,7 +618,7 @@ export const InputsShowcase = () => {
             }
           />
           <Checkbox label="Disabled option" disabled checked />
-        </div>
+        </FormPreview>
       </Card>
 
       <Card
@@ -648,7 +635,7 @@ export const InputsShowcase = () => {
           </>
         }
       >
-        <div class={styles.formPreview}>
+        <FormPreview>
           <ToggleSwitch
             label="Show finalised stocktakes"
             checked={showFinalised()}
@@ -661,7 +648,7 @@ export const InputsShowcase = () => {
             onChange={setOnHold}
           />
           <ToggleSwitch label="Disabled switch" disabled checked />
-        </div>
+        </FormPreview>
       </Card>
 
       <Card
@@ -776,6 +763,6 @@ export const InputsShowcase = () => {
           </Field>
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };
