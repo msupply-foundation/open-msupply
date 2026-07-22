@@ -353,15 +353,19 @@ const ServiceChargesContent = (
       <Show
         when={rows().length > 0}
         fallback={
-          <p>
-            {/* Distinct empty states: no default service item assigned to
-                the store (so Add charge is disabled — the current client's
-                !defaultServiceItem message) vs simply no charges added yet
-                (the same line the inbound service modal shows). */}
-            {!defaultServiceItem() && !serviceItems.loading
-              ? t('error.no-service-charges')
-              : t('messages.no-service-charges')}
-          </p>
+          // Distinct empty states: no default service item assigned to the
+          // store (so Add charge is disabled — the current client's
+          // !defaultServiceItem message) vs simply no charges added yet (the
+          // same line the inbound service modal shows). Held back until the
+          // items fetch settles so the message never flashes from one state
+          // to the other.
+          <Show when={!serviceItems.loading}>
+            <p>
+              {!defaultServiceItem()
+                ? t('error.no-service-charges')
+                : t('messages.no-service-charges')}
+            </p>
+          </Show>
         }
       >
         <DataTable

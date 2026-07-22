@@ -193,14 +193,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             <Text variant="body">
               {/* The label is a hover popover explaining the document — the
                   old app's tooltip: "Customer requisition created on {date}
-                  by {username}". The label (not the whole entry) triggers it
-                  because the Popover trigger is a button, and the entry's
+                  by {username}" (em dash for a requisition with no user, as
+                  the old app shows). The label (not the whole entry) triggers
+                  it because the Popover trigger is a button, and the entry's
                   number is a link — nesting one interactive in another is
-                  invalid.
-                  TODO: requisition.createdDatetime + user.username are not on
-                  the OutboundInfo fragment yet — add them (hand-edit the
-                  .graphql + generated pair; CI codegen reproduces) and
-                  replace the em-dash placeholders with the real values. */}
+                  invalid. */}
               <Popover
                 trigger={t('label.requisition')}
                 openOnHover
@@ -208,9 +205,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               >
                 <p>
                   {t('messages.customer-requisition-created-on', {
-                    date: '—',
+                    date: localisedDate(req().createdDatetime),
                   })}{' '}
-                  {t('messages.by-user', { username: '—' })}
+                  {t('messages.by-user', {
+                    username: req().user?.username ?? '—',
+                  })}
                 </p>
               </Popover>{' '}
               {/* Only the number is the link (old-app parity), targeting the
