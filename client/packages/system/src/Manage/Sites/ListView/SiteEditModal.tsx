@@ -1,3 +1,6 @@
+// Disable camelcase should be removed once enable_multi_site feature flag is removed from the central server's configuration. See issue #12522.
+/* eslint-disable camelcase */
+
 import React from 'react';
 import {
   useTranslation,
