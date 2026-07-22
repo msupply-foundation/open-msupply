@@ -1,5 +1,5 @@
+/* Only what Text doesn't own: colour and the gap above the demo. */
 .note {
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-sm);
+  margin-block-start: var(--space-4);
   color: var(--text-secondary);
 }

@@ -22,11 +22,10 @@
   padding: var(--space-5);
 }
 
+/* Only what Text doesn't own: colour, measure, spacing, code chips. */
 .lead {
-  margin: 0 0 var(--space-4);
-  max-width: 44rem;
-  font-size: var(--text-sm);
-  line-height: 1.6;
+  margin-block-end: var(--space-4);
+  max-inline-size: 44rem;
   color: var(--text-secondary);
 }
 
