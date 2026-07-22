@@ -6,6 +6,10 @@
 // identity. Any other order sends only the standard seeds. Pure — the view
 // supplies the fetched indicator count and the store's name id.
 
+// @ts-expect-error TS(7016): Could not find a declaration file for module
+// './internalOrderDetail.generated'.
+// 'src/sections/internal-orders/detail/internalOrderDetail.generated.ts'
+// implicitly has an 'any' type. -- @roxy-dao to fix
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
 export type IndicatorSeedSource = Pick<
