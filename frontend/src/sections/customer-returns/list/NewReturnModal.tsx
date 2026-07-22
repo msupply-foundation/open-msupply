@@ -6,7 +6,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { XCircleIcon } from '../../../ui/icons';
-import { CustomerSelect } from '../../../domain/customer';
+import { NameSearch } from '../../../domain/name';
 import { InsertCustomerReturn } from './customerReturns.generated';
 
 // S2 — customer selection (spec/customer-returns/ui-surface.md): a modal over
@@ -86,12 +86,15 @@ const Body: Component<{ onClose: () => void }> = props => {
         </Button>
       }
     >
-      <CustomerSelect
+      <NameSearch
         storeId={params.storeId}
+        role="customer"
         label={t('label.customer-name')}
         placeholder={t('placeholder.search-by-name')}
-        testId="customer-search-input"
-        onChange={customer => {
+        disabled={creating()}
+        inputTestId="customer-search-input"
+        clearable={false}
+        onSelect={customer => {
           if (customer) void create(customer.id);
         }}
       />
