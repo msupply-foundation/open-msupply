@@ -4,6 +4,13 @@ import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { IconButton } from '../ui/elements/buttons/IconButton';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import {
+  OkButton,
+  CancelButton,
+  SaveButton,
+  OkAndNextButton,
+  SaveAndNextButton,
+} from '../ui/elements/buttons/StandardButtons';
+import {
   PlusCircleIcon,
   DownloadIcon,
   SaveIcon,
@@ -46,21 +53,65 @@ export const ButtonsShowcase = () => {
     null
   );
   const [onHold, setOnHold] = createSignal(false);
+  const [lastStandard, setLastStandard] = createSignal<string | null>(null);
 
   return (
     <div class={styles.stack}>
       <Card
-        title="Primary — the brand tone"
+        title="Standard buttons — pre-composed for common actions"
+        lead={
+          <>
+            The handful of actions that recur in nearly every dialog and form,
+            wrapped once so you don't re-decide the tone or label each time:{' '}
+            <code>&lt;OkButton&gt;</code>, <code>&lt;CancelButton&gt;</code>,{' '}
+            <code>&lt;SaveButton&gt;</code>,{' '}
+            <code>&lt;OkAndNextButton&gt;</code>, and{' '}
+            <code>&lt;SaveAndNextButton&gt;</code>. Each fixes its own{' '}
+            <strong>variant + label</strong> (labels come from the shared intl
+            catalog, so they translate); everything else a <code>Button</code>{' '}
+            takes — <code>onClick</code>, <code>disabled</code>,{' '}
+            <code>loading</code>, <code>size</code> — passes through. Reach for
+            these first; drop to the raw variants below only when you need a
+            different label or tone. <code>Save</code> carries the icon and{' '}
+            <strong>collapses to icon-only on phones</strong> — resize below
+            768px to see it.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <OkButton onClick={() => setLastStandard('OK')} />
+          <CancelButton onClick={() => setLastStandard('Cancel')} />
+          <SaveButton onClick={() => setLastStandard('Save')} />
+          <OkAndNextButton onClick={() => setLastStandard('OK & next')} />
+          <SaveAndNextButton onClick={() => setLastStandard('Save & next')} />
+        </div>
+        <p class={styles.note}>
+          <Show
+            when={lastStandard()}
+            fallback="Click one of the standard buttons…"
+          >
+            {value => (
+              <>
+                You clicked <strong>{value()}</strong>.
+              </>
+            )}
+          </Show>
+        </p>
+      </Card>
+
+      <Card
+        title="Primary — the main action"
         lead={
           <>
             The default action button (<code>variant="primary"</code>): plain{' '}
-            <code>&lt;button&gt;</code> + CSS, no component library. White pill,
-            no border, a shadow does the lifting; the icon carries the brand
-            tone (orange in the current theme) and the whole pill
-            <strong> fills with it on hover</strong> (label + icon go white).
-            Press one to see the click <strong>ripple</strong> — the single spot
-            we use JS for interaction (it needs the pointer coordinates). Tab to
-            one for the focus ring.
+            <code>&lt;button&gt;</code> + CSS, no component library. Flat, a{' '}
+            <strong>solid action-blue fill</strong> (ui-standards) — the single
+            most important action on a page or dialog. Most views have{' '}
+            <strong>one</strong>. Hover darkens and lifts it slightly. Press one
+            to see the click <strong>ripple</strong> — the single spot we use JS
+            for interaction (it needs the pointer coordinates). Tab to one for
+            the focus ring. Variants are named semantically — never after a
+            colour — the palette lives only in the tokens.
           </>
         }
       >
@@ -74,25 +125,151 @@ export const ButtonsShowcase = () => {
       </Card>
 
       <Card
-        title="Secondary — the action tone"
+        title="Secondary — supporting actions"
         lead={
           <>
-            The same button, <code>variant="secondary"</code>: the action tone
-            (blue in the current theme) for the app's edit/footer actions (Save,
-            Delete, Cancel…). Fills with its tone on hover; the focus ring
-            follows it too. Variants are named semantically — never after a
-            colour — the palette lives only in the tokens.
+            <code>variant="secondary"</code>: an <strong>outlined</strong>{' '}
+            button for actions that sit alongside a primary — Print, Export,
+            Cancel, Edit. A hairline edge at rest; hover recolours the edge and
+            label to the action tone. Use when there's a primary present;
+            promote it to primary if it's the only action.
           </>
         }
       >
         <div class={styles.row}>
           <Button variant="secondary" icon={<SaveIcon />}>
-            Save
+            Print
           </Button>
-          <Button variant="secondary" icon={<TrashIcon />}>
-            Delete
+          <Button variant="secondary" icon={<DownloadIcon />}>
+            Export
           </Button>
           <Button variant="secondary">Cancel</Button>
+          <Button variant="secondary" disabled>
+            Disabled
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Ghost — low-priority & inline"
+        lead={
+          <>
+            <code>variant="ghost"</code>: text only, in the{' '}
+            <strong>action-blue</strong> tone (ui-standards — ghost shares
+            primary's blue), with a faint tint on hover. Its home is inline
+            table actions, overflow menus, and dialogs where space is tight —
+            anywhere a bordered button would be too heavy. Avoid it as the only
+            action on a view (users may not read it as interactive).
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button variant="ghost">View details</Button>
+          <Button variant="ghost" icon={<CopyIcon />}>
+            Duplicate
+          </Button>
+          <Button variant="ghost" size="small">
+            Edit
+          </Button>
+          <Button variant="ghost" disabled>
+            Disabled
+          </Button>
+        </div>
+        <p class={styles.note}>
+          The <strong>Edit</strong> button here is the <code>size="small"</code>{' '}
+          variant (the dense/inline size) — the others are the default medium.
+        </p>
+      </Card>
+
+      <Card
+        title="Danger — the high-caution action"
+        lead={
+          <>
+            <code>variant="danger"</code>: a filled{' '}
+            <strong>brand-orange</strong> tone for actions to be careful with —
+            Delete, Remove, Void. It's a "stop and think" accent, <em>not</em> a
+            hard error-red (it reuses the brand tone, matching the standard's
+            own CSS). Never adjacent to a primary without a spacer. It's the{' '}
+            <strong>one orange-toned variant</strong> — so the only one whose
+            focus ring is orange rather than the app-wide blue.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button variant="danger" icon={<TrashIcon />}>
+            Delete shipment
+          </Button>
+          <Button variant="danger" disabled>
+            Disabled
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Sizes"
+        lead={
+          <>
+            Two sizes (ui-standards #btn-sizes): <code>medium</code> (default,
+            36px) for page and toolbar actions, <code>size="small"</code> (28px)
+            for dense tables and compact panels. At tablet widths (≤1023px)
+            medium grows to the 48px touch target automatically — resize the
+            window to see it; small is the deliberate exception.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button icon={<SaveIcon />}>Medium</Button>
+          <Button size="small" icon={<SaveIcon />}>
+            Small
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="States"
+        lead={
+          <>
+            The interaction states (ui-standards #btn-states).{' '}
+            <strong>Hover</strong> any button to see it darken/lift;{' '}
+            <strong>tab</strong> to one for the real focus ring. The{' '}
+            <em>Focus</em> swatch below is shown statically for reference.{' '}
+            <code>loading</code> swaps the icon for a spinner and blocks
+            re-firing while staying at full opacity (busy, not disabled);{' '}
+            <code>disabled</code> dims to 38% but stays visible.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button>Default</Button>
+          <Button class={styles.focusDemo}>Focus</Button>
+          <Button loading>Saving…</Button>
+          <Button disabled>Disabled</Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Collapsible — icon-only on phones"
+        lead={
+          <>
+            Opt-in with <code>collapsible</code> (ui-standards #btn-icons): at
+            phone widths (≤767px) the button sheds its label down to just the
+            icon, to save toolbar space.{' '}
+            <strong>Resize the window below 768px</strong> to see the first two
+            collapse; the third (no <code>collapsible</code>) keeps its label.
+            Only use it on buttons with an <code>icon</code>; the label stays as
+            the accessible name. Default is off app-wide — one constant flips it
+            later.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button collapsible icon={<PlusCircleIcon />}>
+            New shipment
+          </Button>
+          <Button collapsible variant="secondary" icon={<DownloadIcon />}>
+            Export
+          </Button>
+          <Button icon={<SaveIcon />}>Save changes</Button>
         </div>
       </Card>
 
@@ -153,12 +330,22 @@ export const ButtonsShowcase = () => {
             </code>{' '}
             (the caret's menu buys the focus/keyboard/ARIA contract). Picking a
             format selects it <em>and</em> runs it, like the app's export
-            selector. Each half ripples and fills independently.
+            selector. Each half ripples and lights up independently. Same flat
+            language as <code>&lt;Button&gt;</code>, shown here in both{' '}
+            <code>primary</code> (filled) and <code>secondary</code> (outlined)
+            — the variant is independent of the pick-behaviour.
           </>
         }
       >
         <div class={styles.row}>
           <SplitButton
+            icon={<DownloadIcon />}
+            options={EXPORT_OPTIONS}
+            menuLabel="Export options"
+            onAction={value => setLastExport(value)}
+          />
+          <SplitButton
+            variant="secondary"
             icon={<DownloadIcon />}
             options={EXPORT_OPTIONS}
             menuLabel="Export options"
@@ -187,12 +374,24 @@ export const ButtonsShowcase = () => {
             menu pick only <em>re-targets</em> the main action — the label
             updates, nothing runs until the main half is clicked. Pass{' '}
             <code>menuSelectsOnly</code> +<code>onValueChange</code>; the
-            default (pick = run) stays for export-style menus.
+            default (pick = run) stays for export-style menus. Again in both{' '}
+            <code>primary</code> and <code>secondary</code> — the tone is
+            independent of the behaviour.
           </>
         }
       >
         <div class={styles.row}>
           <SplitButton
+            icon={<SaveIcon />}
+            options={STATUS_OPTIONS}
+            value={pendingStatus()}
+            menuSelectsOnly
+            onValueChange={setPendingStatus}
+            menuLabel="Change status"
+            onAction={value => setConfirmedStatus(value)}
+          />
+          <SplitButton
+            variant="secondary"
             icon={<SaveIcon />}
             options={STATUS_OPTIONS}
             value={pendingStatus()}

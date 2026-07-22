@@ -57,24 +57,103 @@ const currentStoreId = () => loadedStoreId();
 // `me?.userId`; undefined between store switches.
 const currentUserId = () => storeContext()?.me?.userId;
 
-// The permissions the current user holds in the entered store (Guard 3's
-// storeContext read; the query already scopes `permissions` to the store, so
-// this flattens its nodes). Empty until the context resolves — the store guard
-// loads it before any store page renders, so a page read never races it.
-const currentStorePermissions = (): string[] =>
-  storeContext()?.me?.permissions.nodes.flatMap(n => n.permissions) ?? [];
+// The stocktake display-gate preferences (spec/stocktakes › store-preference
+// gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
+// the context is still unresolved — the safe default is OFF, so a gated column /
+// field never flashes in before the preference is known (mirrors the D7 rule for
+// the simplified layout: unresolved ⇒ render the plainer surface). Reactive, so
+// a post-sync refetch re-gates the affected surfaces in place.
+const stocktakePreferences = () => {
+  const prefs = storeContext()?.preferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+  };
+};
 
-// Whether the current user holds a given permission in the entered store. For
-// mirroring a role-restricted affordance (a standing capability, not an
-// action's verdict — spec/ui-standards/validation.md § permission gating); the
-// server still enforces the same resource on every write.
-const hasStorePermission = (permission: string): boolean =>
-  currentStorePermissions().includes(permission);
+// The stock vertical's display-gate preferences (spec/stock › store-preference
+// gates). A superset of stocktakePreferences: the same three shared gates PLUS
+// sortByVvmStatusThenExpiry (the VVM status FIELD shows on S2/S3 when this OR
+// manageVvmStatusForStock is on) and the global backdating window (the S4
+// adjust-date control appears only when inventoryAdjustmentsEnabled, bounded by
+// maxDays). Each defaults OFF/0 while the context is unresolved — the safe
+// default is a plainer surface, so a gated field/control never flashes in
+// before its preference is known. Reactive, so a post-sync refetch re-gates in
+// place. maxDays === 0 means "no maximum" (the server enforces the real bound).
+const stockPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const backdating = prefs?.backdating;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    sortByVvmStatusThenExpiry: prefs?.sortByVvmStatusThenExpiry ?? false,
+    backdating: {
+      inventoryAdjustmentsEnabled:
+        backdating?.inventoryAdjustmentsEnabled ?? false,
+      maxDays: backdating?.maxDays ?? 0,
+    },
+  };
+};
+
+// The inbound-shipment display/behaviour gate preferences
+// (spec/inbound-shipments › store-preference gates). Same safe-default-OFF rule
+// as stocktakePreferences: each is `false` (or a zero window) while the context
+// is unresolved so a gated column/control never flashes in before the
+// preference is known. Reactive — a post-sync refetch re-gates in place.
+// `donorTracking`/`vvm`/`vaccinesInDoses` overlap the stocktake gates; the
+// inbound-only ones (procurement, authorisation, foreign currency, backdating,
+// pack-to-one, manual internal-order linking) ride the same guard-3 query.
+const inboundShipmentPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
+    externalInboundShipmentLinesMustBeAuthorised:
+      prefs?.externalInboundShipmentLinesMustBeAuthorised ?? false,
+    backdatingEnabled: prefs?.backdating?.shipmentsEnabled ?? false,
+    backdatingMaxDays: prefs?.backdating?.maxDays ?? 0,
+    packToOne: store?.packToOne ?? false,
+    issueInForeignCurrency: store?.issueInForeignCurrency ?? false,
+    manuallyLinkInternalOrderToInboundShipment:
+      store?.manuallyLinkInternalOrderToInboundShipment ?? false,
+  };
+};
+
+// A server UserPermission name as it arrives in the store-context query
+// (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
+// generated so callers can't typo a permission. Reading the union off the
+// generated result keeps this in lock-step with the schema (kdd/type-safety).
+type UserPermission = NonNullable<
+  StoreContextResult['me'] & { __typename: 'UserNode' }
+>['permissions']['nodes'][number]['permissions'][number];
+
+// Whether the current user holds a permission in the entered store. Reactive
+// (reads storeContext), so gates re-evaluate when the context loads or the
+// store changes. The permissions query is already scoped to the entered store
+// (storeContext.graphql passes $storeId), so any node's list applies — we flat-
+// check across nodes rather than matching storeId again. Empty/undefined
+// context → false (nothing to grant).
+const hasPermission = (permission: UserPermission): boolean => {
+  const me = storeContext()?.me;
+  if (!me || me.__typename !== 'UserNode') return false;
+  return me.permissions.nodes.some(node =>
+    node.permissions.includes(permission)
+  );
+};
 
 export {
   storeContext,
   refetch as refetchStoreContext,
   currentStoreId,
   currentUserId,
-  hasStorePermission,
+  stocktakePreferences,
+  stockPreferences,
+  inboundShipmentPreferences,
+  hasPermission,
 };
+export type { UserPermission };

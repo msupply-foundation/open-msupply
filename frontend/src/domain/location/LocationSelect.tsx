@@ -1,8 +1,15 @@
 import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
-import { locationsResource, type Location } from './locationResource';
+import { type Location } from './locationResource';
 
 export interface LocationSelectProps {
+  /**
+   * The locations to choose from, fetched by the parent route/view and passed
+   * in (this domain widget owns no cache). See the module comment.
+   */
+  locations: Location[];
+  /** True while the parent's fetch is in flight. */
+  loading?: boolean;
   /** Selected location id (undefined = none). */
   value?: string;
   /**
@@ -23,21 +30,26 @@ export interface LocationSelectProps {
 }
 
 /*
- * The reusable Location picker — a Combobox pre-wired to the store-scoped
- * locations resource. A domain widget (src/domain): it knows the app's data
- * (fetches + labels locations) but is composed from the pure ui/ Combobox.
- * Call sites just pass value + onChange instead of re-wiring
- * items/itemToString/itemToValue/loading each time (and so the label format
- * stays consistent). Reports the full Location node (id + code + name) so
- * callers can store the code/name for display without a re-lookup; id-only
- * callers just read `.id`.
+ * The reusable **volume-blind** Location picker — a Combobox labelled by a
+ * location's code, used where a location is merely *referenced* (scoping a
+ * stocktake count, a list filter) so capacity is irrelevant. For surfaces that
+ * *associate stock* with a location — the stocktake line editor, bulk
+ * change-location — use LocationVolumeSelect instead, which shows each option's
+ * % used and offers the fullness filter.
+ *
+ * A domain widget (src/domain): it knows the app's data shape (labels locations
+ * by code) but is composed from the pure ui/ Combobox, and — per
+ * spec/ui-standards/components.md — owns NO cache: the parent fetches the list
+ * (fetchLocations) and passes it in, so there is one obvious fetch per view
+ * rather than a hidden global. Reports the full Location node (id + code + name)
+ * so callers can store the code/name for display without a re-lookup.
  */
 export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
   <Combobox<Location>
     label={props.label}
     hideLabel={props.hideLabel}
-    items={locationsResource.noSuspense()}
-    loading={locationsResource.loading()}
+    items={props.locations}
+    loading={props.loading}
     itemToString={l => l.code}
     itemToValue={l => l.id}
     value={props.value}

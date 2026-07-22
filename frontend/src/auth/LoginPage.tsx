@@ -110,7 +110,7 @@ export const LoginPage: Component = () => {
         </div>
         <footer class={styles.panelFooter}>
           <p class={styles.version}>
-            <strong>{t('label.app-version')}</strong> 0.0.0
+            <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
           <LanguageSelector
             language={locale()}

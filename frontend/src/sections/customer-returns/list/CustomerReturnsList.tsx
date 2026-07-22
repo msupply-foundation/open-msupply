@@ -2,7 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
-import { hasStorePermission } from '../../../store/storeContext';
+import { hasPermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -178,7 +178,7 @@ const CustomerReturnsList: Component = () => {
     // creating requires CUSTOMER_RETURN_MUTATE. Lacking it, the global
     // permission-denied modal shows at once — never a toast, and no customer
     // picker opens. The server enforces the same resource on the write regardless.
-    if (!hasStorePermission('CUSTOMER_RETURN_MUTATE')) {
+    if (!hasPermission('CUSTOMER_RETURN_MUTATE')) {
       reportPermissionDenied(['CustomerReturnMutate']);
       return;
     }

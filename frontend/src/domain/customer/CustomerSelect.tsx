@@ -32,8 +32,6 @@ export interface CustomerSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
-  /** Open the option list on focus/click (pick-first flows). */
-  openOnFocus?: boolean;
   /** `data-testid` for the input (e.g. `customer-search-input`). */
   testId?: string;
 }
@@ -105,7 +103,6 @@ export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => {
       disabled={props.disabled}
       error={props.error}
       placeholder={props.placeholder}
-      openOnFocus={props.openOnFocus}
       inputTestId={props.testId}
       onInputChange={value => {
         setQuery(value);

@@ -1,0 +1,77 @@
+import { Show, type JSX } from 'solid-js';
+import { AlertTriangleIcon } from '../../icons';
+import styles from './DateTimeFields.module.css';
+
+export interface FieldShellProps {
+  label: string;
+  /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
+  hideLabel?: boolean;
+  /**
+   * Max-width cap, TextField's vocabulary: `short` (default — dates are
+   * short) or `full` to fill the container (e.g. the report argument form,
+   * where every row spans the modal).
+   */
+  width?: 'short' | 'full';
+  required?: boolean;
+  /** Error message — presence switches the field to the error state. */
+  error?: string;
+  /** Shown below the field when there's no error. */
+  helperText?: string;
+  /** id of the control the label points at (also seeds the message id). */
+  controlId: string;
+  /** Renders the control, given the `aria-describedby`/`aria-invalid` to set. */
+  children: (a: {
+    describedBy: string | undefined;
+    invalid: true | undefined;
+  }) => JSX.Element;
+}
+
+/*
+ * The label + helper/error chrome shared by the headless date/time fields —
+ * the same contract as TextField (label[for] + aria-describedby, aria-invalid,
+ * required asterisk, error as icon + text, never colour alone), factored out
+ * because these controls are composites rather than a single <input>.
+ */
+export const FieldShell = (props: FieldShellProps) => {
+  const messageId = `${props.controlId}-message`;
+  // Render the control ONCE, in the (untracked) component body. Rendering it
+  // inside JSX here would re-run — and so tear down and recreate the control,
+  // losing input focus — whenever a tracked prop it reads (e.g. a helperText
+  // that interpolates the live value) changes. See kdd/solid-reactivity-pitfalls.
+  const control = props.children({
+    describedBy: props.error || props.helperText ? messageId : undefined,
+    invalid: props.error ? true : undefined,
+  });
+
+  return (
+    <div class={styles.field} data-width={props.width}>
+      <label
+        class={props.hideLabel ? styles.labelHidden : styles.label}
+        for={props.controlId}
+      >
+        {props.label}
+        <Show when={props.required}>
+          <span class={styles.required} aria-hidden="true">
+            *
+          </span>
+        </Show>
+      </label>
+      {control}
+      <Show
+        when={props.error}
+        fallback={
+          <Show when={props.helperText}>
+            <p id={messageId} class={styles.helper}>
+              {props.helperText}
+            </p>
+          </Show>
+        }
+      >
+        <p id={messageId} class={styles.error}>
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
+        </p>
+      </Show>
+    </div>
+  );
+};

@@ -7,8 +7,13 @@ import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
-import { DateInput } from '../ui/elements/inputs/DateInput';
-import { DateRangeInput } from '../ui/elements/inputs/DateRangeInput';
+import { DateField } from '../ui/elements/inputs/DateField';
+import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
+import { TimeField } from '../ui/elements/inputs/TimeField';
+import {
+  DateRangeField,
+  type IsoDateRange,
+} from '../ui/elements/inputs/DateRangeField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Select } from '../ui/elements/selectors/Select';
 import {
@@ -52,6 +57,13 @@ const ValueReadout = (props: { value: number | undefined }) => (
   </output>
 );
 
+/** Today as ISO `YYYY-MM-DD`, for the "future dates unselectable" demo. */
+const todayIso = (): string => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 const Field = (props: {
   caption: string;
   class?: string;
@@ -94,13 +106,23 @@ export const InputsShowcase = () => {
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
   const [showFinalised, setShowFinalised] = createSignal(false);
-  // Date + range demos (ISO strings in/out).
-  const [expiry, setExpiry] = createSignal('2026-09-30');
-  const [range, setRange] = createSignal({ start: '', end: '' });
-  const rangeError = () =>
-    range().start && range().end && range().end < range().start
-      ? 'End date must not be before the start date.'
-      : undefined;
+  const [onHold, setOnHold] = createSignal(true);
+  // Date & time demos (ISO strings / UTC instant in/out).
+  const [expiry, setExpiry] = createSignal<string | null>('2027-03-01');
+  const [invoiceDate, setInvoiceDate] = createSignal<string | null>(
+    '2023-04-23'
+  );
+  const [expiringBefore, setExpiringBefore] = createSignal<string | null>(null);
+  const [manufacture, setManufacture] = createSignal<string | null>(null);
+  const [countDate, setCountDate] = createSignal<string | null>(null);
+  const [cutoff, setCutoff] = createSignal<string | null>('17:30');
+  const [appointment, setAppointment] = createSignal<string | null>(
+    '2026-07-17T02:30:00.000Z'
+  );
+  const [period, setPeriod] = createSignal<IsoDateRange>({
+    start: '2026-07-01',
+    end: '2026-07-31',
+  });
   // NumberField demos: the parent-owned numbers each ValueReadout displays.
   const [qty, setQty] = createSignal<number | undefined>(1000);
   const [cost, setCost] = createSignal<number | undefined>(12.5);
@@ -129,7 +151,7 @@ export const InputsShowcase = () => {
             two heights and the short/long width caps. Every colour is a theme
             token (the red error glow is <code>--focus-ring-error</code>, themed
             for dark alongside <code>--focus-ring</code>). Click into a field
-            for the orange focus ring; error and required are never conveyed by
+            for the blue focus ring; error and required are never conveyed by
             colour alone.
           </>
         }
@@ -139,7 +161,7 @@ export const InputsShowcase = () => {
             <TextField
               label="Item Code"
               placeholder="e.g. AMX500"
-              helperText="Click to focus — orange ring appears"
+              helperText="Click to focus — blue ring appears"
             />
           </Field>
           <Field caption="Filled">
@@ -175,6 +197,63 @@ export const InputsShowcase = () => {
               width="long"
               placeholder="Longer free-text field"
               helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card
+        title="Size variations — default & small"
+        lead={
+          <>
+            Two sizes (ui-standards "Text Fields — Size Variations"):{' '}
+            <strong>default</strong> (2.5rem / 40px, 14px text) for standalone
+            form fields, modals and drawers; <code>size="small"</code> (2.25rem
+            / 36px, <strong>13px</strong> text <em>and</em> label) for dense
+            contexts — table inline editing, filter bars, toolbars, sidebars.
+            Small shrinks the height <em>and</em> the type; on touch the default
+            grows to the 48px target while small stays dense (density is the
+            point). The one <code>size</code> prop flows to{' '}
+            <code>NumberField</code>, <code>CurrencyField</code> and the date
+            fields — compare each pair below.
+          </>
+        }
+      >
+        <div class={styles.grid}>
+          <Field caption="Default — 40px · 14px">
+            <TextField label="Item Name" value="Amoxicillin 500mg" />
+          </Field>
+          <Field caption="Small — 36px · 13px">
+            <TextField
+              label="Item Name"
+              size="small"
+              value="Amoxicillin 500mg"
+            />
+          </Field>
+          <Field caption="Default — number">
+            <NumberField
+              label="Pack size"
+              value={packSize()}
+              onChange={setPackSize}
+            />
+          </Field>
+          <Field caption="Small — number">
+            <NumberField
+              label="Pack size"
+              size="small"
+              value={packSize()}
+              onChange={setPackSize}
+            />
+          </Field>
+          <Field caption="Default — date">
+            <DateField label="Expiry" value={expiry()} onChange={setExpiry} />
+          </Field>
+          <Field caption="Small — date">
+            <DateField
+              label="Expiry"
+              size="small"
+              value={expiry()}
+              onChange={setExpiry}
             />
           </Field>
         </div>
@@ -453,7 +532,12 @@ export const InputsShowcase = () => {
             <TextField label="Location" hideLabel placeholder="Any" />
           </FieldRow>
           <FieldRow label="Expiring before">
-            <TextField label="Expiring before" hideLabel type="date" />
+            <DateField
+              label="Expiring before"
+              hideLabel
+              value={expiringBefore()}
+              onChange={setExpiringBefore}
+            />
           </FieldRow>
         </div>
       </Card>
@@ -558,6 +642,9 @@ export const InputsShowcase = () => {
             ): a custom track + sliding thumb, the state carried by the thumb
             position. Space toggles it; the label click toggles it. For a binary
             on/off setting where a slider reads more naturally than a tick box.
+            The <code>on</code> state is the action blue by default;{' '}
+            <code>variant="caution"</code> makes it brand orange for a setting
+            to be careful with (e.g. putting stock on hold).
           </>
         }
       >
@@ -567,38 +654,126 @@ export const InputsShowcase = () => {
             checked={showFinalised()}
             onChange={setShowFinalised}
           />
+          <ToggleSwitch
+            label="On hold"
+            variant="caution"
+            checked={onHold()}
+            onChange={setOnHold}
+          />
           <ToggleSwitch label="Disabled switch" disabled checked />
         </div>
       </Card>
 
       <Card
-        title="Date input & range — native <input type=date>"
+        title="Date & time — headless (corvu)"
         lead={
           <>
-            <code>DateInput</code> is the native date picker with TextField's
-            exact label / helper / error / required API — it <em>is</em> a
-            TextField (<code>type="date"</code>), so there's no new styling and
-            the browser owns the picker. <code>DateRangeInput</code> pairs two
-            of them in one labelled row and constrains them by construction
-            (start's <code>max</code> = end, end's <code>min</code> = start),
-            with one combined error slot — try to set the end before the start.
+            <code>DateField</code>, <code>DateRangeField</code>,{' '}
+            <code>DateTimeField</code> and <code>TimeField</code>: a popover
+            date picker on <strong>corvu</strong>'s headless calendar (our own
+            markup + tokens, same bargain as Kobalte), so it renders{' '}
+            <strong>identically in every browser</strong>. You can{' '}
+            <strong>type the date</strong> (e.g. <code>23/04/2023</code>) or
+            pick it; the calendar header opens{' '}
+            <strong>month &amp; year grids</strong> (no giant native dropdown).
+            The <code>format</code> prop drives both display and parsing (
+            <code>dd/MM/yyyy</code>, <code>dd MMM yyyy</code>, …). Time is{' '}
+            <strong>Kobalte's segmented TimeField</strong> (type or arrow-step,
+            no invalid values), with an optional <code>hourCycle</code> for
+            am/pm. <code>DateTimeField</code> puts the typed date and segmented
+            time in <strong>one input</strong>, storing a{' '}
+            <strong>UTC instant</strong> while the user edits{' '}
+            <strong>local wall-clock</strong> time.
           </>
         }
       >
-        <div class={styles.formPreview}>
-          <DateInput
-            label="Expiry date"
-            value={expiry()}
-            onChange={setExpiry}
-            helperText="ISO value in and out"
-          />
-          <DateRangeInput
-            label="Created between"
-            start={range().start}
-            end={range().end}
-            onChange={setRange}
-            error={rangeError()}
-          />
+        <div class={styles.grid}>
+          <Field caption="Date — type or pick">
+            <DateField
+              label="Expiry date"
+              value={expiry()}
+              onChange={setExpiry}
+              helperText={`Type e.g. 12 Aug 2027, or pick. Stored: ${
+                expiry() ?? '(empty)'
+              }`}
+            />
+          </Field>
+          <Field caption="Short format (dd/MM/yyyy)">
+            <DateField
+              label="Invoice date"
+              format="dd/MM/yyyy"
+              value={invoiceDate()}
+              onChange={setInvoiceDate}
+              helperText={`Type 23/04/2023. Stored: ${
+                invoiceDate() ?? '(empty)'
+              }`}
+            />
+          </Field>
+          <Field caption="Bounded — future unselectable">
+            <DateField
+              label="Manufacture date"
+              max={todayIso()}
+              value={manufacture()}
+              onChange={setManufacture}
+              helperText={`max = today; later dates greyed out. Stored: ${
+                manufacture() ?? '(empty)'
+              }`}
+            />
+          </Field>
+          <Field caption="Time — 12h am/pm (Kobalte)">
+            <TimeField
+              label="Cut-off time"
+              value={cutoff()}
+              onChange={setCutoff}
+              hourCycle={12}
+              helperText={`Stored (HH:mm): ${cutoff() ?? '(empty)'}`}
+            />
+          </Field>
+          <Field caption="Date range">
+            <DateRangeField
+              label="Report period"
+              value={period()}
+              onChange={setPeriod}
+              helperText={`${period().start ?? '…'} → ${period().end ?? '…'}`}
+            />
+          </Field>
+          <Field caption="Required">
+            <DateField
+              label="Count date"
+              required
+              value={countDate()}
+              onChange={setCountDate}
+              helperText="Asterisk on label — not placeholder"
+            />
+          </Field>
+          <Field caption="Error">
+            <DateField
+              label="Expiry date"
+              value="2020-01-01"
+              error="Date is in the past"
+            />
+          </Field>
+          <Field caption="Disabled">
+            <DateField
+              label="Locked date"
+              value="2026-07-17"
+              disabled
+              helperText="Grey fill — not interactive"
+            />
+          </Field>
+          <Field
+            caption="Date & time — local edit, UTC store"
+            class={styles.fullRow}
+          >
+            <DateTimeField
+              label="Appointment"
+              value={appointment()}
+              onChange={setAppointment}
+              helperText={`You edit local wall-clock; stored as UTC: ${
+                appointment() ?? '(empty)'
+              }`}
+            />
+          </Field>
         </div>
       </Card>
     </div>

@@ -1,89 +1,69 @@
 import { t } from '../../../intl';
 import {
   constructFilters,
-  FilterDate,
-  FilterTextInput,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { LocationSelect, type Location } from '../../../domain/location';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
-// The detail-view filter chips, built once via constructFilters over the
-// client-side StocktakeLineFilter. `search` is NOT here — it's the always-on
-// item search rendered separately (like OMS), so it's dismissed as `null`.
-// `errorIds` IS a real chip (a removable "Error lines" filter), but it's only
-// OFFERED when the stocktake has errors — see stocktakeDetailFilters() below,
-// which drops it from the list otherwise. It's a label-only chip (no editable
-// control): the error dialog activates it with the actual error line ids; the
-// user can then remove it to go back to all rows.
+// Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
+// mirroring the stocktakes LIST (listFilters.tsx). The map passed to
+// constructFilters is keyed by EVERY key of the generated
+// StocktakeLineFilterInput: a key maps to a definition to expose it, or `null`
+// to dismiss it. Being a Record over all of StocktakeLineFilter it can't
+// compile with a key missing — when the schema gains a filter, codegen adds the
+// key and this map stops compiling until we decide expose-or-dismiss.
 //
-// Each chip's control reads its key off filter() and writes it back with
-// setPartialFilter, in the filter-native shape (kdd/type-safety). label is an
-// accessor so it re-translates on locale switch while the array identity stays
-// stable (no chip remounts — kdd/state-management).
-const FILTERS = constructFilters<StocktakeLineFilter>({
-  search: null,
-  errorIds: {
-    label: () => t('heading.stocktake-errors'),
-    // Label-only chip — activated by the error dialog with the actual line
-    // ids, removed by its X.
-    render: () => null,
-  },
-  item: {
-    label: () => t('label.item'),
-    render: props => (
-      <FilterTextInput
-        label={t('label.item')}
-        placeholder={t('label.item')}
-        value={props.filter().item ?? ''}
-        onInput={value => props.setPartialFilter({ item: value })}
-        // Client-side line filter (in-memory, no server round-trip) → apply on
-        // every keystroke, no debounce (spec: inputs.md § Server-bound input).
-        debounceMs={0}
-      />
-    ),
-  },
-  batch: {
-    label: () => t('label.batch'),
-    render: props => (
-      <FilterTextInput
-        label={t('label.batch')}
-        placeholder={t('label.batch')}
-        value={props.filter().batch ?? ''}
-        onInput={value => props.setPartialFilter({ batch: value })}
-        debounceMs={0}
-      />
-    ),
-  },
-  location: {
-    label: () => t('label.location'),
-    render: props => (
-      <FilterTextInput
-        label={t('label.location')}
-        placeholder={t('label.location')}
-        value={props.filter().location ?? ''}
-        onInput={value => props.setPartialFilter({ location: value })}
-        debounceMs={0}
-      />
-    ),
-  },
-  expiryBefore: {
-    label: () => t('label.items-expiring-before'),
-    render: props => (
-      <FilterDate
-        label={t('label.items-expiring-before')}
-        value={props.filter().expiryBefore ?? ''}
-        onInput={value => props.setPartialFilter({ expiryBefore: value })}
-      />
-    ),
-  },
-});
-
-// The addable/removable filters. The errors chip is offered ONLY when the
-// stocktake has error lines — otherwise it's dropped, so it can't be added from
-// the menu when there's nothing to filter to. Everything else is always
-// available. (Stable identities: the same def objects are filtered, never
-// rebuilt, so <For> reuses chip rows — no remounts.)
+// The detail table is server-filtered now (kdd/stocktake-line-editing), so the
+// only filters we can offer are the ones the backend supports. `itemCodeOrName`
+// is the always-on item search rendered by the toolbar (not a chip), so it's
+// dismissed here; `locationId` is the one addable chip (exact-match location
+// picker). The filters the OLD client-side filter offered but the server can't
+// do yet — batch (no field), expiry-before (no field), and the "show error
+// lines" filter — are TODOs below.
+// The location filter uses the plain, VOLUME-BLIND picker: it only narrows the
+// line list to a location, so capacity is irrelevant (spec/stocktakes/
+// ui-surface.md). The locations are fetched by the detail VIEW (one fetch,
+// shared with the volume-aware editor pickers) and threaded through here as an
+// accessor so the chip's render reads the live list without owning a cache.
 export const stocktakeDetailFilters = (
-  hasErrors: boolean
+  locations: () => Location[]
 ): Filter<StocktakeLineFilter>[] =>
-  hasErrors ? FILTERS : FILTERS.filter(f => f.key !== 'errorIds');
+  constructFilters<StocktakeLineFilter>({
+    // ─ user-facing (addable chips), in display order ─────────────────────────
+    locationId: {
+      label: () => t('label.location'),
+      render: props => (
+        <LocationSelect
+          label={t('label.location')}
+          hideLabel
+          locations={locations()}
+          value={props.filter().locationId?.equalTo ?? undefined}
+          placeholder={t('label.location')}
+          // Pick a location → filter by its id (server locationId.equalTo);
+          // clear (×) → null so stripEmpty drops it (the chip stays).
+          onChange={location =>
+            props.setPartialFilter({
+              locationId: location ? { equalTo: location.id } : null,
+            })
+          }
+        />
+      ),
+    },
+
+    // ─ dismissed (not addable chips) ─────────────────────────────────────────
+    // The always-on item search (name OR code) — rendered by the toolbar, not
+    // as a chip.
+    itemCodeOrName: null,
+    // TODO: batch filter. The old client filter offered it, but
+    // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
+    // TODO: expiry-before filter. No expiry field on the server filter — needs a
+    // backend addition.
+    // TODO: "show error lines" filter. The error dialog used to switch a
+    // client-only id set; server-side this would be `id.equalAny` (or
+    // stockLineId) with the failed ids. Errors still flag inline on the row.
+    id: null,
+    stocktakeId: null,
+    itemId: null,
+    stockLineId: null,
+  });

@@ -164,9 +164,10 @@ export const clearForbiddenError = (): void => {
 
 // Spec (Permission denied): surface the global permission-denied modal from a
 // client-side affordance check — a role the user's loaded permissions lack,
-// caught before the action is fired (spec/ui-standards/validation.md
-// § permission gating). Names are the PascalCase form the modal humanises,
-// matching the wire's HasPermission(...) names an actual Forbidden would carry.
+// caught before the action is fired (e.g. refusing a create up front instead of
+// hiding the button). The same modal a server Forbidden routes to. Names are the
+// PascalCase form the modal humanises, matching the wire's HasPermission(...)
+// names an actual Forbidden would carry.
 export const reportPermissionDenied = (permissions: string[]): void => {
   setForbiddenError(permissions);
 };

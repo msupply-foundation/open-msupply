@@ -8,6 +8,7 @@ export {
 export {
   ReasonSelect,
   reasonsOfKind,
+  reasonMatchesKind,
   type ReasonSelectProps,
   type ReasonKind,
 } from './ReasonSelect';

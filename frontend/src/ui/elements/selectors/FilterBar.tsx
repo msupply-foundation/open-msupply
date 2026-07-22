@@ -10,6 +10,7 @@ import {
 } from '../../icons';
 import { t } from '../../../intl';
 import { createDebounced } from '../../utils/createDebounced';
+import { NumberField } from '../inputs/NumberField';
 import styles from './FilterBar.module.css';
 
 /*
@@ -291,6 +292,48 @@ export const FilterTextInput = (props: {
     </span>
   );
 };
+
+/**
+ * A numeric filter box — FilterTextInput's number-typed sibling, built on the
+ * shared NumberField so the locale-aware gate / eager-valid-commit / paste
+ * repair logic isn't re-hand-rolled per filter (the old parseInt + NaN guard a
+ * field would otherwise carry). The value is a real `number | undefined`
+ * (undefined = the box is empty), so a field maps it straight into its GraphQL
+ * operator (`{ equalTo: n }`) with no string parsing.
+ *
+ * NumberField owns its own field chrome (border, focus ring, compact width),
+ * so — unlike the bordered chip box FilterTextInput sits in — this renders the
+ * field bare; the FilterBar chip still supplies the label + remove around it.
+ * `decimalLimit` defaults to 0 (an integer filter — stocktake number, pack
+ * count); pass a limit for decimal filters.
+ */
+export const FilterNumberInput = (props: {
+  value: number | undefined;
+  onChange: (value: number | undefined) => void;
+  placeholder?: string;
+  label: string;
+  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
+  /** Max decimal places; 0 (default) = integers only. */
+  decimalLimit?: number;
+  /** Lower bound (default 0). */
+  min?: number;
+  /** Upper bound. */
+  max?: number;
+}) => (
+  <NumberField
+    label={props.label}
+    hideLabel
+    size="small"
+    data-testid={props.testId}
+    placeholder={props.placeholder}
+    decimalLimit={props.decimalLimit}
+    min={props.min}
+    max={props.max}
+    value={props.value}
+    onChange={props.onChange}
+  />
+);
 
 /**
  * A single-select dropdown. Generic over its option-value union `V`, so

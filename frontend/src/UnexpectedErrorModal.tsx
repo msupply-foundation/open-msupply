@@ -67,7 +67,10 @@ const UnexpectedError: Component = () => (
         <Button variant="secondary" onClick={() => location.reload()}>
           {t('button.try-again')}
         </Button>
-        <Button variant="secondary" onClick={() => (location.href = '/')}>
+        <Button
+          variant="secondary"
+          onClick={() => (location.href = import.meta.env.BASE_URL)}
+        >
           {t('button.dashboard')}
         </Button>
       </>

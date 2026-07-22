@@ -1,6 +1,6 @@
 import { Show, type JSX } from 'solid-js';
 import * as KSelect from '@kobalte/core/select';
-import { keepDialogOpenOnInside } from './dismissInsideGuard';
+import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import { CheckIcon, ChevronDownIcon } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import styles from './Select.module.css';
@@ -56,6 +56,7 @@ export const Select = (props: SelectProps) => {
   // non-inert); outside one this is undefined and Kobalte's default <body>
   // portal is used.
   const portalMount = usePortalMount();
+  let contentEl: HTMLElement | undefined;
   const findOption = (value: string | undefined) =>
     value === undefined
       ? undefined
@@ -113,12 +114,14 @@ export const Select = (props: SelectProps) => {
       </Show>
       <KSelect.Portal mount={portalMount?.()}>
         <KSelect.Content
+          ref={contentEl}
           class={styles.content}
-          // Keep the listbox open when a pointerdown lands inside the dialog
-          // it's mounted in — Kobalte otherwise dismisses it before a mouse
-          // click commits (see dismissInsideGuard). A genuine click outside the
-          // dialog still closes it.
-          onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
+          // Keep the listbox open only when a pointerdown lands inside this
+          // popup's own content — Kobalte otherwise dismisses an option click
+          // before it commits when the popup is mounted in a dialog (see
+          // dismissInsideGuard). Any click outside the listbox — blank space,
+          // another field — still closes it.
+          onInteractOutside={keepPopupOpenOnInsideContent(() => contentEl)}
         >
           <KSelect.Listbox class={styles.listbox} />
         </KSelect.Content>

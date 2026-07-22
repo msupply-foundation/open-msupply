@@ -1,0 +1,68 @@
+/* One stat: a [value][label] row, plus (when alerting) a status chip beneath.
+   The value sits in a right-aligned fixed-min column so the labels line up down
+   the panel (current app). The whole thing is a link into the list it counts. */
+.stat {
+  display: flex;
+  flex-direction: column;
+  /* Gap here is only between the value/label row and the alert chip below it;
+     the spacing between stats is 0 (the panel stacks them flush). */
+  gap: var(--space-1);
+  color: var(--text-body);
+  text-decoration: none;
+}
+
+/* The label sits vertically centred against the big value (current app), not on
+   its baseline — so a short label reads level with the middle of the number. */
+.main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.value {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  min-inline-size: 2.7rem;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--line-tight);
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+/* Alert chip row — indented to sit under the label (past the value column). */
+.alert {
+  margin-inline-start: calc(2.7rem + var(--space-3));
+}
+
+.stat:hover .label {
+  text-decoration: underline;
+}
+
+.stat:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Info tooltip marker — brand-toned outline mark (current app), a touch larger
+   than the label text (matches the app's 14px marker). */
+.info {
+  display: inline-flex;
+  font-size: 0.875rem;
+  color: var(--primary-main);
+}
+
+.info svg {
+  inline-size: 1em;
+  block-size: 1em;
+}

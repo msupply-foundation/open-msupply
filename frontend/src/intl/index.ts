@@ -34,6 +34,7 @@ export {
   localisedDistanceToNow,
   getDisplayAge,
 } from './formatDateTime';
+export { formatFileSize } from './formatFileSize';
 
 // Metadata / misc helpers
 export {

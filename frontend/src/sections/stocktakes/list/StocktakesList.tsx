@@ -18,13 +18,13 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import {
   getBooleanCell,
+  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../../ui/elements/table/Pagination';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -38,6 +38,7 @@ import { CreateStocktakeModal } from './CreateStocktakeModal';
 import {
   CreateInitialStocktakeAction,
   DeleteStocktakesAction,
+  ExportStocktakesAction,
 } from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
@@ -269,6 +270,7 @@ const StocktakesList: Component = () => {
       c: { key: 'comment' },
       sortKey: 'comment',
       header: t('label.comment'),
+      ...getCommentCell(),
     },
     {
       c: { key: 'stocktakeDate' },
@@ -305,6 +307,12 @@ const StocktakesList: Component = () => {
             >
               {t('label.new-stocktake')}
             </Button>
+            {/* Export the stocktakes list (all pages of the current filter) as
+                CSV or Excel (spec/stocktakes S1). */}
+            <ExportStocktakesAction
+              storeId={params.storeId}
+              filter={() => query().filter}
+            />
           </HeaderButtons>
           <Toolbar>
             <FilterBar
@@ -316,25 +324,11 @@ const StocktakesList: Component = () => {
         </Header>
       }
       contentFooter={
-        // The page's one contextual footer band (matching Open mSupply):
-        // pagination normally, replaced by the selection action bar while rows
-        // are selected.
-        <Show
-          when={selectedIds().length > 0}
-          fallback={
-            <ContentFooter>
-              <Pagination
-                offset={query().offset}
-                pageSize={query().first}
-                total={totalCount()}
-                onOffsetChange={offset => setQuery({ ...query(), offset })}
-                onPageSizeChange={first =>
-                  setQuery({ ...query(), first, offset: 0 })
-                }
-              />
-            </ContentFooter>
-          }
-        >
+        // The page's one contextual footer band: the selection action bar while
+        // rows are selected, otherwise nothing (pagination now renders as an
+        // overlay INSIDE the DataTable — see the `pagination` prop below —
+        // matching the stocktake detail view; kdd/table-state).
+        <Show when={selectedIds().length > 0}>
           <ContentFooter testId="actions-footer">
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
@@ -401,6 +395,26 @@ const StocktakesList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
+        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
+        // not in a page footer band — consistent with the stocktake detail view
+        // (kdd/table-state). State stays page-owned/URL-backed.
+        pagination={{
+          offset: query().offset,
+          pageSize: query().first,
+          total: totalCount(),
+          onOffsetChange: offset => setQuery({ ...query(), offset }),
+          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        }}
       />
       <CreateStocktakeModal
         open={createOpen()}

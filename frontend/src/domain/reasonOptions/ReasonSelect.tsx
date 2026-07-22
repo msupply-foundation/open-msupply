@@ -7,21 +7,28 @@ import {
 
 // Which reason types a use case offers. The reasonOptions list is global and
 // spans many types; each site wants a slice of it, so the filtering lives HERE
-// (one source of truth) rather than re-declared at every call site: -
-// 'adjustment' — a stocktake line's inventory adjustment (count differs from
-// snapshot, either direction): both positive and negative inventory-adjustment
-// reasons. - 'reduction'  — reduce-to-zero (always a reduction): negative
-// inventory-adjustment only. - 'return' — a customer-return line's optional
-// "why it came back" (spec/customer-returns/rules.md § line rules): the
-// active return reasons only.
-export type ReasonKind = 'adjustment' | 'reduction' | 'return';
+// (one source of truth) rather than re-declared at every call site. The kinds
+// mirror the server's adjustment-DIRECTION rule (spec/stocktakes/rules.md
+// §adjustment-reason rules; contract.md §adjustment-reason rules):
+// - 'positive' — a positive adjustment (counted MORE than snapshot; stock went
+//   up): positive-inventory-adjustment reasons only.
+// - 'negative' — a negative adjustment (counted FEWER than snapshot, incl.
+//   reduce-to-zero; stock went down): negative-inventory-adjustment reasons
+//   PLUS vaccine-wastage (open-/closed-vial). The server accepts wastage for
+//   ANY negative adjustment; offering them here is the documented client
+//   narrowing (rules §reason valid). A caller that only wants a reduction
+//   passes 'negative' too (reduce-to-zero is always a reduction).
+// - 'return' — a customer-return line's optional "why it came back"
+//   (spec/customer-returns/rules.md § line rules): the active return reasons.
+export type ReasonKind = 'positive' | 'negative' | 'return';
 
 const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
-  adjustment: new Set([
-    'POSITIVE_INVENTORY_ADJUSTMENT',
+  positive: new Set(['POSITIVE_INVENTORY_ADJUSTMENT']),
+  negative: new Set([
     'NEGATIVE_INVENTORY_ADJUSTMENT',
+    'OPEN_VIAL_WASTAGE',
+    'CLOSED_VIAL_WASTAGE',
   ]),
-  reduction: new Set(['NEGATIVE_INVENTORY_ADJUSTMENT']),
   return: new Set(['RETURN_REASON']),
 };
 
@@ -31,6 +38,17 @@ const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
  */
 export const reasonsOfKind = (kind: ReasonKind): ReasonOption[] =>
   reasonOptionsResource.noSuspense().filter(r => KIND_TYPES[kind].has(r.type));
+
+/**
+ * Whether a reason option is valid for a kind — the single source of truth for
+ * the kind→types mapping, exported so callers can drop a now-mismatched reason
+ * when the adjustment direction changes (e.g. a stocktake line recounted the
+ * other way) without re-declaring the type sets.
+ */
+export const reasonMatchesKind = (
+  reason: Pick<ReasonOption, 'type'>,
+  kind: ReasonKind
+): boolean => KIND_TYPES[kind].has(reason.type);
 
 export interface ReasonSelectProps {
   /** Which reason types to offer (drives the filtering). */

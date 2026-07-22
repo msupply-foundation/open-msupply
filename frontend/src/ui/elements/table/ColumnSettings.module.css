@@ -36,6 +36,61 @@
   background: color-mix(in srgb, var(--primary-main) 8%, transparent);
 }
 
+/* Save-as-global-default — the central-admin action to promote the current
+   layout to the install-wide default. Set apart from the per-user reset actions
+   above by its own row + top divider; feedback (saving/saved/error) sits inline
+   beside the button. */
+.saveDefault {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+.saveButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: none;
+  background: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--primary-main);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.saveButton:disabled {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.saveButton:not(:disabled):hover {
+  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+}
+
+.saveIcon {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+}
+
+.saveStatus {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.saveStatus[data-status='saved'] {
+  color: var(--success-main);
+}
+
+.saveStatus[data-status='error'] {
+  color: var(--error-main);
+}
+
 .table {
   border-collapse: collapse;
   inline-size: 100%;

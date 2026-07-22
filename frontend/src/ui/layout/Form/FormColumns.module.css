@@ -1,0 +1,11 @@
+/*
+ * FormColumns — flex-wrap row of FormColumn stacks (see FormColumns.tsx). The
+ * columns carry their own flex-basis (see FormColumn.module.css); this owns the
+ * gap between them and lets them wrap to a single stack when squeezed.
+ */
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: start;
+}

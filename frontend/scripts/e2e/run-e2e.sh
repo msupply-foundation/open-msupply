@@ -16,9 +16,9 @@
 # by e2e/specs/data.setup.ts through the API.
 #
 # The open-msupply checkout (server + reference datafile only — the
-# suites live here) must be on the `e2e-fe-auth` branch: the e2e datafile
-# + CLI support, merged with the cookie-session auth contract
-# (fe-auth-contract) this front end logs in with.
+# suites live here) must be on `develop` — the same branch this front end
+# needs generally: the cookie-session auth contract plus the e2e datafile
+# + CLI support.
 #
 # Knobs (all optional):
 #   OMS_DIR           open-msupply checkout (default: ../open-msupply)
@@ -35,9 +35,9 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 OMS_DIR=${OMS_DIR:-$FE_DIR/../open-msupply}
 if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
-  echo "OMS_DIR ($OMS_DIR) is not an open-msupply checkout on the e2e-fe-auth branch" >&2
-  echo "  git clone https://github.com/msupply-foundation/open-msupply --branch e2e-fe-auth" >&2
-  echo "  (or: git -C <checkout> switch e2e-fe-auth) — then set OMS_DIR if it isn't ../open-msupply" >&2
+  echo "OMS_DIR ($OMS_DIR) is not an open-msupply checkout on the develop branch" >&2
+  echo "  git clone https://github.com/msupply-foundation/open-msupply --branch develop" >&2
+  echo "  (or: git -C <checkout> switch develop) — then set OMS_DIR if it isn't ../open-msupply" >&2
   exit 1
 fi
 OMS_DIR=$(cd "$OMS_DIR" && pwd)
@@ -150,8 +150,9 @@ for _ in $(seq 1 45); do
   sleep 2
 done
 
-# Serial within a run: the suites share one database and use serial
-# describes; honour an explicit --workers from the caller.
+# Single worker by default: the suites share one database, and the
+# stock-mutating stocktake group must not overlap other stock users; honour
+# an explicit --workers from the caller.
 WORKERS=(--workers 1)
 for arg in "$@"; do [[ "$arg" == --workers* ]] && WORKERS=(); done
 
