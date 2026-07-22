@@ -218,6 +218,16 @@ const InboundShipmentDetailView: Component = () => {
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = () => linesData.latest?.totalCount ?? 0;
 
+  // Total volume of the selected lines (volumePerPack × packs received) — feeds
+  // the change-location picker's "Available" filter so it keeps only locations
+  // with room for the whole move.
+  const selectedVolume = (): number => {
+    const ids = new Set(selectedIds());
+    return rows()
+      .filter(r => ids.has(r.id))
+      .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
+  };
+
   // Volume-aware: inbound places received stock at a location, so the picker
   // shows each location's % used and offers the All / Empty / Available filter
   // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
@@ -752,6 +762,7 @@ const InboundShipmentDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled()}
                       locations={locations()}
+                      requiredVolume={selectedVolume}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />

@@ -29,6 +29,12 @@ export interface LocationVolumeSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /**
+   * The volume being placed (volumePerPack × packs). The "Available" filter
+   * keeps only locations with room for it (and not on hold). Omit where no
+   * specific volume applies — "Available" then means simply not-full.
+   */
+  requiredVolume?: number;
 }
 
 /*
@@ -39,10 +45,11 @@ export interface LocationVolumeSelectProps {
  *      volume, suppressed when that figure would be misleading (see volume.ts).
  *   2. A fullness filter (All / Empty / Available) is always offered as a tab
  *      strip pinned inside the dropdown. "Empty" keeps locations holding no
- *      stock; "Available" keeps those that are not on hold and not full. The
- *      currently-selected location ALWAYS passes so an already-placed line can
- *      be re-saved unchanged. The filter is advisory only — it narrows what's
- *      shown, it never blocks a save.
+ *      stock; "Available" keeps those that are not on hold and have room for
+ *      the volume being placed (requiredVolume — not-full when none is given).
+ *      The currently-selected location ALWAYS passes so an already-placed line
+ *      can be re-saved unchanged. The filter is advisory only — it narrows
+ *      what's shown, it never blocks a save.
  *
  * Both the code and the name are shown (and searched): options and the input
  * read "CODE — Name". Owns no cache: the parent fetches the volume-bearing list
@@ -61,7 +68,9 @@ export const LocationVolumeSelect = (
       // The already-selected location always survives the filter (so the line
       // can be re-saved unchanged even where it no longer "fits").
       if (l.id === selectedId) return true;
-      return mode === 'empty' ? isEmpty(l) : isAvailable(l);
+      return mode === 'empty'
+        ? isEmpty(l)
+        : isAvailable(l, props.requiredVolume);
     });
   });
 

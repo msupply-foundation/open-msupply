@@ -88,3 +88,23 @@ describe('isAvailable', () => {
     expect(isAvailable(loc(0, 0, 0, true))).toBe(false);
   });
 });
+
+describe('isAvailable with a required volume', () => {
+  it('is true when free capacity covers the volume being placed', () => {
+    expect(isAvailable(loc(10, 3, 2), 5)).toBe(true); // 7 free ≥ 5
+    expect(isAvailable(loc(10, 3, 2), 7)).toBe(true); // fits exactly
+  });
+
+  it("is false when it won't fit — a large quantity in a small room", () => {
+    expect(isAvailable(loc(10, 3, 2), 20)).toBe(false); // 7 free < 20
+    expect(isAvailable(loc(10, 9, 1), 2)).toBe(false); // 1 free < 2
+  });
+
+  it('treats no recorded capacity as room regardless of the volume placed', () => {
+    expect(isAvailable(loc(0, 0, 0), 100)).toBe(true);
+  });
+
+  it('stays false when on hold even if the volume would fit', () => {
+    expect(isAvailable(loc(10, 0, 0, true), 1)).toBe(false);
+  });
+});

@@ -17,7 +17,14 @@ import type { LineActionProps } from './DeleteLinesAction';
 type Phase = 'confirm' | 'working' | 'error';
 
 export const ChangeLocationAction: Component<
-  LineActionProps & { locations: LocationWithVolume[] }
+  LineActionProps & {
+    locations: LocationWithVolume[];
+    /**
+     * Total volume of the selected lines — the picker's "Available" filter
+     * keeps only locations with room for the whole move.
+     */
+    requiredVolume?: () => number;
+  }
 > = props => {
   const [open, setOpen] = createSignal(false);
   return (
@@ -41,6 +48,7 @@ export const ChangeLocationAction: Component<
 const Body = (
   props: LineActionProps & {
     locations: LocationWithVolume[];
+    requiredVolume?: () => number;
     onClose: () => void;
   }
 ) => {
@@ -112,6 +120,7 @@ const Body = (
         label={t('label.location')}
         locations={props.locations}
         value={locationId()}
+        requiredVolume={props.requiredVolume?.()}
         onChange={location => setLocationId(location?.id)}
       />
     </Dialog>

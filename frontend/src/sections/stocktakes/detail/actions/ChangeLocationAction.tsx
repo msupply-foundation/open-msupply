@@ -26,6 +26,11 @@ export interface ChangeLocationActionProps {
   disabled: boolean;
   /** The store's locations with capacity (fetched by the detail view). */
   locations: LocationWithVolume[];
+  /**
+   * Total volume of the selected lines — the picker's "Available" filter keeps
+   * only locations with room for the whole move.
+   */
+  requiredVolume?: () => number;
   /** Apply what committed in place (no refetch). */
   onCommit: (commit: LineEditCommit) => void;
   /**
@@ -114,6 +119,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                   hideLabel
                   locations={props.locations}
                   value={locationId() ?? undefined}
+                  requiredVolume={props.requiredVolume?.()}
                   onChange={l => setLocationId(l?.id ?? null)}
                 />
               </FieldRow>
