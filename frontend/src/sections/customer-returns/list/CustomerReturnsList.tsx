@@ -18,6 +18,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -29,7 +30,6 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../../ui/elements/table/Pagination';
 import { CheckIcon, CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -43,6 +43,7 @@ import { CustomerReturnPreferences } from '../preferences.generated';
 import { createFilters, type ReturnsFilter } from './listFilters';
 import { NewReturnModal } from './NewReturnModal';
 import { DeleteReturnsAction } from './actions/DeleteReturnsAction';
+import { ExportCustomerReturnsAction } from './actions/ExportCustomerReturnsAction';
 import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 
 // The customer-returns list (spec/customer-returns/ui-surface.md S1): the
@@ -279,12 +280,13 @@ const CustomerReturnsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      sortKey: 'comment',
       header: t('label.comment'),
+      // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
+      // column is not sortable (only Name / Status / Number / Created are).
+      ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
-      sortKey: 'theirReference',
       header: t('label.reference'),
       meta: { wrapLines: 2 },
     },
@@ -309,6 +311,12 @@ const CustomerReturnsList: Component = () => {
             >
               {t('button.new-return')}
             </Button>
+            {/* Export CSV / Excel (ui-surface S1, AC-L4): every return matching
+                the active filter, across all pages. */}
+            <ExportCustomerReturnsAction
+              storeId={params.storeId}
+              filter={() => variables().filter}
+            />
           </HeaderButtons>
           <Toolbar>
             <FilterBar
@@ -320,22 +328,11 @@ const CustomerReturnsList: Component = () => {
         </Header>
       }
       contentFooter={
-        <Show
-          when={selectedIds().length > 0}
-          fallback={
-            <ContentFooter>
-              <Pagination
-                offset={query().offset}
-                pageSize={query().first}
-                total={totalCount()}
-                onOffsetChange={offset => setQuery({ ...query(), offset })}
-                onPageSizeChange={first =>
-                  setQuery({ ...query(), first, offset: 0 })
-                }
-              />
-            </ContentFooter>
-          }
-        >
+        // The page's one contextual footer band: the selection action bar while
+        // rows are selected, otherwise nothing — pagination renders as an
+        // overlay INSIDE the DataTable (see the `pagination` prop below),
+        // matching the stocktakes list / stocktake detail (kdd/table-state).
+        <Show when={selectedIds().length > 0}>
           <ContentFooter testId="actions-footer">
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
@@ -366,6 +363,9 @@ const CustomerReturnsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        // De-emphasise rows the store can no longer edit (VERIFIED; transfer
+        // rows still in the sender's hands) — ui-surface S1.
+        rowDimmed={isReturnDisabled}
         emptyMessage={t('error.no-customer-returns')}
         empty={
           <Button
@@ -381,6 +381,16 @@ const CustomerReturnsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Pagination renders as an overlay INSIDE the table, not in a page
+        // footer band — consistent with the stocktakes list (kdd/table-state).
+        // State stays page-owned / URL-backed.
+        pagination={{
+          offset: query().offset,
+          pageSize: query().first,
+          total: totalCount(),
+          onOffsetChange: offset => setQuery({ ...query(), offset }),
+          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        }}
       />
       <NewReturnModal
         open={createOpen()}

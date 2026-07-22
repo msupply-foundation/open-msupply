@@ -1,8 +1,11 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { A, useNavigate, useParams } from '@solidjs/router';
-import { t } from '../../../intl';
+import { t, tPlural } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
-import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
+import {
+  SidePanelSection,
+  SidePanelActions,
+} from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { Text } from '../../../ui/elements/typography/Text';
@@ -12,7 +15,8 @@ import {
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { CopyIcon, TrashIcon } from '../../../ui/icons';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { CheckIcon, CopyIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
 import type { ReturnFieldEdit } from './returnEdit';
@@ -39,17 +43,28 @@ export const CustomerReturnSidePanel: Component<
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
+  const [deleteError, setDeleteError] = createSignal<string>();
 
   // Delete is offered only while NEW (AC-D3 — the UI's conservative gate; the
-  // server's own rule is "until VERIFIED", asserted separately by AC-D1/D2).
-  const canDelete = () => props.node.status === 'NEW';
+  // server's own rule is "until VERIFIED", asserted separately by AC-D1/D2),
+  // and never on a read-only return — a transfer return at NEW is still in the
+  // sender's hands (isReturnDisabled), so it must share the standing gate every
+  // other affordance respects rather than keying off status alone.
+  const canDelete = () => !props.disabled && props.node.status === 'NEW';
 
   const runDelete = async () => {
     const result = await deleteReturn(params.storeId, props.node.id);
-    // A rejection here is unexpected (the action is gated to NEW); it fell
-    // through the generic path. On success, back to the list.
-    if (result.kind === 'deleted')
+    if (result.kind === 'deleted') {
       navigate(`/${params.storeId}/distribution/customer-return`);
+      return;
+    }
+    // A rejection here is unexpected (the action is gated to NEW). 'forbidden'
+    // has already raised the global permission-denied modal (D38); the other
+    // cases (e.g. a concurrent advance to VERIFIED) get a local notice instead
+    // of failing silently.
+    if (result.kind === 'error') setDeleteError(result.message);
+    else if (result.kind === 'failed')
+      setDeleteError(t('messages.cant-delete-generic'));
   };
 
   // Copy to clipboard: a readable text snapshot of the record (the current
@@ -130,29 +145,58 @@ export const CustomerReturnSidePanel: Component<
         </Show>
       </SidePanelSection>
 
-      <SidePanelSection title={t('label.actions')}>
-        {/* Default (primary) tone — brand-coloured icon, normal label — the
-            same look as the header's Add item button. */}
-        <Button
-          icon={<TrashIcon />}
-          data-testid="delete-return-button"
-          disabled={!canDelete()}
-          onClick={() => setDeleteConfirm(true)}
-        >
-          {t('button.delete')}
-        </Button>
-        <Button icon={<CopyIcon />} onClick={() => void copy()}>
-          {t('link.copy-to-clipboard')}
-        </Button>
+      {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
+          return) and Copy to clipboard — the shared SidePanelActions layout and
+          secondary-button tone, matching the stocktake detail. */}
+      <SidePanelSection title={t('heading.actions')}>
+        <SidePanelActions>
+          <Button
+            variant="secondary"
+            icon={<TrashIcon />}
+            data-testid="delete-return-button"
+            disabled={!canDelete()}
+            onClick={() => setDeleteConfirm(true)}
+          >
+            {t('button.delete')}
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<CopyIcon />}
+            onClick={() => void copy()}
+          >
+            {t('link.copy-to-clipboard')}
+          </Button>
+        </SidePanelActions>
       </SidePanelSection>
 
       <ConfirmDialog
         open={deleteConfirm()}
         onClose={() => setDeleteConfirm(false)}
         title={t('heading.are-you-sure')}
-        message={t('messages.confirm-delete-returns', { count: 1 })}
+        message={tPlural('messages.confirm-delete-returns', 1)}
         onConfirm={() => void runDelete()}
       />
+
+      {/* An unexpected delete rejection (not a permission block, which routes to
+          the global modal) — surfaced here rather than swallowed. */}
+      <Show when={deleteError()}>
+        <Dialog
+          open
+          onClose={() => setDeleteError(undefined)}
+          icon={<InfoIcon />}
+          title={t('error.something-wrong')}
+          description={deleteError()}
+          actions={
+            <Button
+              variant="secondary"
+              icon={<CheckIcon />}
+              onClick={() => setDeleteError(undefined)}
+            >
+              {t('button.ok')}
+            </Button>
+          }
+        />
+      </Show>
     </>
   );
 };

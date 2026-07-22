@@ -58,7 +58,15 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
     for (const id of props.selectedIds()) {
       const result = await deleteReturn(props.storeId, id);
       if (result.kind === 'deleted') deleted += 1;
-      else failed += 1;
+      else if (result.kind === 'forbidden') {
+        // A standing permission block — the global permission-denied modal is
+        // already showing (D38) and every remaining row would fail the same
+        // way. Commit any rows deleted before it and close this dialog rather
+        // than stacking the generic "couldn't delete" notice on top.
+        if (deleted > 0) props.onDeleted();
+        props.onClose();
+        return;
+      } else failed += 1;
     }
     setDeletedCount(deleted);
     if (deleted > 0) props.onDeleted();

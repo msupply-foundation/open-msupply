@@ -33,11 +33,11 @@ import type { ReturnFieldEdit } from '../returnEdit';
 import {
   blankDraft,
   clampQuantity,
+  existingLinesBeingRemoved,
   reasonStepLines,
   seedDrafts,
   toLineInputs,
   validateStep1,
-  zeroQuantityDeletes,
   type DraftReturnLine,
 } from './returnLineLogic';
 
@@ -219,34 +219,38 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     );
   };
 
-  // Step-1 gating (ui-surface S4; AC-E2/E3's UI half): no quantity → create
-  // mode blocks, edit mode warns-then-confirms (the zero save DELETES the
-  // existing lines); a returned line's pack size below one blocks.
+  // Step-1 gating (ui-surface S4; AC-E2/E3's UI half):
+  // - a returned line's pack size below one blocks;
+  // - nothing to return AND nothing to delete → create-mode block;
+  // - any EXISTING line zeroed → the save DELETES it, so warn-then-confirm —
+  //   including the mixed case (other lines still carry quantity), where the
+  //   zeroed line never reaches the reason step and would otherwise be removed
+  //   silently (AC-E2).
   const gateStep1 = (): boolean => {
-    const verdict = validateStep1(draft.slice());
-    if (verdict === 'invalid-pack-size') {
+    const drafts = draft.slice();
+    if (validateStep1(drafts) === 'invalid-pack-size') {
       setMessage({
         severity: 'error',
         text: t('messages.alert-invalid-pack-size'),
       });
       return false;
     }
-    if (verdict === 'no-quantity') {
-      if (zeroQuantityDeletes(draft.slice()) && !zeroConfirmed()) {
-        setMessage({
-          severity: 'warning',
-          text: t('messages.zero-return-quantity-will-delete-lines'),
-        });
-        setZeroConfirmed(true);
-        return false;
-      }
-      if (!zeroQuantityDeletes(draft.slice())) {
-        setMessage({
-          severity: 'error',
-          text: t('messages.alert-zero-return-quantity'),
-        });
-        return false;
-      }
+    const returning = reasonStepLines(drafts).length > 0;
+    const removing = existingLinesBeingRemoved(drafts).length > 0;
+    if (!returning && !removing) {
+      setMessage({
+        severity: 'error',
+        text: t('messages.alert-zero-return-quantity'),
+      });
+      return false;
+    }
+    if (removing && !zeroConfirmed()) {
+      setMessage({
+        severity: 'warning',
+        text: t('messages.zero-return-quantity-will-delete-lines'),
+      });
+      setZeroConfirmed(true);
+      return false;
     }
     return true;
   };
@@ -580,7 +584,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 item to advance to; anywhere else the action is permanently
                 dead in-context (the quantity step can't save-and-advance, the
                 last item has nowhere to advance to), so it's HIDDEN, not
-                disabled — the blocked-affordances ladder (D25). */}
+                disabled — the blocked-affordances ladder (D39). */}
             <Show when={step() === 'reason' && hasNext()}>
               <Button
                 icon={<ArrowRightIcon />}
