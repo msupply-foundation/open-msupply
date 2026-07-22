@@ -278,6 +278,10 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
         itemToString={locationTypeLabel}
         itemToValue={type => type.id}
         value={form().locationTypeId || undefined}
+        // The record's own type node resolves the label before (and without)
+        // the async options load — the value→items lookup alone leaves the
+        // field blank (reference convention: StocktakeLineEditModal).
+        selectedItem={editedLocation()?.locationType ?? undefined}
         onChange={type =>
           setForm({ ...form(), locationTypeId: type?.id ?? '' })
         }
