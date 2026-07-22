@@ -22,7 +22,8 @@ query locations($storeId: String!) {
 # where stock is associated with a location (stocktake / inbound line editor,
 # bulk change-location): it shows each location's % used and offers the
 # All / Empty / Available fullness filter — where "Available" means not on-hold
-# and not full, hence `onHold`. `volumeUsed` is the server-computed sum of
+# and with room for the volume being placed, hence `onHold`. `volumeUsed` is the
+# server-computed sum of
 # `volumePerPack × packs` over the location's stock, so it must be re-read where
 # volume is shown rather than cached — the consuming route/view fetches this
 # locally and passes it down.

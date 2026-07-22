@@ -1078,6 +1078,10 @@ const StocktakeLineEditContent = (
             loading={props.locationsLoading}
             disabled={!line.countThisLine}
             value={line.location?.id}
+            requiredVolume={
+              (line.volumePerPack ?? 0) *
+              (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks ?? 0)
+            }
             placeholder={t('label.none')}
             onChange={l =>
               update(

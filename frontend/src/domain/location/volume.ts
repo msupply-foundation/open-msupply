@@ -31,12 +31,21 @@ export const availableVolume = (
 export const isEmpty = (location: Pick<LocationWithVolume, 'stock'>): boolean =>
   location.stock.totalCount === 0;
 
-// "Available" — the location can take more stock: it is NOT on hold and NOT
-// full. A location with no recorded capacity (volume 0) counts as having room
-// rather than being excluded — unknown capacity is not a reason to hide it,
-// mirroring the list's fullness rule where such a location shows no bar.
+// "Available" — the location can take the stock being placed: it is NOT on
+// hold and has room for `requiredVolume` (the volume of what's being placed —
+// volumePerPack × packs, threaded from the call site). With nothing specific to
+// place (requiredVolume 0 or omitted) it falls back to simply "not full". A
+// location with no recorded capacity (volume 0) counts as having room rather
+// than being excluded — unknown capacity is not a reason to hide it, mirroring
+// the list's fullness rule where such a location shows no bar.
 export const isAvailable = (
-  location: Pick<LocationWithVolume, 'volume' | 'volumeUsed' | 'onHold'>
-): boolean =>
-  !location.onHold &&
-  (location.volume === 0 || location.volumeUsed < location.volume);
+  location: Pick<LocationWithVolume, 'volume' | 'volumeUsed' | 'onHold'>,
+  requiredVolume = 0
+): boolean => {
+  if (location.onHold) return false;
+  if (location.volume === 0) return true;
+  return (
+    location.volumeUsed < location.volume &&
+    availableVolume(location) >= requiredVolume
+  );
+};

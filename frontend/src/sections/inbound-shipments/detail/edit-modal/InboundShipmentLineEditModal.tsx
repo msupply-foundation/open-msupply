@@ -806,6 +806,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             locations={props.locations}
             value={b.locationId ?? undefined}
+            requiredVolume={b.volumePerPack * b.numberOfPacks}
             onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
           />
         );
