@@ -12,6 +12,7 @@ import { DateField } from '../../../ui/elements/inputs/DateField';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { FormColumns } from '../../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
@@ -32,7 +33,6 @@ import {
   type NewStockItemResult,
   type InsertStockLineVariables,
 } from './newStock.generated';
-import formStyles from '../stockForm.module.css';
 
 // The new-stock modal (spec/stock S3, FL5). Item-first: the rest of the form
 // appears once an item is chosen (its defaults seed pack size + sell price; its
@@ -281,261 +281,262 @@ const NewStockContent = (props: {
         </>
       }
     >
-      <ContentContainer size="form" class={formStyles.stack}>
-        {/* Item first — the rest of the form appears once an item is chosen. */}
-        <div class={formStyles.itemRow}>
-          <ItemSearch
-            label={t('label.item')}
-            storeId={props.storeId}
-            value={item()?.id}
-            selectedItem={item()}
-            onSelect={picked => {
-              // Picking (or clearing) an item resets the form, so the newly
-              // chosen item's defaults (pack size, sell price) seed cleanly
-              // rather than carrying over the previous item's typed values.
-              setItem(picked ?? undefined);
-              setDraft({ ...EMPTY_DRAFT });
-            }}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-          />
-          <Show when={variants().length > 0}>
-            <Combobox<ItemVariant>
-              label={t('label.item-variant')}
-              items={variants()}
-              itemToString={v => v.name}
-              itemToValue={v => v.id}
-              value={draft.itemVariantId ?? undefined}
-              placeholder={t('label.none')}
-              onChange={chooseVariant}
+      <ContentContainer size="form">
+        <Stack>
+          {/* Item first — the rest of the form appears once an item is chosen. */}
+          <Stack gap="sm">
+            <ItemSearch
+              label={t('label.item')}
+              storeId={props.storeId}
+              value={item()?.id}
+              selectedItem={item()}
+              onSelect={picked => {
+                // Picking (or clearing) an item resets the form, so the newly
+                // chosen item's defaults (pack size, sell price) seed cleanly
+                // rather than carrying over the previous item's typed values.
+                setItem(picked ?? undefined);
+                setDraft({ ...EMPTY_DRAFT });
+              }}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
             />
-          </Show>
-        </div>
+            <Show when={variants().length > 0}>
+              <Combobox<ItemVariant>
+                label={t('label.item-variant')}
+                items={variants()}
+                itemToString={v => v.name}
+                itemToValue={v => v.id}
+                value={draft.itemVariantId ?? undefined}
+                placeholder={t('label.none')}
+                onChange={chooseVariant}
+              />
+            </Show>
+          </Stack>
 
-        <Show when={chosenItem()}>
-          <hr class={formStyles.divider} />
-          {/* The sectioned edit form (spec/ui-standards detail-views): S2's
+          <Show when={chosenItem()}>
+            {/* The sectioned edit form (spec/ui-standards detail-views): S2's
               sections adapted to this field set (spec/stock S3 Layout). */}
-          <FormColumns>
-            <FormColumn>
-              <FormSection title={t('heading.stock-levels')}>
-                <FormRow>
-                  {/* NumberField's default min is 0 (no negatives), so the pack
+            <FormColumns>
+              <FormColumn>
+                <FormSection title={t('heading.stock-levels')}>
+                  <FormRow>
+                    {/* NumberField's default min is 0 (no negatives), so the pack
                       count can't go negative from the input (spec AC-N2). */}
-                  <NumberField
-                    label={t('label.pack-qty')}
-                    width="full"
-                    decimalLimit={2}
-                    value={draft.numberOfPacks}
-                    onChange={v => setDraft('numberOfPacks', v)}
-                  />
-                  <NumberField
-                    label={t('label.pack-size')}
-                    width="full"
-                    min={1}
-                    decimalLimit={2}
-                    value={draft.packSize}
-                    error={
-                      draft.packSize != null && !packSizeValid()
-                        ? t('error.pack-size-min')
-                        : undefined
-                    }
-                    onChange={v => setDraft('packSize', v)}
-                  />
-                </FormRow>
-              </FormSection>
+                    <NumberField
+                      label={t('label.pack-qty')}
+                      width="full"
+                      decimalLimit={2}
+                      value={draft.numberOfPacks}
+                      onChange={v => setDraft('numberOfPacks', v)}
+                    />
+                    <NumberField
+                      label={t('label.pack-size')}
+                      width="full"
+                      min={1}
+                      decimalLimit={2}
+                      value={draft.packSize}
+                      error={
+                        draft.packSize != null && !packSizeValid()
+                          ? t('error.pack-size-min')
+                          : undefined
+                      }
+                      onChange={v => setDraft('packSize', v)}
+                    />
+                  </FormRow>
+                </FormSection>
 
-              <FormSection title={t('heading.batches-and-dates')}>
-                <TextField
-                  label={t('label.batch')}
-                  width="full"
-                  value={draft.batch}
-                  onInput={e => setDraft('batch', e.currentTarget.value)}
-                />
-                <TextField
-                  label={t('label.barcode')}
-                  width="full"
-                  value={draft.barcode}
-                  onInput={e => setDraft('barcode', e.currentTarget.value)}
-                />
-                <FormRow>
-                  <DateField
-                    label={t('label.expiry-date')}
+                <FormSection title={t('heading.batches-and-dates')}>
+                  <TextField
+                    label={t('label.batch')}
                     width="full"
-                    value={draft.expiryDate}
-                    onChange={v => setDraft('expiryDate', v)}
+                    value={draft.batch}
+                    onInput={e => setDraft('batch', e.currentTarget.value)}
                   />
-                  <DateField
-                    label={t('label.manufacture-date')}
+                  <TextField
+                    label={t('label.barcode')}
                     width="full"
-                    max={today}
-                    value={draft.manufactureDate}
-                    onChange={v => setDraft('manufactureDate', v)}
+                    value={draft.barcode}
+                    onInput={e => setDraft('barcode', e.currentTarget.value)}
                   />
-                </FormRow>
-                {/* VVM status editable when the gate is on (spec AC-P1: the field
+                  <FormRow>
+                    <DateField
+                      label={t('label.expiry-date')}
+                      width="full"
+                      value={draft.expiryDate}
+                      onChange={v => setDraft('expiryDate', v)}
+                    />
+                    <DateField
+                      label={t('label.manufacture-date')}
+                      width="full"
+                      max={today}
+                      value={draft.manufactureDate}
+                      onChange={v => setDraft('manufactureDate', v)}
+                    />
+                  </FormRow>
+                  {/* VVM status editable when the gate is on (spec AC-P1: the field
                     shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
-                <Show
-                  when={
-                    prefs().manageVvmStatusForStock ||
-                    prefs().sortByVvmStatusThenExpiry
-                  }
-                >
-                  <VvmStatusSelect
-                    label={t('label.vvm-status')}
-                    value={draft.vvmStatus?.id}
-                    placeholder={t('label.none')}
-                    onChange={s =>
+                  <Show
+                    when={
+                      prefs().manageVvmStatusForStock ||
+                      prefs().sortByVvmStatusThenExpiry
+                    }
+                  >
+                    <VvmStatusSelect
+                      label={t('label.vvm-status')}
+                      value={draft.vvmStatus?.id}
+                      placeholder={t('label.none')}
+                      onChange={s =>
+                        setDraft(
+                          'vvmStatus',
+                          s
+                            ? {
+                                id: s.id,
+                                description: s.description,
+                                code: s.code,
+                              }
+                            : null
+                        )
+                      }
+                    />
+                  </Show>
+                </FormSection>
+
+                <FormSection title={t('heading.pricing')}>
+                  <FormRow>
+                    <CurrencyField
+                      label={t('label.cost-price')}
+                      width="full"
+                      value={draft.costPricePerPack}
+                      onChange={v => setDraft('costPricePerPack', v)}
+                    />
+                    <CurrencyField
+                      label={t('label.sell-price')}
+                      width="full"
+                      value={draft.sellPricePerPack}
+                      onChange={v => setDraft('sellPricePerPack', v)}
+                    />
+                  </FormRow>
+                  <ReasonSelect
+                    kind="positive"
+                    label={t('label.reason')}
+                    value={draft.reasonOption?.id}
+                    placeholder={t('label.select-reason')}
+                    onChange={r =>
                       setDraft(
-                        'vvmStatus',
-                        s
-                          ? {
-                              id: s.id,
-                              description: s.description,
-                              code: s.code,
-                            }
-                          : null
+                        'reasonOption',
+                        r ? { id: r.id, type: r.type, reason: r.reason } : null
                       )
                     }
                   />
-                </Show>
-              </FormSection>
+                </FormSection>
+              </FormColumn>
 
-              <FormSection title={t('heading.pricing')}>
-                <FormRow>
-                  <CurrencyField
-                    label={t('label.cost-price')}
-                    width="full"
-                    value={draft.costPricePerPack}
-                    onChange={v => setDraft('costPricePerPack', v)}
-                  />
-                  <CurrencyField
-                    label={t('label.sell-price')}
-                    width="full"
-                    value={draft.sellPricePerPack}
-                    onChange={v => setDraft('sellPricePerPack', v)}
-                  />
-                </FormRow>
-                <ReasonSelect
-                  kind="positive"
-                  label={t('label.reason')}
-                  value={draft.reasonOption?.id}
-                  placeholder={t('label.select-reason')}
-                  onChange={r =>
-                    setDraft(
-                      'reasonOption',
-                      r ? { id: r.id, type: r.type, reason: r.reason } : null
-                    )
-                  }
-                />
-              </FormSection>
-            </FormColumn>
-
-            <FormColumn>
-              <FormSection title={t('heading.storage-and-pack')}>
-                <LocationSelect
-                  label={t('label.location')}
-                  locations={locations()}
-                  loading={allLocations.loading}
-                  value={draft.location?.id}
-                  placeholder={t('label.none')}
-                  onChange={l =>
-                    setDraft(
-                      'location',
-                      l ? { id: l.id, code: l.code, name: l.name } : null
-                    )
-                  }
-                />
-                <FormRow>
-                  <Checkbox
-                    label={t('label.on-hold')}
-                    checked={draft.onHold}
-                    onChange={v => setDraft('onHold', v)}
-                  />
-                  <NumberField
-                    label={t('label.volume-per-pack')}
-                    width="full"
-                    decimalLimit={10}
-                    value={draft.volumePerPack}
-                    onChange={v => setDraft('volumePerPack', v)}
-                  />
-                </FormRow>
-              </FormSection>
-
-              <FormSection title={t('heading.supply-chain')}>
-                <NameSearch
-                  label={t('label.manufacturer')}
-                  storeId={props.storeId}
-                  role="manufacturer"
-                  selected={
-                    draft.manufacturer
-                      ? {
-                          id: draft.manufacturer.id,
-                          name: draft.manufacturer.name,
-                          code: '',
-                          isSupplier: false,
-                          isDonor: false,
-                          isOnHold: false,
-                          isStore: false,
-                        }
-                      : undefined
-                  }
-                  placeholder={t('label.none')}
-                  onSelect={name => {
-                    // Changing the manufacturer clears the item variant
-                    // (spec/stock S2 manufacturer note).
-                    setDraft(d => ({
-                      ...d,
-                      manufacturer: name
-                        ? { id: name.id, name: name.name }
-                        : null,
-                      itemVariantId: null,
-                    }));
-                  }}
-                />
-                <FormRow>
-                  {/* Donor field gated by allowTrackingOfStockByDonor (spec AC-P3). */}
-                  <Show when={prefs().allowTrackingOfStockByDonor}>
-                    <NameSearch
-                      label={t('label.donor')}
-                      storeId={props.storeId}
-                      role="donor"
-                      selected={
-                        draft.donorId
-                          ? {
-                              id: draft.donorId,
-                              name: draft.donorName ?? '',
-                              code: '',
-                              isSupplier: false,
-                              isDonor: true,
-                              isOnHold: false,
-                              isStore: false,
-                            }
-                          : undefined
-                      }
-                      placeholder={t('label.none')}
-                      onSelect={name => {
-                        setDraft('donorId', name?.id ?? null);
-                        setDraft('donorName', name?.name ?? null);
-                      }}
-                    />
-                  </Show>
-                  <CampaignOrProgramSelect
-                    label={t('label.campaign')}
-                    storeId={props.storeId}
-                    itemId={chosenItem()?.id ?? ''}
-                    campaignId={draft.campaignId ?? undefined}
-                    programId={draft.programId ?? undefined}
+              <FormColumn>
+                <FormSection title={t('heading.storage-and-pack')}>
+                  <LocationSelect
+                    label={t('label.location')}
+                    locations={locations()}
+                    loading={allLocations.loading}
+                    value={draft.location?.id}
                     placeholder={t('label.none')}
-                    onChange={v => {
-                      setDraft('campaignId', v?.campaign?.id ?? null);
-                      setDraft('programId', v?.program?.id ?? null);
+                    onChange={l =>
+                      setDraft(
+                        'location',
+                        l ? { id: l.id, code: l.code, name: l.name } : null
+                      )
+                    }
+                  />
+                  <FormRow>
+                    <Checkbox
+                      label={t('label.on-hold')}
+                      checked={draft.onHold}
+                      onChange={v => setDraft('onHold', v)}
+                    />
+                    <NumberField
+                      label={t('label.volume-per-pack')}
+                      width="full"
+                      decimalLimit={10}
+                      value={draft.volumePerPack}
+                      onChange={v => setDraft('volumePerPack', v)}
+                    />
+                  </FormRow>
+                </FormSection>
+
+                <FormSection title={t('heading.supply-chain')}>
+                  <NameSearch
+                    label={t('label.manufacturer')}
+                    storeId={props.storeId}
+                    role="manufacturer"
+                    selected={
+                      draft.manufacturer
+                        ? {
+                            id: draft.manufacturer.id,
+                            name: draft.manufacturer.name,
+                            code: '',
+                            isSupplier: false,
+                            isDonor: false,
+                            isOnHold: false,
+                            isStore: false,
+                          }
+                        : undefined
+                    }
+                    placeholder={t('label.none')}
+                    onSelect={name => {
+                      // Changing the manufacturer clears the item variant
+                      // (spec/stock S2 manufacturer note).
+                      setDraft(d => ({
+                        ...d,
+                        manufacturer: name
+                          ? { id: name.id, name: name.name }
+                          : null,
+                        itemVariantId: null,
+                      }));
                     }}
                   />
-                </FormRow>
-              </FormSection>
-            </FormColumn>
-          </FormColumns>
-        </Show>
+                  <FormRow>
+                    {/* Donor field gated by allowTrackingOfStockByDonor (spec AC-P3). */}
+                    <Show when={prefs().allowTrackingOfStockByDonor}>
+                      <NameSearch
+                        label={t('label.donor')}
+                        storeId={props.storeId}
+                        role="donor"
+                        selected={
+                          draft.donorId
+                            ? {
+                                id: draft.donorId,
+                                name: draft.donorName ?? '',
+                                code: '',
+                                isSupplier: false,
+                                isDonor: true,
+                                isOnHold: false,
+                                isStore: false,
+                              }
+                            : undefined
+                        }
+                        placeholder={t('label.none')}
+                        onSelect={name => {
+                          setDraft('donorId', name?.id ?? null);
+                          setDraft('donorName', name?.name ?? null);
+                        }}
+                      />
+                    </Show>
+                    <CampaignOrProgramSelect
+                      label={t('label.campaign')}
+                      storeId={props.storeId}
+                      itemId={chosenItem()?.id ?? ''}
+                      campaignId={draft.campaignId ?? undefined}
+                      programId={draft.programId ?? undefined}
+                      placeholder={t('label.none')}
+                      onChange={v => {
+                        setDraft('campaignId', v?.campaign?.id ?? null);
+                        setDraft('programId', v?.program?.id ?? null);
+                      }}
+                    />
+                  </FormRow>
+                </FormSection>
+              </FormColumn>
+            </FormColumns>
+          </Show>
+        </Stack>
       </ContentContainer>
     </Dialog>
   );

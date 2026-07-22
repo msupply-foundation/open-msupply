@@ -20,6 +20,7 @@ import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { FormColumns } from '../../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
@@ -437,246 +438,267 @@ const StockLineDetailView: Component = () => {
               }
             >
               <TabPanel value="details">
-                <ContentContainer size="form" class={formStyles.stack}>
-                  {/* Identity header: item name as a heading, code + unit as a
+                <ContentContainer size="form">
+                  <Stack>
+                    {/* Identity header: item name as a heading, code + unit as a
                       muted subtitle below it. */}
-                  <div class={formStyles.identity}>
-                    <Text variant="heading" level={2}>
-                      {l().itemName}
-                    </Text>
-                    <Text variant="subtitle" class={formStyles.identitySub}>
-                      {t('label.code')}: {l().item.code} · {t('label.unit')}:{' '}
-                      {l().item.unitName ?? '—'}
-                    </Text>
-                  </div>
+                    <div class={formStyles.identity}>
+                      <Text variant="heading" level={2}>
+                        {l().itemName}
+                      </Text>
+                      <Text variant="subtitle" class={formStyles.identitySub}>
+                        {t('label.code')}: {l().item.code} · {t('label.unit')}:{' '}
+                        {l().item.unitName ?? '—'}
+                      </Text>
+                    </div>
 
-                  <Show when={invalidLocation(l())}>
-                    <Alert severity="warning" testId="invalid-location-warning">
-                      {t('messages.stock-in-invalid-location')}
-                    </Alert>
-                  </Show>
+                    <Show when={invalidLocation(l())}>
+                      <Alert
+                        severity="warning"
+                        testId="invalid-location-warning"
+                      >
+                        {t('messages.stock-in-invalid-location')}
+                      </Alert>
+                    </Show>
 
-                  <Show when={saveError()}>
-                    {message => <Alert severity="error">{message()}</Alert>}
-                  </Show>
+                    <Show when={saveError()}>
+                      {message => <Alert severity="error">{message()}</Alert>}
+                    </Show>
 
-                  {/* The sectioned edit form (spec/ui-standards detail-views):
+                    {/* The sectioned edit form (spec/ui-standards detail-views):
                       titled sections in two column stacks that wrap to one when
                       squeezed. Editable fields are live inputs (label above);
                       read-only facts are LabelledValue in field variant (no
                       input chrome). Sections and rows per spec/stock S2
                       Layout. */}
-                  <FormColumns>
-                    <FormColumn>
-                      <FormSection title={t('heading.stock-levels')}>
-                        <FormRow>
-                          <LabelledValue
-                            variant="field"
-                            label={t('label.pack-qty')}
-                          >
-                            {qtyValue(l().totalNumberOfPacks, sohUnits())}
-                          </LabelledValue>
-                          <LabelledValue
-                            variant="field"
-                            label={t('label.available-packs')}
-                          >
-                            {qtyValue(l().availableNumberOfPacks, availUnits())}
-                          </LabelledValue>
-                        </FormRow>
-                        <FormRow>
-                          <LabelledValue
-                            variant="field"
-                            label={t('label.available-stock')}
-                          >
-                            {qtyValue(availUnits(), availUnits())}
-                          </LabelledValue>
-                          <LabelledValue variant="field" label={t('label.soh')}>
-                            {qtyValue(sohUnits(), sohUnits())}
-                          </LabelledValue>
-                        </FormRow>
-                      </FormSection>
+                    <FormColumns>
+                      <FormColumn>
+                        <FormSection title={t('heading.stock-levels')}>
+                          <FormRow>
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.pack-qty')}
+                            >
+                              {qtyValue(l().totalNumberOfPacks, sohUnits())}
+                            </LabelledValue>
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.available-packs')}
+                            >
+                              {qtyValue(
+                                l().availableNumberOfPacks,
+                                availUnits()
+                              )}
+                            </LabelledValue>
+                          </FormRow>
+                          <FormRow>
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.available-stock')}
+                            >
+                              {qtyValue(availUnits(), availUnits())}
+                            </LabelledValue>
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.soh')}
+                            >
+                              {qtyValue(sohUnits(), sohUnits())}
+                            </LabelledValue>
+                          </FormRow>
+                        </FormSection>
 
-                      <FormSection title={t('heading.batches-and-dates')}>
-                        <TextField
-                          label={t('label.batch')}
-                          width="full"
-                          value={edit.batch}
-                          onInput={e => setEdit('batch', e.currentTarget.value)}
-                        />
-                        <TextField
-                          label={t('label.barcode')}
-                          width="full"
-                          value={edit.barcode}
-                          onInput={e =>
-                            setEdit('barcode', e.currentTarget.value)
-                          }
-                        />
-                        <FormRow>
-                          <DateField
-                            label={t('label.expiry-date')}
+                        <FormSection title={t('heading.batches-and-dates')}>
+                          <TextField
+                            label={t('label.batch')}
                             width="full"
-                            value={edit.expiryDate}
-                            onChange={v => setEdit('expiryDate', v)}
+                            value={edit.batch}
+                            onInput={e =>
+                              setEdit('batch', e.currentTarget.value)
+                            }
                           />
-                          <DateField
-                            label={t('label.manufacture-date')}
+                          <TextField
+                            label={t('label.barcode')}
                             width="full"
-                            max={localTodayIso()}
-                            value={edit.manufactureDate}
-                            onChange={v => setEdit('manufactureDate', v)}
+                            value={edit.barcode}
+                            onInput={e =>
+                              setEdit('barcode', e.currentTarget.value)
+                            }
                           />
-                        </FormRow>
-                        <Show when={showVvmField()}>
-                          {/* Read-only here — changes go through the VVM history
+                          <FormRow>
+                            <DateField
+                              label={t('label.expiry-date')}
+                              width="full"
+                              value={edit.expiryDate}
+                              onChange={v => setEdit('expiryDate', v)}
+                            />
+                            <DateField
+                              label={t('label.manufacture-date')}
+                              width="full"
+                              max={localTodayIso()}
+                              value={edit.manufactureDate}
+                              onChange={v => setEdit('manufactureDate', v)}
+                            />
+                          </FormRow>
+                          <Show when={showVvmField()}>
+                            {/* Read-only here — changes go through the VVM history
                               flow (spec/stock S2 / AC-V2). */}
-                          <LabelledValue
-                            variant="field"
-                            label={t('label.vvm-status')}
-                          >
-                            {l().vvmStatus?.description ?? '—'}
-                          </LabelledValue>
-                        </Show>
-                      </FormSection>
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.vvm-status')}
+                            >
+                              {l().vvmStatus?.description ?? '—'}
+                            </LabelledValue>
+                          </Show>
+                        </FormSection>
 
-                      <FormSection title={t('heading.pricing')}>
-                        <FormRow>
-                          <CurrencyField
-                            label={t('label.cost-price')}
-                            width="full"
-                            value={edit.costPricePerPack}
-                            onChange={v => setEdit('costPricePerPack', v ?? 0)}
-                          />
-                          <CurrencyField
-                            label={t('label.sell-price')}
-                            width="full"
-                            value={edit.sellPricePerPack}
-                            onChange={v => setEdit('sellPricePerPack', v ?? 0)}
-                          />
-                        </FormRow>
-                      </FormSection>
-                    </FormColumn>
-
-                    <FormColumn>
-                      <FormSection title={t('heading.storage-and-pack')}>
-                        <LocationSelect
-                          label={t('label.location')}
-                          locations={locations()}
-                          loading={allLocations.loading}
-                          value={edit.location?.id}
-                          placeholder={t('label.none')}
-                          onChange={loc =>
-                            setEdit(
-                              'location',
-                              loc
-                                ? { id: loc.id, code: loc.code, name: loc.name }
-                                : null
-                            )
-                          }
-                        />
-                        <FormRow>
-                          <LabelledValue
-                            variant="field"
-                            label={t('label.pack-size')}
-                          >
-                            {formatNumber(l().packSize)}
-                          </LabelledValue>
-                          <Checkbox
-                            label={t('label.on-hold')}
-                            checked={edit.onHold}
-                            onChange={v => setEdit('onHold', v)}
-                          />
-                        </FormRow>
-                        <FormRow>
-                          <NumberField
-                            label={t('label.volume-per-pack')}
-                            width="full"
-                            decimalLimit={10}
-                            value={edit.volumePerPack}
-                            onChange={v => setEdit('volumePerPack', v ?? 0)}
-                          />
-                          <LabelledValue
-                            variant="field"
-                            label={t('label.total-volume')}
-                          >
-                            {formatNumber(l().totalVolume)}
-                          </LabelledValue>
-                        </FormRow>
-                      </FormSection>
-
-                      <FormSection title={t('heading.supply-chain')}>
-                        <NameSearch
-                          label={t('label.manufacturer')}
-                          storeId={params.storeId}
-                          role="manufacturer"
-                          selected={
-                            edit.manufacturer
-                              ? {
-                                  id: edit.manufacturer.id,
-                                  name: edit.manufacturer.name,
-                                  code: '',
-                                  isSupplier: false,
-                                  isDonor: false,
-                                  isOnHold: false,
-                                  isStore: false,
-                                }
-                              : undefined
-                          }
-                          placeholder={t('label.none')}
-                          onSelect={name =>
-                            setEdit(
-                              'manufacturer',
-                              name ? { id: name.id, name: name.name } : null
-                            )
-                          }
-                        />
-                        <LabelledValue
-                          variant="field"
-                          label={t('label.supplier')}
-                        >
-                          {supplierText(l())}
-                        </LabelledValue>
-                        <FormRow>
-                          <Show when={prefs().allowTrackingOfStockByDonor}>
-                            <NameSearch
-                              label={t('label.donor')}
-                              storeId={params.storeId}
-                              role="donor"
-                              selected={
-                                edit.donorId
-                                  ? {
-                                      id: edit.donorId,
-                                      name: edit.donorName ?? '',
-                                      code: '',
-                                      isSupplier: false,
-                                      isDonor: true,
-                                      isOnHold: false,
-                                      isStore: false,
-                                    }
-                                  : undefined
+                        <FormSection title={t('heading.pricing')}>
+                          <FormRow>
+                            <CurrencyField
+                              label={t('label.cost-price')}
+                              width="full"
+                              value={edit.costPricePerPack}
+                              onChange={v =>
+                                setEdit('costPricePerPack', v ?? 0)
                               }
+                            />
+                            <CurrencyField
+                              label={t('label.sell-price')}
+                              width="full"
+                              value={edit.sellPricePerPack}
+                              onChange={v =>
+                                setEdit('sellPricePerPack', v ?? 0)
+                              }
+                            />
+                          </FormRow>
+                        </FormSection>
+                      </FormColumn>
+
+                      <FormColumn>
+                        <FormSection title={t('heading.storage-and-pack')}>
+                          <LocationSelect
+                            label={t('label.location')}
+                            locations={locations()}
+                            loading={allLocations.loading}
+                            value={edit.location?.id}
+                            placeholder={t('label.none')}
+                            onChange={loc =>
+                              setEdit(
+                                'location',
+                                loc
+                                  ? {
+                                      id: loc.id,
+                                      code: loc.code,
+                                      name: loc.name,
+                                    }
+                                  : null
+                              )
+                            }
+                          />
+                          <FormRow>
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.pack-size')}
+                            >
+                              {formatNumber(l().packSize)}
+                            </LabelledValue>
+                            <Checkbox
+                              label={t('label.on-hold')}
+                              checked={edit.onHold}
+                              onChange={v => setEdit('onHold', v)}
+                            />
+                          </FormRow>
+                          <FormRow>
+                            <NumberField
+                              label={t('label.volume-per-pack')}
+                              width="full"
+                              decimalLimit={10}
+                              value={edit.volumePerPack}
+                              onChange={v => setEdit('volumePerPack', v ?? 0)}
+                            />
+                            <LabelledValue
+                              variant="field"
+                              label={t('label.total-volume')}
+                            >
+                              {formatNumber(l().totalVolume)}
+                            </LabelledValue>
+                          </FormRow>
+                        </FormSection>
+
+                        <FormSection title={t('heading.supply-chain')}>
+                          <NameSearch
+                            label={t('label.manufacturer')}
+                            storeId={params.storeId}
+                            role="manufacturer"
+                            selected={
+                              edit.manufacturer
+                                ? {
+                                    id: edit.manufacturer.id,
+                                    name: edit.manufacturer.name,
+                                    code: '',
+                                    isSupplier: false,
+                                    isDonor: false,
+                                    isOnHold: false,
+                                    isStore: false,
+                                  }
+                                : undefined
+                            }
+                            placeholder={t('label.none')}
+                            onSelect={name =>
+                              setEdit(
+                                'manufacturer',
+                                name ? { id: name.id, name: name.name } : null
+                              )
+                            }
+                          />
+                          <LabelledValue
+                            variant="field"
+                            label={t('label.supplier')}
+                          >
+                            {supplierText(l())}
+                          </LabelledValue>
+                          <FormRow>
+                            <Show when={prefs().allowTrackingOfStockByDonor}>
+                              <NameSearch
+                                label={t('label.donor')}
+                                storeId={params.storeId}
+                                role="donor"
+                                selected={
+                                  edit.donorId
+                                    ? {
+                                        id: edit.donorId,
+                                        name: edit.donorName ?? '',
+                                        code: '',
+                                        isSupplier: false,
+                                        isDonor: true,
+                                        isOnHold: false,
+                                        isStore: false,
+                                      }
+                                    : undefined
+                                }
+                                placeholder={t('label.none')}
+                                onSelect={name => {
+                                  setEdit('donorId', name?.id ?? null);
+                                  setEdit('donorName', name?.name ?? null);
+                                }}
+                              />
+                            </Show>
+                            <CampaignOrProgramSelect
+                              label={t('label.campaign')}
+                              storeId={params.storeId}
+                              itemId={l().itemId}
+                              campaignId={edit.campaignId ?? undefined}
+                              programId={edit.programId ?? undefined}
                               placeholder={t('label.none')}
-                              onSelect={name => {
-                                setEdit('donorId', name?.id ?? null);
-                                setEdit('donorName', name?.name ?? null);
+                              onChange={v => {
+                                setEdit('campaignId', v?.campaign?.id ?? null);
+                                setEdit('programId', v?.program?.id ?? null);
                               }}
                             />
-                          </Show>
-                          <CampaignOrProgramSelect
-                            label={t('label.campaign')}
-                            storeId={params.storeId}
-                            itemId={l().itemId}
-                            campaignId={edit.campaignId ?? undefined}
-                            programId={edit.programId ?? undefined}
-                            placeholder={t('label.none')}
-                            onChange={v => {
-                              setEdit('campaignId', v?.campaign?.id ?? null);
-                              setEdit('programId', v?.program?.id ?? null);
-                            }}
-                          />
-                        </FormRow>
-                      </FormSection>
-                    </FormColumn>
-                  </FormColumns>
+                          </FormRow>
+                        </FormSection>
+                      </FormColumn>
+                    </FormColumns>
+                  </Stack>
                 </ContentContainer>
               </TabPanel>
 
