@@ -21,8 +21,11 @@
  *                           enforced unless FRONTEND_DIST_SHA256=skip).
  *     FRONTEND_FETCH_TOKEN  Token used to authenticate the download. REQUIRED for the
  *     GITHUB_TOKEN          default GitHub source because open-msupply-frontend is a
- *                           PRIVATE repo — release assets 404 without it. Sent as an
- *                           `Authorization: token <TOKEN>` header to github.com; the
+ *                           PRIVATE repo. Private-repo assets 404 on the
+ *                           releases/download/ browser URL even with a valid token, so
+ *                           the script resolves the asset id via the REST API and
+ *                           downloads the api.github.com asset endpoint with
+ *                           `Accept: application/octet-stream`. The Authorization
  *                           header is dropped when GitHub redirects to its asset CDN
  *                           (a signed URL that rejects a second auth mechanism).
  *                           FRONTEND_FETCH_TOKEN wins if both are set.
@@ -142,6 +145,70 @@ function httpDownload(urlStr, destPath, token, redirectsLeft, originHost) {
   });
 }
 
+function httpGetJson(urlStr, token) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlStr);
+    const headers = {
+      "User-Agent": "open-msupply-fetch-frontend",
+      Accept: "application/vnd.github+json",
+    };
+    if (token) headers.Authorization = "token " + token;
+    https
+      .get(url, { headers }, (res) => {
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          if (res.statusCode !== 200) {
+            let hint = "";
+            if (res.statusCode === 401 || res.statusCode === 403) {
+              hint =
+                " — check FRONTEND_FETCH_TOKEN/GITHUB_TOKEN has access to the private repo";
+            } else if (res.statusCode === 404) {
+              hint = " — does the pinned tag have a published release?";
+            }
+            return reject(
+              new Error(
+                "HTTP " + res.statusCode + " fetching " + urlStr + hint,
+              ),
+            );
+          }
+          try {
+            resolve(JSON.parse(body));
+          } catch (err) {
+            reject(
+              new Error("invalid JSON from " + urlStr + ": " + err.message),
+            );
+          }
+        });
+      })
+      .on("error", reject);
+  });
+}
+
+// Private-repo release assets 404 on the releases/download/ browser URL even
+// with a valid token — the supported path is the REST asset endpoint with
+// Accept: application/octet-stream (which 302s to a signed CDN URL).
+async function resolveGithubAssetUrl(pin, token) {
+  const assetName = "frontend-dist-" + pin.tag + ".zip";
+  const release = await httpGetJson(
+    "https://api.github.com/repos/" + pin.repo + "/releases/tags/" + pin.tag,
+    token,
+  );
+  const asset = (release.assets || []).find((a) => a.name === assetName);
+  if (!asset) {
+    die(
+      "release " +
+        pin.tag +
+        ' has no asset "' +
+        assetName +
+        '" — did the release-dist workflow publish it?',
+    );
+  }
+  return (
+    "https://api.github.com/repos/" + pin.repo + "/releases/assets/" + asset.id
+  );
+}
+
 function localFilePath(source) {
   if (source.startsWith("file://")) return new URL(source).pathname;
   return source;
@@ -254,14 +321,14 @@ async function main() {
           "  once the FE repo cuts a release. Refusing to fall back to an in-tree build for the root FE.",
       );
     }
-    source =
-      "https://github.com/" +
-      pin.repo +
-      "/releases/download/" +
-      pin.tag +
-      "/frontend-dist-" +
-      pin.tag +
-      ".zip";
+    const token = getToken();
+    if (!token) {
+      die(
+        "downloading from GitHub but no token set. open-msupply-frontend is private —\n" +
+          "  set FRONTEND_FETCH_TOKEN (or GITHUB_TOKEN) to a token with read access to release assets.",
+      );
+    }
+    source = await resolveGithubAssetUrl(pin, token);
   }
 
   // Resolve expected checksum / skip policy.
