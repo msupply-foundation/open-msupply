@@ -192,9 +192,16 @@ export type StockLinesVariables = {
   } | null;
     isActive?: boolean | null;
     isProgramStockLine?: boolean | null;
+    campaignId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
   } | null;
   sort?: Array<{
-    key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry";
+    key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry" | "campaign";
     desc?: boolean | null;
   }> | null;
   page?: {
@@ -363,6 +370,13 @@ export type ItemsByStockLineFilterVariables = {
   } | null;
     isActive?: boolean | null;
     isProgramStockLine?: boolean | null;
+    campaignId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
   } | null;
   sort?: Array<{
     key: "name" | "code" | "type";

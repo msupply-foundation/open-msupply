@@ -3,6 +3,7 @@ import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
@@ -34,6 +35,10 @@ export const AddFromMasterListAction: Component<
   const [open, setOpen] = createSignal(false);
   const [adding, setAdding] = createSignal(false);
   const [error, setError] = createSignal<string>();
+  // The chosen list id awaiting the "add all items?" confirmation — the add is
+  // bulk (every stock item) and not per-line undoable, so it confirms first
+  // (old-app parity).
+  const [pending, setPending] = createSignal<string>();
 
   // The customer's master lists — fetched when the modal first opens, keyed on
   // the customer.
@@ -114,9 +119,10 @@ export const AddFromMasterListAction: Component<
             loading={lists.loading}
             itemToString={list => list.name}
             itemToValue={list => list.id}
+            value={pending() ?? ''}
             disabled={adding()}
             onChange={list => {
-              if (list) void add(list.id);
+              if (list) setPending(list.id);
             }}
           />
         </Show>
@@ -124,6 +130,19 @@ export const AddFromMasterListAction: Component<
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
       </Dialog>
+      {/* Confirm before the bulk add (old-app parity): "Do you want to add all
+          of the items from this master list?" */}
+      <ConfirmDialog
+        open={pending() != null}
+        title={t('heading.are-you-sure')}
+        message={t('messages.confirm-add-from-master-list')}
+        onClose={() => setPending(undefined)}
+        onConfirm={() => {
+          const chosen = pending();
+          setPending(undefined);
+          if (chosen) void add(chosen);
+        }}
+      />
     </Show>
   );
 };
