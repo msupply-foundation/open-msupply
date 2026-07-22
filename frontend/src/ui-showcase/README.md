@@ -24,3 +24,7 @@ if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
 ## Adding a section
 
 Add an entry to the registry in [`sections.tsx`](./sections.tsx) (id, label, component, menu category) and create the matching `<Name>Showcase.tsx` (+ optional `.module.css`) beside it. The shell derives the menu and panels from the registry; the section id becomes its hash.
+
+## Page scaffolding (`common/`)
+
+The chrome _around_ the demos — the section cards, lead/note copy, layout rows — is shared, one component per file in [`common/`](./common/index.ts): `Stack`, `Card`, `Row`, `Col`, `Note`, `Intro`, `PageFrame`/`PageBody`, `ToolbarStub`, `FormPreview`. A typical section page is a `<Stack>` of `<Card title lead>` blocks and owns **no CSS of its own** unless it has genuinely bespoke demo furniture (the icon gallery's glyph grid, the typography specimens, …) — that stays in the page's slim `.module.css` rather than growing single-use components in `common/`. Two rules hold: components _under demo_ are always real `src/ui` components, never showcase lookalikes; and anything in `common/` must be pure demo chrome no real page would ship.
