@@ -26,6 +26,7 @@ import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
 import { CardGridShowcase } from './CardGridShowcase';
 import { ChartsShowcase } from './ChartsShowcase';
+import { PageLayoutShowcase } from './PageLayoutShowcase';
 import { FormLayoutShowcase } from './FormLayoutShowcase';
 import { FormsShowcase } from './FormsShowcase';
 
@@ -186,6 +187,12 @@ export const sections: SectionDef[] = [
     id: 'card-grid',
     label: 'Card grid',
     component: CardGridShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'page-layout',
+    label: 'Page layout',
+    component: PageLayoutShowcase,
     category: 'layout',
   },
   {

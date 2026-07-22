@@ -22,9 +22,3 @@
 .sectionStub {
   min-block-size: 5rem;
 }
-
-/* Blocks in the Stack-rhythm demo — given equal width so the three gap
-   presets read side by side as columns. */
-.rhythmStub {
-  min-inline-size: 9rem;
-}
