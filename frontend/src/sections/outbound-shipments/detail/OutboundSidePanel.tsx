@@ -404,9 +404,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
           {/* Copy to clipboard — the button itself briefly swaps to a "copied"
               confirmation (matching the stocktakes CopyStocktakeAction);
-              in-place feedback, never a toast. */}
+              in-place feedback, never a toast. aria-live so the swap is
+              announced by assistive tech (no visually-hidden twin — a hidden
+              duplicate of the label trips strict e2e text locators). */}
           <Button
             variant="secondary"
+            aria-live="polite"
             icon={copied() ? <CheckIcon /> : <CopyIcon />}
             onClick={copyToClipboard}
           >
