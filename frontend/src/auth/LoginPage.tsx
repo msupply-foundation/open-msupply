@@ -7,7 +7,7 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
-import styles from './Login.module.css';
+import styles from '../ui/styles/LoginInitLayout.module.css';
 
 type SubmitState =
   | { kind: 'idle' }
