@@ -1,0 +1,167 @@
+import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import { t, type LocaleKey } from '../../../intl';
+import {
+  UpdateCustomerReturn,
+  UpdateCustomerReturnLines,
+  type CustomerReturnInfoFragment,
+  type UpdateCustomerReturnVariables,
+  type UpdateCustomerReturnLinesVariables,
+  type UpdateCustomerReturnLinesResult,
+} from './customerReturnDetail.generated';
+import { DeleteCustomerReturn } from '../list/customerReturns.generated';
+
+// Return-LEVEL mutations, split by how their errors are handled (the
+// stocktakeUpdate convention):
+//
+// - saveReturnFields — header saves (reference / comment / colour / hold /
+//   customer). On an editable return these don't produce a domain error the
+//   user must act on — EXCEPT a customer change, whose two typed rejections
+//   (not visible / not a customer) come back for inline display
+//   (spec/customer-returns/contract.md § header rules). Anything else is
+//   promoted to the global unexpected-error modal.
+//
+// - advanceReturnStatus — the action with user-facing rejections. Every one is
+//   a NON-typed GraphQL error (contract § advancing status): we opt in via
+//   returnGraphqlErrors and map extensions.details to translated copy.
+//
+// - saveReturnLines — the one line-save call. Its response union has NO error
+//   member (contract wire trap): every rejection is a non-typed GraphQL error,
+//   surfaced as a message in the modal.
+//
+// - deleteReturn — all rejections non-typed (the three declared typed members
+//   are dead schema — contract § deletion).
+
+type UpdateReturnInput = UpdateCustomerReturnVariables['input'];
+
+export type SaveReturnFieldsResult =
+  | { kind: 'saved'; node: CustomerReturnInfoFragment }
+  // The typed customer-change rejections, for inline display on the lookup.
+  | { kind: 'error'; typename: string; message: string }
+  | { kind: 'failed' };
+
+const CUSTOMER_ERROR_KEYS: Record<string, LocaleKey> = {
+  OtherPartyNotACustomer: 'error.other-party-not-a-customer',
+  OtherPartyNotVisible: 'error.other-party-not-visible',
+};
+
+export const saveReturnFields = async (
+  storeId: string,
+  input: UpdateReturnInput
+): Promise<SaveReturnFieldsResult> => {
+  const result = await graphqlFetch(UpdateCustomerReturn, { storeId, input });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updateCustomerReturn;
+  if (response.__typename === 'InvoiceNode')
+    return { kind: 'saved', node: response };
+  const { error } = response;
+  const key = CUSTOMER_ERROR_KEYS[error.__typename];
+  return {
+    kind: 'error',
+    typename: error.__typename,
+    message: key ? t(key) : error.description,
+  };
+};
+
+// --- Status advance -------------------------------------------------------
+
+// The non-typed rejection names the server puts in extensions.details
+// (contract § advancing status — asserted by the AC tests against the real
+// backend once probed; matching is by substring so a debug-formatted payload
+// still resolves).
+const ADVANCE_ERROR_KEYS: Record<string, LocaleKey> = {
+  CannotIssueCustomerReturnWithNoLines: 'messages.no-lines',
+  CannotChangeStatusOfInvoiceOnHold: 'messages.on-hold-description',
+  ReturnIsNotEditable: 'error.not-editable',
+  CannotReverseInvoiceStatus: 'error.not-editable',
+};
+
+const matchDetails = (errors: GraphqlErrorItem[]): LocaleKey | undefined => {
+  for (const e of errors) {
+    const details = e.extensions?.details;
+    if (typeof details !== 'string') continue;
+    for (const [name, key] of Object.entries(ADVANCE_ERROR_KEYS)) {
+      if (details.includes(name)) return key;
+    }
+  }
+  return undefined;
+};
+
+export type AdvanceReturnResult =
+  | { kind: 'saved'; node: CustomerReturnInfoFragment }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const advanceReturnStatus = async (
+  storeId: string,
+  id: string,
+  status: 'RECEIVED' | 'VERIFIED',
+  // Advancing may release the hold in the same change (rules § advancing
+  // status — the same-request release; AC-S6).
+  onHold?: boolean
+): Promise<AdvanceReturnResult> => {
+  const result = await graphqlFetch(
+    UpdateCustomerReturn,
+    { storeId, input: { id, status, onHold } },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError') {
+    const key = matchDetails(result.errors);
+    return { kind: 'error', message: key ? t(key) : result.message };
+  }
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updateCustomerReturn;
+  if (response.__typename === 'InvoiceNode')
+    return { kind: 'saved', node: response };
+  // A typed error on a status advance is unexpected (the typed members are the
+  // customer-change pair) — surface its description in the dialog.
+  return { kind: 'error', message: response.error.description };
+};
+
+// --- Line save --------------------------------------------------------------
+
+type ReturnWithLines = Extract<
+  UpdateCustomerReturnLinesResult['updateCustomerReturnLines'],
+  { __typename: 'InvoiceNode' }
+>;
+
+export type SaveReturnLinesResult =
+  | { kind: 'saved'; node: ReturnWithLines }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const saveReturnLines = async (
+  storeId: string,
+  input: UpdateCustomerReturnLinesVariables['input']
+): Promise<SaveReturnLinesResult> => {
+  const result = await graphqlFetch(
+    UpdateCustomerReturnLines,
+    { storeId, input },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: result.message };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  return { kind: 'saved', node: result.data.updateCustomerReturnLines };
+};
+
+// --- Delete -----------------------------------------------------------------
+
+export type DeleteReturnResult =
+  { kind: 'deleted' } | { kind: 'error'; message: string } | { kind: 'failed' };
+
+export const deleteReturn = async (
+  storeId: string,
+  id: string
+): Promise<DeleteReturnResult> => {
+  const result = await graphqlFetch(
+    DeleteCustomerReturn,
+    { storeId, id },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: result.message };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.deleteCustomerReturn;
+  if (response.__typename === 'DeleteResponse') return { kind: 'deleted' };
+  return { kind: 'error', message: response.error.description };
+};
