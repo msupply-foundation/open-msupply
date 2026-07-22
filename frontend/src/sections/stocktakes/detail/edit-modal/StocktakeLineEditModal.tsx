@@ -194,6 +194,9 @@ const buildDraft = async (
     item: {
       id: item.id,
       code: item.code,
+      // A draft batch opted in from stock has no persisted unit yet; the Unit
+      // column reads it off saved lines (the server fills it on save).
+      unitName: null,
       isVaccine: item.isVaccine,
       doses: item.doses,
     },
@@ -567,6 +570,8 @@ const StocktakeLineEditContent = (
           item: {
             id: item.id,
             code: item.code,
+            // A fresh blank batch has no persisted unit yet (see fromStock).
+            unitName: null,
             isVaccine: item.isVaccine,
             doses: item.doses,
           },
