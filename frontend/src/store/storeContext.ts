@@ -124,6 +124,27 @@ const inboundShipmentPreferences = () => {
   };
 };
 
+// The patient vertical's configuration gates (spec/patients § configuration
+// gates). `omProgramModule` (StorePreferenceNode) gates the program-related
+// surfaces — the list's Program-enrolments column/filter and the detail's
+// Programs/Encounters/Vaccinations tabs; `genderOptions` (PreferencesNode) is
+// the configured subset of genders every gender picker offers. Both default to
+// the safe OFF/empty while the context is unresolved so a gated surface never
+// flashes in before its preference is known (the same rule as the other
+// *Preferences accessors). Reactive — a post-sync refetch re-gates in place.
+//
+// NOTE (spec gap): dispensary-mode gating of the WHOLE surface (AC-G1) needs
+// the active store's `storeMode`, which no query currently fetches — see the
+// implementation flags. This accessor covers only the sub-gates.
+const patientPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    programModule: store?.omProgramModule ?? false,
+    genderOptions: prefs?.genderOptions ?? [],
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -154,6 +175,7 @@ export {
   stocktakePreferences,
   stockPreferences,
   inboundShipmentPreferences,
+  patientPreferences,
   hasPermission,
 };
 export type { UserPermission };
