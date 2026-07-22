@@ -18,11 +18,14 @@ export interface DeleteLocationsActionProps {
   storeId: string;
   /** The currently-selected location rows (code/name label the report). */
   selectedRows: () => LocationRow[];
+  /** Re-query the list so the deleted rows disappear. Safe mid-flow. */
+  refetchList: () => void;
   /**
-   * Deletion finished (fully or partially) — the list clears its selection
-   * and re-queries so the removed rows disappear.
+   * Clear the list selection. The selection gates the footer this dialog
+   * lives in, so calling this unmounts the dialog — only call it when the
+   * interaction has ended with nothing left to show (issue #374).
    */
-  onDeleted: () => void;
+  clearSelection: () => void;
 }
 
 // The locations-list delete action (spec/locations S3): its footer button + a
@@ -41,6 +44,10 @@ export interface DeleteLocationsActionProps {
 // needs no announcement: the dialog closes, the rows leave the list, the
 // selection clears (ui-surface S3). Any blocked/failed member switches the
 // dialog to the report instead — the deleted ones are already gone behind it.
+// While the report is up the selection is deliberately KEPT: it gates the
+// footer this dialog is mounted in, so clearing it would dispose the dialog
+// before the report renders (issue #374; same disposal trap as the stocktakes
+// reference's error path). It clears when the report is dismissed.
 type Phase =
   | { kind: 'confirm' }
   | { kind: 'deleting' }
@@ -94,16 +101,28 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       outcomes.push(deleteOutcome(row.id, result));
     }
     const summary = summariseOutcomes(outcomes);
-    // The deleted rows are gone regardless of the blocked ones — clear the
-    // selection and re-query behind the dialog.
-    props.onDeleted();
     if (summary.inUse.length === 0 && summary.failedCount === 0) {
       // Full success needs no announcement (ui-surface S3): closure is the
-      // confirmation.
+      // confirmation. Close first — clearing the selection unmounts the
+      // selection-gated footer this dialog lives in.
       props.onClose();
+      props.clearSelection();
+      props.refetchList();
       return;
     }
+    // Some members were blocked/failed: the deleted ones are gone regardless
+    // (AC-D3) — re-query behind the dialog, but KEEP the selection: clearing
+    // it here would unmount the footer (and this dialog) before the report
+    // ever renders (issue #374). The selection clears on dismissal instead.
+    props.refetchList();
     setPhase({ kind: 'report', summary });
+  };
+
+  // Dismissing the report ends the interaction: close, then hand back to the
+  // list (same close-before-unmount ordering as the success path).
+  const dismissReport = () => {
+    props.onClose();
+    props.clearSelection();
   };
 
   const report = () => {
@@ -196,7 +215,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
           <Button
             variant="secondary"
             icon={<CheckIcon />}
-            onClick={props.onClose}
+            onClick={dismissReport}
           >
             {t('button.close')}
           </Button>

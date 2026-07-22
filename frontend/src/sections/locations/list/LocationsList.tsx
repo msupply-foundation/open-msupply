@@ -129,14 +129,6 @@ const LocationsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // Delete lives in DeleteLocationsAction (confirm + per-location outcomes +
-  // in-use report). It calls back mid-flow so the deleted rows disappear and
-  // the selection clears even when some members were blocked (AC-D3).
-  const onDeleted = () => {
-    setSelectedIds([]);
-    void refetch();
-  };
-
   // A save landed in the modal (create or edit): re-query so the list shows it
   // (kdd/state-management — refresh by direct call).
   const onSaved = () => void refetch();
@@ -235,12 +227,18 @@ const LocationsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
             </strong>
+            {/* Delete (confirm + per-location outcomes + in-use report). Two
+                separate callbacks: the action re-queries mid-flow so deleted
+                rows disappear, but clears the selection — which gates this
+                footer, and with it the action's own dialog — only once the
+                interaction ends (issue #374). */}
             <DeleteLocationsAction
               storeId={params.storeId}
               selectedRows={() =>
                 rows().filter(row => selectedIds().includes(row.id))
               }
-              onDeleted={onDeleted}
+              refetchList={() => void refetch()}
+              clearSelection={() => setSelectedIds([])}
             />
             <ContentFooterActions>
               <Button
