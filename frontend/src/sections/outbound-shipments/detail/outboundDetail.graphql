@@ -1,6 +1,9 @@
-# Outbound shipment detail (spec/outbound-shipments S3). One fragment pair —
-# header info + line — shared by the fetch and every mutation that returns the
-# node, so saves can replace the resource in place or refetch cheaply.
+# Outbound shipment detail (spec/outbound-shipments S3). TWO separate reads
+# (rules.md § server-paginated line table): outboundDetail fetches the entity
+# (header/footer/side-panel fields — NOT the lines); outboundLines fetches one
+# server-filtered/sorted/paged lines page via the root invoiceLines. Entity
+# saves splice the returned node back; line-level changes refetch the current
+# lines page.
 
 fragment OutboundInfo on InvoiceNode {
   id
@@ -64,6 +67,13 @@ fragment OutboundInfo on InvoiceNode {
     serviceTotalBeforeTax
     serviceTotalAfterTax
     taxPercentage
+    # Whole-shipment quantity sums over non-service lines (placeholders
+    # included) — the line-table footer totals (D45), which the client can't
+    # sum itself now the lines are server-paginated (contract § detail line
+    # table).
+    totalNumberOfPacks
+    totalNumberOfUnits
+    totalVolume
   }
 }
 
@@ -113,11 +123,6 @@ query outboundDetail($storeId: String!, $id: String!) {
     __typename
     ... on InvoiceNode {
       ...OutboundInfo
-      lines {
-        nodes {
-          ...OutboundLine
-        }
-      }
     }
     ... on NodeError {
       error {
@@ -127,11 +132,33 @@ query outboundDetail($storeId: String!, $id: String!) {
   }
 }
 
-# Header / status / hold / transport / pricing updates. Returns the full node
-# (with lines — leaving NEW trims zero-quantity rows server-side, so the lines
-# must come back too). Typed errors are selected so status-change rejections
-# translate (AC-S1, AC-H1, AC-T1, AC-P3 — the unallocated-lines member carries
-# the offending lines).
+# One server-filtered/sorted/paged lines page (contract § detail line table).
+# Callers always merge invoiceId (and, for the stock/placeholder table,
+# type notEqualTo SERVICE) into the filter; the same operation serves the
+# service-lines read (type equalTo SERVICE) and the status pre-flight count
+# probes. Wire trap: only the LAST sort key is honoured — send exactly one.
+query outboundLines(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+) {
+  invoiceLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...OutboundLine
+      }
+    }
+  }
+}
+
+# Header / status / hold / transport / pricing updates. Returns the entity
+# only (no lines — the view refetches the lines page after a status change,
+# which can trim zero-quantity rows server-side). Typed errors are selected so
+# status-change rejections translate (AC-S1, AC-H1, AC-T1, AC-P3 — the
+# unallocated-lines member carries the offending lines).
 mutation updateOutboundShipment(
   $storeId: String!
   $input: UpdateOutboundShipmentInput!
@@ -140,11 +167,6 @@ mutation updateOutboundShipment(
     __typename
     ... on InvoiceNode {
       ...OutboundInfo
-      lines {
-        nodes {
-          ...OutboundLine
-        }
-      }
     }
     ... on UpdateOutboundShipmentError {
       error {

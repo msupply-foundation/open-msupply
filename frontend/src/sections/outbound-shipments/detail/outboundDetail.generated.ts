@@ -64,6 +64,9 @@ export type OutboundInfoFragment = {
   serviceTotalBeforeTax: number;
   serviceTotalAfterTax: number;
   taxPercentage: number | null;
+  totalNumberOfPacks: number;
+  totalNumberOfUnits: number;
+  totalVolume: number;
 };
 };
 
@@ -116,10 +119,6 @@ export type OutboundDetailVariables = {
 export type OutboundDetailResult = {
   invoice: ({
   __typename: "InvoiceNode";
-} & {
-  lines: {
-  nodes: Array<OutboundLineFragment>;
-};
 } & OutboundInfoFragment) | ({
   __typename: "NodeError";
 } & {
@@ -130,8 +129,133 @@ export type OutboundDetailResult = {
 };
 
 export const OutboundDetail = {
-  query: "query outboundDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n      lines {\n        nodes {\n          ...OutboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n  }\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
+  query: "query outboundDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n    totalNumberOfPacks\n    totalNumberOfUnits\n    totalVolume\n  }\n}",
 } as TypedDocument<OutboundDetailResult, OutboundDetailVariables>;
+
+export type OutboundLinesVariables = {
+  storeId: string;
+  page?: {
+    first?: number | null;
+    offset?: number | null;
+  } | null;
+  filter?: {
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    storeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    invoiceId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    locationId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    itemId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    type?: {
+    equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
+    equalAny?: Array<"STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE"> | null;
+    notEqualTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
+    notEqualAll?: Array<"STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE"> | null;
+  } | null;
+    requisitionId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    numberOfPacks?: {
+    equalTo?: number | null;
+    equalAny?: Array<number> | null;
+    notEqualTo?: number | null;
+    equalAnyOrNull?: Array<number> | null;
+    notEqualAll?: Array<number> | null;
+  } | null;
+    invoiceType?: {
+    equalTo?: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK" | null;
+    equalAny?: Array<"OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK"> | null;
+    notEqualTo?: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK" | null;
+    notEqualAll?: Array<"OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK"> | null;
+  } | null;
+    invoiceStatus?: {
+    equalTo?: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED" | null;
+    equalAny?: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED"> | null;
+    notEqualTo?: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED" | null;
+    notEqualAll?: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED"> | null;
+  } | null;
+    stockLineId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    reasonOption?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    verifiedDatetime?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    programId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    isProgramInvoice?: boolean | null;
+  } | null;
+  sort?: Array<{
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName";
+    desc?: boolean | null;
+  }> | null;
+};
+
+export type OutboundLinesResult = {
+  invoiceLines: ({
+  __typename: "InvoiceLineConnector";
+} & {
+  totalCount: number;
+  nodes: Array<OutboundLineFragment>;
+});
+};
+
+export const OutboundLines = {
+  query: "query outboundLines($storeId: String!, $page: PaginationInput, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!]) {\n  invoiceLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...OutboundLine\n      }\n    }\n  }\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
+} as TypedDocument<OutboundLinesResult, OutboundLinesVariables>;
 
 export type UpdateOutboundShipmentVariables = {
   storeId: string;
@@ -162,10 +286,6 @@ export type UpdateOutboundShipmentVariables = {
 export type UpdateOutboundShipmentResult = {
   updateOutboundShipment: ({
   __typename: "InvoiceNode";
-} & {
-  lines: {
-  nodes: Array<OutboundLineFragment>;
-};
 } & OutboundInfoFragment) | ({
   __typename: "UpdateOutboundShipmentError";
 } & {
@@ -221,7 +341,7 @@ export type UpdateOutboundShipmentResult = {
 };
 
 export const UpdateOutboundShipment = {
-  query: "mutation updateOutboundShipment($storeId: String!, $input: UpdateOutboundShipmentInput!) {\n  updateOutboundShipment(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n      lines {\n        nodes {\n          ...OutboundLine\n        }\n      }\n    }\n    ... on UpdateOutboundShipmentError {\n      error {\n        __typename\n        description\n        ... on CannotChangeStatusOfInvoiceOnHold {\n          description\n        }\n        ... on CannotReverseInvoiceStatus {\n          description\n        }\n        ... on InvoiceIsNotEditable {\n          description\n        }\n        ... on CannotHaveEstimatedDeliveryDateBeforeShippedDate {\n          description\n        }\n        ... on CannotIssueInForeignCurrency {\n          description\n        }\n        ... on CanOnlyChangeToAllocatedWhenNoUnallocatedLines {\n          invoiceLines {\n            nodes {\n              id\n              itemName\n            }\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n  }\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
+  query: "mutation updateOutboundShipment($storeId: String!, $input: UpdateOutboundShipmentInput!) {\n  updateOutboundShipment(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n    }\n    ... on UpdateOutboundShipmentError {\n      error {\n        __typename\n        description\n        ... on CannotChangeStatusOfInvoiceOnHold {\n          description\n        }\n        ... on CannotReverseInvoiceStatus {\n          description\n        }\n        ... on InvoiceIsNotEditable {\n          description\n        }\n        ... on CannotHaveEstimatedDeliveryDateBeforeShippedDate {\n          description\n        }\n        ... on CannotIssueInForeignCurrency {\n          description\n        }\n        ... on CanOnlyChangeToAllocatedWhenNoUnallocatedLines {\n          invoiceLines {\n            nodes {\n              id\n              itemName\n            }\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n    totalNumberOfPacks\n    totalNumberOfUnits\n    totalVolume\n  }\n}",
 } as TypedDocument<UpdateOutboundShipmentResult, UpdateOutboundShipmentVariables>;
 
 export type UpdateOutboundShipmentNameVariables = {
@@ -448,6 +568,23 @@ export const CustomerMasterLists = {
   query: "query customerMasterLists($storeId: String!, $customerNameId: String!) {\n  masterLists(\n    storeId: $storeId\n    filter: {existsForNameId: {equalTo: $customerNameId}}\n  ) {\n    ... on MasterListConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<CustomerMasterListsResult, CustomerMasterListsVariables>;
 
+export type OutboundStocktakeConflictVariables = {
+  storeId: string;
+  onOrAfter?: string | null;
+};
+
+export type OutboundStocktakeConflictResult = {
+  stocktakes: ({
+  __typename: "StocktakeConnector";
+} & {
+  totalCount: number;
+});
+};
+
+export const OutboundStocktakeConflict = {
+  query: "query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {\n  stocktakes(\n    storeId: $storeId\n    filter: {stocktakeDate: {afterOrEqualTo: $onOrAfter}}\n  ) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
+} as TypedDocument<OutboundStocktakeConflictResult, OutboundStocktakeConflictVariables>;
+
 export type OutboundActivityLogsVariables = {
   storeId: string;
   recordId: string;
@@ -472,20 +609,3 @@ export type OutboundActivityLogsResult = {
 export const OutboundActivityLogs = {
   query: "query outboundActivityLogs($storeId: String!, $recordId: String!) {\n  activityLogs(storeId: $storeId, filter: {recordId: {equalTo: $recordId}}) {\n    ... on ActivityLogConnector {\n      __typename\n      nodes {\n        id\n        type\n        datetime\n        to\n        user {\n          username\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<OutboundActivityLogsResult, OutboundActivityLogsVariables>;
-
-export type OutboundStocktakeConflictVariables = {
-  storeId: string;
-  onOrAfter?: string | null;
-};
-
-export type OutboundStocktakeConflictResult = {
-  stocktakes: ({
-  __typename: "StocktakeConnector";
-} & {
-  totalCount: number;
-});
-};
-
-export const OutboundStocktakeConflict = {
-  query: "query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {\n  stocktakes(\n    storeId: $storeId\n    filter: {stocktakeDate: {afterOrEqualTo: $onOrAfter}}\n  ) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
-} as TypedDocument<OutboundStocktakeConflictResult, OutboundStocktakeConflictVariables>;
