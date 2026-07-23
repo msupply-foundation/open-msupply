@@ -123,14 +123,18 @@ const Body = (props: BodyProps): JSX.Element => {
         existingLinesInput: null,
       },
     });
-    const generated =
-      result.kind === 'success' &&
-      result.data.generateCustomerReturnLines.__typename ===
-        'GeneratedCustomerReturnLineConnector'
-        ? result.data.generateCustomerReturnLines.nodes
-        : [];
+    // The response union's only member is the connector, so any failure here
+    // is the global unexpected-error modal's (spec: Unexpected API Errors) —
+    // stay in the loading phase behind it rather than showing an empty grid.
+    if (result.kind !== 'success') return;
     setDraft(
-      reconcile(seedDrafts(generated, new Set<string>()), { key: 'id' })
+      reconcile(
+        seedDrafts(
+          result.data.generateCustomerReturnLines.nodes,
+          new Set<string>()
+        ),
+        { key: 'id' }
+      )
     );
     setLoadingLines(false);
   };

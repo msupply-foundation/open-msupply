@@ -152,13 +152,14 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         existingLinesInput: { returnId: props.returnId, itemId: item.id },
       },
     });
-    const generated =
-      result.kind === 'success' &&
-      result.data.generateCustomerReturnLines.__typename ===
-        'GeneratedCustomerReturnLineConnector'
-        ? result.data.generateCustomerReturnLines.nodes
-        : [];
-    const seeded = seedDrafts(generated, props.existingLineIds());
+    // The response union's only member is the connector, so any failure here
+    // is the global unexpected-error modal's (spec: Unexpected API Errors) —
+    // stay in the loading phase behind it rather than seeding a blank row.
+    if (result.kind !== 'success') return;
+    const seeded = seedDrafts(
+      result.data.generateCustomerReturnLines.nodes,
+      props.existingLineIds()
+    );
     setDraft(
       reconcile(
         seeded.length > 0
