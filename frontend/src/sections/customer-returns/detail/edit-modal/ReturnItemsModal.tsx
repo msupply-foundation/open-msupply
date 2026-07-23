@@ -6,20 +6,11 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../../ui/elements/typography/Text';
-import {
-  DataTable,
-  type Column,
-} from '../../../../ui/elements/table/DataTable';
-import {
-  getDateCell,
-  getNumberCell,
-} from '../../../../ui/elements/table/tableHelpers';
+import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
-import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
 import {
   ArrowRightIcon,
@@ -28,11 +19,11 @@ import {
   XCircleIcon,
 } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
+import styles from './ReturnItemsModal.module.css';
 import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
   blankDraft,
-  clampQuantity,
   existingLinesBeingRemoved,
   reasonStepLines,
   seedDrafts,
@@ -40,6 +31,7 @@ import {
   validateStep1,
   type DraftReturnLine,
 } from './returnLineLogic';
+import { quantityColumns, reasonColumns } from './returnLineColumns';
 
 // S4 — the return-items modal (spec/customer-returns/ui-surface.md S4): the
 // single surface for entering what comes back, per item on an existing return.
@@ -160,13 +152,14 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         existingLinesInput: { returnId: props.returnId, itemId: item.id },
       },
     });
-    const generated =
-      result.kind === 'success' &&
-      result.data.generateCustomerReturnLines.__typename ===
-        'GeneratedCustomerReturnLineConnector'
-        ? result.data.generateCustomerReturnLines.nodes
-        : [];
-    const seeded = seedDrafts(generated, props.existingLineIds());
+    // The response union's only member is the connector, so any failure here
+    // is the global unexpected-error modal's (spec: Unexpected API Errors) —
+    // stay in the loading phase behind it rather than seeding a blank row.
+    if (result.kind !== 'success') return;
+    const seeded = seedDrafts(
+      result.data.generateCustomerReturnLines.nodes,
+      props.existingLineIds()
+    );
     setDraft(
       reconcile(
         seeded.length > 0
@@ -310,188 +303,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     return props.mode === 'add' || (current && props.nextItem(current.id));
   };
 
-  // ---- Step 1 columns: the quantity grid (ui-surface S4 § step 1) ----
-  const quantityColumns = (): Column<DraftReturnLine, never>[] => [
-    {
-      c: { key: 'itemCode' },
-      header: t('label.code'),
-    },
-    {
-      c: { key: 'itemName' },
-      header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
-    },
-    {
-      c: { key: 'batch' },
-      header: t('label.batch'),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <TextField
-            label={t('label.batch')}
-            hideLabel
-            size="small"
-            value={line.batch ?? ''}
-            onInput={e =>
-              update(line.id, 'batch', e.currentTarget.value || null)
-            }
-          />
-        );
-      },
-    },
-    {
-      c: { key: 'expiryDate' },
-      header: t('label.expiry'),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <TextField
-            label={t('label.expiry')}
-            hideLabel
-            size="small"
-            type="date"
-            value={line.expiryDate ?? ''}
-            onInput={e =>
-              update(line.id, 'expiryDate', e.currentTarget.value || null)
-            }
-          />
-        );
-      },
-    },
-    {
-      // Packs issued: context from the originating shipment line — present on
-      // from-shipment drafts only (contract § draft-line generation); blank on
-      // per-item drafts. Read-only.
-      c: { key: 'numberOfPacksIssued' },
-      header: t('label.pack-quantity-issued'),
-      ...getNumberCell(),
-    },
-    {
-      c: { key: 'packSize' },
-      header: t('label.pack-size'),
-      ...getNumberCell(),
-      // NumberField (not a raw controlled input): it clamps to min/max and
-      // repairs the DOM when a keystroke is rejected — the §13 pitfall
-      // (kdd/solid-reactivity-pitfalls) a plain value= binding would hit.
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <NumberField
-            label={t('label.pack-size')}
-            hideLabel
-            size="small"
-            min={1}
-            decimalLimit={2}
-            value={line.packSize}
-            onChange={value => update(line.id, 'packSize', value ?? 1)}
-          />
-        );
-      },
-    },
-    {
-      // Quantity returned: min 0; capped at packs issued where known — a
-      // UI-only cap (rules § creation; AC-E5).
-      c: { key: 'numberOfPacksReturned' },
-      header: t('label.quantity-returned'),
-      ...getNumberCell(),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <NumberField
-            label={t('label.quantity-returned')}
-            hideLabel
-            size="small"
-            min={0}
-            max={line.numberOfPacksIssued ?? undefined}
-            decimalLimit={2}
-            value={line.numberOfPacksReturned}
-            onChange={value =>
-              update(
-                line.id,
-                'numberOfPacksReturned',
-                clampQuantity(value ?? 0, line.numberOfPacksIssued)
-              )
-            }
-          />
-        );
-      },
-    },
-    {
-      c: { key: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
-      ...getNumberCell(),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <NumberField
-            label={t('label.volume-per-pack')}
-            hideLabel
-            size="small"
-            min={0}
-            decimalLimit={4}
-            value={line.volumePerPack}
-            onChange={value => update(line.id, 'volumePerPack', value ?? 0)}
-          />
-        );
-      },
-    },
-  ];
-
-  // ---- Step 2 columns: the reason grid — only lines with quantity
-  // (ui-surface S4 § step 2). Reason optional; options are the active RETURN
-  // reasons (rules § line rules, AC-E4). ----
-  const reasonColumns = (): Column<DraftReturnLine, never>[] => [
-    { c: { key: 'itemCode' }, header: t('label.code') },
-    {
-      c: { key: 'itemName' },
-      header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
-    },
-    { c: { key: 'batch' }, header: t('label.batch') },
-    {
-      // Expiry, read-only here (edited in the quantity step) — matches the
-      // current app's reason-step table (ReturnReasonsTable: batch · expiry ·
-      // reason · comment; no quantity column).
-      c: { key: 'expiryDate' },
-      header: t('label.expiry'),
-      ...getDateCell(),
-    },
-    {
-      c: { id: 'returnReasonInput' },
-      header: t('label.reason'),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <ReasonSelect
-            kind="return"
-            label={t('label.reason')}
-            hideLabel
-            value={line.reasonId ?? undefined}
-            onChange={reason => update(line.id, 'reasonId', reason?.id ?? null)}
-          />
-        );
-      },
-    },
-    {
-      c: { key: 'note' },
-      header: t('label.comment'),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <TextField
-            label={t('label.comment')}
-            hideLabel
-            size="small"
-            value={line.note ?? ''}
-            onInput={e =>
-              update(line.id, 'note', e.currentTarget.value || null)
-            }
-          />
-        );
-      },
-    },
-  ];
-
+  // Step-1 (quantity) and step-2 (reason) grids come from the shared column
+  // builders in returnLineColumns.tsx — the same definitions back the
+  // from-shipment create modal — wired to this modal's per-line `update`.
   const reasonRows = () => reasonStepLines(draft.slice());
 
   return (
@@ -501,30 +315,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={
-        props.mode === 'add' ? (
-          <ItemSearch
-            label={t('heading.return-items')}
-            hideLabel
-            storeId={props.storeId}
-            excludeItemIds={props.excludeItemIds()}
-            value={currentItem()?.id}
-            onSelect={item =>
-              item
-                ? void seedItem({
-                    id: item.id,
-                    code: item.code,
-                    name: item.name,
-                  })
-                : backToSearch()
-            }
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-          />
-        ) : (
-          t('heading.return-items')
-        )
-      }
-      ariaLabel={props.mode === 'add' ? t('heading.return-items') : undefined}
+      title={t('heading.return-items')}
       actionsLead={
         <Show when={message()}>
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
@@ -599,6 +390,28 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         </>
       }
     >
+      {/* Item row under the plain "Return items" title (the current app's
+          layout, and the outbound line editor's pattern): the labelled
+          catalogue lookup — live in add mode, locked to the row's item in
+          update mode. */}
+      <ItemSearch
+        label={t('label.item')}
+        storeId={props.storeId}
+        excludeItemIds={props.excludeItemIds()}
+        value={currentItem()?.id}
+        selectedItem={currentItem()}
+        disabled={props.mode !== 'add'}
+        onSelect={item =>
+          item
+            ? void seedItem({
+                id: item.id,
+                code: item.code,
+                name: item.name,
+              })
+            : backToSearch()
+        }
+        placeholder={t('placeholder.enter-an-item-code-or-name')}
+      />
       <Show
         when={!noItemYet()}
         fallback={
@@ -629,15 +442,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         {/* Under the stepper (the current app's ReturnSteps row): who the
             goods come back from (read-only) and the return's customer
             reference — edited through the shared debounced buffer, the same
-            save path as the detail toolbar. */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--space-6)',
-            'align-items': 'center',
-            'margin-block': 'var(--space-2)',
-          }}
-        >
+            save path as the detail toolbar. One field per row below the
+            compact breakpoint (where the modal is full-screen) — module CSS. */}
+        <div class={styles.contextRow}>
           <FieldRow label={t('label.return-from')}>
             <Text variant="body">{props.returnFromName}</Text>
           </FieldRow>
@@ -678,7 +485,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           when={step() === 'reason'}
           fallback={
             <DataTable
-              columns={quantityColumns()}
+              columns={quantityColumns(update)}
               rows={draft.filter(() => true)}
               rowKey={line => line.id}
               loading={loadingLines()}
@@ -690,7 +497,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
-            columns={reasonColumns()}
+            columns={reasonColumns(update)}
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}

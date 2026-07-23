@@ -204,6 +204,13 @@ const CustomerReturnsList: Component = () => {
     void refetch();
   };
 
+  // Id + status for the bulk delete's client-side pre-check (the outbound
+  // list's shape).
+  const selectedRows = () =>
+    rows()
+      .filter(row => selectedIds().includes(row.id))
+      .map(row => ({ id: row.id, status: row.status }));
+
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/distribution/customer-return/${row.id}`);
 
@@ -339,7 +346,7 @@ const CustomerReturnsList: Component = () => {
             </strong>
             <DeleteReturnsAction
               storeId={params.storeId}
-              selectedIds={selectedIds}
+              selectedRows={selectedRows}
               onDeleted={onDeleted}
             />
             <ContentFooterActions>
@@ -363,9 +370,9 @@ const CustomerReturnsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // De-emphasise rows the store can no longer edit (VERIFIED; transfer
-        // rows still in the sender's hands) — ui-surface S1.
-        rowDimmed={isReturnDisabled}
+        // Rows the store can no longer edit (VERIFIED; transfer rows still
+        // in the sender's hands) take the disabled state — ui-surface S1.
+        rowState={row => (isReturnDisabled(row) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-customer-returns')}
         empty={
           <Button

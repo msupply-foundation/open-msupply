@@ -272,6 +272,21 @@ const StocktakeDetailView: Component = () => {
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
 
+  // Total volume of the selected lines (volumePerPack × counted|snapshot packs)
+  // — feeds the change-location picker's "Available" filter so it keeps only
+  // locations with room for the whole move.
+  const selectedVolume = (): number => {
+    const ids = new Set(selectedIds());
+    return rows()
+      .filter(r => ids.has(r.id))
+      .reduce(
+        (total, r) =>
+          total +
+          r.volumePerPack * (r.countedNumberOfPacks ?? r.snapshotNumberOfPacks),
+        0
+      );
+  };
+
   // Locations WITH capacity for this store, fetched HERE (not from a global
   // cache) and passed down to the line editor + change-location picker, so their
   // % used / fullness filter reflect current stock. `volumeUsed` is
@@ -838,7 +853,7 @@ const StocktakeDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
                       locations={locations()}
-                      rows={rows()}
+                      requiredVolume={selectedVolume}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}
@@ -878,6 +893,14 @@ const StocktakeDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled(node()) ? undefined : openRow}
+                  // Uncounted lines (no counted value) read in the info tone —
+                  // whole-row action-blue text, marking them as awaiting a
+                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68). They're the
+                  // lines trimmed on finalise. Flat table, so a leaf-row
+                  // predicate is enough (no grouped parents to propagate to).
+                  rowTone={line =>
+                    line.countedNumberOfPacks == null ? 'info' : undefined
+                  }
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (

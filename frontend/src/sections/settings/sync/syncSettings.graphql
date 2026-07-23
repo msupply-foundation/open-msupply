@@ -1,0 +1,33 @@
+# Synchronisation settings (spec/settings/contract.md § Synchronisation).
+# The query never returns the password — the form's password field always
+# starts blank (AC-SY2).
+query syncSettings {
+  syncSettings {
+    url
+    username
+    intervalSeconds
+  }
+}
+
+# Success returns the settings themselves (no dedicated OK wrapper); failure is
+# one of the two sync-era error nodes. The V7 node's variant is aliased apart
+# from the V6 one, matching src/api/initialisation.graphql, so the generated
+# union keeps both enums distinct.
+mutation updateSyncSettings($input: SyncSettingsInput!) {
+  updateSyncSettings(input: $input) {
+    ... on SyncSettingsNode {
+      __typename
+      username
+    }
+    ... on SyncErrorNode {
+      __typename
+      variant
+      fullError
+    }
+    ... on SyncErrorV7Node {
+      __typename
+      variantV7: variant
+      fullError
+    }
+  }
+}

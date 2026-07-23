@@ -46,9 +46,9 @@ export interface AppShellProps {
   /**
    * The user activated the sidebar's Sync entry — the chrome's sync affordance
    * (spec/chrome § sync indicator: opens the sync modal in place, no
-   * navigation). Only consulted with the default nav model, whose lower
-   * cluster carries the chrome Sync entry; a host-supplied menu (`upper`
-   * override) navigates every leaf normally, even one with the same id.
+   * navigation). Wiring this prop is what makes the Sync id special: a host
+   * that doesn't (the showcase) navigates every leaf normally, even one with
+   * the same id.
    */
   onSyncOpen?: () => void;
   /** The Sync entry's status badge (spec/chrome § sync indicator). */
@@ -175,14 +175,15 @@ export const AppShell = (props: AppShellProps) => {
               lower={menuLower()}
               selectedId={props.selected.id}
               // The Sync entry opens the modal in place — never navigates
-              // (spec/chrome AC-CH8). Chrome behaviour, so it applies only to
-              // the app's own nav model: a host-supplied menu (the showcase)
+              // (spec/chrome AC-CH8). Chrome behaviour, so it applies only
+              // when the host wired onSyncOpen: one that didn't (the showcase)
               // may use the same id as an ordinary destination.
-              onSelect={leaf =>
-                !props.upper && leaf.id === SYNC_NAV_ID
-                  ? props.onSyncOpen?.()
-                  : props.onNavigate(leaf)
-              }
+              onSelect={leaf => {
+                const openSync =
+                  leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
+                if (openSync) openSync();
+                else props.onNavigate(leaf);
+              }}
               syncBadge={props.syncBadge}
               syncIconDimmed={props.syncIconDimmed}
             />

@@ -1,0 +1,28 @@
+/* Sits inline with the label text (or whatever precedes it) without adding box
+   height; a small logical gap separates the icon from the preceding word. */
+.wrapper {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-start: var(--space-1);
+}
+
+/* Quiet brand-toned info marker, sized off the icon's own 1em. */
+.trigger {
+  display: inline-flex;
+  color: var(--gray-main);
+  font-size: 1rem;
+}
+
+.trigger:hover {
+  color: var(--primary-main);
+}
+
+/* The gloss can run a couple of lines — cap the bubble and let it wrap. */
+.panel {
+  max-width: 22rem;
+}
+
+.body {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

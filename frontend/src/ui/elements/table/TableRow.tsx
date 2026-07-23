@@ -30,16 +30,18 @@ export function TableRow<T>(props: {
   enableSelection: boolean;
   onRowClick?: (row: T) => void;
   /**
-   * De-emphasise this row (read-only records — e.g. SHIPPED+ shipments,
-   * ui-standards list-views): stamps data-dimmed, styled in CSS.
+   * Semantic row state (ui-standards § tables row states) — 'verified' /
+   * 'warning' / 'disabled', derived by the page from the record's own facts
+   * (see DataTable's prop doc). Stamps data-row-state, styled in CSS.
    */
-  rowDimmed?: (row: T) => boolean;
+  rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
-   * Semantic text tone for this row (e.g. 'info' for records awaiting an
-   * action — outbound's placeholder lines): stamps data-tone, styled in CSS.
-   * Semantic names only, mapped to palette tokens by the CSS — never colours.
+   * Semantic text tone for this row: 'info' for records awaiting an action
+   * (placeholder / uncounted lines), 'error' for a line the server refused
+   * (a failed bulk operation). Stamps data-tone, styled in CSS. Semantic
+   * names only, mapped to palette tokens by the CSS — never colours.
    */
-  rowTone?: (row: T) => 'info' | undefined;
+  rowTone?: (row: T) => 'info' | 'error' | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
@@ -63,9 +65,9 @@ export function TableRow<T>(props: {
       // address a specific row in the DOM (e.g. scroll it into view).
       data-row-key={props.row.id}
       class={props.onRowClick ? styles.rowClickable : undefined}
-      data-dimmed={
-        !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)
-          ? ''
+      data-row-state={
+        !props.row.getIsGrouped()
+          ? props.rowState?.(props.row.original)
           : undefined
       }
       data-tone={

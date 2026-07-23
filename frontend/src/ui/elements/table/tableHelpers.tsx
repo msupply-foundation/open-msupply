@@ -2,6 +2,7 @@ import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
+import { CheckIcon } from '../../icons';
 import type { Column } from './columnTypes';
 import { differenceInMonths } from 'date-fns';
 import styles from './tableHelpers.module.css';
@@ -25,7 +26,11 @@ import styles from './tableHelpers.module.css';
 // widen.
 type Meta = ColumnMeta<never, unknown>;
 
-const EMPTY_CELL = '—';
+// Empty cells render BLANK (ui-standards § tables; Carl 2026-07-23): a dash
+// reads as data. A real zero is a VALUE and still renders "0"; reserve a
+// literal "N/A" for a field genuinely not applicable to the row (≠ missing),
+// rendered by the page's own cell. (The items list's months-of-stock dash is
+// spec-owned — AC-S2, absence ≠ zero — and deliberately kept.)
 
 // These return a narrow column FRAGMENT — only the fields they set (meta/cell
 // + the grouping aggregationFn), typed off ColumnDefBase (the non-identity
@@ -46,9 +51,9 @@ export type CellFragment<T> = Pick<
   'meta' | 'cell' | 'aggregationFn' | 'aggregatedCell'
 >;
 
-// Format a date value the ONE way: blank → em dash, else localised.
+// Format a date value the ONE way: no value → blank, else localised.
 const formatDateCell = (value: string | Date | null | undefined): string =>
-  value ? localisedDate(value) : EMPTY_CELL;
+  value ? localisedDate(value) : '';
 
 // Numbers: right-aligned.
 export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
@@ -70,7 +75,7 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
-    if (!value) return EMPTY_CELL;
+    if (!value) return '';
     const almostExpired =
       differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
     return (
@@ -83,6 +88,27 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
 
 // Booleans live in their own cell component (dot / check / yes-no variants,
 // with the accessible-name treatment) — see BooleanCell + getBooleanCell.
+
+// Boolean flag (spec/ui-standards/components.md › "Boolean cell (flag in a
+// table)"): a centred marker when the value is set, blank otherwise — for a
+// column where the fact is the flag, not a Yes/No word (e.g. the patient list's
+// Deceased column). The marker carries the state's accessible name — never an
+// aria-hidden glyph alone (spec/ui-standards/accessibility › assistive-tech
+// parity) — so the caller passes the label (e.g. t('label.deceased')).
+export const getFlagCell = <T,>(
+  label: string,
+  meta?: Meta
+): CellFragment<T> => ({
+  meta: { align: 'center', ...meta },
+  cell: info =>
+    info.getValue<boolean>() ? (
+      <span role="img" aria-label={label} title={label}>
+        <CheckIcon />
+      </span>
+    ) : (
+      ''
+    ),
+});
 
 // Comment: the resolved string value behind a comment icon + popover (blank →
 // nothing). The Comment component renders null when there's no value, so an
@@ -99,9 +125,9 @@ export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // plumbed through; narrowSymbol keeps the symbol a bare "$" in the
 // Latin-script locales (the current app's pattern) — ar has no CLDR narrow
 // form and falls back to "US$".
-const formatCurrencyCell = (value: number | null | undefined): string =>
+export const formatCurrencyCell = (value: number | null | undefined): string =>
   value == null
-    ? EMPTY_CELL
+    ? ''
     : formatNumber(value, {
         style: 'currency',
         currency: 'USD',
