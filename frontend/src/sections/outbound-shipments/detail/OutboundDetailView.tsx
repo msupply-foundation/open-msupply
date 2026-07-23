@@ -724,13 +724,19 @@ const OutboundDetailView: Component = () => {
                 onCommitted={onLineOpsCommitted}
               />
               {/* Export/Print (reports S4): mounted on first open so the
-                  selector's chunk loads lazily. */}
+                  selector's chunk loads lazily. Its own Suspense boundary —
+                  the lazy chunk's first load would otherwise suspend the
+                  route boundary and collapse this open screen to the page
+                  spinner (kdd/solid-reactivity-pitfalls § no remounts on
+                  interaction). */}
               <Show when={reportsOpen()}>
-                <SelectReportModal
-                  context="OUTBOUND_SHIPMENT"
-                  dataId={current().id}
-                  onClose={() => setReportsOpen(false)}
-                />
+                <Suspense>
+                  <SelectReportModal
+                    context="OUTBOUND_SHIPMENT"
+                    dataId={current().id}
+                    onClose={() => setReportsOpen(false)}
+                  />
+                </Suspense>
               </Show>
               {/* Returns need a shipped shipment (AC-V3) — an info-only
                   notice; the return flow is the returns vertical's. */}
@@ -756,33 +762,36 @@ const OutboundDetailView: Component = () => {
                   S4): seeded from the selected STOCK lines (placeholder and
                   service lines can't be returned, so they're excluded); the
                   return is created born VERIFIED and linked to this shipment,
-                  then we navigate to it. */}
+                  then we navigate to it. Own Suspense boundary, as for the
+                  report selector above. */}
               <Show when={returnModalOpen()}>
-                <ReturnFromShipmentModal
-                  open
-                  onClose={() => setReturnModalOpen(false)}
-                  storeId={params.storeId}
-                  outboundShipmentId={current().id}
-                  outboundShipmentInvoiceNumber={current().invoiceNumber}
-                  customerId={current().otherParty.id}
-                  customerName={current().otherParty.name}
-                  outboundShipmentLineIds={() =>
-                    selectedLines()
-                      .filter(
-                        line =>
-                          line.type !== 'SERVICE' &&
-                          line.type !== 'UNALLOCATED_STOCK'
-                      )
-                      .map(line => line.id)
-                  }
-                  onCreated={returnId => {
-                    setReturnModalOpen(false);
-                    setSelectedIds([]);
-                    navigate(
-                      `/${params.storeId}/distribution/customer-return/${returnId}`
-                    );
-                  }}
-                />
+                <Suspense>
+                  <ReturnFromShipmentModal
+                    open
+                    onClose={() => setReturnModalOpen(false)}
+                    storeId={params.storeId}
+                    outboundShipmentId={current().id}
+                    outboundShipmentInvoiceNumber={current().invoiceNumber}
+                    customerId={current().otherParty.id}
+                    customerName={current().otherParty.name}
+                    outboundShipmentLineIds={() =>
+                      selectedLines()
+                        .filter(
+                          line =>
+                            line.type !== 'SERVICE' &&
+                            line.type !== 'UNALLOCATED_STOCK'
+                        )
+                        .map(line => line.id)
+                    }
+                    onCreated={returnId => {
+                      setReturnModalOpen(false);
+                      setSelectedIds([]);
+                      navigate(
+                        `/${params.storeId}/distribution/customer-return/${returnId}`
+                      );
+                    }}
+                  />
+                </Suspense>
               </Show>
             </Page>
           </Tabs>
