@@ -8,3 +8,7 @@
 .row[data-gap='sm'] {
   gap: var(--space-3);
 }
+
+.row[data-align='start'] {
+  align-items: flex-start;
+}

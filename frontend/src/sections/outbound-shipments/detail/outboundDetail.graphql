@@ -10,6 +10,7 @@ fragment OutboundInfo on InvoiceNode {
   createdDatetime
   allocatedDatetime
   pickedDatetime
+  backdatedDatetime
   shippedDatetime
   deliveredDatetime
   receivedDatetime
@@ -365,6 +366,22 @@ query customerMasterLists($storeId: String!, $customerNameId: String!) {
         id
         name
       }
+    }
+  }
+}
+
+# Stocktake-conflict check for backdating (AC-B4): any stocktake counted on or
+# after the chosen backdated date — its reissued lines would predate stock
+# counts already on record. (The old client's named outboundStocktakeCountAfterDate
+# query is absent on this server; this is the equivalent stocktakes date filter.)
+query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {
+  stocktakes(
+    storeId: $storeId
+    filter: { stocktakeDate: { afterOrEqualTo: $onOrAfter } }
+  ) {
+    ... on StocktakeConnector {
+      __typename
+      totalCount
     }
   }
 }
