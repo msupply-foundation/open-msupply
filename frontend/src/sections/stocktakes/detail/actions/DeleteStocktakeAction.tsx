@@ -82,7 +82,7 @@ export const DeleteStocktakeAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         disabled={props.disabled}
         data-testid="delete-stocktake-button"

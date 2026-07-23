@@ -143,10 +143,19 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
   /**
-   * De-emphasise matching rows (read-only records, e.g. SHIPPED+ shipments —
-   * ui-standards/list-views): stamps data-dimmed on the row, styled in CSS.
+   * Semantic row state (ui-standards § tables row states), derived by the
+   * page from the record's own facts — 'disabled' from the vertical's
+   * editability gate (read-only records, e.g. SHIPPED+ shipments),
+   * 'verified'/'warning' only where the domain has such a fact. One state
+   * per row, never stacked. Unselected rows stay WHITE — the badge alone
+   * carries the state; 'verified'/'warning' tint only while the row is
+   * SELECTED, replacing the selection blue (Carl 2026-07-24, confirmed
+   * against the spec demo's behaviour). 'disabled' is the exception:
+   * grey fill + muted text always. Every tint restates a fact a badge in
+   * the row already shows (never colour alone). Stamps data-row-state on
+   * the row, styled in CSS.
    */
-  rowDimmed?: (row: T) => boolean;
+  rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for matching rows: 'info' for lines awaiting an action
    * (placeholder / uncounted lines), 'error' for a line the server refused (a
@@ -779,7 +788,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                           row={row}
                           enableSelection={props.enableSelection ?? false}
                           onRowClick={props.onRowClick}
-                          rowDimmed={props.rowDimmed}
+                          rowState={props.rowState}
                           rowTone={props.rowTone}
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}

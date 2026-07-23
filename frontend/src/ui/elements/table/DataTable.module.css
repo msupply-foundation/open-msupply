@@ -1,18 +1,20 @@
 /*
  * DataTable — the shared, TanStack-driven data table (list views).
  *
- * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs for the
- * table BODY (rows, headers, selection, hover) — those follow the same tokens as the old
- * display-shell Table.module.css. But the toolbar (full-screen button) and the
- * full-screen surface have NO design yet; everything below the "PLACEHOLDER" marker is a
- * functional, token-driven stand-in meant to be replaced once designed.
+ * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs
+ * for the table BODY (rows, headers, selection, hover) — those follow the same
+ * tokens as the old display-shell Table.module.css. But the toolbar
+ * (full-screen button) and the full-screen surface have NO design yet;
+ * everything below the "PLACEHOLDER" marker is a functional, token-driven
+ * stand-in meant to be replaced once designed.
  */
 
 /* --- Table body (designed) -------------------------------------------------- */
 
-/* The DataTable fills the space its container gives it (a flex child in the page body)
-   and owns its own scroll — so the column headers stay pinned and horizontal scroll is
-   available immediately, rather than the whole page body scrolling. */
+/* The DataTable fills the space its container gives it (a flex child in the
+   page body) and owns its own scroll — so the column headers stay pinned and
+   horizontal scroll is available immediately, rather than the whole page body
+   scrolling. */
 .root {
   display: flex;
   flex: 1;
@@ -20,11 +22,25 @@
   min-block-size: 0;
   min-inline-size: 0;
 
-  /* Width of each leading fixed column (expander / select). The ONE source of truth for that
-     box — the .selectCell/.expanderCell rules size to it, and the JS column-pinning math mirrors
-     it as remToPx(2.75) (see DataTable.tsx LEADING_COL_PX). ≥44px at the 16px root is a
-     comfortable WCAG 2.5.8 touch target. Keep the rem here in sync with that JS literal. */
+  /* Width of each leading fixed column (expander / select). The ONE source of
+     truth for that box — the .selectCell/.expanderCell rules size to it, and
+     the JS column-pinning math mirrors it as remToPx(2.75) (see DataTable.tsx
+     LEADING_COL_PX). ≥44px at the 16px root is a comfortable WCAG 2.5.8 touch
+     target. Keep the rem here in sync with that JS literal. */
   --table-leading-col: 2.75rem;
+
+  /* Row background fade (ui-standards § tables: transition background
+     0.15s on body rows) — carried by the cells, which paint the hover
+     wash / selection tint. A custom property rather than a transition
+     override so reduced-motion zeroes it without a higher-specificity
+     rule. */
+  --table-bg-fade: 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    --table-bg-fade: 0s;
+  }
 }
 
 /* Refreshing bar — a thin indeterminate progress bar shown above the scroll
@@ -74,8 +90,8 @@
   min-block-size: 0;
 }
 
-/* The bordered box starts here (the table itself), so the transparent toolbar above sits
-   OUTSIDE the border rather than being enclosed by it. */
+/* The bordered box starts here (the table itself), so the transparent toolbar
+   above sits OUTSIDE the border rather than being enclosed by it. */
 .tableScroll {
   flex: 1;
   min-block-size: 0;
@@ -91,9 +107,10 @@
   font-size: var(--text-sm);
 }
 
-/* Column-header row stays pinned to the top of the scroll container while the body scrolls.
-   Sticky sits on the cells (more reliable than on <thead>). Stacking order (kept strict so the
-   header always wins on vertical scroll and pinned columns win on horizontal scroll):
+/* Column-header row stays pinned to the top of the scroll container while the
+   body scrolls. Sticky sits on the cells (more reliable than on <thead>).
+   Stacking order (kept strict so the header always wins on vertical scroll and
+   pinned columns win on horizontal scroll):
      normal body cell   z auto (0)
      pinned body cell   z 1   (above scrolling body cells)
      normal header cell z 2   (above ALL body cells, incl. pinned ones)
@@ -102,21 +119,32 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 2;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-block-end: 1px solid var(--color-divider);
   background: var(--bg-toolbar);
-  color: var(--text-secondary);
+  color: var(--text-body);
   font-weight: var(--weight-medium);
+  line-height: var(--table-line-height);
   text-align: start;
-  /* Header text may wrap (up to 2 lines — see .thText); the sort indicator stays visible,
-     vertically centered beside it. Body cells keep nowrap unless a column opts into
-     wrapLines (.td[data-wrap]). */
+  /* Header text may wrap (up to 2 lines — see .thText); the sort indicator
+     stays visible, vertically centered beside it. Body cells keep nowrap unless
+     a column opts into wrapLines (.td[data-wrap]). */
   vertical-align: middle;
 }
 
-/* Column resize handle — a thin hit target on the trailing edge of a resizable header.
-   Invisible at rest (a faint divider on hover), highlighted with the brand tone while
-   dragging. Sticky positioning on .th is a containing block for this absolute child. */
+/* Sortable header (ui-standards § tables .sortable): the WHOLE cell is the
+   click target (HeaderCell puts the toggle handler on the th), not just the
+   label. The hover wash lives further down, after the pinned-header rules
+   (no-descending-specificity). */
+.th[data-sortable] {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Column resize handle — a thin hit target on the trailing edge of a resizable
+   header. Invisible at rest (a faint divider on hover), highlighted with the
+   brand tone while dragging. Sticky positioning on .th is a containing block
+   for this absolute child. */
 .resizeHandle {
   position: absolute;
   inset-block: 0;
@@ -158,6 +186,7 @@
   border-block-end: 1px solid var(--color-divider);
   color: var(--text-body);
   white-space: nowrap;
+  transition: background-color var(--table-bg-fade);
 }
 
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
@@ -187,13 +216,6 @@
   text-align: center;
 }
 
-/* De-emphasised (read-only) rows — data-dimmed stamped by TableRow when the
-   page's rowDimmed predicate matches (e.g. SHIPPED+ shipments). Opacity, not a
-   colour, so every cell treatment (chips, swatches) dims consistently. */
-tr[data-dimmed] > .td {
-  opacity: 0.55;
-}
-
 /* Semantic row tones — data-tone stamped by TableRow when the page's rowTone
    predicate matches. 'info' = the action-blue text the current app gives rows
    awaiting an action (e.g. outbound's placeholder lines). Colour on the cells
@@ -203,13 +225,22 @@ tr[data-tone='info'] > .td {
   color: var(--info-main);
 }
 
-/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. The td
-   itself MUST stay a real table cell — swapping its display for the -webkit-box that
-   line-clamp needs detaches it from table layout, so its content and collapsed bottom
-   border stop lining up with neighbouring cells (issue #244). The clamp therefore lives
-   on an inner wrapper (.tdClamp); the td only relaxes nowrap and adds vertical padding.
-   .td's block-size acts as a minimum under table layout, so multi-line content grows
-   the row rather than clipping. Placed after .td so it wins the white-space. */
+/* Disabled rows: cursor follows TRUE interactivity — not-allowed only
+   where a click does nothing; clickable read-only rows (spec AC-L3:
+   they still open) keep the pointer. The grey fill + muted text live
+   with the other row-state rules further down. */
+tr[data-row-state='disabled']:not(.rowClickable) {
+  cursor: not-allowed;
+}
+
+/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis.
+   The td itself MUST stay a real table cell — swapping its display for the
+   -webkit-box that line-clamp needs detaches it from table layout, so its
+   content and collapsed bottom border stop lining up with neighbouring cells
+   (issue #244). The clamp therefore lives on an inner wrapper (.tdClamp); the
+   td only relaxes nowrap and adds vertical padding. .td's block-size acts as a
+   minimum under table layout, so multi-line content grows the row rather than
+   clipping. Placed after .td so it wins the white-space. */
 .td[data-wrap] {
   padding-block: var(--space-1);
   white-space: normal;
@@ -272,25 +303,36 @@ tr[data-tone='info'] > .td {
   justify-content: center;
 }
 
-.thSortable {
-  cursor: pointer;
-  user-select: none;
-}
-
+/* Sort indicator (ui-standards § tables .sort-arrow) — a RESERVED slot on every
+   sortable header: always rendered (empty until sorted) at a fixed width, so
+   toggling a sort never shifts the header text. Action blue, per spec. */
 .sortIndicator {
   flex-shrink: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
+  inline-size: var(--space-3);
   margin-inline-start: var(--space-1);
+  color: var(--secondary-main);
+  font-size: 1.125rem;
+  line-height: 1;
+  text-align: center;
 }
 
-/* A clickable row (list → detail, or detail → edit modal); only when onRowClick set. */
+/* A clickable row (list → detail, or detail → edit modal); only when
+   onRowClick set. The pointer is the affordance — the hover wash below
+   applies to EVERY body row. */
 .rowClickable {
   cursor: pointer;
 }
 
-.rowClickable:hover {
-  background: var(--bg-row);
+/* Row hover wash (ui-standards § tables): every body row, not just
+   clickable ones — a 4% text-tone wash, ≡ the spec's rgba(0,0,0,0.04)
+   in light, flipping to a near-white wash in dark. Painted on the CELLS
+   (a wash on the tr would be hidden by a pinned cell's opaque sticky
+   fill); the pinned cells get opaque variants further down, and rule
+   order keeps the selection tint winning while a selected row is
+   hovered. :where(tbody) scopes body rows only (the header/footer
+   select cells share .selectCell) at zero added specificity. */
+:where(tbody) tr:hover > .td {
+  background: color-mix(in srgb, var(--text-body) 4%, transparent);
 }
 
 /* The leading fixed selection column is a FIXED box width so its pinned sticky
@@ -307,15 +349,7 @@ tr[data-tone='info'] > .td {
   border-block-end: 1px solid var(--color-divider);
   text-align: center;
   padding: var(--space-2) var(--space-1);
-}
-
-/* Selected row — the SAME brand tint as a selected card (data-selected on the <tr>), so
-   selection reads identically in table and card view. The tint sits on the cells (which
-   paint over the row background). Placed AFTER the base .td / .selectCell rules so
-   specificity ascends (no-descending-specificity). */
-tr[data-selected] .td,
-tr[data-selected] .selectCell {
-  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+  transition: background-color var(--table-bg-fade);
 }
 
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
@@ -356,6 +390,14 @@ tr[data-selected] .selectCell {
   box-shadow: inset 1px 0 0 0 var(--color-divider);
 }
 
+/* Sortable-header hover wash (spec: rgba(0,0,0,0.04) over the header grey).
+   Mixed INTO the header fill rather than layered over it — the th is sticky,
+   so its background must stay opaque. Sits after the pinned-header rules so
+   the wash also wins on a pinned sortable header (specificity ascends). */
+.th[data-sortable]:hover {
+  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
+}
+
 /* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the frozen
    leading column reads as one cohesive band with the header above it (matching the header
    background — as requested), plus a soft drop shadow onto the scrolling content to its
@@ -372,11 +414,39 @@ tr[data-selected] .selectCell {
       color-mix(in srgb, var(--gray-main) 35%, transparent);
 }
 
-/* A selected pinned cell keeps the selection tint (over the opaque base) — placed AFTER the base
-   pinned + selected rules so specificity ascends (no-descending-specificity). */
-tr[data-selected] .td[data-pinned],
-tr[data-selected] .selectCell[data-pinned] {
-  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+/* Opaque hover variants for the sticky cells — the translucent row wash
+   would let scrolling content show through a pinned cell, so the same 4%
+   wash is mixed INTO each cell's opaque fill instead. Disabled rows are
+   excluded: they stay flat grey under the pointer (their fill rule is
+   lower-specificity, so it can't outrank these). Selected/state tints
+   still win while hovered — their hover rules match these on specificity
+   and sit later in the file. */
+:where(tbody) tr:not([data-row-state='disabled']):hover > .td[data-pinned] {
+  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-white));
+}
+
+:where(tbody)
+  tr:not([data-row-state='disabled']):hover
+  > .selectCell[data-pinned] {
+  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
+}
+
+/* Row backgrounds — the model (ui-standards § tables, confirmed against
+   the live demo behaviour + Carl 2026-07-24): UNSELECTED rows are always
+   white (only the hover wash above); SELECTING a row shows the action
+   blue, or the row's STATE tint instead when it carries one (the state
+   tint replaces blue, never stacks) — those rules sit below the density
+   block. The one exception is 'disabled': grey fill + muted text ALWAYS —
+   spec-locked rows aren't selectable at all, and our clickable read-only
+   rows keep the grey even selected. Its rule lives here, before the
+   density block, purely for the lint's ascending-specificity order. All
+   fills are opaque (mixed over --surface-raised), so they cover pinned
+   cells with no per-pinned variants; each tint restates a fact a badge
+   in the row already shows (never colour alone). */
+tr[data-row-state='disabled'] > .td,
+tr[data-row-state='disabled'] > .selectCell {
+  background: var(--bg-toolbar);
+  color: var(--text-secondary);
 }
 
 /* Row density (ui-standards § tables → row heights), keyed off the
@@ -384,8 +454,9 @@ tr[data-selected] .selectCell[data-pinned] {
    popover; comfortable is the spec's ⭐ default). Row height only for now —
    the per-density cell padding + typography land with the Phase 2 styling
    pass. block-size acts as a MINIMUM under table layout, so wrapping cells
-   still grow the row. Placed after every other .td-descendant rule
-   (no-descending-specificity). */
+   still grow the row. Sits BEFORE the selection/state tint rules — those
+   carry higher specificity on the .td key, and no-descending-specificity
+   wants ascending order (block-size never collides with them anyway). */
 .table[data-density='compact'] .td {
   block-size: 2.5rem; /* 40px */
 }
@@ -396,6 +467,62 @@ tr[data-selected] .selectCell[data-pinned] {
 
 .table[data-density='spacious'] .td {
   block-size: 4rem; /* 64px */
+}
+
+tr[data-selected]:not([data-row-state]) > .td,
+tr[data-selected]:not([data-row-state]) > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--secondary-main) 8%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-row-state='verified'] > .td,
+tr[data-selected][data-row-state='verified'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--status-verified) 8%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-row-state='warning'] > .td,
+tr[data-selected][data-row-state='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--color-warning) 10%,
+    var(--surface-raised)
+  );
+}
+
+/* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
+   verified 8 → 12%, warning 10 → 15%). Disabled has no deepen — flat. */
+:where(tbody) tr[data-selected]:not([data-row-state]):hover > .td,
+:where(tbody) tr[data-selected]:not([data-row-state]):hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--secondary-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-row-state='verified']:hover > .td,
+:where(tbody) tr[data-selected][data-row-state='verified']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--status-verified) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-row-state='warning']:hover > .td,
+:where(tbody) tr[data-selected][data-row-state='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--color-warning) 15%,
+    var(--surface-raised)
+  );
 }
 
 /* ==========================================================================
@@ -502,9 +629,10 @@ tr[data-selected] .selectCell[data-pinned] {
   vertical-align: top;
 }
 
-/* Selected card <tr> — tints the whole row (brand tint, matching table-row selection). */
+/* Selected card <tr> — tints the whole row (the action-blue selection
+   tint, matching table-row selection). */
 .cardRow[data-selected] > .cardCell {
-  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
 }
 
 /* The card body — a vertical stack (header row, then the secondary field rows). It

@@ -497,6 +497,21 @@ export const TableShowcase = () => {
         // here so the click-to-open row affordance (hover / pointer) still
         // shows.
         onRowClick={() => {}}
+        // Demo mapping so every semantic row state renders for review (a
+        // real page derives these from its own domain gates — e.g. disabled
+        // from its read-only lifecycle check; the tint always pairs with
+        // the row's status badge). SHIPPED rows show the always-on disabled
+        // grey; SELECT a VERIFIED/PICKED row to see its green/amber tint —
+        // states tint only while selected, replacing the selection blue.
+        rowState={row =>
+          row.status === 'VERIFIED'
+            ? 'verified'
+            : row.status === 'PICKED'
+              ? 'warning'
+              : row.status === 'SHIPPED'
+                ? 'disabled'
+                : undefined
+        }
         emptyMessage={t('error.no-inbound-shipments')}
         enableSelection
         selectedIds={selectedIds()}
@@ -516,7 +531,7 @@ export const TableShowcase = () => {
               }
             >
               <Button
-                variant="secondary"
+                variant="danger"
                 icon={<TrashIcon />}
                 disabled={!allSelectedNew()}
               >
