@@ -609,6 +609,17 @@ export const MinimiseIcon = (props: IconProps) => (
   </Stroke>
 );
 
+// Columns — the column-management control (a framed set of vertical columns;
+// ui-standards § tables → column management). TableViewIcon minus its row
+// line, so the two read as siblings but stay distinguishable.
+export const ColumnsIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
+    <path d="M15.5 21.5L15.5 2.5" />
+    <path d="M8.5 21.4998L8.5 2.49976" />
+  </Stroke>
+);
+
 // Table/rows view — the "switch to table" control (a framed grid of rows/cols).
 /* Hugeicons: LayoutTable01Icon */
 export const TableViewIcon = (props: IconProps) => (
