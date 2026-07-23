@@ -17,13 +17,16 @@ query locations($storeId: String!) {
   }
 }
 
-# `locationsWithVolume` — additionally `volume` / `volumeUsed` / `stock.totalCount`.
-# Backs the volume-AWARE picker (LocationVolumeSelect), used where stock is
-# associated with a location (stocktake line editor, bulk change-location): it
-# shows each location's % used and offers the All / Empty / Available fullness
-# filter. `volumeUsed` is the server-computed sum of `volumePerPack × packs` over
-# the location's stock, so it must be re-read where volume is shown rather than
-# cached — the consuming route/view fetches this locally and passes it down.
+# `locationsWithVolume` — additionally `onHold` / `volume` / `volumeUsed` /
+# `stock.totalCount`. Backs the volume-AWARE picker (LocationVolumeSelect), used
+# where stock is associated with a location (stocktake / inbound line editor,
+# bulk change-location): it shows each location's % used and offers the
+# All / Empty / Available fullness filter — where "Available" means not on-hold
+# and with room for the volume being placed, hence `onHold`. `volumeUsed` is the
+# server-computed sum of
+# `volumePerPack × packs` over the location's stock, so it must be re-read where
+# volume is shown rather than cached — the consuming route/view fetches this
+# locally and passes it down.
 query locationsWithVolume($storeId: String!) {
   locations(storeId: $storeId) {
     ... on LocationConnector {
@@ -32,6 +35,7 @@ query locationsWithVolume($storeId: String!) {
         id
         code
         name
+        onHold
         volume
         volumeUsed
         stock {

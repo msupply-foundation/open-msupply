@@ -24,10 +24,12 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
+  formatCurrencyCell,
   getCurrencyCell,
   getExpiryDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createMediaQuery } from '../../../ui/utils/createMediaQuery';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -147,7 +149,7 @@ const OutboundDetailView: Component = () => {
   const serviceLines = () => lines().filter(line => line.type === 'SERVICE');
   // Default line-table order: item name ascending (ui-surface S3 § line table;
   // matches the old app). A flat client-side sort — all lines are loaded, and
-  // the table is un-grouped (D29).
+  // the table is un-grouped (D34).
   const sortedLines = () =>
     [...stockAndPlaceholderLines()].sort((a, b) =>
       a.itemName.localeCompare(b.itemName)
@@ -182,7 +184,7 @@ const OutboundDetailView: Component = () => {
           unitName: false,
           receivedNumberOfPacks: false,
           difference: false,
-          volumePerPack: false,
+          volume: false,
           locationCode: false,
         },
       },
@@ -290,128 +292,155 @@ const OutboundDetailView: Component = () => {
   // The detail line table (spec S3 § line table): one row per stock/placeholder
   // line — flat, since main dropped row-grouping from the shared DataTable;
   // placeholder rows show the requested quantity.
-  const columns = (): Column<Line, never>[] => [
-    {
-      c: { key: 'itemCode' },
-      header: t('label.code'),
-    },
-    {
-      c: { key: 'itemName' },
-      header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
-    },
-    {
-      c: {
-        accessor: line =>
-          line.type === 'UNALLOCATED_STOCK'
-            ? t('label.placeholder')
-            : (line.batch ?? '—'),
-        id: 'batch',
+  const columns = (): Column<Line, never>[] => {
+    // Footer totals (spec § line table: "Totals for quantity/total/volume in
+    // the table footer", D45 — richer than the old app's Total-label + volume
+    // sum, standing in for the per-item aggregates dropped with grouping,
+    // D34). Computed here so columns() takes the reactive dependency and the
+    // footer closures stay plain (the Financial tab's pattern).
+    const totals = stockAndPlaceholderLines().reduce(
+      (sum, line) => ({
+        packs: sum.packs + line.numberOfPacks,
+        units: sum.units + line.numberOfPacks * line.packSize,
+        price: sum.price + line.totalAfterTax,
+        volume: sum.volume + line.volumePerPack * line.numberOfPacks,
+      }),
+      { packs: 0, units: 0, price: 0, volume: 0 }
+    );
+    return [
+      {
+        c: { key: 'itemCode' },
+        header: t('label.code'),
+        footer: () => t('label.total'),
       },
-      header: t('label.batch'),
-    },
-    {
-      c: { key: 'expiryDate' },
-      header: t('label.expiry-date'),
-      ...getExpiryDateCell(),
-    },
-    ...(vvmOn()
-      ? [
-          {
-            c: {
-              accessor: (line: Line) => line.vvmStatus?.description ?? '',
-              id: 'vvmStatus',
-            },
-            header: t('label.vvm-status'),
-          } as Column<Line, never>,
-        ]
-      : []),
-    {
-      c: { accessor: line => line.location?.code ?? '', id: 'locationCode' },
-      header: t('label.location'),
-    },
-    {
-      c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
-      header: t('label.unit'),
-    },
-    {
-      c: { key: 'packSize' },
-      header: t('label.pack-size'),
-      ...getNumberCell(),
-    },
-    ...(dosesOn()
-      ? [
-          {
-            c: {
-              accessor: (line: Line) =>
-                line.item.isVaccine ? line.item.doses : null,
-              id: 'dosesPerUnit',
-            },
-            header: t('label.doses-per-unit'),
-            ...getNumberCell(),
-          } as Column<Line, never>,
-        ]
-      : []),
-    {
-      c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
-      ...getNumberCell(),
-    },
-    {
-      c: { key: 'receivedNumberOfPacks' },
-      header: t('label.packs-received'),
-      ...getNumberCell(),
-    },
-    {
-      c: {
-        accessor: line =>
-          line.receivedNumberOfPacks != null
-            ? line.receivedNumberOfPacks - line.numberOfPacks
-            : null,
-        id: 'difference',
+      {
+        c: { key: 'itemName' },
+        header: t('label.name'),
+        meta: { card: { region: 'primary' }, wrapLines: 2 },
       },
-      header: t('label.difference'),
-      ...getNumberCell(),
-    },
-    {
-      c: {
-        accessor: line => line.numberOfPacks * line.packSize,
-        id: 'unitQuantity',
+      {
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? t('label.placeholder')
+              : (line.batch ?? '—'),
+          id: 'batch',
+        },
+        header: t('label.batch'),
       },
-      header: t('label.unit-quantity'),
-      ...getNumberCell(),
-    },
-    ...(dosesOn()
-      ? [
-          {
-            c: {
-              accessor: (line: Line) =>
-                line.item.isVaccine
-                  ? line.numberOfPacks * line.packSize * line.item.doses
-                  : null,
-              id: 'doses',
-            },
-            header: t('label.doses'),
-            ...getNumberCell(),
-          } as Column<Line, never>,
-        ]
-      : []),
-    {
-      c: { key: 'sellPricePerPack' },
-      header: t('label.unit-sell-price'),
-      ...getCurrencyCell(),
-    },
-    {
-      c: { key: 'totalAfterTax' },
-      header: t('label.total'),
-      ...getCurrencyCell(),
-    },
-    {
-      c: { key: 'volumePerPack' },
-      header: t('label.volume'),
-      ...getNumberCell(),
-    },
-  ];
+      {
+        c: { key: 'expiryDate' },
+        header: t('label.expiry-date'),
+        ...getExpiryDateCell(),
+      },
+      ...(vvmOn()
+        ? [
+            {
+              c: {
+                accessor: (line: Line) => line.vvmStatus?.description ?? '',
+                id: 'vvmStatus',
+              },
+              header: t('label.vvm-status'),
+            } as Column<Line, never>,
+          ]
+        : []),
+      {
+        c: { accessor: line => line.location?.code ?? '', id: 'locationCode' },
+        header: t('label.location'),
+      },
+      {
+        c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
+        header: t('label.unit'),
+      },
+      {
+        c: { key: 'packSize' },
+        header: t('label.pack-size'),
+        ...getNumberCell(),
+      },
+      ...(dosesOn()
+        ? [
+            {
+              c: {
+                accessor: (line: Line) =>
+                  line.item.isVaccine ? line.item.doses : null,
+                id: 'dosesPerUnit',
+              },
+              header: t('label.doses-per-unit'),
+              ...getNumberCell(),
+            } as Column<Line, never>,
+          ]
+        : []),
+      {
+        c: { key: 'numberOfPacks' },
+        header: t('label.pack-quantity'),
+        footer: () => formatNumber(totals.packs),
+        ...getNumberCell(),
+      },
+      {
+        c: { key: 'receivedNumberOfPacks' },
+        header: t('label.packs-received'),
+        ...getNumberCell(),
+      },
+      {
+        c: {
+          accessor: line =>
+            line.receivedNumberOfPacks != null
+              ? line.receivedNumberOfPacks - line.numberOfPacks
+              : null,
+          id: 'difference',
+        },
+        header: t('label.difference'),
+        ...getNumberCell(),
+      },
+      {
+        c: {
+          accessor: line => line.numberOfPacks * line.packSize,
+          id: 'unitQuantity',
+        },
+        header: t('label.unit-quantity'),
+        footer: () => formatNumber(totals.units),
+        ...getNumberCell(),
+      },
+      ...(dosesOn()
+        ? [
+            {
+              c: {
+                accessor: (line: Line) =>
+                  line.item.isVaccine
+                    ? line.numberOfPacks * line.packSize * line.item.doses
+                    : null,
+                id: 'doses',
+              },
+              header: t('label.doses'),
+              ...getNumberCell(),
+            } as Column<Line, never>,
+          ]
+        : []),
+      {
+        c: { key: 'sellPricePerPack' },
+        header: t('label.unit-sell-price'),
+        ...getCurrencyCell(),
+      },
+      {
+        c: { key: 'totalAfterTax' },
+        header: t('label.total'),
+        footer: () => formatCurrencyCell(totals.price),
+        ...getCurrencyCell(),
+      },
+      {
+        // Line volume — volume per pack × packs (the old app's volume column),
+        // not the raw per-pack figure; the footer then sums to the shipment
+        // volume, matching the old app's footer.
+        c: {
+          accessor: line => line.volumePerPack * line.numberOfPacks,
+          id: 'volume',
+        },
+        header: t('label.volume'),
+        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 5 }),
+        ...getNumberCell(),
+      },
+    ];
+  };
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -458,6 +487,7 @@ const OutboundDetailView: Component = () => {
               sidePanelContent={
                 <OutboundSidePanel
                   node={current()}
+                  storeId={params.storeId}
                   disabled={!editable()}
                   edit={edit}
                   onSaveField={patch => void saveField(patch)}
@@ -487,6 +517,7 @@ const OutboundDetailView: Component = () => {
                     {/* Export/Print — the reports vertical's record-screen
                         selector (reports S4), available at every status. */}
                     <Button
+                      variant="secondary"
                       icon={<PrinterIcon />}
                       data-testid="export-print-button"
                       onClick={() => setReportsOpen(true)}

@@ -7,6 +7,14 @@ export interface CardGridProps extends JSX.HTMLAttributes<HTMLDivElement> {
    * defaults to a card-sized 20rem. Drives the intrinsic `auto-fit` track sizing.
    */
   minColumnWidth?: string;
+  /**
+   * Cap on column growth. Default (`1fr`) shares all leftover width equally, so
+   * columns balloon on very wide bodies; a length (e.g. `40rem`) pins columns
+   * at that width instead — `auto-fit` then packs as many capped columns as
+   * fit and leaves the leftover empty at the inline end. With a cap set, the
+   * cap (not `minColumnWidth`) decides the column count.
+   */
+  maxColumnWidth?: string;
 }
 
 /*
@@ -19,13 +27,17 @@ export interface CardGridProps extends JSX.HTMLAttributes<HTMLDivElement> {
 export const CardGrid = (props: CardGridProps) => {
   const [local, rest] = splitProps(props, [
     'minColumnWidth',
+    'maxColumnWidth',
     'class',
     'children',
   ]);
   return (
     <div
       class={local.class ? `${styles.grid} ${local.class}` : styles.grid}
-      style={{ '--card-grid-min': local.minColumnWidth ?? '20rem' }}
+      style={{
+        '--card-grid-min': local.minColumnWidth ?? '20rem',
+        '--card-grid-max': local.maxColumnWidth ?? '1fr',
+      }}
       {...rest}
     >
       {local.children}
