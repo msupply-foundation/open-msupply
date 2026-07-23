@@ -104,6 +104,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
               // (the real values arrive with the item's own search page).
               isVaccine: false,
               doses: 0,
+              defaultPackSize: 1,
+              defaultSellPricePerPack: 0,
             }
           : undefined
       }

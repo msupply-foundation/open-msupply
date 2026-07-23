@@ -66,7 +66,21 @@ mutation duplicateInboundShipment($storeId: String!, $id: String!) {
 }
 
 # The store's Sent purchase orders — the from-a-purchase-order create option
-# (spec S2, AC-PG3). Filtered to SENT; supplier shown so the user can pick.
+# (spec S2 → Link purchase order modal, AC-PG3). Filtered to SENT; supplier +
+# reference + comment shown as table columns so the user can pick the right one.
+fragment LinkPurchaseOrderRow on PurchaseOrderNode {
+  id
+  number
+  reference
+  comment
+  status
+  supplier {
+    id
+    name
+    code
+  }
+}
+
 query sentPurchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
   purchaseOrders(
     storeId: $storeId
@@ -77,15 +91,7 @@ query sentPurchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
       __typename
       totalCount
       nodes {
-        id
-        number
-        reference
-        status
-        supplier {
-          id
-          name
-          code
-        }
+        ...LinkPurchaseOrderRow
       }
     }
   }

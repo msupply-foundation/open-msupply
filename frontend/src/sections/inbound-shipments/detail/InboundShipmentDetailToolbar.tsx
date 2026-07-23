@@ -1,4 +1,4 @@
-import { Show, type Component } from 'solid-js';
+import { Show, createSignal, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
@@ -29,7 +29,7 @@ export interface InboundShipmentDetailToolbarProps {
   onFilterChange: (filter: InboundLineFilter) => void;
   onSaveField: (
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
-  ) => void;
+  ) => Promise<{ ok: boolean; message?: string }>;
 }
 
 // The line-table item-search filter — the only surfaced line filter (server
@@ -59,6 +59,12 @@ export const InboundShipmentDetailToolbar: Component<
   InboundShipmentDetailToolbarProps
 > = props => {
   const kind = () => kindOf(props.node);
+
+  // The received date is enabled while Received + backdating-on, yet the server
+  // can still refuse the save (moving the date forward, or beyond the store's
+  // max-days window). Those come back as untyped rejections; surface the
+  // verdict inline beneath the field (spec S7 / AC-B), request preserved.
+  const [receivedError, setReceivedError] = createSignal<string>();
 
   // Supplier is editable only on a manual shipment that isn't Verified — never
   // on a transfer or a PO-linked shipment (spec S3 header fields).
@@ -137,12 +143,18 @@ export const InboundShipmentDetailToolbar: Component<
           // Backdating only ever moves the date earlier — cap at the current
           // received date. (Server also bounds by the max-days window.)
           max={props.node.receivedDatetime?.slice(0, 10) ?? undefined}
-          onChange={value =>
-            value &&
-            props.onSaveField({ receivedDatetime: `${value}T00:00:00.000Z` })
-          }
+          onChange={value => {
+            if (!value) return;
+            setReceivedError(undefined);
+            void props
+              .onSaveField({ receivedDatetime: `${value}T00:00:00.000Z` })
+              .then(r => setReceivedError(r.ok ? undefined : r.message));
+          }}
         />
       </FieldRow>
+      <Show when={receivedError()}>
+        <Alert severity="error">{receivedError()}</Alert>
+      </Show>
 
       {/* PO-linked: read-only PO number + reference (spec S3 header fields). */}
       <Show when={props.node.purchaseOrder}>

@@ -447,6 +447,7 @@ const OutboundDetailView: Component = () => {
               sidePanelContent={
                 <OutboundSidePanel
                   node={current()}
+                  storeId={params.storeId}
                   disabled={!editable()}
                   edit={edit}
                   onSaveField={patch => void saveField(patch)}
@@ -476,6 +477,7 @@ const OutboundDetailView: Component = () => {
                     {/* Export/Print — the reports vertical's record-screen
                         selector (reports S4), available at every status. */}
                     <Button
+                      variant="secondary"
                       icon={<PrinterIcon />}
                       data-testid="export-print-button"
                       onClick={() => setReportsOpen(true)}

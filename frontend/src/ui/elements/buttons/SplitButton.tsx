@@ -13,6 +13,12 @@ export interface SplitButtonOption {
    * past/current status in a
    *  status-change menu that lists every status for context. */
   disabled?: boolean;
+  /**
+   * Explanation shown as a native tooltip when the entry is disabled — the
+   * "disable with reason" convention (prefer disabling with an explanation over
+   * hiding an unavailable option; ui-surface cross-cutting).
+   */
+  title?: string;
 }
 
 interface SplitButtonProps {
@@ -133,6 +139,7 @@ export const SplitButton = (props: SplitButtonProps) => {
                     option.value === selectedValue() ? 'true' : undefined
                   }
                   disabled={option.disabled}
+                  title={option.disabled ? option.title : undefined}
                   onSelect={() => {
                     if (!option.disabled) pick(option.value);
                   }}
