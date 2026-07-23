@@ -25,9 +25,6 @@ import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import {
@@ -36,7 +33,6 @@ import {
 } from '../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../ui/elements/selectors/FilterBar';
 import {
-  CloseIcon,
   CopyIcon,
   DownloadIcon,
   HomeIcon,
@@ -65,13 +61,16 @@ import {
 import { linkedOrderOf } from '../sections/inbound-shipments/linkedOrder';
 
 // The List-page demo: the SAME assembly as the real InboundShipmentsList — a
-// Page frame with a header (breadcrumb + New shipment + the FilterBar toolbar),
-// the shared DataTable filling the body, and a selection footer. No backend:
-// filter / sort / pagination / selection run over a static 120-row dataset,
-// filtered + sorted + sliced here to stand in for the server contract (the
-// DataTable stays manual-sorting — it renders whatever page of rows it's
-// handed). Rows conform to the generated InboundRowFragment (kdd/type-safety —
-// state bound for the table IS the GraphQL type, never a parallel one).
+// Page frame with a header (breadcrumb + New shipment), and the shared
+// DataTable filling the body as the composition root of its own chrome
+// (ui-standards § tables): the FilterBar in the table's toolbar, and the ONE
+// footer bar that shows the pager by default and swaps to the selection
+// action bar while rows are selected. No backend: filter / sort / pagination
+// / selection run over a static 120-row dataset, filtered + sorted + sliced
+// here to stand in for the server contract (the DataTable stays
+// manual-sorting — it renders whatever page of rows it's handed). Rows
+// conform to the generated InboundRowFragment (kdd/type-safety — state bound
+// for the table IS the GraphQL type, never a parallel one).
 type Row = InboundRowFragment;
 
 // Only the columns that carry a `sortKey` — a header click can sort by these.
@@ -291,6 +290,15 @@ export const TableShowcase = () => {
     }));
   const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) =>
     setBandConfig(activeBand(), key, value);
+  // Local stand-in for createTableConfig's isConfigDefault: no user overrides
+  // at the current band (`== null` counts the table Reset's explicit
+  // `undefined` writes as cleared) → the Settings popover's Reset disables.
+  const isConfigDefault = (): boolean => {
+    const bandConfig = layered()[activeBand()];
+    return (
+      !bandConfig || Object.values(bandConfig).every(value => value == null)
+    );
+  };
 
   // Stand in for the server: filter, sort the whole dataset, then slice the
   // current page.
@@ -467,22 +475,39 @@ export const TableShowcase = () => {
               {t('button.export')}
             </Button>
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={filter()}
-              onChange={onFilterChange}
-            />
-          </Toolbar>
         </Header>
       }
-      contentFooter={
-        // The contextual footer: shown only while rows are selected, carrying
-        // the same actions as the real page (delete gated to New, make-a-copy
-        // gated to a single selection). Actions are inert here (demo only).
-        <Show when={selectedIds().length > 0}>
-          <ContentFooter>
-            <strong>{selectedIds().length} selected</strong>
+    >
+      <DataTable
+        columns={columns()}
+        rows={rows()}
+        rowKey={r => r.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering), matching the real page.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={filter()}
+            onChange={onFilterChange}
+          />
+        }
+        sort={sort()}
+        onSort={onSort}
+        // The real page navigates to the detail route on row click; a no-op
+        // here so the click-to-open row affordance (hover / pointer) still
+        // shows.
+        onRowClick={() => {}}
+        emptyMessage={t('error.no-inbound-shipments')}
+        enableSelection
+        selectedIds={selectedIds()}
+        onSelectionChange={setSelectedIds}
+        // The bulk actions for the table's selection footer (the table adds
+        // the count + Clear and swaps its pager for the bar while rows are
+        // selected), carrying the same gating as the real page: delete only
+        // while every selected row is New, make-a-copy only for a single
+        // selection. Inert here (demo only).
+        selectionActions={
+          <>
             <span
               title={
                 allSelectedNew()
@@ -513,35 +538,11 @@ export const TableShowcase = () => {
                 Duplicate
               </Button>
             </span>
-            <ContentFooterActions>
-              <Button
-                variant="secondary"
-                icon={<CloseIcon />}
-                onClick={() => setSelectedIds([])}
-              >
-                Clear
-              </Button>
-            </ContentFooterActions>
-          </ContentFooter>
-        </Show>
-      }
-    >
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={r => r.id}
-        sort={sort()}
-        onSort={onSort}
-        // The real page navigates to the detail route on row click; a no-op
-        // here so the click-to-open row affordance (hover / pointer) still
-        // shows.
-        onRowClick={() => {}}
-        emptyMessage={t('error.no-inbound-shipments')}
-        enableSelection
-        selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
+          </>
+        }
         config={tableConfig()}
         setConfig={setConfig}
+        configIsDefault={isConfigDefault()}
         pagination={{
           offset: offset(),
           pageSize: pageSize(),

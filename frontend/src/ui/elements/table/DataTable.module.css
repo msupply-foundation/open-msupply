@@ -27,11 +27,6 @@
   --table-leading-col: 2.75rem;
 }
 
-/* Positioning context for the pagination overlay: fills the remaining page
-   height (so the scroll box below is full-height even for a short list) and is
-   `relative` so the absolutely-positioned overlay anchors to THIS box's bottom
-   edge — not to the scrolling content — keeping the pager at the very
-   bottom-right whatever the row count. */
 /* Refreshing bar — a thin indeterminate progress bar shown above the scroll
    area during a keep-previous-data refetch (filter/sort/page). Signals
    "updating" without blanking or remounting the table (issue #160/#196). */
@@ -70,8 +65,9 @@
   }
 }
 
+/* Fills the remaining height between the toolbar and the footer bar, so the
+   scroll box inside it is full-height even for a short list. */
 .tableArea {
-  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -383,6 +379,25 @@ tr[data-selected] .selectCell[data-pinned] {
   background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
+/* Row density (ui-standards § tables → row heights), keyed off the
+   data-density the DataTable stamps on the <table> (chosen in the Settings
+   popover; comfortable is the spec's ⭐ default). Row height only for now —
+   the per-density cell padding + typography land with the Phase 2 styling
+   pass. block-size acts as a MINIMUM under table layout, so wrapping cells
+   still grow the row. Placed after every other .td-descendant rule
+   (no-descending-specificity). */
+.table[data-density='compact'] .td {
+  block-size: 2.5rem; /* 40px */
+}
+
+.table[data-density='comfortable'] .td {
+  block-size: 3.25rem; /* 52px */
+}
+
+.table[data-density='spacious'] .td {
+  block-size: 4rem; /* 64px */
+}
+
 /* ==========================================================================
  * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
  * ========================================================================== */
@@ -397,16 +412,40 @@ tr[data-selected] .selectCell[data-pinned] {
   background: var(--bg-white);
 }
 
-/* A thin bar above the scroll area holding the full-screen toggle. It sits outside the
-   scroll region, so it never moves when the table scrolls (either axis). Transparent, and NO
-   bottom border — the bordered table box below it delineates the boundary; a border here would
+/* The table toolbar (ui-standards § tables): the page-composed filter bar
+   inline-start, the icon-control cluster inline-end. One flex-wrap row —
+   squeezed, the controls wrap under the filters intrinsically (no
+   breakpoints). It sits outside the scroll region, so it never moves when the
+   table scrolls (either axis). Transparent, and NO bottom border — the
+   bordered table box below it delineates the boundary; a border here would
    double up against the table's own top border. */
 .toolbar {
   display: flex;
-  align-items: stretch;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
   min-block-size: 2.25rem;
   padding-inline: var(--space-1);
+  padding-block-end: var(--space-1);
+}
+
+/* The filter-bar slot — claims the inline-start and the free width (its chips
+   wrap inside it), leaving the controls their natural width at the end. */
+.toolbarFilters {
+  display: flex;
+  flex: 1;
+  min-inline-size: 0;
+  align-items: center;
+}
+
+/* The icon-control cluster — held at the inline-end by its own auto margin
+   (lands correctly whether or not filters/tabs sit at the start, and hugs the
+   same edge when it wraps onto its own line). */
+.toolbarControls {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  margin-inline-start: auto;
 }
 
 /* Inline loading spinner sitting just left of the toolbar's icon controls (a
@@ -513,17 +552,16 @@ tr[data-selected] .selectCell[data-pinned] {
   gap: var(--space-2) var(--space-5);
 }
 
-/* Group tabs (kdd/edit-line-card-table) — a row of tab buttons living INSIDE the control bar,
-   inline-start; `margin-inline-end: auto` pushes the icon controls (card-switch / settings /
-   full-screen) to the inline-end of the same bar. Switching sets the active field-group (a
-   secondary column filter); the active tab carries the brand underline (the app's tab idiom,
-   hand-rolled as a plain in-bar strip). */
+/* Group tabs (kdd/edit-line-card-table) — a row of tab buttons living INSIDE the toolbar,
+   inline-start (after any filter bar); the icon-control cluster (.toolbarControls) holds
+   the inline-end via its own auto margin. Switching sets the active field-group (a
+   secondary column filter); the active tab carries the brand underline (the app's tab
+   idiom, hand-rolled as a plain in-bar strip). */
 .groupTabs {
   display: flex;
   align-self: stretch;
   align-items: stretch;
   gap: var(--space-1);
-  margin-inline-end: auto;
 }
 
 .groupTab {
@@ -584,58 +622,8 @@ tr[data-selected] .selectCell[data-pinned] {
   block-size: 1.5rem;
 }
 
-/* --- Pagination overlay (kdd/table-state) ---------------------------------- */
-
-/* The pager floats over the bottom-inline-end of the table rather than living
-   in a separate footer band, so it's always visible without stealing a row of
-   vertical space. position: absolute anchors it to .tableArea's bottom edge (not
-   the scrolling content), so it sits at the very bottom-right for ANY list size
-   — a short list keeps it flush at the box bottom, and it never scrolls away on
-   a long one. It spans the area width and pushes its content to the inline-end.
-   The inset-block-end offset lifts the chip clear of a horizontal scrollbar that
-   the scroll box shows along its bottom edge; the larger padding-inline-end
-   likewise keeps it clear of a vertical scrollbar on the right (otherwise the
-   chip overlays either scrollbar).
-   pointer-events pass through the empty track so clicks on rows behind the
-   (transparent) gutter still land — only the pager panel itself captures them. */
-.paginationOverlay {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: var(--space-3);
-  z-index: 4;
-  display: flex;
-  justify-content: flex-end;
-  /* start end — the larger inline-end keeps the chip clear of a vertical
-     scrollbar on the right. */
-  padding-inline: var(--space-2) var(--space-5);
-  pointer-events: none;
-}
-
-/* The pager panel — a raised, bordered chip so it reads as floating above the
-   rows, pinned bottom-inline-end. Its own contents are interactive again (the
-   track above is click-through). The shared Pagination nav sets `flex: 1` +
-   space-between to fill a full-width footer band; inside this floating chip we
-   override that so it shrinks to content (summary + controls sit together in the
-   corner instead of spanning the table). */
-.paginationOverlay :global(nav) {
-  pointer-events: auto;
-  flex: 0 0 auto;
-  justify-content: flex-end;
-  gap: var(--space-4);
-  background: var(--surface-raised);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  padding-inline: var(--space-3);
-  padding-block: var(--space-1);
-  box-shadow: 0 0.125rem 0.5rem -0.125rem
-    color-mix(in srgb, var(--gray-main) 35%, transparent);
-}
-
-/* Trailing spacer row — reserves enough height for the overlay so the last data
-   row scrolls clear of it. A single spanning cell; no border (it's not a real
-   row). Height ≈ pager panel + its overlay padding. */
-.paginationSpacerRow > td {
-  block-size: 3.25rem;
-  border-block-end: none;
-  padding: 0;
-}
+/* --- Table footer (ui-standards § tables → pagination) ---------------------- */
+/* The footer bar itself is the shared ContentFooter layout component (one bar:
+   the pager by default, the selection action bar while rows are selected — see
+   DataTable.tsx). No table-scoped footer CSS yet; its look is reconciled in the
+   Phase 2 styling pass. */
