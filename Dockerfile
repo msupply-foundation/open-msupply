@@ -15,8 +15,14 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data
-# Web frontend, served from server.frontend_dir (default: frontend/ relative to cwd)
-COPY client/packages/host/dist frontend
+# New FE served at / from server.frontend_dir (default: frontend/ relative to cwd).
+# CI stages the pinned, checksum-verified dist into ./frontend-dist in the build
+# context (build/fetch-frontend.js, run host-side in the workflow — no network
+# fetch inside docker build).
+COPY frontend-dist frontend
+# Old UI served at /old-ui/ : this repo's client build (PUBLIC_PATH=/old-ui/).
+# old_ui_frontend_dir is set to frontend/old-ui in docker/local*.yaml.
+COPY client/packages/host/dist frontend/old-ui
 
 WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .

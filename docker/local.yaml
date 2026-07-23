@@ -1,5 +1,6 @@
 server:
   danger_allow_http: true # allow http in production mode
+  old_ui_frontend_dir: "frontend/old-ui" # serve this repo's client build at /old-ui/
 database:
   host: "localhost"
   port: 5432
@@ -8,4 +9,3 @@ database:
   database_name: "/database/omsupply-database"
 logging:
   mode: All
-  

@@ -37,7 +37,17 @@ so a packaged bundle serves both UIs out of the box.
   `sha256` to the value from that release's published `frontend-dist-<tag>.zip.sha256`.
 - **Private-repo token:** the fetch needs `FRONTEND_FETCH_TOKEN` (or `GITHUB_TOKEN`) with
   read access to the FE repo's release assets — it is sent as an `Authorization: token …`
-  header to github.com and dropped when GitHub redirects to its signed asset CDN.
+  header to github.com and dropped when GitHub redirects to its signed asset CDN. GitHub
+  Actions workflows (Docker image, transition APK, mac builds) mint a short-lived token
+  per run from the same GitHub App the e2e workflow uses to read the FE repo
+  (`vars.FE_APP_ID` / `secrets.FE_APP_PRIVATE_KEY`) — nothing to configure beyond the
+  app. The Jenkins/Windows box cannot mint app tokens: set
+  `FRONTEND_DIST_BASE_URL=https://f002.backblazeb2.com/file/msupply-releases` once —
+  the FE release workflow mirrors every dist there (public bucket, layout
+  `<tag>/frontend-dist-<tag>.zip`), the script derives the URL from the pin's tag, and
+  no credentials are needed; the pin's `sha256` is still enforced. (A fine-grained PAT
+  on a bot account remains the fallback if the mirror is unavailable.) On Windows no `unzip.exe` is
+  required — `fetch-frontend.js` falls back to `tar -xf` (bsdtar, present on Windows 10+).
 - **`FRONTEND_DIST_URL` override:** point the fetch at any http(s) URL, a `file://` URL,
   or a local filesystem path instead of the pinned GitHub asset — used for local testing
   and for later B2 hosting. When it is set, `FRONTEND_DIST_SHA256=skip` may disable
