@@ -9,35 +9,66 @@ import type { CustomFieldDefinitionsResult } from './names.generated';
 export type CustomFieldDef =
   CustomFieldDefinitionsResult['customFields']['nodes'][number];
 
-// The customFields JSON scalar is typed `string | null` by codegen (the plugin
-// maps unknown scalars to string), but the server sends a JSON OBJECT, which the
-// transport deserialises to an object on the response. Accept both — an object
-// (the real runtime case) or a JSON string — and normalise to a plain record.
-// This is the single documented boundary for the mistyped JSON scalar.
-export const parseCustomFields = (
-  raw: string | null | undefined
-): Record<string, unknown> => {
+// The customFields JSON scalar is typed `unknown` by codegen (the honest type
+// for arbitrary JSON). At runtime the server sends a JSON OBJECT, which the
+// transport deserialises to an object on the response — but a JSON string is
+// also accepted. This is the single documented boundary that narrows the raw
+// value to a plain record.
+export const parseCustomFields = (raw: unknown): Record<string, unknown> => {
   if (raw == null) return {};
   if (typeof raw === 'object') return raw as Record<string, unknown>;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return parsed && typeof parsed === 'object'
-      ? (parsed as Record<string, unknown>)
-      : {};
-  } catch {
-    return {};
+  if (typeof raw === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return parsed && typeof parsed === 'object'
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
   }
+  return {};
 };
 
 // One custom field's display value for a row/tab (AC-N18 columns, AC-N24 tab).
 // Blank when the name has no value for that key.
-export const customFieldValue = (
-  raw: string | null | undefined,
-  key: string
-): string => {
+export const customFieldValue = (raw: unknown, key: string): string => {
   const value = parseCustomFields(raw)[key];
   if (value == null || value === '') return '';
   return String(value);
+};
+
+// A custom field's read-only display for the detail tab (AC-N24), chosen by the
+// field's value type — mirrors the current app's per-value-type rendering:
+//   • BOOLEAN → a checkbox state,
+//   • OPTION  → the stored option id + the option's NAME resolved via the
+//     definition's `options` (contract › record detail); the tab shows it in a
+//     disabled dropdown (the read-only counterpart of the option picker),
+//   • every other type → the value as text (blank when unset).
+export type CustomFieldDisplay =
+  | { kind: 'boolean'; checked: boolean }
+  | { kind: 'option'; id: string; name: string }
+  | { kind: 'text'; text: string };
+
+export const customFieldDisplay = (
+  def: CustomFieldDef,
+  raw: unknown
+): CustomFieldDisplay => {
+  const value = parseCustomFields(raw)[def.key];
+  if (def.valueType === 'BOOLEAN') {
+    return { kind: 'boolean', checked: Boolean(value) };
+  }
+  if (def.valueType === 'OPTION') {
+    // Stored value is the option id; resolve it to the option's name (falling
+    // back to the raw id if it can't be resolved). Unset ⇒ blank id + name.
+    const id = value == null ? '' : String(value);
+    const option = def.options.find(o => o.id === value);
+    return { kind: 'option', id, name: option?.name ?? id };
+  }
+  return {
+    kind: 'text',
+    text: value == null || value === '' ? '' : String(value),
+  };
 };
 
 // The dynamicFilter AST (contract › filtering & search): a JSON AST of property

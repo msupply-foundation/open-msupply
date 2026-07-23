@@ -4,22 +4,26 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { Select } from '../../../ui/elements/selectors/Select';
 import { DetailContainer } from '../../../ui/layout/Detail/DetailContainer';
 import { DetailSection } from '../../../ui/layout/Detail/DetailSection';
 import { DetailRow } from '../../../ui/layout/Detail/DetailRow';
 import { CustomFieldDefinitions } from '../names.generated';
 import {
-  customFieldValue,
+  customFieldDisplay,
   visibleCustomFields,
   type CustomFieldDef,
 } from '../customFields';
 
 // S4 Custom fields tab — the supplier role's configured custom-field VALUES,
 // read-only (AC-N24). Definitions come from the consumed customFields read
-// (scope=supplier); values are read from the name's parsed customFields JSON. An
-// empty state shows when the role configures none.
+// (scope=supplier); values are read from the name's parsed customFields JSON.
+// Each row's control follows the field's value type (customFieldDisplay): a
+// boolean shows as a disabled checkbox, an option as its resolved option name,
+// everything else as read-only text. An empty state shows when the role
+// configures none.
 export const CustomFieldsTab: Component<{
-  customFields: string | null;
+  customFields: unknown;
 }> = props => {
   const [defsData] = createResource(
     () => 'supplier',
@@ -30,21 +34,59 @@ export const CustomFieldsTab: Component<{
     }
   );
 
+  // Non-suspending read: this tab first-fetches when the user switches to it,
+  // so a direct/.latest read would suspend the open page's boundary and remount
+  // it (kdd/solid-reactivity-pitfalls › no remounts on interaction).
+  const defs = (): CustomFieldDef[] =>
+    defsData.state === 'ready' || defsData.state === 'refreshing'
+      ? (defsData.latest ?? [])
+      : [];
+
   return (
     <Show when={!defsData.loading} fallback={<Spinner center />}>
       <Show
-        when={(defsData.latest ?? []).length > 0}
+        when={defs().length > 0}
         fallback={<EmptyState message={t('name.custom-fields.empty')} />}
       >
         <DetailContainer>
           <DetailSection>
-            <For each={defsData.latest}>
-              {def => (
-                <DetailRow
-                  label={def.name}
-                  value={customFieldValue(props.customFields, def.key)}
-                />
-              )}
+            <For each={defs()}>
+              {def => {
+                const display = customFieldDisplay(def, props.customFields);
+                switch (display.kind) {
+                  case 'boolean':
+                    return (
+                      <DetailRow label={def.name} checked={display.checked} />
+                    );
+                  case 'option':
+                    // Read-only counterpart of the option picker: a disabled
+                    // dropdown showing the resolved option name (matches the
+                    // current app). Only the selected option is fed in — it's
+                    // disabled and never opens.
+                    return (
+                      <DetailRow
+                        label={def.name}
+                        control={
+                          <Select
+                            label={def.name}
+                            hideLabel
+                            disabled
+                            width="full"
+                            placeholder=""
+                            options={
+                              display.id
+                                ? [{ value: display.id, label: display.name }]
+                                : []
+                            }
+                            value={display.id || undefined}
+                          />
+                        }
+                      />
+                    );
+                  default:
+                    return <DetailRow label={def.name} value={display.text} />;
+                }
+              }}
             </For>
           </DetailSection>
         </DetailContainer>

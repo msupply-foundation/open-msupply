@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildDynamicFilter,
+  customFieldDisplay,
   customFieldValue,
   parseCustomFields,
   visibleCustomFields,
@@ -64,6 +65,48 @@ describe('AC-N24 Custom Fields tab reflects configuration', () => {
     const raw = JSON.stringify({ supply_level: 'High' });
     expect(customFieldValue(raw, 'supply_level')).toBe('High');
     expect(customFieldValue(raw, 'region')).toBe('');
+  });
+
+  it('renders each field by its value type (boolean → checkbox, text → text)', () => {
+    const raw = JSON.stringify({ supply_level: 'High', on_hold: true });
+    expect(customFieldDisplay(def(), raw)).toEqual({
+      kind: 'text',
+      text: 'High',
+    });
+    expect(
+      customFieldDisplay(def({ key: 'on_hold', valueType: 'BOOLEAN' }), raw)
+    ).toEqual({ kind: 'boolean', checked: true });
+    // Unset boolean reads as unchecked.
+    expect(
+      customFieldDisplay(def({ key: 'missing', valueType: 'BOOLEAN' }), raw)
+    ).toEqual({ kind: 'boolean', checked: false });
+  });
+
+  it('resolves an OPTION value (option id) to the option name', () => {
+    const optionDef = def({
+      key: 'zone',
+      valueType: 'OPTION',
+      options: [
+        { id: 'opt-a', key: 'a', name: 'Zone A' },
+        { id: 'opt-b', key: 'b', name: 'Zone B' },
+      ],
+    });
+    const raw = JSON.stringify({ zone: 'opt-b' });
+    expect(customFieldDisplay(optionDef, raw)).toEqual({
+      kind: 'option',
+      id: 'opt-b',
+      name: 'Zone B',
+    });
+    // Unset ⇒ blank id + name (the tab renders an empty disabled dropdown).
+    expect(customFieldDisplay(optionDef, JSON.stringify({}))).toEqual({
+      kind: 'option',
+      id: '',
+      name: '',
+    });
+    // Unknown id ⇒ falls back to the raw id as the name.
+    expect(
+      customFieldDisplay(optionDef, JSON.stringify({ zone: 'opt-x' }))
+    ).toEqual({ kind: 'option', id: 'opt-x', name: 'opt-x' });
   });
 });
 

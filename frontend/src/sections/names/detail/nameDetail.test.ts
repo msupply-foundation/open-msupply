@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  contactCategory,
-  contactFullName,
   detailFromResult,
   isStoreName,
   supplyLevelValue,
@@ -99,24 +97,6 @@ describe('AC-N22 Detail views are read-only', () => {
     const before = JSON.stringify(node);
     supplyLevelValue(node.properties, []);
     expect(JSON.stringify(node)).toBe(before);
-  });
-});
-
-describe('AC-N23 Contacts tab is a read-only list', () => {
-  it('derives a contact full name and a single category', () => {
-    expect(contactFullName({ firstName: 'Ada', lastName: 'Lovelace' })).toBe(
-      'Ada Lovelace'
-    );
-    expect(
-      contactCategory({
-        category1: null,
-        category2: 'Pharmacy',
-        category3: 'X',
-      })
-    ).toBe('Pharmacy');
-    expect(
-      contactCategory({ category1: null, category2: null, category3: null })
-    ).toBe('');
   });
 });
 

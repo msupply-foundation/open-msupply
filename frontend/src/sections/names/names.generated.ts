@@ -68,7 +68,7 @@ export type NamesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
-    dynamicFilter?: string | null;
+    dynamicFilter?: unknown | null;
   } | null;
   sort?: Array<{
     key: "name" | "code";
@@ -97,7 +97,7 @@ export type NamesResult = {
   id: string;
   code: string;
 } | null;
-  customFields: string | null;
+  customFields: unknown | null;
 }>;
 });
 };
@@ -140,7 +140,7 @@ export type NameByIdResult = {
   isOnHold: boolean;
   createdDatetime: string | null;
   properties: string;
-  customFields: string | null;
+  customFields: unknown | null;
   hshCode: string | null;
   hshName: string | null;
   email: string | null;
@@ -225,13 +225,18 @@ export type SupplierPurchaseOrdersResult = {
   number: number;
   status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED";
   createdDatetime: string;
-  orderTotalAfterDiscount: number;
+  confirmedDatetime: string | null;
+  targetMonths: number | null;
+  comment: string | null;
+  lines: {
+  totalCount: number;
+};
 }>;
 });
 };
 
 export const SupplierPurchaseOrders = {
-  query: "query supplierPurchaseOrders($storeId: String!, $supplierName: String!) {\n  purchaseOrders(storeId: $storeId, filter: {supplier: {equalTo: $supplierName}}) {\n    ... on PurchaseOrderConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        number\n        status\n        createdDatetime\n        orderTotalAfterDiscount\n      }\n    }\n  }\n}",
+  query: "query supplierPurchaseOrders($storeId: String!, $supplierName: String!) {\n  purchaseOrders(storeId: $storeId, filter: {supplier: {equalTo: $supplierName}}) {\n    ... on PurchaseOrderConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        number\n        status\n        createdDatetime\n        confirmedDatetime\n        targetMonths\n        comment\n        lines {\n          totalCount\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SupplierPurchaseOrdersResult, SupplierPurchaseOrdersVariables>;
 
 export type ContactsVariables = {
