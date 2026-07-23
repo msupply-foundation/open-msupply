@@ -1,7 +1,10 @@
 use std::cmp;
 
 use super::{
-    api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5},
+    api::{
+        CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5,
+        CENTRAL_BUSY_POLL_PERIOD_SECONDS, CENTRAL_BUSY_TIMEOUT_SECONDS,
+    },
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
 use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
@@ -52,10 +55,27 @@ impl CentralDataSynchroniser {
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
-            let CentralSyncBatchV5 { max_cursor, data } = self
-                .sync_api_v5
-                .get_central_records(start_cursor, batch_size)
-                .await?;
+            // Retry while central is busy with another sync session for this site
+            // (legacy central gates sync per-site); wait for idle then re-request the
+            // same cursor.
+            let CentralSyncBatchV5 { max_cursor, data } = loop {
+                match self
+                    .sync_api_v5
+                    .get_central_records(start_cursor, batch_size)
+                    .await
+                {
+                    Ok(batch) => break batch,
+                    Err(error) if error.is_central_busy() => {
+                        self.sync_api_v5
+                            .wait_until_central_idle(
+                                CENTRAL_BUSY_POLL_PERIOD_SECONDS,
+                                CENTRAL_BUSY_TIMEOUT_SECONDS,
+                            )
+                            .await?;
+                    }
+                    Err(error) => return Err(error.into()),
+                }
+            };
             let batch_length = data.len();
 
             logger.progress(SyncStepProgress::PullCentral, max_cursor - start_cursor)?;
