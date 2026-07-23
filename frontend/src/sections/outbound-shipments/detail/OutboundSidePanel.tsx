@@ -6,6 +6,7 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
+import { A } from '@solidjs/router';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -21,10 +22,11 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
+import { CheckIcon, CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
+import { PickedDateField } from './PickedDateField';
 import { isDeletable, statusLabel } from '../outboundStatus';
 import type { OutboundNode } from './outboundUpdate';
 import type { OutboundFieldEdit } from './outboundEdit';
@@ -36,6 +38,8 @@ import type { OutboundFieldEdit } from './outboundEdit';
 
 export interface OutboundSidePanelProps {
   node: OutboundNode;
+  /** For the backdating control's stocktake-conflict check (AC-B4). */
+  storeId: string;
   disabled: boolean;
   /** The shared edit buffer (comment + transport reference live here). */
   edit: OutboundFieldEdit;
@@ -45,6 +49,7 @@ export interface OutboundSidePanelProps {
     tax?: { percentage: number | null };
     expectedDeliveryDate?: { value: string | null };
     shippingMethodId?: { value: string | null };
+    backdatedDatetime?: string | null;
   }) => void;
   /** Open the service-charges editor (S5). */
   onEditServiceCharges: () => void;
@@ -75,12 +80,15 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
   const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
+  // Group headings sit a weight above the FieldRow labels' medium, so the
+  // pricing groups read as groups.
   const groupHeading = (label: string, info: string): JSX.Element => (
     <span
       style={{
         display: 'inline-flex',
         'align-items': 'center',
         gap: 'var(--space-1)',
+        'font-weight': 'var(--weight-bold)',
       }}
     >
       <Popover
@@ -128,7 +136,31 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <Text variant="body" as="span">
+              {props.node.user?.username ?? '—'}
+            </Text>
+            {/* Info popover on hover — the user's email (the picked-date
+                reason bubble's pattern); no icon when there is no email. */}
+            <Show when={props.node.user?.email}>
+              {email => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={email()}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>{email()}</p>
+                </Popover>
+              )}
+            </Show>
+          </span>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -136,14 +168,17 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Text>
         </FieldRow>
         <FieldRow label={t('label.picked-date')}>
-          {/* Backdating (rules.md § backdating) is preference-gated and NEW-
-              only; the dev preference is off, so this build renders the value
-              read-only — the control slots in here when the gate opens. */}
-          <Text variant="body">
-            {props.node.pickedDatetime
-              ? localisedDate(props.node.pickedDatetime)
-              : '—'}
-          </Text>
+          {/* Backdating control (rules.md § backdating, AC-B1..B4): editable
+              while NEW with the backdating preference on, otherwise disabled
+              with the reason (pref off / past NEW). */}
+          <PickedDateField
+            storeId={props.storeId}
+            node={props.node}
+            disabled={props.disabled}
+            onBackdate={backdatedDatetime =>
+              props.onSaveField({ backdatedDatetime })
+            }
+          />
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <ColourTagPicker
@@ -180,7 +215,40 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         >
           {req => (
             <Text variant="body">
-              {t('label.requisition')} #{req().requisitionNumber}
+              {/* The label is a hover popover explaining the document — the
+                  old app's tooltip: "Customer requisition created on {date}
+                  by {username}" (em dash for a requisition with no user, as
+                  the old app shows). The label (not the whole entry) triggers
+                  it because the Popover trigger is a button, and the entry's
+                  number is a link — nesting one interactive in another is
+                  invalid. */}
+              <Popover
+                trigger={t('label.requisition')}
+                openOnHover
+                placement="top"
+              >
+                <p>
+                  {t('messages.customer-requisition-created-on', {
+                    date: localisedDate(req().createdDatetime),
+                  })}{' '}
+                  {t('messages.by-user', {
+                    username: req().user?.username ?? '—',
+                  })}
+                </p>
+              </Popover>{' '}
+              {/* Only the number is the link (old-app parity), targeting the
+                  requisition's real record route with the requisition-kind
+                  styling — the same pattern (and primary colour) as the
+                  inbound side panel's internal-order link. The requisitions
+                  vertical isn't built yet, so today this lands on the
+                  not-found EntryPage; it goes live once that vertical
+                  registers its routes (no change needed here). */}
+              <A
+                href={`/${props.storeId}/distribution/customer-requisition/${req().id}`}
+                style={{ color: 'var(--primary-main)', 'font-weight': 500 }}
+              >
+                #{req().requisitionNumber}
+              </A>
             </Text>
           )}
         </Show>
@@ -297,7 +365,14 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
-        <FieldRow label={t('heading.grand-total')}>
+        <FieldRow
+          // Bold like the group headings — the shipment-level summary row.
+          label={
+            <span style={{ 'font-weight': 'var(--weight-bold)' }}>
+              {t('heading.grand-total')}
+            </span>
+          }
+        >
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
         </FieldRow>
 
@@ -382,8 +457,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* Record actions, pinned at the panel's end (spec S3 § record
-          actions): Delete · Make a copy · Copy to clipboard. */}
-      <SidePanelSection value="actions" title={t('label.actions')}>
+          actions): Delete · Make a copy · Copy to clipboard — secondary-tone
+          buttons, matching the stocktakes side panel. */}
+      <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           <DeleteShipmentAction
             shipmentId={props.node.id}
@@ -393,18 +469,22 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             shipmentId={() => props.node.id}
             number={() => props.node.invoiceNumber}
             customerName={() => props.node.otherParty.name}
-            variant="panel"
           />
-          <Button icon={<CopyIcon />} onClick={copyToClipboard}>
-            {t('button.copy-to-clipboard')}
+          {/* Copy to clipboard — the button itself briefly swaps to a "copied"
+              confirmation (matching the stocktakes CopyStocktakeAction);
+              in-place feedback, never a toast. aria-live so the swap is
+              announced by assistive tech (no visually-hidden twin — a hidden
+              duplicate of the label trips strict e2e text locators). */}
+          <Button
+            variant="secondary"
+            aria-live="polite"
+            icon={copied() ? <CheckIcon /> : <CopyIcon />}
+            onClick={copyToClipboard}
+          >
+            {copied()
+              ? t('message.copy-success')
+              : t('button.copy-to-clipboard')}
           </Button>
-          {/* role="status" so the confirmation is announced by assistive
-              tech. */}
-          <span role="status">
-            <Show when={copied()}>
-              <Text variant="bodySmall">{t('message.copy-success')}</Text>
-            </Show>
-          </span>
         </SidePanelActions>
       </SidePanelSection>
     </>

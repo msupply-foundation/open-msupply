@@ -15,12 +15,6 @@ export interface DuplicateShipmentActionProps {
   /** The shipment number and customer name — for the confirmation copy. */
   number: () => number;
   customerName: () => string;
-  /**
-   * Where the trigger renders: the list footer's bulk bar (secondary tone,
-   * default) or the detail side panel's record-actions stack (primary, like
-   * the page actions).
-   */
-  variant?: 'footer' | 'panel';
 }
 
 // "Make a copy" (rules.md § duplication, AC-X1/X2): any shipment — SHIPPED
@@ -87,13 +81,18 @@ export const DuplicateShipmentAction: Component<
       setPhase('skipped');
       return;
     }
+    // Close BEFORE navigating: from the detail side panel the navigation only
+    // swaps the route's :id param, so this component stays mounted — without
+    // the close the dialog would sit open (OK still spinning) over the copy.
+    // (From the list the navigation unmounts the dialog anyway.)
+    close();
     goToCopy(response.invoice.id);
   };
 
   return (
     <>
       <Button
-        variant={props.variant === 'panel' ? 'primary' : 'secondary'}
+        variant="secondary"
         icon={<CopyIcon />}
         data-testid="duplicate-shipment-button"
         disabled={!canMutate()}
