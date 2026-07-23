@@ -19,6 +19,13 @@
  *                           local testing and for later B2 hosting. When set, the pin
  *                           tag is not used to build the URL (the pin sha256 is still
  *                           enforced unless FRONTEND_DIST_SHA256=skip).
+ *     FRONTEND_DIST_BASE_URL
+ *                           Base URL of a mirror laid out as <base>/<tag>/frontend-dist-<tag>.zip
+ *                           (the layout the FE release workflow uses for the public
+ *                           msupply-releases B2 bucket). When set (and FRONTEND_DIST_URL is
+ *                           not), the download URL is derived from the pin's tag — set it
+ *                           once on a build box and only the pin changes per release. No
+ *                           token is needed; the pin's sha256 is always enforced.
  *     FRONTEND_FETCH_TOKEN  Token used to authenticate the download. REQUIRED for the
  *     GITHUB_TOKEN          default GitHub source because open-msupply-frontend is a
  *                           PRIVATE repo. Private-repo assets 404 on the
@@ -321,14 +328,27 @@ async function main() {
           "  once the FE repo cuts a release. Refusing to fall back to an in-tree build for the root FE.",
       );
     }
-    const token = getToken();
-    if (!token) {
-      die(
-        "downloading from GitHub but no token set. open-msupply-frontend is private —\n" +
-          "  set FRONTEND_FETCH_TOKEN (or GITHUB_TOKEN) to a token with read access to release assets.",
-      );
+    const baseUrl = process.env.FRONTEND_DIST_BASE_URL || null;
+    if (baseUrl) {
+      source =
+        baseUrl.replace(/\/+$/, "") +
+        "/" +
+        pin.tag +
+        "/frontend-dist-" +
+        pin.tag +
+        ".zip";
+      log("using FRONTEND_DIST_BASE_URL mirror");
+    } else {
+      const token = getToken();
+      if (!token) {
+        die(
+          "downloading from GitHub but no token set. open-msupply-frontend is private —\n" +
+            "  set FRONTEND_FETCH_TOKEN (or GITHUB_TOKEN) to a token with read access to release assets,\n" +
+            "  or set FRONTEND_DIST_BASE_URL to the public mirror (no token needed).",
+        );
+      }
+      source = await resolveGithubAssetUrl(pin, token);
     }
-    source = await resolveGithubAssetUrl(pin, token);
   }
 
   // Resolve expected checksum / skip policy.
