@@ -362,6 +362,10 @@ export type InboundShipmentLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
     equalAny?: Array<"STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE"> | null;
@@ -502,6 +506,10 @@ export type InboundServiceLinesVariables = {
     notEqualTo?: string | null;
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
+  } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;

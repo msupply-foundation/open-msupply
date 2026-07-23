@@ -99,6 +99,7 @@ export type UpdateCustomerReturnVariables = {
     comment?: string | null;
     colour?: string | null;
     theirReference?: string | null;
+    customFields?: unknown | null;
   };
 };
 

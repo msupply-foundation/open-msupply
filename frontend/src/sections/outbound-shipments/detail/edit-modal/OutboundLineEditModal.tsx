@@ -1,4 +1,11 @@
-import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
@@ -52,6 +59,14 @@ import { issueWarningMessages } from './allocationWarnings';
 // Save is the item-set save (saveOutboundShipmentItemLines, AC-I6): lines +
 // placeholder in one call; every rejection is a non-typed GraphQL error
 // (contract wire trap) surfaced in the footer.
+//
+// Two modes (spec S4, AC-V6..V8): 'update' (opened from a row — the picker
+// locks, the clicked batch is scrolled into view + focused, and "OK & next"
+// walks the parent's sorted/paginated line list via the parent-owned
+// nextItem) and 'add' ("Add item", or fallen into when the walk runs out —
+// the picker is active + focused, and "OK & next" reopens empty). The picker
+// shows EVERY item — items already on the shipment are NOT excluded; picking
+// one loads its existing allocation (the draft pre-fills existing lines).
 
 type DraftLine =
   DraftStockOutLinesResult['draftStockOutLines']['draftLines'][number];
@@ -64,6 +79,17 @@ export type LineEditItem = {
   doses?: number;
 };
 
+// Resolve the next item to step to in UPDATE mode ("OK & next"). Owned by the
+// PARENT (the list is server-paginated — the next item may be on a later
+// page, and finding it advances the detail table forward): given the current
+// item id and the set of items already covered THIS iteration, it returns the
+// next distinct uncovered item in the parent's filtered/sorted order, or
+// undefined when the list is exhausted (→ the modal drops into add mode).
+export type ResolveNextItem = (
+  currentId: string,
+  covered: Set<string>
+) => Promise<LineEditItem | undefined>;
+
 interface OutboundLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -71,26 +97,44 @@ interface OutboundLineEditModalProps {
   invoiceId: string;
   /** NEW shipments may create placeholders (rules.md § placeholder lines). */
   isNew: boolean;
-  /** The item to open ON (edit mode — the picker locks); undefined = add. */
+  /**
+   * The item this open STARTS on (a row click) → UPDATE mode (the picker
+   * locks). Omitted for "Add item" → add mode. The modal tracks its own
+   * current item as the user advances with "OK & next".
+   */
   initialItem?: LineEditItem;
-  /** Items already on the shipment — excluded from the picker (S4). */
-  existingItemIds: string[];
+  /**
+   * The clicked LINE id for a row-click open — the editor scrolls its batch
+   * into view and focuses its packs input (AC-V6; draft rows built from
+   * existing lines keep the invoice-line id). Omitted for "Add item"; a
+   * clicked placeholder row has no batch row, so the Issue field is focused.
+   */
+  initialLineId?: string;
+  /**
+   * UPDATE mode "OK & next": resolve the next item to edit (parent-owned;
+   * pages the detail table forward as needed). See ResolveNextItem.
+   */
+  nextItem: ResolveNextItem;
   /**
    * Whether the shipment's customer is itself a store (a transfer). Non-store
    * (external) customers additionally get the received-packs / difference columns.
    */
   customerIsStore: boolean;
-  /** A save committed — the view refetches the shipment. */
+  /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
 }
 
-// Mount-while-open wrapper (kdd/explicit-composition): <Show> tears the
-// content down on close so each open starts fresh.
+// The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
+// tears the content down on close and rebuilds it on the next open, so each
+// OPEN starts fresh. Within one open the content owns its current item
+// (advancing via "OK & next" is imperative — seedItem — not a prop change).
+// The keyed `when` is the OPEN identity: the initial item id when opened from
+// a row, or the literal 'add' when opened from "Add item".
 export const OutboundLineEditModal = (
   props: OutboundLineEditModalProps
 ): JSX.Element => (
-  <Show when={props.open}>
-    <LineEditContent {...props} />
+  <Show when={props.open && (props.initialItem?.id ?? 'add')} keyed>
+    {_openKey => <LineEditContent {...props} />}
   </Show>
 );
 
@@ -125,6 +169,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
     props.initialItem
   );
+  // Mode: 'update' (opened from a row — "OK & next" steps to the next item)
+  // or 'add' ("Add item", or fallen into when an update walk runs out). Only
+  // ever flips update → add, never back.
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialItem ? 'update' : 'add'
+  );
+  // Items already stepped through THIS iteration (since the modal opened on a
+  // row), so the parent's next-item walk never offers one twice — across page
+  // advances too. Seeded with each item as it loads; not reactive.
+  const coveredItemIds = new Set<string>();
+  // What to focus once the next draft finishes loading (see the focus
+  // effect): a batch row's packs input (row-click open / walk advance), or
+  // the add-mode item search. Consumed (cleared) by the effect.
+  const [pendingFocus, setPendingFocus] = createSignal<
+    { row: string | undefined } | 'itemSelector' | undefined
+  >();
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
   const [issueValue, setIssueValue] = createSignal<number | undefined>();
@@ -145,11 +205,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const tableConfig = createTableConfig({ tableId: 'outbound-line-edit' });
   const prefs = () => outboundPrefs()?.prefs;
 
-  // Load one item's draft (server-computed: existing lines + available
-  // batches + placeholder). The ONE seed path — on mount (edit mode) and on
-  // item pick (add mode).
-  const loadItem = async (picked: LineEditItem) => {
+  // Seed one item's draft (server-computed: existing lines + available
+  // batches + placeholder). The ONE seed path — sequential imperative fetch,
+  // not a resource (issue #428's "do things sequential"): on mount (update
+  // mode), on item pick (add mode), and on an "OK & next" advance.
+  // `focusLineId` is the clicked batch to scroll/focus once loaded (AC-V6);
+  // omitted → the first batch row (an advance), undefined row → Issue field.
+  const seedItem = async (picked: LineEditItem, focusLineId?: string) => {
     setItem(picked);
+    coveredItemIds.add(picked.id);
     setLoadingLines(true);
     setErrorMessage(undefined);
     setWarnings([]);
@@ -172,11 +236,75 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const sorted = [...data.draftLines].sort(fefoCompare);
     setDraft(reconcile(sorted, { key: 'id' }));
     setPlaceholderUnits(data.placeholderQuantity ?? 0);
+    // Land ready to type: in update mode the clicked batch's packs input
+    // (draft rows from existing lines keep the invoice-line id) or the first
+    // row on an advance; after an add-mode pick, the Issue field (the
+    // undefined row falls back to it).
+    setPendingFocus(
+      mode() === 'update'
+        ? { row: focusLineId ?? sorted[0]?.id }
+        : { row: undefined }
+    );
     setLoadingLines(false);
   };
 
+  // Back to the item-search state — add mode with no item picked. Reached by
+  // "OK & next" in add mode, or when an update walk runs out of items.
+  const backToSearch = () => {
+    setMode('add');
+    setItem(undefined);
+    setDraft(reconcile([], { key: 'id' }));
+    setPlaceholderUnits(0);
+    setIssueValue(undefined);
+    setWarnings([]);
+    setErrorMessage(undefined);
+    setDirty(false);
+    setZeroConfirm(false);
+    setLoadingLines(false);
+    setPendingFocus('itemSelector');
+  };
+
   onMount(() => {
-    if (props.initialItem) void loadItem(props.initialItem);
+    if (props.initialItem)
+      void seedItem(props.initialItem, props.initialLineId);
+    else setPendingFocus('itemSelector');
+  });
+
+  // Move focus once the target is in the DOM: the item search in add mode,
+  // else the requested batch row (scrolled into view, its packs input
+  // focused); a clicked PLACEHOLDER row has no batch row — fall back to the
+  // Issue field (AC-V6). Runs after the load so the row exists; deferred a
+  // frame so the table has painted.
+  createEffect(() => {
+    const target = pendingFocus();
+    if (!target || loadingLines()) return;
+    setPendingFocus(undefined);
+    requestAnimationFrame(() => {
+      const root = document.querySelector('[data-testid="add-item-modal"]');
+      if (!root) return;
+      if (target === 'itemSelector') {
+        root
+          .querySelector<HTMLElement>('[data-testid="item-search-input"]')
+          ?.focus();
+        return;
+      }
+      const row = target.row
+        ? root.querySelector<HTMLElement>(`[data-row-key="${target.row}"]`)
+        : null;
+      if (!row) {
+        root
+          .querySelector<HTMLInputElement>(
+            '[data-testid="issue-quantity-input"]'
+          )
+          ?.focus();
+        return;
+      }
+      row.scrollIntoView({ block: 'nearest' });
+      const packs = row.querySelector<HTMLInputElement>(
+        '[data-testid="cell-numberOfPacks"] input'
+      );
+      if (packs && !packs.disabled) packs.focus();
+    });
   });
 
   // The shared barred-batch policy (spec/stock-allocation § barred batches,
@@ -337,35 +465,39 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       });
     });
 
-  // OK & next (spec S4): saves, then resets for rapid entry of the NEXT item —
-  // add mode only (the picker clears and refocuses).
+  // OK & next (spec S4, AC-V7): saves, then advances without closing.
+  // - UPDATE mode: ask the parent for the next item in its sorted/paginated
+  //   order (the covered set guards repeats) and seed it in place; when the
+  //   walk is exhausted, drop into add mode (empty, picker focused).
+  // - ADD mode: reopen empty for rapid entry of the next item.
+  // A failed save aborts the advance with the editor unchanged.
   const onOkNext = () =>
     confirmThen(() => {
-      void save().then(ok => {
-        if (!ok) return;
-        setItem(undefined);
-        setDraft(reconcile([], { key: 'id' }));
-        setPlaceholderUnits(0);
-        setIssueValue(undefined);
-        setWarnings([]);
-        setDirty(false);
-        setZeroConfirm(false);
-      });
+      void (async () => {
+        const current = item();
+        if (!(await save())) return;
+        if (mode() === 'add' || !current) {
+          backToSearch();
+          return;
+        }
+        const next = await props.nextItem(current.id, coveredItemIds);
+        if (next) await seedItem(next);
+        else backToSearch(); // exhausted → add mode
+      })();
     });
 
-  const pickerItems = () =>
-    itemOptionsResource
-      .noSuspense()
-      .filter(option => !props.existingItemIds.includes(option.id));
+  // The picker shows EVERY visible stock item — items already on the shipment
+  // are NOT excluded (spec S4; picking one loads its existing allocation).
+  const pickerItems = () => itemOptionsResource.noSuspense();
 
-  const editMode = () => props.initialItem != null;
+  const updateMode = () => mode() === 'update';
 
-  // In edit mode the item is excluded from `pickerItems` (it's already on the
-  // shipment), so the combobox can't resolve its label from `items`. Supply the
-  // selected option directly so the locked field shows the item name.
+  // The catalogue is a lazy resource, so in update mode (row open / walk
+  // advance) the current item may not be resolvable from `items` yet. Supply
+  // the selected option directly so the locked field always shows the name.
   const selectedItemOption = createMemo<ItemOption | undefined>(() => {
     const it = item();
-    if (!editMode() || !it) return undefined;
+    if (!updateMode() || !it) return undefined;
     return {
       id: it.id,
       code: '',
@@ -538,7 +670,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={editMode() ? t('heading.edit-line') : t('button.add-item')}
+      title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
       actionsLead={
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
@@ -563,11 +695,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           >
             {t('button.ok')}
           </Button>
-          {/* Rapid entry — add mode only, and shown only once there's a valid
-              entry to save: HIDDEN (not disabled) until an item is chosen and a
-              change made. OK stays visible-but-disabled as the always-
-              discoverable confirm (spec S4 § footer button matrix). */}
-          <Show when={!editMode() && item() && dirty()}>
+          {/* Rapid entry — BOTH modes (AC-V7), shown only once there's a
+              valid entry to save: HIDDEN (not disabled) until an item is
+              chosen and a change made. In update mode it advances the
+              parent-owned walk; in add mode it reopens empty. OK stays
+              visible-but-disabled as the always-discoverable confirm (spec
+              S4 § footer button matrix). */}
+          <Show when={item() && dirty()}>
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
@@ -612,12 +746,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         value={item()?.id ?? ''}
         selectedItem={selectedItemOption()}
         clearable={false}
-        disabled={editMode() || saving()}
+        disabled={updateMode() || saving()}
         inputTestId="item-search-input"
         placeholder={t('placeholder.search-by-name')}
         onChange={option => {
           if (option)
-            void loadItem({
+            void seedItem({
               id: option.id,
               name: option.name,
               unitName: option.unitName,
@@ -644,6 +778,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           <NumberField
             label={t('label.issue')}
             min={0}
+            data-testid="issue-quantity-input"
             value={issueValue()}
             disabled={saving()}
             onChange={onIssueChange}

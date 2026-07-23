@@ -29,6 +29,7 @@ import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction
 import { PickedDateField } from './PickedDateField';
 import { isDeletable, statusLabel } from '../outboundStatus';
 import type { OutboundNode } from './outboundUpdate';
+import type { OutboundLineFragment } from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
@@ -38,6 +39,11 @@ import type { OutboundFieldEdit } from './outboundEdit';
 
 export interface OutboundSidePanelProps {
   node: OutboundNode;
+  /**
+   * The shipment's service lines (the view's dedicated read — the entity
+   * query no longer carries lines), for the Service-charges block's rows.
+   */
+  serviceLines: OutboundLineFragment[];
   /** For the backdating control's stocktake-conflict check (AC-B4). */
   storeId: string;
   disabled: boolean;
@@ -64,8 +70,7 @@ const money = (value: number | null | undefined): string =>
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
   const requisition = () => props.node.requisition;
-  const serviceLines = () =>
-    props.node.lines.nodes.filter(line => line.type === 'SERVICE');
+  const serviceLines = () => props.serviceLines;
 
   // Tax display derivations (rules.md § pricing): the amount is total − sub
   // total floored at zero; the service group shows the EFFECTIVE rate (tax

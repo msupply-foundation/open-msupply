@@ -33,17 +33,28 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // allowed next status with earlier ones disabled; hidden entirely when
 // read-only. ONE client pre-flight guard (ui-standards/validation.md — the
 // sanctioned lineless server gap): no lines / only placeholder lines →
-// notice, no server call (AC-S6). Everything else submits and surfaces the
-// server's verdict inline in the confirmation dialog — on-hold (AC-H1) and
+// notice, no server call (AC-S6). The pre-flight answers are whole-shipment
+// SERVER probes supplied by the view (the lines are server-paginated — the
+// loaded page can't answer for the shipment), run sequentially when the
+// button is invoked. Everything else submits and surfaces the server's
+// verdict inline in the confirmation dialog — on-hold (AC-H1) and
 // unallocated-placeholder (AC-P3) rejections land in the error phase; the
 // confirmation itself carries the zero-quantity removal warning (AC-S5).
+
+/** Whole-shipment pre-flight answers (probed at action time, never derived
+ * from the loaded page). */
+export interface StatusPreflight {
+  hasLines: boolean;
+  hasOnlyPlaceholders: boolean;
+  zeroQuantityItems: string[];
+}
 
 export interface StatusChangeActionProps {
   storeId: string;
   node: OutboundNode;
-  hasLines: boolean;
-  hasOnlyPlaceholders: boolean;
-  zeroQuantityItems: string[];
+  /** Probe the shipment's pre-flight state; undefined = probe failed (the
+   * global error modal is already up) → the open aborts. */
+  preflight: () => Promise<StatusPreflight | undefined>;
   onSaved: (node: OutboundNode) => void;
   /** The Close button, rendered inside the footer's action cluster. */
   closeButton?: JSX.Element;
@@ -97,15 +108,28 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     return nextStatus();
   };
 
-  const openConfirm = (status: string) => {
-    if (!editable()) return;
+  // The zero-quantity item names from the LAST probe — rendered in the
+  // confirmation's removal warning (AC-S5).
+  const [zeroQuantityItems, setZeroQuantityItems] = createSignal<string[]>([]);
+  // Guards double-invocation while the probe's sequential fetches run.
+  const [probing, setProbing] = createSignal(false);
+
+  const openConfirm = async (status: string) => {
+    if (!editable() || probing()) return;
     // The one sanctioned pre-flight (validation.md): no lines (or only
     // placeholders) — the server would ACCEPT a lineless confirmation
-    // (captured server gap, AC-S6), so the notice is the only guard.
-    if (!props.hasLines || props.hasOnlyPlaceholders) {
+    // (captured server gap, AC-S6), so the notice is the only guard. Probed
+    // whole-shipment at click time; a failed probe already raised the global
+    // error modal, so just abort.
+    setProbing(true);
+    const flight = await props.preflight();
+    setProbing(false);
+    if (!flight) return;
+    if (!flight.hasLines || flight.hasOnlyPlaceholders) {
       setInfoMessage(t('messages.no-lines'));
       return;
     }
+    setZeroQuantityItems(flight.zeroQuantityItems);
     setPhase('confirm');
     setPendingStatus(status as SettableStatus);
   };
@@ -153,7 +177,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               value={selected()}
               menuSelectsOnly
               onValueChange={value => setPicked(value as SettableStatus)}
-              onAction={openConfirm}
+              onAction={status => void openConfirm(status)}
               menuLabel={t('button.confirm')}
             />
           )}
@@ -182,10 +206,10 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   ? STATUS_LABEL_KEYS[pendingStatus()!]
                   : '',
               })}
-              <Show when={props.zeroQuantityItems.length > 0}>
+              <Show when={zeroQuantityItems().length > 0}>
                 <Alert severity="warning">
                   {t('messages.confirm-zero-quantity-status', {
-                    items: props.zeroQuantityItems.join(', '),
+                    items: zeroQuantityItems().join(', '),
                   })}
                 </Alert>
               </Show>

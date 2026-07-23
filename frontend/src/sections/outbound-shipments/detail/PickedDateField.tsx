@@ -6,7 +6,10 @@ import { TextField } from '../../../ui/elements/inputs/TextField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { InfoIcon } from '../../../ui/icons';
-import { OutboundStocktakeConflict } from './outboundDetail.generated';
+import {
+  OutboundLines,
+  OutboundStocktakeConflict,
+} from './outboundDetail.generated';
 import { outboundPrefs } from '../outboundPreferencesResource';
 import type { OutboundNode } from './outboundUpdate';
 import {
@@ -74,8 +77,6 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   const shown = () => draft() ?? effectiveDay();
   const bounds = () => backdateBounds(new Date(), backdating()?.maxDays ?? 0);
 
-  const hasLines = () => props.node.lines.nodes.length > 0;
-
   const onPick = async (day: string) => {
     if (!day || day === effectiveDay()) {
       setDraft(undefined);
@@ -96,8 +97,20 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
       return;
     }
     const stocktakeConflict = result.data.stocktakes.totalCount > 0;
+    // "Existing lines will be removed" needs the WHOLE shipment's line count —
+    // the entity query no longer carries lines and the view's page is
+    // filtered, so probe the server (count only), failing closed as above.
+    const linesResult = await graphqlFetch(OutboundLines, {
+      storeId: props.storeId,
+      filter: { invoiceId: { equalTo: props.node.id } },
+      page: { first: 1 },
+    });
+    if (linesResult.kind !== 'success') {
+      setDraft(undefined);
+      return;
+    }
     const warningKeys = backdateWarnings({
-      hasLines: hasLines(),
+      hasLines: linesResult.data.invoiceLines.totalCount > 0,
       stocktakeConflict,
     });
     // Nothing to warn about → apply directly; otherwise confirm first.
