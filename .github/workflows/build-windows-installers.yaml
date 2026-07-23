@@ -189,12 +189,10 @@ jobs:
         shell: cmd
         run: |
           cd server || exit /b 1
-          @REM TEMPORARY: flush pq-sys artifacts poisoned by the first CI run,
-          @REM which built before PQ_LIB_DIR was set. pq-sys 0.7.3's build.rs
-          @REM emits rerun-if-env-changed with a {:?}-quoted name, so cargo
-          @REM never invalidates it when the real PQ_LIB_DIR changes. Remove
-          @REM after one green run.
-          cargo clean --release -p pq-sys || exit /b 1
+          @REM If libpq.lib linking ever fails after a PostgreSQL upgrade: pq-sys
+          @REM 0.7.3's build.rs emits rerun-if-env-changed with a {:?}-quoted
+          @REM name, so cargo won't rerun it when PQ_LIB_DIR changes — run
+          @REM `cargo clean --release -p pq-sys` once to flush it.
           cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection || exit /b 1
           copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-sqlite.exe" || exit /b 1
           copy "target\release\remote_server.exe"     "..\omSupply\Server\omSupply-server-sqlite.exe" || exit /b 1
@@ -235,15 +233,30 @@ jobs:
         shell: cmd
         run: |
           rmdir "installers" /s /q 2>NUL
+          mkdir "installers" || exit /b 1
           cd omSupply || exit /b 1
           node adjustSUFs.js || exit /b 1
           cd ..
+          echo ##### building omsupply_server.suf
           start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_server.suf" || exit /b 1
+          echo ##### building omsupply_desktop.suf
           start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_desktop.suf" || exit /b 1
+          echo ##### building omsupply_demo.suf
           start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_demo.suf" || exit /b 1
+          echo ##### building omsupply_standalone.suf
           start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_standalone.suf" || exit /b 1
         env:
           installersOutputFolder: ${{ github.workspace }}\installers
+
+      # The Setup Factory log is the only diagnostic SUFDesign produces —
+      # surface it when the build fails.
+      - name: Upload Setup Factory log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: setup-factory-log
+          path: installers/setup-factory.log
+          if-no-files-found: ignore
 
       - name: Sign installers
         if: ${{ !(inputs.skip_signing || (github.event_name == 'push' && github.ref_type == 'branch')) }}
