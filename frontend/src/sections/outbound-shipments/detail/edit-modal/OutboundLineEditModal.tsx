@@ -635,17 +635,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {unitName()}
           </span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            'align-items': 'end',
-            gap: 'var(--space-4)',
-            'margin-block-end': 'var(--space-3)',
-          }}
-        >
+        {/* One control per row below the compact breakpoint (the same cutoff
+            where this large Dialog goes full-screen) — see the module CSS. */}
+        <div class={styles.issueRow}>
+          {/* Both controls at the default height — NumberField's "small"
+              (2.25rem) and Select's "sm" (1.75rem — the Pagination scale)
+              don't align with each other. */}
           <NumberField
             label={t('label.issue')}
-            size="small"
             min={0}
             value={issueValue()}
             disabled={saving()}
@@ -653,7 +650,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           />
           <Select
             label={t('label.units')}
-            size="sm"
             value={allocateInValue()}
             options={[
               { value: 'units', label: unitName() },
