@@ -101,3 +101,70 @@ Built fresh into `src/sections/dashboard/` (no prior implementation existed). On
 - Decide the inbound list's URL contract for the internal/external kind so the dashboard's panel links can differ (the contract's `type` note assumes a filterable input).
 - The expiring-soon link's lower bound (today vs today+1) — see flag above.
 - State what the create shortcut should do while its owning vertical is unbuilt (this build applied AC-N1's placeholder rule by analogy).
+
+## master-lists
+
+Scoped build of the master-lists vertical (`spec/master-lists`) — a read-only Catalogue list + detail, **no mutations**. Types generated against `:8890` (`develop`) via the scoped codegen runner. **master-lists is compile-clean (`tsc`: 0 errors) and `pnpm test` is green (373 tests, incl. 4 new master-lists AC tests).** `pnpm check`/`pnpm build` (the `tsc -b` gates) are blocked **only** by a pre-existing `internal-orders` breakage on `main` — see the repo blocker in the register below; master-lists itself contributes zero errors.
+
+### Built
+
+- **S1 list** — standard scaffold with **no filter controls** (captured as-is), Name (sortable) / Description columns, server pagination, row → detail. Store scoping is the client sending `existsForStoreId` (the `storeId` arg is auth/context only). Default sort name-ascending; only Name sortable.
+- **Export split button** — Export CSV (primary) · Excel (menu), over the **currently-loaded page only** (AC-E1); empty page → "No data available" instead of a download (AC-E3). CSV downloads directly; Excel round-trips the CSV through the shared server converter (`domain/reportFiles`). Silent (no toast — D21).
+- **S2 detail** — description field shown only when non-empty (AC-D4); item-lines table Code / Name (sortable) / Unit; not-found → blocking alert → back to list (AC-L5); server pagination. Lines selected by the `masterListId` **argument** (never a filter field — contract wire trap); sort last-entry-wins.
+- Route registered under `catalogue/master-lists` (list `/`, detail `/:masterListId`); the Catalogue › Master Lists nav entry already existed. Pure-logic export core + 4 AC tests colocated.
+
+### AC coverage
+
+| AC                                                                      | Where                      | Status                                                        |
+| ----------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------- |
+| AC-E1 export = loaded page; AC-E3 empty → no-data                       | `masterListExport.test.ts` | ✅ tested                                                     |
+| AC-L1 store-joined population (`existsForStoreId`)                      | `MasterListsList.tsx`      | ⚠️ built, not unit-tested                                     |
+| AC-L2 no filter controls; AC-L3 name-asc sort                           | list                       | ⚠️ built                                                      |
+| AC-L5 not-found → list                                                  | detail                     | ⚠️ built                                                      |
+| AC-L6 non-joined list reachable by id (header omits `existsForStoreId`) | detail                     | ⚠️ built                                                      |
+| AC-D2 lines item-name sort; AC-D4 description present-only              | detail                     | ⚠️ built                                                      |
+| AC-L7 inactive lists unreachable                                        | —                          | server-enforced (repo forces `isActive`); not client-testable |
+
+### Flags
+
+- **Store CODE in the CSV filename** — the spec wants `<iso>_<store code>_master-lists.csv`, but only `currentStoreId()` is exported (no active-store-**code** accessor), so the filename currently uses the store **id**. Needs an exported active-store-code accessor — see the register.
+- **Plugin columns (list)** — the plugin-column seam isn't wired; no plugin system is built. Flagged, not improvised.
+- No live/visual verification — the app proxies `:8000` (remote, PRE_INITIALISATION). The read-only queries were exercised live on `:8890` during the reverse spec.
+
+---
+
+## Follow-up register — Catalogue verticals (items · help · master-lists)
+
+Consolidated to-do across the three catalogue spec builds, each shipped as a scoped PR: **items #430**, **help #441** (on spec PR #440), **master-lists** (this PR). Grouped by what unblocks the most work first.
+
+### 🚧 Repo blockers (affect the `tsc` gates for every build)
+
+- **`internal-orders` dangling import breaks `pnpm check`/`pnpm build`.** `src/sections/internal-orders/detail/printing.ts` does `import type … from './internalOrderDetail.generated'`, but that generated file is **not committed and has no source `.graphql`** anywhere in the repo, and the dir isn't wired in `App.tsx` (only `printing.ts` + `printing.test.ts` exist). Pre-existing on `main`, unrelated to any catalogue build. `pnpm test` still passes — the `import type` is erased at runtime, so only the `tsc -b` gates fail. **Fix:** restore the `internal-orders` `.graphql` (+ regenerate), or remove the leftover `printing.ts`/`.test.ts`. Until then no build can show a fully green `check`/`build` locally.
+- **Codegen backend.** The repo's `pnpm codegen` fails on the pre-existing `auth.graphql` mismatch (repo ahead of backend), so all three builds generated types via a **scoped runner against `:8890`** (`develop`). `:8000` is the remote (PRE_INITIALISATION) — no live/visual verification of any of the three yet.
+
+### 🧩 Shared components to build / extract (each unblocks multiple verticals)
+
+- **Read-only detail-form scaffold** (`DetailContainer` / `DetailSection` / `DetailRow` / `RecordNameHeader`) — registry ✅ but **not in main** (unmerged `names` branch). **items** detail (General / Store / Custom-fields) is composed single-column from `LabelledValue` as a stopgap; proper two-column needs the scaffold.
+- **Date-time range FilterBar field** — **items** Ledger From/To + items custom-field date-range filter. Only single-date `FilterDate` exists.
+- **Option-typeahead (parent → descendants) filter control** — **items** custom-field option filter (logic built + tested; UI control missing).
+- **Central-presence nav gating** — **help** S2 management ("Manage › Help documents", absent on non-central servers) and **items** central management. `NavItem` has no central flag; `MenuBar` doesn't filter. Chrome/nav infra.
+- **Variant card + editable packaging grid** — **items** Variants tab + S3/S4 modals (central-only).
+- **Active-store-code accessor** — **master-lists** CSV filename (store code); only `currentStoreId` is exported today.
+
+### 📋 Per-vertical unbuilt slices
+
+- **items:** Ledger tab (needs the date-time-range filter + `itemLedger` wiring — AC-D3/D4/D5); custom-field option/date filter UI (AC-P2 UI leg); Variants + Ancillary tabs + S3/S4/S5 central modals + central gating (AC-C1/C2, V*, B*, A*); two-column detail once the scaffold lands.
+- **help:** S2 management + S3 upload (central-only) — needs central-nav gating **and** the file-upload HTTP route (`POST /sync_files/help_document/{id}`, session-cookie auth vs this app's bearer auth — integration risk); AC-A1–A8, S1–S3.
+- **master-lists:** plugin-column seam; store-**code** in the CSV filename; live verification.
+
+### 🔧 Candidate spec refinements (surfaced across the builds)
+
+- **items:** `Statistic` mandates an `href` but the AMC / MOS panels have no drill-down (self-link stopgap) — make `href` optional or specify a target. Detail-tab URL-param pattern (built via `useSearchParams`) — state it in the spec.
+- **help:** AC-V2 lists es/fr, but the real client also localises **pt** (implemented) — the AC undercounts. AC-A1 central-presence nav gating has no home in the chrome nav model yet.
+- **master-lists:** the store-code-in-filename requirement needs an exported accessor to be satisfiable; note that dependency in the spec.
+
+### ✅ Real-backend re-verifications done (on `:8890` / develop)
+
+- **help** wire traps re-confirmed live: `EmptyTitle` non-typed; contact-form single-member union / `EmailIsInvalid`; `RecordAlreadyExist` / `RecordNotFound` typed; server title-trim; publish → delete round-trip; **new:** id-uniqueness spans soft-deleted rows (see #440).
+- **master-lists** read-only queries exercised live during the reverse spec.
+- **items** behavioural ACs covered at the logic level (tests); real-backend legs (AMC, unknown custom-field key, central gate) pending a working codegen/probe env.

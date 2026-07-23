@@ -49,7 +49,7 @@ import {
 } from './outboundDetail.generated';
 import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
-import { isEditable } from '../outboundStatus';
+import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundPrefs } from '../outboundPreferencesResource';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
 import { OutboundSidePanel } from './OutboundSidePanel';
@@ -66,6 +66,15 @@ const SelectReportModal = lazy(() =>
   import('../../../domain/reports').then(module => ({
     default: module.SelectReportModal,
   }))
+);
+// The from-shipment customer-return flow (spec/customer-returns S4, owned by
+// the returns vertical — AC-V3 hands over to it). Lazy so the returns graph it
+// pulls in stays out of this section's eager chunk, loading only when a return
+// is actually started.
+const ReturnFromShipmentModal = lazy(() =>
+  import('../../customer-returns/detail/edit-modal/ReturnFromShipmentModal').then(
+    module => ({ default: module.ReturnFromShipmentModal })
+  )
 );
 import {
   AddFromMasterListAction,
@@ -105,8 +114,10 @@ const OutboundDetailView: Component = () => {
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
-  // "Return selected lines" before SHIPPED — the AC-V3 explanatory notice.
+  // "Return selected lines": at SHIPPED+ opens the customer-return create flow
+  // (returnModalOpen, AC-V3); before that the explanatory notice instead.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
+  const [returnModalOpen, setReturnModalOpen] = createSignal(false);
   // Export/Print (S3 page action → reports S4, AC-E1–E3; any status).
   const [reportsOpen, setReportsOpen] = createSignal(false);
 
@@ -626,15 +637,19 @@ const OutboundDetailView: Component = () => {
                       />
                     </Show>
                     {/* Return selected lines (AC-V3): shown at EVERY status (not
-                        hidden, not disabled) — the return flow opens at SHIPPED /
-                        DELIVERED / VERIFIED, and any other status (RECEIVED
-                        included) gets an explanatory notice. A stub for now: the
-                        customer-return flow is the returns vertical's (not built
-                        yet), so this shows a "not yet available" notice
-                        regardless. See the S3 bulk-action matrix. */}
+                        hidden, not disabled). At SHIPPED / DELIVERED / VERIFIED
+                        it opens the customer-return create flow (owned by the
+                        returns vertical, over this shipment); any other status
+                        (RECEIVED included) gets the explanatory notice. See the
+                        S3 bulk-action matrix. */}
                     <Button
                       variant="secondary"
-                      onClick={() => setReturnNoticeOpen(true)}
+                      data-testid="return-lines-button"
+                      onClick={() =>
+                        canReturnLines(current().status)
+                          ? setReturnModalOpen(true)
+                          : setReturnNoticeOpen(true)
+                      }
                     >
                       {t('button.return-lines')}
                     </Button>
@@ -709,13 +724,19 @@ const OutboundDetailView: Component = () => {
                 onCommitted={onLineOpsCommitted}
               />
               {/* Export/Print (reports S4): mounted on first open so the
-                  selector's chunk loads lazily. */}
+                  selector's chunk loads lazily. Its own Suspense boundary —
+                  the lazy chunk's first load would otherwise suspend the
+                  route boundary and collapse this open screen to the page
+                  spinner (kdd/solid-reactivity-pitfalls § no remounts on
+                  interaction). */}
               <Show when={reportsOpen()}>
-                <SelectReportModal
-                  context="OUTBOUND_SHIPMENT"
-                  dataId={current().id}
-                  onClose={() => setReportsOpen(false)}
-                />
+                <Suspense>
+                  <SelectReportModal
+                    context="OUTBOUND_SHIPMENT"
+                    dataId={current().id}
+                    onClose={() => setReportsOpen(false)}
+                  />
+                </Suspense>
               </Show>
               {/* Returns need a shipped shipment (AC-V3) — an info-only
                   notice; the return flow is the returns vertical's. */}
@@ -736,6 +757,41 @@ const OutboundDetailView: Component = () => {
                     </Button>
                   }
                 />
+              </Show>
+              {/* From-shipment customer-return flow (AC-V3 → customer-returns
+                  S4): seeded from the selected STOCK lines (placeholder and
+                  service lines can't be returned, so they're excluded); the
+                  return is created born VERIFIED and linked to this shipment,
+                  then we navigate to it. Own Suspense boundary, as for the
+                  report selector above. */}
+              <Show when={returnModalOpen()}>
+                <Suspense>
+                  <ReturnFromShipmentModal
+                    open
+                    onClose={() => setReturnModalOpen(false)}
+                    storeId={params.storeId}
+                    outboundShipmentId={current().id}
+                    outboundShipmentInvoiceNumber={current().invoiceNumber}
+                    customerId={current().otherParty.id}
+                    customerName={current().otherParty.name}
+                    outboundShipmentLineIds={() =>
+                      selectedLines()
+                        .filter(
+                          line =>
+                            line.type !== 'SERVICE' &&
+                            line.type !== 'UNALLOCATED_STOCK'
+                        )
+                        .map(line => line.id)
+                    }
+                    onCreated={returnId => {
+                      setReturnModalOpen(false);
+                      setSelectedIds([]);
+                      navigate(
+                        `/${params.storeId}/distribution/customer-return/${returnId}`
+                      );
+                    }}
+                  />
+                </Suspense>
               </Show>
             </Page>
           </Tabs>
