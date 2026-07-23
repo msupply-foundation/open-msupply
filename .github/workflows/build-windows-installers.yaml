@@ -112,6 +112,10 @@ jobs:
           xcopy "build\*.*" "omSupply" /c || exit /b 1
           xcopy "build\windows\*.*" "omSupply" /c || exit /b 1
           xcopy "build\windows\demo" "omSupply\demo" /c /y /i || exit /b 1
+          @REM RefreshEnvironment.exe: primer file compiled into the server and
+          @REM standalone installers (broadcasts WM_SETTINGCHANGE after the
+          @REM installer adds postgres to the machine Path - avoids a reboot).
+          xcopy "build\windows\tools" "omSupply\tools" /c /y /i || exit /b 1
 
       # This repo's client build is the OLD UI: in the dual-frontend bundle it
       # is served under /old-ui/, so it must build with that public path
@@ -237,14 +241,21 @@ jobs:
           cd omSupply || exit /b 1
           node adjustSUFs.js || exit /b 1
           cd ..
+          @REM `|| exit /b` doesn't fire after `start /wait` (start itself
+          @REM succeeds) — check errorlevel explicitly or a failed suf build
+          @REM is silently ignored.
           echo ##### building omsupply_server.suf
-          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_server.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_server.suf"
+          @if %errorlevel% neq 0 exit /b %errorlevel%
           echo ##### building omsupply_desktop.suf
-          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_desktop.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_desktop.suf"
+          @if %errorlevel% neq 0 exit /b %errorlevel%
           echo ##### building omsupply_demo.suf
-          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_demo.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_demo.suf"
+          @if %errorlevel% neq 0 exit /b %errorlevel%
           echo ##### building omsupply_standalone.suf
-          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_standalone.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_standalone.suf"
+          @if %errorlevel% neq 0 exit /b %errorlevel%
         env:
           installersOutputFolder: ${{ github.workspace }}\installers
 
