@@ -3,7 +3,6 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import type { LocaleKey } from '../../../intl';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
@@ -13,6 +12,7 @@ import {
 import { SupplierPurchaseOrders } from '../names.generated';
 import type { SupplierPurchaseOrdersResult } from '../names.generated';
 import { purchaseOrderAreaPath } from '../list/namesListLogic';
+import { poStatusLabel } from './purchaseOrderStatus';
 
 // S4 Purchase orders tab — a read-only reference list of the supplier's purchase
 // orders (AC-N26). The DATA is owned by the purchase-order vertical (contract ›
@@ -24,16 +24,6 @@ import { purchaseOrderAreaPath } from '../list/namesListLogic';
 // detail-views › tabs).
 
 type PoRow = SupplierPurchaseOrdersResult['purchaseOrders']['nodes'][number];
-
-// Purchase-order status → its translated label (mirrors the current app's
-// getStatusTranslator). Keyed by the enum so a new status is a compile error.
-const PO_STATUS_KEY: Record<PoRow['status'], LocaleKey> = {
-  NEW: 'label.new',
-  REQUEST_APPROVAL: 'label.ready-for-approval',
-  CONFIRMED: 'label.ready-to-send',
-  SENT: 'label.sent',
-  FINALISED: 'label.finalised',
-};
 
 export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
   const params = useParams<{ storeId: string }>();
@@ -74,7 +64,7 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
       ...getDateCell(),
     },
     {
-      c: { accessor: row => t(PO_STATUS_KEY[row.status]), id: 'status' },
+      c: { accessor: row => poStatusLabel(row.status), id: 'status' },
       header: t('label.status'),
     },
     {
