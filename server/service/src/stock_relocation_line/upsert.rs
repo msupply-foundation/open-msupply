@@ -85,7 +85,7 @@ fn validate(
     )
     .map_err(ValidateMovement)?;
 
-    Ok(stock_line)
+    Ok(stock_line.stock_line_row)
 }
 
 impl From<RepositoryError> for UpsertStockRelocationLineError {

@@ -45,6 +45,22 @@ pub async fn with_retries<F>(connection_timeouts: RetrySeconds, f: F) -> Result<
 where
     F: Fn(Client) -> RequestBuilder,
 {
+    with_retries_opts(connection_timeouts, true, f).await
+}
+
+/// As [`with_retries`], but `retry_on_idle_timeout` controls whether an idle read timeout
+/// (or 408) triggers a retry. Pass `false` for long-running endpoints whose server-side
+/// work continues after the client gives up (e.g. legacy sync v5): retrying there spawns
+/// an overlapping server-side request for the same site, which the central then rejects as
+/// "sync already running". Connect errors are always retried (no server-side work began).
+pub async fn with_retries_opts<F>(
+    connection_timeouts: RetrySeconds,
+    retry_on_idle_timeout: bool,
+    f: F,
+) -> Result<Response>
+where
+    F: Fn(Client) -> RequestBuilder,
+{
     let mut index = 0;
     loop {
         let client = https_client_builder()
@@ -71,20 +87,23 @@ where
         };
         let elapsed = started.elapsed();
 
-        let (status, is_connect_error, is_timeout_error, url) = match result.as_ref() {
-            Ok(r) => (
-                Some(r.status()),
-                false,
-                false,
-                Some(redact_url_for_log(r.url())),
-            ),
-            Err(e) => (
-                e.status(),
-                e.is_connect(),
-                e.is_timeout(),
-                e.url().map(redact_url_for_log),
-            ),
-        };
+        let (status, is_connect_error, is_timeout_error, is_dropped_connection, url) =
+            match result.as_ref() {
+                Ok(r) => (
+                    Some(r.status()),
+                    false,
+                    false,
+                    false,
+                    Some(redact_url_for_log(r.url())),
+                ),
+                Err(e) => (
+                    e.status(),
+                    e.is_connect(),
+                    e.is_timeout(),
+                    is_connection_dropped(e),
+                    e.url().map(redact_url_for_log),
+                ),
+            };
 
         // Surface the status code (or transport error) for any failed attempt so
         // proxy/upstream errors like 502/503/504 — which we do not currently retry —
@@ -98,6 +117,8 @@ where
                     "connection error"
                 } else if is_timeout_error {
                     "idle timeout"
+                } else if is_dropped_connection {
+                    "connection dropped"
                 } else {
                     "request error"
                 };
@@ -105,9 +126,13 @@ where
             }
         };
 
-        let will_retry =
-            (is_connect_error || is_timeout_error || status == Some(StatusCode::REQUEST_TIMEOUT))
-                && (index + 1) < connection_timeouts.0.len();
+        let idle_timeout = is_timeout_error || status == Some(StatusCode::REQUEST_TIMEOUT);
+        // A mid-flight connection drop (e.g. hyper `IncompleteMessage`) is retried only for endpoints
+        // opting in via `retry_on_idle_timeout` (idempotent reads/upserts like v6); v5 keeps it off to
+        // avoid overlapping an in-flight server-side request. Connect errors are always retried.
+        let will_retry = (is_connect_error
+            || (retry_on_idle_timeout && (idle_timeout || is_dropped_connection)))
+            && (index + 1) < connection_timeouts.0.len();
 
         if let Ok(response) = result.as_ref() {
             let content_length_display = response
@@ -154,5 +179,101 @@ where
         }
 
         break result;
+    }
+}
+
+/// True if the server dropped an established connection mid-response (hyper `IncompleteMessage`,
+/// reset, broken pipe) - distinct from `is_connect`/`is_timeout`, and safe to retry for idempotent
+/// requests.
+fn is_connection_dropped(error: &reqwest::Error) -> bool {
+    // Only request-phase transport errors; never status / decode / body errors.
+    error.is_request() && chain_contains_transient_drop(error)
+}
+
+/// Walk the error's source chain looking for a transient transport-drop signature.
+fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) -> bool {
+    // hyper renders `IncompleteMessage` as "connection closed before message completed".
+    const SIGNATURES: [&str; 5] = [
+        "connection closed before message completed",
+        "incompletemessage",
+        "connection reset",
+        "broken pipe",
+        "unexpected end of file",
+    ];
+
+    let mut current: Option<&(dyn std::error::Error + 'static)> = Some(error);
+    while let Some(err) = current {
+        let message = err.to_string().to_lowercase();
+        if SIGNATURES.iter().any(|signature| message.contains(signature)) {
+            return true;
+        }
+        current = err.source();
+    }
+    false
+}
+
+#[cfg(test)]
+mod test {
+    use super::chain_contains_transient_drop;
+    use std::error::Error;
+    use std::fmt;
+
+    #[derive(Debug)]
+    struct ChainError {
+        message: String,
+        source: Option<Box<ChainError>>,
+    }
+
+    impl fmt::Display for ChainError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.message)
+        }
+    }
+
+    impl Error for ChainError {
+        fn source(&self) -> Option<&(dyn Error + 'static)> {
+            self.source
+                .as_ref()
+                .map(|boxed| boxed.as_ref() as &(dyn Error + 'static))
+        }
+    }
+
+    fn chain(messages: &[&str]) -> ChainError {
+        // Build innermost-first so the outer error's source points inward.
+        let mut current: Option<Box<ChainError>> = None;
+        for message in messages.iter().rev() {
+            current = Some(Box::new(ChainError {
+                message: message.to_string(),
+                source: current,
+            }));
+        }
+        *current.unwrap()
+    }
+
+    #[test]
+    fn detects_incomplete_message_deep_in_chain() {
+        // Mirrors the real reqwest -> hyper chain we saw on a dropped v6 pull.
+        let error = chain(&[
+            "error sending request for url (http://host/central/sync/pull)",
+            "client error (SendRequest)",
+            "connection closed before message completed",
+        ]);
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    #[test]
+    fn detects_connection_reset() {
+        let error = chain(&["error sending request", "Connection reset by peer (os error 54)"]);
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    #[test]
+    fn ignores_non_transient_errors() {
+        // A connect refusal is handled by `is_connect`, not here; a status/body error must not match.
+        let connect = chain(&["error sending request", "tcp connect error", "Connection refused (os error 111)"]);
+        assert!(!chain_contains_transient_drop(&connect));
+
+        let bad_request = chain(&["builder error", "invalid header value"]);
+        assert!(!chain_contains_transient_drop(&bad_request));
     }
 }
