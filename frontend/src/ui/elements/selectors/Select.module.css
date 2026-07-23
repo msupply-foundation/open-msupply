@@ -10,7 +10,20 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
+}
+
+/* Max-width caps, mirroring TextField's `width` prop (default short). `full`
+   lets the dropdown fill its container — e.g. a detail row's value column. */
+.field[data-width='short'] {
   max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
 }
 
 .label {
