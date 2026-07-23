@@ -24,6 +24,9 @@ type StatusValue = NonNullable<
 // The offset is REQUIRED: the server's DateTime scalar parses RFC3339, and a
 // bare `T00:00:00` fails with "premature end of input" (same helpers as the
 // inbound list).
+// TODO: hoist these three to shared code (with the inbound list's identical
+// copies) once a third list needs them — and decide there whether a picked
+// day means the UTC day (this Z literal) or the store-local day.
 const startOfDay = (d: string) => `${d}T00:00:00.000Z`;
 const endOfDay = (d: string) => `${d}T23:59:59.999Z`;
 // A stored bound (full ISO datetime) → the yyyy-mm-dd the date input shows.
