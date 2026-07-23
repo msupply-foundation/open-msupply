@@ -33,6 +33,7 @@ import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatient } from '../patientApi';
@@ -142,7 +143,6 @@ const PatientDetailView: Component = () => {
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal('');
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
-  const [discardOpen, setDiscardOpen] = createSignal(false);
 
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
@@ -238,15 +238,24 @@ const PatientDetailView: Component = () => {
   };
 
   const leave = () => navigate(`/${params.storeId}/dispensary/patients`);
-  const onCancelOrClose = () => {
-    if (isDirty()) setDiscardOpen(true);
-    else leave();
+
+  // Re-seed the edit buffer from the fetched patient, making the form pristine.
+  const resetDraft = () => {
+    const n = node();
+    if (!n) return;
+    setEdit(seedDraft(n));
+    validation.reset();
   };
+
+  // Discard prompt on any leave from a dirty form (spec § patient edit form):
+  // route change, tab switch, browser back, reload / tab close. onDiscard
+  // resets the draft so a tab switch — which stays mounted — is truly cleared.
+  const leaveGuard = createConfirmOnLeave({ isDirty, onDiscard: resetDraft });
 
   const displayName = () => node()?.name || t('label.new-patient');
 
   const crumbs = () => [
-    { label: t('label.patients'), onClick: onCancelOrClose },
+    { label: t('label.patients'), onClick: leave },
     { label: displayName() },
   ];
 
@@ -335,7 +344,7 @@ const PatientDetailView: Component = () => {
                         variant="secondary"
                         icon={<XCircleIcon />}
                         data-testid="cancel-button"
-                        onClick={onCancelOrClose}
+                        onClick={leave}
                       >
                         {isDirty() ? t('button.cancel') : t('button.close')}
                       </Button>
@@ -448,13 +457,13 @@ const PatientDetailView: Component = () => {
                 onClose={() => setConfirmSaveOpen(false)}
               />
               <ConfirmDialog
-                open={discardOpen()}
+                open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
                 cancelLabel={t('button.cancel')}
-                onConfirm={leave}
-                onClose={() => setDiscardOpen(false)}
+                onConfirm={leaveGuard.confirm}
+                onClose={leaveGuard.cancel}
               />
             </Page>
           </Tabs>
