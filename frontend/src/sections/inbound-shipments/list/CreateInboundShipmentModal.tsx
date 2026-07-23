@@ -2,6 +2,7 @@ import {
   createEffect,
   createResource,
   createSignal,
+  onMount,
   Show,
   type Component,
 } from 'solid-js';
@@ -66,6 +67,21 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     props.onClose();
     navigate(`/${params.storeId}/replenishment/inbound-shipment/${id}`);
   };
+
+  // Focus the supplier search on open so the user can type straight away — the
+  // Dialog otherwise parks initial focus on its panel (which keeps a combobox
+  // from popping open); defer a frame so this focus wins. Manual mode only —
+  // the from-PO flow opens a table picker, not a search field.
+  onMount(() => {
+    if (props.mode !== 'manual') return;
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(
+          '[data-testid="create-inbound-modal"] [data-testid="name-search-input"]'
+        )
+        ?.focus();
+    });
+  });
 
   // ── Manual: pick a supplier, optionally link an open internal order, create.
   const [supplier, setSupplier] = createSignal<NameOption | null>(null);

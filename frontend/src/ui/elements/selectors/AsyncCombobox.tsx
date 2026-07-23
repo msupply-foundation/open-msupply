@@ -51,6 +51,12 @@ export interface AsyncComboboxProps<T> {
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
+  /**
+   * Status text shown when the settled option list is empty — a domain hint
+   * (e.g. the patient picker's "Start typing to search"). Passed through to the
+   * Combobox; defaults there to "No matching items".
+   */
+  noResultsMessage?: string;
 }
 
 /*
@@ -153,6 +159,7 @@ export const AsyncCombobox = <T,>(
       clearable={props.clearable}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
+      noResultsMessage={props.noResultsMessage}
       items={items()}
       loading={loading()}
       loadingMore={search.loadingMore()}

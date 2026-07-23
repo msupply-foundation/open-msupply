@@ -29,7 +29,7 @@ import styles from '../Settings.module.css';
  *    MUTATE together, checked server-side; a Forbidden response surfaces
  *    through the app's global Permission-denied surface — graphqlFetch
  *    detects the error before any nested field is read, so the reference
- *    app's crash is not reproduced (AC-CN4, D41).
+ *    app's crash is not reproduced (AC-CN4, D46).
  *  - Configure supply levels is permission-checked client-side BEFORE its
  *    editor opens (AC-CN5).
  */
@@ -65,7 +65,7 @@ export const ConfigurationSection = () => {
   // Initialise / Re-initialise — the same idempotent, all-or-nothing upsert
   // either time (AC-CN1–CN3; atomicity is server-side). Default fetch options
   // on purpose: a Forbidden routes to the global Permission-denied modal
-  // (AC-CN4, D41), any other failure to the global unexpected-error modal.
+  // (AC-CN4, D46), any other failure to the global unexpected-error modal.
   const initialise = async (
     which: 'gaps' | 'forecasting',
     input: NamePropertyInput[]
