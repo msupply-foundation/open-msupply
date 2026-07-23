@@ -7,10 +7,17 @@
 }
 
 /* Comment-cell icon trigger: quiet grey, brand on hover (matches the current
-   app's PopoverCell). Sizing follows the icon's font-size (1em). */
+   app's PopoverCell). Sizing follows the icon's font-size (1em). The whole
+   trigger must stay ≤1.25rem (20px) tall — the table cell's line-height
+   strut: a taller box middle-aligned in the cell inflates the line box
+   ~2px past it, which pushed COMPACT rows (a 40px floor incl. the 1px
+   collapsed border — ui-standards § tables row heights) to ~43px. At 20px
+   the trigger rides the strut and compact sits at exactly 40. Inline
+   padding stays 4px (width doesn't affect row height; 24px wide keeps a
+   fair click target, and the popover also opens on hover). */
 .trigger {
-  padding: var(--space-1);
-  font-size: 1.125rem;
+  padding: 0.125rem var(--space-1);
+  font-size: 1rem;
   color: var(--gray-main);
 }
 

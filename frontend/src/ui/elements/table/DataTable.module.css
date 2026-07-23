@@ -365,6 +365,16 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   transition: background-color var(--table-bg-fade);
 }
 
+/* The selection checkbox is a BLOCK, centred by margin: as an inline
+   (baseline-aligned) replaced box it inflates the cell's line box ~5px,
+   which held COMPACT rows above their 40px floor — the same strut rule
+   as the comment trigger (see Comment.module.css). The legacy display
+   shell used exactly this fix. */
+.selectCell input {
+  display: block;
+  margin-inline: auto;
+}
+
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
    A pinned cell needs a FULLY OPAQUE background so the horizontally-scrolling content never shows
    through the frozen cell (or through the seam between the two leading columns). All get z 1 —
