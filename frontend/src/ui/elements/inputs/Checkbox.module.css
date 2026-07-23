@@ -1,9 +1,8 @@
 /*
- * Checkbox — the native <input type="checkbox"> hidden (but present for a11y +
- * as the state owner), a custom box + CheckIcon styled beside the label.
- * Checked / focus-visible / error states are driven off the input via
- * adjacent-sibling selectors. All sizing rem/em, all colours tokens (the only
- * px are the hairline border + focus outline widths, per CLAUDE.md #6).
+ * Checkbox — the labelled form field around BareCheckbox (which owns the box
+ * look — see BareCheckbox.module.css). Only the field layout, label and
+ * error chrome live here. All sizing rem/em, all colours tokens (the only px
+ * are hairline widths, per CLAUDE.md #6).
  */
 
 .field {
@@ -11,11 +10,6 @@
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
-  /* Contain the visually-hidden native input (.input, position:absolute): with
-     no positioned ancestor it escapes to document space and stretches the
-     viewport's scrollHeight — a second, document-level scrollbar (same fix as
-     TextField's .labelHidden). */
-  position: relative;
 }
 
 .root {
@@ -30,66 +24,10 @@
   opacity: 0.5;
 }
 
-/* Visually hidden native control (still focusable + announced). */
-.input {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-/* The custom box: outlined square that fills with the brand tone + reveals the
-   check when the input is checked. margin aligns it to the first label line. */
-.box {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  inline-size: 1.125rem;
-  block-size: 1.125rem;
+/* Placement of the control in the label row: nudged to the first label
+   line (the box is 18px against the label's ~18.2px line). */
+.control {
   margin-block-start: 0.0625rem;
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-white);
-  color: var(--primary-contrast);
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    box-shadow 120ms ease;
-}
-
-.check {
-  font-size: 0.875rem;
-  opacity: 0;
-}
-
-/* Checked — fill with the brand tone, show the check. */
-.input:checked + .box {
-  background: var(--secondary-main);
-  border-color: var(--secondary-main);
-}
-
-.input:checked + .box .check {
-  opacity: 1;
-}
-
-/* Focus-visible ring on the box (the input itself is hidden). */
-.input:focus-visible + .box {
-  outline: none;
-  border-color: var(--secondary-main);
-  box-shadow: var(--focus-ring);
-}
-
-/* Error state — red edge; red glow when also focused. */
-.box[data-error] {
-  border-color: var(--error-main);
-}
-
-.input:focus-visible + .box[data-error] {
-  box-shadow: var(--focus-ring-error);
 }
 
 .label {
@@ -120,11 +58,5 @@
   .root {
     min-block-size: var(--touch-target);
     align-items: center;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .box {
-    transition: none;
   }
 }
