@@ -467,6 +467,7 @@ mod tests {
                 inactivity_timeout_seconds: crate::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
                 token_refresh_interval_seconds: crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 frontend_dir: "frontend".to_string(),
+                old_ui_frontend_dir: None,
             },
             database: db_settings,
             sync: None,
