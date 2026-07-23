@@ -81,6 +81,11 @@ export const DuplicateShipmentAction: Component<
       setPhase('skipped');
       return;
     }
+    // Close BEFORE navigating: from the detail side panel the navigation only
+    // swaps the route's :id param, so this component stays mounted — without
+    // the close the dialog would sit open (OK still spinning) over the copy.
+    // (From the list the navigation unmounts the dialog anyway.)
+    close();
     goToCopy(response.invoice.id);
   };
 

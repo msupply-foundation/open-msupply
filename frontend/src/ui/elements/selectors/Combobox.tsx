@@ -140,6 +140,14 @@ interface ComboboxProps<T> {
    * ignores it). Omit for a plain combobox.
    */
   listboxHeader?: JSX.Element;
+  /**
+   * By default the popup matches the trigger's width (Kobalte `sameWidth`). Pass
+   * `false` to let it size to its content instead — never narrower than the
+   * trigger, capped so it stays readable and never runs past the viewport — for
+   * pickers whose option text (e.g. a location's `code + name`) can outrun a
+   * narrow field.
+   */
+  matchTriggerWidth?: boolean;
   class?: string;
 }
 
@@ -292,6 +300,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       onChange={handleChange}
       onInputChange={handleInputChange}
       onOpenChange={open => props.onOpenChange?.(open)}
+      // Popup width: match the trigger by default; opt out to size-to-content
+      // (bounded by .contentGrow below). See matchTriggerWidth.
+      sameWidth={props.matchTriggerWidth ?? true}
       allowsEmptyCollection
       // Open the listbox as soon as the input is focused/clicked (not only once
       // the user types) — the options appear on interaction, matching the
@@ -372,7 +383,11 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       <KCombobox.Portal mount={portalMount?.()}>
         <KCombobox.Content
           ref={contentEl}
-          class={styles.content}
+          class={
+            props.matchTriggerWidth === false
+              ? `${styles.content} ${styles.contentGrow}`
+              : styles.content
+          }
           // Keep the listbox open only when a pointerdown lands inside this
           // popup's own content — Kobalte otherwise dismisses an option click
           // before it commits when the popup is mounted in a dialog (see
