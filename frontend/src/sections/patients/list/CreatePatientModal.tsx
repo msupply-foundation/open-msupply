@@ -22,6 +22,8 @@ import {
   getDateCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
+import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
@@ -46,7 +48,7 @@ import {
 import { runInsertPatient } from '../patientApi';
 import {
   emptyDraft,
-  isDraftValid,
+  patientFieldErrors,
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
@@ -116,6 +118,10 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
   const [fetchOpen, setFetchOpen] = createSignal(false);
 
+  // Details-step validation (AC-C3): required errors stay quiet until the first
+  // Save attempt, then surface per field and as the summary below the form.
+  const validation = createFormValidation(() => patientFieldErrors(draft));
+
   // Mint a fresh identifier + reset the flow each time the modal opens (AC-C5).
   createEffect(() => {
     if (props.open) {
@@ -127,6 +133,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       setCentralMatches([]);
       setCentralUnreachable(false);
       setSaveError('');
+      validation.reset();
     }
   });
 
@@ -226,7 +233,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   };
 
   const save = async () => {
-    if (!isDraftValid(draft) || saving()) return;
+    if (saving()) return;
+    validation.arm();
+    if (!validation.valid()) return;
     setSaving(true);
     setSaveError('');
     const outcome = await runInsertPatient(
@@ -346,7 +355,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           icon={<SaveIcon />}
           data-testid="dialog-button-ok"
           loading={saving()}
-          disabled={!isDraftValid(draft)}
           onClick={() => void save()}
         >
           {t('button.save')}
@@ -500,7 +508,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               storeId={props.storeId}
               draft={draft}
               setField={setDraftField}
-              showRequired
+              errorFor={validation.errorFor}
+            />
+            <FormErrorSummary
+              errors={validation.visible()}
+              testId="create-patient-error-summary"
             />
           </Match>
         </Switch>

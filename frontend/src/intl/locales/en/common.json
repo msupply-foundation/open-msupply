@@ -2438,6 +2438,7 @@
   "messages.fetching-report-data": "Fetching report data...",
   "messages.finalise-previous-form": "Finalise the previous R&R form in this schedule to create the next one",
   "messages.finalised-stock-take": "This stocktake is finalised and cannot be edited",
+  "messages.form-has-errors": "Please correct the following before saving:",
   "messages.fridge-tag-import-successful": "Success! {{numberOfLogs}} logs and {{numberOfBreaches}} breaches imported.",
   "messages.full-screen-enabled": "Full screen mode enabled, press ESC or click the exit button in the top right to exit",
   "messages.global-table-config-saved": "Table configuration saved as global default",

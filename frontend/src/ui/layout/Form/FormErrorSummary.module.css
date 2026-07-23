@@ -1,0 +1,9 @@
+/*
+ * FormErrorSummary — the error list inside the red Alert (see
+ * FormErrorSummary.tsx). A tight bulleted list under the lead line; the Alert
+ * itself supplies the panel, icon, and colour.
+ */
+.list {
+  margin: var(--space-1) 0 0;
+  padding-inline-start: var(--space-5);
+}
