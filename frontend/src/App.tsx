@@ -18,12 +18,15 @@ import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
+import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { patientsRoutes } from './sections/patients';
+import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { helpRoutes } from './sections/help';
@@ -42,12 +45,15 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 // section's nested route tree (list + detail etc.), whose view components are
 // lazy. Every other destination falls back to EntryPage.
 const sectionRoutes: Record<string, () => JSX.Element> = {
+  dashboard: dashboardRoutes,
   'inventory/stocktakes': stocktakesRoutes,
   'inventory/locations': locationsRoutes,
   'distribution/customer-return': customerReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'dispensary/patients': patientsRoutes,
+  'catalogue/master-lists': masterListsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
@@ -123,10 +129,10 @@ export const App: Component = () => {
                   (empty) entry page until a real section is registered above. */}
               <Route path="/:storeId" component={StoreGuardLayout}>
                 <Route path="/" component={ShellLayout}>
-                  <Route
-                    path="/"
-                    component={() => <EntryPage labelKey="dashboard" />}
-                  />
+                  {/* The store root is the landing screen — the dashboard
+                      (spec/dashboard S1), same page as the nav's `dashboard`
+                      destination. */}
+                  <Route path="/" component={DashboardPage} />
                   <For each={Object.entries(sectionRoutes)}>
                     {([path, routes]) => (
                       <Route path={`/${path}`}>{routes()}</Route>

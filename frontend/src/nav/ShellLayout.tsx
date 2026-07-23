@@ -3,8 +3,14 @@ import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
-import { findLeafByPath, type NavLeaf } from '../ui/layout/AppShell/navModel';
+import {
+  findLeafByPath,
+  lowerNav,
+  upperNav,
+  type NavLeaf,
+} from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
+import { isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
@@ -49,6 +55,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const onNavigate = (leaf: NavLeaf) =>
     navigate(`/${params.storeId}/${leaf.to}`);
 
+  // Dispensary-mode gate (spec/patients AC-G1): the Dispensary nav group is
+  // shown only in dispensary mode. Filter it out of the upper list otherwise;
+  // the route guard (patients section) blocks direct-URL entry to match. The
+  // lower cluster is unaffected, so it is passed through unchanged (AppShell
+  // takes the app's default lower only when `upper` is not overridden).
+  const menuUpper = () =>
+    isDispensary()
+      ? upperNav
+      : upperNav.filter(item => item.id !== 'dispensary');
+
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
   // the one named by the URL. Activating the store selector routes to the
@@ -77,6 +93,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   return (
     <>
       <AppShell
+        upper={menuUpper()}
+        lower={lowerNav}
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}

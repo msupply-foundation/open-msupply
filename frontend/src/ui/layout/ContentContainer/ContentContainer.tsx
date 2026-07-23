@@ -4,12 +4,26 @@ import styles from './ContentContainer.module.css';
 export interface ContentContainerProps extends JSX.HTMLAttributes<HTMLDivElement> {
   /**
    * The reading-column cap this content grows to before it stops widening and
-   * centres in the page body:
+   * aligns in the page body:
    *  - `form` (default) — a comfortable two-column form (`--measure-form`)
    *  - `prose` — single-column reading text (`--measure-prose`)
    *  - `wide` — dense forms / dashboards (`--measure-wide`)
    */
   size?: 'form' | 'prose' | 'wide';
+  /**
+   * Add the Page body's edge padding to the container itself. For form content
+   * inside a `fillBody` body — a mixed table+form detail view whose Page is
+   * full-bleed for the tables, so there's no body padding for the form to
+   * inherit. Off by default (the body owns padding on a normal page).
+   */
+  padded?: boolean;
+  /**
+   * Where the capped column sits once it stops growing: `center` (default —
+   * the reading-column convention for forms/prose) or `start` — hug the
+   * reading start edge (logical, so the right edge in RTL) for tool-like /
+   * reference pages where a stable origin scans better than centring.
+   */
+  align?: 'center' | 'start';
 }
 
 /*
@@ -24,13 +38,21 @@ export interface ContentContainerProps extends JSX.HTMLAttributes<HTMLDivElement
  * layout, no styling of what's inside. Hand-rolled, pure CSS + tokens.
  */
 export const ContentContainer = (props: ContentContainerProps) => {
-  const [local, rest] = splitProps(props, ['size', 'class', 'children']);
+  const [local, rest] = splitProps(props, [
+    'size',
+    'padded',
+    'align',
+    'class',
+    'children',
+  ]);
   return (
     <div
       class={
         local.class ? `${styles.container} ${local.class}` : styles.container
       }
       data-size={local.size ?? 'form'}
+      data-padded={local.padded ? '' : undefined}
+      data-align={local.align ?? 'center'}
       {...rest}
     >
       {local.children}
