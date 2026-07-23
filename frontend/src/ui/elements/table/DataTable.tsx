@@ -41,6 +41,7 @@ import {
   type ViewMode,
 } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
+import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CloseIcon,
@@ -330,9 +331,15 @@ export function DataTable<T, K extends string, G extends string = never>(
 
   // Row density (ui-standards § tables → row heights) — a view-level config
   // field like viewMode, chosen in the Settings popover and stamped as
-  // data-density on the <table> (row heights mapped in CSS). Comfortable is
-  // the spec's ⭐ default.
-  const viewDensity = () => props.config?.viewDensity ?? 'comfortable';
+  // data-density on the <table> (row heights + cell padding mapped in CSS).
+  // Comfortable is the spec's ⭐ default on desktop; below the nav-overlay
+  // width the DEFAULT grows to spacious (ui-standards § tables → responsive;
+  // Carl 2026-07-24: keyed to the existing breakpoint, not the spec's 1280
+  // band). An explicit user choice (config) wins at any width; Reset clears
+  // it and the responsive default resumes.
+  const isNarrow = useIsNavOverlay();
+  const viewDensity = () =>
+    props.config?.viewDensity ?? (isNarrow() ? 'spacious' : 'comfortable');
 
   // Reset the table to its default layout (the Settings popover's ONE reset —
   // ui-standards § tables → column management): clear every user-layer
@@ -642,6 +649,7 @@ export function DataTable<T, K extends string, G extends string = never>(
             >
               <TableSettings
                 config={props.config}
+                density={viewDensity()}
                 setConfig={props.setConfig}
                 onReset={resetConfig}
                 resetDisabled={props.configIsDefault}
