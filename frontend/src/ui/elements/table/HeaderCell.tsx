@@ -23,11 +23,17 @@ export function HeaderCell<T>(props: {
   const isResizing = () => column().getIsResizing();
   const align = () => column().columnDef.meta?.align;
   const pin = () => props.pinnedStyle(column());
+  const sorted = () => column().getIsSorted();
+  // The arrow slot is RESERVED on every sortable header (empty until sorted,
+  // fixed width — see .sortIndicator) so toggling a sort never shifts the
+  // header text. Decorative: aria-sort on the th carries the semantics.
   const indicator = () => {
-    const sorted = column().getIsSorted();
-    if (!sorted) return null;
+    if (!canSort()) return null;
+    const dir = sorted();
     return (
-      <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>
+      <span class={styles.sortIndicator} aria-hidden="true">
+        {dir === 'desc' ? '▼' : dir === 'asc' ? '▲' : ''}
+      </span>
     );
   };
   return (
@@ -35,6 +41,17 @@ export function HeaderCell<T>(props: {
       class={styles.th}
       data-align={align()}
       data-pinned={column().getIsPinned() || undefined}
+      // Whole-cell sort target (spec .sortable): the toggle handler sits on the
+      // th, not the label span; the resize handle stops click propagation.
+      data-sortable={canSort() || undefined}
+      onClick={canSort() ? column().getToggleSortingHandler() : undefined}
+      aria-sort={
+        sorted()
+          ? sorted() === 'desc'
+            ? 'descending'
+            : 'ascending'
+          : undefined
+      }
       // Cross-FE test-id contract (e2e/TESTIDS.md): every header cell carries
       // `header-<columnId>`, sortable or not.
       data-testid={`header-${column().id}`}
@@ -44,10 +61,7 @@ export function HeaderCell<T>(props: {
       // position + its edge offset.
       style={{ 'min-width': `${column().getSize()}px`, ...pin() }}
     >
-      <span
-        class={`${styles.thLabel} ${canSort() ? styles.thSortable : ''}`}
-        onClick={canSort() ? column().getToggleSortingHandler() : undefined}
-      >
+      <span class={styles.thLabel}>
         {/* Header text wraps up to 2 lines (.thText clamp); the sort indicator is a
             separate non-shrinking sibling so it stays visible when the text wraps. */}
         <span class={styles.thText}>
