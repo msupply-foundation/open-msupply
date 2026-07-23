@@ -31,11 +31,11 @@ export interface LocationSelectProps {
 
 /*
  * The reusable **volume-blind** Location picker — a Combobox labelled by a
- * location's code, used where a location is merely *referenced* (scoping a
- * stocktake count, a list filter) so capacity is irrelevant. For surfaces that
- * *associate stock* with a location — the stocktake line editor, bulk
- * change-location — use LocationVolumeSelect instead, which shows each option's
- * % used and offers the fullness filter.
+ * location's "code — name", used where a location is merely *referenced*
+ * (scoping a stocktake count, a list filter) so capacity is irrelevant. For
+ * surfaces that *associate stock* with a location — the stocktake / inbound line
+ * editors, bulk change-location — use LocationVolumeSelect instead, which shows
+ * each option's % used and offers the fullness filter.
  *
  * A domain widget (src/domain): it knows the app's data shape (labels locations
  * by code) but is composed from the pure ui/ Combobox, and — per
@@ -50,12 +50,15 @@ export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
     hideLabel={props.hideLabel}
     items={props.locations}
     loading={props.loading}
-    itemToString={l => l.code}
+    itemToString={l => `${l.code} — ${l.name}`}
     itemToValue={l => l.id}
     value={props.value}
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
     onChange={l => props.onChange(l)}
+    // Let the popup grow past a narrow field so a location's code + name stays
+    // readable rather than truncating to the field width.
+    matchTriggerWidth={false}
   />
 );

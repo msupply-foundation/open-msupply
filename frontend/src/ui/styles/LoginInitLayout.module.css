@@ -105,6 +105,16 @@
   color: var(--text-secondary); /* not the original's opacity 0.4 — see top */
 }
 
+/* Unobtrusive text link to the sibling old UI (see LoginPage). Secondary tone
+   so it never competes with the login button; underlined so it reads as a link
+   without relying on colour alone. */
+.switchLink {
+  align-self: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
 /* Compact (phone): the hero doesn't render; the form panel is the page.
    Same 599px line as the root font-size step in index.css. */
 @media (max-width: 599px) {

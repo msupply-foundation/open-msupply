@@ -18,9 +18,10 @@ export interface SelectOption {
 interface SelectProps {
   label: string;
   /**
-   * Name the control via aria-label INSTEAD of rendering the label element —
-   * for a Select sitting in an externally-labelled row (e.g. a FieldRow),
-   * mirroring TextField's hideLabel.
+   * Name the trigger via `aria-label` instead of rendering a visible label —
+   * for dense contexts (a table cell, or an externally-labelled FieldRow)
+   * where a column header or row label already names the control. The
+   * accessible name is unchanged. Mirrors TextField/Combobox.
    */
   hideLabel?: boolean;
   options: SelectOption[];
@@ -37,6 +38,13 @@ interface SelectProps {
    *  control.
    */
   size?: 'md' | 'sm';
+  /**
+   * Max-width cap (the container can always be narrower), mirroring
+   * {@link TextField}: `short` (default) / `long` for form fields, `full` to
+   * fill the available width — e.g. a detail row's value column so the dropdown
+   * aligns with the text fields beside it.
+   */
+  width?: 'short' | 'long' | 'full';
   class?: string;
   /** `data-testid` for the trigger button (locale-stable test hook, e2e/TESTIDS.md). */
   testId?: string;
@@ -72,6 +80,7 @@ export const Select = (props: SelectProps) => {
     <KSelect.Root<SelectOption>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-size={props.size ?? 'md'}
+      data-width={props.width ?? 'short'}
       options={props.options}
       optionValue="value"
       optionTextValue="label"

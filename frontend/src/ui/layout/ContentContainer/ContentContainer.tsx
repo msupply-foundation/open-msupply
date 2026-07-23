@@ -11,6 +11,13 @@ export interface ContentContainerProps extends JSX.HTMLAttributes<HTMLDivElement
    */
   size?: 'form' | 'prose' | 'wide';
   /**
+   * Add the Page body's edge padding to the container itself. For form content
+   * inside a `fillBody` body — a mixed table+form detail view whose Page is
+   * full-bleed for the tables, so there's no body padding for the form to
+   * inherit. Off by default (the body owns padding on a normal page).
+   */
+  padded?: boolean;
+  /**
    * Where the capped column sits once it stops growing: `center` (default —
    * the reading-column convention for forms/prose) or `start` — hug the
    * reading start edge (logical, so the right edge in RTL) for tool-like /
@@ -33,6 +40,7 @@ export interface ContentContainerProps extends JSX.HTMLAttributes<HTMLDivElement
 export const ContentContainer = (props: ContentContainerProps) => {
   const [local, rest] = splitProps(props, [
     'size',
+    'padded',
     'align',
     'class',
     'children',
@@ -43,6 +51,7 @@ export const ContentContainer = (props: ContentContainerProps) => {
         local.class ? `${styles.container} ${local.class}` : styles.container
       }
       data-size={local.size ?? 'form'}
+      data-padded={local.padded ? '' : undefined}
       data-align={local.align ?? 'center'}
       {...rest}
     >

@@ -1,6 +1,6 @@
 import { children, createEffect, onCleanup, Show, type JSX } from 'solid-js';
 import { useFullScreen } from '../AppShell/shellContext';
-import { useIsCompact } from '../../utils/createMediaQuery';
+import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { SidePanel } from '../SidePanel/SidePanel';
 import styles from './Page.module.css';
 
@@ -23,10 +23,11 @@ export interface PageProps {
    * The details-panel CONTENT — a stack of <SidePanelSection>s (or any
    * markup). The PANEL ITSELF (the docked frame, its header with the title,
    * and the close button) is baked into the frame here — a detail view
-   * supplies only what goes INSIDE, not the panel chrome. A DOCKED column at
-   * the inline-end of the body: while `sidePanelOpen` it takes its width and
-   * PUSHES the body (shrinks it), rather than floating over it. Omit on pages
-   * without a panel.
+   * supplies only what goes INSIDE, not the panel chrome. At navOverlay and
+   * above it's a DOCKED column at the inline-end: opening it slides the column
+   * in and PUSHES the body (so the app bar's action buttons stay uncovered),
+   * with a drop shadow. Below navOverlay it's an off-canvas drawer that slides
+   * OVER the page behind a scrim. Omit on pages without a panel.
    */
   sidePanelContent?: JSX.Element;
   /** The panel's title (header text + accessible name). */
@@ -84,16 +85,16 @@ export const Page = (props: PageProps) => {
   // detached DOM). children() memoizes so both reads share one instance.
   const panelContent = children(() => props.sidePanelContent);
 
-  // Below the compact breakpoint the OPEN panel is a full-screen overlay
-  // (Page.module.css, spec ui-standards/layout.md → page regions, D27).
-  // While it's active: the covered main column is `inert` (unreachable by
-  // keyboard and assistive tech — the overlay isn't a dialog yet, so without
-  // this focus could tab into the hidden content) and Esc closes the panel.
-  // Interim treatment; the drawer-with-dialog-semantics end-state replaces it
-  // once a Drawer exists.
-  const isCompact = useIsCompact();
+  // Below the navOverlay breakpoint the OPEN panel is an off-canvas drawer that
+  // slides OVER the page behind a scrim, mirroring the nav drawer on the
+  // opposite edge (Page.module.css, spec ui-standards/layout.md → page regions,
+  // D27) — so narrow content is never squeezed to a sliver. While it's active
+  // the covered main column is `inert` (unreachable by keyboard and assistive
+  // tech — it isn't a full dialog yet, so without this focus could tab into the
+  // hidden content) and Esc closes the panel.
+  const isNavOverlay = useIsNavOverlay();
   const overlayActive = () =>
-    isCompact() && props.sidePanelOpen === true && !!panelContent();
+    isNavOverlay() && props.sidePanelOpen === true && !!panelContent();
 
   createEffect(() => {
     if (!overlayActive()) return;
@@ -122,22 +123,33 @@ export const Page = (props: PageProps) => {
         {props.contentFooter}
       </div>
       {/* Details panel, baked into the frame: full page height, MOUNTED while content is
-          provided and merely COLLAPSED (width 0, clipped) while closed — open/close never
-          remounts the content (kdd/state-management: no remounts), and panel state (scroll,
-          in-progress edits) survives. The frame owns the SidePanel chrome (header, title,
+          provided and merely PARKED off-frame while closed — open/close never remounts the
+          content (kdd/state-management: no remounts), and panel state (scroll, in-progress
+          edits) survives. Docked (pushes the body) at navOverlay and above; an off-canvas
+          drawer + scrim below it. The frame owns the SidePanel chrome (header, title,
           close); the page supplies only the content + title + the open boolean. */}
       <Show when={panelContent()}>
-        <div
-          class={styles.panelSlot}
-          data-closed={props.sidePanelOpen === false ? '' : undefined}
-        >
-          <SidePanel
-            label={props.sidePanelTitle}
-            onClose={props.onSidePanelClose}
+        <>
+          {/* Overlay-mode scrim (CSS hides it while docked): dims the covered
+              content and closes the panel on tap. */}
+          <div
+            class={styles.scrim}
+            data-open={props.sidePanelOpen === true ? 'true' : undefined}
+            aria-hidden="true"
+            onClick={() => props.onSidePanelClose?.()}
+          />
+          <div
+            class={styles.panelSlot}
+            data-closed={props.sidePanelOpen === false ? '' : undefined}
           >
-            {panelContent()}
-          </SidePanel>
-        </div>
+            <SidePanel
+              label={props.sidePanelTitle}
+              onClose={props.onSidePanelClose}
+            >
+              {panelContent()}
+            </SidePanel>
+          </div>
+        </>
       </Show>
     </div>
   );

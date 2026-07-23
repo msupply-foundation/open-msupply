@@ -16,6 +16,7 @@ type StorePreferences = StoreContextResult['storePreferences'];
 // A baseline with every gate OFF / threshold unset (0), overridden per case.
 const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   syncRecordsDisplayThreshold: 0,
+  genderOptions: [],
   manageVaccinesInDoses: false,
   manageVvmStatusForStock: false,
   allowTrackingOfStockByDonor: false,

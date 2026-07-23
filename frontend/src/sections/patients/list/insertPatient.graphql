@@ -1,0 +1,12 @@
+# Plain-path create (spec/patients contract › creating a patient). The response
+# is a single-member union whose only member is PatientNode — there is NO error
+# node to branch on; every rejection (e.g. PatientExists) is a top-level GraphQL
+# error carried on extensions.details, decoded by patientApi.ts.
+mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
+  insertPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      id
+    }
+  }
+}

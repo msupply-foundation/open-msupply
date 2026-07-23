@@ -7,9 +7,6 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import {
@@ -27,14 +24,8 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import {
-  CloseIcon,
-  HomeIcon,
-  PlusCircleIcon,
-  TruckIcon,
-} from '../../../ui/icons';
+import { HomeIcon, PlusCircleIcon, TruckIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -42,7 +33,11 @@ import {
   type InboundShipmentsVariables,
 } from './inboundShipments.generated';
 import { updateInboundShipment } from '../detail/inboundShipmentUpdate';
-import { filterFields, type InboundFilter } from './listFilters';
+import {
+  filterFields,
+  inboundQueryInputs,
+  type InboundListFilter,
+} from './listFilters';
 import { CreateInboundShipmentModal } from './CreateInboundShipmentModal';
 import {
   DeleteInboundShipmentsAction,
@@ -70,7 +65,7 @@ type Row = InboundRowFragment;
 type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
-  filter: InboundFilter;
+  filter: InboundListFilter;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;
   first: number;
@@ -123,13 +118,21 @@ const InboundShipmentsList: Component = () => {
   // manual/transfer, external = PO-linked), so the full set is their union;
   // requesting a scope the user lacks refuses the whole list, so we never ask
   // for one they don't hold (spec/inbound-shipments › contract → permissions).
-  const variables = () => ({
-    storeId: params.storeId,
-    filter: stripEmpty(query().filter),
-    sort: query().sort,
-    page: { first: query().first, offset: query().offset },
-    type: heldInboundQueryScopes(),
-  });
+  // The Type filter narrows this scope + adds a requisitionId filter — both
+  // resolved from the client-only `kind` by inboundQueryInputs.
+  const variables = () => {
+    const { filter, type } = inboundQueryInputs(
+      query().filter,
+      heldInboundQueryScopes()
+    );
+    return {
+      storeId: params.storeId,
+      filter,
+      sort: query().sort,
+      page: { first: query().first, offset: query().offset },
+      type,
+    };
+  };
 
   const [data, { refetch }] = createResource(
     () => JSON.stringify(variables()),
@@ -164,7 +167,7 @@ const InboundShipmentsList: Component = () => {
   };
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
-  const onFilterChange = (filter: InboundFilter) => {
+  const onFilterChange = (filter: InboundListFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
     setSelectedIds([]);
   };
@@ -351,21 +354,44 @@ const InboundShipmentsList: Component = () => {
               filter={() => query().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-            />
-          </Toolbar>
         </Header>
       }
-      contentFooter={
-        <Show when={selectedIds().length > 0}>
-          <ContentFooter testId="actions-footer">
-            <strong data-testid="selected-rows-count">
-              {selectedIds().length} {t('label.selected')}
-            </strong>
+    >
+      <DataTable
+        columns={columns()}
+        rows={rows()}
+        rowKey={r => r.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering); state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+          />
+        }
+        loading={data.loading}
+        sort={currentSort()}
+        onSort={onSort}
+        onRowClick={openRow}
+        emptyMessage={t('error.no-inbound-shipments')}
+        empty={
+          <Button
+            icon={<PlusCircleIcon />}
+            data-testid="nothing-here-create-button"
+            onClick={() => setCreateMode('manual')}
+          >
+            {t('button.new-shipment')}
+          </Button>
+        }
+        enableSelection
+        selectedIds={selectedIds()}
+        onSelectionChange={setSelectedIds}
+        // The bulk actions for the table's selection footer (the table adds
+        // the count + Clear around them, and swaps its pager for the bar
+        // while rows are selected).
+        selectionActions={
+          <>
             {/* Delete — enabled only while every selected row is New (spec S1) */}
             <span
               title={
@@ -401,42 +427,11 @@ const InboundShipmentsList: Component = () => {
                 disabled={!singleSelectedId()}
               />
             </span>
-            <ContentFooterActions>
-              <Button
-                variant="secondary"
-                icon={<CloseIcon />}
-                onClick={() => setSelectedIds([])}
-              >
-                {t('label.clear-selection')}
-              </Button>
-            </ContentFooterActions>
-          </ContentFooter>
-        </Show>
-      }
-    >
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={r => r.id}
-        loading={data.loading}
-        sort={currentSort()}
-        onSort={onSort}
-        onRowClick={openRow}
-        emptyMessage={t('error.no-inbound-shipments')}
-        empty={
-          <Button
-            icon={<PlusCircleIcon />}
-            data-testid="nothing-here-create-button"
-            onClick={() => setCreateMode('manual')}
-          >
-            {t('button.new-shipment')}
-          </Button>
+          </>
         }
-        enableSelection
-        selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
         onSaveGlobalDefault={
           tableConfig.canSaveGlobalDefault()
             ? tableConfig.saveGlobalTableConfig
