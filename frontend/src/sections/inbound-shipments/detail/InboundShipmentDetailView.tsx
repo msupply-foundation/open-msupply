@@ -54,6 +54,7 @@ import {
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import {
   isExternalShipment,
+  isPlaceholderLine,
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
@@ -664,7 +665,14 @@ const InboundShipmentDetailView: Component = () => {
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
             {
-              c: { accessor: line => line.totalAfterTax, id: 'total' },
+              c: {
+                // Placeholder lines (0 packs, nothing shipped) have no
+                // meaningful total — blank (null → empty currency cell) rather
+                // than a zero amount (AC-V3).
+                accessor: line =>
+                  isPlaceholderLine(line) ? null : line.totalAfterTax,
+                id: 'total',
+              },
               header: t('label.total'),
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
@@ -872,8 +880,11 @@ const InboundShipmentDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled() ? undefined : openRow}
+                  // A line the last bulk op failed reads in the error tone
+                  // (spec S8 → per-line indicators); an untouched placeholder
+                  // reads in the info tone (AC-V3). Error wins when both hold.
                   rowTone={line =>
-                    lineErrors().has(line.id) ? 'info' : undefined
+                    isPlaceholderLine(line) ? 'info' : undefined
                   }
                   emptyMessage={t('error.no-inbound-items')}
                   empty={
