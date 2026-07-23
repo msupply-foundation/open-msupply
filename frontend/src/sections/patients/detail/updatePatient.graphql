@@ -1,0 +1,26 @@
+# Plain-path edit + custom-fields write (spec/patients contract › editing,
+# custom fields). updatePatient is a DESTRUCTIVE FULL REPLACE — an omitted
+# optional field is cleared and `name` is recomputed from the submitted parts,
+# so the client MUST resend the full field set (patientEdit.ts builds it).
+# Both responses are single-member unions = PatientNode (no typed error node).
+mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
+  updatePatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updatePatientCustomFields(
+  $storeId: String!
+  $input: UpdatePatientCustomFieldsInput!
+) {
+  updatePatientCustomFields(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      id
+      customFields
+    }
+  }
+}

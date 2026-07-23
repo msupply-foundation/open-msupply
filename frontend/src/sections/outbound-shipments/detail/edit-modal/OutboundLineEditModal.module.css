@@ -23,9 +23,32 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The issue row: Issue quantity + Allocate-in lens, with the placeholder
+   notice filling the rest (spec S4). Stacks one control per row below the
+   compact breakpoint (599px = breakpoints.compact − 1, the same cutoff where
+   the hosting size="large" Dialog goes full-screen). */
+.issueRow {
+  display: flex;
+  align-items: end;
+  gap: var(--space-4);
+  margin-block-end: var(--space-3);
+}
+
 /* The "placeholder added" info notice sits to the right of the Issue /
-   Allocate-in fields, filling the rest of that row (spec S4). */
+   Allocate-in fields, filling the rest of that row (spec S4). No align-self
+   override: the row bottom-aligns (align-items: end), so the notice's bottom
+   sits on the same line as the inputs'. */
 .placeholderNotice {
   flex: 1;
-  align-self: center;
+}
+
+@media (max-width: 599px) {
+  .issueRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .placeholderNotice {
+    align-self: stretch;
+  }
 }

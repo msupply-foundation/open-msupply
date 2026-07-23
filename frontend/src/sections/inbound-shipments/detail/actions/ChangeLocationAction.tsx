@@ -4,7 +4,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { MapPinIcon, XCircleIcon } from '../../../../ui/icons';
-import { LocationSelect, type Location } from '../../../../domain/location';
+import {
+  LocationVolumeSelect,
+  type LocationWithVolume,
+} from '../../../../domain/location';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import type { LineActionProps } from './DeleteLinesAction';
 
@@ -14,7 +17,14 @@ import type { LineActionProps } from './DeleteLinesAction';
 type Phase = 'confirm' | 'working' | 'error';
 
 export const ChangeLocationAction: Component<
-  LineActionProps & { locations: Location[] }
+  LineActionProps & {
+    locations: LocationWithVolume[];
+    /**
+     * Total volume of the selected lines — the picker's "Available" filter
+     * keeps only locations with room for the whole move.
+     */
+    requiredVolume?: () => number;
+  }
 > = props => {
   const [open, setOpen] = createSignal(false);
   return (
@@ -36,7 +46,11 @@ export const ChangeLocationAction: Component<
 };
 
 const Body = (
-  props: LineActionProps & { locations: Location[]; onClose: () => void }
+  props: LineActionProps & {
+    locations: LocationWithVolume[];
+    requiredVolume?: () => number;
+    onClose: () => void;
+  }
 ) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [locationId, setLocationId] = createSignal<string>();
@@ -102,10 +116,11 @@ const Body = (
         </Switch>
       }
     >
-      <LocationSelect
+      <LocationVolumeSelect
         label={t('label.location')}
         locations={props.locations}
         value={locationId()}
+        requiredVolume={props.requiredVolume?.()}
         onChange={location => setLocationId(location?.id)}
       />
     </Dialog>

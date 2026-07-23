@@ -1,17 +1,12 @@
 import { Show, createSignal, type Component } from 'solid-js';
+import { A } from '@solidjs/router';
 import { t } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { NameSearch, type NameOption } from '../../../domain/name';
-import {
-  FilterBar,
-  constructFilters,
-  type Filter,
-} from '../../../ui/elements/selectors/FilterBar';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
-import type { InboundLineFilter } from './inboundShipmentLineFilter';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
@@ -25,35 +20,10 @@ export interface InboundShipmentDetailToolbarProps {
   /** Store backdating gate + window (from inboundShipmentPreferences). */
   backdatingEnabled: boolean;
   backdatingMaxDays: number;
-  filter: InboundLineFilter;
-  onFilterChange: (filter: InboundLineFilter) => void;
   onSaveField: (
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
   ) => Promise<{ ok: boolean; message?: string }>;
 }
-
-// The line-table item-search filter — the only surfaced line filter (server
-// supports itemId/locationId, but a free-text item search maps to neither
-// directly; here we expose location by code via the standard chip set and keep
-// item search as an always-on text box). Built once (module load).
-const lineFilters: Filter<InboundLineFilter>[] =
-  constructFilters<InboundLineFilter>({
-    id: null,
-    storeId: null,
-    invoiceId: null,
-    locationId: null,
-    itemId: null,
-    type: null,
-    requisitionId: null,
-    numberOfPacks: null,
-    invoiceType: null,
-    invoiceStatus: null,
-    stockLineId: null,
-    reasonOption: null,
-    verifiedDatetime: null,
-    programId: null,
-    isProgramInvoice: null,
-  });
 
 export const InboundShipmentDetailToolbar: Component<
   InboundShipmentDetailToolbarProps
@@ -156,12 +126,22 @@ export const InboundShipmentDetailToolbar: Component<
         <Alert severity="error">{receivedError()}</Alert>
       </Show>
 
-      {/* PO-linked: read-only PO number + reference (spec S3 header fields). */}
+      {/* PO-linked: PO number (links to the order) + read-only reference (spec
+          S3 header fields). The link targets the purchase-order detail route
+          exactly as the side panel's Related-documents link does — a DEAD link
+          for now: this app mounts only the inbound-shipment vertical (App.tsx),
+          so /replenishment/purchase-order has no component yet. It resolves the
+          day someone implements the purchase-order vertical; kept in step with
+          the side panel so both light up together. */}
       <Show when={props.node.purchaseOrder}>
         {po => (
           <>
             <FieldRow label={t('label.purchase-order')}>
-              <span>#{po().number}</span>
+              <A
+                href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
+              >
+                #{po().number}
+              </A>
             </FieldRow>
             <Show when={po().reference}>
               <FieldRow label={t('label.reference')}>
@@ -171,14 +151,6 @@ export const InboundShipmentDetailToolbar: Component<
           </>
         )}
       </Show>
-
-      {/* Transport details on a transfer are read-only; shown in the side
-          panel. Here the line item-search filter. */}
-      <FilterBar
-        filters={lineFilters}
-        filter={props.filter}
-        onChange={props.onFilterChange}
-      />
     </>
   );
 };

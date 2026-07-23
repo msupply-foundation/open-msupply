@@ -1,9 +1,13 @@
 import { type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { FormColumns } from '../../../../ui/layout/Form/FormColumns';
+import { FormColumn } from '../../../../ui/layout/Form/FormColumn';
+import { FormSection } from '../../../../ui/layout/Form/FormSection';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
-import { InfoOutlineIcon } from '../../../../ui/icons';
+import { InfoTooltip } from '../../../../ui/elements/feedback/InfoTooltip';
 import { createDebouncedEdit } from '../../../../domain/debouncedEdit/createDebouncedEdit';
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
@@ -16,16 +20,23 @@ type CurrencyFields = {
   chargesLocalCurrency: number;
 };
 
+// Money → always 2dp, locale-formatted, no symbol: each field names its
+// currency in its own label (PO vs local), the same convention the sibling
+// Financial tab uses so the two read consistently.
 const money = (value: number): string =>
   formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // The detail "Currency" tab (spec S3 tabs → Currency; contract → Currency tab
-// derivation). A two-column form reconciling the purchase order's currency
-// against the store's home (local) currency. The rate is home-currency units
-// per one PO-currency unit, so foreign → local is × rate (a zero rate is
-// treated as 1 for the displays). Editing the rate or either charge on a
-// PO-linked shipment recomputes line costs server-side (the save refetches the
-// lines page — rules → header fields); the three inputs save on blur.
+// derivation). A two-column form (kdd/form-layout — the stock detail form's
+// vocabulary) reconciling the purchase order's currency against the store's
+// home (local) currency: the left column holds the exchange rate and the
+// editable charges, the right column the derived totals, all read-only.
+//
+// The rate is home-currency units per one PO-currency unit, so foreign → local
+// is × rate (a zero rate is treated as 1 for the displays). Editing the rate or
+// either charge on a PO-linked shipment recomputes line costs server-side (the
+// save refetches the lines page — rules → header fields); the three inputs save
+// on blur (the debounced edit flushes on focus-out of the form).
 export const InboundCurrencyPanel: Component<{
   node: InboundInfoFragment;
   disabled: boolean;
@@ -67,93 +78,80 @@ export const InboundCurrencyPanel: Component<{
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        'flex-wrap': 'wrap',
-        gap: 'var(--space-8)',
-        padding: 'var(--space-4)',
-      }}
-      // Save-on-blur: flush any pending edit when focus leaves the form region.
-      onFocusOut={() => edit.flush()}
-    >
-      {/* Left column — the read-only PO currency plus the three editable fields. */}
-      <div style={{ flex: '1 1 20rem', 'min-width': '18rem' }}>
-        <FieldRow label={t('label.po-currency')}>
-          <span>{poCurrency()?.code ?? '—'}</span>
-        </FieldRow>
-        <FieldRow
-          label={
-            <span
-              style={{
-                display: 'inline-flex',
-                'align-items': 'center',
-                gap: 'var(--space-1)',
-              }}
-            >
-              {t('label.currency-rate')}
-              <span
-                title={t('messages.currency-rate-info')}
-                aria-label={t('messages.currency-rate-info')}
-                style={{ display: 'inline-flex', color: 'var(--primary-main)' }}
-              >
-                <InfoOutlineIcon />
-              </span>
-            </span>
-          }
-        >
-          <NumberField
-            label={t('label.currency-rate')}
-            hideLabel
-            value={rate()}
-            min={0}
-            decimalLimit={4}
-            disabled={props.disabled || isHome()}
-            onChange={onRateChange}
-          />
-        </FieldRow>
-        <FieldRow label={t('label.charges-in-po-currency')}>
-          <NumberField
-            label={t('label.charges-in-po-currency')}
-            hideLabel
-            value={edit.state.chargesForeignCurrency}
-            min={0}
-            decimalLimit={2}
-            disabled={props.disabled}
-            onChange={v => edit.setField('chargesForeignCurrency', v ?? 0)}
-          />
-        </FieldRow>
-        <FieldRow label={t('label.charges-a-converted-to-local')}>
-          <span>{money(chargesConvertedToLocal())}</span>
-        </FieldRow>
-        <FieldRow label={t('label.charges-b-in-local-currency')}>
-          <NumberField
-            label={t('label.charges-b-in-local-currency')}
-            hideLabel
-            value={edit.state.chargesLocalCurrency}
-            min={0}
-            decimalLimit={2}
-            disabled={props.disabled}
-            onChange={v => edit.setField('chargesLocalCurrency', v ?? 0)}
-          />
-        </FieldRow>
-      </div>
+    // Save-on-blur: flush any pending edit when focus leaves the form region.
+    // `padded` because the detail Page is fillBody (full-bleed for the table
+    // tabs), so the body has no edge padding for this form tab to inherit.
+    <ContentContainer size="form" padded onFocusOut={() => edit.flush()}>
+      <FormColumns>
+        {/* Left — the read-only PO currency, the editable rate, and charges. */}
+        <FormColumn>
+          <FormSection title={t('heading.exchange-rate')}>
+            <LabelledValue variant="field" label={t('label.po-currency')}>
+              {poCurrency()?.code ?? '—'}
+            </LabelledValue>
+            <NumberField
+              label={t('label.currency-rate')}
+              labelInfo={
+                <InfoTooltip text={t('messages.currency-rate-info')} />
+              }
+              value={rate()}
+              min={0}
+              decimalLimit={4}
+              disabled={props.disabled || isHome()}
+              onChange={onRateChange}
+            />
+          </FormSection>
 
-      {/* Right column — all read-only, derived. */}
-      <div style={{ flex: '1 1 20rem', 'min-width': '18rem' }}>
-        <FieldRow label={t('label.total-goods-po-currency')}>
-          <span>{money(totalGoodsPo())}</span>
-        </FieldRow>
-        <FieldRow label={t('label.total-goods-local-currency')}>
-          <span>{money(totalGoodsLocal())}</span>
-        </FieldRow>
-        <FieldRow label={t('label.total-charges')}>
-          <span>{money(totalCharges())}</span>
-        </FieldRow>
-        <FieldRow label={t('label.cost-adjustment')}>
-          <span>{costAdjustmentPct().toFixed(2)}%</span>
-        </FieldRow>
-      </div>
-    </div>
+          <FormSection title={t('heading.charges')}>
+            <NumberField
+              label={t('label.charges-in-po-currency')}
+              value={edit.state.chargesForeignCurrency}
+              min={0}
+              decimalLimit={2}
+              disabled={props.disabled}
+              onChange={v => edit.setField('chargesForeignCurrency', v ?? 0)}
+            />
+            <LabelledValue
+              variant="field"
+              label={t('label.charges-a-converted-to-local')}
+            >
+              {money(chargesConvertedToLocal())}
+            </LabelledValue>
+            <NumberField
+              label={t('label.charges-b-in-local-currency')}
+              value={edit.state.chargesLocalCurrency}
+              min={0}
+              decimalLimit={2}
+              disabled={props.disabled}
+              onChange={v => edit.setField('chargesLocalCurrency', v ?? 0)}
+            />
+          </FormSection>
+        </FormColumn>
+
+        {/* Right — all read-only, derived. */}
+        <FormColumn>
+          <FormSection title={t('heading.totals')}>
+            <LabelledValue
+              variant="field"
+              label={t('label.total-goods-po-currency')}
+            >
+              {money(totalGoodsPo())}
+            </LabelledValue>
+            <LabelledValue
+              variant="field"
+              label={t('label.total-goods-local-currency')}
+            >
+              {money(totalGoodsLocal())}
+            </LabelledValue>
+            <LabelledValue variant="field" label={t('label.total-charges')}>
+              {money(totalCharges())}
+            </LabelledValue>
+            <LabelledValue variant="field" label={t('label.cost-adjustment')}>
+              {`${costAdjustmentPct().toFixed(2)}%`}
+            </LabelledValue>
+          </FormSection>
+        </FormColumn>
+      </FormColumns>
+    </ContentContainer>
   );
 };
