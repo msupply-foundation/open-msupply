@@ -29,6 +29,14 @@ Copy this file, rename it `<ID> - <Title>.md`, and fill it in. The rules:
      bullet is the testable outcome anchor; when folding richer prose into a
      case, move any precision the rules don't already state into rules.md
      first — never delete precision into a one-liner.
+   - LINK THE PRECISION from the bullet: a bullet whose exactness lives
+     elsewhere ends with a markdown link to the owning section
+     (`([rules § …](../rules.md#…))`). The link is machine-followable —
+     `python3 exploratory/tools/behaviour_brief.py <ID>` assembles the
+     one-page brief (anchor + linked rule excerpts + mirrored contract
+     section + surface pointers + existing coverage) that deterministic-test
+     authors and the exploratory agent work from. Manual testers never need
+     to follow it; the checklist stays a checklist.
 
 3. "Flows" is COMPOSITION, not expectation: the end-to-end sequences a user
    performs, each naming the behaviours that verify it. Two hard rules keep
