@@ -46,7 +46,12 @@ export const CustomFieldsTab: Component<{
     <Show when={!defsData.loading} fallback={<Spinner center />}>
       <Show
         when={defs().length > 0}
-        fallback={<EmptyState message={t('name.custom-fields.empty')} />}
+        fallback={
+          <EmptyState
+            data-testid="nothing-here"
+            message={t('name.custom-fields.empty')}
+          />
+        }
       >
         <DetailContainer>
           <DetailSection>
@@ -73,6 +78,9 @@ export const CustomFieldsTab: Component<{
                             disabled
                             width="full"
                             placeholder=""
+                            // e2e hook (e2e/TESTIDS.md § Customers & suppliers):
+                            // the read-only option dropdown, keyed by field.
+                            testId={`custom-field-${def.key}`}
                             options={
                               display.id
                                 ? [{ value: display.id, label: display.name }]
