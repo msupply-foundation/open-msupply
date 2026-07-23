@@ -1,7 +1,9 @@
+import { createResource } from 'solid-js';
 import { MemoryRouter, Route } from '@solidjs/router';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatsPanel } from '../ui/elements/dashboard/StatsPanel';
+import { PluginRegionOutlet } from '../ui/elements/plugins/PluginRegionOutlet';
 import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
 import { Button } from '../ui/elements/buttons/Button';
@@ -146,6 +148,62 @@ const ColdChainCard = () => (
 );
 
 /*
+ * Loads its demo contributions from `./demoPlugin` via dynamic `import()`, so
+ * the components arrive the way plugin components do — from a module this
+ * file never statically sees. Read non-suspending (gated on `.state`) —
+ * the section mounts on a menu interaction, so it must not suspend an outer
+ * boundary (kdd/solid-reactivity-pitfalls). Until the module lands the
+ * region is simply empty.
+ */
+const PluginOutletCard = () => {
+  const [demoPlugin] = createResource(() => import('./demoPlugin'));
+  const statContributions = () =>
+    demoPlugin.state === 'ready'
+      ? demoPlugin.latest.demoPluginStatContributions
+      : [];
+  const widgetContributions = () =>
+    demoPlugin.state === 'ready'
+      ? demoPlugin.latest.demoPluginWidgetContributions
+      : [];
+  return (
+    <DashboardCard title="PluginRegionOutlet — plugin contribution mount point">
+      <Lead>
+        The mount point for plugin contributions inside a dashboard container.
+        It renders the list it is given, in that order (merging is the
+        dashboard's job), with <em>no wrapper element</em> — and an empty region
+        renders nothing. The contributions come from <code>demoPlugin.tsx</code>{' '}
+        via dynamic <code>import()</code>, the way plugin components arrive.
+        Shown at two regions: the <em>stat region</em> — inside the built-in
+        widget, a plugin stat joins the built-in stat, and a second contribution
+        throws on render, so only its slot shows the neutral fallback (dashboard
+        AC-D6); and the <em>widget region</em> — a whole plugin card (Cold
+        Chain) joins the same card grid.
+      </Lead>
+      <CardGrid maxColumnWidth="26rem">
+        <DashboardCard title="Replenishment">
+          <StatsPanel
+            title="Inbound Shipments"
+            titleHref="/demo"
+            icon={<StockIcon />}
+            state={{ status: 'ready' }}
+          >
+            <Statistic label="Built-in stat" value="3" href="/demo" />
+            <PluginRegionOutlet
+              contributions={statContributions()}
+              errorFallback="A plugin contribution failed to load"
+            />
+          </StatsPanel>
+        </DashboardCard>
+        <PluginRegionOutlet
+          contributions={widgetContributions()}
+          errorFallback="A plugin contribution failed to load"
+        />
+      </CardGrid>
+    </DashboardCard>
+  );
+};
+
+/*
  * The component cards read best at the form measure, but the closing
  * composition demo needs the whole panel so its CardGrid has room to wrap —
  * so the measure wraps only the component cards, and the composition card
@@ -250,6 +308,8 @@ const Demo = () => (
             />
           </div>
         </DashboardCard>
+
+        <PluginOutletCard />
 
         <DashboardCard title="DashboardCard — titled card of panels + footer action">
           <Lead>

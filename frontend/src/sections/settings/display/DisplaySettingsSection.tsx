@@ -187,7 +187,7 @@ export const DisplaySettingsSection = () => {
           heading={t('heading.custom-theme')}
           saved={settings()?.customTheme?.value ?? ''}
           // Empty JSON object when nothing is saved (rules § Display
-          // settings, D47 — this app has no built-in theme document).
+          // settings, D52 — this app has no built-in theme document).
           emptySeed={'{\n}\n'}
           onSave={saveTheme}
           onClear={clearTheme}

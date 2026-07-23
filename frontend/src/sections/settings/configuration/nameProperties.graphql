@@ -24,7 +24,7 @@ query nameProperties {
 # back the entire call (AC-CN3). ConfigureNamePropertiesResponse is a
 # single-member union (Success); a permission rejection is a plain GraphQL
 # error, which graphqlFetch routes to the global permission-denied surface
-# before any nested field is read (AC-CN4, D46).
+# before any nested field is read (AC-CN4, D51).
 mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
   centralServer {
     general {
