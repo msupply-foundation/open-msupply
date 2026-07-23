@@ -21,7 +21,7 @@ export interface FormErrorSummaryProps {
  */
 export const FormErrorSummary: Component<FormErrorSummaryProps> = props => (
   <Show when={props.errors.length > 0}>
-    <Alert severity="error" testId={props.testId}>
+    <Alert severity="error" class={styles.summary} testId={props.testId}>
       <span>{t('messages.form-has-errors')}</span>
       <ul class={styles.list}>
         <For each={props.errors}>
