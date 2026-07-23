@@ -31,8 +31,6 @@ import {
   SidePanelSection,
   SidePanelActions,
 } from '../ui/layout/SidePanel/SidePanel';
-import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
@@ -43,7 +41,6 @@ import { Select } from '../ui/elements/selectors/Select';
 import { ColourTagPicker } from '../ui/elements/selectors/ColourTag';
 import { DateField } from '../ui/elements/inputs/DateField';
 import {
-  CloseIcon,
   CopyIcon,
   PlusCircleIcon,
   PrinterIcon,
@@ -298,6 +295,15 @@ export const DetailTableShowcase = () => {
     }));
   const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) =>
     setBandConfig(activeBand(), key, value);
+  // Local stand-in for createTableConfig's isConfigDefault: no user overrides
+  // at the current band (`== null` counts the table Reset's explicit
+  // `undefined` writes as cleared) → the Settings popover's Reset disables.
+  const isConfigDefault = (): boolean => {
+    const bandConfig = layered()[activeBand()];
+    return (
+      !bandConfig || Object.values(bandConfig).every(value => value == null)
+    );
+  };
 
   // Stand in for the server: sort the whole dataset, then slice the page.
   const sorted = createMemo(() => {
@@ -580,28 +586,6 @@ export const DetailTableShowcase = () => {
             <TabList tabs={TABS} />
           </Header>
         }
-        contentFooter={
-          // The contextual footer: shown only while lines are selected (the
-          // real page shows a status footer otherwise — omitted here to keep
-          // the focus on the line table). Actions are inert (demo only).
-          <Show when={selectedIds().length > 0}>
-            <ContentFooter>
-              <strong>{selectedIds().length} selected</strong>
-              <Button variant="danger" icon={<TrashIcon />}>
-                Delete
-              </Button>
-              <ContentFooterActions>
-                <Button
-                  variant="secondary"
-                  icon={<CloseIcon />}
-                  onClick={() => setSelectedIds([])}
-                >
-                  Clear
-                </Button>
-              </ContentFooterActions>
-            </ContentFooter>
-          </Show>
-        }
       >
         <TabPanel value="details">
           <DataTable
@@ -626,8 +610,17 @@ export const DetailTableShowcase = () => {
             enableSelection
             selectedIds={selectedIds()}
             onSelectionChange={setSelectedIds}
+            // The bulk action for the table's selection footer (the table
+            // adds the count + Clear and swaps its pager for the bar while
+            // lines are selected). Inert (demo only).
+            selectionActions={
+              <Button variant="danger" icon={<TrashIcon />}>
+                Delete
+              </Button>
+            }
             config={tableConfig()}
             setConfig={setConfig}
+            configIsDefault={isConfigDefault()}
             pagination={{
               offset: offset(),
               pageSize: pageSize(),
