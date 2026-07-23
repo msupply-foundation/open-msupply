@@ -102,8 +102,9 @@ export const OutboundStatusFooter: Component<
         zeroQuantityItems={props.zeroQuantityItems}
         onSaved={props.onSaved}
         closeButton={
+          // Plain (unbordered) icon button — the same close the inbound
+          // status footer renders.
           <IconButton
-            bordered
             icon={<CloseIcon />}
             label={t('button.close')}
             data-testid="close-button"
@@ -120,7 +121,9 @@ export const OutboundStatusFooter: Component<
           onClose={() => setHoldConfirm(false)}
           title={t('heading.are-you-sure')}
           message={
-            holding() ? t('messages.off-hold-confirmation') : t('messages.on-hold-confirmation')
+            holding()
+              ? t('messages.off-hold-confirmation')
+              : t('messages.on-hold-confirmation')
           }
           onConfirm={() => props.onSetHold(!holding())}
         />

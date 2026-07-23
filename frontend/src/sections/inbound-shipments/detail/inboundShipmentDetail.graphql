@@ -232,7 +232,10 @@ query inboundShipmentByNumber(
   }
 }
 
-# One server-paginated page of the shipment's STOCK_IN lines (the detail table).
+# One server-paginated page of the shipment's stock lines (the detail table):
+# STOCK_IN plus UNALLOCATED_STOCK, since a line rejected during authorisation
+# flips to UNALLOCATED_STOCK yet must stay visible (its type is forced by the
+# caller). SERVICE lines are excluded — they belong to the service-charge modal.
 query inboundShipmentLines(
   $storeId: String!
   $filter: InvoiceLineFilterInput

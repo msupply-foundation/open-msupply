@@ -45,9 +45,11 @@ export const startOfWeek = (d: Date): Date => {
   return addDays(d, -sinceMonday);
 };
 
-// A date-only value → the day-start datetime bound in the inbound list's own
-// encoding (its filter chips express date bounds the same way).
+// A date-only value → the day's inclusive datetime bounds in the inbound
+// list's own encoding (its filter chips express date bounds the same way; how
+// a day bound becomes an instant is the list's encoding concern — #456).
 const dayStart = (d: Date): string => `${toDateString(d)}T00:00:00.000Z`;
+const dayEnd = (d: Date): string => `${toDateString(d)}T23:59:59.999Z`;
 
 // One link shape for every stat: the target list path (store-relative) plus
 // the `?query=` filter the list's useUrlQueryState reads (partial state merges
@@ -67,14 +69,23 @@ const listHref = (storeId: string, path: string, filter?: object): string => {
 export const inboundListHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/inbound-shipment');
 
+// The date windows are explicit from–to ranges matching the count window
+// (contract.md § navigation correspondence): today spans start of day to end
+// of day; this week spans Monday to end of Sunday.
 export const inboundTodayHref = (storeId: string, today: Date): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
-    createdDatetime: { afterOrEqualTo: dayStart(today) },
+    createdDatetime: {
+      afterOrEqualTo: dayStart(today),
+      beforeOrEqualTo: dayEnd(today),
+    },
   } satisfies InboundFilter);
 
 export const inboundThisWeekHref = (storeId: string, today: Date): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
-    createdDatetime: { afterOrEqualTo: dayStart(startOfWeek(today)) },
+    createdDatetime: {
+      afterOrEqualTo: dayStart(startOfWeek(today)),
+      beforeOrEqualTo: dayEnd(addDays(startOfWeek(today), 6)),
+    },
   } satisfies InboundFilter);
 
 // Not delivered = New/Shipped (rules.md § inbound shipments; AC-R1).

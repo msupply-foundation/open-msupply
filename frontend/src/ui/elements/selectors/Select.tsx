@@ -18,9 +18,10 @@ export interface SelectOption {
 interface SelectProps {
   label: string;
   /**
-   * Name the control via aria-label INSTEAD of rendering the label element —
-   * for a Select sitting in an externally-labelled row (e.g. a FieldRow),
-   * mirroring TextField's hideLabel.
+   * Name the trigger via `aria-label` instead of rendering a visible label —
+   * for dense contexts (a table cell, or an externally-labelled FieldRow)
+   * where a column header or row label already names the control. The
+   * accessible name is unchanged. Mirrors TextField/Combobox.
    */
   hideLabel?: boolean;
   options: SelectOption[];
