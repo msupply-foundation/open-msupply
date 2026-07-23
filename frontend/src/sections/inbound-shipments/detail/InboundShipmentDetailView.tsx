@@ -41,9 +41,11 @@ import {
 } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
-import { fetchLocations, type Location } from '../../../domain/location';
+import {
+  fetchLocationsWithVolume,
+  type LocationWithVolume,
+} from '../../../domain/location';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipment,
@@ -55,12 +57,12 @@ import {
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import {
   isExternalShipment,
+  isPlaceholderLine,
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
 import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
-import type { InboundLineFilter } from './inboundShipmentLineFilter';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
@@ -85,8 +87,9 @@ import {
 // The inbound-shipment detail view (spec S3). Mirrors the stocktake detail
 // reference: TWO resources — `info` (header/footer/side-panel, a single node,
 // spliced in place on a header save) and `lines` (one server-paginated page of
-// STOCK_IN lines, refetched on any line change). A Verified shipment is
-// read-only (the global edit gate); on-hold blocks only status changes.
+// the shipment's stock lines, refetched on any line change). A Verified
+// shipment is read-only (the global edit gate); on-hold blocks only status
+// changes.
 
 type Line = InboundLineFragment;
 type SortKey = NonNullable<
@@ -96,13 +99,11 @@ type SortKey = NonNullable<
 const DEFAULT_PAGE_SIZE = 20;
 
 type DetailUrlState = {
-  filter: InboundLineFilter;
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;
   offset: number;
   first: number;
 };
 const DEFAULT_URL_STATE: DetailUrlState = {
-  filter: {},
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -113,7 +114,6 @@ const InboundShipmentDetailView: Component = () => {
   const navigate = useNavigate();
   const { query, setQuery } =
     useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
-  const filter = () => query().filter;
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Details-panel open state: responsive default (open on very wide viewports —
@@ -128,9 +128,15 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
-  // The line-edit modal open state: { itemId } to edit an item's batches, {}
-  // to add a new item, undefined = closed.
-  const [editState, setEditState] = createSignal<{ itemId?: string }>();
+  // The line-edit modal open state: { itemId, lineId } to edit an item's
+  // batches (lineId = the clicked batch, focused on open), {} to add a new
+  // item, undefined = closed. Fixed for the whole "OK & next" walk — the modal
+  // advances between items imperatively, so this never changes mid-walk (no
+  // remount); it only clears on close.
+  const [editState, setEditState] = createSignal<{
+    itemId?: string;
+    lineId?: string;
+  }>();
   const [masterListOpen, setMasterListOpen] = createSignal(false);
   const [internalOrderOpen, setInternalOrderOpen] = createSignal(false);
 
@@ -184,17 +190,32 @@ const InboundShipmentDetailView: Component = () => {
       return undefined;
     }
   );
-  const info = (): InboundInfoFragment | undefined => data();
+  // Header/side-panel/footer node — read NON-SUSPENDING (kdd/solid-reactivity-
+  // pitfalls › No remounts on interaction). A line save refetches this node
+  // (its stock/service charge totals change), and the line editor stays open
+  // across an "OK & next" walk: a direct `data()` read would suspend the page
+  // <Suspense> on that refetch, detaching the open native <dialog> (backdrop
+  // gone, focus lost). The `.state` gate keeps the previous node on screen
+  // while it refreshes. Initial load (no live state) is handled by the <Show>
+  // fallback below, not by suspending.
+  const info = (): InboundInfoFragment | undefined =>
+    data.state === 'ready' || data.state === 'refreshing'
+      ? data.latest
+      : undefined;
 
-  // One server-paginated page of STOCK_IN lines (invoiceId + type forced;
-  // user filter/sort/page from the URL). Keyed on serialised variables so
-  // identical content doesn't refetch.
+  // One server-paginated page of the shipment's stock lines (invoiceId + type
+  // forced; user filter/sort/page from the URL). Keyed on serialised variables
+  // so identical content doesn't refetch. Both STOCK_IN and UNALLOCATED_STOCK
+  // are pulled: a line REJECTED during authorisation flips server-side from
+  // STOCK_IN to UNALLOCATED_STOCK, and it must stay on the table so its "Auth
+  // status" column reads Rejected and the row-selection Approve/Reject/Pending
+  // actions can un-reject it (spec ui-surface col 16 / AC-E6). SERVICE lines
+  // stay out — they belong to the service-charge modal, not this table.
   const linesVariables = createMemo<InboundShipmentLinesVariables>(() => ({
     storeId: params.storeId,
     filter: {
-      ...stripEmpty(query().filter),
       invoiceId: { equalTo: params.invoiceId },
-      type: { equalTo: 'STOCK_IN' },
+      type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -212,16 +233,41 @@ const InboundShipmentDetailView: Component = () => {
         : undefined;
     }
   );
-  const rows = (): Line[] => linesData.latest?.nodes ?? [];
-  const totalCount = () => linesData.latest?.totalCount ?? 0;
+  // Lines page read NON-SUSPENDING too (same rule): a line save / bulk action /
+  // "OK & next" page-advance refetches this while the editor is open — the
+  // `.state` gate keeps the current page visible instead of suspending.
+  const rows = (): Line[] =>
+    linesData.state === 'ready' || linesData.state === 'refreshing'
+      ? (linesData.latest?.nodes ?? [])
+      : [];
+  const totalCount = () =>
+    linesData.state === 'ready' || linesData.state === 'refreshing'
+      ? (linesData.latest?.totalCount ?? 0)
+      : 0;
 
-  const [locationsData] = createResource(params.storeId, fetchLocations);
-  const locations = (): Location[] => locationsData.latest ?? [];
+  // Total volume of the selected lines (volumePerPack × packs received) — feeds
+  // the change-location picker's "Available" filter so it keeps only locations
+  // with room for the whole move.
+  const selectedVolume = (): number => {
+    const ids = new Set(selectedIds());
+    return rows()
+      .filter(r => ids.has(r.id))
+      .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
+  };
+
+  // Volume-aware: inbound places received stock at a location, so the picker
+  // shows each location's % used and offers the All / Empty / Available filter
+  // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
+  // read, so figures are fresh on each visit — see fetchLocationsWithVolume.
+  const [locationsData] = createResource(
+    params.storeId,
+    fetchLocationsWithVolume
+  );
+  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
   const isDisabled = () => current()?.status === 'VERIFIED';
   const isExternal = () => (current() ? isExternalShipment(current()!) : false);
-  const existingItemIds = () => rows().map(r => r.itemId);
 
   const refetchAll = () => {
     void refetchInfo();
@@ -289,22 +335,73 @@ const InboundShipmentDetailView: Component = () => {
   };
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
-  const onFilterChange = (next: InboundLineFilter) => {
-    setQuery({ ...query(), filter: next, offset: 0 });
-    setSelectedIds([]);
-  };
 
-  const openRow = (line: Line) => setEditState({ itemId: line.itemId });
+  const openRow = (line: Line) =>
+    setEditState({ itemId: line.itemId, lineId: line.id });
   const openAdd = () => setEditState({});
 
-  // "OK & next" (edit mode): advance the editor to the next distinct item on
-  // the shipment after the current one (the view owns the row list); close when
-  // exhausted. Walks the loaded page (inbound line sets are typically one page).
-  const advanceToNextItem = (currentItemId: string) => {
-    const items = [...new Set(rows().map(r => r.itemId))];
-    const idx = items.indexOf(currentItemId);
-    const next = idx >= 0 ? items[idx + 1] : undefined;
-    setEditState(next ? { itemId: next } : undefined);
+  // "OK & next" (update mode): resolve the next item for the editor to advance
+  // to. Owned by the PARENT because the line table is server-paginated — the
+  // next item may be on a later page, and finding it pages the visible table
+  // forward. Given the current item id and the covered-items set (every item
+  // stepped through this walk, so a re-appearing item — one spans several batch
+  // rows — is never offered twice, across pages too), returns the next distinct
+  // uncovered item id in the current sorted order, or undefined when the whole
+  // list is exhausted (→ the modal drops into add mode, table left on the last
+  // page walked). Mirrors the stocktake reference (kdd/stocktake-line-editing).
+  const nextItem = async (
+    currentId: string,
+    covered: Set<string>
+  ): Promise<string | undefined> => {
+    // The next distinct, uncovered item within a page's rows. On the CURRENT
+    // page start AFTER the current item's rows (`fromStart` false): items
+    // before it are uncovered but already behind us, so a `past` gate walks
+    // past the current item first. Later pages are all "after", so `fromStart`
+    // true.
+    const pick = (pageRows: Line[], fromStart: boolean): string | undefined => {
+      let past = fromStart;
+      for (const line of pageRows) {
+        const id = line.itemId;
+        if (id === currentId) {
+          past = true;
+          continue;
+        }
+        if (!past || covered.has(id)) continue;
+        return id;
+      }
+      return undefined;
+    };
+
+    // 1. The current page (already loaded) — scan only after the current item.
+    const onThisPage = pick(rows(), false);
+    if (onThisPage) return onThisPage;
+
+    // 2/3. Walk forward a page at a time until we find one or run out. Later
+    // pages scan from their top; the covered set guards repeats. Each page is
+    // fetched DIRECTLY (race-free) while the table's URL offset follows along.
+    let offset = query().offset;
+    const first = query().first;
+    for (;;) {
+      offset += first;
+      if (offset >= totalCount()) return undefined; // no further pages
+      setQuery({ ...query(), offset });
+      const result = await graphqlFetch(InboundShipmentLines, {
+        storeId: params.storeId,
+        filter: {
+          invoiceId: { equalTo: params.invoiceId },
+          type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
+        },
+        sort: query().sort,
+        page: { first, offset },
+      });
+      if (
+        result.kind !== 'success' ||
+        result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
+      )
+        return undefined;
+      const found = pick(result.data.invoiceLines.nodes, true);
+      if (found) return found;
+    }
   };
 
   const reportSort = () => {
@@ -585,7 +682,14 @@ const InboundShipmentDetailView: Component = () => {
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
             {
-              c: { accessor: line => line.totalAfterTax, id: 'total' },
+              c: {
+                // Placeholder lines (0 packs, nothing shipped) have no
+                // meaningful total — blank (null → empty currency cell) rather
+                // than a zero amount (AC-V3).
+                accessor: line =>
+                  isPlaceholderLine(line) ? null : line.totalAfterTax,
+                id: 'total',
+              },
               header: t('label.total'),
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
@@ -631,8 +735,12 @@ const InboundShipmentDetailView: Component = () => {
   };
 
   return (
+    // info()/rows() are read non-suspending (above), so the initial-load
+    // spinner comes from this <Show> fallback, not from the <Suspense> (which
+    // stays only as the lazy-route-chunk boundary). Once the node is present it
+    // stays rendered through every refetch — no remount of the open editor.
     <Suspense fallback={<Spinner center />}>
-      <Show when={info()}>
+      <Show when={info()} fallback={<Spinner center />}>
         {node => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
@@ -695,8 +803,6 @@ const InboundShipmentDetailView: Component = () => {
                       edit={edit}
                       backdatingEnabled={prefs().backdatingEnabled}
                       backdatingMaxDays={prefs().backdatingMaxDays}
-                      filter={filter()}
-                      onFilterChange={onFilterChange}
                       onSaveField={saveField}
                     />
                   </Toolbar>
@@ -742,6 +848,7 @@ const InboundShipmentDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled()}
                       locations={locations()}
+                      requiredVolume={selectedVolume}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -791,8 +898,15 @@ const InboundShipmentDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled() ? undefined : openRow}
+                  // A line the last bulk op failed reads in the error tone
+                  // (spec S8 → per-line indicators); an untouched placeholder
+                  // reads in the info tone (AC-V3). Error wins when both hold.
                   rowTone={line =>
-                    lineErrors().has(line.id) ? 'info' : undefined
+                    lineErrors().has(line.id)
+                      ? 'error'
+                      : isPlaceholderLine(line)
+                        ? 'info'
+                        : undefined
                   }
                   emptyMessage={t('error.no-inbound-items')}
                   empty={
@@ -862,7 +976,7 @@ const InboundShipmentDetailView: Component = () => {
                 invoiceId={node().id}
                 isExternal={isExternal()}
                 initialItemId={editState()?.itemId}
-                existingItemIds={existingItemIds()}
+                initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
                 // Cost price is read-only only when the shipment carries a
                 // source link — a purchase order or a linked shipment (a
@@ -875,9 +989,11 @@ const InboundShipmentDetailView: Component = () => {
                   vvm: prefs().manageVvmStatusForStock,
                   donor: prefs().allowTrackingOfStockByDonor,
                   doses: prefs().manageVaccinesInDoses,
+                  authorisation:
+                    prefs().externalInboundShipmentLinesMustBeAuthorised,
                 }}
                 onSaved={onLinesChanged}
-                onRequestNext={advanceToNextItem}
+                onRequestNext={nextItem}
               />
               <AddFromMasterListModal
                 open={masterListOpen()}

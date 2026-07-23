@@ -1,0 +1,82 @@
+# Reusable patient search + central retrieval (spec/patients S4 picker, S2
+# duplicate check, S2b fetch-from-central).
+#
+# patientSearch: local fuzzy search — code/code2 exact, name/first/last/
+# identifier substring, dob/gender exact. score is a fabricated constant 1.0 and
+# the endpoint hard-codes a 100-row page sorted by code (spec/patients contract
+# › searching wire trap): it takes no paging/sort. Single-member union.
+#
+# centralPatientSearch + linkPatientToStore: the ONLY patient operations with a
+# typed error — each error interface's sole member is ConnectionError. (Note the
+# doubled word in LinkPatientPatientToStoreError — a real schema spelling.)
+fragment PatientSearch on PatientSearchNode {
+  patient {
+    id
+    code
+    code2
+    name
+    firstName
+    lastName
+    gender
+    dateOfBirth
+    isDeceased
+  }
+  score
+}
+
+query patientSearch($storeId: String!, $input: PatientSearchInput!) {
+  patientSearch(storeId: $storeId, input: $input) {
+    ... on PatientSearchConnector {
+      __typename
+      totalCount
+      nodes {
+        ...PatientSearch
+      }
+    }
+  }
+}
+
+query centralPatientSearch(
+  $storeId: String!
+  $input: CentralPatientSearchInput!
+) {
+  centralPatientSearch(storeId: $storeId, input: $input) {
+    __typename
+    ... on CentralPatientSearchConnector {
+      totalCount
+      nodes {
+        id
+        code
+        code2
+        firstName
+        lastName
+        gender
+        dateOfBirth
+        isDeceased
+      }
+    }
+    ... on CentralPatientSearchError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation linkPatientToStore($storeId: String!, $nameId: String!) {
+  linkPatientToStore(storeId: $storeId, nameId: $nameId) {
+    __typename
+    ... on NameStoreJoinNode {
+      id
+      nameId
+      storeId
+    }
+    ... on LinkPatientPatientToStoreError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
