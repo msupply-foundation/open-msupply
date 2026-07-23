@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "android:build:debug": "yarn build && yarn workspace @openmsupply-client/android build:debug",
-    "android:build:release": "yarn build && yarn workspace @openmsupply-client/android build:release",
+    "android:build:release": "PUBLIC_PATH=/old-ui/ yarn build && yarn workspace @openmsupply-client/android build:release",
     "android:build:server": "yarn build && yarn workspace @openmsupply-client/android build:server",
     "android:run": "npx cap run android",
     "build": "yarn workspace @openmsupply-client/host build",

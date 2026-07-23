@@ -13,9 +13,15 @@ const localConfig: CapacitorConfig | undefined = fs.existsSync(localConfigPath)
 const config: CapacitorConfig = {
   appId: 'org.openmsupply.client',
   appName: 'Open mSupply',
-  // This is only needed for `npx cap copy` to work, and it does have to point to actual bundle
-  // bundle is server by remote server (local or discovered) or through webpack if debugging (see comment below)
-  webDir: '../host/dist/',
+  // Source dir `npx cap copy` ships into the APK (assets/public), from where
+  // FrontendAssets copies it to <filesDir>/frontend for the embedded server.
+  // Release: the staged dual-frontend bundle (new FE at /, old UI at /old-ui/)
+  // assembled by stage-transition-frontend.sh. Debug: the single host build,
+  // unchanged (debug serves from webpack, so no fetch of the new FE is forced).
+  webDir:
+    process.env['DEBUG_BUILD'] === 'true'
+      ? '../host/dist/'
+      : './frontend-bundle',
   // bundledWebRuntime was removed in @capacitor/cli v4+
   android: {
     path: './',
