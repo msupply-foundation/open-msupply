@@ -110,12 +110,23 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   };
 
   // The confirmation body: the applicable warnings (AC-B2/B4), each resolved
-  // with the chosen date (spec S6 § confirmation dialog).
+  // with the chosen date (spec S6 § confirmation dialog). Each warning sits on
+  // its own block (both ported sentences end in "Are you sure…?", so joined
+  // into one line they read as a run-on); <br/> not <p> — the Dialog already
+  // renders the description inside a <p>.
   const confirmMessage = () => {
     const info = pending();
     if (!info) return '';
     const date = localisedDate(info.backdatedDatetime);
-    return info.warningKeys.map(key => t(key, { date })).join(' ');
+    return info.warningKeys.map((key, index) => (
+      <>
+        <Show when={index > 0}>
+          <br />
+          <br />
+        </Show>
+        {t(key, { date })}
+      </>
+    ));
   };
 
   return (

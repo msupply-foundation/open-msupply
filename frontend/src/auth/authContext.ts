@@ -33,6 +33,14 @@ export const userDisplayName = (): string => {
   return fullName || u.username;
 };
 
+// The store code for a store id, from the logged-in user's store list — the
+// list StoreGuardLayout itself resolves stores from, so any routed storeId is
+// present. Used by the shared list-export filenames
+// (spec/ui-standards/list-views.md § regions); the id fallback only guards a
+// mid-logout race. Reactive (reads authUser).
+export const storeCodeOf = (storeId: string): string =>
+  user()?.stores.nodes.find(s => s.id === storeId)?.code ?? storeId;
+
 // Spec (Unexpected logout): set when any GraphQL call returns unauthenticated —
 // reported by graphqlFetch. Cleared by a successful login.
 const [unauthenticated, setUnauthenticated] = createSignal(false);

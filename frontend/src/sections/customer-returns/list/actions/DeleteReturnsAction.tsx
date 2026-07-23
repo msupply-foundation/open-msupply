@@ -3,42 +3,87 @@ import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CheckIcon,
+  InfoIcon,
+  TrashIcon,
+  XCircleIcon,
+} from '../../../../ui/icons';
 import { deleteReturn } from '../../detail/returnUpdate';
 
 export interface DeleteReturnsActionProps {
   storeId: string;
-  /** The currently-selected return ids. */
-  selectedIds: () => string[];
-  /** Some/all deletions succeeded — clear selection and re-query. */
+  /** The selected rows' id + status (the pre-check needs the status). */
+  selectedRows: () => { id: string; status: string }[];
+  /** Deletion succeeded — clear the selection and re-query. */
   onDeleted: () => void;
 }
 
-// The returns-list bulk delete (spec/customer-returns/acceptance.md AC-D1/D2;
-// the reference DeleteStocktakesAction shape). There is NO batch mutation for
-// customer returns, so this runs one deleteCustomerReturn per id — NOT atomic:
-// a VERIFIED return in the selection fails (every rejection non-typed —
-// contract § deletion wire trap) while the others delete. The error phase says
-// some couldn't be deleted; the list re-queries either way so the deleted rows
-// disappear.
-type Phase = 'confirm' | 'deleting' | 'success' | 'error';
+// The returns-list bulk delete (spec/customer-returns FL7, AC-D1/D2) — the
+// outbound DeleteShipmentsAction shape: the whole batch is refused when ANY
+// selected return is not deletable (only NEW is — AC-D2) — a UI pre-check with
+// a blocking notice instead of the confirmation, no server call; per-row
+// enforcement remains server-side. There is NO batch mutation for customer
+// returns, so a confirmed batch runs one deleteCustomerReturn per id; the
+// pre-check means those should all succeed — any server rejection (a status
+// changed under a stale list) still lands in the error phase as a backstop.
+// A clean sweep closes silently (closure is the confirmation — ui-standards
+// controls.md § dialogs). The hand-back to the list (clear selection +
+// re-query) is DEFERRED to the dialog's close: clearing the selection
+// collapses the selection-gated footer this dialog lives in, so calling it
+// mid-flow unmounts the dialog before the error phase can show.
+type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteReturnsAction: Component<
   DeleteReturnsActionProps
 > = props => {
   const [open, setOpen] = createSignal(false);
+  const [blockedOpen, setBlockedOpen] = createSignal(false);
+
+  const onClick = () => {
+    // Pre-check: every selected return must be deletable (NEW only) or the
+    // whole batch is refused with an explanatory notice in place of the
+    // confirmation (the current app's client-side gate; AC-D2's UI half).
+    if (props.selectedRows().some(row => row.status !== 'NEW')) {
+      setBlockedOpen(true);
+      return;
+    }
+    setOpen(true);
+  };
+
   return (
     <>
       <Button
         variant="secondary"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
-        onClick={() => setOpen(true)}
+        onClick={onClick}
       >
-        {t('button.delete-lines')}
+        {t('label.delete')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
+      </Show>
+      {/* Non-deletable selection: an info-only notice, no server call. */}
+      <Show when={blockedOpen()}>
+        <Dialog
+          open
+          onClose={() => setBlockedOpen(false)}
+          icon={<InfoIcon />}
+          title={t('heading.are-you-sure')}
+          description={
+            <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
+          }
+          actions={
+            <Button
+              variant="secondary"
+              icon={<CheckIcon />}
+              onClick={() => setBlockedOpen(false)}
+            >
+              {t('button.ok')}
+            </Button>
+          }
+        />
       </Show>
     </>
   );
@@ -46,38 +91,48 @@ export const DeleteReturnsAction: Component<
 
 const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [deletedCount, setDeletedCount] = createSignal(0);
-  const count = props.selectedIds().length;
+  // Whether any row deleted — the deferred hand-back needs it (see finish).
+  let didDelete = false;
+  // Snapshotted on open so the message can't shift behind the dialog.
+  const count = props.selectedRows().length;
+
+  // Every close path: dismiss the dialog FIRST, then hand back to the list —
+  // onDeleted clears the selection, which unmounts this dialog's footer host.
+  const finish = () => {
+    props.onClose();
+    if (didDelete) props.onDeleted();
+  };
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('deleting');
-    let deleted = 0;
     let failed = 0;
     // Sequential, one per id — keeps the outcome per row unambiguous.
-    for (const id of props.selectedIds()) {
-      const result = await deleteReturn(props.storeId, id);
-      if (result.kind === 'deleted') deleted += 1;
+    for (const row of props.selectedRows()) {
+      const result = await deleteReturn(props.storeId, row.id);
+      if (result.kind === 'deleted') didDelete = true;
       else if (result.kind === 'forbidden') {
         // A standing permission block — the global permission-denied modal is
         // already showing (D38) and every remaining row would fail the same
         // way. Commit any rows deleted before it and close this dialog rather
         // than stacking the generic "couldn't delete" notice on top.
-        if (deleted > 0) props.onDeleted();
-        props.onClose();
+        finish();
         return;
       } else failed += 1;
     }
-    setDeletedCount(deleted);
-    if (deleted > 0) props.onDeleted();
-    setPhase(failed > 0 ? 'error' : 'success');
+    if (failed > 0) {
+      setPhase('error');
+      return;
+    }
+    // Clean sweep: closure is the confirmation — no announcement.
+    finish();
   };
 
   return (
     <Dialog
       open
       dismissable={phase() !== 'deleting'}
-      onClose={props.onClose}
+      onClose={finish}
       icon={<TrashIcon />}
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
@@ -85,9 +140,6 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
         <Switch fallback={tPlural('messages.confirm-delete-returns', count)}>
           <Match when={phase() === 'error'}>
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
-          </Match>
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-generic', deletedCount())}
           </Match>
         </Switch>
       }
@@ -99,7 +151,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
-                  onClick={props.onClose}
+                  onClick={finish}
                 >
                   {t('button.cancel')}
                 </Button>
@@ -111,17 +163,13 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('label.delete')}
               </Button>
             </>
           }
         >
-          <Match when={phase() === 'success' || phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={props.onClose}
-            >
+          <Match when={phase() === 'error'}>
+            <Button variant="secondary" icon={<CheckIcon />} onClick={finish}>
               {t('button.ok')}
             </Button>
           </Match>
