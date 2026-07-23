@@ -11,8 +11,8 @@
  * mode). The reference implementation is exempt: the wipe keeps it by
  * design. Verticals in spec/README.md that were NOT requested are expected
  * to be untouched by this run and are reported informationally, never as a
- * failure. Also flags a missing BUILD_REPORT.md (the spec-build skill's Done
- * bar).
+ * failure. Also flags any requested vertical missing its colocated
+ * src/sections/<vertical>/BUILD_REPORT.md (the spec-build skill's Done bar).
  *
  * Usage: node scripts/spec-build-coverage.mjs <baseline-sha> <requested-csv>
  *   baseline-sha  — pre-wipe main (the workflow's source_sha output).
@@ -95,11 +95,23 @@ for (const { name, isReference } of verticals) {
 }
 
 console.log('');
-console.log(
-  existsSync('BUILD_REPORT.md')
-    ? '`BUILD_REPORT.md`: ✅ present'
-    : "`BUILD_REPORT.md`: ❌ missing — the spec-build skill's Done bar requires it"
+const requestedList = [...requested];
+const missingReports = requestedList.filter(
+  v => !existsSync(`src/sections/${v}/BUILD_REPORT.md`)
 );
+if (requestedList.length && missingReports.length === 0) {
+  console.log(
+    '`BUILD_REPORT.md`: ✅ present for all requested verticals ' +
+      `(${requestedList.map(v => `\`${v}\``).join(', ')})`
+  );
+} else if (missingReports.length) {
+  console.log(
+    '`BUILD_REPORT.md`: ❌ missing for ' +
+      missingReports.map(v => `\`${v}\``).join(', ') +
+      " — the spec-build skill's Done bar requires a colocated " +
+      '`src/sections/<vertical>/BUILD_REPORT.md` per vertical'
+  );
+}
 if (failures) {
   console.log(
     `\n⚠️ ${failures} of ${requested.size} requested verticals did not get an honest rebuild. This report never fails the job — triage via the branch and the spec-build-claude-transcript artifact.`
