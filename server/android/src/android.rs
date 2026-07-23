@@ -66,15 +66,9 @@ pub mod android {
                 // The app shell copies its APK-bundled web UI here on startup,
                 // before starting the server (see MainActivity.copyFrontendAssets).
                 // The bundle nests the transition ("old UI") build under old-ui/,
-                // served at /old-ui/ while the new FE is served at /.
+                // which the server serves at /old-ui/ by convention while the
+                // new FE is served at /.
                 frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
-                old_ui_frontend_dir: Some(
-                    files_dir
-                        .join("frontend")
-                        .join("old-ui")
-                        .to_string_lossy()
-                        .to_string(),
-                ),
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),

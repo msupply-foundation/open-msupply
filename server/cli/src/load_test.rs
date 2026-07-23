@@ -493,7 +493,6 @@ impl LoadTest {
                 inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
                 token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 frontend_dir: "frontend".to_string(),
-                old_ui_frontend_dir: None,
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -593,7 +592,6 @@ impl LoadTest {
                     inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
                     token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                     frontend_dir: "frontend".to_string(),
-                    old_ui_frontend_dir: None,
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),

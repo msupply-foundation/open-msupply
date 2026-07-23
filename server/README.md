@@ -12,11 +12,12 @@ assets there on startup. In debug builds this falls back to
 `client/packages/host/dist` when the configured directory doesn't exist, so
 `cargo run` serves the frontend without any configuration.
 
-An optional second ("old UI") frontend can be served under the `/old-ui/` URL
-prefix by setting `server.old_ui_frontend_dir`. When unset (the default),
-nothing is mounted at `/old-ui/` and root serving is unaffected. The old UI
-must be built with its `publicPath`/router base set to `/old-ui/` (see the
-client's `PUBLIC_PATH` build variable).
+A second ("old UI") frontend is served under the `/old-ui/` URL prefix from
+the `old-ui` subdirectory of `frontend_dir`, when present — by convention, not
+configuration, so every deployment gets the same URL. When the subdirectory
+doesn't exist nothing is mounted at `/old-ui/` and root serving is unaffected.
+The old UI must be built with its `publicPath`/router base set to `/old-ui/`
+(see the client's `PUBLIC_PATH` build variable).
 
 ### Pinned frontend dist (new FE at `/`)
 
@@ -30,8 +31,8 @@ This repo records which artifact it ships in the **pin file** `frontend-version.
 at the repo root (`tag` + `sha256`). Packaging fetches and verifies it with
 `build/fetch-frontend.js` (plain Node, no npm deps), which unpacks the zip into the
 `frontend/` directory served at `/`. The old UI is built at `/old-ui/` and copied to
-`frontend/old-ui`, and the bundle's `local.yaml` points `old_ui_frontend_dir` there,
-so a packaged bundle serves both UIs out of the box.
+`frontend/old-ui`, which the server serves at `/old-ui/` by convention, so a
+packaged bundle serves both UIs out of the box.
 
 - **Bumping the pin:** set `tag` in `frontend-version.json` to the FE release tag and
   `sha256` to the value from that release's published `frontend-dist-<tag>.zip.sha256`.
