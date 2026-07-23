@@ -775,6 +775,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             size="small"
             value={b.numberOfPacks}
             min={0}
+            // Packs are received in fractions (a part-full pack) —
+            // numberOfPacks is Float on the wire; match the reference 2-dp room
+            // (spec S4).
+            decimalLimit={2}
             onChange={v => updateBatch(b.id, 'numberOfPacks', v ?? 0)}
           />
         );
@@ -797,6 +801,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
             // inline rather than silently coercing to 1 (spec AC-E1 / M2).
             min={0}
+            // Pack size is Float on the wire and may be fractional; 2-dp room
+            // matches the reference (spec S4).
+            decimalLimit={2}
             onChange={v => changePackSize(b.id, v ?? 1)}
           />
         );
@@ -821,6 +828,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   size="small"
                   value={b.shippedNumberOfPacks}
                   min={0}
+                  decimalLimit={2}
                   onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
                 />
               );
@@ -840,6 +848,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   size="small"
                   value={b.shippedPackSize}
                   min={0}
+                  decimalLimit={2}
                   onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
                 />
               );
@@ -865,6 +874,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             size="small"
             value={b.numberOfPacks * b.packSize}
+            // Fractional packs/sizes make the product fractional too; show 2 dp
+            // rather than rounding the read-only units to a whole number.
+            decimalLimit={2}
             disabled
           />
         );
