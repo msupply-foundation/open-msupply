@@ -64,14 +64,41 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Build client
-        run: NODE_OPTIONS="--max_old_space_size=4096" cd ./client && yarn build
+      # This repo's client build is the OLD UI, served under /old-ui/ (asset URLs +
+      # router base). The new FE served at / is fetched below as the pinned dist.
+      - name: Build client (old UI at /old-ui/)
+        run: |
+          cd ./client
+          NODE_OPTIONS="--max_old_space_size=4096" PUBLIC_PATH=/old-ui/ yarn build
 
-      - name: Save artifacts
+      - name: Save old-UI artifacts
         uses: actions/upload-artifact@v6
         with:
           name: client-dist
           path: client/packages/host/dist
+          retention-days: 1
+
+      # New FE served at / : fetch the pinned, checksum-verified dist host-side (no
+      # network fetch inside docker build) and ship it into the image as files.
+      # FRONTEND_FETCH_TOKEN must be configured as a repo secret with read access to
+      # the private open-msupply-frontend repo — it cannot be GITHUB_TOKEN (that only
+      # grants this repo). Until the FE repo cuts a release the pin is a placeholder
+      # and this step fails loudly (matching the mac build's "wrong FE at / is worse
+      # than a loud failure" stance); nightly tags will fail here until the pin is
+      # real. To unblock before then, set the FRONTEND_DIST_URL repo variable to a
+      # dist zip (the same override the mac build documents) — empty vars are ignored.
+      - name: Fetch new frontend (pinned dist)
+        env:
+          FRONTEND_FETCH_TOKEN: ${{ secrets.FRONTEND_FETCH_TOKEN }}
+          FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
+          FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
+        run: node build/fetch-frontend.js frontend-dist
+
+      - name: Save new-frontend artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: frontend-dist
+          path: frontend-dist
           retention-days: 1
 
   generate-matrix:
@@ -175,9 +202,16 @@ jobs:
           name: server-executables-${{ matrix.db }}-${{ matrix.arch }}
           path: server/
 
-      # The frontend is no longer embedded in the server binary; the image
-      # ships it as files (see Dockerfile) so it must be in the build context
-      - name: Load client artifacts
+      # The frontend is no longer embedded in the server binary; the image ships it
+      # as files (see Dockerfile) so both frontends must be in the build context.
+      # New FE at / -> ./frontend-dist ; old UI at /old-ui/ -> client/packages/host/dist
+      - name: Load new-frontend artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend-dist
+
+      - name: Load old-UI (client) artifacts
         uses: actions/download-artifact@v7
         with:
           name: client-dist
