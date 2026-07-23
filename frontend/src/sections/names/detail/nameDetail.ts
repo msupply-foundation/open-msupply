@@ -1,9 +1,9 @@
 import type { NameByIdResult, NamePropertiesResult } from '../names.generated';
 
-// Read-model helpers for the customer/supplier detail views (spec/names slice
-// 2). Both roles are built from the SAME single-name read (rules › record
-// detail); only which fields/tabs are shown differs by role. Kept framework-free
-// for unit testing.
+// Read-model helpers for the customer/supplier detail views (spec/names). Both
+// roles are built from the SAME single-name read (rules › record detail); only
+// which fields/tabs are shown differs by role. Kept framework-free for unit
+// testing.
 
 export type NameDetail = NameByIdResult['names']['nodes'][number];
 export type NamePropertyDef =
