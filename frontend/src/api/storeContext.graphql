@@ -27,6 +27,10 @@ query storeContext($storeId: String!) {
   # the whole stock vertical (list/detail/new-stock/adjust).
   preferences(storeId: $storeId) {
     syncRecordsDisplayThreshold
+    # Patient gender picker (spec/patients § configuration gates › gender
+    # options): the configured subset of GenderTypeNode every gender picker
+    # (create/edit form, list gender filter) offers.
+    genderOptions
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor
@@ -50,6 +54,15 @@ query storeContext($storeId: String!) {
       shipmentsEnabled
       maxDays
     }
+    # Dashboard display gates + label slots (spec/dashboard › display gates):
+    # the alert / look-back / expiry thresholds that show or hide the gated
+    # stats and fill their label slots. useProcurementFunctionality above also
+    # gates the dashboard's external-inbound panel.
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
+    firstThresholdForExpiringItems
+    secondThresholdForExpiringItems
   }
   me {
     ... on UserNode {

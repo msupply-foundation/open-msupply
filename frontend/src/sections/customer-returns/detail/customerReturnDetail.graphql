@@ -27,6 +27,7 @@ fragment CustomerReturnInfo on InvoiceNode {
   otherPartyName
   user {
     username
+    email
   }
   linkedShipment {
     id

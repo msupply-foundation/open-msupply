@@ -125,11 +125,12 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   rowDimmed?: (row: T) => boolean;
   /**
-   * Semantic text tone for matching rows ('info' — e.g. outbound's
-   * placeholder lines awaiting allocation): stamps data-tone on the row,
-   * mapped to palette tokens in CSS. Semantic names only, never colours.
+   * Semantic text tone for matching rows: 'info' for lines awaiting an action
+   * (placeholder / uncounted lines), 'error' for a line the server refused (a
+   * failed bulk operation). Stamps data-tone on the row, mapped to palette
+   * tokens in CSS. Semantic names only, never colours.
    */
-  rowTone?: (row: T) => 'info' | undefined;
+  rowTone?: (row: T) => 'info' | 'error' | undefined;
   /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet

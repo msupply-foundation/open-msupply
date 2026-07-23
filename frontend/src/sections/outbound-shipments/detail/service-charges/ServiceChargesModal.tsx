@@ -311,7 +311,10 @@ const ServiceChargesContent = (
       dismissable={!saving()}
       testId="service-charges-modal"
       title={t('heading.service-charges')}
-      widthRem={48}
+      // Workbench-size, like the line editor: the charges DataTable gets the
+      // flexing body, and the modal goes full-screen at the compact breakpoint
+      // (size="large" is what opts a Dialog into that).
+      size="large"
       headerActions={
         <Button
           variant="secondary"
@@ -352,7 +355,21 @@ const ServiceChargesContent = (
     >
       <Show
         when={rows().length > 0}
-        fallback={<p>{t('error.no-service-charges')}</p>}
+        fallback={
+          // Distinct empty states: no default service item assigned to the
+          // store (so Add charge is disabled — the current client's
+          // !defaultServiceItem message) vs simply no charges added yet (the
+          // same line the inbound service modal shows). Held back until the
+          // items fetch settles so the message never flashes from one state
+          // to the other.
+          <Show when={!serviceItems.loading}>
+            <p>
+              {!defaultServiceItem()
+                ? t('error.no-service-charges')
+                : t('messages.no-service-charges')}
+            </p>
+          </Show>
+        }
       >
         <DataTable
           columns={columns()}

@@ -32,6 +32,13 @@ export interface TextFieldProps extends Omit<
    */
   hideLabel?: boolean;
   /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field (e.g. the currency rate). Kept beside
+   * the label rather than in the field frame so it isn't part of the input's
+   * accessible name. Ignored under `hideLabel` (no label is rendered).
+   */
+  labelInfo?: JSX.Element;
+  /**
    * Short text rendered inside the field frame before/after the input — a
    * currency symbol, a unit ("%", "packs"). Decorative (aria-hidden): the
    * label must carry the meaning. With an adornment present the border box
@@ -63,6 +70,7 @@ export const TextField = (props: TextFieldProps) => {
     'size',
     'width',
     'hideLabel',
+    'labelInfo',
     'startAdornment',
     'endAdornment',
     'id',
@@ -71,6 +79,20 @@ export const TextField = (props: TextFieldProps) => {
   const autoId = createUniqueId();
   const inputId = () => local.id ?? autoId;
   const messageId = () => `${inputId()}-message`;
+
+  // The <label for> itself (text + required asterisk). A local component so it
+  // renders fresh in either branch (bare, or beside labelInfo) — reusing one
+  // JSX node across both would try to mount it in two places.
+  const Label = () => (
+    <label class={styles.label} for={inputId()}>
+      {local.label}
+      <Show when={local.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </label>
+  );
 
   return (
     <div
@@ -84,14 +106,15 @@ export const TextField = (props: TextFieldProps) => {
           layout (a FieldRow) already shows — a hidden twin trips strict
           text-locator matches in the shared e2e suites. */}
       <Show when={!local.hideLabel}>
-        <label class={styles.label} for={inputId()}>
-          {local.label}
-          <Show when={local.required}>
-            <span class={styles.required} aria-hidden="true">
-              *
-            </span>
-          </Show>
-        </label>
+        <Show when={local.labelInfo} fallback={<Label />}>
+          {/* labelInfo sits OUTSIDE the <label for>, as a sibling: nested in
+              the label its accessible name would leak into the input's (the
+              name-from-label computation concatenates descendant controls). */}
+          <span class={styles.labelRow}>
+            <Label />
+            {local.labelInfo}
+          </span>
+        </Show>
       </Show>
       <div
         class={styles.inputWrap}

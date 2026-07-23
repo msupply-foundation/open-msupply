@@ -2,9 +2,9 @@
 
 **Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](spec/ui-standards/components.md).
 
-Scoped build: **customer-returns** only (new vertical — `src/sections/customer-returns/`, first implementation). Gates at completion: `pnpm check` ✓ · `pnpm test` ✓ (141, incl. 20 new AC-citing) · `pnpm build` ✓ (section chunks: list 9.4 kB / detail 32.9 kB / shared return logic 12.3 kB, gzip 3.3/9.4/3.6).
-
 ## customer-returns
+
+Scoped build: **customer-returns** only (new vertical — `src/sections/customer-returns/`, first implementation). Gates at completion: `pnpm check` ✓ · `pnpm test` ✓ (141, incl. 20 new AC-citing) · `pnpm build` ✓ (section chunks: list 9.4 kB / detail 32.9 kB / shared return logic 12.3 kB, gzip 3.3/9.4/3.6).
 
 Spec: [`spec/customer-returns/`](spec/customer-returns/) — itself a fresh reverse spec whose live-mutation probes are still pending (every unfired wire assertion carries `⚠️ VERIFY` in the spec; see its [README verification log](spec/customer-returns/README.md#known-gaps--verification-log)). The implementation is grounded in the same sources; the C2 real-backend legs below inherit that pending state.
 
@@ -50,3 +50,121 @@ Spec: [`spec/customer-returns/`](spec/customer-returns/) — itself a fresh reve
 - **Spec refinement candidates**: AC-L3's deep-link-by-number vs the observed id-based URLs; whether the S3 side panel's "copy to clipboard" payload should be specified. _(Resolved: S4's step indicator now uses the shared determinate progress list — the registry row records the wizard usage; OK & next is present on both steps, disabled until the reason step, matching the running app.)_
 - **Cross-vertical dependency**: the from-shipment creation flow (AC-C4–C7) activates only when the outbound-shipments vertical is implemented and wires its "Return selected lines" action to this section's S4 modal.
 - **DIVERGENCES.md**: D39 honoured — dead edit affordances (Add item, Hold) are hidden on a non-editable return rather than shown disabled; actionable blocks stay visible-disabled or explain on click.
+
+## dashboard
+
+Built fresh into `src/sections/dashboard/` (no prior implementation existed). One screen (S1) mounted at both the store root `/` (the landing screen) and the `dashboard` nav destination. Wire surface: the six split count queries in `dashboardCounts.graphql`; the display-gate preferences ride on the shared guard-3 `storeContext` query (five `PreferencesNode` fields added, additively). Gates green: `pnpm check`, `pnpm test` (282), `pnpm build` (dashboard page = its own lazy chunk, ~4.3 kB gzip).
+
+### AC coverage
+
+| AC           | Test                                                | Notes                                                                                                                                                  |
+| ------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AC-D1        | `dashboardCounts.test.ts`                           | wire surface is queries only, all `storeId`-scoped; store-switch refetch is resource keying (code-level)                                               |
+| AC-D2        | `panelState.test.ts`                                | forbidden → in-panel permission error, unexpected → in-panel generic error; per-panel isolation is one resource per family (`DashboardPage.tsx`)       |
+| AC-D3        | —                                                   | three widgets with gated panels/stats composed in `DashboardPage.tsx`; no component-test env — verify against the running app                          |
+| AC-D4        | —                                                   | **not covered** — plugin contribution mechanism is the plugins vertical's (greenfield, unbuilt)                                                        |
+| AC-D5        | —                                                   | **not covered** — as AC-D4                                                                                                                             |
+| AC-D6        | — (partial)                                         | gated-off external panel never fetches (resource source pauses); plugin error isolation not covered (as AC-D4)                                         |
+| AC-R1        | `dashboardCounts.test.ts`, `statLinks.test.ts`      | count values are server-computed (C2 gap below); window/status link filters tested                                                                     |
+| AC-R2        | `dashboardGates.test.ts`                            | procurement gate both states; partition is server-side                                                                                                 |
+| AC-R3        | —                                                   | server-computed count wired verbatim (`request.draft`); C2 gap                                                                                         |
+| AC-T1        | `statLinks.test.ts`                                 | link restates New/Allocated/Picked; count server-computed                                                                                              |
+| AC-T2        | —                                                   | server-computed count wired verbatim (`response.new`); C2 gap                                                                                          |
+| AC-T3        | `dashboardGates.test.ts`                            | program-module gate both states; alert emphasis at > 0 in `DashboardPage.tsx`                                                                          |
+| AC-E1        | `statLinks.test.ts`                                 | expired link ≤ today; count server-computed                                                                                                            |
+| AC-E2        | `statLinks.test.ts`, `dashboardCounts.test.ts`      | D = 30 sent explicitly; subtraction is server-side (validated live per spec)                                                                           |
+| AC-E3        | `statLinks.test.ts`                                 | 30–89-day link window, 90th day excluded; count server-side                                                                                            |
+| AC-E4        | `dashboardGates.test.ts`, `statLinks.test.ts`       | gate both states + threshold-day link window                                                                                                           |
+| AC-S1, AC-S2 | —                                                   | server-computed counts wired verbatim (`total`, `noStock`); C2 gap                                                                                     |
+| AC-S3        | `dashboardGates.test.ts`                            | look-back gate both states                                                                                                                             |
+| AC-S4, AC-S5 | —                                                   | server-computed (`lowStock`/`highStock`); thresholds sent explicitly (AC-S8)                                                                           |
+| AC-S6        | `dashboardGates.test.ts`                            | alert-threshold gate both states                                                                                                                       |
+| AC-S7        | `dashboardGates.test.ts`                            | gate both states; the threshold-0 degenerate count is never rendered                                                                                   |
+| AC-S8        | `dashboardGates.test.ts`, `dashboardCounts.test.ts` | explicit low/high from store prefs; fetch pauses until prefs resolve; `daysTillExpired` always 30                                                      |
+| AC-N1        | `statLinks.test.ts`                                 | every built list's link filter restates its count; unbuilt lists land on registered placeholders unfiltered (per the AC's own carve-out)               |
+| AC-X1        | —                                                   | permission check (`hasPermission` → `reportPermissionDenied`) + handoff in `DashboardPage.tsx`; no component-test env — verify against the running app |
+
+### Flags
+
+- **C2 (real backend):** no CI tooling exists for the real-backend leg. Every count value is server-computed and wired verbatim; the client-side logic (gates, links, thresholds, panel states) is covered at the logic level. The spec's own validation notes record live verification of the counts.
+- **Plugins extension surface (AC-D3–D6):** the plugins vertical is greenfield/unbuilt. The built-in widgets/panels/stats are composed explicitly (kdd/explicit-composition) with their S3 published ids recorded as structural comments in `DashboardPage.tsx`; the merge/suppress mechanism awaits the plugins vertical. No id registry was invented.
+- **Internal vs external inbound links (contract › navigation correspondence):** the inbound-shipments list encodes `type` as a permission-scope query variable, not a URL filter, so the internal/external kind is not currently expressible in a stat link — the internal and external panels' window/status links are otherwise correct but open the same (scope-union) list. Needs the inbound list to expose the kind in its URL contract; until then this is the placeholder-style degradation.
+- **Order more (AC-X1):** the internal-order create flow is the requisitions vertical's, which is unbuilt — the shortcut is permission-gated and then degrades to the registered `replenishment/internal-order` placeholder (the AC-N1 rule applied to the create handoff). Revisit when internal orders ship.
+- **Cross-section create-flow imports:** the New inbound / New outbound shortcuts lazily import `CreateInboundShipmentModal` and `CustomerSearchModal` from their owning sections (self-contained modals; loaded on first use). If more consumers appear, hoist them to `src/domain/` like the reports selector.
+- **Schema drift in other verticals (C7):** running `pnpm codegen` regenerates `outbound-shipments` and `stock` generated files against the newer pinned schema (`InvoiceFilterInput.dynamicFilter`, `StockLineFilterInput.campaignId`), which breaks those verticals' exhaustive filter maps. Those regenerations were reverted (out of scope); those verticals need a regen + filter-map pass on their next build.
+- **Expiring-soon link boundary:** per the captured contract table the link spans today…today+30 while the count excludes lines already expired (≤ today) — a line expiring exactly today appears in the opened list but is counted under _expired_. Candidate spec refinement: start the soon link at today+1.
+- **Locale keys:** all labels resolved to existing catalog keys verbatim (incl. `label.inbound-not-delivered`, confirmed against the reference app's dashboard); no new keys minted.
+- **Test hooks (C8):** `e2e/TESTIDS.md` defines no dashboard-specific ids; nothing to place.
+
+### Candidate spec refinements
+
+- Decide the inbound list's URL contract for the internal/external kind so the dashboard's panel links can differ (the contract's `type` note assumes a filterable input).
+- The expiring-soon link's lower bound (today vs today+1) — see flag above.
+- State what the create shortcut should do while its owning vertical is unbuilt (this build applied AC-N1's placeholder rule by analogy).
+
+## master-lists
+
+Scoped build of the master-lists vertical (`spec/master-lists`) — a read-only Catalogue list + detail, **no mutations**. Types generated against `:8890` (`develop`) via the scoped codegen runner. **master-lists is compile-clean (`tsc`: 0 errors) and `pnpm test` is green (373 tests, incl. 4 new master-lists AC tests).** `pnpm check`/`pnpm build` (the `tsc -b` gates) are blocked **only** by a pre-existing `internal-orders` breakage on `main` — see the repo blocker in the register below; master-lists itself contributes zero errors.
+
+### Built
+
+- **S1 list** — standard scaffold with **no filter controls** (captured as-is), Name (sortable) / Description columns, server pagination, row → detail. Store scoping is the client sending `existsForStoreId` (the `storeId` arg is auth/context only). Default sort name-ascending; only Name sortable.
+- **Export split button** — Export CSV (primary) · Excel (menu), over the **currently-loaded page only** (AC-E1); empty page → "No data available" instead of a download (AC-E3). CSV downloads directly; Excel round-trips the CSV through the shared server converter (`domain/reportFiles`). Silent (no toast — D21).
+- **S2 detail** — description field shown only when non-empty (AC-D4); item-lines table Code / Name (sortable) / Unit; not-found → blocking alert → back to list (AC-L5); server pagination. Lines selected by the `masterListId` **argument** (never a filter field — contract wire trap); sort last-entry-wins.
+- Route registered under `catalogue/master-lists` (list `/`, detail `/:masterListId`); the Catalogue › Master Lists nav entry already existed. Pure-logic export core + 4 AC tests colocated.
+
+### AC coverage
+
+| AC                                                                      | Where                      | Status                                                        |
+| ----------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------- |
+| AC-E1 export = loaded page; AC-E3 empty → no-data                       | `masterListExport.test.ts` | ✅ tested                                                     |
+| AC-L1 store-joined population (`existsForStoreId`)                      | `MasterListsList.tsx`      | ⚠️ built, not unit-tested                                     |
+| AC-L2 no filter controls; AC-L3 name-asc sort                           | list                       | ⚠️ built                                                      |
+| AC-L5 not-found → list                                                  | detail                     | ⚠️ built                                                      |
+| AC-L6 non-joined list reachable by id (header omits `existsForStoreId`) | detail                     | ⚠️ built                                                      |
+| AC-D2 lines item-name sort; AC-D4 description present-only              | detail                     | ⚠️ built                                                      |
+| AC-L7 inactive lists unreachable                                        | —                          | server-enforced (repo forces `isActive`); not client-testable |
+
+### Flags
+
+- **Store CODE in the CSV filename** — the spec wants `<iso>_<store code>_master-lists.csv`, but only `currentStoreId()` is exported (no active-store-**code** accessor), so the filename currently uses the store **id**. Needs an exported active-store-code accessor — see the register.
+- **Plugin columns (list)** — the plugin-column seam isn't wired; no plugin system is built. Flagged, not improvised.
+- No live/visual verification — the app proxies `:8000` (remote, PRE_INITIALISATION). The read-only queries were exercised live on `:8890` during the reverse spec.
+
+---
+
+## Follow-up register — Catalogue verticals (items · help · master-lists)
+
+Consolidated to-do across the three catalogue spec builds, each shipped as a scoped PR: **items #430**, **help #441** (on spec PR #440), **master-lists** (this PR). Grouped by what unblocks the most work first.
+
+### 🚧 Repo blockers (affect the `tsc` gates for every build)
+
+- **`internal-orders` dangling import breaks `pnpm check`/`pnpm build`.** `src/sections/internal-orders/detail/printing.ts` does `import type … from './internalOrderDetail.generated'`, but that generated file is **not committed and has no source `.graphql`** anywhere in the repo, and the dir isn't wired in `App.tsx` (only `printing.ts` + `printing.test.ts` exist). Pre-existing on `main`, unrelated to any catalogue build. `pnpm test` still passes — the `import type` is erased at runtime, so only the `tsc -b` gates fail. **Fix:** restore the `internal-orders` `.graphql` (+ regenerate), or remove the leftover `printing.ts`/`.test.ts`. Until then no build can show a fully green `check`/`build` locally.
+- **Codegen backend.** The repo's `pnpm codegen` fails on the pre-existing `auth.graphql` mismatch (repo ahead of backend), so all three builds generated types via a **scoped runner against `:8890`** (`develop`). `:8000` is the remote (PRE_INITIALISATION) — no live/visual verification of any of the three yet.
+
+### 🧩 Shared components to build / extract (each unblocks multiple verticals)
+
+- **Read-only detail-form scaffold** (`DetailContainer` / `DetailSection` / `DetailRow` / `RecordNameHeader`) — registry ✅ but **not in main** (unmerged `names` branch). **items** detail (General / Store / Custom-fields) is composed single-column from `LabelledValue` as a stopgap; proper two-column needs the scaffold.
+- **Date-time range FilterBar field** — **items** Ledger From/To + items custom-field date-range filter. Only single-date `FilterDate` exists.
+- **Option-typeahead (parent → descendants) filter control** — **items** custom-field option filter (logic built + tested; UI control missing).
+- **Central-presence nav gating** — **help** S2 management ("Manage › Help documents", absent on non-central servers) and **items** central management. `NavItem` has no central flag; `MenuBar` doesn't filter. Chrome/nav infra.
+- **Variant card + editable packaging grid** — **items** Variants tab + S3/S4 modals (central-only).
+- **Active-store-code accessor** — **master-lists** CSV filename (store code); only `currentStoreId` is exported today.
+
+### 📋 Per-vertical unbuilt slices
+
+- **items:** Ledger tab (needs the date-time-range filter + `itemLedger` wiring — AC-D3/D4/D5); custom-field option/date filter UI (AC-P2 UI leg); Variants + Ancillary tabs + S3/S4/S5 central modals + central gating (AC-C1/C2, V*, B*, A*); two-column detail once the scaffold lands.
+- **help:** S2 management + S3 upload (central-only) — needs central-nav gating **and** the file-upload HTTP route (`POST /sync_files/help_document/{id}`, session-cookie auth vs this app's bearer auth — integration risk); AC-A1–A8, S1–S3.
+- **master-lists:** plugin-column seam; store-**code** in the CSV filename; live verification.
+
+### 🔧 Candidate spec refinements (surfaced across the builds)
+
+- **items:** `Statistic` mandates an `href` but the AMC / MOS panels have no drill-down (self-link stopgap) — make `href` optional or specify a target. Detail-tab URL-param pattern (built via `useSearchParams`) — state it in the spec.
+- **help:** AC-V2 lists es/fr, but the real client also localises **pt** (implemented) — the AC undercounts. AC-A1 central-presence nav gating has no home in the chrome nav model yet.
+- **master-lists:** the store-code-in-filename requirement needs an exported accessor to be satisfiable; note that dependency in the spec.
+
+### ✅ Real-backend re-verifications done (on `:8890` / develop)
+
+- **help** wire traps re-confirmed live: `EmptyTitle` non-typed; contact-form single-member union / `EmailIsInvalid`; `RecordAlreadyExist` / `RecordNotFound` typed; server title-trim; publish → delete round-trip; **new:** id-uniqueness spans soft-deleted rows (see #440).
+- **master-lists** read-only queries exercised live during the reverse spec.
+- **items** behavioural ACs covered at the logic level (tests); real-backend legs (AMC, unknown custom-field key, central gate) pending a working codegen/probe env.

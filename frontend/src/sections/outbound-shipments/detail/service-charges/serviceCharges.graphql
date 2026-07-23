@@ -56,11 +56,13 @@ mutation saveOutboundServiceLines(
 
 # The store's service items — the default (item code "service") gates the Add
 # charge action (rules.md § service lines: no default service item → the
-# charge can't be added).
+# charge can't be added). isVisible matches the old client's items hook, which
+# always folds store visibility into the filter — without it a store that has
+# no VISIBLE service item still offers Add charge (the old app disables it).
 query serviceItems($storeId: String!) {
   items(
     storeId: $storeId
-    filter: { type: { equalTo: SERVICE }, isActive: true }
+    filter: { type: { equalTo: SERVICE }, isActive: true, isVisible: true }
     page: { first: 100 }
   ) {
     ... on ItemConnector {
