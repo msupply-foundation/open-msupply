@@ -168,6 +168,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setErrorMessage(undefined);
     setWarnings([]);
     setIssueValue(undefined);
+    // Back to the units lens: the previous item's pack lens may not exist on
+    // this one, and the auto-allocation below seeds through onIssueChange —
+    // a stale packs-of-N lens would multiply the placeholder's units by N.
+    setAllocateIn({ kind: 'units' });
     setDirty(false);
     setZeroConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
@@ -650,7 +654,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
-              loading={saving()}
+              // loadingLines too (the stocktake editor's busy()): the no-save
+              // page-through is a fetch with no stale-response guard, so the
+              // button must not accept clicks while one is in flight.
+              loading={saving() || loadingLines()}
               onClick={onOkNext}
             >
               {t('button.ok-and-next')}
