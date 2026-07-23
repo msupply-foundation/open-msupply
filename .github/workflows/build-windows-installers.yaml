@@ -189,6 +189,12 @@ jobs:
         shell: cmd
         run: |
           cd server || exit /b 1
+          @REM TEMPORARY: flush pq-sys artifacts poisoned by the first CI run,
+          @REM which built before PQ_LIB_DIR was set. pq-sys 0.7.3's build.rs
+          @REM emits rerun-if-env-changed with a {:?}-quoted name, so cargo
+          @REM never invalidates it when the real PQ_LIB_DIR changes. Remove
+          @REM after one green run.
+          cargo clean --release -p pq-sys || exit /b 1
           cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection || exit /b 1
           copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-sqlite.exe" || exit /b 1
           copy "target\release\remote_server.exe"     "..\omSupply\Server\omSupply-server-sqlite.exe" || exit /b 1
