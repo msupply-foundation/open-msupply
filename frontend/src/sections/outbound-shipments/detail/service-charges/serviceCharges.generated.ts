@@ -87,5 +87,5 @@ export type ServiceItemsResult = {
 };
 
 export const ServiceItems = {
-  query: "query serviceItems($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {type: {equalTo: SERVICE}, isActive: true}\n    page: {first: 100}\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
+  query: "query serviceItems($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {type: {equalTo: SERVICE}, isActive: true, isVisible: true}\n    page: {first: 100}\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<ServiceItemsResult, ServiceItemsVariables>;

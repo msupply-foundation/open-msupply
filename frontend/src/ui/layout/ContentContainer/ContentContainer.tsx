@@ -4,7 +4,7 @@ import styles from './ContentContainer.module.css';
 export interface ContentContainerProps extends JSX.HTMLAttributes<HTMLDivElement> {
   /**
    * The reading-column cap this content grows to before it stops widening and
-   * centres in the page body:
+   * aligns in the page body:
    *  - `form` (default) — a comfortable two-column form (`--measure-form`)
    *  - `prose` — single-column reading text (`--measure-prose`)
    *  - `wide` — dense forms / dashboards (`--measure-wide`)
@@ -17,6 +17,13 @@ export interface ContentContainerProps extends JSX.HTMLAttributes<HTMLDivElement
    * inherit. Off by default (the body owns padding on a normal page).
    */
   padded?: boolean;
+  /**
+   * Where the capped column sits once it stops growing: `center` (default —
+   * the reading-column convention for forms/prose) or `start` — hug the
+   * reading start edge (logical, so the right edge in RTL) for tool-like /
+   * reference pages where a stable origin scans better than centring.
+   */
+  align?: 'center' | 'start';
 }
 
 /*
@@ -34,6 +41,7 @@ export const ContentContainer = (props: ContentContainerProps) => {
   const [local, rest] = splitProps(props, [
     'size',
     'padded',
+    'align',
     'class',
     'children',
   ]);
@@ -44,6 +52,7 @@ export const ContentContainer = (props: ContentContainerProps) => {
       }
       data-size={local.size ?? 'form'}
       data-padded={local.padded ? '' : undefined}
+      data-align={local.align ?? 'center'}
       {...rest}
     >
       {local.children}

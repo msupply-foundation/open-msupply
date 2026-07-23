@@ -35,7 +35,10 @@ import {
   XCircleIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
-import { LocationSelect, type Location } from '../../../../domain/location';
+import {
+  LocationVolumeSelect,
+  type LocationWithVolume,
+} from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch, type NameOption } from '../../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
@@ -97,7 +100,7 @@ export interface InboundShipmentLineEditModalProps {
   purchaseOrderId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
-  locations: Location[];
+  locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
   /**
@@ -1068,11 +1071,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       cell: info => {
         const b = info.row.original;
         return (
-          <LocationSelect
+          <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
             locations={props.locations}
             value={b.locationId ?? undefined}
+            requiredVolume={b.volumePerPack * b.numberOfPacks}
             onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
           />
         );

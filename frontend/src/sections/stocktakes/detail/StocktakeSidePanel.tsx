@@ -43,6 +43,7 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
     <SidePanelSection
       value="additional-info"
       title={t('heading.additional-info')}
+      collapsible
     >
       {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
         the same inline-start as the editable inputs below them (no mixed <dl>/FieldRow widths).
