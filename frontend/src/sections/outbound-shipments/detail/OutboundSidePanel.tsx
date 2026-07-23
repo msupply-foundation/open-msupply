@@ -136,7 +136,31 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <Text variant="body" as="span">
+              {props.node.user?.username ?? '—'}
+            </Text>
+            {/* Info popover on hover — the user's email (the picked-date
+                reason bubble's pattern); no icon when there is no email. */}
+            <Show when={props.node.user?.email}>
+              {email => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={email()}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>{email()}</p>
+                </Popover>
+              )}
+            </Show>
+          </span>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
