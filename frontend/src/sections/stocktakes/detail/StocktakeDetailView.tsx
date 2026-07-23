@@ -297,7 +297,10 @@ const StocktakeDetailView: Component = () => {
   // read via `.latest` so a refetch never trips the view's Suspense boundary.
   const [locationsData, { refetch: refetchLocations }] = createResource(
     () => params.storeId,
-    fetchLocationsWithVolume
+    async storeId => {
+      const result = await fetchLocationsWithVolume(storeId);
+      return result;
+    }
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
@@ -324,7 +327,12 @@ const StocktakeDetailView: Component = () => {
   // A fresh lines page clears stale per-line errors. lineErrors is
   // independently stamped by save failures, so it stays its own signal — this
   // effect only resets it when a new page lands.
-  createEffect(on(linesData, () => setLineErrors(new Map())));
+  createEffect(
+    on(
+      () => linesData.latest,
+      () => setLineErrors(new Map())
+    )
+  );
 
   // A stocktake can be finalised only when it has at least one counted line
   // (OMS no-lines guard). Best-effort over the CURRENT page — a fuller guard
@@ -532,7 +540,15 @@ const StocktakeDetailView: Component = () => {
   // entirely otherwise (not merely default-hidden).
   const prefs = () => stocktakePreferences();
 
-  const columns = (): Column<Line, SortKey>[] => [
+  // A memo, not a plain function: read as a JSX prop (DataTable's `columns`),
+  // it would otherwise rebuild a fresh array + fresh column objects on EVERY
+  // read. TanStack Table treats a new columns identity as a config change and
+  // updates its internal state accordingly, which re-triggers this prop's
+  // reactive scope — a self-sustaining loop with no real dependency change
+  // behind it (this caused a genuine slow-load bug; root-caused via targeted
+  // logging that confirmed every actual dependency stayed unchanged across
+  // dozens of re-fires per second).
+  const columns = createMemo((): Column<Line, SortKey>[] => [
     {
       // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
       // path); the server sort key is `itemCode`.
@@ -715,7 +731,7 @@ const StocktakeDetailView: Component = () => {
       header: t('label.comment'),
       ...getCommentCell(),
     },
-  ];
+  ]);
 
   return (
     // Local Suspense boundary: the FIRST read of data() (info()) suspends until
@@ -754,25 +770,25 @@ const StocktakeDetailView: Component = () => {
                   <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
                     {/* "Add item" — opens the line-edit modal in the item-search
-                      state. Only while the stocktake is editable. */}
+                    state. Only while the stocktake is editable. */}
                     <Show when={!isDisabled(node())}>
                       <Button icon={<PlusCircleIcon />} onClick={openAdd}>
                         {t('button.add-item')}
                       </Button>
                     </Show>
                     {/* Export/Print — always available (unlike Add item, it
-                        does not depend on editability): print/export a report of
-                        this stocktake, respecting the line table's current sort
-                        (spec/stocktakes S3 → spec/reports S4). */}
+                      does not depend on editability): print/export a report of
+                      this stocktake, respecting the line table's current sort
+                      (spec/stocktakes S3 → spec/reports S4). */}
                     <ExportPrintAction
                       stocktakeId={node().id}
                       sort={reportSort()}
                     />
                     {/* More — the closed-panel reopen affordance, at the end of
-                        the app-bar page-action cluster (spec ui-standards/
-                        layout.md → page regions). Shows ONLY while the panel is
-                        closed; uses the sidebar glyph (not the info icon), and
-                        reopening counts as the user's explicit open choice. */}
+                      the app-bar page-action cluster (spec ui-standards/
+                      layout.md → page regions). Shows ONLY while the panel is
+                      closed; uses the sidebar glyph (not the info icon), and
+                      reopening counts as the user's explicit open choice. */}
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"
@@ -795,7 +811,7 @@ const StocktakeDetailView: Component = () => {
                     />
                   </Toolbar>
                   {/* Last child of the Header → the tab strip claims its bottom
-                    edge (Header.module.css / Tabs). Details + Log. */}
+                  edge (Header.module.css / Tabs). Details + Log. */}
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -834,10 +850,10 @@ const StocktakeDetailView: Component = () => {
                       {selectedIds().length} {t('label.selected')}
                     </strong>
                     {/* Each action owns its own button + confirm/working/success/
-                      error modal + run; the view supplies storeId/selection and
-                      refetches the page on any commit (onCommit → onLinesChanged),
-                      stamps failed lines inline (onError), and clears selection on
-                      the error phase's "Show error lines" (onShowErrors). */}
+                    error modal + run; the view supplies storeId/selection and
+                    refetches the page on any commit (onCommit → onLinesChanged),
+                    stamps failed lines inline (onError), and clears selection on
+                    the error phase's "Show error lines" (onShowErrors). */}
                     <DeleteLinesAction
                       storeId={params.storeId}
                       selectedIds={selectedIds}
@@ -934,8 +950,8 @@ const StocktakeDetailView: Component = () => {
                 />
               </TabPanel>
               {/* Log tab: the stocktake's activity log — its own query (OMS
-                parity), mounted only while this tab is active (Kobalte unmounts
-                inactive panels), so it fetches on first visit. */}
+              parity), mounted only while this tab is active (Kobalte unmounts
+              inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
                 <StocktakeLogPanel
                   storeId={params.storeId}
@@ -943,8 +959,8 @@ const StocktakeDetailView: Component = () => {
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a
-                direct child of the Page so a row-click on Details opens it
-                regardless of which tab last had focus. */}
+              direct child of the Page so a row-click on Details opens it
+              regardless of which tab last had focus. */}
               <StocktakeLineEditModal
                 open={editState() != null}
                 onClose={() => setEditState(undefined)}
