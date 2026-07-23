@@ -21,7 +21,7 @@ concurrency:
 jobs:
   check:
     name: cargo check --features integration_test
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 15
     env:
       CARGO_TARGET_DIR: /tmp/target/integration_test

@@ -9,7 +9,7 @@ set -e
 #   frontend-bundle/          NEW FE, served at /          (fetched, pinned dist)
 #   frontend-bundle/old-ui/   OLD UI, served at /old-ui/   (this repo's client build)
 #
-# The embedded server's old_ui_frontend_dir is set to <filesDir>/frontend/old-ui
+# The embedded server serves <filesDir>/frontend/old-ui at /old-ui/ by convention
 # to match (see server/android/src/android.rs).
 #
 # The NEW FE lives in the private open-msupply-frontend repo; fetch-frontend.js

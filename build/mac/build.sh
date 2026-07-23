@@ -58,10 +58,9 @@ cp -R client/packages/host/dist "$DESTINATION/frontend/old-ui"
 mkdir $DESTINATION/configuration
 cp -R server/configuration/base.yaml $DESTINATION/configuration/
 mkdir $DESTINATION/app_data
-# Local file should be present. Point the server at the old UI so the bundle
-# serves both frontends out of the box (base.yaml keeps old_ui_frontend_dir
-# commented; local.yaml overrides it for this bundle).
-printf 'server:\n  old_ui_frontend_dir: "frontend/old-ui"\n' > $DESTINATION/configuration/local.yaml
+# Local file must be present for the server to start. The old UI nested at
+# frontend/old-ui above is served at /old-ui/ by convention — no config needed.
+touch $DESTINATION/configuration/local.yaml
 
 # Initialise demo data
 if [ "$SHOULD_INCLUDE_DEMO_DATA" == "true" ]; then

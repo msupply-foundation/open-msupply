@@ -13,9 +13,8 @@ server:
   # Directory the web frontend is served from, relative to the working directory.
   # Packaging ships the built frontend bundle here.
   frontend_dir: "frontend"
-  # Optional directory for the legacy ("old UI") frontend, served under /old-ui/.
-  # Leave unset to mount nothing at /old-ui/ (default; root serving is unaffected).
-  # old_ui_frontend_dir: "frontend/old-ui"
+  # The legacy ("old UI") frontend is served under /old-ui/ from the old-ui
+  # subdirectory of frontend_dir, when present (by convention — not configurable).
 database:
   host: "localhost"
   port: 5432
