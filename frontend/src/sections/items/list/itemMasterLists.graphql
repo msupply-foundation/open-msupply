@@ -1,0 +1,18 @@
+# The store's master lists — options for the list's Master-list filter, offered
+# only when the store has at least one (spec/items S1 filters). Scoped to lists
+# that exist for the store via existsForStoreId.
+query itemMasterLists($storeId: String!) {
+  masterLists(
+    storeId: $storeId
+    filter: { existsForStoreId: { equalTo: $storeId } }
+  ) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}

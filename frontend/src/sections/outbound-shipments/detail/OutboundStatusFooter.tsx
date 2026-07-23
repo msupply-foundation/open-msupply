@@ -86,7 +86,7 @@ export const OutboundStatusFooter: Component<
           checked={holding()}
           onChange={() => setHoldConfirm(true)}
         >
-          {t('label.on-hold')}
+          {t('label.hold')}
         </CheckboxButton>
       </Show>
 
