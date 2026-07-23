@@ -66,6 +66,7 @@ pub mod android {
                 // The app shell copies its APK-bundled web UI here on startup,
                 // before starting the server (see MainActivity.copyFrontendAssets)
                 frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
+                old_ui_frontend_dir: None,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),

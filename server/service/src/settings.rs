@@ -77,6 +77,13 @@ pub struct ServerSettings {
     /// on Android the app shell copies its bundled web assets here on startup.
     #[serde(default = "default_frontend_dir")]
     pub frontend_dir: String,
+
+    /// Optional directory for the legacy ("old UI") web frontend, resolved
+    /// relative to the working directory and served under the `/old-ui/` URL
+    /// prefix. When unset nothing is mounted at `/old-ui/` (fully backwards
+    /// compatible); root serving from `frontend_dir` is unaffected.
+    #[serde(default)]
+    pub old_ui_frontend_dir: Option<String>,
 }
 
 pub const DEFAULT_INACTIVITY_TIMEOUT_SECONDS: u32 = 900;
@@ -122,6 +129,7 @@ pub fn test_settings(
             inactivity_timeout_seconds: DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
             token_refresh_interval_seconds: DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
             frontend_dir: default_frontend_dir(),
+            old_ui_frontend_dir: None,
         },
         database,
         sync: None,
