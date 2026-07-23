@@ -111,22 +111,6 @@ jobs:
         env:
           PUBLIC_PATH: /old-ui/
 
-      - name: Build server binaries (sqlite + postgres)
-        shell: cmd
-        run: |
-          cd server || exit /b 1
-          cargo install cargo-edit || exit /b 1
-          cargo set-version %version% || exit /b 1
-          cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection || exit /b 1
-          copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-sqlite.exe" || exit /b 1
-          copy "target\release\remote_server.exe"     "..\omSupply\Server\omSupply-server-sqlite.exe" || exit /b 1
-          copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe" || exit /b 1
-          copy "target\release\test_connection.exe"   "..\omSupply\Server\test-connection-sqlite.exe" || exit /b 1
-          cargo build --release --bin omsupply_service --bin remote_server_cli --bin test_connection --features postgres || exit /b 1
-          copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-postgres.exe" || exit /b 1
-          copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe" || exit /b 1
-          copy "target\release\test_connection.exe"   "..\omSupply\Server\test-connection-postgres.exe" || exit /b 1
-
       # The NEW FE lives in the private open-msupply-frontend repo and ships
       # as a pinned, checksum-verified dist zip (see server/README.md,
       # 'Serving front-end'). The old UI is nested inside AFTER the fetch,
@@ -150,6 +134,24 @@ jobs:
           cd client || exit /b 1
           call yarn electron:build || exit /b 1
           xcopy "packages\electron\out\Open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i || exit /b 1
+
+      # Last of the builds: by far the longest step, so every quick,
+      # more-likely-to-flake step (yarn, network fetches) gets to fail first.
+      - name: Build server binaries (sqlite + postgres)
+        shell: cmd
+        run: |
+          cd server || exit /b 1
+          cargo install cargo-edit || exit /b 1
+          cargo set-version %version% || exit /b 1
+          cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection || exit /b 1
+          copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-sqlite.exe" || exit /b 1
+          copy "target\release\remote_server.exe"     "..\omSupply\Server\omSupply-server-sqlite.exe" || exit /b 1
+          copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe" || exit /b 1
+          copy "target\release\test_connection.exe"   "..\omSupply\Server\test-connection-sqlite.exe" || exit /b 1
+          cargo build --release --bin omsupply_service --bin remote_server_cli --bin test_connection --features postgres || exit /b 1
+          copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-postgres.exe" || exit /b 1
+          copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe" || exit /b 1
+          copy "target\release\test_connection.exe"   "..\omSupply\Server\test-connection-postgres.exe" || exit /b 1
 
       # ETOKEN storetype = SafeNet USB hardware token plugged into the build
       # box; --storepass avoids the interactive PIN dialog. Requires Java and
