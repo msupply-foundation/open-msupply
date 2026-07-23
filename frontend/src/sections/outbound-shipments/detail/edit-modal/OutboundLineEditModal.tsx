@@ -779,7 +779,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           rowKey={line => line.id}
           loading={loadingLines()}
           showFullScreen={false}
-          rowDimmed={line => isBarred(line)}
+          rowState={line => (isBarred(line) ? 'disabled' : undefined)}
           emptyMessage={t('messages.no-stock-available')}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}

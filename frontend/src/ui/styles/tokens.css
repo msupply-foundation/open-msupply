@@ -173,6 +173,9 @@
   --nav-child-height: 1.875rem; /* 30px */
   --table-data-row: 2.5rem; /* 40px */
   --table-header-row: 3.75rem; /* 60px */
+  /* Cell line-height (ui-standards § tables): 1.43 ≈ 20px leading at the 14px
+     cell font, shared by header and body cells. */
+  --table-line-height: 1.43;
   --footer-height: 2rem; /* 32px */
   --touch-target: 3rem; /* 48px — spec target */
 
