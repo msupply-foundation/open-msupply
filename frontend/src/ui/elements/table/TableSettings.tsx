@@ -25,8 +25,13 @@ const densityLabel = (density: Density): string =>
 // VISIBLE but disabled while the layout is already at default, so it stays
 // discoverable), plus the central-admin save-as-global-default.
 export function TableSettings(props: {
-  /** The resolved config — read for the current density (default comfortable). */
+  /** The resolved config (written via setConfig; density is read from the
+   *  dedicated prop below, which includes the responsive default). */
   config?: TableConfig;
+  /** The EFFECTIVE density the table is rendering — an explicit config
+   *  choice, or the responsive default (spacious below the nav-overlay
+   *  width). Shown checked in the radio. */
+  density: Density;
   /** Write one config field (the controlled path DataTable already uses). */
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /**
@@ -53,7 +58,7 @@ export function TableSettings(props: {
    */
   onSaveGlobalDefault?: () => Promise<boolean>;
 }): JSX.Element {
-  const density = (): Density => props.config?.viewDensity ?? 'comfortable';
+  const density = (): Density => props.density;
 
   // Inline status for the save-as-global-default action (this app surfaces
   // feedback inline via Alert-style notices rather than a global toast). Reset
