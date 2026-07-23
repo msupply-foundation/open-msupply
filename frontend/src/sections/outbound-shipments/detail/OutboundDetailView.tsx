@@ -24,10 +24,12 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
+  formatCurrencyCell,
   getCurrencyCell,
   getExpiryDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createMediaQuery } from '../../../ui/utils/createMediaQuery';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -47,7 +49,7 @@ import {
 } from './outboundDetail.generated';
 import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
-import { isEditable } from '../outboundStatus';
+import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundPrefs } from '../outboundPreferencesResource';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
 import { OutboundSidePanel } from './OutboundSidePanel';
@@ -64,6 +66,15 @@ const SelectReportModal = lazy(() =>
   import('../../../domain/reports').then(module => ({
     default: module.SelectReportModal,
   }))
+);
+// The from-shipment customer-return flow (spec/customer-returns S4, owned by
+// the returns vertical — AC-V3 hands over to it). Lazy so the returns graph it
+// pulls in stays out of this section's eager chunk, loading only when a return
+// is actually started.
+const ReturnFromShipmentModal = lazy(() =>
+  import('../../customer-returns/detail/edit-modal/ReturnFromShipmentModal').then(
+    module => ({ default: module.ReturnFromShipmentModal })
+  )
 );
 import {
   AddFromMasterListAction,
@@ -103,8 +114,10 @@ const OutboundDetailView: Component = () => {
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
-  // "Return selected lines" before SHIPPED — the AC-V3 explanatory notice.
+  // "Return selected lines": at SHIPPED+ opens the customer-return create flow
+  // (returnModalOpen, AC-V3); before that the explanatory notice instead.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
+  const [returnModalOpen, setReturnModalOpen] = createSignal(false);
   // Export/Print (S3 page action → reports S4, AC-E1–E3; any status).
   const [reportsOpen, setReportsOpen] = createSignal(false);
 
@@ -136,7 +149,7 @@ const OutboundDetailView: Component = () => {
   const serviceLines = () => lines().filter(line => line.type === 'SERVICE');
   // Default line-table order: item name ascending (ui-surface S3 § line table;
   // matches the old app). A flat client-side sort — all lines are loaded, and
-  // the table is un-grouped (D29).
+  // the table is un-grouped (D34).
   const sortedLines = () =>
     [...stockAndPlaceholderLines()].sort((a, b) =>
       a.itemName.localeCompare(b.itemName)
@@ -171,7 +184,7 @@ const OutboundDetailView: Component = () => {
           unitName: false,
           receivedNumberOfPacks: false,
           difference: false,
-          volumePerPack: false,
+          volume: false,
           locationCode: false,
         },
       },
@@ -279,128 +292,155 @@ const OutboundDetailView: Component = () => {
   // The detail line table (spec S3 § line table): one row per stock/placeholder
   // line — flat, since main dropped row-grouping from the shared DataTable;
   // placeholder rows show the requested quantity.
-  const columns = (): Column<Line, never>[] => [
-    {
-      c: { key: 'itemCode' },
-      header: t('label.code'),
-    },
-    {
-      c: { key: 'itemName' },
-      header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
-    },
-    {
-      c: {
-        accessor: line =>
-          line.type === 'UNALLOCATED_STOCK'
-            ? t('label.placeholder')
-            : (line.batch ?? '—'),
-        id: 'batch',
+  const columns = (): Column<Line, never>[] => {
+    // Footer totals (spec § line table: "Totals for quantity/total/volume in
+    // the table footer", D45 — richer than the old app's Total-label + volume
+    // sum, standing in for the per-item aggregates dropped with grouping,
+    // D34). Computed here so columns() takes the reactive dependency and the
+    // footer closures stay plain (the Financial tab's pattern).
+    const totals = stockAndPlaceholderLines().reduce(
+      (sum, line) => ({
+        packs: sum.packs + line.numberOfPacks,
+        units: sum.units + line.numberOfPacks * line.packSize,
+        price: sum.price + line.totalAfterTax,
+        volume: sum.volume + line.volumePerPack * line.numberOfPacks,
+      }),
+      { packs: 0, units: 0, price: 0, volume: 0 }
+    );
+    return [
+      {
+        c: { key: 'itemCode' },
+        header: t('label.code'),
+        footer: () => t('label.total'),
       },
-      header: t('label.batch'),
-    },
-    {
-      c: { key: 'expiryDate' },
-      header: t('label.expiry-date'),
-      ...getExpiryDateCell(),
-    },
-    ...(vvmOn()
-      ? [
-          {
-            c: {
-              accessor: (line: Line) => line.vvmStatus?.description ?? '',
-              id: 'vvmStatus',
-            },
-            header: t('label.vvm-status'),
-          } as Column<Line, never>,
-        ]
-      : []),
-    {
-      c: { accessor: line => line.location?.code ?? '', id: 'locationCode' },
-      header: t('label.location'),
-    },
-    {
-      c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
-      header: t('label.unit'),
-    },
-    {
-      c: { key: 'packSize' },
-      header: t('label.pack-size'),
-      ...getNumberCell(),
-    },
-    ...(dosesOn()
-      ? [
-          {
-            c: {
-              accessor: (line: Line) =>
-                line.item.isVaccine ? line.item.doses : null,
-              id: 'dosesPerUnit',
-            },
-            header: t('label.doses-per-unit'),
-            ...getNumberCell(),
-          } as Column<Line, never>,
-        ]
-      : []),
-    {
-      c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
-      ...getNumberCell(),
-    },
-    {
-      c: { key: 'receivedNumberOfPacks' },
-      header: t('label.packs-received'),
-      ...getNumberCell(),
-    },
-    {
-      c: {
-        accessor: line =>
-          line.receivedNumberOfPacks != null
-            ? line.receivedNumberOfPacks - line.numberOfPacks
-            : null,
-        id: 'difference',
+      {
+        c: { key: 'itemName' },
+        header: t('label.name'),
+        meta: { card: { region: 'primary' }, wrapLines: 2 },
       },
-      header: t('label.difference'),
-      ...getNumberCell(),
-    },
-    {
-      c: {
-        accessor: line => line.numberOfPacks * line.packSize,
-        id: 'unitQuantity',
+      {
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? t('label.placeholder')
+              : (line.batch ?? '—'),
+          id: 'batch',
+        },
+        header: t('label.batch'),
       },
-      header: t('label.unit-quantity'),
-      ...getNumberCell(),
-    },
-    ...(dosesOn()
-      ? [
-          {
-            c: {
-              accessor: (line: Line) =>
-                line.item.isVaccine
-                  ? line.numberOfPacks * line.packSize * line.item.doses
-                  : null,
-              id: 'doses',
-            },
-            header: t('label.doses'),
-            ...getNumberCell(),
-          } as Column<Line, never>,
-        ]
-      : []),
-    {
-      c: { key: 'sellPricePerPack' },
-      header: t('label.unit-sell-price'),
-      ...getCurrencyCell(),
-    },
-    {
-      c: { key: 'totalAfterTax' },
-      header: t('label.total'),
-      ...getCurrencyCell(),
-    },
-    {
-      c: { key: 'volumePerPack' },
-      header: t('label.volume'),
-      ...getNumberCell(),
-    },
-  ];
+      {
+        c: { key: 'expiryDate' },
+        header: t('label.expiry-date'),
+        ...getExpiryDateCell(),
+      },
+      ...(vvmOn()
+        ? [
+            {
+              c: {
+                accessor: (line: Line) => line.vvmStatus?.description ?? '',
+                id: 'vvmStatus',
+              },
+              header: t('label.vvm-status'),
+            } as Column<Line, never>,
+          ]
+        : []),
+      {
+        c: { accessor: line => line.location?.code ?? '', id: 'locationCode' },
+        header: t('label.location'),
+      },
+      {
+        c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
+        header: t('label.unit'),
+      },
+      {
+        c: { key: 'packSize' },
+        header: t('label.pack-size'),
+        ...getNumberCell(),
+      },
+      ...(dosesOn()
+        ? [
+            {
+              c: {
+                accessor: (line: Line) =>
+                  line.item.isVaccine ? line.item.doses : null,
+                id: 'dosesPerUnit',
+              },
+              header: t('label.doses-per-unit'),
+              ...getNumberCell(),
+            } as Column<Line, never>,
+          ]
+        : []),
+      {
+        c: { key: 'numberOfPacks' },
+        header: t('label.pack-quantity'),
+        footer: () => formatNumber(totals.packs),
+        ...getNumberCell(),
+      },
+      {
+        c: { key: 'receivedNumberOfPacks' },
+        header: t('label.packs-received'),
+        ...getNumberCell(),
+      },
+      {
+        c: {
+          accessor: line =>
+            line.receivedNumberOfPacks != null
+              ? line.receivedNumberOfPacks - line.numberOfPacks
+              : null,
+          id: 'difference',
+        },
+        header: t('label.difference'),
+        ...getNumberCell(),
+      },
+      {
+        c: {
+          accessor: line => line.numberOfPacks * line.packSize,
+          id: 'unitQuantity',
+        },
+        header: t('label.unit-quantity'),
+        footer: () => formatNumber(totals.units),
+        ...getNumberCell(),
+      },
+      ...(dosesOn()
+        ? [
+            {
+              c: {
+                accessor: (line: Line) =>
+                  line.item.isVaccine
+                    ? line.numberOfPacks * line.packSize * line.item.doses
+                    : null,
+                id: 'doses',
+              },
+              header: t('label.doses'),
+              ...getNumberCell(),
+            } as Column<Line, never>,
+          ]
+        : []),
+      {
+        c: { key: 'sellPricePerPack' },
+        header: t('label.unit-sell-price'),
+        ...getCurrencyCell(),
+      },
+      {
+        c: { key: 'totalAfterTax' },
+        header: t('label.total'),
+        footer: () => formatCurrencyCell(totals.price),
+        ...getCurrencyCell(),
+      },
+      {
+        // Line volume — volume per pack × packs (the old app's volume column),
+        // not the raw per-pack figure; the footer then sums to the shipment
+        // volume, matching the old app's footer.
+        c: {
+          accessor: line => line.volumePerPack * line.numberOfPacks,
+          id: 'volume',
+        },
+        header: t('label.volume'),
+        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 5 }),
+        ...getNumberCell(),
+      },
+    ];
+  };
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -597,15 +637,19 @@ const OutboundDetailView: Component = () => {
                       />
                     </Show>
                     {/* Return selected lines (AC-V3): shown at EVERY status (not
-                        hidden, not disabled) — the return flow opens at SHIPPED /
-                        DELIVERED / VERIFIED, and any other status (RECEIVED
-                        included) gets an explanatory notice. A stub for now: the
-                        customer-return flow is the returns vertical's (not built
-                        yet), so this shows a "not yet available" notice
-                        regardless. See the S3 bulk-action matrix. */}
+                        hidden, not disabled). At SHIPPED / DELIVERED / VERIFIED
+                        it opens the customer-return create flow (owned by the
+                        returns vertical, over this shipment); any other status
+                        (RECEIVED included) gets the explanatory notice. See the
+                        S3 bulk-action matrix. */}
                     <Button
                       variant="secondary"
-                      onClick={() => setReturnNoticeOpen(true)}
+                      data-testid="return-lines-button"
+                      onClick={() =>
+                        canReturnLines(current().status)
+                          ? setReturnModalOpen(true)
+                          : setReturnNoticeOpen(true)
+                      }
                     >
                       {t('button.return-lines')}
                     </Button>
@@ -680,13 +724,19 @@ const OutboundDetailView: Component = () => {
                 onCommitted={onLineOpsCommitted}
               />
               {/* Export/Print (reports S4): mounted on first open so the
-                  selector's chunk loads lazily. */}
+                  selector's chunk loads lazily. Its own Suspense boundary —
+                  the lazy chunk's first load would otherwise suspend the
+                  route boundary and collapse this open screen to the page
+                  spinner (kdd/solid-reactivity-pitfalls § no remounts on
+                  interaction). */}
               <Show when={reportsOpen()}>
-                <SelectReportModal
-                  context="OUTBOUND_SHIPMENT"
-                  dataId={current().id}
-                  onClose={() => setReportsOpen(false)}
-                />
+                <Suspense>
+                  <SelectReportModal
+                    context="OUTBOUND_SHIPMENT"
+                    dataId={current().id}
+                    onClose={() => setReportsOpen(false)}
+                  />
+                </Suspense>
               </Show>
               {/* Returns need a shipped shipment (AC-V3) — an info-only
                   notice; the return flow is the returns vertical's. */}
@@ -707,6 +757,41 @@ const OutboundDetailView: Component = () => {
                     </Button>
                   }
                 />
+              </Show>
+              {/* From-shipment customer-return flow (AC-V3 → customer-returns
+                  S4): seeded from the selected STOCK lines (placeholder and
+                  service lines can't be returned, so they're excluded); the
+                  return is created born VERIFIED and linked to this shipment,
+                  then we navigate to it. Own Suspense boundary, as for the
+                  report selector above. */}
+              <Show when={returnModalOpen()}>
+                <Suspense>
+                  <ReturnFromShipmentModal
+                    open
+                    onClose={() => setReturnModalOpen(false)}
+                    storeId={params.storeId}
+                    outboundShipmentId={current().id}
+                    outboundShipmentInvoiceNumber={current().invoiceNumber}
+                    customerId={current().otherParty.id}
+                    customerName={current().otherParty.name}
+                    outboundShipmentLineIds={() =>
+                      selectedLines()
+                        .filter(
+                          line =>
+                            line.type !== 'SERVICE' &&
+                            line.type !== 'UNALLOCATED_STOCK'
+                        )
+                        .map(line => line.id)
+                    }
+                    onCreated={returnId => {
+                      setReturnModalOpen(false);
+                      setSelectedIds([]);
+                      navigate(
+                        `/${params.storeId}/distribution/customer-return/${returnId}`
+                      );
+                    }}
+                  />
+                </Suspense>
               </Show>
             </Page>
           </Tabs>

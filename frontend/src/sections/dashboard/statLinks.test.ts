@@ -49,14 +49,24 @@ describe('time windows (rules.md § time windows)', () => {
 });
 
 describe('replenishment links', () => {
-  // AC-N1/AC-R1 — created-today / created-this-week filter from the window
-  // start; not delivered = New/Shipped exactly.
-  it('AC-N1: inbound today / this week filter created-datetime from the window start', () => {
+  // AC-N1/AC-R1 — the date windows are explicit from–to ranges matching the
+  // count window (contract.md § navigation correspondence): today spans start
+  // of day to end of day; this week spans Monday to end of Sunday.
+  it('AC-N1: inbound today is a from–to range over the whole day', () => {
     expect(filterOf(inboundTodayHref('s1', wednesday))).toEqual({
-      createdDatetime: { afterOrEqualTo: '2026-07-22T00:00:00.000Z' },
+      createdDatetime: {
+        afterOrEqualTo: '2026-07-22T00:00:00.000Z',
+        beforeOrEqualTo: '2026-07-22T23:59:59.999Z',
+      },
     });
+  });
+
+  it('AC-N1: inbound this-week spans Monday to end of Sunday', () => {
     expect(filterOf(inboundThisWeekHref('s1', wednesday))).toEqual({
-      createdDatetime: { afterOrEqualTo: '2026-07-20T00:00:00.000Z' },
+      createdDatetime: {
+        afterOrEqualTo: '2026-07-20T00:00:00.000Z',
+        beforeOrEqualTo: '2026-07-26T23:59:59.999Z',
+      },
     });
   });
 

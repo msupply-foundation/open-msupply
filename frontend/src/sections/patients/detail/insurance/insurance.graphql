@@ -1,0 +1,81 @@
+# Patient insurance policies (spec/patients § insurance policies; contract ›
+# insurance policies). A policy links a patient to an insurance provider.
+#
+# Reads gate on QueryPatient, writes on MutatePatient — no insurance-specific
+# permission. Both insert/update return a single-member union whose only member
+# is IdResponse — there is NO typed error node; every rejection is a top-level
+# GraphQL error, decoded generically by insuranceApi.ts.
+
+fragment InsurancePolicy on InsurancePolicyNode {
+  __typename
+  id
+  insuranceProviderId
+  policyNumberPerson
+  policyNumberFamily
+  policyNumber
+  policyType
+  discountPercentage
+  expiryDate
+  isActive
+  nameOfInsured
+  insuranceProviders {
+    __typename
+    id
+    providerName
+  }
+}
+
+# The patient's policies (spec/patients ui-surface › Insurance tab). `nameId` is
+# the patient id; the server verifies the patient exists. Only the LAST sort
+# element is applied server-side; keys are expiryDate / isActive only.
+query insurancePolicies(
+  $storeId: String!
+  $nameId: String!
+  $sort: [InsuranceSortInput!]
+) {
+  insurancePolicies(storeId: $storeId, nameId: $nameId, sort: $sort) {
+    ... on InsuranceConnector {
+      __typename
+      nodes {
+        ...InsurancePolicy
+      }
+    }
+  }
+}
+
+# The configured providers (spec/patients § insurance surface gate). Returns
+# ACTIVE providers only; the presence of ≥1 gates the whole insurance surface.
+query insuranceProviders($storeId: String!) {
+  insuranceProviders(storeId: $storeId) {
+    ... on InsuranceProvidersConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        providerName
+      }
+    }
+  }
+}
+
+# Add a policy (spec/patients contract › insurance writes). The server composes
+# policyNumber from the family + person parts — do NOT send policyNumber.
+mutation insertInsurance($storeId: String!, $input: InsertInsuranceInput!) {
+  insertInsurance(storeId: $storeId, input: $input) {
+    ... on IdResponse {
+      __typename
+      id
+    }
+  }
+}
+
+# Edit a policy. The policy-number parts and the patient link are fixed at
+# creation and have no input field here; every other field is an optional patch.
+mutation updateInsurance($storeId: String!, $input: UpdateInsuranceInput!) {
+  updateInsurance(storeId: $storeId, input: $input) {
+    ... on IdResponse {
+      __typename
+      id
+    }
+  }
+}
