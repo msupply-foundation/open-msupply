@@ -311,6 +311,9 @@ impl InvoiceNode {
             service_total_after_tax: 0.0,
             tax_percentage: self.row().tax_percentage,
             foreign_currency_total_after_tax: None,
+            total_number_of_packs: 0.0,
+            total_number_of_units: 0.0,
+            total_volume: 0.0,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;
@@ -644,6 +647,24 @@ impl PricingNode {
 
     pub async fn tax_percentage(&self) -> &Option<f64> {
         &self.invoice_pricing.tax_percentage
+    }
+
+    // quantity totals — whole-invoice sums over non-service lines
+    // (placeholders included), for detail-view footer roll-ups that can't be
+    // computed client-side once lines are server-paginated
+
+    pub async fn total_number_of_packs(&self) -> f64 {
+        self.invoice_pricing.total_number_of_packs
+    }
+
+    /// Sum of number_of_packs * pack_size
+    pub async fn total_number_of_units(&self) -> f64 {
+        self.invoice_pricing.total_number_of_units
+    }
+
+    /// Sum of number_of_packs * volume_per_pack
+    pub async fn total_volume(&self) -> f64 {
+        self.invoice_pricing.total_volume
     }
 }
 
