@@ -17,6 +17,7 @@ import { DisplayShowcase } from './DisplayShowcase';
 import { DocumentUploadShowcase } from './DocumentUploadShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
+import { DetailTableShowcase } from './DetailTableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { AccordionShowcase } from './AccordionShowcase';
@@ -213,8 +214,15 @@ export const sections: SectionDef[] = [
     fill: true,
   },
   {
+    id: 'detail-table',
+    label: 'Detail table page',
+    component: DetailTableShowcase,
+    category: 'pages',
+    fill: true,
+  },
+  {
     id: 'forms',
-    label: 'Detail form',
+    label: 'Detail form page',
     component: FormsShowcase,
     category: 'pages',
     fill: true,
