@@ -66,6 +66,12 @@ fragment UserInfo on UserNode {
       id
       code
       name
+      # The store's mode (spec/patients § configuration gates › AC-G1):
+      # dispensary mode gates the whole patient surface. UserStoreNode carries
+      # storeMode per store, so the entered store's mode is known from the
+      # me/login response — no extra query.
+      storeMode
+      homeCurrencyCode
     }
   }
 }

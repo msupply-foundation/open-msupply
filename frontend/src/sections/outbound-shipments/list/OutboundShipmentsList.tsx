@@ -17,6 +17,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  getCommentCell,
   getCurrencyCell,
   getDateCell,
   getNumberCell,
@@ -242,9 +243,11 @@ const OutboundShipmentsList: Component = () => {
       header: t('label.reference'),
     },
     {
-      // Comment is the shared comment cell — not sortable (ui-surface S1).
+      // Comment is the shared comment cell (bubble + hover popover, as the
+      // inbound list renders it) — not sortable (ui-surface S1).
       c: { key: 'comment' },
       header: t('label.comment'),
+      ...getCommentCell(),
     },
     {
       // Shipment total after tax (nested under pricing) — an accessor column.

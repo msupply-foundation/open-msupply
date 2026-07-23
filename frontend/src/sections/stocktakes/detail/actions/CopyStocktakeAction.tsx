@@ -69,8 +69,12 @@ export const CopyStocktakeAction: Component<
   };
 
   return (
+    // aria-live so the label swap is announced by assistive tech (no
+    // visually-hidden twin — a hidden duplicate of the label trips strict
+    // e2e text locators).
     <Button
       variant="secondary"
+      aria-live="polite"
       icon={copied() ? <CheckIcon /> : <CopyIcon />}
       loading={busy()}
       data-testid="copy-stocktake-button"

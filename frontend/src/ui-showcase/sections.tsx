@@ -3,6 +3,7 @@ import {
   SlidersIcon,
   CopyIcon,
   CardViewIcon,
+  FileIcon,
   type IconProps,
 } from '../ui/icons';
 import { TypographyShowcase } from './TypographyShowcase';
@@ -16,6 +17,7 @@ import { DisplayShowcase } from './DisplayShowcase';
 import { DocumentUploadShowcase } from './DocumentUploadShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
+import { DetailTableShowcase } from './DetailTableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { AccordionShowcase } from './AccordionShowcase';
@@ -25,9 +27,11 @@ import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
 import { CardGridShowcase } from './CardGridShowcase';
 import { ChartsShowcase } from './ChartsShowcase';
+import { PageLayoutShowcase } from './PageLayoutShowcase';
+import { FormLayoutShowcase } from './FormLayoutShowcase';
 import { FormsShowcase } from './FormsShowcase';
 
-export type SectionCategory = 'components' | 'layout';
+export type SectionCategory = 'components' | 'layout' | 'pages';
 
 export type SectionDef = {
   id: string;
@@ -55,8 +59,11 @@ export type SectionDef = {
 
 /*
  * The menu-bar groups the sections divide into (Carl, 2026-07-08): basic
- * components / layout elements. The showcase shell derives its MenuBar nav
- * model from this list + the registry below.
+ * components / layout elements — plus Pages (2026-07-23): the full-page
+ * `fill` demos showing the elements assembled into a real page, one entry
+ * per page pattern. Element pages explain one thing in demo cards; Pages
+ * entries show the assembly in use, cross-linked both ways. The showcase
+ * shell derives its MenuBar nav model from this list + the registry below.
  */
 export const categories: {
   id: SectionCategory;
@@ -65,6 +72,7 @@ export const categories: {
 }[] = [
   { id: 'components', label: 'Components', icon: SlidersIcon },
   { id: 'layout', label: 'Layout Elements', icon: CopyIcon },
+  { id: 'pages', label: 'Pages', icon: FileIcon },
 ];
 
 /*
@@ -129,12 +137,6 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
-    id: 'dialog',
-    label: 'Dialog / Modal',
-    component: DialogShowcase,
-    category: 'components',
-  },
-  {
     id: 'display',
     label: 'Display',
     component: DisplayShowcase,
@@ -151,13 +153,6 @@ export const sections: SectionDef[] = [
     label: 'Sync',
     component: SyncShowcase,
     category: 'components',
-  },
-  {
-    id: 'table',
-    label: 'Table',
-    component: TableShowcase,
-    category: 'components',
-    fill: true,
   },
   {
     id: 'header',
@@ -184,16 +179,52 @@ export const sections: SectionDef[] = [
     category: 'layout',
   },
   {
+    id: 'dialog',
+    label: 'Dialog / Modal',
+    component: DialogShowcase,
+    category: 'layout',
+  },
+  {
     id: 'card-grid',
     label: 'Card grid',
     component: CardGridShowcase,
     category: 'layout',
   },
   {
-    id: 'forms',
-    label: 'Forms',
-    component: FormsShowcase,
+    id: 'page-layout',
+    label: 'Page layout',
+    component: PageLayoutShowcase,
     category: 'layout',
+  },
+  {
+    id: 'form-layout',
+    label: 'Form layout',
+    component: FormLayoutShowcase,
+    category: 'layout',
+  },
+  // The Pages group: full-page `fill` demos of the elements assembled into a
+  // real page pattern, labelled by the pattern. Ids predate the group and stay
+  // as-is — they double as URL hashes, and #/showcase/table / #/showcase/forms
+  // links are in circulation.
+  {
+    id: 'table',
+    label: 'List page',
+    component: TableShowcase,
+    category: 'pages',
+    fill: true,
+  },
+  {
+    id: 'detail-table',
+    label: 'Detail table page',
+    component: DetailTableShowcase,
+    category: 'pages',
+    fill: true,
+  },
+  {
+    id: 'forms',
+    label: 'Detail form page',
+    component: FormsShowcase,
+    category: 'pages',
     fill: true,
   },
   // A standalone reference page, listed as its own top-level menu entry rather

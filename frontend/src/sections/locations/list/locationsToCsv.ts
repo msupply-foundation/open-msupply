@@ -1,13 +1,13 @@
 import { t } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
-import { locationTypeLabel } from './locationTypeLabel';
 import type { LocationRow } from './locationEdit';
 
-// The locations list → CSV (spec/locations AC-L5): each location's code, name,
-// location type, volume, volume-used, and on-hold. Headers are translated;
-// the type renders as the list's name + temperature-range label; on-hold as
-// Yes/No. Feeds either a direct .csv download or the server's csvToExcel
-// conversion (domain/reportFiles), exactly like the reference vertical's
+// The locations list → CSV (spec/locations AC-L5). Headers are translated;
+// the data values are stable machine formats, not display strings: the type
+// column is the type NAME only (no temperature range, unlike the on-screen
+// column), and on-hold serializes as lowercase true/false. Feeds either a
+// direct .csv download or the server's csvToExcel conversion
+// (domain/reportFiles), exactly like the reference vertical's
 // stocktakesToCsv.
 export const locationsToCsv = (rows: LocationRow[]): string => {
   const fields = [
@@ -21,10 +21,10 @@ export const locationsToCsv = (rows: LocationRow[]): string => {
   const data = rows.map(row => [
     row.code,
     row.name,
-    locationTypeLabel(row.locationType),
+    row.locationType?.name ?? '',
     row.volume,
     row.volumeUsed,
-    row.onHold ? t('messages.yes') : t('messages.no'),
+    row.onHold ? 'true' : 'false',
   ]);
   return toCsv(fields, data);
 };

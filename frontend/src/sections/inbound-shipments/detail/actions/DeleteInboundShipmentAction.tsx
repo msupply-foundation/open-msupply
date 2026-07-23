@@ -10,6 +10,8 @@ export interface DeleteInboundShipmentActionProps {
   storeId: string;
   invoiceId: string;
   isExternal: boolean;
+  /** Shipment number — for the confirmation copy ("Shipment #N"). */
+  number: () => number;
   /** The client offers delete only while New (spec → deletion UI narrowing). */
   disabled: boolean;
   /** Deleted — the view leaves for the list. */
@@ -78,7 +80,11 @@ const Body = (
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={t('messages.confirm-delete-shipment')}>
+        <Switch
+          fallback={t('messages.confirm-delete-shipment', {
+            number: props.number(),
+          })}
+        >
           <Match when={phase() === 'error'}>
             <Alert severity="error">{errorMessage()}</Alert>
           </Match>
