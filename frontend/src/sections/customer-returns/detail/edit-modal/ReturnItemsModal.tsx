@@ -19,6 +19,7 @@ import {
   XCircleIcon,
 } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
+import styles from './ReturnItemsModal.module.css';
 import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
@@ -313,30 +314,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={
-        props.mode === 'add' ? (
-          <ItemSearch
-            label={t('heading.return-items')}
-            hideLabel
-            storeId={props.storeId}
-            excludeItemIds={props.excludeItemIds()}
-            value={currentItem()?.id}
-            onSelect={item =>
-              item
-                ? void seedItem({
-                    id: item.id,
-                    code: item.code,
-                    name: item.name,
-                  })
-                : backToSearch()
-            }
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-          />
-        ) : (
-          t('heading.return-items')
-        )
-      }
-      ariaLabel={props.mode === 'add' ? t('heading.return-items') : undefined}
+      title={t('heading.return-items')}
       actionsLead={
         <Show when={message()}>
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
@@ -411,6 +389,28 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         </>
       }
     >
+      {/* Item row under the plain "Return items" title (the current app's
+          layout, and the outbound line editor's pattern): the labelled
+          catalogue lookup — live in add mode, locked to the row's item in
+          update mode. */}
+      <ItemSearch
+        label={t('label.item')}
+        storeId={props.storeId}
+        excludeItemIds={props.excludeItemIds()}
+        value={currentItem()?.id}
+        selectedItem={currentItem()}
+        disabled={props.mode !== 'add'}
+        onSelect={item =>
+          item
+            ? void seedItem({
+                id: item.id,
+                code: item.code,
+                name: item.name,
+              })
+            : backToSearch()
+        }
+        placeholder={t('placeholder.enter-an-item-code-or-name')}
+      />
       <Show
         when={!noItemYet()}
         fallback={
@@ -441,15 +441,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         {/* Under the stepper (the current app's ReturnSteps row): who the
             goods come back from (read-only) and the return's customer
             reference — edited through the shared debounced buffer, the same
-            save path as the detail toolbar. */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--space-6)',
-            'align-items': 'center',
-            'margin-block': 'var(--space-2)',
-          }}
-        >
+            save path as the detail toolbar. One field per row below the
+            compact breakpoint (where the modal is full-screen) — module CSS. */}
+        <div class={styles.contextRow}>
           <FieldRow label={t('label.return-from')}>
             <Text variant="body">{props.returnFromName}</Text>
           </FieldRow>

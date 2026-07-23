@@ -26,6 +26,8 @@ import {
   reasonColumns,
   type UpdateLine,
 } from './returnLineColumns';
+// The shared wizard context-row layout (stacks below the compact breakpoint).
+import styles from './ReturnItemsModal.module.css';
 
 // S4, from-shipment mode — the return-items modal launched from an outbound
 // shipment's "Return selected lines" (spec/customer-returns/ui-surface.md S4;
@@ -35,9 +37,10 @@ import {
 // SELECTED shipment lines (across items) via generateCustomerReturnLines, with
 // packs-issued populated; there is no item picker / add-batch / OK-&-next; and
 // saving CREATES the return (insertCustomerReturn with outboundShipmentId) —
-// born VERIFIED, linked, stock introduced (contract § creation — auto-verify),
-// after which OK navigates to the new return. Shares the two-step wizard and
-// the inline grids with the per-item modal (returnLineColumns).
+// born VERIFIED, linked, stock introduced (contract § creation — auto-verify).
+// OK spins while the insert runs, then goes STRAIGHT to the new return — no
+// intermediary confirmation screen. Shares the two-step wizard and the inline
+// grids with the per-item modal (returnLineColumns).
 
 type Step = 'quantity' | 'reason';
 
@@ -94,9 +97,6 @@ const Body = (props: BodyProps): JSX.Element => {
   const [message, setMessage] = createSignal<
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
-  // Set once the insert succeeds — the modal shows the born-VERIFIED
-  // confirmation, then OK navigates to the new return (rules § creation).
-  const [createdId, setCreatedId] = createSignal<string>();
 
   const tableConfig = createTableConfig({
     tableId: 'customer-return-from-shipment-edit',
@@ -179,18 +179,21 @@ const Body = (props: BodyProps): JSX.Element => {
       // auto-verifies (contract § creation).
       customerReturnLines: toLineInputs(draft.map(line => unwrap(line))),
     });
-    setSaving(false);
     // 'forbidden' / 'failed' already raised the global modal (D38) — close so
     // the flow isn't a dead end behind it.
     if (result.kind === 'forbidden' || result.kind === 'failed') {
+      setSaving(false);
       props.onClose();
       return;
     }
     if (result.kind === 'error') {
+      setSaving(false);
       setMessage({ severity: 'error', text: result.message });
       return;
     }
-    setCreatedId(result.id);
+    // Straight to the new return — OK keeps its spinner until the host
+    // navigates (which unmounts this modal); no confirmation screen.
+    props.onCreated(result.id);
   };
 
   const reasonRows = () => reasonStepLines(draft.slice());
@@ -209,18 +212,7 @@ const Body = (props: BodyProps): JSX.Element => {
         </Show>
       }
       actions={
-        <Show
-          when={!createdId()}
-          fallback={
-            <Button
-              icon={<CheckIcon />}
-              data-testid="dialog-button-ok"
-              onClick={() => props.onCreated(createdId() as string)}
-            >
-              {t('button.ok')}
-            </Button>
-          }
-        >
+        <>
           <Show
             when={step() === 'reason'}
             fallback={
@@ -268,84 +260,69 @@ const Body = (props: BodyProps): JSX.Element => {
               {t('button.ok')}
             </Button>
           </Show>
-        </Show>
+        </>
       }
     >
-      <Show
-        when={!createdId()}
-        fallback={
-          <Alert severity="success">
-            {t('messages.customer-return-created-verified')}
-          </Alert>
-        }
-      >
-        {/* The wizard's step indicator — the shared determinate progress list;
+      {/* The wizard's step indicator — the shared determinate progress list;
             reaching the reason step completes "Select quantity" (ui-surface
             S4 § layout). */}
-        <ProgressList
-          variant="secondary"
-          steps={[
-            {
-              label: t('label.select-quantity'),
-              started: true,
-              finished: step() === 'reason',
-            },
-            {
-              label: t('label.select-reason'),
-              started: step() === 'reason',
-              finished: false,
-            },
-          ]}
-        />
-        {/* Context row: who the goods come back from (read-only) and the
+      <ProgressList
+        variant="secondary"
+        steps={[
+          {
+            label: t('label.select-quantity'),
+            started: true,
+            finished: step() === 'reason',
+          },
+          {
+            label: t('label.select-reason'),
+            started: step() === 'reason',
+            finished: false,
+          },
+        ]}
+      />
+      {/* Context row: who the goods come back from (read-only) and the
             return's customer reference, pre-filled "From outbound shipment #N"
-            (rules § creation — a UI default). */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--space-6)',
-            'align-items': 'center',
-            'margin-block': 'var(--space-2)',
-          }}
-        >
-          <FieldRow label={t('label.return-from')}>
-            <Text variant="body">{props.customerName}</Text>
-          </FieldRow>
-          <FieldRow label={t('label.customer-ref')}>
-            <TextField
-              label={t('label.customer-ref')}
-              hideLabel
-              size="small"
-              value={reference()}
-              onInput={e => setReference(e.currentTarget.value)}
-            />
-          </FieldRow>
-        </div>
-        <Show
-          when={step() === 'reason'}
-          fallback={
-            <DataTable
-              columns={quantityColumns(update)}
-              rows={draft.filter(() => true)}
-              rowKey={line => line.id}
-              loading={loadingLines()}
-              showFullScreen={false}
-              config={tableConfig.config()}
-              setConfig={tableConfig.setConfig}
-              emptyMessage={t('error.no-customer-return-items')}
-            />
-          }
-        >
+            (rules § creation — a UI default). One field per row below the
+            compact breakpoint — the ReturnItemsModal's shared contextRow. */}
+      <div class={styles.contextRow}>
+        <FieldRow label={t('label.return-from')}>
+          <Text variant="body">{props.customerName}</Text>
+        </FieldRow>
+        <FieldRow label={t('label.customer-ref')}>
+          <TextField
+            label={t('label.customer-ref')}
+            hideLabel
+            size="small"
+            value={reference()}
+            onInput={e => setReference(e.currentTarget.value)}
+          />
+        </FieldRow>
+      </div>
+      <Show
+        when={step() === 'reason'}
+        fallback={
           <DataTable
-            columns={reasonColumns(update)}
-            rows={reasonRows()}
+            columns={quantityColumns(update)}
+            rows={draft.filter(() => true)}
             rowKey={line => line.id}
+            loading={loadingLines()}
             showFullScreen={false}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}
             emptyMessage={t('error.no-customer-return-items')}
           />
-        </Show>
+        }
+      >
+        <DataTable
+          columns={reasonColumns(update)}
+          rows={reasonRows()}
+          rowKey={line => line.id}
+          showFullScreen={false}
+          config={tableConfig.config()}
+          setConfig={tableConfig.setConfig}
+          emptyMessage={t('error.no-customer-return-items')}
+        />
       </Show>
     </Dialog>
   );
