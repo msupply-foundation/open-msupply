@@ -10,7 +10,10 @@ import {
   csvToExcel,
   downloadBlob,
   fetchReportFile,
+  listExportCsvFilename,
+  listExportExcelFilename,
 } from '../../../../domain/reportFiles';
+import { storeCodeOf } from '../../../../auth/authContext';
 import { stripEmpty } from '../../../../typeHelpers';
 import { Patients, type PatientsVariables } from '../patients.generated';
 import type { PatientFilter } from '../listFilters';
@@ -56,12 +59,16 @@ export const ExportPatientsAction: Component<
     try {
       const csv = await buildCsv();
       if (!csv) return; // nothing to export
-      const filename = t('filename.patients');
+      // Filenames per the shared list-export rule
+      // (ui-standards/list-views § regions).
+      const storeCode = storeCodeOf(props.storeId);
+      const listName = t('filename.patients');
       if (format === 'excel') {
         const generated = await csvToExcel({
           storeId: props.storeId,
           csvData: csv,
-          filename,
+          filename: listExportExcelFilename(storeCode, listName),
+          sheetName: storeCode,
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
@@ -69,7 +76,7 @@ export const ExportPatientsAction: Component<
       } else {
         downloadBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          `${filename}.csv`
+          listExportCsvFilename(storeCode, listName, new Date())
         );
       }
     } finally {
