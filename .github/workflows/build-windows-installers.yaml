@@ -67,9 +67,13 @@ jobs:
           # before corepack is enabled (#12508)
           package-manager-cache: false
 
-      - name: Install Rust toolchain
+      # Argless install reads the channel pinned in server/rust-toolchain.toml
+      # (which the cargo build would resolve via the rustup shim anyway — this
+      # just surfaces the download in its own step rather than mid-build).
+      - name: Install Rust toolchain (pinned by rust-toolchain.toml)
         shell: pwsh
-        run: rustup toolchain install stable --profile minimal --no-self-update
+        working-directory: server
+        run: rustup toolchain install --profile minimal --no-self-update
 
       - name: Mint token for the frontend repo
         uses: actions/create-github-app-token@v2
