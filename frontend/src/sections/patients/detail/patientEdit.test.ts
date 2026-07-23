@@ -4,6 +4,7 @@ import {
   draftEquals,
   emptyDraft,
   isDraftValid,
+  patientFieldErrors,
   toInsertInput,
   toUpdateInput,
   type PatientDraft,
@@ -56,6 +57,29 @@ describe('isDraftValid (AC-C3 — built-in form requires code + names)', () => {
 
   it('an empty draft is invalid', () => {
     expect(isDraftValid(emptyDraft())).toBe(false);
+  });
+});
+
+describe('patientFieldErrors (AC-C3 — required-field rules feed validation)', () => {
+  const ids = (draft: PatientDraft) =>
+    patientFieldErrors(draft)
+      .filter(e => e.failed)
+      .map(e => e.id);
+
+  it('flags exactly code, first name and last name when empty', () => {
+    expect(ids(emptyDraft())).toEqual(['code', 'firstName', 'lastName']);
+  });
+
+  it('flags nothing once all three are filled', () => {
+    expect(ids(fullDraft())).toEqual([]);
+  });
+
+  it('treats whitespace-only as empty and flags just that field', () => {
+    expect(ids({ ...fullDraft(), firstName: '   ' })).toEqual(['firstName']);
+  });
+
+  it('carries no per-field message — each defaults to the generic required text', () => {
+    expect(patientFieldErrors(emptyDraft()).every(e => !e.message)).toBe(true);
   });
 });
 

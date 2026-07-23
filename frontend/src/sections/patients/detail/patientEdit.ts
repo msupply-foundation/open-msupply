@@ -1,3 +1,5 @@
+import { t } from '../../../intl';
+import type { FieldError } from '../../../ui/layout/Form/formValidation';
 import type { Gender } from '../../../domain/patient';
 import type { InsertPatientVariables } from '../list/insertPatient.generated';
 import type { UpdatePatientVariables } from './updatePatient.generated';
@@ -54,6 +56,24 @@ export const seedDraft = (node: PatientNode): PatientDraft => ({
   isDeceased: node.isDeceased,
   dateOfDeath: node.dateOfDeath,
 });
+
+// The plain-path built-in form's required-field rules (AC-C3): code + first
+// name + last name, each a plain required error (deferred to Save). One list so
+// the create wizard and the edit tab validate identically; feed to
+// createFormValidation and read back per field / as the summary.
+export const patientFieldErrors = (draft: PatientDraft): FieldError[] => [
+  { id: 'code', label: t('label.code'), failed: draft.code.trim() === '' },
+  {
+    id: 'firstName',
+    label: t('label.first-name'),
+    failed: draft.firstName.trim() === '',
+  },
+  {
+    id: 'lastName',
+    label: t('label.last-name'),
+    failed: draft.lastName.trim() === '',
+  },
+];
 
 // The plain-path built-in form requires code + first name + last name before it
 // will submit (AC-C3); the server itself requires only id + code.

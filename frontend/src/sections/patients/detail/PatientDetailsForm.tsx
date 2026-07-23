@@ -24,8 +24,12 @@ export interface PatientDetailsFormProps {
     value: PatientDraft[K]
   ) => void;
   disabled?: boolean;
-  /** Show inline required-field errors (after a submit attempt). */
-  showRequired?: boolean;
+  /**
+   * Per-field error message for a given field id (from the form's
+   * createFormValidation); undefined when the field is clean or no validation
+   * is wired. Fields: `code`, `firstName`, `lastName`.
+   */
+  errorFor?: (id: string) => string | undefined;
 }
 
 // The plain-path (built-in) patient form (spec/patients S3 Details; S2 step ③),
@@ -37,10 +41,7 @@ export interface PatientDetailsFormProps {
 // from date of birth, read-only.
 export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
   const today = new Date().toISOString().slice(0, 10);
-  const requiredError = (value: string) =>
-    props.showRequired && value.trim() === ''
-      ? t('error.field-required')
-      : undefined;
+  const errorFor = (id: string) => props.errorFor?.(id);
   const age = () => ageFromDob(props.draft.dateOfBirth);
 
   return (
@@ -51,7 +52,7 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             label={t('label.code')}
             width="full"
             required
-            error={requiredError(props.draft.code)}
+            error={errorFor('code')}
             value={props.draft.code}
             disabled={props.disabled}
             onInput={e => props.setField('code', e.currentTarget.value)}
@@ -67,7 +68,7 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             label={t('label.first-name')}
             width="full"
             required
-            error={requiredError(props.draft.firstName)}
+            error={errorFor('firstName')}
             value={props.draft.firstName}
             disabled={props.disabled}
             onInput={e => props.setField('firstName', e.currentTarget.value)}
@@ -76,7 +77,7 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             label={t('label.last-name')}
             width="full"
             required
-            error={requiredError(props.draft.lastName)}
+            error={errorFor('lastName')}
             value={props.draft.lastName}
             disabled={props.disabled}
             onInput={e => props.setField('lastName', e.currentTarget.value)}

@@ -32,7 +32,6 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { hasPermission } from '../../../store/storeContext';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
@@ -42,11 +41,14 @@ import {
   draftEquals,
   emptyDraft,
   isDraftValid,
+  patientFieldErrors,
   seedDraft,
   toUpdateInput,
   type PatientDraft,
 } from './patientEdit';
 import { PatientDetailsForm } from './PatientDetailsForm';
+import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
+import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
 import {
@@ -54,18 +56,31 @@ import {
   fetchInsurancePolicies,
 } from './insurance/insuranceApi';
 import type { InsurancePolicyFragment } from './insurance/insurance.generated';
+import { ProgramEnrolmentsPanel } from './programs/ProgramEnrolmentsPanel';
+import { EncountersPanel } from './programs/EncountersPanel';
+import {
+  fetchPatientProgramEnrolments,
+  fetchPatientEncounters,
+} from './programs/programsApi';
+import { hasPermission, patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
-// (Details / Insurance / Log). The Details tab is the plain-path built-in form,
-// buffered locally and committed on an explicit Save behind a confirmation,
-// with a discard prompt when leaving dirty (the StockLineDetailView model). The
-// Insurance tab (spec § insurance policies) lists the patient's policies and
-// adds/edits them, gated on the site having configured insurance providers. The
-// Log tab reuses the shared activity-log surface.
+// (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
+// Details tab is the plain-path built-in form, buffered locally and committed
+// on an explicit Save behind a confirmation, with a discard prompt when leaving
+// dirty (the StockLineDetailView model). The Insurance tab lists the patient's
+// policies and adds/edits them (gated on configured providers). The Programs /
+// Encounters / Vaccinations tabs are READ-ONLY lists gated on the program
+// module — the enrolment/encounter document editors and the vaccination card
+// they'd open are owned by other (unbuilt) verticals, so Programs/Vaccinations
+// rows are non-clickable and Encounters rows navigate to the (future) encounter
+// route. The Log tab reuses the shared activity-log surface.
 //
 // NOT built here (owned by other/unbuilt verticals — see the implementation
-// flags): the document-path schema-driven form, the Custom fields tab, and the
-// Programs / Encounters / Vaccinations / Contact-tracing tabs.
+// flags): the document-path schema-driven form, the Custom fields tab, the
+// Contact-tracing tab, and — for the program-module tabs above — the enrolment
+// / encounter document editors, the create actions (New program / encounter),
+// and the vaccination card those rows would open.
 
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
@@ -97,11 +112,16 @@ const PatientDetailView: Component = () => {
   // change / after a save (never on a same-id refetch, to keep focus).
   const [edit, setEdit] = createStore<PatientDraft>(emptyDraft());
   const [seededId, setSeededId] = createSignal<string>();
+  // Details-tab validation (AC-C3): required errors stay quiet until the user
+  // attempts Save, then surface per field and as the summary. Disarmed on every
+  // (re)seed — a fresh patient, or the post-save reseed, starts clean.
+  const validation = createFormValidation(() => patientFieldErrors(edit));
   createEffect(
     on(node, n => {
       if (n && n.id !== seededId()) {
         setEdit(seedDraft(n));
         setSeededId(n.id);
+        validation.reset();
       }
     })
   );
@@ -148,6 +168,43 @@ const PatientDetailView: Component = () => {
   );
   const policies = () => policiesData.latest ?? [];
 
+  // Program-module tabs (spec § program-module tabs): Programs / Encounters /
+  // Vaccinations, read-only lists gated on the program module. Enrolments load
+  // once for both the Programs tab (all) and the Vaccinations tab (immunisation
+  // subset, derived client-side); encounters load separately, newest first.
+  const hasProgramModule = () => patientPreferences().programModule;
+
+  const [enrolmentsData] = createResource(
+    () =>
+      hasProgramModule()
+        ? {
+            storeId: params.storeId,
+            filter: { patientId: { equalTo: params.patientId } },
+            sort: { key: 'enrolmentDatetime' as const, desc: true },
+          }
+        : undefined,
+    fetchPatientProgramEnrolments
+  );
+  const enrolments = () => enrolmentsData.latest ?? [];
+  const immunisationEnrolments = () =>
+    enrolments().filter(e => e.isImmunisationProgram);
+
+  const [encountersData] = createResource(
+    () =>
+      hasProgramModule()
+        ? {
+            storeId: params.storeId,
+            filter: { patientId: { equalTo: params.patientId } },
+            sort: { key: 'startDatetime' as const, desc: true },
+          }
+        : undefined,
+    fetchPatientEncounters
+  );
+  const encounters = () => encountersData.latest ?? [];
+
+  const openEncounter = (encounter: { id: string }) =>
+    navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
+
   // Full-replace edit (AC-E2): toUpdateInput sends every field. On success,
   // re-seed from the refreshed record (name is recomputed server-side) by
   // clearing seededId so the seed effect re-runs, and refetch.
@@ -171,6 +228,15 @@ const PatientDetailView: Component = () => {
     void refetch();
   };
 
+  // Save click: arm validation first, so an invalid form reveals its errors
+  // (per field + summary) instead of silently doing nothing; only a valid form
+  // opens the confirmation prompt (AC-E1).
+  const attemptSave = () => {
+    validation.arm();
+    if (!validation.valid()) return;
+    setConfirmSaveOpen(true);
+  };
+
   const leave = () => navigate(`/${params.storeId}/dispensary/patients`);
   const onCancelOrClose = () => {
     if (isDirty()) setDiscardOpen(true);
@@ -186,6 +252,13 @@ const PatientDetailView: Component = () => {
 
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
+    ...(hasProgramModule()
+      ? [
+          { value: 'programs', label: t('label.programs') },
+          { value: 'encounters', label: t('label.encounters') },
+          { value: 'vaccinations', label: t('label.vaccinations') },
+        ]
+      : []),
     ...(hasInsurance()
       ? [{ value: 'insurance', label: t('label.insurance') }]
       : []),
@@ -271,10 +344,8 @@ const PatientDetailView: Component = () => {
                           icon={<SaveIcon />}
                           data-testid="save-button"
                           loading={saving()}
-                          disabled={
-                            !isDirty() || !isDraftValid(edit) || saving()
-                          }
-                          onClick={() => setConfirmSaveOpen(true)}
+                          disabled={!isDirty() || saving()}
+                          onClick={attemptSave}
                         >
                           {t('button.save')}
                         </Button>
@@ -299,10 +370,45 @@ const PatientDetailView: Component = () => {
                       draft={edit}
                       setField={setField}
                       disabled={!canMutate()}
+                      errorFor={validation.errorFor}
+                    />
+                    <FormErrorSummary
+                      errors={validation.visible()}
+                      testId="patient-detail-error-summary"
                     />
                   </ContentContainer>
                 </div>
               </TabPanel>
+              <Show when={hasProgramModule()}>
+                {/* Read-only program-module lists. Programs + Vaccinations
+                    share the enrolment table (Vaccinations = immunisation
+                    subset); rows aren't clickable (editing needs the document
+                    form / vaccination card, other verticals). Encounters rows
+                    navigate to the (future) encounter route. */}
+                <TabPanel value="programs">
+                  <ProgramEnrolmentsPanel
+                    rows={enrolments()}
+                    loading={enrolmentsData.loading}
+                    tableId="patient-program-enrolment-list"
+                    emptyMessage={t('messages.no-programs')}
+                  />
+                </TabPanel>
+                <TabPanel value="encounters">
+                  <EncountersPanel
+                    rows={encounters()}
+                    loading={encountersData.loading}
+                    onRowClick={openEncounter}
+                  />
+                </TabPanel>
+                <TabPanel value="vaccinations">
+                  <ProgramEnrolmentsPanel
+                    rows={immunisationEnrolments()}
+                    loading={enrolmentsData.loading}
+                    tableId="patient-vaccination-card-list"
+                    emptyMessage={t('messages.no-programs')}
+                  />
+                </TabPanel>
+              </Show>
               <Show when={hasInsurance()}>
                 <TabPanel value="insurance">
                   {/* A table — fills the region and owns its own scroll (like

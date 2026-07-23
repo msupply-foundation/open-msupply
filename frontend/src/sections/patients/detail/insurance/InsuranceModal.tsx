@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -11,6 +11,8 @@ import { ToggleSwitch } from '../../../../ui/elements/inputs/ToggleSwitch';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FormColumns } from '../../../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../../../ui/layout/Form/FormColumn';
+import { FormErrorSummary } from '../../../../ui/layout/Form/FormErrorSummary';
+import { createFormValidation } from '../../../../ui/layout/Form/formValidation';
 import { SaveIcon, XCircleIcon } from '../../../../ui/icons';
 import { runInsertInsurance, runUpdateInsurance } from './insuranceApi';
 import type { InsuranceProviderOption } from './insuranceApi';
@@ -90,8 +92,6 @@ const Body: Component<InsuranceModalProps> = props => {
 
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal('');
-  // Inline required-field errors show only after a submit attempt.
-  const [showRequired, setShowRequired] = createSignal(false);
 
   const policyTypeOptions: { value: PolicyType; label: string }[] = [
     { value: 'PERSONAL', label: t('label.personal') },
@@ -109,22 +109,49 @@ const Body: Component<InsuranceModalProps> = props => {
   const activeNeedsCoverage = () =>
     draft.isActive && draft.discountPercentage <= 0;
 
-  const isValid = createMemo(
-    () =>
-      draft.insuranceProviderId !== null &&
-      draft.expiryDate !== null &&
-      !expiryInPast() &&
-      !activeNeedsCoverage() &&
-      (editing() || hasAnyPolicyNumber())
-  );
-
-  const requiredError = (empty: boolean) =>
-    showRequired() && empty ? t('error.field-required') : undefined;
+  // Validation (AC-I3/I4). Required errors + the active-needs-coverage rule
+  // (which trips on the default 0 rate) stay quiet until Save; the past-expiry
+  // rule surfaces immediately. The Body remounts per open, so state is fresh.
+  const validation = createFormValidation(() => [
+    {
+      id: 'policyNumberFamily',
+      label: t('label.policy-number-family'),
+      failed: !editing() && !hasAnyPolicyNumber(),
+    },
+    {
+      id: 'policyNumberPerson',
+      label: t('label.policy-number-person'),
+      failed: !editing() && !hasAnyPolicyNumber(),
+    },
+    {
+      id: 'insuranceProviderId',
+      label: t('label.provider-name'),
+      failed: draft.insuranceProviderId === null,
+    },
+    {
+      id: 'expiryDate',
+      label: t('label.insurance-expiry-date'),
+      failed: expiryInPast(),
+      message: t('error.date-in-past'),
+    },
+    {
+      id: 'expiryDate',
+      label: t('label.insurance-expiry-date'),
+      failed: draft.expiryDate === null,
+    },
+    {
+      id: 'discountPercentage',
+      label: t('label.coverage-rate'),
+      failed: activeNeedsCoverage(),
+      message: t('messages.active-policy-needs-coverage'),
+      showOnSubmit: true,
+    },
+  ]);
 
   const save = async () => {
     if (saving()) return;
-    setShowRequired(true);
-    if (!isValid()) return;
+    validation.arm();
+    if (!validation.valid()) return;
     setSaving(true);
     setSaveError('');
     const outcome = props.policy
@@ -135,7 +162,7 @@ const Body: Component<InsuranceModalProps> = props => {
           discountPercentage: draft.discountPercentage,
           expiryDate: draft.expiryDate,
           isActive: draft.isActive,
-          nameOfInsured: draft.nameOfInsured || null,
+          nameOfInsured: draft.nameOfInsured,
         })
       : await runInsertInsurance(props.storeId, {
           id: crypto.randomUUID(),
@@ -147,7 +174,7 @@ const Body: Component<InsuranceModalProps> = props => {
           discountPercentage: draft.discountPercentage,
           expiryDate: draft.expiryDate!,
           isActive: draft.isActive,
-          nameOfInsured: draft.nameOfInsured || null,
+          nameOfInsured: draft.nameOfInsured,
         });
     setSaving(false);
     if (!outcome) return props.onClose(); // handled globally
@@ -204,7 +231,7 @@ const Body: Component<InsuranceModalProps> = props => {
             width="full"
             required={!editing() && draft.policyNumberPerson.trim() === ''}
             disabled={editing()}
-            error={requiredError(!editing() && !hasAnyPolicyNumber())}
+            error={validation.errorFor('policyNumberFamily')}
             value={draft.policyNumberFamily}
             onInput={e => setDraft('policyNumberFamily', e.currentTarget.value)}
           />
@@ -213,6 +240,7 @@ const Body: Component<InsuranceModalProps> = props => {
             width="full"
             required={!editing() && draft.policyNumberFamily.trim() === ''}
             disabled={editing()}
+            error={validation.errorFor('policyNumberPerson')}
             value={draft.policyNumberPerson}
             onInput={e => setDraft('policyNumberPerson', e.currentTarget.value)}
           />
@@ -237,11 +265,7 @@ const Body: Component<InsuranceModalProps> = props => {
             width="full"
             min={today}
             value={draft.expiryDate}
-            error={
-              expiryInPast()
-                ? t('error.date-in-past')
-                : requiredError(draft.expiryDate === null)
-            }
+            error={validation.errorFor('expiryDate')}
             onChange={value => setDraft('expiryDate', value)}
           />
           <Combobox<InsuranceProviderOption>
@@ -250,6 +274,7 @@ const Body: Component<InsuranceModalProps> = props => {
             itemToString={p => p.providerName}
             itemToValue={p => p.id}
             clearable={false}
+            error={validation.errorFor('insuranceProviderId')}
             value={draft.insuranceProviderId ?? undefined}
             onChange={p => setDraft('insuranceProviderId', p?.id ?? null)}
           />
@@ -262,15 +287,15 @@ const Body: Component<InsuranceModalProps> = props => {
             decimalLimit={2}
             endAdornment="%"
             value={draft.discountPercentage}
-            error={
-              showRequired() && activeNeedsCoverage()
-                ? t('messages.active-policy-needs-coverage')
-                : undefined
-            }
+            error={validation.errorFor('discountPercentage')}
             onChange={value => setDraft('discountPercentage', value ?? 0)}
           />
         </FormColumn>
       </FormColumns>
+      <FormErrorSummary
+        errors={validation.visible()}
+        testId="insurance-error-summary"
+      />
     </Dialog>
   );
 };
