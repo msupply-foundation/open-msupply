@@ -37,11 +37,15 @@ so a packaged bundle serves both UIs out of the box.
   `sha256` to the value from that release's published `frontend-dist-<tag>.zip.sha256`.
 - **Private-repo token:** the fetch needs `FRONTEND_FETCH_TOKEN` (or `GITHUB_TOKEN`) with
   read access to the FE repo's release assets — it is sent as an `Authorization: token …`
-  header to github.com and dropped when GitHub redirects to its signed asset CDN. Every
-  packaging pipeline that runs the fetch needs it configured: the Jenkins/Windows build
-  box as an environment variable, GitHub Actions (Docker image, transition APK) as a
-  repository secret named `FRONTEND_FETCH_TOKEN`. On Windows no `unzip.exe` is required —
-  `fetch-frontend.js` falls back to `tar -xf` (bsdtar, present on Windows 10+).
+  header to github.com and dropped when GitHub redirects to its signed asset CDN. GitHub
+  Actions workflows (Docker image, transition APK, mac builds) mint a short-lived token
+  per run from the same GitHub App the e2e workflow uses to read the FE repo
+  (`vars.FE_APP_ID` / `secrets.FE_APP_PRIVATE_KEY`) — nothing to configure beyond the
+  app. The Jenkins/Windows box cannot mint app tokens: give it either a fine-grained
+  PAT (bot account, FE repo only, contents: read) as an environment variable, or —
+  preferred — a `FRONTEND_DIST_URL` pointing at the B2 mirror of the dist zip, fetched
+  with the B2 credential pattern the box already uses. On Windows no `unzip.exe` is
+  required — `fetch-frontend.js` falls back to `tar -xf` (bsdtar, present on Windows 10+).
 - **`FRONTEND_DIST_URL` override:** point the fetch at any http(s) URL, a `file://` URL,
   or a local filesystem path instead of the pinned GitHub asset — used for local testing
   and for later B2 hosting. When it is set, `FRONTEND_DIST_SHA256=skip` may disable

@@ -76,6 +76,15 @@ jobs:
         working-directory: ./client/packages/android
         run: npx cap update android
 
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v2
+        id: fe-token
+        with:
+          app-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
+
       - name: Build Android App
         working-directory: client
         run: yarn android:build:release
@@ -84,12 +93,13 @@ jobs:
           # Update this version when upgrading the NDK version on the self-hosted machine
           # Transition APK ships the new FE at / and this repo's build as the old UI
           # at /old-ui/. stage-transition-frontend.sh fetches the pinned new FE, which
-          # needs FRONTEND_FETCH_TOKEN (a repo secret with read access to the private
-          # open-msupply-frontend repo — GITHUB_TOKEN can't reach it). It fails loudly
-          # on the placeholder pin, so this build fails until the pin is real; set the
+          # with a short-lived token minted above from the same GitHub App the e2e
+          # workflow uses to read the private open-msupply-frontend repo (GITHUB_TOKEN
+          # can't reach it; no PAT to expire or rotate). It fails loudly on the
+          # placeholder pin, so this build fails until the pin is real; set the
           # FRONTEND_DIST_URL repo variable to a dist zip to unblock before then (empty
-          # vars are ignored). Configure the secret on the self-hosted runner's repo.
-          FRONTEND_FETCH_TOKEN: ${{ secrets.FRONTEND_FETCH_TOKEN }}
+          # vars are ignored).
+          FRONTEND_FETCH_TOKEN: ${{ steps.fe-token.outputs.token }}
           FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
           FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
 

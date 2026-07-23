@@ -80,16 +80,26 @@ jobs:
 
       # New FE served at / : fetch the pinned, checksum-verified dist host-side (no
       # network fetch inside docker build) and ship it into the image as files.
-      # FRONTEND_FETCH_TOKEN must be configured as a repo secret with read access to
-      # the private open-msupply-frontend repo — it cannot be GITHUB_TOKEN (that only
-      # grants this repo). Until the FE repo cuts a release the pin is a placeholder
+      # The FE repo is private and GITHUB_TOKEN only grants this repo, so a
+      # short-lived token is minted from the same GitHub App the e2e workflow uses
+      # to read open-msupply-frontend (vars.FE_APP_ID / secrets.FE_APP_PRIVATE_KEY —
+      # no PAT to expire or rotate). Until the FE repo cuts a release the pin is a placeholder
       # and this step fails loudly (matching the mac build's "wrong FE at / is worse
       # than a loud failure" stance); nightly tags will fail here until the pin is
       # real. To unblock before then, set the FRONTEND_DIST_URL repo variable to a
       # dist zip (the same override the mac build documents) — empty vars are ignored.
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v2
+        id: fe-token
+        with:
+          app-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
+
       - name: Fetch new frontend (pinned dist)
         env:
-          FRONTEND_FETCH_TOKEN: ${{ secrets.FRONTEND_FETCH_TOKEN }}
+          FRONTEND_FETCH_TOKEN: ${{ steps.fe-token.outputs.token }}
           FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
           FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
         run: node build/fetch-frontend.js frontend-dist
