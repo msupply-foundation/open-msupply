@@ -1,0 +1,224 @@
+name: Build windows installers
+
+# Replaces the two Jenkins jobs "omSupplyMain" and "omSupplyMain - Installers"
+# (build → sign binaries → Setup Factory installers → sign installers → publish),
+# merged into one job since both ran on the same machine anyway. The old
+# build/windows/*.bat orchestration is inlined as steps; only adjustSUFs.js and
+# the .suf projects remain as files.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write # upload installers to an existing GitHub release
+
+concurrency:
+  # One physical build box and one eToken — never run two builds at once.
+  # No cancel-in-progress: a tag build already running should finish.
+  group: windows-build-server
+
+env:
+  # Machine tool locations — centralised here instead of hardcoded in the
+  # steps, so a version bump is a one-line change.
+  JSIGN_JAR: c:\mSupply_installer_codesigning\jsign-6.0.jar
+  SETUP_FACTORY_EXE: C:\Program Files (x86)\Setup Factory 10\SUFDesign.exe
+  TSA_URL: http://timestamp.sectigo.com
+
+jobs:
+  build:
+    name: Build, sign and package
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 240
+    steps:
+      # clean: false to keep server/target and client/node_modules between
+      # runs (Jenkins behaved the same way); the staging steps delete their
+      # own omSupply/ and installers/ output dirs. fetch-depth: 0 because the
+      # version comes from `git describe --tags`.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          clean: false
+
+      # versionTag (e.g. v2.8.1-abc) names artifacts and installers; version
+      # is the canonical x.y.z used for cargo set-version and the .suf
+      # ProductVer. Both are read from the environment by adjustSUFs.js.
+      - name: Record version
+        shell: pwsh
+        run: |
+          $versionTag = (git describe --tags).Trim()
+          $m = [regex]::Match($versionTag, '\d+\.\d+\.\d+')
+          $version = if ($m.Success) { ($m.Value -split '\.' | ForEach-Object { [int]$_ }) -join '.' } else { '0.0.0' }
+          Write-Host "versionTag=$versionTag version=$version"
+          "versionTag=$versionTag" >> $env:GITHUB_ENV
+          "version=$version" >> $env:GITHUB_ENV
+
+      - name: Read .nvmrc
+        id: nvm
+        shell: pwsh
+        run: '"NVMRC=$(Get-Content ./client/.nvmrc)" >> $env:GITHUB_OUTPUT'
+
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v5
+        with:
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
+
+      - name: Install Rust toolchain
+        shell: pwsh
+        run: rustup toolchain install stable --profile minimal --no-self-update
+
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v2
+        id: fe-token
+        with:
+          app-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
+
+      # omSupply\ is the staging dir the .suf projects package from
+      # (#PROJECTFILEDIR# in their Source paths), so the sufs, adjustSUFs.js,
+      # license etc. are copied in next to the built Server\ and Desktop\.
+      - name: Stage installer inputs
+        shell: cmd
+        run: |
+          rmdir "omSupply" /s /q 2>NUL
+          mkdir "omSupply\Server" || exit /b 1
+          mkdir "omSupply\Desktop" || exit /b 1
+          xcopy "server\configuration" "omSupply\Server\configuration" /e /h /c /i || exit /b 1
+          xcopy "server\app_data" "omSupply\Server\app_data" /e /h /c /i || exit /b 1
+          @REM Dual-frontend bundle config: serve the old UI at /old-ui/. Written in
+          @REM YAML flow syntax so it's a single echo line; it deep-merges into
+          @REM base.yaml's server block (default APP_ENVIRONMENT is "local").
+          > "omSupply\Server\configuration\local.yaml" echo server: { old_ui_frontend_dir: "frontend/old-ui" }
+          @if %errorlevel% neq 0 exit /b %errorlevel%
+          copy "server\server\omSupply.ico" "build\omSupply.ico" || exit /b 1
+          xcopy "build\*.*" "omSupply" /c || exit /b 1
+          xcopy "build\windows\*.*" "omSupply" /c || exit /b 1
+          xcopy "build\windows\demo" "omSupply\demo" /c /y /i || exit /b 1
+
+      # This repo's client build is the OLD UI: in the dual-frontend bundle it
+      # is served under /old-ui/, so it must build with that public path
+      # (asset URLs + router base). The NEW FE served at / is fetched as a
+      # pinned dist zip in a later step.
+      - name: Build client (old UI)
+        shell: cmd
+        run: |
+          @if exist "client\packages\host\dist" rd /s /q "client\packages\host\dist" 2>NUL
+          cd client || exit /b 1
+          call corepack enable || exit /b 1
+          call yarn install --immutable || exit /b 1
+          call yarn build || exit /b 1
+        env:
+          PUBLIC_PATH: /old-ui/
+
+      - name: Build server binaries (sqlite + postgres)
+        shell: cmd
+        run: |
+          cd server || exit /b 1
+          cargo install cargo-edit || exit /b 1
+          cargo set-version %version% || exit /b 1
+          cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection || exit /b 1
+          copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-sqlite.exe" || exit /b 1
+          copy "target\release\remote_server.exe"     "..\omSupply\Server\omSupply-server-sqlite.exe" || exit /b 1
+          copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe" || exit /b 1
+          copy "target\release\test_connection.exe"   "..\omSupply\Server\test-connection-sqlite.exe" || exit /b 1
+          cargo build --release --bin omsupply_service --bin remote_server_cli --bin test_connection --features postgres || exit /b 1
+          copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-postgres.exe" || exit /b 1
+          copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe" || exit /b 1
+          copy "target\release\test_connection.exe"   "..\omSupply\Server\test-connection-postgres.exe" || exit /b 1
+
+      # The NEW FE lives in the private open-msupply-frontend repo and ships
+      # as a pinned, checksum-verified dist zip (see server/README.md,
+      # 'Serving front-end'). The old UI is nested inside AFTER the fetch,
+      # which wipes and replaces Server\frontend. No unzip.exe needed: on
+      # Windows fetch-frontend.js falls back to `tar -xf` (bsdtar, present on
+      # Windows 10+).
+      - name: Fetch new frontend and nest old UI
+        shell: cmd
+        run: |
+          node build\fetch-frontend.js "omSupply\Server\frontend" || exit /b 1
+          xcopy "client\packages\host\dist" "omSupply\Server\frontend\old-ui" /e /h /c /i || exit /b 1
+        env:
+          # Empty override vars are ignored.
+          FRONTEND_FETCH_TOKEN: ${{ steps.fe-token.outputs.token }}
+          FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
+          FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
+
+      - name: Build electron app
+        shell: cmd
+        run: |
+          cd client || exit /b 1
+          call yarn electron:build || exit /b 1
+          xcopy "packages\electron\out\Open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i || exit /b 1
+
+      # ETOKEN storetype = SafeNet USB hardware token plugged into the build
+      # box; --storepass avoids the interactive PIN dialog. Requires Java and
+      # the SafeNet Authentication Client drivers on the runner.
+      - name: Sign binaries
+        shell: cmd
+        run: |
+          for %%e in ("%GITHUB_WORKSPACE%\omSupply\Server\*.exe") do java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%%e" || exit /b 1
+          java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%GITHUB_WORKSPACE%\omSupply\Desktop\open mSupply.exe" || exit /b 1
+        env:
+          ETOKEN_PASS: ${{ secrets.ETOKEN_PASS }}
+
+      # adjustSUFs.js stamps versionTag/version and installersOutputFolder
+      # into the staged .suf projects (from the omSupply\ copies, cwd matters).
+      # Jenkins never checked SUFDesign's exit code; here a failed suf build
+      # fails the step.
+      - name: Build installers (Setup Factory)
+        shell: cmd
+        run: |
+          rmdir "installers" /s /q 2>NUL
+          cd omSupply || exit /b 1
+          node adjustSUFs.js || exit /b 1
+          cd ..
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_server.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_desktop.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_demo.suf" || exit /b 1
+          start "" /wait "%SETUP_FACTORY_EXE%" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_standalone.suf" || exit /b 1
+        env:
+          installersOutputFolder: ${{ github.workspace }}\installers
+
+      - name: Sign installers
+        shell: cmd
+        run: |
+          for %%e in ("%GITHUB_WORKSPACE%\installers\*.exe") do java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%%e" || exit /b 1
+        env:
+          ETOKEN_PASS: ${{ secrets.ETOKEN_PASS }}
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: omsupply-installers-${{ env.versionTag }}
+          path: installers/*.exe
+
+      # Attach installers to the GitHub release for this tag — but only if a
+      # release already exists (draft or published); creating releases for
+      # every nightly tag would crowd the release list.
+      - name: Upload to GitHub release (if one exists)
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag exists - uploading installers"
+            gh release upload $tag (Get-ChildItem installers\*.exe) --clobber
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          } else {
+            Write-Host "No release for $tag - skipping upload"
+            exit 0
+          }
+
+      # TODO: enable once the MEGA client is set up on the new build server —
+      # this mirrors the old Jenkins publish step.
+      # - name: Copy installers to MEGA sync folder
+      #   shell: cmd
+      #   run: copy "%GITHUB_WORKSPACE%\installers\*.exe" "C:\Users\<user>\Documents\MEGA downloads\Dropbox Mega\omSupply\" /y
