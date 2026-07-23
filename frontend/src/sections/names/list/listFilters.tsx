@@ -37,6 +37,8 @@ const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
       <FilterTextInput
         label={t('name.filter.search')}
         placeholder={t('name.filter.search-placeholder')}
+        // e2e hook: FilterBar supplies `filter-input-codeOrName` (TESTIDS.md).
+        testId={props.testId}
         value={props.filter().codeOrName?.like ?? ''}
         // Blank box → null (FilterBar's "added but empty" marker), never
         // { like: '' } — the server treats "" as a real substring match.
@@ -102,6 +104,8 @@ export const customFieldFilters = (
       <FilterTextInput
         label={def.name}
         placeholder={t('name.filter.contains')}
+        // e2e hook: FilterBar supplies `filter-input-<key>` (TESTIDS.md).
+        testId={props.testId}
         value={props.filter()[def.key] ?? ''}
         onInput={value =>
           props.setPartialFilter({ [def.key]: value ? value : null })
