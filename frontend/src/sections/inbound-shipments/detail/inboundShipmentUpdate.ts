@@ -38,6 +38,21 @@ export const isExternalShipment = (info: {
   purchaseOrderId?: string | null;
 }): boolean => info.purchaseOrderId != null;
 
+// A placeholder line — a stock-in line with zero packs received and nothing
+// reported shipped: a line added but not yet received. It carries no received
+// quantity and is trimmed the first time the shipment advances out of New
+// (rules → placeholder trimming), so the detail table de-emphasises it in the
+// info tone (spec ui-surface → Line table, AC-V3). Mirrors the reference app's
+// `isInboundPlaceholderRow`. Structural param — no fragment import needed.
+export const isPlaceholderLine = (line: {
+  type: string;
+  numberOfPacks: number;
+  shippedNumberOfPacks?: number | null;
+}): boolean =>
+  line.type === 'STOCK_IN' &&
+  line.numberOfPacks === 0 &&
+  !line.shippedNumberOfPacks;
+
 // A top-level (untyped) rejection carries the Rust variant name in
 // `extensions.details`; translate it to a human message (falls back to a
 // sentence-cased form of the identifier), else the bare GraphQL message.

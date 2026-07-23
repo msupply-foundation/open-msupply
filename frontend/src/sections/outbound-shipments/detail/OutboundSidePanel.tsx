@@ -6,6 +6,7 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
+import { A } from '@solidjs/router';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -79,12 +80,15 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
   const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
+  // Group headings sit a weight above the FieldRow labels' medium, so the
+  // pricing groups read as groups.
   const groupHeading = (label: string, info: string): JSX.Element => (
     <span
       style={{
         display: 'inline-flex',
         'align-items': 'center',
         gap: 'var(--space-1)',
+        'font-weight': 'var(--weight-bold)',
       }}
     >
       <Popover
@@ -132,7 +136,31 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <Text variant="body" as="span">
+              {props.node.user?.username ?? '—'}
+            </Text>
+            {/* Info popover on hover — the user's email (the picked-date
+                reason bubble's pattern); no icon when there is no email. */}
+            <Show when={props.node.user?.email}>
+              {email => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={email()}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>{email()}</p>
+                </Popover>
+              )}
+            </Show>
+          </span>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -187,7 +215,40 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         >
           {req => (
             <Text variant="body">
-              {t('label.requisition')} #{req().requisitionNumber}
+              {/* The label is a hover popover explaining the document — the
+                  old app's tooltip: "Customer requisition created on {date}
+                  by {username}" (em dash for a requisition with no user, as
+                  the old app shows). The label (not the whole entry) triggers
+                  it because the Popover trigger is a button, and the entry's
+                  number is a link — nesting one interactive in another is
+                  invalid. */}
+              <Popover
+                trigger={t('label.requisition')}
+                openOnHover
+                placement="top"
+              >
+                <p>
+                  {t('messages.customer-requisition-created-on', {
+                    date: localisedDate(req().createdDatetime),
+                  })}{' '}
+                  {t('messages.by-user', {
+                    username: req().user?.username ?? '—',
+                  })}
+                </p>
+              </Popover>{' '}
+              {/* Only the number is the link (old-app parity), targeting the
+                  requisition's real record route with the requisition-kind
+                  styling — the same pattern (and primary colour) as the
+                  inbound side panel's internal-order link. The requisitions
+                  vertical isn't built yet, so today this lands on the
+                  not-found EntryPage; it goes live once that vertical
+                  registers its routes (no change needed here). */}
+              <A
+                href={`/${props.storeId}/distribution/customer-requisition/${req().id}`}
+                style={{ color: 'var(--primary-main)', 'font-weight': 500 }}
+              >
+                #{req().requisitionNumber}
+              </A>
             </Text>
           )}
         </Show>
@@ -304,7 +365,14 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
-        <FieldRow label={t('heading.grand-total')}>
+        <FieldRow
+          // Bold like the group headings — the shipment-level summary row.
+          label={
+            <span style={{ 'font-weight': 'var(--weight-bold)' }}>
+              {t('heading.grand-total')}
+            </span>
+          }
+        >
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
         </FieldRow>
 
@@ -404,9 +472,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
           {/* Copy to clipboard — the button itself briefly swaps to a "copied"
               confirmation (matching the stocktakes CopyStocktakeAction);
-              in-place feedback, never a toast. */}
+              in-place feedback, never a toast. aria-live so the swap is
+              announced by assistive tech (no visually-hidden twin — a hidden
+              duplicate of the label trips strict e2e text locators). */}
           <Button
             variant="secondary"
+            aria-live="polite"
             icon={copied() ? <CheckIcon /> : <CopyIcon />}
             onClick={copyToClipboard}
           >
