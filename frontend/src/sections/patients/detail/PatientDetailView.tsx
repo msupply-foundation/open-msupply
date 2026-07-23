@@ -15,6 +15,8 @@ import { t, localisedDate } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
@@ -28,7 +30,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
-import { SaveIcon, XCircleIcon } from '../../../ui/icons';
+import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { hasPermission } from '../../../store/storeContext';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { genderLabel } from '../../../domain/patient';
@@ -44,16 +47,25 @@ import {
   type PatientDraft,
 } from './patientEdit';
 import { PatientDetailsForm } from './PatientDetailsForm';
+import { InsurancePanel } from './insurance/InsurancePanel';
+import { InsuranceModal } from './insurance/InsuranceModal';
+import {
+  fetchInsuranceProviders,
+  fetchInsurancePolicies,
+} from './insurance/insuranceApi';
+import type { InsurancePolicyFragment } from './insurance/insurance.generated';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
-// (Details / Log). The Details tab is the plain-path built-in form, buffered
-// locally and committed on an explicit Save behind a confirmation, with a
-// discard prompt when leaving dirty (the StockLineDetailView model). The Log
-// tab reuses the shared activity-log surface.
+// (Details / Insurance / Log). The Details tab is the plain-path built-in form,
+// buffered locally and committed on an explicit Save behind a confirmation,
+// with a discard prompt when leaving dirty (the StockLineDetailView model). The
+// Insurance tab (spec § insurance policies) lists the patient's policies and
+// adds/edits them, gated on the site having configured insurance providers. The
+// Log tab reuses the shared activity-log surface.
 //
 // NOT built here (owned by other/unbuilt verticals — see the implementation
 // flags): the document-path schema-driven form, the Custom fields tab, and the
-// Programs / Encounters / Vaccinations / Insurance / Contact-tracing tabs.
+// Programs / Encounters / Vaccinations / Contact-tracing tabs.
 
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
@@ -112,6 +124,30 @@ const PatientDetailView: Component = () => {
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
   const [discardOpen, setDiscardOpen] = createSignal(false);
 
+  // Insurance (spec § insurance policies). The tab + add action gate on the
+  // site having at least one configured (active) insurance provider; policies
+  // load only once that surface is shown. Modal state: undefined = closed,
+  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add). `.latest` reads
+  // keep these off the Suspense boundary the patient resource owns.
+  const [providers] = createResource(
+    () => params.storeId,
+    fetchInsuranceProviders
+  );
+  const hasInsurance = () => (providers.latest ?? []).length > 0;
+
+  const [insuranceState, setInsuranceState] = createSignal<{
+    policy?: InsurancePolicyFragment;
+  }>();
+
+  const [policiesData, { refetch: refetchPolicies }] = createResource(
+    () =>
+      hasInsurance()
+        ? { storeId: params.storeId, nameId: params.patientId }
+        : undefined,
+    fetchInsurancePolicies
+  );
+  const policies = () => policiesData.latest ?? [];
+
   // Full-replace edit (AC-E2): toUpdateInput sends every field. On success,
   // re-seed from the refreshed record (name is recomputed server-side) by
   // clearing seededId so the seed effect re-runs, and refetch.
@@ -150,6 +186,9 @@ const PatientDetailView: Component = () => {
 
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
+    ...(hasInsurance()
+      ? [{ value: 'insurance', label: t('label.insurance') }]
+      : []),
     { value: 'log', label: t('label.log') },
   ];
 
@@ -170,6 +209,48 @@ const PatientDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs()} />
+                  {/* Add insurance — the app-bar page action on the Insurance
+                      tab (spec ui-surface S3 layout). Gated on providers being
+                      configured + patient-mutate; opens the modal in add mode.
+                      (The other-vertical program create actions share this slot
+                      once built.) */}
+                  <Show when={activeTab() === 'insurance' && canMutate()}>
+                    <HeaderButtons>
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-insurance-header-button"
+                        onClick={() => setInsuranceState({})}
+                      >
+                        {t('button.add-insurance')}
+                      </Button>
+                    </HeaderButtons>
+                  </Show>
+                  {/* Summary (spec/patients S3): Patient ID · Gender · DOB
+                      (with derived age) live in the app-bar toolbar row above
+                      the tabs — the inbound-shipment header-fields pattern —
+                      not in the tab body. */}
+                  <Toolbar>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '2rem',
+                        'flex-wrap': 'wrap',
+                      }}
+                    >
+                      <LabelledValue label={t('label.patient-id')}>
+                        {n().code}
+                      </LabelledValue>
+                      <LabelledValue label={t('label.gender')}>
+                        {(() => {
+                          const g = n().gender;
+                          return g ? genderLabel(g) : '—';
+                        })()}
+                      </LabelledValue>
+                      <LabelledValue label={t('label.date-of-birth')}>
+                        {dobDisplay(n())}
+                      </LabelledValue>
+                    </div>
+                  </Toolbar>
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -203,44 +284,53 @@ const PatientDetailView: Component = () => {
                 </Show>
               }
             >
-              {/* Summary header (spec/patients S3): Patient ID · Gender · DOB
-                  (with derived age). Always visible above the tab panels. */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '2rem',
-                  'flex-wrap': 'wrap',
-                  'padding-block': '0.75rem',
-                }}
-              >
-                <LabelledValue label={t('label.patient-id')}>
-                  {n().code}
-                </LabelledValue>
-                <LabelledValue label={t('label.gender')}>
-                  {(() => {
-                    const g = n().gender;
-                    return g ? genderLabel(g) : '—';
-                  })()}
-                </LabelledValue>
-                <LabelledValue label={t('label.date-of-birth')}>
-                  {dobDisplay(n())}
-                </LabelledValue>
-              </div>
-
               <TabPanel value="details">
-                <Show when={saveError()}>
-                  <Alert severity="error">{saveError()}</Alert>
-                </Show>
-                <PatientDetailsForm
-                  storeId={params.storeId}
-                  draft={edit}
-                  setField={setField}
-                  disabled={!canMutate()}
-                />
+                {/* fillBody strips the body's edge padding (so the Log table
+                    fills the region); the Details form is a padded, centred,
+                    width-capped measure of its own (ui-standards/detail-views
+                    → detail form). */}
+                <div style={{ padding: 'var(--space-5)' }}>
+                  <ContentContainer size="form">
+                    <Show when={saveError()}>
+                      <Alert severity="error">{saveError()}</Alert>
+                    </Show>
+                    <PatientDetailsForm
+                      storeId={params.storeId}
+                      draft={edit}
+                      setField={setField}
+                      disabled={!canMutate()}
+                    />
+                  </ContentContainer>
+                </div>
               </TabPanel>
+              <Show when={hasInsurance()}>
+                <TabPanel value="insurance">
+                  {/* A table — fills the region and owns its own scroll (like
+                      the Log tab and the reference line tables), so no body
+                      padding wrapper here, unlike the Details form. */}
+                  <InsurancePanel
+                    policies={policies()}
+                    loading={policiesData.loading}
+                    disabled={!canMutate()}
+                    onAdd={() => setInsuranceState({})}
+                    onRowClick={policy => setInsuranceState({ policy })}
+                  />
+                </TabPanel>
+              </Show>
               <TabPanel value="log">
                 <ActivityLogPanel storeId={params.storeId} recordId={n().id} />
               </TabPanel>
+
+              <InsuranceModal
+                open={insuranceState() !== undefined}
+                onClose={() => setInsuranceState(undefined)}
+                storeId={params.storeId}
+                patientId={n().id}
+                patientName={n().name}
+                providers={providers.latest ?? []}
+                policy={insuranceState()?.policy}
+                onSaved={() => void refetchPolicies()}
+              />
 
               <ConfirmDialog
                 open={confirmSaveOpen()}
