@@ -1,0 +1,42 @@
+# Items catalogue list (spec/items S1). Filter / sort / pagination are carried
+# as the GraphQL input types (ItemFilterInput, ItemSortInput, PaginationInput)
+# so URL state maps straight onto them with no remapping (kdd/type-safety).
+# storeId scopes the per-store stats + master-list membership. The vertical
+# always sends type: { equalTo: STOCK } and isActive: true (built in listFilters
+# — spec/items contract "list population and visibility"). `sort` accepts a list
+# but the server honours only the LAST entry, so send a single-element list
+# (spec/items contract wire trap).
+query items(
+  $storeId: String!
+  $filter: ItemFilterInput
+  $sort: [ItemSortInput!]
+  $page: PaginationInput
+) {
+  items(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on ItemConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        unitName
+        isVaccine
+        doses
+        # Server-filtered to defined, non-hidden item-scope keys (spec/items
+        # AC-P1); rendered one column per definition.
+        customFields
+        masterLists(storeId: $storeId) {
+          id
+          name
+        }
+        # months-of-stock is null when AMC is 0 (rendered as a dash, AC-S2).
+        stats(storeId: $storeId) {
+          averageMonthlyConsumption
+          stockOnHand
+          monthsOfStockOnHand
+        }
+      }
+    }
+  }
+}

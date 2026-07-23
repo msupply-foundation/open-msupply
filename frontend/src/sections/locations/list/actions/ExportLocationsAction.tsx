@@ -10,8 +10,11 @@ import {
   csvToExcel,
   downloadBlob,
   fetchReportFile,
+  listExportCsvFilename,
+  listExportExcelFilename,
 } from '../../../../domain/reportFiles';
 import { stripEmpty } from '../../../../typeHelpers';
+import { storeCodeOf } from '../../../../auth/authContext';
 import { LocationsList } from '../locations.generated';
 import type { LocationsListVariables } from '../locations.generated';
 import type { LocationFilter } from '../listFilters';
@@ -64,12 +67,16 @@ export const ExportLocationsAction: Component<
     try {
       const csv = await buildCsv();
       if (!csv) return; // nothing to export
-      const filename = t('filename.locations');
+      // Filenames per the shared list-export rule (AC-L5 →
+      // ui-standards/list-views § regions).
+      const storeCode = storeCodeOf(props.storeId);
+      const listName = t('filename.locations');
       if (format === 'excel') {
         const generated = await csvToExcel({
           storeId: props.storeId,
           csvData: csv,
-          filename,
+          filename: listExportExcelFilename(storeCode, listName),
+          sheetName: storeCode,
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
@@ -77,7 +84,7 @@ export const ExportLocationsAction: Component<
       } else {
         downloadBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          `${filename}.csv`
+          listExportCsvFilename(storeCode, listName, new Date())
         );
       }
     } finally {
