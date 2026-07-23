@@ -73,8 +73,11 @@ interface OutboundLineEditModalProps {
   isNew: boolean;
   /** The item to open ON (edit mode — the picker locks); undefined = add. */
   initialItem?: LineEditItem;
-  /** Items already on the shipment — excluded from the picker (S4). */
-  existingItemIds: string[];
+  /**
+   * The shipment's items in line-table order (distinct): excluded from the
+   * picker in add mode (S4), and paged through by OK & next in edit mode.
+   */
+  existingItems: LineEditItem[];
   /**
    * Whether the shipment's customer is itself a store (a transfer). Non-store
    * (external) customers additionally get the received-packs / difference columns.
@@ -141,6 +144,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
+  // Snapshot of the shipment's items at open: OK & next in update mode pages
+  // through them in table order, stable even as each save refetches the
+  // shipment (outbound loads all lines, so this is client-side — the paginated
+  // reference editors ask the parent for the next item instead).
+  const [itemsAtOpen, setItemsAtOpen] = createSignal<LineEditItem[]>([]);
+  // Add vs update, as a MUTABLE signal (matching the stocktake / inbound
+  // editors): an update walk that runs out of items drops into add mode, which
+  // unlocks the picker. Only ever flips update → add.
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialItem ? 'update' : 'add'
+  );
 
   const tableConfig = createTableConfig({ tableId: 'outbound-line-edit' });
   const prefs = () => outboundPrefs()?.prefs;
@@ -171,11 +185,33 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // the server-side allocation).
     const sorted = [...data.draftLines].sort(fefoCompare);
     setDraft(reconcile(sorted, { key: 'id' }));
-    setPlaceholderUnits(data.placeholderQuantity ?? 0);
+    const placeholder = data.placeholderQuantity ?? 0;
+    setPlaceholderUnits(placeholder);
     setLoadingLines(false);
+
+    // Auto-allocate on open: a NEW shipment's *pure*
+    // placeholder — an item carrying a requested quantity with nothing yet
+    // allocated — is distributed against available stock the moment the editor
+    // opens, the same FEFO run the Issue field performs (seeded with the
+    // requested quantity), leaving the placeholder holding any remainder. A
+    // notice shows only if stock was actually placed. Requisition-sourced and
+    // manual-shortfall placeholders carry a quantity; master-list placeholders
+    // are zero, so this no-ops for them. An item with stock already allocated
+    // is left untouched (only a wholly-unallocated placeholder triggers it).
+    const allocatedPacks = sorted.reduce(
+      (sum, line) => sum + line.numberOfPacks,
+      0
+    );
+    if (props.isNew && placeholder > 0 && allocatedPacks === 0) {
+      onIssueChange(placeholder);
+      const placed = draft.reduce((sum, line) => sum + line.numberOfPacks, 0);
+      if (placed > 0)
+        setWarnings(prev => [t('messages.auto-allocated-lines'), ...prev]);
+    }
   };
 
   onMount(() => {
+    setItemsAtOpen(props.existingItems);
     if (props.initialItem) void loadItem(props.initialItem);
   });
 
@@ -337,35 +373,72 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       });
     });
 
-  // OK & next (spec S4): saves, then resets for rapid entry of the NEXT item —
-  // add mode only (the picker clears and refocuses).
-  const onOkNext = () =>
+  // Reset to the empty item-search state (add mode) — the picker unlocks and
+  // clears. Reached when an update walk runs out of items, or by OK & next in
+  // add mode (add another). Matches the stocktake / inbound editors'
+  // backToSearch; mode only ever flips update → add.
+  const backToSearch = () => {
+    setMode('add');
+    setItem(undefined);
+    setDraft(reconcile([], { key: 'id' }));
+    setPlaceholderUnits(0);
+    setIssueValue(undefined);
+    setWarnings([]);
+    setDirty(false);
+    setZeroConfirm(false);
+    setErrorMessage(undefined);
+  };
+
+  // OK & next (spec S4): save, then continue rapid entry — never a dead end
+  // (matching the stocktake / inbound editors, so never disabled):
+  //  · add mode    — return to the picker to add another (backToSearch).
+  //  · update mode — advance to the next item on the shipment (open-time
+  //    order); when the walk is exhausted, drop into add mode instead.
+  const onOkNext = () => {
+    // Update mode, unchanged: page on without a redundant save (outbound gates
+    // saves on a real change — the reference editors re-save a harmless no-op).
+    if (mode() === 'update' && !dirty()) {
+      const next = nextItem();
+      if (next) void loadItem(next);
+      else backToSearch();
+      return;
+    }
     confirmThen(() => {
       void save().then(ok => {
         if (!ok) return;
-        setItem(undefined);
-        setDraft(reconcile([], { key: 'id' }));
-        setPlaceholderUnits(0);
-        setIssueValue(undefined);
-        setWarnings([]);
-        setDirty(false);
-        setZeroConfirm(false);
+        if (mode() === 'add') {
+          backToSearch();
+          return;
+        }
+        const next = nextItem();
+        if (next) void loadItem(next);
+        else backToSearch(); // exhausted → add mode
       });
     });
+  };
 
   const pickerItems = () =>
     itemOptionsResource
       .noSuspense()
-      .filter(option => !props.existingItemIds.includes(option.id));
+      .filter(option => !props.existingItems.some(it => it.id === option.id));
 
-  const editMode = () => props.initialItem != null;
+  // The item after the current one in the open-time order — OK & next's target
+  // in update mode; undefined once the walk reaches the last item (then OK &
+  // next drops into add mode instead of being a dead end).
+  const nextItem = (): LineEditItem | undefined => {
+    const currentId = item()?.id;
+    if (currentId == null) return undefined;
+    const items = itemsAtOpen();
+    const index = items.findIndex(entry => entry.id === currentId);
+    return index < 0 ? undefined : items[index + 1];
+  };
 
   // In edit mode the item is excluded from `pickerItems` (it's already on the
   // shipment), so the combobox can't resolve its label from `items`. Supply the
   // selected option directly so the locked field shows the item name.
   const selectedItemOption = createMemo<ItemOption | undefined>(() => {
     const it = item();
-    if (!editMode() || !it) return undefined;
+    if (mode() !== 'update' || !it) return undefined;
     return {
       id: it.id,
       code: '',
@@ -538,7 +611,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={editMode() ? t('heading.edit-line') : t('button.add-item')}
+      title={
+        mode() === 'update' ? t('heading.edit-line') : t('button.add-item')
+      }
       actionsLead={
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
@@ -563,11 +638,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           >
             {t('button.ok')}
           </Button>
-          {/* Rapid entry — add mode only, and shown only once there's a valid
-              entry to save: HIDDEN (not disabled) until an item is chosen and a
-              change made. OK stays visible-but-disabled as the always-
-              discoverable confirm (spec S4 § footer button matrix). */}
-          <Show when={!editMode() && item() && dirty()}>
+          {/* OK & next (spec S4 § footer button matrix) — never disabled, like
+              the stocktake / inbound editors:
+               · add mode    — HIDDEN until an item is chosen and a change made;
+                 then saves + returns to the picker to add another.
+               · update mode — SHOWN throughout; saves then advances to the next
+                 item on the shipment, or drops into add mode once the walk is
+                 exhausted.
+              OK stays visible-but-disabled as the always-discoverable confirm. */}
+          <Show when={mode() === 'update' ? item() : item() && dirty()}>
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
@@ -612,7 +691,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         value={item()?.id ?? ''}
         selectedItem={selectedItemOption()}
         clearable={false}
-        disabled={editMode() || saving()}
+        disabled={mode() === 'update' || saving()}
         inputTestId="item-search-input"
         placeholder={t('placeholder.search-by-name')}
         onChange={option => {
