@@ -32,7 +32,7 @@ Copy this file, rename it `<ID> - <Title>.md`, and fill it in. The rules:
    - LINK THE PRECISION from the bullet: a bullet whose exactness lives
      elsewhere ends with a markdown link to the owning section
      (`([rules § …](../rules.md#…))`). The link is machine-followable —
-     `python3 exploratory/tools/behaviour_brief.py <ID>` assembles the
+     `pnpm brief <ID>` assembles the
      one-page brief (anchor + linked rule excerpts + mirrored contract
      section + surface pointers + existing coverage) that deterministic-test
      authors and the exploratory agent work from. Manual testers never need
