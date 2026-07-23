@@ -64,9 +64,17 @@ pub mod android {
                 inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
                 token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 // The app shell copies its APK-bundled web UI here on startup,
-                // before starting the server (see MainActivity.copyFrontendAssets)
+                // before starting the server (see MainActivity.copyFrontendAssets).
+                // The bundle nests the transition ("old UI") build under old-ui/,
+                // served at /old-ui/ while the new FE is served at /.
                 frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
-                old_ui_frontend_dir: None,
+                old_ui_frontend_dir: Some(
+                    files_dir
+                        .join("frontend")
+                        .join("old-ui")
+                        .to_string_lossy()
+                        .to_string(),
+                ),
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
