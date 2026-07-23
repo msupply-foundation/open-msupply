@@ -167,6 +167,14 @@ jobs:
         env:
           ETOKEN_PASS: ${{ secrets.ETOKEN_PASS }}
 
+      # The .suf projects reference the "openmsupply" installer theme, which
+      # Setup Factory resolves from its machine-wide theme directory — install
+      # the committed copy so the runner needs no manual theme setup (a
+      # missing theme pops a modal dialog, which would hang a headless build).
+      - name: Install Setup Factory theme
+        shell: cmd
+        run: xcopy "build\windows\openmsupply" "C:\ProgramData\IndigoRose\Setup Factory\10.0\Themes\openmsupply" /e /c /i /y || exit /b 1
+
       # adjustSUFs.js stamps versionTag/version and installersOutputFolder
       # into the staged .suf projects (from the omSupply\ copies, cwd matters).
       # Jenkins never checked SUFDesign's exit code; here a failed suf build
