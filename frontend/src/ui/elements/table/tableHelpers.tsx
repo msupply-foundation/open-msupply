@@ -99,7 +99,7 @@ export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // plumbed through; narrowSymbol keeps the symbol a bare "$" in the
 // Latin-script locales (the current app's pattern) — ar has no CLDR narrow
 // form and falls back to "US$".
-const formatCurrencyCell = (value: number | null | undefined): string =>
+export const formatCurrencyCell = (value: number | null | undefined): string =>
   value == null
     ? EMPTY_CELL
     : formatNumber(value, {
