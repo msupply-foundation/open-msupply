@@ -7,9 +7,11 @@
   "scripts": {
     "dev": "concurrently -k -n vite,css-types -c auto \"vite\" \"tcm --watch --pattern '**/*.module.css' src\"",
     "build": "tcm --pattern '**/*.module.css' src && tsc -b && vite build",
+    "build:showcase": "tcm --pattern '**/*.module.css' src && tsc -b && vite build --config vite.showcase.config.ts",
     "preview": "vite preview",
+    "preview:showcase": "vite preview --config vite.showcase.config.ts",
     "css:types": "tcm --pattern '**/*.module.css' src",
-    "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs",
+    "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-min-browser.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

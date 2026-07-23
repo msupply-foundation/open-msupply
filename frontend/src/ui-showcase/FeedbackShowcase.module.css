@@ -16,3 +16,8 @@
 .commentTrigger:hover {
   color: var(--primary-main);
 }
+
+/* Demo items hug their content instead of stretching. */
+.hugStart {
+  align-items: flex-start;
+}

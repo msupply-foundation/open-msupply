@@ -29,9 +29,13 @@ import {
   XCircleIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
-import { LocationSelect, type Location } from '../../../../domain/location';
+import {
+  LocationVolumeSelect,
+  type LocationWithVolume,
+} from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch, type NameOption } from '../../../../domain/name';
+import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
   InboundShipmentLines,
@@ -44,6 +48,8 @@ import { runInboundBatch } from '../inboundShipmentUpdate';
 export interface LineEditPrefs {
   vvm: boolean;
   donor: boolean;
+  /** Vaccines-in-doses preference — gates the Doses-per-unit field (H5). */
+  doses: boolean;
 }
 
 export interface InboundShipmentLineEditModalProps {
@@ -64,7 +70,7 @@ export interface InboundShipmentLineEditModalProps {
   purchaseOrderId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
-  locations: Location[];
+  locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
   /**
@@ -104,6 +110,17 @@ type DraftBatch = {
   shippedNumberOfPacks: number | undefined;
   shippedPackSize: number | undefined;
   volumePerPack: number;
+  manufacturerId: string | null;
+  manufacturerName: string | null;
+  campaignId: string | null;
+  programId: string | null;
+  /**
+   * Whether the user has hand-edited the cost / sell price (AC-H6): a prefilled
+   * price the user hasn't touched clears to zero when the pack size moves off
+   * the item default; an overridden one is left alone.
+   */
+  costOverridden: boolean;
+  sellOverridden: boolean;
 };
 
 const emptyBatch = (): DraftBatch => ({
@@ -125,6 +142,12 @@ const emptyBatch = (): DraftBatch => ({
   shippedNumberOfPacks: undefined,
   shippedPackSize: undefined,
   volumePerPack: 0,
+  manufacturerId: null,
+  manufacturerName: null,
+  campaignId: null,
+  programId: null,
+  costOverridden: false,
+  sellOverridden: false,
 });
 
 const fromLine = (line: InboundLineFragment): DraftBatch => ({
@@ -146,6 +169,14 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   shippedNumberOfPacks: line.shippedNumberOfPacks ?? undefined,
   shippedPackSize: line.shippedPackSize ?? undefined,
   volumePerPack: line.volumePerPack,
+  manufacturerId: line.manufacturer?.id ?? null,
+  manufacturerName: line.manufacturer?.name ?? null,
+  campaignId: line.campaign?.id ?? null,
+  programId: line.program?.id ?? null,
+  // Existing lines aren't subject to the prefill-clear (AC-H6 is about adding);
+  // mark both overridden so a pack-size edit never wipes a saved price.
+  costOverridden: true,
+  sellOverridden: true,
 });
 
 // The tabs / card-groups for the grouped table (matching the stocktake editor).
@@ -171,9 +202,25 @@ export const InboundShipmentLineEditModal: Component<
   </Show>
 );
 
-// Only id/code/name are needed for display + the insert itemId; a lighter type
-// than ItemOption so a line-seeded item (no unitName/totalUnits) fits too.
-type ChosenItem = { id: string; code: string; name: string };
+// id/code/name for display + the insert itemId, plus the item attributes the
+// editor surfaces read-only: unitName (the Unit field, H6), and isVaccine/doses
+// (the Doses-per-unit field, gated by the vaccines-in-doses pref, H5).
+type ChosenItem = {
+  id: string;
+  code: string;
+  name: string;
+  unitName: string | null;
+  isVaccine: boolean;
+  doses: number;
+  /**
+   * Item default pack size + store default sell price — the new-line price
+   * prefill (AC-H6). defaultSellPricePerPack is 0 where unknown (the PO-line
+   * picker and edit-mode line-load don't fetch it), so no price prefill there —
+   * correct, since AC-H6 targets the manual add-item case.
+   */
+  defaultPackSize: number;
+  defaultSellPricePerPack: number;
+};
 
 const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [item, setItem] = createSignal<ChosenItem | null>(null);
@@ -207,16 +254,50 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           id: first.itemId,
           code: first.itemCode,
           name: first.itemName,
+          unitName: first.item?.unitName ?? null,
+          isVaccine: first.item?.isVaccine ?? false,
+          doses: first.item?.doses ?? 0,
+          defaultPackSize: first.item?.defaultPackSize ?? 1,
+          defaultSellPricePerPack: 0,
         });
     }
     return true;
   });
 
+  // A fresh batch for `chosen`, price-prefilled per AC-H6: starts at the item's
+  // default pack size, with cost AND sell price seeded from the store default
+  // sell price — but only when cost is editable (a manual shipment); on a
+  // PO/transfer shipment cost derives from the source, so leave prices at zero.
+  const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
+    const base = emptyBatch();
+    const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
+    if (props.costLocked) return { ...base, packSize };
+    const price = chosen.defaultSellPricePerPack;
+    return {
+      ...base,
+      packSize,
+      costPricePerPack: price,
+      sellPricePerPack: price,
+    };
+  };
+
   const chooseItem = (option: ItemOption | null) => {
-    setItem(
-      option ? { id: option.id, code: option.code, name: option.name } : null
-    );
-    if (option) setBatches([emptyBatch()]);
+    if (!option) {
+      setItem(null);
+      return;
+    }
+    const chosen: ChosenItem = {
+      id: option.id,
+      code: option.code,
+      name: option.name,
+      unitName: option.unitName,
+      isVaccine: option.isVaccine,
+      doses: option.doses,
+      defaultPackSize: option.defaultPackSize,
+      defaultSellPricePerPack: option.defaultSellPricePerPack,
+    };
+    setItem(chosen);
+    setBatches([prefillFromItem(chosen)]);
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
@@ -236,11 +317,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         : [];
     }
   );
+  // No-suspend read (mirrors storeScopedResource.noSuspense): reading
+  // `poLines()` — OR `poLines.latest` — trips the page <Suspense> on the first
+  // pending read, collapsing the boundary and remounting this dialog, which
+  // then loses the native top layer and drops into the page flow
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Gate on state.
+  const poLineList = () =>
+    poLines.state === 'ready' || poLines.state === 'refreshing'
+      ? (poLines.latest ?? [])
+      : [];
   const choosePoLine = (id: string) => {
-    const line = (poLines() ?? []).find(l => l.id === id);
+    const line = poLineList().find(l => l.id === id);
     if (!line) return;
     setPoLineId(id);
-    setItem({ id: line.item.id, code: line.item.code, name: line.item.name });
+    // The PO-line lookup carries only id/code/name for the item; unit/vaccine
+    // attributes fill in once the line is saved and reloaded via the full line
+    // fragment (edit mode). Default them for the pre-save PO-add view.
+    setItem({
+      id: line.item.id,
+      code: line.item.code,
+      name: line.item.name,
+      unitName: null,
+      isVaccine: false,
+      doses: 0,
+      defaultPackSize: line.requestedPackSize || 1,
+      defaultSellPricePerPack: 0,
+    });
     setBatches([{ ...emptyBatch(), packSize: line.requestedPackSize || 1 }]);
   };
 
@@ -256,7 +358,51 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (index >= 0) setBatches(index, field, value as never);
   };
 
-  const addBatch = () => setBatches(produce(d => d.push(emptyBatch())));
+  // A new batch prefills from the current item (AC-H6) just like the first one.
+  const addBatch = () => {
+    const chosen = item();
+    setBatches(
+      produce(d => d.push(chosen ? prefillFromItem(chosen) : emptyBatch()))
+    );
+  };
+
+  // Pack-size / price edits (AC-H6): moving the pack size off the item default
+  // clears a still-prefilled (non-overridden) price to zero; editing a price
+  // marks it overridden so a later pack-size change leaves it alone.
+  const changePackSize = (id: string, value: number) => {
+    const chosen = item();
+    setBatches(
+      produce(d => {
+        const b = d.find(x => x.id === id);
+        if (!b) return;
+        b.packSize = value;
+        if (chosen && !props.costLocked && value !== chosen.defaultPackSize) {
+          if (!b.costOverridden) b.costPricePerPack = 0;
+          if (!b.sellOverridden) b.sellPricePerPack = 0;
+        }
+      })
+    );
+  };
+  const changeCost = (id: string, value: number) =>
+    setBatches(
+      produce(d => {
+        const b = d.find(x => x.id === id);
+        if (b) {
+          b.costPricePerPack = value;
+          b.costOverridden = true;
+        }
+      })
+    );
+  const changeSell = (id: string, value: number) =>
+    setBatches(
+      produce(d => {
+        const b = d.find(x => x.id === id);
+        if (b) {
+          b.sellPricePerPack = value;
+          b.sellOverridden = true;
+        }
+      })
+    );
   const duplicateBatch = (id: string) =>
     setBatches(
       produce(d => {
@@ -303,6 +449,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         shippedNumberOfPacks: b.shippedNumberOfPacks,
         shippedPackSize: b.shippedPackSize,
         volumePerPack: b.volumePerPack,
+        manufacturerId: b.manufacturerId ?? undefined,
+        campaignId: b.campaignId ?? undefined,
+        programId: b.programId ?? undefined,
         // A PO-linked line must cite the order line it fills.
         purchaseOrderLineId: props.purchaseOrderId ? poLineId() : undefined,
       }));
@@ -326,6 +475,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         shippedNumberOfPacks: b.shippedNumberOfPacks,
         shippedPackSize: b.shippedPackSize,
         volumePerPack: b.volumePerPack,
+        manufacturerId: { value: b.manufacturerId },
+        campaignId: { value: b.campaignId },
+        programId: { value: b.programId },
       }));
     const del = batches
       .filter(b => !b.isNew && b.deleted)
@@ -349,8 +501,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     );
     setSaving(false);
     if (!outcome) return false;
-    if (outcome.errors.size > 0) {
-      setErrorMessage([...outcome.errors.values()][0]);
+    // A batch-level (untyped, top-level) rejection wins over per-line errors —
+    // it aborted the whole all-or-nothing batch. Show it in the modal banner,
+    // keeping the modal open (S7: surfaced inline, never a toast).
+    const message =
+      outcome.message ??
+      (outcome.errors.size > 0 ? [...outcome.errors.values()][0] : undefined);
+    if (message) {
+      setErrorMessage(message);
       return false;
     }
     if (outcome.applied) props.onSaved();
@@ -376,6 +534,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   const noItemYet = () => !item();
+
+  // Mismatch warning (spec S4): a manual shipment records what the supplier
+  // reported shipping (shippedNumberOfPacks/shippedPackSize) alongside what was
+  // received — warn when any batch's received differs from shipped. Not a
+  // blocker; the save still proceeds.
+  const hasMismatch = () =>
+    !props.purchaseOrderId &&
+    rows().some(
+      b =>
+        b.shippedNumberOfPacks !== undefined &&
+        (b.shippedNumberOfPacks !== b.numberOfPacks ||
+          (b.shippedPackSize !== undefined && b.shippedPackSize !== b.packSize))
+    );
 
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
@@ -429,12 +600,104 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             size="small"
             value={b.packSize}
-            min={1}
-            onChange={v => updateBatch(b.id, 'packSize', v ?? 1)}
+            // Don't clamp below 1 — a pack size < 1 is a server rule
+            // (PackSizeBelowOne, untyped); submit it and surface the rejection
+            // inline rather than silently coercing to 1 (spec AC-E1 / M2).
+            min={0}
+            onChange={v => changePackSize(b.id, v ?? 1)}
           />
         );
       },
     },
+    // Packs shipped / Shipped pack size — supplier-declared quantities (spec
+    // S4, manual only). Feed the received-vs-shipped mismatch warning and the
+    // detail table's Difference column (H6).
+    ...(!props.purchaseOrderId
+      ? [
+          {
+            c: { id: 'shippedNumberOfPacks' },
+            header: t('label.shipped-number-of-packs'),
+            tabsAndCardGroups: ['batch'],
+            ...getNumberCell(),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <NumberField
+                  label={t('label.shipped-number-of-packs')}
+                  hideLabel
+                  size="small"
+                  value={b.shippedNumberOfPacks}
+                  min={0}
+                  onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
+                />
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+          {
+            c: { id: 'shippedPackSize' },
+            header: t('label.shipped-pack-size'),
+            tabsAndCardGroups: ['batch'],
+            ...getNumberCell(),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <NumberField
+                  label={t('label.shipped-pack-size')}
+                  hideLabel
+                  size="small"
+                  value={b.shippedPackSize}
+                  min={0}
+                  onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
+                />
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
+    // Units received (computed) — packs received × pack size (spec S4).
+    {
+      c: { id: 'unitsReceived' },
+      header: t('label.units-received', {
+        unit: item()?.unitName ?? t('label.units'),
+      }),
+      tabsAndCardGroups: ['batch'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NumberField
+            label={t('label.units-received', {
+              unit: item()?.unitName ?? t('label.units'),
+            })}
+            hideLabel
+            size="small"
+            value={b.numberOfPacks * b.packSize}
+            disabled
+          />
+        );
+      },
+    },
+    // Doses per unit (H5) — read-only item attribute, gated by the vaccines-in-
+    // doses preference and shown only for a vaccine item.
+    ...(props.prefs.doses && item()?.isVaccine
+      ? [
+          {
+            c: { id: 'dosesPerUnit' },
+            header: t('label.doses-per-unit'),
+            tabsAndCardGroups: ['batch'],
+            ...getNumberCell(),
+            cell: () => (
+              <NumberField
+                label={t('label.doses-per-unit')}
+                hideLabel
+                size="small"
+                value={item()?.doses ?? 0}
+                disabled
+              />
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'expiryDate' },
       header: t('label.expiry'),
@@ -451,8 +714,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
-    // VVM status (Batch tab) — gated by the manage-VVM preference.
-    ...(props.prefs.vvm
+    // VVM status (Batch tab) — gated by the manage-VVM preference AND a vaccine
+    // item (VVM applies to vaccines only, spec AC-PG1 / M1).
+    ...(props.prefs.vvm && item()?.isVaccine
       ? [
           {
             c: { id: 'vvmStatus' },
@@ -488,7 +752,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             size="small"
             value={b.costPricePerPack}
             disabled={props.costLocked}
-            onChange={v => updateBatch(b.id, 'costPricePerPack', v ?? 0)}
+            onChange={v => changeCost(b.id, v ?? 0)}
           />
         );
       },
@@ -506,7 +770,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             size="small"
             value={b.sellPricePerPack}
-            onChange={v => updateBatch(b.id, 'sellPricePerPack', v ?? 0)}
+            onChange={v => changeSell(b.id, v ?? 0)}
+          />
+        );
+      },
+    },
+    // Line total (computed) — packs received × pack cost price (spec S4).
+    {
+      c: { id: 'lineTotal' },
+      header: t('label.line-total'),
+      tabsAndCardGroups: ['pricing'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <CurrencyField
+            label={t('label.line-total')}
+            hideLabel
+            size="small"
+            value={b.numberOfPacks * b.costPricePerPack}
+            disabled
           />
         );
       },
@@ -518,11 +801,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       cell: info => {
         const b = info.row.original;
         return (
-          <LocationSelect
+          <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
             locations={props.locations}
             value={b.locationId ?? undefined}
+            requiredVolume={b.volumePerPack * b.numberOfPacks}
             onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
           />
         );
@@ -583,6 +867,85 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
+    // Manufacturer (Other tab, spec S4) — a name lookup, manufacturer role.
+    {
+      c: { id: 'manufacturer' },
+      header: t('label.manufacturer'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NameSearch
+            label={t('label.manufacturer')}
+            hideLabel
+            storeId={props.storeId}
+            role="manufacturer"
+            selected={
+              b.manufacturerId
+                ? ({
+                    id: b.manufacturerId,
+                    name: b.manufacturerName ?? '',
+                    code: '',
+                    isSupplier: false,
+                    isDonor: false,
+                    isOnHold: false,
+                    isStore: false,
+                  } satisfies NameOption)
+                : undefined
+            }
+            onSelect={m => {
+              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
+              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
+            }}
+          />
+        );
+      },
+    },
+    // Campaign/program (Other tab, spec S4) — a single picker; a campaign and a
+    // program are mutually exclusive on the line, so choosing one clears the
+    // other (the select routes the choice to the right wire field).
+    {
+      c: { id: 'campaignOrProgram' },
+      header: t('label.campaign'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <CampaignOrProgramSelect
+            label={t('label.campaign')}
+            hideLabel
+            storeId={props.storeId}
+            itemId={item()?.id ?? ''}
+            campaignId={b.campaignId ?? undefined}
+            programId={b.programId ?? undefined}
+            onChange={choice => {
+              updateBatch(b.id, 'campaignId', choice?.campaign?.id ?? null);
+              updateBatch(b.id, 'programId', choice?.program?.id ?? null);
+            }}
+          />
+        );
+      },
+    },
+    // Volume per pack (Other tab, spec S4).
+    {
+      c: { id: 'volumePerPack' },
+      header: t('label.volume-per-pack'),
+      tabsAndCardGroups: ['other'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NumberField
+            label={t('label.volume-per-pack')}
+            hideLabel
+            size="small"
+            value={b.volumePerPack}
+            min={0}
+            onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
+          />
+        );
+      },
+    },
     {
       c: { key: 'note' },
       header: t('label.note'),
@@ -648,11 +1011,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.purchase-order')}
             value={poLineId()}
             onValueChange={choosePoLine}
-            options={(poLines() ?? [])
+            options={poLineList()
               .filter(l => !props.existingItemIds.includes(l.item.id))
               .map(l => ({
                 value: l.id,
-                label: `#${l.lineNumber} ${l.item.name} (${l.item.code})`,
+                label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
+                  'label.pack-size'
+                ).toLowerCase()} ${l.requestedPackSize}`,
               }))}
           />
         ) : (
@@ -668,7 +1033,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           />
         )
       }
-      ariaLabel={t('button.add-item')}
+      ariaLabel={
+        props.initialItemId ? t('label.edit-line') : t('button.add-item')
+      }
       headerActions={
         <Show when={!noItemYet()}>
           <Button
@@ -690,6 +1057,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
@@ -697,7 +1065,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <Show when={!noItemYet()}>
             <Button
               variant="secondary"
-              data-testid="ok-and-next-button"
+              data-testid="dialog-button-next-and-ok"
               loading={saving()}
               onClick={() => void onOkNext()}
             >
@@ -721,16 +1089,31 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             <Alert severity="info">{t('messages.select-an-item')}</Alert>
           }
         >
-          <DataTable
-            columns={columns()}
-            rows={rows()}
-            rowKey={b => b.id}
-            tabsAndCardGroups={TABS_AND_CARD_GROUPS}
-            showFullScreen={false}
-            config={tableConfig.config()}
-            setConfig={tableConfig.setConfig}
-            emptyMessage={t('label.add-batch')}
-          />
+          <>
+            {/* Read-only Unit field, follows the selector (spec S4). */}
+            <Show when={item()?.unitName}>
+              <TextField
+                label={t('label.unit')}
+                value={item()?.unitName ?? ''}
+                disabled
+              />
+            </Show>
+            <Show when={hasMismatch()}>
+              <Alert severity="warning">
+                {t('messages.received-shipped-mismatch')}
+              </Alert>
+            </Show>
+            <DataTable
+              columns={columns()}
+              rows={rows()}
+              rowKey={b => b.id}
+              tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+              showFullScreen={false}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
+              emptyMessage={t('label.add-batch')}
+            />
+          </>
         </Show>
       </Show>
     </Dialog>

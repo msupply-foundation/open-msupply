@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- Entry page for the STANDALONE showcase build (`pnpm build:showcase`,
+     vite.showcase.config.ts) — emitted as the site's index.html. Mirrors
+     index.html minus the app-only pre-boot pieces: no unsupported-browser
+     warning (an internal dev tool; check-min-browser.mjs reads index.html
+     only). See src/ui-showcase/README.md § Standalone build. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open mSupply UI Showcase</title>
+    <script>
+      // Apply the persisted theme before first paint so a dark-theme user
+      // never sees a flash of light (key shared with ThemeToggle).
+      try {
+        var theme = localStorage.getItem('oms-theme');
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/showcase.tsx"></script>
+  </body>
+</html>

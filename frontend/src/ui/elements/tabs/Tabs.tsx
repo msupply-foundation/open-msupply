@@ -13,6 +13,12 @@ import styles from './Tabs.module.css';
 export interface TabDef {
   value: string;
   label: string;
+  /**
+   * Override the auto `tab-<value>` test id (locale-stable e2e hook,
+   * e2e/TESTIDS.md). Use when a strip already has a contracted id scheme of
+   * its own — e.g. the location picker's `location-fullness-*` filter.
+   */
+  testId?: string;
 }
 
 interface TabsProps {
@@ -76,7 +82,15 @@ export const Tabs = (props: TabsProps) => (
  * the LAST child of a <Header>, it claims the header's bottom edge — see
  * Header.module.css.
  */
-export const TabList = (props: { tabs: TabDef[] }) => {
+export const TabList = (props: {
+  tabs: TabDef[];
+  /**
+   * Accessible name for the tablist — set it when the strip isn't a page's
+   * primary navigation but a labelled control (e.g. the location picker's
+   * fullness filter reads "Filter locations by available space").
+   */
+  label?: string;
+}) => {
   const context = KTabs.useTabsContext();
   let listEl: HTMLDivElement | undefined;
   const [pos, setPos] = createSignal<{ left: number; width: number }>();
@@ -112,14 +126,23 @@ export const TabList = (props: { tabs: TabDef[] }) => {
   );
 
   return (
-    <KTabs.List ref={listEl} class={styles.list} data-tab-bar="">
+    <KTabs.List
+      ref={listEl}
+      class={styles.list}
+      data-tab-bar=""
+      aria-label={props.label}
+    >
       <For each={props.tabs}>
         {tab => (
           <KTabs.Trigger
             value={tab.value}
             class={styles.trigger}
-            // tab-<value> per e2e/TESTIDS.md: value lowercased, spaces → '-'
-            data-testid={`tab-${tab.value.toLowerCase().replace(/\s+/g, '-')}`}
+            // Custom id when the strip has its own contracted scheme; otherwise
+            // tab-<value> per e2e/TESTIDS.md (value lowercased, spaces → '-').
+            data-testid={
+              tab.testId ??
+              `tab-${tab.value.toLowerCase().replace(/\s+/g, '-')}`
+            }
           >
             {tab.label}
           </KTabs.Trigger>

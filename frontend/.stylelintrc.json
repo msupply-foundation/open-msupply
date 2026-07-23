@@ -21,6 +21,9 @@
           {
             "customProperties": {
               "--kb-popper-content-available-height": "100vh",
+              "--kb-popper-content-available-width": "100vw",
+              "--kb-popper-anchor-width": "0px",
+              "--kb-accordion-content-height": "0px",
               "--ripple-color": "transparent",
               "--chip-colour": "transparent",
               "--table-leading-col": "2.75rem"
