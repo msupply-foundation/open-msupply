@@ -21,7 +21,7 @@ COPY server/data data
 # fetch inside docker build).
 COPY frontend-dist frontend
 # Old UI served at /old-ui/ : this repo's client build (PUBLIC_PATH=/old-ui/).
-# old_ui_frontend_dir is set to frontend/old-ui in docker/local*.yaml.
+# The server serves frontend/old-ui at /old-ui/ by convention — no config needed.
 COPY client/packages/host/dist frontend/old-ui
 
 WORKDIR /usr/src/omsupply/server/configuration

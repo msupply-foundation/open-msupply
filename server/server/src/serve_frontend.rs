@@ -19,7 +19,7 @@ fn get_asset(settings: &Settings, path: &str) -> Option<Vec<u8>> {
     read_asset(&frontend_root(settings)?, path)
 }
 
-/// Read an asset from `server.old_ui_frontend_dir` (served under `/old-ui/`).
+/// Read an asset from the old UI bundle (served under `/old-ui/`).
 fn get_old_ui_asset(settings: &Settings, path: &str) -> Option<Vec<u8>> {
     read_asset(&old_ui_frontend_root(settings)?, path)
 }
@@ -52,13 +52,14 @@ fn frontend_root(settings: &Settings) -> Option<PathBuf> {
     configured
 }
 
-/// Root for the optional legacy ("old UI") frontend. `None` when
-/// `old_ui_frontend_dir` is unset or the directory doesn't exist, so nothing
-/// is mounted at `/old-ui/` by default. No debug fallback: the old UI is only
-/// served when explicitly configured.
+/// Root for the legacy ("old UI") frontend: by convention the `old-ui`
+/// subdirectory of the frontend dir. Packaging nests the old UI there on every
+/// platform (windows/mac/android/docker), so all deployments serve it at
+/// `/old-ui/` with no configuration — deliberately not configurable, so every
+/// customer gets the same URL convention. `None` when the subdirectory doesn't
+/// exist, in which case nothing is mounted at `/old-ui/`.
 fn old_ui_frontend_root(settings: &Settings) -> Option<PathBuf> {
-    let dir = settings.server.old_ui_frontend_dir.as_ref()?;
-    Path::new(dir).canonicalize().ok()
+    frontend_root(settings)?.join("old-ui").canonicalize().ok()
 }
 
 /// Cache-control for a frontend asset by path. The index and translation files
@@ -128,7 +129,7 @@ async fn index(settings: Data<Settings>) -> impl Responder {
 }
 
 // Legacy ("old UI") frontend served under /old-ui/. Files (paths ending with an
-// extension) are served directly from `old_ui_frontend_dir`.
+// extension) are served directly from the frontend dir's old-ui/ subdirectory.
 #[get(r#"/old-ui/{filename:.*\..+$}"#)]
 async fn old_ui_file(req: HttpRequest, settings: Data<Settings>) -> impl Responder {
     let filename: String = req.match_info().query("filename").parse().unwrap();
@@ -143,14 +144,14 @@ async fn old_ui_file(req: HttpRequest, settings: Data<Settings>) -> impl Respond
 async fn old_ui_index(settings: Data<Settings>) -> impl Responder {
     let result = serve_old_ui_frontend(&settings, INDEX);
 
-    // Unset setting or missing bundle: respond with a plain-text hint, mirroring
-    // the root index behaviour rather than a bare 404.
+    // Missing bundle: respond with a plain-text hint, mirroring the root index
+    // behaviour rather than a bare 404.
     if result.status() == StatusCode::NOT_FOUND {
         HttpResponse::Ok()
             .content_type(ContentType(mime::TEXT_PLAIN))
             .body(format!(
-                "Cannot find index.html in old UI frontend directory ({}). See https://github.com/msupply-foundation/open-msupply/tree/develop/server#serving-front-end",
-                settings.server.old_ui_frontend_dir.as_deref().unwrap_or("<unset>")
+                "Cannot find index.html in old UI frontend directory ({}/old-ui). See https://github.com/msupply-foundation/open-msupply/tree/develop/server#serving-front-end",
+                settings.server.frontend_dir
             ))
     } else {
         result
@@ -182,7 +183,7 @@ mod test {
         fs::write(dir.join("assets/x.js"), format!("// {marker} js")).unwrap();
     }
 
-    fn settings_with(frontend: &Path, old_ui: Option<&Path>) -> Settings {
+    fn settings_with(frontend: &Path) -> Settings {
         let mut settings = test_settings(
             repository::database_settings::DatabaseSettings {
                 username: String::new(),
@@ -199,8 +200,6 @@ mod test {
             None,
         );
         settings.server.frontend_dir = frontend.to_str().unwrap().to_string();
-        settings.server.old_ui_frontend_dir =
-            old_ui.map(|p| p.to_str().unwrap().to_string());
         settings
     }
 
@@ -210,13 +209,16 @@ mod test {
     }
 
     #[actix_web::test]
-    async fn serves_root_and_old_ui_from_separate_dirs() {
+    async fn serves_old_ui_from_nested_old_ui_dir() {
+        // The old UI is served from the `old-ui` subdirectory of the frontend
+        // dir by convention — no configuration involved.
         let new_dir = TempDir::new().unwrap();
-        let old_dir = TempDir::new().unwrap();
         write_dist(new_dir.path(), "NEW");
-        write_dist(old_dir.path(), "OLD");
+        let old_dir = new_dir.path().join("old-ui");
+        fs::create_dir_all(&old_dir).unwrap();
+        write_dist(&old_dir, "OLD");
 
-        let settings = settings_with(new_dir.path(), Some(old_dir.path()));
+        let settings = settings_with(new_dir.path());
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(settings))
@@ -281,11 +283,11 @@ mod test {
     }
 
     #[actix_web::test]
-    async fn old_ui_unset_is_graceful_and_root_still_works() {
+    async fn missing_old_ui_dir_is_graceful_and_root_still_works() {
         let new_dir = TempDir::new().unwrap();
         write_dist(new_dir.path(), "NEW");
 
-        let settings = settings_with(new_dir.path(), None);
+        let settings = settings_with(new_dir.path());
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(settings))
@@ -314,7 +316,7 @@ mod test {
     async fn index_html_is_not_cached() {
         let new_dir = TempDir::new().unwrap();
         write_dist(new_dir.path(), "NEW");
-        let settings = settings_with(new_dir.path(), None);
+        let settings = settings_with(new_dir.path());
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(settings))
