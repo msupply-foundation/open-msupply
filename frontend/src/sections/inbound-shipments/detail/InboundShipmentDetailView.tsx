@@ -42,7 +42,10 @@ import {
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
-import { fetchLocations, type Location } from '../../../domain/location';
+import {
+  fetchLocationsWithVolume,
+  type LocationWithVolume,
+} from '../../../domain/location';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipment,
@@ -242,11 +245,25 @@ const InboundShipmentDetailView: Component = () => {
       ? (linesData.latest?.totalCount ?? 0)
       : 0;
 
-  const [locationsData] = createResource(params.storeId, fetchLocations);
-  const locations = (): Location[] =>
-    locationsData.state === 'ready' || locationsData.state === 'refreshing'
-      ? (locationsData.latest ?? [])
-      : [];
+  // Total volume of the selected lines (volumePerPack × packs received) — feeds
+  // the change-location picker's "Available" filter so it keeps only locations
+  // with room for the whole move.
+  const selectedVolume = (): number => {
+    const ids = new Set(selectedIds());
+    return rows()
+      .filter(r => ids.has(r.id))
+      .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
+  };
+
+  // Volume-aware: inbound places received stock at a location, so the picker
+  // shows each location's % used and offers the All / Empty / Available filter
+  // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
+  // read, so figures are fresh on each visit — see fetchLocationsWithVolume.
+  const [locationsData] = createResource(
+    params.storeId,
+    fetchLocationsWithVolume
+  );
+  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
   const isDisabled = () => current()?.status === 'VERIFIED';
@@ -831,6 +848,7 @@ const InboundShipmentDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled()}
                       locations={locations()}
+                      requiredVolume={selectedVolume}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />

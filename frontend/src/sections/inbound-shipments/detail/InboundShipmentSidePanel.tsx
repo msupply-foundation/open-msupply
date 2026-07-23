@@ -149,6 +149,7 @@ export const InboundShipmentSidePanel: Component<
       <SidePanelSection
         value="additional-info"
         title={t('heading.additional-info')}
+        collapsible
       >
         <Show when={props.donorTracking}>
           <FieldRow label={t('label.donor')}>
@@ -201,6 +202,7 @@ export const InboundShipmentSidePanel: Component<
       <SidePanelSection
         value="related-documents"
         title={t('heading.related-documents')}
+        collapsible
       >
         <Show
           when={props.node.purchaseOrder || props.node.requisition}
@@ -235,7 +237,11 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Charges ------------------------------------------------------------ */}
-      <SidePanelSection value="charges" title={t('heading.charges')}>
+      <SidePanelSection
+        value="charges"
+        title={t('heading.charges')}
+        collapsible
+      >
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
         <FieldRow label={t('heading.stock-charges')}>
@@ -378,6 +384,7 @@ export const InboundShipmentSidePanel: Component<
         <SidePanelSection
           value="transport-details"
           title={t('heading.transport-details')}
+          collapsible
         >
           <FieldRow label={t('label.shipping-method')}>
             <span>{props.node.shippingMethod?.method ?? '—'}</span>
