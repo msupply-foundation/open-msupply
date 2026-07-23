@@ -1,0 +1,4 @@
+# Homebrew's libpq is keg-only, so it isn't on the default linker search path.
+# pq-sys (pulled in by diesel's "postgres" feature) reads PQ_LIB_DIR to find it.
+[env]
+PQ_LIB_DIR = "/opt/homebrew/opt/libpq/lib"
