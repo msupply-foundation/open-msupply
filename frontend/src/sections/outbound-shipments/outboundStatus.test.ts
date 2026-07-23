@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CLIENT_SETTABLE,
   STATUS_FLOW,
+  canReturnLines,
   isDeletable,
   isEditable,
   statusColour,
@@ -50,6 +51,18 @@ describe('outboundStatus', () => {
   // settable — NEW is unreachable by update, DELIVERED+ transfer-mirrored.
   it('client-settable statuses exclude NEW and the transfer-mirrored tail', () => {
     expect([...CLIENT_SETTABLE]).toEqual(['ALLOCATED', 'PICKED', 'SHIPPED']);
+  });
+
+  // AC-V3 — the customer-return entry point opens only from SHIPPED /
+  // DELIVERED / VERIFIED; every earlier status, and RECEIVED, gets the notice.
+  it('AC-V3: canReturnLines only from SHIPPED/DELIVERED/VERIFIED', () => {
+    expect(canReturnLines('SHIPPED')).toBe(true);
+    expect(canReturnLines('DELIVERED')).toBe(true);
+    expect(canReturnLines('VERIFIED')).toBe(true);
+    expect(canReturnLines('NEW')).toBe(false);
+    expect(canReturnLines('ALLOCATED')).toBe(false);
+    expect(canReturnLines('PICKED')).toBe(false);
+    expect(canReturnLines('RECEIVED')).toBe(false);
   });
 
   // statusLabel/statusColour resolve via the map, else fall back: the raw

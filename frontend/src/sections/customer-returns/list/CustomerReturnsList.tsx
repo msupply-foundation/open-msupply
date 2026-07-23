@@ -204,6 +204,13 @@ const CustomerReturnsList: Component = () => {
     void refetch();
   };
 
+  // Id + status for the bulk delete's client-side pre-check (the outbound
+  // list's shape).
+  const selectedRows = () =>
+    rows()
+      .filter(row => selectedIds().includes(row.id))
+      .map(row => ({ id: row.id, status: row.status }));
+
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/distribution/customer-return/${row.id}`);
 
@@ -339,7 +346,7 @@ const CustomerReturnsList: Component = () => {
             </strong>
             <DeleteReturnsAction
               storeId={params.storeId}
-              selectedIds={selectedIds}
+              selectedRows={selectedRows}
               onDeleted={onDeleted}
             />
             <ContentFooterActions>
