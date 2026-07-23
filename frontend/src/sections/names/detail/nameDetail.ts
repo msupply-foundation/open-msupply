@@ -57,21 +57,3 @@ export const supplyLevelValue = (
   if (value == null || value === '') return '';
   return String(value);
 };
-
-// A contact's display "name" — first + last, trimmed (AC-N23 Contacts tab).
-export const contactFullName = (contact: {
-  firstName: string;
-  lastName: string;
-}): string => `${contact.firstName} ${contact.lastName}`.trim();
-
-// A contact's display "category" — the first non-empty of its three category
-// slots (AC-N23 shows a single "category" column).
-export const contactCategory = (contact: {
-  category1?: string | null;
-  category2?: string | null;
-  category3?: string | null;
-}): string =>
-  contact.category1?.trim() ||
-  contact.category2?.trim() ||
-  contact.category3?.trim() ||
-  '';

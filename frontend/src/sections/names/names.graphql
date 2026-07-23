@@ -155,7 +155,12 @@ query supplierPurchaseOrders($storeId: String!, $supplierName: String!) {
         number
         status
         createdDatetime
-        orderTotalAfterDiscount
+        confirmedDatetime
+        targetMonths
+        comment
+        lines {
+          totalCount
+        }
       }
     }
   }
