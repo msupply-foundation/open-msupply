@@ -84,7 +84,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
 
   // The volume the whole move will occupy = Σ (volumePerPack × countedPacks)
   // over the selected lines, sizing the picker's Available filter so it surfaces
-  // locations that can hold the entire selection (spec/stocktakes AC-VL2).
+  // locations that can hold the entire selection (OMS-REG-INV-03.62).
   const requiredVolume = () => {
     const selected = new Set(props.selectedIds());
     return props.rows
