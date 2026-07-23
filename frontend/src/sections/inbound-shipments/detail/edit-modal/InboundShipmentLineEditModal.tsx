@@ -1,6 +1,5 @@
 import {
   createEffect,
-  createResource,
   createSignal,
   onMount,
   Show,
@@ -46,8 +45,16 @@ import {
   type InboundLineFragment,
   type BatchInboundShipmentVariables,
 } from '../inboundShipmentDetail.generated';
-import { PurchaseOrderLines } from '../inboundShipmentLookups.generated';
+import {
+  PurchaseOrderLines,
+  type PurchaseOrderLinesResult,
+} from '../inboundShipmentLookups.generated';
 import { runInboundBatch } from '../inboundShipmentUpdate';
+
+// One line of the linked purchase order — the PO-line picker's options (derived
+// from the generated result, not restated).
+type PoLine =
+  PurchaseOrderLinesResult['purchaseOrder']['lines']['nodes'][number];
 
 export interface LineEditPrefs {
   vvm: boolean;
@@ -68,10 +75,20 @@ export interface InboundShipmentLineEditModalProps {
   storeId: string;
   invoiceId: string;
   isExternal: boolean;
-  /** Present ⇒ EDIT mode (that item's batches); absent ⇒ ADD mode. */
+  /**
+   * The item this open STARTS on (a row click) → UPDATE mode. Omitted for "Add
+   * item" → ADD mode (the item-search state). The modal tracks its own current
+   * item as the user advances with "OK & next" — this prop is fixed for the
+   * whole walk (it never re-keys the modal mid-walk).
+   */
   initialItemId?: string;
-  /** Items already on the shipment — excluded from the add-item search. */
-  existingItemIds: string[];
+  /**
+   * The clicked BATCH (invoice-line id) for a row-click open — the editor
+   * scrolls it into view and focuses its packs-received field on open. Omitted
+   * for "Add item" (and unused after an "OK & next" advance, which focuses the
+   * first row).
+   */
+  initialLineId?: string;
   /**
    * On a PO-linked shipment, add mode picks a purchase-order LINE (not an item
    * search) — a line insert must cite one (spec AC-E3). Set to the shipment's
@@ -84,11 +101,17 @@ export interface InboundShipmentLineEditModalProps {
   prefs: LineEditPrefs;
   onSaved: () => void;
   /**
-   * "OK & next" in EDIT mode: after saving, ask the parent to advance to the
-   * next item on the shipment (the parent owns the row list). Undefined ⇒ close
-   * after save.
+   * UPDATE mode "OK & next": after saving, ask the parent for the next item to
+   * advance to — parent-owned because the line table is server-paginated, so
+   * the next item may be on a later page (finding it pages the table forward).
+   * Given the current item id and the covered-items set (items already stepped
+   * through this walk), returns the next distinct uncovered item id, or
+   * undefined when the list is exhausted (→ the modal drops into add mode).
    */
-  onRequestNext?: (currentItemId: string) => void;
+  onRequestNext?: (
+    currentItemId: string,
+    covered: Set<string>
+  ) => Promise<string | undefined>;
 }
 
 // The inbound-shipment line editor (spec S4): the single surface for entering a
@@ -270,6 +293,24 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [batches, setBatches] = createStore<DraftBatch[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
+  // True while an item's existing lines are being fetched (mount, and each "OK
+  // & next" advance) so the body shows a spinner instead of flashing its empty
+  // state. Starts true; add mode clears it once the selector is ready.
+  const [loadingLines, setLoadingLines] = createSignal(true);
+  // Mode: 'update' (opened from a row — "OK & next" walks to the next item on
+  // the shipment) or 'add' ("Add item", or fallen into when an update walk
+  // runs out — "OK & next" then resets to add another). Only ever flips update
+  // → add, never back; the item selector is locked in update mode. Not visible
+  // (the selector IS the title; no Add/Edit label). Mirrors the stocktake
+  // editor (kdd/stocktake-line-editing).
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialItemId ? 'update' : 'add'
+  );
+
+  // Items already stepped through THIS walk (since the modal opened on a row),
+  // so the parent's next-item resolver never offers one twice — across page
+  // advances too. Seeded as each item loads; not reactive.
+  const coveredItemIds = new Set<string>();
 
   // What to focus once the batches are in the DOM (see the focus effect):
   // - 'itemSelector' → the add-mode top selector (item search, or PO-line
@@ -282,39 +323,51 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
 
   const tableConfig = createTableConfig({ tableId: 'inbound-line-edit' });
 
-  // Edit mode: load the item's existing lines and seed the draft. Add mode
-  // loads nothing until an item is chosen.
-  const [loaded] = createResource(async () => {
-    if (!props.initialItemId) return true;
+  // Load one item's existing lines and seed the batch draft — a plain
+  // SEQUENTIAL fetch, NOT a createResource (issue #428: draft state is built
+  // from individual fetches). Advancing between items during a walk then
+  // mutates the draft in place with no <Suspense> boundary to trip, so it never
+  // remounts (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  // `focusLineId` is the batch to focus once loaded (the clicked batch on a row
+  // open); omitted → the first row. Records the item in the covered set for the
+  // walk. Closes if the item has no lines left (it vanished).
+  const loadItemById = async (id: string, focusLineId?: string) => {
+    setLoadingLines(true);
+    setErrorMessage(undefined);
+    coveredItemIds.add(id);
     const result = await graphqlFetch(InboundShipmentLines, {
       storeId: props.storeId,
       filter: {
         invoiceId: { equalTo: props.invoiceId },
-        itemId: { equalTo: props.initialItemId },
+        itemId: { equalTo: id },
       },
       page: { first: 200 },
     });
-    if (
+    const lines =
       result.kind === 'success' &&
       result.data.invoiceLines.__typename === 'InvoiceLineConnector'
-    ) {
-      const lines = result.data.invoiceLines.nodes;
-      setBatches(lines.map(fromLine));
-      const first = lines[0];
-      if (first)
-        setItem({
-          id: first.itemId,
-          code: first.itemCode,
-          name: first.itemName,
-          unitName: first.item?.unitName ?? null,
-          isVaccine: first.item?.isVaccine ?? false,
-          doses: first.item?.doses ?? 0,
-          defaultPackSize: first.item?.defaultPackSize ?? 1,
-          defaultSellPricePerPack: 0,
-        });
+        ? result.data.invoiceLines.nodes
+        : [];
+    const first = lines[0];
+    if (!first) {
+      props.onClose();
+      return;
     }
-    return true;
-  });
+    setBatches(lines.map(fromLine));
+    setItem({
+      id: first.itemId,
+      code: first.itemCode,
+      name: first.itemName,
+      unitName: first.item?.unitName ?? null,
+      isVaccine: first.item?.isVaccine ?? false,
+      doses: first.item?.doses ?? 0,
+      defaultPackSize: first.item?.defaultPackSize ?? 1,
+      defaultSellPricePerPack: 0,
+    });
+    // Focus the requested batch, else the first row.
+    setPendingFocus({ row: focusLineId ?? first.id });
+    setLoadingLines(false);
+  };
 
   // A fresh batch for `chosen`, price-prefilled per AC-H6: starts at the item's
   // default pack size, with cost AND sell price seeded from the store default
@@ -333,7 +386,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     };
   };
 
+  // Picking from the item search is an ADD-flow action (update mode is entered
+  // only by clicking a row, and locks the selector), so it keeps mode 'add'.
+  // Items already on the shipment are NOT excluded — picking one loads a fresh
+  // batch for it (issue #428, confirmed with Mark; matches the stocktake
+  // editor). State for any item currently in the editor is lost, by design.
   const chooseItem = (option: ItemOption | null) => {
+    setMode('add');
     if (!option) {
       setItem(null);
       setBatches([]);
@@ -358,33 +417,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
-  // (spec AC-E3 — a PO-linked line insert must cite an order line). The picked
-  // line supplies the item, the cited line id, and the requested pack size.
+  // (spec AC-E3 — a PO-linked line insert must cite an order line). The order's
+  // lines are fetched once (sequentially, on mount) into a plain signal — not a
+  // createResource — so they're ready if/when the editor drops into add mode
+  // (initial open, or after an update walk exhausts).
   const [poLineId, setPoLineId] = createSignal<string>();
-  const [poLines] = createResource(
-    () => props.purchaseOrderId && !props.initialItemId,
-    async () => {
-      const result = await graphqlFetch(PurchaseOrderLines, {
-        storeId: props.storeId,
-        purchaseOrderId: props.purchaseOrderId!,
-      });
-      return result.kind === 'success' &&
-        result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
-        ? result.data.purchaseOrder.lines.nodes
-        : [];
-    }
-  );
-  // No-suspend read (mirrors storeScopedResource.noSuspense): reading
-  // `poLines()` — OR `poLines.latest` — trips the page <Suspense> on the first
-  // pending read, collapsing the boundary and remounting this dialog, which
-  // then loses the native top layer and drops into the page flow
-  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Gate on state.
-  const poLineList = () =>
-    poLines.state === 'ready' || poLines.state === 'refreshing'
-      ? (poLines.latest ?? [])
-      : [];
+  const [poLines, setPoLines] = createSignal<PoLine[]>([]);
+  const loadPoLines = async () => {
+    if (!props.purchaseOrderId) return;
+    const result = await graphqlFetch(PurchaseOrderLines, {
+      storeId: props.storeId,
+      purchaseOrderId: props.purchaseOrderId,
+    });
+    if (
+      result.kind === 'success' &&
+      result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
+    )
+      setPoLines(result.data.purchaseOrder.lines.nodes);
+  };
   const choosePoLine = (id: string) => {
-    const line = poLineList().find(l => l.id === id);
+    const line = poLines().find(l => l.id === id);
     if (!line) return;
     setPoLineId(id);
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
@@ -484,10 +536,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
-  // Add mode opens on the top selector (edit mode's initial focus is set once
-  // its lines load — see the resource above). Matches the stocktake editor.
+  // Seed on mount: a row open (update mode) loads its item — focusing the
+  // clicked batch; an add open starts in the item-search state, focusing the
+  // selector. On a PO-linked shipment the order's lines are fetched too (needed
+  // whenever the editor is in add mode — the initial open, or after an update
+  // walk exhausts). Matches the stocktake editor.
   onMount(() => {
-    if (!props.initialItemId) setPendingFocus('itemSelector');
+    void loadPoLines();
+    if (props.initialItemId)
+      void loadItemById(props.initialItemId, props.initialLineId);
+    else {
+      setLoadingLines(false);
+      setPendingFocus('itemSelector');
+    }
   });
 
   // Move focus once the target is in the DOM: the add-mode selector, else the
@@ -496,10 +557,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // overrides the Dialog's own initial-focus-to-panel default (which keeps a
   // combobox from popping open) — an intentional, per-editor affordance. A
   // disabled packs field (a locked line) can't take focus — we still scroll to
-  // it. Reading `loaded.loading` is the safe (non-suspending) resource read.
+  // it. Gated on loadingLines so the row exists before we reach for it.
   createEffect(() => {
     const target = pendingFocus();
-    if (!target || loaded.loading) return;
+    if (!target || loadingLines()) return;
     setPendingFocus(undefined);
     requestAnimationFrame(() => {
       const root = document.querySelector('[data-testid="add-item-modal"]');
@@ -630,21 +691,39 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const onOk = async () => {
     if (await save()) props.onClose();
   };
-  // OK & next: EDIT mode → save, then ask the parent to advance to the next
-  // item on the shipment (it owns the row list); ADD mode → save, then reset to
-  // add another item.
-  const onOkNext = async () => {
-    if (!(await save())) return;
-    const currentItemId = props.initialItemId;
-    if (currentItemId && props.onRequestNext) {
-      props.onRequestNext(currentItemId);
-      return;
-    }
+  // Back to the add-mode item-search state — no item picked. Reached when an
+  // update walk exhausts, or by "OK & next" in add mode (add another). Always
+  // add mode from here on, so the selector unlocks.
+  const backToSearch = () => {
+    setMode('add');
     setItem(null);
     setPoLineId(undefined);
     setBatches([]);
-    // Back to add-another: focus the selector so the next item can be typed.
+    setErrorMessage(undefined);
+    // Focus the selector so the next item can be typed / picked.
     setPendingFocus('itemSelector');
+  };
+
+  // OK & next: save, then — on success only — advance. By mode:
+  // - ADD: reset to the item-search state to add another (backToSearch).
+  // - UPDATE: ask the parent for the next item (it pages the detail table
+  //   forward as needed, guarding repeats with the covered set). Got one →
+  //   load it (draft swaps in place, no remount). None left → the walk is
+  //   exhausted, so drop into add mode's search state.
+  // Reuses this open either way (no close/reopen). A failed save stays put.
+  const onOkNext = async () => {
+    if (!(await save())) return;
+    if (mode() === 'add') {
+      backToSearch();
+      return;
+    }
+    const current = item();
+    const next =
+      current && props.onRequestNext
+        ? await props.onRequestNext(current.id, coveredItemIds)
+        : undefined;
+    if (next) await loadItemById(next);
+    else backToSearch(); // exhausted → add mode
   };
 
   const noItemYet = () => !item();
@@ -1113,6 +1192,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.volume-per-pack')}
             hideLabel
+            decimalLimit={10}
             size="small"
             value={b.volumePerPack}
             min={0}
@@ -1179,38 +1259,38 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       testId="add-item-modal"
       title={
         // On a PO-linked shipment, add mode picks a purchase-order line; every
-        // other case (manual add, and edit mode) shows the item selector — in
-        // edit mode disabled, so add and edit read as the same surface.
-        props.purchaseOrderId && !props.initialItemId ? (
+        // other case (manual add, and update mode) shows the item selector — in
+        // update mode disabled, so add and edit read as the same surface. Items
+        // already on the shipment are NOT filtered out (issue #428). The choice
+        // keys off mode(), not the initial prop, so an exhausted update walk
+        // that drops into add mode unlocks the selector / shows the PO picker.
+        props.purchaseOrderId && mode() === 'add' ? (
           <Select
             label={t('label.purchase-order')}
             testId="purchase-order-line-input"
             value={poLineId()}
             onValueChange={choosePoLine}
-            options={poLineList()
-              .filter(l => !props.existingItemIds.includes(l.item.id))
-              .map(l => ({
-                value: l.id,
-                label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
-                  'label.pack-size'
-                ).toLowerCase()} ${l.requestedPackSize}`,
-              }))}
+            options={poLines().map(l => ({
+              value: l.id,
+              label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
+                'label.pack-size'
+              ).toLowerCase()} ${l.requestedPackSize}`,
+            }))}
           />
         ) : (
           <ItemSearch
             label={t('label.item')}
             hideLabel
             storeId={props.storeId}
-            excludeItemIds={props.existingItemIds}
             value={item()?.id}
             selectedItem={item() ?? undefined}
-            disabled={!!props.initialItemId}
+            disabled={mode() === 'update'}
             onSelect={chooseItem}
           />
         )
       }
       ariaLabel={
-        props.initialItemId ? t('label.edit-line') : t('button.add-item')
+        mode() === 'update' ? t('label.edit-line') : t('button.add-item')
       }
       headerActions={
         <Show when={!noItemYet()}>
@@ -1258,7 +1338,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </>
       }
     >
-      <Show when={!loaded.loading} fallback={<Spinner center />}>
+      <Show when={!loadingLines()} fallback={<Spinner center />}>
         <Show
           when={!noItemYet()}
           fallback={

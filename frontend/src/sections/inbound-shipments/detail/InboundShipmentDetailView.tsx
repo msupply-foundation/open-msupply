@@ -124,9 +124,15 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
-  // The line-edit modal open state: { itemId } to edit an item's batches, {}
-  // to add a new item, undefined = closed.
-  const [editState, setEditState] = createSignal<{ itemId?: string }>();
+  // The line-edit modal open state: { itemId, lineId } to edit an item's
+  // batches (lineId = the clicked batch, focused on open), {} to add a new
+  // item, undefined = closed. Fixed for the whole "OK & next" walk — the modal
+  // advances between items imperatively, so this never changes mid-walk (no
+  // remount); it only clears on close.
+  const [editState, setEditState] = createSignal<{
+    itemId?: string;
+    lineId?: string;
+  }>();
   const [masterListOpen, setMasterListOpen] = createSignal(false);
   const [internalOrderOpen, setInternalOrderOpen] = createSignal(false);
 
@@ -180,7 +186,18 @@ const InboundShipmentDetailView: Component = () => {
       return undefined;
     }
   );
-  const info = (): InboundInfoFragment | undefined => data();
+  // Header/side-panel/footer node — read NON-SUSPENDING (kdd/solid-reactivity-
+  // pitfalls › No remounts on interaction). A line save refetches this node
+  // (its stock/service charge totals change), and the line editor stays open
+  // across an "OK & next" walk: a direct `data()` read would suspend the page
+  // <Suspense> on that refetch, detaching the open native <dialog> (backdrop
+  // gone, focus lost). The `.state` gate keeps the previous node on screen
+  // while it refreshes. Initial load (no live state) is handled by the <Show>
+  // fallback below, not by suspending.
+  const info = (): InboundInfoFragment | undefined =>
+    data.state === 'ready' || data.state === 'refreshing'
+      ? data.latest
+      : undefined;
 
   // One server-paginated page of the shipment's stock lines (invoiceId + type
   // forced; user filter/sort/page from the URL). Keyed on serialised variables
@@ -212,16 +229,27 @@ const InboundShipmentDetailView: Component = () => {
         : undefined;
     }
   );
-  const rows = (): Line[] => linesData.latest?.nodes ?? [];
-  const totalCount = () => linesData.latest?.totalCount ?? 0;
+  // Lines page read NON-SUSPENDING too (same rule): a line save / bulk action /
+  // "OK & next" page-advance refetches this while the editor is open — the
+  // `.state` gate keeps the current page visible instead of suspending.
+  const rows = (): Line[] =>
+    linesData.state === 'ready' || linesData.state === 'refreshing'
+      ? (linesData.latest?.nodes ?? [])
+      : [];
+  const totalCount = () =>
+    linesData.state === 'ready' || linesData.state === 'refreshing'
+      ? (linesData.latest?.totalCount ?? 0)
+      : 0;
 
   const [locationsData] = createResource(params.storeId, fetchLocations);
-  const locations = (): Location[] => locationsData.latest ?? [];
+  const locations = (): Location[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   const current = () => info();
   const isDisabled = () => current()?.status === 'VERIFIED';
   const isExternal = () => (current() ? isExternalShipment(current()!) : false);
-  const existingItemIds = () => rows().map(r => r.itemId);
 
   const refetchAll = () => {
     void refetchInfo();
@@ -290,17 +318,72 @@ const InboundShipmentDetailView: Component = () => {
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
-  const openRow = (line: Line) => setEditState({ itemId: line.itemId });
+  const openRow = (line: Line) =>
+    setEditState({ itemId: line.itemId, lineId: line.id });
   const openAdd = () => setEditState({});
 
-  // "OK & next" (edit mode): advance the editor to the next distinct item on
-  // the shipment after the current one (the view owns the row list); close when
-  // exhausted. Walks the loaded page (inbound line sets are typically one page).
-  const advanceToNextItem = (currentItemId: string) => {
-    const items = [...new Set(rows().map(r => r.itemId))];
-    const idx = items.indexOf(currentItemId);
-    const next = idx >= 0 ? items[idx + 1] : undefined;
-    setEditState(next ? { itemId: next } : undefined);
+  // "OK & next" (update mode): resolve the next item for the editor to advance
+  // to. Owned by the PARENT because the line table is server-paginated — the
+  // next item may be on a later page, and finding it pages the visible table
+  // forward. Given the current item id and the covered-items set (every item
+  // stepped through this walk, so a re-appearing item — one spans several batch
+  // rows — is never offered twice, across pages too), returns the next distinct
+  // uncovered item id in the current sorted order, or undefined when the whole
+  // list is exhausted (→ the modal drops into add mode, table left on the last
+  // page walked). Mirrors the stocktake reference (kdd/stocktake-line-editing).
+  const nextItem = async (
+    currentId: string,
+    covered: Set<string>
+  ): Promise<string | undefined> => {
+    // The next distinct, uncovered item within a page's rows. On the CURRENT
+    // page start AFTER the current item's rows (`fromStart` false): items
+    // before it are uncovered but already behind us, so a `past` gate walks
+    // past the current item first. Later pages are all "after", so `fromStart`
+    // true.
+    const pick = (pageRows: Line[], fromStart: boolean): string | undefined => {
+      let past = fromStart;
+      for (const line of pageRows) {
+        const id = line.itemId;
+        if (id === currentId) {
+          past = true;
+          continue;
+        }
+        if (!past || covered.has(id)) continue;
+        return id;
+      }
+      return undefined;
+    };
+
+    // 1. The current page (already loaded) — scan only after the current item.
+    const onThisPage = pick(rows(), false);
+    if (onThisPage) return onThisPage;
+
+    // 2/3. Walk forward a page at a time until we find one or run out. Later
+    // pages scan from their top; the covered set guards repeats. Each page is
+    // fetched DIRECTLY (race-free) while the table's URL offset follows along.
+    let offset = query().offset;
+    const first = query().first;
+    for (;;) {
+      offset += first;
+      if (offset >= totalCount()) return undefined; // no further pages
+      setQuery({ ...query(), offset });
+      const result = await graphqlFetch(InboundShipmentLines, {
+        storeId: params.storeId,
+        filter: {
+          invoiceId: { equalTo: params.invoiceId },
+          type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
+        },
+        sort: query().sort,
+        page: { first, offset },
+      });
+      if (
+        result.kind !== 'success' ||
+        result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
+      )
+        return undefined;
+      const found = pick(result.data.invoiceLines.nodes, true);
+      if (found) return found;
+    }
   };
 
   const reportSort = () => {
@@ -627,8 +710,12 @@ const InboundShipmentDetailView: Component = () => {
   };
 
   return (
+    // info()/rows() are read non-suspending (above), so the initial-load
+    // spinner comes from this <Show> fallback, not from the <Suspense> (which
+    // stays only as the lazy-route-chunk boundary). Once the node is present it
+    // stays rendered through every refetch — no remount of the open editor.
     <Suspense fallback={<Spinner center />}>
-      <Show when={info()}>
+      <Show when={info()} fallback={<Spinner center />}>
         {node => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
@@ -856,7 +943,7 @@ const InboundShipmentDetailView: Component = () => {
                 invoiceId={node().id}
                 isExternal={isExternal()}
                 initialItemId={editState()?.itemId}
-                existingItemIds={existingItemIds()}
+                initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
                 // Cost price is read-only only when the shipment carries a
                 // source link — a purchase order or a linked shipment (a
@@ -873,7 +960,7 @@ const InboundShipmentDetailView: Component = () => {
                     prefs().externalInboundShipmentLinesMustBeAuthorised,
                 }}
                 onSaved={onLinesChanged}
-                onRequestNext={advanceToNextItem}
+                onRequestNext={nextItem}
               />
               <AddFromMasterListModal
                 open={masterListOpen()}
