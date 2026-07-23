@@ -252,7 +252,6 @@ pub async fn patient_pull(
             limit: batch_size as i64,
         },
     )?;
-
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
         rows,
