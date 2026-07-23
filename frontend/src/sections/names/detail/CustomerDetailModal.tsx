@@ -71,7 +71,12 @@ export const CustomerDetailModal: Component<Props> = props => {
         // OK dismisses the read-only viewer (matches the current app's modal OK:
         // primary + check icon). Our Button is the brand white-pill primary that
         // fills on hover (design-system choice), not OMS's solid-fill button.
-        <Button variant="primary" icon={<CheckIcon />} onClick={props.onClose}>
+        <Button
+          variant="primary"
+          icon={<CheckIcon />}
+          onClick={props.onClose}
+          data-testid="customer-detail-ok"
+        >
           {t('common.ok')}
         </Button>
       }
