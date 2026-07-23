@@ -234,7 +234,7 @@ export const CreateStocktakeModal = (props: {
       expiryDate,
       includeAllItems,
     } = form();
-    // Seed a default description on every create mode (spec AC-C9): the server
+    // Seed a default description on every create mode (OMS-REG-INV-03.9): the server
     // fabricates no default, so the client composes one — the user's display
     // name and today's date, both in the active locale. Editable in place
     // afterward; nothing re-derives it.
