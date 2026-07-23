@@ -61,6 +61,12 @@ const SupplierDetailPage: Component = () => {
   return (
     <Tabs value={tab()} onValueChange={setTab}>
       <Page
+        // Fill the body (no padding, non-scrolling) so the table tabs (Purchase
+        // orders, Contacts) go full-bleed like the list views — the table starts
+        // right after the side menu, not inset. The form tabs (Details, Custom
+        // fields) self-pad and centre via their own DetailContainer, so they
+        // stay correct without the body padding.
+        fillBody
         header={
           <Header>
             <Breadcrumb crumbs={crumbs()} />
