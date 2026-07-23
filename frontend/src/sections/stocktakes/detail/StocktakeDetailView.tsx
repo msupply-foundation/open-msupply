@@ -893,6 +893,14 @@ const StocktakeDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled(node()) ? undefined : openRow}
+                  // Uncounted lines (no counted value) read in the info tone —
+                  // whole-row action-blue text, marking them as awaiting a
+                  // count (spec ui-surface → Line table, AC-D6). They're the
+                  // lines trimmed on finalise. Flat table, so a leaf-row
+                  // predicate is enough (no grouped parents to propagate to).
+                  rowTone={line =>
+                    line.countedNumberOfPacks == null ? 'info' : undefined
+                  }
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (

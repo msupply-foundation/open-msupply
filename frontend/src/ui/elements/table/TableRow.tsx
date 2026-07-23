@@ -35,11 +35,12 @@ export function TableRow<T>(props: {
    */
   rowDimmed?: (row: T) => boolean;
   /**
-   * Semantic text tone for this row (e.g. 'info' for records awaiting an
-   * action — outbound's placeholder lines): stamps data-tone, styled in CSS.
-   * Semantic names only, mapped to palette tokens by the CSS — never colours.
+   * Semantic text tone for this row: 'info' for records awaiting an action
+   * (placeholder / uncounted lines), 'error' for a line the server refused
+   * (a failed bulk operation). Stamps data-tone, styled in CSS. Semantic
+   * names only, mapped to palette tokens by the CSS — never colours.
    */
-  rowTone?: (row: T) => 'info' | undefined;
+  rowTone?: (row: T) => 'info' | 'error' | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.

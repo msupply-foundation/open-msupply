@@ -95,3 +95,12 @@ export const isEditable = (status: string): boolean =>
 
 // A shipment is deletable exactly while it is editable (rules.md § deletion).
 export const isDeletable = isEditable;
+
+// The customer-return entry point (spec/outbound-shipments acceptance AC-V3):
+// "Return selected lines" opens the customer-return flow only from SHIPPED,
+// DELIVERED or VERIFIED — the shipment has left the store, so its issued lines
+// can come back. At any other status (RECEIVED included, per the UI matrix) the
+// button instead shows the explanatory notice. The button is always visible;
+// this only decides open-flow vs notice.
+export const canReturnLines = (status: string): boolean =>
+  status === 'SHIPPED' || status === 'DELIVERED' || status === 'VERIFIED';
