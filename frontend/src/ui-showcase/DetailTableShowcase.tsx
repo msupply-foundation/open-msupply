@@ -8,6 +8,7 @@ import {
 import {
   getCurrencyCell,
   getDateCell,
+  getExpiryDateCell,
   getNumberCell,
 } from '../ui/elements/table/tableHelpers';
 import {
@@ -118,6 +119,17 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const isoDay = (month: number, day: number, year: number) =>
   `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`;
 
+// Expiry dates are generated RELATIVE to today so the near-expiry error tone
+// (getExpiryDateCell: ≤3 months out, past included) always has live examples
+// no matter when the showcase is opened. `day` stays 1–28, so every month is
+// safe.
+const monthsFromNow = (months: number, day: number): string => {
+  const now = new Date();
+  const m = now.getMonth() + months;
+  const year = now.getFullYear() + Math.floor(m / 12);
+  return isoDay((((m % 12) + 12) % 12) + 1, day, year);
+};
+
 // A deterministic ~50-line dataset exercising every cell type: numbers,
 // currency, dates, wrapping names, blank cells, placeholder (info-tone) rows,
 // and a couple of transfer-linked lines whose code reads in the error tone.
@@ -137,6 +149,11 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   const camp = CAMPAIGNS[i % CAMPAIGNS.length];
   const month = (i % 12) + 1;
   const day = (i % 27) + 1;
+  // A few lines already expired (2–3 months ago), a few inside the ≤3-month
+  // warning window (0–2 months out — a 0 with an earlier day reads as just
+  // expired), the rest safely 6–29 months out.
+  const expiryMonths =
+    i % 13 === 2 ? -((i % 3) + 1) : i % 9 === 5 ? (i % 7) % 3 : (i % 24) + 6;
   return {
     id: `line-${i + 1}`,
     type: 'STOCK_IN',
@@ -144,7 +161,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
     itemName: item.name,
     itemCode: item.code,
     batch: i % 7 === 3 ? null : `BN${2000 + i * 3}`,
-    expiryDate: i % 11 === 4 ? null : isoDay(month, day, 2028),
+    expiryDate: i % 11 === 4 ? null : monthsFromNow(expiryMonths, day),
     manufactureDate: i % 5 === 0 ? isoDay(month, day, 2025) : null,
     packSize,
     numberOfPacks,
@@ -358,7 +375,7 @@ export const DetailTableShowcase = () => {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
       header: t('label.expiry'),
-      ...getDateCell(),
+      ...getExpiryDateCell(),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
