@@ -51,6 +51,7 @@ import {
   SettingsIcon,
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import { BareCheckbox } from '../inputs/BareCheckbox';
 import { EmptyState } from '../feedback/EmptyState';
 import { Spinner } from '../feedback/Spinner';
 import { Button } from '../buttons/Button';
@@ -506,10 +507,10 @@ export function DataTable<T, K extends string, G extends string = never>(
   // so content can't widen it) and is itself pinned-left (it must not scroll
   // away either). This px MUST equal that box width, or the first data column
   // scrolls through a seam beside it. The width's ONE source is
-  // --table-leading-col (2.75rem, on the table .root — see DataTable.module.css);
+  // --table-leading-col (3rem, on the table .root — see DataTable.module.css);
   // we mirror the same rem here via remToPx (reads the live root font-size, so
   // it tracks the compact-band 85% root too). leadingWidth is its total.
-  const leadingColPx = () => remToPx(2.75); // keep 2.75 in sync with --table-leading-col
+  const leadingColPx = () => remToPx(3); // keep 3 in sync with --table-leading-col
   const leadingWidth = () => (props.enableSelection ? leadingColPx() : 0);
 
   // The sticky style for a data column's cell (header or body), or undefined
@@ -713,22 +714,15 @@ export function DataTable<T, K extends string, G extends string = never>(
                           data-pinned="left"
                           style={leadingPinnedStyle(0)}
                         >
-                          <input
-                            type="checkbox"
+                          {/* Partial selection (some rows on this page, not
+                              all) shows the indeterminate dash (ui-standards
+                              § tables → row selection). */}
+                          <BareCheckbox
+                            class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
                             checked={table.getIsAllRowsSelected()}
-                            // Partial selection (some rows on this page,
-                            // not all) shows the native indeterminate glyph
-                            // (ui-standards § tables → row selection).
-                            // `indeterminate` is a DOM PROPERTY, not an
-                            // attribute, so it's set via a ref'd effect.
-                            ref={el =>
-                              createEffect(() => {
-                                el.indeterminate =
-                                  table.getIsSomeRowsSelected();
-                              })
-                            }
+                            indeterminate={table.getIsSomeRowsSelected()}
                             onChange={table.getToggleAllRowsSelectedHandler()}
                           />
                         </th>

@@ -238,6 +238,14 @@ export const CopyIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Indeterminate dash (BareCheckbox's tri-state glyph) */
+/* Hugeicons: MinusSignIcon */
+export const MinusIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 12L4 12" />
+  </Stroke>
+);
+
 /* Clear / remove */
 /* Hugeicons: MinusSignCircleIcon */
 export const MinusCircleIcon = (props: IconProps) => (
