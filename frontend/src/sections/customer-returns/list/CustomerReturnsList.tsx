@@ -370,9 +370,9 @@ const CustomerReturnsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // De-emphasise rows the store can no longer edit (VERIFIED; transfer
-        // rows still in the sender's hands) — ui-surface S1.
-        rowDimmed={isReturnDisabled}
+        // Rows the store can no longer edit (VERIFIED; transfer rows still
+        // in the sender's hands) take the disabled state — ui-surface S1.
+        rowState={row => (isReturnDisabled(row) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-customer-returns')}
         empty={
           <Button

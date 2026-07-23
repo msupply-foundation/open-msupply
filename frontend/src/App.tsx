@@ -20,11 +20,14 @@ import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
+import { customersRoutes, suppliersRoutes } from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { itemsRoutes } from './sections/items';
+import { patientsRoutes } from './sections/patients';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
@@ -46,12 +49,16 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 const sectionRoutes: Record<string, () => JSX.Element> = {
   dashboard: dashboardRoutes,
   'inventory/stocktakes': stocktakesRoutes,
+  'distribution/customers': customersRoutes,
+  'replenishment/suppliers': suppliersRoutes,
   'inventory/locations': locationsRoutes,
   'distribution/customer-return': customerReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
+  'dispensary/patients': patientsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,

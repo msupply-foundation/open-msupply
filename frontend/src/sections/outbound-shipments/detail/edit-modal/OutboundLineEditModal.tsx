@@ -218,6 +218,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setErrorMessage(undefined);
     setWarnings([]);
     setIssueValue(undefined);
+    // Back to the units lens: the previous item's pack lens may not exist on
+    // this one, and the auto-allocation below seeds through onIssueChange —
+    // a stale packs-of-N lens would multiply the placeholder's units by N.
+    setAllocateIn({ kind: 'units' });
     setDirty(false);
     setZeroConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
@@ -235,7 +239,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // the server-side allocation).
     const sorted = [...data.draftLines].sort(fefoCompare);
     setDraft(reconcile(sorted, { key: 'id' }));
-    setPlaceholderUnits(data.placeholderQuantity ?? 0);
+    const placeholder = data.placeholderQuantity ?? 0;
+    setPlaceholderUnits(placeholder);
     // Land ready to type: in update mode the clicked batch's packs input
     // (draft rows from existing lines keep the invoice-line id) or the first
     // row on an advance; after an add-mode pick, the Issue field (the
@@ -246,6 +251,26 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         : { row: undefined }
     );
     setLoadingLines(false);
+
+    // Auto-allocate on open (AC-A5): a NEW shipment's *pure* placeholder — an
+    // item carrying a requested quantity with nothing yet allocated — is
+    // distributed against available stock the moment the editor opens, the
+    // same FEFO run the Issue field performs (seeded with the requested
+    // quantity), leaving the placeholder holding any remainder. A notice
+    // shows only if stock was actually placed. Requisition-sourced and
+    // manual-shortfall placeholders carry a quantity; master-list
+    // placeholders are zero, so this no-ops for them. An item with stock
+    // already allocated is left untouched.
+    const allocatedPacks = sorted.reduce(
+      (sum, line) => sum + line.numberOfPacks,
+      0
+    );
+    if (props.isNew && placeholder > 0 && allocatedPacks === 0) {
+      onIssueChange(placeholder);
+      const placed = draft.reduce((sum, line) => sum + line.numberOfPacks, 0);
+      if (placed > 0)
+        setWarnings(prev => [t('messages.auto-allocated-lines'), ...prev]);
+    }
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by
@@ -465,26 +490,37 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       });
     });
 
-  // OK & next (spec S4, AC-V7): saves, then advances without closing.
+  // OK & next (spec S4, AC-V7): save, then continue rapid entry — never a
+  // dead end (matching the stocktake / inbound editors, so never disabled):
   // - UPDATE mode: ask the parent for the next item in its sorted/paginated
   //   order (the covered set guards repeats) and seed it in place; when the
-  //   walk is exhausted, drop into add mode (empty, picker focused).
+  //   walk is exhausted, drop into add mode (empty, picker focused). An
+  //   unchanged item pages on WITHOUT a redundant save (outbound gates saves
+  //   on a real change).
   // - ADD mode: reopen empty for rapid entry of the next item.
   // A failed save aborts the advance with the editor unchanged.
-  const onOkNext = () =>
+  const advance = async (currentId: string) => {
+    const next = await props.nextItem(currentId, coveredItemIds);
+    if (next) await seedItem(next);
+    else backToSearch(); // exhausted → add mode
+  };
+  const onOkNext = () => {
+    const current = item();
+    if (mode() === 'update' && current && !dirty()) {
+      void advance(current.id);
+      return;
+    }
     confirmThen(() => {
       void (async () => {
-        const current = item();
         if (!(await save())) return;
         if (mode() === 'add' || !current) {
           backToSearch();
           return;
         }
-        const next = await props.nextItem(current.id, coveredItemIds);
-        if (next) await seedItem(next);
-        else backToSearch(); // exhausted → add mode
+        await advance(current.id);
       })();
     });
+  };
 
   // The picker shows EVERY visible stock item — items already on the shipment
   // are NOT excluded (spec S4; picking one loads its existing allocation).
@@ -695,17 +731,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           >
             {t('button.ok')}
           </Button>
-          {/* Rapid entry — BOTH modes (AC-V7), shown only once there's a
-              valid entry to save: HIDDEN (not disabled) until an item is
-              chosen and a change made. In update mode it advances the
-              parent-owned walk; in add mode it reopens empty. OK stays
-              visible-but-disabled as the always-discoverable confirm (spec
-              S4 § footer button matrix). */}
-          <Show when={item() && dirty()}>
+          {/* OK & next (spec S4 § footer button matrix) — never disabled,
+              like the stocktake / inbound editors:
+               · add mode    — HIDDEN until an item is chosen and a change
+                 made; then saves + returns to the picker to add another.
+               · update mode — SHOWN throughout; saves any change, then
+                 advances the parent-owned walk, or drops into add mode once
+                 it is exhausted.
+              OK stays visible-but-disabled as the always-discoverable
+              confirm. */}
+          <Show when={mode() === 'update' ? item() : item() && dirty()}>
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
-              loading={saving()}
+              // loadingLines too (the stocktake editor's busy()): the no-save
+              // page-through is a fetch with no stale-response guard, so the
+              // button must not accept clicks while one is in flight.
+              loading={saving() || loadingLines()}
               onClick={onOkNext}
             >
               {t('button.ok-and-next')}
@@ -828,7 +870,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           rowKey={line => line.id}
           loading={loadingLines()}
           showFullScreen={false}
-          rowDimmed={line => isBarred(line)}
+          rowState={line => (isBarred(line) ? 'disabled' : undefined)}
           emptyMessage={t('messages.no-stock-available')}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}

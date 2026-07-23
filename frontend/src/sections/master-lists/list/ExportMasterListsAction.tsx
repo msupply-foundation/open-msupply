@@ -10,11 +10,12 @@ import {
   csvToExcel,
   downloadBlob,
   fetchReportFile,
+  listExportCsvFilename,
+  listExportExcelFilename,
 } from '../../../domain/reportFiles';
 import { currentStoreId } from '../../../store/storeContext';
+import { storeCodeOf } from '../../../auth/authContext';
 import {
-  csvFilename,
-  excelFilename,
   masterListsToCsv,
   type MasterListExportRow,
 } from '../masterListExport';
@@ -55,11 +56,16 @@ export const ExportMasterListsAction: Component<{
       const storeId = currentStoreId();
       if (!storeId) return; // store-scoped route always has one; guard for the type
 
+      // Filenames per the shared list-export rule
+      // (ui-standards/list-views § regions).
+      const storeCode = storeCodeOf(storeId);
+      const listName = t('filename.master-lists');
       if (format === 'excel') {
         const generated = await csvToExcel({
           storeId,
           csvData: csv,
-          filename: excelFilename(storeId),
+          filename: listExportExcelFilename(storeCode, listName),
+          sheetName: storeCode,
         });
         if (generated.kind !== 'fileId') return;
         const file = await fetchReportFile(generated.fileId);
@@ -67,7 +73,7 @@ export const ExportMasterListsAction: Component<{
       } else {
         downloadBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          csvFilename(new Date().toISOString(), storeId)
+          listExportCsvFilename(storeCode, listName, new Date())
         );
       }
     } finally {

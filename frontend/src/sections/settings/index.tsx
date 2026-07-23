@@ -1,9 +1,15 @@
 import { lazy } from 'solid-js';
 import { Route } from '@solidjs/router';
 
-// The Settings utility destination, mounted under /{storeId}/settings by
-// App.tsx (spec/chrome § utility destinations). Lazy so the page is its own
-// bundle, mirroring the other sections.
-const SettingsPage = lazy(() => import('./SettingsPage'));
-
-export const settingsRoutes = () => <Route path="/" component={SettingsPage} />;
+// Settings vertical (spec/settings): the S1 settings page, plus the S2
+// Test-scanner screen reached from Devices. Mounted by App.tsx under
+// /:storeId/settings.
+export const settingsRoutes = () => (
+  <>
+    <Route path="/" component={lazy(() => import('./SettingsPage'))} />
+    <Route
+      path="/test-scanner"
+      component={lazy(() => import('./devices/TestScannerPage'))}
+    />
+  </>
+);
