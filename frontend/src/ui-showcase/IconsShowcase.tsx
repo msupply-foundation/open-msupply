@@ -1,7 +1,10 @@
 import { createSignal, For, type Component } from 'solid-js';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
 import * as iconsModule from '../ui/icons';
 import type { IconProps } from '../ui/icons';
 import { RadioGroup, type RadioOption } from '../ui/elements/inputs/RadioGroup';
+import { Intro } from './common';
 import styles from './IconsShowcase.module.css';
 
 /*
@@ -42,45 +45,47 @@ export const IconsShowcase = () => {
   const [colour, setColour] = createSignal('body');
 
   return (
-    <div class={styles.stack}>
-      <p class={styles.lead}>
-        Every icon in <code>src/ui/icons</code>. Each is a plain SVG that paints
-        with <code>currentColor</code> and sizes to <code>1em</code>, so colour
-        follows the surrounding text and size follows font-size — use the
-        switches to preview any size and theme colour.
-      </p>
-      <div class={styles.controls}>
-        <RadioGroup
-          label="Size"
-          orientation="horizontal"
-          options={SIZE_OPTIONS}
-          value={size()}
-          onChange={setSize}
-        />
-        <RadioGroup
-          label="Colour"
-          orientation="horizontal"
-          options={COLOUR_OPTIONS}
-          value={colour()}
-          onChange={setColour}
-        />
-      </div>
-      <ul class={styles.grid}>
-        <For each={icons}>
-          {([name, Icon]) => (
-            <li class={styles.card}>
-              <span
-                class={styles.glyph}
-                data-size={size()}
-                data-colour={colour()}
-              >
-                <Icon />
-              </span>
-              <code class={styles.name}>{name}</code>
-            </li>
-          )}
-        </For>
-      </ul>
-    </div>
+    <ContentContainer size="form" align="start">
+      <Stack gap="lg">
+        <Intro>
+          Every icon in <code>src/ui/icons</code>. Each is a plain SVG that
+          paints with <code>currentColor</code> and sizes to <code>1em</code>,
+          so colour follows the surrounding text and size follows font-size —
+          use the switches to preview any size and theme colour.
+        </Intro>
+        <div class={styles.controls}>
+          <RadioGroup
+            label="Size"
+            orientation="horizontal"
+            options={SIZE_OPTIONS}
+            value={size()}
+            onChange={setSize}
+          />
+          <RadioGroup
+            label="Colour"
+            orientation="horizontal"
+            options={COLOUR_OPTIONS}
+            value={colour()}
+            onChange={setColour}
+          />
+        </div>
+        <ul class={styles.grid}>
+          <For each={icons}>
+            {([name, Icon]) => (
+              <li class={styles.tile}>
+                <span
+                  class={styles.glyph}
+                  data-size={size()}
+                  data-colour={colour()}
+                >
+                  <Icon />
+                </span>
+                <code class={styles.name}>{name}</code>
+              </li>
+            )}
+          </For>
+        </ul>
+      </Stack>
+    </ContentContainer>
   );
 };

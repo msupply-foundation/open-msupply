@@ -18,7 +18,9 @@ import {
 //   ANY negative adjustment; offering them here is the documented client
 //   narrowing (rules §reason valid). A caller that only wants a reduction
 //   passes 'negative' too (reduce-to-zero is always a reduction).
-export type ReasonKind = 'positive' | 'negative';
+// - 'return' — a customer-return line's optional "why it came back"
+//   (spec/customer-returns/rules.md § line rules): the active return reasons.
+export type ReasonKind = 'positive' | 'negative' | 'return';
 
 const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
   positive: new Set(['POSITIVE_INVENTORY_ADJUSTMENT']),
@@ -27,6 +29,7 @@ const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
     'OPEN_VIAL_WASTAGE',
     'CLOSED_VIAL_WASTAGE',
   ]),
+  return: new Set(['RETURN_REASON']),
 };
 
 /**

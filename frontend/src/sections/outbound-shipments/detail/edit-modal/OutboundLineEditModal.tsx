@@ -3,12 +3,10 @@ import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
-import { toNumberOrNull } from '../../../../typeHelpers';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
@@ -33,13 +31,16 @@ import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
 import {
   availableUnits as sumAvailableUnits,
   barReasons,
+  deriveIssueWarnings,
   distributeIssue,
   fefoCompare,
   lensToUnits,
   type AllocateUnit,
   type AllocationPreferences,
+  type IssueWarning,
 } from '../../../../domain/allocation';
 import { outboundPrefs } from '../../outboundPreferencesResource';
+import { issueWarningMessages } from './allocationWarnings';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
 // quantity to issue and distribute it across batches. The batch grid is the
@@ -97,13 +98,36 @@ export const OutboundLineEditModal = (
 // packs-of-‹size›; doses stay display-only in this build (entry mode needs
 // the doses preference, off on the dev store).
 
+// Resolve the shared distribution warnings (src/domain/allocation
+// deriveIssueWarnings) to the editor's inline banner strings. The mapping —
+// over-allocation surfaced (AC-AL3) and every skipped category reported
+// (AC-AL2) — is the pure issueWarningMessages (unit-tested in
+// ./allocationWarnings); here we only resolve its keys/params via t(), reusing
+// the same ported vocabulary the bulk allocate report uses. The shortfall is
+// NOT reported here — outbound surfaces it as the dedicated placeholder notice
+// (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
+const warningMessages = (
+  derived: readonly IssueWarning[],
+  requestedUnits: number
+): string[] =>
+  issueWarningMessages(derived, requestedUnits).map(message =>
+    message.key === 'messages.over-allocated'
+      ? t(message.key, {
+          quantity: formatNumber(message.quantity),
+          issueQuantity: formatNumber(message.issueQuantity),
+        })
+      : t(message.key, {
+          reasons: message.reasons.map(reason => t(reason)).join(', '),
+        })
+  );
+
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
     props.initialItem
   );
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
-  const [issueText, setIssueText] = createSignal('');
+  const [issueValue, setIssueValue] = createSignal<number | undefined>();
   const [allocateIn, setAllocateIn] = createSignal<AllocateUnit>({
     kind: 'units',
   });
@@ -129,7 +153,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setLoadingLines(true);
     setErrorMessage(undefined);
     setWarnings([]);
-    setIssueText('');
+    setIssueValue(undefined);
     setDirty(false);
     setZeroConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
@@ -218,9 +242,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       setDraft(index, 'numberOfPacks', packs);
     }
     setPlaceholderUnits(props.isNew ? result.shortfallUnits : 0);
-    const notes: string[] = [];
-    if (result.skippedReasons.size > 0) notes.push(t('messages.stock-expired'));
-    setWarnings(notes);
+    // Structured per-category + over-allocation warnings from the shared policy
+    // (AC-AL2/AL3). Shortfall is surfaced separately as the placeholder notice,
+    // so it is excluded here (reportShortfall:false).
+    setWarnings(
+      warningMessages(
+        deriveIssueWarnings(result, { reportShortfall: false }),
+        units
+      )
+    );
     setDirty(true);
     // The allocation just changed — any earlier zero-allocation confirmation
     // no longer applies (spec S4 § save; it must be re-earned against the
@@ -228,9 +258,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setZeroConfirm(false);
   };
 
-  const onIssueInput = (value: string) => {
-    setIssueText(value);
-    const units = lensToUnits(toNumberOrNull(value), allocateIn());
+  // NumberField hands us a committed number (already numeric-only and clamped
+  // to min 0 — negatives and non-numeric input never reach here) or undefined
+  // when the field is cleared.
+  const onIssueChange = (value: number | undefined) => {
+    setIssueValue(value);
+    const units = lensToUnits(value ?? null, allocateIn());
     // Clearing (or blanking) the Issue field distributes 0 — resetting every
     // batch's packs and the placeholder, not leaving the last distribution behind.
     distribute(units ?? 0);
@@ -313,7 +346,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         setItem(undefined);
         setDraft(reconcile([], { key: 'id' }));
         setPlaceholderUnits(0);
-        setIssueText('');
+        setIssueValue(undefined);
         setWarnings([]);
         setDirty(false);
         setZeroConfirm(false);
@@ -530,12 +563,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           >
             {t('button.ok')}
           </Button>
-          {/* Rapid entry — add mode only (spec S4 § save). */}
-          <Show when={!editMode()}>
+          {/* Rapid entry — add mode only, and shown only once there's a valid
+              entry to save: HIDDEN (not disabled) until an item is chosen and a
+              change made. OK stays visible-but-disabled as the always-
+              discoverable confirm (spec S4 § footer button matrix). */}
+          <Show when={!editMode() && item() && dirty()}>
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
-              disabled={!item() || !dirty()}
               loading={saving()}
               onClick={onOkNext}
             >
@@ -566,8 +601,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               <span data-testid="item-option-name">{option.name}</span>
             </span>
             <span class={styles.itemStock}>
-              {formatNumber(option.availableStockOnHand)}{' '}
-              {option.unitName ?? t('label.unit-plural')}
+              {/* A fixed, localised "Units" label for every item — the item's
+                  own unitName is untranslatable catalogue data, so the old app's
+                  item search shows t('label.units') here for all items (the
+                  specific unit is used on the Available line / lens, not here). */}
+              {formatNumber(option.availableStockOnHand)} {t('label.units')}
             </span>
           </span>
         )}
@@ -597,25 +635,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {unitName()}
           </span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            'align-items': 'end',
-            gap: 'var(--space-4)',
-            'margin-block-end': 'var(--space-3)',
-          }}
-        >
-          <TextField
+        {/* One control per row below the compact breakpoint (the same cutoff
+            where this large Dialog goes full-screen) — see the module CSS. */}
+        <div class={styles.issueRow}>
+          {/* Both controls at the default height — NumberField's "small"
+              (2.25rem) and Select's "sm" (1.75rem — the Pagination scale)
+              don't align with each other. */}
+          <NumberField
             label={t('label.issue')}
-            size="small"
-            inputmode="decimal"
-            value={issueText()}
+            min={0}
+            value={issueValue()}
             disabled={saving()}
-            onInput={e => onIssueInput(e.currentTarget.value)}
+            onChange={onIssueChange}
           />
           <Select
             label={t('label.units')}
-            size="sm"
             value={allocateInValue()}
             options={[
               { value: 'units', label: unitName() },
@@ -630,8 +664,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                   ? { kind: 'units' }
                   : { kind: 'packs', size: Number(value.slice(6)) }
               );
-              const parsed = toNumberOrNull(issueText());
-              if (parsed != null && parsed >= 0) onIssueInput(issueText());
+              // Re-interpret the same requested quantity in the new lens.
+              const v = issueValue();
+              if (v != null) onIssueChange(v);
             }}
           />
           {/* Placeholder notice (info) — to the right of Issue / Allocate-in,

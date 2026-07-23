@@ -1,19 +1,19 @@
 import type { Component } from 'solid-js';
 import type { IconProps } from '../../icons';
 import {
-  HomeIcon,
+  DashboardIcon,
   TruckIcon,
   StockIcon,
   CustomersIcon,
   ThermometerIcon,
   FileIcon,
-  ListIcon,
+  CatalogueIcon,
   SlidersIcon,
   ReportsIcon,
   SettingsIcon,
   HelpIcon,
-  DownloadIcon,
-  RadioIcon,
+  ReplenishmentIcon,
+  SyncIcon,
 } from '../../icons';
 import type { LocaleKey } from '../../../intl';
 import {
@@ -62,14 +62,14 @@ export interface NavItem {
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
 // only (spec DIVERGENCES D4).
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
-  dashboard: HomeIcon,
-  replenishment: DownloadIcon,
+  dashboard: DashboardIcon,
+  replenishment: ReplenishmentIcon,
   inventory: StockIcon,
   distribution: TruckIcon,
   dispensary: CustomersIcon,
   'cold-chain': ThermometerIcon,
   programs: FileIcon,
-  catalogue: ListIcon,
+  catalogue: CatalogueIcon,
   manage: SlidersIcon,
   reports: ReportsIcon,
   settings: SettingsIcon,
@@ -105,7 +105,7 @@ const syncNavItem: NavItem = {
   id: SYNC_NAV_ID,
   labelKey: 'sync',
   to: 'sync',
-  icon: RadioIcon,
+  icon: SyncIcon,
 };
 
 export const upperNav: NavItem[] = items.filter(

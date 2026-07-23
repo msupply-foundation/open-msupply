@@ -46,6 +46,14 @@
   box-shadow: var(--focus-ring-error);
 }
 
+/* Disabled: the same muted fill the disabled TextField uses (its
+   `.input:disabled`), so a read-only lookup — the locked item in edit mode, or
+   the customer field once the shipment is read-only / requisition-sourced —
+   reads as read-only rather than as an editable white field. */
+.control:has(.input:disabled) {
+  background: var(--bg-input);
+}
+
 .searchIcon {
   display: inline-flex;
   margin-inline-start: var(--input-padding-x);
@@ -132,13 +140,22 @@
   z-index: 50;
 }
 
-/* Sticky in-dropdown header (e.g. the location fullness filter): a
-   non-shrinking row above the scrolling listbox, with a hairline divider. */
+/* Size-to-content popup (matchTriggerWidth={false}): never narrower than the
+   trigger, capped so long option text stays readable and never runs past the
+   viewport edge. Being absolutely positioned, the popup shrink-to-fits its
+   content between these bounds; over-long rows ellipsize within it. */
+.contentGrow {
+  min-width: var(--kb-popper-anchor-width);
+  max-width: min(var(--kb-popper-content-available-width), 32rem);
+}
+
+/* Sticky in-dropdown header (e.g. the location fullness tabs): a non-shrinking
+   row above the scrolling listbox. The header content supplies its own bottom
+   edge (the tab strip's underline track), so this adds only the gap to the list
+   — no second divider. */
 .listboxHeader {
   flex: none;
-  padding-block-end: var(--space-2);
   margin-block-end: var(--space-2);
-  border-block-end: 1px solid var(--color-border-value);
 }
 
 .listbox {
@@ -173,6 +190,15 @@
 
 .item[data-selected] {
   font-weight: var(--weight-medium);
+}
+
+/* A listed-but-disabled option (aria-disabled — e.g. an on-hold customer):
+   dimmed alongside its textual marker, never colour-alone — same treatment
+   as Select's .item[data-disabled]. Visible for context, not selectable; no
+   pointer affordance. */
+.item[data-disabled] {
+  color: var(--gray-main);
+  cursor: default;
 }
 
 .status {

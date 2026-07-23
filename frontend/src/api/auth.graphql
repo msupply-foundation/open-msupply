@@ -71,6 +71,7 @@ fragment UserInfo on UserNode {
       # storeMode per store, so the entered store's mode is known from the
       # me/login response — no extra query.
       storeMode
+      homeCurrencyCode
     }
   }
 }

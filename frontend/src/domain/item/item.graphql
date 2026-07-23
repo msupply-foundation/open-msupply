@@ -28,6 +28,13 @@ query itemsWithStock(
         # factor from the picker straight onto a new line, without a re-fetch.
         isVaccine
         doses
+        # defaultPackSize + the store's default sell price prefill a new inbound
+        # line's pack size, cost price, and sell price (spec/inbound-shipments
+        # AC-H6), carried from the picker onto the line without a re-fetch.
+        defaultPackSize
+        itemStoreProperties(storeId: $storeId) {
+          defaultSellPricePerPack
+        }
         availableBatches(storeId: $storeId) {
           ... on StockLineConnector {
             __typename

@@ -19,6 +19,20 @@ type StatusValue = NonNullable<
   NonNullable<NonNullable<OutboundFilter['status']>['equalAny']>[number]
 >;
 
+// A native date (yyyy-mm-dd) → the day's inclusive datetime bounds, so a
+// DatetimeFilterInput can express a "between" range from date-only inputs.
+// The offset is REQUIRED: the server's DateTime scalar parses RFC3339, and a
+// bare `T00:00:00` fails with "premature end of input" (same helpers as the
+// inbound list).
+// TODO: hoist these three to shared code (with the inbound list's identical
+// copies) once a third list needs them — and decide there whether a picked
+// day means the UTC day (this Z literal) or the store-local day.
+const startOfDay = (d: string) => `${d}T00:00:00.000Z`;
+const endOfDay = (d: string) => `${d}T23:59:59.999Z`;
+// A stored bound (full ISO datetime) → the yyyy-mm-dd the date input shows.
+const toDateInput = (iso: string | null | undefined) =>
+  iso ? iso.slice(0, 10) : '';
+
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the outbound-shipments list
  * (spec S1 § filters): keyed by EVERY key of the generated InvoiceFilterInput —
@@ -123,17 +137,17 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
           <FilterDate
             label={t('label.from-created-datetime')}
             testId={props.testId}
-            value={range().afterOrEqualTo?.slice(0, 10) ?? ''}
+            value={toDateInput(range().afterOrEqualTo)}
             onInput={value =>
-              setRange({ afterOrEqualTo: value ? `${value}T00:00:00` : null })
+              setRange({ afterOrEqualTo: value ? startOfDay(value) : null })
             }
           />
           <FilterDate
             label={t('label.to-created-datetime')}
             testId={`${props.testId}-to`}
-            value={range().beforeOrEqualTo?.slice(0, 10) ?? ''}
+            value={toDateInput(range().beforeOrEqualTo)}
             onInput={value =>
-              setRange({ beforeOrEqualTo: value ? `${value}T23:59:59` : null })
+              setRange({ beforeOrEqualTo: value ? endOfDay(value) : null })
             }
           />
         </>
@@ -157,17 +171,17 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
           <FilterDate
             label={t('label.from-shipped-datetime')}
             testId={props.testId}
-            value={range().afterOrEqualTo?.slice(0, 10) ?? ''}
+            value={toDateInput(range().afterOrEqualTo)}
             onInput={value =>
-              setRange({ afterOrEqualTo: value ? `${value}T00:00:00` : null })
+              setRange({ afterOrEqualTo: value ? startOfDay(value) : null })
             }
           />
           <FilterDate
             label={t('label.to-shipped-datetime')}
             testId={`${props.testId}-to`}
-            value={range().beforeOrEqualTo?.slice(0, 10) ?? ''}
+            value={toDateInput(range().beforeOrEqualTo)}
             onInput={value =>
-              setRange({ beforeOrEqualTo: value ? `${value}T23:59:59` : null })
+              setRange({ beforeOrEqualTo: value ? endOfDay(value) : null })
             }
           />
         </>
@@ -206,6 +220,8 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
   receivedDatetime: null,
   verifiedDatetime: null,
   createdOrBackdatedDatetime: null,
+  // Programmatic filter, not a specced list filter.
+  dynamicFilter: null,
 });
 
 export const filterFields = (): Filter<OutboundFilter>[] => FILTERS;

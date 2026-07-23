@@ -10,6 +10,9 @@ import { DuplicateInboundShipment } from '../../list/createInboundShipment.gener
 
 export interface DuplicateInboundShipmentActionProps {
   invoiceId: string;
+  /** Shipment number and supplier name — for the confirmation copy. */
+  number: () => number;
+  supplierName: () => string;
   disabled?: boolean;
 }
 
@@ -37,13 +40,23 @@ export const DuplicateInboundShipmentAction: Component<
         {t('button.make-a-copy')}
       </Button>
       <Show when={open()}>
-        <Body invoiceId={props.invoiceId} onClose={() => setOpen(false)} />
+        <Body
+          invoiceId={props.invoiceId}
+          number={props.number}
+          supplierName={props.supplierName}
+          onClose={() => setOpen(false)}
+        />
       </Show>
     </>
   );
 };
 
-const Body = (props: { invoiceId: string; onClose: () => void }) => {
+const Body = (props: {
+  invoiceId: string;
+  number: () => number;
+  supplierName: () => string;
+  onClose: () => void;
+}) => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
   const [phase, setPhase] = createSignal<Phase>('confirm');
@@ -91,7 +104,12 @@ const Body = (props: { invoiceId: string; onClose: () => void }) => {
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={t('messages.confirm-duplicate-shipment')}>
+        <Switch
+          fallback={t('messages.confirm-duplicate-shipment', {
+            number: props.number(),
+            supplierName: props.supplierName(),
+          })}
+        >
           <Match when={phase() === 'skipped'}>
             <Alert severity="warning">
               {tPlural('messages.duplicate-lines-skipped', skipped())}
