@@ -1,6 +1,6 @@
 {
-  "_comment": "PLACEHOLDER — this pin is NOT yet valid. open-msupply-frontend has not cut its first release, so no frontend-dist-<tag>.zip exists to pin against. Until it does, packaging must be driven with the FRONTEND_DIST_URL env override (see server/README.md, 'Serving front-end'). Once the FE repo publishes a release, bump `tag` to that release tag and `sha256` to the value from its published frontend-dist-<tag>.zip.sha256 sidecar. Fetched + verified by build/fetch-frontend.js.",
+  "_comment": "Which open-msupply-frontend release this repo ships. Bump tag to an FE release tag and sha256 to the value from its published frontend-dist-<tag>.zip.sha256 sidecar; build/fetch-frontend.js fetches and verifies it (see server/README.md, Serving front-end). v0.0.0-rc* tags are pre-release trial pins for proving the pipelines.",
   "repo": "msupply-foundation/open-msupply-frontend",
-  "tag": "v0.0.0-placeholder",
-  "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  "tag": "v0.0.0-rc2",
+  "sha256": "74f320e271410cd64cc58f8968669aead2d51680da49e987fa2a998f2f995dda"
 }
