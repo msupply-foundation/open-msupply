@@ -170,6 +170,19 @@ jobs:
           }
           Write-Host "Stamped $($manifests.Count) crates to $env:version"
 
+      # pq-sys links the postgres build against libpq.lib and needs PQ_LIB_DIR
+      # to find it on Windows. Auto-detect the newest installed PostgreSQL
+      # rather than relying on a machine env var (runtime libpq.dll on customer
+      # machines is the installer's concern, not the build's).
+      - name: Locate libpq (postgres build)
+        shell: pwsh
+        run: |
+          $lib = Get-ChildItem "C:\Program Files\PostgreSQL\*\lib" -ErrorAction SilentlyContinue |
+            Sort-Object { [double]$_.Parent.Name } -Descending | Select-Object -First 1
+          if (-not $lib) { throw "No PostgreSQL lib dir found under C:\Program Files\PostgreSQL - install PostgreSQL (the --features postgres build links libpq.lib)" }
+          Write-Host "PQ_LIB_DIR=$($lib.FullName)"
+          "PQ_LIB_DIR=$($lib.FullName)" >> $env:GITHUB_ENV
+
       # Last of the builds: by far the longest step, so every quick,
       # more-likely-to-flake step (yarn, network fetches) gets to fail first.
       - name: Build server binaries (sqlite + postgres)
