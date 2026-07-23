@@ -9,10 +9,6 @@ on:
   push:
     tags:
       - "v*"
-    # TEMPORARY: pre-merge testing only — workflow_dispatch isn't available
-    # until this file is on the default branch. Remove before merging.
-    branches:
-      - windows-build-github-actions
   workflow_dispatch:
     inputs:
       skip_signing:
@@ -211,9 +207,9 @@ jobs:
       # box; --storepass avoids the interactive PIN dialog. Requires Java and
       # the SafeNet Authentication Client drivers on the runner.
       - name: Sign binaries
-        # Tag pushes always sign (inputs are empty there and branch pushes are a
-        # temporary test trigger); dispatch runs sign unless skip_signing is set.
-        if: ${{ !(inputs.skip_signing || (github.event_name == 'push' && github.ref_type == 'branch')) }}
+        # inputs are empty on tag pushes, so releases always sign; dispatch
+        # runs sign unless skip_signing is set.
+        if: ${{ !inputs.skip_signing }}
         shell: cmd
         run: |
           for %%e in ("%GITHUB_WORKSPACE%\omSupply\Server\*.exe") do java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%%e" || exit /b 1
@@ -270,7 +266,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Sign installers
-        if: ${{ !(inputs.skip_signing || (github.event_name == 'push' && github.ref_type == 'branch')) }}
+        if: ${{ !inputs.skip_signing }}
         shell: cmd
         run: |
           for %%e in ("%GITHUB_WORKSPACE%\installers\*.exe") do java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%%e" || exit /b 1
