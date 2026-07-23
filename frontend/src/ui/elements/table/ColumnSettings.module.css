@@ -1,8 +1,10 @@
 /*
- * Column-settings panel — the content inside the toolbar ⚙ popover. A compact table:
- * order chevrons, a visibility toggle, the column label, pin buttons, and a rem width
- * input, with reset actions above. Bare CSS + tokens only (no library); colours are
- * tokens, sizes rem (only px is the hairline dividers / focus ring, per the sizing rule).
+ * Columns panel — the content inside the toolbar's Columns popover. A compact table:
+ * order chevrons, a visibility toggle, the column label, and pin buttons, with
+ * Show all / Hide all bulk actions above (table-wide settings — density, Reset —
+ * live in the separate Settings popover, TableSettings.module.css). Bare CSS +
+ * tokens only (no library); colours are tokens, sizes rem (only px is the hairline
+ * dividers / focus ring, per the sizing rule).
  */
 .panel {
   display: flex;
@@ -36,61 +38,6 @@
   background: color-mix(in srgb, var(--primary-main) 8%, transparent);
 }
 
-/* Save-as-global-default — the central-admin action to promote the current
-   layout to the install-wide default. Set apart from the per-user reset actions
-   above by its own row + top divider; feedback (saving/saved/error) sits inline
-   beside the button. */
-.saveDefault {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-block-end: var(--space-2);
-  border-block-end: 1px solid var(--color-divider);
-}
-
-.saveButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  border: none;
-  background: none;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  color: var(--primary-main);
-  font: inherit;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-}
-
-.saveButton:disabled {
-  color: var(--text-secondary);
-  cursor: default;
-}
-
-.saveButton:not(:disabled):hover {
-  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
-}
-
-.saveIcon {
-  inline-size: 0.875rem;
-  block-size: 0.875rem;
-}
-
-.saveStatus {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-}
-
-.saveStatus[data-status='saved'] {
-  color: var(--success-main);
-}
-
-.saveStatus[data-status='error'] {
-  color: var(--error-main);
-}
-
 .table {
   border-collapse: collapse;
   inline-size: 100%;
@@ -102,8 +49,7 @@
 
 .orderCell,
 .visibilityCell,
-.pinCell,
-.sizeCell {
+.pinCell {
   white-space: nowrap;
 }
 
@@ -159,24 +105,6 @@
   border-color: var(--primary-main);
   background: var(--primary-main);
   color: var(--primary-contrast);
-}
-
-.sizeInput {
-  inline-size: 3.5rem;
-  padding: var(--space-1);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-sm);
-  background: var(--surface-raised);
-  color: var(--text-body);
-  font: inherit;
-  font-size: var(--text-sm);
-  text-align: end;
-}
-
-.remUnit {
-  margin-inline-start: var(--space-1);
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
 }
 
 /* Group badge — shows which tab/group(s) a column belongs to (icon + label), inline after the

@@ -31,16 +31,3 @@ export const masterListsToCsv = (
     .join('\n');
   return rows.length > 0 ? `${head}\n${body}` : head;
 };
-
-// CSV filename: `<ISO datetime>_<store code>_<stem>.csv` (contract › export). The
-// Excel variant is `<store code>_<stem>` (no datetime) — see excelFilename.
-export const csvFilename = (
-  isoDatetime: string,
-  storeCode: string,
-  stem = 'master-lists'
-): string => `${isoDatetime}_${storeCode}_${stem}.csv`;
-
-export const excelFilename = (
-  storeCode: string,
-  stem = 'master-lists'
-): string => `${storeCode}_${stem}`;

@@ -1,54 +1,33 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
-import { ChevronDownIcon, SaveIcon } from '../../icons';
-import { pxToRem } from '../../utils/rem';
+import { ChevronDownIcon } from '../../icons';
 import type { TableConfig, TableConfigKey } from './tableConfig';
 import { ALL_TABS, type TabAndCardGroup } from './DataTable';
 import styles from './ColumnSettings.module.css';
 
-// The column-settings panel: a table with a row per column, each exposing
-// visibility, order (up/down), pin, and width (in rem). It's a thin renderer
-// over TanStack's own per-column getters/handlers (kdd/table-state — the brains
-// are TanStack's; we only draw the UI): getIsVisible/getCanHide,
-// getCanPin/getIsPinned/pin, getSize/getCanResize. The three resets call
-// table.reset*, which reverts to the resolved lower config layers.
+// The Columns panel (ui-standards § tables → column management): a table with
+// a row per column, each exposing visibility (Show), order (Move up/down) and
+// pin (L/R), with Show all / Hide all bulk actions above — exactly the spec's
+// panel, nothing more (column WIDTH is set by dragging the header edge, not
+// here). It's a thin renderer over TanStack's own per-column getters/handlers
+// (kdd/table-state — the brains are TanStack's; we only draw the UI):
+// getIsVisible/getCanHide, getCanPin/getIsPinned/pin. Table-wide actions
+// (density, Reset table to default, save-as-global-default) live in the
+// separate Settings popover — see TableSettings.
 //
 // Writes go through setConfig (the same controlled path DataTable uses), so
-// persistence + layering + the px↔rem boundary still apply. Sizes are
-// shown/stored in REM (config truth); TanStack works in px, so we convert at
-// this boundary too.
+// persistence + layering still apply.
 export function ColumnSettings<T>(props: {
   table: Table<T>;
-  config?: TableConfig;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /**
    * The table's tabs/groups (when grouped) — used to badge each row with the
    * group(s) a
    *  column belongs to, so it's clear hiding/reordering is GLOBAL across tabs. */
   tabsAndCardGroups?: TabAndCardGroup<string>[];
-  /**
-   * Promote the current layout to the shared install-wide default. Present ONLY
-   * when the host has decided the current user may do so (central server +
-   * EDIT_CENTRAL_DATA — the gate is the host's, kept out of this generic
-   * component); absent → the action isn't offered. Resolves true on success,
-   * false on failure, which this panel reflects inline.
-   */
-  onSaveGlobalDefault?: () => Promise<boolean>;
 }): JSX.Element {
-  // Inline status for the save-as-global-default action (this app surfaces
-  // feedback inline via Alert-style notices rather than a global toast). Reset
-  // to idle when the panel is re-opened is unnecessary — the popover unmounts
-  // its contents on close.
-  const [saveStatus, setSaveStatus] = createSignal<
-    'idle' | 'saving' | 'saved' | 'error'
-  >('idle');
-  const saveGlobalDefault = async () => {
-    setSaveStatus('saving');
-    const ok = await props.onSaveGlobalDefault?.();
-    setSaveStatus(ok ? 'saved' : 'error');
-  };
   // The tabs/groups a column id belongs to, for its settings-row icon badges.
   // An ALL_TABS column (batch, actions) belongs to EVERY tab → show all icons;
   // an array names specific groups → show those; absent → none.
@@ -88,75 +67,29 @@ export function ColumnSettings<T>(props: {
     return typeof header === 'string' ? header : id;
   };
 
-  // Current stored width in rem for a column, or undefined when unset (default
-  // width).
-  const widthRem = (id: string): number | undefined =>
-    props.config?.columnSizing?.[id];
-
-  const setWidthRem = (id: string, rem: number | undefined) => {
-    const current = { ...(props.config?.columnSizing ?? {}) };
-    if (rem == null) delete current[id];
-    else current[id] = rem;
-    props.setConfig?.('columnSizing', current);
-  };
-
   return (
     <div class={styles.panel}>
-      {/* Reset actions — each reverts one facet to the resolved config/default via TanStack. */}
+      {/* Bulk visibility — Show all / Hide all (ui-standards § tables → column
+          management). TanStack's toggleAllColumnsVisible only touches columns
+          that CAN hide (getCanHide), so structural columns are safe. */}
       <div class={styles.actions}>
         <button
           type="button"
           class={styles.action}
-          onClick={() => props.table.resetColumnVisibility()}
+          data-testid="table-show-all-columns"
+          onClick={() => props.table.toggleAllColumnsVisible(true)}
         >
-          {t('table.reset-visibility')}
+          {t('table.show-all')}
         </button>
         <button
           type="button"
           class={styles.action}
-          onClick={() => props.table.resetColumnOrder()}
+          data-testid="table-hide-all-columns"
+          onClick={() => props.table.toggleAllColumnsVisible(false)}
         >
-          {t('table.reset-order')}
-        </button>
-        <button
-          type="button"
-          class={styles.action}
-          onClick={() => props.table.resetColumnSizing()}
-        >
-          {t('table.reset-size')}
+          {t('table.hide-all')}
         </button>
       </div>
-
-      {/* Save-as-global-default — only for central-server admins (the host gates
-          the callback's presence). Divider above sets it apart from the per-user
-          reset actions: this writes the INSTALL-WIDE default, not local state.
-          Feedback is inline (saving / saved / error) — no global toast. */}
-      <Show when={props.onSaveGlobalDefault}>
-        <div class={styles.saveDefault}>
-          <button
-            type="button"
-            class={styles.saveButton}
-            disabled={saveStatus() === 'saving'}
-            data-testid="table-save-global-default"
-            onClick={saveGlobalDefault}
-          >
-            <SaveIcon class={styles.saveIcon} />
-            {t('table.save-global-default')}
-          </button>
-          <Show when={saveStatus() !== 'idle'}>
-            <span
-              class={styles.saveStatus}
-              data-status={saveStatus()}
-              role="status"
-            >
-              {saveStatus() === 'saving' &&
-                t('table.save-global-default.saving')}
-              {saveStatus() === 'saved' && t('table.save-global-default.saved')}
-              {saveStatus() === 'error' && t('table.save-global-default.error')}
-            </span>
-          </Show>
-        </div>
-      </Show>
 
       <table class={styles.table}>
         <tbody>
@@ -246,30 +179,6 @@ export function ColumnSettings<T>(props: {
                       >
                         {t('table.pin-right-short')}
                       </button>
-                    </Show>
-                  </td>
-
-                  {/* Width in rem — shown only when a size is set; blank clears to default.
-                      Placeholder shows the current effective width (getSize px → rem) so the
-                      user sees what "default" is without it counting as an override. */}
-                  <td class={styles.sizeCell}>
-                    <Show when={column().getCanResize()}>
-                      <input
-                        type="number"
-                        class={styles.sizeInput}
-                        min="1"
-                        step="0.5"
-                        aria-label={t('table.column-width')}
-                        value={widthRem(id) ?? ''}
-                        placeholder={String(pxToRem(column().getSize()))}
-                        onChange={event => {
-                          const raw = event.currentTarget.value.trim();
-                          if (raw === '') return setWidthRem(id, undefined);
-                          const rem = Number.parseFloat(raw);
-                          setWidthRem(id, Number.isNaN(rem) ? undefined : rem);
-                        }}
-                      />
-                      <span class={styles.remUnit}>{t('table.rem')}</span>
                     </Show>
                   </td>
                 </tr>

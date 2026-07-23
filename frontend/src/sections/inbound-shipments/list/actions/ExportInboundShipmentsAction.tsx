@@ -10,7 +10,10 @@ import {
   csvToExcel,
   downloadBlob,
   fetchReportFile,
+  listExportCsvFilename,
+  listExportExcelFilename,
 } from '../../../../domain/reportFiles';
+import { storeCodeOf } from '../../../../auth/authContext';
 import { InboundShipments } from '../inboundShipments.generated';
 import type { InboundShipmentsVariables } from '../inboundShipments.generated';
 import { inboundQueryInputs, type InboundListFilter } from '../listFilters';
@@ -68,12 +71,16 @@ export const ExportInboundShipmentsAction: Component<
     try {
       const csv = await buildCsv();
       if (!csv) return;
-      const filename = t('filename.inbounds');
+      // Filenames per the shared list-export rule
+      // (ui-standards/list-views § regions).
+      const storeCode = storeCodeOf(props.storeId);
+      const listName = t('filename.inbounds');
       if (format === 'excel') {
         const generated = await csvToExcel({
           storeId: props.storeId,
           csvData: csv,
-          filename,
+          filename: listExportExcelFilename(storeCode, listName),
+          sheetName: storeCode,
         });
         if (generated.kind !== 'fileId') return;
         const file = await fetchReportFile(generated.fileId);
@@ -81,7 +88,7 @@ export const ExportInboundShipmentsAction: Component<
       } else {
         downloadBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          `${filename}.csv`
+          listExportCsvFilename(storeCode, listName, new Date())
         );
       }
     } finally {

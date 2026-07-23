@@ -151,7 +151,8 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  /* Footer buttons are centred (matching the current app's modal DialogActions). */
+  justify-content: center;
   align-items: center;
   gap: var(--space-3);
   /* Bottom-pin the actions when there's no footer above them (see .footer). With a footer,
@@ -162,7 +163,7 @@
 }
 
 /* With a lead (a message beside the buttons), split the row: lead at the inline-start, buttons
-   at the inline-end. Without it, the single buttons group stays inline-end (flex-end above). */
+   at the inline-end. Without it, the centred buttons group applies (above). */
 .actions[data-has-lead] {
   justify-content: space-between;
 }

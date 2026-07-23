@@ -82,6 +82,14 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
   // dialog stays open with entries intact (AC-C4/AC-E2/AC-E3, D21/D22).
   const [rejection, setRejection] = createSignal<SaveRejection>();
 
+  // The Name input — Name is the modal's autofocused field (ui-surface S2).
+  // First open uses the input's native `autofocus`, but that fires only on the
+  // element's initial mount; OK-&-next reseeds the SAME mounted input (an
+  // interaction never remounts the form — kdd/solid-reactivity-pitfalls § no
+  // remounts), so autofocus can't re-fire. Keep the ref to refocus Name after
+  // each advance, matching first-open behaviour.
+  let nameInput: HTMLInputElement | undefined;
+
   // The location-type picker's options (consumed `locationTypes` read —
   // contract.md § contract surface). Fetched once per store; read WITHOUT
   // suspending — this modal renders under AppShell's <Suspense>, and a pending
@@ -191,6 +199,13 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       setCurrent({ mode: 'create' });
       setForm(EMPTY_FORM);
     }
+    // Refocus Name (ui-surface S2): clicking OK-&-next disabled that button
+    // mid-save, dropping focus to <body>, and the reseed above doesn't remount
+    // the input so native autofocus won't re-fire. Deferred a frame — the same
+    // focus-after-state-change idiom as the reference modals (Stocktake /
+    // CreateInboundShipment) — so the input is re-enabled (saving() cleared)
+    // before we move focus to it.
+    requestAnimationFrame(() => nameInput?.focus());
   };
 
   return (
@@ -253,6 +268,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       {/* Body, top to bottom, per ui-surface S2 § layout. Each field stands
           alone, so it uses the control's built-in label (ui-standards). */}
       <TextField
+        ref={nameInput}
         label={t('label.name')}
         required
         autofocus

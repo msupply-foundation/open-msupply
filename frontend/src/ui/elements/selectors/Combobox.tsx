@@ -92,6 +92,13 @@ interface ComboboxProps<T> {
    * blanked mid-keystroke.
    */
   loading?: boolean;
+  /**
+   * The status text shown when the settled option list is empty (server mode's
+   * "no matches" state). Defaults to "No matching items"; a caller overrides it
+   * for a domain-specific hint — e.g. the patient picker's "Start typing to
+   * search", which doubles as its type-to-search prompt.
+   */
+  noResultsMessage?: string;
   disabled?: boolean;
   /**
    * Whether a committed selection can be cleared (the clear button). Default
@@ -405,7 +412,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <div class={styles.status}>Loading…</div>
           </Show>
           <Show when={!props.loading && noMatches()}>
-            <div class={styles.status}>No matching items</div>
+            <div class={styles.status}>
+              {props.noResultsMessage ?? 'No matching items'}
+            </div>
           </Show>
           {/* The listbox owns the scroll; in server mode onScroll fetches the
               next page near the bottom (see onListboxScroll). */}

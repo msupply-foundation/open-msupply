@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   csvEscape,
-  csvFilename,
-  excelFilename,
   masterListsToCsv,
   type MasterListExportRow,
 } from './masterListExport';
@@ -37,12 +35,5 @@ describe('masterListExport (spec/master-lists § export)', () => {
     expect(csvEscape('a,b')).toBe('"a,b"');
     expect(csvEscape('a"b')).toBe('"a""b"');
     expect(csvEscape('a\nb')).toBe('"a\nb"');
-  });
-
-  it('filenames: CSV carries datetime + store code; Excel drops the datetime', () => {
-    expect(csvFilename('2026-07-23T00:00:00Z', 'TP')).toBe(
-      '2026-07-23T00:00:00Z_TP_master-lists.csv'
-    );
-    expect(excelFilename('TP')).toBe('TP_master-lists');
   });
 });
