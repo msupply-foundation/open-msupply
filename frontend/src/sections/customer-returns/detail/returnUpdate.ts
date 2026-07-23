@@ -14,7 +14,11 @@ import {
   type UpdateCustomerReturnLinesVariables,
   type UpdateCustomerReturnLinesResult,
 } from './customerReturnDetail.generated';
-import { DeleteCustomerReturn } from '../list/customerReturns.generated';
+import {
+  DeleteCustomerReturn,
+  InsertCustomerReturn,
+  type InsertCustomerReturnVariables,
+} from '../list/customerReturns.generated';
 
 // Return-LEVEL mutations, split by how their errors are handled (the
 // stocktakeUpdate convention):
@@ -184,5 +188,46 @@ export const deleteReturn = async (
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.deleteCustomerReturn;
   if (response.__typename === 'DeleteResponse') return { kind: 'deleted' };
+  return { kind: 'error', message: response.error.description };
+};
+
+// --- Create from an originating shipment ------------------------------------
+
+// The from-shipment creation path (rules § creation — from an originating
+// outbound shipment; AC-C4–C7): insertCustomerReturn with outboundShipmentId
+// set. The server records the originating shipment (InvoiceNode.originalShipment)
+// and auto-advances the return to VERIFIED in the same transaction, so the
+// response node is already terminal with its stock introduced (contract
+// § creation — auto-verify). The two typed insert errors are the customer pair,
+// which can't fire here (the customer comes from the shipment); every other
+// rejection (cannot-return-unshipped, the all-zero whole-creation failure, …)
+// is non-typed and surfaces in the modal — except Forbidden, which routes to
+// the global permission-denied modal (D38), exactly as deleteReturn above.
+export type CreateReturnResult =
+  | { kind: 'created'; id: string }
+  | { kind: 'forbidden' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const createReturnFromShipment = async (
+  storeId: string,
+  input: InsertCustomerReturnVariables['input']
+): Promise<CreateReturnResult> => {
+  const result = await graphqlFetch(
+    InsertCustomerReturn,
+    { storeId, input },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError') {
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'forbidden' };
+    }
+    return { kind: 'error', message: result.message };
+  }
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.insertCustomerReturn;
+  if (response.__typename === 'InvoiceNode')
+    return { kind: 'created', id: response.id };
   return { kind: 'error', message: response.error.description };
 };

@@ -1,6 +1,7 @@
 import { Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { NameSearch } from '../../../domain/name';
@@ -34,46 +35,51 @@ export const CustomerReturnToolbar: Component<
   const kind = () => returnKind(props.node);
   return (
     <>
-      <FieldRow label={t('label.customer-name')}>
-        <NameSearch
-          storeId={props.storeId}
-          role="customer"
-          label={t('label.customer-name')}
-          hideLabel
-          // Seed the record's current customer so the selection's label
-          // resolves before (or regardless of) its page. The detail fragment
-          // carries only the party's id + name; the seed's other fields are
-          // display hints the input text doesn't use.
-          selected={{
-            id: props.node.otherPartyId,
-            code: '',
-            name: props.node.otherPartyName,
-            isOnHold: false,
-            isStore: false,
-            isSupplier: false,
-            isDonor: false,
-          }}
-          disabled={props.disabled || kind() === 'transfer'}
-          error={props.customerError}
-          clearable={false}
-          onSelect={customer => {
-            if (customer) props.onChangeCustomer(customer.id);
-          }}
-        />
-      </FieldRow>
-      <FieldRow label={t('label.customer-ref')}>
-        <TextField
-          label={t('label.customer-ref')}
-          hideLabel
-          data-testid="customer-reference-field"
-          value={props.edit.state.theirReference}
-          disabled={props.disabled}
-          onInput={e =>
-            props.edit.setField('theirReference', e.currentTarget.value)
-          }
-          onBlur={() => props.edit.flush()}
-        />
-      </FieldRow>
+      {/* Customer name with the reference on its own row below (not inline
+          beside it) — one Stack, so the wrapping Toolbar treats the pair as
+          a single block. */}
+      <Stack gap="sm">
+        <FieldRow label={t('label.customer-name')}>
+          <NameSearch
+            storeId={props.storeId}
+            role="customer"
+            label={t('label.customer-name')}
+            hideLabel
+            // Seed the record's current customer so the selection's label
+            // resolves before (or regardless of) its page. The detail fragment
+            // carries only the party's id + name; the seed's other fields are
+            // display hints the input text doesn't use.
+            selected={{
+              id: props.node.otherPartyId,
+              code: '',
+              name: props.node.otherPartyName,
+              isOnHold: false,
+              isStore: false,
+              isSupplier: false,
+              isDonor: false,
+            }}
+            disabled={props.disabled || kind() === 'transfer'}
+            error={props.customerError}
+            clearable={false}
+            onSelect={customer => {
+              if (customer) props.onChangeCustomer(customer.id);
+            }}
+          />
+        </FieldRow>
+        <FieldRow label={t('label.customer-ref')}>
+          <TextField
+            label={t('label.customer-ref')}
+            hideLabel
+            data-testid="customer-reference-field"
+            value={props.edit.state.theirReference}
+            disabled={props.disabled}
+            onInput={e =>
+              props.edit.setField('theirReference', e.currentTarget.value)
+            }
+            onBlur={() => props.edit.flush()}
+          />
+        </FieldRow>
+      </Stack>
       {/* The kind banner (rules § manual vs transfer): manual returns don't
           track delivery automatically; a transfer return explains why editing
           waits until it is received (AC-T1). */}
