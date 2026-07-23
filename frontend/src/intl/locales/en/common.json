@@ -2105,6 +2105,7 @@
   "login.body": "Welcome to Open mSupply. Your partner for managing health supply chains and improving medicine availability.",
   "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
   "login.store-changed": "Welcome to the {{store}} store",
+  "login.switch-to-old-ui": "Switch to old UI",
   "logout": "Logout",
   "manage": "Manage",
   "manage-equipment": "Equipment",
