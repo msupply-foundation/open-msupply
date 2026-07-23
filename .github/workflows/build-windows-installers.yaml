@@ -10,6 +10,12 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      skip_signing:
+        description: "Skip code signing (dry runs without the eToken)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write # upload installers to an existing GitHub release
@@ -177,6 +183,8 @@ jobs:
       # box; --storepass avoids the interactive PIN dialog. Requires Java and
       # the SafeNet Authentication Client drivers on the runner.
       - name: Sign binaries
+        # inputs.skip_signing is false-y on tag pushes, so releases always sign
+        if: ${{ !inputs.skip_signing }}
         shell: cmd
         run: |
           for %%e in ("%GITHUB_WORKSPACE%\omSupply\Server\*.exe") do java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%%e" || exit /b 1
@@ -211,6 +219,7 @@ jobs:
           installersOutputFolder: ${{ github.workspace }}\installers
 
       - name: Sign installers
+        if: ${{ !inputs.skip_signing }}
         shell: cmd
         run: |
           for %%e in ("%GITHUB_WORKSPACE%\installers\*.exe") do java -jar "%JSIGN_JAR%" --storetype ETOKEN --storepass %ETOKEN_PASS% --tsaurl %TSA_URL% "%%e" || exit /b 1
