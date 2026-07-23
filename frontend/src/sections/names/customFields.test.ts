@@ -8,7 +8,7 @@ import {
   type CustomFieldDef,
 } from './customFields';
 
-// Slice-2 custom-field surface (spec/names). The reference dataset configures no
+// The custom-field surface (spec/names). The reference dataset configures no
 // custom fields, so these assert the contract-grounded logic (columns, values,
 // dynamicFilter AST); populated live behaviour is a recorded C2 gap.
 
