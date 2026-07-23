@@ -89,6 +89,28 @@
   background: var(--bg-white);
 }
 
+/* Empty (or initial-loading) table: drop the bordered box (matching the current
+   app's borderless empty state) and become a flex column so the empty state /
+   spinner fills the space BELOW the still-visible column headers. Keep the 1px
+   as transparent (not border:none) so the layout doesn't shift when rows land. */
+.tableScroll[data-empty] {
+  display: flex;
+  flex-direction: column;
+  border-color: transparent;
+}
+
+/* The empty-state / spinner region under the header row — fills the remaining
+   height so its content centres (like the current app). */
+.emptyBody {
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.emptyBody > * {
+  flex: 1;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
