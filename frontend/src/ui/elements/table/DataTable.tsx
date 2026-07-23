@@ -691,95 +691,77 @@ export function DataTable<T, K extends string, G extends string = never>(
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
       <div class={styles.tableArea}>
-        <div class={styles.tableScroll}>
-          {/* No rows → render the loading spinner or the empty state directly (no
-              table/cards at all, so there's no header row or colSpan cell to size).
-              The toolbar above stays put. The check is view-independent (both views
-              read the same core row model), so it sits above the table/card Switch.
-              When loading with no rows yet (initial load) the spinner shows; once
-              data lands the empty state is only shown if it's genuinely empty. */}
-          <Show
-            when={table.getRowModel().rows.length > 0}
-            fallback={
-              <Show
-                when={props.loading}
-                fallback={
-                  <EmptyState
-                    data-testid="nothing-here"
-                    message={props.emptyMessage ?? t('table.no-results')}
-                  >
-                    {props.empty}
-                  </EmptyState>
-                }
-              >
-                <Spinner center data-testid="table-loading" />
-              </Show>
-            }
-          >
-            {/* One <table> for BOTH views — card view is now rows in the SAME
+        <div
+          class={styles.tableScroll}
+          data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
+        >
+          {/* One <table> for BOTH views — card view is now rows in the SAME
               table (each card is a full-width <tr>), so columns/scroll/selection
               are shared. The header row is table-view only (hidden in card view:
-              a card's fields carry their own labels via LabelledValue). */}
-            <table class={styles.table} data-density={viewDensity()}>
-              <Show when={viewMode() === 'table'}>
-                <thead>
-                  <For each={table.getHeaderGroups()}>
-                    {headerGroup => (
-                      <tr>
-                        <Show when={props.enableSelection}>
-                          <th
-                            class={`${styles.th} ${styles.selectCell}`}
-                            data-pinned="left"
-                            style={leadingPinnedStyle(0)}
-                          >
-                            <input
-                              type="checkbox"
-                              aria-label={t('table.select-all')}
-                              data-testid="select-all-rows-checkbox"
-                              checked={table.getIsAllRowsSelected()}
-                              // Partial selection (some rows on this page,
-                              // not all) shows the native indeterminate glyph
-                              // (ui-standards § tables → row selection).
-                              // `indeterminate` is a DOM PROPERTY, not an
-                              // attribute, so it's set via a ref'd effect.
-                              ref={el =>
-                                createEffect(() => {
-                                  el.indeterminate =
-                                    table.getIsSomeRowsSelected();
-                                })
-                              }
-                              onChange={table.getToggleAllRowsSelectedHandler()}
-                            />
-                          </th>
-                        </Show>
-                        {/* Display-time tab filter: render only the active tab's header cells
+              a card's fields carry their own labels via LabelledValue). The table
+              renders even with NO rows so the column headers stay visible — the
+              empty state / spinner sits BELOW it (matching the current app). */}
+          <table class={styles.table} data-density={viewDensity()}>
+            <Show when={viewMode() === 'table'}>
+              <thead>
+                <For each={table.getHeaderGroups()}>
+                  {headerGroup => (
+                    <tr>
+                      <Show when={props.enableSelection}>
+                        <th
+                          class={`${styles.th} ${styles.selectCell}`}
+                          data-pinned="left"
+                          style={leadingPinnedStyle(0)}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label={t('table.select-all')}
+                            data-testid="select-all-rows-checkbox"
+                            checked={table.getIsAllRowsSelected()}
+                            // Partial selection (some rows on this page,
+                            // not all) shows the native indeterminate glyph
+                            // (ui-standards § tables → row selection).
+                            // `indeterminate` is a DOM PROPERTY, not an
+                            // attribute, so it's set via a ref'd effect.
+                            ref={el =>
+                              createEffect(() => {
+                                el.indeterminate =
+                                  table.getIsSomeRowsSelected();
+                              })
+                            }
+                            onChange={table.getToggleAllRowsSelectedHandler()}
+                          />
+                        </th>
+                      </Show>
+                      {/* Display-time tab filter: render only the active tab's header cells
                           (TanStack still holds every column — see columnInActiveTab). */}
-                        <For each={headerGroup.headers}>
-                          {header => (
-                            <Show
-                              when={columnInActiveTab(
-                                header.column.columnDef as {
-                                  tabsAndCardGroups?: Membership;
-                                }
-                              )}
-                            >
-                              <HeaderCell
-                                header={header}
-                                pinnedStyle={pinnedStyle}
-                              />
-                            </Show>
-                          )}
-                        </For>
-                      </tr>
-                    )}
-                  </For>
-                </thead>
-              </Show>
-              <tbody>
-                {/* The outer <Show> guarantees rows here, so no empty fallback.
-                  Table view → one <TableRow> (a grid of <td>) per row; card
-                  view → one full-width card <tr> per row (CardView), so both
-                  live in the same <table>. */}
+                      <For each={headerGroup.headers}>
+                        {header => (
+                          <Show
+                            when={columnInActiveTab(
+                              header.column.columnDef as {
+                                tabsAndCardGroups?: Membership;
+                              }
+                            )}
+                          >
+                            <HeaderCell
+                              header={header}
+                              pinnedStyle={pinnedStyle}
+                            />
+                          </Show>
+                        )}
+                      </For>
+                    </tr>
+                  )}
+                </For>
+              </thead>
+            </Show>
+            <tbody>
+              {/* Rows only when populated; the empty/loading state renders
+                  below the table so the headers stay visible. Table view → one
+                  <TableRow> per row; card view → one full-width card <tr> per row
+                  (CardView), so both live in the same <table>. */}
+              <Show when={table.getRowModel().rows.length > 0}>
                 <Switch>
                   <Match when={viewMode() === 'card'}>
                     <CardView
@@ -812,52 +794,80 @@ export function DataTable<T, K extends string, G extends string = never>(
                     </For>
                   </Match>
                 </Switch>
-              </tbody>
-              {/* Footer band (table view only) — rendered iff a column declares
+              </Show>
+            </tbody>
+            {/* Footer band (table view only) — rendered iff a column declares
                   a `footer` (e.g. a summed total, see the inbound Financial
                   tab). Mirrors the header row's structure: a leading blank cell
                   under the selection column, then one cell per active-tab
                   column carrying its own align. The `footer` render fn owns the
                   content (a string, or flexRender of a component). */}
-              <Show when={viewMode() === 'table' && hasFooter()}>
-                <tfoot>
-                  <For each={table.getFooterGroups()}>
-                    {footerGroup => (
-                      <tr>
-                        <Show when={props.enableSelection}>
-                          <td
-                            class={`${styles.tf} ${styles.selectCell}`}
-                            aria-hidden="true"
-                          />
-                        </Show>
-                        <For each={footerGroup.headers}>
-                          {header => (
-                            <Show
-                              when={columnInActiveTab(
-                                header.column.columnDef as {
-                                  tabsAndCardGroups?: Membership;
-                                }
-                              )}
+            <Show
+              when={
+                viewMode() === 'table' &&
+                hasFooter() &&
+                table.getRowModel().rows.length > 0
+              }
+            >
+              <tfoot>
+                <For each={table.getFooterGroups()}>
+                  {footerGroup => (
+                    <tr>
+                      <Show when={props.enableSelection}>
+                        <td
+                          class={`${styles.tf} ${styles.selectCell}`}
+                          aria-hidden="true"
+                        />
+                      </Show>
+                      <For each={footerGroup.headers}>
+                        {header => (
+                          <Show
+                            when={columnInActiveTab(
+                              header.column.columnDef as {
+                                tabsAndCardGroups?: Membership;
+                              }
+                            )}
+                          >
+                            <td
+                              class={styles.tf}
+                              data-align={header.column.columnDef.meta?.align}
+                              data-testid={`footer-${header.column.id}`}
                             >
-                              <td
-                                class={styles.tf}
-                                data-align={header.column.columnDef.meta?.align}
-                                data-testid={`footer-${header.column.id}`}
-                              >
-                                {flexRender(
-                                  header.column.columnDef.footer,
-                                  header.getContext()
-                                )}
-                              </td>
-                            </Show>
-                          )}
-                        </For>
-                      </tr>
-                    )}
-                  </For>
-                </tfoot>
+                              {flexRender(
+                                header.column.columnDef.footer,
+                                header.getContext()
+                              )}
+                            </td>
+                          </Show>
+                        )}
+                      </For>
+                    </tr>
+                  )}
+                </For>
+              </tfoot>
+            </Show>
+          </table>
+          {/* Empty / initial-loading state — a sibling BELOW the table so the
+                column headers above stay visible (matching the current app). The
+                bordered box is dropped while empty (data-empty on tableScroll).
+                Loading with no rows shows the spinner; a settled empty list shows
+                the "nothing here" empty state. */}
+          <Show when={table.getRowModel().rows.length === 0}>
+            <div class={styles.emptyBody}>
+              <Show
+                when={props.loading}
+                fallback={
+                  <EmptyState
+                    data-testid="nothing-here"
+                    message={props.emptyMessage ?? t('table.no-results')}
+                  >
+                    {props.empty}
+                  </EmptyState>
+                }
+              >
+                <Spinner center data-testid="table-loading" />
               </Show>
-            </table>
+            </div>
           </Show>
         </div>
       </div>

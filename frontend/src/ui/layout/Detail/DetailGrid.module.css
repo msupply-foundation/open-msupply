@@ -1,0 +1,14 @@
+/* One grid for the whole detail form: [label value] · gap · [label value]. The
+   first label column auto-sizes to the widest label among the LEFT column AND
+   the full-width rows (they share it), so their fields line up; a spacer column
+   keeps a clear gap between the two column-pairs while the label→value gap stays
+   tight. Rows place themselves into columns via DetailRow's `side`/`full`. */
+.grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) var(
+      --space-5
+    ) max-content minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: center;
+  inline-size: 100%;
+}
