@@ -884,7 +884,11 @@ const InboundShipmentDetailView: Component = () => {
                   // (spec S8 → per-line indicators); an untouched placeholder
                   // reads in the info tone (AC-V3). Error wins when both hold.
                   rowTone={line =>
-                    isPlaceholderLine(line) ? 'info' : undefined
+                    lineErrors().has(line.id)
+                      ? 'error'
+                      : isPlaceholderLine(line)
+                        ? 'info'
+                        : undefined
                   }
                   emptyMessage={t('error.no-inbound-items')}
                   empty={

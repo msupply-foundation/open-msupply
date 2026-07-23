@@ -34,7 +34,6 @@ import {
   TruckIcon,
 } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -42,7 +41,11 @@ import {
   type InboundShipmentsVariables,
 } from './inboundShipments.generated';
 import { updateInboundShipment } from '../detail/inboundShipmentUpdate';
-import { filterFields, type InboundFilter } from './listFilters';
+import {
+  filterFields,
+  inboundQueryInputs,
+  type InboundListFilter,
+} from './listFilters';
 import { CreateInboundShipmentModal } from './CreateInboundShipmentModal';
 import {
   DeleteInboundShipmentsAction,
@@ -70,7 +73,7 @@ type Row = InboundRowFragment;
 type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
-  filter: InboundFilter;
+  filter: InboundListFilter;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;
   first: number;
@@ -123,13 +126,21 @@ const InboundShipmentsList: Component = () => {
   // manual/transfer, external = PO-linked), so the full set is their union;
   // requesting a scope the user lacks refuses the whole list, so we never ask
   // for one they don't hold (spec/inbound-shipments › contract → permissions).
-  const variables = () => ({
-    storeId: params.storeId,
-    filter: stripEmpty(query().filter),
-    sort: query().sort,
-    page: { first: query().first, offset: query().offset },
-    type: heldInboundQueryScopes(),
-  });
+  // The Type filter narrows this scope + adds a requisitionId filter — both
+  // resolved from the client-only `kind` by inboundQueryInputs.
+  const variables = () => {
+    const { filter, type } = inboundQueryInputs(
+      query().filter,
+      heldInboundQueryScopes()
+    );
+    return {
+      storeId: params.storeId,
+      filter,
+      sort: query().sort,
+      page: { first: query().first, offset: query().offset },
+      type,
+    };
+  };
 
   const [data, { refetch }] = createResource(
     () => JSON.stringify(variables()),
@@ -164,7 +175,7 @@ const InboundShipmentsList: Component = () => {
   };
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
-  const onFilterChange = (filter: InboundFilter) => {
+  const onFilterChange = (filter: InboundListFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
     setSelectedIds([]);
   };
