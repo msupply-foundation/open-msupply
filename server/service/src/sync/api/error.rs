@@ -134,6 +134,12 @@ impl SyncApiError {
         matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
 
+    /// Transient transport-level failure (dropped connection, unknown/unparseable error).
+    /// Safe to retry within a bounded polling loop rather than aborting it outright.
+    pub(crate) fn is_transient(&self) -> bool {
+        self.is_connection() || self.is_unknown()
+    }
+
     /// Central is busy with another session for this site (sync / integration / initialisation in
     /// progress). Caller should wait for central to be idle and retry.
     pub(crate) fn is_central_busy(&self) -> bool {
@@ -404,5 +410,32 @@ mod test {
             .expect_err("Should result in error");
         assert!(!result.is_central_busy());
         assert!(result.is_connection());
+    }
+
+    #[actix_rt::test]
+    async fn test_is_transient() {
+        // Connection error - transient (safe to retry within a poll loop).
+        let connection_error = create_api("http://localhost:9999", "", "")
+            .post_initialise()
+            .await
+            .expect_err("Should result in error");
+        assert!(connection_error.is_transient());
+
+        // Unknown error - also transient.
+        let unknown_error =
+            SyncApiError::new_test(SyncApiErrorVariantV5::Other(anyhow::anyhow!("boom")));
+        assert!(unknown_error.is_transient());
+
+        // A parsed business error (e.g. central-busy) is not transient - it's an authoritative
+        // response, not a transport failure, so it shouldn't be silently retried as such.
+        let parsed_error = SyncApiError::new_test(SyncApiErrorVariantV5::ParsedError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            source: ParsedError {
+                code: SyncErrorCodeV5::Other("initialisation_in_progress".to_string()),
+                message: "busy".to_string(),
+                data: None,
+            },
+        });
+        assert!(!parsed_error.is_transient());
     }
 }
