@@ -1,15 +1,18 @@
-import { createResource, createSignal, Show, type Component } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onMount,
+  Show,
+  type Component,
+} from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
-import { Select } from '../../../ui/elements/selectors/Select';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { NameSearch } from '../../../domain/name';
 import type { NameOption } from '../../../domain/name';
-import { XCircleIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
@@ -18,20 +21,27 @@ import {
   SentPurchaseOrders,
 } from './createInboundShipment.generated';
 import { SupplierInternalOrders } from '../detail/inboundShipmentLookups.generated';
+import { LinkInternalOrderModal } from './LinkInternalOrderModal';
+import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
 
-// The inbound-shipment create flow (spec S2). Two modes:
-//  - 'manual': a "Suppliers" modal with a single supplier lookup; picking a
-//    supplier both confirms and creates a New shipment, navigating to detail.
-//  - 'fromPurchaseOrder': list the store's Sent purchase orders; pick one and
-//    choose whether to seed all its lines or none, then create the external
-//    (PO-linked) shipment via the ...External twin (contract → creation wire
-//    trap: purchaseOrderId REQUIRES the external mutation).
+// The inbound-shipment create flow (spec S2). A sequence of modal steps,
+// branching on which create action was taken:
 //
-// KNOWN SIMPLIFICATION (flagged): the spec's intermediate "link an open
-// internal order for this supplier" step (offered when the store allows manual
-// internal-order linking) is not built here — creation goes straight through.
-// The internal-order LINK is still reachable later via the detail toolbar's
-// "Add from internal order". See the section README delta.
+//  - 'manual': a "Suppliers" lookup. Selecting a supplier both confirms and
+//    closes it. Then, only when the store allows manually linking internal
+//    orders AND the supplier has ≥1 linkable (Sent) order, the rich
+//    LinkInternalOrderModal opens (link one, or Next to skip). A supplier with
+//    no linkable orders — or a store without the preference — creates
+//    immediately, no extra step.
+//  - 'fromPurchaseOrder': the rich LinkPurchaseOrderModal (offered only when the
+//    store's procurement preference is on). Linking a PO is mandatory; the
+//    supplier comes from the chosen order. Creates via the ...External twin
+//    (contract → creation wire trap: purchaseOrderId REQUIRES the external
+//    mutation).
+//
+// The two pickers are contextful tables, NOT single-field dropdowns — see the
+// modal components. This orchestrator owns the data resources + the create
+// mutations; the pickers are presentational and call back with the chosen id(s).
 
 export interface CreateInboundShipmentModalProps {
   open: boolean;
@@ -58,12 +68,23 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     navigate(`/${params.storeId}/replenishment/inbound-shipment/${id}`);
   };
 
-  // ── Manual: pick a supplier, optionally link an open internal order, create
-  // (spec S2). When the store allows manual internal-order linking AND the
-  // chosen supplier has open internal orders, an intermediate step offers
-  // linking one before creation; otherwise creation is immediate.
+  // Focus the supplier search on open so the user can type straight away — the
+  // Dialog otherwise parks initial focus on its panel (which keeps a combobox
+  // from popping open); defer a frame so this focus wins. Manual mode only —
+  // the from-PO flow opens a table picker, not a search field.
+  onMount(() => {
+    if (props.mode !== 'manual') return;
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(
+          '[data-testid="create-inbound-modal"] [data-testid="name-search-input"]'
+        )
+        ?.focus();
+    });
+  });
+
+  // ── Manual: pick a supplier, optionally link an open internal order, create.
   const [supplier, setSupplier] = createSignal<NameOption | null>(null);
-  const [linkRequisitionId, setLinkRequisitionId] = createSignal<string>();
   const canLinkOrders = () =>
     inboundShipmentPreferences().manuallyLinkInternalOrderToInboundShipment;
 
@@ -81,9 +102,30 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     }
   );
   const internalOrders = () => ordersData() ?? [];
-  // The link step shows only once a supplier is chosen and the store allows
-  // linking (the picker inside lists any open orders, or notes there are none).
-  const showLinkStep = () => canLinkOrders() && !!supplier();
+  // The link step is offered ONLY when the chosen supplier actually has open
+  // internal orders (spec S2) — not for every supplier. A supplier with no open
+  // orders skips it and creates immediately (below); while orders load we hold
+  // on a spinner rather than flashing the supplier search.
+  const awaitingOrders = () =>
+    canLinkOrders() && !!supplier() && ordersData.loading;
+  const showLinkStep = () =>
+    canLinkOrders() &&
+    !!supplier() &&
+    !ordersData.loading &&
+    internalOrders().length > 0;
+
+  // Guards the once-per-supplier auto-create so the effect can't loop if create
+  // fails; reset whenever a new supplier is chosen.
+  const [linkResolved, setLinkResolved] = createSignal(false);
+  // Linking allowed + supplier chosen + orders resolved to NONE → create now,
+  // exactly as the no-linking path does (no forced extra step).
+  createEffect(() => {
+    if (!canLinkOrders() || !supplier() || ordersData.loading) return;
+    if (internalOrders().length === 0 && !linkResolved()) {
+      setLinkResolved(true);
+      void create(supplier()!.id);
+    }
+  });
 
   const create = async (otherPartyId: string, requisitionId?: string) => {
     if (creating()) return;
@@ -102,15 +144,15 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
   };
 
   const onSupplierSelect = (chosen: NameOption | null) => {
+    setLinkResolved(false);
     setSupplier(chosen);
-    // No link step → create straight away (spec S2 default manual flow).
+    // No linking configured → create straight away (spec S2 default manual
+    // flow). When linking IS allowed, the effect above decides: link step if
+    // the supplier has open orders, immediate create if not.
     if (chosen && !canLinkOrders()) void create(chosen.id);
   };
 
   // ── From a purchase order ─────────────────────────────────────────────────
-  const [selectedPoId, setSelectedPoId] = createSignal<string>();
-  const [seedLines, setSeedLines] = createSignal<'all' | 'none'>('all');
-
   // The store's Sent purchase orders (spec S2 / AC-PG3). Fetched on open;
   // non-suspending read so the modal shows a spinner rather than tripping a
   // boundary.
@@ -129,9 +171,8 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
   );
   const purchaseOrders = () => poData.latest ?? [];
 
-  const createFromPo = async () => {
-    const poId = selectedPoId();
-    const po = purchaseOrders().find(p => p.id === poId);
+  const createFromPo = async (purchaseOrderId: string, addLines: boolean) => {
+    const po = purchaseOrders().find(p => p.id === purchaseOrderId);
     if (!po || !po.supplier || creating()) return;
     setCreating(true);
     setErrorMessage(undefined);
@@ -141,7 +182,7 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         id: crypto.randomUUID(),
         otherPartyId: po.supplier.id,
         purchaseOrderId: po.id,
-        insertLinesFromPurchaseOrder: seedLines() === 'all',
+        insertLinesFromPurchaseOrder: addLines,
       },
     });
     setCreating(false);
@@ -152,151 +193,62 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
       setErrorMessage(response.error.description);
   };
 
-  const errorLead = (
-    <Show when={errorMessage()}>
-      <Alert severity="error">{errorMessage()}</Alert>
-    </Show>
-  );
-
+  // The three steps render as always-mounted siblings driven by reactive `open`
+  // props (the repo's modal pattern — see the detail view). NOT a <Switch>:
+  // switching branches would UNMOUNT the active <Dialog>, and a native <dialog>
+  // fires its `close` event on unmount, which the Dialog reports as onClose —
+  // tearing the whole create flow down (the modal "flashes and closes"). With
+  // `open` driven reactively, the closing dialog's onClose is guarded by its
+  // now-false `open`, so the transition is silent.
   return (
-    <Show
-      when={props.mode === 'fromPurchaseOrder'}
-      fallback={
-        // Manual: a "Suppliers" modal — selecting a supplier confirms + closes.
-        <Dialog
-          open
-          dismissable={!creating()}
-          onClose={props.onClose}
-          title={showLinkStep() ? t('internal-order') : t('suppliers')}
-          testId="create-inbound-modal"
-          actionsLead={errorLead}
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
-              {/* Link step: an explicit Create button (a supplier is already
-                  chosen; the internal-order link is optional). */}
-              <Show when={showLinkStep()}>
-                <Button
-                  data-testid="dialog-button-ok"
-                  loading={creating()}
-                  onClick={() =>
-                    void create(
-                      supplier()!.id,
-                      linkRequisitionId() || undefined
-                    )
-                  }
-                >
-                  {t('button.create-shipment')}
-                </Button>
-              </Show>
-            </>
-          }
-        >
-          <Show when={!creating()} fallback={<Spinner center />}>
-            <Show
-              when={showLinkStep()}
-              fallback={
-                <NameSearch
-                  label={t('label.supplier-name')}
-                  storeId={params.storeId}
-                  role="supplier"
-                  onSelect={onSupplierSelect}
-                />
-              }
-            >
-              <Show when={!ordersData.loading} fallback={<Spinner center />}>
-                <Show
-                  when={internalOrders().length > 0}
-                  fallback={
-                    <Alert severity="info">
-                      {t('error.no-inbound-shipments-linked')}
-                    </Alert>
-                  }
-                >
-                  <Select
-                    label={t('internal-order')}
-                    value={linkRequisitionId()}
-                    onValueChange={setLinkRequisitionId}
-                    options={[
-                      { value: '', label: t('label.none') },
-                      ...internalOrders().map(o => ({
-                        value: o.id,
-                        label: `#${o.requisitionNumber}`,
-                      })),
-                    ]}
-                  />
-                </Show>
-              </Show>
-            </Show>
-          </Show>
-        </Dialog>
-      }
-    >
+    <>
+      {/* Suppliers step (manual): a supplier lookup; selecting confirms +
+          closes. Open until the link step takes over; holds a spinner while a
+          chosen supplier's open orders load or a create is in flight. */}
       <Dialog
-        open
+        open={props.mode === 'manual' && !showLinkStep()}
         dismissable={!creating()}
+        closeButton
         onClose={props.onClose}
-        title={t('button.new-external-shipment')}
-        testId="create-inbound-external-modal"
-        actionsLead={errorLead}
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
-            <Button
-              data-testid="dialog-button-ok"
-              loading={creating()}
-              disabled={!selectedPoId()}
-              onClick={() => void createFromPo()}
-            >
-              {t('button.ok')}
-            </Button>
-          </>
-        }
+        title={t('suppliers')}
+        testId="create-inbound-modal"
       >
-        <Show when={!poData.loading} fallback={<Spinner center />}>
-          <Show
-            when={purchaseOrders().length > 0}
-            fallback={
-              <Alert severity="info">
-                {t('messages.no-sent-purchase-orders')}
-              </Alert>
-            }
-          >
-            <Select
-              label={t('label.purchase-order')}
-              placeholder={t('label.select-purchase-order')}
-              value={selectedPoId()}
-              onValueChange={setSelectedPoId}
-              options={purchaseOrders().map(po => ({
-                value: po.id,
-                label: `#${po.number} — ${po.supplier?.name ?? ''}`,
-                description: po.reference ?? undefined,
-              }))}
-            />
-            <RadioGroup
-              label={t('label.lines')}
-              value={seedLines()}
-              onChange={value => setSeedLines(value as 'all' | 'none')}
-              options={[
-                { value: 'all', label: t('label.seed-all-lines') },
-                { value: 'none', label: t('label.seed-no-lines') },
-              ]}
-            />
-          </Show>
+        <Show when={errorMessage()}>
+          <Alert severity="error">{errorMessage()}</Alert>
+        </Show>
+        <Show
+          when={!creating() && !awaitingOrders()}
+          fallback={<Spinner center />}
+        >
+          <NameSearch
+            label={t('label.supplier-name')}
+            storeId={params.storeId}
+            role="supplier"
+            onSelect={onSupplierSelect}
+          />
         </Show>
       </Dialog>
-    </Show>
+
+      <LinkInternalOrderModal
+        open={showLinkStep()}
+        onClose={props.onClose}
+        orders={internalOrders()}
+        loading={ordersData.loading}
+        busy={creating()}
+        error={errorMessage()}
+        onLink={requisitionId => void create(supplier()!.id, requisitionId)}
+        onNext={() => void create(supplier()!.id)}
+      />
+
+      <LinkPurchaseOrderModal
+        open={props.mode === 'fromPurchaseOrder'}
+        onClose={props.onClose}
+        orders={purchaseOrders()}
+        loading={poData.loading}
+        busy={creating()}
+        error={errorMessage()}
+        onSelect={(id, addLines) => void createFromPo(id, addLines)}
+      />
+    </>
   );
 };

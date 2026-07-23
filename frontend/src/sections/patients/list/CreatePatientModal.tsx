@@ -17,10 +17,8 @@ import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import {
-  getBooleanCell,
-  getDateCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getDateCell } from '../../../ui/elements/table/tableHelpers';
+import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -273,7 +271,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     {
       c: { key: 'isDeceased' },
       header: t('label.deceased'),
-      ...getBooleanCell(),
+      ...getBooleanCell({ display: 'yesNo' }),
     },
     {
       c: { id: 'action' },

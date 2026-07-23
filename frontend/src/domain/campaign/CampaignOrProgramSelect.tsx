@@ -15,8 +15,7 @@ export type CampaignOrProgram =
 // the onChange can route the choice to the right field. The value key is
 // prefixed by kind so a campaign and a program sharing an id never collide.
 type Option =
-  | { kind: 'campaign'; node: Campaign }
-  | { kind: 'program'; node: ItemProgram };
+  { kind: 'campaign'; node: Campaign } | { kind: 'program'; node: ItemProgram };
 
 const optionValue = (o: Option): string => `${o.kind}:${o.node.id}`;
 
@@ -61,10 +60,26 @@ export const CampaignOrProgramSelect = (
     () => ({ storeId: props.storeId, itemId: props.itemId }),
     ({ storeId, itemId }) => fetchItemPrograms(storeId, itemId)
   );
+  // Read programs WITHOUT ever suspending. This picker renders inside the
+  // already-open line-edit modal, itself under the detail view's <Suspense>
+  // boundary — so suspending here would collapse that boundary and remount the
+  // whole page subtree, which detaches the open <dialog>: it loses the top
+  // layer (no backdrop, background not inert), so the modal looks broken on the
+  // Other tab (kdd/solid-reactivity-pitfalls › No remounts on interaction,
+  // rule 1). Crucially `programs.latest` is NOT enough: `.latest` STILL suspends
+  // on the FIRST pending read (before any value exists) — the exact case here,
+  // since this per-item resource first fetches when the Other tab mounts. So we
+  // gate on `.state` (reading state/latest never suspends): only surface a value
+  // once ready/refreshing, else `[]`. Same technique as storeScopedResource's
+  // noSuspense(). `programs.loading` still drives the Combobox spinner below.
+  const programList = (): ItemProgram[] =>
+    programs.state === 'ready' || programs.state === 'refreshing'
+      ? (programs.latest ?? [])
+      : [];
 
   const options = (): Option[] => [
     ...campaigns().map(node => ({ kind: 'campaign' as const, node })),
-    ...(programs() ?? []).map(node => ({ kind: 'program' as const, node })),
+    ...programList().map(node => ({ kind: 'program' as const, node })),
   ];
 
   // The current selection resolved to its merged-list value key (or undefined).

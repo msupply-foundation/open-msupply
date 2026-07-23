@@ -19,6 +19,7 @@ export type UserInfoFragment = {
   code: string;
   name: string;
   storeMode: "STORE" | "DISPENSARY";
+  homeCurrencyCode: string | null;
 }>;
 };
 };
@@ -32,7 +33,7 @@ export type MeResult = {
 };
 
 export const Me = {
-  query: "query me {\n  me {\n    ... on UserNode {\n      __typename\n      ...UserInfo\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      name\n      storeMode\n    }\n  }\n}",
+  query: "query me {\n  me {\n    ... on UserNode {\n      __typename\n      ...UserInfo\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      name\n      storeMode\n      homeCurrencyCode\n    }\n  }\n}",
 } as TypedDocument<MeResult, MeVariables>;
 
 export type AuthTokenVariables = {
@@ -55,7 +56,7 @@ export type AuthTokenResult = {
 };
 
 export const AuthToken = {
-  query: "query authToken($username: String!, $password: String!) {\n  authToken(username: $username, password: $password) {\n    ... on AuthToken {\n      __typename\n      user {\n        ...UserInfo\n      }\n    }\n    ... on AuthTokenError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      name\n      storeMode\n    }\n  }\n}",
+  query: "query authToken($username: String!, $password: String!) {\n  authToken(username: $username, password: $password) {\n    ... on AuthToken {\n      __typename\n      user {\n        ...UserInfo\n      }\n    }\n    ... on AuthTokenError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      name\n      storeMode\n      homeCurrencyCode\n    }\n  }\n}",
 } as TypedDocument<AuthTokenResult, AuthTokenVariables>;
 
 export type RefreshTokenVariables = Record<string, never>;

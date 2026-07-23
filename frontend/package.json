@@ -7,9 +7,11 @@
   "scripts": {
     "dev": "concurrently -k -n vite,css-types -c auto \"vite\" \"tcm --watch --pattern '**/*.module.css' src\"",
     "build": "tcm --pattern '**/*.module.css' src && tsc -b && vite build",
+    "build:showcase": "tcm --pattern '**/*.module.css' src && tsc -b && vite build --config vite.showcase.config.ts",
     "preview": "vite preview",
+    "preview:showcase": "vite preview --config vite.showcase.config.ts",
     "css:types": "tcm --pattern '**/*.module.css' src",
-    "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs",
+    "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-min-browser.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -44,12 +46,14 @@
     "concurrently": "^9.2.3",
     "eslint": "^9.39.5",
     "eslint-plugin-comment-length": "^2.3.1",
+    "eslint-plugin-compat": "^7.0.2",
     "eslint-plugin-solid": "^0.14.5",
     "globals": "^17.7.0",
     "graphql": "^16.10.0",
     "prettier": "3.9.5",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
+    "stylelint-no-unsupported-browser-features": "^8.1.1",
     "stylelint-value-no-unknown-custom-properties": "^6.1.1",
     "typed-css-modules": "^0.9.1",
     "typescript": "~6.0.2",
@@ -62,5 +66,8 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  }
+  },
+  "browserslist": [
+    "chrome >= 138"
+  ]
 }

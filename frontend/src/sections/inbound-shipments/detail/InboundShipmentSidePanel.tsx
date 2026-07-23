@@ -1,6 +1,15 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import {
+  createResource,
+  createSignal,
+  For,
+  Show,
+  type Component,
+} from 'solid-js';
 import { A } from '@solidjs/router';
 import { t, localisedDate } from '../../../intl';
+import { formatNumber } from '../../../intl/formatNumber';
+import { homeCurrency } from '../../../intl/currency';
+import { graphqlFetch } from '../../../api/graphql';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -11,9 +20,13 @@ import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { CopyIcon, EditIcon } from '../../../ui/icons';
-import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
+import {
+  InboundServiceLines,
+  type InboundInfoFragment,
+} from './inboundShipmentDetail.generated';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
+import { runInboundBatch } from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
@@ -42,10 +55,15 @@ export interface InboundShipmentSidePanelProps {
 }
 
 const money = (value: number): string =>
-  value.toLocaleString(undefined, {
+  formatNumber(value, {
+    style: 'currency',
+    currency: homeCurrency(),
+    currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+const round2 = (value: number): number => Math.round(value * 100) / 100;
 
 // The inbound-shipment detail side panel (spec S3 → side panel): record
 // actions, additional info (donor/edited-by/created/colour/comment), related
@@ -58,6 +76,42 @@ export const InboundShipmentSidePanel: Component<
   const [serviceOpen, setServiceOpen] = createSignal(false);
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
   const [copied, setCopied] = createSignal(false);
+
+  // The itemised service lines feeding the Charges → Service charges block.
+  // Re-read when the service-line modal saves or the service tax rate changes
+  // (bump the version); pricing totals come from the node via onRefetch.
+  const [serviceVersion, setServiceVersion] = createSignal(0);
+  const [serviceLines] = createResource(serviceVersion, async () => {
+    const result = await graphqlFetch(InboundServiceLines, {
+      storeId: props.storeId,
+      filter: {
+        invoiceId: { equalTo: props.node.id },
+        type: { equalTo: 'SERVICE' },
+      },
+    });
+    return result.kind === 'success' &&
+      result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+      ? result.data.invoiceLines.nodes
+      : [];
+  });
+  const refreshService = () => {
+    setServiceVersion(v => v + 1);
+    props.onRefetch();
+  };
+
+  // Editing the service tax cascades one rate across every service line (the
+  // per-line tax cascade — the update input's TaxInput wrapper), mirroring the
+  // stock-tax cascade on the invoice.
+  const setServiceTax = (percentage: number) => {
+    const lines = serviceLines() ?? [];
+    if (lines.length === 0) return;
+    void runInboundBatch(props.storeId, props.isExternal, {
+      updateInboundShipmentServiceLines: lines.map(line => ({
+        id: line.id,
+        tax: { percentage },
+      })),
+    }).then(refreshService);
+  };
 
   // Change-currency is offered only when the store allows foreign currency and
   // the supplier isn't itself a store (spec S3 charges → foreign currency).
@@ -78,10 +132,25 @@ export const InboundShipmentSidePanel: Component<
   const pricing = () => props.node.pricing;
   const isTransfer = () => kindOf(props.node) === 'transfer';
 
+  // Derived service tax rate (blended across lines) and amount — the display
+  // side of the inline editor; both zero when there's nothing to tax.
+  const serviceRate = () =>
+    pricing().serviceTotalBeforeTax > 0
+      ? round2(
+          (pricing().serviceTotalAfterTax / pricing().serviceTotalBeforeTax -
+            1) *
+            100
+        )
+      : 0;
+
   return (
     <>
       {/* Additional info ---------------------------------------------------- */}
-      <SidePanelSection title={t('heading.additional-info')}>
+      <SidePanelSection
+        value="additional-info"
+        title={t('heading.additional-info')}
+        collapsible
+      >
         <Show when={props.donorTracking}>
           <FieldRow label={t('label.donor')}>
             <span
@@ -130,7 +199,11 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Related documents -------------------------------------------------- */}
-      <SidePanelSection title={t('heading.related-documents')}>
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+        collapsible
+      >
         <Show
           when={props.node.purchaseOrder || props.node.requisition}
           fallback={<span>{t('messages.no-related-documents')}</span>}
@@ -164,29 +237,20 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Charges ------------------------------------------------------------ */}
-      <SidePanelSection title={t('heading.charges')}>
+      <SidePanelSection
+        value="charges"
+        title={t('heading.charges')}
+        collapsible
+      >
+        {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
+            off when not editable or the stock sub-total is zero) · total. */}
+        <FieldRow label={t('heading.stock-charges')}>
+          <span />
+        </FieldRow>
         <FieldRow label={t('label.sub-total')}>
           <span>{money(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
-          <NumberField
-            label={t('label.tax')}
-            hideLabel
-            value={props.node.taxPercentage ?? 0}
-            min={0}
-            max={100}
-            decimalLimit={2}
-            disabled={props.disabled}
-            onChange={value =>
-              props.onSaveField({ tax: { percentage: value ?? 0 } })
-            }
-          />
-        </FieldRow>
-        <FieldRow label={t('label.total')}>
-          <span>{money(pricing().stockTotalAfterTax)}</span>
-        </FieldRow>
-
-        <FieldRow label={t('heading.service-charges')}>
           <span
             style={{
               display: 'inline-flex',
@@ -194,17 +258,82 @@ export const InboundShipmentSidePanel: Component<
               'align-items': 'center',
             }}
           >
-            <span>{money(pricing().serviceTotalAfterTax)}</span>
-            <Button
-              variant="secondary"
-              icon={<EditIcon />}
-              disabled={props.disabled}
-              data-testid="edit-service-charges-button"
-              onClick={() => setServiceOpen(true)}
-            >
-              {t('label.edit')}
-            </Button>
+            <NumberField
+              label={t('label.tax')}
+              hideLabel
+              value={props.node.taxPercentage ?? 0}
+              min={0}
+              max={100}
+              decimalLimit={2}
+              endAdornment="%"
+              disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
+              onChange={value =>
+                props.onSaveField({ tax: { percentage: value ?? 0 } })
+              }
+            />
+            <span>
+              {money(
+                pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
+              )}
+            </span>
           </span>
+        </FieldRow>
+        <FieldRow label={t('label.total')}>
+          <span>{money(pricing().stockTotalAfterTax)}</span>
+        </FieldRow>
+
+        {/* Service charges: an edit action opens the service-line modal; an
+            itemised list, then sub-total · tax (inline editor + amount) ·
+            total (spec S3 charges → service charges). */}
+        <FieldRow label={t('heading.service-charges')}>
+          <Button
+            variant="secondary"
+            icon={<EditIcon />}
+            disabled={props.disabled}
+            data-testid="edit-service-charges-button"
+            onClick={() => setServiceOpen(true)}
+          >
+            {t('label.edit')}
+          </Button>
+        </FieldRow>
+        <For each={serviceLines() ?? []}>
+          {line => (
+            <FieldRow label={line.itemName}>
+              <span>{money(line.totalBeforeTax)}</span>
+            </FieldRow>
+          )}
+        </For>
+        <FieldRow label={t('label.sub-total')}>
+          <span>{money(pricing().serviceTotalBeforeTax)}</span>
+        </FieldRow>
+        <FieldRow label={t('label.tax')}>
+          <span
+            style={{
+              display: 'inline-flex',
+              gap: 'var(--space-2)',
+              'align-items': 'center',
+            }}
+          >
+            <NumberField
+              label={t('label.tax')}
+              hideLabel
+              value={serviceRate()}
+              min={0}
+              max={100}
+              decimalLimit={2}
+              endAdornment="%"
+              disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
+              onChange={value => setServiceTax(value ?? 0)}
+            />
+            <span>
+              {money(
+                pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
+              )}
+            </span>
+          </span>
+        </FieldRow>
+        <FieldRow label={t('label.total')}>
+          <span>{money(pricing().serviceTotalAfterTax)}</span>
         </FieldRow>
 
         {/* Foreign currency — code/rate/converted total + the gated
@@ -245,14 +374,18 @@ export const InboundShipmentSidePanel: Component<
           </FieldRow>
         </Show>
 
-        <FieldRow label={t('label.total')}>
+        <FieldRow label={t('heading.grand-total')}>
           <strong>{money(pricing().totalAfterTax)}</strong>
         </FieldRow>
       </SidePanelSection>
 
       {/* Transport details (transfers only, read-only) ---------------------- */}
       <Show when={isTransfer()}>
-        <SidePanelSection title={t('heading.transport-details')}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+          collapsible
+        >
           <FieldRow label={t('label.shipping-method')}>
             <span>{props.node.shippingMethod?.method ?? '—'}</span>
           </FieldRow>
@@ -269,29 +402,39 @@ export const InboundShipmentSidePanel: Component<
         </SidePanelSection>
       </Show>
 
-      {/* Record actions — pinned at the panel's end (spec S3 side-panel top,
-          rendered last per SidePanelActions convention). */}
-      <SidePanelActions>
-        {/* Delete only while New (client narrowing). */}
-        <Show when={props.node.status === 'NEW'}>
-          <DeleteInboundShipmentAction
-            storeId={props.storeId}
+      {/* Actions — the record-action cluster, its own titled section at the
+          panel's end (spec S3 side panel → Actions), so it carries the same
+          heading + padding as the info sections above. */}
+      <SidePanelSection value="actions" title={t('heading.actions')}>
+        <SidePanelActions>
+          {/* Delete only while New (client narrowing). */}
+          <Show when={props.node.status === 'NEW'}>
+            <DeleteInboundShipmentAction
+              storeId={props.storeId}
+              invoiceId={props.node.id}
+              isExternal={props.isExternal}
+              number={() => props.node.invoiceNumber}
+              disabled={false}
+              onDeleted={props.onDeleted}
+            />
+          </Show>
+          <DuplicateInboundShipmentAction
             invoiceId={props.node.id}
-            isExternal={props.isExternal}
-            disabled={false}
-            onDeleted={props.onDeleted}
+            number={() => props.node.invoiceNumber}
+            supplierName={() => props.node.otherPartyName}
           />
-        </Show>
-        <DuplicateInboundShipmentAction invoiceId={props.node.id} />
-        <Button
-          variant="secondary"
-          icon={<CopyIcon />}
-          data-testid="copy-to-clipboard-button"
-          onClick={copyToClipboard}
-        >
-          {copied() ? t('message.copy-success') : t('button.copy-to-clipboard')}
-        </Button>
-      </SidePanelActions>
+          <Button
+            variant="secondary"
+            icon={<CopyIcon />}
+            data-testid="copy-to-clipboard-button"
+            onClick={copyToClipboard}
+          >
+            {copied()
+              ? t('message.copy-success')
+              : t('button.copy-to-clipboard')}
+          </Button>
+        </SidePanelActions>
+      </SidePanelSection>
 
       <DefaultDonorModal
         open={donorOpen()}
@@ -307,7 +450,7 @@ export const InboundShipmentSidePanel: Component<
         invoiceId={props.node.id}
         isExternal={props.isExternal}
         disabled={props.disabled}
-        onSaved={props.onRefetch}
+        onSaved={refreshService}
       />
       <CurrencyModal
         open={currencyOpen()}

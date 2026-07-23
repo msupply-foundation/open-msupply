@@ -1,4 +1,4 @@
-import { createSignal, For, type JSX } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
 import { Combobox } from '../ui/elements/selectors/Combobox';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
@@ -12,7 +12,8 @@ import {
 import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { Button } from '../ui/elements/buttons/Button';
-import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
+import { CancelButton } from '../ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterMultiSelect,
@@ -21,21 +22,11 @@ import {
   type Filter,
 } from '../ui/elements/selectors/FilterBar';
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
+import { Lead, Row } from './common';
 import styles from './SelectorsShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /**
  * A coloured status dot — the kind of rich option a native <option> can't
@@ -216,65 +207,56 @@ export const SelectorsShowcase = () => {
   };
 
   return (
-    <div class={styles.stack}>
-      <Card
-        title="Styled drop-down — Kobalte Select"
-        lead={
-          <>
+    <ContentContainer size="form" align="start">
+      <Stack gap="lg">
+        <DashboardCard title="Styled drop-down — Kobalte Select">
+          <Lead>
             Pick one from a fixed list, but the options carry a status colour a
             native <code>&lt;option&gt;</code> can't render. Kobalte Select buys
             the listbox a11y contract (the Solid analogue of last week's Radix
             Select); the look is entirely ours.
-          </>
-        }
-      >
-        <Select
-          label="Invoice status"
-          value={status()}
-          onValueChange={setStatus}
-          options={INVOICE_STATUSES.map(s => ({
-            value: s.value,
-            label: s.label,
-            adornment: <Dot color={s.color} />,
-          }))}
-          helperText="Coloured dots + check indicator — styled, still accessible"
-        />
-      </Card>
+          </Lead>
+          <Select
+            label="Invoice status"
+            value={status()}
+            onValueChange={setStatus}
+            options={INVOICE_STATUSES.map(s => ({
+              value: s.value,
+              label: s.label,
+              adornment: <Dot color={s.color} />,
+            }))}
+            helperText="Coloured dots + check indicator — styled, still accessible"
+          />
+        </DashboardCard>
 
-      <Card
-        title="Autocomplete / combobox — Kobalte Combobox"
-        lead={
-          <>
+        <DashboardCard title="Autocomplete / combobox — Kobalte Combobox">
+          <Lead>
             The flagged hard widget: type to filter a large item list and pick
             one. Filters on <strong>code or name</strong>, renders a two-line
             option, and is clearable. Where last week's Downshift left popup
             placement to us, Kobalte portals it with collision-aware,
             control-width positioning. This is the real outbound-shipment item
             picker.
-          </>
-        }
-      >
-        <Combobox<DemoItem>
-          label="Add item"
-          items={ITEMS}
-          itemToString={item => item.name}
-          itemToValue={item => item.code}
-          filter={itemFilter}
-          renderItem={renderItem}
-          onChange={setPicked}
-          placeholder="Search by item code or name…"
-          helperText={
-            picked()
-              ? `Selected: ${picked()!.code} — ${picked()!.name}`
-              : 'Try "amox", "500", or a code like "ORS20"'
-          }
-        />
-      </Card>
+          </Lead>
+          <Combobox<DemoItem>
+            label="Add item"
+            items={ITEMS}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
+            filter={itemFilter}
+            renderItem={renderItem}
+            onChange={setPicked}
+            placeholder="Search by item code or name…"
+            helperText={
+              picked()
+                ? `Selected: ${picked()!.code} — ${picked()!.name}`
+                : 'Try "amox", "500", or a code like "ORS20"'
+            }
+          />
+        </DashboardCard>
 
-      <Card
-        title="Async autocomplete — AsyncCombobox (server-paginated)"
-        lead={
-          <>
+        <DashboardCard title="Async autocomplete — AsyncCombobox (server-paginated)">
+          <Lead>
             The <strong>server-fed</strong> combobox: typing refetches from the
             backend, scrolling near the bottom loads the next page, and a
             controlled selection shows its label even before its page is loaded.
@@ -284,25 +266,21 @@ export const SelectorsShowcase = () => {
             a mock fetcher (page size {ASYNC_PAGE_SIZE}, faked latency) and
             starts preselected to the last item to show it render without a
             lookup.
-          </>
-        }
-      >
-        <AsyncCombobox<DemoItem>
-          label="Add item (async)"
-          fetchPage={mockFetchPage}
-          itemToString={item => item.name}
-          itemToValue={item => item.code}
-          renderItem={renderItem}
-          selected={asyncPicked() ?? undefined}
-          onSelect={setAsyncPicked}
-          placeholder="Search by item code or name…"
-        />
-      </Card>
+          </Lead>
+          <AsyncCombobox<DemoItem>
+            label="Add item (async)"
+            fetchPage={mockFetchPage}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
+            renderItem={renderItem}
+            selected={asyncPicked() ?? undefined}
+            onSelect={setAsyncPicked}
+            placeholder="Search by item code or name…"
+          />
+        </DashboardCard>
 
-      <Card
-        title="Autocomplete — open-on-interaction & per-option disabled"
-        lead={
-          <>
+        <DashboardCard title="Autocomplete — open-on-interaction & per-option disabled">
+          <Lead>
             Every combobox opens its full list as soon as the input is
             focused/clicked — no typing needed (the customer-search modal's
             pick-first flow is just the default). <code>itemDisabled</code>{' '}
@@ -311,51 +289,43 @@ export const SelectorsShowcase = () => {
             <code>aria-disabled</code>). After committing a pick, reopening
             shows the <em>full</em> list again — the input text only filters
             while it's something the user typed.
-          </>
-        }
-      >
-        <Combobox<DemoItem>
-          label="Item (zero-stock rows listed but disabled)"
-          items={ITEMS}
-          itemToString={item => item.name}
-          itemToValue={item => item.code}
-          filter={itemFilter}
-          itemDisabled={item => item.availableStock === 0}
-          renderItem={renderItem}
-          onChange={() => {}}
-          placeholder="Click — the list opens without typing"
-        />
-      </Card>
+          </Lead>
+          <Combobox<DemoItem>
+            label="Item (zero-stock rows listed but disabled)"
+            items={ITEMS}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
+            filter={itemFilter}
+            itemDisabled={item => item.availableStock === 0}
+            renderItem={renderItem}
+            onChange={() => {}}
+            placeholder="Click — the list opens without typing"
+          />
+        </DashboardCard>
 
-      <Card
-        title="Multi-select autocomplete — Kobalte Combobox (multiple)"
-        lead={
-          <>
+        <DashboardCard title="Multi-select autocomplete — Kobalte Combobox (multiple)">
+          <Lead>
             The many-value sibling: pick several items, each a removable tag.
             Backspace removes the last; the menu stays open for picking several
             in a row. Unlike last week's Downshift version, picked items stay in
             the list check-marked — clicking one deselects it (Kobalte's
             standard multi-combobox model). Maps to the app's{' '}
             <code>AutocompleteMulti</code>.
-          </>
-        }
-      >
-        <MultiSelect<DemoItem>
-          label="Items on this master list"
-          items={ITEMS}
-          itemToString={item => item.code}
-          selectedItems={multi()}
-          onChange={setMulti}
-          renderItem={renderItem}
-          placeholder="Search to add items…"
-          helperText={`${multi().length} selected`}
-        />
-      </Card>
+          </Lead>
+          <MultiSelect<DemoItem>
+            label="Items on this master list"
+            items={ITEMS}
+            itemToString={item => item.code}
+            selectedItems={multi()}
+            onChange={setMulti}
+            renderItem={renderItem}
+            placeholder="Search to add items…"
+            helperText={`${multi().length} selected`}
+          />
+        </DashboardCard>
 
-      <Card
-        title="Selectors in a dialog — portal-into-dialog"
-        lead={
-          <>
+        <DashboardCard title="Selectors in a dialog — portal-into-dialog">
+          <Lead>
             The case that needs care: a{' '}
             <strong>Combobox / Select opened inside a modal dialog</strong>. A
             listbox portaled to <code>&lt;body&gt;</code> would render{' '}
@@ -366,69 +336,64 @@ export const SelectorsShowcase = () => {
             click-outside that closes the popup. Open the dialog and pick an
             item <strong>by clicking</strong> — it commits, and the listbox
             layers above the dialog.
-          </>
-        }
-      >
-        <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(true)}>
-          Open dialog with pickers
-        </Button>
-        <p class={styles.filterReadout}>
-          {dialogItem()
-            ? `Picked: ${dialogItem()!.code} — ${dialogItem()!.name} (${dialogStatus()})`
-            : '(nothing picked yet)'}
-        </p>
-        <Dialog
-          open={dialogOpen()}
-          onClose={() => setDialogOpen(false)}
-          icon={<PlusCircleIcon />}
-          title="Add a line"
-          description="Both pickers below open their listbox inside this dialog — click an option to select it."
-          widthRem={34}
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                icon={<PlusCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Add
-              </Button>
-            </>
-          }
-        >
-          <Combobox<DemoItem>
-            label="Item"
-            items={ITEMS}
-            itemToString={item => item.name}
-            itemToValue={item => item.code}
-            filter={itemFilter}
-            renderItem={renderItem}
-            onChange={setDialogItem}
-            placeholder="Search by item code or name…"
-          />
-          <Select
-            label="Status"
-            value={dialogStatus()}
-            onValueChange={setDialogStatus}
-            options={INVOICE_STATUSES.map(s => ({
-              value: s.value,
-              label: s.label,
-              adornment: <Dot color={s.color} />,
-            }))}
-          />
-        </Dialog>
-      </Card>
+          </Lead>
+          <Row>
+            <Button
+              icon={<PlusCircleIcon />}
+              onClick={() => setDialogOpen(true)}
+            >
+              Open dialog with pickers
+            </Button>
+          </Row>
+          <p class={styles.filterReadout}>
+            {dialogItem()
+              ? `Picked: ${dialogItem()!.code} — ${dialogItem()!.name} (${dialogStatus()})`
+              : '(nothing picked yet)'}
+          </p>
+          <Dialog
+            open={dialogOpen()}
+            onClose={() => setDialogOpen(false)}
+            icon={<PlusCircleIcon />}
+            title="Add a line"
+            description="Both pickers below open their listbox inside this dialog — click an option to select it."
+            widthRem={34}
+            actions={
+              <>
+                <CancelButton onClick={() => setDialogOpen(false)} />
+                <Button
+                  icon={<PlusCircleIcon />}
+                  onClick={() => setDialogOpen(false)}
+                >
+                  Add
+                </Button>
+              </>
+            }
+          >
+            <Combobox<DemoItem>
+              label="Item"
+              items={ITEMS}
+              itemToString={item => item.name}
+              itemToValue={item => item.code}
+              filter={itemFilter}
+              renderItem={renderItem}
+              onChange={setDialogItem}
+              placeholder="Search by item code or name…"
+            />
+            <Select
+              label="Status"
+              value={dialogStatus()}
+              onValueChange={setDialogStatus}
+              options={INVOICE_STATUSES.map(s => ({
+                value: s.value,
+                label: s.label,
+                adornment: <Dot color={s.color} />,
+              }))}
+            />
+          </Dialog>
+        </DashboardCard>
 
-      <Card
-        title="Filter bar — Kobalte DropdownMenu"
-        lead={
-          <>
+        <DashboardCard title="Filter bar — Kobalte DropdownMenu">
+          <Lead>
             The app's FilterMenu pattern: a <strong>Filters</strong> dropdown
             lists the addable fields; picking one adds an inline editor chip
             beside it — a text input, or a single-select menu for the status
@@ -437,56 +402,48 @@ export const SelectorsShowcase = () => {
             hand-rolled. The filter object is a controlled prop the page owns,
             in GraphQL-native shape — destined for URL query params once routing
             lands, so filtered views become shareable.
-          </>
-        }
-      >
-        <FilterBar
-          filters={DEMO_FILTERS}
-          filter={filters()}
-          onChange={setFilters}
-        />
-        <p class={styles.filterReadout}>
-          What the page hands to the table:{' '}
-          <code>{filterQuery() || '(no filters)'}</code>
-        </p>
-      </Card>
+          </Lead>
+          <FilterBar
+            filters={DEMO_FILTERS}
+            filter={filters()}
+            onChange={setFilters}
+          />
+          <p class={styles.filterReadout}>
+            What the page hands to the table:{' '}
+            <code>{filterQuery() || '(no filters)'}</code>
+          </p>
+        </DashboardCard>
 
-      <Card
-        title="Filter bar — multi-select enum filter"
-        lead={
-          <>
+        <DashboardCard title="Filter bar — multi-select enum filter">
+          <Lead>
             <code>FilterMultiSelect</code>: the TESTIDS contract's multi-select
             enum filter (each option stamps{' '}
             <code>filter-option-&lt;VALUE&gt;</code>) — a status filter that
             maps straight onto a wire <code>equalAny</code>. The trigger
             summarises the selection, or shows the placeholder while empty.
-          </>
-        }
-      >
-        <FilterMultiSelect
-          label="Status"
-          placeholder="Any"
-          values={statusFilter()}
-          options={INVOICE_STATUSES.map(status => ({
-            value: status.value,
-            label: status.label,
-          }))}
-          onChange={setStatusFilter}
-        />
-        <p class={styles.filterReadout}>
-          Wire filter:{' '}
-          <code>
-            {statusFilter().length
-              ? `status: { equalAny: [${statusFilter().join(', ')}] }`
-              : '(no status filter)'}
-          </code>
-        </p>
-      </Card>
+          </Lead>
+          <FilterMultiSelect
+            label="Status"
+            placeholder="Any"
+            values={statusFilter()}
+            options={INVOICE_STATUSES.map(status => ({
+              value: status.value,
+              label: status.label,
+            }))}
+            onChange={setStatusFilter}
+          />
+          <p class={styles.filterReadout}>
+            Wire filter:{' '}
+            <code>
+              {statusFilter().length
+                ? `status: { equalAny: [${statusFilter().join(', ')}] }`
+                : '(no status filter)'}
+            </code>
+          </p>
+        </DashboardCard>
 
-      <Card
-        title="Colour tag — dot + swatch picker"
-        lead={
-          <>
+        <DashboardCard title="Colour tag — dot + swatch picker">
+          <Lead>
             User-set colour on a record for visual grouping only. The{' '}
             <code>ColourTagDot</code> is read-only and hides the dot for
             uneditable records; the <code>ColourTagPicker</code> is a dot with a{' '}
@@ -494,41 +451,40 @@ export const SelectorsShowcase = () => {
             ring circle indicates that no tag is set. The colour palette is
             currently baked into the component since all current colour tag
             usages use the same palette.
-          </>
-        }
-      >
-        <div class={styles.tagRow}>
-          <For each={TAG_COLOURS}>
-            {colour => <ColourTagDot colour={colour.value} />}
-          </For>
-          <span class={styles.tagRowLabel}>
-            <code>ColourTagDot</code> — the read-only face (uneditable rows,
-            read-only panels)
-          </span>
-        </div>
-        <div class={styles.tagRow}>
-          <ColourTagPicker colour={tagColour()} onSelect={setTagColour} />
-          <span class={styles.tagRowLabel}>
-            Inline table variant: <code>row</code>.{' '}
-            {tagName()
-              ? `Tagged: ${tagName()}`
-              : 'Untagged: dashed ring circle'}
-          </span>
-        </div>
-        <div class={styles.tagRow}>
-          <ColourTagPicker
-            colour={tagColour()}
-            onSelect={setTagColour}
-            variant="field"
-            placement="bottom-end"
-          />
-          <span class={styles.tagRowLabel}>
-            Side panel variant: use <code>placement="bottom-end"</code> so the
-            <code>&lt;Popover&gt;</code> grows back into the viewport from the
-            panel's edge.{' '}
-          </span>
-        </div>
-      </Card>
-    </div>
+          </Lead>
+          <div class={styles.tagRow}>
+            <For each={TAG_COLOURS}>
+              {colour => <ColourTagDot colour={colour.value} />}
+            </For>
+            <span class={styles.tagRowLabel}>
+              <code>ColourTagDot</code> — the read-only face (uneditable rows,
+              read-only panels)
+            </span>
+          </div>
+          <div class={styles.tagRow}>
+            <ColourTagPicker colour={tagColour()} onSelect={setTagColour} />
+            <span class={styles.tagRowLabel}>
+              Inline table variant: <code>row</code>.{' '}
+              {tagName()
+                ? `Tagged: ${tagName()}`
+                : 'Untagged: dashed ring circle'}
+            </span>
+          </div>
+          <div class={styles.tagRow}>
+            <ColourTagPicker
+              colour={tagColour()}
+              onSelect={setTagColour}
+              variant="field"
+              placement="bottom-end"
+            />
+            <span class={styles.tagRowLabel}>
+              Side panel variant: use <code>placement="bottom-end"</code> so the
+              <code>&lt;Popover&gt;</code> grows back into the viewport from the
+              panel's edge.{' '}
+            </span>
+          </div>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
   );
 };

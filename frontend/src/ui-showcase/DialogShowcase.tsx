@@ -1,4 +1,7 @@
-import { createSignal, For, Show, type JSX } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
@@ -8,22 +11,13 @@ import {
   StoreSelector,
   type StoreOption,
 } from '../ui/elements/selectors/StoreSelector';
-import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../ui/icons';
+import {
+  CancelButton,
+  SaveButton,
+} from '../ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '../ui/icons';
+import { Lead, Note, Row } from './common';
 import styles from './DialogShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* A stand-in line list for the large "workbench" dialog — enough rows that the
    body overflows and scrolls internally while the header/footer/actions stay
@@ -67,47 +61,38 @@ export const DialogShowcase = () => {
   const [chosen, setChosen] = createSignal('');
 
   return (
-    <div class={styles.stack}>
-      <Card
-        title="Confirm dialog — Save → are you sure?"
-        lead={
-          <>
+    <ContentContainer size="form" align="start">
+      <Stack gap="lg">
+        <DashboardCard title="Confirm dialog — Save → are you sure?">
+          <Lead>
             Native <code>&lt;dialog&gt;</code> + <code>showModal()</code>, no
             library — the platform gives the focus trap (top layer + inert
             page), focus restore, Escape and <code>::backdrop</code>; the RnD
             prototype bought Radix for exactly this contract, and the "hard to
             drive from React" objection doesn't exist in Solid. Scrim click and
             Escape both cancel. Watch focus return to the Save button on close.
-          </>
-        }
-      >
-        <Button
-          variant="secondary"
-          icon={<SaveIcon />}
-          onClick={() => setConfirmOpen(true)}
-        >
-          Save
-        </Button>
-        <span class={styles.outcome} role="status">
-          {outcome()}
-        </span>
-        <ConfirmDialog
-          open={confirmOpen()}
-          onClose={() => {
-            setConfirmOpen(false);
-            setOutcome(o =>
-              o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o
-            );
-          }}
-          message="Save changes to this shipment? This is the standard Cancel/OK preset — ConfirmDialog is a thin composition over Dialog."
-          onConfirm={() => setOutcome('Saved ✓')}
-        />
-      </Card>
+          </Lead>
+          <Row>
+            <SaveButton onClick={() => setConfirmOpen(true)} />
+            <span class={styles.outcome} role="status">
+              {outcome()}
+            </span>
+          </Row>
+          <ConfirmDialog
+            open={confirmOpen()}
+            onClose={() => {
+              setConfirmOpen(false);
+              setOutcome(o =>
+                o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o
+              );
+            }}
+            message="Save changes to this shipment? This is the standard Cancel/OK preset — ConfirmDialog is a thin composition over Dialog."
+            onConfirm={() => setOutcome('Saved ✓')}
+          />
+        </DashboardCard>
 
-      <Card
-        title="Dialog — custom content, footer and actions"
-        lead={
-          <>
+        <DashboardCard title="Dialog — custom content, footer and actions">
+          <Lead>
             The base <code>&lt;Dialog&gt;</code> takes a required{' '}
             <code>title</code> (its accessible name), optional icon /
             description, free-form children, an optional bottom-pinned{' '}
@@ -119,49 +104,46 @@ export const DialogShowcase = () => {
             the first control and Tab cycles inside while the page behind is
             inert. (Opening a Combobox / Select <em>inside</em> a dialog needs
             extra care — see the "in a dialog" card under Selectors.)
-          </>
-        }
-      >
-        <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(true)}>
-          New shipment
-        </Button>
-        <Dialog
-          open={dialogOpen()}
-          onClose={() => setDialogOpen(false)}
-          icon={<PlusCircleIcon />}
-          title="New shipment"
-          description="Give the shipment a reference."
-          widthRem={34}
-          minBodyHeightRem={16}
-          footer={
-            <Alert severity="info">A new draft shipment will be created.</Alert>
-          }
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                icon={<PlusCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Create
-              </Button>
-            </>
-          }
-        >
-          <TextField label="Reference" placeholder="e.g. PO-1042" />
-        </Dialog>
-      </Card>
+          </Lead>
+          <Row>
+            <Button
+              icon={<PlusCircleIcon />}
+              onClick={() => setDialogOpen(true)}
+            >
+              New shipment
+            </Button>
+          </Row>
+          <Dialog
+            open={dialogOpen()}
+            onClose={() => setDialogOpen(false)}
+            icon={<PlusCircleIcon />}
+            title="New shipment"
+            description="Give the shipment a reference."
+            widthRem={34}
+            minBodyHeightRem={16}
+            footer={
+              <Alert severity="info">
+                A new draft shipment will be created.
+              </Alert>
+            }
+            actions={
+              <>
+                <CancelButton onClick={() => setDialogOpen(false)} />
+                <Button
+                  icon={<PlusCircleIcon />}
+                  onClick={() => setDialogOpen(false)}
+                >
+                  Create
+                </Button>
+              </>
+            }
+          >
+            <TextField label="Reference" placeholder="e.g. PO-1042" />
+          </Dialog>
+        </DashboardCard>
 
-      <Card
-        title={'Large "workbench" dialog — size="large"'}
-        lead={
-          <>
+        <DashboardCard title={'Large "workbench" dialog — size="large"'}>
+          <Lead>
             <code>size="large"</code> fills nearly the whole viewport — full
             width and ~80% height — for content-heavy modals like the stock line
             editor. The body becomes a flex column, so a single tall child (a
@@ -172,72 +154,61 @@ export const DialogShowcase = () => {
             breakpoint) a large dialog like this goes{' '}
             <strong>full-screen</strong>, edge to edge with no radius — smaller
             dialogs stay centred cards.
-          </>
-        }
-      >
-        <Button
-          icon={<PlusCircleIcon />}
-          onClick={() => setWorkbenchOpen(true)}
-        >
-          Edit lines
-        </Button>
-        <Dialog
-          open={workbenchOpen()}
-          onClose={() => setWorkbenchOpen(false)}
-          size="large"
-          icon={<PlusCircleIcon />}
-          title="Edit lines — stock take"
-          headerActions={
+          </Lead>
+          <Row>
             <Button
-              variant="secondary"
               icon={<PlusCircleIcon />}
-              onClick={addLine}
+              onClick={() => setWorkbenchOpen(true)}
             >
-              Add line
+              Edit lines
             </Button>
-          }
-          footer={
-            <Alert severity="info">
-              {lines().length} lines — the list scrolls; the header, this banner
-              and the actions stay put.
-            </Alert>
-          }
-          actions={
-            <>
+          </Row>
+          <Dialog
+            open={workbenchOpen()}
+            onClose={() => setWorkbenchOpen(false)}
+            size="large"
+            icon={<PlusCircleIcon />}
+            title="Edit lines — stock take"
+            headerActions={
               <Button
                 variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={() => setWorkbenchOpen(false)}
+                icon={<PlusCircleIcon />}
+                onClick={addLine}
               >
-                Cancel
+                Add line
               </Button>
-              <Button
-                icon={<SaveIcon />}
-                onClick={() => setWorkbenchOpen(false)}
-              >
-                Save
-              </Button>
-            </>
-          }
-        >
-          <div class={styles.workbench}>
-            <For each={lines()}>
-              {line => (
-                <div class={styles.workbenchRow}>
-                  <span class={styles.workbenchCode}>{line.code}</span>
-                  <span class={styles.workbenchName}>{line.name}</span>
-                  <span class={styles.workbenchPacks}>{line.packs} packs</span>
-                </div>
-              )}
-            </For>
-          </div>
-        </Dialog>
-      </Card>
+            }
+            footer={
+              <Alert severity="info">
+                {lines().length} lines — the list scrolls; the header, this
+                banner and the actions stay put.
+              </Alert>
+            }
+            actions={
+              <>
+                <CancelButton onClick={() => setWorkbenchOpen(false)} />
+                <SaveButton onClick={() => setWorkbenchOpen(false)} />
+              </>
+            }
+          >
+            <div class={styles.workbench}>
+              <For each={lines()}>
+                {line => (
+                  <div class={styles.workbenchRow}>
+                    <span class={styles.workbenchCode}>{line.code}</span>
+                    <span class={styles.workbenchName}>{line.name}</span>
+                    <span class={styles.workbenchPacks}>
+                      {line.packs} packs
+                    </span>
+                  </div>
+                )}
+              </For>
+            </div>
+          </Dialog>
+        </DashboardCard>
 
-      <Card
-        title="Store selector — in a blocking Dialog"
-        lead={
-          <>
+        <DashboardCard title="Store selector — in a blocking Dialog">
+          <Lead>
             The <code>StoreSelector</code> library component styled after the
             current app's login store-selector — <code>TextField</code> search,
             a bordered selectable list with <code>Default</code> /{' '}
@@ -249,33 +220,34 @@ export const DialogShowcase = () => {
             </code>{' '}
             Dialog — blocking (no scrim/Escape dismiss, an answer is required),
             exactly as the app's store login uses it.
-          </>
-        }
-      >
-        <Button onClick={() => setStoreOpen(true)}>Open store selection</Button>
-        <Show when={chosen()}>
-          <p class={styles.lead} style={{ 'margin-block-start': '0.75rem' }}>
-            {chosen()}
-          </p>
-        </Show>
-        <Dialog
-          open={storeOpen()}
-          onClose={() => setStoreOpen(false)}
-          dismissable={false}
-          title="Select a store"
-        >
-          <StoreSelector
-            stores={STORES}
-            defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
-            lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
-            onConfirm={id => {
-              const store = STORES.find(s => s.id === id);
-              setChosen(store ? `Entered ${store.name}` : '');
-              setStoreOpen(false);
-            }}
-          />
-        </Dialog>
-      </Card>
-    </div>
+          </Lead>
+          <Row>
+            <Button onClick={() => setStoreOpen(true)}>
+              Open store selection
+            </Button>
+          </Row>
+          <Show when={chosen()}>
+            <Note>{chosen()}</Note>
+          </Show>
+          <Dialog
+            open={storeOpen()}
+            onClose={() => setStoreOpen(false)}
+            dismissable={false}
+            title="Select a store"
+          >
+            <StoreSelector
+              stores={STORES}
+              defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
+              lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
+              onConfirm={id => {
+                const store = STORES.find(s => s.id === id);
+                setChosen(store ? `Entered ${store.name}` : '');
+                setStoreOpen(false);
+              }}
+            />
+          </Dialog>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
   );
 };

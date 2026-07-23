@@ -159,6 +159,7 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
   storeId: null,
   isAvailable: null,
   isActive: null,
+  campaignId: null,
 });
 
 // The filters offered, gated reactively (spec/stock S1 › filters):

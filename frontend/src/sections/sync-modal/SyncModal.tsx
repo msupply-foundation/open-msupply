@@ -15,7 +15,7 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ProgressList, type ProgressStep } from '../../ui/sync/ProgressList';
-import { CheckCircleIcon, RadioIcon, SettingsIcon } from '../../ui/icons';
+import { CheckCircleIcon, SyncIcon, SettingsIcon } from '../../ui/icons';
 import { t, tPlural, localisedDate, localisedTime } from '../../intl';
 import {
   syncStatus,
@@ -249,7 +249,7 @@ export const SyncModal: Component<{
         <div class={styles.actions}>
           <Button
             variant="primary"
-            icon={<RadioIcon />}
+            icon={<SyncIcon />}
             loading={busy()}
             onClick={() => void onSyncNow()}
           >

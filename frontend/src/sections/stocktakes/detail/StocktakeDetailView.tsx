@@ -37,6 +37,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -110,7 +111,8 @@ type StocktakeInfoNode = Extract<
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
-// sort on (prices, manufacture date, note, comment) simply omit `sortKey`.
+// sort on (manufacture date, unit, doses, difference, donor, manufacturer,
+// campaign, comment — see spec contract § backend gaps) simply omit `sortKey`.
 type SortKey = NonNullable<StocktakeLinesVariables['sort']>[number]['key'];
 
 // A finalised or on-hold (locked) stocktake can't have its content edited (OMS
@@ -181,25 +183,22 @@ const StocktakeDetailView: Component = () => {
     tableId: 'stocktake-detail',
     defaultConfig: {
       base: {
+        // Hidden by default (the user reveals them via the column-visibility
+        // control) — the spec's "hidden by default" set for the detail line
+        // table (spec/stocktakes S3), which mirrors OMS's defaultHideOnMobile
+        // columns. Snapshot / Counted / Difference / Reason / Comment stay
+        // visible. Gated columns (dosesPerUnit / donor) only appear in the table
+        // at all when their store preference is on; this sets their initial
+        // visibility once present.
         columnVisibility: {
-          packSize: false,
-          sellPricePerPack: false,
-          costPricePerPack: false,
           manufactureDate: false,
           location: false,
-          reason: false,
-          note: false,
-          // The columns added for spec parity — all hidden by default (the user
-          // reveals them via the column-visibility control), matching the
-          // existing extras. Gated columns (doses*, donor) only appear in the
-          // table at all when their store preference is on; this just sets their
-          // initial visibility once present.
-          difference: false,
+          itemUnit: false,
+          packSize: false,
           dosesPerUnit: false,
-          dosesCounted: false,
           donor: false,
           manufacturer: false,
-          comment: false,
+          campaign: false,
         },
       },
     },
@@ -272,6 +271,21 @@ const StocktakeDetailView: Component = () => {
   // page (keeps rows in place, no remount); undefined before the first load.
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+
+  // Total volume of the selected lines (volumePerPack × counted|snapshot packs)
+  // — feeds the change-location picker's "Available" filter so it keeps only
+  // locations with room for the whole move.
+  const selectedVolume = (): number => {
+    const ids = new Set(selectedIds());
+    return rows()
+      .filter(r => ids.has(r.id))
+      .reduce(
+        (total, r) =>
+          total +
+          r.volumePerPack * (r.countedNumberOfPacks ?? r.snapshotNumberOfPacks),
+        0
+      );
+  };
 
   // Locations WITH capacity for this store, fetched HERE (not from a global
   // cache) and passed down to the line editor + change-location picker, so their
@@ -544,6 +558,47 @@ const StocktakeDetailView: Component = () => {
       ...getDateCell(),
     },
     {
+      c: { key: 'manufactureDate' },
+      // Unsortable — StocktakeLineSortFieldInput has no manufactureDate key
+      // (backend gap; spec/stocktakes contract § backend gaps).
+      header: t('label.manufacture-date'),
+      ...getDateCell(),
+    },
+    {
+      // Location is nested (location.code) — an accessor column. Server sorts
+      // by locationCode.
+      c: { accessor: line => line.location?.code ?? '', id: 'location' },
+      sortKey: 'locationCode',
+      header: t('label.location'),
+    },
+    {
+      // Unit name (item.unitName) — read-only. Unsortable (no server key;
+      // backend gap). Matches OMS's columns.tsx itemUnit, placed after Location.
+      c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
+      header: t('label.unit-name'),
+    },
+    {
+      c: { key: 'packSize' },
+      // Unsortable in OMS's columns.tsx (no enableSorting) even though the
+      // server has a packSize key — matched here.
+      header: t('label.pack-size'),
+      ...getNumberCell(),
+    },
+    // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
+    // vaccine rows only.
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: {
+              accessor: line => dosesPerUnit(line) ?? '',
+              id: 'dosesPerUnit',
+            },
+            header: t('label.doses-per-unit'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
+    {
       c: { key: 'snapshotNumberOfPacks' },
       sortKey: 'snapshotNumberOfPacks',
       header: t('label.snapshot-num-of-packs'),
@@ -618,51 +673,9 @@ const StocktakeDetailView: Component = () => {
       header: t('label.difference'),
       ...getNumberCell(),
     },
-    // The remaining editable fields (mirroring the line-edit panel) as columns.
-    // Start hidden by default. Only the fields the server can sort on carry a
-    // `sortKey` (packSize) — the rest render as unsortable headers.
-    {
-      c: { key: 'packSize' },
-      sortKey: 'packSize',
-      header: t('label.pack-size'),
-      ...getNumberCell(),
-    },
-    // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
-    // vaccine rows only.
-    ...(prefs().manageVaccinesInDoses
-      ? [
-          {
-            c: {
-              accessor: line => dosesPerUnit(line) ?? '',
-              id: 'dosesPerUnit',
-            },
-            header: t('label.doses-per-unit'),
-            ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
-        ]
-      : []),
-    {
-      c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
-      ...getNumberCell(),
-    },
-    {
-      c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
-      ...getNumberCell(),
-    },
-    {
-      c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
-      ...getDateCell(),
-    },
-    {
-      // Location is nested (location.code) — an accessor column. Server sorts
-      // by locationCode.
-      c: { accessor: line => line.location?.code ?? '', id: 'location' },
-      sortKey: 'locationCode',
-      header: t('label.location'),
-    },
+    // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
+    // Campaign · Comment. No price columns — Sell/Cost price live only in the
+    // line editor's Pricing tab, never as detail-table columns (spec S3).
     {
       // The adjustment reason (reasonOption.reason) — an accessor column.
       // Server sorts by reasonOption.
@@ -691,14 +704,18 @@ const StocktakeDetailView: Component = () => {
       header: t('label.manufacturer'),
     },
     {
-      c: { key: 'note' },
-      header: t('label.note'),
+      // Campaign name (ungated) — campaign.name on the line. Unsortable (no
+      // server key; backend gap). Matches OMS's columns.tsx campaign, placed
+      // after Manufacturer, before Comment.
+      c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
+      header: t('label.campaign-only'),
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
-    // note; hidden by default like the other extra columns.
+    // note; the shared comment cell (indicator + popover).
     {
-      c: { accessor: line => line.comment ?? '', id: 'comment' },
+      c: { key: 'comment' },
       header: t('label.comment'),
+      ...getCommentCell(),
     },
   ];
 
@@ -836,7 +853,7 @@ const StocktakeDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
                       locations={locations()}
-                      rows={rows()}
+                      requiredVolume={selectedVolume}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}
@@ -876,6 +893,14 @@ const StocktakeDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled(node()) ? undefined : openRow}
+                  // Uncounted lines (no counted value) read in the info tone —
+                  // whole-row action-blue text, marking them as awaiting a
+                  // count (spec ui-surface → Line table, AC-D6). They're the
+                  // lines trimmed on finalise. Flat table, so a leaf-row
+                  // predicate is enough (no grouped parents to propagate to).
+                  rowTone={line =>
+                    line.countedNumberOfPacks == null ? 'info' : undefined
+                  }
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (

@@ -34,7 +34,6 @@ import {
   TruckIcon,
 } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -42,7 +41,11 @@ import {
   type InboundShipmentsVariables,
 } from './inboundShipments.generated';
 import { updateInboundShipment } from '../detail/inboundShipmentUpdate';
-import { filterFields, type InboundFilter } from './listFilters';
+import {
+  filterFields,
+  inboundQueryInputs,
+  type InboundListFilter,
+} from './listFilters';
 import { CreateInboundShipmentModal } from './CreateInboundShipmentModal';
 import {
   DeleteInboundShipmentsAction,
@@ -70,7 +73,7 @@ type Row = InboundRowFragment;
 type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
-  filter: InboundFilter;
+  filter: InboundListFilter;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;
   first: number;
@@ -123,13 +126,21 @@ const InboundShipmentsList: Component = () => {
   // manual/transfer, external = PO-linked), so the full set is their union;
   // requesting a scope the user lacks refuses the whole list, so we never ask
   // for one they don't hold (spec/inbound-shipments › contract → permissions).
-  const variables = () => ({
-    storeId: params.storeId,
-    filter: stripEmpty(query().filter),
-    sort: query().sort,
-    page: { first: query().first, offset: query().offset },
-    type: heldInboundQueryScopes(),
-  });
+  // The Type filter narrows this scope + adds a requisitionId filter — both
+  // resolved from the client-only `kind` by inboundQueryInputs.
+  const variables = () => {
+    const { filter, type } = inboundQueryInputs(
+      query().filter,
+      heldInboundQueryScopes()
+    );
+    return {
+      storeId: params.storeId,
+      filter,
+      sort: query().sort,
+      page: { first: query().first, offset: query().offset },
+      type,
+    };
+  };
 
   const [data, { refetch }] = createResource(
     () => JSON.stringify(variables()),
@@ -164,7 +175,7 @@ const InboundShipmentsList: Component = () => {
   };
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
-  const onFilterChange = (filter: InboundFilter) => {
+  const onFilterChange = (filter: InboundListFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
     setSelectedIds([]);
   };
@@ -288,7 +299,6 @@ const InboundShipmentsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      sortKey: 'comment',
       header: t('label.comment'),
       ...getCommentCell(),
     },
@@ -333,7 +343,7 @@ const InboundShipmentsList: Component = () => {
             >
               <SplitButton
                 icon={<PlusCircleIcon />}
-                testId="new-shipment"
+                testId="new-shipment-button"
                 menuLabel={t('button.new-shipment')}
                 options={[
                   { value: 'manual', label: t('button.new-shipment') },
@@ -367,18 +377,41 @@ const InboundShipmentsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
             </strong>
-            {/* Delete — only while every selected row is New (spec S1). */}
-            <Show when={allSelectedNew()}>
+            {/* Delete — enabled only while every selected row is New (spec S1) */}
+            <span
+              title={
+                allSelectedNew() ? undefined : t('messages.delete-only-new')
+              }
+            >
               <DeleteInboundShipmentsAction
                 storeId={params.storeId}
                 selectedIds={selectedIds}
                 onDeleted={onDeleted}
+                disabled={!allSelectedNew()}
               />
-            </Show>
-            {/* Make a copy — single selection only (spec AC-L4). */}
-            <Show when={singleSelectedId()}>
-              {id => <DuplicateInboundShipmentAction invoiceId={id()} />}
-            </Show>
+            </span>
+            {/* Make a copy — enabled only for a single selection (spec AC-L4);
+                shown disabled-with-reason otherwise (M5). Number/supplier come
+                from the (only) selected row; when multi-selected the action is
+                disabled so the confirm never opens. */}
+            <span
+              title={
+                singleSelectedId() ? undefined : t('messages.copy-single-only')
+              }
+            >
+              <DuplicateInboundShipmentAction
+                invoiceId={singleSelectedId() ?? selectedIds()[0] ?? ''}
+                number={() =>
+                  rows().find(r => r.id === selectedIds()[0])?.invoiceNumber ??
+                  0
+                }
+                supplierName={() =>
+                  rows().find(r => r.id === selectedIds()[0])?.otherPartyName ??
+                  ''
+                }
+                disabled={!singleSelectedId()}
+              />
+            </span>
             <ContentFooterActions>
               <Button
                 variant="secondary"

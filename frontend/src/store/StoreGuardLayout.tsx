@@ -10,7 +10,7 @@ import {
   storeContext,
 } from './storeContext';
 import { StoreSelectionScreen } from './StoreSelectionScreen';
-import { t } from '../intl';
+import { setHomeCurrency, t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
 // Reserved path for "no store in the URL": the segment never names a store, so
@@ -58,6 +58,11 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     const store = storeToEnter();
     const currentUser = user();
     if (!store || !currentUser) return;
+    // The entered store owns the home currency (a store property, not a
+    // language one — see intl/currency). Set it here so CurrencyField, the
+    // financial columns, and the side-panel charges all read the right
+    // symbol/decimals; re-runs on every store switch.
+    setHomeCurrency(store.homeCurrencyCode);
     recordPreviousStoreId(currentUser.userId, store.id);
     // Auto-selected store (the URL segment did not name it): navigate to
     // /{store-id}.

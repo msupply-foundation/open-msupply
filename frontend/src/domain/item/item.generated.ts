@@ -78,6 +78,10 @@ export type ItemsWithStockResult = {
   unitName: string | null;
   isVaccine: boolean;
   doses: number;
+  defaultPackSize: number;
+  itemStoreProperties: {
+  defaultSellPricePerPack: number;
+} | null;
   availableBatches: {
   __typename: "StockLineConnector";
   nodes: Array<{
@@ -91,5 +95,5 @@ export type ItemsWithStockResult = {
 };
 
 export const ItemsWithStock = {
-  query: "query itemsWithStock($storeId: String!, $filter: ItemFilterInput, $page: PaginationInput, $sort: [ItemSortInput!]) {\n  items(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n        availableBatches(storeId: $storeId) {\n          ... on StockLineConnector {\n            __typename\n            nodes {\n              id\n              totalNumberOfPacks\n              packSize\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query itemsWithStock($storeId: String!, $filter: ItemFilterInput, $page: PaginationInput, $sort: [ItemSortInput!]) {\n  items(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n        defaultPackSize\n        itemStoreProperties(storeId: $storeId) {\n          defaultSellPricePerPack\n        }\n        availableBatches(storeId: $storeId) {\n          ... on StockLineConnector {\n            __typename\n            nodes {\n              id\n              totalNumberOfPacks\n              packSize\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ItemsWithStockResult, ItemsWithStockVariables>;
