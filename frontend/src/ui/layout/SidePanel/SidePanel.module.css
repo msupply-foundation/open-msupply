@@ -1,10 +1,12 @@
 /*
- * Details panel — a DOCKED column at the inline-end (right) edge of the Page's middle region.
- * When the page opens it, it takes its own width and PUSHES the body (the body shrinks to fit) —
- * it does not float over the content (matching Open mSupply, which animates the panel's width and
- * moves the view). Dismissed by its own close button (top inline-end) or the header toggle; the
- * page owns the open/close boolean (Page.sidePanelOpen) and hides the open button while it's open.
- * Own scroll, so long field lists scroll independently of the body.
+ * Details panel — the detail-view right-hand panel's SURFACE + content shell.
+ * The DOCKING geometry (how it sits in the page: a docked column that slides in
+ * and pushes the body at navOverlay and above, an off-canvas drawer + scrim
+ * below it, and the drop shadow) is owned by the Page frame — see
+ * Page.module.css `.panelSlot`. This file owns only the panel's own look: its
+ * sticky header, its sections, and its independent scroll. Dismissed by its own
+ * close button (top inline-end) or the header toggle; the page owns the
+ * open/close boolean (Page.sidePanelOpen) and hides the open button while open.
  */
 
 .panel {
