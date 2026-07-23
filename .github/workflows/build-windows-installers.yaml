@@ -104,7 +104,10 @@ jobs:
           mkdir "omSupply\Server" || exit /b 1
           mkdir "omSupply\Desktop" || exit /b 1
           xcopy "server\configuration" "omSupply\Server\configuration" /e /h /c /i || exit /b 1
-          xcopy "server\app_data" "omSupply\Server\app_data" /e /h /c /i || exit /b 1
+          @REM app_data ships empty (it's runtime-created; nothing is tracked in
+          @REM git) — the Jenkins-era xcopy of server\app_data only ever copied
+          @REM stale runtime files from the build box, or silently did nothing.
+          mkdir "omSupply\Server\app_data" || exit /b 1
           copy "server\server\omSupply.ico" "build\omSupply.ico" || exit /b 1
           xcopy "build\*.*" "omSupply" /c || exit /b 1
           xcopy "build\windows\*.*" "omSupply" /c || exit /b 1
