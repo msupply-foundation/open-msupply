@@ -139,14 +139,30 @@ jobs:
           call yarn electron:build || exit /b 1
           xcopy "packages\electron\out\Open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i || exit /b 1
 
+      # Replaces `cargo set-version` (cargo-edit): `cargo install cargo-edit`
+      # silently downloads and builds whatever the latest crates.io release is
+      # whenever one is published — an unpinned third-party binary on the
+      # signing box. Workspace manifests come from cargo's own metadata; the
+      # anchored regex only matches the [package] version key, never
+      # dependency tables.
+      - name: Stamp crate versions
+        shell: pwsh
+        working-directory: server
+        run: |
+          $manifests = (cargo metadata --format-version 1 --no-deps | ConvertFrom-Json).packages.manifest_path
+          foreach ($m in $manifests) {
+            $content = Get-Content $m -Raw
+            $updated = $content -replace '(?m)^version = "[^"]*"', "version = `"$($env:version)`""
+            if ($updated -ne $content) { Set-Content $m $updated -NoNewline }
+          }
+          Write-Host "Stamped $($manifests.Count) crates to $env:version"
+
       # Last of the builds: by far the longest step, so every quick,
       # more-likely-to-flake step (yarn, network fetches) gets to fail first.
       - name: Build server binaries (sqlite + postgres)
         shell: cmd
         run: |
           cd server || exit /b 1
-          cargo install cargo-edit || exit /b 1
-          cargo set-version %version% || exit /b 1
           cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection || exit /b 1
           copy "target\release\omsupply_service.exe"  "..\omSupply\Server\omSupply-sqlite.exe" || exit /b 1
           copy "target\release\remote_server.exe"     "..\omSupply\Server\omSupply-server-sqlite.exe" || exit /b 1
