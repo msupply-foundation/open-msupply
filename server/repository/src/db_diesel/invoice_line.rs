@@ -30,8 +30,6 @@ table! {
         service_total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
         foreign_currency_total_after_tax -> Nullable<Double>,
-        total_number_of_packs -> Double,
-        total_number_of_units -> Double,
         total_volume -> Double,
     }
 }
@@ -48,11 +46,9 @@ pub struct PricingRow {
     pub service_total_after_tax: f64,
     pub tax_percentage: Option<f64>,
     pub foreign_currency_total_after_tax: Option<f64>,
-    /// Whole-invoice quantity totals over non-service lines (placeholders
+    /// Whole-invoice volume total over non-service lines (placeholders
     /// included) — the detail-view footer roll-up, which the client can no
     /// longer sum itself once lines are server-paginated.
-    pub total_number_of_packs: f64,
-    pub total_number_of_units: f64,
     pub total_volume: f64,
 }
 
@@ -453,12 +449,6 @@ impl InvoiceLine {
                     .map(|tax| price + (price * tax / 100.0))
                     .unwrap_or(price)
             }),
-            total_number_of_packs: if is_service { 0.0 } else { row.number_of_packs },
-            total_number_of_units: if is_service {
-                0.0
-            } else {
-                row.number_of_packs * row.pack_size
-            },
             total_volume: if is_service {
                 0.0
             } else {
