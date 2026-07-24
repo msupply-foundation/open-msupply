@@ -31,9 +31,10 @@ query names(
           id
           code
         }
-        # v2 custom-field VALUES (JSON object; codegen types the JSON scalar as
-        # string — parsed at the boundary in customFields.ts). Server-filtered to
-        # the fields visible for the name's role scope(s). Backs the custom-field columns.
+        # Custom-field VALUES (JSON object; codegen types the JSON scalar as
+        # string — parsed at the boundary in domain/customFields). Server-filtered
+        # to the fields visible for the name's role scope(s). Backs the custom-field
+        # columns.
         customFields
       }
     }
@@ -71,10 +72,10 @@ query nameById($storeId: String!, $nameId: String!) {
         isDonor
         isOnHold
         createdDatetime
-        # v1 name properties — a JSON STRING blob; read for the customer detail's
+        # Name properties — a JSON STRING blob; read for the customer detail's
         # supply level (well-known key), matched against nameProperties defs.
         properties
-        # v2 custom-field values (JSON object as string; see customFields.ts).
+        # Custom-field values (JSON object as string; see domain/customFields).
         customFields
         # Supplier-only trade terms (S4 Details tab; AC-N25).
         hshCode
@@ -91,34 +92,14 @@ query nameById($storeId: String!, $nameId: String!) {
   }
 }
 
-# Consumed read (owned by the settings/properties area): the v2 custom-field
-# DEFINITIONS for a role scope ("customer" / "supplier"). Drives which
-# custom-field columns/filters/rows exist. `key` indexes into NameNode.customFields
-# and is what a dynamicFilter condition targets.
-query customFieldDefinitions($scope: String!) {
-  customFields(filter: { scope: { equalTo: $scope } }) {
-    ... on CustomFieldConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        key
-        name
-        valueType
-        kind
-        displayMode
-        options {
-          id
-          key
-          name
-        }
-      }
-    }
-  }
-}
+# Custom-field DEFINITIONS (per role scope) are read through the shared
+# domain/customFields module (its own `customFieldDefinitions($scope)` query),
+# not duplicated here — the list and the supplier Custom Fields tab both consume
+# it. `key` indexes into NameNode.customFields and is what a dynamicFilter
+# condition targets.
 
-# Consumed read: the v1 name-property DEFINITIONS (for the customer detail's
-# supply level). Distinct from the v2 custom-field system above.
+# Consumed read: the name-property DEFINITIONS (for the customer detail's
+# supply level). Distinct from the custom-field system.
 query nameProperties {
   nameProperties {
     ... on NamePropertyConnector {

@@ -33,6 +33,7 @@ export type CustomerReturnInfoFragment = {
   username: string;
 } | null;
 } | null;
+  customFields: unknown | null;
 };
 
 export type CustomerReturnLineFragment = {
@@ -86,7 +87,7 @@ export type CustomerReturnDetailResult = {
 };
 
 export const CustomerReturnDetail = {
-  query: "query customerReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...CustomerReturnLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n}\n\nfragment CustomerReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  sellPricePerPack\n  note\n  itemVariantId\n  volumePerPack\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+  query: "query customerReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...CustomerReturnLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment CustomerReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  sellPricePerPack\n  note\n  itemVariantId\n  volumePerPack\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
 } as TypedDocument<CustomerReturnDetailResult, CustomerReturnDetailVariables>;
 
 export type UpdateCustomerReturnVariables = {
@@ -99,6 +100,7 @@ export type UpdateCustomerReturnVariables = {
     comment?: string | null;
     colour?: string | null;
     theirReference?: string | null;
+    customFields?: unknown | null;
   };
 };
 
@@ -116,7 +118,7 @@ export type UpdateCustomerReturnResult = {
 };
 
 export const UpdateCustomerReturn = {
-  query: "mutation updateCustomerReturn($storeId: String!, $input: UpdateCustomerReturnInput!) {\n  updateCustomerReturn(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n    }\n    ... on UpdateCustomerReturnError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n}",
+  query: "mutation updateCustomerReturn($storeId: String!, $input: UpdateCustomerReturnInput!) {\n  updateCustomerReturn(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n    }\n    ... on UpdateCustomerReturnError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}",
 } as TypedDocument<UpdateCustomerReturnResult, UpdateCustomerReturnVariables>;
 
 export type UpdateCustomerReturnLinesVariables = {
@@ -151,7 +153,7 @@ export type UpdateCustomerReturnLinesResult = {
 };
 
 export const UpdateCustomerReturnLines = {
-  query: "mutation updateCustomerReturnLines($storeId: String!, $input: UpdateCustomerReturnLinesInput!) {\n  updateCustomerReturnLines(storeId: $storeId, input: $input) {\n    ... on InvoiceNode {\n      __typename\n      ...CustomerReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...CustomerReturnLine\n        }\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n}\n\nfragment CustomerReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  sellPricePerPack\n  note\n  itemVariantId\n  volumePerPack\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+  query: "mutation updateCustomerReturnLines($storeId: String!, $input: UpdateCustomerReturnLinesInput!) {\n  updateCustomerReturnLines(storeId: $storeId, input: $input) {\n    ... on InvoiceNode {\n      __typename\n      ...CustomerReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...CustomerReturnLine\n        }\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment CustomerReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  sellPricePerPack\n  note\n  itemVariantId\n  volumePerPack\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
 } as TypedDocument<UpdateCustomerReturnLinesResult, UpdateCustomerReturnLinesVariables>;
 
 export type GenerateCustomerReturnLinesVariables = {

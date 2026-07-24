@@ -46,11 +46,7 @@ import {
 } from '../../../ui/icons';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { ActivityLogPanel } from '../../../domain/activityLog';
-import {
-  isTabVisible,
-  prescriptionCustomFieldsResource,
-} from '../../../domain/invoiceCustomFields';
-import { CustomFieldsTab } from './CustomFieldsTab';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
 import { SelectReportModal } from '../../../domain/reports';
 import {
   hasPermission,
@@ -286,17 +282,31 @@ const PrescriptionDetailView: Component = () => {
       });
   };
 
-  // The VISIBLE (non-prominent) custom fields drive the Custom fields tab —
-  // present only when the scope configures ≥1 (AC-CF1).
-  const visibleCustomFields = () =>
-    prescriptionCustomFieldsResource.noSuspense().filter(isTabVisible);
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
-    ...(visibleCustomFields().length > 0
-      ? [{ value: 'custom-fields', label: t('label.custom-fields') }]
-      : []),
+    { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
   ];
+
+  // Custom-fields save (explicit-save tab) — patch-merged server-side; returns
+  // true so the tab clears its dirty state. The toolbar (prominent fields)
+  // saves through saveField directly (fire-and-forget, like other header
+  // fields).
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const current = info();
+    if (!current) return false;
+    const outcome = await savePrescription(params.storeId, {
+      id: current.id,
+      customFields: patch,
+    });
+    if (outcome.kind === 'saved') {
+      mutate(prev => (prev ? { ...prev, ...outcome.node } : prev));
+      return true;
+    }
+    return false;
+  };
 
   const prefs = prescriptionPreferences;
 
@@ -595,18 +605,15 @@ const PrescriptionDetailView: Component = () => {
                 setConfig={tableConfig.setConfig}
               />
             </TabPanel>
-            <Show when={visibleCustomFields().length > 0}>
-              <TabPanel value="custom-fields">
-                <CustomFieldsTab
-                  definitions={visibleCustomFields()}
-                  values={
-                    (node().customFields ?? {}) as Record<string, unknown>
-                  }
-                  disabled={disabled()}
-                  onSave={patch => void saveField({ customFields: patch })}
-                />
-              </TabPanel>
-            </Show>
+            <TabPanel value="custom-fields">
+              <CustomFieldsEditTab
+                scope="prescription"
+                promoteToToolbar
+                disabled={disabled()}
+                values={node().customFields}
+                onSave={saveCustomFields}
+              />
+            </TabPanel>
             <TabPanel value="log">
               <ActivityLogPanel recordId={node().id} storeId={params.storeId} />
             </TabPanel>

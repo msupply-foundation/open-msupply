@@ -1,6 +1,5 @@
 import {
   createResource,
-  For,
   Show,
   Suspense,
   type Component,
@@ -9,7 +8,6 @@ import {
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl/formatDateTime';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -28,10 +26,9 @@ import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { CustomFieldsView } from '../../../domain/customFields';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
-import { ItemCustomFieldDefinitions } from '../itemCustomFields.generated';
 import {
   formatMonthsOfStock,
   formatUnits,
@@ -71,15 +68,6 @@ const ItemDetailView: Component = () => {
   );
   const item = (): ItemDetailRow | undefined => data.latest;
 
-  const [defsData] = createResource(async () => {
-    const result = await graphqlFetch(ItemCustomFieldDefinitions, {});
-    if (result.kind !== 'success') return [];
-    return result.data.customFields.nodes.filter(
-      d => d.displayMode !== 'HIDDEN'
-    );
-  });
-  const visibleDefs = () => defsData.latest ?? [];
-
   const backToList = () => {
     // Replace history so Back can't return to the missing record (AC-L9).
     navigate(`/${params.storeId}/catalogue/items`, { replace: true });
@@ -108,9 +96,6 @@ const ItemDetailView: Component = () => {
       enableSorting: false,
     },
   ];
-
-  const customFieldValue = (key: string): unknown =>
-    (item()?.customFields as Record<string, unknown> | null | undefined)?.[key];
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -339,25 +324,9 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="custom-fields">
-                <Show
-                  when={visibleDefs().length > 0}
-                  fallback={
-                    <EmptyState message={t('messages.no-custom-fields')} />
-                  }
-                >
-                  <DetailGroup title={t('label.custom-fields')}>
-                    <For each={visibleDefs()}>
-                      {def => (
-                        <LabelledValue variant="field" label={def.name}>
-                          {renderCustomFieldValue(
-                            def,
-                            customFieldValue(def.key)
-                          )}
-                        </LabelledValue>
-                      )}
-                    </For>
-                  </DetailGroup>
-                </Show>
+                {/* Read-only custom fields for the item scope (item.custom_fields
+                    is server read-only) — the shared view. */}
+                <CustomFieldsView scope="item" values={i().customFields} />
               </TabPanel>
 
               <TabPanel value="log">
@@ -380,32 +349,5 @@ const DetailGroup = (props: { title: string; children: JSX.Element }) => (
     {props.children}
   </section>
 );
-
-const renderCustomFieldValue = (
-  def: {
-    valueType: string;
-    options: { id: string; key: string; name: string }[];
-  },
-  value: unknown
-): string => {
-  if (value == null) return '';
-  switch (def.valueType) {
-    case 'BOOLEAN':
-      return value ? t('messages.yes') : t('messages.no');
-    case 'OPTION': {
-      const match = def.options.find(o => o.id === value || o.key === value);
-      return match?.name ?? String(value);
-    }
-    case 'DATE':
-      return localisedDate(value as string);
-    default:
-      return String(value);
-  }
-};
-
-// getBooleanCell is imported for parity with the list's custom-field columns;
-// the custom-fields tab shows values as read-only text (spec/items S2). Keep
-// the import referenced to avoid an unused-import error while the tab evolves.
-void getBooleanCell;
 
 export default ItemDetailView;

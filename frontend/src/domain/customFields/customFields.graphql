@@ -1,0 +1,29 @@
+# Shared custom-field DEFINITIONS read, scoped (spec/ui-standards/custom-fields).
+# One query for every scope (item, customer, supplier, patient, invoice kinds):
+# the caller passes the scope string. Drives which custom-field columns /
+# filters / tab rows / prominent toolbar controls exist. `key` indexes into the
+# record's `customFields` JSON and is what a dynamicFilter condition targets;
+# `options` carry `parentOptionId` so an OPTION field renders its hierarchy and
+# an option filter can match a parent plus its descendants.
+query customFieldDefinitions($scope: String!) {
+  customFields(filter: { scope: { equalTo: $scope } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        key
+        name
+        valueType
+        kind
+        displayMode
+        options {
+          id
+          key
+          name
+          parentOptionId
+        }
+      }
+    }
+  }
+}
