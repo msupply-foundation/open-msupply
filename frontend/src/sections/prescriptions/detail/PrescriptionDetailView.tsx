@@ -321,7 +321,7 @@ const PrescriptionDetailView: Component = () => {
       {
         c: { key: 'itemName' },
         header: t('label.name'),
-        meta: { card: { region: 'primary' } },
+        meta: { cardPosition: 'header-primary' },
       },
       { c: { key: 'batch' }, header: t('label.batch') },
       {

@@ -36,19 +36,39 @@ declare module '@tanstack/solid-table' {
      */
     wrapLines?: number;
     /**
-     * Where this column renders in CARD view (viewMode 'card'). `region`
-     * 'primary' = the big
-     *  top-left title, 'badge' = the top-right chip. `showLabel: true`
-     *  captions the cell with a small muted label (same style as a secondary
-     *  field's label) — reusing the column's own `header`, so it isn't
-     *  specified twice — useful when the cell is otherwise unlabelled (e.g. an
-     *  editable batch input in the primary slot). A column with NO `card`
-     *  falls into the single "secondary area" below the header (a wrapping
-     *  label-value flow; grouped into rows when the table is grouped — see
-     *  CardView). Visibility still follows columnVisibility — a hidden column
-     *  doesn't appear on the card either.
+     * Where this column's cell renders in CARD view (viewMode 'card'). Exactly
+     * ONE position per column def: a column has a single `cell` renderer, so a
+     * value that must appear in two places rendered differently (e.g. Batch as
+     * a header title AND as an editable input in the body) is TWO column defs,
+     * each naming its own position — not one column in two positions. The four
+     * positions split into a header row and a content body:
+     *  • 'header-primary'    — the big top-left identity/title (no label).
+     *  • 'header-badge'      — the top-right chip (no label).
+     *  • 'content-primary'   — a body field, always shown (labelled).
+     *  • 'content-secondary' — a body field, hidden in compact card views
+     *                          (labelled).
+     * Header positions are never labelled; content positions are captioned with
+     * the column's own `header`. A column with NO cardPosition falls into the
+     * body alongside the content positions (the ungrouped/secondary flow — see
+     * CardView), grouped into rows by `tabsAndCardGroups` when the table is
+     * grouped. Visibility still follows columnVisibility — a hidden column
+     * doesn't appear on the card either.
      */
-    card?: { region: 'primary' | 'badge'; showLabel?: boolean };
+    cardPosition?:
+      | 'header-primary'
+      | 'header-badge'
+      | 'content-primary'
+      | 'content-secondary';
+    /**
+     * Omit this column from TABLE view (a card-only column). Independent of
+     * cardPosition, which still places it on the card.
+     */
+    hideOnTable?: boolean;
+    /**
+     * Omit this column from CARD view (a table-only column). When true,
+     * cardPosition is moot; setting both hide flags renders the column nowhere.
+     */
+    hideOnCard?: boolean;
   }
 }
 

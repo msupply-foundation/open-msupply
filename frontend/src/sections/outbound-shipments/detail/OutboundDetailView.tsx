@@ -348,7 +348,7 @@ const OutboundDetailView: Component = () => {
       {
         c: { key: 'itemName' },
         header: t('label.name'),
-        meta: { card: { region: 'primary' }, wrapLines: 2 },
+        meta: { cardPosition: 'header-primary', wrapLines: 2 },
       },
       {
         c: {
