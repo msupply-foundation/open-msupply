@@ -99,9 +99,6 @@ export const createFilters = (
     type: null,
     // Identity / relational / programmatic filters.
     id: null,
-    // Custom-field AST filter (schema-wide addition); not a user-facing list
-    // filter here — S1 offers name + status only.
-    dynamicFilter: null,
     nameId: null,
     otherPartyId: null,
     storeId: null,
