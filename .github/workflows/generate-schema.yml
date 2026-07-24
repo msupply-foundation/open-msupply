@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
       - name: Checkout
