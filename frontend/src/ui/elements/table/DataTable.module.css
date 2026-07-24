@@ -177,43 +177,52 @@
   user-select: none;
 }
 
-/* Column resize handle — a thin hit target on the trailing edge of a resizable
-   header. Invisible at rest (a faint divider on hover), highlighted with the
-   brand tone while dragging. Sticky positioning on .th is a containing block
-   for this absolute child. */
+/* Column resize handle (ui-standards § tables .col-resize-handle, unit 11): a
+   0.75rem hit target STRADDLING the trailing header edge — it overhangs the
+   edge by 0.1875rem so the grab zone spans the column boundary, and z-index
+   lifts it clear of the neighbouring sticky header. Invisible at rest; a
+   centred 0.125rem bar (inset to 60% height, rounded) fades to the action blue
+   on hover AND throughout a resize drag (.resizeHandleActive keeps it lit once
+   the pointer leaves the handle mid-drag — hover alone would drop it). Sticky
+   positioning on .th is the containing block for this absolute child.
+   TODO (WCAG 2.5.7, flagged Carl 2026-07-24): drag-resize still has NO
+   non-drag alternative — add keyboard arrow-key resize on a focusable handle
+   (or a width control) in a later a11y pass. */
 .resizeHandle {
   position: absolute;
   inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: var(--space-2);
+  inset-inline-end: -0.1875rem;
+  inline-size: var(--space-3);
+  z-index: 10;
   cursor: col-resize;
   touch-action: none;
   user-select: none;
+  background: transparent;
 }
 
 .resizeHandle::after {
   content: '';
   position: absolute;
-  inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: 2px;
+  /* 60% height, vertically centred (spec top/bottom 20%). */
+  inset-block: 20%;
+  /* Centre the bar in the hit area, RTL-safe: auto margins over a fixed
+     inline-size (not a physical left + translateX). */
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: 0.125rem;
+  border-radius: 0.125rem;
   background: transparent;
-  transition: background 120ms ease;
+  /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
+     rule on .root — so no separate reduced-motion block is needed here. */
+  transition: background var(--table-bg-fade);
 }
 
-.resizeHandle:hover::after {
-  background: var(--color-divider);
-}
-
-.resizeHandleActive::after,
-.resizeHandleActive:hover::after {
-  background: var(--primary-main);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .resizeHandle::after {
-    transition: none;
-  }
+/* Blue on hover AND while resizing — the spec draws no grey stage and no
+   distinct active colour (this retires the last orange interaction accent;
+   focus ring / sort arrow / selection / pins all unified to blue earlier). */
+.resizeHandle:hover::after,
+.resizeHandleActive::after {
+  background: var(--secondary-main);
 }
 
 .td {
