@@ -1,8 +1,8 @@
 // Label-printer form logic (spec/settings/rules.md § Devices — label
 // printer), pure for the unit tests: the all-four-fields gate on both Test and
-// Save (AC-LP2 — held even in USB mode, captured as-is), and the input builder
+// Save (OMS-REG-SET-05.21 — held even in USB mode, captured as-is), and the input builder
 // that carries ONLY the four network/label fields — the USB preference is
-// device-local and never part of what travels to the server (AC-LP3).
+// device-local and never part of what travels to the server (OMS-REG-SET-05.22).
 
 import type { UpdateLabelPrinterSettingsVariables } from './labelPrinter.generated';
 
@@ -23,7 +23,7 @@ export const defaultLabelPrinterForm = (): LabelPrinterForm => ({
 });
 
 // Both Test and Save stay disabled until address, port, label height, and
-// label width are ALL filled in — even when testing via USB (AC-LP2).
+// label width are ALL filled in — even when testing via USB (OMS-REG-SET-05.21).
 export const canTestOrSave = (form: LabelPrinterForm): boolean =>
   form.address.trim() !== '' &&
   form.port != null &&
@@ -33,7 +33,7 @@ export const canTestOrSave = (form: LabelPrinterForm): boolean =>
   form.labelWidth != null &&
   form.labelWidth > 0;
 
-// Only the four server-side fields — no USB flag exists on the wire (AC-LP3).
+// Only the four server-side fields — no USB flag exists on the wire (OMS-REG-SET-05.22).
 export const buildLabelPrinterInput = (
   form: LabelPrinterForm
 ): UpdateLabelPrinterSettingsVariables['input'] => ({
