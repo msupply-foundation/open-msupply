@@ -11,7 +11,7 @@ export type ItemRow = ItemsResult['items']['nodes'][number];
 export type SortKey = 'name' | 'code';
 
 // A vaccine unit figure, with the doses equivalent appended (suffix "ds") when
-// the manage-vaccines-in-doses preference is on (spec/items S1, AC-S3).
+// the manage-vaccines-in-doses preference is on (spec/items S1, OMS-REG-CAT-04.35).
 const unitsWithDoses = (
   units: number,
   row: ItemRow,
@@ -24,8 +24,8 @@ const unitsWithDoses = (
 
 // The fixed item columns (spec/items S1). Default sort name ascending; only
 // Code + Name sortable. Master lists is a chip-list cell; MOS is blank (dash)
-// at zero AMC (AC-S2); stock-on-hand + AMC append the doses equivalent on
-// vaccine rows under the preference (AC-S3).
+// at zero AMC (OMS-REG-CAT-04.34); stock-on-hand + AMC append the doses
+// equivalent on vaccine rows under the preference (.35).
 export const fixedColumns = (
   showDoses: () => boolean
 ): Column<ItemRow, SortKey>[] => [

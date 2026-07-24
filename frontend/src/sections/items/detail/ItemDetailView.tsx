@@ -65,14 +65,14 @@ const ItemDetailView: Component = () => {
         id: { equalTo: v.itemId },
       });
       if (result.kind !== 'success') return undefined;
-      // Empty page = unknown or inactive item → not-found (AC-L9).
+      // Empty page = unknown or inactive item → not-found (OMS-REG-CAT-04.32).
       return result.data.items.nodes[0];
     }
   );
   const item = (): ItemDetailRow | undefined => data.latest;
 
   const backToList = () => {
-    // Replace history so Back can't return to the missing record (AC-L9).
+    // Replace history so Back can't return to the missing record (OMS-REG-CAT-04.32).
     navigate(`/${params.storeId}/catalogue/items`, { replace: true });
   };
 
@@ -106,7 +106,7 @@ const ItemDetailView: Component = () => {
         when={item()}
         fallback={
           <Show when={!data.loading} fallback={<Spinner center />}>
-            {/* Not-found blocking notice — confirm returns to the list (AC-L9). */}
+            {/* Not-found blocking notice — confirm returns to the list (OMS-REG-CAT-04.32). */}
             <ConfirmDialog
               open
               title={t('error.item-not-found')}
