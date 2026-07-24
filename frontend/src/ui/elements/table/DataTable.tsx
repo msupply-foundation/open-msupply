@@ -880,6 +880,7 @@ export function DataTable<T, K extends string, G extends string = never>(
           Page-level selection footer and this bar just shows the pager. */}
       <Show when={props.pagination || selectionBarActive()}>
         <ContentFooter
+          class={styles.tableFooter}
           testId={selectionBarActive() ? 'actions-footer' : 'table-footer'}
         >
           <Show
