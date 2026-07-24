@@ -55,9 +55,19 @@ export type CellFragment<T> = Pick<
 const formatDateCell = (value: string | Date | null | undefined): string =>
   value ? localisedDate(value) : '';
 
-// Numbers: right-aligned.
+// Numbers: right-aligned, displayed locale-formatted to at most 2 dp
+// (ui-standards § tables; the old app's number-cell default) — derived values
+// carry float dust and raw renders skip digit grouping. Display-only: the
+// underlying value is untouched. Non-number values (a pre-formatted string)
+// pass through; absent renders blank.
 export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
+  cell: info => {
+    const value = info.getValue<number | string | null | undefined>();
+    return typeof value === 'number'
+      ? formatNumber(value, { maximumFractionDigits: 2 })
+      : (value ?? '');
+  },
 });
 
 // Dates: format the resolved value via localisedDate, blank → em dash.

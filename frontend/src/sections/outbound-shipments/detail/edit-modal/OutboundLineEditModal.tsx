@@ -803,7 +803,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
-        return <>{line.numberOfPacks * line.packSize}</>;
+        return (
+          <>
+            {formatNumber(line.numberOfPacks * line.packSize, {
+              maximumFractionDigits: 2,
+            })}
+          </>
+        );
       },
     },
     // Received count + derived difference (AC-I8) — non-store customers only
