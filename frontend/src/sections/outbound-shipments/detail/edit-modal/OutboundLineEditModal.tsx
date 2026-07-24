@@ -40,6 +40,7 @@ import {
   type DraftStockOutLinesResult,
 } from './outboundLineEdit.generated';
 import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
+import { toSaveLineInputs } from './saveLineInputs';
 import {
   availableUnits as sumAvailableUnits,
   autoAllocateBarReasons,
@@ -256,9 +257,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       sorted.map(line => [line.id, line.numberOfPacks])
     );
     nonAllocatableIds = new Set(
-      sorted
-        .filter(line => !rowHasAllocatableStock(line))
-        .map(line => line.id)
+      sorted.filter(line => !rowHasAllocatableStock(line)).map(line => line.id)
     );
     const ordered = [
       ...sorted.filter(line => !nonAllocatableIds.has(line.id)),
@@ -529,6 +528,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setZeroConfirm(false);
   };
 
+  // The received count (AC-I8): the packs the destination reported for this
+  // batch row — blank (null) until recorded, clearable back to blank. The
+  // Difference column derives from it in place; nothing re-distributes.
+  const setReceived = (id: string, value: number | null) => {
+    const index = draft.findIndex(line => line.id === id);
+    if (index < 0) return;
+    setDraft(index, 'receivedNumberOfPacks', value);
+    setDirty(true);
+  };
+
   const save = async (): Promise<boolean> => {
     const current = item();
     if (!current) return false;
@@ -544,12 +553,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           // The full set, zeros included — the item-set save replaces the
           // item's lines (zero packs removes an existing line), and the
           // explicit placeholder quantity creates/updates/deletes the
-          // placeholder to match (AC-I6).
-          lines: draft.map(line => ({
-            id: line.id,
-            numberOfPacks: line.numberOfPacks,
-            stockLineId: line.stockLineId,
-          })),
+          // placeholder to match (AC-I6). Received counts and variance
+          // reasons are echoed through (see ./saveLineInputs).
+          lines: toSaveLineInputs(draft),
           placeholderQuantity: placeholderUnits(),
         },
       },
@@ -664,13 +670,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // packs lens) — matches the old app's canAutoAllocate CheckCell;
       // hovering the tick shows the reason. Issue-barred rows are
       // additionally dimmed (rowState).
-      c: { accessor: line => willAutoAllocate(line), id: 'canAllocate' },
+      //
+      // Derived cells (this tick, {unit} issued, Difference) compute from the
+      // draft store IN the cell render, never via a column accessor: TanStack
+      // caches accessor values per row-model build, and per-batch edits
+      // mutate rows in place without a rebuild — an accessor-computed cell
+      // freezes at its first value.
+      c: { id: 'canAllocate' },
       // getSize() is a min-width floor (auto layout) — without this the
       // header-less tick column gets the 150px default and reads as a gap.
       size: 36,
       header: '',
       cell: info => (
-        <Show when={info.getValue<boolean>()}>
+        <Show when={willAutoAllocate(info.row.original)}>
           <Popover
             trigger={<CheckIcon />}
             triggerLabel={t('description.used-in-auto-allocation')}
@@ -764,7 +776,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...getNumberCell(),
     },
     {
-      // The one editable cell: packs issued from this batch (AC-I5).
+      // Packs issued from this batch (AC-I5), bounded 0…available.
       c: { key: 'numberOfPacks' },
       header: t('label.issued'),
       meta: { align: 'right' },
@@ -786,34 +798,55 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
     },
     {
-      c: {
-        accessor: line => line.numberOfPacks * line.packSize,
-        id: 'unitsIssued',
-      },
+      c: { id: 'unitsIssued' },
       header: t('label.units-issued', { unit: unitName() }),
-      ...getNumberCell(),
+      meta: { align: 'right' },
+      cell: info => {
+        const line = info.row.original;
+        return <>{line.numberOfPacks * line.packSize}</>;
+      },
     },
+    // Received count + derived difference (AC-I8) — non-store customers only
+    // (a transfer's counts mirror back from the receiving side). Blank until
+    // the destination's count is recorded; disabled on the same rows the
+    // Packs-issued cell is.
     ...(props.customerIsStore
       ? []
       : [
           {
-            c: {
-              accessor: (line: DraftLine) =>
-                line.receivedNumberOfPacks ?? line.numberOfPacks,
-              id: 'receivedNumberOfPacks',
-            },
+            c: { key: 'receivedNumberOfPacks' },
             header: t('label.packs-received'),
-            ...getNumberCell(),
+            meta: { align: 'right' },
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <NumberField
+                  label={t('label.packs-received')}
+                  hideLabel
+                  size="small"
+                  min={0}
+                  decimalLimit={2}
+                  disabled={rowDisabled(line)}
+                  value={line.receivedNumberOfPacks ?? undefined}
+                  onChange={value => setReceived(line.id, value ?? null)}
+                />
+              );
+            },
           } as Column<DraftLine, never>,
           {
-            c: {
-              accessor: (line: DraftLine) =>
-                (line.receivedNumberOfPacks ?? line.numberOfPacks) -
-                line.numberOfPacks,
-              id: 'difference',
-            },
+            c: { id: 'difference' },
             header: t('label.difference'),
-            ...getNumberCell(),
+            meta: { align: 'right' },
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <>
+                  {line.receivedNumberOfPacks == null
+                    ? ''
+                    : line.receivedNumberOfPacks - line.numberOfPacks}
+                </>
+              );
+            },
           } as Column<DraftLine, never>,
         ]),
   ];

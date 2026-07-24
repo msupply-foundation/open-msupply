@@ -39,6 +39,9 @@ query draftStockOutLines(
         priority
       }
       receivedNumberOfPacks
+      reasonOption {
+        id
+      }
       campaign {
         name
       }
