@@ -3,6 +3,8 @@
 // branching + date math are testable in isolation (the component resolves the
 // returned message KEYS via t() and owns the stocktake-conflict query).
 
+import { localDayToUtc } from '../../../ui/elements/inputs/dateTimeConvert';
+
 export type BackdatingReasonKey =
   | 'messages.received-date-backdating-not-enabled'
   | 'messages.picked-date-not-new';
@@ -63,14 +65,14 @@ export const withinBackdateBounds = (
   day: string
 ): boolean => day >= bounds.min && day <= bounds.max;
 
-// A chosen day → an ISO datetime on that day at `now`'s time (recorded "as of"
-// that day; the picker bounds it to the window above).
-export const backdatedDatetimeFor = (now: Date, day: string): string => {
-  const [year, month, date] = day.split('-').map(Number);
-  const when = new Date(now);
-  when.setFullYear(year!, month! - 1, date!);
-  return when.toISOString();
-};
+// A chosen day → the instant to record the shipment "as of" (matching the
+// current app): today keeps the actual current moment; a backdated day is
+// stamped at its LOCAL end-of-day via the shared conversion (#456), so the
+// entry sorts after same-day activity. Input is a `DateTime<Utc>`.
+export const backdatedDatetimeFor = (now: Date, day: string): string =>
+  day === toDateInput(now)
+    ? now.toISOString()
+    : localDayToUtc(day, { endOfDay: true });
 
 export type BackdateWarningKey =
   | 'messages.confirm-backdate-picked-date'
