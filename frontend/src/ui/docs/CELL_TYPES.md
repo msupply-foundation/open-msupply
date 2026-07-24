@@ -1,6 +1,6 @@
 # Table cell types & `getCellDefinition`
 
-The catalogue of table **cell types** — the reusable rendering + alignment + default width for each kind of column a vertical shows — and the `getCellDefinition` lookup that turns a common column key into the right one. This is the reference for Phase 3's column-preset work (see [`TABLE_PLAN.md`](./TABLE_PLAN.md)); the cell fragments themselves live in [`tableHelpers.tsx`](../elements/table/tableHelpers.tsx) (plus [`BooleanCell.tsx`](../elements/table/BooleanCell.tsx) / [`ChipListCell.tsx`](../elements/table/ChipListCell.tsx)).
+The catalogue of table **cell types** — the reusable rendering + alignment + default width for each kind of column a vertical shows — and the `getCellDefinition` lookup that turns a common column key into the right one. This is the reference for Phase 3's column-preset work (see [`TABLE_PLAN.md`](./TABLE_PLAN.md), and [`kdd/column-config`](../../../kdd/column-config/draft-kdd.md) for why the API is shaped this way); the cell fragments themselves live in [`tableHelpers.tsx`](../elements/table/tableHelpers.tsx) (plus [`BooleanCell.tsx`](../elements/table/BooleanCell.tsx) / [`ChipListCell.tsx`](../elements/table/ChipListCell.tsx)).
 
 ## The model
 
