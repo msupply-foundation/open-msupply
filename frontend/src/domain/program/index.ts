@@ -1,9 +1,20 @@
-// The Program domain module (kdd/domain-modules): the store-scoped
-// program-enrolment registries resource + type, and the reusable
-// ProgramSelect picker (reports the program's context id — spec/reports
-// AC-R10).
+// The Program domain module (kdd/domain-modules). Two distinct pickers over
+// two distinct entities:
+//  - ProgramNameSelect: the store's programs (ProgramNode.id) — a
+//    prescription's programId (spec/prescriptions).
+//  - ProgramDocumentSelect: program-enrolment DOCUMENT registries (context id)
+//    — the report/patient-enrolment surfaces (spec/reports AC-R10).
 export {
   programRegistriesResource,
+  programsResource,
   type ProgramRegistry,
+  type ProgramListItem,
 } from './programResource';
-export { ProgramSelect, type ProgramSelectProps } from './ProgramSelect';
+export {
+  ProgramNameSelect,
+  type ProgramNameSelectProps,
+} from './ProgramNameSelect';
+export {
+  ProgramDocumentSelect,
+  type ProgramDocumentSelectProps,
+} from './ProgramDocumentSelect';

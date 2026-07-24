@@ -895,7 +895,7 @@ const StocktakeDetailView: Component = () => {
                   onRowClick={isDisabled(node()) ? undefined : openRow}
                   // Uncounted lines (no counted value) read in the info tone —
                   // whole-row action-blue text, marking them as awaiting a
-                  // count (spec ui-surface → Line table, AC-D6). They're the
+                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68). They're the
                   // lines trimmed on finalise. Flat table, so a leaf-row
                   // predicate is enough (no grouped parents to propagate to).
                   rowTone={line =>
