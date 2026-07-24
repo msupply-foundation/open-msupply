@@ -20,7 +20,6 @@ use crate::{
 };
 
 use super::{
-    assign_prescription_number::AssignPrescriptionNumber,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
     plugin_processor::PluginProcessor,
@@ -67,7 +66,12 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
-            ProcessorType::AssignPrescriptionNumber => vec![Box::new(AssignPrescriptionNumber)],
+            // Disabled: this processor's cursor starts at 0, so its first run walks the entire
+            // historical changelog synchronously on the single-threaded main runtime, freezing
+            // sync and all background tasks on servers with a large changelog (#12547).
+            // Re-enable (restore `vec![Box::new(AssignPrescriptionNumber)]` and un-ignore its
+            // test) once it is runtime-safe and cursor-seeded - see ideas in #12547.
+            ProcessorType::AssignPrescriptionNumber => vec![],
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]

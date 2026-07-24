@@ -46,8 +46,8 @@ mod v2_18_00;
 mod v2_19_00;
 mod v2_20_00;
 mod v2_21_00;
-mod v3_00_00;
 mod v2_21_01;
+mod v3_00_00;
 mod version;
 mod views;
 

@@ -81,6 +81,7 @@
 #   interval: 60 # in seconds
 # features:
 #   stock_movement: true
+#   enable_multi_device_site: true # central server only; enables the multi-device toggle on the Sites screen
 # changelog_partition: # postgres-only; controls partitioning of the changelog table
 #   partition_size: 5000000      # cursor values per partition
 #   lookahead: 30000000          # number of insertable records headroom for changelog; also the lower bound — yaml values below this are clamped up

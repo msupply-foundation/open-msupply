@@ -13,6 +13,7 @@ use crate::{
 /// Ensure the processor allocates a real number to them, is idempotent, and leaves
 /// non-prescription invoices untouched.
 #[tokio::test]
+#[ignore = "processor disabled (empty vec in ProcessorType::get_processors) for 2.21.02, see #12547"]
 async fn assigns_prescription_number_to_prescriptions() {
     let site_id = 26;
 

@@ -433,7 +433,7 @@ mod test {
         assert_eq!(repack_invoices_for("full_sl").len(), 0);
 
         // Fractional pack quantities can be moved (repack validation is not applied)
-        stock_line("fraction_sl").upsert(&ctx.connection).unwrap();
+        sl_repo.upsert_one(&stock_line("fraction_sl")).unwrap();
         let fraction_movement = new_movement(&service_provider, &ctx).await;
         let fraction_line_id = add_line(&ctx, &fraction_movement, "fraction_sl", 2.5);
         service
@@ -454,12 +454,12 @@ mod test {
 
         // Moving all available packs while some are reserved (available < total)
         // must split, not relocate the whole line
-        StockLineRow {
-            available_number_of_packs: 6.0,
-            ..stock_line("reserved_sl")
-        }
-        .upsert(&ctx.connection)
-        .unwrap();
+        sl_repo
+            .upsert_one(&StockLineRow {
+                available_number_of_packs: 6.0,
+                ..stock_line("reserved_sl")
+            })
+            .unwrap();
         let reserved_movement = new_movement(&service_provider, &ctx).await;
         let reserved_line_id = add_line(&ctx, &reserved_movement, "reserved_sl", 6.0);
         service

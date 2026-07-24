@@ -154,7 +154,10 @@ impl RemoteDataSynchroniser {
                 Ok(info) => info,
                 // Transient poll failures don't affect the worker; retry until the stall timeout.
                 Err(error) if error.is_transient() => {
-                    log::warn!("Polling central site info failed (will retry): {:#?}", error);
+                    log::warn!(
+                        "Polling central site info failed (will retry): {:#?}",
+                        error
+                    );
                     if last_progress.elapsed() >= stall_timeout {
                         return Err(WaitForInitialisationError::TimeoutReached);
                     }
@@ -523,7 +526,10 @@ mod test {
         let result = synchroniser(&server.base_url())
             .wait_for_initialisation(0, 600)
             .await;
-        assert_matches!(result, Err(WaitForInitialisationError::InitialisationFailed));
+        assert_matches!(
+            result,
+            Err(WaitForInitialisationError::InitialisationFailed)
+        );
     }
 
     /// Worker gone (idle) but not completed -> no progress -> stall timeout (recoverable).
@@ -552,8 +558,7 @@ mod test {
         let server = MockServer::start();
         server.mock(|when, then| {
             when.method(GET).path("/sync/v5/site");
-            then.status(200)
-                .body(site_info_body("started", Some(5)));
+            then.status(200).body(site_info_body("started", Some(5)));
         });
         server.mock(|when, then| {
             when.method(GET).path("/sync/v5/site_status");
@@ -643,7 +648,7 @@ mod test {
         .await;
 
         assert!(result.is_err(), "should still be waiting, not returned");
-        post.assert_hits(0); // no duplicate POST while a worker is running
+        post.assert_calls(0); // no duplicate POST while a worker is running
     }
 
     fn dummy_site_info() -> SiteInfoV5 {

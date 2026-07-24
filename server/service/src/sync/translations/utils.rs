@@ -6,18 +6,20 @@ use repository::{
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
     AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
-    CampaignRowRepository, CategoryRowRepository, ClinicianLinkRowRepository, ContextRowRepository,
-    CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
+    CampaignRowRepository, CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository,
+    ContextRowRepository, CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
     FormSchemaRowRepository, IndicatorColumnRowRepository, IndicatorLineRowRepository,
     InsuranceProviderRowRepository, InvoiceLineRowRepository, InvoiceRowRepository,
-    ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository, LocationRowRepository,
-    LocationTypeRowRepository, MasterListRowRepository, NameInsuranceJoinRowRepository,
-    NameLinkRowRepository, NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
+    ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository,
+    KeyValueStoreRepository, LocationRowRepository, LocationTypeRowRepository,
+    MasterListRowRepository, NameInsuranceJoinRowRepository, NameLinkRowRepository,
+    NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
     ProgramIndicatorRowRepository, ProgramRowRepository, PropertyRowRepository,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, ReasonOptionRowRepository,
     RepositoryError, RequisitionRowRepository, RnRFormRowRepository, SensorRowRepository,
-    ShippingMethodRowRepository, StockLineRowRepository, StocktakeRowRepository, StorageConnection,
-    StoreRowRepository, TemperatureBreachRowRepository, UnitRowRepository, VVMStatusRowRepository,
+    ShippingMethodRowRepository, SiteRowRepository, StockLineRowRepository,
+    StocktakeRowRepository, StorageConnection, StoreRowRepository, SyncVersion,
+    TemperatureBreachRowRepository, UnitRowRepository, VVMStatusRowRepository,
     VaccineCourseDoseRowRepository, VaccineCourseRowRepository, WarningRowRepository,
 };
 use util::uuid::uuid;
@@ -34,6 +36,73 @@ pub(crate) fn legacy_custom_fields_if_central(
         build()
     } else {
         None
+    }
+}
+
+/// On central, decides whether a `name`/`name_store_join` changelog row should be
+/// skipped (`true`, reason logged) rather than relayed to legacy (OG) central,
+/// based on which site the row was edited on (#9430, #12106).
+///
+/// Called from `try_translate_to_*_sync_record` rather than
+/// `should_translate_to_sync_record` because only the former receives a
+/// database connection. On central this is only reached in the v5 legacy push:
+/// the v6 central pull translates with `PullFromOmSupplyCentral`, which the
+/// name translators decline, and v7 has no per-table translation.
+pub(crate) fn skip_name_relay_to_legacy(
+    connection: &StorageConnection,
+    changelog: &ChangelogRow,
+) -> Result<bool, RepositoryError> {
+    // Only the central server relays other sites' records to legacy. On a remote
+    // site this whole check is a no-op: the remote pushes its own edits to legacy
+    // exactly as it always has.
+    if !crate::sync::CentralServerConfig::is_central_server() {
+        return Ok(false);
+    }
+
+    // Rows with no source_site_id predate v3.0.0 (since then every changelog row
+    // is stamped with the id of the site it was edited on). Leave them alone —
+    // the v5 push filter (`ChangelogFilter::all_data_for_legacy_central`) never
+    // selects them, so they can't reach this point anyway.
+    let Some(source_site_id) = changelog.source_site_id else {
+        return Ok(false);
+    };
+
+    // Edited on this server (central itself, e.g. central used as an active
+    // dispensary): push to legacy — nobody else will (#12106).
+    if KeyValueStoreRepository::new(connection).get_current_site_id()? == Some(source_site_id) {
+        return Ok(false);
+    }
+
+    // Edited on a remote site: look the site up (the `site` table exists on
+    // central only) and decide by its sync version.
+    match SiteRowRepository::new(connection).find_one_by_id(source_site_id)? {
+        // V7 sites sync only with OMS central, never with legacy — central is
+        // the only path their patient edits have to legacy, so push (#12106).
+        Some(site) if site.sync_version == SyncVersion::V7 => Ok(false),
+        // V5/V6 sites push their patient edits to legacy themselves (as well as
+        // to OMS central, for cross-site patient sharing). Pushing central's
+        // copy too would race the site's own push and could overwrite newer
+        // data with stale data — the original #9430 patient-DOB bug.
+        Some(_) => {
+            log::debug!(
+                "Not relaying {} record {} to legacy: source site {} is V5/V6 and pushes to legacy itself",
+                changelog.table_name,
+                changelog.record_id,
+                source_site_id
+            );
+            Ok(true)
+        }
+        // No site row for this id — shouldn't happen (every syncing site has
+        // one on central). Fail safe by not pushing, and warn so it's visible.
+        None => {
+            log::warn!(
+                "Not relaying {} record {} to legacy: unknown source site {}",
+                changelog.table_name,
+                changelog.record_id,
+                source_site_id
+            );
+            Ok(true)
+        }
     }
 }
 

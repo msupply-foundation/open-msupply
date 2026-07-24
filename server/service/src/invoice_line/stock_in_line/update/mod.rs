@@ -166,7 +166,8 @@ mod test {
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_item_a, mock_item_b,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
-            mock_name_store_b, mock_reason_option, mock_shipment_variance_reason_option,
+            mock_name_store_b, mock_outbound_shipment_a, mock_purchase_order_a, mock_reason_option,
+            mock_shipment_variance_reason_option,
             mock_store_a, mock_store_b, mock_supplier_return_a_invoice_line_a,
             mock_transferred_inbound_shipment_a, mock_user_account_a, mock_vaccine_item_a,
             mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
@@ -831,7 +832,7 @@ mod test {
     async fn update_stock_in_line_cannot_edit_cost_price() {
         let po_invoice = cost_price_test_invoice(
             "po_linked_inbound",
-            Some("some_purchase_order".to_string()),
+            Some(mock_purchase_order_a().id),
             None,
             None,
         );
@@ -840,7 +841,7 @@ mod test {
         let linked_invoice = cost_price_test_invoice(
             "transfer_linked_inbound",
             None,
-            Some("some_outbound_invoice".to_string()),
+            Some(mock_outbound_shipment_a().id),
             None,
         );
         let linked_line = cost_price_test_line("transfer_linked_line", &linked_invoice.id);

@@ -2473,6 +2473,7 @@
   "messages.message-sent": "Your message has been saved successfully. It will be sent with the next synchronisation process.",
   "messages.missing-insurance-inputs": "Please fill in all fields",
   "messages.move-all-or-partial": "Move all or a partial quantity (max {{max}}).",
+  "messages.multi-device-requires-flag": "Multi-device sync must be enabled in the server configuration (features: enable_multi_device_site) before it can be turned on here.",
   "messages.must-allocate-all-lines": "Cannot change the status until all lines have been allocated.",
   "messages.native-mode": "Select the mode which you would like to run. Note that you can change this option later if you have administrator access.",
   "messages.native-mode-client": "This mode allows you to select which server to connect to.",

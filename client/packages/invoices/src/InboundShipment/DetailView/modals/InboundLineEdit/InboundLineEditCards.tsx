@@ -280,6 +280,7 @@ export const InboundLineEditCards = ({
               <NumberInputCell
                 cell={cell}
                 updateFn={(value: number) => {
+                  const item = row.original.item;
                   const isDefaultSellPrice =
                     line.sellPricePerPack ===
                     getLineDefaultSellPrice(

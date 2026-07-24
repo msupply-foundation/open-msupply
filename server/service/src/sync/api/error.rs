@@ -134,6 +134,12 @@ impl SyncApiError {
         matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
 
+    /// Transient transport-level failure (dropped connection, unknown/unparseable error).
+    /// Safe to retry within a bounded polling loop rather than aborting it outright.
+    pub(crate) fn is_transient(&self) -> bool {
+        self.is_connection() || self.is_unknown()
+    }
+
     /// Central is busy with another session for this site (sync / integration / initialisation in
     /// progress). Caller should wait for central to be idle and retry.
     pub(crate) fn is_central_busy(&self) -> bool {
@@ -148,12 +154,6 @@ impl SyncApiError {
                             || code == "initialisation_in_progress"
                 )
         )
-    }
-
-    /// Transient transport-level failure (dropped connection, unknown/unparseable error).
-    /// Safe to retry within a bounded polling loop rather than aborting it outright.
-    pub(crate) fn is_transient(&self) -> bool {
-        self.is_connection() || self.is_unknown()
     }
 }
 
