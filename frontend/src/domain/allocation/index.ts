@@ -9,6 +9,7 @@ export {
   type Distribution,
 } from './distributeIssue';
 export {
+  autoAllocateBarReasons,
   barReasons,
   isBarred,
   fefoCompare,

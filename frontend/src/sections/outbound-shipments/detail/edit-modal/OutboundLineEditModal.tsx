@@ -41,6 +41,7 @@ import {
 import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
 import {
   availableUnits as sumAvailableUnits,
+  autoAllocateBarReasons,
   barReasons,
   deriveIssueWarnings,
   distributeIssue,
@@ -360,10 +361,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     manageVvmStatusForStock: prefs()?.manageVvmStatusForStock ?? false,
     sortByVvmStatusThenExpiry: prefs()?.sortByVvmStatusThenExpiry ?? false,
   });
-  const lineBarReasons = (line: DraftLine) =>
-    barReasons(line, allocationPrefs());
+  // TWO bar rules (rules.md § barred batches): the pref-gated ISSUE bar
+  // (manual entry disabled, row dimmed — AC-AL8/AL9) vs the stricter,
+  // unconditional AUTO bar (expired / unusable-VVM stock is never
+  // auto-allocated, preference or not — AC-AL2/AL10).
   const isBarred = (line: DraftLine): boolean =>
-    lineBarReasons(line).length > 0;
+    barReasons(line, allocationPrefs()).length > 0;
+  const lineAutoBarReasons = (line: DraftLine) =>
+    autoAllocateBarReasons(line, allocationPrefs());
+  // The tick column's predicate ("will be used in auto-allocation"): auto-
+  // fillable AND, under the packs lens, of the selected pack size (the old
+  // app's canAutoAllocate contract).
+  const willAutoAllocate = (line: DraftLine): boolean => {
+    if (line.availablePacks <= 0) return false;
+    if (lineAutoBarReasons(line).length > 0) return false;
+    const lens = allocateIn();
+    return lens.kind !== 'packs' || line.packSize === lens.size;
+  };
 
   // Available = allocatable units, EXCLUDING on-hold batches (old-app parity;
   // the shared helper skips on-hold stock/location — kdd/allocation). On-hold
@@ -403,14 +417,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // shortfall becomes the placeholder (NEW only), and each condition raises
   // its warning banner.
   const distribute = (units: number) => {
+    const lens = allocateIn();
     const result = distributeIssue(
       draft.map(line => ({
         id: line.id,
         packSize: line.packSize,
         availablePacks: line.availablePacks,
-        barred: lineBarReasons(line),
+        barred: lineAutoBarReasons(line),
       })),
-      units
+      units,
+      // The packs lens fills only batches of the selected size (AC-AL11).
+      lens.kind === 'packs' ? { requiredPackSize: lens.size } : undefined
     );
     for (let index = 0; index < draft.length; index++) {
       const packs = result.packsById.get(draft[index]!.id) ?? 0;
@@ -572,10 +589,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const columns = (): Column<DraftLine, never>[] => [
     {
-      // "Will be used in auto-allocation": a check on usable (not barred)
-      // batches — matches the old app's canAllocate CheckCell; hovering the
-      // tick shows the reason. Barred rows are additionally dimmed (rowDimmed).
-      c: { accessor: line => !isBarred(line), id: 'canAllocate' },
+      // "Will be used in auto-allocation": the AUTO-fillable predicate
+      // (unconditional expired/VVM exclusion + pack-size match under the
+      // packs lens) — matches the old app's canAutoAllocate CheckCell;
+      // hovering the tick shows the reason. Issue-barred rows are
+      // additionally dimmed (rowState).
+      c: { accessor: line => willAutoAllocate(line), id: 'canAllocate' },
       // getSize() is a min-width floor (auto layout) — without this the
       // header-less tick column gets the 150px default and reads as a gap.
       size: 36,

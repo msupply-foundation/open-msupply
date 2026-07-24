@@ -44,14 +44,26 @@ const localDay = (date: Date): string => {
   return `${date.getFullYear()}-${month}-${day}`;
 };
 
+// The expiry guard compares calendar DAYS (`today + threshold` vs the
+// expiry's date part), so the verdict is stable across the whole day rather
+// than flipping with the time of day the check happens to run.
+const expiredWithin = (
+  expiryDate: string,
+  thresholdDays: number,
+  today: Date
+): boolean => {
+  const limit = new Date(today);
+  limit.setDate(limit.getDate() + thresholdDays);
+  return expiryDate.slice(0, 10) <= localDay(limit);
+};
+
 /**
- * Every bar category that applies to a batch (AC-AL2/AC-AL8/AC-AL9): on hold
- * (batch or location), expired within the guard threshold, unusable VVM
- * (under the preference). Empty result = usable.
- *
- * The expiry guard compares calendar DAYS (`today + threshold` vs the
- * expiry's date part), so the verdict is stable across the whole day rather
- * than flipping with the time of day the check happens to run.
+ * Every category BARRING a batch from issue entirely — manual entry included
+ * (rules.md § barred batches › barred from all issue; AC-AL8/AC-AL9): on
+ * hold (batch or location), expired within the guard threshold (only under
+ * _prevent issue of expired stock_), unusable VVM (only under _manage VVM
+ * status_). Empty result = manually issuable. Auto-distribution applies the
+ * STRICTER autoAllocateBarReasons below.
  */
 export const barReasons = (
   batch: BarrableBatch,
@@ -61,14 +73,44 @@ export const barReasons = (
 ): BarReason[] => {
   const reasons: BarReason[] = [];
   if (batch.stockLineOnHold || batch.location?.onHold) reasons.push('on-hold');
-  if (prefs.expiredStockPreventIssue && batch.expiryDate) {
-    const limit = new Date(today);
-    limit.setDate(limit.getDate() + prefs.expiredStockIssueThreshold);
-    if (batch.expiryDate.slice(0, 10) <= localDay(limit))
-      reasons.push('expired');
-  }
+  if (
+    prefs.expiredStockPreventIssue &&
+    batch.expiryDate &&
+    expiredWithin(batch.expiryDate, prefs.expiredStockIssueThreshold, today)
+  )
+    reasons.push('expired');
   if (batch.vvmStatus?.unusable && prefs.manageVvmStatusForStock)
     reasons.push('unusable-vvm');
+  return reasons;
+};
+
+/**
+ * Every category excluding a batch from AUTO-distribution (rules.md § barred
+ * batches › never auto-allocated; AC-AL2/AC-AL10). Stricter than barReasons
+ * and NOT preference-gated:
+ *
+ * - **expired stock is never auto-allocated** — with _prevent issue of
+ *   expired stock_ off the cutoff is simply the expiry date itself; the
+ *   preference only WIDENS the cutoff by its threshold (and separately bars
+ *   manual entry, barReasons above);
+ * - **unusable VVM is never auto-allocated**, preference or no preference
+ *   (_manage VVM status_ only gates the manual bar and the grid column).
+ *
+ * A batch excluded here but not in barReasons stays manually issuable.
+ */
+export const autoAllocateBarReasons = (
+  batch: BarrableBatch,
+  prefs: AllocationPreferences,
+  today: Date = new Date()
+): BarReason[] => {
+  const reasons: BarReason[] = [];
+  if (batch.stockLineOnHold || batch.location?.onHold) reasons.push('on-hold');
+  const threshold = prefs.expiredStockPreventIssue
+    ? prefs.expiredStockIssueThreshold
+    : 0;
+  if (batch.expiryDate && expiredWithin(batch.expiryDate, threshold, today))
+    reasons.push('expired');
+  if (batch.vvmStatus?.unusable) reasons.push('unusable-vvm');
   return reasons;
 };
 
