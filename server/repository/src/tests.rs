@@ -236,6 +236,9 @@ mod repository_test {
                 tax_percentage: None,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 5.0,
+                // Non-zero so the stats assertion pins that placeholder
+                // volume is excluded from total_volume
+                volume_per_pack: 2.0,
                 ..Default::default()
             }
         }
@@ -866,9 +869,9 @@ mod repository_test {
                 stock_total_after_tax: 3.0,
                 service_total_before_tax: 10.0,
                 service_total_after_tax: 15.0,
-                // The volume total covers non-service lines, placeholders
-                // included: line1 (2 packs × 0.5/pack) + line2 (0) +
-                // placeholder (0); the service line is excluded.
+                // The volume total covers stock lines only: line1
+                // (2 packs × 0.5/pack) + line2 (0); the placeholder
+                // (5 packs × 2.0/pack) and the service line are excluded.
                 total_volume: 1.0,
                 ..stats_invoice_1.clone()
             }
