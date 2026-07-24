@@ -79,18 +79,28 @@ export type StatusChangeResult =
   | { kind: 'saved'; node: OutboundNode }
   // A structured rejection with a translated message; `unallocatedItems`
   // carries the offending placeholder items when the rejection is the
-  // unallocated-lines guard (AC-P3).
-  | { kind: 'error'; message: string; unallocatedItems: string[] }
+  // unallocated-lines guard (AC-P3); `heldShipment` marks the on-hold
+  // rejection (AC-H1) so the notice can offer the one-save release-and-
+  // advance retry (AC-H2).
+  | {
+      kind: 'error';
+      message: string;
+      unallocatedItems: string[];
+      heldShipment?: boolean;
+    }
   | { kind: 'failed' };
 
 export const changeShipmentStatus = async (
   storeId: string,
   id: string,
-  status: NonNullable<UpdateInput['status']>
+  status: NonNullable<UpdateInput['status']>,
+  // Release the hold in the SAME save (rules.md § on hold: a single change
+  // that both releases and advances is allowed — AC-H2).
+  releaseHold = false
 ): Promise<StatusChangeResult> => {
   const result = await graphqlFetch(UpdateOutboundShipment, {
     storeId,
-    input: { id, status },
+    input: releaseHold ? { id, status, onHold: false } : { id, status },
   });
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updateOutboundShipment;
@@ -105,6 +115,7 @@ export const changeShipmentStatus = async (
         kind: 'error',
         message: t('messages.on-hold-outbound'),
         unallocatedItems: [],
+        heldShipment: true,
       };
     case 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines': {
       const items = error.invoiceLines.nodes.map(line => line.itemName);
