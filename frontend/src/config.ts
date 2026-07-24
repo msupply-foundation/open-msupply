@@ -20,6 +20,11 @@ export const SYNC_FILES_URL = '/sync_files';
 // the backend in dev (see the dev server proxy in vite.config.ts).
 export const CUSTOM_TRANSLATIONS_URL = '/custom-translations';
 
+// Prescription dispensing labels (spec/prescriptions § label printing): the
+// server prints via a REST endpoint, not GraphQL — POST a JSON array of label
+// payloads. Proxied to the backend in dev (see vite.config.ts).
+export const PRINT_LABEL_PRESCRIPTION_URL = '/print/label-prescription';
+
 export const DEFAULT_SYNC_INTERVAL_SECONDS = 300;
 // The current app's status-poll cadence (spec/sync-modal contract: ~2 s
 // while the surface is open and the live channel is down).

@@ -38,6 +38,7 @@ import {
   searchCentralPatients,
   genderOptions,
   genderLabel,
+  minimalPatientOption,
   type Gender,
   type GenderOption,
   type CentralPatient,
@@ -97,6 +98,14 @@ export interface CreatePatientModalProps {
   open: boolean;
   storeId: string;
   onClose: () => void;
+  /**
+   * When set, the modal is being used to create-and-return a patient for
+   * another surface (e.g. the prescription create dialog — spec/prescriptions
+   * AC-C5): on a successful create it calls this with the new patient and
+   * closes, INSTEAD of navigating to the patient detail. Omit for the
+   * standalone list flow (navigate to the new patient).
+   */
+  onCreated?: (patient: PatientOption) => void;
 }
 
 export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
@@ -244,6 +253,14 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     if (!outcome) return; // handled globally
     if (outcome.kind === 'error') {
       setSaveError(outcome.message);
+      return;
+    }
+    // Create-and-return (AC-C5): hand the new patient back to the caller and
+    // close, rather than navigating away to its detail.
+    if (props.onCreated) {
+      const name = [draft.lastName, draft.firstName].filter(Boolean).join(', ');
+      props.onClose();
+      props.onCreated(minimalPatientOption(outcome.id, name));
       return;
     }
     props.onClose();

@@ -1,5 +1,7 @@
-import { type JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
+import { Button } from '../../ui/elements/buttons/Button';
+import { PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import {
   patientSearchPageFetcher,
@@ -28,6 +30,13 @@ export interface PatientSearchProps {
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
   class?: string;
+  /**
+   * When set, a **Create patient** affordance is offered beside the picker
+   * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
+   * prescriptions AC-C5). The consuming vertical opens its own patient-create
+   * flow from this callback and selects the result via `onSelect`.
+   */
+  onCreatePatient?: () => void;
 }
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
@@ -69,25 +78,42 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * consuming verticals when built — see the implementation flags.
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
-  <AsyncCombobox<PatientOption>
-    label={props.label}
-    hideLabel={props.hideLabel}
-    class={props.class}
-    disabled={props.disabled}
-    error={props.error}
-    placeholder={props.placeholder}
-    inputTestId={props.inputTestId ?? 'patient-search-input'}
-    noResultsMessage={t('messages.type-to-search')}
-    clearable={props.clearable}
-    fetchPage={(search, offset) =>
-      search.trim() === ''
-        ? Promise.resolve({ nodes: [], totalCount: 0 })
-        : patientSearchPageFetcher(props.storeId)(search, offset)
-    }
-    itemToString={patient => patient.name}
-    itemToValue={patient => patient.id}
-    renderItem={renderRow}
-    selected={props.selected}
-    onSelect={props.onSelect}
-  />
+  <span
+    style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
+  >
+    <AsyncCombobox<PatientOption>
+      label={props.label}
+      hideLabel={props.hideLabel}
+      class={props.class}
+      disabled={props.disabled}
+      error={props.error}
+      placeholder={props.placeholder}
+      inputTestId={props.inputTestId ?? 'patient-search-input'}
+      noResultsMessage={t('messages.type-to-search')}
+      clearable={props.clearable}
+      fetchPage={(search, offset) =>
+        search.trim() === ''
+          ? Promise.resolve({ nodes: [], totalCount: 0 })
+          : patientSearchPageFetcher(props.storeId)(search, offset)
+      }
+      itemToString={patient => patient.name}
+      itemToValue={patient => patient.id}
+      renderItem={renderRow}
+      selected={props.selected}
+      onSelect={props.onSelect}
+    />
+    {/* Create-patient affordance (opt-in) — the consumer opens its own
+        patient-create flow and selects the result (spec/patients S4). */}
+    <Show when={props.onCreatePatient}>
+      <Button
+        variant="secondary"
+        icon={<PlusCircleIcon />}
+        disabled={props.disabled}
+        data-testid="create-patient-button"
+        onClick={() => props.onCreatePatient?.()}
+      >
+        {t('label.create-patient')}
+      </Button>
+    </Show>
+  </span>
 );

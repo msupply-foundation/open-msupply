@@ -24,7 +24,7 @@ import { DateRangeField } from '../../ui/elements/inputs/DateRangeField';
 import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
 import { fetchLocations, type Location } from '../location/locationResource';
-import { ProgramSelect } from '../program/ProgramSelect';
+import { ProgramDocumentSelect } from '../program/ProgramDocumentSelect';
 import {
   ProgramListSelect,
   type ProgramListPick,
@@ -549,10 +549,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match when={field.kind === 'program' ? field : undefined} keyed>
                 {programField => (
-                  <ProgramSelect
+                  <ProgramDocumentSelect
                     label={programField.label}
                     value={selectValue(programField.key)}
-                    onChange={contextId =>
+                    onChange={(contextId: string | null) =>
                       setValues(programField.key, contextId ?? undefined)
                     }
                     error={requiredError(programField)}

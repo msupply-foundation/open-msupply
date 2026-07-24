@@ -1,0 +1,185 @@
+# The prescription detail read + header/status writes
+# (spec/prescriptions/contract.md). One fragment serves the detail query and
+# the update mutation so a save can patch the resource in place.
+fragment PrescriptionFields on InvoiceNode {
+  id
+  invoiceNumber
+  status
+  createdDatetime
+  pickedDatetime
+  verifiedDatetime
+  cancelledDatetime
+  backdatedDatetime
+  comment
+  colour
+  theirReference
+  clinicianId
+  clinician {
+    id
+    firstName
+    lastName
+  }
+  patient {
+    id
+    name
+    code
+    dateOfBirth
+    gender
+  }
+  programId
+  program {
+    id
+    name
+  }
+  diagnosisId
+  nameInsuranceJoinId
+  insuranceDiscountAmount
+  insuranceDiscountPercentage
+  customFields
+  insurancePolicy {
+    policyNumber
+    discountPercentage
+    insuranceProviders {
+      providerName
+    }
+  }
+  pricing {
+    totalAfterTax
+  }
+  user {
+    username
+    email
+  }
+  lines {
+    totalCount
+    nodes {
+      id
+      type
+      itemId
+      itemName
+      itemCode
+      batch
+      expiryDate
+      locationName
+      packSize
+      numberOfPacks
+      prescribedQuantity
+      note
+      sellPricePerPack
+      costPricePerPack
+      totalAfterTax
+      item {
+        id
+        code
+        name
+        unitName
+        isVaccine
+        doses
+      }
+      stockLine {
+        id
+      }
+    }
+  }
+}
+
+query prescriptionDetail($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...PrescriptionFields
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# Header edits, status changes, cancellation, and the payment write all ride
+# updatePrescription (spec/prescriptions/contract.md). Typed members:
+# InvoiceIsNotEditable, RecordNotFound, InvalidStockSelection (the
+# cannot-backdate guard — the name lies, contract wire trap).
+mutation updatePrescription(
+  $storeId: String!
+  $input: UpdatePrescriptionInput!
+) {
+  updatePrescription(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...PrescriptionFields
+    }
+    ... on UpdatePrescriptionError {
+      error {
+        __typename
+        description
+      }
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# Detail delete (spec/prescriptions/contract.md § deletion): editable
+# statuses only — VERIFIED/CANCELLED reject with typed CannotEditInvoice.
+mutation deletePrescription($storeId: String!, $id: String!) {
+  deletePrescription(storeId: $storeId, id: $id) {
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeletePrescriptionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The active diagnoses the side panel's Diagnosis picker offers
+# (spec/prescriptions/contract.md § patient, clinician, program, diagnosis —
+# the picker is the only guard; an id outside it fails opaquely).
+query diagnosesActive {
+  diagnosesActive {
+    id
+    code
+    description
+  }
+}
+
+# Bulk line delete (detail selection footer; also the date/program-change
+# clear-lines flow — spec/prescriptions AC-B2). Same all-or-nothing batch as
+# the list delete; the client only ever sends it on an editable prescription.
+mutation deletePrescriptionLines($storeId: String!, $ids: [DeletePrescriptionLineInput!]!) {
+  batchPrescription(storeId: $storeId, input: { deletePrescriptionLines: $ids }) {
+    deletePrescriptionLines {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeletePrescriptionLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# The label-printer settings gate (spec/prescriptions § label printing): null
+# means no printer configured — the print action explains instead of printing.
+query labelPrinterSettings {
+  labelPrinterSettings {
+    address
+    port
+    labelHeight
+    labelWidth
+  }
+}

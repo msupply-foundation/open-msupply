@@ -1,0 +1,196 @@
+import { createSignal, Show, type Component } from 'solid-js';
+import { useNavigate, useParams } from '@solidjs/router';
+import { t } from '../../../intl';
+import { graphqlFetch } from '../../../api/graphql';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { TextField } from '../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../ui/elements/inputs/DateField';
+import { PatientSearch, type PatientOption } from '../../../domain/patient';
+import { ClinicianSelect } from '../../../domain/clinician';
+import { ProgramNameSelect } from '../../../domain/program';
+import { CreatePatientModal } from '../../patients';
+import { prescriptionDateInstant } from '../detail/prescriptionUpdate';
+import { InsertPrescription } from './createPrescription.generated';
+
+// The create-prescription modal (spec/prescriptions/ui-surface.md S2, FL2):
+// patient (the one required field — the reusable patient picker), date
+// (defaults today, capped at today — AC-B5), reference, clinician (offered
+// options only — the server never validates it at creation, AC-C3), and
+// program. Create is disabled until a patient is chosen; a failure shows
+// in-dialog with input preserved (controls › dialogs); success navigates to
+// the new prescription's detail.
+
+const localToday = (): string => {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, '0');
+  const day = `${now.getDate()}`.padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+export interface CreatePrescriptionModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export const CreatePrescriptionModal: Component<
+  CreatePrescriptionModalProps
+> = props => {
+  const params = useParams<{ storeId: string }>();
+  const navigate = useNavigate();
+
+  const [patient, setPatient] = createSignal<PatientOption | null>(null);
+  const [date, setDate] = createSignal<string>(localToday());
+  const [reference, setReference] = createSignal('');
+  const [clinicianId, setClinicianId] = createSignal<string>();
+  const [programId, setProgramId] = createSignal<string>();
+  const [busy, setBusy] = createSignal(false);
+  const [error, setError] = createSignal<string>();
+  // The create-patient-on-no-match sub-flow (AC-C5): opens the patients
+  // vertical's create modal over this dialog; on success the new patient is
+  // selected here (modal-in-place — D47).
+  const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
+
+  const reset = () => {
+    setPatient(null);
+    setDate(localToday());
+    setReference('');
+    setClinicianId(undefined);
+    setProgramId(undefined);
+    setError(undefined);
+  };
+  const close = () => {
+    reset();
+    props.onClose();
+  };
+
+  const create = async () => {
+    const chosen = patient();
+    if (!chosen || busy()) return;
+    setBusy(true);
+    setError(undefined);
+    // Creation rejections are ALL non-typed (contract § creation), so opt in
+    // to the raw GraphQL errors and show them in-dialog rather than tripping
+    // the global modal for a user-correctable input.
+    const result = await graphqlFetch(
+      InsertPrescription,
+      {
+        storeId: params.storeId,
+        input: {
+          id: crypto.randomUUID(),
+          patientId: chosen.id,
+          ...(reference().trim() ? { theirReference: reference().trim() } : {}),
+          ...(clinicianId() ? { clinicianId: clinicianId() } : {}),
+          ...(programId() ? { programId: programId() } : {}),
+          // The picked day rides as its end-of-day instant: today reads as
+          // not-backdated (a "future" instant the server clears — AC-B5); an
+          // earlier day backdates (AC-B1).
+          prescriptionDate: prescriptionDateInstant(date()),
+        },
+      },
+      { returnGraphqlErrors: true }
+    );
+    setBusy(false);
+    if (result.kind === 'success') {
+      const id = result.data.insertPrescription.id;
+      close();
+      navigate(`/${params.storeId}/dispensary/prescription/${id}`);
+      return;
+    }
+    setError(
+      result.kind === 'graphqlError'
+        ? result.message
+        : t('error.something-wrong')
+    );
+  };
+
+  return (
+    <Dialog
+      open={props.open}
+      onClose={close}
+      title={t('label.create-prescription')}
+      testId="create-prescription-modal"
+      actionsLead={
+        <Show when={error()}>
+          <Alert severity="error">{error()}</Alert>
+        </Show>
+      }
+      actions={
+        <>
+          <Button
+            variant="secondary"
+            data-testid="dialog-button-cancel"
+            onClick={close}
+          >
+            {t('button.cancel')}
+          </Button>
+          <Button
+            data-testid="dialog-button-ok"
+            disabled={!patient()}
+            loading={busy()}
+            onClick={() => void create()}
+          >
+            {t('label.create')}
+          </Button>
+        </>
+      }
+    >
+      <FieldRow label={t('label.patient')}>
+        <PatientSearch
+          label={t('label.patient')}
+          hideLabel
+          storeId={params.storeId}
+          selected={patient() ?? undefined}
+          onSelect={setPatient}
+          onCreatePatient={() => setCreatePatientOpen(true)}
+        />
+      </FieldRow>
+      <FieldRow label={t('label.date')}>
+        <DateField
+          label={t('label.date')}
+          hideLabel
+          value={date()}
+          max={localToday()}
+          onChange={value => setDate(value ?? localToday())}
+        />
+      </FieldRow>
+      <FieldRow label={t('label.reference')}>
+        <TextField
+          label={t('label.reference')}
+          hideLabel
+          value={reference()}
+          onInput={e => setReference(e.currentTarget.value)}
+        />
+      </FieldRow>
+      <FieldRow label={t('label.clinician')}>
+        <ClinicianSelect
+          label={t('label.clinician')}
+          hideLabel
+          value={clinicianId()}
+          onChange={clinician => setClinicianId(clinician?.id)}
+        />
+      </FieldRow>
+      <FieldRow label={t('label.program')}>
+        <ProgramNameSelect
+          label={t('label.program')}
+          hideLabel
+          value={programId()}
+          onChange={id => setProgramId(id ?? undefined)}
+        />
+      </FieldRow>
+      {/* Create-patient-on-no-match (AC-C5, D47): modal-in-place over this
+          dialog; on success the new patient is selected here. */}
+      <CreatePatientModal
+        open={createPatientOpen()}
+        storeId={params.storeId}
+        onClose={() => setCreatePatientOpen(false)}
+        onCreated={created => {
+          setPatient(created);
+          setCreatePatientOpen(false);
+        }}
+      />
+    </Dialog>
+  );
+};
