@@ -141,6 +141,7 @@ const DATA: Row[] = Array.from({ length: 120 }, (_, i): Row => {
     invoiceNumber: 1200 - i,
     otherPartyName: supplier,
     otherPartyId: `party-${i}`,
+    customFields: null,
     otherParty: { store: isStore ? { id: `store-${i}` } : null },
     status,
     onHold: i % 9 === 0,

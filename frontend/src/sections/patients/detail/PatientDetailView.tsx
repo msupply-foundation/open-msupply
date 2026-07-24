@@ -37,10 +37,7 @@ import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
-import {
-  CustomFieldsView,
-  CustomFieldsEditTab,
-} from '../../../domain/customFields';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
   ageFromDob,
   draftEquals,
@@ -459,24 +456,16 @@ const PatientDetailView: Component = () => {
               </Show>
               <TabPanel value="custom-fields">
                 {/* Custom fields (spec/patients ui-surface; write path AC-CF1–CF3).
-                    Editable when the user can mutate the patient; read-only
-                    otherwise. The write is the patient-specific merge operation,
-                    independent of the details form (rules › custom fields). */}
-                <Show
-                  when={canMutate()}
-                  fallback={
-                    <CustomFieldsView
-                      scope="patient"
-                      values={n().customFields}
-                    />
-                  }
-                >
-                  <CustomFieldsEditTab
-                    scope="patient"
-                    values={n().customFields}
-                    onSave={saveCustomFields}
-                  />
-                </Show>
+                    Disabled when the user can't mutate the patient. The write is
+                    the patient-specific merge operation, independent of the
+                    details form (rules › custom fields). No toolbar here, so the
+                    tab shows every configured field. */}
+                <CustomFieldsEditTab
+                  scope="patient"
+                  disabled={!canMutate()}
+                  values={n().customFields}
+                  onSave={saveCustomFields}
+                />
               </TabPanel>
               <TabPanel value="log">
                 <ActivityLogPanel storeId={params.storeId} recordId={n().id} />
