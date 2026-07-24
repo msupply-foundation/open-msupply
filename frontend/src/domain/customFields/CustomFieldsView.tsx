@@ -20,8 +20,11 @@ import { customFieldDisplayString } from './display';
 // by the parsed kind — boolean → disabled checkbox, option → resolved name in a
 // disabled dropdown (the read-only counterpart of the picker), everything else
 // → a read-only value (numbers/dates localised via customFieldDisplayString).
-// A read-only surface has no toolbar, so prominent fields render here too. Empty
-// state when the scope configures nothing shown.
+// The read-only surface for a genuinely read-only vertical (names, items) — it
+// has no toolbar, so every shown field renders here. Editable verticals whose
+// record can lock (invoices/patient) instead use CustomFieldsEditTab with
+// `disabled`, keeping the label-above form. Empty state when the scope
+// configures nothing shown.
 export const CustomFieldsView = (props: { scope: string; values: unknown }) => {
   const reader = customFieldDefinitions(props.scope);
   const fields = () =>

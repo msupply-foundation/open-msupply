@@ -25,6 +25,9 @@ query outboundShipments(
         pricing {
           totalAfterTax
         }
+        # Custom-field VALUES (JSON object), scope-filtered — backs the
+        # configured custom-field columns.
+        customFields
       }
     }
   }
@@ -34,7 +37,10 @@ query outboundShipments(
 # create can navigate to the new shipment. Typed rejections (AC-C2) are
 # selected so the modal can translate them; anything else is non-typed and goes
 # to the global error modal.
-mutation insertOutboundShipment($storeId: String!, $input: InsertOutboundShipmentInput!) {
+mutation insertOutboundShipment(
+  $storeId: String!
+  $input: InsertOutboundShipmentInput!
+) {
   insertOutboundShipment(storeId: $storeId, input: $input) {
     __typename
     ... on InvoiceNode {

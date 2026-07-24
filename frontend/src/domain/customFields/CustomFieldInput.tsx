@@ -23,11 +23,18 @@ const asNumber = (value: unknown): number | undefined => {
 // placeholder in the fallback, never crashes. `value` is the field's raw stored
 // value; `onChange` emits the new value to store — a boolean, a number
 // (undefined when cleared), an ISO date string or null, the option id, or text.
+//
+// By default the control shows its own label ABOVE it — the sectioned-edit-form
+// row used in the custom-fields tab (matches the patient/stock detail forms).
+// Pass `hideLabel` where a surrounding row supplies the label (the toolbar's
+// FieldRow); a boolean always renders its labelled checkbox inline.
 export const CustomFieldInput = (props: {
   field: ParsedCustomField;
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  hideLabel?: boolean;
+  size?: 'default' | 'small';
   testId?: string;
 }) => {
   const testId = () => props.testId ?? `custom-field-${props.field.def.key}`;
@@ -38,7 +45,8 @@ export const CustomFieldInput = (props: {
         // unsupported: labelled but disabled, so the row still renders.
         <TextField
           label={name()}
-          hideLabel
+          hideLabel={props.hideLabel}
+          size={props.size}
           width="full"
           disabled
           value=""
@@ -58,7 +66,8 @@ export const CustomFieldInput = (props: {
       <Match when={props.field.kind === 'text'}>
         <TextField
           label={name()}
-          hideLabel
+          hideLabel={props.hideLabel}
+          size={props.size}
           width="full"
           value={props.value == null ? '' : String(props.value)}
           disabled={props.disabled}
@@ -70,7 +79,8 @@ export const CustomFieldInput = (props: {
         {numberField => (
           <NumberField
             label={name()}
-            hideLabel
+            hideLabel={props.hideLabel}
+            size={props.size}
             width="full"
             allowNegative
             decimalLimit={numberField().integer ? 0 : 6}
@@ -83,7 +93,8 @@ export const CustomFieldInput = (props: {
       <Match when={props.field.kind === 'date'}>
         <DateField
           label={name()}
-          hideLabel
+          hideLabel={props.hideLabel}
+          size={props.size}
           width="full"
           value={typeof props.value === 'string' ? props.value : null}
           disabled={props.disabled}
@@ -96,6 +107,7 @@ export const CustomFieldInput = (props: {
             def={optionField().def}
             value={props.value == null ? '' : String(props.value)}
             disabled={props.disabled}
+            hideLabel={props.hideLabel}
             testId={testId()}
             onChange={id => props.onChange(id || undefined)}
           />

@@ -129,4 +129,7 @@ export const createFilters = (
     receivedDatetime: null,
     verifiedDatetime: null,
     createdOrBackdatedDatetime: null,
+    // Custom-field filtering rides the shared domain/customFields group
+    // (FilterBar `extra`), a separate state slice — not a ReturnsFilter chip.
+    dynamicFilter: null,
   });

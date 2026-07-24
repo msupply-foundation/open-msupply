@@ -17,6 +17,8 @@ export const CustomFieldOptionSelect = (props: {
   value: string;
   onChange: (id: string) => void;
   disabled?: boolean;
+  /** Hide the picker's own label (default false — label shown above). */
+  hideLabel?: boolean;
   testId?: string;
 }) => {
   const items = (): OrderedOption[] =>
@@ -25,7 +27,7 @@ export const CustomFieldOptionSelect = (props: {
   return (
     <Combobox<OrderedOption>
       label={props.def.name}
-      hideLabel
+      hideLabel={props.hideLabel}
       items={items()}
       itemToString={o => o.option.name}
       itemToValue={o => o.option.id}
