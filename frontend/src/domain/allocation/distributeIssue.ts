@@ -9,8 +9,10 @@
 //   3. now over → walk BACKWARDS trimming whole packs from the latest-filled
 //      batches, skipping any batch whose pack size exceeds the excess.
 //
-// Over-allocation survives only when no combination of whole packs can land
-// on the request (AC-AL3), and the shortfall (what the consumer maps to its
+// Surviving over-allocation is always smaller than every pack size still
+// allocated — though the fill is greedy, not an exhaustive search, so it may
+// miss a whole-pack combination that lands exactly (AC-AL3) — and the
+// shortfall (what the consumer maps to its
 // remainder concept, e.g. outbound's placeholder) plus every barred category
 // passed over while holding stock are reported. Pure: the consuming editor
 // owns its draft store; this owns the arithmetic so AC-AL1/AL3/AL4's client

@@ -206,7 +206,7 @@ describe('distributeIssue exact-quantity bias (AC-AL3)', () => {
     expect(result.overAllocatedUnits).toBe(0);
   });
 
-  it('over-allocates only when whole packs cannot land on the request', () => {
+  it('over-allocates when trimming cannot land on the request', () => {
     // 47 from [5×1, 5×10] → 5 + 50 rounds past it; trimming the size-1 batch
     // (5 units) gets to 50 exactly-not — 0 + 5×10 = 50, over by 3 (no
     // combination of whole packs makes 47).
@@ -215,6 +215,18 @@ describe('distributeIssue exact-quantity bias (AC-AL3)', () => {
     expect(result.packsById.get('b')).toBe(5);
     expect(result.overAllocatedUnits).toBe(3);
     expect(result.shortfallUnits).toBe(0);
+  });
+
+  it('surviving over-allocation is smaller than every allocated pack size', () => {
+    // 6 from [4×10, 3×10]: down-pass takes one 4-pack; up-pass adds a second
+    // (8); trim skips both sizes (> excess 2) → over by 2, below every
+    // allocated pack size — even though 3 + 3 would land exactly. The fill is
+    // greedy, not an exhaustive search (old-app parity; rules.md
+    // § whole-pack arithmetic).
+    const result = distributeIssue([line('a', 4, 10), line('b', 3, 10)], 6);
+    expect(result.packsById.get('a')).toBe(2);
+    expect(result.packsById.get('b')).toBe(0);
+    expect(result.overAllocatedUnits).toBe(2);
   });
 
   it('the doc example: 350 from [200×1, 3×100] lands exactly', () => {
@@ -226,7 +238,7 @@ describe('distributeIssue exact-quantity bias (AC-AL3)', () => {
     expect(result.overAllocatedUnits).toBe(0);
   });
 
-  it('whole-pack mode never issues a batch\'s fractional-pack dust', () => {
+  it("whole-pack mode never issues a batch's fractional-pack dust", () => {
     const result = distributeIssue([line('a', 10, 5.5)], 60);
     expect(result.packsById.get('a')).toBe(5);
     expect(result.shortfallUnits).toBe(10);
@@ -236,11 +248,9 @@ describe('distributeIssue exact-quantity bias (AC-AL3)', () => {
 describe('distributeIssue under the packs lens (AC-AL11)', () => {
   it('fills only batches of the required pack size, without a skip report', () => {
     // 3 packs of 10 (30 units) from [10×5, 10×10] → only the size-10 batch.
-    const result = distributeIssue(
-      [line('a', 5, 10), line('b', 10, 10)],
-      30,
-      { requiredPackSize: 10 }
-    );
+    const result = distributeIssue([line('a', 5, 10), line('b', 10, 10)], 30, {
+      requiredPackSize: 10,
+    });
     expect(result.packsById.get('a')).toBe(0);
     expect(result.packsById.get('b')).toBe(3);
     expect(result.skippedReasons.size).toBe(0);
