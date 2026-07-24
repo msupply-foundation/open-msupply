@@ -6,7 +6,7 @@ import {
   isBarred,
   type AllocationPreferences,
 } from './policy';
-import { lensToUnits, availableUnits, distinctPackSizes } from './units';
+import { lensToUnits, unitsToLens, availableUnits, distinctPackSizes } from './units';
 import { deriveIssueWarnings } from './warnings';
 
 // The shared barred-batch policy, FEFO comparator, lens conversion, and
@@ -161,6 +161,18 @@ describe('lensToUnits', () => {
     expect(
       lensToUnits(Number.POSITIVE_INFINITY, { kind: 'packs', size: 10 })
     ).toBeUndefined();
+  });
+
+  // AC-AL7 — the doses lens converts by the item's doses-per-unit (doses =
+  // units × dosesPerUnit), zero/missing rate falling back to 1; the policy
+  // still distributes in units.
+  it('converts the doses lens both ways', () => {
+    expect(lensToUnits(20, { kind: 'doses', dosesPerUnit: 10 })).toBe(2);
+    expect(lensToUnits(20, { kind: 'doses', dosesPerUnit: 0 })).toBe(20);
+    expect(lensToUnits(-1, { kind: 'doses', dosesPerUnit: 10 })).toBeUndefined();
+    expect(unitsToLens(2, { kind: 'doses', dosesPerUnit: 10 })).toBe(20);
+    expect(unitsToLens(30, { kind: 'packs', size: 10 })).toBe(3);
+    expect(unitsToLens(7, { kind: 'units' })).toBe(7);
   });
 });
 
