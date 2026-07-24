@@ -159,7 +159,7 @@ export const NamesList: Component<NamesListProps> = props => {
           </span>
         );
       },
-      meta: { cardPosition: 'header-primary' },
+      meta: { headerPosition: 'primary' },
     },
     {
       c: { key: 'name' },

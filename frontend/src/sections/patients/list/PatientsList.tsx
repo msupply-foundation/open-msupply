@@ -164,7 +164,7 @@ const PatientsList: Component = () => {
       c: { key: 'code' },
       sortKey: 'code',
       header: t('label.patient-id'),
-      meta: { cardPosition: 'header-primary' },
+      meta: { headerPosition: 'primary' },
     },
     { c: { key: 'code2' }, sortKey: 'code2', header: t('label.patient-nuic') },
     {

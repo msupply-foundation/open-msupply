@@ -338,7 +338,7 @@ export const TableShowcase = () => {
       // The wide flex-fill "sink" column (text default), keeping its bespoke
       // swatch + supplier-kind cell.
       ...getCellDefinition<Row>('otherPartyName', {
-        cardPosition: 'header-primary',
+        headerPosition: 'primary',
       }),
       cell: info => {
         const row = info.row.original;
@@ -380,7 +380,7 @@ export const TableShowcase = () => {
           />
         );
       },
-      meta: { cardPosition: 'header-badge' },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },
@@ -492,6 +492,10 @@ export const TableShowcase = () => {
         }
         sort={sort()}
         onSort={onSort}
+        // Offer the card ⇄ table toggle above the compact band (below 600px the
+        // list is card-only regardless). In card view the Sort control appears
+        // in the toolbar (no clickable headers there).
+        showCardToggle
         // The real page navigates to the detail route on row click; a no-op
         // here so the click-to-open row affordance (hover / pointer) still
         // shows.

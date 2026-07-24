@@ -232,8 +232,9 @@ const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
 
 // The optional `meta` is merged into the resolved preset's meta (caller wins),
 // exactly like the individual helpers — so a per-call tweak (an extra
-// cardPosition, a re-align) needs no manual meta merge. To override the width,
-// set `size`/`maxSize` after the spread; to override the `cell`, set `cell:`
+// headerPosition, a re-align) needs no manual meta merge. To override the
+// width, set `size`/`maxSize` after the spread; to override the `cell`, set
+// `cell:`
 // after it.
 export const getCellDefinition = <T,>(
   key: CellDefinitionKey,

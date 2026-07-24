@@ -847,64 +847,28 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   gap: var(--space-2) var(--space-5);
 }
 
-/* Group tabs (kdd/edit-line-card-table) — a row of tab buttons living INSIDE the toolbar,
-   inline-start (after any filter bar); the icon-control cluster (.toolbarControls) holds
-   the inline-end via its own auto margin. Switching sets the active field-group (a
-   secondary column filter); the active tab carries the brand underline (the app's tab
-   idiom, hand-rolled as a plain in-bar strip). */
-.groupTabs {
+/* --- Card body groups ------------------------------------------------------- */
+
+/* A body group's block (non-disclosure): its optional caption then its field
+   flow. Ungrouped fields render straight as .cardFields with no wrapper. */
+.cardGroup {
   display: flex;
-  align-self: stretch;
-  align-items: stretch;
-  gap: var(--space-1);
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.groupTab {
-  display: inline-flex;
+/* Group caption — a leading icon + label for a captioned (or disclosure) group.
+   Muted, small; the icon is brand-toned. Absent for the default primary group. */
+.cardGroupCaption {
+  display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-inline: var(--space-2);
-  border: none;
-  background: none;
   color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  cursor: pointer;
-  border-block-end: 2px solid transparent;
 }
 
-.groupTab:hover {
-  color: var(--text-body);
-}
-
-.groupTab[data-active] {
-  color: var(--primary-main);
-  border-block-end-color: var(--primary-main);
-}
-
-.groupTab:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
-}
-
-.groupTabIcon {
-  display: inline-flex;
-}
-
-.groupTabIcon svg {
-  inline-size: 1.125rem;
-  block-size: 1.125rem;
-}
-
-/* Card-view group marker (kdd/edit-line-card-table) — NOT a section header. The card's fields
-   flow as one list; each group contributes this as just another secondary element inline before
-   its fields: the 'secondary' text look (muted, --text-sm) with a bigger brand icon prepended.
-   It claims a full row of the wrapping cardFields flex so it reads as the lead-in to its fields,
-   but carries no divider/heading chrome. */
-/* Group icon — the icon-only marker that leads each group's cells in the secondary flow
-   (kdd/edit-line-card-table). It's just one more element in the .cardFields flex (no
-   flex-basis / row-claim), so the group's fields sit right after it, inline; a bigger,
-   brand-toned icon so the grouping reads at a glance. */
+/* The group's leading icon (caption + disclosure header). */
 .cardGroupIcon {
   display: inline-flex;
   align-items: center;
@@ -913,8 +877,146 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 .cardGroupIcon svg {
-  inline-size: 1.5rem;
-  block-size: 1.5rem;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+/* Panel — a contained "zone" around a group's fields (opt-in via CardGroup.panel;
+   the wide modal cards use it, small list cards stay flat). A faint tint + hairline
+   so white field controls don't look washed out on the card. */
+.cardPanel {
+  background: color-mix(in srgb, var(--text-body) 3%, transparent);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+
+/* Disclosure group — the fields live inside an Accordion (open/closed). The head
+   stacks the trigger and, while collapsed, an optional row preview. */
+.cardDisclosureHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cardDisclosureTrigger {
+  color: var(--secondary-main);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.cardPreview {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* --- Toolbar: view toggle + sort control ------------------------------------ */
+
+/* Segmented card ⇄ table toggle (above the compact band only). */
+.viewToggle {
+  display: inline-flex;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.viewToggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.viewToggleButton + .viewToggleButton {
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
+.viewToggleButton:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
+}
+
+.viewToggleButton[data-active] {
+  background: color-mix(in srgb, var(--secondary-main) 10%, transparent);
+  color: var(--secondary-main);
+}
+
+/* Sort trigger — a labelled pill (field name + direction arrow), card view only. */
+.sortTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  block-size: 2.25rem;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.sortTrigger:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+.sortTriggerLabel {
+  font-weight: var(--weight-medium);
+}
+
+/* Direction arrow — points down for descending; rotates to point up for
+   ascending. Shared by the trigger and the active menu row. */
+.sortArrow {
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform 0.15s;
+}
+
+.sortArrow:not([data-desc]) {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sortArrow {
+    transition: none;
+  }
+}
+
+.sortMenu {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 10rem;
+}
+
+.sortMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  text-align: start;
+  border-radius: var(--radius-sm);
+}
+
+.sortMenuItem:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+.sortMenuItem[data-active] {
+  color: var(--secondary-main);
+  font-weight: var(--weight-medium);
 }
 
 /* --- Table footer (ui-standards § tables → pagination, unit 10) ------------- */

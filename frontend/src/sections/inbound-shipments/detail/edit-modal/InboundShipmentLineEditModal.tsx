@@ -20,8 +20,7 @@ import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import {
   DataTable,
   type Column,
-  type TabAndCardGroup,
-  ALL_TABS,
+  type CardGroup,
 } from '../../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -248,16 +247,32 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   sellOverridden: true,
 });
 
-// The tabs / card-groups for the grouped table (matching the stocktake editor).
-// Batch is the ALL_TABS anchor (shows in every tab), not its own group.
+// The card body groups (matching the stocktake editor). This modal is card-only
+// (no table view — see the createTableConfig default below): batch is the
+// always-shown primary panel; pricing and other are collapsed disclosures.
+// Batch is the card HEADER identity (meta.headerPosition), so it isn't itself a
+// body group.
 type GroupKey = 'batch' | 'pricing' | 'other';
-const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
-  { key: 'batch', labelKey: 'label.batch', icon: () => <StockIcon /> },
-  { key: 'pricing', labelKey: 'label.pricing', icon: () => <InfoIcon /> },
+const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
+  {
+    key: 'batch',
+    labelKey: 'label.batch',
+    icon: () => <StockIcon />,
+    panel: true,
+  },
+  {
+    key: 'pricing',
+    labelKey: 'label.pricing',
+    icon: () => <InfoIcon />,
+    panel: true,
+    disclosure: 'closed',
+  },
   {
     key: 'other',
     labelKey: 'heading.other',
     icon: () => <MessageSquareIcon />,
+    panel: true,
+    disclosure: 'closed',
   },
 ];
 
@@ -324,7 +339,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     { row: string } | 'itemSelector' | undefined
   >();
 
-  const tableConfig = createTableConfig({ tableId: 'inbound-line-edit' });
+  // Card-only: default the view to card at every band (compact already forces
+  // card; this extends it to desktop). No showCardToggle on the DataTable, so
+  // there's no way to a table view — the batch grid is always cards.
+  const tableConfig = createTableConfig({
+    tableId: 'inbound-line-edit',
+    defaultConfig: { base: { viewMode: 'card' } },
+  });
 
   // Load one item's existing lines and seed the batch draft — a plain
   // SEQUENTIAL fetch, NOT a createResource (issue #428: draft state is built
@@ -749,8 +770,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'batch' },
       header: t('label.batch'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { cardPosition: 'header-primary' },
+      meta: { headerPosition: 'primary' },
       cell: info => {
         const b = info.row.original;
         return (
@@ -767,7 +787,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'numberOfPacks' },
       header: t('label.pack-quantity'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -790,7 +810,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'packSize' },
       header: t('label.pack-size'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -820,7 +840,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {
             c: { id: 'shippedNumberOfPacks' },
             header: t('label.shipped-number-of-packs'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
               const b = info.row.original;
@@ -840,7 +860,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {
             c: { id: 'shippedPackSize' },
             header: t('label.shipped-pack-size'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
               const b = info.row.original;
@@ -865,7 +885,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       header: t('label.units-received', {
         unit: item()?.unitName ?? t('label.units'),
       }),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -899,7 +919,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {
             c: { id: 'authStatus' },
             header: t('label.auth-status'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
@@ -954,7 +974,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {
             c: { id: 'dosesPerUnit' },
             header: t('label.doses-per-unit'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: () => (
               <NumberField
@@ -971,7 +991,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'expiryDate' },
       header: t('label.expiry'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
         return (
@@ -991,7 +1011,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {
             c: { id: 'vvmStatus' },
             header: t('label.vvm-status'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             cell: info => {
               const b = info.row.original;
               return (
@@ -1011,7 +1031,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'costPricePerPack' },
       header: t('label.pack-cost-price'),
-      tabsAndCardGroups: ['pricing'],
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1030,7 +1050,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
-      tabsAndCardGroups: ['pricing'],
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1049,7 +1069,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'lineTotal' },
       header: t('label.line-total'),
-      tabsAndCardGroups: ['pricing'],
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1067,7 +1087,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'location' },
       header: t('label.location'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1085,7 +1105,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'manufactureDate' },
       header: t('label.manufacture-date'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1105,7 +1125,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {
             c: { id: 'donor' },
             header: t('label.donor'),
-            tabsAndCardGroups: ['other'],
+            cardGroup: 'other',
             cell: info => {
               const b = info.row.original;
               return (
@@ -1141,7 +1161,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'manufacturer' },
       header: t('label.manufacturer'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1177,7 +1197,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'campaignOrProgram' },
       header: t('label.campaign'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1200,7 +1220,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'volumePerPack' },
       header: t('label.volume-per-pack'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1220,7 +1240,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'note' },
       header: t('label.note'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1237,8 +1257,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'actions' },
       header: t('label.actions'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { cardPosition: 'header-badge', align: 'right' },
+      meta: { headerPosition: 'badge', align: 'right' },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1381,7 +1400,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               columns={columns()}
               rows={rows()}
               rowKey={b => b.id}
-              tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+              cardGroups={CARD_GROUPS}
               showFullScreen={false}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}

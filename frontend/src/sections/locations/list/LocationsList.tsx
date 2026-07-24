@@ -151,7 +151,7 @@ const LocationsList: Component = () => {
       sortKey: 'name',
       header: t('label.name'),
       // Card view: the name is the card's title.
-      meta: { cardPosition: 'header-primary' },
+      meta: { headerPosition: 'primary' },
     },
     {
       // Location type, shown as name + temperature range (ui-surface S1
