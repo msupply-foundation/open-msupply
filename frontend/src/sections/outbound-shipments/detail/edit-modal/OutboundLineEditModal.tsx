@@ -13,7 +13,11 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
-import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
@@ -28,7 +32,7 @@ import {
   getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../../ui/icons';
+import { CheckIcon } from '../../../../ui/icons';
 import {
   DraftStockOutLines,
   SaveOutboundItemLines,
@@ -740,24 +744,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
-            icon={<CheckIcon />}
+          />
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             disabled={!item() || !dirty()}
             loading={saving()}
             onClick={onOk}
-          >
-            {t('button.ok')}
-          </Button>
-          {/* OK & next (spec S4 § footer button matrix) — never disabled,
+          />
+          {/* Save & next (spec S4 § footer button matrix) — never disabled,
               like the stocktake / inbound editors:
                · add mode    — HIDDEN until the item carries a NON-ZERO
                  quantity (seeded from an existing allocation, or entered);
@@ -766,7 +763,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                · update mode — SHOWN throughout; saves any change, then
                  advances the parent-owned walk, or drops into add mode once
                  it is exhausted.
-              OK stays visible-but-disabled as the always-discoverable
+              Save stays visible-but-disabled as the always-discoverable
               confirm. */}
           <Show
             when={
@@ -775,17 +772,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 : item() && issuedUnits() + placeholderUnits() > 0
             }
           >
-            <Button
-              icon={<ArrowRightIcon />}
+            <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
               // loadingLines too (the stocktake editor's busy()): the no-save
               // page-through is a fetch with no stale-response guard, so the
               // button must not accept clicks while one is in flight.
               loading={saving() || loadingLines()}
               onClick={onOkNext}
-            >
-              {t('button.ok-and-next')}
-            </Button>
+            />
           </Show>
         </>
       }

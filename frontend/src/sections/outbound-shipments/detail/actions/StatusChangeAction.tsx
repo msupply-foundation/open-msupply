@@ -40,7 +40,7 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // verdict inline in the confirmation dialog — on-hold (AC-H1) and
 // unallocated-placeholder (AC-P3) rejections land in the error phase; the
 // confirmation itself carries the zero-quantity removal warning (AC-S5).
-// The on-hold notice is ACTIONABLE (D53): it offers "Release hold and
+// The on-hold notice is ACTIONABLE (D59): it offers "Release hold and
 // confirm ‹status›" — one save carrying both the release and the advance
 // (rules.md § on hold, AC-H2) — instead of the old app's dead-end toast.
 
@@ -75,7 +75,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   // Set when the notice is the ON-HOLD rejection: the status the user tried
   // to reach, offered as "Release hold and confirm ‹status›" — one save that
-  // both releases and advances (AC-H2, D53). Cleared with the notice.
+  // both releases and advances (AC-H2, D59). Cleared with the notice.
   const [holdRetryStatus, setHoldRetryStatus] = createSignal<
     SettableStatus | undefined
   >();
@@ -163,7 +163,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       // doesn't apply) and the verdict surfaces as the footer's blocking
       // notice — the same surface, still never a toast. The shared suite
       // pins this close-then-notice shape. The on-hold verdict additionally
-      // arms the notice's release-and-advance action (AC-H2, D53).
+      // arms the notice's release-and-advance action (AC-H2, D59).
       close();
       setHoldRetryStatus(result.heldShipment ? status : undefined);
       setInfoMessage(result.message);
@@ -181,7 +181,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     setHoldRetryStatus(undefined);
   };
 
-  // The on-hold notice's action (AC-H2, D53): retry the SAME status change
+  // The on-hold notice's action (AC-H2, D59): retry the SAME status change
   // with the hold released in one save — {id, status, onHold: false}.
   const releaseAndConfirm = async () => {
     const status = holdRetryStatus();
@@ -283,7 +283,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       </Show>
 
       {/* Blocking notice: the lineless pre-flight (guards 1–2) and server
-          verdicts. The ON-HOLD verdict is actionable (AC-H2, D53): alongside
+          verdicts. The ON-HOLD verdict is actionable (AC-H2, D59): alongside
           OK it offers "Release hold and confirm ‹status›" — one save carrying
           both the release and the advance. */}
       <Show when={infoMessage() != null}>
