@@ -20,6 +20,7 @@ export {
 } from './policy';
 export {
   lensToUnits,
+  unitsToLens,
   availableUnits,
   issuedUnits,
   distinctPackSizes,

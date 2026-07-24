@@ -42,6 +42,7 @@ import {
   distributeIssue,
   fillOrderCompare,
   lensToUnits,
+  unitsToLens,
   type AllocateUnit,
   type AllocationPreferences,
   type IssueWarning,
@@ -139,8 +140,8 @@ export const OutboundLineEditModal = (
 );
 
 // Issue-entry lens (spec/stock-allocation § the allocate-in lens): units,
-// packs-of-‹size›; doses stay display-only in this build (entry mode needs
-// the doses preference, off on the dev store).
+// packs-of-‹size›, and — for vaccine items under manage-vaccines-in-doses —
+// doses (AC-AL7).
 
 // Resolve the shared distribution warnings (src/domain/allocation
 // deriveIssueWarnings) to the editor's inline banner strings. The mapping —
@@ -387,7 +388,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // bare second allocateIn() call is not narrowed).
   const allocateInValue = () => {
     const lens = allocateIn();
-    return lens.kind === 'units' ? 'units' : `packs-${lens.size}`;
+    if (lens.kind === 'units') return 'units';
+    if (lens.kind === 'doses') return 'doses';
+    return `packs-${lens.size}`;
   };
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
@@ -861,6 +864,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             value={allocateInValue()}
             options={[
               { value: 'units', label: unitName() },
+              // The doses lens (AC-AL7): vaccine items under the
+              // manage-vaccines-in-doses preference only.
+              ...(prefs()?.manageVaccinesInDoses && item()?.isVaccine
+                ? [{ value: 'doses', label: t('label.doses') }]
+                : []),
               ...distinctPackSizes().map(size => ({
                 value: `packs-${size}`,
                 label: t('label.packs-of-pack-size', { packSize: size }),
@@ -871,7 +879,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               const next: AllocateUnit =
                 value === 'units'
                   ? { kind: 'units' }
-                  : { kind: 'packs', size: Number(value.slice(6)) };
+                  : value === 'doses'
+                    ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                    : { kind: 'packs', size: Number(value.slice(6)) };
               setAllocateIn(next);
               // Re-EXPRESS the current quantity in the new lens — the units
               // equivalent is preserved and NOTHING redistributes (matching
@@ -881,11 +891,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               const v = issueValue();
               if (v != null) {
                 const units = lensToUnits(v, previous) ?? 0;
-                setIssueValue(
-                  next.kind === 'units'
-                    ? units
-                    : Math.round((units / next.size) * 100) / 100
-                );
+                setIssueValue(Math.round(unitsToLens(units, next) * 100) / 100);
               }
             }}
           />
