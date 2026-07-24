@@ -87,6 +87,19 @@ export function ColumnSettings<T>(props: {
     props.setConfig?.('columnOrder', next);
   };
 
+  // Show all / Hide all, scoped to the LISTED (current-view) columns — never
+  // TanStack's toggleAllColumnsVisible, which would flip columns hidden in this
+  // view too (e.g. "Hide all" in table view nuking card-only columns in card
+  // view, with no table-view row left to restore them). Only columns that CAN
+  // hide are touched; the write goes through setConfig like every other change.
+  const setAllListedVisible = (visible: boolean) => {
+    const next = { ...props.table.getState().columnVisibility };
+    for (const id of listedIds()) {
+      if (props.table.getColumn(id)?.getCanHide()) next[id] = visible;
+    }
+    props.setConfig?.('columnVisibility', next);
+  };
+
   // Header text for the row label. TanStack headers can be a string or a
   // function/JSX; we only render the string case here (our columns use string
   // headers) and fall back to the column id otherwise, so the panel always has
@@ -99,14 +112,15 @@ export function ColumnSettings<T>(props: {
   return (
     <div class={styles.panel}>
       {/* Bulk visibility — Show all / Hide all (ui-standards § tables → column
-          management). TanStack's toggleAllColumnsVisible only touches columns
-          that CAN hide (getCanHide), so structural columns are safe. */}
+          management), scoped to the columns this view lists (see
+          setAllListedVisible); only columns that CAN hide are touched, so
+          structural columns are safe. */}
       <div class={styles.actions}>
         <button
           type="button"
           class={styles.action}
           data-testid="table-show-all-columns"
-          onClick={() => props.table.toggleAllColumnsVisible(true)}
+          onClick={() => setAllListedVisible(true)}
         >
           {t('table.show-all')}
         </button>
@@ -114,7 +128,7 @@ export function ColumnSettings<T>(props: {
           type="button"
           class={styles.action}
           data-testid="table-hide-all-columns"
-          onClick={() => props.table.toggleAllColumnsVisible(false)}
+          onClick={() => setAllListedVisible(false)}
         >
           {t('table.hide-all')}
         </button>

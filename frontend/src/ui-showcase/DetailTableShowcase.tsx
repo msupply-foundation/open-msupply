@@ -5,12 +5,7 @@ import {
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import {
-  getCurrencyCell,
-  getDateCell,
-  getExpiryDateCell,
-  getNumberCell,
-} from '../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -347,6 +342,7 @@ export const DetailTableShowcase = () => {
       c: { accessor: line => line.itemCode, id: 'itemCode' },
       sortKey: 'itemCode',
       header: t('label.code'),
+      ...getCellDefinition<Line>('itemCode'),
       cell: info => {
         const line = info.row.original;
         return (
@@ -364,39 +360,46 @@ export const DetailTableShowcase = () => {
       c: { key: 'itemName' },
       sortKey: 'itemName',
       header: t('label.name'),
-      meta: { cardPosition: 'header-primary', wrapLines: 2 },
+      ...getCellDefinition<Line>('itemName', {
+        cardPosition: 'header-primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: t('label.batch'),
+      ...getCellDefinition<Line>('batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
       header: t('label.expiry'),
-      ...getExpiryDateCell(),
+      ...getCellDefinition<Line>('expiryDate'),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationName',
       header: t('label.location'),
+      ...getCellDefinition<Line>('location'),
     },
     {
       c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
       header: t('label.unit'),
+      ...getCellDefinition<Line>('unitName'),
     },
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
       header: t('label.pack-size'),
-      ...getNumberCell(),
+      ...getCellDefinition<Line>('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
       header: t('label.pack-quantity'),
-      ...getNumberCell(),
-      meta: { align: 'right', cardPosition: 'header-badge' },
+      ...getCellDefinition<Line>('numberOfPacks', {
+        cardPosition: 'header-badge',
+      }),
     },
     {
       // Difference — shipped minus received; blank when nothing shipped.
@@ -408,7 +411,7 @@ export const DetailTableShowcase = () => {
         id: 'difference',
       },
       header: t('label.difference'),
-      ...getNumberCell(),
+      ...getCellDefinition<Line>('difference'),
     },
     {
       c: {
@@ -416,17 +419,17 @@ export const DetailTableShowcase = () => {
         id: 'unitQuantity',
       },
       header: t('label.unit-quantity'),
-      ...getNumberCell(),
+      ...getCellDefinition<Line>('unitQuantity'),
     },
     {
       c: { key: 'costPricePerPack' },
       header: t('label.pack-cost-price'),
-      ...getCurrencyCell(),
+      ...getCellDefinition<Line>('costPricePerPack'),
     },
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
-      ...getCurrencyCell(),
+      ...getCellDefinition<Line>('sellPricePerPack'),
     },
     {
       c: {
@@ -434,7 +437,7 @@ export const DetailTableShowcase = () => {
         id: 'total',
       },
       header: t('label.total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition<Line>('total'),
     },
     {
       c: {
@@ -442,11 +445,12 @@ export const DetailTableShowcase = () => {
         id: 'manufacturer',
       },
       header: t('label.manufacturer'),
+      ...getCellDefinition<Line>('manufacturer'),
     },
     {
       c: { key: 'manufactureDate' },
       header: t('label.manufacture-date'),
-      ...getDateCell(),
+      ...getCellDefinition<Line>('manufactureDate'),
     },
     {
       c: {
@@ -458,6 +462,7 @@ export const DetailTableShowcase = () => {
     {
       c: { key: 'note' },
       header: t('label.note'),
+      ...getCellDefinition<Line>('note'),
     },
   ];
 

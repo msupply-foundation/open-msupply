@@ -142,10 +142,18 @@ export type Column<T, K extends string, G extends string = never> = {
    *  fields and sortKey.
    */
   c: ColumnIdentity<T>;
-} & Omit<IdentifiedColumnDef<T>, 'id'> & {
+} & Omit<IdentifiedColumnDef<T>, 'id' | 'minSize'> & {
     sortKey?: K;
     tabsAndCardGroups?: G[] | typeof ALL_TABS;
   };
+// `minSize` is deliberately OMITTED (not just unused): it's TanStack's drag
+// lower-bound, NOT the resting min-width (that comes from `size`, delivered as
+// the min-width floor). A dev setting `minSize` expecting a wider column would
+// see nothing at rest — a footgun — so passing it is a compile error, steering
+// them to `size`. TanStack keeps its internal default (20) as the drag floor,
+// which is what we want (a `size` default is a SOFT default — freely draggable
+// smaller). Width caps use `maxSize` (delivered as max-width). See
+// docs/CELL_TYPES.md.
 
 // Map our Column → the TanStack ColumnDef it feeds to createSolidTable,
 // translating the `c` identity into the matching TanStack fields and

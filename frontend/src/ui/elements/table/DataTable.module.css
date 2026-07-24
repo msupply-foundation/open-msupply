@@ -155,8 +155,15 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 2;
-  padding: var(--space-3) var(--space-4);
+  padding-block: var(--space-3);
   border-block-end: 1px solid var(--color-divider);
+
+  /* Inline padding is ALIGNMENT-AWARE (see the .th[data-align] rules below):
+     the content-side padding matches the body cell so header text lines up
+     with its column, the free side is trimmed. --th-pad-inline is that matched
+     value, defaulted here and set per density in the density block. */
+  --th-pad-inline: var(--space-4);
+
   background: var(--bg-toolbar);
   color: var(--text-body);
   font-weight: var(--weight-medium);
@@ -334,6 +341,23 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 .th[data-align='center'],
 .td[data-align='center'] {
   text-align: center;
+}
+
+/* Header inline padding aligns the header text with the body content below it,
+   while trimming the "free" side so labels get room (Carl 2026-07-24). Left
+   headers pad the START (= --th-pad-inline, the body cell's inline padding) and
+   zero the END; right headers mirror it so numbers line up at the end; centre
+   headers stay symmetric. The fixed leading select cell keeps its own box. */
+.th:not(.selectCell) {
+  padding-inline: var(--th-pad-inline) 0;
+}
+
+.th[data-align='right']:not(.selectCell) {
+  padding-inline: 0 var(--th-pad-inline);
+}
+
+.th[data-align='center']:not(.selectCell) {
+  padding-inline: var(--space-1);
 }
 
 .thLabel {
@@ -539,8 +563,11 @@ tr[data-row-state='disabled'] > .selectCell {
    sits generously centred in the floor (vertical-align: middle), while a
    header that WRAPS to two lines grows from the small padding instead of
    ballooning to floor-plus-full-padding. Same block-size-as-minimum model
-   as .td; horizontal padding stays per-density; the leading select th
-   keeps its own fixed box (checkbox centring), so it's excluded. */
+   as .td. Inline padding is alignment-aware (the .th[data-align] rules above):
+   each density sets --th-pad-inline to the BODY cell's inline padding, applied
+   to the header's content side (start for left, end for right) so the header
+   text lines up with its column; the free side is zeroed to give labels room.
+   The leading select th keeps its own fixed box (checkbox centring). */
 .table[data-density='compact'] .td {
   block-size: 2.5rem; /* 40px */
   padding: var(--space-2) var(--space-3);
@@ -549,7 +576,7 @@ tr[data-row-state='disabled'] > .selectCell {
 .table[data-density='compact'] .th:not(.selectCell) {
   block-size: 2.25rem; /* 36px min (single line) */
   padding-block: var(--space-1);
-  padding-inline: var(--space-3);
+  --th-pad-inline: var(--space-3); /* = body compact inline padding */
 }
 
 .table[data-density='comfortable'] .td {
@@ -560,7 +587,7 @@ tr[data-row-state='disabled'] > .selectCell {
 .table[data-density='comfortable'] .th:not(.selectCell) {
   block-size: 2.75rem; /* 44px min (single line) */
   padding-block: var(--space-1);
-  padding-inline: var(--space-4);
+  --th-pad-inline: var(--space-4); /* = body comfortable inline padding */
 }
 
 .table[data-density='spacious'] .td {
@@ -571,7 +598,7 @@ tr[data-row-state='disabled'] > .selectCell {
 .table[data-density='spacious'] .th:not(.selectCell) {
   block-size: 3.25rem; /* 52px min (single line) */
   padding-block: var(--space-2);
-  padding-inline: 1.25rem;
+  --th-pad-inline: 1.25rem; /* = body spacious inline padding */
 }
 
 tr[data-selected]:not([data-row-state]) > .td,
