@@ -1,4 +1,5 @@
 import { stripEmpty } from '../../../typeHelpers';
+import type { CustomFieldFilterState } from '../../../domain/customFields';
 import type { NamesVariables, NamesResult } from '../names.generated';
 
 // Pure list logic for the Customer & Supplier lists (spec/names). Kept
@@ -43,8 +44,8 @@ export const TYPE_RESTRICTION: NamesFilter = {
 // converted to the dynamicFilter AST at query time.
 export type NamesListState = {
   filter: NamesFilter;
-  // Raw per-custom-field filter values; null = an added-but-empty chip.
-  cf?: Record<string, string | null>;
+  // Typed per-custom-field filter values; null = an added-but-empty chip.
+  cf?: CustomFieldFilterState;
   sort?: NamesSort;
   offset: number;
   first: number;
@@ -70,7 +71,7 @@ export const buildFilter = (
   // but the server's JSON scalar accepts the object directly in variables — so
   // the single cast to the generated field type lives here, at the one boundary
   // (documented codegen limitation; see BUILD_REPORT).
-  dynamicFilter?: object
+  dynamicFilter?: unknown
 ): NamesFilter => ({
   ...roleRelationshipFilter(role),
   ...TYPE_RESTRICTION,
@@ -86,7 +87,7 @@ export const buildVariables = (args: {
   storeId: string;
   role: Role;
   state: NamesListState;
-  dynamicFilter?: object;
+  dynamicFilter?: unknown;
 }): NamesVariables => ({
   storeId: args.storeId,
   filter: buildFilter(args.role, args.state.filter, args.dynamicFilter),

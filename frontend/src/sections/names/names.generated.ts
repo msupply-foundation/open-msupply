@@ -158,35 +158,6 @@ export const NameById = {
   query: "query nameById($storeId: String!, $nameId: String!) {\n  names(storeId: $storeId, filter: {id: {equalTo: $nameId}}) {\n    ... on NameConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        type\n        isCustomer\n        isSupplier\n        isVisible\n        store {\n          id\n          code\n          storeName\n        }\n        phone\n        address1\n        address2\n        country\n        website\n        comment\n        chargeCode\n        isManufacturer\n        isDonor\n        isOnHold\n        createdDatetime\n        properties\n        customFields\n        hshCode\n        hshName\n        email\n        margin\n        freightFactor\n        currency {\n          id\n          code\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<NameByIdResult, NameByIdVariables>;
 
-export type CustomFieldDefinitionsVariables = {
-  scope: string;
-};
-
-export type CustomFieldDefinitionsResult = {
-  customFields: ({
-  __typename: "CustomFieldConnector";
-} & {
-  totalCount: number;
-  nodes: Array<{
-  id: string;
-  key: string;
-  name: string;
-  valueType: "INTEGER" | "TEXT" | "DATE" | "REAL" | "OPTION" | "BOOLEAN";
-  kind: "STANDARD" | "LEGACY";
-  displayMode: "HIDDEN" | "VISIBLE" | "PROMINENT" | "OTHER" | null;
-  options: Array<{
-  id: string;
-  key: string;
-  name: string;
-}>;
-}>;
-});
-};
-
-export const CustomFieldDefinitions = {
-  query: "query customFieldDefinitions($scope: String!) {\n  customFields(filter: {scope: {equalTo: $scope}}) {\n    ... on CustomFieldConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        key\n        name\n        valueType\n        kind\n        displayMode\n        options {\n          id\n          key\n          name\n        }\n      }\n    }\n  }\n}",
-} as TypedDocument<CustomFieldDefinitionsResult, CustomFieldDefinitionsVariables>;
-
 export type NamePropertiesVariables = Record<string, never>;
 
 export type NamePropertiesResult = {

@@ -1,7 +1,7 @@
 import { createResource, createRoot } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
 import { CustomFieldDefinitions } from './customFields.generated';
-import type { CustomFieldDef } from './customFields';
+import type { CustomFieldDef } from './parse';
 
 // Custom-field DEFINITIONS cache, keyed by scope (spec/ui-standards/custom-fields
 // › definitions). Definitions come from central config/sync and are stable for

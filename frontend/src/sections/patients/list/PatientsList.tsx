@@ -29,6 +29,13 @@ import { genderLabel } from '../../../domain/patient';
 import { Patients } from './patients.generated';
 import type { PatientsVariables, PatientsResult } from './patients.generated';
 import { filterFields, type PatientFilter } from './listFilters';
+import {
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 import { CreatePatientModal } from './CreatePatientModal';
 import { ExportPatientsAction } from './actions';
 
@@ -45,6 +52,8 @@ type SortKey = NonNullable<PatientsVariables['sort']>[number]['key'];
 
 type PatientsListState = {
   filter: PatientFilter;
+  /** Custom-field filter values (per key), converted to the dynamicFilter AST. */
+  cf?: CustomFieldFilterState;
   sort?: PatientsVariables['sort'];
   offset: number;
   first: number;
@@ -86,9 +95,23 @@ const PatientsList: Component = () => {
     },
   });
 
+  // Custom-field definitions for the patient scope — the shared scope-keyed
+  // cache, read NON-SUSPENDING (kdd/solid-reactivity-pitfalls). Empty ⇒ no
+  // custom-field columns and no custom-field filters (spec/patients ui-surface;
+  // rules § list).
+  const cfReader = customFieldDefinitions('patient');
+  const cfDefs = () => cfReader.noSuspense();
+  // Stable Filter identities across edits (FilterBar keys chips by reference —
+  // rebuilding would remount and drop focus).
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+
   const variables = createMemo<PatientsVariables>(() => ({
     storeId: params.storeId,
-    filter: stripEmpty(query().filter),
+    filter: {
+      ...stripEmpty(query().filter),
+      // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+    },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
   }));
@@ -120,6 +143,9 @@ const PatientsList: Component = () => {
 
   const onFilterChange = (filter: PatientFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
+
+  const onCustomFieldChange = (cf: CustomFieldFilterState) =>
+    setQuery({ ...query(), cf, offset: 0 });
 
   const openRow = (row: PatientRow) =>
     navigate(`/${params.storeId}/dispensary/patients/${row.id}`);
@@ -193,6 +219,12 @@ const PatientsList: Component = () => {
       header: t('label.deceased'),
       ...getFlagCell(t('label.deceased')),
     },
+    // Configured custom-field columns — not sortable; value chosen by kind
+    // (option → resolved name, number/date → localised).
+    ...customFieldColumns<PatientRow, SortKey>(
+      cfDefs(),
+      row => row.customFields
+    ),
   ];
 
   const crumbs = () => [{ label: t('label.patients') }];
@@ -219,10 +251,18 @@ const PatientsList: Component = () => {
             />
           </HeaderButtons>
           <Toolbar>
+            {/* One filter menu: the default patient filters + the patient
+                scope's configured custom-field filters as the bar's second
+                group (spec/patients rules § list; ui-surface). */}
             <FilterBar
               filters={filterFields()}
               filter={query().filter}
               onChange={onFilterChange}
+              extra={{
+                filters: cfFilters(),
+                filter: query().cf ?? {},
+                onChange: onCustomFieldChange,
+              }}
             />
           </Toolbar>
         </Header>

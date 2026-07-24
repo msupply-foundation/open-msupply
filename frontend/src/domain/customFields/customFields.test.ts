@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildDynamicFilter,
-  customFieldDisplay,
-  customFieldValue,
+  ancestorIds,
+  optionAndDescendantIds,
   orderOptionsHierarchically,
+  parseCustomField,
   parseCustomFields,
   partitionCustomFields,
-  resolveOptionName,
   shownCustomFields,
   type CustomFieldDef,
   type CustomFieldOption,
-} from './customFields';
+} from './parse';
+import { buildCustomFieldDynamicFilter } from './filter';
 
-// The shared custom-field logic (spec/ui-standards/custom-fields). The reference
-// dataset configures no custom fields, so these assert the contract-grounded
-// logic (parsing, value-type display, display-mode partitioning, option
-// hierarchy, the dynamicFilter AST); populated live behaviour is a recorded gap.
+// The shared custom-field interpreter (spec/ui-standards/custom-fields). The
+// reference dataset configures no custom fields, so these assert the contract-
+// grounded pure logic: the value-type → kind parse, display-mode partitioning,
+// the option hierarchy, and the typed dynamicFilter AST.
 
 const option = (over: Partial<CustomFieldOption> = {}): CustomFieldOption => ({
   id: 'o1',
@@ -36,58 +36,31 @@ const def = (over: Partial<CustomFieldDef> = {}): CustomFieldDef => ({
   ...over,
 });
 
+describe('parseCustomField — value type → kind', () => {
+  it('maps each value type to its kind', () => {
+    expect(parseCustomField(def({ valueType: 'TEXT' })).kind).toBe('text');
+    expect(parseCustomField(def({ valueType: 'BOOLEAN' })).kind).toBe(
+      'boolean'
+    );
+    expect(parseCustomField(def({ valueType: 'DATE' })).kind).toBe('date');
+    expect(parseCustomField(def({ valueType: 'OPTION' })).kind).toBe('option');
+    const int = parseCustomField(def({ valueType: 'INTEGER' }));
+    const real = parseCustomField(def({ valueType: 'REAL' }));
+    expect(int.kind === 'number' && int.integer).toBe(true);
+    expect(real.kind === 'number' && real.integer).toBe(false);
+  });
+});
+
 describe('parseCustomFields — the JSON boundary', () => {
-  it('accepts an object, a JSON string, and coerces junk to {}', () => {
+  it('accepts an object or JSON string; coerces junk to {}', () => {
     expect(parseCustomFields({ a: 1 })).toEqual({ a: 1 });
     expect(parseCustomFields('{"a":1}')).toEqual({ a: 1 });
     expect(parseCustomFields(null)).toEqual({});
     expect(parseCustomFields('not json')).toEqual({});
-    expect(parseCustomFields(42)).toEqual({});
-  });
-
-  it('reads a value by key, undefined when unset', () => {
-    expect(customFieldValue({ field: 'x' }, 'field')).toBe('x');
-    expect(customFieldValue({ field: 'x' }, 'other')).toBeUndefined();
   });
 });
 
-describe('customFieldDisplay — value-type rendering', () => {
-  it('boolean → checked state', () => {
-    expect(
-      customFieldDisplay(def({ valueType: 'BOOLEAN' }), { field: true })
-    ).toEqual({
-      kind: 'boolean',
-      checked: true,
-    });
-  });
-
-  it('option → stored id resolved to its name', () => {
-    const d = def({
-      valueType: 'OPTION',
-      options: [option({ id: 'o1', name: 'High' })],
-    });
-    expect(customFieldDisplay(d, { field: 'o1' })).toEqual({
-      kind: 'option',
-      id: 'o1',
-      name: 'High',
-    });
-  });
-
-  it('option → falls back to the raw id when unresolved', () => {
-    const d = def({ valueType: 'OPTION', options: [] });
-    expect(resolveOptionName(d, 'missing')).toBe('missing');
-  });
-
-  it('everything else → text, blank when unset', () => {
-    expect(customFieldDisplay(def(), { field: 'hello' })).toEqual({
-      kind: 'text',
-      text: 'hello',
-    });
-    expect(customFieldDisplay(def(), {})).toEqual({ kind: 'text', text: '' });
-  });
-});
-
-describe('partitionCustomFields — display-mode placement', () => {
+describe('display-mode partitioning', () => {
   const defs = [
     def({ key: 'a', displayMode: 'VISIBLE' }),
     def({ key: 'b', displayMode: 'PROMINENT' }),
@@ -96,7 +69,7 @@ describe('partitionCustomFields — display-mode placement', () => {
     def({ key: 'e', displayMode: null }),
   ];
 
-  it('drops HIDDEN / OTHER / null; keeps VISIBLE + PROMINENT', () => {
+  it('shownCustomFields drops HIDDEN / OTHER / null', () => {
     expect(shownCustomFields(defs).map(d => d.key)).toEqual(['a', 'b']);
   });
 
@@ -113,14 +86,15 @@ describe('partitionCustomFields — display-mode placement', () => {
   });
 });
 
-describe('orderOptionsHierarchically — depth-first tree', () => {
-  it('nests children under parents with a depth, orphans as roots', () => {
-    const options = [
-      option({ id: 'child', parentOptionId: 'root' }),
-      option({ id: 'root', parentOptionId: null }),
-      option({ id: 'grandchild', parentOptionId: 'child' }),
-      option({ id: 'orphan', parentOptionId: 'ghost' }),
-    ];
+describe('option hierarchy', () => {
+  const options = [
+    option({ id: 'child', parentOptionId: 'root' }),
+    option({ id: 'root', parentOptionId: null }),
+    option({ id: 'grandchild', parentOptionId: 'child' }),
+    option({ id: 'orphan', parentOptionId: 'ghost' }),
+  ];
+
+  it('orders depth-first with depth; orphans as roots', () => {
     expect(
       orderOptionsHierarchically(options).map(o => [o.option.id, o.depth])
     ).toEqual([
@@ -130,21 +104,77 @@ describe('orderOptionsHierarchically — depth-first tree', () => {
       ['orphan', 0],
     ]);
   });
+
+  it('optionAndDescendantIds returns the id plus all descendants', () => {
+    expect(optionAndDescendantIds(options, 'root').sort()).toEqual([
+      'child',
+      'grandchild',
+      'root',
+    ]);
+    expect(optionAndDescendantIds(options, 'grandchild')).toEqual([
+      'grandchild',
+    ]);
+  });
+
+  it('ancestorIds returns the parent chain, nearest first', () => {
+    expect(ancestorIds(options, 'grandchild')).toEqual(['child', 'root']);
+    expect(ancestorIds(options, 'root')).toEqual([]);
+    expect(ancestorIds(options, 'orphan')).toEqual([]);
+  });
 });
 
-describe('buildDynamicFilter — the list filter AST', () => {
-  it('ANDs non-empty conditions, dropping blanks', () => {
-    expect(buildDynamicFilter({ a: 'x', b: '', c: '  ', d: 'y' })).toEqual({
+describe('buildCustomFieldDynamicFilter — typed AST per kind', () => {
+  it('emits the right operator for each value kind', () => {
+    expect(
+      buildCustomFieldDynamicFilter({
+        note: { kind: 'text', contains: 'x' },
+        active: { kind: 'boolean', value: true },
+        region: { kind: 'option', optionIds: ['r1', 'r2'] },
+        count: { kind: 'number', min: 1, max: 5 },
+        due: { kind: 'date', from: '2026-01-01' },
+      })
+    ).toEqual({
       And: [
-        { CustomField: { key: 'a', filter: { Text: { Like: 'x' } } } },
-        { CustomField: { key: 'd', filter: { Text: { Like: 'y' } } } },
+        { CustomField: { key: 'note', filter: { Text: { Like: 'x' } } } },
+        {
+          CustomField: { key: 'active', filter: { Boolean: { Equal: true } } },
+        },
+        {
+          CustomField: {
+            key: 'region',
+            filter: { Option: { In: ['r1', 'r2'] } },
+          },
+        },
+        {
+          CustomField: {
+            key: 'count',
+            filter: { Number: { GreaterThanOrEqual: 1 } },
+          },
+        },
+        {
+          CustomField: {
+            key: 'count',
+            filter: { Number: { LowerThanOrEqual: 5 } },
+          },
+        },
+        {
+          CustomField: {
+            key: 'due',
+            filter: { Date: { GreaterThanOrEqual: '2026-01-01' } },
+          },
+        },
       ],
     });
   });
 
-  it('undefined when nothing active (a no-op filter)', () => {
-    expect(buildDynamicFilter({})).toBeUndefined();
-    expect(buildDynamicFilter({ a: '' })).toBeUndefined();
-    expect(buildDynamicFilter(undefined)).toBeUndefined();
+  it('drops empty values and returns undefined for a no-op filter', () => {
+    expect(
+      buildCustomFieldDynamicFilter({
+        note: { kind: 'text', contains: '' },
+        empty: null,
+      })
+    ).toBeUndefined();
+    expect(buildCustomFieldDynamicFilter({})).toBeUndefined();
+    expect(buildCustomFieldDynamicFilter(undefined)).toBeUndefined();
   });
 });

@@ -3,11 +3,12 @@ import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { DateField } from '../../ui/elements/inputs/DateField';
+import { t } from '../../intl';
 import { CustomFieldOptionSelect } from './CustomFieldOptionSelect';
-import type { CustomFieldDef } from './customFields';
+import type { ParsedCustomField } from './parse';
 
 // A number-typed stored value coerced back to a number for the NumberField;
-// undefined (empty field) for anything non-numeric.
+// undefined (empty) for anything non-numeric.
 const asNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number') return value;
   if (value == null || value === '') return undefined;
@@ -15,25 +16,48 @@ const asNumber = (value: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
-// The single editable value-type → control mapping (spec/ui-standards/
-// custom-fields › value types), used by both the editable tab and the prominent
-// toolbar. `value` is the field's raw stored value; `onChange` emits the new
-// value to store (a number for numeric types, a boolean, an ISO date string or
-// null, or the option id — `undefined` when cleared). The label is carried by
-// the surrounding row/label, so it is hidden here.
+// The editable control for ONE custom field — the interpreter's edit surface:
+// a single Switch over the parsed `field.kind`, each arm an explicit library
+// component (kdd/explicit-composition, kdd/report-argument-forms). An
+// `unsupported` kind (a value type a newer server added) degrades to a disabled
+// placeholder in the fallback, never crashes. `value` is the field's raw stored
+// value; `onChange` emits the new value to store — a boolean, a number
+// (undefined when cleared), an ISO date string or null, the option id, or text.
 export const CustomFieldInput = (props: {
-  def: CustomFieldDef;
+  field: ParsedCustomField;
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
   testId?: string;
 }) => {
-  const testId = () => props.testId ?? `custom-field-${props.def.key}`;
+  const testId = () => props.testId ?? `custom-field-${props.field.def.key}`;
+  const name = () => props.field.def.name;
   return (
     <Switch
       fallback={
+        // unsupported: labelled but disabled, so the row still renders.
         <TextField
-          label={props.def.name}
+          label={name()}
+          hideLabel
+          width="full"
+          disabled
+          value=""
+          helperText={t('custom-fields.unsupported-type')}
+        />
+      }
+    >
+      <Match when={props.field.kind === 'boolean'}>
+        <Checkbox
+          label={name()}
+          checked={Boolean(props.value)}
+          disabled={props.disabled}
+          testId={testId()}
+          onChange={checked => props.onChange(checked)}
+        />
+      </Match>
+      <Match when={props.field.kind === 'text'}>
+        <TextField
+          label={name()}
           hideLabel
           width="full"
           value={props.value == null ? '' : String(props.value)}
@@ -41,36 +65,24 @@ export const CustomFieldInput = (props: {
           data-testid={testId()}
           onInput={e => props.onChange(e.currentTarget.value)}
         />
-      }
-    >
-      <Match when={props.def.valueType === 'BOOLEAN'}>
-        <Checkbox
-          label={props.def.name}
-          checked={Boolean(props.value)}
-          disabled={props.disabled}
-          testId={testId()}
-          onChange={checked => props.onChange(checked)}
-        />
       </Match>
-      <Match
-        when={
-          props.def.valueType === 'INTEGER' || props.def.valueType === 'REAL'
-        }
-      >
-        <NumberField
-          label={props.def.name}
-          hideLabel
-          width="full"
-          allowNegative
-          decimalLimit={props.def.valueType === 'REAL' ? 6 : 0}
-          value={asNumber(props.value)}
-          disabled={props.disabled}
-          onChange={n => props.onChange(n)}
-        />
+      <Match when={props.field.kind === 'number' && props.field}>
+        {numberField => (
+          <NumberField
+            label={name()}
+            hideLabel
+            width="full"
+            allowNegative
+            decimalLimit={numberField().integer ? 0 : 6}
+            value={asNumber(props.value)}
+            disabled={props.disabled}
+            onChange={n => props.onChange(n)}
+          />
+        )}
       </Match>
-      <Match when={props.def.valueType === 'DATE'}>
+      <Match when={props.field.kind === 'date'}>
         <DateField
-          label={props.def.name}
+          label={name()}
           hideLabel
           width="full"
           value={typeof props.value === 'string' ? props.value : null}
@@ -78,14 +90,16 @@ export const CustomFieldInput = (props: {
           onChange={d => props.onChange(d)}
         />
       </Match>
-      <Match when={props.def.valueType === 'OPTION'}>
-        <CustomFieldOptionSelect
-          def={props.def}
-          value={props.value == null ? '' : String(props.value)}
-          disabled={props.disabled}
-          testId={testId()}
-          onChange={id => props.onChange(id || undefined)}
-        />
+      <Match when={props.field.kind === 'option' && props.field}>
+        {optionField => (
+          <CustomFieldOptionSelect
+            def={optionField().def}
+            value={props.value == null ? '' : String(props.value)}
+            disabled={props.disabled}
+            testId={testId()}
+            onChange={id => props.onChange(id || undefined)}
+          />
+        )}
       </Match>
     </Switch>
   );

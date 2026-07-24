@@ -2,7 +2,11 @@ import { For, Show } from 'solid-js';
 import { createDebouncedEdit } from '../debouncedEdit';
 import { customFieldDefinitions } from './customFieldsResource';
 import { CustomFieldInput } from './CustomFieldInput';
-import { parseCustomFields, partitionCustomFields } from './customFields';
+import {
+  parseCustomField,
+  parseCustomFields,
+  partitionCustomFields,
+} from './parse';
 
 // PROMINENT custom fields promoted to the detail-view toolbar (spec/ui-standards/
 // custom-fields › the toolbar promotion). Auto-saves like the other toolbar
@@ -39,7 +43,7 @@ export const CustomFieldsToolbar = (props: {
           >
             <span>{def.name}</span>
             <CustomFieldInput
-              def={def}
+              field={parseCustomField(def)}
               value={edit.state[def.key]}
               onChange={v => edit.setField(def.key, v)}
             />
