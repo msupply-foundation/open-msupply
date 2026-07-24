@@ -32,7 +32,7 @@ concurrency:
 jobs:
   e2e:
     name: Deterministic e2e (reference datafile)
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 45
     env:
       # Share the backend-tests sqlite target dir — the default (sqlite)
@@ -49,10 +49,10 @@ jobs:
       # reads THIS repo — a GitHub App scoped to reading that repo mints a
       # short-lived token per run (no PAT to expire or rotate).
       - name: Mint token for the suites repo
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: fe-token
         with:
-          app-id: ${{ vars.FE_APP_ID }}
+          client-id: ${{ vars.FE_APP_ID }}
           private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
           owner: msupply-foundation
           repositories: open-msupply-frontend
