@@ -46,9 +46,9 @@ pub struct PricingRow {
     pub service_total_after_tax: f64,
     pub tax_percentage: Option<f64>,
     pub foreign_currency_total_after_tax: Option<f64>,
-    /// Whole-invoice volume total over non-service lines (placeholders
-    /// included) — the detail-view footer roll-up, which the client can no
-    /// longer sum itself once lines are server-paginated.
+    /// Whole-invoice volume total over stock lines (same line set as the
+    /// stock totals) — the detail-view footer roll-up, which the client can
+    /// no longer sum itself once lines are server-paginated.
     pub total_volume: f64,
 }
 
@@ -449,10 +449,10 @@ impl InvoiceLine {
                     .map(|tax| price + (price * tax / 100.0))
                     .unwrap_or(price)
             }),
-            total_volume: if is_service {
-                0.0
-            } else {
+            total_volume: if is_stock {
                 row.number_of_packs * row.volume_per_pack
+            } else {
+                0.0
             },
         }
     }
