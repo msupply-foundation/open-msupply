@@ -1,0 +1,119 @@
+name: Bump frontend pin
+
+# Keeps frontend-version.json tracking the latest open-msupply-frontend
+# release. The FE repo auto-releases on every merge to its main (its
+# release-dist.yaml); this workflow polls for the newest release,
+# verifies the published sha256 by recomputing it from the actual zip,
+# and opens (or force-updates) a single rolling PR bumping the pin.
+# Merging that PR stays a human decision — the pin is the compatibility
+# record (open-msupply-frontend#401 / #12523).
+#
+# Auth: the FE repo is private — reading its releases reuses the same
+# GitHub App (FE_APP_ID / FE_APP_PRIVATE_KEY) the packaging workflows
+# use to fetch the dist. The PR is pushed with NIGHTLY_BUILD_GITHUB_PAT
+# (as integrate-rc-to-develop does) so CI runs on it — PRs created with
+# the default GITHUB_TOKEN don't trigger workflows.
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: bump-frontend-pin
+
+env:
+  FE_REPO: msupply-foundation/open-msupply-frontend
+  PIN_BRANCH: bump-frontend-pin
+
+jobs:
+  bump:
+    name: Check latest FE release and update pin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: develop
+          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v2
+        id: fe-token
+        with:
+          app-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
+
+      - name: Compare latest FE release with the pin
+        id: check
+        env:
+          GH_TOKEN: ${{ steps.fe-token.outputs.token }}
+        run: |
+          # `gh release view` with no tag resolves the latest
+          # non-prerelease release; empty while only -rc releases exist.
+          LATEST="$(gh release view --repo "$FE_REPO" --json tagName -q .tagName 2>/dev/null || true)"
+          PINNED="$(node -p 'require("./frontend-version.json").tag')"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          if [ -z "$LATEST" ]; then
+            echo "::notice::No non-prerelease FE release found; nothing to do"
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+          elif [ "$LATEST" = "$PINNED" ]; then
+            echo "Pin already at $PINNED"
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Pin $PINNED -> $LATEST"
+            echo "bump=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify sha256 and update frontend-version.json
+        if: steps.check.outputs.bump == 'true'
+        env:
+          GH_TOKEN: ${{ steps.fe-token.outputs.token }}
+          TAG: ${{ steps.check.outputs.latest }}
+        run: |
+          gh release download "$TAG" --repo "$FE_REPO" --dir /tmp/fe-dist \
+            --pattern "frontend-dist-${TAG}.zip*"
+          # Don't take the sidecar on faith — recompute from the zip
+          # itself, so the pin only ever records a hash that matches
+          # what packaging builds will download.
+          PUBLISHED="$(cut -d' ' -f1 "/tmp/fe-dist/frontend-dist-${TAG}.zip.sha256")"
+          ACTUAL="$(sha256sum "/tmp/fe-dist/frontend-dist-${TAG}.zip" | cut -d' ' -f1)"
+          if [ "$PUBLISHED" != "$ACTUAL" ]; then
+            echo "::error::sha256 mismatch for $TAG: sidecar says $PUBLISHED, zip is $ACTUAL"
+            exit 1
+          fi
+          SHA256="$ACTUAL" node -e '
+            const fs = require("fs");
+            const pin = JSON.parse(fs.readFileSync("frontend-version.json", "utf8"));
+            pin.tag = process.env.TAG;
+            pin.sha256 = process.env.SHA256;
+            fs.writeFileSync("frontend-version.json", JSON.stringify(pin, null, 2) + "\n");
+          '
+
+      - name: Push branch and open or update the rolling PR
+        if: steps.check.outputs.bump == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+          TAG: ${{ steps.check.outputs.latest }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$PIN_BRANCH"
+          git add frontend-version.json
+          git commit -m "Bump frontend pin to $TAG"
+          git push -f origin "$PIN_BRANCH"
+
+          TITLE="Bump frontend pin to $TAG"
+          BODY="Automated pin bump to the latest open-msupply-frontend release: \
+          [$TAG](https://github.com/$FE_REPO/releases/tag/$TAG). The sha256 was \
+          recomputed from the downloaded zip, not just copied from the sidecar. \
+          This rolling PR is force-updated whenever a newer FE release appears; \
+          merge it when this FE version should ship."
+          if gh pr view "$PIN_BRANCH" --repo "$GITHUB_REPOSITORY" --json state -q .state 2>/dev/null | grep -qx OPEN; then
+            gh pr edit "$PIN_BRANCH" --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base develop --head "$PIN_BRANCH" \
+              --title "$TITLE" --body "$BODY"
+          fi
