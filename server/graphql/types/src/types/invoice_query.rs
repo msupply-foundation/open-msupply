@@ -647,11 +647,11 @@ impl PricingNode {
         &self.invoice_pricing.tax_percentage
     }
 
-    // volume total — the whole-invoice sum over non-service lines
-    // (placeholders included), for the detail-view footer roll-up that can't
+    // volume total — the whole-invoice sum over stock lines (same line set
+    // as the stock totals), for the detail-view footer roll-up that can't
     // be computed client-side once lines are server-paginated
 
-    /// Sum of number_of_packs * volume_per_pack
+    /// Sum of number_of_packs * volume_per_pack over stock lines
     pub async fn total_volume(&self) -> f64 {
         self.invoice_pricing.total_volume
     }
