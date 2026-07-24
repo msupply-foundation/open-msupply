@@ -155,7 +155,10 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           label={t('label.picked-date')}
           hideLabel
           type="date"
-          width="short"
+          // Compact (10rem cap), not short: the row also carries the
+          // disabled-reason info bubble, which the wider input pushed past
+          // the panel edge (clipped since the panel gained its own scroll).
+          width="compact"
           data-testid="picked-date-field"
           value={shown()}
           min={enabled() ? bounds().min : undefined}
