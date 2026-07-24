@@ -43,6 +43,10 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
+  CustomFieldsEditTab,
+  CustomFieldsToolbar,
+} from '../../../domain/customFields';
+import {
   fetchLocationsWithVolume,
   type LocationWithVolume,
 } from '../../../domain/location';
@@ -420,6 +424,7 @@ const InboundShipmentDetailView: Component = () => {
         ]
       : []),
     { value: 'documents', label: t('label.documents') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
   ];
 
@@ -805,6 +810,16 @@ const InboundShipmentDetailView: Component = () => {
                       backdatingMaxDays={prefs().backdatingMaxDays}
                       onSaveField={saveField}
                     />
+                    {/* PROMINENT custom fields for the scope — stay in the
+                        toolbar even when the shipment is read-only (Verified),
+                        just disabled (spec/ui-standards/custom-fields). */}
+                    <CustomFieldsToolbar
+                      scope="inbound_shipment"
+                      recordId={node().id}
+                      values={node().customFields}
+                      disabled={isDisabled()}
+                      onSave={patch => void saveField({ customFields: patch })}
+                    />
                   </Toolbar>
                   <TabList tabs={tabs()} />
                 </Header>
@@ -960,6 +975,20 @@ const InboundShipmentDetailView: Component = () => {
                   node={node()}
                   disabled={isDisabled()}
                   onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
+              <TabPanel value="custom-fields">
+                {/* Custom fields for the inbound_shipment scope — disabled once
+                    the shipment is read-only (Verified); prominent fields live
+                    in the toolbar, so the tab shows the rest. */}
+                <CustomFieldsEditTab
+                  scope="inbound_shipment"
+                  promoteToToolbar
+                  disabled={isDisabled()}
+                  values={node().customFields}
+                  onSave={patch =>
+                    saveField({ customFields: patch }).then(r => r.ok)
+                  }
                 />
               </TabPanel>
               <TabPanel value="log">

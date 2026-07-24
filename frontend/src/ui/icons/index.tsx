@@ -247,6 +247,23 @@ export const CopyIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Filter funnel (the filter bar's Add-filter pill). Not a Hugeicons glyph:
+   this is the ui-standards site's own funnel path (feather "filter"),
+   copied so the pill matches the spec exactly. */
+export const FilterIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+  </Stroke>
+);
+
+/* Indeterminate dash (BareCheckbox's tri-state glyph) */
+/* Hugeicons: MinusSignIcon */
+export const MinusIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 12L4 12" />
+  </Stroke>
+);
+
 /* Clear / remove */
 /* Hugeicons: MinusSignCircleIcon */
 export const MinusCircleIcon = (props: IconProps) => (

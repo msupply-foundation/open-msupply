@@ -32,15 +32,15 @@ export interface DeleteLocationsActionProps {
 // confirm → deleting → report dialog, a peer of the reference vertical's
 // DeleteStocktakesAction. Differences are the spec's own: there is NO batch
 // mutation — the selection is N independent deleteLocation calls, each
-// succeeding or failing on its own (AC-D3, contract.md § deletion) — and a
+// succeeding or failing on its own (OMS-REG-INV-01.33, contract.md § deletion) — and a
 // failure is PER LOCATION: the typed LocationInUse rejection feeds the in-use
-// report (AC-D2), while untyped failures (movement history → plain Internal
-// error, AC-D5) are counted, not detailed. The per-call GraphQL errors are
+// report (OMS-REG-INV-01.32), while untyped failures (movement history → plain Internal
+// error, OMS-REG-INV-01.35) are counted, not detailed. The per-call GraphQL errors are
 // taken via returnGraphqlErrors so one blocked location degrades to a line in
 // the report instead of tripping the global unexpected-error (reload) modal
 // mid-bulk — the outcome lands in the initiating surface (D21).
 //
-// Nothing is deleted until the confirmation is accepted (AC-D4). Full success
+// Nothing is deleted until the confirmation is accepted (OMS-REG-INV-01.34). Full success
 // needs no announcement: the dialog closes, the rows leave the list, the
 // selection clears (ui-surface S3). Any blocked/failed member switches the
 // dialog to the report instead — the deleted ones are already gone behind it.
@@ -85,12 +85,12 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
     rows.find(row => row.id === id)?.code ?? id;
 
   const run = async () => {
-    if (phase().kind !== 'confirm') return; // re-entry guard (AC-D4)
+    if (phase().kind !== 'confirm') return; // re-entry guard (OMS-REG-INV-01.34)
     setPhase({ kind: 'deleting' });
     // N independent calls, sequential: each location succeeds or fails on its
-    // own — an in-use member never blocks the rest (AC-D3). GraphQL errors are
+    // own — an in-use member never blocks the rest (OMS-REG-INV-01.33). GraphQL errors are
     // returned (not globally surfaced) so an untyped per-location failure
-    // (AC-D5) becomes a report line, not an app-level error.
+    // (OMS-REG-INV-01.35) becomes a report line, not an app-level error.
     const outcomes = [];
     for (const row of rows) {
       const result = await graphqlFetch(
@@ -111,7 +111,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       return;
     }
     // Some members were blocked/failed: the deleted ones are gone regardless
-    // (AC-D3) — re-query behind the dialog, but KEEP the selection: clearing
+    // (OMS-REG-INV-01.33) — re-query behind the dialog, but KEEP the selection: clearing
     // it here would unmount the footer (and this dialog) before the report
     // ever renders (issue #374). The selection clears on dismissal instead.
     props.refetchList();
@@ -143,7 +143,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       title={t('heading.are-you-sure')}
       description={
         <Switch
-          // Confirm / deleting: how many will be deleted (AC-D4).
+          // Confirm / deleting: how many will be deleted (OMS-REG-INV-01.34).
           fallback={tPlural('messages.confirm-delete-locations', rows.length)}
         >
           <Match when={report()}>
@@ -158,7 +158,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                   </p>
                 </Show>
                 {/* The in-use report: each blocked location with the
-                    references that block it (AC-D2, AC-D3). */}
+                    references that block it (OMS-REG-INV-01.32, OMS-REG-INV-01.33). */}
                 <For each={summary().inUse}>
                   {blocked => (
                     <Alert severity="error" testId="location-in-use">
@@ -170,7 +170,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                     </Alert>
                   )}
                 </For>
-                {/* Untyped failures (movement history — AC-D5): counted. */}
+                {/* Untyped failures (movement history — OMS-REG-INV-01.35): counted. */}
                 <Show when={summary().failedCount > 0}>
                   <Alert severity="error" testId="location-delete-failed">
                     {tPlural(
@@ -189,7 +189,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
           when={report()}
           fallback={
             // confirm / deleting: Cancel (hidden while deleting) + the loading
-            // Delete (AC-D4 — nothing is deleted until confirmed).
+            // Delete (OMS-REG-INV-01.34 — nothing is deleted until confirmed).
             <>
               <Show when={phase().kind === 'confirm'}>
                 <Button

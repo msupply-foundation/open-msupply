@@ -119,3 +119,48 @@ describe('distributeIssue', () => {
     expect(result.overAllocatedUnits).toBe(0);
   });
 });
+
+// The prescriptions variant (spec/prescriptions AC-A1): dispensing works in
+// units, so packs split — the exact request is filled, never rounded up, and
+// the whole-pack over-allocation report can't arise.
+describe('distributeIssue with partialPacks (prescriptions AC-A1)', () => {
+  it('splits a pack to fill the exact requested units', () => {
+    const result = distributeIssue(
+      [{ id: 'a', packSize: 100, availablePacks: 100, barred: [] }],
+      1,
+      { partialPacks: true }
+    );
+    expect(result.packsById.get('a')).toBeCloseTo(0.01, 10);
+    expect(result.overAllocatedUnits).toBe(0);
+    expect(result.shortfallUnits).toBe(0);
+  });
+
+  it('drains earlier batches whole and splits only the last take', () => {
+    const result = distributeIssue(
+      [
+        { id: 'early', packSize: 10, availablePacks: 1, barred: [] },
+        { id: 'late', packSize: 10, availablePacks: 5, barred: [] },
+      ],
+      15,
+      { partialPacks: true }
+    );
+    expect(result.packsById.get('early')).toBe(1);
+    expect(result.packsById.get('late')).toBeCloseTo(0.5, 10);
+    expect(result.overAllocatedUnits).toBe(0);
+  });
+
+  it('still reports the shortfall and skips barred stock', () => {
+    const result = distributeIssue(
+      [
+        { id: 'held', packSize: 1, availablePacks: 50, barred: ['on-hold'] },
+        { id: 'ok', packSize: 1, availablePacks: 3, barred: [] },
+      ],
+      10,
+      { partialPacks: true }
+    );
+    expect(result.packsById.get('held')).toBe(0);
+    expect(result.packsById.get('ok')).toBe(3);
+    expect(result.shortfallUnits).toBe(7);
+    expect([...result.skippedReasons]).toEqual(['on-hold']);
+  });
+});

@@ -119,9 +119,6 @@ export const createFilters = (
     colour: null,
     onHold: null,
     isProgramInvoice: null,
-    // Custom-field dynamic filter (JSON seam; needs the query's type argument
-    // to pin one invoice type) — the spec's S1 filters are name + status only.
-    dynamicFilter: null,
     // Datetime ranges — no styled date-range filter control yet (same deferral
     // as the reference vertical's stocktakeDate).
     createdDatetime: null,
@@ -132,4 +129,7 @@ export const createFilters = (
     receivedDatetime: null,
     verifiedDatetime: null,
     createdOrBackdatedDatetime: null,
+    // Custom-field filtering rides the shared domain/customFields group
+    // (FilterBar `extra`), a separate state slice — not a ReturnsFilter chip.
+    dynamicFilter: null,
   });

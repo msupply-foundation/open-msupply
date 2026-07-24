@@ -59,6 +59,7 @@ import {
   supplierIsStore,
 } from '../sections/inbound-shipments/detail/inboundShipmentStatus';
 import { linkedOrderOf } from '../sections/inbound-shipments/linkedOrder';
+import linkStyles from '../sections/inbound-shipments/linkedOrder.module.css';
 
 // The List-page demo: the SAME assembly as the real InboundShipmentsList — a
 // Page frame with a header (breadcrumb + New shipment), and the shared
@@ -141,6 +142,7 @@ const DATA: Row[] = Array.from({ length: 120 }, (_, i): Row => {
     invoiceNumber: 1200 - i,
     otherPartyName: supplier,
     otherPartyId: `party-${i}`,
+    customFields: null,
     otherParty: { store: isStore ? { id: `store-${i}` } : null },
     status,
     onHold: i % 9 === 0,
@@ -413,7 +415,8 @@ export const TableShowcase = () => {
                   e.stopPropagation();
                   e.preventDefault();
                 }}
-                style={{ color: l().colour, 'font-weight': 500 }}
+                class={linkStyles.link}
+                data-kind={l().kind}
               >
                 {l().label}
               </a>

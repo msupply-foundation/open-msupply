@@ -19,21 +19,12 @@ export type StockStatusLens =
 
 export type AtRisk = 'at-risk' | 'not-at-risk';
 
-// One custom-field filter value, tagged by the definition's value type. option
-// carries the chosen option id PLUS its descendant ids (a parent matches its
-// descendants — AC-P2); number/date carry an exclusive-free range.
-export type CustomFieldFilterValue =
-  | { type: 'TEXT'; contains: string }
-  | { type: 'BOOLEAN'; value: boolean }
-  | { type: 'OPTION'; optionIds: string[] }
-  | { type: 'INTEGER' | 'REAL'; min?: number; max?: number }
-  | { type: 'DATE'; from?: string; to?: string };
-
 // The UI-side filter state (URL-backed). Empty/undefined members are simply not
 // applied. `lens` replaces the default visible-or-on-hand population.
 // `null` members are allowed because FilterBar marks an added-but-empty chip
 // with null; buildItemFilter treats null and undefined identically (not
-// applied).
+// applied). Custom-field filters are a SEPARATE state slice on the list (the
+// shared domain/customFields group → dynamicFilter), not part of this UI filter.
 export type ItemsListFilter = {
   codeOrName?: string | null;
   lens?: StockStatusLens | null;
@@ -41,7 +32,6 @@ export type ItemsListFilter = {
   maxMonthsOfStock?: number | null;
   masterListId?: string | null;
   atRisk?: AtRisk | null;
-  customFields?: Record<string, CustomFieldFilterValue> | null;
 };
 
 // The stock-status lens → the ItemFilterInput fields it sets (spec/items
@@ -60,54 +50,6 @@ export const expandLens = (lens: StockStatusLens): Partial<WireFilter> => {
     case 'out-of-stock-recent':
       return { hasStockOnHand: false, withRecentConsumption: true };
   }
-};
-
-// A custom-field filter value → the dynamicFilter condition-AST node for it
-// (spec/items contract "custom fields"). Number/date ranges expand to TWO nodes
-// (>= min, <= max); everything else is one. Returns [] when the value carries
-// no bound (so it contributes nothing).
-export const customFieldConditions = (
-  key: string,
-  v: CustomFieldFilterValue
-): unknown[] => {
-  const cf = (filter: unknown) => ({ CustomField: { key, filter } });
-  switch (v.type) {
-    case 'TEXT':
-      return v.contains ? [cf({ Text: { Like: v.contains } })] : [];
-    case 'BOOLEAN':
-      return [cf({ Boolean: { Equal: v.value } })];
-    case 'OPTION':
-      // parent matches descendants: send the parent id plus every descendant id
-      return v.optionIds.length ? [cf({ Option: { In: v.optionIds } })] : [];
-    case 'INTEGER':
-    case 'REAL': {
-      const out: unknown[] = [];
-      if (v.min !== undefined)
-        out.push(cf({ Number: { GreaterThanOrEqual: v.min } }));
-      if (v.max !== undefined)
-        out.push(cf({ Number: { LowerThanOrEqual: v.max } }));
-      return out;
-    }
-    case 'DATE': {
-      const out: unknown[] = [];
-      if (v.from) out.push(cf({ Date: { GreaterThanOrEqual: v.from } }));
-      if (v.to) out.push(cf({ Date: { LowerThanOrEqual: v.to } }));
-      return out;
-    }
-  }
-};
-
-// All custom-field values → the dynamicFilter JSON (an { And: [...] } of
-// CustomField nodes), or undefined when nothing is set. Several property
-// filters combine as AND with each other and everything else (AC-P2).
-export const buildDynamicFilter = (
-  customFields: Record<string, CustomFieldFilterValue> | null | undefined
-): unknown | undefined => {
-  if (!customFields) return undefined;
-  const conditions = Object.entries(customFields).flatMap(([key, v]) =>
-    customFieldConditions(key, v)
-  );
-  return conditions.length ? { And: conditions } : undefined;
 };
 
 // The UI filter state → the wire ItemFilterInput. Always carries the base
@@ -129,9 +71,6 @@ export const buildItemFilter = (f: ItemsListFilter): WireFilter => {
   if (f.minMonthsOfStock != null) filter.minMonthsOfStock = f.minMonthsOfStock;
   if (f.maxMonthsOfStock != null) filter.maxMonthsOfStock = f.maxMonthsOfStock;
   if (f.atRisk) filter.productsAtRiskOfBeingOutOfStock = f.atRisk === 'at-risk';
-
-  const dynamicFilter = buildDynamicFilter(f.customFields);
-  if (dynamicFilter !== undefined) filter.dynamicFilter = dynamicFilter;
 
   return filter;
 };

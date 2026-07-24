@@ -12,7 +12,7 @@ import { NameById } from '../names.generated';
 import { suppliersListPath } from '../list/namesListLogic';
 import { detailFromResult } from './nameDetail';
 import { SupplierDetailsTab } from './SupplierDetailsTab';
-import { CustomFieldsTab } from './CustomFieldsTab';
+import { CustomFieldsView } from '../../../domain/customFields';
 import { ContactsTab } from './ContactsTab';
 import { PurchaseOrdersTab } from './PurchaseOrdersTab';
 
@@ -81,7 +81,7 @@ const SupplierDetailPage: Component = () => {
                 <SupplierDetailsTab name={n()} />
               </TabPanel>
               <TabPanel value="custom-fields">
-                <CustomFieldsTab customFields={n().customFields} />
+                <CustomFieldsView scope="supplier" values={n().customFields} />
               </TabPanel>
               <TabPanel value="purchase-orders">
                 <PurchaseOrdersTab supplierName={n().name} />

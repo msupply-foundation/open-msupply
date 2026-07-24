@@ -19,7 +19,7 @@ const loc = (volume: number, volumeUsed: number, totalCount: number) => ({
   stock: { __typename: 'StockLineConnector' as const, totalCount },
 });
 
-describe('AC-V2 — fullness display', () => {
+describe('OMS-REG-INV-01.31 — fullness display', () => {
   it('a non-zero volume shows the proportion used ÷ capacity', () => {
     expect(getVolumeUsedPercentage(loc(10, 2.5, 3))).toBe(25);
   });
@@ -34,12 +34,12 @@ describe('AC-V2 — fullness display', () => {
   });
 });
 
-describe('AC-V3 — volume fields feed location pickers elsewhere', () => {
+describe('OMS-REG-INV-01.30 — volume fields feed location pickers elsewhere', () => {
   // The volume-aware picker (LocationVolumeSelect) reads this vertical's
   // volume / volumeUsed / stock.totalCount through the SAME helpers: the
   // percentage rule above (identical suppression cases), and availableVolume
   // for its Available fullness mode. The picker never writes these fields —
-  // AC-V1 holds across every surface (locationEdit.test.ts pins that no input
+  // OMS-REG-INV-01.30 holds across every surface (locationEdit.test.ts pins that no input
   // carries volumeUsed).
   it("the picker's % used follows the same undefined-safe rule as the list", () => {
     expect(getVolumeUsedPercentage(loc(4, 4, 1))).toBe(100);

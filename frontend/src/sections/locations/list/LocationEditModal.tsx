@@ -55,7 +55,7 @@ export interface LocationEditModalProps {
   editor: EditorState;
   /**
    * The list's current rows, in display order — OK-&-next in edit mode
-   * advances to the row after the current one (AC-C5); disabled on the last.
+   * advances to the row after the current one (OMS-REG-INV-01.5); disabled on the last.
    */
   rows: () => LocationRow[];
   onClose: () => void;
@@ -79,7 +79,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
   // mutation is in flight (ui-standards/controls.md § dialogs, D22).
   const [saving, setSaving] = createSignal<'ok' | 'next' | null>(null);
   // The inline save-rejection banner (duplicate code, wrong store, …) — the
-  // dialog stays open with entries intact (AC-C4/AC-E2/AC-E3, D21/D22).
+  // dialog stays open with entries intact (OMS-REG-INV-01.25/OMS-REG-INV-01.27/OMS-REG-INV-01.28, D21/D22).
   const [rejection, setRejection] = createSignal<SaveRejection>();
 
   // The Name input — Name is the modal's autofocused field (ui-surface S2).
@@ -114,7 +114,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
     return state.mode === 'edit' ? state.location : undefined;
   };
 
-  // Volume used is server-derived and read-only everywhere (AC-V1): shown from
+  // Volume used is server-derived and read-only everywhere (OMS-REG-INV-01.30): shown from
   // the clicked row in edit mode, 0 on a fresh create — never an input value
   // that could be sent.
   const volumeUsed = () => editedLocation()?.volumeUsed ?? 0;
@@ -136,7 +136,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
   };
 
   const save = async (advance: boolean) => {
-    if (saving() || !isFormValid(form())) return; // re-entry guard + AC-C3
+    if (saving() || !isFormValid(form())) return; // re-entry guard + OMS-REG-INV-01.24
     setSaving(advance ? 'next' : 'ok');
     setRejection(undefined);
     // Snapshot the advance target BEFORE the list refetches under us.
@@ -146,7 +146,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
     let failed: SaveRejection | undefined;
     if (location) {
       // Edit: the FULL current field set every save — an omitted
-      // locationTypeId would silently clear the type (AC-E4, contract.md
+      // locationTypeId would silently clear the type (OMS-REG-INV-01.29, contract.md
       // ⚠️ wire trap).
       const result = await graphqlFetch(UpdateLocation, {
         storeId: props.storeId,
@@ -190,7 +190,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       props.onClose();
       return;
     }
-    // OK & next (AC-C5): advance without returning to the list — edit moves to
+    // OK & next (OMS-REG-INV-01.5): advance without returning to the list — edit moves to
     // the next list location, create resets to a fresh blank form.
     if (next) {
       setCurrent({ mode: 'edit', location: next });
@@ -312,7 +312,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
           onChange={volume => setForm({ ...form(), volume })}
         />
         {/* Server-derived, rendered disabled/read-only — no input carries it
-            (AC-V1). */}
+            (OMS-REG-INV-01.30). */}
         <NumberField
           label={t('label.volume-used')}
           decimalLimit={10}
