@@ -160,7 +160,12 @@
   background: var(--bg-toolbar);
   color: var(--text-body);
   font-weight: var(--weight-medium);
-  line-height: var(--table-line-height);
+  /* Tighter than the body's --table-line-height (1.43) — a deliberate
+     header deviation (Carl 2026-07-24): only ever visible when a header
+     WRAPS to two lines, where it pulls the two lines closer and keeps the
+     wrapped header under ~50px. Single-line headers are centred in the
+     block-size floor regardless, so this doesn't change their look. */
+  line-height: 1.2;
   text-align: start;
   /* Header text may wrap (up to 2 lines — see .thText); the sort indicator
      stays visible, vertically centered beside it. Body cells keep nowrap unless
@@ -524,19 +529,27 @@ tr[data-row-state='disabled'] > .selectCell {
    spacious below the nav-overlay width — see viewDensity in DataTable).
    Each band sets the spec's row height + cell padding (compact 8/12,
    comfortable 12/16, spacious 16/20 — 1.25rem literal: 20px has no space
-   token), and the HEADER row breathes with the same paddings (Carl
-   2026-07-24) — except the leading select cell, whose fixed box owns its
-   own padding (checkbox centring). block-size acts as a MINIMUM under
-   table layout, so wrapping cells still grow the row. Sits BEFORE the
-   selection/state tint rules — those carry higher specificity on the .td
-   key, and no-descending-specificity wants ascending order. */
+   token). block-size acts as a MINIMUM under table layout, so wrapping
+   cells still grow the row. Sits BEFORE the selection/state tint rules —
+   those carry higher specificity on the .td key, and
+   no-descending-specificity wants ascending order.
+
+   HEADER cells take a min-height FLOOR (block-size) + a SMALLER vertical
+   padding than the data cells (Carl 2026-07-24): a single-line header
+   sits generously centred in the floor (vertical-align: middle), while a
+   header that WRAPS to two lines grows from the small padding instead of
+   ballooning to floor-plus-full-padding. Same block-size-as-minimum model
+   as .td; horizontal padding stays per-density; the leading select th
+   keeps its own fixed box (checkbox centring), so it's excluded. */
 .table[data-density='compact'] .td {
   block-size: 2.5rem; /* 40px */
   padding: var(--space-2) var(--space-3);
 }
 
 .table[data-density='compact'] .th:not(.selectCell) {
-  padding: var(--space-2) var(--space-3);
+  block-size: 2.25rem; /* 36px min (single line) */
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
 }
 
 .table[data-density='comfortable'] .td {
@@ -545,7 +558,9 @@ tr[data-row-state='disabled'] > .selectCell {
 }
 
 .table[data-density='comfortable'] .th:not(.selectCell) {
-  padding: var(--space-3) var(--space-4);
+  block-size: 2.75rem; /* 44px min (single line) */
+  padding-block: var(--space-1);
+  padding-inline: var(--space-4);
 }
 
 .table[data-density='spacious'] .td {
@@ -554,7 +569,9 @@ tr[data-row-state='disabled'] > .selectCell {
 }
 
 .table[data-density='spacious'] .th:not(.selectCell) {
-  padding: var(--space-4) 1.25rem;
+  block-size: 3.25rem; /* 52px min (single line) */
+  padding-block: var(--space-2);
+  padding-inline: 1.25rem;
 }
 
 tr[data-selected]:not([data-row-state]) > .td,
