@@ -49,6 +49,32 @@ export const saveShipmentFields = async (
   return nodeOf(result.data.updateOutboundShipment);
 };
 
+// Change the shipment's currency + rate (spec S3 side panel → foreign
+// currency; ported from the inbound CurrencyModal's save path). The rejection
+// is USER-facing — CannotIssueInForeignCurrency when the store pref is off or
+// the customer is itself a store, or a non-positive rate — so the modal needs
+// the message inline rather than the global error modal.
+export type CurrencyChangeResult =
+  | { kind: 'saved'; node: OutboundNode }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const changeShipmentCurrency = async (
+  storeId: string,
+  input: Pick<UpdateInput, 'id' | 'currencyId' | 'currencyRate'>
+): Promise<CurrencyChangeResult> => {
+  const result = await graphqlFetch(UpdateOutboundShipment, {
+    storeId,
+    input,
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updateOutboundShipment;
+  if (response.__typename === 'InvoiceNode')
+    return { kind: 'saved', node: response };
+  if (response.__typename === 'NodeError') return { kind: 'failed' };
+  return { kind: 'error', message: response.error.description };
+};
+
 export type StatusChangeResult =
   | { kind: 'saved'; node: OutboundNode }
   // A structured rejection with a translated message; `unallocatedItems`

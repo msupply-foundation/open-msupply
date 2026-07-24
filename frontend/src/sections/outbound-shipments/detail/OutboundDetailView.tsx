@@ -708,6 +708,10 @@ const OutboundDetailView: Component = () => {
                   serviceLines={serviceLines()}
                   storeId={params.storeId}
                   disabled={!editable()}
+                  foreignCurrencyAllowed={
+                    outboundPrefs()?.store?.issueInForeignCurrency ?? false
+                  }
+                  onSaved={saved => mutate(() => saved)}
                   edit={edit}
                   onSaveField={patch => void saveField(patch)}
                   onEditServiceCharges={() => setServiceOpen(true)}
