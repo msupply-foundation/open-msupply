@@ -6,12 +6,14 @@
 // preference fields), so any issue-side vertical can feed it from its own
 // preferences query.
 
-/** The preference values that shape barring (consumer-resolved). */
+/** The preference values that shape barring and ordering (consumer-resolved). */
 export interface AllocationPreferences {
   expiredStockPreventIssue: boolean;
   /** Days before expiry at which the expired-issue guard bars a batch. */
   expiredStockIssueThreshold: number;
   manageVvmStatusForStock: boolean;
+  /** Ordering variant (rules.md § ordering): usable VVM status before expiry. */
+  sortByVvmStatusThenExpiry: boolean;
 }
 
 /**
@@ -77,8 +79,7 @@ export const isBarred = (
 
 /**
  * FEFO display/fill order: earliest expiry first, no expiry last (AC-AL1).
- * The VVM-then-expiry preference variant is a consumer-side pre-sort layered
- * over this comparator.
+ * The VVM-then-expiry preference variant is fillOrderCompare below.
  */
 export const fefoCompare = (
   a: { expiryDate?: string | null },
@@ -87,4 +88,37 @@ export const fefoCompare = (
   if (!a.expiryDate) return b.expiryDate ? 1 : 0;
   if (!b.expiryDate) return -1;
   return a.expiryDate < b.expiryDate ? -1 : a.expiryDate > b.expiryDate ? 1 : 0;
+};
+
+/** The batch fields ordering reads — expiry plus the VVM status priority. */
+export interface OrderableBatch {
+  expiryDate?: string | null;
+  vvmStatus?: { priority: number } | null;
+}
+
+/**
+ * The display/fill order (rules.md § ordering, AC-AL1): FEFO — or, under the
+ * _sort by VVM status then expiry_ preference, VVM priority first (ascending,
+ * no status last — priority 1 outranks 2) with expiry breaking ties. Matches
+ * the server's allocate ordering exactly (StockLineSortField::
+ * VvmStatusThenExpiry: `priority asc nulls last, expiry asc nulls last`), so
+ * the grid, the Issue-field distribution, and the bulk allocate action all
+ * take stock in the same order. Unusable-VVM batches are not the comparator's
+ * concern — barring skips them regardless of where they sort.
+ */
+export const fillOrderCompare = (
+  a: OrderableBatch,
+  b: OrderableBatch,
+  prefs: Pick<AllocationPreferences, 'sortByVvmStatusThenExpiry'>
+): number => {
+  if (prefs.sortByVvmStatusThenExpiry) {
+    const aPriority = a.vvmStatus?.priority;
+    const bPriority = b.vvmStatus?.priority;
+    if (aPriority != null || bPriority != null) {
+      if (aPriority == null) return 1;
+      if (bPriority == null) return -1;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+    }
+  }
+  return fefoCompare(a, b);
 };

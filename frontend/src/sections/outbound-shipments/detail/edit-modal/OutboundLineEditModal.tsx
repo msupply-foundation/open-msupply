@@ -40,7 +40,7 @@ import {
   barReasons,
   deriveIssueWarnings,
   distributeIssue,
-  fefoCompare,
+  fillOrderCompare,
   lensToUnits,
   type AllocateUnit,
   type AllocationPreferences,
@@ -234,10 +234,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       return;
     }
     const data = result.data.draftStockOutLines;
-    // FEFO order for display and distribution: the shared comparator
-    // (spec/stock-allocation § ordering, AC-AL1; VVM-then-expiry stays with
-    // the server-side allocation).
-    const sorted = [...data.draftLines].sort(fefoCompare);
+    // Display and distribution order (spec/stock-allocation § ordering,
+    // AC-AL1): the shared comparator — FEFO, or VVM-priority-then-expiry
+    // under the sort-by-VVM preference, matching the server-side bulk
+    // allocate's ordering.
+    const sorted = [...data.draftLines].sort((a, b) =>
+      fillOrderCompare(a, b, allocationPrefs())
+    );
     setDraft(reconcile(sorted, { key: 'id' }));
     const placeholder = data.placeholderQuantity ?? 0;
     setPlaceholderUnits(placeholder);
@@ -350,6 +353,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     expiredStockPreventIssue: prefs()?.expiredStockPreventIssue ?? false,
     expiredStockIssueThreshold: prefs()?.expiredStockIssueThreshold ?? 0,
     manageVvmStatusForStock: prefs()?.manageVvmStatusForStock ?? false,
+    sortByVvmStatusThenExpiry: prefs()?.sortByVvmStatusThenExpiry ?? false,
   });
   const lineBarReasons = (line: DraftLine) =>
     barReasons(line, allocationPrefs());
