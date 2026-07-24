@@ -173,6 +173,7 @@ export type CustomerReturnsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    dynamicFilter?: unknown | null;
   } | null;
   sort?: Array<{
     key: "type" | "otherPartyName" | "invoiceNumber" | "comment" | "status" | "createdDatetime" | "invoiceDatetime" | "allocatedDatetime" | "pickedDatetime" | "shippedDatetime" | "deliveredDatetime" | "verifiedDatetime" | "theirReference" | "transportReference";
@@ -202,12 +203,13 @@ export type CustomerReturnsResult = {
   linkedShipment: {
   id: string;
 } | null;
+  customFields: unknown | null;
 }>;
 });
 };
 
 export const CustomerReturns = {
-  query: "query customerReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        linkedShipment {\n          id\n        }\n      }\n    }\n  }\n}",
+  query: "query customerReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        linkedShipment {\n          id\n        }\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<CustomerReturnsResult, CustomerReturnsVariables>;
 
 export type InsertCustomerReturnVariables = {

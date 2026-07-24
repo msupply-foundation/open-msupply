@@ -18,7 +18,7 @@ import { Pagination } from '../../../ui/elements/table/Pagination';
 import { HomeIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { Names, CustomFieldDefinitions } from '../names.generated';
+import { Names } from '../names.generated';
 import type { NamesVariables } from '../names.generated';
 import {
   buildVariables,
@@ -32,11 +32,10 @@ import {
   type SortKey,
 } from './namesListLogic';
 import {
-  buildDynamicFilter,
-  customFieldValue,
-  visibleCustomFields,
-  type CustomFieldDef,
-} from '../customFields';
+  buildCustomFieldDynamicFilter,
+  customFieldDefinitions,
+  customFieldColumns,
+} from '../../../domain/customFields';
 import {
   searchFilters,
   customFieldFilters,
@@ -73,21 +72,13 @@ export const NamesList: Component<NamesListProps> = props => {
 
   const tableConfig = createTableConfig({ tableId: props.tableId });
 
-  // Custom-field definitions for the role. A SEPARATE, filter-
-  // independent fetch keyed on store + scope, so it loads once per store/scope
-  // and never re-runs on search/sort/page. Empty when the deployment configures
-  // none (AC-N18/N19: none configured ⇒ no columns and no custom-field filters).
-  const [cfDefsData] = createResource(
-    () => `${params.storeId}:${props.scope}`,
-    async () => {
-      const result = await graphqlFetch(CustomFieldDefinitions, {
-        scope: props.scope,
-      });
-      if (result.kind !== 'success') return [];
-      return visibleCustomFields(result.data.customFields.nodes);
-    }
-  );
-  const cfDefs = (): CustomFieldDef[] => cfDefsData.latest ?? [];
+  // Custom-field definitions for the role — the shared scope-keyed cache
+  // (domain/customFields), loaded once per scope and read NON-SUSPENDING so a
+  // pending fetch never tears down the open list (kdd/solid-reactivity-pitfalls).
+  // Empty when the deployment configures none (AC-N18/N19: none configured ⇒ no
+  // columns and no custom-field filters).
+  const cfReader = customFieldDefinitions(props.scope);
+  const cfDefs = () => cfReader.noSuspense();
 
   // The custom-field filter definitions, memoised so the Filter object identities
   // are STABLE across filter edits: FilterBar's <For> keys chips by reference, so
@@ -105,7 +96,7 @@ export const NamesList: Component<NamesListProps> = props => {
       storeId: params.storeId,
       role: props.role,
       state: query(),
-      dynamicFilter: buildDynamicFilter(query().cf),
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     })
   );
 
@@ -176,13 +167,9 @@ export const NamesList: Component<NamesListProps> = props => {
       header: t('name.column.name'),
       meta: { wrapLines: 2 },
     },
-    // Custom-field columns — not sortable (rules › sorting). One per configured
-    // field; value read from the parsed customFields JSON (AC-N18).
-    ...cfDefs().map((def): Column<NameRow, SortKey> => ({
-      c: { id: `cf-${def.key}` },
-      header: def.name,
-      cell: info => customFieldValue(info.row.original.customFields, def.key),
-    })),
+    // Configured custom-field columns — not sortable; value chosen by kind
+    // (option → resolved name, number/date → localised) (AC-N18).
+    ...customFieldColumns<NameRow, SortKey>(cfDefs(), row => row.customFields),
   ];
 
   return (
@@ -193,21 +180,19 @@ export const NamesList: Component<NamesListProps> = props => {
           <Breadcrumb crumbs={props.crumbs()} />
           {/* No page actions — read-only vertical (AC-N16). */}
           <Toolbar>
-            {/* Search by name or code (AC-N13). */}
+            {/* One filter menu: name/code search + the role's configured
+                custom-field filters (AC-N13/N19), the latter as the bar's
+                second group so they share the one menu + chip row. */}
             <FilterBar
               filters={searchFilters()}
               filter={query().filter}
               onChange={onSearchChange}
+              extra={{
+                filters: cfFilters(),
+                filter: query().cf ?? {},
+                onChange: onCustomFieldChange,
+              }}
             />
-            {/* Custom-field filters — present only when the role has
-                configured fields (AC-N19). */}
-            <Show when={cfDefs().length > 0}>
-              <FilterBar
-                filters={cfFilters()}
-                filter={query().cf ?? {}}
-                onChange={onCustomFieldChange}
-              />
-            </Show>
           </Toolbar>
         </Header>
       }

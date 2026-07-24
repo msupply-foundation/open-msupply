@@ -45,9 +45,12 @@ import {
   statusLabel,
 } from '../prescriptionStatus';
 import {
-  buildCustomFieldColumns,
-  prescriptionCustomFieldsResource,
-} from '../../../domain/invoiceCustomFields';
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 import { filterFields, type PrescriptionFilter } from './listFilters';
 import { CreatePrescriptionModal } from './CreatePrescriptionModal';
 import {
@@ -68,6 +71,8 @@ type SortKey = NonNullable<PrescriptionsVariables['sort']>[number]['key'];
 
 type PrescriptionsListState = {
   filter: PrescriptionFilter;
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  cf?: CustomFieldFilterState;
   sort?: PrescriptionsVariables['sort'];
   offset: number;
   first: number;
@@ -103,6 +108,16 @@ const PrescriptionsList: Component = () => {
     },
   });
 
+  // Custom-field definitions for the prescription scope — shared scope-keyed
+  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('prescription');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+  const onCustomFieldChange = (cf: CustomFieldFilterState) => {
+    setQuery({ ...query(), cf, offset: 0 });
+    setSelectedIds([]);
+  };
+
   // The list always pins the invoice type (contract § the list); the user's
   // filters merge over that.
   const variables = createMemo<PrescriptionsVariables>(() => ({
@@ -110,6 +125,8 @@ const PrescriptionsList: Component = () => {
     filter: {
       ...stripEmpty(query().filter),
       type: { equalTo: 'PRESCRIPTION' },
+      // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -233,9 +250,11 @@ const PrescriptionsList: Component = () => {
       header: t('label.comment'),
       ...getCommentCell(),
     },
-    // A column per configured prescription custom field (AC-CF4).
-    ...buildCustomFieldColumns<PrescriptionRow>(
-      prescriptionCustomFieldsResource.noSuspense()
+    // A column per configured prescription custom field (AC-CF4) — not
+    // sortable; value chosen by kind.
+    ...customFieldColumns<PrescriptionRow, SortKey>(
+      cfDefs(),
+      row => row.customFields
     ),
   ];
 
@@ -268,6 +287,11 @@ const PrescriptionsList: Component = () => {
               filters={filterFields()}
               filter={query().filter}
               onChange={onFilterChange}
+              extra={{
+                filters: cfFilters(),
+                filter: query().cf ?? {},
+                onChange: onCustomFieldChange,
+              }}
             />
           </Toolbar>
         </Header>

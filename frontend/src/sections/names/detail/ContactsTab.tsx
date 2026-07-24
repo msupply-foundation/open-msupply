@@ -33,7 +33,7 @@ export const ContactsTab: Component<{ nameId: string }> = props => {
   );
 
   // Non-suspending read (opened on interaction — see the reactivity note in
-  // CustomFieldsTab / kdd/solid-reactivity-pitfalls).
+  // domain/customFields CustomFieldsView / kdd/solid-reactivity-pitfalls).
   const rows = (): ContactRow[] =>
     data.state === 'ready' || data.state === 'refreshing'
       ? (data.latest ?? [])

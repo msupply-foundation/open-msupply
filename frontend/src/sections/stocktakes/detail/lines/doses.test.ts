@@ -46,3 +46,21 @@ describe('OMS-REG-INV-03.64 — dose equivalents', () => {
     expect(dosesCounted(line({ countedNumberOfPacks: 0 }))).toBe(0);
   });
 });
+
+describe('D58 — unconfigured doses-per-unit counts as 1, not 0', () => {
+  it('treats item.doses = 0 as 1 in doses-per-unit', () => {
+    expect(dosesPerUnit(line({ item: { isVaccine: true, doses: 0 } }))).toBe(
+      10
+    );
+  });
+
+  it('tracks a live-edited count for a vaccine with no configured doses-per-unit, never pinned at 0', () => {
+    const noDosesConfigured = { isVaccine: true, doses: 0 };
+    expect(
+      dosesCounted(line({ item: noDosesConfigured, countedNumberOfPacks: 3 }))
+    ).toBe(30);
+    expect(
+      dosesCounted(line({ item: noDosesConfigured, countedNumberOfPacks: 7 }))
+    ).toBe(70);
+  });
+});

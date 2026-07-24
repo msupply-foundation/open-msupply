@@ -37,6 +37,7 @@ const node = (
   user: null,
   linkedShipment: null,
   originalShipment: null,
+  customFields: null,
   ...over,
 });
 

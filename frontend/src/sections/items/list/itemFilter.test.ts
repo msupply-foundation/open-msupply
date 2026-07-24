@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildDynamicFilter,
-  buildItemFilter,
-  customFieldConditions,
-  expandLens,
-} from './itemFilter';
+import { buildItemFilter, expandLens } from './itemFilter';
 
 describe('itemFilter — list population & filters (spec/items S1)', () => {
   // AC-L1 — default population is the store's stock-type catalogue: active,
@@ -85,81 +80,6 @@ describe('itemFilter — list population & filters (spec/items S1)', () => {
   });
 });
 
-describe('itemFilter — custom-field property filters (spec/items AC-P2)', () => {
-  // AC-P2 — one filter per definition, typed by value type; several combine as
-  // AND with each other and everything else.
-  it('AC-P2: text → Like', () => {
-    expect(
-      customFieldConditions('k', { type: 'TEXT', contains: 'abc' })
-    ).toEqual([
-      { CustomField: { key: 'k', filter: { Text: { Like: 'abc' } } } },
-    ]);
-    expect(customFieldConditions('k', { type: 'TEXT', contains: '' })).toEqual(
-      []
-    );
-  });
-
-  it('AC-P2: boolean → Equal (yes/no)', () => {
-    expect(
-      customFieldConditions('k', { type: 'BOOLEAN', value: true })
-    ).toEqual([
-      { CustomField: { key: 'k', filter: { Boolean: { Equal: true } } } },
-    ]);
-  });
-
-  it('AC-P2: option → In with parent + descendants', () => {
-    expect(
-      customFieldConditions('k', {
-        type: 'OPTION',
-        optionIds: ['parent', 'childA', 'childB'],
-      })
-    ).toEqual([
-      {
-        CustomField: {
-          key: 'k',
-          filter: { Option: { In: ['parent', 'childA', 'childB'] } },
-        },
-      },
-    ]);
-  });
-
-  it('AC-P2: number → range expands to two >= / <= nodes', () => {
-    expect(
-      customFieldConditions('k', { type: 'INTEGER', min: 2, max: 9 })
-    ).toEqual([
-      {
-        CustomField: {
-          key: 'k',
-          filter: { Number: { GreaterThanOrEqual: 2 } },
-        },
-      },
-      {
-        CustomField: { key: 'k', filter: { Number: { LowerThanOrEqual: 9 } } },
-      },
-    ]);
-  });
-
-  it('AC-P2: multiple property filters combine under a single And', () => {
-    const dyn = buildDynamicFilter({
-      colour: { type: 'TEXT', contains: 'red' },
-      refrigerated: { type: 'BOOLEAN', value: true },
-    }) as { And: unknown[] };
-    expect(dyn.And).toHaveLength(2);
-    // and they land on the wire filter alongside the base filter
-    const f = buildItemFilter({
-      customFields: { refrigerated: { type: 'BOOLEAN', value: true } },
-    });
-    expect(f.dynamicFilter).toEqual({
-      And: [
-        {
-          CustomField: {
-            key: 'refrigerated',
-            filter: { Boolean: { Equal: true } },
-          },
-        },
-      ],
-    });
-    // no custom filters → no dynamicFilter key at all
-    expect(buildItemFilter({}).dynamicFilter).toBeUndefined();
-  });
-});
+// The custom-field property filter → dynamicFilter AST is now the shared
+// domain/customFields logic (see its customFields.test.ts); the item list wires
+// that group separately, so itemFilter no longer owns it.

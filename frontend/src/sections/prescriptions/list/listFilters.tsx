@@ -154,8 +154,9 @@ const FILTERS: Filter<PrescriptionFilter>[] =
 
     // ─ dismissed (not user-facing) ────────────────────────────────────────
     // The list always pins type PRESCRIPTION programmatically; the store scope
-    // is the server's. Custom-field (dynamicFilter) filtering is deferred with
-    // the custom-fields surfaces (see the build report).
+    // is the server's. `dynamicFilter` carries the custom-field filters, built
+    // from the FilterBar's separate custom-field group (see the list view), not
+    // a chip in this wire-filter map.
     id: null,
     nameId: null,
     invoiceNumberOrStatus: null,

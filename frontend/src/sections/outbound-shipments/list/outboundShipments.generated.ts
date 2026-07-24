@@ -202,12 +202,13 @@ export type OutboundShipmentsResult = {
   pricing: {
   totalAfterTax: number;
 };
+  customFields: unknown | null;
 }>;
 });
 };
 
 export const OutboundShipments = {
-  query: "query outboundShipments($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        theirReference\n        comment\n        colour\n        pricing {\n          totalAfterTax\n        }\n      }\n    }\n  }\n}",
+  query: "query outboundShipments($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        theirReference\n        comment\n        colour\n        pricing {\n          totalAfterTax\n        }\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<OutboundShipmentsResult, OutboundShipmentsVariables>;
 
 export type InsertOutboundShipmentVariables = {
