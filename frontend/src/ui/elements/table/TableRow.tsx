@@ -24,6 +24,14 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   return lines && lines > 1 ? lines : undefined;
 };
 
+// A column's real growth cap in px (delivered as max-width), or undefined.
+// TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
+// columnDef, so only a value below that sentinel counts as an actual cap.
+const cellMaxWidthPx = <T,>(cell: TanCell<T, unknown>): number | undefined => {
+  const max = cell.column.columnDef.maxSize;
+  return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
+};
+
 // A body row: its cells, clickable when onRowClick is set. Extracted from
 // DataTable.tsx (table-view row rendering).
 export function TableRow<T>(props: {
@@ -111,11 +119,17 @@ export function TableRow<T>(props: {
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
               // 1, the cell clamps to that many lines then ellipsises (CSS
               // line-clamp); otherwise the default single-line nowrap applies.
-              // min-width keeps the column-width floor. A pinned column
-              // additionally gets sticky position + its edge offset.
+              // min-width keeps the column-width floor (getSize()); maxSize is
+              // the growth cap, applied as max-width (docs/CELL_TYPES.md).
+              // TanStack merges its default maxSize (MAX_SAFE_INTEGER) into
+              // every columnDef, so only a value below that sentinel is a real
+              // cap. A pinned column additionally gets sticky position + offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
+                ...(cellMaxWidthPx(cell) !== undefined
+                  ? { 'max-width': `${cellMaxWidthPx(cell)}px` }
+                  : {}),
                 ...(cellWrapLines(cell)
                   ? { '--wrap-lines': String(cellWrapLines(cell)) }
                   : {}),

@@ -6,12 +6,7 @@ import {
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getCurrencyCell,
-  getDateCell,
-  getNumberCell,
-} from '../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -229,17 +224,11 @@ const sortValue = (r: Row, key: SortKey): string | number => {
   }
 };
 
-// The real page's default column config: the base table hides Delivered /
-// Reference / Total, and below 600px the list flips to card view and also drops
-// the comment column (inboundShipments list createTableConfig defaults).
+// Default column config for the showcase: the base (desktop) table starts with
+// ALL columns visible — so the full column set + their widths are on show;
+// below 600px the list still flips to card view and drops a couple of columns
+// (the responsive card default the real inboundShipments list uses).
 const DEFAULT_CONFIG: LayeredConfig = {
-  base: {
-    columnVisibility: {
-      deliveredDatetime: false,
-      theirReference: false,
-      total: false,
-    },
-  },
   compact: {
     viewMode: 'card',
     columnVisibility: {
@@ -346,7 +335,11 @@ export const TableShowcase = () => {
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: t('label.name'),
-      meta: { cardPosition: 'header-primary' },
+      // The wide flex-fill "sink" column (text default), keeping its bespoke
+      // swatch + supplier-kind cell.
+      ...getCellDefinition<Row>('otherPartyName', {
+        cardPosition: 'header-primary',
+      }),
       cell: info => {
         const row = info.row.original;
         return (
@@ -393,7 +386,9 @@ export const TableShowcase = () => {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: '#',
-      ...getNumberCell(),
+      // Small + capped — the `invoiceNumber` key carries a tight size/maxSize
+      // default (a few digits) in the cell-definition map.
+      ...getCellDefinition<Row>('invoiceNumber'),
     },
     {
       // Linked order — PO-<n> (secondary colour) or IO-<n> (primary colour),
@@ -429,28 +424,29 @@ export const TableShowcase = () => {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition<Row>('createdDatetime'),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
       header: t('label.delivered'),
-      ...getDateCell(),
+      ...getCellDefinition<Row>('deliveredDatetime'),
     },
     {
       c: { key: 'comment' },
       header: t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition<Row>('comment'),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
       header: t('label.reference'),
+      ...getCellDefinition<Row>('theirReference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
       header: t('label.total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition<Row>('total'),
     },
   ];
 
