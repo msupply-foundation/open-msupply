@@ -448,6 +448,23 @@ export const CustomerMasterLists = {
   query: "query customerMasterLists($storeId: String!, $customerNameId: String!) {\n  masterLists(\n    storeId: $storeId\n    filter: {existsForNameId: {equalTo: $customerNameId}}\n  ) {\n    ... on MasterListConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<CustomerMasterListsResult, CustomerMasterListsVariables>;
 
+export type OutboundStocktakeConflictVariables = {
+  storeId: string;
+  onOrAfter?: string | null;
+};
+
+export type OutboundStocktakeConflictResult = {
+  stocktakes: ({
+  __typename: "StocktakeConnector";
+} & {
+  totalCount: number;
+});
+};
+
+export const OutboundStocktakeConflict = {
+  query: "query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {\n  stocktakes(\n    storeId: $storeId\n    filter: {stocktakeDate: {afterOrEqualTo: $onOrAfter}}\n  ) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
+} as TypedDocument<OutboundStocktakeConflictResult, OutboundStocktakeConflictVariables>;
+
 export type OutboundActivityLogsVariables = {
   storeId: string;
   recordId: string;
@@ -472,20 +489,3 @@ export type OutboundActivityLogsResult = {
 export const OutboundActivityLogs = {
   query: "query outboundActivityLogs($storeId: String!, $recordId: String!) {\n  activityLogs(storeId: $storeId, filter: {recordId: {equalTo: $recordId}}) {\n    ... on ActivityLogConnector {\n      __typename\n      nodes {\n        id\n        type\n        datetime\n        to\n        user {\n          username\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<OutboundActivityLogsResult, OutboundActivityLogsVariables>;
-
-export type OutboundStocktakeConflictVariables = {
-  storeId: string;
-  onOrAfter?: string | null;
-};
-
-export type OutboundStocktakeConflictResult = {
-  stocktakes: ({
-  __typename: "StocktakeConnector";
-} & {
-  totalCount: number;
-});
-};
-
-export const OutboundStocktakeConflict = {
-  query: "query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {\n  stocktakes(\n    storeId: $storeId\n    filter: {stocktakeDate: {afterOrEqualTo: $onOrAfter}}\n  ) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
-} as TypedDocument<OutboundStocktakeConflictResult, OutboundStocktakeConflictVariables>;
