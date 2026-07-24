@@ -61,7 +61,7 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
     currency: { size: 7.5 },
     date: { size: 8.125 },
     expiry: { size: 8.125 },
-    comment: { size: 3, maxSize: 3 }, // fixed — an icon, never grows
+    comment: { size: 5, maxSize: 8 }, // fixed — an icon, never grows
     chipList: { size: 12 },
   };
 
