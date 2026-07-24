@@ -25,6 +25,9 @@ query patients(
         nextOfKinName
         isDeceased
         createdDatetime
+        # Custom-field VALUES (JSON object), server-filtered to the "patient"
+        # scope's visible keys — backs the configured custom-field columns.
+        customFields
         programEnrolments {
           ... on ProgramEnrolmentConnector {
             __typename

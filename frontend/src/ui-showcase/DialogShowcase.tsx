@@ -14,6 +14,7 @@ import {
 import {
   CancelButton,
   SaveButton,
+  DialogSaveButton,
 } from '../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../ui/icons';
 import { Lead, Note, Row } from './common';
@@ -187,7 +188,7 @@ export const DialogShowcase = () => {
             actions={
               <>
                 <CancelButton onClick={() => setWorkbenchOpen(false)} />
-                <SaveButton onClick={() => setWorkbenchOpen(false)} />
+                <DialogSaveButton onClick={() => setWorkbenchOpen(false)} />
               </>
             }
           >

@@ -6,7 +6,13 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import {
@@ -36,11 +42,8 @@ import {
   StockIcon,
   InfoIcon,
   MessageSquareIcon,
-  XCircleIcon,
   TrashIcon,
   CopyIcon,
-  CheckIcon,
-  ArrowRightIcon,
 } from '../../../../ui/icons';
 import {
   StockLinesByItem,
@@ -820,16 +823,13 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <DateField
             label={t('label.expiry-date')}
             hideLabel
             size="small"
-            type="date"
             disabled={!line.countThisLine}
-            value={line.expiryDate ?? ''}
-            onInput={e =>
-              update(line.id, 'expiryDate', e.currentTarget.value || null)
-            }
+            value={line.expiryDate}
+            onChange={v => update(line.id, 'expiryDate', v)}
           />
         );
       },
@@ -837,20 +837,17 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'manufactureDate' },
       header: t('label.manufacture-date'),
-      tabsAndCardGroups: ['other'],
+      tabsAndCardGroups: ['batch'],
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <DateField
             label={t('label.manufacture-date')}
             hideLabel
             size="small"
-            type="date"
             disabled={!line.countThisLine}
-            value={line.manufactureDate ?? ''}
-            onInput={e =>
-              update(line.id, 'manufactureDate', e.currentTarget.value || null)
-            }
+            value={line.manufactureDate}
+            onChange={v => update(line.id, 'manufactureDate', v)}
           />
         );
       },
@@ -943,6 +940,39 @@ const StocktakeLineEditContent = (
             disabled={!line.countThisLine || !packSizeEditable(line)}
             value={line.packSize ?? undefined}
             onChange={value => update(line.id, 'packSize', value ?? null)}
+          />
+        );
+      },
+    },
+    // Location (Batch tab, D57) — moved off Other so the field the user is
+    // most likely to set while actively counting sits on the tab that's
+    // already open, rather than requiring a tab switch.
+    {
+      c: { key: 'location' },
+      header: t('label.location'),
+      tabsAndCardGroups: ['batch'],
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <LocationVolumeSelect
+            label={t('label.location')}
+            hideLabel
+            locations={props.locations}
+            loading={props.locationsLoading}
+            disabled={!line.countThisLine}
+            value={line.location?.id}
+            requiredVolume={
+              (line.volumePerPack ?? 0) *
+              (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks ?? 0)
+            }
+            placeholder={t('label.none')}
+            onChange={l =>
+              update(
+                line.id,
+                'location',
+                l ? { id: l.id, code: l.code, name: l.name } : null
+              )
+            }
           />
         );
       },
@@ -1060,36 +1090,6 @@ const StocktakeLineEditContent = (
             // NumberField commits a real number (or undefined when cleared); the
             // draft stores null for empty, so map undefined → null.
             onChange={value => update(line.id, 'volumePerPack', value ?? null)}
-          />
-        );
-      },
-    },
-    {
-      c: { key: 'location' },
-      header: t('label.location'),
-      tabsAndCardGroups: ['other'],
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <LocationVolumeSelect
-            label={t('label.location')}
-            hideLabel
-            locations={props.locations}
-            loading={props.locationsLoading}
-            disabled={!line.countThisLine}
-            value={line.location?.id}
-            requiredVolume={
-              (line.volumePerPack ?? 0) *
-              (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks ?? 0)
-            }
-            placeholder={t('label.none')}
-            onChange={l =>
-              update(
-                line.id,
-                'location',
-                l ? { id: l.id, code: l.code, name: l.name } : null
-              )
-            }
           />
         );
       },
@@ -1386,37 +1386,27 @@ const StocktakeLineEditContent = (
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           {/* Before an item is picked: nothing to save, so only Cancel shows.
-              Once an item is chosen, OK / OK & next appear. */}
+              Once an item is chosen, Save / Save & next appear. */}
           <Show when={!noItemYet()}>
-            <Button
-              icon={<CheckIcon />}
+            <DialogSaveButton
               loading={busy()}
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
-            >
-              {t('button.ok')}
-            </Button>
-            {/* OK & next: ALWAYS shown once an item is loaded (both modes). In
-                update mode it advances to the next item, or — when the walk is
-                exhausted — saves and drops into add mode. In add mode it saves
-                and returns to the search to add another. */}
-            <Button
-              icon={<ArrowRightIcon />}
+            />
+            {/* Save & next: ALWAYS shown once an item is loaded (both modes).
+                In update mode it advances to the next item, or — when the
+                walk is exhausted — saves and drops into add mode. In add mode
+                it saves and returns to the search to add another. */}
+            <SaveAndNextButton
               loading={busy()}
               data-testid="dialog-button-next-and-ok"
               onClick={() => void onOkNext()}
-            >
-              {t('button.ok-and-next')}
-            </Button>
+            />
           </Show>
         </>
       }

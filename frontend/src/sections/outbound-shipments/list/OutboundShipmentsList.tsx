@@ -39,6 +39,13 @@ import {
 } from './outboundShipments.generated';
 import { UpdateOutboundShipment } from '../detail/outboundDetail.generated';
 import { filterFields, type OutboundFilter } from './listFilters';
+import {
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 import { isEditable, statusColour, statusLabel } from '../outboundStatus';
 import { CustomerSearchModal } from './CustomerSearchModal';
 import {
@@ -62,6 +69,8 @@ type SortKey = NonNullable<OutboundShipmentsVariables['sort']>[number]['key'];
 
 type OutboundListState = {
   filter: OutboundFilter;
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  cf?: CustomFieldFilterState;
   sort?: OutboundShipmentsVariables['sort'];
   offset: number;
   first: number;
@@ -99,6 +108,16 @@ const OutboundShipmentsList: Component = () => {
     },
   });
 
+  // Custom-field definitions for the outbound_shipment scope — shared scope-keyed
+  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('outbound_shipment');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+  const onCustomFieldChange = (cf: CustomFieldFilterState) => {
+    setQuery({ ...query(), cf, offset: 0 });
+    setSelectedIds([]);
+  };
+
   // GraphQL variables from URL state; the type filter is PINNED here — it is
   // not part of the user-facing filter state (contract.md § the list).
   const variables = createMemo<OutboundShipmentsVariables>(() => ({
@@ -106,6 +125,8 @@ const OutboundShipmentsList: Component = () => {
     filter: {
       ...stripEmpty(query().filter),
       type: { equalTo: 'OUTBOUND_SHIPMENT' },
+      // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -258,6 +279,11 @@ const OutboundShipmentsList: Component = () => {
       header: t('label.total'),
       ...getCurrencyCell(),
     },
+    // Configured custom-field columns — not sortable; value chosen by kind.
+    ...customFieldColumns<ShipmentRow, SortKey>(
+      cfDefs(),
+      row => row.customFields
+    ),
   ];
 
   const crumbs = () => [
@@ -289,6 +315,11 @@ const OutboundShipmentsList: Component = () => {
               filters={filterFields()}
               filter={query().filter}
               onChange={onFilterChange}
+              extra={{
+                filters: cfFilters(),
+                filter: query().cf ?? {},
+                onChange: onCustomFieldChange,
+              }}
             />
           </Toolbar>
         </Header>
@@ -339,8 +370,9 @@ const OutboundShipmentsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // Read-only rows (SHIPPED+) are de-emphasised (AC-L3).
-        rowDimmed={row => !isEditable(row.status)}
+        // Read-only rows (SHIPPED+) take the disabled state (AC-L3); they
+        // stay clickable — row click still opens the detail.
+        rowState={row => (!isEditable(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-outbound-shipments')}
         empty={
           <Button

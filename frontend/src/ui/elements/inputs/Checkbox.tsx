@@ -1,5 +1,6 @@
 import { createUniqueId, Show } from 'solid-js';
-import { CheckIcon, AlertTriangleIcon } from '../../icons';
+import { AlertTriangleIcon } from '../../icons';
+import { BareCheckbox } from './BareCheckbox';
 import styles from './Checkbox.module.css';
 
 export interface CheckboxProps {
@@ -18,15 +19,12 @@ export interface CheckboxProps {
 }
 
 /*
- * Checkbox — a labelled checkbox on the native <input type="checkbox"> (NO
- * library): native semantics + keyboard (Space) + `disabled` come free. The
- * native control is visually hidden (kept for a11y and as the real state
- * owner); a styled box + CheckIcon sit beside the label, driven by the input's
- * :checked / :focus-visible via adjacent-sibling selectors — colour never
- * carries meaning alone (the check glyph is the state, an error shows an
- * icon + text). Label/typography match TextField (--text-sm / --weight-medium
- * label, --text-xs error). The <label> wraps everything so a label click
- * toggles the box.
+ * Checkbox — the labelled form field: label + error chrome around the ONE
+ * drawn checkbox control (BareCheckbox — native input state owner, box +
+ * glyph look). Colour never carries meaning alone (the check glyph is the
+ * state, an error shows an icon + text). Label/typography match TextField
+ * (--text-sm / --weight-medium label, --text-xs error). The <label> wraps
+ * everything so a label click toggles the box.
  */
 export const Checkbox = (props: CheckboxProps) => {
   const autoId = createUniqueId();
@@ -39,24 +37,17 @@ export const Checkbox = (props: CheckboxProps) => {
         class={styles.root}
         data-disabled={props.disabled ? '' : undefined}
       >
-        <input
+        <BareCheckbox
           id={inputId()}
-          type="checkbox"
-          class={styles.input}
+          class={styles.control}
           checked={props.checked}
           disabled={props.disabled}
+          error={!!props.error}
           data-testid={props.testId}
           aria-invalid={props.error ? 'true' : undefined}
           aria-describedby={props.error ? messageId() : undefined}
           onChange={event => props.onChange?.(event.currentTarget.checked)}
         />
-        <span
-          class={styles.box}
-          data-error={props.error ? '' : undefined}
-          aria-hidden="true"
-        >
-          <CheckIcon class={styles.check} />
-        </span>
         <span class={styles.label}>{props.label}</span>
       </label>
       <Show when={props.error}>

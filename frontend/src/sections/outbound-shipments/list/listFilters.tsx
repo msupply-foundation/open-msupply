@@ -1,6 +1,6 @@
 import { t } from '../../../intl';
 import {
-  FilterDate,
+  FilterDateRange,
   FilterMultiSelect,
   FilterTextInput,
   constructFilters,
@@ -119,74 +119,60 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
   },
   createdDatetime: {
     label: () => t('label.created'),
-    render: props => {
-      // A date range as two bounds on the one key. The native input yields
-      // yyyy-mm-dd; bounds are inclusive (afterOrEqualTo / beforeOrEqualTo,
-      // the "to" day extended to its end so the whole day matches).
-      const range = () => props.filter().createdDatetime ?? {};
-      const setRange = (patch: {
-        afterOrEqualTo?: string | null;
-        beforeOrEqualTo?: string | null;
-      }) => {
-        const next = { ...range(), ...patch };
-        const live = next.afterOrEqualTo || next.beforeOrEqualTo;
-        props.setPartialFilter({ createdDatetime: live ? next : null });
-      };
-      return (
-        <>
-          <FilterDate
-            label={t('label.from-created-datetime')}
-            testId={props.testId}
-            value={toDateInput(range().afterOrEqualTo)}
-            onInput={value =>
-              setRange({ afterOrEqualTo: value ? startOfDay(value) : null })
-            }
-          />
-          <FilterDate
-            label={t('label.to-created-datetime')}
-            testId={`${props.testId}-to`}
-            value={toDateInput(range().beforeOrEqualTo)}
-            onInput={value =>
-              setRange({ beforeOrEqualTo: value ? endOfDay(value) : null })
-            }
-          />
-        </>
-      );
-    },
+    // A date range as two bounds on the one key, from the shared date-range
+    // picker. Bounds are inclusive (afterOrEqualTo / beforeOrEqualTo, the
+    // "to" day extended to its end so the whole day matches).
+    render: props => (
+      <FilterDateRange
+        label={t('label.created')}
+        testId={props.testId}
+        value={{
+          start:
+            toDateInput(props.filter().createdDatetime?.afterOrEqualTo) || null,
+          end:
+            toDateInput(props.filter().createdDatetime?.beforeOrEqualTo) ||
+            null,
+        }}
+        onChange={({ start, end }) =>
+          props.setPartialFilter({
+            createdDatetime:
+              start || end
+                ? {
+                    afterOrEqualTo: start ? startOfDay(start) : undefined,
+                    beforeOrEqualTo: end ? endOfDay(end) : undefined,
+                  }
+                : null,
+          })
+        }
+      />
+    ),
   },
   shippedDatetime: {
     label: () => t('label.shipped'),
-    render: props => {
-      const range = () => props.filter().shippedDatetime ?? {};
-      const setRange = (patch: {
-        afterOrEqualTo?: string | null;
-        beforeOrEqualTo?: string | null;
-      }) => {
-        const next = { ...range(), ...patch };
-        const live = next.afterOrEqualTo || next.beforeOrEqualTo;
-        props.setPartialFilter({ shippedDatetime: live ? next : null });
-      };
-      return (
-        <>
-          <FilterDate
-            label={t('label.from-shipped-datetime')}
-            testId={props.testId}
-            value={toDateInput(range().afterOrEqualTo)}
-            onInput={value =>
-              setRange({ afterOrEqualTo: value ? startOfDay(value) : null })
-            }
-          />
-          <FilterDate
-            label={t('label.to-shipped-datetime')}
-            testId={`${props.testId}-to`}
-            value={toDateInput(range().beforeOrEqualTo)}
-            onInput={value =>
-              setRange({ beforeOrEqualTo: value ? endOfDay(value) : null })
-            }
-          />
-        </>
-      );
-    },
+    render: props => (
+      <FilterDateRange
+        label={t('label.shipped')}
+        testId={props.testId}
+        value={{
+          start:
+            toDateInput(props.filter().shippedDatetime?.afterOrEqualTo) || null,
+          end:
+            toDateInput(props.filter().shippedDatetime?.beforeOrEqualTo) ||
+            null,
+        }}
+        onChange={({ start, end }) =>
+          props.setPartialFilter({
+            shippedDatetime:
+              start || end
+                ? {
+                    afterOrEqualTo: start ? startOfDay(start) : undefined,
+                    beforeOrEqualTo: end ? endOfDay(end) : undefined,
+                  }
+                : null,
+          })
+        }
+      />
+    ),
   },
 
   // ─ dismissed (not user-facing) ───────────────────────────────────────────

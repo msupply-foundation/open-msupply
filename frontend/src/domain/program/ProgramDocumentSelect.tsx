@@ -5,7 +5,7 @@ import {
   type ProgramRegistry,
 } from './programResource';
 
-export interface ProgramSelectProps {
+export interface ProgramDocumentSelectProps {
   /** Selected program context id (undefined = none). */
   value?: string;
   /** Fires with the chosen program's CONTEXT id, or null when cleared. */
@@ -19,13 +19,13 @@ export interface ProgramSelectProps {
 }
 
 /*
- * The reusable Program picker — a Combobox pre-wired to the store-scoped
- * program-enrolment registries resource (kdd/domain-modules). Options are the
+ * The program-ENROLMENT-DOCUMENT picker — a Combobox pre-wired to the
+ * store-scoped program-enrolment registries resource (kdd/domain-modules). Options are the
  * registries the user may see, labelled by name; the reported value is the
  * program's CONTEXT id — what report data queries filter by — never the
  * registry's own id (spec/reports contract "Arguments", AC-R10).
  */
-export const ProgramSelect = (props: ProgramSelectProps): JSX.Element => {
+export const ProgramDocumentSelect = (props: ProgramDocumentSelectProps): JSX.Element => {
   const items = () => programRegistriesResource.noSuspense();
 
   // A lone option is pre-selected (spec/reports AC-R10) — the common
