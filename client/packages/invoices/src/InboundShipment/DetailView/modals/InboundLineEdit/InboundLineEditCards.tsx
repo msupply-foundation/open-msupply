@@ -286,7 +286,7 @@ export const InboundLineEditCards = ({
                     getLineDefaultSellPrice(
                       line,
                       line.costPricePerPack,
-                      line.packSize
+                      value
                     );
                   const shouldClearCostPrice =
                     item?.defaultPackSize !== line.packSize &&

@@ -169,7 +169,9 @@ fn set_last_ledger_fix_run(service_provider: &ServiceProvider) {
     let ctx = match service_provider.basic_context() {
         Ok(ctx) => ctx,
         Err(error) => {
-            log::error!("Ledger fix: could not record last run, DB context unavailable: {error:?}");
+            log::error!(
+                "Ledger fix: could not record last run, DB context unavailable: {error:?}"
+            );
             return;
         }
     };

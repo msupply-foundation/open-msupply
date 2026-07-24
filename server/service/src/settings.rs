@@ -75,6 +75,8 @@ pub struct ServerSettings {
     /// Directory the web frontend is served from, resolved relative to the
     /// working directory. Packaging ships the built frontend bundle here;
     /// on Android the app shell copies its bundled web assets here on startup.
+    /// An `old-ui` subdirectory, when present, is served under `/old-ui/`
+    /// (by convention — not configurable).
     #[serde(default = "default_frontend_dir")]
     pub frontend_dir: String,
 }

@@ -20,6 +20,7 @@ export type LoginLayoutProps = {
   fullSize: boolean;
   StoreSelector?: React.ReactNode;
   showStoreSelector?: boolean;
+  TryNewUiLink?: React.ReactNode;
 };
 
 export const LoginLayout = ({
@@ -32,6 +33,7 @@ export const LoginLayout = ({
   fullSize,
   StoreSelector,
   showStoreSelector = false,
+  TryNewUiLink,
 }: LoginLayoutProps) => {
   const t = useTranslation();
 
@@ -44,6 +46,7 @@ export const LoginLayout = ({
       SiteInfo={SiteInfo}
       onLogin={onLogin}
       fullSize={fullSize}
+      TryNewUiLink={TryNewUiLink}
     />
   );
 
@@ -159,6 +162,7 @@ const LoginForm = ({
   ErrorMessage,
   onLogin,
   fullSize,
+  TryNewUiLink,
 }: LoginLayoutProps) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -180,6 +184,11 @@ const LoginForm = ({
         <Box display="flex" justifyContent="flex-end">
           {LoginButton}
         </Box>
+        {TryNewUiLink && (
+          <Box display="flex" justifyContent="center">
+            {TryNewUiLink}
+          </Box>
+        )}
       </Stack>
     </form>
   );
