@@ -43,7 +43,7 @@ export const CreateInitialStocktakeAction = (props: {
         isInitialStocktake: true,
         comment: t('stocktake.comment-initial-stocktake-template'),
         // Same client-composed default description as the regular create flow
-        // (spec AC-C9) — every create mode seeds it.
+        // (OMS-REG-INV-03.9) — every create mode seeds it.
         description: t('stocktake.description-template', {
           username: userDisplayName(),
           date: localisedDate(new Date()),
