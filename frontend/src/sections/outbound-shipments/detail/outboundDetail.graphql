@@ -377,6 +377,22 @@ mutation addToOutboundFromMasterList(
   }
 }
 
+# Active currencies for the change-currency modal (spec S3 side panel →
+# foreign currency). No storeId arg on this query.
+query outboundCurrencies {
+  currencies(filter: { isActive: true }) {
+    ... on CurrencyConnector {
+      __typename
+      nodes {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
+    }
+  }
+}
+
 # Master lists joined to the CUSTOMER (rules.md § adding from a master list —
 # the list must be visible to the customer, not just the store).
 query customerMasterLists($storeId: String!, $customerNameId: String!) {
