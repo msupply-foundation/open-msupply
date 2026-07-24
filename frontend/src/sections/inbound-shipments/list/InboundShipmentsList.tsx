@@ -1,4 +1,4 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { A, useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
@@ -51,6 +51,13 @@ import {
 } from '../detail/inboundShipmentStatus';
 import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
+import {
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 import linkStyles from '../linkedOrder.module.css';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
@@ -67,6 +74,8 @@ type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
   filter: InboundListFilter;
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  cf?: CustomFieldFilterState;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;
   first: number;
@@ -121,6 +130,12 @@ const InboundShipmentsList: Component = () => {
   // for one they don't hold (spec/inbound-shipments › contract → permissions).
   // The Type filter narrows this scope + adds a requisitionId filter — both
   // resolved from the client-only `kind` by inboundQueryInputs.
+  // Custom-field definitions for the inbound_shipment scope — shared scope-keyed
+  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('inbound_shipment');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+
   const variables = () => {
     const { filter, type } = inboundQueryInputs(
       query().filter,
@@ -128,7 +143,11 @@ const InboundShipmentsList: Component = () => {
     );
     return {
       storeId: params.storeId,
-      filter,
+      filter: {
+        ...filter,
+        // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+        dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+      },
       sort: query().sort,
       page: { first: query().first, offset: query().offset },
       type,
@@ -170,6 +189,10 @@ const InboundShipmentsList: Component = () => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   const onFilterChange = (filter: InboundListFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
+    setSelectedIds([]);
+  };
+  const onCustomFieldChange = (cf: CustomFieldFilterState) => {
+    setQuery({ ...query(), cf, offset: 0 });
     setSelectedIds([]);
   };
   const onDeleted = () => {
@@ -307,6 +330,8 @@ const InboundShipmentsList: Component = () => {
       header: t('label.total'),
       ...getCurrencyCell(),
     },
+    // Configured custom-field columns — not sortable; value chosen by kind.
+    ...customFieldColumns<Row, SortKey>(cfDefs(), row => row.customFields),
   ];
 
   const crumbs = () => [
@@ -371,6 +396,11 @@ const InboundShipmentsList: Component = () => {
             filters={filterFields()}
             filter={query().filter}
             onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
           />
         }
         loading={data.loading}

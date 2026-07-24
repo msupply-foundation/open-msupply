@@ -29,6 +29,9 @@ query customerReturns(
         linkedShipment {
           id
         }
+        # Custom-field VALUES (JSON object), scope-filtered — backs the
+        # configured custom-field columns.
+        customFields
       }
     }
   }

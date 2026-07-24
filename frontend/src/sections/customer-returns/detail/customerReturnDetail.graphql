@@ -40,6 +40,9 @@ fragment CustomerReturnInfo on InvoiceNode {
       username
     }
   }
+  # Custom-field VALUES (JSON object), scope-filtered — backs the Custom fields
+  # tab + prominent toolbar fields.
+  customFields
 }
 
 # ONE fragment, both directions: the detail row AND what updateCustomerReturnLines

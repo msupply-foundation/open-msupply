@@ -1,4 +1,4 @@
-import { createSignal, For, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DateField } from '../../../ui/elements/inputs/DateField';
@@ -10,11 +10,7 @@ import {
 } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
-import {
-  CustomFieldInput,
-  isProminent,
-  prescriptionCustomFieldsResource,
-} from '../../../domain/invoiceCustomFields';
+import { CustomFieldsToolbar } from '../../../domain/customFields';
 import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import { prescriptionDateOf } from '../prescriptionStatus';
 import {
@@ -48,15 +44,6 @@ export const PrescriptionToolbar: Component<
   const [pending, setPending] = createSignal<Omit<UpdateInput, 'id'>>();
 
   const hasLines = () => props.node.lines.totalCount > 0;
-
-  // The prominent prescription custom fields (Category, Patient type on the
-  // reference store) — inline controls that save on change (AC-CF1/CF3). The
-  // value blob is the invoice's customFields; a change patches ONE key (the
-  // server merges), so we send just that key.
-  const prominentFields = () =>
-    prescriptionCustomFieldsResource.noSuspense().filter(isProminent);
-  const customFieldValues = () =>
-    (props.node.customFields ?? {}) as Record<string, unknown>;
 
   const patientOption = (): PatientOption | undefined => {
     const patient = props.node.patient;
@@ -135,21 +122,13 @@ export const PrescriptionToolbar: Component<
         />
       </FieldRow>
       {/* Prominent custom fields (AC-CF1) — inline, save-on-change. */}
-      <For each={prominentFields()}>
-        {definition => (
-          <FieldRow label={definition.name || definition.key}>
-            <CustomFieldInput
-              definition={definition}
-              hideLabel
-              value={customFieldValues()[definition.key]}
-              disabled={props.disabled}
-              onChange={value =>
-                props.onSave({ customFields: { [definition.key]: value } })
-              }
-            />
-          </FieldRow>
-        )}
-      </For>
+      <CustomFieldsToolbar
+        scope="prescription"
+        recordId={props.node.id}
+        values={props.node.customFields}
+        disabled={props.disabled}
+        onSave={patch => props.onSave({ customFields: patch })}
+      />
 
       {/* The clear-lines warning (AC-B2): proceeding deletes every line, then
           applies the pending change; declining leaves everything untouched. */}

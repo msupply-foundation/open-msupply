@@ -12,10 +12,8 @@ export type MasterListOption = { id: string; name: string };
 // The list's add-a-filter chip menu (spec/items S1 › Filters). The
 // always-present code-or-name SEARCH is rendered separately in the Toolbar (not
 // a chip), so `codeOrName` is dismissed here. Per-definition custom-field
-// filters are deferred — the option-typeahead + date-range controls aren't
-// built yet (see BUILD_REPORT); the dynamicFilter LOGIC exists + is tested
-// (AC-P2), only the UI controls are pending — so `customFields` is dismissed
-// here too.
+// filters ride the shared domain/customFields group (FilterBar `extra`), a
+// separate state slice — not part of this ItemsListFilter map.
 //
 // `masterLists` / `showAtRisk` are accessors: the master-list options stay
 // fresh without rebuilding the array, and the two conditional chips
@@ -113,7 +111,6 @@ export const buildItemsFilters = (
       ),
     },
     codeOrName: null,
-    customFields: null,
   });
 
   return all.filter(f => {

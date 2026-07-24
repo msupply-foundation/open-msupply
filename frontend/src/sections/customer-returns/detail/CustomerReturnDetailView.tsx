@@ -27,6 +27,10 @@ import {
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
+  CustomFieldsEditTab,
+  CustomFieldsToolbar,
+} from '../../../domain/customFields';
+import {
   CustomerReturnDetail,
   type CustomerReturnInfoFragment,
   type CustomerReturnLineFragment,
@@ -143,6 +147,16 @@ const CustomerReturnDetailView: Component = () => {
 
   const setHold = (hold: boolean) => void saveField({ onHold: hold });
   const setColour = (colour: string) => void saveField({ colour });
+
+  // Custom-fields save (explicit-save tab) — patch-merged server-side; true on
+  // success so the tab clears its dirty state. The prominent-field toolbar uses
+  // saveField directly (fire-and-forget, like the other toolbar fields).
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const result = await saveField({ customFields: patch });
+    return result?.kind === 'saved';
+  };
 
   // A customer change re-runs the customer checks; its typed rejections show
   // inline on the lookup (AC-C2 / AC-E6).
@@ -325,6 +339,15 @@ const CustomerReturnDetailView: Component = () => {
                       onChangeCustomer={id => void changeCustomer(id)}
                       customerError={customerError()}
                     />
+                    {/* PROMINENT custom fields — stay in the toolbar even when
+                        the return is read-only, just disabled. */}
+                    <CustomFieldsToolbar
+                      scope="customer_return"
+                      recordId={node().id}
+                      values={node().customFields}
+                      disabled={disabled()}
+                      onSave={patch => void saveField({ customFields: patch })}
+                    />
                   </Toolbar>
                 </Header>
               }
@@ -345,6 +368,10 @@ const CustomerReturnDetailView: Component = () => {
                 <TabList
                   tabs={[
                     { value: 'details', label: t('label.details') },
+                    {
+                      value: 'custom-fields',
+                      label: t('label.custom-fields'),
+                    },
                     { value: 'log', label: t('label.log') },
                   ]}
                 />
@@ -369,6 +396,18 @@ const CustomerReturnDetailView: Component = () => {
                     }
                     config={tableConfig.config()}
                     setConfig={tableConfig.setConfig}
+                  />
+                </TabPanel>
+                <TabPanel value="custom-fields">
+                  {/* Custom fields for the customer_return scope — disabled once
+                      the return is read-only. Prominent fields live in the
+                      toolbar, so the tab shows the rest. */}
+                  <CustomFieldsEditTab
+                    scope="customer_return"
+                    promoteToToolbar
+                    disabled={disabled()}
+                    values={node().customFields}
+                    onSave={saveCustomFields}
                   />
                 </TabPanel>
                 <TabPanel value="log">

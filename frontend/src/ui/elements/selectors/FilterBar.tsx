@@ -92,19 +92,92 @@ export const constructFilters = <F,>(defs: {
     )
     .map(([key, def]) => ({ key, ...def }));
 
-interface FilterBarProps<F extends object> {
+/**
+ * A second, independent filter group hosted in the SAME bar — its own typed
+ * state and change handler. Used for filters whose state isn't the wire filter
+ * `F`: custom-field filters carry a per-key typed value map that the page
+ * expands to `dynamicFilter` (kdd/page-composition — a UI filter vocabulary
+ * that maps onto the wire, like the items stock lens). FilterBar stays generic
+ * and knows nothing about custom fields; the domain builds this group's
+ * `filters` with its own typed controls.
+ */
+export interface FilterGroup<C extends object> {
+  filters: Filter<C>[];
+  filter: C;
+  onChange: (filter: C) => void;
+}
+
+interface FilterBarProps<
+  F extends object,
+  C extends object = Record<string, never>,
+> {
   /** The filters a user can add — drives the add-filter menu and the chips. */
   filters: Filter<F>[];
   /** Controlled filter object — the caller's generated GraphQL filter shape. */
   filter: F;
   onChange: (filter: F) => void;
+  /**
+   * Optional second group rendered in the same menu + chip row (e.g. custom
+   * fields). Omit for a single-group bar.
+   */
+  extra?: FilterGroup<C>;
 }
+
+// One group's add/remove/reset over a controlled filter object. Kept as
+// accessors so a chip's control reads `filter()` live (no remount on edit —
+// kdd/state-management). `null` marks an added-but-empty chip; the page strips
+// nulls before querying.
+interface GroupOps<G extends object> {
+  active: () => Filter<G>[];
+  available: () => Filter<G>[];
+  add: (f: Filter<G>) => void;
+  remove: (f: Filter<G>) => void;
+  reset: () => void;
+  renderProps: (f: Filter<G>) => {
+    filter: () => G;
+    setFilter: (next: G) => void;
+    setPartialFilter: (patch: Partial<G>) => void;
+    testId: string;
+  };
+}
+
+const groupOps = <G extends object>(
+  filters: () => Filter<G>[],
+  filter: () => G,
+  onChange: (g: G) => void
+): GroupOps<G> => {
+  const isActive = (f: Filter<G>) => f.key in filter();
+  const without = (key: keyof G & string): G => {
+    const { [key]: _omit, ...rest } = filter();
+    return rest as G; // erase the omitted optional key; the value is a filter object
+  };
+  return {
+    active: () => filters().filter(isActive),
+    available: () => filters().filter(f => !isActive(f)),
+    add: f => onChange({ ...filter(), [f.key]: null }),
+    remove: f => onChange(without(f.key)),
+    reset: () => {
+      let next = filter();
+      for (const f of filters()) {
+        const { [f.key]: _o, ...rest } = next;
+        next = rest as G;
+      }
+      onChange(next);
+    },
+    renderProps: f => ({
+      filter,
+      setFilter: onChange,
+      setPartialFilter: patch => onChange({ ...filter(), ...patch }),
+      testId: `filter-input-${f.key}`,
+    }),
+  };
+};
 
 /*
  * Filter bar — the current app's FilterMenu pattern (Solid port of the RnD
- * prototype's FilterBar, Radix DropdownMenu → Kobalte): a "Filters" dropdown
- * lists the addable fields; picking one adds a chip beside it holding that
- * field's control.
+ * prototype's FilterBar, Radix DropdownMenu → Kobalte): an "Add filter"
+ * dropdown lists the addable fields; picking one adds a chip beside it holding
+ * that field's control.
  *
  * State model (see kdd/page-composition): the caller's filter object IS the
  * state, in GraphQL-native shape. A chip is shown iff its key is PRESENT on
@@ -115,31 +188,45 @@ interface FilterBarProps<F extends object> {
  * signal to seed. The page strips null/empty keys before querying
  * (stripEmpty).
  */
-export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
-  // props.filters is a stable module const (its labels are accessors, so it
-  // needn't be rebuilt to re-translate) — identities don't churn, so <For>
-  // reuses chip rows across filter edits instead of remounting them
-  // (kdd/state-management: no remounts). Hence no memo; read props.filters
-  // directly.
-  const isActive = (f: Filter<F>) => f.key in props.filter;
-  const active = () => props.filters.filter(isActive);
-  const available = () => props.filters.filter(f => !isActive(f));
+// A menu entry, types erased at the render edge so one dropdown lists both
+// groups' addable filters.
+type MenuItem = { key: string; label: () => string; onAdd: () => void };
 
-  const setFilter = (next: F) => props.onChange(next);
-  const setPartialFilter = (patch: Partial<F>) =>
-    props.onChange({ ...props.filter, ...patch });
+export const FilterBar = <
+  F extends object,
+  C extends object = Record<string, never>,
+>(
+  props: FilterBarProps<F, C>
+) => {
+  // Read props live inside accessors so a chip's control tracks its own value
+  // and <For> reuses chip rows across edits (kdd/state-management: no remounts).
+  const main = groupOps<F>(
+    () => props.filters,
+    () => props.filter,
+    props.onChange
+  );
+  // Extra-group ops bound to a snapshot of props.extra — fine for the menu /
+  // reset / active-count, which recompute reactively; chip controls bind their
+  // own live ops inside the <Show> below.
+  const extraOps = (): GroupOps<C> | undefined => {
+    const e = props.extra;
+    return e
+      ? groupOps<C>(
+          () => e.filters,
+          () => e.filter,
+          e.onChange
+        )
+      : undefined;
+  };
 
   let barEl: HTMLDivElement | undefined;
 
-  const addFilter = (f: Filter<F>) =>
-    props.onChange({ ...props.filter, [f.key]: null });
-
   // Hand a just-added chip's editor the next action (Carl, 2026-07-24): a
-  // text/number input takes typing focus; a button editor (enum, date
-  // range) opens its chooser — the chip instantiates empty, so choosing IS
-  // the next step. Every editor stamps `filter-input-<key>` on its
-  // focusable. Returns whether it landed (FiltersMenu then suppresses its
-  // own close-time focus restoration).
+  // text/number input takes typing focus; a button editor (enum, date range)
+  // opens its chooser — the chip instantiates empty, so choosing IS the next
+  // step. Every editor stamps `filter-input-<key>` on its focusable. Returns
+  // whether it landed (FiltersMenu then suppresses its own close-time focus
+  // restoration). Keyed by string so it serves the main and extra groups alike.
   const focusChipEditor = (key: string): boolean => {
     const el = barEl?.querySelector<HTMLElement>(
       `[data-testid="filter-input-${key}"]`
@@ -165,55 +252,61 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
     return true;
   };
 
-  const removeFilter = (f: Filter<F>) => {
-    const next = { ...props.filter };
-    delete next[f.key];
-    props.onChange(next);
+  // Both groups' addable filters, type-erased into one menu list.
+  const menuItems = (): MenuItem[] => {
+    const items: MenuItem[] = main
+      .available()
+      .map(f => ({ key: f.key, label: f.label, onAdd: () => main.add(f) }));
+    const ex = extraOps();
+    if (ex)
+      for (const f of ex.available())
+        items.push({ key: f.key, label: f.label, onAdd: () => ex.add(f) });
+    return items;
   };
 
-  // Clear only the keys this bar manages (delete, don't replace with {}): any
-  // programmatic filter key the caller set outside the bar is left intact, and
-  // it stays typed as F with no `as`.
+  const anyActive = () =>
+    main.active().length > 0 || (extraOps()?.active().length ?? 0) > 0;
+
   const resetAll = () => {
-    const next = { ...props.filter };
-    for (const f of props.filters) delete next[f.key];
-    props.onChange(next);
+    main.reset();
+    extraOps()?.reset();
   };
 
   return (
     <div class={styles.bar} ref={barEl}>
-      <FiltersMenu
-        available={available()}
-        onAdd={addFilter}
-        focusChip={focusChipEditor}
-      />
+      <FiltersMenu available={menuItems()} focusChip={focusChipEditor} />
 
-      <For each={active()}>
+      <For each={main.active()}>
         {f => (
-          <div class={styles.chip}>
-            <span class={styles.chipLabel}>{f.label()}:</span>
-            {f.render({
-              filter: () => props.filter,
-              setFilter,
-              setPartialFilter,
-              testId: `filter-input-${f.key}`,
-            })}
-            <button
-              type="button"
-              class={styles.remove}
-              aria-label={t('label.clear-filter-detail', { name: f.label() })}
-              onClick={() => removeFilter(f)}
-            >
-              <CloseIcon />
-            </button>
-          </div>
+          <FilterChip label={f.label()} onRemove={() => main.remove(f)}>
+            {f.render(main.renderProps(f))}
+          </FilterChip>
         )}
       </For>
 
+      <Show when={props.extra}>
+        {extra => {
+          // Live ops for the extra group (reads through the <Show> accessor).
+          const ex = groupOps<C>(
+            () => extra().filters,
+            () => extra().filter,
+            extra().onChange
+          );
+          return (
+            <For each={ex.active()}>
+              {f => (
+                <FilterChip label={f.label()} onRemove={() => ex.remove(f)}>
+                  {f.render(ex.renderProps(f))}
+                </FilterChip>
+              )}
+            </For>
+          );
+        }}
+      </Show>
+
       {/* Bar-level "Clear all" (ui-standards § tables → filtering) — a plain
-          text button, shown only while filters are active; replaces the old
-          "Remove all filters" menu item. */}
-      <Show when={active().length > 0}>
+          text button, shown only while any filter (either group) is active. */}
+      <Show when={anyActive()}>
         <button type="button" class={styles.clearAll} onClick={resetAll}>
           {t('label.clear-all-filters')}
         </button>
@@ -222,9 +315,31 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
   );
 };
 
-const FiltersMenu = <F extends object>(props: {
-  available: Filter<F>[];
-  onAdd: (f: Filter<F>) => void;
+// Chip chrome: label + the field's control + a remove button.
+const FilterChip = (props: {
+  label: string;
+  onRemove: () => void;
+  children: JSX.Element;
+}) => (
+  <div class={styles.chip}>
+    <span class={styles.chipLabel}>{props.label}:</span>
+    {props.children}
+    <button
+      type="button"
+      class={styles.remove}
+      aria-label={t('label.clear-filter-detail', { name: props.label })}
+      onClick={props.onRemove}
+    >
+      <CloseIcon />
+    </button>
+  </div>
+);
+
+// The add-filter menu. Lists both groups' addable filters (type-erased to
+// MenuItem so one dropdown serves them all) and, on pick, hands focus to the
+// new chip's editor instead of the menu's default restore-to-trigger.
+const FiltersMenu = (props: {
+  available: MenuItem[];
   /** Focus the just-added chip's editor; true if it landed. */
   focusChip: (key: string) => boolean;
 }) => {
@@ -237,7 +352,7 @@ const FiltersMenu = <F extends object>(props: {
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       {/* The spec's dashed "Add filter" pill (ui-standards § tables →
-          filtering): funnel icon + label, no chevron. Purely additive now —
+          filtering): funnel icon + label, no chevron. Purely additive —
           Clear all lives in the bar. */}
       <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
         <FilterIcon class={styles.triggerIcon} />
@@ -259,16 +374,16 @@ const FiltersMenu = <F extends object>(props: {
           }}
         >
           <For each={props.available}>
-            {f => (
+            {item => (
               <DropdownMenu.Item
                 class={styles.item}
-                data-testid={`filter-option-${f.key}`}
+                data-testid={`filter-option-${item.key}`}
                 onSelect={() => {
-                  pickedKey = f.key;
-                  props.onAdd(f);
+                  pickedKey = item.key;
+                  item.onAdd();
                 }}
               >
-                <span class={styles.itemLabel}>{f.label()}</span>
+                <span class={styles.itemLabel}>{item.label()}</span>
               </DropdownMenu.Item>
             )}
           </For>
@@ -483,14 +598,23 @@ export const FilterMultiSelect = <V extends string>(props: {
   label: string;
   /** Shown on the trigger while nothing is selected (e.g. "Any"). */
   placeholder: string;
+  /**
+   * Override the trigger's selected-summary text (default: the chosen labels
+   * joined). Use it to collapse a redundant selection — e.g. a hierarchical
+   * option filter showing just the parent when its whole subtree is chosen.
+   * Called only when something is selected.
+   */
+  summary?: () => string;
   /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
   testId?: string;
 }) => {
   const summary = () => {
-    const chosen = props.options.filter(o => props.values.includes(o.value));
-    return chosen.length
-      ? chosen.map(o => o.label).join(', ')
-      : props.placeholder;
+    if (props.values.length === 0) return props.placeholder;
+    if (props.summary) return props.summary();
+    return props.options
+      .filter(o => props.values.includes(o.value))
+      .map(o => o.label)
+      .join(', ');
   };
   const toggle = (value: V, checked: boolean) => {
     const without = props.values.filter(v => v !== value);
