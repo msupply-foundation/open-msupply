@@ -36,64 +36,35 @@ declare module '@tanstack/solid-table' {
      */
     wrapLines?: number;
     /**
-     * Where this column's cell renders in CARD view (viewMode 'card'). Exactly
-     * ONE position per column def: a column has a single `cell` renderer, so a
-     * value that must appear in two places rendered differently (e.g. Batch as
-     * a header title AND as an editable input in the body) is TWO column defs,
-     * each naming its own position — not one column in two positions. The four
-     * positions split into a header row and a content body:
-     *  • 'header-primary'    — the big top-left identity/title (no label).
-     *  • 'header-badge'      — the top-right chip (no label).
-     *  • 'content-primary'   — a body field, always shown (labelled).
-     *  • 'content-secondary' — a body field, hidden in compact card views
-     *                          (labelled).
-     * Header positions are never labelled; content positions are captioned with
-     * the column's own `header`. A column with NO cardPosition falls into the
-     * body alongside the content positions (the ungrouped/secondary flow — see
-     * CardView), grouped into rows by `tabsAndCardGroups` when the table is
-     * grouped. Visibility still follows columnVisibility — a hidden column
-     * doesn't appear on the card either.
+     * Where this column's cell renders in the CARD HEADER (card view). The
+     * header is the card's top row: a big identity/title inline-start and a
+     * badge/chip inline-end, both rendered WITHOUT their label. A column has a
+     * single `cell` renderer, so a value that must appear as a header title AND
+     * as an editable body field rendered differently is TWO column defs, each
+     * naming its own placement. Two slots:
+     *  • 'primary' — the identity/title, inline-start (no label).
+     *  • 'badge'   — the chip, inline-end (no label).
+     * A column with NO headerPosition falls into the card BODY, placed by its
+     * `cardGroup` (Column.cardGroup — grouped, optionally panelled, optionally
+     * inside a disclosure; see CardGroup + CardView). Visibility still follows
+     * columnVisibility — a hidden column doesn't appear on the card either.
      */
-    cardPosition?:
-      | 'header-primary'
-      | 'header-badge'
-      | 'content-primary'
-      | 'content-secondary';
+    headerPosition?: 'primary' | 'badge';
     /**
      * Omit this column from TABLE view (a card-only column). Independent of
-     * cardPosition, which still places it on the card.
+     * headerPosition/cardGroup, which still place it on the card.
      */
     hideOnTable?: boolean;
     /**
      * Omit this column from CARD view (a table-only column). When true,
-     * cardPosition is moot; setting both hide flags renders the column nowhere.
+     * headerPosition/cardGroup are moot; setting both hide flags renders the
+     * column nowhere.
      */
     hideOnCard?: boolean;
   }
 }
 
 export type SortState<K extends string> = { key: K; desc: boolean };
-
-// A column that belongs to EVERY tab but is not itself part of card grouping
-// (a row-identity anchor like the batch or the selection). Setting
-// `tabsAndCardGroups: ALL_TABS` (the bare const, not an array) is explicit:
-// shows in every tab (table view), and in card view falls to the ungrouped area
-// (if it has no `card` region) rather than any card group's row.
-export const ALL_TABS = '__all_tabs__';
-
-// A column's tab / card-group membership as stored on the columnDef: either
-// the ALL_TABS sentinel, an array of card-group keys, or absent.
-export type Membership = string[] | typeof ALL_TABS | undefined;
-
-// Does a membership put the column in a given tab? ALL_TABS → yes for any tab;
-// an array → yes if it lists that card group (each card group is one tab);
-// absent → no.
-export const membershipInTab = (m: Membership, tab: string): boolean =>
-  m === ALL_TABS ? true : Array.isArray(m) ? m.includes(tab) : false;
-
-// The real card-group keys a membership names (excludes ALL_TABS / absent).
-export const membershipCardGroups = (m: Membership): string[] =>
-  Array.isArray(m) ? m : [];
 
 // How a column identifies itself — a discriminated union of the three real
 // scenarios, replacing TanStack's raw accessorKey/accessorFn/id fields (which
@@ -126,14 +97,14 @@ export type ColumnIdentity<T> =
 // column may sort by a different field than it displays, and ColumnMeta can't
 // carry K since ColumnDef only parameterises over TData/TValue). Usually equals
 // the column's key/id; the DataTable maps sortKey ⇄ resolved id for the
-// manual-sort round-trip. • `tabsAndCardGroups` — the card-group membership (a
-// card group is presented as a TAB in table view, hence the name): EITHER the
-// ALL_TABS sentinel (bare — an anchor in every tab but not a card group), OR an
-// ARRAY of the table's card-group keys (typed G, so a typo is a compile error;
-// a column may list several). Omitting it means the column is in no card group
-// — in card view it lands in the ungrouped area. See TabAndCardGroup + the
-// filter in DataTable, and kdd/edit-line-card-table. Display-only conventions
-// (align, card region) live in `meta` — kdd/table-state.
+// manual-sort round-trip. • `cardGroup` — the card BODY group this column's
+// field belongs to in card view (typed G, so a typo is a compile error). One
+// group per column; omit and the field falls into the card's default
+// (unpanelled, always-shown) group. The group's presentation — icon, panel,
+// disclosure — is declared once in the table's `cardGroups` list (see
+// CardGroup + CardView). Header columns (meta.headerPosition) ignore cardGroup.
+// Display-only conventions (align, header slot) live in `meta` —
+// kdd/table-state.
 export type Column<T, K extends string, G extends string = never> = {
   /**
    * The column's identity — one of key / id / accessor+id (see
@@ -144,7 +115,7 @@ export type Column<T, K extends string, G extends string = never> = {
   c: ColumnIdentity<T>;
 } & Omit<IdentifiedColumnDef<T>, 'id' | 'minSize'> & {
     sortKey?: K;
-    tabsAndCardGroups?: G[] | typeof ALL_TABS;
+    cardGroup?: G;
   };
 // `minSize` is deliberately OMITTED (not just unused): it's TanStack's drag
 // lower-bound, NOT the resting min-width (that comes from `size`, delivered as
@@ -159,9 +130,9 @@ export type Column<T, K extends string, G extends string = never> = {
 // translating the `c` identity into the matching TanStack fields and
 // GUARANTEEING an explicit `id`: • key      → accessorKey: key, id: String(key)
 // • accessor → accessorFn: accessor, id • id       → id (a display column — no
-// accessor) The rest of the column (header/cell/meta + our
-// sortKey/tabsAndCardGroups) rides along untouched — read back off the
-// columnDef by the sort mapper, the card-group filter, and ColumnSettings.
+// accessor) The rest of the column (header/cell/meta + our sortKey/cardGroup)
+// rides along untouched — read back off the columnDef by the sort mapper,
+// CardView's group engine, and ColumnSettings.
 export const toColumnDef = <T, K extends string, G extends string>(
   col: Column<T, K, G>
 ): ColumnDef<T> => {
@@ -176,25 +147,45 @@ export const toColumnDef = <T, K extends string, G extends string>(
   return { ...rest, id: c.id } as ColumnDef<T>;
 };
 
-// A card-group definition for a grouped table. The page declares a const list;
-// `Column.tabsAndCardGroups` references these keys (typed as G). One shape
-// drives both faces (kdd/edit-line-card-table): a card group shows as a TAB in
-// table view and a GROUP-ROW in card view — hence the icon (shown on the tab +
-// card group row) and the translated label.
-export type TabAndCardGroup<G extends string> = {
-  /**
-   * The card-group key — what a column's `tabsAndCardGroups` entry must match.
-   */
+// A card BODY group — how one `cardGroup` key presents in card view. The table
+// declares a const list (`DataTable.cardGroups`); each column's `cardGroup`
+// references a key (typed G). A group renders as a captioned block of its
+// columns' fields, in the order the groups are listed; the default (ungrouped)
+// group renders first, unpanelled, always shown. Every field of the group
+// beyond the header is a label + value.
+export type CardGroup<T, G extends string> = {
+  /** The group key — what a column's `cardGroup` must match. */
   key: G;
-  /** i18n key for the card-group label (shown on its tab + card group row). */
-  labelKey: LocaleKey;
   /**
-   * Optional icon for the card group — its tab and its card group-row — as a
-   * FACTORY (`() => <Icon/>`), not a bare element. The icon renders in
-   * multiple places at once (the tab strip + one per card in card view); a
-   * shared JSX element is a single DOM node that can only live in one place
-   * (it would end up on just the last card), so each render site calls this to
-   * get its own node.
+   * i18n key for the group caption / disclosure header. OPTIONAL — the common
+   * primary group is unlabelled (just its fields). A disclosure group with no
+   * label falls back to "More details".
+   */
+  labelKey?: LocaleKey;
+  /**
+   * Optional leading icon for the group — as a FACTORY (`() => <Icon/>`), not a
+   * bare element. The icon renders once per card (one node per row); a shared
+   * JSX element is a single DOM node that can only live in one place (it would
+   * end up on just the last card), so each render site calls this for its own
+   * node.
    */
   icon?: () => JSX.Element;
+  /**
+   * Render this group's fields inside a contained panel (the mockup's tinted
+   * "zone") rather than flat on the card. Default false — good for the wide
+   * modal cards, off for small list cards.
+   */
+  panel?: boolean;
+  /**
+   * Put this group inside a disclosure (Accordion). Omit → always shown, no
+   * accordion (the "primary" content). 'open' → accordion, initially open.
+   * 'closed' → accordion, initially collapsed (the "secondary" content). A
+   * table-only field is `meta.hideOnCard`, not a disclosure state.
+   */
+  disclosure?: 'open' | 'closed';
+  /**
+   * Row-specific preview shown beside the disclosure header WHILE COLLAPSED
+   * (e.g. "Diff +3 · Reason: Damaged"). Only meaningful with `disclosure`.
+   */
+  disclosurePreview?: (row: T) => JSX.Element;
 };

@@ -526,7 +526,7 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'itemName' },
         sortKey: 'itemName',
         header: t('label.name'),
-        meta: { cardPosition: 'header-primary', wrapLines: 2 },
+        meta: { headerPosition: 'primary', wrapLines: 2 },
       },
       // PO line number — PO-linked shipments only.
       ...(isExternalShipment(node)
@@ -601,7 +601,7 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'numberOfPacks' },
         header: t('label.pack-quantity'),
         ...getNumberCell(),
-        meta: { align: 'right', cardPosition: 'header-badge' },
+        meta: { align: 'right', headerPosition: 'badge' },
       },
       // Difference (H6) — supplier-shipped packs minus received packs; blank
       // when nothing was recorded as shipped.

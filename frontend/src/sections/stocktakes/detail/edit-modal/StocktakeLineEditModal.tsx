@@ -18,8 +18,7 @@ import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import {
   DataTable,
   type Column,
-  type TabAndCardGroup,
-  ALL_TABS,
+  type CardGroup,
 } from '../../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -229,24 +228,31 @@ const buildDraft = async (
   return [...fromExisting, ...fromStock];
 };
 
-// The tabs / card-groups for the grouped table (unchanged). Batch is an ALL_TABS
-// anchor (shows in every tab), not its own group.
+// The card body groups. This modal is card-only (no table view — see the
+// createTableConfig default below): batch is the always-shown primary panel;
+// pricing and other are collapsed disclosures. Batch is the card HEADER
+// identity (meta.headerPosition), so it isn't itself a body group.
 type GroupKey = 'batch' | 'pricing' | 'other';
-const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
+const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
     labelKey: 'label.batch',
     icon: () => <StockIcon />,
+    panel: true,
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing',
     icon: () => <InfoIcon />,
+    panel: true,
+    disclosure: 'closed',
   },
   {
     key: 'other',
     labelKey: 'heading.other',
     icon: () => <MessageSquareIcon />,
+    panel: true,
+    disclosure: 'closed',
   },
 ];
 
@@ -388,7 +394,13 @@ const StocktakeLineEditContent = (
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
 
-  const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
+  // Card-only: default the view to card at every band (compact already forces
+  // card; this extends it to desktop). No showCardToggle on the DataTable, so
+  // there's no way to a table view — the batch grid is always cards.
+  const tableConfig = createTableConfig({
+    tableId: 'stocktake-line-edit',
+    defaultConfig: { base: { viewMode: 'card' } },
+  });
 
   // Seed the draft for one item. Replaces the store (reconcile by id) so no rows
   // from the previous item linger, and resets per-item UI. countByDefault:
@@ -779,7 +791,6 @@ const StocktakeLineEditContent = (
     {
       c: { id: 'countThisLine' },
       header: t('label.count-this-line'),
-      tabsAndCardGroups: ALL_TABS,
       meta: { align: 'center' },
       cell: info => {
         const line = info.row.original;
@@ -798,8 +809,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'batch' },
       header: t('label.batch'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { cardPosition: 'header-primary' },
+      meta: { headerPosition: 'primary' },
       cell: info => {
         const line = info.row.original;
         return (
@@ -819,7 +829,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'expiryDate' },
       header: t('label.expiry-date'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
         return (
@@ -837,7 +847,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'manufactureDate' },
       header: t('label.manufacture-date'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
         return (
@@ -855,7 +865,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'snapshotNumberOfPacks' },
       header: t('label.snapshot-num-of-packs'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -893,7 +903,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'countedNumberOfPacks' },
       header: t('label.counted-num-of-packs'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -925,7 +935,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'packSize' },
       header: t('label.pack-size'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -950,7 +960,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'location' },
       header: t('label.location'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
         return (
@@ -984,7 +994,7 @@ const StocktakeLineEditContent = (
           {
             c: { id: 'vvmStatus' },
             header: t('label.vvm-status'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             cell: info => {
               const line = info.row.original;
               // Non-vaccine rows leave the cell blank (the display is vaccine-
@@ -1020,7 +1030,7 @@ const StocktakeLineEditContent = (
           {
             c: { id: 'dosesCounted' },
             header: t('label.doses-counted'),
-            tabsAndCardGroups: ['batch'],
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
               const doses = dosesCounted(info.row.original);
@@ -1032,7 +1042,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
-      tabsAndCardGroups: ['pricing'],
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -1053,7 +1063,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'costPricePerPack' },
       header: t('label.pack-cost-price'),
-      tabsAndCardGroups: ['pricing'],
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -1074,7 +1084,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'volumePerPack' },
       header: t('label.volume-per-pack'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -1103,7 +1113,7 @@ const StocktakeLineEditContent = (
           {
             c: { id: 'donor' },
             header: t('label.donor'),
-            tabsAndCardGroups: ['other'],
+            cardGroup: 'other',
             cell: info => {
               const line = info.row.original;
               return (
@@ -1145,7 +1155,7 @@ const StocktakeLineEditContent = (
     {
       c: { id: 'campaignOrProgram' },
       header: t('label.campaign'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1173,7 +1183,7 @@ const StocktakeLineEditContent = (
     {
       c: { id: 'manufacturer' },
       header: t('label.manufacturer'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1211,7 +1221,7 @@ const StocktakeLineEditContent = (
     {
       c: { id: 'inventoryAdjustmentReasonInput' },
       header: t('label.reason'),
-      tabsAndCardGroups: ['batch'],
+      cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
         const error = () => {
@@ -1252,7 +1262,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'note' },
       header: t('label.note'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1272,7 +1282,7 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'comment' },
       header: t('label.stocktake-comment'),
-      tabsAndCardGroups: ['other'],
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1292,8 +1302,7 @@ const StocktakeLineEditContent = (
     {
       c: { id: 'actions' },
       header: t('label.actions'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { cardPosition: 'header-badge', align: 'right' },
+      meta: { headerPosition: 'badge', align: 'right' },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1426,7 +1435,7 @@ const StocktakeLineEditContent = (
           rows={rows()}
           rowKey={line => line.id}
           loading={loadingLines()}
-          tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+          cardGroups={CARD_GROUPS}
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}

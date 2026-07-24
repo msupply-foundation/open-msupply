@@ -361,7 +361,7 @@ export const DetailTableShowcase = () => {
       sortKey: 'itemName',
       header: t('label.name'),
       ...getCellDefinition<Line>('itemName', {
-        cardPosition: 'header-primary',
+        headerPosition: 'primary',
         wrapLines: 2,
       }),
     },
@@ -398,7 +398,7 @@ export const DetailTableShowcase = () => {
       c: { key: 'numberOfPacks' },
       header: t('label.pack-quantity'),
       ...getCellDefinition<Line>('numberOfPacks', {
-        cardPosition: 'header-badge',
+        headerPosition: 'badge',
       }),
     },
     {
@@ -616,6 +616,9 @@ export const DetailTableShowcase = () => {
             rowKey={line => line.id}
             sort={sort()}
             onSort={onSort}
+            // Offer the card ⇄ table toggle above the compact band (below 600px
+            // the list is card-only). Card view surfaces the Sort control.
+            showCardToggle
             // The real page opens the line-edit modal on row click; a no-op
             // here so the click-to-open row affordance still shows.
             onRowClick={() => {}}

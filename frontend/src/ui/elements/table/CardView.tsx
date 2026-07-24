@@ -7,32 +7,26 @@ import {
 } from '@tanstack/solid-table';
 import { LabelledValue } from '../typography/LabelledValue';
 import { BareCheckbox } from '../inputs/BareCheckbox';
-import { t } from '../../../intl';
 import {
-  membershipCardGroups,
-  type Membership,
-  type TabAndCardGroup,
-} from './columnTypes';
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  useAccordionItemExpanded,
+} from '../accordion/Accordion';
+import { t } from '../../../intl';
+import type { CardGroup } from './columnTypes';
 import styles from './DataTable.module.css';
 
-// A cell's explicit card position, or undefined when it has none — in which
-// case it belongs to the card body (rendered below the header, ordered by
-// group when grouped), alongside the content positions.
-const cellCardPosition = <T,>(
+// A cell's card HEADER slot, or undefined when it belongs to the body.
+const headerSlot = <T,>(
   cell: TanCell<T, unknown>
-):
-  | 'header-primary'
-  | 'header-badge'
-  | 'content-primary'
-  | 'content-secondary'
-  | undefined => cell.column.columnDef.meta?.cardPosition;
+): 'primary' | 'badge' | undefined =>
+  cell.column.columnDef.meta?.headerPosition;
 
-// Whether a cell sits in the card HEADER row (either header position) — as
-// opposed to the body, which holds every other visible cell.
-const cellInHeader = <T,>(cell: TanCell<T, unknown>): boolean => {
-  const p = cellCardPosition(cell);
-  return p === 'header-primary' || p === 'header-badge';
-};
+// A body cell's group key (undefined = the default/ungrouped group).
+const cellGroup = <T,>(cell: TanCell<T, unknown>): string | undefined =>
+  (cell.column.columnDef as { cardGroup?: string }).cardGroup;
 
 // The column's header text, for a field label. Headers may be a string or
 // JSX/function; only the string case yields a readable label (our columns use
@@ -44,40 +38,120 @@ const columnHeaderText = <T,>(
   return typeof header === 'string' ? header : undefined;
 };
 
-// A cell's column membership (ALL_TABS sentinel | array of group keys |
-// undefined).
-const cellMembership = <T,>(cell: TanCell<T, unknown>): Membership =>
-  (cell.column.columnDef as { tabsAndCardGroups?: Membership })
-    .tabsAndCardGroups;
+// A labelled field flow — the body cells of one group, each as label + value,
+// wrapping until exhausted. Boxed in a panel when the group asks for it.
+function FieldFlow<T>(props: {
+  cells: TanCell<T, unknown>[];
+  panel?: boolean;
+}): JSX.Element {
+  return (
+    <div class={props.panel ? styles.cardPanel : undefined}>
+      <div class={styles.cardFields}>
+        <For each={props.cells}>
+          {cell => (
+            <LabelledValue label={columnHeaderText(cell)}>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </LabelledValue>
+          )}
+        </For>
+      </div>
+    </div>
+  );
+}
 
-// Whether a cell belongs to a real card GROUP (a declared group key) —
-// excludes ALL_TABS, which appears in every tab but is NOT part of card
-// grouping.
-const cellInGroup = <T,>(cell: TanCell<T, unknown>, key: string): boolean =>
-  membershipCardGroups(cellMembership(cell)).includes(key);
+// A group caption — its leading icon and/or label. Rendered only when the group
+// declares one or the other (the default primary group has neither).
+function GroupCaption<T, G extends string>(props: {
+  group: CardGroup<T, G>;
+}): JSX.Element {
+  return (
+    <Show when={props.group.icon || props.group.labelKey}>
+      <div class={styles.cardGroupCaption}>
+        <Show when={props.group.icon}>
+          {icon => <span class={styles.cardGroupIcon}>{icon()()}</span>}
+        </Show>
+        <Show when={props.group.labelKey}>
+          {labelKey => <span>{t(labelKey())}</span>}
+        </Show>
+      </div>
+    </Show>
+  );
+}
 
-// Card view — each row is a card (ui-standards § tables): primary identity
-// top-left, a badge top-right, and the rest in the secondary area below. Reuses
-// TanStack's row model + visible cells, routing each by its meta.card region;
-// selection + row-click mirror the table. When `tabsAndCardGroups` is set
-// (kdd/edit-line-card-table), the secondary area is ordered by group — each
-// group as its own ROW (icon + its fields); ALL_TABS / ungrouped cells follow,
-// unlabelled.
+// The collapsed-state preview beside a disclosure header — shown only while the
+// accordion item is closed (reads Kobalte's collapsible context via
+// useAccordionItemExpanded). Rendered inside the AccordionItem, as a sibling of
+// the trigger (NOT inside AccordionContent, which is hidden when collapsed).
+function ClosedPreview(props: { children: JSX.Element }): JSX.Element {
+  const expanded = useAccordionItemExpanded();
+  return (
+    <Show when={!expanded()}>
+      <div class={styles.cardPreview}>{props.children}</div>
+    </Show>
+  );
+}
+
+// A disclosure group — its fields inside an Accordion (initially open or
+// closed). The trigger carries the group's icon + label ("More details" when
+// unlabelled); an optional row preview shows beside it while collapsed. The
+// wrapper stops click propagation so operating the disclosure never triggers a
+// clickable card's onRowClick.
+function DisclosureGroup<T, G extends string>(props: {
+  group: CardGroup<T, G>;
+  cells: TanCell<T, unknown>[];
+  row: T;
+}): JSX.Element {
+  const label = () =>
+    props.group.labelKey ? t(props.group.labelKey) : t('table.more-details');
+  return (
+    <Accordion
+      collapsible
+      defaultValue={props.group.disclosure === 'open' ? [props.group.key] : []}
+    >
+      <AccordionItem value={props.group.key}>
+        <div onClick={event => event.stopPropagation()}>
+          <div class={styles.cardDisclosureHead}>
+            <AccordionTrigger class={styles.cardDisclosureTrigger}>
+              <Show when={props.group.icon}>
+                {icon => <span class={styles.cardGroupIcon}>{icon()()}</span>}
+              </Show>
+              {label()}
+            </AccordionTrigger>
+            <Show when={props.group.disclosurePreview}>
+              {preview => <ClosedPreview>{preview()(props.row)}</ClosedPreview>}
+            </Show>
+          </div>
+          <AccordionContent>
+            <FieldFlow cells={props.cells} panel={props.group.panel} />
+          </AccordionContent>
+        </div>
+      </AccordionItem>
+    </Accordion>
+  );
+}
+
+// Card view — each row is a card (ui-standards § tables): an identity/title
+// inline-start and a badge inline-end in the HEADER, then the body laid out as
+// GROUPS. A column's body group is `cardGroup`; the table's `cardGroups` list
+// declares each group's presentation (icon, panel, disclosure). Ungrouped body
+// cells form the default group, rendered first — unpanelled, always shown. A
+// group with a `disclosure` sits inside an Accordion; others render inline.
+// Selection + row-click mirror the table.
 //
 // Each card is a full-width table ROW (a <tr> with a single <td>) so card view
 // shares the SAME <table> as table view — one scroll container, the header row
-// simply hidden. In card view the table has no header and every row is one
-// <td>, so it's effectively a one-column table: the cell fills the width with
-// no colSpan needed, and the card content wraps rather than scrolling.
-export function CardView<T>(props: {
+// simply hidden. In card view every row is one <td>, so the cell fills the
+// width and the card content wraps rather than scrolling.
+export function CardView<T, G extends string>(props: {
   table: Table<T>;
-  tabsAndCardGroups?: TabAndCardGroup<string>[];
+  cardGroups?: CardGroup<T, G>[];
   enableSelection: boolean;
   onRowClick?: (row: T) => void;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.
   const rows = () => props.table.getRowModel().rows;
+  const groupKeys = () => new Set((props.cardGroups ?? []).map(g => g.key));
   return (
     <For each={rows()}>
       {row => {
@@ -87,11 +161,21 @@ export function CardView<T>(props: {
           row
             .getVisibleCells()
             .filter(c => !c.column.columnDef.meta?.hideOnCard);
-        const inHeader = (position: 'header-primary' | 'header-badge') =>
-          cells().filter(c => cellCardPosition(c) === position);
-        // The card body: every visible cell NOT in the header row (the content
-        // positions plus un-annotated columns).
-        const secondaryCells = () => cells().filter(c => !cellInHeader(c));
+        const inHeader = (slot: 'primary' | 'badge') =>
+          cells().filter(c => headerSlot(c) === slot);
+        // Body cells = everything not in the header row.
+        const bodyCells = () =>
+          cells().filter(c => headerSlot(c) === undefined);
+        // The default group: body cells with no group (or a stray group key not
+        // declared in cardGroups). Rendered first, unpanelled, always shown.
+        const defaultCells = () =>
+          bodyCells().filter(c => {
+            const g = cellGroup(c);
+            return g === undefined || !groupKeys().has(g as G);
+          });
+        // A declared group's cells, in body order.
+        const groupCells = (key: G) =>
+          bodyCells().filter(c => cellGroup(c) === key);
         return (
           <tr
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
@@ -113,10 +197,10 @@ export function CardView<T>(props: {
                     />
                   </Show>
                   <div class={styles.cardIdentity}>
-                    <For each={inHeader('header-primary')}>
+                    <For each={inHeader('primary')}>
                       {cell => (
-                        // Header positions are never labelled — the cell fills
-                        // the slot directly (identity/title top-left).
+                        // Header slots are never labelled — the cell fills the
+                        // slot directly (identity/title inline-start).
                         <div class={styles.cardPrimary}>
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -126,7 +210,7 @@ export function CardView<T>(props: {
                       )}
                     </For>
                   </div>
-                  <For each={inHeader('header-badge')}>
+                  <For each={inHeader('badge')}>
                     {cell => (
                       <div class={styles.cardBadge}>
                         {flexRender(
@@ -137,71 +221,38 @@ export function CardView<T>(props: {
                     )}
                   </For>
                 </div>
-                {/* The secondary area — every cell with no explicit card region. When grouped:
-                    each group is its own ROW (a .cardFields flow led by the group ICON),
-                    skipping groups with nothing visible (pass 1); then a final row for cells in
-                    NO group — ALL_TABS anchors + un-annotated columns — with no icon (pass 2).
-                    Ungrouped tables render one flat row. A cell is "in a group" only via a real
-                    tab key; ALL_TABS never counts as a card group. */}
-                <Show when={secondaryCells().length > 0}>
-                  {/* Pass 1 — one row per group. */}
-                  <For each={props.tabsAndCardGroups}>
-                    {group => {
-                      const groupCells = () =>
-                        secondaryCells().filter(c => cellInGroup(c, group.key));
-                      return (
-                        <Show when={groupCells().length > 0}>
-                          <div class={styles.cardFields}>
-                            <Show when={group.icon}>
-                              {icon => (
-                                <span class={styles.cardGroupIcon}>
-                                  {icon()()}
-                                </span>
-                              )}
-                            </Show>
-                            <For each={groupCells()}>
-                              {cell => (
-                                <LabelledValue label={columnHeaderText(cell)}>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext()
-                                  )}
-                                </LabelledValue>
-                              )}
-                            </For>
-                          </div>
-                        </Show>
-                      );
-                    }}
-                  </For>
-                  {/* Pass 2 — the ungrouped row: cells in no real group (ALL_TABS anchors +
-                      un-annotated), and the whole set when the table isn't grouped. No icon. */}
-                  <Show
-                    when={secondaryCells().filter(
-                      c =>
-                        !(props.tabsAndCardGroups ?? []).some(g =>
-                          cellInGroup(c, g.key)
-                        )
-                    )}
-                  >
-                    {ungrouped => (
-                      <Show when={ungrouped().length > 0}>
-                        <div class={styles.cardFields}>
-                          <For each={ungrouped()}>
-                            {cell => (
-                              <LabelledValue label={columnHeaderText(cell)}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}
-                              </LabelledValue>
-                            )}
-                          </For>
-                        </div>
-                      </Show>
-                    )}
-                  </Show>
+                {/* Default (ungrouped) group first — unpanelled, always shown. */}
+                <Show when={defaultCells().length > 0}>
+                  <FieldFlow cells={defaultCells()} />
                 </Show>
+                {/* Declared groups, in list order. A group with a disclosure
+                    goes inside an Accordion; others render inline with an
+                    optional caption + panel. Empty groups (no visible cells)
+                    render nothing. */}
+                <For each={props.cardGroups}>
+                  {group => (
+                    <Show when={groupCells(group.key).length > 0}>
+                      <Show
+                        when={group.disclosure}
+                        fallback={
+                          <div class={styles.cardGroup}>
+                            <GroupCaption group={group} />
+                            <FieldFlow
+                              cells={groupCells(group.key)}
+                              panel={group.panel}
+                            />
+                          </div>
+                        }
+                      >
+                        <DisclosureGroup
+                          group={group}
+                          cells={groupCells(group.key)}
+                          row={row.original}
+                        />
+                      </Show>
+                    </Show>
+                  )}
+                </For>
               </div>
             </td>
           </tr>

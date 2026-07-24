@@ -205,7 +205,7 @@ const OutboundShipmentsList: Component = () => {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: t('label.name'),
-      meta: { cardPosition: 'header-primary', wrapLines: 2 },
+      meta: { headerPosition: 'primary', wrapLines: 2 },
       cell: info => {
         const row = info.row.original;
         return (
@@ -244,7 +244,7 @@ const OutboundShipmentsList: Component = () => {
           />
         );
       },
-      meta: { cardPosition: 'header-badge' },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },

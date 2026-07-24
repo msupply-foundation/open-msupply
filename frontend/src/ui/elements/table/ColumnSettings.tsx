@@ -10,7 +10,6 @@ import {
   PinRightIcon,
 } from '../../icons';
 import type { TableConfig, TableConfigKey, ViewMode } from './tableConfig';
-import { ALL_TABS, type TabAndCardGroup } from './DataTable';
 import styles from './ColumnSettings.module.css';
 
 // The Columns panel (ui-standards § tables → column management, the advanced
@@ -30,11 +29,6 @@ export function ColumnSettings<T>(props: {
   table: Table<T>;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /**
-   * The table's tabs/groups (when grouped) — used to badge each row with the
-   * group(s) a
-   *  column belongs to, so it's clear hiding/reordering is GLOBAL across tabs. */
-  tabsAndCardGroups?: TabAndCardGroup<string>[];
-  /**
    * The table's current view. The panel lists only the columns that view
    * actually shows — card-only columns (meta.hideOnTable) are dropped in table
    * view, table-only columns (meta.hideOnCard) in card view — so the popover
@@ -42,21 +36,6 @@ export function ColumnSettings<T>(props: {
    */
   viewMode: ViewMode;
 }): JSX.Element {
-  // The tabs/groups a column id belongs to, for its settings-row icon badges.
-  // An ALL_TABS column (batch, actions) belongs to EVERY tab → show all icons;
-  // an array names specific groups → show those; absent → none.
-  const columnGroups = (id: string): TabAndCardGroup<string>[] => {
-    const groups = props.tabsAndCardGroups;
-    if (!groups) return [];
-    const membership = (
-      props.table.getColumn(id)?.columnDef as {
-        tabsAndCardGroups?: string[] | typeof ALL_TABS;
-      }
-    )?.tabsAndCardGroups;
-    if (membership === ALL_TABS) return groups;
-    if (!Array.isArray(membership)) return [];
-    return groups.filter(g => membership.includes(g.key));
-  };
   // Leaf column ids in effective display order (columnOrder if set, else def
   // order). Card-only / table-only columns are excluded for the current view
   // (see the viewMode prop) so the panel matches what's on screen.
@@ -164,27 +143,7 @@ export function ColumnSettings<T>(props: {
                   <EyeIcon class={styles.eyeShow} />
                   <EyeOffIcon class={styles.eyeHide} />
                 </span>
-                <span class={styles.colName}>
-                  {label(id)}
-                  {/* Group badge(s): just the ICON of each group this column
-                      belongs to (the group's label reads on its tab) — a compact
-                      hint that visibility/order changes here are GLOBAL across
-                      tabs. `title` gives the text on hover. */}
-                  <For each={columnGroups(id)}>
-                    {group => (
-                      <Show when={group.icon}>
-                        {icon => (
-                          <span
-                            class={styles.groupBadgeIcon}
-                            title={t(group.labelKey)}
-                          >
-                            {icon()()}
-                          </span>
-                        )}
-                      </Show>
-                    )}
-                  </For>
-                </span>
+                <span class={styles.colName}>{label(id)}</span>
               </label>
 
               {/* Trailing controls: Move up/down (no drag), then Pin L/R. */}

@@ -250,17 +250,3 @@
 .chevronUp {
   transform: rotate(180deg);
 }
-
-/* Group badge — the icon(s) of the tab/group(s) a column belongs to, inline
-   after the name, so it's clear hiding/reordering here is GLOBAL across tabs.
-   Text on hover via title. */
-.groupBadgeIcon {
-  display: inline-flex;
-  align-items: center;
-  color: var(--primary-main);
-}
-
-.groupBadgeIcon svg {
-  inline-size: 0.875rem;
-  block-size: 0.875rem;
-}
