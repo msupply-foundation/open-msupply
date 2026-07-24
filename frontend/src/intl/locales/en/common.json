@@ -2921,7 +2921,7 @@
   "name.empty": "No names to display",
   "name.filter.contains": "contains",
   "name.filter.search": "Search",
-  "name.filter.search-placeholder": "Search by name or code",
+  "name.filter.search-placeholder": "Name or code",
   "name.po.empty": "No purchase orders",
   "name.store-indicator": "This name is a store",
   "name.tab.contacts": "Contacts",
