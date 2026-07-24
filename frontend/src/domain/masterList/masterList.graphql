@@ -1,8 +1,11 @@
-# Master lists for the current store — an app-wide lookup backed by a store-scoped cache
-# (masterListsResource): fetched once per store, shared by every consumer (the stocktake
-# create form's master-list picker, and future verticals). id + name is all a picker needs.
-query masterLists($storeId: String!) {
-  masterLists(storeId: $storeId) {
+# Master lists for the current store — a store-scoped cache (masterListsResource):
+# fetched once per store, shared by every consumer (the stocktake create form's
+# master-list picker, and future verticals). id + name is all a picker needs.
+# storeId is auth/context only (spec/master-lists/contract.md) — the resource
+# supplies existsForStoreId as $filter, without which the query returns every
+# master list system-wide, including ones this store can't create a stocktake from.
+query masterLists($storeId: String!, $filter: MasterListFilterInput) {
+  masterLists(storeId: $storeId, filter: $filter) {
     ... on MasterListConnector {
       __typename
       nodes {
