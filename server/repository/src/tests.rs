@@ -162,14 +162,15 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 1).unwrap()),
-                pack_size: 1.0,
+                pack_size: 10.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 1.0,
                 total_after_tax: 1.0,
                 tax_percentage: None,
                 r#type: InvoiceLineType::StockIn,
-                number_of_packs: 1.0,
+                number_of_packs: 2.0,
+                volume_per_pack: 0.5,
                 ..Default::default()
             }
         }
@@ -213,6 +214,28 @@ mod repository_test {
                 tax_percentage: None,
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 1.0,
+                ..Default::default()
+            }
+        }
+
+        pub fn invoice_line_placeholder() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test_placeholder".to_string(),
+                item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
+                invoice_id: invoice_1().id.to_string(),
+                stock_line_id: None,
+                batch: None,
+                expiry_date: None,
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 0.0,
+                total_after_tax: 0.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 5.0,
                 ..Default::default()
             }
         }
@@ -284,7 +307,8 @@ mod repository_test {
         },
         requisition_row::RequisitionStatus,
         test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRow,
+        InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository,
+        InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRow,
         ItemRowRepository, KeyType, KeyValueStoreRepository, MasterListFilter,
         MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
@@ -818,6 +842,10 @@ mod repository_test {
         InvoiceLineRowRepository::new(&connection)
             .upsert_one(&service_item)
             .unwrap();
+        let placeholder_item = data::invoice_line_placeholder();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&placeholder_item)
+            .unwrap();
 
         // line stats
         let invoice_1_id = data::invoice_1().id;
@@ -838,9 +866,58 @@ mod repository_test {
                 stock_total_after_tax: 3.0,
                 service_total_before_tax: 10.0,
                 service_total_after_tax: 15.0,
+                // The volume total covers non-service lines, placeholders
+                // included: line1 (2 packs × 0.5/pack) + line2 (0) +
+                // placeholder (0); the service line is excluded.
+                total_volume: 1.0,
                 ..stats_invoice_1.clone()
             }
         );
+
+        // item_code_or_name filters on the joined item's code OR name
+        let repo = InvoiceLineRepository::new(&connection);
+        let by_code = repo
+            .query_by_filter(
+                InvoiceLineFilter::new().item_code_or_name(StringFilter::like("code1")),
+            )
+            .unwrap();
+        assert_eq!(
+            {
+                let mut ids: Vec<String> =
+                    by_code.iter().map(|l| l.invoice_line_row.id.clone()).collect();
+                ids.sort();
+                ids
+            },
+            vec![
+                "test1".to_string(),
+                "test2-with-optional".to_string(),
+                "test_placeholder".to_string()
+            ]
+        );
+        let by_name = repo
+            .query_by_filter(
+                InvoiceLineFilter::new().item_code_or_name(StringFilter::like("item-2")),
+            )
+            .unwrap();
+        assert_eq!(
+            by_name
+                .iter()
+                .map(|l| l.invoice_line_row.id.clone())
+                .collect::<Vec<_>>(),
+            vec!["test3".to_string()]
+        );
+        // The (code OR name) pair must AND with the other filters — item-2 is
+        // only on invoice_2, so scoping to invoice_1 yields nothing (guards
+        // the or_filter grouping: it ORs against the whole existing clause,
+        // so item_code_or_name must be applied first).
+        let scoped = repo
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(data::invoice_1().id))
+                    .item_code_or_name(StringFilter::like("item-2")),
+            )
+            .unwrap();
+        assert_eq!(scoped.len(), 0);
     }
 
     #[actix_rt::test]
