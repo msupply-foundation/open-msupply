@@ -40,6 +40,9 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // verdict inline in the confirmation dialog — on-hold (AC-H1) and
 // unallocated-placeholder (AC-P3) rejections land in the error phase; the
 // confirmation itself carries the zero-quantity removal warning (AC-S5).
+// The on-hold notice is ACTIONABLE (D53): it offers "Release hold and
+// confirm ‹status›" — one save carrying both the release and the advance
+// (rules.md § on hold, AC-H2) — instead of the old app's dead-end toast.
 
 /** Whole-shipment pre-flight answers (probed at action time, never derived
  * from the loaded page). */
@@ -70,6 +73,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   >();
   const [infoMessage, setInfoMessage] = createSignal<string | undefined>();
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  // Set when the notice is the ON-HOLD rejection: the status the user tried
+  // to reach, offered as "Release hold and confirm ‹status›" — one save that
+  // both releases and advances (AC-H2, D53). Cleared with the notice.
+  const [holdRetryStatus, setHoldRetryStatus] = createSignal<
+    SettableStatus | undefined
+  >();
+  const [releasing, setReleasing] = createSignal(false);
 
   const editable = () => isEditable(props.node.status);
   const currentIndex = () => statusIndex(props.node.status);
@@ -152,8 +162,10 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       // closes (it holds no input to preserve, so D20's stay-open rationale
       // doesn't apply) and the verdict surfaces as the footer's blocking
       // notice — the same surface, still never a toast. The shared suite
-      // pins this close-then-notice shape.
+      // pins this close-then-notice shape. The on-hold verdict additionally
+      // arms the notice's release-and-advance action (AC-H2, D53).
       close();
+      setHoldRetryStatus(result.heldShipment ? status : undefined);
       setInfoMessage(result.message);
       return;
     }
@@ -162,6 +174,36 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     // a lingering modal would block the next lifecycle step.
     props.onSaved(result.node);
     close();
+  };
+
+  const closeNotice = () => {
+    setInfoMessage(undefined);
+    setHoldRetryStatus(undefined);
+  };
+
+  // The on-hold notice's action (AC-H2, D53): retry the SAME status change
+  // with the hold released in one save — {id, status, onHold: false}.
+  const releaseAndConfirm = async () => {
+    const status = holdRetryStatus();
+    if (!status || releasing()) return;
+    setReleasing(true);
+    const result = await changeShipmentStatus(
+      props.storeId,
+      props.node.id,
+      status,
+      true
+    );
+    setReleasing(false);
+    if (result.kind === 'failed') return closeNotice();
+    if (result.kind === 'error') {
+      // A fresh verdict (e.g. a racing edit) replaces the notice; the retry
+      // is not re-armed — a second rejection needs a fresh attempt.
+      setHoldRetryStatus(undefined);
+      setInfoMessage(result.message);
+      return;
+    }
+    props.onSaved(result.node);
+    closeNotice();
   };
 
   return (
@@ -240,22 +282,44 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         />
       </Show>
 
-      {/* Blocking notice (guards 1–2): unallocated placeholders / no lines. */}
+      {/* Blocking notice: the lineless pre-flight (guards 1–2) and server
+          verdicts. The ON-HOLD verdict is actionable (AC-H2, D53): alongside
+          OK it offers "Release hold and confirm ‹status›" — one save carrying
+          both the release and the advance. */}
       <Show when={infoMessage() != null}>
         <Dialog
           open
-          onClose={() => setInfoMessage(undefined)}
+          dismissable={!releasing()}
+          onClose={closeNotice}
           icon={<InfoIcon />}
           title={t('heading.cannot-do-that')}
           description={infoMessage()}
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={() => setInfoMessage(undefined)}
-            >
-              {t('button.ok')}
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                icon={<CheckIcon />}
+                disabled={releasing()}
+                onClick={closeNotice}
+              >
+                {t('button.ok')}
+              </Button>
+              <Show when={holdRetryStatus()}>
+                {retry => (
+                  <Button
+                    variant="primary"
+                    icon={<ArrowRightIcon />}
+                    data-testid="release-hold-and-confirm-button"
+                    loading={releasing()}
+                    onClick={() => void releaseAndConfirm()}
+                  >
+                    {t('button.release-hold-and-confirm-status', {
+                      status: STATUS_LABELS[retry()],
+                    })}
+                  </Button>
+                )}
+              </Show>
+            </>
           }
         />
       </Show>

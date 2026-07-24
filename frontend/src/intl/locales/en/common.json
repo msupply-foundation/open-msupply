@@ -156,6 +156,7 @@
   "button.reduce-lines-to-zero": "Reduce to 0",
   "button.refresh": "Refresh",
   "button.reject": "Reject",
+  "button.release-hold-and-confirm-status": "Release hold & confirm {{status}}",
   "button.remove-file": "Remove file",
   "button.repack": "Repack",
   "button.requested-to-suggested": "Use suggested quantities",
