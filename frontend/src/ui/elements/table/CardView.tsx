@@ -81,7 +81,12 @@ export function CardView<T>(props: {
   return (
     <For each={rows()}>
       {row => {
-        const cells = () => row.getVisibleCells();
+        // Card view drops table-only columns (meta.hideOnCard) at the source,
+        // so they appear in neither the header nor the body.
+        const cells = () =>
+          row
+            .getVisibleCells()
+            .filter(c => !c.column.columnDef.meta?.hideOnCard);
         const inHeader = (position: 'header-primary' | 'header-badge') =>
           cells().filter(c => cellCardPosition(c) === position);
         // The card body: every visible cell NOT in the header row (the content
