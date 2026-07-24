@@ -92,6 +92,9 @@ fragment InboundInfo on InvoiceNode {
     foreignCurrencyTotalAfterTax
     taxPercentage
   }
+  # Custom-field VALUES (JSON object), server-filtered to the inbound_shipment
+  # scope's visible keys — backs the Custom fields tab + prominent toolbar fields.
+  customFields
 }
 
 fragment InboundLine on InvoiceLineNode {

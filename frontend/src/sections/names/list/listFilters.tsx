@@ -4,7 +4,6 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
-import type { CustomFieldDef } from '../customFields';
 import type { NamesFilter } from './namesListLogic';
 
 // Filter definitions for the Customer & Supplier lists (spec/names). The search
@@ -81,35 +80,10 @@ const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
 
 export const searchFilters = (): Filter<NamesFilter>[] => SEARCH_FILTERS;
 
-// The per-custom-field filter state: raw entered text per custom-field key
-// (null = an added-but-empty chip). Converted to the dynamicFilter AST at query
-// time (see customFields.buildDynamicFilter).
-export type CustomFieldFilterState = Record<string, string | null>;
-
-/*
- * The CUSTOM-FIELD filters — built dynamically from the role's
- * configured definitions (AC-N19: "exactly the fields configured for the role";
- * none configured ⇒ no custom-field filters). Each definition becomes an
- * add-a-filter entry whose text box writes that field's value into the cf state.
- * Built directly (not via constructFilters) because the keys are dynamic (from
- * config), not static keys of a generated type.
- */
-export const customFieldFilters = (
-  defs: CustomFieldDef[]
-): Filter<CustomFieldFilterState>[] =>
-  defs.map(def => ({
-    key: def.key,
-    label: () => def.name,
-    render: props => (
-      <FilterTextInput
-        label={def.name}
-        placeholder={t('name.filter.contains')}
-        // e2e hook: FilterBar supplies `filter-input-<key>` (TESTIDS.md).
-        testId={props.testId}
-        value={props.filter()[def.key] ?? ''}
-        onInput={value =>
-          props.setPartialFilter({ [def.key]: value ? value : null })
-        }
-      />
-    ),
-  }));
+// The custom-field filters (AC-N18/N19) are the shared builder — one text
+// filter per configured field for the role's scope; none configured ⇒ none.
+// Re-exported so the list keeps importing filters from one place.
+export {
+  customFieldFilters,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
