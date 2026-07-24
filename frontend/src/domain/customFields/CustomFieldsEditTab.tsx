@@ -11,7 +11,11 @@ import { DetailRow } from '../../ui/layout/Detail/DetailRow';
 import { createConfirmOnLeave } from '../confirmOnLeave';
 import { customFieldDefinitions } from './customFieldsResource';
 import { CustomFieldInput } from './CustomFieldInput';
-import { parseCustomFields, partitionCustomFields } from './customFields';
+import {
+  parseCustomField,
+  parseCustomFields,
+  partitionCustomFields,
+} from './parse';
 
 // The editable custom-fields tab (spec/ui-standards/custom-fields › editing):
 // the scope's VISIBLE fields (prominent ones live in the toolbar) as editable
@@ -31,11 +35,15 @@ export const CustomFieldsEditTab = (props: {
   const [draft, setDraft] = createStore<Record<string, unknown>>(
     parseCustomFields(props.values)
   );
+  // The keys edited since the last save — so the patch carries ONLY changed
+  // keys (a partial merge), never re-sends untouched ones.
+  let changed = new Set<string>();
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
 
   const resetDraft = () => {
     setDraft(reconcile(parseCustomFields(props.values)));
+    changed = new Set();
     setDirty(false);
   };
 
@@ -46,19 +54,26 @@ export const CustomFieldsEditTab = (props: {
 
   const setField = (key: string, value: unknown) => {
     setDraft(key, value);
+    changed.add(key);
     setDirty(true);
   };
 
   const save = async () => {
-    if (!dirty() || saving()) return;
+    if (!dirty() || saving() || changed.size === 0) return;
     setSaving(true);
-    // Send every tab key's current value; the server patch-merges, so untouched
-    // keys are unaffected and re-sending them is harmless.
+    // Only the changed keys — a partial merge; the server leaves the rest
+    // untouched. A cleared field carries its empty value; the vertical's
+    // `onSave` decides the wire encoding (e.g. null to delete a key).
     const patch: Record<string, unknown> = {};
-    for (const def of tabDefs()) patch[def.key] = draft[def.key];
+    changed.forEach(key => {
+      patch[key] = draft[key];
+    });
     const ok = await props.onSave(patch);
     setSaving(false);
-    if (ok) setDirty(false);
+    if (ok) {
+      changed = new Set();
+      setDirty(false);
+    }
   };
 
   return (
@@ -80,7 +95,7 @@ export const CustomFieldsEditTab = (props: {
                   label={def.name}
                   control={
                     <CustomFieldInput
-                      def={def}
+                      field={parseCustomField(def)}
                       value={draft[def.key]}
                       onChange={v => setField(def.key, v)}
                     />

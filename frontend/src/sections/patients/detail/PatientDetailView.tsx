@@ -36,7 +36,11 @@ import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
-import { runUpdatePatient } from '../patientApi';
+import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
+import {
+  CustomFieldsView,
+  CustomFieldsEditTab,
+} from '../../../domain/customFields';
 import {
   ageFromDob,
   draftEquals,
@@ -259,6 +263,26 @@ const PatientDetailView: Component = () => {
     { label: displayName() },
   ];
 
+  // Custom-fields merge write (spec/patients AC-CF1–CF3). Sends only the changed
+  // keys; a cleared field is sent as `null` (never '', which would persist a
+  // literal empty value — AC-CF2). Returns true on success so the edit tab
+  // clears its dirty state.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const n = node();
+    if (!n) return false;
+    const customFields: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      customFields[key] = value === '' || value === undefined ? null : value;
+    }
+    const outcome = await runUpdatePatientCustomFields(params.storeId, {
+      id: n.id,
+      customFields,
+    });
+    return outcome?.kind === 'ok';
+  };
+
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(hasProgramModule()
@@ -271,6 +295,7 @@ const PatientDetailView: Component = () => {
     ...(hasInsurance()
       ? [{ value: 'insurance', label: t('label.insurance') }]
       : []),
+    { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
   ];
 
@@ -432,6 +457,27 @@ const PatientDetailView: Component = () => {
                   />
                 </TabPanel>
               </Show>
+              <TabPanel value="custom-fields">
+                {/* Custom fields (spec/patients ui-surface; write path AC-CF1–CF3).
+                    Editable when the user can mutate the patient; read-only
+                    otherwise. The write is the patient-specific merge operation,
+                    independent of the details form (rules › custom fields). */}
+                <Show
+                  when={canMutate()}
+                  fallback={
+                    <CustomFieldsView
+                      scope="patient"
+                      values={n().customFields}
+                    />
+                  }
+                >
+                  <CustomFieldsEditTab
+                    scope="patient"
+                    values={n().customFields}
+                    onSave={saveCustomFields}
+                  />
+                </Show>
+              </TabPanel>
               <TabPanel value="log">
                 <ActivityLogPanel storeId={params.storeId} recordId={n().id} />
               </TabPanel>

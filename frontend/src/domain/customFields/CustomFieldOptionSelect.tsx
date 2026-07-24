@@ -3,7 +3,7 @@ import {
   orderOptionsHierarchically,
   type CustomFieldDef,
   type OrderedOption,
-} from './customFields';
+} from './parse';
 
 // The editable OPTION control (spec/ui-standards/custom-fields › option fields):
 // a searchable picker over the field's options, hierarchical — a parent's
