@@ -143,6 +143,33 @@ const patientPreferences = () => {
   };
 };
 
+// The prescriptions display/affordance gates (spec/prescriptions §
+// store-preference gates): the allocation-shaping trio (doses / VVM /
+// expired-issue) + the ordering variant, the list's status-options set, and
+// the legacy store preference gating the prescribed-quantity field/column.
+// Same safe defaults while unresolved as the other *Preferences accessors —
+// OFF for gated columns/fields, but `invoiceStatusOptions` empty means
+// UNRESTRICTED (every status offered until the real value resolves — the
+// permissive default, DIVERGENCES D7's precedent via AC-PR2). Reactive — a
+// post-sync refetch re-gates in place.
+const prescriptionPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    sortByVvmStatusThenExpiry: prefs?.sortByVvmStatusThenExpiry ?? false,
+    expiredStockPreventIssue: prefs?.expiredStockPreventIssue ?? false,
+    expiredStockIssueThreshold: prefs?.expiredStockIssueThreshold ?? 0,
+    invoiceStatusOptions: prefs?.invoiceStatusOptions ?? [],
+    // Unset/unresolved → SHOWN (the permissive default, matching the reference
+    // app's `?? true`): the prescribed-quantity field is a data-capture
+    // affordance the user expects; an explicit `false` hides it
+    // (spec/prescriptions § store-preference gates).
+    editPrescribedQuantity: store?.editPrescribedQuantityOnPrescription ?? true,
+  };
+};
+
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
 // group (ShellLayout) and its routes (the patients section's route guard). The
@@ -190,6 +217,7 @@ export {
   stockPreferences,
   inboundShipmentPreferences,
   patientPreferences,
+  prescriptionPreferences,
   isDispensary,
   hasPermission,
 };
