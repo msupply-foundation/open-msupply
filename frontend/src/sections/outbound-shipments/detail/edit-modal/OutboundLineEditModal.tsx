@@ -384,7 +384,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   //
   // The manual bar's on-hold exception and the sunk non-allocatable rows
   // (AC-AL14/AL15) judge the allocation AS SEEDED at editor open — plain
-  // (non-reactive) snapshots set by loadItem, so zeroing a held row mid-edit
+  // (non-reactive) snapshots set by seedItem, so zeroing a held row mid-edit
   // doesn't lock it and rows don't reorder underneath the user.
   let seededPacksById = new Map<string, number>();
   let nonAllocatableIds = new Set<string>();
