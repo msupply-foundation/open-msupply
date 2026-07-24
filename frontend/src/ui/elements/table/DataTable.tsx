@@ -409,12 +409,22 @@ export function DataTable<T, K extends string, G extends string = never>(
     return membershipInTab(col?.tabsAndCardGroups, cardGroup);
   };
 
-  // Does any active-tab column declare a `footer`? Drives whether the footer
+  // Table view shows a column when it's in the active card group AND not
+  // declared card-only (meta.hideOnTable). Same display-time-filter model as
+  // columnInActiveTab: TanStack keeps the FULL column set (config/order/sizing
+  // stay whole); we just skip rendering the header/body/footer cells here, and
+  // the Columns popover drops card-only columns in table view (see
+  // ColumnSettings). A card-only column with a footer must not force a <tfoot>,
+  // so hasFooter gates on this too.
+  const showInTableView = (columnDef: {
+    tabsAndCardGroups?: Membership;
+    meta?: { hideOnTable?: boolean };
+  }): boolean => columnInActiveTab(columnDef) && !columnDef.meta?.hideOnTable;
+
+  // Does any table-view column declare a `footer`? Drives whether the footer
   // band renders at all — a table with no summed columns has no <tfoot>.
   const hasFooter = (): boolean =>
-    props.columns.some(
-      col => col.footer !== undefined && columnInActiveTab(col)
-    );
+    props.columns.some(col => col.footer !== undefined && showInTableView(col));
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -636,6 +646,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                 table={table}
                 setConfig={props.setConfig}
                 tabsAndCardGroups={props.tabsAndCardGroups}
+                viewMode={viewMode()}
               />
             </Popover>
           </Show>
@@ -733,13 +744,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                           (TanStack still holds every column — see columnInActiveTab). */}
                       <For each={headerGroup.headers}>
                         {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )}
-                          >
+                          <Show when={showInTableView(header.column.columnDef)}>
                             <HeaderCell
                               header={header}
                               pinnedStyle={pinnedStyle}
@@ -779,11 +784,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}
                           cellVisible={cell =>
-                            columnInActiveTab(
-                              cell.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )
+                            showInTableView(cell.column.columnDef)
                           }
                         />
                       )}
@@ -817,13 +818,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       </Show>
                       <For each={footerGroup.headers}>
                         {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )}
-                          >
+                          <Show when={showInTableView(header.column.columnDef)}>
                             <td
                               class={styles.tf}
                               data-align={header.column.columnDef.meta?.align}
