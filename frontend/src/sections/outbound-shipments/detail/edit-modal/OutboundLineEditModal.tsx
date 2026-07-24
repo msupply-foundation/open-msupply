@@ -841,9 +841,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               const line = info.row.original;
               return (
                 <>
+                  {/* Displayed to 2 dp (the old app's number-cell default) —
+                      the raw subtraction carries float dust (2.34 − 3). */}
                   {line.receivedNumberOfPacks == null
                     ? ''
-                    : line.receivedNumberOfPacks - line.numberOfPacks}
+                    : formatNumber(
+                        line.receivedNumberOfPacks - line.numberOfPacks,
+                        { maximumFractionDigits: 2 }
+                      )}
                 </>
               );
             },
