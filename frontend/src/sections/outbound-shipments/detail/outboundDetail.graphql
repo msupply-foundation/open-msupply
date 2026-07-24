@@ -67,12 +67,10 @@ fragment OutboundInfo on InvoiceNode {
     serviceTotalBeforeTax
     serviceTotalAfterTax
     taxPercentage
-    # Whole-shipment quantity sums over non-service lines (placeholders
-    # included) — the line-table footer totals (D45), which the client can't
+    # Whole-shipment volume sum over non-service lines (placeholders
+    # included) — the line-table footer total (D45), which the client can't
     # sum itself now the lines are server-paginated (contract § detail line
-    # table).
-    totalNumberOfPacks
-    totalNumberOfUnits
+    # table). The price total is stockTotalAfterTax above.
     totalVolume
   }
 }

@@ -516,8 +516,6 @@ const OutboundDetailView: Component = () => {
     // would silently become a page total under server pagination (AC-V4).
     const pricing = node()?.pricing;
     const totals = {
-      packs: pricing?.totalNumberOfPacks ?? 0,
-      units: pricing?.totalNumberOfUnits ?? 0,
       price: pricing?.stockTotalAfterTax ?? 0,
       volume: pricing?.totalVolume ?? 0,
     };
@@ -595,7 +593,6 @@ const OutboundDetailView: Component = () => {
       {
         c: { key: 'numberOfPacks' },
         header: t('label.pack-quantity'),
-        footer: () => formatNumber(totals.packs),
         ...getNumberCell(),
       },
       {
@@ -620,7 +617,6 @@ const OutboundDetailView: Component = () => {
           id: 'unitQuantity',
         },
         header: t('label.unit-quantity'),
-        footer: () => formatNumber(totals.units),
         ...getNumberCell(),
       },
       ...(dosesOn()
