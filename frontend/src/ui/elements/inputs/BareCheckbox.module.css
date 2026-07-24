@@ -1,0 +1,114 @@
+/*
+ * BareCheckbox — the one drawn checkbox (see BareCheckbox.tsx). Box look
+ * lifted verbatim from the original labelled Checkbox so forms keep their
+ * exact rendering; the labelled Checkbox now composes this control.
+ *
+ * The root is a BLOCK-LEVEL flex box on purpose: inside a table cell an
+ * inline-level root would join the cell's inline formatting context and the
+ * line-height strut (larger than the 18px box) would set the cell's height —
+ * at compact density that pushes rows past their 40px floor
+ * (kdd/solid-reactivity-pitfalls has the reactivity twins; the layout twin
+ * lives in the DataTable ledger entries). As a flex ITEM (its two form/card
+ * hosts are flex rows) outer display doesn't matter.
+ */
+.root {
+  display: flex;
+  position: relative;
+  flex-shrink: 0;
+  /* Block-level boxes stretch to their container; shrink to the 18px box so
+     a host's margin-inline: auto (the table's .selectBox) truly centres it. */
+  inline-size: fit-content;
+}
+
+/* The native input: invisible but full-size OVER the box, so it is the real
+   click target (and Playwright-visible — e2e checks the input by test id;
+   opacity: 0 keeps a bounding box where clip-path hiding would not). The
+   explicit 100% sizes matter: a checkbox is a REPLACED element, so inset: 0
+   alone doesn't stretch it — it stays at its ~13px intrinsic size in a
+   corner, leaving most of the drawn box click-dead. */
+.input {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input:disabled {
+  cursor: default;
+}
+
+/* The drawn box: outlined square that fills with the brand tone + reveals
+   the glyph when the input is checked/indeterminate. pointer-events: none —
+   the box is presentation only (aria-hidden), every click belongs to the
+   input. Not optional: the glyphs' opacity: 0 promotes them into the
+   positioned paint layer (spec: opacity < 1 renders like z-index: 0), where
+   DOM order puts them ABOVE the absolutely-positioned input — without this,
+   the glyph area at the box's centre is click-dead. */
+.box {
+  display: grid;
+  place-items: center;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--primary-contrast);
+  pointer-events: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+/* Both glyphs are stacked in the grid's single cell; opacity picks one. */
+.check,
+.dash {
+  grid-area: 1 / 1;
+  font-size: 0.875rem;
+  opacity: 0;
+}
+
+/* Checked / indeterminate — fill with the brand tone, show the glyph.
+   :indeterminate wins the glyph choice (native tri-state precedence). */
+.input:checked + .box,
+.input:indeterminate + .box {
+  background: var(--secondary-main);
+  border-color: var(--secondary-main);
+}
+
+.input:checked + .box .check {
+  opacity: 1;
+}
+
+.input:indeterminate + .box .check {
+  opacity: 0;
+}
+
+.input:indeterminate + .box .dash {
+  opacity: 1;
+}
+
+/* Focus-visible ring on the box (the input itself is invisible). */
+.input:focus-visible + .box {
+  outline: none;
+  border-color: var(--secondary-main);
+  box-shadow: var(--focus-ring);
+}
+
+/* Error state — red edge; red glow when also focused. */
+.box[data-error] {
+  border-color: var(--error-main);
+}
+
+.input:focus-visible + .box[data-error] {
+  box-shadow: var(--focus-ring-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box {
+    transition: none;
+  }
+}

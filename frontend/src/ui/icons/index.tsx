@@ -123,6 +123,15 @@ export const PlusCircleIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Display / brightness (the settings Display-settings section heading) */
+/* Hugeicons: Sun01Icon */
+export const SunIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C14.7614 7 17 9.23858 17 12Z" />
+    <path d="M12 2V3.5M12 20.5V22M19.0708 19.0713L18.0101 18.0106M5.98926 5.98926L4.9286 4.9286M22 12H20.5M3.5 12H2M19.0713 4.92871L18.0106 5.98937M5.98975 18.011L4.92909 19.0716" />
+  </Stroke>
+);
+
 /* Export / download — arrow pointing down into the tray */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (
@@ -235,6 +244,23 @@ export const CopyIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M9 15C9 12.1716 9 10.7574 9.87868 9.87868C10.7574 9 12.1716 9 15 9L16 9C18.8284 9 20.2426 9 21.1213 9.87868C22 10.7574 22 12.1716 22 15V16C22 18.8284 22 20.2426 21.1213 21.1213C20.2426 22 18.8284 22 16 22H15C12.1716 22 10.7574 22 9.87868 21.1213C9 20.2426 9 18.8284 9 16L9 15Z" />
     <path d="M16.9999 9C16.9975 6.04291 16.9528 4.51121 16.092 3.46243C15.9258 3.25989 15.7401 3.07418 15.5376 2.90796C14.4312 2 12.7875 2 9.5 2C6.21252 2 4.56878 2 3.46243 2.90796C3.25989 3.07417 3.07418 3.25989 2.90796 3.46243C2 4.56878 2 6.21252 2 9.5C2 12.7875 2 14.4312 2.90796 15.5376C3.07417 15.7401 3.25989 15.9258 3.46243 16.092C4.51121 16.9528 6.04291 16.9975 9 16.9999" />
+  </Stroke>
+);
+
+/* Filter funnel (the filter bar's Add-filter pill). Not a Hugeicons glyph:
+   this is the ui-standards site's own funnel path (feather "filter"),
+   copied so the pill matches the spec exactly. */
+export const FilterIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+  </Stroke>
+);
+
+/* Indeterminate dash (BareCheckbox's tri-state glyph) */
+/* Hugeicons: MinusSignIcon */
+export const MinusIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 12L4 12" />
   </Stroke>
 );
 
@@ -597,6 +623,17 @@ export const MaximiseIcon = (props: IconProps) => (
 export const MinimiseIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M6.5023 10.7365C7.34671 10.7485 10.1432 11.3294 10.7361 10.7365C11.329 10.1436 10.7481 7.34708 10.7361 6.50267M13.2685 17.5027C13.2565 16.6583 12.6756 13.8618 13.2685 13.2689C13.8614 12.676 16.6579 13.2569 17.5023 13.2689M20.9991 21.001L13.6102 13.6188M10.3691 10.3763L2.99998 2.99902" />
+  </Stroke>
+);
+
+// Columns — the column-management control (a framed set of vertical columns;
+// ui-standards § tables → column management). TableViewIcon minus its row
+// line, so the two read as siblings but stay distinguishable.
+export const ColumnsIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
+    <path d="M15.5 21.5L15.5 2.5" />
+    <path d="M8.5 21.4998L8.5 2.49976" />
   </Stroke>
 );
 

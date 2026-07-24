@@ -7,6 +7,7 @@ import {
   type Row as TanRow,
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
+import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
 // The alignment convention carried on a column's meta (set by the cell
@@ -30,10 +31,11 @@ export function TableRow<T>(props: {
   enableSelection: boolean;
   onRowClick?: (row: T) => void;
   /**
-   * De-emphasise this row (read-only records — e.g. SHIPPED+ shipments,
-   * ui-standards list-views): stamps data-dimmed, styled in CSS.
+   * Semantic row state (ui-standards § tables row states) — 'verified' /
+   * 'warning' / 'disabled', derived by the page from the record's own facts
+   * (see DataTable's prop doc). Stamps data-row-state, styled in CSS.
    */
-  rowDimmed?: (row: T) => boolean;
+  rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
    * (placeholder / uncounted lines), 'error' for a line the server refused
@@ -64,9 +66,9 @@ export function TableRow<T>(props: {
       // address a specific row in the DOM (e.g. scroll it into view).
       data-row-key={props.row.id}
       class={props.onRowClick ? styles.rowClickable : undefined}
-      data-dimmed={
-        !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)
-          ? ''
+      data-row-state={
+        !props.row.getIsGrouped()
+          ? props.rowState?.(props.row.original)
           : undefined
       }
       data-tone={
@@ -86,8 +88,8 @@ export function TableRow<T>(props: {
           data-pinned="left"
           style={props.leadingPinnedStyle(0)}
         >
-          <input
-            type="checkbox"
+          <BareCheckbox
+            class={styles.selectBox}
             aria-label={t('table.select-row')}
             data-testid="select-row-checkbox"
             checked={props.row.getIsSelected()}

@@ -1,0 +1,84 @@
+# The line editor's batch grid data (spec/prescriptions/contract.md §
+# allocation): the server-computed draft lines for one item on this
+# prescription, plus the item's prescribed quantity and directions note.
+query prescriptionEditLines(
+  $storeId: String!
+  $itemId: String!
+  $invoiceId: String!
+) {
+  draftStockOutLines(
+    storeId: $storeId
+    itemId: $itemId
+    invoiceId: $invoiceId
+  ) {
+    prescribedQuantity
+    note
+    draftLines {
+      id
+      stockLineId
+      numberOfPacks
+      packSize
+      batch
+      expiryDate
+      sellPricePerPack
+      inStorePacks
+      availablePacks
+      stockLineOnHold
+      dosesPerUnit
+      location {
+        code
+        onHold
+      }
+      vvmStatus {
+        id
+        description
+        unusable
+      }
+    }
+  }
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isVisibleOrOnHand: true }
+    page: { first: 1 }
+  ) {
+    ... on ItemConnector {
+      nodes {
+        id
+        code
+        name
+        unitName
+        isVaccine
+        doses
+        itemDirections {
+          id
+          directions
+          priority
+        }
+      }
+    }
+  }
+}
+
+# The item set-save (spec/prescriptions/contract.md § the item set-save): one
+# item's lines replaced as a set — zeroed lines removed, the directions note
+# written to every line, the prescribed quantity recorded. Returns a bare
+# InvoiceNode: every rejection is non-typed (contract wire trap).
+mutation savePrescriptionItemLines(
+  $storeId: String!
+  $input: SavePrescriptionLinesInput!
+) {
+  savePrescriptionItemLines(storeId: $storeId, input: $input) {
+    id
+  }
+}
+
+# The abbreviation dictionary behind directions entry
+# (spec/prescriptions/contract.md § directions): expansion is client-side
+# token replacement.
+query abbreviations {
+  abbreviations {
+    id
+    text
+    expansion
+  }
+}

@@ -16,11 +16,15 @@ import { CancelButton } from '../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
+  FilterCheckbox,
+  FilterDateRange,
   FilterMultiSelect,
+  FilterNumberInput,
   FilterSelect,
   FilterTextInput,
   type Filter,
 } from '../ui/elements/selectors/FilterBar';
+import type { IsoDateRange } from '../ui/elements/inputs/DateRangeField';
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
@@ -95,21 +99,25 @@ const itemFilter = (item: DemoItem, input: string) => {
 /*
  * A demo filter object, shaped like a list page's GraphQL filter (the
  * FilterBar is generic over it — see kdd/page-composition). A key PRESENT
- * (even as null/'') means its chip is shown; absent means it isn't. Three
- * free-text columns + the status enum, the current app's outbound-shipment
- * FilterMenu set.
+ * (even as null/'') means its chip is shown; absent means it isn't. One of
+ * EVERY chip editor type: text, number, single-select, multi-select, date
+ * range and boolean — the full OMS filter-type parity set.
  */
 interface InvoiceFilter {
   otherPartyName?: string | null;
-  invoiceNumber?: string | null;
+  invoiceNumber?: number | null;
   theirReference?: string | null;
   status?: string | null;
+  statuses?: string[] | null;
+  createdDatetime?: IsoDateRange | null;
+  onHold?: boolean | null;
 }
 
-/* 
+/*
  * Built once as a stable const — labels are accessors, so FilterBar's <For>
- * reuses
-   chip rows instead of remounting them (kdd/state-management: no remounts). */
+ * reuses chip rows instead of remounting them (kdd/state-management: no
+ * remounts). Every render passes props.testId through — the FilterBar's
+ * add-a-filter focus hand-off finds the new chip's editor by that id. */
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
@@ -118,6 +126,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
       <FilterTextInput
         label="Name"
         placeholder="Search by name"
+        testId={props.testId}
         value={props.filter().otherPartyName ?? ''}
         onInput={value =>
           props.setPartialFilter({ otherPartyName: value || null })
@@ -129,11 +138,13 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     key: 'invoiceNumber',
     label: () => 'Invoice number',
     render: props => (
-      <FilterTextInput
+      <FilterNumberInput
         label="Invoice number"
-        value={props.filter().invoiceNumber ?? ''}
-        onInput={value =>
-          props.setPartialFilter({ invoiceNumber: value || null })
+        placeholder="Invoice number"
+        testId={props.testId}
+        value={props.filter().invoiceNumber ?? undefined}
+        onChange={value =>
+          props.setPartialFilter({ invoiceNumber: value ?? null })
         }
       />
     ),
@@ -144,6 +155,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterTextInput
         label="Reference"
+        testId={props.testId}
         value={props.filter().theirReference ?? ''}
         onInput={value =>
           props.setPartialFilter({ theirReference: value || null })
@@ -157,12 +169,60 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterSelect
         label="Status"
+        testId={props.testId}
         value={props.filter().status ?? ''}
         options={[
           { value: '', label: 'Any' },
           ...INVOICE_STATUSES.map(s => ({ value: s.value, label: s.label })),
         ]}
         onChange={value => props.setPartialFilter({ status: value || null })}
+      />
+    ),
+  },
+  {
+    key: 'statuses',
+    label: () => 'Statuses',
+    render: props => (
+      <FilterMultiSelect
+        label="Statuses"
+        placeholder="Any"
+        testId={props.testId}
+        options={INVOICE_STATUSES.map(s => ({
+          value: s.value,
+          label: s.label,
+        }))}
+        values={props.filter().statuses ?? []}
+        onChange={values =>
+          props.setPartialFilter({ statuses: values.length ? values : null })
+        }
+      />
+    ),
+  },
+  {
+    key: 'createdDatetime',
+    label: () => 'Created',
+    render: props => (
+      <FilterDateRange
+        label="Created"
+        testId={props.testId}
+        value={props.filter().createdDatetime ?? { start: null, end: null }}
+        onChange={({ start, end }) =>
+          props.setPartialFilter({
+            createdDatetime: start || end ? { start, end } : null,
+          })
+        }
+      />
+    ),
+  },
+  {
+    key: 'onHold',
+    label: () => 'On hold',
+    render: props => (
+      <FilterCheckbox
+        label="On hold"
+        testId={props.testId}
+        checked={props.filter().onHold ?? false}
+        onChange={checked => props.setPartialFilter({ onHold: checked })}
       />
     ),
   },
@@ -200,7 +260,16 @@ export const SelectorsShowcase = () => {
   const filterQuery = () => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters())) {
-      if (value != null && value !== '') params.set(key, String(value));
+      if (value == null || value === '' || value === false) continue;
+      if (Array.isArray(value)) {
+        if (value.length) params.set(key, value.join(','));
+      } else if (typeof value === 'object') {
+        // The date range: {start, end} → "start..end" (either side open).
+        const { start, end } = value;
+        if (start || end) params.set(key, `${start ?? ''}..${end ?? ''}`);
+      } else {
+        params.set(key, String(value));
+      }
     }
     const query = params.toString();
     return query ? `?${query}` : '';

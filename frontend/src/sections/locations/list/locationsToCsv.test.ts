@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { locationsToCsv } from './locationsToCsv';
 import type { LocationRow } from './locationEdit';
 
-// AC-L5 — CSV export (spec/locations/acceptance.md § list & lifecycle): a CSV
+// OMS-REG-INV-01.11 — CSV export (spec/locations/acceptance.md § list & lifecycle): a CSV
 // with each location's code, name, location type, volume, volume-used, and
 // on-hold, formatted for OMS consumer compatibility (#377): type name only,
 // lowercase true/false, timestamp-and-store-code filename. In node the catalog
 // isn't loaded, so t() falls back to its keys — header assertions pin keys
 // standing in for the translated labels; the data-value assertions are exact
-// because AC-L5 pins them as machine formats, not translations.
+// because OMS-REG-INV-01.11–.13 pin them as machine formats, not translations.
 
 const row = (overrides: Partial<LocationRow> = {}): LocationRow => ({
   id: 'loc-1',
@@ -22,7 +22,7 @@ const row = (overrides: Partial<LocationRow> = {}): LocationRow => ({
   ...overrides,
 });
 
-describe('AC-L5 — CSV export', () => {
+describe('OMS-REG-INV-01.11 — CSV export', () => {
   it('emits one header and one line per location, with the six spec columns in order', () => {
     const csv = locationsToCsv([row()]);
     const [header, line] = csv.split('\r\n');

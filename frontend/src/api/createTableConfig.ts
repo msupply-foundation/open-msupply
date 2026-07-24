@@ -55,6 +55,16 @@ export type TableConfigController = {
    *  an updater — DataTable resolves TanStack's updater before calling this). */
   setConfig: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /**
+   * Whether the table's layout equals its default at the current band — i.e.
+   * the user layer holds no overrides (writing `undefined` through setConfig,
+   * as the table's Reset does, counts as no override). Drives the Settings
+   * popover's "Reset table to default" disabled state (visible but disabled at
+   * default — ui-standards § tables → column management); pass as DataTable's
+   * `configIsDefault`. Reactive: re-evaluates on every user-layer write and on
+   * band changes.
+   */
+  isConfigDefault: () => boolean;
+  /**
    * Whether the current user may save this table's layout as the shared
    * global default — central server AND EDIT_CENTRAL_DATA (the same gate the
    * reference client uses; the server enforces it regardless). REACTIVE: reads
@@ -165,6 +175,16 @@ export function createTableConfig(options: {
     bumpUser(v => v + 1);
   };
 
+  // No user overrides at the current band → the layout is at its default.
+  // `== null` also treats explicit `undefined` writes (the table's Reset) as
+  // cleared, matching appData's isEmptyLayeredConfig rule.
+  const isConfigDefault = (): boolean => {
+    const bandConfig = user()[band()];
+    return (
+      !bandConfig || Object.values(bandConfig).every(value => value == null)
+    );
+  };
+
   // Promote the user's current layout for THIS table to the shared global
   // default. Mirrors the reference client (useSaveGlobalTableConfig): take the
   // whole current global blob, splice in this table's user-layer config (or
@@ -200,5 +220,11 @@ export function createTableConfig(options: {
     return true;
   };
 
-  return { config, setConfig, canSaveGlobalDefault, saveGlobalTableConfig };
+  return {
+    config,
+    setConfig,
+    isConfigDefault,
+    canSaveGlobalDefault,
+    saveGlobalTableConfig,
+  };
 }
