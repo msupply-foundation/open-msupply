@@ -1,11 +1,4 @@
-import {
-  createResource,
-  For,
-  Show,
-  Suspense,
-  type Component,
-  type JSX,
-} from 'solid-js';
+import { createResource, For, Show, Suspense, type Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
@@ -22,13 +15,14 @@ import {
 } from '../../../ui/elements/tabs/Tabs';
 import { StatsPanel } from '../../../ui/elements/dashboard/StatsPanel';
 import { Statistic } from '../../../ui/elements/dashboard/Statistic';
-import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
-import { Text } from '../../../ui/elements/typography/Text';
+import { DetailContainer } from '../../../ui/layout/Detail/DetailContainer';
+import { DetailSection } from '../../../ui/layout/Detail/DetailSection';
+import { DetailRow } from '../../../ui/layout/Detail/DetailRow';
+import { Select } from '../../../ui/elements/selectors/Select';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
 import { ItemCustomFieldDefinitions } from '../itemCustomFields.generated';
@@ -39,9 +33,14 @@ import {
 } from '../list/itemStats';
 
 // The item detail screen (spec/items S2). Read-only: every field renders as a
-// disabled/read-only value; the only writes are the central-only management
+// disabled control on the shared detail-form scaffold (ui-standards
+// detail-views: DetailContainer/DetailSection/DetailRow — the names vertical
+// is the live reference); the only writes are the central-only management
 // flows (S3–S5), which are NOT built in this pass (flagged in BUILD_REPORT).
 // Statistics band + URL-driven tabs (a tab is deep-linkable via ?tab=).
+// Sections stack single-column: the spec's two-column pairing (two
+// DetailSections side-by-side) has no layout owner in the library yet —
+// the remainder of BUILD_REPORT flag #1.
 //
 // Built tabs: General, Store, Master lists, Custom fields, Log. Flagged tabs
 // (rendered as a placeholder pending their components): Ledger (needs the
@@ -78,7 +77,14 @@ const ItemDetailView: Component = () => {
       d => d.displayMode !== 'HIDDEN'
     );
   });
-  const visibleDefs = () => defsData.latest ?? [];
+  // Non-suspending read (kdd/solid-reactivity-pitfalls › no remounts on
+  // interaction): the custom-fields tab can first render on a tab switch while
+  // the definitions are still loading — a .latest read would suspend and
+  // remount the open page.
+  const visibleDefs = () =>
+    defsData.state === 'ready' || defsData.state === 'refreshing'
+      ? (defsData.latest ?? [])
+      : [];
 
   const backToList = () => {
     // Replace history so Back can't return to the missing record (AC-L9).
@@ -196,120 +202,124 @@ const ItemDetailView: Component = () => {
               </CardGrid>
 
               <TabPanel value="general">
-                <DetailGroup title={t('title.details')}>
-                  <LabelledValue variant="field" label={t('label.name')}>
-                    {i().name}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.code')}>
-                    {i().code}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.unit')}>
-                    {i().unitName ?? ''}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.strength')}>
-                    {i().strength ?? ''}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.ddd')}>
-                    {i().ddd}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.type')}>
-                    {i().type}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.is-vaccine')}>
-                    {i().isVaccine ? t('messages.yes') : t('messages.no')}
-                  </LabelledValue>
-                  <Show when={i().isVaccine}>
-                    <LabelledValue variant="field" label={t('label.doses')}>
-                      {formatUnits(i().doses)}
-                    </LabelledValue>
-                  </Show>
-                </DetailGroup>
-                <DetailGroup title={t('title.categories')}>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.atc-category')}
-                  >
-                    {i().atcCategory}
-                  </LabelledValue>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.universal-name')}
-                  >
-                    {i().msupplyUniversalName}
-                  </LabelledValue>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.universal-code')}
-                  >
-                    {i().universalCode}
-                  </LabelledValue>
-                </DetailGroup>
-                <DetailGroup title={t('title.storage')}>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.location-type')}
-                  >
-                    {i().restrictedLocationType?.name ?? ''}
-                  </LabelledValue>
-                </DetailGroup>
-                <DetailGroup title={t('title.packaging')}>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.default-pack-size')}
-                  >
-                    {formatUnits(i().defaultPackSize)}
-                  </LabelledValue>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.outer-pack-size')}
-                  >
-                    {formatUnits(i().outerPackSize)}
-                  </LabelledValue>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.volume-per-pack')}
-                  >
-                    {formatUnits(i().volumePerPack, 2)}
-                  </LabelledValue>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.volume-per-outer-pack')}
-                  >
-                    {formatUnits(i().volumePerOuterPack, 2)}
-                  </LabelledValue>
-                  <LabelledValue variant="field" label={t('label.weight')}>
-                    {formatUnits(i().weight, 2)}
-                  </LabelledValue>
-                </DetailGroup>
-                <DetailGroup title={t('title.pricing')}>
-                  <LabelledValue variant="field" label={t('label.margin')}>
-                    {formatUnits(i().margin, 2)}
-                  </LabelledValue>
-                </DetailGroup>
+                <DetailContainer>
+                  <DetailSection title={t('title.details')}>
+                    <DetailRow label={t('label.name')} value={i().name} />
+                    <DetailRow label={t('label.code')} value={i().code} />
+                    <DetailRow
+                      label={t('label.unit')}
+                      value={i().unitName ?? ''}
+                    />
+                    <DetailRow
+                      label={t('label.strength')}
+                      value={i().strength ?? ''}
+                    />
+                    <DetailRow label={t('label.ddd')} value={i().ddd} />
+                    <DetailRow label={t('label.type')} value={i().type} />
+                    <DetailRow
+                      label={t('label.is-vaccine')}
+                      checked={i().isVaccine}
+                    />
+                    <Show when={i().isVaccine}>
+                      <DetailRow
+                        label={t('label.doses')}
+                        value={formatUnits(i().doses)}
+                      />
+                    </Show>
+                  </DetailSection>
+                  <DetailSection title={t('title.categories')}>
+                    <DetailRow
+                      label={t('label.atc-category')}
+                      value={i().atcCategory}
+                    />
+                    <DetailRow
+                      label={t('label.universal-name')}
+                      value={i().msupplyUniversalName}
+                    />
+                    <DetailRow
+                      label={t('label.universal-code')}
+                      value={i().universalCode}
+                    />
+                  </DetailSection>
+                  <DetailSection title={t('title.storage')}>
+                    {/* Disabled lookup naming the restricted location type
+                        (spec S2 › Storage: a disabled autocomplete — the
+                        read-only lookup rendering; it never opens). */}
+                    <DetailRow
+                      label={t('label.location-type')}
+                      control={
+                        <Select
+                          label={t('label.location-type')}
+                          hideLabel
+                          disabled
+                          width="full"
+                          placeholder=""
+                          options={
+                            i().restrictedLocationType
+                              ? [
+                                  {
+                                    value: i().restrictedLocationType!.id,
+                                    label: i().restrictedLocationType!.name,
+                                  },
+                                ]
+                              : []
+                          }
+                          value={i().restrictedLocationType?.id}
+                        />
+                      }
+                    />
+                  </DetailSection>
+                  <DetailSection title={t('title.packaging')}>
+                    <DetailRow
+                      label={t('label.default-pack-size')}
+                      value={formatUnits(i().defaultPackSize)}
+                    />
+                    <DetailRow
+                      label={t('label.outer-pack-size')}
+                      value={formatUnits(i().outerPackSize)}
+                    />
+                    <DetailRow
+                      label={t('label.volume-per-pack')}
+                      value={formatUnits(i().volumePerPack, 2)}
+                    />
+                    <DetailRow
+                      label={t('label.volume-per-outer-pack')}
+                      value={formatUnits(i().volumePerOuterPack, 2)}
+                    />
+                    <DetailRow
+                      label={t('label.weight')}
+                      value={formatUnits(i().weight, 2)}
+                    />
+                  </DetailSection>
+                  <DetailSection title={t('title.pricing')}>
+                    <DetailRow
+                      label={t('label.margin')}
+                      value={formatUnits(i().margin, 2)}
+                    />
+                  </DetailSection>
+                </DetailContainer>
               </TabPanel>
 
               <TabPanel value="store">
-                <DetailGroup title={t('title.pricing')}>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.default-sell-price-per-pack')}
-                  >
-                    {formatUnits(
-                      i().itemStoreProperties?.defaultSellPricePerPack ?? 0,
-                      2
-                    )}
-                  </LabelledValue>
-                </DetailGroup>
-                <DetailGroup title={t('title.ordering')}>
-                  <LabelledValue
-                    variant="field"
-                    label={t('label.ignore-for-orders')}
-                  >
-                    {i().itemStoreProperties?.ignoreForOrders
-                      ? t('messages.yes')
-                      : t('messages.no')}
-                  </LabelledValue>
-                </DetailGroup>
+                <DetailContainer>
+                  <DetailSection title={t('title.pricing')}>
+                    <DetailRow
+                      label={t('label.default-sell-price-per-pack')}
+                      value={formatUnits(
+                        i().itemStoreProperties?.defaultSellPricePerPack ?? 0,
+                        2
+                      )}
+                    />
+                  </DetailSection>
+                  <DetailSection title={t('title.ordering')}>
+                    <DetailRow
+                      label={t('label.ignore-for-orders')}
+                      checked={
+                        i().itemStoreProperties?.ignoreForOrders ?? false
+                      }
+                    />
+                  </DetailSection>
+                </DetailContainer>
               </TabPanel>
 
               <TabPanel value="master-lists">
@@ -339,24 +349,91 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="custom-fields">
-                <Show
-                  when={visibleDefs().length > 0}
-                  fallback={
-                    <EmptyState message={t('messages.no-custom-fields')} />
-                  }
-                >
-                  <DetailGroup title={t('label.custom-fields')}>
-                    <For each={visibleDefs()}>
-                      {def => (
-                        <LabelledValue variant="field" label={def.name}>
-                          {renderCustomFieldValue(
-                            def,
-                            customFieldValue(def.key)
-                          )}
-                        </LabelledValue>
-                      )}
-                    </For>
-                  </DetailGroup>
+                {/* One read-only row per definition, control by value type
+                    (spec S2 › Custom fields): boolean → disabled checkbox,
+                    option → disabled lookup showing the option NAME, dates
+                    localised, everything else read-only text — mirroring the
+                    names vertical's CustomFieldsTab. */}
+                <Show when={!defsData.loading} fallback={<Spinner center />}>
+                  <Show
+                    when={visibleDefs().length > 0}
+                    fallback={
+                      <EmptyState message={t('messages.no-custom-fields')} />
+                    }
+                  >
+                    <DetailContainer>
+                      <DetailSection>
+                        <For each={visibleDefs()}>
+                          {def => {
+                            // The value is a tracked read (the item can change
+                            // under a kept-alive row); the KIND is static per
+                            // definition, so the switch is safe at row setup.
+                            const value = () => customFieldValue(def.key);
+                            switch (def.valueType) {
+                              case 'BOOLEAN':
+                                return (
+                                  <DetailRow
+                                    label={def.name}
+                                    checked={Boolean(value())}
+                                  />
+                                );
+                              case 'OPTION': {
+                                const match = () =>
+                                  def.options.find(
+                                    o => o.id === value() || o.key === value()
+                                  );
+                                return (
+                                  <DetailRow
+                                    label={def.name}
+                                    control={
+                                      <Select
+                                        label={def.name}
+                                        hideLabel
+                                        disabled
+                                        width="full"
+                                        placeholder=""
+                                        options={
+                                          match()
+                                            ? [
+                                                {
+                                                  value: match()!.id,
+                                                  label: match()!.name,
+                                                },
+                                              ]
+                                            : []
+                                        }
+                                        value={match()?.id}
+                                      />
+                                    }
+                                  />
+                                );
+                              }
+                              case 'DATE':
+                                return (
+                                  <DetailRow
+                                    label={def.name}
+                                    value={
+                                      value() == null
+                                        ? ''
+                                        : localisedDate(value() as string)
+                                    }
+                                  />
+                                );
+                              default:
+                                return (
+                                  <DetailRow
+                                    label={def.name}
+                                    value={
+                                      value() == null ? '' : String(value())
+                                    }
+                                  />
+                                );
+                            }
+                          }}
+                        </For>
+                      </DetailSection>
+                    </DetailContainer>
+                  </Show>
                 </Show>
               </TabPanel>
 
@@ -370,42 +447,5 @@ const ItemDetailView: Component = () => {
     </Suspense>
   );
 };
-
-// A read-only field group — a heading over stacked LabelledValue rows. Composes
-// existing primitives (the dedicated two-column DetailSection scaffold isn't in
-// main yet — flagged in BUILD_REPORT; single-column stacking here).
-const DetailGroup = (props: { title: string; children: JSX.Element }) => (
-  <section>
-    <Text variant="heading">{props.title}</Text>
-    {props.children}
-  </section>
-);
-
-const renderCustomFieldValue = (
-  def: {
-    valueType: string;
-    options: { id: string; key: string; name: string }[];
-  },
-  value: unknown
-): string => {
-  if (value == null) return '';
-  switch (def.valueType) {
-    case 'BOOLEAN':
-      return value ? t('messages.yes') : t('messages.no');
-    case 'OPTION': {
-      const match = def.options.find(o => o.id === value || o.key === value);
-      return match?.name ?? String(value);
-    }
-    case 'DATE':
-      return localisedDate(value as string);
-    default:
-      return String(value);
-  }
-};
-
-// getBooleanCell is imported for parity with the list's custom-field columns;
-// the custom-fields tab shows values as read-only text (spec/items S2). Keep
-// the import referenced to avoid an unused-import error while the tab evolves.
-void getBooleanCell;
 
 export default ItemDetailView;
