@@ -19,12 +19,15 @@ export interface DosesLine {
 }
 
 // Doses in ONE pack of this line — packSize × the item's doses-per-unit. Blank
-// (null) for a non-vaccine item, or when the pack size is unknown.
+// (null) for a non-vaccine item, or when the pack size is unknown. A vaccine
+// with no doses-per-unit configured counts as 1 (spec/stocktakes › store-
+// preference gates, D58) — treating it as 0 would pin this at 0 regardless of
+// what's counted, matching internal-orders' same-shaped fallback.
 export const dosesPerUnit = (line: DosesLine): number | null => {
   if (!line.item.isVaccine) return null;
   const packSize = line.packSize ?? null;
   if (packSize == null) return null;
-  return packSize * line.item.doses;
+  return packSize * (line.item.doses || 1);
 };
 
 // Total doses counted on this line — counted packs × doses-per-pack. Blank

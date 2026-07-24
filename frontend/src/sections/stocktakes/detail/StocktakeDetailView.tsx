@@ -79,6 +79,7 @@ import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import { stocktakePreferences } from '../../../store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
+import { isUncounted, lineDifference } from './lines/stocktakeLine';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -664,10 +665,7 @@ const StocktakeDetailView: Component = () => {
     // (no server field), so unsortable.
     {
       c: {
-        accessor: line =>
-          line.countedNumberOfPacks == null
-            ? ''
-            : line.countedNumberOfPacks - (line.snapshotNumberOfPacks ?? 0),
+        accessor: line => lineDifference(line) ?? '',
         id: 'difference',
       },
       header: t('label.difference'),
@@ -895,12 +893,10 @@ const StocktakeDetailView: Component = () => {
                   onRowClick={isDisabled(node()) ? undefined : openRow}
                   // Uncounted lines (no counted value) read in the info tone —
                   // whole-row action-blue text, marking them as awaiting a
-                  // count (spec ui-surface → Line table, AC-D6). They're the
+                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68). They're the
                   // lines trimmed on finalise. Flat table, so a leaf-row
                   // predicate is enough (no grouped parents to propagate to).
-                  rowTone={line =>
-                    line.countedNumberOfPacks == null ? 'info' : undefined
-                  }
+                  rowTone={line => (isUncounted(line) ? 'info' : undefined)}
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (

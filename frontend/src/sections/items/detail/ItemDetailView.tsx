@@ -1,8 +1,7 @@
-import { createResource, For, Show, Suspense, type Component } from 'solid-js';
+import { createResource, Show, Suspense, type Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl/formatDateTime';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -26,8 +25,8 @@ import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { CustomFieldsView } from '../../../domain/customFields';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
-import { ItemCustomFieldDefinitions } from '../itemCustomFields.generated';
 import {
   formatMonthsOfStock,
   formatUnits,
@@ -72,22 +71,6 @@ const ItemDetailView: Component = () => {
   );
   const item = (): ItemDetailRow | undefined => data.latest;
 
-  const [defsData] = createResource(async () => {
-    const result = await graphqlFetch(ItemCustomFieldDefinitions, {});
-    if (result.kind !== 'success') return [];
-    return result.data.customFields.nodes.filter(
-      d => d.displayMode !== 'HIDDEN'
-    );
-  });
-  // Non-suspending read (kdd/solid-reactivity-pitfalls › no remounts on
-  // interaction): the custom-fields tab can first render on a tab switch while
-  // the definitions are still loading — a .latest read would suspend and
-  // remount the open page.
-  const visibleDefs = () =>
-    defsData.state === 'ready' || defsData.state === 'refreshing'
-      ? (defsData.latest ?? [])
-      : [];
-
   const backToList = () => {
     // Replace history so Back can't return to the missing record (AC-L9).
     navigate(`/${params.storeId}/catalogue/items`, { replace: true });
@@ -116,9 +99,6 @@ const ItemDetailView: Component = () => {
       enableSorting: false,
     },
   ];
-
-  const customFieldValue = (key: string): unknown =>
-    (item()?.customFields as Record<string, unknown> | null | undefined)?.[key];
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -362,92 +342,9 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="custom-fields">
-                {/* One read-only row per definition, control by value type
-                    (spec S2 › Custom fields): boolean → disabled checkbox,
-                    option → disabled lookup showing the option NAME, dates
-                    localised, everything else read-only text — mirroring the
-                    names vertical's CustomFieldsTab. */}
-                <Show when={!defsData.loading} fallback={<Spinner center />}>
-                  <Show
-                    when={visibleDefs().length > 0}
-                    fallback={
-                      <EmptyState message={t('messages.no-custom-fields')} />
-                    }
-                  >
-                    <DetailContainer>
-                      <DetailSection>
-                        <For each={visibleDefs()}>
-                          {def => {
-                            // The value is a tracked read (the item can change
-                            // under a kept-alive row); the KIND is static per
-                            // definition, so the switch is safe at row setup.
-                            const value = () => customFieldValue(def.key);
-                            switch (def.valueType) {
-                              case 'BOOLEAN':
-                                return (
-                                  <DetailRow
-                                    label={def.name}
-                                    checked={Boolean(value())}
-                                  />
-                                );
-                              case 'OPTION': {
-                                const match = () =>
-                                  def.options.find(
-                                    o => o.id === value() || o.key === value()
-                                  );
-                                return (
-                                  <DetailRow
-                                    label={def.name}
-                                    control={
-                                      <Select
-                                        label={def.name}
-                                        hideLabel
-                                        disabled
-                                        width="full"
-                                        placeholder=""
-                                        options={
-                                          match()
-                                            ? [
-                                                {
-                                                  value: match()!.id,
-                                                  label: match()!.name,
-                                                },
-                                              ]
-                                            : []
-                                        }
-                                        value={match()?.id}
-                                      />
-                                    }
-                                  />
-                                );
-                              }
-                              case 'DATE':
-                                return (
-                                  <DetailRow
-                                    label={def.name}
-                                    value={
-                                      value() == null
-                                        ? ''
-                                        : localisedDate(value() as string)
-                                    }
-                                  />
-                                );
-                              default:
-                                return (
-                                  <DetailRow
-                                    label={def.name}
-                                    value={
-                                      value() == null ? '' : String(value())
-                                    }
-                                  />
-                                );
-                            }
-                          }}
-                        </For>
-                      </DetailSection>
-                    </DetailContainer>
-                  </Show>
-                </Show>
+                {/* Read-only custom fields for the item scope (item.custom_fields
+                    is server read-only) — the shared view. */}
+                <CustomFieldsView scope="item" values={i().customFields} />
               </TabPanel>
 
               <TabPanel value="log">

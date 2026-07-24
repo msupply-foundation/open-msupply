@@ -4,6 +4,53 @@ import type { TypedDocument } from "../../api/graphql";
 
 export type MasterListsVariables = {
   storeId: string;
+  filter?: {
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    name?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    code?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    description?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    existsForName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    existsForNameId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    existsForStoreId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    isProgram?: boolean | null;
+    itemId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+  } | null;
 };
 
 export type MasterListsResult = {
@@ -18,5 +65,5 @@ export type MasterListsResult = {
 };
 
 export const MasterLists = {
-  query: "query masterLists($storeId: String!) {\n  masterLists(storeId: $storeId) {\n    ... on MasterListConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
+  query: "query masterLists($storeId: String!, $filter: MasterListFilterInput) {\n  masterLists(storeId: $storeId, filter: $filter) {\n    ... on MasterListConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<MasterListsResult, MasterListsVariables>;

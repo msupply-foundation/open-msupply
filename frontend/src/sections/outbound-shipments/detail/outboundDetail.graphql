@@ -65,6 +65,9 @@ fragment OutboundInfo on InvoiceNode {
     serviceTotalAfterTax
     taxPercentage
   }
+  # Custom-field VALUES (JSON object), scope-filtered — backs the Custom fields
+  # tab + prominent toolbar fields.
+  customFields
 }
 
 fragment OutboundLine on InvoiceLineNode {

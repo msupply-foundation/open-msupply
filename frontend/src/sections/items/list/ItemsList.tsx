@@ -19,17 +19,18 @@ import {
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { Items, type ItemsVariables } from './items.generated';
-import { ItemCustomFieldDefinitions } from '../itemCustomFields.generated';
 import { ItemPreferences } from '../itemPreferences.generated';
 import { ItemMasterLists } from './itemMasterLists.generated';
 import { buildItemFilter, type ItemsListFilter } from './itemFilter';
 import { buildItemsFilters } from './listFilters';
+import { fixedColumns, type ItemRow, type SortKey } from './itemColumns';
 import {
+  customFieldDefinitions,
   customFieldColumns,
-  fixedColumns,
-  type ItemRow,
-  type SortKey,
-} from './itemColumns';
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 
 // The items catalogue list (spec/items S1). Read-only: no create/edit/delete,
 // no row selection, no export — the catalogue is central-owned. Rows only
@@ -42,6 +43,8 @@ const DEFAULT_PAGE_SIZE = 20;
 
 type ItemsListState = {
   filter: ItemsListFilter;
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  cf?: CustomFieldFilterState;
   sort?: ItemsVariables['sort'];
   offset: number;
   first: number;
@@ -63,9 +66,21 @@ const ItemsList: Component = () => {
 
   const tableConfig = createTableConfig({ tableId: 'items' });
 
+  // Custom-field definitions for the item scope — shared scope-keyed cache,
+  // read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('item');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+  const onCustomFieldChange = (cf: CustomFieldFilterState) =>
+    setQuery({ ...query(), cf, offset: 0 });
+
   const variables = createMemo<ItemsVariables>(() => ({
     storeId: params.storeId,
-    filter: buildItemFilter(query().filter),
+    filter: {
+      ...buildItemFilter(query().filter),
+      // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+    },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
   }));
@@ -85,17 +100,6 @@ const ItemsList: Component = () => {
   );
   const rows = (): ItemRow[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
-
-  // Custom-field definitions (columns/filters) — store-independent.
-  const [defsData] = createResource(async () => {
-    const result = await graphqlFetch(ItemCustomFieldDefinitions, {});
-    if (result.kind !== 'success') return [];
-    // Non-hidden definitions only (hidden values never reach the client — AC-P1).
-    return result.data.customFields.nodes.filter(
-      d => d.displayMode !== 'HIDDEN'
-    );
-  });
-  const visibleDefs = () => defsData.latest ?? [];
 
   // Preferences gate the doses display + the at-risk filter (spec/items).
   const [prefsData] = createResource(
@@ -127,7 +131,7 @@ const ItemsList: Component = () => {
 
   const columns = (): Column<ItemRow, SortKey>[] => [
     ...fixedColumns(showDoses),
-    ...customFieldColumns(visibleDefs()),
+    ...customFieldColumns<ItemRow, SortKey>(cfDefs(), row => row.customFields),
   ];
 
   const filters = createMemo(() =>
@@ -169,6 +173,11 @@ const ItemsList: Component = () => {
               filters={filters()}
               filter={query().filter}
               onChange={onFilterChange}
+              extra={{
+                filters: cfFilters(),
+                filter: query().cf ?? {},
+                onChange: onCustomFieldChange,
+              }}
             />
           </Toolbar>
         </Header>
