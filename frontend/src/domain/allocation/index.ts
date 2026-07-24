@@ -12,9 +12,11 @@ export {
   barReasons,
   isBarred,
   fefoCompare,
+  fillOrderCompare,
   type AllocationPreferences,
   type BarrableBatch,
   type BarReason,
+  type OrderableBatch,
 } from './policy';
 export {
   lensToUnits,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   barReasons,
   fefoCompare,
+  fillOrderCompare,
   isBarred,
   type AllocationPreferences,
 } from './policy';
@@ -15,6 +16,7 @@ const prefs = (over: Partial<AllocationPreferences> = {}) => ({
   expiredStockPreventIssue: false,
   expiredStockIssueThreshold: 0,
   manageVvmStatusForStock: false,
+  sortByVvmStatusThenExpiry: false,
   ...over,
 });
 
@@ -106,6 +108,44 @@ describe('fefoCompare', () => {
       { id: 'early', expiryDate: '2026-01-01' },
     ].sort(fefoCompare);
     expect(sorted.map(line => line.id)).toEqual(['early', 'late', 'none']);
+  });
+});
+
+describe('fillOrderCompare', () => {
+  const lines = [
+    { id: 'p2-early', expiryDate: '2026-01-01', vvmStatus: { priority: 2 } },
+    { id: 'p1-late', expiryDate: '2027-06-01', vvmStatus: { priority: 1 } },
+    { id: 'none-early', expiryDate: '2025-01-01', vvmStatus: null },
+    { id: 'p1-early', expiryDate: '2026-06-01', vvmStatus: { priority: 1 } },
+    { id: 'none-none', expiryDate: null },
+  ];
+
+  // AC-AL1 — the preference OFF leaves pure FEFO (VVM priority ignored).
+  it('is pure FEFO while the preference is off', () => {
+    const sorted = [...lines].sort((a, b) => fillOrderCompare(a, b, prefs()));
+    expect(sorted.map(line => line.id)).toEqual([
+      'none-early',
+      'p2-early',
+      'p1-early',
+      'p1-late',
+      'none-none',
+    ]);
+  });
+
+  // AC-AL1 (VVM-then-expiry variant) — priority ascending (1 before 2),
+  // no-status last, expiry breaking ties within a priority; matches the
+  // server's `priority asc nulls last, expiry asc nulls last`.
+  it('orders VVM priority then expiry under the preference', () => {
+    const sorted = [...lines].sort((a, b) =>
+      fillOrderCompare(a, b, prefs({ sortByVvmStatusThenExpiry: true }))
+    );
+    expect(sorted.map(line => line.id)).toEqual([
+      'p1-early',
+      'p1-late',
+      'p2-early',
+      'none-early',
+      'none-none',
+    ]);
   });
 });
 
