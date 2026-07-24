@@ -63,25 +63,6 @@ export const wouldGoBelowZero = (
   direction === 'REDUCTION' &&
   adjustedQuantity(currentAvailable, direction, amount) < 0;
 
-// The device-LOCAL calendar date as ISO YYYY-MM-DD — the user's wall-clock day,
-// NOT UTC. Used for "today" comparisons and date-input bounds so a store whose
-// local date differs from UTC doesn't misclassify its own today as backdated.
-// (Impure — reads the clock; not unit-tested. Kept here beside its callers.)
-export const localTodayIso = (): string => {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-};
-
-// The local calendar date `days` before today, ISO YYYY-MM-DD — the lower bound
-// of the backdating window (spec/stock S4 max-days).
-export const localIsoDaysAgo = (days: number): string => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-};
-
 // The backdated instant for an adjustment (spec/stock S4): choosing today (or no
 // date) means "not backdated" (undefined); otherwise a reduction is stamped at
 // the day's end, an addition at its start.
