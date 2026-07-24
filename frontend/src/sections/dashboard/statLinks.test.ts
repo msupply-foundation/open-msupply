@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addDays,
   DAYS_TILL_EXPIRED,
   expiredHref,
   expiringBetweenThresholdsHref,
@@ -13,7 +12,6 @@ import {
   customerRequisitionListHref,
   itemCatalogueHref,
   outboundNotShippedHref,
-  startOfWeek,
 } from './statLinks';
 
 // The stat links' navigation correspondence (spec/dashboard/rules.md §
@@ -28,35 +26,21 @@ const filterOf = (href: string): Record<string, unknown> => {
   return (JSON.parse(query!) as { filter: Record<string, unknown> }).filter;
 };
 
-// A fixed Wednesday, local time.
+// A fixed Wednesday, local time. (addDays / startOfWeek are unit-tested with
+// the shared module; here the windows are asserted via the built links.)
 const wednesday = new Date(2026, 6, 22); // 2026-07-22
-
-describe('time windows (rules.md § time windows)', () => {
-  it('startOfWeek is the most recent Monday (ISO week)', () => {
-    expect(startOfWeek(wednesday).getDay()).toBe(1);
-    expect(startOfWeek(wednesday).getDate()).toBe(20);
-    // A Monday is its own week start; Sunday belongs to the week begun the
-    // previous Monday.
-    const monday = new Date(2026, 6, 20);
-    expect(startOfWeek(monday).getDate()).toBe(20);
-    const sunday = new Date(2026, 6, 26);
-    expect(startOfWeek(sunday).getDate()).toBe(20);
-  });
-
-  it('addDays crosses month boundaries', () => {
-    expect(addDays(new Date(2026, 6, 22), 30).getMonth()).toBe(7);
-  });
-});
 
 describe('replenishment links', () => {
   // AC-N1/AC-R1 — the date windows are explicit from–to ranges matching the
   // count window (contract.md § navigation correspondence): today spans start
   // of day to end of day; this week spans Monday to end of Sunday.
-  it('AC-N1: inbound today is a from–to range over the whole day', () => {
+  // Bounds are the LOCAL day widened to UTC instants (#456); expected values
+  // built with the local Date constructor so the assertions hold in any zone.
+  it('AC-N1: inbound today is a from–to range over the whole local day', () => {
     expect(filterOf(inboundTodayHref('s1', wednesday))).toEqual({
       createdDatetime: {
-        afterOrEqualTo: '2026-07-22T00:00:00.000Z',
-        beforeOrEqualTo: '2026-07-22T23:59:59.999Z',
+        afterOrEqualTo: new Date(2026, 6, 22).toISOString(),
+        beforeOrEqualTo: new Date(2026, 6, 22, 23, 59, 59, 999).toISOString(),
       },
     });
   });
@@ -64,8 +48,8 @@ describe('replenishment links', () => {
   it('AC-N1: inbound this-week spans Monday to end of Sunday', () => {
     expect(filterOf(inboundThisWeekHref('s1', wednesday))).toEqual({
       createdDatetime: {
-        afterOrEqualTo: '2026-07-20T00:00:00.000Z',
-        beforeOrEqualTo: '2026-07-26T23:59:59.999Z',
+        afterOrEqualTo: new Date(2026, 6, 20).toISOString(),
+        beforeOrEqualTo: new Date(2026, 6, 26, 23, 59, 59, 999).toISOString(),
       },
     });
   });
