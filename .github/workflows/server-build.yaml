@@ -17,10 +17,10 @@ jobs:
         working-directory: ./server
         run: cargo run --bin remote_server_cli -- initialise-from-export -n 'reference1' -r
       - name: Mint token for the frontend repo
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: fe-token
         with:
-          app-id: ${{ vars.FE_APP_ID }}
+          client-id: ${{ vars.FE_APP_ID }}
           private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
           owner: msupply-foundation
           repositories: open-msupply-frontend
