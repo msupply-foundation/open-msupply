@@ -20,7 +20,6 @@ use crate::{
 
 use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
-    assign_prescription_number::AssignPrescriptionNumber,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
@@ -66,7 +65,12 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
-            ProcessorType::AssignPrescriptionNumber => vec![Box::new(AssignPrescriptionNumber)],
+            // Disabled: this processor's cursor starts at 0, so its first run walks the entire
+            // historical changelog synchronously on the single-threaded main runtime, freezing
+            // sync and all background tasks on servers with a large changelog (#12547).
+            // Re-enable (restore `vec![Box::new(AssignPrescriptionNumber)]` and un-ignore its
+            // test) once it is runtime-safe and cursor-seeded - see ideas in #12547.
+            ProcessorType::AssignPrescriptionNumber => vec![],
             ProcessorType::AddPatientVisibilityForCentral => {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }
