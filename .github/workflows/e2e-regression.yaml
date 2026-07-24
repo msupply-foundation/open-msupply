@@ -43,7 +43,7 @@ jobs:
       - name: Update PATH
         run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # open-msupply-frontend is private and the default GITHUB_TOKEN only
       # reads THIS repo — a GitHub App scoped to reading that repo mints a
@@ -58,7 +58,7 @@ jobs:
           repositories: open-msupply-frontend
 
       - name: Check out open-msupply-frontend (suite definitions)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.FE_SUITES_REPO }}
           ref: ${{ env.FE_SUITES_REF }}
@@ -77,9 +77,12 @@ jobs:
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
 
       - name: Enable Corepack (yarn here, pnpm in the suites repo)
         run: corepack enable
@@ -115,7 +118,7 @@ jobs:
         run: cd client && yarn e2e:local stocktake-regression distribution-regression
 
       - name: Upload Playwright report (html + results.json)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: (!cancelled())
         with:
           name: e2e-playwright-report
@@ -124,7 +127,7 @@ jobs:
           retention-days: 7
 
       - name: Upload traces and stack logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: (!cancelled())
         with:
           name: e2e-test-results
