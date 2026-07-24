@@ -3,7 +3,8 @@
  * --------------------------------------------------------------------------
  *  This is the ONE place to adjust the default width of any table column
  *  type or common column. It feeds `getCellDefinition` in tableHelpers.tsx;
- *  see docs/CELL_TYPES.md for the full model.
+ *  see docs/CELL_TYPES.md for the full model and kdd/column-config for why
+ *  it's shaped this way (rem authoring, two layers, CSS delivery).
  *
  *  Two layers, in override order:
  *    • KIND_WIDTH — per cell TYPE (all numbers, all dates, …). The
