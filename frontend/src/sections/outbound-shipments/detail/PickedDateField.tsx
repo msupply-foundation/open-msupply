@@ -30,7 +30,8 @@ import {
 // stocktake-conflict warning (AC-B4) — before setting backdatedDatetime; the
 // parent's field save then re-issues against historical availability and
 // stamps future statuses at the backdated time (server-side). The picker is
-// bounded to [today − maxDays, today] so a future or over-limit day can't be
+// bounded to [today − (maxDays − 1), today] — maxDays 0/unset = unbounded
+// past (backdating.ts) — so a future or over-limit day can't be
 // chosen (the remaining AC-B1 rejections). The pure gate/date/warning logic
 // lives in ./backdating (unit-tested); this component wires it to the UI + the
 // stocktake-conflict query.

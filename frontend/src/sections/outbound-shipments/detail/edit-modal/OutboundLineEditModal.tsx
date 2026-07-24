@@ -2,6 +2,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  onCleanup,
   onMount,
   Show,
   type JSX,
@@ -591,12 +592,28 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   //   on a real change).
   // - ADD mode: reopen empty for rapid entry of the next item.
   // A failed save aborts the advance with the editor unchanged.
+  // A walk advance in flight: gates the button (a double-click must not
+  // start two concurrent walks — overlapping page advances and covered-set
+  // writes) and survives in the button's loading face. `disposed` stops the
+  // tail of an advance whose modal was closed mid-walk (the parent's walk
+  // also aborts its own paging via its `aborted` dep).
+  const [advancing, setAdvancing] = createSignal(false);
+  let disposed = false;
+  onCleanup(() => (disposed = true));
   const advance = async (currentId: string) => {
-    const next = await props.nextItem(currentId, coveredItemIds);
-    if (next) await seedItem(next);
-    else backToSearch(); // exhausted → add mode
+    if (advancing()) return;
+    setAdvancing(true);
+    try {
+      const next = await props.nextItem(currentId, coveredItemIds);
+      if (disposed) return;
+      if (next) await seedItem(next);
+      else backToSearch(); // exhausted → add mode
+    } finally {
+      setAdvancing(false);
+    }
   };
   const onOkNext = () => {
+    if (advancing()) return;
     const current = item();
     // Nothing changed → no redundant save (outbound gates saves on a real
     // change): update mode pages on, add mode just returns to the picker.
@@ -846,10 +863,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           >
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
-              // loadingLines too (the stocktake editor's busy()): the no-save
-              // page-through is a fetch with no stale-response guard, so the
+              // loadingLines too (the stocktake editor's busy()), and the
+              // walk itself (advancing): the page-through is a fetch, so the
               // button must not accept clicks while one is in flight.
-              loading={saving() || loadingLines()}
+              loading={saving() || loadingLines() || advancing()}
               onClick={onOkNext}
             />
           </Show>
