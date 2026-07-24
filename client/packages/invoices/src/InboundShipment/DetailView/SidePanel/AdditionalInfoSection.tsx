@@ -96,6 +96,7 @@ export const AdditionalInfoSectionComponent = () => {
           disabled={isDisabled}
           onChange={e => update({ comment: e.target.value })}
           value={comment || ''}
+          inputProps={{ 'data-testid': 'comment-field' }}
         />
       </Grid>
     </DetailPanelSection>

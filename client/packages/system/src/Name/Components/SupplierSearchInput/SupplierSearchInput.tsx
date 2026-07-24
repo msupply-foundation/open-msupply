@@ -53,6 +53,7 @@ export const SupplierSearchInput = ({
       openOnFocus={openOnFocus}
       width={width}
       noOptionsText={t('label.no-options')}
+      inputTestId="name-search-input"
     />
   );
 };

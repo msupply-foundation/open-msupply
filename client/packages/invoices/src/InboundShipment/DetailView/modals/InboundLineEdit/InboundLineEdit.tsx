@@ -330,8 +330,8 @@ export const InboundLineEdit = ({
   const okDisabled =
     (hasPurchaseOrder
       ? !selectedPOLine ||
-      draftLines.length === 0 ||
-      manualLinesWithZeroNumberOfPacks
+        draftLines.length === 0 ||
+        manualLinesWithZeroNumberOfPacks
       : !currentItem || manualLinesWithZeroNumberOfPacks) ||
     hasInvalidPluginLines;
 
@@ -381,6 +381,7 @@ export const InboundLineEdit = ({
 
   return (
     <Modal
+      testId="add-item-modal"
       title={
         mode === ModalMode.Create
           ? t('heading.add-item')
