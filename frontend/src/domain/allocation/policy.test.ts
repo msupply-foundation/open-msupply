@@ -5,9 +5,11 @@ import {
   fefoCompare,
   fillOrderCompare,
   isBarred,
+  rowHasAllocatableStock,
   type AllocationPreferences,
 } from './policy';
 import {
+  clampManualPacks,
   lensToUnits,
   unitsToLens,
   availableUnits,
@@ -158,6 +160,123 @@ describe('autoAllocateBarReasons (AC-AL2/AL10)', () => {
         today
       )
     ).toEqual(['on-hold']);
+  });
+});
+
+// The manual-bar refinements (old-app parity): the on-hold exception for a
+// seeded allocation, the vaccine gate on the manual VVM bar, and the
+// non-allocatable row predicate behind the grid's sunk rows.
+describe('barReasons refinements (AC-AL14 / AC-AL9)', () => {
+  it('AC-AL14: an on-hold batch with a seeded allocation and stock stays manually editable', () => {
+    const held = {
+      stockLineOnHold: true,
+      numberOfPacks: 2,
+      availablePacks: 3,
+    };
+    expect(barReasons(held, prefs())).toEqual([]);
+    // …while auto-distribution still never fills it.
+    expect(autoAllocateBarReasons(held, prefs())).toEqual(['on-hold']);
+  });
+
+  it('the exception needs BOTH a seeded allocation and available stock', () => {
+    expect(
+      barReasons(
+        { stockLineOnHold: true, numberOfPacks: 0, availablePacks: 3 },
+        prefs()
+      )
+    ).toEqual(['on-hold']);
+    expect(
+      barReasons(
+        { stockLineOnHold: true, numberOfPacks: 2, availablePacks: 0 },
+        prefs()
+      )
+    ).toEqual(['on-hold']);
+    // Callers not passing the seeded fields keep the unconditional bar.
+    expect(barReasons({ stockLineOnHold: true }, prefs())).toEqual(['on-hold']);
+  });
+
+  it('AC-AL9: the manual VVM bar applies to vaccine items only; the auto bar regardless', () => {
+    const guard = prefs({ manageVvmStatusForStock: true });
+    const unusable = {
+      stockLineOnHold: false,
+      vvmStatus: { unusable: true },
+    };
+    expect(barReasons({ ...unusable, isVaccineItem: false }, guard)).toEqual(
+      []
+    );
+    expect(barReasons({ ...unusable, isVaccineItem: true }, guard)).toEqual([
+      'unusable-vvm',
+    ]);
+    // Omitted = treated as a vaccine (VVM data only exists on vaccine stock).
+    expect(barReasons(unusable, guard)).toEqual(['unusable-vvm']);
+    expect(
+      autoAllocateBarReasons({ ...unusable, isVaccineItem: false }, prefs())
+    ).toEqual(['unusable-vvm']);
+  });
+});
+
+describe('rowHasAllocatableStock (AC-AL15)', () => {
+  it('needs available stock, and on hold additionally a seeded allocation', () => {
+    expect(
+      rowHasAllocatableStock({
+        stockLineOnHold: false,
+        availablePacks: 1,
+        numberOfPacks: 0,
+      })
+    ).toBe(true);
+    expect(
+      rowHasAllocatableStock({
+        stockLineOnHold: false,
+        availablePacks: 0,
+        numberOfPacks: 5,
+      })
+    ).toBe(false);
+    expect(
+      rowHasAllocatableStock({
+        stockLineOnHold: true,
+        availablePacks: 3,
+        numberOfPacks: 0,
+      })
+    ).toBe(false);
+    expect(
+      rowHasAllocatableStock({
+        stockLineOnHold: true,
+        availablePacks: 3,
+        numberOfPacks: 2,
+      })
+    ).toBe(true);
+    expect(
+      rowHasAllocatableStock({
+        stockLineOnHold: false,
+        location: { onHold: true },
+        availablePacks: 3,
+        numberOfPacks: 0,
+      })
+    ).toBe(false);
+  });
+});
+
+describe('clampManualPacks (AC-AL6 — the manual-entry clamp)', () => {
+  it('whole-pack mode rounds a fractional entry UP', () => {
+    expect(clampManualPacks(2.5, 10)).toBe(3);
+    expect(clampManualPacks(3, 10)).toBe(3);
+  });
+
+  it('whole-pack mode clamps an over-available entry DOWN to the whole-pack floor', () => {
+    expect(clampManualPacks(10, 3.5)).toBe(3);
+    // The round-up itself can cross availability — then the floor wins too.
+    expect(clampManualPacks(3.2, 3.5)).toBe(3);
+  });
+
+  it('partial-pack mode keeps the fraction, bounded to raw availability', () => {
+    expect(clampManualPacks(2.5, 3.5, { partialPacks: true })).toBe(2.5);
+    expect(clampManualPacks(10, 3.5, { partialPacks: true })).toBe(3.5);
+  });
+
+  it('never negative or non-finite', () => {
+    expect(clampManualPacks(-1, 10)).toBe(0);
+    expect(clampManualPacks(Number.NaN, 10)).toBe(0);
+    expect(clampManualPacks(undefined, 10)).toBe(0);
   });
 });
 

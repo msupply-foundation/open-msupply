@@ -12,6 +12,7 @@ export {
   autoAllocateBarReasons,
   barReasons,
   isBarred,
+  rowHasAllocatableStock,
   fefoCompare,
   fillOrderCompare,
   type AllocationPreferences,
@@ -20,6 +21,7 @@ export {
   type OrderableBatch,
 } from './policy';
 export {
+  clampManualPacks,
   lensToUnits,
   unitsToLens,
   availableUnits,
