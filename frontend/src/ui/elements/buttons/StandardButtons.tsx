@@ -68,13 +68,6 @@ export const DialogSaveButton = (props: StandardButtonProps) => (
   </Button>
 );
 
-/** Primary confirm that also advances to the next step in a multi-step flow. */
-export const OkAndNextButton = (props: StandardButtonProps) => (
-  <Button variant="primary" {...props}>
-    {t('button.ok-and-next')}
-  </Button>
-);
-
 /** Primary save that also advances to the next step in a multi-step flow. */
 export const SaveAndNextButton = (props: StandardButtonProps) => (
   <Button variant="primary" {...props}>
