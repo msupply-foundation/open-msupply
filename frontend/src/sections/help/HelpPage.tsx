@@ -160,13 +160,13 @@ const HelpPage: Component = () => {
             <TextField
               label={t('label.your-email-address')}
               value={email()}
-              onInput={setEmail}
+              onInput={e => setEmail(e.currentTarget.value)}
               error={emailError()}
             />
             <TextArea
               label={t('label.message')}
               value={message()}
-              onInput={setMessage}
+              onInput={e => setMessage(e.currentTarget.value)}
               rows={4}
             />
             <Show when={outcome()}>
