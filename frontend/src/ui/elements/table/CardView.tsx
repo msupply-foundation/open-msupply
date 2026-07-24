@@ -15,12 +15,24 @@ import {
 } from './columnTypes';
 import styles from './DataTable.module.css';
 
-// A cell's explicit card region, or undefined when it has none — in which case
-// it belongs to the single "secondary area" (rendered below the header, ordered
-// by group when grouped).
-const cellCardRegion = <T,>(
+// A cell's explicit card position, or undefined when it has none — in which
+// case it belongs to the card body (rendered below the header, ordered by
+// group when grouped), alongside the content positions.
+const cellCardPosition = <T,>(
   cell: TanCell<T, unknown>
-): 'primary' | 'badge' | undefined => cell.column.columnDef.meta?.card?.region;
+):
+  | 'header-primary'
+  | 'header-badge'
+  | 'content-primary'
+  | 'content-secondary'
+  | undefined => cell.column.columnDef.meta?.cardPosition;
+
+// Whether a cell sits in the card HEADER row (either header position) — as
+// opposed to the body, which holds every other visible cell.
+const cellInHeader = <T,>(cell: TanCell<T, unknown>): boolean => {
+  const p = cellCardPosition(cell);
+  return p === 'header-primary' || p === 'header-badge';
+};
 
 // The column's header text, for a field label. Headers may be a string or
 // JSX/function; only the string case yields a readable label (our columns use
@@ -31,15 +43,6 @@ const columnHeaderText = <T,>(
   const header = cell.column.columnDef.header;
   return typeof header === 'string' ? header : undefined;
 };
-
-// The optional caption for a primary/badge card cell — a small muted label
-// above the cell (for an otherwise-unlabelled cell, e.g. an editable input).
-// Opt in with `card.showLabel`; the text is the column's own header, so it
-// isn't specified twice.
-const cellCardLabel = <T,>(cell: TanCell<T, unknown>): string | undefined =>
-  cell.column.columnDef.meta?.card?.showLabel
-    ? columnHeaderText(cell)
-    : undefined;
 
 // A cell's column membership (ALL_TABS sentinel | array of group keys |
 // undefined).
@@ -79,12 +82,11 @@ export function CardView<T>(props: {
     <For each={rows()}>
       {row => {
         const cells = () => row.getVisibleCells();
-        const inRegion = (region: 'primary' | 'badge') =>
-          cells().filter(c => cellCardRegion(c) === region);
-        // The "secondary area": every visible cell with NO explicit card
-        // region.
-        const secondaryCells = () =>
-          cells().filter(c => cellCardRegion(c) === undefined);
+        const inHeader = (position: 'header-primary' | 'header-badge') =>
+          cells().filter(c => cellCardPosition(c) === position);
+        // The card body: every visible cell NOT in the header row (the content
+        // positions plus un-annotated columns).
+        const secondaryCells = () => cells().filter(c => !cellInHeader(c));
         return (
           <tr
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
@@ -106,32 +108,27 @@ export function CardView<T>(props: {
                     />
                   </Show>
                   <div class={styles.cardIdentity}>
-                    <For each={inRegion('primary')}>
+                    <For each={inHeader('header-primary')}>
                       {cell => (
-                        // meta.card.label (optional): a muted caption above
-                        // the cell, same style as a secondary field's label —
-                        // for an unlabelled cell (e.g. an input).
-                        <LabelledValue label={cellCardLabel(cell)}>
-                          <div class={styles.cardPrimary}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </div>
-                        </LabelledValue>
-                      )}
-                    </For>
-                  </div>
-                  <For each={inRegion('badge')}>
-                    {cell => (
-                      <LabelledValue label={cellCardLabel(cell)}>
-                        <div class={styles.cardBadge}>
+                        // Header positions are never labelled — the cell fills
+                        // the slot directly (identity/title top-left).
+                        <div class={styles.cardPrimary}>
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
                           )}
                         </div>
-                      </LabelledValue>
+                      )}
+                    </For>
+                  </div>
+                  <For each={inHeader('header-badge')}>
+                    {cell => (
+                      <div class={styles.cardBadge}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </div>
                     )}
                   </For>
                 </div>

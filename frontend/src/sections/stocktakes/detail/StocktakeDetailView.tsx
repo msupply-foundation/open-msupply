@@ -545,7 +545,7 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'itemName',
       header: t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
+      meta: { cardPosition: 'header-primary', wrapLines: 2 },
     },
     {
       c: { key: 'batch' },
@@ -645,7 +645,7 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'countedNumberOfPacks',
       header: t('label.counted-num-of-packs'),
       ...getNumberCell(),
-      meta: { align: 'right', card: { region: 'badge' } },
+      meta: { align: 'right', cardPosition: 'header-badge' },
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine rows
     // only (blank otherwise); nothing stored per line (see ./lines/doses).

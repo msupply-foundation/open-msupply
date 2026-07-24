@@ -68,8 +68,9 @@ export const getDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
 });
 
 // Expiry dates: like getDateCell, but an almost-expired date (≤3 months to
-// expiry, past included — the old app's isAlmostExpired / MINIMUM_EXPIRY_MONTHS)
-// renders in the error colour, matching the old app's ExpiryDateCell.
+// expiry, past included — the old app's isAlmostExpired /
+// MINIMUM_EXPIRY_MONTHS) renders in the error colour, matching the old app's
+// ExpiryDateCell.
 const EXPIRY_WARNING_MONTHS = 3;
 export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },

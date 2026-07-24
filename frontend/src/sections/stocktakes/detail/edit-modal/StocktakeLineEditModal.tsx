@@ -799,7 +799,7 @@ const StocktakeLineEditContent = (
       c: { key: 'batch' },
       header: t('label.batch'),
       tabsAndCardGroups: ALL_TABS,
-      meta: { card: { region: 'primary', showLabel: true } },
+      meta: { cardPosition: 'header-primary' },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1293,7 +1293,7 @@ const StocktakeLineEditContent = (
       c: { id: 'actions' },
       header: t('label.actions'),
       tabsAndCardGroups: ALL_TABS,
-      meta: { card: { region: 'badge' }, align: 'right' },
+      meta: { cardPosition: 'header-badge', align: 'right' },
       cell: info => {
         const line = info.row.original;
         return (

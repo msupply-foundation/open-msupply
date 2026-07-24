@@ -388,7 +388,7 @@ const StockList: Component = () => {
       }),
       textCol('itemName', t('label.name'), l => l.itemName, {
         sortKey: 'itemName',
-        meta: { card: { region: 'primary' }, wrapLines: 2 },
+        meta: { cardPosition: 'header-primary', wrapLines: 2 },
       }),
       {
         c: { id: 'masterLists' },
@@ -464,7 +464,7 @@ const StockList: Component = () => {
         ...(sortable('numberOfPacks')
           ? { sortKey: 'numberOfPacks' as SortKey }
           : {}),
-        meta: { align: 'right', card: { region: 'badge' } },
+        meta: { align: 'right', cardPosition: 'header-badge' },
         cell: info => {
           const row = info.row.original;
           const packs =

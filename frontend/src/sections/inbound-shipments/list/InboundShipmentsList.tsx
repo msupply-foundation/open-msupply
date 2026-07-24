@@ -225,7 +225,7 @@ const InboundShipmentsList: Component = () => {
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: t('label.name'),
-      meta: { card: { region: 'primary' } },
+      meta: { cardPosition: 'header-primary' },
       cell: info => {
         const row = info.row.original;
         return (
@@ -266,7 +266,7 @@ const InboundShipmentsList: Component = () => {
           />
         );
       },
-      meta: { card: { region: 'badge' } },
+      meta: { cardPosition: 'header-badge' },
     },
     {
       c: { key: 'invoiceNumber' },
