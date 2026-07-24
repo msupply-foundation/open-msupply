@@ -42,7 +42,7 @@ jobs:
           # before corepack is enabled (#12508)
           package-manager-cache: false
       - name: Mint token for the frontend repo
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: fe-token
         with:
           app-id: ${{ vars.FE_APP_ID }}

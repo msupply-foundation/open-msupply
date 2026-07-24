@@ -49,7 +49,7 @@ jobs:
       # reads THIS repo — a GitHub App scoped to reading that repo mints a
       # short-lived token per run (no PAT to expire or rotate).
       - name: Mint token for the suites repo
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: fe-token
         with:
           app-id: ${{ vars.FE_APP_ID }}

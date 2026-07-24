@@ -89,7 +89,7 @@ jobs:
       # real. To unblock before then, set the FRONTEND_DIST_URL repo variable to a
       # dist zip (the same override the mac build documents) — empty vars are ignored.
       - name: Mint token for the frontend repo
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: fe-token
         with:
           app-id: ${{ vars.FE_APP_ID }}
