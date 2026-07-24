@@ -67,6 +67,7 @@ import {
 import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
 import type { OutboundLineFilter } from './outboundLineFilter';
+import { createNextItemWalk } from './nextItemWalk';
 import { outboundDetailFilters } from './outboundDetailFilters';
 import type { StatusPreflight } from './actions/StatusChangeAction';
 import { isEditable, canReturnLines } from '../outboundStatus';
@@ -232,6 +233,17 @@ const OutboundDetailView: Component = () => {
   // page (keeps rows in place, no remount); undefined before the first load.
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+  // Deleting the last page's rows can leave the offset past the end (an
+  // empty "41–40 of 40" page) — clamp back to the last real page when a
+  // resolved page proves the offset overshot. Idempotent: the clamped offset
+  // satisfies the guard, so the effect settles in one step.
+  createEffect(() => {
+    const total = linesData.latest?.totalCount;
+    const { offset, first } = query();
+    if (total == null || offset === 0 || offset < total) return;
+    const lastPage = Math.floor(Math.max(0, total - 1) / first) * first;
+    setQuery({ ...query(), offset: lastPage });
+  });
 
   // Service lines — a small dedicated read (spec S5; the side panel's service
   // rows). Never in the paginated table; refetched alongside the lines page
@@ -269,11 +281,7 @@ const OutboundDetailView: Component = () => {
       // entity's server-side pricing aggregates (D45), so every line-level
       // change moves them — a lines-only refetch would leave the footer one
       // edit behind. `.latest` reads keep the refresh remount-free.
-      await Promise.all([
-        refetchLines(),
-        refetchServiceLines(),
-        refetchInfo(),
-      ]);
+      await Promise.all([refetchLines(), refetchServiceLines(), refetchInfo()]);
     } finally {
       setSilentRefetching(false);
     }
@@ -413,6 +421,9 @@ const OutboundDetailView: Component = () => {
 
   const onLineOpsCommitted = () => {
     setSelectedIds([]);
+    // A save may have changed the rows — the walk must refetch, not trust
+    // its remembered page.
+    walk.reset();
     void refetchAfterSave();
   };
 
@@ -449,68 +460,35 @@ const OutboundDetailView: Component = () => {
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
   // item may be on a later PAGE, and finding it means advancing the detail
-  // table forward — the same as the user paging (rules.md § OK & next).
-  //   1. Scan the CURRENT page's rows after the current item for the next
-  //      distinct item not in `covered` (an item spans several batch rows).
-  //   2. If none on this page and more pages exist, advance to the next page
-  //      (offset += first — the table VISIBLY moves), fetch it, and rescan.
-  //   3. Exhausted → undefined; the modal then drops into add mode. The
-  //      table stays on the last page.
-  // Pages beyond the first are fetched DIRECTLY (not via the reactive
-  // resource) so the walk is race-free; we still setQuery(offset) so the
-  // visible table follows along, and the resource refetches that page in the
-  // background.
-  const nextItem = async (
-    currentId: string,
-    covered: Set<string>
-  ): Promise<LineEditItem | undefined> => {
-    // Pick the next distinct, uncovered item within a page's rows. On the
-    // CURRENT page we must start AFTER the current item's rows (`fromStart`
-    // false — items before it are already behind us); on later pages
-    // everything is "after" (`fromStart` true). The covered set (which
-    // includes the current item) skips repeats.
-    const pick = (
-      pageRows: Line[],
-      fromStart: boolean
-    ): LineEditItem | undefined => {
-      let past = fromStart;
-      for (const line of pageRows) {
-        const id = line.item.id;
-        if (id === currentId) {
-          past = true;
-          continue;
-        }
-        if (!past || covered.has(id)) continue;
-        return {
-          id,
-          name: line.item.name,
-          unitName: line.item.unitName,
-          isVaccine: line.item.isVaccine,
-          doses: line.item.doses,
-        };
-      }
-      return undefined;
-    };
-
-    const onThisPage = pick(rows(), false);
-    if (onThisPage) return onThisPage;
-
-    let offset = query().offset;
-    const first = query().first;
-    for (;;) {
-      offset += first;
-      if (offset >= totalCount()) return undefined;
-      // Move the visible table to this page (the resource refetches it too).
-      setQuery({ ...query(), offset });
+  // table forward — the same as the user paging (rules.md § Save & next).
+  // The paging logic lives in ./nextItemWalk (unit-tested); this wires its
+  // deps: direct page fetches (race-free — never the reactive resource),
+  // page advance = setQuery + selection clear (AC-V9), abort = the editor
+  // closed (a cancel mid-walk must not keep paging the table).
+  const walk = createNextItemWalk({
+    fetchPage: async (offset, first) => {
       const result = await graphqlFetch(OutboundLines, {
         ...linesVariables(),
         page: { first, offset },
       });
       if (result.kind !== 'success') return undefined;
-      const found = pick(result.data.invoiceLines.nodes, true);
-      if (found) return found;
-    }
-  };
+      return {
+        rows: result.data.invoiceLines.nodes,
+        totalCount: result.data.invoiceLines.totalCount,
+      };
+    },
+    currentOffset: () => query().offset,
+    pageSize: () => query().first,
+    advancePage: offset => {
+      setQuery({ ...query(), offset });
+      setSelectedIds([]);
+    },
+    aborted: () => editState() == null,
+  });
+  const nextItem = async (
+    currentId: string,
+    covered: Set<string>
+  ): Promise<LineEditItem | undefined> => walk.next(currentId, covered);
 
   const selectedLines = () =>
     rows().filter(line => selectedIds().includes(line.id));
