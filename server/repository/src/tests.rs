@@ -866,12 +866,9 @@ mod repository_test {
                 stock_total_after_tax: 3.0,
                 service_total_before_tax: 10.0,
                 service_total_after_tax: 15.0,
-                // Quantity totals cover non-service lines, placeholders
-                // included: line1 (2 packs × size 10, volume 0.5/pack) +
-                // line2 (1 × 1) + placeholder (5 × 1); the service line
-                // (1 pack) is excluded.
-                total_number_of_packs: 8.0,
-                total_number_of_units: 26.0,
+                // The volume total covers non-service lines, placeholders
+                // included: line1 (2 packs × 0.5/pack) + line2 (0) +
+                // placeholder (0); the service line is excluded.
                 total_volume: 1.0,
                 ..stats_invoice_1.clone()
             }
