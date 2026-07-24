@@ -32,7 +32,9 @@ import {
   availableUnits as sumAvailableUnits,
   autoAllocateBarReasons,
   barReasons,
+  clampManualPacks,
   deriveIssueWarnings,
+  rowHasAllocatableStock,
   distributeIssue,
   fefoCompare,
   lensToUnits,
@@ -185,11 +187,25 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       return;
     }
     const data = result.data.draftStockOutLines;
-    // FEFO order for display and distribution: the shared comparator
-    // (spec/stock-allocation § ordering, AC-AL1; VVM-then-expiry stays with
-    // the server-side allocation).
+    // FEFO order for display and distribution (spec/stock-allocation §
+    // ordering, AC-AL1; VVM-then-expiry stays with the server-side
+    // allocation) — with rows holding nothing allocatable sunk to the bottom
+    // (AC-AL15). Snapshot the seeded allocation first: the on-hold manual
+    // exception and the sinking both judge it (AC-AL14).
     const sorted = [...data.draftLines].sort(fefoCompare);
-    setDraft(reconcile(sorted, { key: 'id' }));
+    seededPacksById = new Map(
+      sorted.map(line => [line.id, line.numberOfPacks])
+    );
+    nonAllocatableIds = new Set(
+      sorted
+        .filter(line => !rowHasAllocatableStock(line))
+        .map(line => line.id)
+    );
+    const ordered = [
+      ...sorted.filter(line => !nonAllocatableIds.has(line.id)),
+      ...sorted.filter(line => nonAllocatableIds.has(line.id)),
+    ];
+    setDraft(reconcile(ordered, { key: 'id' }));
     const placeholder = data.placeholderQuantity ?? 0;
     setPlaceholderUnits(placeholder);
     setLoadingLines(false);
@@ -232,8 +248,32 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // (manual entry disabled, row dimmed — AC-AL8/AL9) vs the stricter,
   // unconditional AUTO bar (expired / unusable-VVM stock is never
   // auto-allocated, preference or not — AC-AL2/AL10).
+  //
+  // The manual bar's on-hold exception and the sunk non-allocatable rows
+  // (AC-AL14/AL15) judge the allocation AS SEEDED at editor open — plain
+  // (non-reactive) snapshots set by loadItem, so zeroing a held row mid-edit
+  // doesn't lock it and rows don't reorder underneath the user.
+  let seededPacksById = new Map<string, number>();
+  let nonAllocatableIds = new Set<string>();
   const isBarred = (line: DraftLine): boolean =>
-    barReasons(line, allocationPrefs()).length > 0;
+    barReasons(
+      {
+        stockLineOnHold: line.stockLineOnHold,
+        location: line.location,
+        vvmStatus: line.vvmStatus,
+        expiryDate: line.expiryDate,
+        availablePacks: line.availablePacks,
+        numberOfPacks: seededPacksById.get(line.id) ?? 0,
+        isVaccineItem: item()?.isVaccine ?? true,
+      },
+      allocationPrefs()
+    ).length > 0;
+  // Nothing to allocate OR adjust here — sunk to the bottom, disabled
+  // (AC-AL15), like the manual bar.
+  const isNonAllocatable = (line: DraftLine): boolean =>
+    nonAllocatableIds.has(line.id);
+  const rowDisabled = (line: DraftLine): boolean =>
+    isBarred(line) || isNonAllocatable(line);
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
@@ -326,14 +366,27 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     distribute(units ?? 0);
   };
 
-  // Direct per-batch edit, bounded 0…available (AC-I5 — the client bounds the
-  // input; the server does not reject negatives while NEW).
+  // Direct per-batch edit (AC-I5/AC-AL6): whole packs — a fractional entry
+  // rounds UP, an entry beyond availability clamps DOWN to the whole-pack
+  // floor (rules.md § whole-pack arithmetic). An adjusted entry is reported
+  // (AC-AL13), and any earlier distribution banners are REPLACED — they
+  // describe an allocation this edit just changed.
   const setPacks = (id: string, value: number | null) => {
     const index = draft.findIndex(line => line.id === id);
     if (index < 0) return;
     const line = draft[index]!;
-    const bounded = Math.max(0, Math.min(value ?? 0, line.availablePacks));
-    setDraft(index, 'numberOfPacks', bounded);
+    const applied = clampManualPacks(value, line.availablePacks);
+    setDraft(index, 'numberOfPacks', applied);
+    setWarnings(
+      value != null && applied !== value
+        ? [
+            t('messages.over-allocated-line', {
+              quantity: formatNumber(applied),
+              issueQuantity: formatNumber(value),
+            }),
+          ]
+        : []
+    );
     setDirty(true);
     // As in distribute() — a direct per-batch edit also invalidates a stale
     // zero-allocation confirmation.
@@ -590,7 +643,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             min={0}
             max={line.availablePacks}
             decimalLimit={2}
-            disabled={isBarred(line)}
+            disabled={rowDisabled(line)}
             value={line.numberOfPacks || undefined}
             onChange={value => setPacks(line.id, value ?? null)}
           />
@@ -801,7 +854,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           rowKey={line => line.id}
           loading={loadingLines()}
           showFullScreen={false}
-          rowState={line => (isBarred(line) ? 'disabled' : undefined)}
+          rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
           emptyMessage={t('messages.no-stock-available')}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}

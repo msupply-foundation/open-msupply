@@ -31,6 +31,21 @@ export interface BarrableBatch {
   location?: { onHold: boolean } | null;
   vvmStatus?: { unusable: boolean } | null;
   expiryDate?: string | null;
+  /**
+   * The batch's allocation on the record being edited, AS SEEDED when the
+   * editor opened (not live) — an on-hold batch already carrying one stays
+   * manually editable so the allocation can be adjusted (AC-AL14). Omitted =
+   * no exception (on hold always bars).
+   */
+  numberOfPacks?: number;
+  /** Available packs — the on-hold exception also needs stock to adjust against. */
+  availablePacks?: number;
+  /**
+   * Whether the batch's item is a vaccine — the manual unusable-VVM bar
+   * applies to vaccine items only (AC-AL9). Omitted = treated as a vaccine
+   * (VVM data only exists on vaccine stock in practice).
+   */
+  isVaccineItem?: boolean;
 }
 
 /** Local calendar date as YYYY-MM-DD (the store clock's day). */
@@ -68,14 +83,28 @@ export const barReasons = (
   today: Date = new Date()
 ): BarReason[] => {
   const reasons: BarReason[] = [];
-  if (batch.stockLineOnHold || batch.location?.onHold) reasons.push('on-hold');
+  // An on-hold batch that ALREADY holds an allocation on this record (and
+  // still has stock) stays manually editable — the hold must not lock in an
+  // allocation made before it (AC-AL14). Judged on the SEEDED allocation the
+  // consumer passes, so zeroing the row mid-edit doesn't lock it.
+  const heldButAdjustable =
+    (batch.numberOfPacks ?? 0) > 0 && (batch.availablePacks ?? 0) > 0;
+  if (
+    (batch.stockLineOnHold || batch.location?.onHold) &&
+    !heldButAdjustable
+  )
+    reasons.push('on-hold');
   if (
     prefs.expiredStockPreventIssue &&
     batch.expiryDate &&
     expiredWithin(batch.expiryDate, prefs.expiredStockIssueThreshold, today)
   )
     reasons.push('expired');
-  if (batch.vvmStatus?.unusable && prefs.manageVvmStatusForStock)
+  if (
+    batch.vvmStatus?.unusable &&
+    prefs.manageVvmStatusForStock &&
+    (batch.isVaccineItem ?? true)
+  )
     reasons.push('unusable-vvm');
   return reasons;
 };
@@ -116,6 +145,24 @@ export const isBarred = (
   prefs: AllocationPreferences,
   today?: Date
 ): boolean => barReasons(batch, prefs, today).length > 0;
+
+/**
+ * Whether the row holds anything allocatable at all (AC-AL15): available
+ * stock, and — when on hold — an existing allocation to adjust. Rows failing
+ * this sink to the bottom of the batch grid, disabled; judged on the SEEDED
+ * values at editor open, like the on-hold exception above.
+ */
+export const rowHasAllocatableStock = (batch: {
+  stockLineOnHold: boolean;
+  location?: { onHold: boolean } | null;
+  availablePacks: number;
+  numberOfPacks: number;
+}): boolean => {
+  if (batch.availablePacks <= 0) return false;
+  if (batch.stockLineOnHold || batch.location?.onHold)
+    return batch.numberOfPacks > 0;
+  return true;
+};
 
 /**
  * FEFO display/fill order: earliest expiry first, no expiry last (AC-AL1).
