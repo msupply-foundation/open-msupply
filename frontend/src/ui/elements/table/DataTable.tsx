@@ -630,6 +630,7 @@ export function DataTable<T, K extends string, G extends string = never>(
               trigger={<ColumnsIcon />}
               triggerLabel={t('table.columns')}
               triggerClass={styles.controlButton}
+              class={styles.controlPopover}
             >
               <ColumnSettings
                 table={table}
@@ -647,6 +648,7 @@ export function DataTable<T, K extends string, G extends string = never>(
               trigger={<SettingsIcon />}
               triggerLabel={t('table.settings')}
               triggerClass={styles.controlButton}
+              class={styles.controlPopover}
             >
               <TableSettings
                 config={props.config}
