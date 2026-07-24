@@ -618,9 +618,11 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  min-block-size: 2.25rem;
+  min-block-size: 2.75rem;
   padding-inline: var(--space-1);
-  padding-block-end: var(--space-1);
+  /* Symmetric block padding — an end-only pad shifted the centred chips
+     visibly above the toolbar's midline. */
+  padding-block: var(--space-1);
 }
 
 /* The filter-bar slot — claims the inline-start and the free width (its chips
@@ -663,7 +665,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   cursor: pointer;
   color: var(--text-secondary);
   padding: var(--space-1) var(--space-2);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   line-height: 1;
   border-radius: var(--radius-sm);
 }
