@@ -58,14 +58,17 @@ export interface OutboundSidePanelProps {
   onSaved: (node: OutboundNode) => void;
   /** The shared edit buffer (comment + transport reference live here). */
   edit: OutboundFieldEdit;
-  /** Field saves that aren't buffered text (colour, expected date, method). */
+  /** Field saves that aren't buffered text (colour, expected date, method).
+   * Resolves once the entity reflects the save (or the save failed) — the
+   * picked-date control awaits it to hand its optimistic value over without
+   * a flicker. */
   onSaveField: (patch: {
     colour?: string;
     tax?: { percentage: number | null };
     expectedDeliveryDate?: { value: string | null };
     shippingMethodId?: { value: string | null };
     backdatedDatetime?: string | null;
-  }) => void;
+  }) => Promise<void>;
   /** Open the service-charges editor (S5). */
   onEditServiceCharges: () => void;
 }

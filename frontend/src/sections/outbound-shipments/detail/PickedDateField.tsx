@@ -40,8 +40,11 @@ export interface PickedDateFieldProps {
   node: OutboundNode;
   /** Panel-wide read-only gate (SHIPPED onward). */
   disabled: boolean;
-  /** Apply the backdate — sets backdatedDatetime (parent saves + refetches). */
-  onBackdate: (backdatedDatetime: string) => void;
+  /** Apply the backdate — sets backdatedDatetime (parent saves + refetches).
+   * Resolves once the node reflects the save (or the save failed): the field
+   * keeps showing the chosen day until then, so the confirmed pick never
+   * flickers back to the old day for the save round-trip. */
+  onBackdate: (backdatedDatetime: string) => Promise<void>;
 }
 
 export const PickedDateField: Component<PickedDateFieldProps> = props => {
@@ -54,6 +57,10 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // The user's un-saved picked day, so a cancelled pick reverts the input
   // (the controlled `value` alone wouldn't — the node hasn't changed).
   const [draft, setDraft] = createSignal<string>();
+  // A confirmed backdate is saving — onClose (which always follows
+  // onConfirm) must not revert the draft while it is. Plain flag: nothing
+  // renders from it.
+  let confirmInFlight = false;
 
   const backdating = () => outboundPrefs()?.prefs?.backdating;
   const gate = () =>
@@ -113,9 +120,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
       hasLines: linesResult.data.invoiceLines.totalCount > 0,
       stocktakeConflict,
     });
-    // Nothing to warn about → apply directly; otherwise confirm first.
+    // Nothing to warn about → apply directly; otherwise confirm first. The
+    // draft holds the chosen day on screen until the node reflects the save
+    // (a failed save reverts — the node is unchanged and the draft clears).
     if (warningKeys.length === 0) {
-      props.onBackdate(backdatedDatetime);
+      await props.onBackdate(backdatedDatetime);
       setDraft(undefined);
       return;
     }
@@ -202,13 +211,20 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
         message={confirmMessage()}
         onClose={() => {
           setPending(undefined);
-          setDraft(undefined);
+          // ConfirmDialog's OK calls onConfirm THEN onClose — a cancelled
+          // pick reverts the input here, but a CONFIRMED one must keep the
+          // draft on screen through the save round-trip (clearing it now
+          // would snap back to the OLD day until the node updates).
+          if (!confirmInFlight) setDraft(undefined);
         }}
         onConfirm={() => {
           const info = pending();
-          setPending(undefined);
-          setDraft(undefined);
-          if (info) props.onBackdate(info.backdatedDatetime);
+          if (!info) return;
+          confirmInFlight = true;
+          void props.onBackdate(info.backdatedDatetime).then(() => {
+            confirmInFlight = false;
+            setDraft(undefined);
+          });
         }}
       />
     </>

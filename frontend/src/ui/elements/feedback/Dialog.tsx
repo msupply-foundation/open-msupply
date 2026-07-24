@@ -288,6 +288,15 @@ export const Dialog = (props: DialogProps) => {
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
       onCancel={event => props.dismissable === false && event.preventDefault()}
+      // A modal dialog is an event boundary for Escape: the dialog renders in
+      // place (not portaled), so the keydown would bubble on into ancestor
+      // key handlers — e.g. Kobalte's accordion root, whose Escape clears the
+      // selection and collapses the section AROUND the open dialog. A modal
+      // <dialog> detached that way (its host subtree hidden or removed while
+      // open) loses its top layer and later re-renders in-flow. Stop
+      // propagation only — the UA's own default action (the `cancel` event
+      // above) is not propagation-dependent and still closes the dialog.
+      onKeyDown={event => event.key === 'Escape' && event.stopPropagation()}
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
