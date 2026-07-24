@@ -11,6 +11,9 @@ import { locale, t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
+import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../../ui/layout/Stack/Stack';
+import { FormSection } from '../../ui/layout/Form/FormSection';
 import { Text } from '../../ui/elements/typography/Text';
 import { Select } from '../../ui/elements/selectors/Select';
 import { TextField } from '../../ui/elements/inputs/TextField';
@@ -101,84 +104,89 @@ const HelpPage: Component = () => {
         </Header>
       }
     >
-      {/* Block 1 — user guide (external link, opens a new context). */}
-      <section>
-        <Text variant="heading">{t('heading.user-guide')}</Text>
-        <a
-          href={userGuideUrl(locale())}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t('label.user-guide')}
-        </a>
-      </section>
+      {/* The spec's single width-capped column (spec/help S1 § layout): the
+          registry's content measure at form width, blocks stacked with the
+          page rhythm. */}
+      <ContentContainer size="form">
+        <Stack gap="lg">
+          {/* Block 1 — user guide (external link, opens a new context). */}
+          <FormSection title={t('heading.user-guide')}>
+            <a
+              href={userGuideUrl(locale())}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('label.user-guide')}
+            </a>
+          </FormSection>
 
-      {/* Block 2 — keyboard shortcuts (static explanatory text). */}
-      <section>
-        <Text variant="heading">{t('heading.keyboard-shortcuts')}</Text>
-        <Text>{t('message.keyboard-shortcuts')}</Text>
-      </section>
+          {/* Block 2 — keyboard shortcuts (static explanatory text). */}
+          <FormSection title={t('heading.keyboard-shortcuts')}>
+            <Text>{t('message.keyboard-shortcuts')}</Text>
+          </FormSection>
 
-      {/* Block 3 — help documents; whole block absent when none showable (AC-V3). */}
-      <Show when={documents().length > 0}>
-        <section>
-          <Text variant="heading">{t('heading.help-documents')}</Text>
-          <For each={documents()}>
-            {doc => (
-              <div>
-                <a
-                  href={helpDocumentFileUrl(
-                    '',
-                    doc.id,
-                    doc.files!.nodes[0]!.id
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {doc.title}
-                </a>
-              </div>
-            )}
-          </For>
-        </section>
-      </Show>
+          {/* Block 3 — help documents; whole block absent when none showable (AC-V3). */}
+          <Show when={documents().length > 0}>
+            <FormSection title={t('heading.help-documents')}>
+              <For each={documents()}>
+                {doc => (
+                  <a
+                    href={helpDocumentFileUrl(
+                      '',
+                      doc.id,
+                      doc.files!.nodes[0]!.id
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {doc.title}
+                  </a>
+                )}
+              </For>
+            </FormSection>
+          </Show>
 
-      {/* Block 4 — contact form. */}
-      <section>
-        <Text variant="heading">{t('heading.contact-us')}</Text>
-        <Select
-          label={t('label.reason-for-contacting')}
-          value={reason()}
-          options={[
-            { value: 'FEEDBACK', label: t('label.feedback') },
-            { value: 'SUPPORT', label: t('label.support') },
-          ]}
-          onValueChange={v => setReason(v as ContactType)}
-        />
-        <TextField
-          label={t('label.your-email-address')}
-          value={email()}
-          onInput={setEmail}
-          error={emailError()}
-        />
-        <TextArea
-          label={t('label.message')}
-          value={message()}
-          onInput={setMessage}
-          rows={4}
-        />
-        <Show when={outcome()}>
-          {o => <Alert severity={o().severity}>{o().text}</Alert>}
-        </Show>
-        <Button
-          icon={<MessageSquareIcon />}
-          loading={sending()}
-          disabled={!canSend()}
-          onClick={() => void send()}
-        >
-          {t('button.send')}
-        </Button>
-      </section>
+          {/* Block 4 — contact form. */}
+          <FormSection title={t('heading.contact-us')}>
+            <Select
+              label={t('label.reason-for-contacting')}
+              value={reason()}
+              options={[
+                { value: 'FEEDBACK', label: t('label.feedback') },
+                { value: 'SUPPORT', label: t('label.support') },
+              ]}
+              onValueChange={v => setReason(v as ContactType)}
+            />
+            <TextField
+              label={t('label.your-email-address')}
+              value={email()}
+              onInput={setEmail}
+              error={emailError()}
+            />
+            <TextArea
+              label={t('label.message')}
+              value={message()}
+              onInput={setMessage}
+              rows={4}
+            />
+            <Show when={outcome()}>
+              {o => <Alert severity={o().severity}>{o().text}</Alert>}
+            </Show>
+            {/* Natural-width button (a bare flex child would stretch). The
+                spec's end-alignment awaits a form-actions layout primitive. */}
+            <div>
+              <Button
+                icon={<MessageSquareIcon />}
+                loading={sending()}
+                disabled={!canSend()}
+                onClick={() => void send()}
+              >
+                {t('button.send')}
+              </Button>
+            </div>
+          </FormSection>
+        </Stack>
+      </ContentContainer>
     </Page>
   );
 };
