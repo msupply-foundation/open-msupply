@@ -54,6 +54,7 @@ const store = (
   stocktakeFrequency: 0,
   monthlyConsumptionLookBackPeriod: 0,
   monthsLeadTime: 0,
+  editPrescribedQuantityOnPrescription: false,
   ...overrides,
 });
 

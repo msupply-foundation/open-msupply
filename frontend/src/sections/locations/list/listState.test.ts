@@ -11,7 +11,7 @@ import {
 // shared-infrastructure and real-backend behaviour respectively (BUILD_REPORT
 // records the real-backend gap).
 
-describe('AC-L1 — list is store-scoped', () => {
+describe('OMS-REG-INV-01.36 — list is store-scoped', () => {
   it('every query carries the active store id', () => {
     expect(buildListVariables(DEFAULT_STATE, 'store-7').storeId).toBe(
       'store-7'
@@ -19,7 +19,7 @@ describe('AC-L1 — list is store-scoped', () => {
   });
 });
 
-describe('AC-L2 — sort by code or name', () => {
+describe('OMS-REG-INV-01.17 — sort by code or name', () => {
   it('defaults to name ascending', () => {
     expect(DEFAULT_STATE.sort).toEqual([{ key: 'name', desc: false }]);
   });
@@ -43,7 +43,7 @@ describe('AC-L2 — sort by code or name', () => {
   });
 });
 
-describe('AC-L3 — filter by name / code / on-hold', () => {
+describe('OMS-REG-INV-01.14 — filter by name / code / on-hold', () => {
   it('live filters flow through in GraphQL-native shape', () => {
     const variables = buildListVariables(
       {
@@ -70,7 +70,7 @@ describe('AC-L3 — filter by name / code / on-hold', () => {
   });
 });
 
-describe('AC-L4 — pagination', () => {
+describe('OMS-REG-INV-01.19 — pagination', () => {
   it('pagination is server-side: first/offset from the URL state', () => {
     const variables = buildListVariables(
       { ...DEFAULT_STATE, offset: 40, first: 20 },

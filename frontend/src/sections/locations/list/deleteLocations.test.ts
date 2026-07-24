@@ -8,7 +8,7 @@ import type { GraphqlResult } from '../../../api/graphql';
 import type { DeleteLocationResult } from './locations.generated';
 
 // AC-citing tests for the delete flow's logic (spec/locations/acceptance.md
-// § deletion). The dialog half — the confirmation gate (AC-D4) and the in-use
+// § deletion). The dialog half — the confirmation gate (OMS-REG-INV-01.34) and the in-use
 // report rendering — lives in DeleteLocationsAction; the mutation is only
 // fired from the confirm phase's OK, and these tests pin how each call's
 // result becomes an outcome and how outcomes fold into the report.
@@ -32,7 +32,7 @@ const inUse = success({
   },
 });
 
-describe('AC-D1 — delete unused location', () => {
+describe('OMS-REG-INV-01.21 — delete unused location', () => {
   it('a DeleteResponse means the location was removed', () => {
     expect(deleteOutcome('loc-1', deleted)).toEqual({
       kind: 'deleted',
@@ -41,7 +41,7 @@ describe('AC-D1 — delete unused location', () => {
   });
 });
 
-describe('AC-D2 — in-use location is not deleted', () => {
+describe('OMS-REG-INV-01.32 — in-use location is not deleted', () => {
   it('LocationInUse becomes the in-use report row, carrying the referencing stock and invoice lines', () => {
     expect(deleteOutcome('loc-2', inUse)).toEqual({
       kind: 'inUse',
@@ -52,7 +52,7 @@ describe('AC-D2 — in-use location is not deleted', () => {
   });
 });
 
-describe('AC-D3 — bulk delete is per-location', () => {
+describe('OMS-REG-INV-01.33 — bulk delete is per-location', () => {
   it('folds mixed outcomes: unused deleted, in-use reported, without blocking each other', () => {
     const outcomes: DeleteOutcome[] = [
       deleteOutcome('a', deleted),
@@ -77,7 +77,7 @@ describe('AC-D3 — bulk delete is per-location', () => {
   });
 });
 
-describe('AC-D5 — emptied location with movement history is not deletable', () => {
+describe('OMS-REG-INV-01.35 — emptied location with movement history is not deletable', () => {
   // The movement-history block fails storage-side as a plain Internal-error
   // GraphQL error — NOT the typed in-use report (contract.md ⚠️ wire trap).
   // The per-call graphqlError result therefore maps to a plain failure line,
@@ -111,7 +111,7 @@ describe('AC-D5 — emptied location with movement history is not deletable', ()
   });
 });
 
-describe('AC-D4 — delete requires confirmation (logic half)', () => {
+describe('OMS-REG-INV-01.34 — delete requires confirmation (logic half)', () => {
   // The gate itself is the dialog's: DeleteLocationsAction only calls the
   // mutation from its confirm phase's OK (re-entry guarded). What the logic
   // layer can pin: an empty outcome set — nothing confirmed, nothing run —

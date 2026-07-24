@@ -6,6 +6,12 @@
 // placeholder) plus every barred category passed over while holding stock.
 // Pure: the consuming editor owns its draft store; this owns the arithmetic
 // so AC-AL1/AL3/AL4's client face is testable in isolation.
+//
+// The `partialPacks` option is the prescriptions variant
+// (spec/prescriptions/rules.md § allocation, AC-A1): dispensing works in
+// units, so packs may split — the last take is the exact fraction needed,
+// there is never over-allocation, and a shortfall only narrows (no
+// placeholder concept).
 
 import type { BarReason } from './policy';
 
@@ -39,7 +45,8 @@ export type Distribution = {
 // VVM-then-expiry preference).
 export const distributeIssue = (
   lines: readonly DistributableLine[],
-  requestedUnits: number
+  requestedUnits: number,
+  options?: { partialPacks?: boolean }
 ): Distribution => {
   const packsById = new Map<string, number>();
   // Non-finite requests (NaN/Infinity from unparsed input) distribute
@@ -65,6 +72,8 @@ export const distributeIssue = (
     let packs: number;
     if (remaining >= maxUnits) {
       packs = line.availablePacks;
+    } else if (options?.partialPacks) {
+      packs = remaining / line.packSize;
     } else {
       packs = Math.min(
         Math.ceil(remaining / line.packSize),
