@@ -107,7 +107,8 @@ import {
 // `info` (outboundDetail — header/footer/side-panel fields, NOT the lines)
 // and `lines` (outboundLines — one server-filtered/sorted page). An entity-
 // LEVEL save mutates `info` in place; a LINE-level change refetches the lines
-// page (totals, placeholders, and trims all move server-side —
+// page AND the entity (the footer totals are its server-side pricing
+// aggregates — D45; placeholders and trims move server-side too —
 // kdd/state-management: refresh by direct call). Service lines are their own
 // small read (the S5 editor + side-panel rows).
 
@@ -178,7 +179,7 @@ const OutboundDetailView: Component = () => {
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
   const [returnModalOpen, setReturnModalOpen] = createSignal(false);
 
-  const [data, { mutate }] = createResource(
+  const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId }),
     async variables => {
       // A not-found NodeError is NOT routed to the global error modal (which
@@ -264,7 +265,15 @@ const OutboundDetailView: Component = () => {
   const refetchAfterSave = async () => {
     setSilentRefetching(true);
     try {
-      await Promise.all([refetchLines(), refetchServiceLines()]);
+      // The entity refetches WITH the lines: the footer totals are the
+      // entity's server-side pricing aggregates (D45), so every line-level
+      // change moves them — a lines-only refetch would leave the footer one
+      // edit behind. `.latest` reads keep the refresh remount-free.
+      await Promise.all([
+        refetchLines(),
+        refetchServiceLines(),
+        refetchInfo(),
+      ]);
     } finally {
       setSilentRefetching(false);
     }
