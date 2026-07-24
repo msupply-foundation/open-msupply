@@ -131,6 +131,32 @@ export const OutboundDetail = {
   query: "query outboundDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n    totalVolume\n  }\n  customFields\n}",
 } as TypedDocument<OutboundDetailResult, OutboundDetailVariables>;
 
+export type FullOutboundVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type FullOutboundResult = {
+  invoice: ({
+  __typename: "InvoiceNode";
+} & OutboundInfoFragment & {
+  lines: {
+  totalCount: number;
+  nodes: Array<OutboundLineFragment>;
+};
+}) | ({
+  __typename: "NodeError";
+} & {
+  error: {
+  description: string;
+};
+});
+};
+
+export const FullOutbound = {
+  query: "query fullOutbound($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...OutboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n    totalVolume\n  }\n  customFields\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
+} as TypedDocument<FullOutboundResult, FullOutboundVariables>;
+
 export type OutboundLinesVariables = {
   storeId: string;
   page?: {
