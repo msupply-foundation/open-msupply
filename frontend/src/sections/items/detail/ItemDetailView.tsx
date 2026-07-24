@@ -18,6 +18,8 @@ import { Statistic } from '../../../ui/elements/dashboard/Statistic';
 import { DetailContainer } from '../../../ui/layout/Detail/DetailContainer';
 import { DetailSection } from '../../../ui/layout/Detail/DetailSection';
 import { DetailRow } from '../../../ui/layout/Detail/DetailRow';
+import { FormColumns } from '../../../ui/layout/Form/FormColumns';
+import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { Select } from '../../../ui/elements/selectors/Select';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
@@ -38,9 +40,9 @@ import {
 // is the live reference); the only writes are the central-only management
 // flows (S3–S5), which are NOT built in this pass (flagged in BUILD_REPORT).
 // Statistics band + URL-driven tabs (a tab is deep-linkable via ?tab=).
-// Sections stack single-column: the spec's two-column pairing (two
-// DetailSections side-by-side) has no layout owner in the library yet —
-// the remainder of BUILD_REPORT flag #1.
+// The General tab's two-column section pairing (spec: "two-column, groups in
+// order") reuses the pure-layout FormColumns/FormColumn row — column 1 then
+// column 2 preserves the spec's group order when the columns wrap to one.
 //
 // Built tabs: General, Store, Master lists, Custom fields, Log. Flagged tabs
 // (rendered as a placeholder pending their components): Ledger (needs the
@@ -203,100 +205,111 @@ const ItemDetailView: Component = () => {
 
               <TabPanel value="general">
                 <DetailContainer>
-                  <DetailSection title={t('title.details')}>
-                    <DetailRow label={t('label.name')} value={i().name} />
-                    <DetailRow label={t('label.code')} value={i().code} />
-                    <DetailRow
-                      label={t('label.unit')}
-                      value={i().unitName ?? ''}
-                    />
-                    <DetailRow
-                      label={t('label.strength')}
-                      value={i().strength ?? ''}
-                    />
-                    <DetailRow label={t('label.ddd')} value={i().ddd} />
-                    <DetailRow label={t('label.type')} value={i().type} />
-                    <DetailRow
-                      label={t('label.is-vaccine')}
-                      checked={i().isVaccine}
-                    />
-                    <Show when={i().isVaccine}>
-                      <DetailRow
-                        label={t('label.doses')}
-                        value={formatUnits(i().doses)}
-                      />
-                    </Show>
-                  </DetailSection>
-                  <DetailSection title={t('title.categories')}>
-                    <DetailRow
-                      label={t('label.atc-category')}
-                      value={i().atcCategory}
-                    />
-                    <DetailRow
-                      label={t('label.universal-name')}
-                      value={i().msupplyUniversalName}
-                    />
-                    <DetailRow
-                      label={t('label.universal-code')}
-                      value={i().universalCode}
-                    />
-                  </DetailSection>
-                  <DetailSection title={t('title.storage')}>
-                    {/* Disabled lookup naming the restricted location type
+                  {/* Two-column groups (spec S2 › General), paired with the
+                      pure-layout column row. minWidth 18rem so two columns fit
+                      the DetailContainer measure (the 22rem default would
+                      always wrap to one); reading order when wrapped stays the
+                      spec's group order. */}
+                  <FormColumns>
+                    <FormColumn minWidth="18rem">
+                      <DetailSection title={t('title.details')}>
+                        <DetailRow label={t('label.name')} value={i().name} />
+                        <DetailRow label={t('label.code')} value={i().code} />
+                        <DetailRow
+                          label={t('label.unit')}
+                          value={i().unitName ?? ''}
+                        />
+                        <DetailRow
+                          label={t('label.strength')}
+                          value={i().strength ?? ''}
+                        />
+                        <DetailRow label={t('label.ddd')} value={i().ddd} />
+                        <DetailRow label={t('label.type')} value={i().type} />
+                        <DetailRow
+                          label={t('label.is-vaccine')}
+                          checked={i().isVaccine}
+                        />
+                        <Show when={i().isVaccine}>
+                          <DetailRow
+                            label={t('label.doses')}
+                            value={formatUnits(i().doses)}
+                          />
+                        </Show>
+                      </DetailSection>
+                      <DetailSection title={t('title.categories')}>
+                        <DetailRow
+                          label={t('label.atc-category')}
+                          value={i().atcCategory}
+                        />
+                        <DetailRow
+                          label={t('label.universal-name')}
+                          value={i().msupplyUniversalName}
+                        />
+                        <DetailRow
+                          label={t('label.universal-code')}
+                          value={i().universalCode}
+                        />
+                      </DetailSection>
+                    </FormColumn>
+                    <FormColumn minWidth="18rem">
+                      <DetailSection title={t('title.storage')}>
+                        {/* Disabled lookup naming the restricted location type
                         (spec S2 › Storage: a disabled autocomplete — the
                         read-only lookup rendering; it never opens). */}
-                    <DetailRow
-                      label={t('label.location-type')}
-                      control={
-                        <Select
+                        <DetailRow
                           label={t('label.location-type')}
-                          hideLabel
-                          disabled
-                          width="full"
-                          placeholder=""
-                          options={
-                            i().restrictedLocationType
-                              ? [
-                                  {
-                                    value: i().restrictedLocationType!.id,
-                                    label: i().restrictedLocationType!.name,
-                                  },
-                                ]
-                              : []
+                          control={
+                            <Select
+                              label={t('label.location-type')}
+                              hideLabel
+                              disabled
+                              width="full"
+                              placeholder=""
+                              options={
+                                i().restrictedLocationType
+                                  ? [
+                                      {
+                                        value: i().restrictedLocationType!.id,
+                                        label: i().restrictedLocationType!.name,
+                                      },
+                                    ]
+                                  : []
+                              }
+                              value={i().restrictedLocationType?.id}
+                            />
                           }
-                          value={i().restrictedLocationType?.id}
                         />
-                      }
-                    />
-                  </DetailSection>
-                  <DetailSection title={t('title.packaging')}>
-                    <DetailRow
-                      label={t('label.default-pack-size')}
-                      value={formatUnits(i().defaultPackSize)}
-                    />
-                    <DetailRow
-                      label={t('label.outer-pack-size')}
-                      value={formatUnits(i().outerPackSize)}
-                    />
-                    <DetailRow
-                      label={t('label.volume-per-pack')}
-                      value={formatUnits(i().volumePerPack, 2)}
-                    />
-                    <DetailRow
-                      label={t('label.volume-per-outer-pack')}
-                      value={formatUnits(i().volumePerOuterPack, 2)}
-                    />
-                    <DetailRow
-                      label={t('label.weight')}
-                      value={formatUnits(i().weight, 2)}
-                    />
-                  </DetailSection>
-                  <DetailSection title={t('title.pricing')}>
-                    <DetailRow
-                      label={t('label.margin')}
-                      value={formatUnits(i().margin, 2)}
-                    />
-                  </DetailSection>
+                      </DetailSection>
+                      <DetailSection title={t('title.packaging')}>
+                        <DetailRow
+                          label={t('label.default-pack-size')}
+                          value={formatUnits(i().defaultPackSize)}
+                        />
+                        <DetailRow
+                          label={t('label.outer-pack-size')}
+                          value={formatUnits(i().outerPackSize)}
+                        />
+                        <DetailRow
+                          label={t('label.volume-per-pack')}
+                          value={formatUnits(i().volumePerPack, 2)}
+                        />
+                        <DetailRow
+                          label={t('label.volume-per-outer-pack')}
+                          value={formatUnits(i().volumePerOuterPack, 2)}
+                        />
+                        <DetailRow
+                          label={t('label.weight')}
+                          value={formatUnits(i().weight, 2)}
+                        />
+                      </DetailSection>
+                      <DetailSection title={t('title.pricing')}>
+                        <DetailRow
+                          label={t('label.margin')}
+                          value={formatUnits(i().margin, 2)}
+                        />
+                      </DetailSection>
+                    </FormColumn>
+                  </FormColumns>
                 </DetailContainer>
               </TabPanel>
 
