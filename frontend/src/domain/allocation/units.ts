@@ -18,6 +18,26 @@ export const lensToUnits = (
   return lens.kind === 'packs' ? value * lens.size : value;
 };
 
+/**
+ * Clamp a manual per-batch packs entry (rules.md § whole-pack arithmetic,
+ * AC-AL6): never negative or non-finite. Whole-pack consumers round a
+ * fractional entry UP to whole packs, and an entry beyond availability
+ * clamps DOWN to the batch's whole-pack floor; partial-pack consumers keep
+ * the exact fraction, bounded to the raw (fractional) availability.
+ */
+export const clampManualPacks = (
+  value: number | null | undefined,
+  availablePacks: number,
+  options?: { partialPacks?: boolean }
+): number => {
+  if (value == null || !Number.isFinite(value) || value < 0) return 0;
+  if (options?.partialPacks) return Math.min(value, availablePacks);
+  const wholePacks = Math.ceil(value);
+  return wholePacks > availablePacks
+    ? Math.max(0, Math.floor(availablePacks))
+    : wholePacks;
+};
+
 /** The structural fields the unit sums read. */
 export interface UnitCountableBatch {
   packSize: number;

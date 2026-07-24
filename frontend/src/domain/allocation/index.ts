@@ -12,12 +12,14 @@ export {
   autoAllocateBarReasons,
   barReasons,
   isBarred,
+  rowHasAllocatableStock,
   fefoCompare,
   type AllocationPreferences,
   type BarrableBatch,
   type BarReason,
 } from './policy';
 export {
+  clampManualPacks,
   lensToUnits,
   availableUnits,
   issuedUnits,
