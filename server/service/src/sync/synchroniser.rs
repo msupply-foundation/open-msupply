@@ -323,8 +323,13 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::AssignRequisitionNumber);
 
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::AssignPrescriptionNumber);
+        // Disabled: this processor's cursor starts at 0, so its first run walks the entire
+        // historical changelog synchronously on the single-threaded main runtime, freezing sync
+        // and all background tasks on servers with a large changelog (#12547). Not triggering it
+        // at all (rather than seeding the cursor) so it does no changelog scanning whatsoever.
+        // Re-enable once it is runtime-safe and cursor-seeded - see ideas in #12547.
+        // ctx.processors_trigger
+        //     .trigger_processor(ProcessorType::AssignPrescriptionNumber);
 
         ctx.processors_trigger
             .trigger_processor(ProcessorType::Plugins);
