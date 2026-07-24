@@ -13,7 +13,11 @@ import { t } from '../../../intl';
 import { createDebounced } from '../../utils/createDebounced';
 import { NumberField } from '../inputs/NumberField';
 import { BareCheckbox } from '../inputs/BareCheckbox';
-import { DateRangeField, type IsoDateRange } from '../inputs/DateRangeField';
+import { DateRangeField } from '../inputs/DateRangeField';
+import {
+  utcBoundsFromLocalDays,
+  utcToLocalDay,
+} from '../inputs/dateTimeConvert';
 import styles from './FilterBar.module.css';
 
 /*
@@ -680,32 +684,61 @@ export const FilterCheckbox = (props: {
   />
 );
 
+/** Inclusive range bounds on a filter key (shared by `DatetimeFilterInput`
+ *  and `DateFilterInput`). */
+interface RangeBounds {
+  afterOrEqualTo?: string | null;
+  beforeOrEqualTo?: string | null;
+}
+
 /**
- * A date-range filter — the shared DateRangeField (corvu calendar, range
- * mode, pick-only) de-boxed onto the chip pill via .bareField, replacing the
- * old pair of native date inputs. Value is the field's `{ start, end }` ISO
- * `yyyy-mm-dd` pair; the caller maps it onto its filter's bounds (e.g.
- * after/beforeOrEqualTo datetimes).
+ * A date-range filter chip. The user picks a calendar-day range; `type` (the
+ * target field's wire scalar) drives the conversion — kept here so no vertical
+ * hand-rolls it (#456): `dateTime` widens each day to UTC day-start/day-end
+ * bounds and reads back to the local day; `date` passes the plain ISO date
+ * through. The value is the field's own wire bounds, so a vertical binds its
+ * key directly.
  */
 export const FilterDateRange = (props: {
-  value: IsoDateRange;
-  onChange: (value: IsoDateRange) => void;
+  value: RangeBounds | null | undefined;
+  onChange: (value: RangeBounds | null) => void;
+  /** The target field's wire scalar — governs conversion, not the UI. */
+  type: 'date' | 'dateTime';
   label: string;
   /** `data-testid` for the trigger (FilterBar supplies
    *  `filter-input-<key>`). */
   testId?: string;
-}) => (
-  <span class={styles.bareField}>
-    <DateRangeField
-      label={props.label}
-      hideLabel
-      size="small"
-      testId={props.testId}
-      value={props.value}
-      onChange={props.onChange}
-    />
-  </span>
-);
+}) => {
+  const toLocal = (bound: string | null | undefined): string | null =>
+    props.type === 'dateTime' ? utcToLocalDay(bound) : (bound ?? null);
+  const toWire = (
+    start: string | null,
+    end: string | null
+  ): RangeBounds | null => {
+    if (props.type === 'dateTime') return utcBoundsFromLocalDays(start, end);
+    return start || end
+      ? {
+          ...(start ? { afterOrEqualTo: start } : {}),
+          ...(end ? { beforeOrEqualTo: end } : {}),
+        }
+      : null;
+  };
+  return (
+    <span class={styles.bareField}>
+      <DateRangeField
+        label={props.label}
+        hideLabel
+        size="small"
+        testId={props.testId}
+        value={{
+          start: toLocal(props.value?.afterOrEqualTo),
+          end: toLocal(props.value?.beforeOrEqualTo),
+        }}
+        onChange={({ start, end }) => props.onChange(toWire(start, end))}
+      />
+    </span>
+  );
+};
 
 /**
  * A date filter — a native date input behind the calendar icon, sharing the
