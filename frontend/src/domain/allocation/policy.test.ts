@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
+  autoAllocateBarReasons,
   barReasons,
   fefoCompare,
   fillOrderCompare,
   isBarred,
   type AllocationPreferences,
 } from './policy';
-import { lensToUnits, unitsToLens, availableUnits, distinctPackSizes } from './units';
+import {
+  lensToUnits,
+  unitsToLens,
+  availableUnits,
+  distinctPackSizes,
+} from './units';
 import { deriveIssueWarnings } from './warnings';
 
 // The shared barred-batch policy, FEFO comparator, lens conversion, and
@@ -99,6 +105,62 @@ describe('barReasons / isBarred', () => {
   });
 });
 
+// The old app's canAutoAllocate contract (ported from
+// client/packages/invoices/src/StockOut/utils.test.ts): auto-distribution's
+// exclusions are UNCONDITIONAL — the issue preferences only widen them.
+describe('autoAllocateBarReasons (AC-AL2/AL10)', () => {
+  const today = new Date('2025-12-15T12:00:00');
+
+  it('AC-AL10: expired stock is never auto-allocated, preference off or on', () => {
+    const expired = { stockLineOnHold: false, expiryDate: '2023-01-01' };
+    // Preference OFF — the cutoff is the expiry date itself.
+    expect(autoAllocateBarReasons(expired, prefs(), today)).toEqual([
+      'expired',
+    ]);
+    // …while the ISSUE bar stays open (manual entry allowed).
+    expect(barReasons(expired, prefs(), today)).toEqual([]);
+  });
+
+  it('the guard preference widens the auto cutoff by its threshold', () => {
+    const almostExpired = { stockLineOnHold: false, expiryDate: '2025-12-20' };
+    expect(autoAllocateBarReasons(almostExpired, prefs(), today)).toEqual([]);
+    expect(
+      autoAllocateBarReasons(
+        almostExpired,
+        prefs({
+          expiredStockPreventIssue: true,
+          expiredStockIssueThreshold: 10,
+        }),
+        today
+      )
+    ).toEqual(['expired']);
+  });
+
+  it('unusable VVM is never auto-allocated, preference off or on', () => {
+    const unusable = { stockLineOnHold: false, vvmStatus: { unusable: true } };
+    expect(autoAllocateBarReasons(unusable, prefs(), today)).toEqual([
+      'unusable-vvm',
+    ]);
+    // …while the ISSUE bar needs the preference (barReasons test above).
+    expect(barReasons(unusable, prefs(), today)).toEqual([]);
+    const usable = { stockLineOnHold: false, vvmStatus: { unusable: false } };
+    expect(autoAllocateBarReasons(usable, prefs(), today)).toEqual([]);
+  });
+
+  it('on-hold stock is never auto-allocated', () => {
+    expect(
+      autoAllocateBarReasons({ stockLineOnHold: true }, prefs(), today)
+    ).toEqual(['on-hold']);
+    expect(
+      autoAllocateBarReasons(
+        { stockLineOnHold: false, location: { onHold: true } },
+        prefs(),
+        today
+      )
+    ).toEqual(['on-hold']);
+  });
+});
+
 describe('fefoCompare', () => {
   // AC-AL1 — earliest expiry first, no expiry last.
   it('orders earliest expiry first with no-expiry last', () => {
@@ -169,7 +231,9 @@ describe('lensToUnits', () => {
   it('converts the doses lens both ways', () => {
     expect(lensToUnits(20, { kind: 'doses', dosesPerUnit: 10 })).toBe(2);
     expect(lensToUnits(20, { kind: 'doses', dosesPerUnit: 0 })).toBe(20);
-    expect(lensToUnits(-1, { kind: 'doses', dosesPerUnit: 10 })).toBeUndefined();
+    expect(
+      lensToUnits(-1, { kind: 'doses', dosesPerUnit: 10 })
+    ).toBeUndefined();
     expect(unitsToLens(2, { kind: 'doses', dosesPerUnit: 10 })).toBe(20);
     expect(unitsToLens(30, { kind: 'packs', size: 10 })).toBe(3);
     expect(unitsToLens(7, { kind: 'units' })).toBe(7);
@@ -217,6 +281,7 @@ describe('deriveIssueWarnings', () => {
       shortfallUnits: 4,
       overAllocatedUnits: 2,
       skippedReasons: new Set(['on-hold', 'expired'] as const),
+      wholePackGapUnits: 0,
     };
     const reported = deriveIssueWarnings(distribution, {
       reportShortfall: true,
