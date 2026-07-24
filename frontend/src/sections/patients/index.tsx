@@ -10,6 +10,15 @@ import { isDispensary } from '../../store/storeContext';
 const PatientsList = lazy(() => import('./list/PatientsList'));
 const PatientDetailView = lazy(() => import('./detail/PatientDetailView'));
 
+// The create-patient modal is reused by other dispensary surfaces (the
+// prescription create dialog's create-on-no-match flow — spec/prescriptions
+// AC-C5) via its `onCreated` callback. Re-exported here so consumers depend on
+// the patients vertical's public surface, not a deep path.
+export {
+  CreatePatientModal,
+  type CreatePatientModalProps,
+} from './list/CreatePatientModal';
+
 // Dispensary-mode gate (spec/patients AC-G1): the whole patient surface is
 // reachable only in dispensary mode. The Dispensary nav group is hidden in
 // other modes (ShellLayout); this layout route blocks direct-URL entry so no

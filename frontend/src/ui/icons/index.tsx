@@ -247,6 +247,23 @@ export const CopyIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Filter funnel (the filter bar's Add-filter pill). Not a Hugeicons glyph:
+   this is the ui-standards site's own funnel path (feather "filter"),
+   copied so the pill matches the spec exactly. */
+export const FilterIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+  </Stroke>
+);
+
+/* Indeterminate dash (BareCheckbox's tri-state glyph) */
+/* Hugeicons: MinusSignIcon */
+export const MinusIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 12L4 12" />
+  </Stroke>
+);
+
 /* Clear / remove */
 /* Hugeicons: MinusSignCircleIcon */
 export const MinusCircleIcon = (props: IconProps) => (
@@ -617,6 +634,62 @@ export const ColumnsIcon = (props: IconProps) => (
     <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
     <path d="M15.5 21.5L15.5 2.5" />
     <path d="M8.5 21.4998L8.5 2.49976" />
+  </Stroke>
+);
+
+// Column-visibility toggle in the Columns panel (ui-standards § tables → column
+// management): shown = eye, hidden = eye with a slash. The <input> stays the
+// accessible control (visually hidden); these are decorative. Paths are the
+// spec's own eye / eye-off SVGs.
+export const EyeIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21.544 11.045C21.848 11.4713 22 11.6845 22 12C22 12.3155 21.848 12.5287 21.544 12.955C20.1779 14.8706 16.6892 19 12 19C7.31078 19 3.8221 14.8706 2.45604 12.955C2.15201 12.5287 2 12.3155 2 12C2 11.6845 2.15201 11.4713 2.45604 11.045C3.8221 9.12944 7.31078 5 12 5C16.6892 5 20.1779 9.12944 21.544 11.045Z" />
+    <path d="M15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12Z" />
+  </Stroke>
+);
+
+export const EyeOffIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M6.43385 6.51953C4.22009 7.89049 2.93281 9.86457 2.31858 11.0339C2.10621 11.4382 2.00003 11.6403 2 12.0082C1.99997 12.3761 2.10584 12.5777 2.3176 12.981C3.32862 14.9066 6.16702 19.0195 11.9669 19.0195C14.2454 19.0195 16.0669 18.3848 17.5 17.4972" />
+    <path d="M9.87868 9.87868C9.33579 10.4216 9 11.1716 9 12C9 13.6569 10.3431 15 12 15C12.8284 15 13.5784 14.6642 14.1213 14.1213" />
+    <path d="M2 2L22 22" />
+    <path d="M10 5.14847C10.5934 5.05255 11.224 5 11.8936 5C17.7747 5 20.6528 9.05385 21.6779 10.9517C21.8927 11.3492 22 11.548 22 11.9106C22 12.2733 21.8921 12.4727 21.6765 12.8717C21.3678 13.4428 20.8916 14.2085 20.2167 15" />
+  </Stroke>
+);
+
+// Pin-a-column-to-the-edge toggles in the Columns panel (ui-standards § tables):
+// a small card with a solid bar docked to the left / right edge. Physical
+// left/right (TanStack pinning is physical, not logical), so no RTL flip. The
+// spec's own pin SVGs; the docked bar is a filled rect, the frame stroked.
+export const PinLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 16 16" stroke-width="1.3" {...props}>
+    <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
+    <path d="M6 3.5v9" />
+    <rect
+      x="2.7"
+      y="4.2"
+      width="2.6"
+      height="7.6"
+      rx="0.7"
+      fill="currentColor"
+      stroke="none"
+    />
+  </Stroke>
+);
+
+export const PinRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 16 16" stroke-width="1.3" {...props}>
+    <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
+    <path d="M10 3.5v9" />
+    <rect
+      x="10.7"
+      y="4.2"
+      width="2.6"
+      height="7.6"
+      rx="0.7"
+      fill="currentColor"
+      stroke="none"
+    />
   </Stroke>
 );
 

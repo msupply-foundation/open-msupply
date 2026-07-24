@@ -30,9 +30,12 @@ export function HeaderCell<T>(props: {
   const indicator = () => {
     if (!canSort()) return null;
     const dir = sorted();
+    // The spec's arrow glyphs (ui-standards § tables .sort-arrow): ↓ / ↑
+    // (U+2193 / U+2191), not filled triangles. Decorative — aria-sort on the
+    // th carries the semantics.
     return (
       <span class={styles.sortIndicator} aria-hidden="true">
-        {dir === 'desc' ? '▼' : dir === 'asc' ? '▲' : ''}
+        {dir === 'desc' ? '↓' : dir === 'asc' ? '↑' : ''}
       </span>
     );
   };

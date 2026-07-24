@@ -40,7 +40,7 @@ const form = (
   ...overrides,
 });
 
-describe('AC-C1 — create with code and name', () => {
+describe('OMS-REG-INV-01.1 — create with code and name', () => {
   it('builds the insert input with the given code and name and the defaults: on-hold off, volume 0, no type', () => {
     const input = buildInsertInput(form(), 'new-id');
     expect(input).toEqual({
@@ -68,9 +68,9 @@ describe('AC-C1 — create with code and name', () => {
   });
 });
 
-describe('AC-C2 — name defaults to code (wire default)', () => {
+describe('OMS-REG-INV-01.23 — name defaults to code (wire default)', () => {
   // The server stores code as the name when none is supplied ON THE WIRE; the
-  // UI never exercises it because AC-C3 requires a name before any request is
+  // UI never exercises it because OMS-REG-INV-01.24 requires a name before any request is
   // sent. The client-side guarantee is therefore: every insert this client
   // builds carries a non-empty name. The wire default itself is a
   // real-backend criterion (BUILD_REPORT gap).
@@ -81,7 +81,7 @@ describe('AC-C2 — name defaults to code (wire default)', () => {
   });
 });
 
-describe('AC-C3 — code and name required in the UI', () => {
+describe('OMS-REG-INV-01.24 — code and name required in the UI', () => {
   it('is invalid (save disabled, no request) while name or code is empty', () => {
     expect(isFormValid(form({ name: '' }))).toBe(false);
     expect(isFormValid(form({ code: '' }))).toBe(false);
@@ -102,7 +102,7 @@ describe('AC-C3 — code and name required in the UI', () => {
   });
 });
 
-describe('AC-C4 / AC-E2 — duplicate code rejected', () => {
+describe('OMS-REG-INV-01.25 / OMS-REG-INV-01.27 — duplicate code rejected', () => {
   it('maps UniqueValueViolation on code to the duplicate-code rejection', () => {
     expect(
       saveRejection({
@@ -124,7 +124,7 @@ describe('AC-C4 / AC-E2 — duplicate code rejected', () => {
   });
 });
 
-describe('AC-C5 — save and advance', () => {
+describe('OMS-REG-INV-01.5 — save and advance', () => {
   const rows = [row({ id: 'a' }), row({ id: 'b' }), row({ id: 'c' })];
 
   it('edit: advances to the next list location', () => {
@@ -141,7 +141,7 @@ describe('AC-C5 — save and advance', () => {
   });
 });
 
-describe('AC-E1 — edit fields', () => {
+describe('OMS-REG-INV-01.26 — edit fields', () => {
   it('the update input carries exactly the edited field set for the location id', () => {
     const input = buildUpdateInput(
       form({ name: 'Renamed', code: 'B2', volume: 7, onHold: true }),
@@ -182,7 +182,7 @@ describe('AC-E1 — edit fields', () => {
   });
 });
 
-describe("AC-E3 — cannot edit another store's location", () => {
+describe("OMS-REG-INV-01.28 — cannot edit another store's location", () => {
   it('maps RecordBelongsToAnotherStore to the generic rejection with its description (inline banner, nothing changes)', () => {
     expect(
       saveRejection({
@@ -196,7 +196,7 @@ describe("AC-E3 — cannot edit another store's location", () => {
   });
 });
 
-describe('AC-E4 — location type survives an unrelated field edit', () => {
+describe('OMS-REG-INV-01.29 — location type survives an unrelated field edit', () => {
   // updateLocation's locationTypeId is NOT partial (contract.md ⚠️ wire trap):
   // omitting it clears the type. The client therefore sends the FULL current
   // field set — including the unchanged locationTypeId — on every save.
@@ -226,7 +226,7 @@ describe('AC-E4 — location type survives an unrelated field edit', () => {
   });
 });
 
-describe('AC-V1 — volume used is read-only and derived', () => {
+describe('OMS-REG-INV-01.30 — volume used is read-only and derived', () => {
   it('no input carries volumeUsed — neither insert nor update', () => {
     expect(buildInsertInput(form(), 'id')).not.toHaveProperty('volumeUsed');
     expect(buildUpdateInput(form(), 'id')).not.toHaveProperty('volumeUsed');

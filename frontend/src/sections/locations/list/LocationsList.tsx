@@ -43,12 +43,12 @@ import { DeleteLocationsAction, ExportLocationsAction } from './actions';
 // the create/edit modal (S2), and the only bulk action is Delete (S3).
 
 // Sortable columns are typed to the generated sort-field union — only name and
-// code exist (AC-L2; kdd/type-safety).
+// code exist (OMS-REG-INV-01.17; kdd/type-safety).
 type SortKey = NonNullable<LocationsListVariables['sort']>[number]['key'];
 
-// The fullness display (AC-V2): the proportion used ÷ capacity as a
+// The fullness display (OMS-REG-INV-01.31): the proportion used ÷ capacity as a
 // percentage, via the SAME undefined-safe helper the volume-aware picker uses
-// (AC-V3 — one rule, domain/location/volume). No figure when capacity is 0, or
+// (OMS-REG-INV-01.30 — one rule, domain/location/volume). No figure when capacity is 0, or
 // when stock is present but volumeUsed is 0 (misleading "0%").
 const fullnessLabel = (row: LocationRow): string => {
   const pct = getVolumeUsedPercentage(row);
@@ -60,7 +60,7 @@ const fullnessLabel = (row: LocationRow): string => {
 const LocationsList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
   // StoreGuardLayout, which requires a resolved store before routing. The
-  // query is store-scoped server-side by it (AC-L1).
+  // query is store-scoped server-side by it (OMS-REG-INV-01.36).
   const params = useParams<{ storeId: string }>();
   const { query, setQuery } =
     useUrlQueryState<LocationsListState>(DEFAULT_STATE);
@@ -83,7 +83,7 @@ const LocationsList: Component = () => {
   });
 
   // GraphQL variables, derived straight from URL state + the store in the
-  // path (listState.ts — AC-L1/AC-L4; stripEmpty drops added-but-empty filter
+  // path (listState.ts — OMS-REG-INV-01.36/OMS-REG-INV-01.19; stripEmpty drops added-but-empty filter
   // chips so the query carries only live filters).
   const variables = createMemo<LocationsListVariables>(() =>
     buildListVariables(query(), params.storeId)
@@ -119,7 +119,7 @@ const LocationsList: Component = () => {
 
   // Clicking a sortable header: the DataTable computes the next direction and
   // hands back key + desc; record it as the GraphQL sort array, resetting to
-  // the first page (AC-L2).
+  // the first page (OMS-REG-INV-01.17).
   const onSort = (key: SortKey, desc: boolean) => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   };
@@ -168,8 +168,8 @@ const LocationsList: Component = () => {
       ...getNumberCell(),
     },
     {
-      // Fullness, read-only (AC-V1): used ÷ capacity, no figure when capacity
-      // is 0 (AC-V2). Registry gap: the proportion-BAR treatment has no built
+      // Fullness, read-only (OMS-REG-INV-01.30): used ÷ capacity, no figure when capacity
+      // is 0 (OMS-REG-INV-01.31). Registry gap: the proportion-BAR treatment has no built
       // component yet, so this renders the percentage text (see BUILD_REPORT).
       c: { accessor: fullnessLabel, id: 'volumeUsed' },
       header: t('label.volume-used'),
@@ -204,7 +204,7 @@ const LocationsList: Component = () => {
               {t('label.new-location')}
             </Button>
             {/* Export the locations list (all pages of the current filter) as
-                CSV or Excel (AC-L5). */}
+                CSV or Excel (OMS-REG-INV-01.11). */}
             <ExportLocationsAction
               storeId={params.storeId}
               filter={() => query().filter}
@@ -283,7 +283,7 @@ const LocationsList: Component = () => {
             : undefined
         }
         // Server-side pagination; the count reflects the full filtered set
-        // (AC-L4). State stays page-owned/URL-backed.
+        // (OMS-REG-INV-01.19). State stays page-owned/URL-backed.
         pagination={{
           offset: query().offset,
           pageSize: query().first,

@@ -71,11 +71,10 @@ export type MasterListsResult = {
   name: string;
   code: string;
   description: string;
-  linesCount: number | null;
 }>;
 });
 };
 
 export const MasterLists = {
-  query: "query masterLists($storeId: String!, $filter: MasterListFilterInput, $sort: [MasterListSortInput!], $page: PaginationInput) {\n  masterLists(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on MasterListConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        code\n        description\n        linesCount\n      }\n    }\n  }\n}",
+  query: "query masterLists($storeId: String!, $filter: MasterListFilterInput, $sort: [MasterListSortInput!], $page: PaginationInput) {\n  masterLists(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on MasterListConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        code\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<MasterListsResult, MasterListsVariables>;

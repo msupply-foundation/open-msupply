@@ -104,7 +104,7 @@ export function TableSettings(props: {
 
       <button
         type="button"
-        class={styles.action}
+        class={styles.popBtn}
         disabled={props.resetDisabled}
         data-testid="table-reset-default"
         onClick={() => props.onReset()}
@@ -121,7 +121,7 @@ export function TableSettings(props: {
         <div class={styles.saveDefault}>
           <button
             type="button"
-            class={styles.action}
+            class={styles.popBtn}
             disabled={saveStatus() === 'saving'}
             data-testid="table-save-global-default"
             onClick={saveGlobalDefault}

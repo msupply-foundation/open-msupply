@@ -1,0 +1,40 @@
+# The patient's recently-prescribed history (spec/prescriptions/contract.md §
+# history): every other prescription of the patient past NEW, newest first,
+# capped at 20; the per-item merge is client-side.
+query prescriptionHistory(
+  $storeId: String!
+  $patientId: String!
+  $statuses: [InvoiceNodeStatus!]
+) {
+  invoices(
+    storeId: $storeId
+    filter: {
+      type: { equalTo: PRESCRIPTION }
+      otherPartyId: { equalTo: $patientId }
+      status: { equalAny: $statuses }
+    }
+    sort: [{ key: pickedDatetime, desc: true }]
+    page: { first: 20 }
+  ) {
+    ... on InvoiceConnector {
+      nodes {
+        id
+        pickedDatetime
+        createdDatetime
+        clinician {
+          firstName
+          lastName
+        }
+        lines {
+          nodes {
+            itemId
+            itemName
+            packSize
+            numberOfPacks
+            note
+          }
+        }
+      }
+    }
+  }
+}

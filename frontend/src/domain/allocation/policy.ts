@@ -12,8 +12,10 @@ export interface AllocationPreferences {
   /** Days before expiry at which the expired-issue guard bars a batch. */
   expiredStockIssueThreshold: number;
   manageVvmStatusForStock: boolean;
-  /** Ordering variant (rules.md § ordering): usable VVM status before expiry. */
-  sortByVvmStatusThenExpiry: boolean;
+  /** Ordering variant (rules.md § ordering): usable VVM status before expiry.
+   *  Optional — a consumer that doesn't read the pref (prescriptions) omits
+   *  it, which behaves as off (plain FEFO). */
+  sortByVvmStatusThenExpiry?: boolean;
 }
 
 /**
