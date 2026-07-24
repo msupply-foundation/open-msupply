@@ -6,6 +6,7 @@ import {
   type Table,
 } from '@tanstack/solid-table';
 import { LabelledValue } from '../typography/LabelledValue';
+import { BareCheckbox } from '../inputs/BareCheckbox';
 import { t } from '../../../intl';
 import {
   membershipCardGroups,
@@ -95,8 +96,7 @@ export function CardView<T>(props: {
               <div class={styles.card}>
                 <div class={styles.cardHeader}>
                   <Show when={props.enableSelection}>
-                    <input
-                      type="checkbox"
+                    <BareCheckbox
                       class={styles.cardSelect}
                       aria-label={t('table.select-row')}
                       data-testid="select-row-checkbox"

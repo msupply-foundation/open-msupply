@@ -7,6 +7,7 @@ import {
   type Row as TanRow,
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
+import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
 // The alignment convention carried on a column's meta (set by the cell
@@ -87,8 +88,8 @@ export function TableRow<T>(props: {
           data-pinned="left"
           style={props.leadingPinnedStyle(0)}
         >
-          <input
-            type="checkbox"
+          <BareCheckbox
+            class={styles.selectBox}
             aria-label={t('table.select-row')}
             data-testid="select-row-checkbox"
             checked={props.row.getIsSelected()}
