@@ -8,7 +8,7 @@ name: Manual Cargo Clean
 jobs:
   build_and_test:
     name: Run cargo clean against self-hosted
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
       - name: Delete Postgres CARGO_TARGET_DIR
