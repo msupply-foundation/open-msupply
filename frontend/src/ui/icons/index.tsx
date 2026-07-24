@@ -123,6 +123,15 @@ export const PlusCircleIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Display / brightness (the settings Display-settings section heading) */
+/* Hugeicons: Sun01Icon */
+export const SunIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C14.7614 7 17 9.23858 17 12Z" />
+    <path d="M12 2V3.5M12 20.5V22M19.0708 19.0713L18.0101 18.0106M5.98926 5.98926L4.9286 4.9286M22 12H20.5M3.5 12H2M19.0713 4.92871L18.0106 5.98937M5.98975 18.011L4.92909 19.0716" />
+  </Stroke>
+);
+
 /* Export / download — arrow pointing down into the tray */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (
@@ -597,6 +606,17 @@ export const MaximiseIcon = (props: IconProps) => (
 export const MinimiseIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M6.5023 10.7365C7.34671 10.7485 10.1432 11.3294 10.7361 10.7365C11.329 10.1436 10.7481 7.34708 10.7361 6.50267M13.2685 17.5027C13.2565 16.6583 12.6756 13.8618 13.2685 13.2689C13.8614 12.676 16.6579 13.2569 17.5023 13.2689M20.9991 21.001L13.6102 13.6188M10.3691 10.3763L2.99998 2.99902" />
+  </Stroke>
+);
+
+// Columns — the column-management control (a framed set of vertical columns;
+// ui-standards § tables → column management). TableViewIcon minus its row
+// line, so the two read as siblings but stay distinguishable.
+export const ColumnsIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
+    <path d="M15.5 21.5L15.5 2.5" />
+    <path d="M8.5 21.4998L8.5 2.49976" />
   </Stroke>
 );
 

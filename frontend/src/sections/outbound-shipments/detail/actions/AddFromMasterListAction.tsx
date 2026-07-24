@@ -3,10 +3,9 @@ import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
-import { PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
   CustomerMasterLists,
@@ -35,10 +34,10 @@ export const AddFromMasterListAction: Component<
   const [open, setOpen] = createSignal(false);
   const [adding, setAdding] = createSignal(false);
   const [error, setError] = createSignal<string>();
-  // The chosen list id awaiting the "add all items?" confirmation — the add is
-  // bulk (every stock item) and not per-line undoable, so it confirms first
-  // (old-app parity).
-  const [pending, setPending] = createSignal<string>();
+  // The chosen list id (the Combobox selection), committed by the dialog's OK.
+  // No "add all items?" confirmation (D46) — the picker's OK is the deliberate
+  // commit, and it shows a spinner until the bulk add resolves.
+  const [selected, setSelected] = createSignal<string>();
 
   // The customer's master lists — fetched when the modal first opens, keyed on
   // the customer.
@@ -86,6 +85,7 @@ export const AddFromMasterListAction: Component<
         data-testid="add-from-master-list-button"
         onClick={() => {
           setError(undefined);
+          setSelected(undefined);
           setOpen(true);
         }}
       >
@@ -99,14 +99,31 @@ export const AddFromMasterListAction: Component<
         widthRem={32}
         minBodyHeightRem={20}
         actions={
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            data-testid="dialog-button-cancel"
-            onClick={() => setOpen(false)}
-          >
-            {t('button.cancel')}
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
+              disabled={adding()}
+              onClick={() => setOpen(false)}
+            >
+              {t('button.cancel')}
+            </Button>
+            {/* OK commits the bulk add — disabled until a list is chosen, and
+                showing a spinner (loading) until the add resolves (D46). */}
+            <Button
+              icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
+              disabled={!selected()}
+              loading={adding()}
+              onClick={() => {
+                const chosen = selected();
+                if (chosen) void add(chosen);
+              }}
+            >
+              {t('button.ok')}
+            </Button>
+          </>
         }
       >
         <Show
@@ -119,10 +136,10 @@ export const AddFromMasterListAction: Component<
             loading={lists.loading}
             itemToString={list => list.name}
             itemToValue={list => list.id}
-            value={pending() ?? ''}
+            value={selected() ?? ''}
             disabled={adding()}
             onChange={list => {
-              if (list) setPending(list.id);
+              if (list) setSelected(list.id);
             }}
           />
         </Show>
@@ -130,19 +147,6 @@ export const AddFromMasterListAction: Component<
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
       </Dialog>
-      {/* Confirm before the bulk add (old-app parity): "Do you want to add all
-          of the items from this master list?" */}
-      <ConfirmDialog
-        open={pending() != null}
-        title={t('heading.are-you-sure')}
-        message={t('messages.confirm-add-from-master-list')}
-        onClose={() => setPending(undefined)}
-        onConfirm={() => {
-          const chosen = pending();
-          setPending(undefined);
-          if (chosen) void add(chosen);
-        }}
-      />
     </Show>
   );
 };

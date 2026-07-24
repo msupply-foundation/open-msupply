@@ -1,0 +1,55 @@
+# Configuration (spec/settings/contract.md § Configuration). nameProperties
+# computes whether GAPS/forecasting are already configured (by key) and reads
+# the supply-level property's current allowedValues.
+query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        id
+        remoteEditable
+        property {
+          id
+          key
+          name
+          allowedValues
+          valueType
+        }
+      }
+    }
+  }
+}
+
+# The whole input array is upserted in one transaction — a key collision rolls
+# back the entire call (AC-CN3). ConfigureNamePropertiesResponse is a
+# single-member union (Success); a permission rejection is a plain GraphQL
+# error, which graphqlFetch routes to the global permission-denied surface
+# before any nested field is read (AC-CN4, D51).
+mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
+  centralServer {
+    general {
+      configureNameProperties(input: $input) {
+        ... on Success {
+          __typename
+          success
+        }
+      }
+    }
+  }
+}
+
+# The supply-level "in use" set: every store's recorded properties JSON, parsed
+# client-side for the supply_level key (AC-CN6). The consumed query is named in
+# contract § Configuration (source-traced from the reference client; its
+# ⚠️ VERIFY — not yet confirmed against a running server — still stands there).
+query storeProperties($storeId: String!) {
+  names(storeId: $storeId, filter: { isStore: true }, page: { first: 5000 }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        id
+        properties
+      }
+    }
+  }
+}

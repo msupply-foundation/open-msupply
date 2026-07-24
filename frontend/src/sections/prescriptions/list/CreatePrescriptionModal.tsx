@@ -50,7 +50,7 @@ export const CreatePrescriptionModal: Component<
   const [error, setError] = createSignal<string>();
   // The create-patient-on-no-match sub-flow (AC-C5): opens the patients
   // vertical's create modal over this dialog; on success the new patient is
-  // selected here (modal-in-place — D47).
+  // selected here (modal-in-place — D54).
   const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
 
   const reset = () => {
@@ -180,7 +180,7 @@ export const CreatePrescriptionModal: Component<
           onChange={id => setProgramId(id ?? undefined)}
         />
       </FieldRow>
-      {/* Create-patient-on-no-match (AC-C5, D47): modal-in-place over this
+      {/* Create-patient-on-no-match (AC-C5, D54): modal-in-place over this
           dialog; on success the new patient is selected here. */}
       <CreatePatientModal
         open={createPatientOpen()}
