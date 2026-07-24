@@ -9,8 +9,7 @@ name: Android Build
 jobs:
   create-android-build:
     # Must run on the mac mini - the bare `self-hosted` label also matches the
-    # Windows self-hosted runner, which can't run this job (unix shell steps,
-    # darwin NDK path).
+    # Windows self-hosted runner, which can't run this job (unix shell steps).
     runs-on: [self-hosted, macOS]
     timeout-minutes: 30
     steps:
@@ -62,6 +61,18 @@ jobs:
         # config.toml of the self-hosted machine.
         run: rustup target add aarch64-linux-android armv7-linux-androideabi --toolchain "${{ steps.rust_toolchain.outputs.channel }}"
 
+      - name: Set up NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          # server/android/.cargo/config.toml uses the API-22 clang wrappers
+          # (aarch64-linux-android22-clang etc.), present in this NDK. Downloaded
+          # into the runner tool cache (persists on the self-hosted mac), so no
+          # pre-installed NDK or hardcoded host path is needed. Keep in step with
+          # build-android-server-lib.yaml.
+          ndk-version: r27c
+          add-to-path: false
+
       - name: Set Up Java
         uses: actions/setup-java@v5
         with:
@@ -92,8 +103,9 @@ jobs:
         working-directory: client
         run: yarn android:build:release
         env:
-          NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
-          # Update this version when upgrading the NDK version on the self-hosted machine
+          # The NDK's mac prebuilt toolchain dir is named darwin-x86_64 on Apple
+          # silicon too (the binaries themselves are universal).
+          NDK_BIN: ${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/darwin-x86_64/bin/
           # Transition APK ships the new FE at / and this repo's build as the old UI
           # at /old-ui/. stage-transition-frontend.sh fetches the pinned new FE, which
           # with a short-lived token minted above from the same GitHub App the e2e
