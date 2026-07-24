@@ -642,7 +642,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-2) var(--space-5);
   border-block-end: 1px solid var(--color-border-value);
 }
 
@@ -676,16 +676,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Shared look for the toolbar's icon controls (full-screen button + the settings popover
-   trigger, which gets this via Popover's triggerClass). Transparent, secondary-tone icon,
-   subtle hover — matches the OMS toolbar. */
+/* The toolbar's icon controls (ui-standards § tables .mrt-ib — the Columns +
+   Settings popover triggers, via Popover's triggerClass, and the full-screen
+   button): a 2.25rem transparent square, muted icon, soft hover wash. No
+   border (the old 1px transparent hack is gone). */
 .controlButton,
 .fullScreenButton {
-  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: none;
   background: transparent;
   cursor: pointer;
   color: var(--text-secondary);
-  padding: var(--space-1) var(--space-2);
   font-size: var(--text-lg);
   line-height: 1;
   border-radius: var(--radius-sm);
@@ -693,13 +698,35 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 
 .controlButton:hover,
 .fullScreenButton:hover {
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
 }
 
-.controlButtonActive {
-  background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
-  border-color: color-mix(in srgb, var(--secondary-main) 45%, transparent);
+/* Active trigger (full-screen on) — the spec's 8% blue tint + blue icon, no
+   border. */
+.controlButtonActive,
+.controlButtonActive:hover {
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
   color: var(--secondary-main);
+}
+
+/* Open popover trigger takes the same active tint (spec .mrt-ib.active), keyed
+   off the aria-expanded the Popover sets — so the Columns/Settings buttons
+   light up while their panel is open, with no extra state wiring. Placed after
+   the :hover rule so it wins while an open trigger is also hovered. */
+.controlButton[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
+  color: var(--secondary-main);
+}
+
+/* The two control popovers (Columns / Settings) — the spec's dense .mrt-pop
+   panel: tight 0.375rem padding (the panel's rows carry their own), overriding
+   the shared Popover .panel's roomier default. Scoped under .root so it
+   OUT-SPECIFIES that base rule deterministically (the panel is a DOM
+   descendant of .root even in the native top layer) rather than tying with it
+   on bundle order. Comment/date-picker popovers keep the roomy default. */
+.root .controlPopover {
+  padding: 0.375rem;
 }
 
 /* --- Card view (ui-standards § tables, mobile card layout) ------------------- */

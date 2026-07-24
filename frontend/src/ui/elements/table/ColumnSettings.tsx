@@ -2,20 +2,27 @@ import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
-import { ChevronDownIcon } from '../../icons';
+import {
+  ChevronDownIcon,
+  EyeIcon,
+  EyeOffIcon,
+  PinLeftIcon,
+  PinRightIcon,
+} from '../../icons';
 import type { TableConfig, TableConfigKey } from './tableConfig';
 import { ALL_TABS, type TabAndCardGroup } from './DataTable';
 import styles from './ColumnSettings.module.css';
 
-// The Columns panel (ui-standards § tables → column management): a table with
-// a row per column, each exposing visibility (Show), order (Move up/down) and
-// pin (L/R), with Show all / Hide all bulk actions above — exactly the spec's
-// panel, nothing more (column WIDTH is set by dragging the header edge, not
-// here). It's a thin renderer over TanStack's own per-column getters/handlers
-// (kdd/table-state — the brains are TanStack's; we only draw the UI):
-// getIsVisible/getCanHide, getCanPin/getIsPinned/pin. Table-wide actions
-// (density, Reset table to default, save-as-global-default) live in the
-// separate Settings popover — see TableSettings.
+// The Columns panel (ui-standards § tables → column management, the advanced
+// example's #mrt-cols-pop): Show all / Hide all, a Show | Move | Pin header,
+// then a row per column — an eye / eye-off visibility toggle + name (the
+// clickable label), with Move up/down and Pin left/right control groups
+// trailing (column WIDTH is set by dragging the header edge, not here). It's a
+// thin renderer over TanStack's own per-column getters/handlers (kdd/table-state
+// — the brains are TanStack's; we only draw the UI): getIsVisible/getCanHide,
+// getCanPin/getIsPinned/pin. Table-wide actions (density, Reset table to
+// default, save-as-global-default) live in the separate Settings popover — see
+// TableSettings.
 //
 // Writes go through setConfig (the same controlled path DataTable uses), so
 // persistence + layering still apply.
@@ -91,102 +98,116 @@ export function ColumnSettings<T>(props: {
         </button>
       </div>
 
-      <table class={styles.table}>
-        <tbody>
-          <For each={orderedIds()}>
-            {(id, index) => {
-              const column = () => props.table.getColumn(id)!;
-              return (
-                <tr class={styles.row}>
-                  {/* Order: up/down chevrons (no drag). Disabled at the ends. */}
-                  <td class={styles.orderCell}>
+      {/* Muted column header labelling the row controls. */}
+      <div class={styles.head} aria-hidden="true">
+        <span class={styles.headShow}>{t('table.show')}</span>
+        <span class={styles.headActions}>
+          <span class={styles.headMove}>{t('table.move')}</span>
+          <span class={styles.headPin}>{t('table.pin')}</span>
+        </span>
+      </div>
+
+      <For each={orderedIds()}>
+        {(id, index) => {
+          const column = () => props.table.getColumn(id)!;
+          return (
+            <div class={styles.row}>
+              {/* Visibility — an eye / eye-off toggle. The checkbox is the
+                  accessible control (visually hidden); clicking anywhere on the
+                  label toggles it. Disabled when the column can't hide. */}
+              <label class={styles.colLabel}>
+                <input
+                  type="checkbox"
+                  class={styles.visInput}
+                  checked={column().getIsVisible()}
+                  disabled={!column().getCanHide()}
+                  aria-label={t('table.column-visible')}
+                  onChange={column().getToggleVisibilityHandler()}
+                />
+                <span class={styles.eye}>
+                  <EyeIcon class={styles.eyeShow} />
+                  <EyeOffIcon class={styles.eyeHide} />
+                </span>
+                <span class={styles.colName}>
+                  {label(id)}
+                  {/* Group badge(s): just the ICON of each group this column
+                      belongs to (the group's label reads on its tab) — a compact
+                      hint that visibility/order changes here are GLOBAL across
+                      tabs. `title` gives the text on hover. */}
+                  <For each={columnGroups(id)}>
+                    {group => (
+                      <Show when={group.icon}>
+                        {icon => (
+                          <span
+                            class={styles.groupBadgeIcon}
+                            title={t(group.labelKey)}
+                          >
+                            {icon()()}
+                          </span>
+                        )}
+                      </Show>
+                    )}
+                  </For>
+                </span>
+              </label>
+
+              {/* Trailing controls: Move up/down (no drag), then Pin L/R. */}
+              <span class={styles.colActions}>
+                <span class={styles.moveGroup}>
+                  <button
+                    type="button"
+                    class={styles.moveBtn}
+                    aria-label={t('table.move-up')}
+                    disabled={index() === 0}
+                    onClick={() => move(id, -1)}
+                  >
+                    <ChevronDownIcon class={styles.chevronUp} />
+                  </button>
+                  <button
+                    type="button"
+                    class={styles.moveBtn}
+                    aria-label={t('table.move-down')}
+                    disabled={index() === orderedIds().length - 1}
+                    onClick={() => move(id, 1)}
+                  >
+                    <ChevronDownIcon />
+                  </button>
+                </span>
+
+                {/* Pin left / right — only when the column can be pinned. */}
+                <Show when={column().getCanPin()}>
+                  <span class={styles.pinGroup}>
                     <button
                       type="button"
-                      class={styles.iconButton}
-                      aria-label={t('table.move-up')}
-                      disabled={index() === 0}
-                      onClick={() => move(id, -1)}
+                      class={`${styles.pinBtn} ${column().getIsPinned() === 'left' ? styles.pinActive : ''}`}
+                      aria-label={t('table.pin-left')}
+                      onClick={() =>
+                        column().pin(
+                          column().getIsPinned() === 'left' ? false : 'left'
+                        )
+                      }
                     >
-                      <ChevronDownIcon class={styles.chevronUp} />
+                      <PinLeftIcon />
                     </button>
                     <button
                       type="button"
-                      class={styles.iconButton}
-                      aria-label={t('table.move-down')}
-                      disabled={index() === orderedIds().length - 1}
-                      onClick={() => move(id, 1)}
+                      class={`${styles.pinBtn} ${column().getIsPinned() === 'right' ? styles.pinActive : ''}`}
+                      aria-label={t('table.pin-right')}
+                      onClick={() =>
+                        column().pin(
+                          column().getIsPinned() === 'right' ? false : 'right'
+                        )
+                      }
                     >
-                      <ChevronDownIcon />
+                      <PinRightIcon />
                     </button>
-                  </td>
-
-                  {/* Visibility toggle — bound to TanStack; disabled when the column can't hide. */}
-                  <td class={styles.visibilityCell}>
-                    <input
-                      type="checkbox"
-                      checked={column().getIsVisible()}
-                      disabled={!column().getCanHide()}
-                      aria-label={t('table.column-visible')}
-                      onChange={column().getToggleVisibilityHandler()}
-                    />
-                  </td>
-
-                  <td class={styles.labelCell}>
-                    {label(id)}
-                    {/* Group badge(s): just the ICON of each group this column belongs to (the
-                        group's label reads on its tab) — a compact hint that visibility/order
-                        changes here are GLOBAL across tabs. `title` gives the text on hover. */}
-                    <For each={columnGroups(id)}>
-                      {group => (
-                        <Show when={group.icon}>
-                          {icon => (
-                            <span
-                              class={styles.groupBadgeIcon}
-                              title={t(group.labelKey)}
-                            >
-                              {icon()()}
-                            </span>
-                          )}
-                        </Show>
-                      )}
-                    </For>
-                  </td>
-
-                  {/* Pin left / right — only when the column can be pinned. Active state shown. */}
-                  <td class={styles.pinCell}>
-                    <Show when={column().getCanPin()}>
-                      <button
-                        type="button"
-                        class={`${styles.pinButton} ${column().getIsPinned() === 'left' ? styles.pinActive : ''}`}
-                        aria-label={t('table.pin-left')}
-                        onClick={() =>
-                          column().pin(
-                            column().getIsPinned() === 'left' ? false : 'left'
-                          )
-                        }
-                      >
-                        {t('table.pin-left-short')}
-                      </button>
-                      <button
-                        type="button"
-                        class={`${styles.pinButton} ${column().getIsPinned() === 'right' ? styles.pinActive : ''}`}
-                        aria-label={t('table.pin-right')}
-                        onClick={() =>
-                          column().pin(
-                            column().getIsPinned() === 'right' ? false : 'right'
-                          )
-                        }
-                      >
-                        {t('table.pin-right-short')}
-                      </button>
-                    </Show>
-                  </td>
-                </tr>
-              );
-            }}
-          </For>
-        </tbody>
-      </table>
+                  </span>
+                </Show>
+              </span>
+            </div>
+          );
+        }}
+      </For>
     </div>
   );
 }
