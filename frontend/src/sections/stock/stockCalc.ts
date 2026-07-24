@@ -3,6 +3,8 @@
 // the server's rules for the UI's previews / pre-validation; the server remains
 // the guard for every MUST.
 
+import { localDayToUtc } from '../../ui/elements/inputs/dateTimeConvert';
+
 // Units = packs × pack size; value = packs × cost price (spec/stock rules — a
 // quantity in units is packs × pack size, never a stored field).
 export const packsToUnits = (packs: number, packSize: number): number =>
@@ -72,6 +74,7 @@ export const backdatedDatetime = (
   direction: 'ADDITION' | 'REDUCTION'
 ): string | undefined => {
   if (!date || date === today) return undefined;
-  const time = direction === 'REDUCTION' ? 'T23:59:59.000Z' : 'T00:00:00.000Z';
-  return `${date}${time}`;
+  // Local day → UTC via the shared conversion (#456): reduction at the day's
+  // end, addition at its start (the input is DateTime<Utc>, so `Z` is right).
+  return localDayToUtc(date, { endOfDay: direction === 'REDUCTION' });
 };

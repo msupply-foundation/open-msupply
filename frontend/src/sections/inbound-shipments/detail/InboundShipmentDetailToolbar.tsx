@@ -4,6 +4,12 @@ import { t } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import {
+  dateToOffsetIso,
+  isoDateToDate,
+  localTodayIso,
+  utcToLocalDay,
+} from '../../../ui/elements/inputs/dateTimeConvert';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
@@ -107,17 +113,26 @@ export const InboundShipmentDetailToolbar: Component<
         <DateField
           label={t('label.received')}
           hideLabel
-          value={props.node.receivedDatetime?.slice(0, 10) ?? null}
+          value={utcToLocalDay(props.node.receivedDatetime)}
           disabled={!receivedDateEditable()}
           helperText={receivedDateReason()}
           // Backdating only ever moves the date earlier — cap at the current
           // received date. (Server also bounds by the max-days window.)
-          max={props.node.receivedDatetime?.slice(0, 10) ?? undefined}
+          max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
           onChange={value => {
-            if (!value) return;
+            const picked = isoDateToDate(value);
+            if (!picked) return;
             setReceivedError(undefined);
+            // Offset-preserving so the server's backdating log records the
+            // picked local day (input is DateTime<FixedOffset>; #456). Today
+            // → the current moment; a backdated day → its local start (matches
+            // the current app).
+            const received =
+              value === localTodayIso()
+                ? dateToOffsetIso(new Date())
+                : dateToOffsetIso(picked);
             void props
-              .onSaveField({ receivedDatetime: `${value}T00:00:00.000Z` })
+              .onSaveField({ receivedDatetime: received })
               .then(r => setReceivedError(r.ok ? undefined : r.message));
           }}
         />
