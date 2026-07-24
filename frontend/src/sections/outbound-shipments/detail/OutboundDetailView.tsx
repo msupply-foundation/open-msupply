@@ -612,13 +612,9 @@ const OutboundDetailView: Component = () => {
       },
       {
         c: {
-          // Displayed to 2 dp (the old app's number-cell default) — the raw
-          // subtraction carries float dust (2.34 − 3).
           accessor: line =>
             line.receivedNumberOfPacks != null
-              ? formatNumber(line.receivedNumberOfPacks - line.numberOfPacks, {
-                  maximumFractionDigits: 2,
-                })
+              ? line.receivedNumberOfPacks - line.numberOfPacks
               : null,
           id: 'difference',
         },
