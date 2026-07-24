@@ -98,13 +98,17 @@ describe('withinBackdateBounds (AC-B1 save-path rejection)', () => {
 });
 
 describe('backdatedDatetimeFor', () => {
-  it('produces an ISO datetime whose local day is the chosen day', () => {
-    const iso = backdatedDatetimeFor(
-      new Date(2026, 6, 22, 9, 30, 0),
-      '2026-07-15'
-    );
+  const now = new Date(2026, 6, 22, 9, 30, 0);
+
+  it('a backdated day is stamped at its LOCAL end-of-day (UTC instant)', () => {
+    const iso = backdatedDatetimeFor(now, '2026-07-15');
+    expect(iso).toBe(new Date(2026, 6, 15, 23, 59, 59, 999).toISOString());
+    // Round-trips to the chosen local day, whatever the device zone.
     expect(toDateInput(new Date(iso))).toBe('2026-07-15');
-    expect(() => new Date(iso).toISOString()).not.toThrow();
+  });
+
+  it('today keeps the actual current moment (not backdated)', () => {
+    expect(backdatedDatetimeFor(now, '2026-07-22')).toBe(now.toISOString());
   });
 });
 
