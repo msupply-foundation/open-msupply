@@ -152,7 +152,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       });
       if (result.kind !== 'success') return;
       if (result.data.invoice.__typename !== 'InvoiceNode') return;
-      await navigator.clipboard.writeText(JSON.stringify(result.data, null, 2));
+      // The node itself — the old app copies the record, not the query
+      // wrapper ({"invoice": …}).
+      await navigator.clipboard.writeText(
+        JSON.stringify(result.data.invoice, null, 2)
+      );
       setCopied(true);
       clearTimeout(copiedTimer);
       copiedTimer = setTimeout(() => setCopied(false), 2500);

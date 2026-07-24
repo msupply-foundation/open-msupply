@@ -55,9 +55,9 @@ export const CopyStocktakeAction: Component<
       if (result.kind !== 'success') return;
       if (result.data.stocktake.__typename !== 'StocktakeNode') return;
 
-      // The full result, pretty-printed — faithful to "the full graphql result,
-      // stocktake and lines".
-      const json = JSON.stringify(result.data, null, 2);
+      // The node itself, pretty-printed — the old app copies the record, not
+      // the query wrapper ({"stocktake": …}).
+      const json = JSON.stringify(result.data.stocktake, null, 2);
       await navigator.clipboard.writeText(json);
 
       setCopied(true);
