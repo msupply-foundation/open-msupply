@@ -25,6 +25,19 @@ export const CUSTOM_TRANSLATIONS_URL = '/custom-translations';
 // payloads. Proxied to the backend in dev (see vite.config.ts).
 export const PRINT_LABEL_PRESCRIPTION_URL = '/print/label-prescription';
 
+// Support tools (spec/settings/contract.md § Support) — REST, not GraphQL.
+// GET /support/database vacuums the server database in place, then streams
+// the file (session-cookie auth, SERVER_ADMIN checked in the handler).
+// Proxied to the backend in dev (see vite.config.ts).
+export const SUPPORT_DATABASE_URL = '/support/database';
+
+// Label-printer connection test (spec/settings/contract.md § Devices — label
+// printer): POST with no body, expects { is_valid: boolean } (500 + text on
+// failure). The server probes the STORED printer settings, not anything the
+// client sends — route confirmed in server source
+// (server/server/src/print/mod.rs → test_printer).
+export const PRINT_LABEL_TEST_URL = '/print/label-test';
+
 export const DEFAULT_SYNC_INTERVAL_SECONDS = 300;
 // The current app's status-poll cadence (spec/sync-modal contract: ~2 s
 // while the surface is open and the live channel is down).

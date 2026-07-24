@@ -47,7 +47,7 @@ import {
 } from './prescriptionLineEdit.generated';
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
-// D46 modal replacing the real app's full-page route): item lookup (locked in
+// D53 modal replacing the real app's full-page route): item lookup (locked in
 // edit mode, existing items excluded in add mode), the allocation editor body
 // with the prescription deltas — partial packs (AC-A1), no placeholder,
 // nothing allocated on open (AC-A2) — the preference-gated prescribed
@@ -375,7 +375,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             {t('button.ok')}
           </Button>
           {/* Hidden until a valid entry exists; never in edit mode (the
-              outbound S4 footer matrix, reused by D46). */}
+              outbound S4 footer matrix, reused by D53). */}
           <Show when={!isEdit && saveEnabled()}>
             <Button
               data-testid="dialog-button-next-and-ok"
@@ -477,7 +477,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             columns={columns()}
             rows={[...lines]}
             rowKey={line => line.id}
-            rowDimmed={line => line.barred.length > 0}
+            rowState={line => (line.barred.length > 0 ? 'disabled' : undefined)}
             loading={gridData.loading}
           />
         </Show>

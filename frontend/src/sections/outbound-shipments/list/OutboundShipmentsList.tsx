@@ -339,8 +339,9 @@ const OutboundShipmentsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // Read-only rows (SHIPPED+) are de-emphasised (AC-L3).
-        rowDimmed={row => !isEditable(row.status)}
+        // Read-only rows (SHIPPED+) take the disabled state (AC-L3); they
+        // stay clickable — row click still opens the detail.
+        rowState={row => (!isEditable(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-outbound-shipments')}
         empty={
           <Button

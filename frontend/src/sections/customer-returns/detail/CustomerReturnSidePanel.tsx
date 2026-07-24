@@ -190,12 +190,13 @@ export const CustomerReturnSidePanel: Component<
       </SidePanelSection>
 
       {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
-          return) and Copy to clipboard — the shared SidePanelActions layout and
-          secondary-button tone, matching the stocktake detail. */}
+          return, danger tone — Delete buttons are danger app-wide, Carl
+          2026-07-24) and Copy to clipboard (secondary) — the shared
+          SidePanelActions layout, matching the stocktake detail. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           <Button
-            variant="secondary"
+            variant="danger"
             icon={<TrashIcon />}
             data-testid="delete-return-button"
             disabled={!canDelete()}

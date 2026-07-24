@@ -38,7 +38,6 @@ import {
   InfoIcon,
   MinusCircleIcon,
   PlusCircleIcon,
-  PrinterIcon,
 } from '../../../ui/icons';
 import { NameSearch } from '../../../domain/name';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -59,14 +58,6 @@ import {
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
 import { ServiceChargesModal } from './service-charges/ServiceChargesModal';
-// The record-screen report selector (reports S4): lazy-imported behind the
-// Export/Print trigger per the reports section's bundle note — a static
-// import would pull the selector graph into this section's eager chunk.
-const SelectReportModal = lazy(() =>
-  import('../../../domain/reports').then(module => ({
-    default: module.SelectReportModal,
-  }))
-);
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
 // the returns vertical — AC-V3 hands over to it). Lazy so the returns graph it
 // pulls in stays out of this section's eager chunk, loading only when a return
@@ -80,6 +71,7 @@ import {
   AddFromMasterListAction,
   AllocateLinesAction,
   DeleteLinesAction,
+  ExportPrintAction,
 } from './actions';
 
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
@@ -118,8 +110,6 @@ const OutboundDetailView: Component = () => {
   // (returnModalOpen, AC-V3); before that the explanatory notice instead.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
   const [returnModalOpen, setReturnModalOpen] = createSignal(false);
-  // Export/Print (S3 page action → reports S4, AC-E1–E3; any status).
-  const [reportsOpen, setReportsOpen] = createSignal(false);
 
   const [data, { mutate, refetch }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId }),
@@ -154,6 +144,25 @@ const OutboundDetailView: Component = () => {
     [...stockAndPlaceholderLines()].sort((a, b) =>
       a.itemName.localeCompare(b.itemName)
     );
+  // The shipment's items in line-table order (distinct) — the line editor
+  // excludes them from the add-mode picker and, in edit mode, pages through
+  // them with OK & next.
+  const orderedItems = (): LineEditItem[] => {
+    const seen = new Set<string>();
+    const items: LineEditItem[] = [];
+    for (const line of sortedLines()) {
+      if (seen.has(line.item.id)) continue;
+      seen.add(line.item.id);
+      items.push({
+        id: line.item.id,
+        name: line.item.name,
+        unitName: line.item.unitName,
+        isVaccine: line.item.isVaccine,
+        doses: line.item.doses,
+      });
+    }
+    return items;
+  };
 
   const editable = () => {
     const current = node();
@@ -515,15 +524,10 @@ const OutboundDetailView: Component = () => {
                       onCommitted={onLineOpsCommitted}
                     />
                     {/* Export/Print — the reports vertical's record-screen
-                        selector (reports S4), available at every status. */}
-                    <Button
-                      variant="secondary"
-                      icon={<PrinterIcon />}
-                      data-testid="export-print-button"
-                      onClick={() => setReportsOpen(true)}
-                    >
-                      {t('button.export-or-print')}
-                    </Button>
+                        selector (reports S4), available at every status. A
+                        self-contained action (static import), mirroring the
+                        sibling verticals — see ExportPrintAction. */}
+                    <ExportPrintAction shipmentId={current().id} />
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"
@@ -709,9 +713,7 @@ const OutboundDetailView: Component = () => {
                 isNew={current().status === 'NEW'}
                 customerIsStore={current().otherParty.store != null}
                 initialItem={editorItem()}
-                existingItemIds={stockAndPlaceholderLines().map(
-                  line => line.item.id
-                )}
+                existingItems={orderedItems()}
                 onCommitted={onLineOpsCommitted}
               />
               <ServiceChargesModal
@@ -723,21 +725,6 @@ const OutboundDetailView: Component = () => {
                 serviceLines={serviceLines()}
                 onCommitted={onLineOpsCommitted}
               />
-              {/* Export/Print (reports S4): mounted on first open so the
-                  selector's chunk loads lazily. Its own Suspense boundary —
-                  the lazy chunk's first load would otherwise suspend the
-                  route boundary and collapse this open screen to the page
-                  spinner (kdd/solid-reactivity-pitfalls § no remounts on
-                  interaction). */}
-              <Show when={reportsOpen()}>
-                <Suspense>
-                  <SelectReportModal
-                    context="OUTBOUND_SHIPMENT"
-                    dataId={current().id}
-                    onClose={() => setReportsOpen(false)}
-                  />
-                </Suspense>
-              </Show>
               {/* Returns need a shipped shipment (AC-V3) — an info-only
                   notice; the return flow is the returns vertical's. */}
               <Show when={returnNoticeOpen()}>

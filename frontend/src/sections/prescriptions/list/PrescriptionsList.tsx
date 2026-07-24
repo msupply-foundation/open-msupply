@@ -305,8 +305,9 @@ const PrescriptionsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // Read-only rows are dimmed but stay legible and clickable (AC-L3).
-        rowDimmed={row => isReadOnly(rowStatus(row))}
+        // Read-only rows take the disabled state — de-emphasised but legible
+        // and clickable (AC-L3); matches the outbound list post table-styling.
+        rowState={row => (isReadOnly(rowStatus(row)) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-prescriptions')}
         empty={
           <Button

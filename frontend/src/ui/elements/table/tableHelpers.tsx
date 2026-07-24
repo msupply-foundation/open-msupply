@@ -26,7 +26,11 @@ import styles from './tableHelpers.module.css';
 // widen.
 type Meta = ColumnMeta<never, unknown>;
 
-const EMPTY_CELL = '—';
+// Empty cells render BLANK (ui-standards § tables; Carl 2026-07-23): a dash
+// reads as data. A real zero is a VALUE and still renders "0"; reserve a
+// literal "N/A" for a field genuinely not applicable to the row (≠ missing),
+// rendered by the page's own cell. (The items list's months-of-stock dash is
+// spec-owned — AC-S2, absence ≠ zero — and deliberately kept.)
 
 // These return a narrow column FRAGMENT — only the fields they set (meta/cell
 // + the grouping aggregationFn), typed off ColumnDefBase (the non-identity
@@ -47,9 +51,9 @@ export type CellFragment<T> = Pick<
   'meta' | 'cell' | 'aggregationFn' | 'aggregatedCell'
 >;
 
-// Format a date value the ONE way: blank → em dash, else localised.
+// Format a date value the ONE way: no value → blank, else localised.
 const formatDateCell = (value: string | Date | null | undefined): string =>
-  value ? localisedDate(value) : EMPTY_CELL;
+  value ? localisedDate(value) : '';
 
 // Numbers: right-aligned.
 export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
@@ -71,7 +75,7 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
-    if (!value) return EMPTY_CELL;
+    if (!value) return '';
     const almostExpired =
       differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
     return (
@@ -102,7 +106,7 @@ export const getFlagCell = <T,>(
         <CheckIcon />
       </span>
     ) : (
-      EMPTY_CELL
+      ''
     ),
 });
 
@@ -123,7 +127,7 @@ export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // form and falls back to "US$".
 export const formatCurrencyCell = (value: number | null | undefined): string =>
   value == null
-    ? EMPTY_CELL
+    ? ''
     : formatNumber(value, {
         style: 'currency',
         currency: 'USD',

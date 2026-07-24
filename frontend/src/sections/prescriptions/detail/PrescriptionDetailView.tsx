@@ -83,7 +83,7 @@ import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModa
 // (patient / clinician / date / program), Details + Log tabs over the flat
 // line table (one row per dispensed line; carriers never render — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
-// (D46). Read-only from VERIFIED: dead affordances are hidden (D39).
+// (D53). Read-only from VERIFIED: dead affordances are hidden (D39).
 
 type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
@@ -612,7 +612,7 @@ const PrescriptionDetailView: Component = () => {
             </TabPanel>
           </Page>
 
-          {/* The S4 line editor (D46) — mounted fresh per open. */}
+          {/* The S4 line editor (D53) — mounted fresh per open. */}
           <Show when={editState()} keyed>
             {state => (
               <PrescriptionLineEditModal
