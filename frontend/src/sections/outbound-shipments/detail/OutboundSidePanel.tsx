@@ -28,9 +28,13 @@ import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
 import { PickedDateField } from './PickedDateField';
 import { CurrencyModal } from './modals/CurrencyModal';
-import { isDeletable, statusLabel } from '../outboundStatus';
+import { isDeletable } from '../outboundStatus';
 import type { OutboundNode } from './outboundUpdate';
-import type { OutboundLineFragment } from './outboundDetail.generated';
+import { graphqlFetch } from '../../../api/graphql';
+import {
+  FullOutbound,
+  type OutboundLineFragment,
+} from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
@@ -129,23 +133,32 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   // Copy confirmation shown inline beside the button (controls › action
   // feedback — never a toast), fading after a moment.
   const [copied, setCopied] = createSignal(false);
+  const [copying, setCopying] = createSignal(false);
   let copiedTimer: ReturnType<typeof setTimeout> | undefined;
   onCleanup(() => clearTimeout(copiedTimer));
 
-  const copyToClipboard = () => {
-    const node = props.node;
-    const text = [
-      `${t('label.outbound-shipment')} #${node.invoiceNumber}`,
-      `${t('label.customer-name')}: ${node.otherParty.name}`,
-      `${t('label.status')}: ${statusLabel(node.status)}`,
-      `${t('label.created')}: ${localisedDate(node.createdDatetime)}`,
-      `${t('heading.grand-total')}: ${money(pricing().totalAfterTax)}`,
-    ].join('\n');
-    void navigator.clipboard.writeText(text).then(() => {
+  // Copy the WHOLE shipment — header + every line, unpaginated — as pretty
+  // JSON (spec S3 § record actions; the fullStocktake pattern). The detail's
+  // lines read is server-paged, so this is its own one-shot fetch. A fetch
+  // failure is surfaced by graphqlFetch's global modal; a NodeError (not
+  // expected from a screen showing the record) just doesn't copy.
+  const copyToClipboard = async () => {
+    if (copying()) return;
+    setCopying(true);
+    try {
+      const result = await graphqlFetch(FullOutbound, {
+        storeId: props.storeId,
+        id: props.node.id,
+      });
+      if (result.kind !== 'success') return;
+      if (result.data.invoice.__typename !== 'InvoiceNode') return;
+      await navigator.clipboard.writeText(JSON.stringify(result.data, null, 2));
       setCopied(true);
       clearTimeout(copiedTimer);
       copiedTimer = setTimeout(() => setCopied(false), 2500);
-    });
+    } finally {
+      setCopying(false);
+    }
   };
 
   return (
@@ -511,8 +524,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Button
             variant="secondary"
             aria-live="polite"
+            loading={copying()}
             icon={copied() ? <CheckIcon /> : <CopyIcon />}
-            onClick={copyToClipboard}
+            onClick={() => void copyToClipboard()}
           >
             {copied()
               ? t('message.copy-success')

@@ -133,6 +133,33 @@ query outboundDetail($storeId: String!, $id: String!) {
   }
 }
 
+# The side panel's "Copy to clipboard" (spec S3 § record actions): the WHOLE
+# shipment — header + every line, unpaginated — in one fetch, written to the
+# clipboard as pretty JSON. The detail's own lines read is server-paged, so
+# this reads the invoice.lines connector directly (contract § detail line
+# table). Reuses the OutboundInfo / OutboundLine fragments so the copied JSON
+# mirrors the app's own shape (the fullStocktake pattern). NodeError is
+# promoted to the global error modal by the caller.
+query fullOutbound($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {
+    __typename
+    ... on InvoiceNode {
+      ...OutboundInfo
+      lines {
+        totalCount
+        nodes {
+          ...OutboundLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
 # One server-filtered/sorted/paged lines page (contract § detail line table).
 # Callers always merge invoiceId (and, for the stock/placeholder table,
 # type notEqualTo SERVICE) into the filter; the same operation serves the
