@@ -517,8 +517,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   };
   const onOkNext = () => {
     const current = item();
-    if (mode() === 'update' && current && !dirty()) {
-      void advance(current.id);
+    // Nothing changed → no redundant save (outbound gates saves on a real
+    // change): update mode pages on, add mode just returns to the picker.
+    if (current && !dirty()) {
+      if (mode() === 'update') void advance(current.id);
+      else backToSearch();
       return;
     }
     confirmThen(() => {
@@ -562,6 +565,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // batches — matches the old app's canAllocate CheckCell; hovering the
       // tick shows the reason. Barred rows are additionally dimmed (rowDimmed).
       c: { accessor: line => !isBarred(line), id: 'canAllocate' },
+      // getSize() is a min-width floor (auto layout) — without this the
+      // header-less tick column gets the 150px default and reads as a gap.
+      size: 36,
       header: '',
       cell: info => (
         <Show when={info.getValue<boolean>()}>
@@ -602,6 +608,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         accessor: line => line.campaign?.name ?? line.program?.name ?? '',
         id: 'campaign',
       },
+      // Wide enough that the two-word header doesn't wrap mid-word.
+      size: 200,
       header: t('label.campaign'),
     },
     {
@@ -744,14 +752,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </Button>
           {/* OK & next (spec S4 § footer button matrix) — never disabled,
               like the stocktake / inbound editors:
-               · add mode    — HIDDEN until an item is chosen and a change
-                 made; then saves + returns to the picker to add another.
+               · add mode    — HIDDEN until the item carries a NON-ZERO
+                 quantity (seeded from an existing allocation, or entered);
+                 then saves any change + returns to the picker to add
+                 another. A zero quantity keeps it hidden.
                · update mode — SHOWN throughout; saves any change, then
                  advances the parent-owned walk, or drops into add mode once
                  it is exhausted.
               OK stays visible-but-disabled as the always-discoverable
               confirm. */}
-          <Show when={mode() === 'update' ? item() : item() && dirty()}>
+          <Show
+            when={
+              mode() === 'update'
+                ? item()
+                : item() && issuedUnits() + placeholderUnits() > 0
+            }
+          >
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
