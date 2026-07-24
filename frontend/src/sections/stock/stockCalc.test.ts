@@ -81,12 +81,14 @@ describe('AC-A10 / AC-A11 backdated instant', () => {
     expect(backdatedDatetime(null, today, 'REDUCTION')).toBeUndefined();
     expect(backdatedDatetime(today, today, 'ADDITION')).toBeUndefined();
   });
-  it('a backdated reduction stamps the day end; an addition the day start', () => {
+  // Expected instants built with the local Date constructor: the picked local
+  // day's start/end as a UTC instant (#456), so it holds in any device zone.
+  it('a backdated reduction stamps the local day end; an addition the day start', () => {
     expect(backdatedDatetime('2020-01-01', today, 'REDUCTION')).toBe(
-      '2020-01-01T23:59:59.000Z'
+      new Date(2020, 0, 1, 23, 59, 59, 999).toISOString()
     );
     expect(backdatedDatetime('2020-01-01', today, 'ADDITION')).toBe(
-      '2020-01-01T00:00:00.000Z'
+      new Date(2020, 0, 1).toISOString()
     );
   });
 });
