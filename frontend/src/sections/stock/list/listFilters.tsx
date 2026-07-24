@@ -83,31 +83,17 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
-  // Expiry — a from/to range from the shared date-range picker. Plain DATE
-  // bounds (no time component — the server filter is date-typed), present as
-  // { afterOrEqualTo?, beforeOrEqualTo? }; clearing both → null so stripEmpty
-  // drops the empty chip.
+  // Expiry — a `Date` scalar; FilterDateRange (type="date") passes the plain
+  // ISO dates through, no conversion (#456).
   expiryDate: {
     label: () => t('label.expiry-date'),
     render: props => (
       <FilterDateRange
+        type="date"
         label={t('label.expiry-date')}
         testId={props.testId}
-        value={{
-          start: props.filter().expiryDate?.afterOrEqualTo || null,
-          end: props.filter().expiryDate?.beforeOrEqualTo || null,
-        }}
-        onChange={({ start, end }) =>
-          props.setPartialFilter({
-            expiryDate:
-              start || end
-                ? {
-                    afterOrEqualTo: start || undefined,
-                    beforeOrEqualTo: end || undefined,
-                  }
-                : null,
-          })
-        }
+        value={props.filter().expiryDate}
+        onChange={value => props.setPartialFilter({ expiryDate: value })}
       />
     ),
   },

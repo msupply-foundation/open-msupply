@@ -24,7 +24,6 @@ import {
   FilterTextInput,
   type Filter,
 } from '../ui/elements/selectors/FilterBar';
-import type { IsoDateRange } from '../ui/elements/inputs/DateRangeField';
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
@@ -109,7 +108,10 @@ interface InvoiceFilter {
   theirReference?: string | null;
   status?: string | null;
   statuses?: string[] | null;
-  createdDatetime?: IsoDateRange | null;
+  createdDatetime?: {
+    afterOrEqualTo?: string | null;
+    beforeOrEqualTo?: string | null;
+  } | null;
   onHold?: boolean | null;
 }
 
@@ -203,14 +205,11 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     label: () => 'Created',
     render: props => (
       <FilterDateRange
+        type="dateTime"
         label="Created"
         testId={props.testId}
-        value={props.filter().createdDatetime ?? { start: null, end: null }}
-        onChange={({ start, end }) =>
-          props.setPartialFilter({
-            createdDatetime: start || end ? { start, end } : null,
-          })
-        }
+        value={props.filter().createdDatetime}
+        onChange={value => props.setPartialFilter({ createdDatetime: value })}
       />
     ),
   },
