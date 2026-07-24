@@ -785,39 +785,72 @@ mod test {
         .is_ok());
     }
 
+    // Expected cost price editability by case:
+    //
+    // | Case                                       | Pack cost price enabled? |
+    // |---------------------------------------------|---------------------------|
+    // | External supplier + purchase order         | Disabled                 |
+    // | Internal supplier + linked to outbound/IO  | Disabled                 |
+    // | External supplier, created manually        | Enabled                  |
+    // | Internal supplier, created manually        | Enabled                  |
+    //
+
+    fn cost_price_test_invoice(
+        id: &str,
+        purchase_order_id: Option<String>,
+        linked_invoice_id: Option<String>,
+        name_store_id: Option<String>,
+    ) -> InvoiceRow {
+        InvoiceRow {
+            id: id.to_string(),
+            store_id: mock_store_b().id,
+            name_id: mock_name_store_b().id,
+            purchase_order_id,
+            linked_invoice_id,
+            name_store_id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            ..Default::default()
+        }
+    }
+
+    fn cost_price_test_line(id: &str, invoice_id: &str) -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: id.to_string(),
+            invoice_id: invoice_id.to_string(),
+            item_id: mock_item_a().id,
+            r#type: InvoiceLineType::StockIn,
+            cost_price_per_pack: 100_000.0,
+            number_of_packs: 1.0,
+            pack_size: 1.0,
+            ..Default::default()
+        }
+    }
+
     #[actix_rt::test]
     async fn update_stock_in_line_cannot_edit_cost_price() {
-        fn internal_supplier_inbound() -> InvoiceRow {
-            InvoiceRow {
-                id: "internal_supplier_inbound".to_string(),
-                store_id: mock_store_b().id,
-                name_id: mock_name_store_b().id,
-                name_store_id: Some(mock_store_b().id),
-                r#type: InvoiceType::InboundShipment,
-                status: InvoiceStatus::New,
-                ..Default::default()
-            }
-        }
+        let po_invoice = cost_price_test_invoice(
+            "po_linked_inbound",
+            Some("some_purchase_order".to_string()),
+            None,
+            None,
+        );
+        let line = cost_price_test_line("po_linked_line", &po_invoice.id);
 
-        fn internal_supplier_line() -> InvoiceLineRow {
-            InvoiceLineRow {
-                id: "internal_supplier_line".to_string(),
-                invoice_id: internal_supplier_inbound().id,
-                item_id: mock_item_a().id,
-                r#type: InvoiceLineType::StockIn,
-                cost_price_per_pack: 100_000.0,
-                number_of_packs: 1.0,
-                pack_size: 1.0,
-                ..Default::default()
-            }
-        }
+        let linked_invoice = cost_price_test_invoice(
+            "transfer_linked_inbound",
+            None,
+            Some("some_outbound_invoice".to_string()),
+            None,
+        );
+        let linked_line = cost_price_test_line("transfer_linked_line", &linked_invoice.id);
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_stock_in_line_cannot_edit_cost_price",
             MockDataInserts::all(),
             MockData {
-                invoices: vec![internal_supplier_inbound()],
-                invoice_lines: vec![internal_supplier_line()],
+                invoices: vec![po_invoice, linked_invoice],
+                invoice_lines: vec![line.clone(), linked_line.clone()],
                 ..Default::default()
             },
         )
@@ -828,12 +861,27 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        // CannotEditCostPrice: changing cost price on internal supplier invoice
+        // CannotEditCostPrice: changing cost price on a PO-linked invoice
         assert_eq!(
             update_stock_in_line(
                 &context,
                 UpdateStockInLine {
-                    id: internal_supplier_line().id,
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotEditCostPrice)
+        );
+
+        // CannotEditCostPrice: changing cost price on a transfer-linked invoice
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: linked_line.id.clone(),
                     r#type: StockInType::InboundShipment,
                     cost_price_per_pack: Some(999.0),
                     ..Default::default()
@@ -847,7 +895,7 @@ mod test {
         assert!(update_stock_in_line(
             &context,
             UpdateStockInLine {
-                id: internal_supplier_line().id,
+                id: line.id.clone(),
                 r#type: StockInType::InboundShipment,
                 cost_price_per_pack: Some(100_000.0),
                 ..Default::default()
@@ -862,7 +910,7 @@ mod test {
         assert!(update_stock_in_line(
             &context,
             UpdateStockInLine {
-                id: internal_supplier_line().id,
+                id: line.id.clone(),
                 r#type: StockInType::InboundShipment,
                 cost_price_per_pack: Some(nearly_same),
                 ..Default::default()
@@ -875,8 +923,70 @@ mod test {
         assert!(update_stock_in_line(
             &context,
             UpdateStockInLine {
-                id: internal_supplier_line().id,
+                id: line.id.clone(),
                 r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+    }
+
+    #[actix_rt::test]
+    async fn update_stock_in_line_can_edit_cost_price() {
+        // Plain manual inbound shipment (no purchase_order_id, no linked_invoice_id):
+        // cost price must remain editable.
+        let invoice = cost_price_test_invoice("manual_inbound", None, None, None);
+        let line = cost_price_test_line("manual_line", &invoice.id);
+
+        // Manual inbound shipment whose other party is an internal store, but with
+        // no PO and no linked transfer invoice: still editable. `name_store_id` alone
+        // is not a valid reason to lock cost price (#12496).
+        let internal_supplier_invoice = cost_price_test_invoice(
+            "manual_inbound_internal_supplier",
+            None,
+            None,
+            Some(mock_store_b().id),
+        );
+        let internal_supplier_line = cost_price_test_line(
+            "manual_line_internal_supplier",
+            &internal_supplier_invoice.id,
+        );
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_can_edit_cost_price",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice, internal_supplier_invoice],
+                invoice_lines: vec![line.clone(), internal_supplier_line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: line.id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(999.0),
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line.id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(999.0),
                 ..Default::default()
             },
             None

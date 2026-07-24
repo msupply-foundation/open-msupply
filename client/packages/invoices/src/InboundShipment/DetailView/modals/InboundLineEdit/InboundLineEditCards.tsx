@@ -116,9 +116,7 @@ export const InboundLineEditCards = ({
     isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const isManualShipment =
-    !inboundData?.purchaseOrder &&
-    !inboundData?.linkedShipment &&
-    !inboundData?.otherParty?.store;
+    !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
 
   const supplierMargin = inboundData?.otherParty?.margin ?? 0;
   const { data: itemPrice } = useItemPrice(item?.id);
@@ -287,8 +285,12 @@ export const InboundLineEditCards = ({
                     getLineDefaultSellPrice(
                       line,
                       line.costPricePerPack,
-                      line.packSize
+                      value
                     );
+                  const shouldClearCostPrice =
+                    item?.defaultPackSize !== line.packSize &&
+                    item?.itemStoreProperties?.defaultSellPricePerPack ===
+                      line.costPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -303,6 +305,9 @@ export const InboundLineEditCards = ({
                         value
                       )
                       : line.sellPricePerPack,
+                    costPricePerPack: shouldClearCostPrice
+                      ? 0
+                      : line.costPricePerPack,
                     packSize: value,
                     id: row.original.id,
                   });
