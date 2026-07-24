@@ -1,12 +1,11 @@
 /*
  * DataTable — the shared, TanStack-driven data table (list views).
  *
- * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs
- * for the table BODY (rows, headers, selection, hover) — those follow the same
- * tokens as the old display-shell Table.module.css. But the toolbar
- * (full-screen button) and the full-screen surface have NO design yet;
- * everything below the "PLACEHOLDER" marker is a functional, token-driven
- * stand-in meant to be replaced once designed.
+ * Body (rows, headers, selection, hover) and the band chrome (toolbar,
+ * footer, frame) are reconciled to ui-standards § tables (see
+ * docs/DESIGN_STANDARDS.md › Tables ledger). Still PLACEHOLDER: the
+ * toolbar's control-button/popover look (unit 13) and the full-screen
+ * surface — see the marker below.
  */
 
 /* --- Table body (designed) -------------------------------------------------- */
@@ -14,20 +13,38 @@
 /* The DataTable fills the space its container gives it (a flex child in the
    page body) and owns its own scroll — so the column headers stay pinned and
    horizontal scroll is available immediately, rather than the whole page body
-   scrolling. */
+   scrolling.
+
+   The FRAME (ui-standards § tables, unit 10): the table is ONE enclosed
+   card — toolbar band / scroll box / footer bar stacked inside a single
+   hairline frame, every band seam a single full-width hairline (the
+   deployed spec demo renders a DOUBLED toolbar/thead seam — two adjacent
+   1px #E0E0E0 borders — recorded as WIP sloppiness we deliberately don't
+   copy; same reason the spec's thead border-top is NOT adopted).
+   overflow: clip keeps children's square-cornered fills inside the
+   rounded frame; every floating surface that originates inside escapes
+   it — Columns/Settings/comment/calendar ride the native Popover API
+   (top layer), filter menus and the rows-per-page listbox portal to
+   <body> (Kobalte). */
 .root {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-block-size: 0;
   min-inline-size: 0;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  overflow: clip;
 
   /* Width of each leading fixed column (expander / select). The ONE source of
      truth for that box — the .selectCell/.expanderCell rules size to it, and
-     the JS column-pinning math mirrors it as remToPx(2.75) (see DataTable.tsx
-     LEADING_COL_PX). ≥44px at the 16px root is a comfortable WCAG 2.5.8 touch
-     target. Keep the rem here in sync with that JS literal. */
-  --table-leading-col: 2.75rem;
+     the JS column-pinning math mirrors it as remToPx(3) (see DataTable.tsx
+     leadingColPx). 3rem = the spec's fixed 48px selection column
+     (ui-standards § tables — "Checkbox/selection stays 48px"), which is also
+     its universal touch-target number. Keep the rem here in sync with that
+     JS literal. */
+  --table-leading-col: 3rem;
 
   /* Row background fade (ui-standards § tables: transition background
      0.15s on body rows) — carried by the cells, which paint the hover
@@ -45,13 +62,13 @@
 
 /* Refreshing bar — a thin indeterminate progress bar shown above the scroll
    area during a keep-previous-data refetch (filter/sort/page). Signals
-   "updating" without blanking or remounting the table (issue #160/#196). */
+   "updating" without blanking or remounting the table (issue #160/#196).
+   Flush edge-to-edge: it sits just under the toolbar's hairline, inside
+   the frame. */
 .refreshingBar {
   position: relative;
   block-size: 0.1875rem;
   overflow: hidden;
-  border-start-start-radius: var(--radius-md);
-  border-start-end-radius: var(--radius-md);
   background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
 }
 
@@ -90,25 +107,22 @@
   min-block-size: 0;
 }
 
-/* The bordered box starts here (the table itself), so the transparent toolbar
-   above sits OUTSIDE the border rather than being enclosed by it. */
+/* The scroll box is borderless — the frame on .root encloses it, the
+   toolbar's hairline sits above it and the footer's hairline below it
+   (single seams; unit 10). */
 .tableScroll {
   flex: 1;
   min-block-size: 0;
   overflow: auto;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  background: var(--bg-white);
 }
 
-/* Empty (or initial-loading) table: drop the bordered box (matching the current
-   app's borderless empty state) and become a flex column so the empty state /
-   spinner fills the space BELOW the still-visible column headers. Keep the 1px
-   as transparent (not border:none) so the layout doesn't shift when rows land. */
+/* Empty (or initial-loading) table: become a flex column so the empty state /
+   spinner fills the space BELOW the still-visible column headers. (The old
+   borderless-when-empty look predates the framed card — the frame now stays,
+   with the empty state inside it.) */
 .tableScroll[data-empty] {
   display: flex;
   flex-direction: column;
-  border-color: transparent;
 }
 
 /* The empty-state / spinner region under the header row — fills the remaining
@@ -163,43 +177,52 @@
   user-select: none;
 }
 
-/* Column resize handle — a thin hit target on the trailing edge of a resizable
-   header. Invisible at rest (a faint divider on hover), highlighted with the
-   brand tone while dragging. Sticky positioning on .th is a containing block
-   for this absolute child. */
+/* Column resize handle (ui-standards § tables .col-resize-handle, unit 11): a
+   0.75rem hit target STRADDLING the trailing header edge — it overhangs the
+   edge by 0.1875rem so the grab zone spans the column boundary, and z-index
+   lifts it clear of the neighbouring sticky header. Invisible at rest; a
+   centred 0.125rem bar (inset to 60% height, rounded) fades to the action blue
+   on hover AND throughout a resize drag (.resizeHandleActive keeps it lit once
+   the pointer leaves the handle mid-drag — hover alone would drop it). Sticky
+   positioning on .th is the containing block for this absolute child.
+   TODO (WCAG 2.5.7, flagged Carl 2026-07-24): drag-resize still has NO
+   non-drag alternative — add keyboard arrow-key resize on a focusable handle
+   (or a width control) in a later a11y pass. */
 .resizeHandle {
   position: absolute;
   inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: var(--space-2);
+  inset-inline-end: -0.1875rem;
+  inline-size: var(--space-3);
+  z-index: 10;
   cursor: col-resize;
   touch-action: none;
   user-select: none;
+  background: transparent;
 }
 
 .resizeHandle::after {
   content: '';
   position: absolute;
-  inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: 2px;
+  /* 60% height, vertically centred (spec top/bottom 20%). */
+  inset-block: 20%;
+  /* Centre the bar in the hit area, RTL-safe: auto margins over a fixed
+     inline-size (not a physical left + translateX). */
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: 0.125rem;
+  border-radius: 0.125rem;
   background: transparent;
-  transition: background 120ms ease;
+  /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
+     rule on .root — so no separate reduced-motion block is needed here. */
+  transition: background var(--table-bg-fade);
 }
 
-.resizeHandle:hover::after {
-  background: var(--color-divider);
-}
-
-.resizeHandleActive::after,
-.resizeHandleActive:hover::after {
-  background: var(--primary-main);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .resizeHandle::after {
-    transition: none;
-  }
+/* Blue on hover AND while resizing — the spec draws no grey stage and no
+   distinct active colour (this retires the last orange interaction accent;
+   focus ring / sort arrow / selection / pins all unified to blue earlier). */
+.resizeHandle:hover::after,
+.resizeHandleActive::after {
+  background: var(--secondary-main);
 }
 
 .td {
@@ -387,13 +410,14 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   transition: background-color var(--table-bg-fade);
 }
 
-/* The selection checkbox is a BLOCK, centred by margin: as an inline
-   (baseline-aligned) replaced box it inflates the cell's line box ~5px,
-   which held COMPACT rows above their 40px floor — the same strut rule
-   as the comment trigger (see Comment.module.css). The legacy display
-   shell used exactly this fix. */
-.selectCell input {
-  display: block;
+/* Placement of the BareCheckbox in a selection cell: centred by margin.
+   The control's root is block-level (BareCheckbox.module.css) so the cell
+   never gets an inline formatting context — an inline-level box there
+   would let the cell's line-height strut (~24px: selection cells don't
+   carry .td's line-height token) set the height and push COMPACT rows
+   past their 40px floor. Same strut rule as the comment trigger (see
+   Comment.module.css). */
+.selectBox {
   margin-inline: auto;
 }
 
@@ -590,7 +614,9 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 /* ==========================================================================
- * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
+ * PLACEHOLDER — the full-screen surface + the toolbar's control-button look
+ * below await their design pass (the buttons/popovers are unit 13; the
+ * toolbar BAND itself is reconciled — see .toolbar above).
  * ========================================================================== */
 
 /* When full screen, the table area covers the viewport above everything. Still a flex
@@ -603,21 +629,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   background: var(--bg-white);
 }
 
-/* The table toolbar (ui-standards § tables): the page-composed filter bar
-   inline-start, the icon-control cluster inline-end. One flex-wrap row —
-   squeezed, the controls wrap under the filters intrinsically (no
-   breakpoints). It sits outside the scroll region, so it never moves when the
-   table scrolls (either axis). Transparent, and NO bottom border — the
-   bordered table box below it delineates the boundary; a border here would
-   double up against the table's own top border. */
+/* The table toolbar (ui-standards § tables .mrt-toolbar, unit 10): the
+   page-composed filter bar inline-start, the icon-control cluster
+   inline-end, inside the frame as the card's top band — the spec's
+   0.75rem × 1.5rem padding, a single hairline below it (the spec's thead
+   border-top is deliberately NOT also drawn — see the .root comment).
+   One flex-wrap row — squeezed, the controls wrap under the filters
+   intrinsically (no breakpoints). It sits outside the scroll region, so
+   it never moves when the table scrolls (either axis). */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  min-block-size: 2.25rem;
-  padding-inline: var(--space-1);
-  padding-block-end: var(--space-1);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  border-block-end: 1px solid var(--color-border-value);
 }
 
 /* The filter-bar slot — claims the inline-start and the free width (its chips
@@ -650,30 +676,57 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Shared look for the toolbar's icon controls (full-screen button + the settings popover
-   trigger, which gets this via Popover's triggerClass). Transparent, secondary-tone icon,
-   subtle hover — matches the OMS toolbar. */
+/* The toolbar's icon controls (ui-standards § tables .mrt-ib — the Columns +
+   Settings popover triggers, via Popover's triggerClass, and the full-screen
+   button): a 2.25rem transparent square, muted icon, soft hover wash. No
+   border (the old 1px transparent hack is gone). */
 .controlButton,
 .fullScreenButton {
-  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: none;
   background: transparent;
   cursor: pointer;
   color: var(--text-secondary);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   line-height: 1;
   border-radius: var(--radius-sm);
 }
 
 .controlButton:hover,
 .fullScreenButton:hover {
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
 }
 
-.controlButtonActive {
-  background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
-  border-color: color-mix(in srgb, var(--secondary-main) 45%, transparent);
+/* Active trigger (full-screen on) — the spec's 8% blue tint + blue icon, no
+   border. */
+.controlButtonActive,
+.controlButtonActive:hover {
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
   color: var(--secondary-main);
+}
+
+/* Open popover trigger takes the same active tint (spec .mrt-ib.active), keyed
+   off the aria-expanded the Popover sets — so the Columns/Settings buttons
+   light up while their panel is open, with no extra state wiring. Placed after
+   the :hover rule so it wins while an open trigger is also hovered. */
+.controlButton[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
+  color: var(--secondary-main);
+}
+
+/* The two control popovers (Columns / Settings) — the spec's dense .mrt-pop
+   panel: tight 0.375rem padding (the panel's rows carry their own), overriding
+   the shared Popover .panel's roomier default. Scoped under .root so it
+   OUT-SPECIFIES that base rule deterministically (the panel is a DOM
+   descendant of .root even in the native top layer) rather than tying with it
+   on bundle order. Comment/date-picker popovers keep the roomy default. */
+.root .controlPopover {
+  padding: 0.375rem;
 }
 
 /* --- Card view (ui-standards § tables, mobile card layout) ------------------- */
@@ -718,6 +771,12 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   margin-block-start: var(--space-1);
   flex-shrink: 0;
 }
+
+/* The selection checkbox itself is BareCheckbox (inputs/BareCheckbox) — the
+   ONE drawn checkbox, shared with the labelled form Checkbox, per the
+   spec's tables reusing its Input-Fields checkbox (ui-standards § tables →
+   row selection). Only PLACEMENT lives in this file (.selectBox /
+   .cardSelect). */
 
 .cardIdentity {
   flex: 1;
@@ -814,8 +873,16 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   block-size: 1.5rem;
 }
 
-/* --- Table footer (ui-standards § tables → pagination) ---------------------- */
-/* The footer bar itself is the shared ContentFooter layout component (one bar:
-   the pager by default, the selection action bar while rows are selected — see
-   DataTable.tsx). No table-scoped footer CSS yet; its look is reconciled in the
-   Phase 2 styling pass. */
+/* --- Table footer (ui-standards § tables → pagination, unit 10) ------------- */
+/* The footer bar is the shared ContentFooter layout component (one bar: the
+   pager by default, the selection action bar while rows are selected — see
+   DataTable.tsx), passed this override class as the table's in-frame band:
+   the spec's tighter 0.5rem block padding (ContentFooter's own inline
+   --space-5 already equals the spec's 1.5rem). Its top hairline
+   (--color-border-value, from ContentFooter) is the footer seam — single,
+   since the scroll box above is borderless. Scoped under .root so the
+   override OUT-SPECIFIES ContentFooter's own padding rather than tying
+   with it (a same-specificity tie is decided by bundle order — fragile). */
+.root > .tableFooter {
+  padding-block: var(--space-2);
+}

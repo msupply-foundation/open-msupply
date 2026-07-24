@@ -2,7 +2,7 @@ import { t } from '../../../intl';
 import {
   FilterSelect,
   FilterTextInput,
-  FilterDate,
+  FilterDateRange,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
@@ -83,38 +83,33 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
-  // Expiry — a from/to date range (two native date inputs in one chip). A range
-  // is present as { afterOrEqualTo?, beforeOrEqualTo? }; clearing both → null so
-  // stripEmpty drops the empty chip.
+  // Expiry — a from/to range from the shared date-range picker. Plain DATE
+  // bounds (no time component — the server filter is date-typed), present as
+  // { afterOrEqualTo?, beforeOrEqualTo? }; clearing both → null so stripEmpty
+  // drops the empty chip.
   expiryDate: {
     label: () => t('label.expiry-date'),
-    render: props => {
-      const range = () => props.filter().expiryDate ?? {};
-      const setBound = (
-        bound: 'afterOrEqualTo' | 'beforeOrEqualTo',
-        value: string
-      ) => {
-        const next = { ...range(), [bound]: value || undefined };
-        const empty = !next.afterOrEqualTo && !next.beforeOrEqualTo;
-        props.setPartialFilter({ expiryDate: empty ? null : next });
-      };
-      return (
-        <>
-          <FilterDate
-            label={t('label.from')}
-            testId={`${props.testId}-from`}
-            value={range().afterOrEqualTo ?? ''}
-            onInput={value => setBound('afterOrEqualTo', value)}
-          />
-          <FilterDate
-            label={t('label.to')}
-            testId={`${props.testId}-to`}
-            value={range().beforeOrEqualTo ?? ''}
-            onInput={value => setBound('beforeOrEqualTo', value)}
-          />
-        </>
-      );
-    },
+    render: props => (
+      <FilterDateRange
+        label={t('label.expiry-date')}
+        testId={props.testId}
+        value={{
+          start: props.filter().expiryDate?.afterOrEqualTo || null,
+          end: props.filter().expiryDate?.beforeOrEqualTo || null,
+        }}
+        onChange={({ start, end }) =>
+          props.setPartialFilter({
+            expiryDate:
+              start || end
+                ? {
+                    afterOrEqualTo: start || undefined,
+                    beforeOrEqualTo: end || undefined,
+                  }
+                : null,
+          })
+        }
+      />
+    ),
   },
   // VVM status — single-select of active VVM statuses. Offered only when
   // manageVvmStatusForStock is on (gated in filterFields below).

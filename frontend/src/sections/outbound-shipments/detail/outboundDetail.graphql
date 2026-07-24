@@ -73,6 +73,9 @@ fragment OutboundInfo on InvoiceNode {
     # table). The price total is stockTotalAfterTax above.
     totalVolume
   }
+  # Custom-field VALUES (JSON object), scope-filtered — backs the Custom fields
+  # tab + prominent toolbar fields.
+  customFields
 }
 
 fragment OutboundLine on InvoiceLineNode {

@@ -1,5 +1,5 @@
 import { Show, type JSX } from 'solid-js';
-import { CheckIcon, HelpIcon, XCircleIcon } from '../../icons';
+import { HelpIcon } from '../../icons';
 import { Button } from '../buttons/Button';
 import { Dialog } from './Dialog';
 
@@ -39,7 +39,6 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
         <>
           <Button
             variant="secondary"
-            icon={<XCircleIcon />}
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
@@ -47,7 +46,6 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
           </Button>
           <Button
             variant="secondary"
-            icon={<CheckIcon />}
             data-testid="confirmation-modal-ok"
             onClick={() => {
               props.onConfirm();

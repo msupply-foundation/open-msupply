@@ -129,7 +129,7 @@ export const createFilters = (
     receivedDatetime: null,
     verifiedDatetime: null,
     createdOrBackdatedDatetime: null,
-    // Server-driven report/plugin filter hook (develop schema) — not a user
-    // chip.
+    // Custom-field filtering rides the shared domain/customFields group
+    // (FilterBar `extra`), a separate state slice — not a ReturnsFilter chip.
     dynamicFilter: null,
   });

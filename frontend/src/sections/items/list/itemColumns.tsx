@@ -1,15 +1,10 @@
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl/formatDateTime';
 import { type Column } from '../../../ui/elements/table/DataTable';
 import { getChipListCell } from '../../../ui/elements/table/ChipListCell';
-import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import type { ItemsResult } from './items.generated';
-import type { ItemCustomFieldDefinitionsResult } from '../itemCustomFields.generated';
 import { formatMonthsOfStock, formatUnits, dosesEquivalent } from './itemStats';
 
 export type ItemRow = ItemsResult['items']['nodes'][number];
-export type CustomFieldDef =
-  ItemCustomFieldDefinitionsResult['customFields']['nodes'][number];
 
 // Only Code and Name are sortable — the sort surface matches the wire's sort
 // keys (spec/items S1 › Columns). Clicking any other header does nothing.
@@ -26,71 +21,6 @@ const unitsWithDoses = (
   if (!showDoses || !row.isVaccine) return base;
   return `${base} (${formatUnits(dosesEquivalent(units, row.doses))} ${t('label.doses-short')})`;
 };
-
-// Read one custom-field value out of the item's JSON blob (server already
-// filtered to defined, non-hidden item-scope keys — AC-P1).
-const readCustomField = (row: ItemRow, key: string): unknown =>
-  (row.customFields as Record<string, unknown> | null | undefined)?.[key] ??
-  undefined;
-
-const optionName = (def: CustomFieldDef, value: unknown): string => {
-  const match = def.options.find(o => o.id === value || o.key === value);
-  return match?.name ?? (value == null ? '' : String(value));
-};
-
-// One column per (non-hidden) item-scope custom-field definition, labelled with
-// its display NAME (data, not a locale key). Rendering follows the value type:
-// option → the option name, boolean → a flag cell, date → localised, text /
-// number → the raw value (spec/items S1 › Columns, AC-P2). Hidden definitions
-// never reach the client, so callers pass only visible defs.
-export const customFieldColumns = (
-  defs: CustomFieldDef[]
-): Column<ItemRow, SortKey>[] =>
-  defs.map(def => {
-    const base = {
-      c: {
-        accessor: (row: ItemRow) => readCustomField(row, def.key),
-        id: `cf:${def.key}`,
-      },
-      header: def.name,
-      enableSorting: false,
-    };
-    switch (def.valueType) {
-      case 'BOOLEAN':
-        return { ...base, ...getBooleanCell({ label: def.name }) };
-      case 'OPTION':
-        return { ...base, cell: info => optionName(def, info.getValue()) };
-      case 'DATE':
-        return {
-          ...base,
-          cell: info => {
-            const v = info.getValue();
-            return v ? localisedDate(v as string) : '';
-          },
-        };
-      case 'INTEGER':
-      case 'REAL':
-        return {
-          ...base,
-          meta: { align: 'right' as const },
-          cell: info => {
-            const v = info.getValue();
-            return typeof v === 'number'
-              ? formatUnits(v, def.valueType === 'REAL' ? 2 : 0)
-              : '';
-          },
-        };
-      case 'TEXT':
-      default:
-        return {
-          ...base,
-          cell: info => {
-            const v = info.getValue();
-            return v == null ? '' : String(v);
-          },
-        };
-    }
-  });
 
 // The fixed item columns (spec/items S1). Default sort name ascending; only
 // Code + Name sortable. Master lists is a chip-list cell; MOS is blank (dash)

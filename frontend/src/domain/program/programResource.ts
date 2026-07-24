@@ -30,6 +30,20 @@ export const programRegistriesResource =
       : undefined;
   });
 
+// The store's visible programs as an app-wide store-scoped cache (the store's
+// own program list, name-sorted) — the prescription program picker's options
+// (spec/prescriptions § patient, clinician, program, diagnosis). Distinct from
+// the enrolment-document registries above: a prescription's programId is a
+// ProgramNode.id, NOT a registry contextId. Lazy, deduped, refetched on store
+// change (createStoreScopedResource); read via .noSuspense().
+export const programsResource = createStoreScopedResource<ProgramListItem>(
+  currentStoreId,
+  async storeId => {
+    const result = await graphqlFetch(Programs, { storeId });
+    return result.kind === 'success' ? result.data.programs.nodes : undefined;
+  }
+);
+
 // One pickable program for the report argument program picker (AC-R12) —
 // exactly the node the Programs operation selects (kdd/type-safety).
 export type ProgramListItem = Extract<

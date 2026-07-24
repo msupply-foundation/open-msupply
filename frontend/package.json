@@ -22,7 +22,9 @@
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:local": "bash scripts/e2e/run-e2e.sh",
     "dev-android": "./scripts/dev-android.sh",
-    "build-android": "./scripts/build-android.sh"
+    "build-android": "./scripts/build-android.sh",
+    "brief": "python3 exploratory/tools/behaviour_brief.py",
+    "check:anchors": "python3 exploratory/tools/check_anchor_refs.py"
   },
   "dependencies": {
     "@capacitor/camera": "^8.2.0",

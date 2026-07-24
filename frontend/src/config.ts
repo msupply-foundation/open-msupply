@@ -20,6 +20,11 @@ export const SYNC_FILES_URL = '/sync_files';
 // the backend in dev (see the dev server proxy in vite.config.ts).
 export const CUSTOM_TRANSLATIONS_URL = '/custom-translations';
 
+// Prescription dispensing labels (spec/prescriptions § label printing): the
+// server prints via a REST endpoint, not GraphQL — POST a JSON array of label
+// payloads. Proxied to the backend in dev (see vite.config.ts).
+export const PRINT_LABEL_PRESCRIPTION_URL = '/print/label-prescription';
+
 // Support tools (spec/settings/contract.md § Support) — REST, not GraphQL.
 // GET /support/database vacuums the server database in place, then streams
 // the file (session-cookie auth, SERVER_ADMIN checked in the handler).

@@ -54,6 +54,10 @@ import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import {
+  CustomFieldsEditTab,
+  CustomFieldsToolbar,
+} from '../../../domain/customFields';
+import {
   OutboundDetail,
   OutboundLines,
   UpdateOutboundShipmentName,
@@ -356,6 +360,25 @@ const OutboundDetailView: Component = () => {
   };
 
   const setHold = (hold: boolean) => void saveField({ onHold: hold });
+
+  // Custom-fields save (explicit-save tab) — patch-merged server-side; returns
+  // true so the tab clears its dirty state. The toolbar (prominent fields) uses
+  // saveField directly (fire-and-forget, like the other toolbar fields).
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const current = node();
+    if (!current) return false;
+    const saved = await saveShipmentFields(params.storeId, {
+      id: current.id,
+      customFields: patch,
+    });
+    if (saved) {
+      mutate(() => saved);
+      return true;
+    }
+    return false;
+  };
 
   // Customer change (AC-N1): reissues under a NEW identity — renavigate to the
   // returned id. Blocked (UI) when the shipment came from a requisition
@@ -798,6 +821,15 @@ const OutboundDetailView: Component = () => {
                         onBlur={() => edit.flush()}
                       />
                     </FieldRow>
+                    {/* PROMINENT custom fields — stay in the toolbar even when
+                        the shipment is read-only (past PICKED), just disabled. */}
+                    <CustomFieldsToolbar
+                      scope="outbound_shipment"
+                      recordId={current().id}
+                      values={current().customFields}
+                      disabled={!editable()}
+                      onSave={patch => void saveField({ customFields: patch })}
+                    />
                     {/* Always-on item search — name OR code (server
                         itemCodeOrName.like, AC-V5), like the stocktakes
                         detail. Blank clears to null so stripEmpty drops it (a
@@ -824,6 +856,10 @@ const OutboundDetailView: Component = () => {
                       {
                         value: 'details',
                         label: t('label.details'),
+                      },
+                      {
+                        value: 'custom-fields',
+                        label: t('label.custom-fields'),
                       },
                       { value: 'log', label: t('label.log') },
                     ]}
@@ -959,6 +995,18 @@ const OutboundDetailView: Component = () => {
                       setSelectedIds([]);
                     },
                   }}
+                />
+              </TabPanel>
+              <TabPanel value="custom-fields">
+                {/* Custom fields for the outbound_shipment scope — disabled once
+                    the shipment is read-only (past PICKED). Prominent fields
+                    live in the toolbar, so the tab shows the rest. */}
+                <CustomFieldsEditTab
+                  scope="outbound_shipment"
+                  promoteToToolbar
+                  disabled={!editable()}
+                  values={current().customFields}
+                  onSave={saveCustomFields}
                 />
               </TabPanel>
               <TabPanel value="log">

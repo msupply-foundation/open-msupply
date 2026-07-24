@@ -25,7 +25,9 @@ export type PatientFilter = NonNullable<PatientsVariables['filter']>;
  * Text filters match as substrings ({ like }); the Patient ID (identifier)
  * filter is the broad OR match across code / secondary code / name / program-
  * enrolment id (AC-L3); gender and date of birth match exactly ({ equalTo }).
- * Custom-field columns (dynamicFilter) are a separate vertical — dismissed here.
+ * Custom-field filtering rides on its own bar (the shared customFieldFilters →
+ * dynamicFilter, spec/ui-standards/custom-fields), not a PatientFilter chip, so
+ * `dynamicFilter` stays dismissed in this map.
  */
 const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   // ─ default-shown (seeded present-as-null in the list's DEFAULT_STATE) ─

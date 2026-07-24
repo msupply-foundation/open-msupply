@@ -33,7 +33,8 @@ import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipme
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
 import { ServiceLineModal } from './modals/ServiceLineModal';
 import { CurrencyModal } from './modals/CurrencyModal';
-import { poLabel, ioLabel, PO_COLOUR, IO_COLOUR } from '../linkedOrder';
+import { poLabel, ioLabel } from '../linkedOrder';
+import linkStyles from '../linkedOrder.module.css';
 
 export interface InboundShipmentSidePanelProps {
   storeId: string;
@@ -214,7 +215,8 @@ export const InboundShipmentSidePanel: Component<
               <FieldRow label={t('label.purchase-order')}>
                 <A
                   href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
-                  style={{ color: PO_COLOUR, 'font-weight': 500 }}
+                  class={linkStyles.link}
+                  data-kind="po"
                 >
                   {poLabel(po().number)}
                 </A>
@@ -226,7 +228,8 @@ export const InboundShipmentSidePanel: Component<
               <FieldRow label={t('internal-order')}>
                 <A
                   href={`/${props.storeId}/replenishment/internal-order/${req().id}`}
-                  style={{ color: IO_COLOUR, 'font-weight': 500 }}
+                  class={linkStyles.link}
+                  data-kind="io"
                 >
                   {ioLabel(req().requisitionNumber)}
                 </A>

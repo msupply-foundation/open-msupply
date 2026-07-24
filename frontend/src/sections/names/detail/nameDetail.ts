@@ -21,8 +21,8 @@ export const detailFromResult = (
 export const isStoreName = (detail: Pick<NameDetail, 'store'>): boolean =>
   detail.store != null;
 
-// The customer detail's "supply level" is a v1 NAME PROPERTY (distinct from the
-// v2 custom fields): its value lives in NameNode.properties — a JSON STRING blob
+// The customer detail's "supply level" is a NAME PROPERTY (distinct from the
+// custom fields): its value lives in NameNode.properties — a JSON STRING blob
 // keyed by property key. Matched by a well-known key.
 // ⚠️ VERIFY: the exact central key for supply level; using 'supply_level' as the
 // documented best guess (the reference dataset configures no name properties, so
