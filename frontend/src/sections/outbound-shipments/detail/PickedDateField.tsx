@@ -155,10 +155,13 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           label={t('label.picked-date')}
           hideLabel
           type="date"
-          // Compact (10rem cap), not short: the row also carries the
-          // disabled-reason info bubble, which the wider input pushed past
-          // the panel edge (clipped since the panel gained its own scroll).
-          width="compact"
+          // Explicit width (spread onto the <input>): the input's default
+          // `width: 100%` fills the panel row's whole control column, pushing
+          // the disabled-reason info bubble past the panel edge where its own
+          // scroll clips it. A dd/mm/yyyy date fits in 8rem, leaving room for
+          // the bubble beside it. The width-cap variants can't do this — they
+          // only cap, and the column is narrower than every cap.
+          style={{ width: '8rem' }}
           data-testid="picked-date-field"
           value={shown()}
           min={enabled() ? bounds().min : undefined}
