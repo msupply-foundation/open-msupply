@@ -241,6 +241,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setDraft(reconcile(sorted, { key: 'id' }));
     const placeholder = data.placeholderQuantity ?? 0;
     setPlaceholderUnits(placeholder);
+    // Seed the Issue field with the item's CURRENT requested quantity —
+    // issued units + placeholder, the same total the grid footer shows; 0
+    // when nothing is issued (spec S4 § issue field seed). Display-only: a
+    // bare setIssueValue never re-distributes, so opening an item can't
+    // disturb a hand-tuned per-batch spread. (The lens was just reset to
+    // units, so the unit sum is the right shape.)
+    const seededIssuedUnits = sorted.reduce(
+      (sum, line) => sum + line.numberOfPacks * line.packSize,
+      0
+    );
+    setIssueValue(seededIssuedUnits + placeholder);
     // Land ready to type: in update mode the clicked batch's packs input
     // (draft rows from existing lines keep the invoice-line id) or the first
     // row on an advance; after an add-mode pick, the Issue field (the
@@ -836,14 +847,26 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               })),
             ]}
             onValueChange={value => {
-              setAllocateIn(
+              const previous = allocateIn();
+              const next: AllocateUnit =
                 value === 'units'
                   ? { kind: 'units' }
-                  : { kind: 'packs', size: Number(value.slice(6)) }
-              );
-              // Re-interpret the same requested quantity in the new lens.
+                  : { kind: 'packs', size: Number(value.slice(6)) };
+              setAllocateIn(next);
+              // Re-EXPRESS the current quantity in the new lens — the units
+              // equivalent is preserved and NOTHING redistributes (matching
+              // the old app; spec S4 § issue field seed). Re-running the
+              // distribution here would silently rewrite the allocation —
+              // seeded or hand-tuned — on a mere display-unit switch.
               const v = issueValue();
-              if (v != null) onIssueChange(v);
+              if (v != null) {
+                const units = lensToUnits(v, previous) ?? 0;
+                setIssueValue(
+                  next.kind === 'units'
+                    ? units
+                    : Math.round((units / next.size) * 100) / 100
+                );
+              }
             }}
           />
           {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
