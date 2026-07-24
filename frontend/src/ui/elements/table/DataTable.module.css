@@ -1,12 +1,11 @@
 /*
  * DataTable — the shared, TanStack-driven data table (list views).
  *
- * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs
- * for the table BODY (rows, headers, selection, hover) — those follow the same
- * tokens as the old display-shell Table.module.css. But the toolbar
- * (full-screen button) and the full-screen surface have NO design yet;
- * everything below the "PLACEHOLDER" marker is a functional, token-driven
- * stand-in meant to be replaced once designed.
+ * Body (rows, headers, selection, hover) and the band chrome (toolbar,
+ * footer, frame) are reconciled to ui-standards § tables (see
+ * docs/DESIGN_STANDARDS.md › Tables ledger). Still PLACEHOLDER: the
+ * toolbar's control-button/popover look (unit 13) and the full-screen
+ * surface — see the marker below.
  */
 
 /* --- Table body (designed) -------------------------------------------------- */
@@ -14,13 +13,29 @@
 /* The DataTable fills the space its container gives it (a flex child in the
    page body) and owns its own scroll — so the column headers stay pinned and
    horizontal scroll is available immediately, rather than the whole page body
-   scrolling. */
+   scrolling.
+
+   The FRAME (ui-standards § tables, unit 10): the table is ONE enclosed
+   card — toolbar band / scroll box / footer bar stacked inside a single
+   hairline frame, every band seam a single full-width hairline (the
+   deployed spec demo renders a DOUBLED toolbar/thead seam — two adjacent
+   1px #E0E0E0 borders — recorded as WIP sloppiness we deliberately don't
+   copy; same reason the spec's thead border-top is NOT adopted).
+   overflow: clip keeps children's square-cornered fills inside the
+   rounded frame; every floating surface that originates inside escapes
+   it — Columns/Settings/comment/calendar ride the native Popover API
+   (top layer), filter menus and the rows-per-page listbox portal to
+   <body> (Kobalte). */
 .root {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-block-size: 0;
   min-inline-size: 0;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  overflow: clip;
 
   /* Width of each leading fixed column (expander / select). The ONE source of
      truth for that box — the .selectCell/.expanderCell rules size to it, and
@@ -47,13 +62,13 @@
 
 /* Refreshing bar — a thin indeterminate progress bar shown above the scroll
    area during a keep-previous-data refetch (filter/sort/page). Signals
-   "updating" without blanking or remounting the table (issue #160/#196). */
+   "updating" without blanking or remounting the table (issue #160/#196).
+   Flush edge-to-edge: it sits just under the toolbar's hairline, inside
+   the frame. */
 .refreshingBar {
   position: relative;
   block-size: 0.1875rem;
   overflow: hidden;
-  border-start-start-radius: var(--radius-md);
-  border-start-end-radius: var(--radius-md);
   background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
 }
 
@@ -92,25 +107,22 @@
   min-block-size: 0;
 }
 
-/* The bordered box starts here (the table itself), so the transparent toolbar
-   above sits OUTSIDE the border rather than being enclosed by it. */
+/* The scroll box is borderless — the frame on .root encloses it, the
+   toolbar's hairline sits above it and the footer's hairline below it
+   (single seams; unit 10). */
 .tableScroll {
   flex: 1;
   min-block-size: 0;
   overflow: auto;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  background: var(--bg-white);
 }
 
-/* Empty (or initial-loading) table: drop the bordered box (matching the current
-   app's borderless empty state) and become a flex column so the empty state /
-   spinner fills the space BELOW the still-visible column headers. Keep the 1px
-   as transparent (not border:none) so the layout doesn't shift when rows land. */
+/* Empty (or initial-loading) table: become a flex column so the empty state /
+   spinner fills the space BELOW the still-visible column headers. (The old
+   borderless-when-empty look predates the framed card — the frame now stays,
+   with the empty state inside it.) */
 .tableScroll[data-empty] {
   display: flex;
   flex-direction: column;
-  border-color: transparent;
 }
 
 /* The empty-state / spinner region under the header row — fills the remaining
@@ -593,7 +605,9 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 /* ==========================================================================
- * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
+ * PLACEHOLDER — the full-screen surface + the toolbar's control-button look
+ * below await their design pass (the buttons/popovers are unit 13; the
+ * toolbar BAND itself is reconciled — see .toolbar above).
  * ========================================================================== */
 
 /* When full screen, the table area covers the viewport above everything. Still a flex
@@ -606,23 +620,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   background: var(--bg-white);
 }
 
-/* The table toolbar (ui-standards § tables): the page-composed filter bar
-   inline-start, the icon-control cluster inline-end. One flex-wrap row —
-   squeezed, the controls wrap under the filters intrinsically (no
-   breakpoints). It sits outside the scroll region, so it never moves when the
-   table scrolls (either axis). Transparent, and NO bottom border — the
-   bordered table box below it delineates the boundary; a border here would
-   double up against the table's own top border. */
+/* The table toolbar (ui-standards § tables .mrt-toolbar, unit 10): the
+   page-composed filter bar inline-start, the icon-control cluster
+   inline-end, inside the frame as the card's top band — the spec's
+   0.75rem × 1.5rem padding, a single hairline below it (the spec's thead
+   border-top is deliberately NOT also drawn — see the .root comment).
+   One flex-wrap row — squeezed, the controls wrap under the filters
+   intrinsically (no breakpoints). It sits outside the scroll region, so
+   it never moves when the table scrolls (either axis). */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  min-block-size: 2.75rem;
-  padding-inline: var(--space-1);
-  /* Symmetric block padding — an end-only pad shifted the centred chips
-     visibly above the toolbar's midline. */
-  padding-block: var(--space-1);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-block-end: 1px solid var(--color-border-value);
 }
 
 /* The filter-bar slot — claims the inline-start and the free width (its chips
@@ -825,8 +837,16 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   block-size: 1.5rem;
 }
 
-/* --- Table footer (ui-standards § tables → pagination) ---------------------- */
-/* The footer bar itself is the shared ContentFooter layout component (one bar:
-   the pager by default, the selection action bar while rows are selected — see
-   DataTable.tsx). No table-scoped footer CSS yet; its look is reconciled in the
-   Phase 2 styling pass. */
+/* --- Table footer (ui-standards § tables → pagination, unit 10) ------------- */
+/* The footer bar is the shared ContentFooter layout component (one bar: the
+   pager by default, the selection action bar while rows are selected — see
+   DataTable.tsx), passed this override class as the table's in-frame band:
+   the spec's tighter 0.5rem block padding (ContentFooter's own inline
+   --space-5 already equals the spec's 1.5rem). Its top hairline
+   (--color-border-value, from ContentFooter) is the footer seam — single,
+   since the scroll box above is borderless. Scoped under .root so the
+   override OUT-SPECIFIES ContentFooter's own padding rather than tying
+   with it (a same-specificity tie is decided by bundle order — fragile). */
+.root > .tableFooter {
+  padding-block: var(--space-2);
+}

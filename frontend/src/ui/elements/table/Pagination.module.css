@@ -1,34 +1,36 @@
-/* Pagination bar — styled to match the current Open mSupply app: "Showing X-Y of Z"
-   on the inline-start edge, rows-per-page selector + numbered pager on the inline-end. */
+/* Pagination bar (ui-standards § tables → pagination, unit 10): ONE
+   inline-end cluster — rows-per-page, the range "1–20 of 38", the pager —
+   right-aligned in the table's footer band (the spec's .mrt-pager /
+   .pgn-pager margin-left:auto). Bar text is quiet (--text-secondary); the
+   range sits in the body tone with tabular-nums. Deviations recorded in
+   the ledger: --text-sm (14px) kept over the spec's 13px (sizes pass
+   deferred), and the pager keeps our fixed-slot layout over the spec's
+   plain pill list. */
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  /* Fill the container's width so justify-content spreads summary (start) from the
-     controls (end). A no-op in a block context (showcase card), but essential inside a
-     flex parent like ContentFooter, where a child otherwise shrinks to its content and
-     the whole bar would clump at the start. */
+  justify-content: flex-end;
+  /* Fill the container's width so the cluster right-aligns. A no-op in a
+     block context (showcase card), but essential inside a flex parent like
+     ContentFooter, where a child otherwise shrinks to its content and the
+     whole bar would clump at the start. */
   flex: 1;
-  gap: 1rem;
+  /* The spec's cluster gap (.mrt-pager gap: 1.25rem — between the
+     rows-per-page control, the range and the pager; no 1.25rem space
+     token). */
+  gap: 1.25rem;
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-.summary {
-  white-space: nowrap;
-}
-
-/* The range + total in the summary are emphasised, matching OMS's bold numbers. */
-.summaryNumber {
-  font-weight: var(--weight-bold);
+/* The range "1–20 of 38" — body tone against the quiet bar text, and
+   tabular-nums so the digits keep constant width while paging (the spec's
+   .mrt-page-range). No bold (unit 10 — the old emphasised summary is
+   retired). */
+.range {
   color: var(--text-body);
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* The rows-per-page Select, laid out inline for the bar: label beside a compact
@@ -56,8 +58,9 @@
   gap: 0.125rem;
 }
 
-/* Circular pager buttons, matching the current app's MUI Pagination: 2rem circle,
-   transparent by default. */
+/* Pager buttons (the spec's .mrt-page-btn / .pgn-pg): 2rem quiet squares —
+   transparent at rest, a soft wash on hover, --radius-sm corners (the
+   spec's 0.375rem has no token; the flat-button radius is the nearest). */
 .pageButton {
   display: inline-flex;
   align-items: center;
@@ -66,32 +69,34 @@
   height: 2rem;
   padding: 0 var(--space-1);
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-body);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 
 /* The prev/next arrow icons are drawn larger than the page-number text so they
    read as chunky, clear controls (the MUI paths are filled, so size = weight). */
 .pageButton svg {
-  width: 1.375rem;
-  height: 1.375rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .pageButton:disabled {
-  opacity: 0.4;
+  /* Spec: disabled pager arrows dim to 0.35. */
+  opacity: 0.35;
   cursor: default;
 }
 
 .pageButton:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--text-body) 4%, transparent);
+  /* Spec hover: rgba(0,0,0,0.06) — a 6% body-tone wash via tokens. */
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
 }
 
-/* The current page — a plain display (not editable). A compact box carrying the
-   subtle grey tint the active page used to have, matching the pager buttons'
-   footprint so the row stays aligned. */
+/* The current page — a plain display (not editable). The spec's active pill:
+   a 10% action-blue tint with semibold blue text, matching the pager
+   buttons' footprint so the row stays aligned. */
 .pageCurrent {
   display: inline-flex;
   align-items: center;
@@ -100,7 +105,20 @@
   block-size: 2rem;
   padding-inline: var(--space-1);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
-  color: var(--text-body);
-  font-size: var(--text-xs);
+  background: color-mix(in srgb, var(--secondary-main) 10%, transparent);
+  color: var(--secondary-main);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+/* ≤480px (spec § pagination responsive): the pager collapses to prev/next +
+   the range — the rows-per-page selector and the NUMBER slots hide (the
+   .numberSlot class rides on the first/middle/last buttons and the
+   current-page pill; the arrows keep only themselves). The page size stays
+   whatever was last chosen (default 20). */
+@media (max-width: 480px) {
+  .pageSize,
+  .numberSlot {
+    display: none;
+  }
 }
