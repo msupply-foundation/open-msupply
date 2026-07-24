@@ -6,11 +6,14 @@ import {
   CheckIcon,
   ChevronDownIcon,
   CloseIcon,
+  FilterIcon,
   SearchIcon,
 } from '../../icons';
 import { t } from '../../../intl';
 import { createDebounced } from '../../utils/createDebounced';
 import { NumberField } from '../inputs/NumberField';
+import { BareCheckbox } from '../inputs/BareCheckbox';
+import { DateRangeField, type IsoDateRange } from '../inputs/DateRangeField';
 import styles from './FilterBar.module.css';
 
 /*
@@ -126,8 +129,41 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
   const setPartialFilter = (patch: Partial<F>) =>
     props.onChange({ ...props.filter, ...patch });
 
+  let barEl: HTMLDivElement | undefined;
+
   const addFilter = (f: Filter<F>) =>
     props.onChange({ ...props.filter, [f.key]: null });
+
+  // Hand a just-added chip's editor the next action (Carl, 2026-07-24): a
+  // text/number input takes typing focus; a button editor (enum, date
+  // range) opens its chooser — the chip instantiates empty, so choosing IS
+  // the next step. Every editor stamps `filter-input-<key>` on its
+  // focusable. Returns whether it landed (FiltersMenu then suppresses its
+  // own close-time focus restoration).
+  const focusChipEditor = (key: string): boolean => {
+    const el = barEl?.querySelector<HTMLElement>(
+      `[data-testid="filter-input-${key}"]`
+    );
+    if (!el) return false;
+    if (el instanceof HTMLButtonElement) {
+      el.focus();
+      // A Kobalte menu trigger opens on POINTERDOWN (mouse), not on the
+      // click event — a synthetic el.click() alone does nothing to it. Our
+      // own Popover triggers open on click; they ignore the pointerdown.
+      el.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          pointerType: 'mouse',
+        })
+      );
+      el.click();
+    } else {
+      el.focus();
+    }
+    return true;
+  };
 
   const removeFilter = (f: Filter<F>) => {
     const next = { ...props.filter };
@@ -145,17 +181,17 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
   };
 
   return (
-    <div class={styles.bar}>
+    <div class={styles.bar} ref={barEl}>
       <FiltersMenu
         available={available()}
         onAdd={addFilter}
-        onReset={active().length > 0 ? resetAll : undefined}
+        focusChip={focusChipEditor}
       />
 
       <For each={active()}>
         {f => (
           <div class={styles.chip}>
-            <span class={styles.chipLabel}>{f.label()}</span>
+            <span class={styles.chipLabel}>{f.label()}:</span>
             {f.render({
               filter: () => props.filter,
               setFilter,
@@ -173,6 +209,15 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
           </div>
         )}
       </For>
+
+      {/* Bar-level "Clear all" (ui-standards § tables → filtering) — a plain
+          text button, shown only while filters are active; replaces the old
+          "Remove all filters" menu item. */}
+      <Show when={active().length > 0}>
+        <button type="button" class={styles.clearAll} onClick={resetAll}>
+          {t('label.clear-all-filters')}
+        </button>
+      </Show>
     </div>
   );
 };
@@ -180,43 +225,58 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
 const FiltersMenu = <F extends object>(props: {
   available: Filter<F>[];
   onAdd: (f: Filter<F>) => void;
-  onReset?: () => void;
-}) => (
-  <DropdownMenu.Root placement="bottom-start" gutter={4}>
-    <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
-      <span>{t('label.filters')}</span>
-      <ChevronDownIcon class={styles.triggerChevron} />
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Portal>
-      <DropdownMenu.Content class={styles.content}>
-        <For each={props.available}>
-          {f => (
-            <DropdownMenu.Item
-              class={styles.item}
-              data-testid={`filter-option-${f.key}`}
-              onSelect={() => props.onAdd(f)}
-            >
-              <span class={styles.itemLabel}>{f.label()}</span>
-            </DropdownMenu.Item>
-          )}
-        </For>
-        <Show when={props.onReset && props.available.length > 0}>
-          <DropdownMenu.Separator class={styles.separator} />
-        </Show>
-        <Show when={props.onReset}>
-          <DropdownMenu.Item
-            class={styles.item}
-            onSelect={() => props.onReset?.()}
-          >
-            <span class={styles.itemLabel}>
-              {t('label.remove-all-filters')}
-            </span>
-          </DropdownMenu.Item>
-        </Show>
-      </DropdownMenu.Content>
-    </DropdownMenu.Portal>
-  </DropdownMenu.Root>
-);
+  /** Focus the just-added chip's editor; true if it landed. */
+  focusChip: (key: string) => boolean;
+}) => {
+  // Picking a field hands focus to the NEW chip's editor instead of the
+  // menu's default close-time restore-to-trigger. The hand-off happens IN
+  // onCloseAutoFocus — the one moment that's both after the chip mounted
+  // and after which nothing else re-takes focus. An Escape/outside
+  // dismissal (no pick) keeps the normal restore (keyboard a11y).
+  let pickedKey: string | undefined;
+  return (
+    <DropdownMenu.Root placement="bottom-start" gutter={4}>
+      {/* The spec's dashed "Add filter" pill (ui-standards § tables →
+          filtering): funnel icon + label, no chevron. Purely additive now —
+          Clear all lives in the bar. */}
+      <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
+        <FilterIcon class={styles.triggerIcon} />
+        <span>{t('label.add-filter')}</span>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          class={styles.content}
+          onCloseAutoFocus={event => {
+            if (!pickedKey) return;
+            const key = pickedKey;
+            pickedKey = undefined;
+            event.preventDefault();
+            // Kobalte's DropdownMenu refocuses its trigger right after this
+            // handler REGARDLESS of preventDefault (hard-coded for any
+            // non-outside close). Queue the hand-off one task later so the
+            // chip editor wins the exchange.
+            setTimeout(() => props.focusChip(key));
+          }}
+        >
+          <For each={props.available}>
+            {f => (
+              <DropdownMenu.Item
+                class={styles.item}
+                data-testid={`filter-option-${f.key}`}
+                onSelect={() => {
+                  pickedKey = f.key;
+                  props.onAdd(f);
+                }}
+              >
+                <span class={styles.itemLabel}>{f.label()}</span>
+              </DropdownMenu.Item>
+            )}
+          </For>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+};
 
 /*
  * Styled controls a field composes inside its `render`. They are dumb and
@@ -301,9 +361,12 @@ export const FilterTextInput = (props: {
  * (undefined = the box is empty), so a field maps it straight into its GraphQL
  * operator (`{ equalTo: n }`) with no string parsing.
  *
- * NumberField owns its own field chrome (border, focus ring, compact width),
- * so — unlike the bordered chip box FilterTextInput sits in — this renders the
- * field bare; the FilterBar chip still supplies the label + remove around it.
+ * The .bareField wrapper strips NumberField's own frame (token override) so
+ * the field sits transparently on the chip pill like the text filter, while
+ * keeping the shared component's locale gate / caret safety. Commits are
+ * DEBOUNCED like the text filter: NumberField eagerly commits every valid
+ * keystroke, and an exact-match filter applied at "12" while typing "1200"
+ * matches nothing — the pause lets the whole number land as one change.
  * `decimalLimit` defaults to 0 (an integer filter — stocktake number, pack
  * count); pass a limit for decimal filters.
  */
@@ -320,20 +383,28 @@ export const FilterNumberInput = (props: {
   min?: number;
   /** Upper bound. */
   max?: number;
-}) => (
-  <NumberField
-    label={props.label}
-    hideLabel
-    size="small"
-    data-testid={props.testId}
-    placeholder={props.placeholder}
-    decimalLimit={props.decimalLimit}
-    min={props.min}
-    max={props.max}
-    value={props.value}
-    onChange={props.onChange}
-  />
-);
+}) => {
+  const commit = createDebounced(
+    (value: number | undefined) => props.onChange(value),
+    300
+  );
+  return (
+    <span class={styles.bareField}>
+      <NumberField
+        label={props.label}
+        hideLabel
+        size="small"
+        data-testid={props.testId}
+        placeholder={props.placeholder}
+        decimalLimit={props.decimalLimit}
+        min={props.min}
+        max={props.max}
+        value={props.value}
+        onChange={commit}
+      />
+    </span>
+  );
+};
 
 /**
  * A single-select dropdown. Generic over its option-value union `V`, so
@@ -462,10 +533,61 @@ export const FilterMultiSelect = <V extends string>(props: {
 };
 
 /**
+ * A boolean filter — the OMS boolean chip (e.g. "On hold"): the ONE drawn
+ * checkbox (BareCheckbox) sitting directly on the pill. The chip's label
+ * names the fact; ticking applies it. A discrete choice, so `onChange`
+ * applies immediately — no debounce (spec: ui-standards/inputs.md §
+ * Server-bound input). The caller maps checked onto its filter shape
+ * (usually `{ key: true }` vs dropping the key / null).
+ */
+export const FilterCheckbox = (props: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  /** `data-testid` for the input (FilterBar supplies `filter-input-<key>`). */
+  testId?: string;
+}) => (
+  <BareCheckbox
+    class={styles.checkboxFilter}
+    checked={props.checked}
+    aria-label={props.label}
+    data-testid={props.testId}
+    onChange={event => props.onChange(event.currentTarget.checked)}
+  />
+);
+
+/**
+ * A date-range filter — the shared DateRangeField (corvu calendar, range
+ * mode, pick-only) de-boxed onto the chip pill via .bareField, replacing the
+ * old pair of native date inputs. Value is the field's `{ start, end }` ISO
+ * `yyyy-mm-dd` pair; the caller maps it onto its filter's bounds (e.g.
+ * after/beforeOrEqualTo datetimes).
+ */
+export const FilterDateRange = (props: {
+  value: IsoDateRange;
+  onChange: (value: IsoDateRange) => void;
+  label: string;
+  /** `data-testid` for the trigger (FilterBar supplies
+   *  `filter-input-<key>`). */
+  testId?: string;
+}) => (
+  <span class={styles.bareField}>
+    <DateRangeField
+      label={props.label}
+      hideLabel
+      size="small"
+      testId={props.testId}
+      value={props.value}
+      onChange={props.onChange}
+    />
+  </span>
+);
+
+/**
  * A date filter — a native date input behind the calendar icon, sharing the
  * text-filter chrome. Value is an ISO `yyyy-mm-dd` string (native date input's
- * format); '' clears it. Used for "before"/"after" bounds inside a filter's
- * render.
+ * format); '' clears it. Used for a SINGLE date bound (the patients list's
+ * date-of-birth); ranges use FilterDateRange.
  */
 export const FilterDate = (props: {
   value: string;

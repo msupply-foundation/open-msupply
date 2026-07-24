@@ -51,6 +51,7 @@ import {
 } from '../detail/inboundShipmentStatus';
 import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
+import linkStyles from '../linkedOrder.module.css';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -252,8 +253,9 @@ const InboundShipmentsList: Component = () => {
     },
     {
       // Linked order (spec S1 column 4) — when linked, a link to the order
-      // prefixed by kind: PO-<number> for a purchase order (SECONDARY colour),
-      // IO-<number> for an internal order (PRIMARY colour); blank otherwise.
+      // prefixed by kind: PO-<number> for a purchase order, IO-<number> for
+      // an internal order; blank otherwise. Toned by kind via the shared
+      // linkedOrder.module.css.
       c: {
         accessor: row => linkedOrderOf(params.storeId, row)?.label ?? '',
         id: 'linkedOrder',
@@ -268,7 +270,8 @@ const InboundShipmentsList: Component = () => {
               <A
                 href={l().href}
                 onClick={e => e.stopPropagation()}
-                style={{ color: l().colour, 'font-weight': 500 }}
+                class={linkStyles.link}
+                data-kind={l().kind}
               >
                 {l().label}
               </A>
