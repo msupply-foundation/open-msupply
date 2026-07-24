@@ -24,13 +24,13 @@ query items(
         isVaccine
         doses
         # Server-filtered to defined, non-hidden item-scope keys (spec/items
-        # AC-P1); rendered one column per definition.
+        # OMS-REG-CAT-04.36); rendered one column per definition (.37).
         customFields
         masterLists(storeId: $storeId) {
           id
           name
         }
-        # months-of-stock is null when AMC is 0 (rendered as a dash, AC-S2).
+        # months-of-stock is null when AMC is 0 (rendered as a dash, OMS-REG-CAT-04.34).
         stats(storeId: $storeId) {
           averageMonthlyConsumption
           stockOnHand

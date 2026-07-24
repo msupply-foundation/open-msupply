@@ -7,9 +7,10 @@ import {
 } from './itemStats';
 
 describe('itemStats — item statistics display (spec/items S1/S2)', () => {
-  // AC-S2 — months of stock is blank (a dash) at zero AMC, never 0/∞/error;
-  // the wire delivers null in that case. A real value shows two decimals.
-  it('AC-S2: months of stock is blank (dash) when null, else 2dp', () => {
+  // OMS-REG-CAT-04.34 — months of stock is blank (a dash) at zero AMC, never
+  // 0/∞/error; the wire delivers null in that case. A real value shows two
+  // decimals.
+  it('months of stock is blank (dash) when null, else 2dp (CAT-04.34)', () => {
     expect(formatMonthsOfStock(null)).toBe('—');
     expect(formatMonthsOfStock(undefined)).toBe('—');
     expect(formatMonthsOfStock(2.5)).toBe('2.50');
@@ -17,16 +18,16 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
     expect(formatMonthsOfStock(0)).toBe('0.00');
   });
 
-  // AC-S3 — doses shown only for vaccine items AND only under the
+  // OMS-REG-CAT-04.35 — doses shown only for vaccine items AND only under the
   // manage-vaccines-in-doses preference; the equivalent is units × doses/unit.
-  it('AC-S3: doses gate requires vaccine AND the preference', () => {
+  it('doses gate requires vaccine AND the preference (CAT-04.35)', () => {
     expect(shouldShowDoses(true, true)).toBe(true);
     expect(shouldShowDoses(true, false)).toBe(false);
     expect(shouldShowDoses(false, true)).toBe(false);
     expect(shouldShowDoses(false, false)).toBe(false);
   });
 
-  it('AC-S3: doses equivalent = units × doses per unit', () => {
+  it('doses equivalent = units × doses per unit (CAT-04.35)', () => {
     expect(dosesEquivalent(10, 20)).toBe(200);
     expect(dosesEquivalent(0, 20)).toBe(0);
   });

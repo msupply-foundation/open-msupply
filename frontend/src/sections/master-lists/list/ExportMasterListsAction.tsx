@@ -22,11 +22,11 @@ import {
 
 // The list-index Export action (spec/master-lists S1 › export). A split button
 // (Export CSV primary · Excel in the menu) exporting the CURRENTLY-LOADED page
-// only (AC-E1) — the rows are handed in, never re-fetched. CSV downloads
-// directly; Excel round-trips the CSV through the shared server converter
-// (domain/reportFiles). With no rows, the "No data available" message shows
-// instead of a download (AC-E3). Downloads are silent — no toast (captured
-// as-is; D21).
+// only (OMS-REG-CAT-07.26) — the rows are handed in, never re-fetched. CSV
+// downloads directly; Excel round-trips the CSV through the shared server
+// converter (domain/reportFiles). With no rows, the "No data available"
+// message shows instead of a download (.29). Downloads are silent — no toast
+// (captured as-is; D21).
 export const ExportMasterListsAction: Component<{
   rows: () => MasterListExportRow[];
 }> = props => {
@@ -42,7 +42,7 @@ export const ExportMasterListsAction: Component<{
     if (busy()) return;
     const rows = props.rows();
     if (rows.length === 0) {
-      setNoData(true); // AC-E3
+      setNoData(true); // OMS-REG-CAT-07.29
       return;
     }
     setNoData(false);
