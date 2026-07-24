@@ -41,6 +41,12 @@ export const userDisplayName = (): string => {
 export const storeCodeOf = (storeId: string): string =>
   user()?.stores.nodes.find(s => s.id === storeId)?.code ?? storeId;
 
+// The store NAME for a store id, same source and fallback discipline as
+// storeCodeOf. Used where a human-facing store label is printed (the
+// prescription dispensing labels — spec/prescriptions § label printing).
+export const storeNameOf = (storeId: string): string =>
+  user()?.stores.nodes.find(s => s.id === storeId)?.name ?? storeId;
+
 // Spec (Unexpected logout): set when any GraphQL call returns unauthenticated —
 // reported by graphqlFetch. Cleared by a successful login.
 const [unauthenticated, setUnauthenticated] = createSignal(false);

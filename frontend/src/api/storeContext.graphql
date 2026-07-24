@@ -18,6 +18,10 @@ query storeContext($storeId: String!) {
     stocktakeFrequency
     monthlyConsumptionLookBackPeriod
     monthsLeadTime
+    # Prescription gate (spec/prescriptions › store-preference gates): the
+    # prescribed-quantity field/column. A legacy store preference, not a
+    # PreferencesNode field.
+    editPrescribedQuantityOnPrescription
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
