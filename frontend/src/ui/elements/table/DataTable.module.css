@@ -975,9 +975,18 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 .sortTrigger {
   display: inline-flex;
   align-items: center;
+  /* Label inline-start, direction glyph pinned inline-end — the glyph stays on
+     the right whatever the field-name width. */
+  justify-content: space-between;
   gap: var(--space-2);
   block-size: 2.25rem;
+  /* Floor so a short field name (e.g. "#") doesn't collapse the pill to a stub;
+     it grows past this for longer names. */
+  min-inline-size: 6rem;
   padding-inline: var(--space-3);
+  /* Extra separation from the icon controls — the labelled pill needs more air
+     from them than the icons need from each other (the cluster gap alone). */
+  margin-inline-end: var(--space-2);
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-sm);
   background: transparent;
@@ -992,24 +1001,6 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 
 .sortTriggerLabel {
   font-weight: var(--weight-medium);
-}
-
-/* Direction arrow — points down for descending; rotates to point up for
-   ascending. Shared by the trigger and the active menu row. */
-.sortArrow {
-  inline-size: 1rem;
-  block-size: 1rem;
-  transition: transform 0.15s;
-}
-
-.sortArrow:not([data-desc]) {
-  transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sortArrow {
-    transition: none;
-  }
 }
 
 .sortMenu {
