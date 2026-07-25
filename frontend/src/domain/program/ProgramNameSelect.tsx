@@ -13,6 +13,8 @@ export interface ProgramNameSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the input — forwarded to the Combobox. */
+  testId?: string;
 }
 
 /*
@@ -36,6 +38,7 @@ export const ProgramNameSelect = (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    inputTestId={props.testId}
     onChange={program => props.onChange(program?.id ?? null)}
   />
 );
