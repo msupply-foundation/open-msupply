@@ -672,6 +672,10 @@ export const DetailTableShowcase = () => {
           <LineEditModal
             open={editItem() !== null}
             item={editItem()}
+            // The clicked item's batches — grouped by item CODE (the showcase's
+            // itemId is unique per row; the code repeats), so opening a row
+            // shows all that item's batch cards.
+            lines={DATA.filter(l => l.itemCode === editItem()?.code)}
             onClose={() => setEditItem(null)}
           />
         </TabPanel>
