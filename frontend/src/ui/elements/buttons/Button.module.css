@@ -89,7 +89,7 @@
 /* Disabled — whole button dims to 38% (ui-standards); still visible, not
    hidden. Only opacity/cursor, so it never fights the tone rules for colour. */
 .button:disabled {
-  opacity: 0.38;
+  opacity: var(--disabled-opacity);
   cursor: not-allowed;
 }
 

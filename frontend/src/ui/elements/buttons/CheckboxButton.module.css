@@ -46,7 +46,7 @@
 
 .button[data-disabled] {
   cursor: default;
-  color: var(--gray-light);
+  color: var(--text-disabled);
 }
 
 .button:hover:not([data-disabled]) {
@@ -88,7 +88,7 @@
 }
 
 .button[data-disabled] .box {
-  border-color: var(--gray-light);
+  border-color: var(--text-disabled);
 }
 
 .label {

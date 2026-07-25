@@ -100,9 +100,9 @@
 
 /* Disabled — grey fill, muted border, not interactive */
 .input:disabled {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
@@ -157,7 +157,7 @@
 }
 
 .inputWrap[data-adorned]:has(.input:disabled) {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
 }
 

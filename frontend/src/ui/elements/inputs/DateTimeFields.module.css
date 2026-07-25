@@ -80,9 +80,9 @@
 }
 
 .control[data-disabled] {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
 }
 
 /* The date portion: a bare button filling the free space, calendar icon at the
@@ -244,7 +244,7 @@
 }
 
 .control[data-disabled] .timeSeg {
-  color: var(--gray-main);
+  color: var(--text-disabled);
 }
 
 /* Small size (ui-standards Size Variations): the inner text and the label drop
