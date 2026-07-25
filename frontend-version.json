@@ -1,6 +1,6 @@
 {
   "_comment": "Which open-msupply-frontend release this repo ships. Bump tag to an FE release tag and sha256 to the value from its published frontend-dist-<tag>.zip.sha256 sidecar; build/fetch-frontend.js fetches and verifies it (see server/README.md, Serving front-end). v0.0.0-rc* tags are pre-release trial pins for proving the pipelines.",
   "repo": "msupply-foundation/open-msupply-frontend",
-  "tag": "v0.0.23",
-  "sha256": "fb0c74df3e4fb687df9cef8c3edbf2ff4f4466611c8a0c299a83ae49104c3118"
+  "tag": "v0.0.24",
+  "sha256": "6d8646f05eaee1256ac73ff95ad087c7a1ab07fe8d2ecac7c054be6bef49489b"
 }
