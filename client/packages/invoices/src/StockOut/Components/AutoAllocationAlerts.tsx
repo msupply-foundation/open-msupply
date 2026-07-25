@@ -18,7 +18,15 @@ export const AutoAllocationAlerts = ({ sx }: { sx?: SxProps<Theme> }) => {
       sx={sx}
     >
       {alerts.map(({ message, severity }) => (
-        <Alert severity={severity} key={message}>
+        <Alert
+          severity={severity}
+          key={message}
+          data-testid={
+            severity === 'warning'
+              ? 'prescription-shortfall-warning'
+              : undefined
+          }
+        >
           {message}
         </Alert>
       ))}
