@@ -34,6 +34,30 @@ const VARIANTS: {
   },
 ];
 
+/*
+ * Monospace specimens — the `mono` prop composed with a size variant. Colour is
+ * the container's (via .sampleCell) exactly as the spec wants for codes: "mono,
+ * slightly smaller, secondary colour" — the size/colour are contextual, `mono`
+ * only swaps the family.
+ */
+const MONO: { variant: TextVariant; sample: string; meta: string }[] = [
+  {
+    variant: 'body',
+    sample: 'AMOX-500-CAP',
+    meta: 'item code · mono · body size',
+  },
+  {
+    variant: 'bodySmall',
+    sample: 'B2467-594',
+    meta: 'batch · mono · bodySmall (slightly smaller, per spec)',
+  },
+  {
+    variant: 'bodySmall',
+    sample: 'A.03.2 — 0O 1lI',
+    meta: 'location ID · mono · disambiguates 0/O and 1/l/I',
+  },
+];
+
 export const TypographyShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
@@ -54,6 +78,35 @@ export const TypographyShowcase = () => (
               <div class={styles.specimen}>
                 <dt class={styles.sampleCell}>
                   <Text variant={row.variant}>{row.sample}</Text>
+                </dt>
+                <dd class={styles.meta}>{row.meta}</dd>
+              </div>
+            )}
+          </For>
+        </dl>
+      </DashboardCard>
+
+      <DashboardCard title="Monospace — codes, batches & IDs">
+        <Lead>
+          Codes, batches, location IDs and dense identifiers render in the{' '}
+          <strong>monospace</strong> family (<code>--font-mono</code>:{' '}
+          <code>'Monaco', 'Courier New', monospace</code> — ui-standards ›
+          typography): fixed-width glyphs align in columns and disambiguate 0/O
+          and 1/l/I. Add <code>mono</code> to any <code>&lt;Text&gt;</code> — a
+          family swap only, orthogonal to <code>variant</code> (compose with{' '}
+          <code>bodySmall</code> for the spec's slightly-smaller code), and it
+          still takes its colour from the container. The same token drives table{' '}
+          <code>data-mono</code> cells (Code, Batch), where it'll see the most
+          use.
+        </Lead>
+        <dl class={styles.specimens}>
+          <For each={MONO}>
+            {row => (
+              <div class={styles.specimen}>
+                <dt class={styles.sampleCell}>
+                  <Text variant={row.variant} mono>
+                    {row.sample}
+                  </Text>
                 </dt>
                 <dd class={styles.meta}>{row.meta}</dd>
               </div>
