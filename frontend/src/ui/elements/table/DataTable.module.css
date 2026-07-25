@@ -821,16 +821,17 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
-/* Header: identity (title + secondary) inline-start, badge pinned inline-end
-   (ui-standards `.card-table-card-header`). */
+/* Header: selection checkbox, identity title and badge on one row, vertically
+   centred so the checkbox, the identity's colour dot / icon / name and the badge
+   all line up (the identity is single-line; a future code-beneath would move
+   this back to flex-start with the checkbox aligned to the title line). */
 .cardHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
 }
 
 .cardSelect {
-  margin-block-start: var(--space-1);
   flex-shrink: 0;
 }
 
@@ -845,7 +846,13 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   min-width: 0;
 }
 
-/* Identity title (ui-standards `.card-table-card-primary`). */
+/* Identity title (ui-standards `.card-table-card-primary`). No line-height
+   override — it's box-centred by .cardHeader's align-items, and every box
+   centre (checkbox, colour dot, icon, title, badge) is identical, verified in
+   BOTH Chromium and Firefox. Any residual glyph-within-box offset is the
+   rasteriser's own leading distribution, which differs per engine in OPPOSITE
+   directions, so tightening line-height helps one and hurts the other — left to
+   the default. */
 .cardPrimary {
   color: var(--text-body);
   font-size: var(--text-md);
@@ -869,12 +876,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 /* Field grid — LabelledValue units in an auto-fitting column grid (ui-standards
-   `.card-table-fields` is a fixed two columns; auto-fit so a wide modal card
-   also fills across, one column on a very narrow card; CLAUDE.md #7). */
+   `.card-table-fields` is a fixed two columns; auto-fit so a wide card also
+   fills across, one column on a very narrow card; CLAUDE.md #7). The min track
+   is the DENSITY knob: it's the smallest a column may get, so short read-fields
+   (a code, a date) pack tighter at a lower floor. Kept modest for flat display
+   fields; panels (editable inputs) widen it below. */
 .cardFields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: var(--space-3) var(--space-4);
+}
+
+/* Fields inside a panel are usually editable inputs (the modal cards), which
+   need more room than a read-only value — so give panel tracks a wider floor. */
+.cardPanel .cardFields {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 /* --- Card body groups ------------------------------------------------------- */
