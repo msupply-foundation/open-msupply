@@ -27,8 +27,10 @@ import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
 import { PickedDateField } from './PickedDateField';
+import { CurrencyModal } from './modals/CurrencyModal';
 import { isDeletable, statusLabel } from '../outboundStatus';
 import type { OutboundNode } from './outboundUpdate';
+import type { OutboundLineFragment } from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
@@ -38,19 +40,35 @@ import type { OutboundFieldEdit } from './outboundEdit';
 
 export interface OutboundSidePanelProps {
   node: OutboundNode;
+  /**
+   * The shipment's service lines (the view's dedicated read — the entity
+   * query no longer carries lines), for the Service-charges block's rows.
+   */
+  serviceLines: OutboundLineFragment[];
   /** For the backdating control's stocktake-conflict check (AC-B4). */
   storeId: string;
   disabled: boolean;
+  /**
+   * The _issue in foreign currency_ store preference — with the customer not
+   * being a store, the ONLY gates on the change-currency control (spec S3 §
+   * side panel: not gated by shipment status).
+   */
+  foreignCurrencyAllowed: boolean;
+  /** The currency modal saved — replace the entity in place. */
+  onSaved: (node: OutboundNode) => void;
   /** The shared edit buffer (comment + transport reference live here). */
   edit: OutboundFieldEdit;
-  /** Field saves that aren't buffered text (colour, expected date, method). */
+  /** Field saves that aren't buffered text (colour, expected date, method).
+   * Resolves once the entity reflects the save (or the save failed) — the
+   * picked-date control awaits it to hand its optimistic value over without
+   * a flicker. */
   onSaveField: (patch: {
     colour?: string;
     tax?: { percentage: number | null };
     expectedDeliveryDate?: { value: string | null };
     shippingMethodId?: { value: string | null };
     backdatedDatetime?: string | null;
-  }) => void;
+  }) => Promise<void>;
   /** Open the service-charges editor (S5). */
   onEditServiceCharges: () => void;
 }
@@ -64,8 +82,13 @@ const money = (value: number | null | undefined): string =>
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
   const requisition = () => props.node.requisition;
-  const serviceLines = () =>
-    props.node.lines.nodes.filter(line => line.type === 'SERVICE');
+  const serviceLines = () => props.serviceLines;
+  // Change-currency is offered only when the store allows foreign currency
+  // and the customer isn't itself a store — deliberately NOT gated by
+  // shipment status (spec S3 § side panel).
+  const [currencyOpen, setCurrencyOpen] = createSignal(false);
+  const canChangeCurrency = () =>
+    props.foreignCurrencyAllowed && props.node.otherParty.store == null;
 
   // Tax display derivations (rules.md § pricing): the amount is total − sub
   // total floored at zero; the service group shows the EFFECTIVE rate (tax
@@ -378,11 +401,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
         {/* Foreign currency — always shown (rules.md § pricing): code · rate
             (a zero rate displays as 1) · total (dash until a real foreign
-            currency is set). The change-currency control is deferred with the
-            FC preference — the dev store has it off, so it isn't built/
-            verifiable yet (ui-surface § side panel notes this gap). */}
+            currency is set). The change-currency control (currency + rate in
+            one edit, ported from the inbound CurrencyModal) is gated by the
+            issue-in-foreign-currency preference and the customer not being a
+            store — by those gates ONLY, not by shipment status (spec S3 §
+            side panel). */}
         <FieldRow label={t('heading.foreign-currency')}>
-          <span />
+          <IconButton
+            bordered
+            size="small"
+            icon={<EditIcon />}
+            label={t('label.currency')}
+            data-testid="change-currency-button"
+            disabled={!canChangeCurrency()}
+            onClick={() => setCurrencyOpen(true)}
+          />
         </FieldRow>
         <FieldRow label={t('label.code')}>
           <Text variant="body">{props.node.currency?.code ?? ''}</Text>
@@ -487,6 +520,13 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Button>
         </SidePanelActions>
       </SidePanelSection>
+      <CurrencyModal
+        open={currencyOpen()}
+        onClose={() => setCurrencyOpen(false)}
+        storeId={props.storeId}
+        node={props.node}
+        onSaved={props.onSaved}
+      />
     </>
   );
 };

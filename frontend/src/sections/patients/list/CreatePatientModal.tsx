@@ -387,7 +387,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         icon={<PlusCircleIcon />}
         dismissable={!searching() && !saving()}
         onClose={props.onClose}
-        widthRem={step() === 3 ? 56 : 44}
+        widthRem={step() === 2 ? 96 : step() === 3 ? 56 : 44}
         minBodyHeightRem={34}
         actions={actions()}
       >

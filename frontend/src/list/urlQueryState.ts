@@ -46,8 +46,16 @@ export function useUrlQueryState<T extends object>(
     if (!raw) return defaultState;
     try {
       // Merge over the default so a partial/older URL still yields a full
-      // state.
-      return { ...defaultState, ...(JSON.parse(raw) as Partial<T>) };
+      // state. Explicit nulls are dropped FIRST — `{"sort": null}` must fall
+      // back to the default, not override it and crash an accessor
+      // client-side; anything else malformed still degrades to a GraphQL
+      // error per the contract above.
+      const parsed = Object.fromEntries(
+        Object.entries(JSON.parse(raw) as Partial<T>).filter(
+          ([, value]) => value != null
+        )
+      ) as Partial<T>;
+      return { ...defaultState, ...parsed };
     } catch {
       return defaultState;
     }
