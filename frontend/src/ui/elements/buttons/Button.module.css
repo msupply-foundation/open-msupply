@@ -17,11 +17,11 @@
  *               error-red; it's the one orange-toned variant (so the one with a
  *               matching orange focus ring).
  *
- * Two sizes (medium 36px default, small 28px). At <=1023px (breakpoints
- * navOverlay) medium grows to the 48px WCAG 2.5.5 touch target; small is the
- * deliberate exception. Width-based (not pointer:coarse) so device-emulation
- * doesn't inflate it past the split button — the reason the old bump was
- * removed. Icon + label share currentColor, so the tone flows to both.
+ * Two sizes (medium 36px default, small 28px). On coarse pointers medium grows
+ * to the shared --touch-target tap target; small is the deliberate exception.
+ * Keyed on pointer:coarse (not viewport width) so it follows the real input
+ * device — a mouse-driven narrow window keeps the compact 36px. Icon + label
+ * share currentColor, so the tone flows to both.
  *
  * Rule order is ascending-specificity (no-descending-specificity): base →
  * sizes/focus/disabled/tone-rest → danger focus override → hover fills.
@@ -62,11 +62,16 @@
   font-size: var(--text-xs);
 }
 
-/* Tablet & below: medium reaches the 48px touch target; small stays dense. */
-@media (max-width: 1023px) {
+/* Touch pointers: medium grows to the --touch-target tap target (small stays
+   dense). pointer:coarse (not a width query) so it keys off the actual input
+   device — a narrow desktop window with a mouse keeps the compact 36px.
+   min-block-size governs the height; padding is kept clear of it so the shared
+   --touch-target token stays the single knob for every touch-restricted
+   element. */
+@media (pointer: coarse) {
   .button[data-size='medium'] {
     min-block-size: var(--touch-target);
-    padding-block: 0.75rem;
+    padding-block: 0.5rem;
     font-size: var(--text-md);
   }
 }
@@ -84,7 +89,7 @@
 /* Disabled — whole button dims to 38% (ui-standards); still visible, not
    hidden. Only opacity/cursor, so it never fights the tone rules for colour. */
 .button:disabled {
-  opacity: 0.38;
+  opacity: var(--disabled-opacity);
   cursor: not-allowed;
 }
 

@@ -33,17 +33,31 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // allowed next status with earlier ones disabled; hidden entirely when
 // read-only. ONE client pre-flight guard (ui-standards/validation.md — the
 // sanctioned lineless server gap): no lines / only placeholder lines →
-// notice, no server call (AC-S6). Everything else submits and surfaces the
-// server's verdict inline in the confirmation dialog — on-hold (AC-H1) and
+// notice, no server call (AC-S6). The pre-flight answers are whole-shipment
+// SERVER probes supplied by the view (the lines are server-paginated — the
+// loaded page can't answer for the shipment), run sequentially when the
+// button is invoked. Everything else submits and surfaces the server's
+// verdict inline in the confirmation dialog — on-hold (AC-H1) and
 // unallocated-placeholder (AC-P3) rejections land in the error phase; the
 // confirmation itself carries the zero-quantity removal warning (AC-S5).
+// The on-hold notice is ACTIONABLE (D59): it offers "Release hold and
+// confirm ‹status›" — one save carrying both the release and the advance
+// (rules.md § on hold, AC-H2) — instead of the old app's dead-end toast.
+
+/** Whole-shipment pre-flight answers (probed at action time, never derived
+ * from the loaded page). */
+export interface StatusPreflight {
+  hasLines: boolean;
+  hasOnlyPlaceholders: boolean;
+  zeroQuantityItems: string[];
+}
 
 export interface StatusChangeActionProps {
   storeId: string;
   node: OutboundNode;
-  hasLines: boolean;
-  hasOnlyPlaceholders: boolean;
-  zeroQuantityItems: string[];
+  /** Probe the shipment's pre-flight state; undefined = probe failed (the
+   * global error modal is already up) → the open aborts. */
+  preflight: () => Promise<StatusPreflight | undefined>;
   onSaved: (node: OutboundNode) => void;
   /** The Close button, rendered inside the footer's action cluster. */
   closeButton?: JSX.Element;
@@ -59,6 +73,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   >();
   const [infoMessage, setInfoMessage] = createSignal<string | undefined>();
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  // Set when the notice is the ON-HOLD rejection: the status the user tried
+  // to reach, offered as "Release hold and confirm ‹status›" — one save that
+  // both releases and advances (AC-H2, D59). Cleared with the notice.
+  const [holdRetryStatus, setHoldRetryStatus] = createSignal<
+    SettableStatus | undefined
+  >();
+  const [releasing, setReleasing] = createSignal(false);
 
   const editable = () => isEditable(props.node.status);
   const currentIndex = () => statusIndex(props.node.status);
@@ -97,15 +118,28 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     return nextStatus();
   };
 
-  const openConfirm = (status: string) => {
-    if (!editable()) return;
+  // The zero-quantity item names from the LAST probe — rendered in the
+  // confirmation's removal warning (AC-S5).
+  const [zeroQuantityItems, setZeroQuantityItems] = createSignal<string[]>([]);
+  // Guards double-invocation while the probe's sequential fetches run.
+  const [probing, setProbing] = createSignal(false);
+
+  const openConfirm = async (status: string) => {
+    if (!editable() || probing()) return;
     // The one sanctioned pre-flight (validation.md): no lines (or only
     // placeholders) — the server would ACCEPT a lineless confirmation
-    // (captured server gap, AC-S6), so the notice is the only guard.
-    if (!props.hasLines || props.hasOnlyPlaceholders) {
+    // (captured server gap, AC-S6), so the notice is the only guard. Probed
+    // whole-shipment at click time; a failed probe already raised the global
+    // error modal, so just abort.
+    setProbing(true);
+    const flight = await props.preflight();
+    setProbing(false);
+    if (!flight) return;
+    if (!flight.hasLines || flight.hasOnlyPlaceholders) {
       setInfoMessage(t('messages.no-lines'));
       return;
     }
+    setZeroQuantityItems(flight.zeroQuantityItems);
     setPhase('confirm');
     setPendingStatus(status as SettableStatus);
   };
@@ -128,8 +162,10 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       // closes (it holds no input to preserve, so D20's stay-open rationale
       // doesn't apply) and the verdict surfaces as the footer's blocking
       // notice — the same surface, still never a toast. The shared suite
-      // pins this close-then-notice shape.
+      // pins this close-then-notice shape. The on-hold verdict additionally
+      // arms the notice's release-and-advance action (AC-H2, D59).
       close();
+      setHoldRetryStatus(result.heldShipment ? status : undefined);
       setInfoMessage(result.message);
       return;
     }
@@ -138,6 +174,36 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     // a lingering modal would block the next lifecycle step.
     props.onSaved(result.node);
     close();
+  };
+
+  const closeNotice = () => {
+    setInfoMessage(undefined);
+    setHoldRetryStatus(undefined);
+  };
+
+  // The on-hold notice's action (AC-H2, D59): retry the SAME status change
+  // with the hold released in one save — {id, status, onHold: false}.
+  const releaseAndConfirm = async () => {
+    const status = holdRetryStatus();
+    if (!status || releasing()) return;
+    setReleasing(true);
+    const result = await changeShipmentStatus(
+      props.storeId,
+      props.node.id,
+      status,
+      true
+    );
+    setReleasing(false);
+    if (result.kind === 'failed') return closeNotice();
+    if (result.kind === 'error') {
+      // A fresh verdict (e.g. a racing edit) replaces the notice; the retry
+      // is not re-armed — a second rejection needs a fresh attempt.
+      setHoldRetryStatus(undefined);
+      setInfoMessage(result.message);
+      return;
+    }
+    props.onSaved(result.node);
+    closeNotice();
   };
 
   return (
@@ -153,7 +219,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               value={selected()}
               menuSelectsOnly
               onValueChange={value => setPicked(value as SettableStatus)}
-              onAction={openConfirm}
+              onAction={status => void openConfirm(status)}
               menuLabel={t('button.confirm')}
             />
           )}
@@ -182,10 +248,10 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   ? STATUS_LABEL_KEYS[pendingStatus()!]
                   : '',
               })}
-              <Show when={props.zeroQuantityItems.length > 0}>
+              <Show when={zeroQuantityItems().length > 0}>
                 <Alert severity="warning">
                   {t('messages.confirm-zero-quantity-status', {
-                    items: props.zeroQuantityItems.join(', '),
+                    items: zeroQuantityItems().join(', '),
                   })}
                 </Alert>
               </Show>
@@ -216,22 +282,44 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         />
       </Show>
 
-      {/* Blocking notice (guards 1–2): unallocated placeholders / no lines. */}
+      {/* Blocking notice: the lineless pre-flight (guards 1–2) and server
+          verdicts. The ON-HOLD verdict is actionable (AC-H2, D59): alongside
+          OK it offers "Release hold and confirm ‹status›" — one save carrying
+          both the release and the advance. */}
       <Show when={infoMessage() != null}>
         <Dialog
           open
-          onClose={() => setInfoMessage(undefined)}
+          dismissable={!releasing()}
+          onClose={closeNotice}
           icon={<InfoIcon />}
           title={t('heading.cannot-do-that')}
           description={infoMessage()}
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={() => setInfoMessage(undefined)}
-            >
-              {t('button.ok')}
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                icon={<CheckIcon />}
+                disabled={releasing()}
+                onClick={closeNotice}
+              >
+                {t('button.ok')}
+              </Button>
+              <Show when={holdRetryStatus()}>
+                {retry => (
+                  <Button
+                    variant="primary"
+                    icon={<ArrowRightIcon />}
+                    data-testid="release-hold-and-confirm-button"
+                    loading={releasing()}
+                    onClick={() => void releaseAndConfirm()}
+                  >
+                    {t('button.release-hold-and-confirm-status', {
+                      status: STATUS_LABELS[retry()],
+                    })}
+                  </Button>
+                )}
+              </Show>
+            </>
           }
         />
       </Show>

@@ -18,6 +18,13 @@ export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
   level?: HeadingLevel;
   /** Render a different element without changing the visual style. */
   as?: string;
+  /**
+   * Render in the monospace family (`--font-mono`) — codes, batches, IDs & dense
+   * identifiers (ui-standards › typography). A family swap only: orthogonal to
+   * `variant` (compose with `bodySmall` for the spec's slightly-smaller code)
+   * and sets no colour, so the container still owns it.
+   */
+  mono?: boolean;
 }
 
 /* Default element per variant. `heading` is overridden by `level` below. */
@@ -49,6 +56,7 @@ export const Text = (props: TextProps) => {
     'variant',
     'level',
     'as',
+    'mono',
     'class',
     'children',
   ]);
@@ -58,8 +66,12 @@ export const Text = (props: TextProps) => {
     (variant() === 'heading'
       ? `h${local.level ?? 2}`
       : DEFAULT_ELEMENT[variant()]);
-  const cls = () =>
-    local.class ? `${styles[variant()]} ${local.class}` : styles[variant()];
+  const cls = () => {
+    const parts = [styles[variant()]];
+    if (local.mono) parts.push(styles.mono);
+    if (local.class) parts.push(local.class);
+    return parts.join(' ');
+  };
 
   return (
     <Dynamic component={element()} class={cls()} {...rest}>
