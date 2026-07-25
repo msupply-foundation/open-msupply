@@ -61,9 +61,9 @@
 }
 
 .trigger[data-disabled] {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
@@ -129,7 +129,7 @@
 }
 
 .item[data-disabled] {
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: default;
 }
 

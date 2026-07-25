@@ -84,8 +84,8 @@
 }
 
 .pageButton:disabled {
-  /* Spec: disabled pager arrows dim to 0.35. */
-  opacity: 0.35;
+  /* Disabled pager arrows dim via the shared --disabled-opacity. */
+  opacity: var(--disabled-opacity);
   cursor: default;
 }
 

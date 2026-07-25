@@ -59,7 +59,6 @@
   --bg-group-dark: #e2e2e9;
   --bg-icon: #e5eeff;
   --bg-input: #f2f2f5;
-  --bg-input-disabled: #fafafc;
 
   /* Floating/elevated surfaces (buttons, menus, dialogs, popups). Same as the
      content surface in light — the shadow does the lifting — but overridden
@@ -71,6 +70,16 @@
   --text-secondary: #555770; /* body2 / h6 / form.field */
   --text-label: #28293d; /* form.label */
   --button-text: #373740;
+
+  /* --- Disabled state -------------------------------------------------
+     Single source for how disabled things look; tune all disabled styling
+     here. --text-disabled is the muted ink for disabled text / icons / control
+     outlines — readable, but clearly weaker than body text; --bg-disabled is
+     the muted fill for disabled input frames. Whole-control widgets that dim as
+     a unit instead use --disabled-opacity (defined just after the theme
+     contract, since it's not a colour). */
+  --text-disabled: #7a7b90;
+  --bg-disabled: #f2f2f5;
 
   /* header / drawer mixins (theme.ts → mixins) */
   --header-bg: #fafafc;
@@ -134,6 +143,12 @@
   --success-main: #2e7d32;
 
   /* @theme-contract:end */
+
+  /* Disabled dimming — one opacity for whole-control widgets that fade as a
+     unit (buttons, icon buttons, checkboxes, toggles, upload zone) rather than
+     recolour. Not a colour, so it lives outside the theme contract and is the
+     same in both themes. Pairs with --text-disabled / --bg-disabled above. */
+  --disabled-opacity: 0.6;
 
   /* --- Spacing (4px base → rem) --------------------------------------- */
   --space-1: 0.25rem;
@@ -287,13 +302,16 @@
   --bg-group-dark: #33333f;
   --bg-icon: #24304a;
   --bg-input: #2a2a36;
-  --bg-input-disabled: #1c1c24;
 
   /* Text — soft near-white, not pure white */
   --text-body: #ececf2;
   --text-secondary: #a8a9bd;
   --text-label: #d6d6e0;
   --button-text: #d0d0da;
+
+  /* Disabled state */
+  --text-disabled: #9596ab;
+  --bg-disabled: #2a2a36;
 
   /* Header / drawer */
   --header-bg: #1a1a22;

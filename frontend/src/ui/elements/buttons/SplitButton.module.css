@@ -185,7 +185,7 @@
 /* A disabled entry (a past/current status shown for context) — greyed, not selectable.
    Placed after the current rule so it wins for a current-and-disabled item. */
 .item[data-disabled] {
-  color: var(--gray-light);
+  color: var(--text-disabled);
   font-weight: var(--weight-regular);
   cursor: default;
 }

@@ -92,9 +92,9 @@
 
 /* Disabled — grey fill, muted border, not interactive */
 .textarea:disabled {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
