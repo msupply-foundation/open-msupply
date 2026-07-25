@@ -245,6 +245,18 @@
      (ui-standards .form-field gap). 0.375rem (6px) is off the --space scale
      (which steps 0.25 / 0.5 / 0.75), so it's its own input token. */
   --input-field-gap: 0.375rem; /* 6px */
+
+  /* FIELD LABEL — the ONE definition of a field label's typography, shared by
+     the input components (TextField/TextArea/DateField/NumberField `.label`)
+     AND the read-only LabelledValue, so a labelled value and an input label
+     read IDENTICALLY side by side (Carl 2026-07-26). Change the label look in
+     one place. All values reference other tokens, so they stay theme-correct
+     with no dark override. (Small inputs still notch the size down via
+     --input-font-sm — a size variant, not a per-component divergence.) */
+  --field-label-font-size: var(--text-sm); /* 14px */
+  --field-label-font-weight: var(--weight-medium); /* 500 */
+  --field-label-line-height: 1;
+  --field-label-color: var(--text-body);
   --input-padding-x: 0.75rem; /* 12px horizontal */
   --input-radius: 0.375rem; /* 6px */
   --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */

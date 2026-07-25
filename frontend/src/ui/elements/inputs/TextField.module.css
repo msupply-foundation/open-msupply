@@ -40,10 +40,12 @@
 }
 
 .label {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  line-height: 1; /* ui-standards .field-label — tight, sits close to the input */
-  color: var(--text-body);
+  /* Shared field-label token — identical to LabelledValue's label (Carl
+     2026-07-26). See --field-label-* in tokens.css. */
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
 }
 
 /* Small fields drop the label to 13px too (ui-standards field-label--small). */

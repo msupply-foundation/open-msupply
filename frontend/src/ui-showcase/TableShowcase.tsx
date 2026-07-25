@@ -22,6 +22,7 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Button } from '../ui/elements/buttons/Button';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
+import { TextField } from '../ui/elements/inputs/TextField';
 import {
   ColourTagPicker,
   TAG_COLOURS,
@@ -257,6 +258,13 @@ export const TableShowcase = () => {
     Object.fromEntries(DATA.map(r => [r.id, r.colour]))
   );
 
+  // A card-only EDITABLE field (see the `note` column below, meta.hideOnTable):
+  // demonstrates how an input sits alongside the read-only LabelledValue fields
+  // in card view. Buffered locally like `colours` (no backend).
+  const [notes, setNotes] = createStore<Record<string, string>>(
+    Object.fromEntries(DATA.map(r => [r.id, r.theirReference ?? '']))
+  );
+
   // Local column config, standing in for createTableConfig (which needs store
   // context the standalone showcase doesn't have). The DataTable's own column
   // settings menu writes the `user` layer via setConfig; DEFAULT_CONFIG seeds
@@ -447,6 +455,30 @@ export const TableShowcase = () => {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
       header: t('label.total'),
       ...getCellDefinition<Row>('total'),
+    },
+    {
+      // CARD-ONLY editable field (meta.hideOnTable) — shows how an input reads
+      // alongside the read-only LabelledValue fields in card view. The column
+      // header is the field label (LabelledValue renders it above the input);
+      // the TextField's own label is hidden but kept for a11y.
+      c: { id: 'note' },
+      header: 'Note',
+      meta: { hideOnTable: true },
+      cell: info => {
+        const row = info.row.original;
+        return (
+          <TextField
+            label="Note"
+            hideLabel
+            size="small"
+            width="full"
+            value={notes[row.id]}
+            onInput={e => setNotes(row.id, e.currentTarget.value)}
+            // Don't let typing/clicking the input open the row.
+            onClick={e => e.stopPropagation()}
+          />
+        );
+      },
     },
   ];
 
