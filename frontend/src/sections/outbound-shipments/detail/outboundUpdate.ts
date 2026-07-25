@@ -49,22 +49,58 @@ export const saveShipmentFields = async (
   return nodeOf(result.data.updateOutboundShipment);
 };
 
+// Change the shipment's currency + rate (spec S3 side panel → foreign
+// currency; ported from the inbound CurrencyModal's save path). The rejection
+// is USER-facing — CannotIssueInForeignCurrency when the store pref is off or
+// the customer is itself a store, or a non-positive rate — so the modal needs
+// the message inline rather than the global error modal.
+export type CurrencyChangeResult =
+  | { kind: 'saved'; node: OutboundNode }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const changeShipmentCurrency = async (
+  storeId: string,
+  input: Pick<UpdateInput, 'id' | 'currencyId' | 'currencyRate'>
+): Promise<CurrencyChangeResult> => {
+  const result = await graphqlFetch(UpdateOutboundShipment, {
+    storeId,
+    input,
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updateOutboundShipment;
+  if (response.__typename === 'InvoiceNode')
+    return { kind: 'saved', node: response };
+  if (response.__typename === 'NodeError') return { kind: 'failed' };
+  return { kind: 'error', message: response.error.description };
+};
+
 export type StatusChangeResult =
   | { kind: 'saved'; node: OutboundNode }
   // A structured rejection with a translated message; `unallocatedItems`
   // carries the offending placeholder items when the rejection is the
-  // unallocated-lines guard (AC-P3).
-  | { kind: 'error'; message: string; unallocatedItems: string[] }
+  // unallocated-lines guard (AC-P3); `heldShipment` marks the on-hold
+  // rejection (AC-H1) so the notice can offer the one-save release-and-
+  // advance retry (AC-H2).
+  | {
+      kind: 'error';
+      message: string;
+      unallocatedItems: string[];
+      heldShipment?: boolean;
+    }
   | { kind: 'failed' };
 
 export const changeShipmentStatus = async (
   storeId: string,
   id: string,
-  status: NonNullable<UpdateInput['status']>
+  status: NonNullable<UpdateInput['status']>,
+  // Release the hold in the SAME save (rules.md § on hold: a single change
+  // that both releases and advances is allowed — AC-H2).
+  releaseHold = false
 ): Promise<StatusChangeResult> => {
   const result = await graphqlFetch(UpdateOutboundShipment, {
     storeId,
-    input: { id, status },
+    input: releaseHold ? { id, status, onHold: false } : { id, status },
   });
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updateOutboundShipment;
@@ -79,6 +115,7 @@ export const changeShipmentStatus = async (
         kind: 'error',
         message: t('messages.on-hold-outbound'),
         unallocatedItems: [],
+        heldShipment: true,
       };
     case 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines': {
       const items = error.invoiceLines.nodes.map(line => line.itemName);

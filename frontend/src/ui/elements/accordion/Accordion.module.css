@@ -64,7 +64,7 @@
 
 .trigger:disabled,
 .trigger:disabled .chevron {
-  color: var(--gray-light);
+  color: var(--text-disabled);
 }
 
 .header[data-expanded] .chevron {
