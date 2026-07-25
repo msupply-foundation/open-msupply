@@ -28,6 +28,7 @@ import {
   SidePanelActions,
 } from '../ui/layout/SidePanel/SidePanel';
 import { Button } from '../ui/elements/buttons/Button';
+import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -270,6 +271,10 @@ export const DetailTableShowcase = () => {
   const [offset, setOffset] = createSignal(0);
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+
+  // The line the Line Edit modal is open on (a row click), or null when closed.
+  // The real page opens the batch editor here; the showcase mirrors it.
+  const [editItem, setEditItem] = createSignal<EditItem | null>(null);
 
   // The side panel (opened from the header's More button, closed from its own
   // header — the Page frame owns the panel chrome; the page owns only this
@@ -619,9 +624,16 @@ export const DetailTableShowcase = () => {
             // Offer the card ⇄ table toggle above the compact band (below 600px
             // the list is card-only). Card view surfaces the Sort control.
             showCardToggle
-            // The real page opens the line-edit modal on row click; a no-op
-            // here so the click-to-open row affordance still shows.
-            onRowClick={() => {}}
+            // The real page opens the line-edit modal on row click; the
+            // showcase opens the Line Edit modal on the clicked line's item.
+            onRowClick={line =>
+              setEditItem({
+                id: line.itemId,
+                code: line.itemCode,
+                name: line.itemName,
+                unitName: line.item?.unitName ?? null,
+              })
+            }
             // A failed-bulk-op line reads in the error tone; an untouched
             // placeholder in the info tone. Error wins when both hold.
             rowTone={line =>
@@ -656,6 +668,11 @@ export const DetailTableShowcase = () => {
                 setOffset(0);
               },
             }}
+          />
+          <LineEditModal
+            open={editItem() !== null}
+            item={editItem()}
+            onClose={() => setEditItem(null)}
           />
         </TabPanel>
         <TabPanel value="documents">
