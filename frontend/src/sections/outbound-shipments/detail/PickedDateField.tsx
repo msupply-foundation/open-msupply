@@ -6,7 +6,10 @@ import { TextField } from '../../../ui/elements/inputs/TextField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { InfoIcon } from '../../../ui/icons';
-import { OutboundStocktakeConflict } from './outboundDetail.generated';
+import {
+  OutboundLines,
+  OutboundStocktakeConflict,
+} from './outboundDetail.generated';
 import { outboundPrefs } from '../outboundPreferencesResource';
 import type { OutboundNode } from './outboundUpdate';
 import {
@@ -27,7 +30,8 @@ import {
 // stocktake-conflict warning (AC-B4) — before setting backdatedDatetime; the
 // parent's field save then re-issues against historical availability and
 // stamps future statuses at the backdated time (server-side). The picker is
-// bounded to [today − maxDays, today] so a future or over-limit day can't be
+// bounded to [today − (maxDays − 1), today] — maxDays 0/unset = unbounded
+// past (backdating.ts) — so a future or over-limit day can't be
 // chosen (the remaining AC-B1 rejections). The pure gate/date/warning logic
 // lives in ./backdating (unit-tested); this component wires it to the UI + the
 // stocktake-conflict query.
@@ -37,8 +41,11 @@ export interface PickedDateFieldProps {
   node: OutboundNode;
   /** Panel-wide read-only gate (SHIPPED onward). */
   disabled: boolean;
-  /** Apply the backdate — sets backdatedDatetime (parent saves + refetches). */
-  onBackdate: (backdatedDatetime: string) => void;
+  /** Apply the backdate — sets backdatedDatetime (parent saves + refetches).
+   * Resolves once the node reflects the save (or the save failed): the field
+   * keeps showing the chosen day until then, so the confirmed pick never
+   * flickers back to the old day for the save round-trip. */
+  onBackdate: (backdatedDatetime: string) => Promise<void>;
 }
 
 export const PickedDateField: Component<PickedDateFieldProps> = props => {
@@ -51,6 +58,10 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // The user's un-saved picked day, so a cancelled pick reverts the input
   // (the controlled `value` alone wouldn't — the node hasn't changed).
   const [draft, setDraft] = createSignal<string>();
+  // A confirmed backdate is saving — onClose (which always follows
+  // onConfirm) must not revert the draft while it is. Plain flag: nothing
+  // renders from it.
+  let confirmInFlight = false;
 
   const backdating = () => outboundPrefs()?.prefs?.backdating;
   const gate = () =>
@@ -74,8 +85,6 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   const shown = () => draft() ?? effectiveDay();
   const bounds = () => backdateBounds(new Date(), backdating()?.maxDays ?? 0);
 
-  const hasLines = () => props.node.lines.nodes.length > 0;
-
   const onPick = async (day: string) => {
     if (!day || day === effectiveDay()) {
       setDraft(undefined);
@@ -96,13 +105,27 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
       return;
     }
     const stocktakeConflict = result.data.stocktakes.totalCount > 0;
+    // "Existing lines will be removed" needs the WHOLE shipment's line count —
+    // the entity query no longer carries lines and the view's page is
+    // filtered, so probe the server (count only), failing closed as above.
+    const linesResult = await graphqlFetch(OutboundLines, {
+      storeId: props.storeId,
+      filter: { invoiceId: { equalTo: props.node.id } },
+      page: { first: 1 },
+    });
+    if (linesResult.kind !== 'success') {
+      setDraft(undefined);
+      return;
+    }
     const warningKeys = backdateWarnings({
-      hasLines: hasLines(),
+      hasLines: linesResult.data.invoiceLines.totalCount > 0,
       stocktakeConflict,
     });
-    // Nothing to warn about → apply directly; otherwise confirm first.
+    // Nothing to warn about → apply directly; otherwise confirm first. The
+    // draft holds the chosen day on screen until the node reflects the save
+    // (a failed save reverts — the node is unchanged and the draft clears).
     if (warningKeys.length === 0) {
-      props.onBackdate(backdatedDatetime);
+      await props.onBackdate(backdatedDatetime);
       setDraft(undefined);
       return;
     }
@@ -142,7 +165,13 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           label={t('label.picked-date')}
           hideLabel
           type="date"
-          width="short"
+          // Explicit width (spread onto the <input>): the input's default
+          // `width: 100%` fills the panel row's whole control column, pushing
+          // the disabled-reason info bubble past the panel edge where its own
+          // scroll clips it. A dd/mm/yyyy date fits in 8rem, leaving room for
+          // the bubble beside it. The width-cap variants can't do this — they
+          // only cap, and the column is narrower than every cap.
+          style={{ width: '8rem' }}
           data-testid="picked-date-field"
           value={shown()}
           min={enabled() ? bounds().min : undefined}
@@ -183,13 +212,20 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
         message={confirmMessage()}
         onClose={() => {
           setPending(undefined);
-          setDraft(undefined);
+          // ConfirmDialog's OK calls onConfirm THEN onClose — a cancelled
+          // pick reverts the input here, but a CONFIRMED one must keep the
+          // draft on screen through the save round-trip (clearing it now
+          // would snap back to the OLD day until the node updates).
+          if (!confirmInFlight) setDraft(undefined);
         }}
         onConfirm={() => {
           const info = pending();
-          setPending(undefined);
-          setDraft(undefined);
-          if (info) props.onBackdate(info.backdatedDatetime);
+          if (!info) return;
+          confirmInFlight = true;
+          void props.onBackdate(info.backdatedDatetime).then(() => {
+            confirmInFlight = false;
+            setDraft(undefined);
+          });
         }}
       />
     </>

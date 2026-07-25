@@ -33,6 +33,7 @@ export type DraftStockOutLinesResult = {
   id: string;
   description: string;
   unusable: boolean;
+  priority: number;
 } | null;
   receivedNumberOfPacks: number | null;
   campaign: {
@@ -52,7 +53,7 @@ export type DraftStockOutLinesResult = {
 };
 
 export const DraftStockOutLines = {
-  query: "query draftStockOutLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    placeholderQuantity\n    draftLines {\n      id\n      numberOfPacks\n      stockLineId\n      batch\n      expiryDate\n      packSize\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      dosesPerUnit\n      volumePerPack\n      location {\n        id\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n      }\n      receivedNumberOfPacks\n      campaign {\n        name\n      }\n      program {\n        name\n      }\n      donor(storeId: $storeId) {\n        name\n      }\n      manufacturer(storeId: $storeId) {\n        name\n      }\n    }\n  }\n}",
+  query: "query draftStockOutLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    placeholderQuantity\n    draftLines {\n      id\n      numberOfPacks\n      stockLineId\n      batch\n      expiryDate\n      packSize\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      dosesPerUnit\n      volumePerPack\n      location {\n        id\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n      receivedNumberOfPacks\n      campaign {\n        name\n      }\n      program {\n        name\n      }\n      donor(storeId: $storeId) {\n        name\n      }\n      manufacturer(storeId: $storeId) {\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<DraftStockOutLinesResult, DraftStockOutLinesVariables>;
 
 export type SaveOutboundItemLinesVariables = {
