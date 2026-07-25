@@ -1,6 +1,7 @@
 import { createResource, Show, Suspense, type Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { isCentralServer } from '../../../api/serverInfo';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -27,6 +28,7 @@ import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { CustomFieldsView } from '../../../domain/customFields';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
+import { visibleTabs } from './itemDetailTabs';
 import {
   formatMonthsOfStock,
   formatUnits,
@@ -47,6 +49,8 @@ import {
 // (rendered as a placeholder pending their components): Ledger (needs the
 // date-time-range filter field), Ancillary items (needs the central-only
 // modals), Variants (needs the variant card + editable packaging grid).
+// Variants' tab PRESENCE is wired now (OMS-REG-CAT-05.1/.2, itemDetailTabs.ts)
+// — central-server-only, ahead of its content.
 
 type ItemDetailRow = NonNullable<ItemDetailResult['items']['nodes'][number]>;
 type MasterListRow = NonNullable<ItemDetailRow['masterLists']>[number];
@@ -76,15 +80,7 @@ const ItemDetailView: Component = () => {
     navigate(`/${params.storeId}/catalogue/items`, { replace: true });
   };
 
-  const tabs = (): TabDef[] => [
-    { value: 'general', label: t('label.general') },
-    { value: 'store', label: t('label.store') },
-    { value: 'master-lists', label: t('label.master-lists') },
-    { value: 'ledger', label: t('label.ledger') },
-    { value: 'ancillary', label: t('title.ancillary-supplies') },
-    { value: 'custom-fields', label: t('label.custom-fields') },
-    { value: 'log', label: t('label.log') },
-  ];
+  const tabs = (): TabDef[] => visibleTabs(isCentralServer());
 
   const stockHref = () =>
     `/${params.storeId}/inventory/stock?itemId=${params.itemId}`;
@@ -346,6 +342,17 @@ const ItemDetailView: Component = () => {
                     is server read-only) — the shared view. */}
                 <CustomFieldsView scope="item" values={i().customFields} />
               </TabPanel>
+
+              <Show when={isCentralServer()}>
+                <TabPanel value="variants">
+                  {/* FLAGGED (BUILD_REPORT): the variant card + editable
+                      packaging grid aren't built yet — this slice only wires
+                      the tab's central-only PRESENCE (OMS-REG-CAT-05.1/.2).
+                      Gated here too (not just in tabs()) so a stale ?tab=
+                      param on a remote site can't render central content. */}
+                  <EmptyState message={t('messages.no-item-variants')} />
+                </TabPanel>
+              </Show>
 
               <TabPanel value="log">
                 <ActivityLogPanel storeId={params.storeId} recordId={i().id} />
