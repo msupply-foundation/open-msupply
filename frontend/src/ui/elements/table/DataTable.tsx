@@ -43,7 +43,6 @@ import { useIsNavOverlay, useIsCompact } from '../../utils/createMediaQuery';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CardViewIcon,
-  ChevronDownIcon,
   CloseIcon,
   ColumnsIcon,
   MaximiseIcon,
@@ -607,11 +606,13 @@ export function DataTable<T, K extends string, G extends string = never>(
                       ? columnLabel(activeSortColumn()!)
                       : t('table.sort')}
                   </span>
+                  {/* Same direction glyph as the table header's sort indicator
+                      (↓ desc / ↑ asc, .sortIndicator), pushed to the pill's
+                      trailing edge (justify-content) regardless of label width. */}
                   <Show when={props.sort}>
-                    <ChevronDownIcon
-                      class={styles.sortArrow}
-                      data-desc={props.sort?.desc ? '' : undefined}
-                    />
+                    <span class={styles.sortIndicator} aria-hidden="true">
+                      {props.sort!.desc ? '↓' : '↑'}
+                    </span>
                   </Show>
                 </>
               }
@@ -630,10 +631,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                     >
                       <span>{columnLabel(col)}</span>
                       <Show when={props.sort?.key === col.sortKey}>
-                        <ChevronDownIcon
-                          class={styles.sortArrow}
-                          data-desc={props.sort?.desc ? '' : undefined}
-                        />
+                        <span class={styles.sortIndicator} aria-hidden="true">
+                          {props.sort!.desc ? '↓' : '↑'}
+                        </span>
                       </Show>
                     </button>
                   )}
