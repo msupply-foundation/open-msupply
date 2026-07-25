@@ -38,24 +38,36 @@ const columnHeaderText = <T,>(
   return typeof header === 'string' ? header : undefined;
 };
 
-// A labelled field flow — the body cells of one group, each as label + value,
-// wrapping until exhausted. Boxed in a panel when the group asks for it.
-function FieldFlow<T>(props: {
+// A labelled field grid — the body cells of one group, each as a
+// LabelledValue (label above value), laid out as an auto-fitting column grid
+// (ui-standards § tables card layout: two columns on a phone card, more on a
+// wide modal card).
+function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
+  return (
+    <div class={styles.cardFields}>
+      <For each={props.cells}>
+        {cell => (
+          <LabelledValue label={columnHeaderText(cell)}>
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </LabelledValue>
+        )}
+      </For>
+    </div>
+  );
+}
+
+// A group's fields, boxed in a contained panel (the mockup's tinted "zone")
+// when the group asks for it, else the flat field grid.
+function GroupFields<T, G extends string>(props: {
+  group: CardGroup<T, G>;
   cells: TanCell<T, unknown>[];
-  panel?: boolean;
 }): JSX.Element {
   return (
-    <div class={props.panel ? styles.cardPanel : undefined}>
-      <div class={styles.cardFields}>
-        <For each={props.cells}>
-          {cell => (
-            <LabelledValue label={columnHeaderText(cell)}>
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </LabelledValue>
-          )}
-        </For>
+    <Show when={props.group.panel} fallback={<FieldFlow cells={props.cells} />}>
+      <div class={styles.cardPanel}>
+        <FieldFlow cells={props.cells} />
       </div>
-    </div>
+    </Show>
   );
 }
 
@@ -122,7 +134,7 @@ function DisclosureGroup<T, G extends string>(props: {
             </Show>
           </div>
           <AccordionContent>
-            <FieldFlow cells={props.cells} panel={props.group.panel} />
+            <GroupFields group={props.group} cells={props.cells} />
           </AccordionContent>
         </div>
       </AccordionItem>
@@ -221,38 +233,48 @@ export function CardView<T, G extends string>(props: {
                     )}
                   </For>
                 </div>
-                {/* Default (ungrouped) group first — unpanelled, always shown. */}
-                <Show when={defaultCells().length > 0}>
-                  <FieldFlow cells={defaultCells()} />
-                </Show>
-                {/* Declared groups, in list order. A group with a disclosure
-                    goes inside an Accordion; others render inline with an
-                    optional caption + panel. Empty groups (no visible cells)
-                    render nothing. */}
-                <For each={props.cardGroups}>
-                  {group => (
-                    <Show when={groupCells(group.key).length > 0}>
-                      <Show
-                        when={group.disclosure}
-                        fallback={
-                          <div class={styles.cardGroup}>
-                            <GroupCaption group={group} />
-                            <FieldFlow
-                              cells={groupCells(group.key)}
-                              panel={group.panel}
-                            />
-                          </div>
-                        }
-                      >
-                        <DisclosureGroup
-                          group={group}
-                          cells={groupCells(group.key)}
-                          row={row.original}
-                        />
-                      </Show>
+                {/* Card body — divided from the header by a hairline
+                    (ui-standards § tables card layout). Only rendered when
+                    there are body cells (a header-only card shows no divider).
+                    Holds the default (ungrouped) group first, then the declared
+                    groups in list order. */}
+                <Show when={bodyCells().length > 0}>
+                  <div class={styles.cardBody}>
+                    {/* Default (ungrouped) group first — unpanelled, always
+                        shown. */}
+                    <Show when={defaultCells().length > 0}>
+                      <FieldFlow cells={defaultCells()} />
                     </Show>
-                  )}
-                </For>
+                    {/* Declared groups, in list order. A group with a
+                        disclosure goes inside an Accordion; others render inline
+                        with an optional caption + panel. Empty groups (no
+                        visible cells) render nothing. */}
+                    <For each={props.cardGroups}>
+                      {group => (
+                        <Show when={groupCells(group.key).length > 0}>
+                          <Show
+                            when={group.disclosure}
+                            fallback={
+                              <div class={styles.cardGroup}>
+                                <GroupCaption group={group} />
+                                <GroupFields
+                                  group={group}
+                                  cells={groupCells(group.key)}
+                                />
+                              </div>
+                            }
+                          >
+                            <DisclosureGroup
+                              group={group}
+                              cells={groupCells(group.key)}
+                              row={row.original}
+                            />
+                          </Show>
+                        </Show>
+                      )}
+                    </For>
+                  </div>
+                </Show>
               </div>
             </td>
           </tr>

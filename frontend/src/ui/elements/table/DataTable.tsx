@@ -49,7 +49,6 @@ import {
   MaximiseIcon,
   MinimiseIcon,
   SettingsIcon,
-  TableViewIcon,
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { BareCheckbox } from '../inputs/BareCheckbox';
@@ -642,41 +641,29 @@ export function DataTable<T, K extends string, G extends string = never>(
               </div>
             </Popover>
           </Show>
-          {/* View toggle — card ⇄ table, above the compact breakpoint only
-              (below it the table is always card, so the toggle is hidden). The
-              chosen view persists via `viewMode` config. Opt-in per table
-              (showCardToggle) and needs setConfig to persist. */}
+          {/* View toggle — a single Card-view control matching the other icon
+              controls (no border): grey when in table view, blue when card view
+              is active; clicking flips between the two. Above the compact
+              breakpoint only (below it the table is always card, so it's
+              hidden). Opt-in per table (showCardToggle) and needs setConfig to
+              persist the choice. */}
           <Show when={props.showCardToggle && !isCompact() && props.setConfig}>
-            <div
-              class={styles.viewToggle}
-              role="group"
-              aria-label={t('table.view')}
+            <button
+              type="button"
+              class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
+              data-testid="table-view-toggle"
+              aria-pressed={viewMode() === 'card'}
+              aria-label={t('table.view-cards')}
+              title={t('table.view-cards')}
+              onClick={() =>
+                props.setConfig?.(
+                  'viewMode',
+                  viewMode() === 'card' ? 'table' : 'card'
+                )
+              }
             >
-              <button
-                type="button"
-                class={styles.viewToggleButton}
-                data-testid="table-view-card"
-                data-active={viewMode() === 'card' ? '' : undefined}
-                aria-pressed={viewMode() === 'card'}
-                aria-label={t('table.view-cards')}
-                title={t('table.view-cards')}
-                onClick={() => props.setConfig?.('viewMode', 'card')}
-              >
-                <CardViewIcon />
-              </button>
-              <button
-                type="button"
-                class={styles.viewToggleButton}
-                data-testid="table-view-table"
-                data-active={viewMode() === 'table' ? '' : undefined}
-                aria-pressed={viewMode() === 'table'}
-                aria-label={t('table.view-table')}
-                title={t('table.view-table')}
-                onClick={() => props.setConfig?.('viewMode', 'table')}
-              >
-                <TableViewIcon />
-              </button>
-            </div>
+              <CardViewIcon />
+            </button>
           </Show>
           {/* Columns — the per-column panel (show / move / pin;
               ui-standards § tables → column management: one predictable place,
@@ -754,6 +741,7 @@ export function DataTable<T, K extends string, G extends string = never>(
       <div class={styles.tableArea}>
         <div
           class={styles.tableScroll}
+          data-view={viewMode()}
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
