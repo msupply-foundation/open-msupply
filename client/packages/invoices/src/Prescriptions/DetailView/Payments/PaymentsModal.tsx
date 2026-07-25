@@ -111,6 +111,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     <Modal
       width={700}
       title={t('title.payment')}
+      testId="payments-modal"
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="save" onClick={onSave} />}
       sx={{
