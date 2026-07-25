@@ -25,7 +25,7 @@ import {
   locale,
   setHomeCurrency,
 } from '../intl';
-import { FormPreview, Lead } from './common';
+import { FormPreview, Lead, Note } from './common';
 import styles from './InputsShowcase.module.css';
 
 // Mock source for the home-currency selector: the currencies old OMS shipped
@@ -196,11 +196,10 @@ export const InputsShowcase = () => {
             form fields, modals and drawers; <code>size="small"</code> (2.25rem
             / 36px, <strong>13px</strong> text <em>and</em> label) for dense
             contexts — table inline editing, filter bars, toolbars, sidebars.
-            Small shrinks the height <em>and</em> the type; on touch the default
-            grows to the 48px target while small stays dense (density is the
-            point). The one <code>size</code> prop flows to{' '}
-            <code>NumberField</code>, <code>CurrencyField</code> and the date
-            fields — compare each pair below.
+            Small shrinks the height <em>and</em> the type. The one{' '}
+            <code>size</code> prop flows to <code>NumberField</code>,{' '}
+            <code>CurrencyField</code> and the date fields — compare each pair
+            below.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Default — 40px · 14px">
@@ -240,6 +239,16 @@ export const InputsShowcase = () => {
               />
             </Field>
           </div>
+          <Note>
+            <strong>Touch enforcement:</strong> on coarse pointers (phones,
+            tablets) every input grows to a WCAG 2.5.5 (AAA) tap target —{' '}
+            <strong>default → 48px</strong>, <strong>small → 44px</strong> — and
+            the text bumps to 16px so iOS Safari doesn&rsquo;t zoom on focus.
+            Both heights are absolute px, so the narrow-viewport root shrink
+            can&rsquo;t erode them. Every field reads the same four{' '}
+            <code>--input-height*</code> tokens, so they stay aligned side by
+            side. Emulate a touch device (or resize on a real one) to see it.
+          </Note>
         </DashboardCard>
 
         <DashboardCard title="Multi-line text — native <textarea>">

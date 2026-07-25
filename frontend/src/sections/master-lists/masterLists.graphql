@@ -19,7 +19,6 @@ query masterLists(
         name
         code
         description
-        linesCount
       }
     }
   }

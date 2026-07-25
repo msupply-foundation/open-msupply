@@ -81,7 +81,7 @@
    management), greyed to read as inert. Ordered before :hover for
    no-descending-specificity. */
 .popBtn:disabled {
-  color: var(--gray-light);
+  color: var(--text-disabled);
   cursor: default;
 }
 

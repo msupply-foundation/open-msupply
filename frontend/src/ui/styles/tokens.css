@@ -59,7 +59,6 @@
   --bg-group-dark: #e2e2e9;
   --bg-icon: #e5eeff;
   --bg-input: #f2f2f5;
-  --bg-input-disabled: #fafafc;
 
   /* Floating/elevated surfaces (buttons, menus, dialogs, popups). Same as the
      content surface in light — the shadow does the lifting — but overridden
@@ -71,6 +70,16 @@
   --text-secondary: #555770; /* body2 / h6 / form.field */
   --text-label: #28293d; /* form.label */
   --button-text: #373740;
+
+  /* --- Disabled state -------------------------------------------------
+     Single source for how disabled things look; tune all disabled styling
+     here. --text-disabled is the muted ink for disabled text / icons / control
+     outlines — readable, but clearly weaker than body text; --bg-disabled is
+     the muted fill for disabled input frames. Whole-control widgets that dim as
+     a unit instead use --disabled-opacity (defined just after the theme
+     contract, since it's not a colour). */
+  --text-disabled: #7a7b90;
+  --bg-disabled: #f2f2f5;
 
   /* header / drawer mixins (theme.ts → mixins) */
   --header-bg: #fafafc;
@@ -135,6 +144,12 @@
 
   /* @theme-contract:end */
 
+  /* Disabled dimming — one opacity for whole-control widgets that fade as a
+     unit (buttons, icon buttons, checkboxes, toggles, upload zone) rather than
+     recolour. Not a colour, so it lives outside the theme contract and is the
+     same in both themes. Pairs with --text-disabled / --bg-disabled above. */
+  --disabled-opacity: 0.6;
+
   /* --- Spacing (4px base → rem) --------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -153,6 +168,10 @@
   /* --- Typography (theme.ts → typography) ----------------------------- */
   --font-sans:
     'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Monospace — codes, batches, location IDs & dense identifiers
+     (ui-standards › typography). A system stack, no webfont bundled: fixed-
+     width glyphs align in columns and disambiguate 0/O and 1/l/I. */
+  --font-mono: 'Monaco', 'Courier New', monospace;
   --text-xs: 0.75rem; /* 12px — body2 */
   --text-sm: 0.875rem; /* 14px — body1 / th / input */
   --text-md: 1rem; /* 16px — h6 */
@@ -177,21 +196,39 @@
      cell font, shared by header and body cells. */
   --table-line-height: 1.43;
   --footer-height: 2rem; /* 32px */
-  --touch-target: 3rem; /* 48px — spec target */
+  /* The single knob for the minimum size of every touch-restricted element —
+     labelled buttons, icon-only buttons, header controls, menu rows, etc., all
+     of which reference this token behind a `pointer: coarse` query. Tune here.
+     An ABSOLUTE px (like --input-font-touch), a deliberate exception to the
+     rem-only rule: a tap target must stay a stable physical size and NOT be
+     eroded by the root-size shrink, which fires below 600px — i.e. on exactly
+     the phones where the coarse pointer applies. px still scales under browser
+     zoom, so reflow/AA zoom is unaffected. 44px satisfies WCAG 2.5.5 (AAA). */
+  --touch-target: 44px; /* tunable */
 
   /* --- Buttons (ui-standards #btn-sizes) ------------------------------ */
   --button-height: 2.25rem; /* 36px — medium (default) */
   --button-height-sm: 1.75rem; /* 28px — small (dense/inline) */
 
-  /* --- Inputs (company design spec) ----------------------------------- */
-  --input-height: 2.5rem; /* 40px default */
-  --input-height-sm: 2.25rem; /* 36px small */
-  /* Font size on touch — an ABSOLUTE 16px, the one input exception to the
-     rem-only rule (px, not rem). iOS Safari zooms the page on focus when a
-     field's font is under 16px, and that threshold is absolute, so this must
-     hold even below 600px where index.css shrinks the root to 85%. Applied to
-     default-size fields on coarse pointers (ui-standards #field-touch-sizing);
-     the small variant stays dense. */
+  /* --- Input heights: the four-height system (tune every input here) ---
+     Every field-type input (text/number/currency, date/time/range, select,
+     multi-select, combobox) reads these four tokens and NOTHING else for its
+     height, so they stay identical side by side and tune from one place. Two
+     rest sizes in rem (scale with the root density knob) + two touch sizes
+     enforced under pointer:coarse in ABSOLUTE px, so the root-shrink on phones
+     can't erode the tap target (px still scales under browser zoom). Both touch
+     sizes clear WCAG 2.5.5 AAA (44px); standard sits a notch above at 48, and
+     the standard↔small 4px step is preserved in both modes. */
+  --input-height: 2.5rem; /* 40px — standard, rest */
+  --input-height-sm: 2.25rem; /* 36px — small, rest */
+  --input-height-touch: 48px; /* standard, touch-enforced */
+  --input-height-sm-touch: 44px; /* small, touch-enforced */
+  /* Font size on touch — an ABSOLUTE 16px, an input exception to the rem-only
+     rule (px, not rem). iOS Safari zooms the page on focus when a field's font
+     is under 16px, and that threshold is absolute, so this must hold even below
+     600px where index.css shrinks the root. Applied to BOTH sizes on coarse
+     pointers (ui-standards #field-touch-sizing) — small included, since the iOS
+     zoom threshold ignores our size variants. */
   --input-font-touch: 16px;
   /* Small-field text (ui-standards "Text Fields — Size Variations"): 13px, a
      notch under the 14px default (--text-sm) so a small input + its label read
@@ -269,13 +306,16 @@
   --bg-group-dark: #33333f;
   --bg-icon: #24304a;
   --bg-input: #2a2a36;
-  --bg-input-disabled: #1c1c24;
 
   /* Text — soft near-white, not pure white */
   --text-body: #ececf2;
   --text-secondary: #a8a9bd;
   --text-label: #d6d6e0;
   --button-text: #d0d0da;
+
+  /* Disabled state */
+  --text-disabled: #9596ab;
+  --bg-disabled: #2a2a36;
 
   /* Header / drawer */
   --header-bg: #1a1a22;
