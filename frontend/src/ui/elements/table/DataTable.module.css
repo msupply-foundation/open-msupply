@@ -305,11 +305,14 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    clipping. Placed after .td so it wins the white-space. */
 .td[data-wrap] {
   white-space: normal;
-  /* Multi-line cells read from the top (ui-standards § tables — the
-     spec's global td top-align only ever SHOWS on multi-line rows);
-     single-line cells keep the default middle so they sit centred in
-     the fixed row height. */
-  vertical-align: top;
+  /* All body cells stay vertically centred (the default middle), wrapping
+     columns included (Carl 2026-07-26): CSS can't tell whether a cell actually
+     wrapped, so a `vertical-align: top` here raised EVERY single-line row in a
+     wrapping column a few px above its centred neighbours in the fixed row
+     height — visible misalignment (the Name column). A genuine 2-line cell now
+     centres as a block in the grown row, still aligned with its neighbours.
+     Diverges from the ui-standards note that multi-line cells read from the
+     top — deliberate, since our density model uses fixed row heights. */
 }
 
 .tdClamp {
