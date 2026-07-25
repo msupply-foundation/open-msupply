@@ -168,6 +168,10 @@
   /* --- Typography (theme.ts → typography) ----------------------------- */
   --font-sans:
     'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Monospace — codes, batches, location IDs & dense identifiers
+     (ui-standards › typography). A system stack, no webfont bundled: fixed-
+     width glyphs align in columns and disambiguate 0/O and 1/l/I. */
+  --font-mono: 'Monaco', 'Courier New', monospace;
   --text-xs: 0.75rem; /* 12px — body2 */
   --text-sm: 0.875rem; /* 14px — body1 / th / input */
   --text-md: 1rem; /* 16px — h6 */
