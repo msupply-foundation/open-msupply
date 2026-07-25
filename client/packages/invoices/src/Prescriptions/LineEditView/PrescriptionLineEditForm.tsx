@@ -125,6 +125,9 @@ export const PrescriptionLineEditForm = ({
                         }
                       }}
                       style={{ flex: 1 }}
+                      slotProps={{
+                        htmlInput: { 'data-testid': 'abbreviation-field' },
+                      }}
                     />
                   }
                 />

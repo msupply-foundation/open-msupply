@@ -57,6 +57,7 @@ export const DateTimePickerInput = ({
   formError,
   customError,
   validate,
+  inputTestId,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
   error?: boolean;
@@ -77,6 +78,8 @@ export const DateTimePickerInput = ({
   formError?: FormErrorBinding;
   customError?: CustomErrorValue;
   validate?: (value: Date | null | undefined) => string | null;
+  /** `data-testid` for the text input (locale-stable test hook). */
+  inputTestId?: string;
 }) => {
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
@@ -202,6 +205,9 @@ export const DateTimePickerInput = ({
               width,
               minWidth: showTime ? 200 : undefined,
             },
+            ...(inputTestId
+              ? { htmlInput: { 'data-testid': inputTestId } }
+              : {}),
           },
 
           tabs: {
