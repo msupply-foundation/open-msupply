@@ -140,9 +140,9 @@ export const FeedbackShowcase = () => {
         <DashboardCard title="InfoTooltip — help text behind an icon">
           <Lead>
             The help-text sibling of <code>Comment</code>: a quiet{' '}
-            <code>InfoOutlineIcon</code> that reveals a short gloss on hover /
-            focus / tap. Pass it to an input's <code>labelInfo</code> slot to
-            explain a field (below), or drop it inline beside any term.
+            <code>InfoIcon</code> that reveals a short gloss on hover / focus /
+            tap. Pass it to an input's <code>labelInfo</code> slot to explain a
+            field (below), or drop it inline beside any term.
           </Lead>
           <div class={styles.popoverRow}>
             <span>Standalone: </span>

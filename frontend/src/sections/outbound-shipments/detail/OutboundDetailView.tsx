@@ -1,5 +1,6 @@
 import {
   createEffect,
+  createMemo,
   createResource,
   createSignal,
   lazy,
@@ -22,7 +23,15 @@ import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
-import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+} from '../../../ui/elements/table/DataTable';
+import {
+  FilterBar,
+  FilterTextInput,
+} from '../../../ui/elements/selectors/FilterBar';
 import {
   formatCurrencyCell,
   getCurrencyCell,
@@ -40,18 +49,27 @@ import {
   PlusCircleIcon,
 } from '../../../ui/icons';
 import { NameSearch } from '../../../domain/name';
+import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { useUrlQueryState } from '../../../list/urlQueryState';
+import { stripEmpty } from '../../../typeHelpers';
 import {
   CustomFieldsEditTab,
   CustomFieldsToolbar,
 } from '../../../domain/customFields';
 import {
   OutboundDetail,
+  OutboundLines,
   UpdateOutboundShipmentName,
   type OutboundLineFragment,
+  type OutboundLinesVariables,
 } from './outboundDetail.generated';
 import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
+import type { OutboundLineFilter } from './outboundLineFilter';
+import { createNextItemWalk } from './nextItemWalk';
+import { outboundDetailFilters } from './outboundDetailFilters';
+import type { StatusPreflight } from './actions/StatusChangeAction';
 import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundPrefs } from '../outboundPreferencesResource';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
@@ -79,22 +97,65 @@ import {
 } from './actions';
 
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
-// header (customer + customer reference), Details/Log tabs, the item-grouped
-// read-only line table (row click opens the line editor S4 — AC-V1), the side
-// panel (S3 § side panel), and the persistent status footer (hold / crumbs /
-// status split button — AC-V2), replaced by the bulk line-action bar on
-// selection. Line quantities are entered ONLY in the line editor.
+// header (customer + customer reference + line search/filters), Details/Log
+// tabs, the flat read-only SERVER-paginated line table (row click opens the
+// line editor S4 on that row's item AND batch — AC-V1/AC-V6), the side panel
+// (S3 § side panel), and the persistent status footer (hold / crumbs / status
+// split button — AC-V2), replaced by the bulk line-action bar on selection.
+// Line quantities are entered ONLY in the line editor.
 //
-// Data: one resource; header-field saves splice the returned node back
-// (updateOutboundShipment returns header + lines — leaving NEW trims rows
-// server-side); line-level operations refetch (totals, placeholders, and
-// trims all move server-side — kdd/state-management: refresh by direct call).
+// TWO independent queries (rules.md § server-paginated line table, AC-V4):
+// `info` (outboundDetail — header/footer/side-panel fields, NOT the lines)
+// and `lines` (outboundLines — one server-filtered/sorted page). An entity-
+// LEVEL save mutates `info` in place; a LINE-level change refetches the lines
+// page AND the entity (the footer totals are its server-side pricing
+// aggregates — D45; placeholders and trims move server-side too —
+// kdd/state-management: refresh by direct call). Service lines are their own
+// small read (the S5 editor + side-panel rows).
 
 type Line = OutboundLineFragment;
+
+// The server sort-field union (from codegen) — a column can only ever name a
+// real server sort key (kdd/type-safety). Columns whose data the server can't
+// sort on (VVM, unit, doses, quantities, prices, received/difference, volume —
+// spec contract § detail line table) simply omit `sortKey`.
+type SortKey = NonNullable<OutboundLinesVariables['sort']>[number]['key'];
+
+const DEFAULT_PAGE_SIZE = 20;
+
+// The URL-backed view state (kdd/url-structure): filter + sort + pagination in
+// the single `?query=` JSON param, so a filtered/sorted/paged view is
+// shareable and survives reload + back-nav (AC-V4). All three conform to the
+// generated outboundLines variables (no remapping — kdd/type-safety).
+// Selection and the side-panel open state stay local (transient UI). Mirrors
+// the stocktakes detail.
+type DetailUrlState = {
+  filter: OutboundLineFilter;
+  sort: NonNullable<OutboundLinesVariables['sort']>;
+  offset: number;
+  first: number;
+};
+
+const DEFAULT_URL_STATE: DetailUrlState = {
+  // Default sort: item name ascending (spec S3 § line table).
+  filter: {},
+  sort: [{ key: 'itemName', desc: false }],
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
+};
 
 const OutboundDetailView: Component = () => {
   const params = useParams<{ storeId: string; invoiceId: string }>();
   const navigate = useNavigate();
+  // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
+  // nav) in one `?query=` param. Thin accessors over that single query.
+  const { query, setQuery } =
+    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const filter = () => query().filter;
+  const currentSort = (): SortState<SortKey> | undefined => {
+    const s = query().sort[0];
+    return s ? { key: s.key, desc: s.desc ?? false } : undefined;
+  };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Side panel: auto-open on wide viewports, closed below (the responsive
   // detail-panel behaviour the shared e2e suites drive); the More button and
@@ -103,9 +164,13 @@ const OutboundDetailView: Component = () => {
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
   createEffect(() => setSidePanelOpen(isWide()));
 
-  // The line editor: add mode (item picker) or edit mode (a row's item).
-  const [editorOpen, setEditorOpen] = createSignal(false);
-  const [editorItem, setEditorItem] = createSignal<LineEditItem | undefined>();
+  // The line editor's open state (undefined = closed). The editor self-manages
+  // its current item as the user advances with "OK & next"; we only tell it
+  // WHICH item (and clicked batch, for scroll/focus — AC-V6) to open on:
+  // - { item, lineId }: opened from a ROW click — update mode.
+  // - {}: opened from "Add item" — add mode (item search focused).
+  type EditState = { item?: LineEditItem; lineId?: string } | undefined;
+  const [editState, setEditState] = createSignal<EditState>();
   const [serviceOpen, setServiceOpen] = createSignal(false);
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
@@ -115,7 +180,7 @@ const OutboundDetailView: Component = () => {
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
   const [returnModalOpen, setReturnModalOpen] = createSignal(false);
 
-  const [data, { mutate, refetch }] = createResource(
+  const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId }),
     async variables => {
       // A not-found NodeError is NOT routed to the global error modal (which
@@ -130,61 +195,143 @@ const OutboundDetailView: Component = () => {
     }
   );
 
-  // `.latest` (not `data()`): line ops refetch while the screen stays open,
-  // and a suspending read would collapse the route's <Suspense> — unmounting
-  // the table, footer, and any OPEN dialog (the line editor's "OK & next",
-  // the allocate report) mid-interaction. `.latest` suspends only until the
-  // FIRST load resolves, so the initial spinner is unchanged
+  // `.latest` (not `data()`): saves mutate while the screen stays open, and a
+  // suspending read would collapse the route's <Suspense> — unmounting the
+  // table, footer, and any OPEN dialog (the line editor's "OK & next", the
+  // allocate report) mid-interaction. `.latest` suspends only until the FIRST
+  // load resolves, so the initial spinner is unchanged
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
   const node = (): OutboundNode | undefined => data.latest;
-  const lines = (): Line[] => data.latest?.lines.nodes ?? [];
-  const stockAndPlaceholderLines = () =>
-    lines().filter(line => line.type !== 'SERVICE');
-  const serviceLines = () => lines().filter(line => line.type === 'SERVICE');
-  // Default line-table order: item name ascending (ui-surface S3 § line table;
-  // matches the old app). A flat client-side sort — all lines are loaded, and
-  // the table is un-grouped (D34).
-  const sortedLines = () =>
-    [...stockAndPlaceholderLines()].sort((a, b) =>
-      a.itemName.localeCompare(b.itemName)
-    );
-  // The shipment's items in line-table order (distinct) — the line editor
-  // excludes them from the add-mode picker and, in edit mode, pages through
-  // them with OK & next.
-  const orderedItems = (): LineEditItem[] => {
-    const seen = new Set<string>();
-    const items: LineEditItem[] = [];
-    for (const line of sortedLines()) {
-      if (seen.has(line.item.id)) continue;
-      seen.add(line.item.id);
-      items.push({
-        id: line.item.id,
-        name: line.item.name,
-        unitName: line.item.unitName,
-        isVaccine: line.item.isVaccine,
-        doses: line.item.doses,
-      });
+
+  // The lines PAGE — a separate, server-filtered/sorted/paged query (AC-V4).
+  // Keyed on the SERIALISED variables (a stable string) so identical query
+  // content doesn't refetch (kdd/solid-reactivity-pitfalls). stripEmpty drops
+  // added-but-empty filter chips; the fixed invoiceId + non-service scoping is
+  // merged here (never URL state). Service lines are a separate read below.
+  const linesVariables = createMemo<OutboundLinesVariables>(() => ({
+    storeId: params.storeId,
+    filter: {
+      ...stripEmpty(query().filter),
+      invoiceId: { equalTo: params.invoiceId },
+      type: { notEqualTo: 'SERVICE' },
+    },
+    sort: query().sort,
+    page: { first: query().first, offset: query().offset },
+  }));
+  const [linesData, { refetch: refetchLines }] = createResource(
+    () => JSON.stringify(linesVariables()),
+    async serialised => {
+      const result = await graphqlFetch(
+        OutboundLines,
+        JSON.parse(serialised) as OutboundLinesVariables
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.invoiceLines;
     }
-    return items;
+  );
+  // Read `.latest` (non-suspending): during a refetch it returns the previous
+  // page (keeps rows in place, no remount); undefined before the first load.
+  const rows = (): Line[] => linesData.latest?.nodes ?? [];
+  const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+  // Deleting the last page's rows can leave the offset past the end (an
+  // empty "41–40 of 40" page) — clamp back to the last real page when a
+  // resolved page proves the offset overshot. Idempotent: the clamped offset
+  // satisfies the guard, so the effect settles in one step.
+  createEffect(() => {
+    const total = linesData.latest?.totalCount;
+    const { offset, first } = query();
+    if (total == null || offset === 0 || offset < total) return;
+    const lastPage = Math.floor(Math.max(0, total - 1) / first) * first;
+    setQuery({ ...query(), offset: lastPage });
+  });
+
+  // Service lines — a small dedicated read (spec S5; the side panel's service
+  // rows). Never in the paginated table; refetched alongside the lines page
+  // (a bulk delete can remove service lines too).
+  const [serviceData, { refetch: refetchServiceLines }] = createResource(
+    () => ({ storeId: params.storeId, invoiceId: params.invoiceId }),
+    async variables => {
+      const result = await graphqlFetch(OutboundLines, {
+        storeId: variables.storeId,
+        filter: {
+          invoiceId: { equalTo: variables.invoiceId },
+          type: { equalTo: 'SERVICE' },
+        },
+        page: { first: 100 },
+      });
+      if (result.kind !== 'success') return undefined;
+      return result.data.invoiceLines.nodes;
+    }
+  );
+  const serviceLines = (): Line[] => serviceData.latest ?? [];
+
+  // The store's locations (code/name only) for the Location filter chip.
+  // Volume-blind — the chip narrows a line list, capacity is irrelevant.
+  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const locations = () => locationsData.latest ?? [];
+
+  // A save-triggered refetch is SILENT — no refreshing bar (the table stays
+  // put while the fresh page swaps in). A user-navigation refetch (filter/
+  // sort/page) shows the bar as usual.
+  const [silentRefetching, setSilentRefetching] = createSignal(false);
+  const refetchAfterSave = async () => {
+    setSilentRefetching(true);
+    try {
+      // The entity refetches WITH the lines: the footer totals are the
+      // entity's server-side pricing aggregates (D45), so every line-level
+      // change moves them — a lines-only refetch would leave the footer one
+      // edit behind. `.latest` reads keep the refresh remount-free.
+      await Promise.all([refetchLines(), refetchServiceLines(), refetchInfo()]);
+    } finally {
+      setSilentRefetching(false);
+    }
   };
+  const tableLoading = () => linesData.loading && !silentRefetching();
 
   const editable = () => {
     const current = node();
     return current ? isEditable(current.status) : false;
   };
 
-  // Footer inputs (spec S3 § status footer): the one client pre-flight is the
-  // lineless server gap (AC-S6); other rejections surface from the server.
-  const hasOnlyPlaceholders = () => {
-    const stock = stockAndPlaceholderLines();
-    return (
-      stock.length > 0 && stock.every(line => line.type === 'UNALLOCATED_STOCK')
-    );
+  // Status pre-flight (AC-S5/AC-S6) — whole-shipment answers the current page
+  // can't give (rules.md § server-paginated line table): three sequential
+  // count/name probes run when the user invokes the status change, not
+  // reactive derivations. A failed probe returns undefined (graphqlFetch has
+  // already routed the error to the global modal) and the action aborts.
+  const preflight = async (): Promise<StatusPreflight | undefined> => {
+    const invoiceId = { equalTo: params.invoiceId };
+    const nonService = await graphqlFetch(OutboundLines, {
+      storeId: params.storeId,
+      filter: { invoiceId, type: { notEqualTo: 'SERVICE' } },
+      page: { first: 1 },
+    });
+    if (nonService.kind !== 'success') return undefined;
+    const stock = await graphqlFetch(OutboundLines, {
+      storeId: params.storeId,
+      filter: { invoiceId, type: { equalTo: 'STOCK_OUT' } },
+      page: { first: 1 },
+    });
+    if (stock.kind !== 'success') return undefined;
+    const zeros = await graphqlFetch(OutboundLines, {
+      storeId: params.storeId,
+      filter: {
+        invoiceId,
+        type: { notEqualTo: 'SERVICE' },
+        numberOfPacks: { equalTo: 0 },
+      },
+      page: { first: 1000 },
+    });
+    if (zeros.kind !== 'success') return undefined;
+    const lineCount = nonService.data.invoiceLines.totalCount;
+    return {
+      hasLines: lineCount > 0,
+      hasOnlyPlaceholders:
+        lineCount > 0 && stock.data.invoiceLines.totalCount === 0,
+      zeroQuantityItems: zeros.data.invoiceLines.nodes.map(
+        line => line.itemName
+      ),
+    };
   };
-  const zeroQuantityItems = () =>
-    stockAndPlaceholderLines()
-      .filter(line => line.numberOfPacks === 0)
-      .map(line => line.itemName);
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-detail',
@@ -274,34 +421,77 @@ const OutboundDetailView: Component = () => {
 
   const onLineOpsCommitted = () => {
     setSelectedIds([]);
-    void refetch();
+    // A save may have changed the rows — the walk must refetch, not trust
+    // its remembered page.
+    walk.reset();
+    void refetchAfterSave();
   };
 
-  // Row click → the line editor for that row's ITEM (AC-V1); disabled rows
-  // (read-only shipment) get no handler at all.
-  const openRow = (line: Line) => {
-    if (line.type === 'SERVICE') {
-      setServiceOpen(true);
-      return;
-    }
-    setEditorItem({
-      id: line.item.id,
-      name: line.item.name,
-      unitName: line.item.unitName,
-      isVaccine: line.item.isVaccine,
-      doses: line.item.doses,
+  // Header click: TanStack computed the next direction; record it as the
+  // GraphQL sort array, reset to the first page, and clear the selection
+  // (AC-V9 — the gates below classify by the rows in view).
+  const onSort = (key: SortKey, desc: boolean) => {
+    setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
+    setSelectedIds([]);
+  };
+
+  const onFilterChange = (next: OutboundLineFilter) => {
+    setQuery({ ...query(), filter: next, offset: 0 });
+    setSelectedIds([]);
+  };
+
+  // Row click → the line editor for that row's ITEM (AC-V1), carrying the
+  // clicked line so the editor scrolls to / focuses that batch (AC-V6);
+  // disabled rows (read-only shipment) get no handler at all. The editor
+  // advances through the list itself via "OK & next" (AC-V7).
+  const openRow = (line: Line) =>
+    setEditState({
+      item: {
+        id: line.item.id,
+        name: line.item.name,
+        unitName: line.item.unitName,
+        isVaccine: line.item.isVaccine,
+        doses: line.item.doses,
+      },
+      lineId: line.id,
     });
-    setEditorOpen(true);
-  };
-  const openAdd = () => {
-    setEditorItem(undefined);
-    setEditorOpen(true);
-  };
+  const openAdd = () => setEditState({});
+
+  // "OK & next" (update mode) asks the parent for the next item to edit. We
+  // own this (not the modal) because the list is server-paginated: the next
+  // item may be on a later PAGE, and finding it means advancing the detail
+  // table forward — the same as the user paging (rules.md § Save & next).
+  // The paging logic lives in ./nextItemWalk (unit-tested); this wires its
+  // deps: direct page fetches (race-free — never the reactive resource),
+  // page advance = setQuery + selection clear (AC-V9), abort = the editor
+  // closed (a cancel mid-walk must not keep paging the table).
+  const walk = createNextItemWalk({
+    fetchPage: async (offset, first) => {
+      const result = await graphqlFetch(OutboundLines, {
+        ...linesVariables(),
+        page: { first, offset },
+      });
+      if (result.kind !== 'success') return undefined;
+      return {
+        rows: result.data.invoiceLines.nodes,
+        totalCount: result.data.invoiceLines.totalCount,
+      };
+    },
+    currentOffset: () => query().offset,
+    pageSize: () => query().first,
+    advancePage: offset => {
+      setQuery({ ...query(), offset });
+      setSelectedIds([]);
+    },
+    aborted: () => editState() == null,
+  });
+  const nextItem = async (
+    currentId: string,
+    covered: Set<string>
+  ): Promise<LineEditItem | undefined> => walk.next(currentId, covered);
 
   const selectedLines = () =>
-    stockAndPlaceholderLines()
-      .concat(serviceLines())
-      .filter(line => selectedIds().includes(line.id));
+    rows().filter(line => selectedIds().includes(line.id));
   // Bulk-action visibility (spec S3 § bulk line actions matrix): state-disallowed
   // actions are HIDDEN, not disabled.
   const hasSelectedPlaceholder = () =>
@@ -310,6 +500,11 @@ const OutboundDetailView: Component = () => {
   const prefs = () => outboundPrefs()?.prefs;
   const dosesOn = () => prefs()?.manageVaccinesInDoses ?? false;
   const vvmOn = () => prefs()?.manageVvmStatusForStock ?? false;
+
+  // Build the filter definitions ONCE (a component body runs once at mount).
+  // The location chip's render reads `locations` through the accessor, so the
+  // live list flows in without rebuilding the filter array.
+  const detailFilters = outboundDetailFilters(locations);
 
   const crumbs = (current: OutboundNode) => [
     { label: t('distribution') },
@@ -323,30 +518,27 @@ const OutboundDetailView: Component = () => {
 
   // The detail line table (spec S3 § line table): one row per stock/placeholder
   // line — flat, since main dropped row-grouping from the shared DataTable;
-  // placeholder rows show the requested quantity.
-  const columns = (): Column<Line, never>[] => {
-    // Footer totals (spec § line table: "Totals for quantity/total/volume in
-    // the table footer", D45 — richer than the old app's Total-label + volume
-    // sum, standing in for the per-item aggregates dropped with grouping,
-    // D34). Computed here so columns() takes the reactive dependency and the
-    // footer closures stay plain (the Financial tab's pattern).
-    const totals = stockAndPlaceholderLines().reduce(
-      (sum, line) => ({
-        packs: sum.packs + line.numberOfPacks,
-        units: sum.units + line.numberOfPacks * line.packSize,
-        price: sum.price + line.totalAfterTax,
-        volume: sum.volume + line.volumePerPack * line.numberOfPacks,
-      }),
-      { packs: 0, units: 0, price: 0, volume: 0 }
-    );
+  // placeholder rows show the requested quantity. Sortable columns name a real
+  // server sort key; the rest omit sortKey (no client-side fallback).
+  const columns = (): Column<Line, SortKey>[] => {
+    // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
+    // off the entity's pricing stats — never a sum over the loaded rows, which
+    // would silently become a page total under server pagination (AC-V4).
+    const pricing = node()?.pricing;
+    const totals = {
+      price: pricing?.stockTotalAfterTax ?? 0,
+      volume: pricing?.totalVolume ?? 0,
+    };
     return [
       {
         c: { key: 'itemCode' },
+        sortKey: 'itemCode',
         header: t('label.code'),
         footer: () => t('label.total'),
       },
       {
         c: { key: 'itemName' },
+        sortKey: 'itemName',
         header: t('label.name'),
         meta: { cardPosition: 'header-primary', wrapLines: 2 },
       },
@@ -358,10 +550,12 @@ const OutboundDetailView: Component = () => {
               : (line.batch ?? '—'),
           id: 'batch',
         },
+        sortKey: 'batch',
         header: t('label.batch'),
       },
       {
         c: { key: 'expiryDate' },
+        sortKey: 'expiryDate',
         header: t('label.expiry-date'),
         ...getExpiryDateCell(),
       },
@@ -373,11 +567,14 @@ const OutboundDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: t('label.vvm-status'),
-            } as Column<Line, never>,
+            } as Column<Line, SortKey>,
           ]
         : []),
       {
         c: { accessor: line => line.location?.code ?? '', id: 'locationCode' },
+        // The server key sorts by location NAME; code is what we display —
+        // near enough in practice (codes prefix names in this dataset).
+        sortKey: 'locationName',
         header: t('label.location'),
       },
       {
@@ -386,6 +583,7 @@ const OutboundDetailView: Component = () => {
       },
       {
         c: { key: 'packSize' },
+        sortKey: 'packSize',
         header: t('label.pack-size'),
         ...getNumberCell(),
       },
@@ -399,13 +597,12 @@ const OutboundDetailView: Component = () => {
               },
               header: t('label.doses-per-unit'),
               ...getNumberCell(),
-            } as Column<Line, never>,
+            } as Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
         header: t('label.pack-quantity'),
-        footer: () => formatNumber(totals.packs),
         ...getNumberCell(),
       },
       {
@@ -430,7 +627,6 @@ const OutboundDetailView: Component = () => {
           id: 'unitQuantity',
         },
         header: t('label.unit-quantity'),
-        footer: () => formatNumber(totals.units),
         ...getNumberCell(),
       },
       ...(dosesOn()
@@ -445,7 +641,7 @@ const OutboundDetailView: Component = () => {
               },
               header: t('label.doses'),
               ...getNumberCell(),
-            } as Column<Line, never>,
+            } as Column<Line, SortKey>,
           ]
         : []),
       {
@@ -519,10 +715,21 @@ const OutboundDetailView: Component = () => {
               sidePanelContent={
                 <OutboundSidePanel
                   node={current()}
+                  serviceLines={serviceLines()}
                   storeId={params.storeId}
                   disabled={!editable()}
+                  foreignCurrencyAllowed={
+                    outboundPrefs()?.store?.issueInForeignCurrency ?? false
+                  }
+                  onSaved={saved => mutate(() => saved)}
                   edit={edit}
-                  onSaveField={patch => void saveField(patch)}
+                  onSaveField={async patch => {
+                    await saveField(patch);
+                    // A backdate DELETES the shipment's lines server-side
+                    // (AC-B2) — the visible page must follow, like any other
+                    // line-level change.
+                    if ('backdatedDatetime' in patch) await refetchAfterSave();
+                  }}
                   onEditServiceCharges={() => setServiceOpen(true)}
                 />
               }
@@ -616,6 +823,26 @@ const OutboundDetailView: Component = () => {
                       disabled={!editable()}
                       onSave={patch => void saveField({ customFields: patch })}
                     />
+                    {/* Always-on item search — name OR code (server
+                        itemCodeOrName.like, AC-V5), like the stocktakes
+                        detail. Blank clears to null so stripEmpty drops it (a
+                        blank `like` would match everything). */}
+                    <FilterTextInput
+                      label={t('placeholder.filter-items')}
+                      placeholder={t('placeholder.filter-items')}
+                      value={filter().itemCodeOrName?.like ?? ''}
+                      onInput={value =>
+                        onFilterChange({
+                          ...filter(),
+                          itemCodeOrName: value ? { like: value } : null,
+                        })
+                      }
+                    />
+                    <FilterBar
+                      filters={detailFilters}
+                      filter={filter()}
+                      onChange={onFilterChange}
+                    />
                   </Toolbar>
                   <TabList
                     tabs={[
@@ -639,11 +866,15 @@ const OutboundDetailView: Component = () => {
                     <OutboundStatusFooter
                       storeId={params.storeId}
                       node={current()}
-                      hasLines={stockAndPlaceholderLines().length > 0}
-                      hasOnlyPlaceholders={hasOnlyPlaceholders()}
-                      zeroQuantityItems={zeroQuantityItems()}
+                      preflight={preflight}
                       onSetHold={setHold}
-                      onSaved={saved => mutate(() => saved)}
+                      // A status change can trim zero-quantity lines
+                      // server-side — refetch the lines page alongside the
+                      // in-place entity splice.
+                      onSaved={saved => {
+                        mutate(() => saved);
+                        void refetchAfterSave();
+                      }}
                       onClose={() =>
                         navigate(
                           `/${params.storeId}/distribution/outbound-shipment`
@@ -709,9 +940,15 @@ const OutboundDetailView: Component = () => {
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
-                  rows={sortedLines()}
+                  rows={rows()}
                   rowKey={line => line.id}
-                  loading={data.loading}
+                  // Non-suspending loading read — a between-page/filter/sort
+                  // refetch keeps rows + shows the refreshing bar; a post-save
+                  // refetch is silent (tableLoading gates it out). Initial
+                  // load → Suspense.
+                  loading={tableLoading()}
+                  sort={currentSort()}
+                  onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
                   // Placeholder lines read in the info tone — whole-row blue
                   // text, matching the current app (ui-surface S3 line table).
@@ -735,6 +972,22 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Page navigation clears the selection (AC-V9): the bulk-
+                  // action gates classify by rows in view, so a selection must
+                  // never carry ids the user can no longer see.
+                  pagination={{
+                    offset: query().offset,
+                    pageSize: query().first,
+                    total: totalCount(),
+                    onOffsetChange: offset => {
+                      setQuery({ ...query(), offset });
+                      setSelectedIds([]);
+                    },
+                    onPageSizeChange: first => {
+                      setQuery({ ...query(), first, offset: 0 });
+                      setSelectedIds([]);
+                    },
+                  }}
                 />
               </TabPanel>
               <TabPanel value="custom-fields">
@@ -754,14 +1007,15 @@ const OutboundDetailView: Component = () => {
               </TabPanel>
 
               <OutboundLineEditModal
-                open={editorOpen()}
-                onClose={() => setEditorOpen(false)}
+                open={editState() != null}
+                onClose={() => setEditState(undefined)}
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
                 customerIsStore={current().otherParty.store != null}
-                initialItem={editorItem()}
-                existingItems={orderedItems()}
+                initialItem={editState()?.item}
+                initialLineId={editState()?.lineId}
+                nextItem={nextItem}
                 onCommitted={onLineOpsCommitted}
               />
               <ServiceChargesModal

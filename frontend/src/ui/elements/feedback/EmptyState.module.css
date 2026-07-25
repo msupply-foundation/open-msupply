@@ -10,11 +10,12 @@
 }
 
 /* The sprout illustration. Sized via font-size (the icon is 1em); ~120px at
-   the base root font-size, matching the current app. Its pale-blue fill is
-   baked into the icon (the --gray-pale token), so no colour here. */
+   the base root font-size, matching the current app. Stroked in currentColor,
+   so it takes the same quiet grey as the "Nothing here" heading below. */
 .graphic {
   font-size: 7.5rem;
   line-height: 1;
+  color: var(--gray-light);
 }
 
 /* "Nothing here" — the bold heading, quiet grey (the current app's gray.light). */

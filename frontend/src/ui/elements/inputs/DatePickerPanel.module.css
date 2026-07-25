@@ -197,7 +197,7 @@
 }
 
 .day[data-disabled] {
-  color: var(--gray-light);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 

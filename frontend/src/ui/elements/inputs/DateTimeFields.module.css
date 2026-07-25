@@ -80,9 +80,9 @@
 }
 
 .control[data-disabled] {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
 }
 
 /* The date portion: a bare button filling the free space, calendar icon at the
@@ -244,7 +244,7 @@
 }
 
 .control[data-disabled] .timeSeg {
-  color: var(--gray-main);
+  color: var(--text-disabled);
 }
 
 /* Small size (ui-standards Size Variations): the inner text and the label drop
@@ -260,6 +260,26 @@
 .control[data-size='small'] .dateInput,
 .control[data-size='small'] .timeSegs {
   font-size: var(--input-font-sm);
+}
+
+/* Touch: match the shared input touch heights (standard 48 / small 44, both
+   WCAG 2.5.5 AAA) and bump the typed text to 16px for BOTH sizes — the date
+   input is a real <input>, so iOS Safari zooms on focus under 16px. This block
+   is the reason the date fields now reach the touch target at all. */
+@media (pointer: coarse) {
+  .control {
+    min-block-size: var(--input-height-touch);
+  }
+
+  .control[data-size='small'] {
+    min-block-size: var(--input-height-sm-touch);
+  }
+
+  .dateTrigger,
+  .dateInput,
+  .timeSegs {
+    font-size: var(--input-font-touch);
+  }
 }
 
 .helper {

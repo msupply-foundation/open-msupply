@@ -1,4 +1,12 @@
-import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
@@ -6,7 +14,11 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
-import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
@@ -21,7 +33,7 @@ import {
   getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../../ui/icons';
+import { CheckIcon } from '../../../../ui/icons';
 import {
   DraftStockOutLines,
   SaveOutboundItemLines,
@@ -30,11 +42,15 @@ import {
 import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
 import {
   availableUnits as sumAvailableUnits,
+  autoAllocateBarReasons,
   barReasons,
+  clampManualPacks,
   deriveIssueWarnings,
+  rowHasAllocatableStock,
   distributeIssue,
-  fefoCompare,
+  fillOrderCompare,
   lensToUnits,
+  unitsToLens,
   type AllocateUnit,
   type AllocationPreferences,
   type IssueWarning,
@@ -52,6 +68,14 @@ import { issueWarningMessages } from './allocationWarnings';
 // Save is the item-set save (saveOutboundShipmentItemLines, AC-I6): lines +
 // placeholder in one call; every rejection is a non-typed GraphQL error
 // (contract wire trap) surfaced in the footer.
+//
+// Two modes (spec S4, AC-V6..V8): 'update' (opened from a row — the picker
+// locks, the clicked batch is scrolled into view + focused, and "OK & next"
+// walks the parent's sorted/paginated line list via the parent-owned
+// nextItem) and 'add' ("Add item", or fallen into when the walk runs out —
+// the picker is active + focused, and "OK & next" reopens empty). The picker
+// shows EVERY item — items already on the shipment are NOT excluded; picking
+// one loads its existing allocation (the draft pre-fills existing lines).
 
 type DraftLine =
   DraftStockOutLinesResult['draftStockOutLines']['draftLines'][number];
@@ -64,6 +88,17 @@ export type LineEditItem = {
   doses?: number;
 };
 
+// Resolve the next item to step to in UPDATE mode ("OK & next"). Owned by the
+// PARENT (the list is server-paginated — the next item may be on a later
+// page, and finding it advances the detail table forward): given the current
+// item id and the set of items already covered THIS iteration, it returns the
+// next distinct uncovered item in the parent's filtered/sorted order, or
+// undefined when the list is exhausted (→ the modal drops into add mode).
+export type ResolveNextItem = (
+  currentId: string,
+  covered: Set<string>
+) => Promise<LineEditItem | undefined>;
+
 interface OutboundLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -71,35 +106,50 @@ interface OutboundLineEditModalProps {
   invoiceId: string;
   /** NEW shipments may create placeholders (rules.md § placeholder lines). */
   isNew: boolean;
-  /** The item to open ON (edit mode — the picker locks); undefined = add. */
+  /**
+   * The item this open STARTS on (a row click) → UPDATE mode (the picker
+   * locks). Omitted for "Add item" → add mode. The modal tracks its own
+   * current item as the user advances with "OK & next".
+   */
   initialItem?: LineEditItem;
   /**
-   * The shipment's items in line-table order (distinct): excluded from the
-   * picker in add mode (S4), and paged through by OK & next in edit mode.
+   * The clicked LINE id for a row-click open — the editor scrolls its batch
+   * into view and focuses its packs input (AC-V6; draft rows built from
+   * existing lines keep the invoice-line id). Omitted for "Add item"; a
+   * clicked placeholder row has no batch row, so the Issue field is focused.
    */
-  existingItems: LineEditItem[];
+  initialLineId?: string;
+  /**
+   * UPDATE mode "OK & next": resolve the next item to edit (parent-owned;
+   * pages the detail table forward as needed). See ResolveNextItem.
+   */
+  nextItem: ResolveNextItem;
   /**
    * Whether the shipment's customer is itself a store (a transfer). Non-store
    * (external) customers additionally get the received-packs / difference columns.
    */
   customerIsStore: boolean;
-  /** A save committed — the view refetches the shipment. */
+  /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
 }
 
-// Mount-while-open wrapper (kdd/explicit-composition): <Show> tears the
-// content down on close so each open starts fresh.
+// The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
+// tears the content down on close and rebuilds it on the next open, so each
+// OPEN starts fresh. Within one open the content owns its current item
+// (advancing via "OK & next" is imperative — seedItem — not a prop change).
+// The keyed `when` is the OPEN identity: the initial item id when opened from
+// a row, or the literal 'add' when opened from "Add item".
 export const OutboundLineEditModal = (
   props: OutboundLineEditModalProps
 ): JSX.Element => (
-  <Show when={props.open}>
-    <LineEditContent {...props} />
+  <Show when={props.open && (props.initialItem?.id ?? 'add')} keyed>
+    {_openKey => <LineEditContent {...props} />}
   </Show>
 );
 
 // Issue-entry lens (spec/stock-allocation § the allocate-in lens): units,
-// packs-of-‹size›; doses stay display-only in this build (entry mode needs
-// the doses preference, off on the dev store).
+// packs-of-‹size›, and — for vaccine items under manage-vaccines-in-doses —
+// doses (AC-AL7).
 
 // Resolve the shared distribution warnings (src/domain/allocation
 // deriveIssueWarnings) to the editor's inline banner strings. The mapping —
@@ -128,6 +178,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
     props.initialItem
   );
+  // Mode: 'update' (opened from a row — "OK & next" steps to the next item)
+  // or 'add' ("Add item", or fallen into when an update walk runs out). Only
+  // ever flips update → add, never back.
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialItem ? 'update' : 'add'
+  );
+  // Items already stepped through THIS iteration (since the modal opened on a
+  // row), so the parent's next-item walk never offers one twice — across page
+  // advances too. Seeded with each item as it loads; not reactive.
+  const coveredItemIds = new Set<string>();
+  // What to focus once the next draft finishes loading (see the focus
+  // effect): a batch row's packs input (row-click open / walk advance), or
+  // the add-mode item search. Consumed (cleared) by the effect.
+  const [pendingFocus, setPendingFocus] = createSignal<
+    { row: string | undefined } | 'itemSelector' | undefined
+  >();
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
   const [issueValue, setIssueValue] = createSignal<number | undefined>();
@@ -144,26 +210,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
-  // Snapshot of the shipment's items at open: OK & next in update mode pages
-  // through them in table order, stable even as each save refetches the
-  // shipment (outbound loads all lines, so this is client-side — the paginated
-  // reference editors ask the parent for the next item instead).
-  const [itemsAtOpen, setItemsAtOpen] = createSignal<LineEditItem[]>([]);
-  // Add vs update, as a MUTABLE signal (matching the stocktake / inbound
-  // editors): an update walk that runs out of items drops into add mode, which
-  // unlocks the picker. Only ever flips update → add.
-  const [mode, setMode] = createSignal<'add' | 'update'>(
-    props.initialItem ? 'update' : 'add'
-  );
 
   const tableConfig = createTableConfig({ tableId: 'outbound-line-edit' });
   const prefs = () => outboundPrefs()?.prefs;
 
-  // Load one item's draft (server-computed: existing lines + available
-  // batches + placeholder). The ONE seed path — on mount (edit mode) and on
-  // item pick (add mode).
-  const loadItem = async (picked: LineEditItem) => {
+  // Seed one item's draft (server-computed: existing lines + available
+  // batches + placeholder). The ONE seed path — sequential imperative fetch,
+  // not a resource (issue #428's "do things sequential"): on mount (update
+  // mode), on item pick (add mode), and on an "OK & next" advance.
+  // `focusLineId` is the clicked batch to scroll/focus once loaded (AC-V6);
+  // omitted → the first batch row (an advance), undefined row → Issue field.
+  const seedItem = async (picked: LineEditItem, focusLineId?: string) => {
     setItem(picked);
+    coveredItemIds.add(picked.id);
     setLoadingLines(true);
     setErrorMessage(undefined);
     setWarnings([]);
@@ -184,24 +243,61 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       return;
     }
     const data = result.data.draftStockOutLines;
-    // FEFO order for display and distribution: the shared comparator
-    // (spec/stock-allocation § ordering, AC-AL1; VVM-then-expiry stays with
-    // the server-side allocation).
-    const sorted = [...data.draftLines].sort(fefoCompare);
-    setDraft(reconcile(sorted, { key: 'id' }));
+    // Display and distribution order (spec/stock-allocation § ordering,
+    // AC-AL1): the shared comparator — FEFO, or VVM-priority-then-expiry
+    // under the sort-by-VVM preference, matching the server-side bulk
+    // allocate's ordering — with rows holding nothing allocatable sunk to
+    // the bottom (AC-AL15). Snapshot the seeded allocation first: the
+    // on-hold manual exception and the sinking both judge it (AC-AL14).
+    const sorted = [...data.draftLines].sort((a, b) =>
+      fillOrderCompare(a, b, allocationPrefs())
+    );
+    seededPacksById = new Map(
+      sorted.map(line => [line.id, line.numberOfPacks])
+    );
+    nonAllocatableIds = new Set(
+      sorted
+        .filter(line => !rowHasAllocatableStock(line))
+        .map(line => line.id)
+    );
+    const ordered = [
+      ...sorted.filter(line => !nonAllocatableIds.has(line.id)),
+      ...sorted.filter(line => nonAllocatableIds.has(line.id)),
+    ];
+    setDraft(reconcile(ordered, { key: 'id' }));
     const placeholder = data.placeholderQuantity ?? 0;
     setPlaceholderUnits(placeholder);
+    // Seed the Issue field with the item's CURRENT requested quantity —
+    // issued units + placeholder, the same total the grid footer shows; 0
+    // when nothing is issued (spec S4 § issue field seed). Display-only: a
+    // bare setIssueValue never re-distributes, so opening an item can't
+    // disturb a hand-tuned per-batch spread. (The lens was just reset to
+    // units, so the unit sum is the right shape.)
+    const seededIssuedUnits = sorted.reduce(
+      (sum, line) => sum + line.numberOfPacks * line.packSize,
+      0
+    );
+    setIssueValue(seededIssuedUnits + placeholder);
+    // Land ready to type: in update mode the clicked batch's packs input
+    // (draft rows from existing lines keep the invoice-line id) or the first
+    // row on an advance; after an add-mode pick, the Issue field (the
+    // undefined row falls back to it).
+    setPendingFocus(
+      mode() === 'update'
+        ? { row: focusLineId ?? sorted[0]?.id }
+        : { row: undefined }
+    );
     setLoadingLines(false);
 
-    // Auto-allocate on open: a NEW shipment's *pure*
-    // placeholder — an item carrying a requested quantity with nothing yet
-    // allocated — is distributed against available stock the moment the editor
-    // opens, the same FEFO run the Issue field performs (seeded with the
-    // requested quantity), leaving the placeholder holding any remainder. A
-    // notice shows only if stock was actually placed. Requisition-sourced and
-    // manual-shortfall placeholders carry a quantity; master-list placeholders
-    // are zero, so this no-ops for them. An item with stock already allocated
-    // is left untouched (only a wholly-unallocated placeholder triggers it).
+    // Auto-allocate on open (AC-A5): a NEW shipment's *pure* placeholder — an
+    // item carrying a requested quantity with nothing yet allocated — is
+    // distributed against available stock the moment the editor opens, the
+    // same FEFO run the Issue field performs (seeded with the requested
+    // quantity), leaving the placeholder holding any remainder. A notice
+    // shows only if stock was actually placed. Requisition-sourced and
+    // manual-shortfall placeholders carry a quantity; master-list
+    // placeholders are zero, so this no-ops for them. An item with stock
+    // already allocated is left untouched.
     const allocatedPacks = sorted.reduce(
       (sum, line) => sum + line.numberOfPacks,
       0
@@ -214,9 +310,63 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     }
   };
 
+  // Back to the item-search state — add mode with no item picked. Reached by
+  // "OK & next" in add mode, or when an update walk runs out of items.
+  const backToSearch = () => {
+    setMode('add');
+    setItem(undefined);
+    setDraft(reconcile([], { key: 'id' }));
+    setPlaceholderUnits(0);
+    setIssueValue(undefined);
+    setWarnings([]);
+    setErrorMessage(undefined);
+    setDirty(false);
+    setZeroConfirm(false);
+    setLoadingLines(false);
+    setPendingFocus('itemSelector');
+  };
+
   onMount(() => {
-    setItemsAtOpen(props.existingItems);
-    if (props.initialItem) void loadItem(props.initialItem);
+    if (props.initialItem)
+      void seedItem(props.initialItem, props.initialLineId);
+    else setPendingFocus('itemSelector');
+  });
+
+  // Move focus once the target is in the DOM: the item search in add mode,
+  // else the requested batch row (scrolled into view, its packs input
+  // focused); a clicked PLACEHOLDER row has no batch row — fall back to the
+  // Issue field (AC-V6). Runs after the load so the row exists; deferred a
+  // frame so the table has painted.
+  createEffect(() => {
+    const target = pendingFocus();
+    if (!target || loadingLines()) return;
+    setPendingFocus(undefined);
+    requestAnimationFrame(() => {
+      const root = document.querySelector('[data-testid="add-item-modal"]');
+      if (!root) return;
+      if (target === 'itemSelector') {
+        root
+          .querySelector<HTMLElement>('[data-testid="item-search-input"]')
+          ?.focus();
+        return;
+      }
+      const row = target.row
+        ? root.querySelector<HTMLElement>(`[data-row-key="${target.row}"]`)
+        : null;
+      if (!row) {
+        root
+          .querySelector<HTMLInputElement>(
+            '[data-testid="issue-quantity-input"]'
+          )
+          ?.focus();
+        return;
+      }
+      row.scrollIntoView({ block: 'nearest' });
+      const packs = row.querySelector<HTMLInputElement>(
+        '[data-testid="cell-numberOfPacks"] input'
+      );
+      if (packs && !packs.disabled) packs.focus();
+    });
   });
 
   // The shared barred-batch policy (spec/stock-allocation § barred batches,
@@ -226,11 +376,49 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     expiredStockPreventIssue: prefs()?.expiredStockPreventIssue ?? false,
     expiredStockIssueThreshold: prefs()?.expiredStockIssueThreshold ?? 0,
     manageVvmStatusForStock: prefs()?.manageVvmStatusForStock ?? false,
+    sortByVvmStatusThenExpiry: prefs()?.sortByVvmStatusThenExpiry ?? false,
   });
-  const lineBarReasons = (line: DraftLine) =>
-    barReasons(line, allocationPrefs());
+  // TWO bar rules (rules.md § barred batches): the pref-gated ISSUE bar
+  // (manual entry disabled, row dimmed — AC-AL8/AL9) vs the stricter,
+  // unconditional AUTO bar (expired / unusable-VVM stock is never
+  // auto-allocated, preference or not — AC-AL2/AL10).
+  //
+  // The manual bar's on-hold exception and the sunk non-allocatable rows
+  // (AC-AL14/AL15) judge the allocation AS SEEDED at editor open — plain
+  // (non-reactive) snapshots set by seedItem, so zeroing a held row mid-edit
+  // doesn't lock it and rows don't reorder underneath the user.
+  let seededPacksById = new Map<string, number>();
+  let nonAllocatableIds = new Set<string>();
   const isBarred = (line: DraftLine): boolean =>
-    lineBarReasons(line).length > 0;
+    barReasons(
+      {
+        stockLineOnHold: line.stockLineOnHold,
+        location: line.location,
+        vvmStatus: line.vvmStatus,
+        expiryDate: line.expiryDate,
+        availablePacks: line.availablePacks,
+        numberOfPacks: seededPacksById.get(line.id) ?? 0,
+        isVaccineItem: item()?.isVaccine ?? true,
+      },
+      allocationPrefs()
+    ).length > 0;
+  // Nothing to allocate OR adjust here — sunk to the bottom, disabled
+  // (AC-AL15), like the manual bar.
+  const isNonAllocatable = (line: DraftLine): boolean =>
+    nonAllocatableIds.has(line.id);
+  const rowDisabled = (line: DraftLine): boolean =>
+    isBarred(line) || isNonAllocatable(line);
+  const lineAutoBarReasons = (line: DraftLine) =>
+    autoAllocateBarReasons(line, allocationPrefs());
+  // The tick column's predicate ("will be used in auto-allocation"): auto-
+  // fillable AND, under the packs lens, of the selected pack size (the old
+  // app's canAutoAllocate contract).
+  const willAutoAllocate = (line: DraftLine): boolean => {
+    if (line.availablePacks <= 0) return false;
+    if (lineAutoBarReasons(line).length > 0) return false;
+    const lens = allocateIn();
+    return lens.kind !== 'packs' || line.packSize === lens.size;
+  };
 
   // Available = allocatable units, EXCLUDING on-hold batches (old-app parity;
   // the shared helper skips on-hold stock/location — kdd/allocation). On-hold
@@ -259,7 +447,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // bare second allocateIn() call is not narrowed).
   const allocateInValue = () => {
     const lens = allocateIn();
-    return lens.kind === 'units' ? 'units' : `packs-${lens.size}`;
+    if (lens.kind === 'units') return 'units';
+    if (lens.kind === 'doses') return 'doses';
+    return `packs-${lens.size}`;
   };
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
@@ -268,14 +458,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // shortfall becomes the placeholder (NEW only), and each condition raises
   // its warning banner.
   const distribute = (units: number) => {
+    const lens = allocateIn();
     const result = distributeIssue(
       draft.map(line => ({
         id: line.id,
         packSize: line.packSize,
         availablePacks: line.availablePacks,
-        barred: lineBarReasons(line),
+        barred: lineAutoBarReasons(line),
       })),
-      units
+      units,
+      // The packs lens fills only batches of the selected size (AC-AL11).
+      lens.kind === 'packs' ? { requiredPackSize: lens.size } : undefined
     );
     for (let index = 0; index < draft.length; index++) {
       const packs = result.packsById.get(draft[index]!.id) ?? 0;
@@ -309,14 +502,27 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     distribute(units ?? 0);
   };
 
-  // Direct per-batch edit, bounded 0…available (AC-I5 — the client bounds the
-  // input; the server does not reject negatives while NEW).
+  // Direct per-batch edit (AC-I5/AC-AL6): whole packs — a fractional entry
+  // rounds UP, an entry beyond availability clamps DOWN to the whole-pack
+  // floor (rules.md § whole-pack arithmetic). An adjusted entry is reported
+  // (AC-AL13), and any earlier distribution banners are REPLACED — they
+  // describe an allocation this edit just changed.
   const setPacks = (id: string, value: number | null) => {
     const index = draft.findIndex(line => line.id === id);
     if (index < 0) return;
     const line = draft[index]!;
-    const bounded = Math.max(0, Math.min(value ?? 0, line.availablePacks));
-    setDraft(index, 'numberOfPacks', bounded);
+    const applied = clampManualPacks(value, line.availablePacks);
+    setDraft(index, 'numberOfPacks', applied);
+    setWarnings(
+      value != null && applied !== value
+        ? [
+            t('messages.over-allocated-line', {
+              quantity: formatNumber(applied),
+              issueQuantity: formatNumber(value),
+            }),
+          ]
+        : []
+    );
     setDirty(true);
     // As in distribute() — a direct per-batch edit also invalidates a stale
     // zero-allocation confirmation.
@@ -377,72 +583,69 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       });
     });
 
-  // Reset to the empty item-search state (add mode) — the picker unlocks and
-  // clears. Reached when an update walk runs out of items, or by OK & next in
-  // add mode (add another). Matches the stocktake / inbound editors'
-  // backToSearch; mode only ever flips update → add.
-  const backToSearch = () => {
-    setMode('add');
-    setItem(undefined);
-    setDraft(reconcile([], { key: 'id' }));
-    setPlaceholderUnits(0);
-    setIssueValue(undefined);
-    setWarnings([]);
-    setDirty(false);
-    setZeroConfirm(false);
-    setErrorMessage(undefined);
+  // OK & next (spec S4, AC-V7): save, then continue rapid entry — never a
+  // dead end (matching the stocktake / inbound editors, so never disabled):
+  // - UPDATE mode: ask the parent for the next item in its sorted/paginated
+  //   order (the covered set guards repeats) and seed it in place; when the
+  //   walk is exhausted, drop into add mode (empty, picker focused). An
+  //   unchanged item pages on WITHOUT a redundant save (outbound gates saves
+  //   on a real change).
+  // - ADD mode: reopen empty for rapid entry of the next item.
+  // A failed save aborts the advance with the editor unchanged.
+  // A walk advance in flight: gates the button (a double-click must not
+  // start two concurrent walks — overlapping page advances and covered-set
+  // writes) and survives in the button's loading face. `disposed` stops the
+  // tail of an advance whose modal was closed mid-walk (the parent's walk
+  // also aborts its own paging via its `aborted` dep).
+  const [advancing, setAdvancing] = createSignal(false);
+  let disposed = false;
+  onCleanup(() => (disposed = true));
+  const advance = async (currentId: string) => {
+    if (advancing()) return;
+    setAdvancing(true);
+    try {
+      const next = await props.nextItem(currentId, coveredItemIds);
+      if (disposed) return;
+      if (next) await seedItem(next);
+      else backToSearch(); // exhausted → add mode
+    } finally {
+      setAdvancing(false);
+    }
   };
-
-  // OK & next (spec S4): save, then continue rapid entry — never a dead end
-  // (matching the stocktake / inbound editors, so never disabled):
-  //  · add mode    — return to the picker to add another (backToSearch).
-  //  · update mode — advance to the next item on the shipment (open-time
-  //    order); when the walk is exhausted, drop into add mode instead.
   const onOkNext = () => {
-    // Update mode, unchanged: page on without a redundant save (outbound gates
-    // saves on a real change — the reference editors re-save a harmless no-op).
-    if (mode() === 'update' && !dirty()) {
-      const next = nextItem();
-      if (next) void loadItem(next);
+    if (advancing()) return;
+    const current = item();
+    // Nothing changed → no redundant save (outbound gates saves on a real
+    // change): update mode pages on, add mode just returns to the picker.
+    if (current && !dirty()) {
+      if (mode() === 'update') void advance(current.id);
       else backToSearch();
       return;
     }
     confirmThen(() => {
-      void save().then(ok => {
-        if (!ok) return;
-        if (mode() === 'add') {
+      void (async () => {
+        if (!(await save())) return;
+        if (mode() === 'add' || !current) {
           backToSearch();
           return;
         }
-        const next = nextItem();
-        if (next) void loadItem(next);
-        else backToSearch(); // exhausted → add mode
-      });
+        await advance(current.id);
+      })();
     });
   };
 
-  const pickerItems = () =>
-    itemOptionsResource
-      .noSuspense()
-      .filter(option => !props.existingItems.some(it => it.id === option.id));
+  // The picker shows EVERY visible stock item — items already on the shipment
+  // are NOT excluded (spec S4; picking one loads its existing allocation).
+  const pickerItems = () => itemOptionsResource.noSuspense();
 
-  // The item after the current one in the open-time order — OK & next's target
-  // in update mode; undefined once the walk reaches the last item (then OK &
-  // next drops into add mode instead of being a dead end).
-  const nextItem = (): LineEditItem | undefined => {
-    const currentId = item()?.id;
-    if (currentId == null) return undefined;
-    const items = itemsAtOpen();
-    const index = items.findIndex(entry => entry.id === currentId);
-    return index < 0 ? undefined : items[index + 1];
-  };
+  const updateMode = () => mode() === 'update';
 
-  // In edit mode the item is excluded from `pickerItems` (it's already on the
-  // shipment), so the combobox can't resolve its label from `items`. Supply the
-  // selected option directly so the locked field shows the item name.
+  // The catalogue is a lazy resource, so in update mode (row open / walk
+  // advance) the current item may not be resolvable from `items` yet. Supply
+  // the selected option directly so the locked field always shows the name.
   const selectedItemOption = createMemo<ItemOption | undefined>(() => {
     const it = item();
-    if (mode() !== 'update' || !it) return undefined;
+    if (!updateMode() || !it) return undefined;
     return {
       id: it.id,
       code: '',
@@ -456,10 +659,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const columns = (): Column<DraftLine, never>[] => [
     {
-      // "Will be used in auto-allocation": a check on usable (not barred)
-      // batches — matches the old app's canAllocate CheckCell; hovering the
-      // tick shows the reason. Barred rows are additionally dimmed (rowDimmed).
-      c: { accessor: line => !isBarred(line), id: 'canAllocate' },
+      // "Will be used in auto-allocation": the AUTO-fillable predicate
+      // (unconditional expired/VVM exclusion + pack-size match under the
+      // packs lens) — matches the old app's canAutoAllocate CheckCell;
+      // hovering the tick shows the reason. Issue-barred rows are
+      // additionally dimmed (rowState).
+      c: { accessor: line => willAutoAllocate(line), id: 'canAllocate' },
+      // getSize() is a min-width floor (auto layout) — without this the
+      // header-less tick column gets the 150px default and reads as a gap.
+      size: 36,
       header: '',
       cell: info => (
         <Show when={info.getValue<boolean>()}>
@@ -500,6 +708,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         accessor: line => line.campaign?.name ?? line.program?.name ?? '',
         id: 'campaign',
       },
+      // Wide enough that the two-word header doesn't wrap mid-word.
+      size: 200,
       header: t('label.campaign'),
     },
     {
@@ -568,7 +778,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             min={0}
             max={line.availablePacks}
             decimalLimit={2}
-            disabled={isBarred(line)}
+            disabled={rowDisabled(line)}
             value={line.numberOfPacks || undefined}
             onChange={value => setPacks(line.id, value ?? null)}
           />
@@ -615,9 +825,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={
-        mode() === 'update' ? t('heading.edit-line') : t('button.add-item')
-      }
+      title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
       actionsLead={
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
@@ -625,43 +833,42 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
-            icon={<CheckIcon />}
+          />
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             disabled={!item() || !dirty()}
             loading={saving()}
             onClick={onOk}
+          />
+          {/* Save & next (spec S4 § footer button matrix) — never disabled,
+              like the stocktake / inbound editors:
+               · add mode    — HIDDEN until the item carries a NON-ZERO
+                 quantity (seeded from an existing allocation, or entered);
+                 then saves any change + returns to the picker to add
+                 another. A zero quantity keeps it hidden.
+               · update mode — SHOWN throughout; saves any change, then
+                 advances the parent-owned walk, or drops into add mode once
+                 it is exhausted.
+              Save stays visible-but-disabled as the always-discoverable
+              confirm. */}
+          <Show
+            when={
+              mode() === 'update'
+                ? item()
+                : item() && issuedUnits() + placeholderUnits() > 0
+            }
           >
-            {t('button.ok')}
-          </Button>
-          {/* OK & next (spec S4 § footer button matrix) — never disabled, like
-              the stocktake / inbound editors:
-               · add mode    — HIDDEN until an item is chosen and a change made;
-                 then saves + returns to the picker to add another.
-               · update mode — SHOWN throughout; saves then advances to the next
-                 item on the shipment, or drops into add mode once the walk is
-                 exhausted.
-              OK stays visible-but-disabled as the always-discoverable confirm. */}
-          <Show when={mode() === 'update' ? item() : item() && dirty()}>
-            <Button
-              icon={<ArrowRightIcon />}
+            <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
-              // loadingLines too (the stocktake editor's busy()): the no-save
-              // page-through is a fetch with no stale-response guard, so the
+              // loadingLines too (the stocktake editor's busy()), and the
+              // walk itself (advancing): the page-through is a fetch, so the
               // button must not accept clicks while one is in flight.
-              loading={saving() || loadingLines()}
+              loading={saving() || loadingLines() || advancing()}
               onClick={onOkNext}
-            >
-              {t('button.ok-and-next')}
-            </Button>
+            />
           </Show>
         </>
       }
@@ -698,12 +905,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         value={item()?.id ?? ''}
         selectedItem={selectedItemOption()}
         clearable={false}
-        disabled={mode() === 'update' || saving()}
+        disabled={updateMode() || saving()}
         inputTestId="item-search-input"
         placeholder={t('placeholder.search-by-name')}
         onChange={option => {
           if (option)
-            void loadItem({
+            void seedItem({
               id: option.id,
               name: option.name,
               unitName: option.unitName,
@@ -730,6 +937,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           <NumberField
             label={t('label.issue')}
             min={0}
+            data-testid="issue-quantity-input"
             value={issueValue()}
             disabled={saving()}
             onChange={onIssueChange}
@@ -739,20 +947,35 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             value={allocateInValue()}
             options={[
               { value: 'units', label: unitName() },
+              // The doses lens (AC-AL7): vaccine items under the
+              // manage-vaccines-in-doses preference only.
+              ...(prefs()?.manageVaccinesInDoses && item()?.isVaccine
+                ? [{ value: 'doses', label: t('label.doses') }]
+                : []),
               ...distinctPackSizes().map(size => ({
                 value: `packs-${size}`,
                 label: t('label.packs-of-pack-size', { packSize: size }),
               })),
             ]}
             onValueChange={value => {
-              setAllocateIn(
+              const previous = allocateIn();
+              const next: AllocateUnit =
                 value === 'units'
                   ? { kind: 'units' }
-                  : { kind: 'packs', size: Number(value.slice(6)) }
-              );
-              // Re-interpret the same requested quantity in the new lens.
+                  : value === 'doses'
+                    ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                    : { kind: 'packs', size: Number(value.slice(6)) };
+              setAllocateIn(next);
+              // Re-EXPRESS the current quantity in the new lens — the units
+              // equivalent is preserved and NOTHING redistributes (matching
+              // the old app; spec S4 § issue field seed). Re-running the
+              // distribution here would silently rewrite the allocation —
+              // seeded or hand-tuned — on a mere display-unit switch.
               const v = issueValue();
-              if (v != null) onIssueChange(v);
+              if (v != null) {
+                const units = lensToUnits(v, previous) ?? 0;
+                setIssueValue(Math.round(unitsToLens(units, next) * 100) / 100);
+              }
             }}
           />
           {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
@@ -779,7 +1002,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           rowKey={line => line.id}
           loading={loadingLines()}
           showFullScreen={false}
-          rowState={line => (isBarred(line) ? 'disabled' : undefined)}
+          rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
           emptyMessage={t('messages.no-stock-available')}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}

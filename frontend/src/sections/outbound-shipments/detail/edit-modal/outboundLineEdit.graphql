@@ -36,6 +36,7 @@ query draftStockOutLines(
         id
         description
         unusable
+        priority
       }
       receivedNumberOfPacks
       campaign {

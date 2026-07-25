@@ -1,4 +1,5 @@
 import {
+  autoAllocateBarReasons,
   barReasons,
   distributeIssue,
   fefoCompare,
@@ -21,12 +22,19 @@ type ServerDraftLine = NonNullable<
 >['draftLines'][number];
 
 export interface DraftLine extends ServerDraftLine {
+  /** The pref-gated ISSUE bar (manual entry / row display — AC-AL8/AL9). */
   barred: readonly BarReason[];
+  /**
+   * The stricter AUTO bar (stock-allocation § barred batches › never
+   * auto-allocated): expired / unusable-VVM stock is never distributed to,
+   * preference or not (AC-AL2/AL10).
+   */
+  autoBarred: readonly BarReason[];
 }
 
 /**
  * Seed the editor's rows: FEFO-ordered (display order IS fill order,
- * stock-allocation § ordering) with each row's bar verdict resolved once.
+ * stock-allocation § ordering) with each row's bar verdicts resolved once.
  * `availablePacks` already includes this prescription's own draft allocation
  * (the server hands back re-issuable capacity).
  */
@@ -35,9 +43,11 @@ export const seedDraftLines = (
   prefs: AllocationPreferences,
   today?: Date
 ): DraftLine[] =>
-  [...lines]
-    .sort(fefoCompare)
-    .map(line => ({ ...line, barred: barReasons(line, prefs, today) }));
+  [...lines].sort(fefoCompare).map(line => ({
+    ...line,
+    barred: barReasons(line, prefs, today),
+    autoBarred: autoAllocateBarReasons(line, prefs, today),
+  }));
 
 /** Units currently issued across the draft rows. */
 export const draftIssuedUnits = (lines: readonly DraftLine[]): number =>
@@ -61,9 +71,13 @@ export const allocateUnits = (
   lines: readonly DraftLine[],
   requestedUnits: number
 ): { packsById: Map<string, number>; shortfallUnits: number } => {
-  const distribution = distributeIssue(lines, requestedUnits, {
-    partialPacks: true,
-  });
+  // Distribution filters on the AUTO bar — expired/unusable-VVM stock is
+  // never auto-dispensed even with the issue prefs off (AC-AL10).
+  const distribution = distributeIssue(
+    lines.map(line => ({ ...line, barred: line.autoBarred })),
+    requestedUnits,
+    { partialPacks: true }
+  );
   return {
     packsById: distribution.packsById,
     shortfallUnits: distribution.shortfallUnits,
