@@ -66,6 +66,12 @@
      LIGHTER than content in dark, where lightness carries elevation. */
   --surface-raised: var(--bg-white);
 
+  /* Recessed list surface behind discrete cards (card-view — ui-standards §
+     tables card layout `.card-table-list`): a faint grey so white cards lift
+     off it. Cards themselves stay --surface-raised. Dark: darker than the card
+     so the same figure/ground holds. */
+  --table-card-surface: #f4f5f7;
+
   /* text (theme.ts → typography + palette.form) */
   --text-body: #1c1c28; /* body1 / th */
   --text-secondary: #555770; /* body2 / h6 / form.field */
@@ -295,6 +301,10 @@
   /* Raised surfaces sit LIGHTER than the #21212b content — on dark, lightness
      (not shadow) carries elevation, so buttons/menus/dialogs stand out. */
   --surface-raised: #2b2b3a;
+
+  /* Recessed card-list surface — darker than the raised card so the same
+     figure/ground reads in dark. */
+  --table-card-surface: #1b1b24;
 
   /* Elevation via near-BLACK shadows. The light theme's grey shadows are
      lighter than a dark surface, so they read as a glow — black reads as depth.

@@ -3590,7 +3590,6 @@
   "table.show-columns": "Show/hide columns",
   "table.sort": "Sort",
   "table.toggle-full-screen": "Toggle full screen",
-  "table.view": "View",
   "table.view-cards": "Card view",
   "table.view-table": "Table view",
   "template.requisition-sent": "Approved by {{name}}{{job}}. Email: {{email}} and phone number: {{phone}}.",
