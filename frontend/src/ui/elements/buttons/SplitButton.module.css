@@ -56,8 +56,9 @@
     color 140ms ease;
 }
 
-/* Tablet & below: match the Button's 48px touch growth. */
-@media (max-width: 1023px) {
+/* Touch pointers: match the Button's tap-target growth (same token, same
+   trigger) so the two stay the same height. */
+@media (pointer: coarse) {
   .main,
   .caret {
     min-block-size: var(--touch-target);
