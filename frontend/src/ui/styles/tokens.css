@@ -177,21 +177,39 @@
      cell font, shared by header and body cells. */
   --table-line-height: 1.43;
   --footer-height: 2rem; /* 32px */
-  --touch-target: 3rem; /* 48px — spec target */
+  /* The single knob for the minimum size of every touch-restricted element —
+     labelled buttons, icon-only buttons, header controls, menu rows, etc., all
+     of which reference this token behind a `pointer: coarse` query. Tune here.
+     An ABSOLUTE px (like --input-font-touch), a deliberate exception to the
+     rem-only rule: a tap target must stay a stable physical size and NOT be
+     eroded by the root-size shrink, which fires below 600px — i.e. on exactly
+     the phones where the coarse pointer applies. px still scales under browser
+     zoom, so reflow/AA zoom is unaffected. 44px satisfies WCAG 2.5.5 (AAA). */
+  --touch-target: 44px; /* tunable */
 
   /* --- Buttons (ui-standards #btn-sizes) ------------------------------ */
   --button-height: 2.25rem; /* 36px — medium (default) */
   --button-height-sm: 1.75rem; /* 28px — small (dense/inline) */
 
-  /* --- Inputs (company design spec) ----------------------------------- */
-  --input-height: 2.5rem; /* 40px default */
-  --input-height-sm: 2.25rem; /* 36px small */
-  /* Font size on touch — an ABSOLUTE 16px, the one input exception to the
-     rem-only rule (px, not rem). iOS Safari zooms the page on focus when a
-     field's font is under 16px, and that threshold is absolute, so this must
-     hold even below 600px where index.css shrinks the root to 85%. Applied to
-     default-size fields on coarse pointers (ui-standards #field-touch-sizing);
-     the small variant stays dense. */
+  /* --- Input heights: the four-height system (tune every input here) ---
+     Every field-type input (text/number/currency, date/time/range, select,
+     multi-select, combobox) reads these four tokens and NOTHING else for its
+     height, so they stay identical side by side and tune from one place. Two
+     rest sizes in rem (scale with the root density knob) + two touch sizes
+     enforced under pointer:coarse in ABSOLUTE px, so the root-shrink on phones
+     can't erode the tap target (px still scales under browser zoom). Both touch
+     sizes clear WCAG 2.5.5 AAA (44px); standard sits a notch above at 48, and
+     the standard↔small 4px step is preserved in both modes. */
+  --input-height: 2.5rem; /* 40px — standard, rest */
+  --input-height-sm: 2.25rem; /* 36px — small, rest */
+  --input-height-touch: 48px; /* standard, touch-enforced */
+  --input-height-sm-touch: 44px; /* small, touch-enforced */
+  /* Font size on touch — an ABSOLUTE 16px, an input exception to the rem-only
+     rule (px, not rem). iOS Safari zooms the page on focus when a field's font
+     is under 16px, and that threshold is absolute, so this must hold even below
+     600px where index.css shrinks the root. Applied to BOTH sizes on coarse
+     pointers (ui-standards #field-touch-sizing) — small included, since the iOS
+     zoom threshold ignores our size variants. */
   --input-font-touch: 16px;
   /* Small-field text (ui-standards "Text Fields — Size Variations"): 13px, a
      notch under the 14px default (--text-sm) so a small input + its label read

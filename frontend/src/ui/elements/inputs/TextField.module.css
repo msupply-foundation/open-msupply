@@ -228,14 +228,21 @@
 }
 
 @media (pointer: coarse) {
+  /* Standard grows to --input-height-touch, small to --input-height-sm-touch
+     (both clear WCAG 2.5.5 AAA), keeping the 4px size step on touch. */
   .input,
   .inputWrap[data-adorned] {
-    min-height: var(--touch-target);
+    min-height: var(--input-height-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus).
-     Default size only; the small variant stays dense (ui-standards). */
-  .input:not([data-size='small']) {
+  .input[data-size='small'],
+  .inputWrap[data-adorned][data-size='small'] {
+    min-height: var(--input-height-sm-touch);
+  }
+
+  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). BOTH
+     sizes: the iOS zoom threshold is absolute and ignores our size variant. */
+  .input {
     font-size: var(--input-font-touch);
   }
 

@@ -93,7 +93,7 @@ export const Pagination = (props: PaginationProps) => {
       <Show when={props.onPageSizeChange}>
         <Select
           class={styles.pageSize}
-          size="sm"
+          size="small"
           label={t('pagination.rows')}
           testId="rows-per-page-select"
           value={String(props.pageSize)}

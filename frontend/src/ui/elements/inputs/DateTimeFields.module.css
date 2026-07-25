@@ -262,6 +262,26 @@
   font-size: var(--input-font-sm);
 }
 
+/* Touch: match the shared input touch heights (standard 48 / small 44, both
+   WCAG 2.5.5 AAA) and bump the typed text to 16px for BOTH sizes — the date
+   input is a real <input>, so iOS Safari zooms on focus under 16px. This block
+   is the reason the date fields now reach the touch target at all. */
+@media (pointer: coarse) {
+  .control {
+    min-block-size: var(--input-height-touch);
+  }
+
+  .control[data-size='small'] {
+    min-block-size: var(--input-height-sm-touch);
+  }
+
+  .dateTrigger,
+  .dateInput,
+  .timeSegs {
+    font-size: var(--input-font-touch);
+  }
+}
+
 .helper {
   margin: 0;
   font-size: var(--text-xs);
