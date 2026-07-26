@@ -1,7 +1,8 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component, type JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
+import { Alert } from '../ui/elements/feedback/Alert';
 import { Button } from '../ui/elements/buttons/Button';
 import { IconButton } from '../ui/elements/buttons/IconButton';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -9,7 +10,8 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
-import { ItemSearch } from '../domain/item';
+import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
+import type { Page } from '../ui/utils/createPaginatedSearch';
 import {
   DataTable,
   type CardGroup,
@@ -52,15 +54,98 @@ export type EditItem = {
 export interface LineEditModalProps {
   open: boolean;
   onClose: () => void;
-  /** The item the click opened on (row click → UPDATE mode). */
+  /**
+   * The item the modal opened on: a row click → UPDATE mode (the selector is
+   * locked); null → ADD mode ("Add item", an active item search).
+   */
   item: EditItem | null;
-  /** That item's existing rows (one card per row), seeded into the draft. */
+  /** The opened item's existing rows (one card per row), seeded into the draft. */
   lines: InboundLineFragment[];
 }
 
-// The showcase item search needs a storeId, but this open is UPDATE mode (the
-// selector is disabled), so it never runs a fetch; a placeholder id is enough.
-const SHOWCASE_STORE_ID = 'showcase';
+// ---- The add-mode item picker (a self-contained stand-in for the real
+// GraphQL-backed ItemSearch — the showcase has no store, so it searches a
+// fixed catalogue). Mirrors ItemSearch's shape: an AsyncCombobox with a
+// paginated fetcher and a "code - name … Σ Units" option row. ----
+type ItemChoice = {
+  id: string;
+  code: string;
+  name: string;
+  unitName: string | null;
+  totalUnits: number;
+  defaultPackSize: number;
+};
+
+const CATALOG: ItemChoice[] = [
+  { id: 'AMOX500', code: 'AMOX500', name: 'Amoxicillin 500mg capsules', unitName: 'Capsule', totalUnits: 4999, defaultPackSize: 100 }, // prettier-ignore
+  { id: 'PARA500', code: 'PARA500', name: 'Paracetamol 500mg tablets', unitName: 'Tablet', totalUnits: 12000, defaultPackSize: 100 }, // prettier-ignore
+  { id: 'IBU200', code: 'IBU200', name: 'Ibuprofen 200mg tablets', unitName: 'Tablet', totalUnits: 3400, defaultPackSize: 50 }, // prettier-ignore
+  { id: 'MET850', code: 'MET850', name: 'Metformin 850mg tablets', unitName: 'Tablet', totalUnits: 900, defaultPackSize: 30 }, // prettier-ignore
+  { id: 'SALB100', code: 'SALB100', name: 'Salbutamol 100mcg inhaler', unitName: 'Inhaler', totalUnits: 240, defaultPackSize: 1 }, // prettier-ignore
+  { id: 'OME20', code: 'OME20', name: 'Omeprazole 20mg capsules', unitName: 'Capsule', totalUnits: 640, defaultPackSize: 20 }, // prettier-ignore
+  { id: 'CEFT1G', code: 'CEFT1G', name: 'Ceftriaxone 1g injection', unitName: 'Vial', totalUnits: 120, defaultPackSize: 10 }, // prettier-ignore
+  { id: 'ORS-SACHET', code: 'ORS-SACHET', name: 'Oral rehydration salts', unitName: 'Sachet', totalUnits: 500, defaultPackSize: 1 }, // prettier-ignore
+];
+
+const ITEM_PAGE_SIZE = 5;
+const fetchItemPage = (
+  search: string,
+  offset: number
+): Promise<Page<ItemChoice>> => {
+  const needle = search.toLocaleLowerCase();
+  const filtered = CATALOG.filter(
+    i =>
+      i.name.toLocaleLowerCase().includes(needle) ||
+      i.code.toLocaleLowerCase().includes(needle)
+  );
+  return Promise.resolve({
+    nodes: filtered.slice(offset, offset + ITEM_PAGE_SIZE),
+    totalCount: filtered.length,
+  });
+};
+
+const renderItemRow = (item: ItemChoice): JSX.Element => (
+  <span
+    style={{
+      display: 'flex',
+      'justify-content': 'space-between',
+      gap: 'var(--space-3)',
+      width: '100%',
+    }}
+  >
+    <span>
+      {item.code} - {item.name}
+    </span>
+    <span style={{ color: 'var(--text-secondary)', 'white-space': 'nowrap' }}>
+      {item.totalUnits} {t('label.units')}
+    </span>
+  </span>
+);
+
+// The item selector shown in the dialog title — active in add mode, locked in
+// update mode (add and edit then read as the same surface, matching the real
+// editor). `selected` renders the current item's label even when it isn't in
+// the search results (update mode, opened from a row).
+const ItemSelector = (props: {
+  value?: string;
+  selected?: ItemChoice;
+  disabled?: boolean;
+  onSelect: (item: ItemChoice | null) => void;
+}): JSX.Element => (
+  <AsyncCombobox<ItemChoice>
+    label={t('label.item')}
+    hideLabel
+    disabled={props.disabled}
+    inputTestId="item-search-input"
+    fetchPage={fetchItemPage}
+    value={props.value}
+    selected={props.selected}
+    itemToString={item => `${item.code} - ${item.name}`}
+    itemToValue={item => item.id}
+    renderItem={renderItemRow}
+    onSelect={props.onSelect}
+  />
+);
 
 // One editable batch. This is the manual-shipment default field set (matching
 // the detail table the modal opens from) — the pref-gated fields (auth / VVM /
@@ -180,10 +265,25 @@ const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
 // whose TITLE is the item selector, an "Add batch" affordance in the header,
 // Cancel / OK & next / OK actions, and a card-only grouped DataTable body
 // (batch panel + Pricing / Other disclosures). Card view at every width — no
-// table view.
+// table view. Opens either on a row (UPDATE — seeded with that item's batches)
+// or from "Add item" (ADD — an active item search, empty until an item is
+// picked).
 const Body: Component<LineEditModalProps> = props => {
+  // update = opened on a row (selector locked); add = "Add item" (active
+  // search). Fixed for this mount; the keyed Show below rebuilds on reopen.
+  const initialMode: 'add' | 'update' = props.item ? 'update' : 'add';
+
+  // The current item (mutable in add mode as the user picks/clears one).
+  const [item, setItem] = createSignal<EditItem | null>(props.item);
+  // The pack size a new batch starts at — the opened item's, then the picked
+  // item's default once one is chosen.
+  const [packSizeSeed, setPackSizeSeed] = createSignal(
+    props.lines[0]?.packSize ?? 1
+  );
+
   // Live draft, keyed by batch id so a splice can't desync a row from its slot
-  // (matches the real editor). Seeded from the clicked item's existing rows.
+  // (matches the real editor). Seeded from the clicked item's existing rows
+  // (empty in add mode until an item is picked).
   const [batches, setBatches] = createStore<DraftBatch[]>(
     props.lines.map(fromLine)
   );
@@ -206,6 +306,42 @@ const Body: Component<LineEditModalProps> = props => {
       [activeBand()]: { ...current[activeBand()], [key]: value },
     }));
 
+  // Picking an item (add mode): seed one empty batch at the item's default pack
+  // size. Clearing (null) empties the editor back to the item-search state.
+  const chooseItem = (choice: ItemChoice | null) => {
+    if (!choice) {
+      setItem(null);
+      setBatches([]);
+      return;
+    }
+    setItem({
+      id: choice.id,
+      code: choice.code,
+      name: choice.name,
+      unitName: choice.unitName,
+    });
+    setPackSizeSeed(choice.defaultPackSize > 0 ? choice.defaultPackSize : 1);
+    setBatches([
+      emptyBatch(choice.defaultPackSize > 0 ? choice.defaultPackSize : 1),
+    ]);
+  };
+
+  // The current item as an ItemChoice, so the locked selector shows its label
+  // even though the opened item isn't in the catalogue search results.
+  const selectedChoice = (): ItemChoice | undefined => {
+    const it = item();
+    return it
+      ? {
+          id: it.id,
+          code: it.code,
+          name: it.name,
+          unitName: it.unitName,
+          totalUnits: 0,
+          defaultPackSize: packSizeSeed(),
+        }
+      : undefined;
+  };
+
   const indexById = (id: string) => batches.findIndex(b => b.id === id);
   const updateBatch = <F extends keyof DraftBatch>(
     id: string,
@@ -216,9 +352,8 @@ const Body: Component<LineEditModalProps> = props => {
     if (index >= 0) setBatches(index, field, value as never);
   };
 
-  const defaultPackSize = () => props.lines[0]?.packSize ?? 1;
   const addBatch = () =>
-    setBatches(produce(d => d.push(emptyBatch(defaultPackSize()))));
+    setBatches(produce(d => d.push(emptyBatch(packSizeSeed()))));
   const duplicateBatch = (id: string) => {
     const newId = crypto.randomUUID();
     setBatches(
@@ -240,7 +375,8 @@ const Body: Component<LineEditModalProps> = props => {
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
-  const unitLabel = () => props.item?.unitName ?? t('label.units');
+  const hasItem = () => item() !== null;
+  const unitLabel = () => item()?.unitName ?? t('label.units');
 
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
@@ -573,27 +709,26 @@ const Body: Component<LineEditModalProps> = props => {
       size="large"
       testId="line-edit-modal"
       title={
-        // Update mode: the selector shows the clicked item, disabled — so add
-        // and edit read as the same surface (matches the real editor).
-        <ItemSearch
-          label={t('label.item')}
-          hideLabel
-          storeId={SHOWCASE_STORE_ID}
-          value={props.item?.id}
-          selectedItem={props.item ?? undefined}
-          disabled
-          onSelect={() => {}}
+        <ItemSelector
+          value={item()?.id}
+          selected={selectedChoice()}
+          disabled={initialMode === 'update'}
+          onSelect={chooseItem}
         />
       }
-      ariaLabel={t('label.edit-line')}
+      ariaLabel={
+        initialMode === 'update' ? t('label.edit-line') : t('button.add-item')
+      }
       headerActions={
-        <Button
-          icon={<PlusCircleIcon />}
-          data-testid="add-batch-button"
-          onClick={addBatch}
-        >
-          {t('label.add-batch')}
-        </Button>
+        <Show when={hasItem()}>
+          <Button
+            icon={<PlusCircleIcon />}
+            data-testid="add-batch-button"
+            onClick={addBatch}
+          >
+            {t('label.add-batch')}
+          </Button>
+        </Show>
       }
       actions={
         <>
@@ -605,44 +740,53 @@ const Body: Component<LineEditModalProps> = props => {
           >
             {t('button.cancel')}
           </Button>
-          <Button
-            variant="secondary"
-            data-testid="dialog-button-next-and-ok"
-            onClick={props.onClose}
-          >
-            {t('button.ok-and-next')}
-          </Button>
-          <Button data-testid="dialog-button-ok" onClick={props.onClose}>
-            {t('button.ok')}
-          </Button>
+          <Show when={hasItem()}>
+            <Button
+              variant="secondary"
+              data-testid="dialog-button-next-and-ok"
+              onClick={props.onClose}
+            >
+              {t('button.ok-and-next')}
+            </Button>
+            <Button data-testid="dialog-button-ok" onClick={props.onClose}>
+              {t('button.ok')}
+            </Button>
+          </Show>
         </>
       }
     >
-      {/* Read-only Unit field follows the selector (spec S4). */}
-      <Show when={props.item?.unitName}>
-        <TextField
-          label={t('label.unit')}
-          value={props.item?.unitName ?? ''}
-          disabled
+      <Show
+        when={hasItem()}
+        fallback={
+          <Alert severity="info">{t('messages.select-item-to-receive')}</Alert>
+        }
+      >
+        {/* Read-only Unit field follows the selector (spec S4). */}
+        <Show when={item()?.unitName}>
+          <TextField
+            label={t('label.unit')}
+            value={item()?.unitName ?? ''}
+            disabled
+          />
+        </Show>
+        <DataTable
+          columns={columns()}
+          rows={rows()}
+          rowKey={b => b.id}
+          cardGroups={CARD_GROUPS}
+          showFullScreen={false}
+          config={config()}
+          setConfig={setConfig}
+          emptyMessage={t('label.add-batch')}
         />
       </Show>
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={b => b.id}
-        cardGroups={CARD_GROUPS}
-        showFullScreen={false}
-        config={config()}
-        setConfig={setConfig}
-        emptyMessage={t('label.add-batch')}
-      />
     </Dialog>
   );
 };
 
 export const LineEditModal: Component<LineEditModalProps> = props => (
-  // A fresh mount per open, keyed on the item id, so switching items rebuilds
-  // the draft (kdd/solid-reactivity-pitfalls — no leaked state).
+  // A fresh mount per open, keyed on the item id (or 'add'), so switching items
+  // rebuilds the draft (kdd/solid-reactivity-pitfalls — no leaked state).
   <Show when={props.open && (props.item?.id ?? 'add')} keyed>
     <Body {...props} />
   </Show>
