@@ -1,9 +1,8 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createResource, createSignal } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -11,65 +10,60 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { ChipListCell } from '../../../ui/elements/table/ChipListCell';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import {
-  PlusCircleIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-  GroupItemsIcon,
-  UngroupItemsIcon,
-} from '../../../ui/icons';
+import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import { stockPreferences } from '../../../store/storeContext';
 import {
   StockLines,
-  ItemsByStockLineFilter,
   type StockLineRowFragment,
   type StockLinesVariables,
-  type ItemsByStockLineFilterResult,
 } from './stock.generated';
-import {
-  filterFields,
-  STOCK_LINE_ONLY_FILTER_KEYS,
-  type StockFilter,
-} from './listFilters';
+import { filterFields, type StockFilter } from './listFilters';
 import { NewStockModal } from './NewStockModal';
 import { ExportStockAction } from './actions/ExportStockAction';
 
 // The stock list view (spec/stock S1). The store's stock lines that have packs
 // on hand (total > 0 — the always-on hasPacksInStore gate), server-paginated /
-// filtered / sorted, with a grouped-by-item toggle. Data + URL-backed
-// filter/sort/pagination/grouped state are owned here; the UI composes library
-// components (Page / Header / FilterBar / DataTable). No selection, no bulk
-// footer (spec deviation: stock lines are never deleted from this screen). The
-// grouped view flattens item aggregate rows + their expandable batch rows into
-// ONE DataTable (DataTable has no native row expansion — page-owned instead).
+// filtered / sorted. Data + URL-backed filter/sort/pagination state are owned
+// here; the UI composes library components (Page / Header / FilterBar /
+// DataTable). No selection, no bulk footer (spec deviation: stock lines are
+// never deleted from this screen).
+//
+// ONE Column<Row, SortKey, GroupKey> list renders as BOTH the table and the
+// card view (spec/stock S1 › card view): each column declares its card slot
+// (meta.headerPosition for the header, cardGroup 'more' for the disclosure,
+// neither for the always-shown body). Table column order follows the current
+// open-mSupply Stock ListView (see columns() below). Sorting is server-driven —
+// a column is sortable only when it declares a sortKey AND resolves an accessor
+// (TanStack gates header sort on the accessorFn; a pure display column never
+// sorts — this is why the old id-only columns were dead, kdd/table-state).
+//
+// The grouped-by-item view is deferred this iteration (spec/stock DIVERGENCES
+// D63) — the list is the flat stock-line list only.
 
 const DEFAULT_PAGE_SIZE = 20;
-const DASH = '—';
 
-type LineRow = StockLineRowFragment;
-type GroupedConnector = Extract<
-  ItemsByStockLineFilterResult['itemsByStockLineFilter'],
-  { __typename: 'ItemConnector' }
->;
-type ItemRow = GroupedConnector['nodes'][number];
+type Row = StockLineRowFragment;
 
-type Row =
-  | { kind: 'line'; id: string; line: LineRow }
-  | { kind: 'item'; id: string; item: ItemRow };
+// Card body groups (spec/stock S1 › card view): one collapsed "More details"
+// disclosure holds every column that is neither in the header nor always shown.
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Row, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' }, // no labelKey → "More details"
+];
 
 // The server sort-field union — a column can only ever name a real key
-// (kdd/type-safety). Grouped mode honours only itemName / itemCode.
+// (kdd/type-safety).
 type SortKey = NonNullable<StockLinesVariables['sort']>[number]['key'];
 
 type StockListState = {
@@ -77,7 +71,6 @@ type StockListState = {
   sort: NonNullable<StockLinesVariables['sort']>;
   offset: number;
   first: number;
-  grouped: boolean;
 };
 
 const DEFAULT_STATE: StockListState = {
@@ -85,90 +78,34 @@ const DEFAULT_STATE: StockListState = {
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
-  grouped: false,
 };
-
-const fmtNum = (n: number) => formatNumber(n);
-const fmtCur = (n: number) =>
-  formatNumber(n, {
-    style: 'currency',
-    currency: 'USD',
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-const fmtDate = (d: string | null | undefined) => (d ? localisedDate(d) : DASH);
 
 // Units = packs × pack size; value = packs × cost price (spec/stock rules —
 // always computed, never stored).
-const lineUnits = (l: LineRow) => l.totalNumberOfPacks * l.packSize;
-const lineAvailUnits = (l: LineRow) => l.availableNumberOfPacks * l.packSize;
-const lineValue = (l: LineRow) => l.totalNumberOfPacks * l.costPricePerPack;
-
-const itemBatches = (item: ItemRow): LineRow[] => item.availableBatches.nodes;
-const sumBy = (rows: LineRow[], f: (l: LineRow) => number) =>
-  rows.reduce((acc, l) => acc + f(l), 0);
-
-// A per-line attribute on an item row: the single value when every batch agrees,
-// else the "multiple" marker (spec/stock AC-L5).
-const singleOrMultiple = (
-  rows: LineRow[],
-  value: (l: LineRow) => string
-): string => {
-  const distinct = new Set(rows.map(value).filter(v => v !== ''));
-  if (distinct.size === 0) return DASH;
-  if (distinct.size === 1) return [...distinct][0];
-  return t('label.multiple');
-};
-
-// The currency form of the above: the single price CURRENCY-formatted when every
-// batch agrees (so an item aggregate row matches its child line rows), else the
-// multiple marker.
-const singleOrMultipleCurrency = (
-  rows: LineRow[],
-  value: (l: LineRow) => number
-): string => {
-  const distinct = new Set(rows.map(value));
-  if (distinct.size === 0) return DASH;
-  if (distinct.size === 1) return fmtCur([...distinct][0]);
-  return t('label.multiple');
-};
+const lineUnits = (l: Row) => l.totalNumberOfPacks * l.packSize;
+const lineAvailUnits = (l: Row) => l.availableNumberOfPacks * l.packSize;
+const lineValue = (l: Row) => l.totalNumberOfPacks * l.costPricePerPack;
 
 const StockList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
   const { query, setQuery } = useUrlQueryState<StockListState>(DEFAULT_STATE);
   const [createOpen, setCreateOpen] = createSignal(false);
-  const [expanded, setExpanded] = createSignal<Set<string>>(new Set());
-
-  const grouped = () => query().grouped;
   const prefs = () => stockPreferences();
-  // In grouped mode only item name / code are server-sortable.
-  const sortable = (k: SortKey) =>
-    !grouped() || k === 'itemName' || k === 'itemCode';
 
-  const flatVariables = (): StockLinesVariables => ({
+  const variables = (): StockLinesVariables => ({
     storeId: params.storeId,
     filter: { ...stripEmpty(query().filter), hasPacksInStore: true },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
   });
 
-  const groupedVariables = () => {
-    const s = query().sort[0];
-    const itemKey: 'name' | 'code' = s?.key === 'itemCode' ? 'code' : 'name';
-    return {
-      storeId: params.storeId,
-      filter: { ...stripEmpty(query().filter), hasPacksInStore: true },
-      sort: [{ key: itemKey, desc: s?.desc ?? false }],
-      page: { first: query().first, offset: query().offset },
-    };
-  };
-
-  // Only the ACTIVE view fetches: an inactive source returns false, so
-  // createResource skips its fetcher. `.latest` reads never suspend.
-  const [flatData] = createResource(
-    () => (grouped() ? false : JSON.stringify(flatVariables())),
+  // Global resource-style fetch (kdd/state-management): the serialised variables
+  // are the resource source (a stable string — kdd/solid-reactivity-pitfalls),
+  // and `.latest` reads never suspend, so a filter/sort/page refetch keeps the
+  // table mounted and shows the loading treatment rather than remounting.
+  const [data] = createResource(
+    () => JSON.stringify(variables()),
     async serialised => {
       const result = await graphqlFetch(
         StockLines,
@@ -178,420 +115,248 @@ const StockList: Component = () => {
       return result.data.stockLines;
     }
   );
-  const [groupedData] = createResource(
-    () => (grouped() ? JSON.stringify(groupedVariables()) : false),
-    async serialised => {
-      const result = await graphqlFetch(
-        ItemsByStockLineFilter,
-        JSON.parse(serialised) as ReturnType<typeof groupedVariables>
-      );
-      if (result.kind !== 'success') return undefined;
-      return result.data.itemsByStockLineFilter.__typename === 'ItemConnector'
-        ? result.data.itemsByStockLineFilter
-        : undefined;
-    }
-  );
 
-  const loading = () => (grouped() ? groupedData.loading : flatData.loading);
-  const totalCount = () =>
-    grouped()
-      ? (groupedData.latest?.totalCount ?? 0)
-      : (flatData.latest?.totalCount ?? 0);
-
-  const rows = (): Row[] => {
-    if (!grouped()) {
-      return (flatData.latest?.nodes ?? []).map(line => ({
-        kind: 'line' as const,
-        id: `line-${line.id}`,
-        line,
-      }));
-    }
-    const items = groupedData.latest?.nodes ?? [];
-    const out: Row[] = [];
-    for (const item of items) {
-      out.push({ kind: 'item', id: `item-${item.id}`, item });
-      if (expanded().has(item.id)) {
-        for (const line of itemBatches(item)) {
-          out.push({ kind: 'line', id: `line-${line.id}`, line });
-        }
-      }
-    }
-    return out;
-  };
+  const rows = (): Row[] => data.latest?.nodes ?? [];
+  const totalCount = () => data.latest?.totalCount ?? 0;
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
+  // Clicking a sortable header: the DataTable (TanStack) computes the next
+  // direction and hands back key + desc; we record it as the GraphQL sort array,
+  // resetting to the first page.
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
   const onFilterChange = (filter: StockFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
 
-  const toggleGrouped = () => {
-    const next = !grouped();
-    const filter = { ...query().filter };
-    if (next) for (const key of STOCK_LINE_ONLY_FILTER_KEYS) delete filter[key];
-    setExpanded(new Set<string>());
-    setQuery({
-      ...query(),
-      grouped: next,
-      filter,
-      sort: [{ key: 'itemName', desc: query().sort[0]?.desc ?? false }],
-      offset: 0,
-    });
-  };
-
-  const toggleExpand = (itemId: string) => {
-    const next = new Set(expanded());
-    if (next.has(itemId)) next.delete(itemId);
-    else next.add(itemId);
-    setExpanded(next);
-  };
-
   const openLine = (id: string) =>
     navigate(`/${params.storeId}/inventory/stock/${id}`);
 
-  const onRowClick = (row: Row) =>
-    row.kind === 'line' ? openLine(row.line.id) : toggleExpand(row.item.id);
+  // A units figure with the dose equivalent appended as a suffix for vaccine
+  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the items
+  // list's dose display (no bespoke styling).
+  const unitsText = (
+    units: number,
+    isVaccine: boolean,
+    doses: number
+  ): string =>
+    prefs().manageVaccinesInDoses && isVaccine
+      ? `${formatNumber(units)} (${formatNumber(units * doses)} ${t('label.doses-short')})`
+      : formatNumber(units);
 
-  // A units value with a dose sub-note for vaccine rows when manageVaccinesInDoses
-  // is on (spec/stock AC-P2).
-  const unitsCell = (units: number, isVaccine: boolean, doses: number) => (
-    <span
-      style={{
-        display: 'inline-flex',
-        'flex-direction': 'column',
-        'align-items': 'flex-end',
-      }}
-    >
-      <span>{fmtNum(units)}</span>
-      <Show when={prefs().manageVaccinesInDoses && isVaccine}>
-        <span
-          style={{ 'font-size': 'var(--text-xs)', color: 'var(--gray-main)' }}
-        >
-          {fmtNum(units * doses)}
-        </span>
-      </Show>
-    </span>
-  );
+  // Every column is shown by default; the user hides / reorders / pins them from
+  // the Columns control (spec/stock S1). No default columnVisibility overrides —
+  // the card view renders only VISIBLE columns, so a lean default table would
+  // strip the card of its fields.
+  const tableConfig = createTableConfig({ tableId: 'stock-list' });
 
-  const tableConfig = createTableConfig({
-    tableId: 'stock-list',
-    defaultConfig: {
-      base: {
-        columnVisibility: {
-          batch: false,
-          expiryDate: false,
-          manufactureDate: false,
-          vvmStatus: false,
-          locationCode: false,
-          locationName: false,
-          unit: false,
-          packSize: false,
-          soh: false,
-          availableStock: false,
-          costPricePerPack: false,
-          sellPricePerPack: false,
-          total: false,
-          manufacturer: false,
-          supplierName: false,
-        },
+  // Column order follows the current open-mSupply Stock ListView (Code · Name ·
+  // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
+  // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost ·
+  // Sell · Total · Manufacturer · Supplier). Each column also declares its card
+  // slot per spec/stock S1 › card view.
+  //
+  // The card HEADER is Name-then-Code (the split for this screen), but the TABLE
+  // keeps OMS's Code-first order — the one place the two views want a different
+  // order (issue #551). So Code is TWO faces: a real table column (Code first,
+  // sortable, hidden on the card) and a card-only primary placed AFTER Name.
+  // Every other column is a single def serving both views.
+  const columns = (): Column<Row, SortKey, GroupKey>[] => [
+    {
+      // Code — table face (OMS position 1): sortable, hidden on the card.
+      c: { accessor: r => r.item.code, id: 'itemCode' },
+      sortKey: 'itemCode',
+      header: t('label.code'),
+      ...getCellDefinition('itemCode', { hideOnCard: true }),
+    },
+    {
+      // Name — primary in both views (card title).
+      c: { key: 'itemName' },
+      sortKey: 'itemName',
+      header: t('label.name'),
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
+    },
+    {
+      // Code — card face: the second primary, after Name; absent from the table
+      // and from the Columns popover (structural).
+      c: { accessor: r => r.item.code, id: 'itemCodeCard' },
+      header: t('label.code'),
+      ...getCellDefinition('itemCode', {
+        headerPosition: 'primary',
+        hideOnTable: true,
+        hideFromColumnSettings: true,
+      }),
+    },
+    {
+      // Master lists — card: always shown.
+      c: {
+        accessor: r => (r.item.masterLists ?? []).map(m => m.name),
+        id: 'masterLists',
       },
+      header: t('label.master-lists'),
+      enableSorting: false,
+      ...getCellDefinition('masterLists'),
     },
-  });
-
-  // A plain-text column: line → its value; item → single-or-multiple across
-  // batches. Empty → em dash.
-  const textCol = (
-    id: string,
-    header: string,
-    value: (l: LineRow) => string,
-    opts: { sortKey?: SortKey; meta?: Column<Row, SortKey>['meta'] } = {}
-  ): Column<Row, SortKey> => ({
-    c: { id },
-    header,
-    enableSorting: !!opts.sortKey && sortable(opts.sortKey),
-    ...(opts.sortKey && sortable(opts.sortKey)
-      ? { sortKey: opts.sortKey }
-      : {}),
-    ...(opts.meta ? { meta: opts.meta } : {}),
-    cell: info => {
-      const row = info.row.original;
-      if (row.kind === 'line') return value(row.line) || DASH;
-      return singleOrMultiple(itemBatches(row.item), value);
+    {
+      // Batch — card: badge.
+      c: { key: 'batch' },
+      sortKey: 'batch',
+      header: t('label.batch'),
+      ...getCellDefinition('batch', { headerPosition: 'badge' }),
     },
-  });
-
-  const columns = (): Column<Row, SortKey>[] => {
-    const cols: Column<Row, SortKey>[] = [];
-
-    if (grouped()) {
-      cols.push({
-        c: { id: 'expander' },
-        header: '',
-        enableSorting: false,
-        cell: info => {
-          const row = info.row.original;
-          if (row.kind !== 'item') return null;
-          return (
-            <IconButton
-              size="small"
-              icon={
-                expanded().has(row.item.id) ? (
-                  <ChevronDownIcon />
-                ) : (
-                  <ChevronRightIcon />
-                )
-              }
-              label={t('label.expand')}
-              onClick={e => {
-                e.stopPropagation();
-                toggleExpand(row.item.id);
-              }}
-            />
-          );
-        },
-      });
-    }
-
-    // A date column: line → the formatted date; item → single-or-multiple over
-    // the raw ISO, formatting a shared single date.
-    const dateCol = (
-      id: string,
-      header: string,
-      value: (l: LineRow) => string | null | undefined,
-      sortKey: SortKey
-    ): Column<Row, SortKey> => ({
-      c: { id },
-      header,
-      enableSorting: sortable(sortKey),
-      ...(sortable(sortKey) ? { sortKey } : {}),
+    {
+      // Expiry — card: always shown.
+      c: { key: 'expiryDate' },
+      sortKey: 'expiryDate',
+      header: t('label.expiry-date'),
+      ...getCellDefinition('expiryDate'),
+    },
+    {
+      // Manufacture date — card: More details.
+      c: { key: 'manufactureDate' },
+      sortKey: 'manufactureDate',
+      header: t('label.manufacture-date'),
+      cardGroup: 'more',
+      ...getCellDefinition('manufactureDate'),
+    },
+    ...(prefs().manageVvmStatusForStock
+      ? [
+          {
+            // VVM status — card: More details (gated on the store preference).
+            c: {
+              accessor: (r: Row) =>
+                r.item.isVaccine ? (r.vvmStatus?.description ?? '') : '',
+              id: 'vvmStatus',
+            },
+            header: t('label.vvm-status'),
+            enableSorting: false,
+            cardGroup: 'more',
+          } satisfies Column<Row, SortKey, GroupKey>,
+        ]
+      : []),
+    {
+      // Location code — card: More details.
+      c: { accessor: r => r.location?.code ?? '', id: 'locationCode' },
+      sortKey: 'locationCode',
+      header: t('label.location-code'),
+      cardGroup: 'more',
+      ...getCellDefinition('location'),
+    },
+    {
+      // Location name — card: More details.
+      c: {
+        accessor: r => r.location?.name ?? r.locationName ?? '',
+        id: 'locationName',
+      },
+      header: t('label.location-name'),
+      enableSorting: false,
+      cardGroup: 'more',
+      ...getCellDefinition('locationName'),
+    },
+    {
+      // Unit — card: always shown.
+      c: { accessor: r => r.item.unitName ?? '', id: 'unit' },
+      header: t('label.unit'),
+      enableSorting: false,
+      ...getCellDefinition('unit'),
+    },
+    {
+      // Pack size — card: always shown.
+      c: { key: 'packSize' },
+      sortKey: 'packSize',
+      header: t('label.pack-size'),
+      ...getCellDefinition('packSize'),
+      cell: info => formatNumber(info.getValue<number>()),
+    },
+    {
+      // Pack qty — card: More details.
+      c: { accessor: r => r.totalNumberOfPacks, id: 'numberOfPacks' },
+      sortKey: 'numberOfPacks',
+      header: t('label.pack-qty'),
+      cardGroup: 'more',
+      ...getCellDefinition('numberOfPacks'),
+      cell: info => formatNumber(info.getValue<number>()),
+    },
+    {
+      // SOH — card: More details.
+      c: { accessor: r => lineUnits(r), id: 'soh' },
+      header: t('label.soh'),
+      enableSorting: false,
+      cardGroup: 'more',
+      ...getCellDefinition('units'),
+      cell: info =>
+        unitsText(
+          lineUnits(info.row.original),
+          info.row.original.item.isVaccine,
+          info.row.original.item.doses
+        ),
+    },
+    {
+      // Available stock — card: always shown.
+      c: { accessor: r => lineAvailUnits(r), id: 'availableStock' },
+      header: t('label.available-stock'),
+      enableSorting: false,
+      ...getCellDefinition('units'),
+      cell: info =>
+        unitsText(
+          lineAvailUnits(info.row.original),
+          info.row.original.item.isVaccine,
+          info.row.original.item.doses
+        ),
+    },
+    {
+      // Cost price — card: More details.
+      c: { key: 'costPricePerPack' },
+      sortKey: 'costPricePerPack',
+      header: t('label.pack-cost-price'),
+      cardGroup: 'more',
+      ...getCellDefinition('costPricePerPack'),
+    },
+    {
+      // Sell price — card: More details.
+      c: { key: 'sellPricePerPack' },
+      sortKey: 'sellPricePerPack',
+      header: t('label.pack-sell-price'),
+      cardGroup: 'more',
+      ...getCellDefinition('sellPricePerPack'),
+    },
+    {
+      // Total — card: More details.
+      c: { accessor: r => lineValue(r), id: 'total' },
+      header: t('label.total'),
+      enableSorting: false,
+      cardGroup: 'more',
+      ...getCellDefinition('total'),
+    },
+    {
+      // Manufacturer — card: More details.
+      c: { accessor: r => r.manufacturer?.name ?? '', id: 'manufacturer' },
+      header: t('label.manufacturer'),
+      enableSorting: false,
+      cardGroup: 'more',
+      ...getCellDefinition('manufacturer'),
+    },
+    {
+      // Supplier — card: More details. Blank renders "Inventory adjustment".
+      c: { accessor: r => r.supplierName ?? '', id: 'supplierName' },
+      sortKey: 'supplierName',
+      header: t('label.supplier'),
+      cardGroup: 'more',
       cell: info => {
-        const row = info.row.original;
-        if (row.kind === 'line') return fmtDate(value(row.line));
-        const single = singleOrMultiple(
-          itemBatches(row.item),
-          l => value(l) ?? ''
-        );
-        return single === t('label.multiple') || single === DASH
-          ? single
-          : fmtDate(single);
+        const supplier = info.getValue<string>();
+        return supplier && supplier.length > 0
+          ? supplier
+          : t('label.inventory-adjustment');
       },
-    });
-
-    cols.push(
-      textCol('itemCode', t('label.code'), l => l.item.code, {
-        sortKey: 'itemCode',
-      }),
-      textCol('itemName', t('label.name'), l => l.itemName, {
-        sortKey: 'itemName',
-        meta: { headerPosition: 'primary', wrapLines: 2 },
-      }),
-      {
-        c: { id: 'masterLists' },
-        header: t('label.master-lists'),
-        enableSorting: false,
-        cell: info => {
-          const row = info.row.original;
-          const names =
-            row.kind === 'item'
-              ? (row.item.masterLists ?? []).map(m => m.name)
-              : (row.line.item.masterLists ?? []).map(m => m.name);
-          return <ChipListCell items={names} />;
-        },
-      },
-      textCol('batch', t('label.batch'), l => l.batch ?? '', {
-        sortKey: 'batch',
-      }),
-      dateCol(
-        'expiryDate',
-        t('label.expiry-date'),
-        l => l.expiryDate,
-        'expiryDate'
-      ),
-      dateCol(
-        'manufactureDate',
-        t('label.manufacture-date'),
-        l => l.manufactureDate,
-        'manufactureDate'
-      )
-    );
-
-    if (prefs().manageVvmStatusForStock) {
-      cols.push(
-        textCol('vvmStatus', t('label.vvm-status'), l =>
-          l.item.isVaccine ? (l.vvmStatus?.description ?? '') : ''
-        )
-      );
-    }
-
-    cols.push(
-      textCol(
-        'locationCode',
-        t('label.location-code'),
-        l => l.location?.code ?? '',
-        {
-          sortKey: 'locationCode',
-        }
-      ),
-      textCol(
-        'locationName',
-        t('label.location-name'),
-        l => l.location?.name ?? l.locationName ?? ''
-      ),
-      textCol('unit', t('label.unit'), l => l.item.unitName ?? ''),
-      {
-        c: { id: 'packSize' },
-        header: t('label.pack-size'),
-        enableSorting: sortable('packSize'),
-        ...(sortable('packSize') ? { sortKey: 'packSize' as SortKey } : {}),
-        meta: { align: 'right' },
-        cell: info => {
-          const row = info.row.original;
-          if (row.kind === 'line') return fmtNum(row.line.packSize);
-          return singleOrMultiple(itemBatches(row.item), l =>
-            String(l.packSize)
-          );
-        },
-      },
-      {
-        c: { id: 'numberOfPacks' },
-        header: t('label.pack-qty'),
-        enableSorting: sortable('numberOfPacks'),
-        ...(sortable('numberOfPacks')
-          ? { sortKey: 'numberOfPacks' as SortKey }
-          : {}),
-        meta: { align: 'right', headerPosition: 'badge' },
-        cell: info => {
-          const row = info.row.original;
-          const packs =
-            row.kind === 'line'
-              ? row.line.totalNumberOfPacks
-              : sumBy(itemBatches(row.item), l => l.totalNumberOfPacks);
-          return fmtNum(packs);
-        },
-      },
-      {
-        c: { id: 'soh' },
-        header: t('label.soh'),
-        enableSorting: false,
-        meta: { align: 'right' },
-        cell: info => {
-          const row = info.row.original;
-          if (row.kind === 'item')
-            return unitsCell(
-              sumBy(itemBatches(row.item), lineUnits),
-              row.item.isVaccine,
-              row.item.doses
-            );
-          return unitsCell(
-            lineUnits(row.line),
-            row.line.item.isVaccine,
-            row.line.item.doses
-          );
-        },
-      },
-      {
-        c: { id: 'availableStock' },
-        header: t('label.available-stock'),
-        enableSorting: false,
-        meta: { align: 'right' },
-        cell: info => {
-          const row = info.row.original;
-          if (row.kind === 'item')
-            return unitsCell(
-              sumBy(itemBatches(row.item), lineAvailUnits),
-              row.item.isVaccine,
-              row.item.doses
-            );
-          return unitsCell(
-            lineAvailUnits(row.line),
-            row.line.item.isVaccine,
-            row.line.item.doses
-          );
-        },
-      },
-      {
-        c: { id: 'costPricePerPack' },
-        header: t('label.pack-cost-price'),
-        enableSorting: sortable('costPricePerPack'),
-        ...(sortable('costPricePerPack')
-          ? { sortKey: 'costPricePerPack' as SortKey }
-          : {}),
-        meta: { align: 'right' },
-        cell: info => {
-          const row = info.row.original;
-          if (row.kind === 'line') return fmtCur(row.line.costPricePerPack);
-          return singleOrMultipleCurrency(
-            itemBatches(row.item),
-            l => l.costPricePerPack
-          );
-        },
-      },
-      {
-        c: { id: 'sellPricePerPack' },
-        header: t('label.pack-sell-price'),
-        enableSorting: sortable('sellPricePerPack'),
-        ...(sortable('sellPricePerPack')
-          ? { sortKey: 'sellPricePerPack' as SortKey }
-          : {}),
-        meta: { align: 'right' },
-        cell: info => {
-          const row = info.row.original;
-          if (row.kind === 'line') return fmtCur(row.line.sellPricePerPack);
-          return singleOrMultipleCurrency(
-            itemBatches(row.item),
-            l => l.sellPricePerPack
-          );
-        },
-      },
-      {
-        c: { id: 'total' },
-        header: t('label.total'),
-        enableSorting: false,
-        meta: { align: 'right' },
-        cell: info => {
-          const row = info.row.original;
-          const value =
-            row.kind === 'line'
-              ? lineValue(row.line)
-              : sumBy(itemBatches(row.item), lineValue);
-          return fmtCur(value);
-        },
-      },
-      textCol(
-        'manufacturer',
-        t('label.manufacturer'),
-        l => l.manufacturer?.name ?? ''
-      ),
-      {
-        c: { id: 'supplierName' },
-        header: t('label.supplier'),
-        enableSorting: sortable('supplierName'),
-        ...(sortable('supplierName')
-          ? { sortKey: 'supplierName' as SortKey }
-          : {}),
-        cell: info => {
-          const row = info.row.original;
-          const supplier =
-            row.kind === 'line'
-              ? (row.line.supplierName ?? '')
-              : singleOrMultiple(
-                  itemBatches(row.item),
-                  l => l.supplierName ?? ''
-                );
-          // Blank supplier renders the fixed "Inventory adjustment" text.
-          return supplier && supplier !== DASH
-            ? supplier
-            : t('label.inventory-adjustment');
-        },
-      }
-    );
-    return cols;
-  };
+    },
+  ];
 
   const crumbs = () => [{ label: t('inventory') }, { label: t('stock') }];
 
@@ -627,17 +392,9 @@ const StockList: Component = () => {
           </HeaderButtons>
           <Toolbar>
             <FilterBar
-              filters={filterFields(grouped())}
+              filters={filterFields()}
               filter={query().filter}
               onChange={onFilterChange}
-            />
-            <IconButton
-              icon={grouped() ? <UngroupItemsIcon /> : <GroupItemsIcon />}
-              label={t('label.group-by-item')}
-              data-testid="group-by-item-toggle"
-              bordered
-              aria-pressed={grouped()}
-              onClick={toggleGrouped}
             />
           </Toolbar>
         </Header>
@@ -647,11 +404,12 @@ const StockList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
-        loading={loading()}
+        loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
-        onRowClick={onRowClick}
-        rowTone={row => (row.kind === 'line' && grouped() ? 'info' : undefined)}
+        onRowClick={row => openLine(row.id)}
+        showCardToggle
+        cardGroups={CARD_GROUPS}
         emptyMessage={t('error.no-stock')}
         empty={emptyCreate()}
         config={tableConfig.config()}
