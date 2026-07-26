@@ -18,6 +18,7 @@
 export type WalkRow = {
   item: {
     id: string;
+    code: string;
     name: string;
     unitName?: string | null;
     isVaccine?: boolean;

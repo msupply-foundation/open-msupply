@@ -87,28 +87,3 @@ export type SaveOutboundItemLinesResult = {
 export const SaveOutboundItemLines = {
   query: "mutation saveOutboundItemLines($storeId: String!, $input: SaveOutboundShipmentLinesInput!) {\n  saveOutboundShipmentItemLines(storeId: $storeId, input: $input) {\n    id\n  }\n}",
 } as TypedDocument<SaveOutboundItemLinesResult, SaveOutboundItemLinesVariables>;
-
-export type OutboundItemOptionsVariables = {
-  storeId: string;
-};
-
-export type OutboundItemOptionsResult = {
-  items: ({
-  __typename: "ItemConnector";
-} & {
-  totalCount: number;
-  nodes: Array<{
-  id: string;
-  code: string;
-  name: string;
-  unitName: string | null;
-  isVaccine: boolean;
-  doses: number;
-  availableStockOnHand: number;
-}>;
-});
-};
-
-export const OutboundItemOptions = {
-  query: "query outboundItemOptions($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {isVisible: true, isActive: true, type: {equalTo: STOCK}}\n    page: {first: 1000}\n    sort: {key: name}\n  ) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n        availableStockOnHand(storeId: $storeId)\n      }\n    }\n  }\n}",
-} as TypedDocument<OutboundItemOptionsResult, OutboundItemOptionsVariables>;

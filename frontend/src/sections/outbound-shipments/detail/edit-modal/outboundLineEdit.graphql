@@ -72,29 +72,3 @@ mutation saveOutboundItemLines(
     id
   }
 }
-
-# The item picker (S4): searchable stock-item catalogue (client-side filter
-# over the store's cached set — the combobox pattern the registry sanctions).
-# The view excludes items already on the shipment.
-query outboundItemOptions($storeId: String!) {
-  items(
-    storeId: $storeId
-    filter: { isVisible: true, isActive: true, type: { equalTo: STOCK } }
-    page: { first: 1000 }
-    sort: { key: name }
-  ) {
-    ... on ItemConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        code
-        name
-        unitName
-        isVaccine
-        doses
-        availableStockOnHand(storeId: $storeId)
-      }
-    }
-  }
-}
