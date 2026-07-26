@@ -10,7 +10,8 @@ import { Comment } from '../ui/elements/feedback/Comment';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
-import { Lead, Row } from './common';
+import { Lead, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './FeedbackShowcase.module.css';
 
 /* Chip colours come from the --status-* contract tokens (with dark
@@ -24,11 +25,35 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
   { label: 'Verified', colour: 'var(--status-verified)' },
 ];
 
+export const feedbackMetadata: PageMetadata = {
+  id: 'feedback',
+  title: 'Feedback',
+  searchTerms: ['status', 'message', 'notification'],
+  items: [
+    {
+      id: 'feedback-chips-badges',
+      title: 'Chips & badges',
+      searchTerms: ['status chip', 'badge', 'count', 'pill'],
+    },
+    {
+      id: 'feedback-alerts',
+      title: 'Alerts',
+      searchTerms: ['error', 'warning', 'info', 'success', 'banner'],
+    },
+    {
+      id: 'feedback-popovers',
+      title: 'Popovers & tooltips',
+      searchTerms: ['popover', 'tooltip', 'comment', 'hint', 'help'],
+    },
+  ],
+};
+
 export const FeedbackShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Status chips">
+        <SectionTOC page={feedbackMetadata} />
+        <DashboardCard id="feedback-chips-badges" title="Status chips">
           <Lead>
             Hand-rolled, pure CSS — a chip has no interaction or a11y contract
             to buy. One <code>colour</code> prop (always a{' '}
@@ -59,7 +84,10 @@ export const FeedbackShowcase = () => {
           </Row>
         </DashboardCard>
 
-        <DashboardCard title="Alerts — error / warning / info / success / neutral">
+        <DashboardCard
+          id="feedback-alerts"
+          title="Alerts — error / warning / info / success / neutral"
+        >
           <Lead>
             Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current app's
             MUI Alert look (pale tinted panel, 10px radius, severity icon)
@@ -86,7 +114,10 @@ export const FeedbackShowcase = () => {
           </Stack>
         </DashboardCard>
 
-        <DashboardCard title="Popover — content bubble on click/focus">
+        <DashboardCard
+          id="feedback-popovers"
+          title="Popover — content bubble on click/focus"
+        >
           <Lead>
             Native Popover API (<code>popover="auto"</code>), no library — top
             layer (no portal, no clipping), light dismiss, Escape and{' '}

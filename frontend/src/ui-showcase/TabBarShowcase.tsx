@@ -10,6 +10,7 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Lead, PageFrame, ToolbarStub } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './TabBarShowcase.module.css';
 
 const PAGE_TABS: TabDef[] = [
@@ -25,13 +26,36 @@ const KEYBOARD_TABS: TabDef[] = [
   { value: 'panel', label: 'Into the panel' },
 ];
 
+// No TOC is rendered for this page (Carl: hide it), but the metadata is still
+// exported + registered so Search indexes the tab-bar sections.
+export const tabBarMetadata: PageMetadata = {
+  id: 'tab-bar',
+  title: 'Tab bar',
+  searchTerms: ['tabs', 'navigation'],
+  items: [
+    {
+      id: 'tab-bar-header-edge',
+      title: "Header's bottom edge",
+      searchTerms: ['tab', 'header', 'underline'],
+    },
+    {
+      id: 'tab-bar-keyboard',
+      title: 'Keyboard contract',
+      searchTerms: ['arrow keys', 'a11y', 'accessibility'],
+    },
+  ],
+};
+
 export const TabBarShowcase = () => {
   const [pageTab, setPageTab] = createSignal('general');
 
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Tab bar — the header's bottom edge">
+        <DashboardCard
+          id="tab-bar-header-edge"
+          title="Tab bar — the header's bottom edge"
+        >
           <Lead>
             The demo's tab strip: centred labels with a single underline that{' '}
             <em>slides</em> between them. <code>&lt;Tabs&gt;</code> (the state
@@ -87,7 +111,10 @@ export const TabBarShowcase = () => {
           </PageFrame>
         </DashboardCard>
 
-        <DashboardCard title="Keyboard contract, standalone strip">
+        <DashboardCard
+          id="tab-bar-keyboard"
+          title="Keyboard contract, standalone strip"
+        >
           <Lead>
             Outside a header the strip keeps its own bottom border. The
             behaviour is Kobalte's WAI-ARIA tabs pattern — the part we buy: the
