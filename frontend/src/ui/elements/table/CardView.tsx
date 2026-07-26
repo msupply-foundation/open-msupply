@@ -150,10 +150,16 @@ function DisclosureGroup<T, G extends string>(props: {
         <div onClick={event => event.stopPropagation()}>
           <div class={styles.cardDisclosureHead}>
             <AccordionTrigger class={styles.cardDisclosureTrigger}>
-              <Show when={props.group.icon}>
-                {icon => <span class={styles.cardGroupIcon}>{icon()()}</span>}
-              </Show>
-              {label()}
+              {/* Reuse the group caption's exact icon+label lead so a
+                  disclosure header (Pricing / Other) lines up pixel-for-pixel
+                  with a plain caption (Batch) — same markup, same box. The
+                  trigger only adds the chevron (and the blue link colour). */}
+              <span class={styles.cardGroupCaption}>
+                <Show when={props.group.icon}>
+                  {icon => <span class={styles.cardGroupIcon}>{icon()()}</span>}
+                </Show>
+                {label()}
+              </span>
             </AccordionTrigger>
             <Show when={props.group.disclosurePreview}>
               {preview => <ClosedPreview>{preview()(props.row)}</ClosedPreview>}
