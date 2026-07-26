@@ -28,6 +28,7 @@ import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { CustomFieldsView } from '../../../domain/customFields';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
+import { ItemLedgerPanel } from './ItemLedgerPanel';
 import { visibleTabs } from './itemDetailTabs';
 import {
   formatMonthsOfStock,
@@ -45,10 +46,11 @@ import {
 // order") reuses the pure-layout FormColumns/FormColumn row — column 1 then
 // column 2 preserves the spec's group order when the columns wrap to one.
 //
-// Built tabs: General, Store, Master lists, Custom fields, Log. Flagged tabs
-// (rendered as a placeholder pending their components): Ledger (needs the
-// date-time-range filter field), Ancillary items (needs the central-only
-// modals), Variants (needs the variant card + editable packaging grid).
+// Built tabs: General, Store, Master lists, Ledger (ItemLedgerPanel — its own
+// query/filters/pagination, kdd/state-management), Custom fields, Log.
+// Flagged tabs (rendered as a placeholder pending their components):
+// Ancillary items (needs the central-only modals), Variants (needs the
+// variant card + editable packaging grid).
 // Variants' tab PRESENCE is wired now (OMS-REG-CAT-05.1/.2, itemDetailTabs.ts)
 // — central-server-only, ahead of its content.
 
@@ -326,9 +328,10 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="ledger">
-                {/* FLAGGED (BUILD_REPORT): the ledger needs a date-time-range
-                    FilterBar field (not built) + the itemLedger query wiring. */}
-                <EmptyState message={t('messages.no-item-ledger')} />
+                <ItemLedgerPanel
+                  storeId={params.storeId}
+                  itemId={params.itemId}
+                />
               </TabPanel>
 
               <TabPanel value="ancillary">
