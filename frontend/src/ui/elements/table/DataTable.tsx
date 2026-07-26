@@ -560,7 +560,13 @@ export function DataTable<T, K extends string, G extends string = never>(
   const overlay = () => fullScreen() && !shellFullScreen;
 
   return (
-    <div class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}>
+    // data-datatable: a stable, un-hashed styling hook so a fill-body page can
+    // full-bleed the table from its own CSS module (Page.module.css) — a
+    // descendant selector can't name this .root class across CSS Modules.
+    <div
+      class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
+      data-datatable
+    >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
           inline-end. Outside the scroll region, so it never scrolls with the
