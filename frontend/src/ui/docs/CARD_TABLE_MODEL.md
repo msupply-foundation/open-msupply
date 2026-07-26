@@ -57,13 +57,15 @@ Set on each column literal in your `columns()` array. Anything not about the car
 
 Passed to `<DataTable>`.
 
-| Prop                   | Type                | Effect                                                                                                                                                                                       |
-| ---------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cardGroups`           | `CardGroup<T, G>[]` | Declares each **body group's** presentation (below). Card-view only; table view ignores it.                                                                                                  |
-| `showCardToggle`       | `boolean`           | Show the card⇄table toggle in the toolbar (above the 600px compact band). Needs `setConfig`. Omit for a table with no card view, or a card-only screen.                                      |
-| `config` / `setConfig` | table config        | `config.viewMode` picks the view above the compact band (`'table'` default). Seed base-band `viewMode: 'card'` to default to cards. **Below 600px the table is always card**, toggle hidden. |
-| `enableSelection`      | `boolean`           | Adds the leading selection checkbox to both views.                                                                                                                                           |
-| `onRowClick`           | `(row) => void`     | Click-through on a row/card. Disclosure and inline-editing controls stop propagation so they don't trigger it.                                                                               |
+| Prop                   | Type                                             | Effect                                                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cardGroups`           | `CardGroup<T, G>[]`                              | Declares each **body group's** presentation (below). Card-view only; table view ignores it.                                                                                                  |
+| `showCardToggle`       | `boolean`                                        | Show the card⇄table toggle in the toolbar (above the 600px compact band). Needs `setConfig`. Omit for a table with no card view, or a card-only screen.                                      |
+| `config` / `setConfig` | table config                                     | `config.viewMode` picks the view above the compact band (`'table'` default). Seed base-band `viewMode: 'card'` to default to cards. **Below 600px the table is always card**, toggle hidden. |
+| `enableSelection`      | `boolean`                                        | Adds the leading selection checkbox to both views.                                                                                                                                           |
+| `onRowClick`           | `(row) => void`                                  | Click-through on a row/card. Disclosure and inline-editing controls stop propagation so they don't trigger it.                                                                               |
+| `rowState`             | `(row) => 'verified' \| 'warning' \| 'disabled'` | The row's **background** tint, mapped from the row's own facts — see [Row states & backgrounds](#row-states--backgrounds). **Table view only.**                                              |
+| `rowTone`              | `(row) => 'info' \| 'error'`                     | The row's **text** colour (info / error) — same section. **Table view only.**                                                                                                                |
 
 ### `CardGroup<T, G>`
 
@@ -89,6 +91,57 @@ The card label text is the column's string `header`. Whether and how it renders:
 - **Unlabelled** (default for header cells, or `showLabel: false`) → the cell content fills its slot directly.
 
 Read-only labelled values and editable inputs share the `--field-label-*` token, so a `LabelledValue` and a real input read identically in a card.
+
+## Row states & backgrounds
+
+A row's colour comes from two page-supplied functions, each a pure map from a row to a **semantic name** — never a colour (the CSS owns the palette, and colour never carries meaning alone: WCAG 2.2). Both are **table-view only**: in card view a selected card gets a blue border + faint fill, and neither function applies.
+
+### `rowState` — the background tint
+
+`rowState={(row) => 'verified' | 'warning' | 'disabled' | undefined}` tags each row with one of three fixed states — think **green / amber / grey** — from the row's own facts (a status field, a lock flag). What each looks like, and _when_:
+
+| State      | Unselected | Selected                         |
+| ---------- | ---------- | -------------------------------- |
+| _(none)_   | white      | action **blue** (default select) |
+| `verified` | **white**  | **green** — _replaces_ the blue  |
+| `warning`  | **white**  | **amber** — _replaces_ the blue  |
+| `disabled` | **grey**   | **grey** (unchanged)             |
+
+Three things that trip people up:
+
+- **`verified` / `warning` are selection-gated.** At rest the row is plain white — indistinguishable from a stateless row. The green / amber shows **only once the row is selected**. The row's status **chip** is what carries the meaning at rest; the tint is a selection-time reinforcement, not the primary signal — so `rowState` is only worth setting alongside `enableSelection`.
+- **A state tint _replaces_ the selection blue — it never stacks.** A selected `verified` row is green, not blue-plus-green.
+- **`disabled` is the exception — grey _always_**, selected or not (a read-only / spec-locked row; clickable read-only rows keep the grey even when selected).
+
+Hover deepens whichever tint is showing by a couple of points; `disabled` stays flat.
+
+### `rowTone` — the text colour
+
+`rowTone={(row) => 'info' | 'error' | undefined}` is the orthogonal **text-colour** channel (not a background): `info` paints the row's text in the action-blue tone (a record awaiting an action — a placeholder / uncounted line), `error` in the error tone (a line the server refused). It composes on top of any `rowState` background.
+
+### What a dev writes
+
+The DataTable owns the tints, the selection-gating and the replaces-blue rule. The page owns **only** the row → state mapping:
+
+1. Decide the states your row type can be in, from its **own** facts — a status field, a `readOnly` / lock flag, a set of "this one failed" ids.
+2. Write `rowState` (and optionally `rowTone`) as a pure function — no per-view branching, no colours:
+
+   ```tsx
+   <DataTable
+     enableSelection // verified/warning only show on selected rows
+     rowState={row => {
+       if (row.status === 'VERIFIED') return 'verified'; // green when selected
+       if (row.status === 'ON_HOLD') return 'warning'; // amber when selected
+       if (row.readOnly) return 'disabled'; // grey — always
+       return undefined; // plain → blue when selected
+     }}
+     rowTone={row => (failedIds.has(row.id) ? 'error' : undefined)}
+   />
+   ```
+
+3. Show the **same fact as a status chip** in a column too — the tint reinforces the chip, it is never the only signal.
+
+Live: the **Row states & tints** demo on the [Table & Card showcase page](../../ui-showcase/TableCardShowcase.tsx) (`#/showcase/table-card`); assembled, the List page keys `rowState` off the shipment status.
 
 ## Recipes
 
