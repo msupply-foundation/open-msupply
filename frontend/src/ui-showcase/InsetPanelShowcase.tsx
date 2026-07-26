@@ -5,6 +5,7 @@ import { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { FormPreview, Lead } from './common';
+import type { PageMetadata } from './metadata';
 
 /*
  * Storybook of the InsetPanel layout element: a recessed grey panel that
@@ -14,10 +15,27 @@ import { FormPreview, Lead } from './common';
  * Demoed with the FieldRow + TextField rows it pairs with inside the
  * create-stocktake modal.
  */
+// Single-card page: no TOC rendered, but metadata is exported for Search.
+export const insetPanelMetadata: PageMetadata = {
+  id: 'inset-panel',
+  title: 'Inset panel',
+  searchTerms: ['recessed', 'group', 'well'],
+  items: [
+    {
+      id: 'inset-panel-recessed',
+      title: 'Inset panel',
+      searchTerms: ['recessed', 'grouping', 'well'],
+    },
+  ],
+};
+
 export const InsetPanelShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
-      <DashboardCard title="Inset panel — recessed grouping">
+      <DashboardCard
+        id="inset-panel-recessed"
+        title="Inset panel — recessed grouping"
+      >
         <Lead>
           A recessed grey panel that groups related controls, with an optional
           muted <code>hint</code> line at the top — the app's "extra options"

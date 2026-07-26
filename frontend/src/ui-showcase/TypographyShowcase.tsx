@@ -3,7 +3,8 @@ import { Text, type TextVariant } from '../ui/elements/typography/Text';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
-import { Lead } from './common';
+import { Lead, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './TypographyShowcase.module.css';
 
 /*
@@ -58,10 +59,44 @@ const MONO: { variant: TextVariant; sample: string; meta: string }[] = [
   },
 ];
 
+export const typographyMetadata: PageMetadata = {
+  id: 'typography',
+  title: 'Typography',
+  searchTerms: ['font', 'text'],
+  items: [
+    {
+      id: 'typography-scale',
+      title: 'Type scale',
+      searchTerms: ['size', 'hierarchy', 'heading'],
+    },
+    {
+      id: 'typography-monospace',
+      title: 'Monospace',
+      searchTerms: ['code', 'batch', 'id', 'mono', 'fixed-width'],
+    },
+    {
+      id: 'typography-titles',
+      title: 'Titles & subtitles',
+      searchTerms: ['subtitle', 'caption', 'label'],
+    },
+    {
+      id: 'typography-colour',
+      title: 'Colour',
+      searchTerms: ['color', 'tone', 'inherit'],
+    },
+    {
+      id: 'typography-headings',
+      title: 'Headings & rank',
+      searchTerms: ['h1', 'h2', 'semantic'],
+    },
+  ],
+};
+
 export const TypographyShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
-      <DashboardCard title="The type scale">
+      <SectionTOC page={typographyMetadata} />
+      <DashboardCard id="typography-scale" title="The type scale">
         <Lead>
           <code>&lt;Text&gt;</code> carries the app's whole type scale — a Solid
           port of the current app's MUI <code>body1</code> / <code>body2</code>{' '}
@@ -86,7 +121,10 @@ export const TypographyShowcase = () => (
         </dl>
       </DashboardCard>
 
-      <DashboardCard title="Monospace — codes, batches & IDs">
+      <DashboardCard
+        id="typography-monospace"
+        title="Monospace — codes, batches & IDs"
+      >
         <Lead>
           Codes, batches, location IDs and dense identifiers render in the{' '}
           <strong>monospace</strong> family (<code>--font-mono</code>:{' '}
@@ -115,7 +153,7 @@ export const TypographyShowcase = () => (
         </dl>
       </DashboardCard>
 
-      <DashboardCard title="Subtitle pairs with a title">
+      <DashboardCard id="typography-titles" title="Subtitle pairs with a title">
         <Lead>
           <code>subtitle</code> is a deck that sits under a title — a fixed step
           smaller than the heading (<code>--text-sm</code>) and semibold (600),
@@ -183,7 +221,10 @@ export const TypographyShowcase = () => (
         </div>
       </DashboardCard>
 
-      <DashboardCard title="Colour comes from the container">
+      <DashboardCard
+        id="typography-colour"
+        title="Colour comes from the container"
+      >
         <Lead>
           <code>&lt;Text&gt;</code> sets <em>no</em> colour —{' '}
           <code>color: inherit</code>. So the subtext below is muted because the{' '}
@@ -199,7 +240,7 @@ export const TypographyShowcase = () => (
         </div>
       </DashboardCard>
 
-      <DashboardCard title="Headings: size ≠ rank">
+      <DashboardCard id="typography-headings" title="Headings: size ≠ rank">
         <Lead>
           <code>variant</code> sets the visual size; <code>level</code> sets the
           document rank. Both lines below use <code>variant="heading"</code> so
