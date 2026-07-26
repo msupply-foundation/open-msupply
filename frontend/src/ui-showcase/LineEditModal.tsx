@@ -10,7 +10,6 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
-import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
 import {
@@ -131,12 +130,14 @@ const ItemSelector = (props: {
   value?: string;
   selected?: ItemChoice;
   disabled?: boolean;
+  helperText?: string;
   onSelect: (item: ItemChoice | null) => void;
 }): JSX.Element => (
   <AsyncCombobox<ItemChoice>
     label={t('label.item')}
     hideLabel
     disabled={props.disabled}
+    helperText={props.helperText}
     inputTestId="item-search-input"
     fetchPage={fetchItemPage}
     value={props.value}
@@ -719,6 +720,13 @@ const Body: Component<LineEditModalProps> = props => {
           value={item()?.id}
           selected={selectedChoice()}
           disabled={initialMode === 'update'}
+          // Unit is a fact of the item — surfaced as the selector's helper text
+          // ("Unit: Capsule") rather than a standalone field (spec S4).
+          helperText={
+            item()?.unitName
+              ? `${t('label.unit')}: ${item()?.unitName}`
+              : undefined
+          }
           onSelect={chooseItem}
         />
       }
@@ -767,16 +775,6 @@ const Body: Component<LineEditModalProps> = props => {
           <Alert severity="info">{t('messages.select-item-to-receive')}</Alert>
         }
       >
-        {/* Unit is a fact of the item, never editable — inline label + value,
-            matching the batch header's inline field (spec S4). NB wrapping a
-            read-only VALUE in FieldRow (a "control row") is the
-            LabelledValue/FieldRow naming smell logged in COMPONENT_RENAMING.md
-            — an inline read-only labelled value has no clean home yet. */}
-        <Show when={item()?.unitName}>
-          <FieldRow label={t('label.unit')} labelWidth="auto">
-            {item()?.unitName}
-          </FieldRow>
-        </Show>
         <DataTable
           columns={columns()}
           rows={rows()}
