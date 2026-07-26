@@ -94,7 +94,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   // and the customer isn't itself a store — and, like every header edit,
   // only while the shipment is editable: the server rejects all header
   // updates from SHIPPED (the old app leaves this control clickable but the
-  // edit silently does nothing — D63).
+  // edit silently does nothing — D65).
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
   const canChangeCurrency = () =>
     props.foreignCurrencyAllowed &&

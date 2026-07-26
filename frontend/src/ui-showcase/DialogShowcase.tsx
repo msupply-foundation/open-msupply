@@ -17,7 +17,8 @@ import {
   DialogSaveButton,
 } from '../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../ui/icons';
-import { Lead, Note, Row } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './DialogShowcase.module.css';
 
 /* A stand-in line list for the large "workbench" dialog — enough rows that the
@@ -47,6 +48,34 @@ const STORES: StoreOption[] = [
   { id: 'demo-5', code: 'maliana-rh', name: 'Maliana Referral Hospital' },
 ];
 
+export const dialogMetadata: PageMetadata = {
+  id: 'dialog',
+  title: 'Dialog / Modal',
+  searchTerms: ['modal', 'popup', 'overlay'],
+  items: [
+    {
+      id: 'dialog-confirm',
+      title: 'Confirm dialog',
+      searchTerms: ['are you sure', 'yes', 'no', 'confirmation'],
+    },
+    {
+      id: 'dialog-custom',
+      title: 'Custom dialog',
+      searchTerms: ['content', 'footer', 'actions'],
+    },
+    {
+      id: 'dialog-large',
+      title: 'Large workbench dialog',
+      searchTerms: ['wide', 'edit lines', 'size large'],
+    },
+    {
+      id: 'dialog-store-selector',
+      title: 'Store selector',
+      searchTerms: ['store', 'blocking', 'choose'],
+    },
+  ],
+};
+
 export const DialogShowcase = () => {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
   const [outcome, setOutcome] = createSignal('');
@@ -64,7 +93,11 @@ export const DialogShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Confirm dialog — Save → are you sure?">
+        <SectionTOC page={dialogMetadata} />
+        <DashboardCard
+          id="dialog-confirm"
+          title="Confirm dialog — Save → are you sure?"
+        >
           <Lead>
             Native <code>&lt;dialog&gt;</code> + <code>showModal()</code>, no
             library — the platform gives the focus trap (top layer + inert
@@ -92,7 +125,10 @@ export const DialogShowcase = () => {
           />
         </DashboardCard>
 
-        <DashboardCard title="Dialog — custom content, footer and actions">
+        <DashboardCard
+          id="dialog-custom"
+          title="Dialog — custom content, footer and actions"
+        >
           <Lead>
             The base <code>&lt;Dialog&gt;</code> takes a required{' '}
             <code>title</code> (its accessible name), optional icon /
@@ -143,7 +179,10 @@ export const DialogShowcase = () => {
           </Dialog>
         </DashboardCard>
 
-        <DashboardCard title={'Large "workbench" dialog — size="large"'}>
+        <DashboardCard
+          id="dialog-large"
+          title={'Large "workbench" dialog — size="large"'}
+        >
           <Lead>
             <code>size="large"</code> fills nearly the whole viewport — full
             width and ~80% height — for content-heavy modals like the stock line
@@ -208,7 +247,10 @@ export const DialogShowcase = () => {
           </Dialog>
         </DashboardCard>
 
-        <DashboardCard title="Store selector — in a blocking Dialog">
+        <DashboardCard
+          id="dialog-store-selector"
+          title="Store selector — in a blocking Dialog"
+        >
           <Lead>
             The <code>StoreSelector</code> library component styled after the
             current app's login store-selector — <code>TextField</code> search,
