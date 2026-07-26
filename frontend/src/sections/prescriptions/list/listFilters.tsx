@@ -2,11 +2,10 @@ import { t } from '../../../intl';
 import {
   FilterSelect,
   FilterTextInput,
+  FilterDateRange,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
-import { DateRangeField } from '../../../ui/elements/inputs/DateRangeField';
-import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import { prescriptionPreferences } from '../../../store/storeContext';
 import {
   STATUS_LABEL_KEYS,
@@ -22,14 +21,6 @@ import type { PrescriptionsVariables } from './prescriptions.generated';
 // InvoiceFilterInput so a schema addition stops compiling until a decision is
 // made (the stocktakes listFilters pattern).
 export type PrescriptionFilter = NonNullable<PrescriptionsVariables['filter']>;
-
-// A picked calendar day widened to an inclusive local-day instant — the
-// createdOrBackdatedDatetime field is a DateTime (the backdated-or-created
-// coalescence the list sorts and filters by; AC-L1).
-const dayStart = (iso: string) => new Date(`${iso}T00:00:00`).toISOString();
-const dayEnd = (iso: string) => new Date(`${iso}T23:59:59.999`).toISOString();
-const localDay = (utc: string | null | undefined) =>
-  utcToLocalParts(utc)?.date ?? null;
 
 // The status filter's option set (AC-PR2): the lifecycle statuses limited by
 // the invoice-status-options preference — an unresolved/empty preference
@@ -71,32 +62,19 @@ const FILTERS: Filter<PrescriptionFilter>[] =
         />
       ),
     },
+    // Prescription date — a DateTime field (created-or-backdated coalescence,
+    // AC-L1); FilterDateRange (type="dateTime") owns the local ⇄ UTC
+    // conversion (#456).
     createdOrBackdatedDatetime: {
       label: () => t('label.prescription-date'),
       render: props => (
-        <DateRangeField
+        <FilterDateRange
+          type="dateTime"
           label={t('label.prescription-date')}
-          hideLabel
-          size="small"
           testId={props.testId}
-          value={{
-            start: localDay(
-              props.filter().createdOrBackdatedDatetime?.afterOrEqualTo
-            ),
-            end: localDay(
-              props.filter().createdOrBackdatedDatetime?.beforeOrEqualTo
-            ),
-          }}
-          onChange={({ start, end }) =>
-            props.setPartialFilter({
-              createdOrBackdatedDatetime:
-                start || end
-                  ? {
-                      ...(start ? { afterOrEqualTo: dayStart(start) } : {}),
-                      ...(end ? { beforeOrEqualTo: dayEnd(end) } : {}),
-                    }
-                  : null,
-            })
+          value={props.filter().createdOrBackdatedDatetime}
+          onChange={value =>
+            props.setPartialFilter({ createdOrBackdatedDatetime: value })
           }
         />
       ),

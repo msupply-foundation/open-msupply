@@ -30,6 +30,11 @@
 //
 // Labels arrive pre-translated (AC-R2) and are used verbatim.
 
+import {
+  localDayToUtc,
+  utcToLocalDay,
+} from '../../ui/elements/inputs/dateTimeConvert';
+
 /** One option for an enum select: raw schema value + its display label. */
 export interface EnumOption {
   value: string;
@@ -606,8 +611,7 @@ const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
  * (AC-R9/R16/R17; the captured client parsed bare dates at UTC midnight —
  * normalized here, see the contract).
  */
-export const dayStartInstant = (date: string): string =>
-  new Date(`${date}T00:00:00`).toISOString();
+export const dayStartInstant = (date: string): string => localDayToUtc(date);
 
 /**
  * A calendar date's last instant (23:59:59.999 local) as an RFC3339 UTC
@@ -615,21 +619,15 @@ export const dayStartInstant = (date: string): string =>
  * captured client's hour-24 overflow normalized away, see the contract).
  */
 export const dayEndInstant = (date: string): string =>
-  new Date(`${date}T23:59:59.999`).toISOString();
+  localDayToUtc(date, { endOfDay: true });
 
 /**
  * An RFC3339 instant → the viewer's local calendar date (`yyyy-mm-dd`), for
  * date fields that EDIT an instant-valued argument (the schedule cascade's
  * from/to bounds). '' for absent or garbled values.
  */
-export const instantToLocalDate = (value: unknown): string => {
-  if (typeof value !== 'string' || value === '') return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-};
+export const instantToLocalDate = (value: unknown): string =>
+  typeof value === 'string' ? (utcToLocalDay(value) ?? '') : '';
 
 /**
  * The period picker's writes (AC-R16, contract "Arguments") as a key → value
