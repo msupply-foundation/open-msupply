@@ -70,6 +70,13 @@ declare module '@tanstack/solid-table' {
      * column nowhere.
      */
     hideOnCard?: boolean;
+    /**
+     * Omit this column from the Columns settings popover — it stays in the
+     * view, it's just not user-configurable (no show/hide/move/pin row). For
+     * structural columns the user shouldn't touch, e.g. a card's identity
+     * (headerPosition 'primary') or its row-actions column.
+     */
+    hideFromColumnSettings?: boolean;
   }
 }
 

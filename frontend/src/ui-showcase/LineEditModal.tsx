@@ -386,8 +386,13 @@ const Body: Component<LineEditModalProps> = props => {
       c: { key: 'batch' },
       header: t('label.batch'),
       // The card's identity field, captioned "Batch" — a header field is
-      // unlabelled by default, so opt the label in.
-      meta: { headerPosition: 'primary', showLabel: true },
+      // unlabelled by default, so opt the label in. Structural: not
+      // user-configurable, so keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const b = info.row.original;
         return (
@@ -683,7 +688,13 @@ const Body: Component<LineEditModalProps> = props => {
     {
       c: { id: 'actions' },
       header: t('label.actions'),
-      meta: { headerPosition: 'badge', align: 'right' },
+      // Structural row-actions column — not user-configurable, so keep it out
+      // of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const b = info.row.original;
         return (

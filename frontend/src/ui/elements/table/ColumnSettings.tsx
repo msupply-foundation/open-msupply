@@ -42,6 +42,9 @@ export function ColumnSettings<T>(props: {
   const listedIds = () =>
     props.table
       .getAllLeafColumns()
+      // Structural columns opt out of the popover entirely (stay in the view,
+      // not user-configurable).
+      .filter(c => !c.columnDef.meta?.hideFromColumnSettings)
       .filter(c =>
         props.viewMode === 'card'
           ? !c.columnDef.meta?.hideOnCard
