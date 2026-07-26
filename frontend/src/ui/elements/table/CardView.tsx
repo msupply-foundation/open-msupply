@@ -6,6 +6,7 @@ import {
   type Table,
 } from '@tanstack/solid-table';
 import { LabelledValue } from '../typography/LabelledValue';
+import { FieldRow } from '../inputs/FieldRow';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import {
   Accordion,
@@ -38,20 +39,45 @@ const columnHeaderText = <T,>(
   return typeof header === 'string' ? header : undefined;
 };
 
-// A labelled field grid — the body cells of one group, each as a
-// LabelledValue (label above value), laid out as an auto-fitting column grid
-// (ui-standards § tables card layout: two columns on a phone card, more on a
-// wide modal card).
+// Whether a cell shows its field label in card view. Default follows the slot
+// — header cells unlabelled, body cells labelled — and meta.showLabel overrides
+// either (see ColumnMeta.showLabel).
+const showsLabel = <T,>(
+  cell: TanCell<T, unknown>,
+  isHeader: boolean
+): boolean => cell.column.columnDef.meta?.showLabel ?? !isHeader;
+
+// A card cell, optionally captioned by the column's string header. Unlabelled,
+// the cell fills its slot directly. Labelled, the wrapper follows the slot: a
+// HEADER field uses a FieldRow (label beside the control, one line — the card's
+// identity row); a BODY field uses a LabelledValue (label above, matching the
+// field grid). A generic function (not a sub-component) so the cell's T infers
+// cleanly at each call site, matching the other helpers here.
+function cellField<T>(
+  cell: TanCell<T, unknown>,
+  isHeader: boolean
+): JSX.Element {
+  const content = () =>
+    flexRender(cell.column.columnDef.cell, cell.getContext());
+  if (!showsLabel(cell, isHeader)) return content();
+  const label = columnHeaderText(cell);
+  return isHeader ? (
+    <FieldRow label={label} labelWidth="auto">
+      {content()}
+    </FieldRow>
+  ) : (
+    <LabelledValue label={label}>{content()}</LabelledValue>
+  );
+}
+
+// A labelled field grid — the body cells of one group, each captioned by
+// default (meta.showLabel can drop an individual label), laid out as an
+// auto-fitting column grid (ui-standards § tables card layout: two columns on a
+// phone card, more on a wide modal card).
 function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
   return (
     <div class={styles.cardFields}>
-      <For each={props.cells}>
-        {cell => (
-          <LabelledValue label={columnHeaderText(cell)}>
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </LabelledValue>
-        )}
-      </For>
+      <For each={props.cells}>{cell => cellField(cell, false)}</For>
     </div>
   );
 }
@@ -211,13 +237,11 @@ export function CardView<T, G extends string>(props: {
                   <div class={styles.cardIdentity}>
                     <For each={inHeader('primary')}>
                       {cell => (
-                        // Header slots are never labelled — the cell fills the
-                        // slot directly (identity/title inline-start).
+                        // Header slots are unlabelled by default — the cell
+                        // fills the slot directly (identity/title inline-start)
+                        // — unless meta.showLabel opts a caption in.
                         <div class={styles.cardPrimary}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
+                          {cellField(cell, true)}
                         </div>
                       )}
                     </For>
@@ -225,10 +249,7 @@ export function CardView<T, G extends string>(props: {
                   <For each={inHeader('badge')}>
                     {cell => (
                       <div class={styles.cardBadge}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {cellField(cell, true)}
                       </div>
                     )}
                   </For>

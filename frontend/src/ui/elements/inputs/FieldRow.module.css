@@ -11,6 +11,13 @@
   gap: var(--space-2) var(--space-3);
 }
 
+/* labelWidth="auto": reserve nothing for the label — it takes its natural width
+   and the control sits right after it (a lone row with no siblings to align
+   to, e.g. a card header field). */
+.row[data-label-width='auto'] {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
 .label {
   color: var(--text-body);
   font-size: var(--text-sm);
