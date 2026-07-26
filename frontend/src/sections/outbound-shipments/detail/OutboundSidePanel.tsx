@@ -20,7 +20,10 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
-import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+} from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { CheckIcon, CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
@@ -88,11 +91,15 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const requisition = () => props.node.requisition;
   const serviceLines = () => props.serviceLines;
   // Change-currency is offered only when the store allows foreign currency
-  // and the customer isn't itself a store — deliberately NOT gated by
-  // shipment status (spec S3 § side panel).
+  // and the customer isn't itself a store — and, like every header edit,
+  // only while the shipment is editable: the server rejects all header
+  // updates from SHIPPED (the old app leaves this control clickable but the
+  // edit silently does nothing — D63).
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
   const canChangeCurrency = () =>
-    props.foreignCurrencyAllowed && props.node.otherParty.store == null;
+    props.foreignCurrencyAllowed &&
+    props.node.otherParty.store == null &&
+    !props.disabled;
 
   // Tax display derivations (rules.md § pricing): the amount is total − sub
   // total floored at zero; the service group shows the EFFECTIVE rate (tax
@@ -221,11 +228,19 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.color')}>
-          <ColourTagPicker
-            colour={props.node.colour ?? null}
-            variant="field"
-            onSelect={colour => props.onSaveField({ colour })}
-          />
+          {/* Read-only once the shipment is (the panel-wide gate — "all
+              inputs share the editability gate", spec S3): the dot replaces
+              the picker, per the component's own read-only form. */}
+          <Show
+            when={!props.disabled}
+            fallback={<ColourTagDot colour={props.node.colour ?? null} />}
+          >
+            <ColourTagPicker
+              colour={props.node.colour ?? null}
+              variant="field"
+              onSelect={colour => props.onSaveField({ colour })}
+            />
+          </Show>
         </FieldRow>
         <FieldRow label={t('label.comment')}>
           <TextField
