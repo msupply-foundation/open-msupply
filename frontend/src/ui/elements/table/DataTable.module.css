@@ -847,6 +847,14 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 .cardIdentity {
   flex: 1;
   min-width: 0;
+  /* A row of the header's 'primary' cells (inline-start), so a second primary
+     — e.g. a "#" number beside the name — sits BESIDE the title, not under it.
+     The common single-primary case is a one-item row (unchanged). Wraps when
+     the identity block runs out of width rather than overflowing. */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
 }
 
 /* Identity title (ui-standards `.card-table-card-primary`). No line-height
@@ -861,6 +869,9 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   font-size: var(--text-md);
   font-weight: var(--weight-medium);
   overflow-wrap: anywhere;
+  /* Shrink + wrap inside .cardIdentity's flex row instead of forcing the row
+     wider than the card (matters once a second primary shares the row). */
+  min-width: 0;
 }
 
 .cardBadge {
