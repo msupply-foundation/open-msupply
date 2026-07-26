@@ -8,7 +8,6 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
 import {
   DataTable,
@@ -390,13 +389,6 @@ const StockList: Component = () => {
               sort={() => query().sort}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-            />
-          </Toolbar>
         </Header>
       }
     >
@@ -404,6 +396,15 @@ const StockList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering), never the page header; state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
