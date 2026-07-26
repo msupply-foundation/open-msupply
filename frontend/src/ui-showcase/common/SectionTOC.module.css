@@ -1,0 +1,50 @@
+/*
+ * Section Table of Contents — a recessed strip of anchor links to the page's
+ * key sections, sitting above the first card. Tokens only, logical properties
+ * (mirrors in RTL), rem sizing; theming rides the token overrides.
+ */
+.toc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-group-main);
+}
+
+.heading {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+/* A wrapping row of links (intrinsic wrap, no breakpoints). */
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-block;
+  color: var(--secondary-main);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: 2px;
+}

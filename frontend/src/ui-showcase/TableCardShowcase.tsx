@@ -42,7 +42,15 @@ import {
   TrashIcon,
 } from '../ui/icons';
 import { Text } from '../ui/elements/typography/Text';
-import { AnatomyTree, Intro, Lead, Note, type AnatomyNode } from './common';
+import {
+  AnatomyTree,
+  Intro,
+  Lead,
+  Note,
+  SectionTOC,
+  type AnatomyNode,
+} from './common';
+import type { PageMetadata } from './metadata';
 
 /*
  * The Table & Card anatomy page (Layout Elements) — the interactive companion
@@ -1239,10 +1247,34 @@ const CARD_ANATOMY: AnatomyNode[] = [
 // within a centred, scrolling column, so chrome-hiding would leave the
 // tables their boxed size. The overlay isn't the real behaviour, but it
 // gives the narrow card demos room when toggled to a table.
+export const tableCardMetadata: PageMetadata = {
+  id: 'table-card',
+  title: 'Table & Card',
+  searchTerms: ['data table', 'list', 'rows', 'columns'],
+  items: [
+    {
+      id: 'table-card-basics',
+      title: 'Table basics',
+      searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+    },
+    {
+      id: 'table-card-model',
+      title: 'Card model',
+      searchTerms: ['anatomy', 'disclosure', 'panel', 'body groups'],
+    },
+    {
+      id: 'table-card-assembled',
+      title: 'Assembled',
+      searchTerms: ['list card', 'multi panel', 'example'],
+    },
+  ],
+};
+
 export const TableCardShowcase = () => (
   <ShellFullScreenContext.Provider value={undefined}>
     <ContentContainer size="wide" align="start">
       <Stack gap="lg">
+        <SectionTOC page={tableCardMetadata} />
         <Intro>
           <strong>One column list, two renderings.</strong> The shared{' '}
           <code>DataTable</code> renders a list of records as a <em>table</em>{' '}
@@ -1261,7 +1293,10 @@ export const TableCardShowcase = () => (
 
         <Text variant="heading">Tables</Text>
 
-        <DashboardCard title="Table basics · The simplest table">
+        <DashboardCard
+          id="table-card-basics"
+          title="Table basics · The simplest table"
+        >
           <Lead>
             Three props — <code>columns</code>, <code>rows</code>,{' '}
             <code>rowKey</code>. Each column spells only its identity (
@@ -1321,7 +1356,10 @@ export const TableCardShowcase = () => (
 
         <Text variant="heading">Cards</Text>
 
-        <DashboardCard title="Card model · One list, two renderings">
+        <DashboardCard
+          id="table-card-model"
+          title="Card model · One list, two renderings"
+        >
           <Lead>
             The same columns as a working table, plus{' '}
             <code>showCardToggle</code>. The name declares itself the card{' '}
@@ -1389,7 +1427,10 @@ export const TableCardShowcase = () => (
               <CardAdvancedDemo />
             </DashboardCard>
 
-            <DashboardCard title="Assembled · A list card">
+            <DashboardCard
+              id="table-card-assembled"
+              title="Assembled · A list card"
+            >
               <Lead>
                 The shape the real pages ship: a title + status badge, a few
                 always-shown facts, and the rest tucked into one "More details"
