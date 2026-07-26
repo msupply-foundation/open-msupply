@@ -1,6 +1,6 @@
 # The Card/Table model — implementation reference
 
-How to configure the shared [`DataTable`](../elements/table/DataTable.tsx) so one column list renders as a **table** (rows × columns), as a **card list** (one card per row), or both — and how each column places itself on the card. This is the API-first reference: what to write, what it does, and the common recipes. The design decisions and history live in [`TABLE_PLAN.md`](./TABLE_PLAN.md) § Phase 4; cell rendering/width presets live in [`CELL_TYPES.md`](./CELL_TYPES.md); the authoritative per-field types are in [`columnTypes.ts`](../elements/table/columnTypes.ts).
+How to configure the shared [`DataTable`](../elements/table/DataTable.tsx) so one column list renders as a **table** (rows × columns), as a **card list** (one card per row), or both — and how each column places itself on the card. This is the API-first reference: what to write, what it does, and the common recipes. The interactive companion — this whole model rendered live, from the simplest three-prop table up to a sophisticated card — is the **Table & Card** showcase page ([`TableCardShowcase.tsx`](../../ui-showcase/TableCardShowcase.tsx), `#/showcase/table-card`). The design decisions and history live in [`TABLE_PLAN.md`](./TABLE_PLAN.md) § Phase 4; cell rendering/width presets live in [`CELL_TYPES.md`](./CELL_TYPES.md); the authoritative per-field types are in [`columnTypes.ts`](../elements/table/columnTypes.ts).
 
 ## The one idea to hold onto
 

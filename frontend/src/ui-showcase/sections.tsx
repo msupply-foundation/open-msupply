@@ -29,6 +29,7 @@ import { CardGridShowcase } from './CardGridShowcase';
 import { ChartsShowcase } from './ChartsShowcase';
 import { PageLayoutShowcase } from './PageLayoutShowcase';
 import { FormLayoutShowcase } from './FormLayoutShowcase';
+import { TableCardShowcase } from './TableCardShowcase';
 import { FormsShowcase } from './FormsShowcase';
 
 export type SectionCategory = 'components' | 'layout' | 'pages';
@@ -200,6 +201,15 @@ export const sections: SectionDef[] = [
     id: 'form-layout',
     label: 'Form layout',
     component: FormLayoutShowcase,
+    category: 'layout',
+  },
+  // The card/table model walkthrough — the interactive companion to
+  // docs/CARD_TABLE_MODEL.md, bridging into the Pages group it cross-links to
+  // (List page / Detail table page are its assembled results).
+  {
+    id: 'table-card',
+    label: 'Table & Card',
+    component: TableCardShowcase,
     category: 'layout',
   },
   // The Pages group: full-page `fill` demos of the elements assembled into a
