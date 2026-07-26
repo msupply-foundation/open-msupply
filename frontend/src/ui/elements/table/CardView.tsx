@@ -57,16 +57,25 @@ function cellField<T>(
   cell: TanCell<T, unknown>,
   isHeader: boolean
 ): JSX.Element {
-  const content = () =>
-    flexRender(cell.column.columnDef.cell, cell.getContext());
-  if (!showsLabel(cell, isHeader)) return content();
+  // The value node — wrapped in a data-mono span for code-like columns
+  // (meta.mono) so the monospace font reaches the card too (table view applies
+  // it on the <td>). Only the VALUE is wrapped, never the field label.
+  const value = () => {
+    const content = flexRender(cell.column.columnDef.cell, cell.getContext());
+    return cell.column.columnDef.meta?.mono ? (
+      <span data-mono="">{content}</span>
+    ) : (
+      content
+    );
+  };
+  if (!showsLabel(cell, isHeader)) return value();
   const label = columnHeaderText(cell);
   return isHeader ? (
     <FieldRow label={label} labelWidth="auto">
-      {content()}
+      {value()}
     </FieldRow>
   ) : (
-    <LabelledValue label={label}>{content()}</LabelledValue>
+    <LabelledValue label={label}>{value()}</LabelledValue>
   );
 }
 

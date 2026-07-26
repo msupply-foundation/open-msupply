@@ -24,6 +24,11 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   return lines && lines > 1 ? lines : undefined;
 };
 
+// The monospace convention: code-like value cells render in --font-mono (set by
+// the `code` cell kind). Value cells only — the header label stays sans.
+const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.mono ?? false;
+
 // A column's real growth cap in px (delivered as max-width), or undefined.
 // TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
 // columnDef, so only a value below that sentinel counts as an actual cap.
@@ -115,6 +120,7 @@ export function TableRow<T>(props: {
               // scoped by row (row.getByTestId('cell-batch')).
               data-testid={`cell-${cell.column.id}`}
               data-align={cellAlign(cell)}
+              data-mono={cellMono(cell) ? '' : undefined}
               data-pinned={cell.column.getIsPinned() || undefined}
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
               // 1, the cell clamps to that many lines then ellipsises (CSS
