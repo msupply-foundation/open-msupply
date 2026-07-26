@@ -87,7 +87,7 @@ export const categories: {
 }[] = [
   { id: 'components', label: 'Components', icon: SlidersIcon },
   { id: 'layout', label: 'Layout Elements', icon: CopyIcon },
-  { id: 'pages', label: 'Pages', icon: FileIcon },
+  { id: 'pages', label: 'Page Examples', icon: FileIcon },
 ];
 
 /*
