@@ -448,6 +448,7 @@ const OutboundDetailView: Component = () => {
     setEditState({
       item: {
         id: line.item.id,
+        code: line.item.code,
         name: line.item.name,
         unitName: line.item.unitName,
         isVaccine: line.item.isVaccine,

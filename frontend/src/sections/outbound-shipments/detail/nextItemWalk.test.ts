@@ -12,7 +12,7 @@ import {
 // stale) resource.
 
 const row = (itemId: string): WalkRow => ({
-  item: { id: itemId, name: `Item ${itemId}` },
+  item: { id: itemId, code: `c-${itemId}`, name: `Item ${itemId}` },
 });
 
 // Three pages of two rows each; items a..f, one row per item except where a

@@ -20,7 +20,6 @@ import {
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
-import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import styles from './OutboundLineEditModal.module.css';
 import {
@@ -39,7 +38,7 @@ import {
   SaveOutboundItemLines,
   type DraftStockOutLinesResult,
 } from './outboundLineEdit.generated';
-import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
+import { ItemSearch } from '../../../../domain/item';
 import { toSaveLineInputs } from './saveLineInputs';
 import {
   availableUnits as sumAvailableUnits,
@@ -83,6 +82,8 @@ type DraftLine =
 
 export type LineEditItem = {
   id: string;
+  /** For the locked picker's "code - name" label (ItemSearch selectedItem). */
+  code: string;
   name: string;
   unitName?: string | null;
   isVaccine?: boolean;
@@ -640,28 +641,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     });
   };
 
-  // The picker shows EVERY visible stock item — items already on the shipment
-  // are NOT excluded (spec S4; picking one loads its existing allocation).
-  const pickerItems = () => itemOptionsResource.noSuspense();
-
   const updateMode = () => mode() === 'update';
-
-  // The catalogue is a lazy resource, so in update mode (row open / walk
-  // advance) the current item may not be resolvable from `items` yet. Supply
-  // the selected option directly so the locked field always shows the name.
-  const selectedItemOption = createMemo<ItemOption | undefined>(() => {
-    const it = item();
-    if (!updateMode() || !it) return undefined;
-    return {
-      id: it.id,
-      code: '',
-      name: it.name,
-      unitName: it.unitName ?? null,
-      isVaccine: it.isVaccine ?? false,
-      doses: it.doses ?? 0,
-      availableStockOnHand: 0,
-    };
-  });
 
   const columns = (): Column<DraftLine, never>[] => [
     {
@@ -917,50 +897,30 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* Item row: the catalogue lookup (locked in edit mode) + unit. */}
-      <Combobox<ItemOption>
+      {/* Item row: the shared server-searched item lookup (spec S4 — the
+          registry's async catalogue-lookup; no client-side cached cap), locked
+          in update mode. `selectedItem` labels the current value when it isn't
+          in the search's own paginated results (a row-click open / walk
+          advance). Clearing (×) returns to the empty search state — like an
+          add-mode item switch, unsaved edits are discarded (AC-V8). */}
+      <ItemSearch
         label={t('label.item')}
-        items={pickerItems()}
-        loading={itemOptionsResource.loading()}
-        itemToString={option => option.name}
-        itemToValue={option => option.id}
-        filter={(option, input) => {
-          const needle = input.toLocaleLowerCase();
-          return (
-            option.name.toLocaleLowerCase().includes(needle) ||
-            option.code.toLocaleLowerCase().includes(needle)
-          );
-        }}
-        renderItem={option => (
-          <span class={styles.itemOption}>
-            <span class={styles.itemLabel}>
-              <span data-testid="item-option-code">{option.code}</span>{' '}
-              <span data-testid="item-option-name">{option.name}</span>
-            </span>
-            <span class={styles.itemStock}>
-              {/* A fixed, localised "Units" label for every item — the item's
-                  own unitName is untranslatable catalogue data, so the old app's
-                  item search shows t('label.units') here for all items (the
-                  specific unit is used on the Available line / lens, not here). */}
-              {formatNumber(option.availableStockOnHand)} {t('label.units')}
-            </span>
-          </span>
-        )}
-        value={item()?.id ?? ''}
-        selectedItem={selectedItemOption()}
-        clearable={false}
+        storeId={props.storeId}
         disabled={updateMode() || saving()}
-        inputTestId="item-search-input"
-        placeholder={t('placeholder.search-by-name')}
-        onChange={option => {
+        value={item()?.id}
+        selectedItem={item()}
+        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        onSelect={option => {
           if (option)
             void seedItem({
               id: option.id,
+              code: option.code,
               name: option.name,
               unitName: option.unitName,
               isVaccine: option.isVaccine,
               doses: option.doses,
             });
+          else backToSearch();
         }}
       />
 
