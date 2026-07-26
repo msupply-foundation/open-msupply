@@ -2,15 +2,11 @@ import { createMemo, createSignal, Show } from 'solid-js';
 import { t } from '../intl';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import {
-  getCurrencyCell,
-  getDateCell,
-  getExpiryDateCell,
-  getNumberCell,
-} from '../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -33,6 +29,7 @@ import {
   SidePanelActions,
 } from '../ui/layout/SidePanel/SidePanel';
 import { Button } from '../ui/elements/buttons/Button';
+import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -72,6 +69,18 @@ type SortKey =
   | 'expiryDate'
   | 'packSize'
   | 'locationName';
+
+// Card-view grouping for the list card: the item NAME is the card title
+// (headerPosition 'primary') and the pack quantity its badge; Code / Batch /
+// Expiry / Unit form the always-shown default group (no cardGroup), and every
+// remaining column drops into one collapsed "More details" disclosure so a
+// list card stays scannable. Only one body group is declared — the rest is the
+// default group. No labelKey → the disclosure header falls back to "More
+// details".
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
 
 // Mirrors isPlaceholderLine in the real vertical (detail/inboundShipmentUpdate)
 // — a stock-in line with nothing received and nothing shipped. Reproduced here
@@ -276,6 +285,17 @@ export const DetailTableShowcase = () => {
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
+  // The line the Line Edit modal is open on (a row click), or null when closed.
+  // The real page opens the batch editor here; the showcase mirrors it.
+  const [editItem, setEditItem] = createSignal<EditItem | null>(null);
+  const [editorOpen, setEditorOpen] = createSignal(false);
+  // Open the line editor on a row (UPDATE) or from "Add item" (ADD — null item,
+  // active selector).
+  const openEditor = (item: EditItem | null) => {
+    setEditItem(item);
+    setEditorOpen(true);
+  };
+
   // The side panel (opened from the header's More button, closed from its own
   // header — the Page frame owns the panel chrome; the page owns only this
   // boolean).
@@ -342,11 +362,12 @@ export const DetailTableShowcase = () => {
     setOffset(0);
   };
 
-  const columns = (): Column<Line, SortKey>[] => [
+  const columns = (): Column<Line, SortKey, GroupKey>[] => [
     {
       c: { accessor: line => line.itemCode, id: 'itemCode' },
       sortKey: 'itemCode',
       header: t('label.code'),
+      ...getCellDefinition<Line>('itemCode'),
       cell: info => {
         const line = info.row.original;
         return (
@@ -364,39 +385,51 @@ export const DetailTableShowcase = () => {
       c: { key: 'itemName' },
       sortKey: 'itemName',
       header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
+      ...getCellDefinition<Line>('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: t('label.batch'),
+      ...getCellDefinition<Line>('batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
       header: t('label.expiry'),
-      ...getExpiryDateCell(),
+      ...getCellDefinition<Line>('expiryDate'),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationName',
       header: t('label.location'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('location'),
     },
     {
       c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
       header: t('label.unit'),
+      ...getCellDefinition<Line>('unitName'),
     },
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
       header: t('label.pack-size'),
-      ...getNumberCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
       header: t('label.pack-quantity'),
-      ...getNumberCell(),
-      meta: { align: 'right', card: { region: 'badge' } },
+      // Badge cells drop their label by default; keep it so the card's chip
+      // reads "Num. of packs: 12", not a bare number.
+      ...getCellDefinition<Line>('numberOfPacks', {
+        headerPosition: 'badge',
+        showLabel: true,
+      }),
     },
     {
       // Difference — shipped minus received; blank when nothing shipped.
@@ -408,7 +441,8 @@ export const DetailTableShowcase = () => {
         id: 'difference',
       },
       header: t('label.difference'),
-      ...getNumberCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('difference'),
     },
     {
       c: {
@@ -416,17 +450,20 @@ export const DetailTableShowcase = () => {
         id: 'unitQuantity',
       },
       header: t('label.unit-quantity'),
-      ...getNumberCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('unitQuantity'),
     },
     {
       c: { key: 'costPricePerPack' },
       header: t('label.pack-cost-price'),
-      ...getCurrencyCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('costPricePerPack'),
     },
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
-      ...getCurrencyCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('sellPricePerPack'),
     },
     {
       c: {
@@ -434,7 +471,8 @@ export const DetailTableShowcase = () => {
         id: 'total',
       },
       header: t('label.total'),
-      ...getCurrencyCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('total'),
     },
     {
       c: {
@@ -442,11 +480,14 @@ export const DetailTableShowcase = () => {
         id: 'manufacturer',
       },
       header: t('label.manufacturer'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('manufacturer'),
     },
     {
       c: { key: 'manufactureDate' },
       header: t('label.manufacture-date'),
-      ...getDateCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('manufactureDate'),
     },
     {
       c: {
@@ -454,10 +495,13 @@ export const DetailTableShowcase = () => {
         id: 'campaignProgram',
       },
       header: t('label.campaign'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'note' },
       header: t('label.note'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('note'),
     },
   ];
 
@@ -547,7 +591,10 @@ export const DetailTableShowcase = () => {
                     label: t('label.add-from-master-list'),
                   },
                 ]}
-                onAction={() => {}}
+                // Both options open the editor in ADD mode (no master-list
+                // flow in the showcase) — an active item search, empty until an
+                // item is picked.
+                onAction={() => openEditor(null)}
               />
               <Button variant="secondary" icon={<PrinterIcon />}>
                 {t('button.export-or-print')}
@@ -607,13 +654,24 @@ export const DetailTableShowcase = () => {
         <TabPanel value="details">
           <DataTable
             columns={columns()}
+            cardGroups={CARD_GROUPS}
             rows={rows()}
             rowKey={line => line.id}
             sort={sort()}
             onSort={onSort}
-            // The real page opens the line-edit modal on row click; a no-op
-            // here so the click-to-open row affordance still shows.
-            onRowClick={() => {}}
+            // Offer the card ⇄ table toggle above the compact band (below 600px
+            // the list is card-only). Card view surfaces the Sort control.
+            showCardToggle
+            // The real page opens the line-edit modal on row click; the
+            // showcase opens the Line Edit modal on the clicked line's item.
+            onRowClick={line =>
+              openEditor({
+                id: line.itemId,
+                code: line.itemCode,
+                name: line.itemName,
+                unitName: line.item?.unitName ?? null,
+              })
+            }
             // A failed-bulk-op line reads in the error tone; an untouched
             // placeholder in the info tone. Error wins when both hold.
             rowTone={line =>
@@ -648,6 +706,15 @@ export const DetailTableShowcase = () => {
                 setOffset(0);
               },
             }}
+          />
+          <LineEditModal
+            open={editorOpen()}
+            item={editItem()}
+            // The clicked item's batches — grouped by item CODE (the showcase's
+            // itemId is unique per row; the code repeats), so opening a row
+            // shows all that item's batch cards.
+            lines={DATA.filter(l => l.itemCode === editItem()?.code)}
+            onClose={() => setEditorOpen(false)}
           />
         </TabPanel>
         <TabPanel value="documents">

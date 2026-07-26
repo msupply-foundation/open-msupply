@@ -18,6 +18,12 @@ interface MultiSelectProps<T> {
   renderItem?: (item: T) => JSX.Element;
   placeholder?: string;
   helperText?: string;
+  /**
+   * Control size. 'default' is the form-field size; 'small' is the compact
+   * variant for dense contexts (e.g. cards). Matches the shared input size
+   * scale (see --input-height*).
+   */
+  size?: 'default' | 'small';
   class?: string;
 }
 
@@ -53,6 +59,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
     <KCombobox.Root<T>
       multiple
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-size={props.size ?? 'default'}
       options={props.items}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}

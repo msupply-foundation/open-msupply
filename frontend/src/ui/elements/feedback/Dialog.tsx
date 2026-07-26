@@ -61,6 +61,13 @@ export interface DialogProps {
    * than the footer). The title takes the free space; these group at the end.
    */
   headerActions?: JSX.Element;
+  /**
+   * Vertical alignment of the header row. `center` (default) suits a
+   * single-line title + actions. `start` top-aligns them — for a title that's
+   * taller than the actions (e.g. a selector with helper text below it), so the
+   * actions sit against the title's top edge rather than its centre.
+   */
+  headerAlign?: 'center' | 'start';
   description?: JSX.Element;
   children?: JSX.Element;
   /**
@@ -114,6 +121,7 @@ interface DialogHeaderProps {
   titleIsString: boolean;
   titleId: string;
   titleHidden?: boolean;
+  align?: 'center' | 'start';
   icon?: JSX.Element;
   headerActions?: JSX.Element;
 }
@@ -133,6 +141,7 @@ const DialogHeader = (props: DialogHeaderProps): JSX.Element => {
     <header
       class={styles.header}
       classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
+      data-align={props.align === 'start' ? 'start' : undefined}
     >
       <Show when={icon()}>
         <span class={styles.icon}>{icon()}</span>
@@ -333,6 +342,7 @@ export const Dialog = (props: DialogProps) => {
             titleIsString={titleIsString()}
             titleId={titleId}
             titleHidden={props.titleHidden}
+            align={props.headerAlign}
             icon={props.icon}
             headerActions={props.headerActions}
           />
