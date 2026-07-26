@@ -10,7 +10,7 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
-import { LabelledValue } from '../ui/elements/typography/LabelledValue';
+import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
 import {
@@ -384,7 +384,9 @@ const Body: Component<LineEditModalProps> = props => {
     {
       c: { key: 'batch' },
       header: t('label.batch'),
-      meta: { headerPosition: 'primary' },
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in.
+      meta: { headerPosition: 'primary', showLabel: true },
       cell: info => {
         const b = info.row.original;
         return (
@@ -392,6 +394,9 @@ const Body: Component<LineEditModalProps> = props => {
             label={t('label.batch')}
             hideLabel
             size="small"
+            // Narrow: a batch code is short, and it's the card's inline header
+            // field (the FieldRow control cell is otherwise full-width).
+            width="compact"
             value={b.batch}
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
@@ -762,12 +767,15 @@ const Body: Component<LineEditModalProps> = props => {
           <Alert severity="info">{t('messages.select-item-to-receive')}</Alert>
         }
       >
-        {/* Unit is a fact of the item, never editable — a LabelledValue, not a
-            disabled input — on its own line below the selector (spec S4). */}
+        {/* Unit is a fact of the item, never editable — inline label + value,
+            matching the batch header's inline field (spec S4). NB wrapping a
+            read-only VALUE in FieldRow (a "control row") is the
+            LabelledValue/FieldRow naming smell logged in COMPONENT_RENAMING.md
+            — an inline read-only labelled value has no clean home yet. */}
         <Show when={item()?.unitName}>
-          <LabelledValue label={t('label.unit')} variant="field">
+          <FieldRow label={t('label.unit')} labelWidth="auto">
             {item()?.unitName}
-          </LabelledValue>
+          </FieldRow>
         </Show>
         <DataTable
           columns={columns()}

@@ -51,6 +51,15 @@ declare module '@tanstack/solid-table' {
      */
     headerPosition?: 'primary' | 'badge';
     /**
+     * Override whether this column's field label shows in CARD view. The
+     * default follows the slot: HEADER cells (headerPosition) render WITHOUT a
+     * label, BODY cells WITH one. Set explicitly to override either case — e.g.
+     * `showLabel: true` on a primary header field to caption it ("Batch"), or
+     * `showLabel: false` on a body field to drop its label. The label text is
+     * the column's string `header` (a JSX/function header yields no label).
+     */
+    showLabel?: boolean;
+    /**
      * Omit this column from TABLE view (a card-only column). Independent of
      * headerPosition/cardGroup, which still place it on the card.
      */
