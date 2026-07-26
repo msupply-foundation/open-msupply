@@ -275,6 +275,13 @@ export const DetailTableShowcase = () => {
   // The line the Line Edit modal is open on (a row click), or null when closed.
   // The real page opens the batch editor here; the showcase mirrors it.
   const [editItem, setEditItem] = createSignal<EditItem | null>(null);
+  const [editorOpen, setEditorOpen] = createSignal(false);
+  // Open the line editor on a row (UPDATE) or from "Add item" (ADD — null item,
+  // active selector).
+  const openEditor = (item: EditItem | null) => {
+    setEditItem(item);
+    setEditorOpen(true);
+  };
 
   // The side panel (opened from the header's More button, closed from its own
   // header — the Page frame owns the panel chrome; the page owns only this
@@ -557,7 +564,10 @@ export const DetailTableShowcase = () => {
                     label: t('label.add-from-master-list'),
                   },
                 ]}
-                onAction={() => {}}
+                // Both options open the editor in ADD mode (no master-list
+                // flow in the showcase) — an active item search, empty until an
+                // item is picked.
+                onAction={() => openEditor(null)}
               />
               <Button variant="secondary" icon={<PrinterIcon />}>
                 {t('button.export-or-print')}
@@ -627,7 +637,7 @@ export const DetailTableShowcase = () => {
             // The real page opens the line-edit modal on row click; the
             // showcase opens the Line Edit modal on the clicked line's item.
             onRowClick={line =>
-              setEditItem({
+              openEditor({
                 id: line.itemId,
                 code: line.itemCode,
                 name: line.itemName,
@@ -670,13 +680,13 @@ export const DetailTableShowcase = () => {
             }}
           />
           <LineEditModal
-            open={editItem() !== null}
+            open={editorOpen()}
             item={editItem()}
             // The clicked item's batches — grouped by item CODE (the showcase's
             // itemId is unique per row; the code repeats), so opening a row
             // shows all that item's batch cards.
             lines={DATA.filter(l => l.itemCode === editItem()?.code)}
-            onClose={() => setEditItem(null)}
+            onClose={() => setEditorOpen(false)}
           />
         </TabPanel>
         <TabPanel value="documents">
