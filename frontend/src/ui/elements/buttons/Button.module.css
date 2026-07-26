@@ -37,6 +37,12 @@
   border-radius: var(--radius-sm); /* 0.25rem / 4px — flat */
   font-family: inherit;
   font-weight: var(--weight-medium);
+  /* Honor the height token: the inherited ~1.71 body line-height otherwise
+     pushes the box ~2px past --button-height (36px) / --touch-target (44px),
+     so a button reads taller than a same-token input/select. nowrap keeps the
+     label one line, so line-height only sizes that line's box and the flex
+     centring leaves the glyphs untouched. */
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
   transition:
