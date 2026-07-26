@@ -433,6 +433,61 @@ const WorkingTable = () => {
   );
 };
 
+// Row states & background tints (table view only). Two rows are pre-selected
+// so the verified (green) and warning (amber) tints show on load; discontinued
+// rows are disabled (grey) always. Selecting / deselecting shows the gating —
+// verified / warning are white until selected.
+const RowStatesDemo = () => {
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([
+    'sl-1',
+    'sl-2',
+  ]);
+  const columns = (): Column<StockLine, SortKey>[] => [
+    {
+      c: { key: 'code' },
+      header: 'Code',
+      ...getCellDefinition<StockLine>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: 'Name',
+      ...getCellDefinition<StockLine>('name'),
+    },
+    {
+      c: { key: 'status' },
+      header: 'Status',
+      cell: info => <StatusCell status={info.getValue<StockStatus>()} />,
+    },
+    {
+      c: { key: 'quantity' },
+      header: 'Quantity',
+      ...getNumberCell<StockLine>(),
+      size: remToPx(6),
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns()}
+      rows={DATA.slice(0, 6)}
+      rowKey={r => r.id}
+      enableSelection
+      selectedIds={selectedIds()}
+      onSelectionChange={setSelectedIds}
+      // The page's ONLY job: map each row to a state from its own facts.
+      // active → verified (green when selected), onHold → warning (amber
+      // when selected), discontinued → disabled (grey always). The DataTable
+      // owns the tints, the selection-gating and the replaces-blue rule.
+      rowState={row =>
+        row.status === 'active'
+          ? 'verified'
+          : row.status === 'onHold'
+            ? 'warning'
+            : 'disabled'
+      }
+    />
+  );
+};
+
 // ============================================================================
 // § The card model
 // ============================================================================
@@ -1061,13 +1116,13 @@ export const TableCardShowcase = () => (
           <strong>One column list, two renderings.</strong> The shared{' '}
           <code>DataTable</code> renders a list of records as a <em>table</em>{' '}
           (rows × columns) or as a <em>card list</em> (one card per row) from a
-          single <code>Column[]</code> — each column decides, per view, whether it
-          appears and where. This page walks that model up from the simplest
+          single <code>Column[]</code> — each column decides, per view, whether
+          it appears and where. This page walks that model up from the simplest
           three-prop table to a sophisticated card. The two <em>assembled</em>{' '}
           results, wired over real data, are the Pages demos (
           <a href="#/showcase/table">List page</a>,{' '}
-          <a href="#/showcase/detail-table">Detail table page</a>); the full field
-          reference is <code>docs/CARD_TABLE_MODEL.md</code> (
+          <a href="#/showcase/detail-table">Detail table page</a>); the full
+          field reference is <code>docs/CARD_TABLE_MODEL.md</code> (
           <code>docs/CELL_TYPES.md</code> for the cell presets).
         </Intro>
 
@@ -1079,9 +1134,9 @@ export const TableCardShowcase = () => (
           <Lead>
             Three props — <code>columns</code>, <code>rows</code>,{' '}
             <code>rowKey</code>. Each column spells only its identity (
-            <code>c</code>) and a <code>header</code>; TanStack renders the value
-            as-is over a real semantic <code>&lt;table&gt;</code>. Everything
-            after this is one optional prop at a time.
+            <code>c</code>) and a <code>header</code>; TanStack renders the
+            value as-is over a real semantic <code>&lt;table&gt;</code>.
+            Everything after this is one optional prop at a time.
           </Lead>
           <BareTable />
         </DashboardCard>
@@ -1092,37 +1147,56 @@ export const TableCardShowcase = () => (
             cell type — rendering, alignment and a default width in one spread:{' '}
             <code>code</code> (Code), <code>name</code> (the wide Text sink),{' '}
             <code>packSize</code> (Number), <code>total</code> (Currency),{' '}
-            <code>expiryDate</code> (red within 3 months) and <code>comment</code>{' '}
-            (an icon + popover). A field that <em>isn't</em> a common key —{' '}
-            <code>quantity</code> — uses the explicit <code>getNumberCell()</code>{' '}
-            and sets its own <code>size</code>. Drag a header edge to resize.
+            <code>expiryDate</code> (red within 3 months) and{' '}
+            <code>comment</code> (an icon + popover). A field that{' '}
+            <em>isn't</em> a common key — <code>quantity</code> — uses the
+            explicit <code>getNumberCell()</code> and sets its own{' '}
+            <code>size</code>. Drag a header edge to resize.
           </Lead>
           <CellTypesTable />
         </DashboardCard>
 
         <DashboardCard title="Table basics · A working table">
           <Lead>
-            The four features a real list ships, each one prop: sortable headers (
-            <code>sort</code> / <code>onSort</code>), a selection checkbox +
+            The four features a real list ships, each one prop: sortable headers
+            (<code>sort</code> / <code>onSort</code>), a selection checkbox +
             action footer (<code>enableSelection</code> /{' '}
             <code>selectionActions</code>), the pager (<code>pagination</code>)
-            and the Settings popover (<code>config</code> / <code>setConfig</code>{' '}
-            — show/hide, reorder, pin). The page owns the state; the table is
-            presentation over the page of rows it's handed.
+            and the Settings popover (<code>config</code> /{' '}
+            <code>setConfig</code> — show/hide, reorder, pin). The page owns the
+            state; the table is presentation over the page of rows it's handed.
           </Lead>
           <WorkingTable />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · Row states & tints">
+          <Lead>
+            Row background tints come from one prop — <code>rowState</code>, a
+            function mapping each row to{' '}
+            <code>'verified' | 'warning' | 'disabled'</code> (think green /
+            amber / grey) from its own facts (here active → verified, on hold →
+            warning, discontinued → disabled). The catch: <code>verified</code>{' '}
+            and <code>warning</code> are <strong>selection-gated</strong> — the
+            row is plain white until you <strong>select</strong> it, then it
+            tints green / amber instead of the default selection blue (the
+            status chip carries the meaning at rest). <code>disabled</code> is
+            grey always. Two rows are pre-selected so the tints show; select or
+            deselect to watch the gating. Full rules are in{' '}
+            <code>CARD_TABLE_MODEL.md</code>.
+          </Lead>
+          <RowStatesDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>
 
         <DashboardCard title="Card model · One list, two renderings">
           <Lead>
-            The same columns as a working table, plus <code>showCardToggle</code>.
-            The name declares itself the card <em>title</em> (
-            <code>headerPosition: 'primary'</code>) and the status a{' '}
-            <em>badge</em> (<code>'badge'</code>); flip the toolbar toggle and the
-            identical <code>Column[]</code> renders as cards. Below 600px the
-            table is <em>always</em> cards and the toggle hides.
+            The same columns as a working table, plus{' '}
+            <code>showCardToggle</code>. The name declares itself the card{' '}
+            <em>title</em> (<code>headerPosition: 'primary'</code>) and the
+            status a <em>badge</em> (<code>'badge'</code>); flip the toolbar
+            toggle and the identical <code>Column[]</code> renders as cards.
+            Below 600px the table is <em>always</em> cards and the toggle hides.
           </Lead>
           <CardToggleDemo />
         </DashboardCard>
@@ -1138,8 +1212,8 @@ export const TableCardShowcase = () => (
                 title inline-start, the <code>badge</code> inline-end, both
                 unlabelled — over a hairline, then a <strong>body</strong> whose
                 cells are labelled by default (label above value, the same field
-                grid a form uses). Match this against the figure at the top of the
-                page.
+                grid a form uses). Match this against the figure at the top of
+                the page.
               </Lead>
               <CardAnatomyDemo />
             </DashboardCard>
@@ -1158,9 +1232,9 @@ export const TableCardShowcase = () => (
 
             <DashboardCard title="Card model · Disclosure — More details">
               <Lead>
-                A group with <code>disclosure: 'closed'</code> wraps its fields in
-                a collapsed accordion — secondary content, reachable but out of
-                the way. <code>disclosurePreview</code> shows a row-specific
+                A group with <code>disclosure: 'closed'</code> wraps its fields
+                in a collapsed accordion — secondary content, reachable but out
+                of the way. <code>disclosurePreview</code> shows a row-specific
                 summary (here the total) beside the header while collapsed.
                 Primary vs secondary content is simply: no disclosure vs{' '}
                 <code>disclosure: 'closed'</code>.
@@ -1170,14 +1244,15 @@ export const TableCardShowcase = () => (
 
             <DashboardCard title="Card model · Fields that differ by view">
               <Lead>
-                Two recipes. <strong>One value, two faces</strong>: the code is a
-                plain Code column in table view (<code>hideOnCard</code>) and a
-                second, card-only <code>primary</code> cell rendered{' '}
+                Two recipes. <strong>One value, two faces</strong>: the code is
+                a plain Code column in table view (<code>hideOnCard</code>) and
+                a second, card-only <code>primary</code> cell rendered{' '}
                 <code>#CODE</code> in card view (<code>hideOnTable</code>) —
                 distinct <code>id</code>s so they never collide.{' '}
-                <strong>A card-only editable field</strong>: the Note input exists
-                only on the card (<code>hideOnTable</code>), sitting alongside the
-                read-only labelled values. Toggle to compare the faces.
+                <strong>A card-only editable field</strong>: the Note input
+                exists only on the card (<code>hideOnTable</code>), sitting
+                alongside the read-only labelled values. Toggle to compare the
+                faces.
               </Lead>
               <CardAdvancedDemo />
             </DashboardCard>
@@ -1186,16 +1261,17 @@ export const TableCardShowcase = () => (
               <Lead>
                 The shape the real pages ship: a title + status badge, a few
                 always-shown facts, and the rest tucked into one "More details"
-                disclosure — with selection and the card⇄table toggle. This is the
-                sophisticated end of the same model; the fully wired versions over
-                real data are the <a href="#/showcase/table">List page</a> and{' '}
+                disclosure — with selection and the card⇄table toggle. This is
+                the sophisticated end of the same model; the fully wired
+                versions over real data are the{' '}
+                <a href="#/showcase/table">List page</a> and{' '}
                 <a href="#/showcase/detail-table">Detail table page</a>.
               </Lead>
               <Note>
-                The Columns popover is a table-shaped control — visibility toggles
-                apply in card view, but "pin left/right" and moving a column
-                between card groups aren't expressible there yet (see the doc's
-                Known limitations).
+                The Columns popover is a table-shaped control — visibility
+                toggles apply in card view, but "pin left/right" and moving a
+                column between card groups aren't expressible there yet (see the
+                doc's Known limitations).
               </Note>
               <AssembledCardDemo />
             </DashboardCard>
