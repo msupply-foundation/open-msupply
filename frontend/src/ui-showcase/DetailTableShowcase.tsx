@@ -2,6 +2,7 @@ import { createMemo, createSignal, Show } from 'solid-js';
 import { t } from '../intl';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
@@ -68,6 +69,18 @@ type SortKey =
   | 'expiryDate'
   | 'packSize'
   | 'locationName';
+
+// Card-view grouping for the list card: the item NAME is the card title
+// (headerPosition 'primary') and the pack quantity its badge; Code / Batch /
+// Expiry / Unit form the always-shown default group (no cardGroup), and every
+// remaining column drops into one collapsed "More details" disclosure so a
+// list card stays scannable. Only one body group is declared — the rest is the
+// default group. No labelKey → the disclosure header falls back to "More
+// details".
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
 
 // Mirrors isPlaceholderLine in the real vertical (detail/inboundShipmentUpdate)
 // — a stock-in line with nothing received and nothing shipped. Reproduced here
@@ -349,7 +362,7 @@ export const DetailTableShowcase = () => {
     setOffset(0);
   };
 
-  const columns = (): Column<Line, SortKey>[] => [
+  const columns = (): Column<Line, SortKey, GroupKey>[] => [
     {
       c: { accessor: line => line.itemCode, id: 'itemCode' },
       sortKey: 'itemCode',
@@ -393,6 +406,7 @@ export const DetailTableShowcase = () => {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationName',
       header: t('label.location'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('location'),
     },
     {
@@ -404,13 +418,17 @@ export const DetailTableShowcase = () => {
       c: { key: 'packSize' },
       sortKey: 'packSize',
       header: t('label.pack-size'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
       header: t('label.pack-quantity'),
+      // Badge cells drop their label by default; keep it so the card's chip
+      // reads "Num. of packs: 12", not a bare number.
       ...getCellDefinition<Line>('numberOfPacks', {
         headerPosition: 'badge',
+        showLabel: true,
       }),
     },
     {
@@ -423,6 +441,7 @@ export const DetailTableShowcase = () => {
         id: 'difference',
       },
       header: t('label.difference'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('difference'),
     },
     {
@@ -431,16 +450,19 @@ export const DetailTableShowcase = () => {
         id: 'unitQuantity',
       },
       header: t('label.unit-quantity'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('unitQuantity'),
     },
     {
       c: { key: 'costPricePerPack' },
       header: t('label.pack-cost-price'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('costPricePerPack'),
     },
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('sellPricePerPack'),
     },
     {
@@ -449,6 +471,7 @@ export const DetailTableShowcase = () => {
         id: 'total',
       },
       header: t('label.total'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('total'),
     },
     {
@@ -457,11 +480,13 @@ export const DetailTableShowcase = () => {
         id: 'manufacturer',
       },
       header: t('label.manufacturer'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('manufacturer'),
     },
     {
       c: { key: 'manufactureDate' },
       header: t('label.manufacture-date'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('manufactureDate'),
     },
     {
@@ -470,10 +495,12 @@ export const DetailTableShowcase = () => {
         id: 'campaignProgram',
       },
       header: t('label.campaign'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'note' },
       header: t('label.note'),
+      cardGroup: 'more',
       ...getCellDefinition<Line>('note'),
     },
   ];
@@ -627,6 +654,7 @@ export const DetailTableShowcase = () => {
         <TabPanel value="details">
           <DataTable
             columns={columns()}
+            cardGroups={CARD_GROUPS}
             rows={rows()}
             rowKey={line => line.id}
             sort={sort()}
