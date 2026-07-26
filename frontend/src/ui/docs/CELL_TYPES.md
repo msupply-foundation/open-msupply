@@ -2,6 +2,8 @@
 
 The catalogue of table **cell types** — the reusable rendering + alignment + default width for each kind of column a vertical shows — and the `getCellDefinition` lookup that turns a common column key into the right one. This is the reference for Phase 3's column-preset work (see [`TABLE_PLAN.md`](./TABLE_PLAN.md), and [`kdd/column-config`](../../../kdd/column-config/draft-kdd.md) for why the API is shaped this way); the cell fragments themselves live in [`tableHelpers.tsx`](../elements/table/tableHelpers.tsx) (plus [`BooleanCell.tsx`](../elements/table/BooleanCell.tsx) / [`ChipListCell.tsx`](../elements/table/ChipListCell.tsx)).
 
+For how a column places itself in **card view** (header/badge/body, groups, disclosures, the label rules) and how table vs card share one column list, see [`CARD_TABLE_MODEL.md`](./CARD_TABLE_MODEL.md) — this doc covers the cell rendering it builds on.
+
 ## The model
 
 A **cell fragment** (`CellFragment<T>`) is the slice of a column def a preset owns: `meta` (alignment, wrap) + an optional `cell` render fn (+ grouping `aggregationFn`) + the width props **`size`** / **`maxSize`**. A page spreads it into its own column literal, which still owns identity (`c`), `header`, and `sortKey` explicitly — the preset never touches those, so `keyof T` checking and `K` sort-key inference are unaffected (kdd/type-safety, kdd/explicit-composition):
