@@ -137,12 +137,17 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     </span>
   );
 
-  // Copy confirmation shown inline beside the button (controls › action
-  // feedback — never a toast), fading after a moment.
-  const [copied, setCopied] = createSignal(false);
+  // Copy feedback shown in place on the button (controls › action feedback —
+  // never a toast), fading after a moment.
+  const [copyFeedback, setCopyFeedback] = createSignal<'copied' | 'failed'>();
   const [copying, setCopying] = createSignal(false);
   let copiedTimer: ReturnType<typeof setTimeout> | undefined;
   onCleanup(() => clearTimeout(copiedTimer));
+  const flashCopyFeedback = (kind: 'copied' | 'failed') => {
+    setCopyFeedback(kind);
+    clearTimeout(copiedTimer);
+    copiedTimer = setTimeout(() => setCopyFeedback(undefined), 2500);
+  };
 
   // Copy the WHOLE shipment — header + every line, unpaginated — as pretty
   // JSON (spec S3 § record actions; the fullStocktake pattern). The detail's
@@ -159,14 +164,19 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       });
       if (result.kind !== 'success') return;
       if (result.data.invoice.__typename !== 'InvoiceNode') return;
-      // The node itself — the old app copies the record, not the query
-      // wrapper ({"invoice": …}).
-      await navigator.clipboard.writeText(
-        JSON.stringify(result.data.invoice, null, 2)
-      );
-      setCopied(true);
-      clearTimeout(copiedTimer);
-      copiedTimer = setTimeout(() => setCopied(false), 2500);
+      try {
+        // The node itself — the old app copies the record, not the query
+        // wrapper ({"invoice": …}).
+        await navigator.clipboard.writeText(
+          JSON.stringify(result.data.invoice, null, 2)
+        );
+      } catch {
+        // Clipboard write refused — e.g. Safari's user-activation window
+        // expired over a slow fetch. Surface in the same in-place slot.
+        flashCopyFeedback('failed');
+        return;
+      }
+      flashCopyFeedback('copied');
     } finally {
       setCopying(false);
     }
@@ -544,12 +554,14 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             variant="secondary"
             aria-live="polite"
             loading={copying()}
-            icon={copied() ? <CheckIcon /> : <CopyIcon />}
+            icon={copyFeedback() === 'copied' ? <CheckIcon /> : <CopyIcon />}
             onClick={() => void copyToClipboard()}
           >
-            {copied()
+            {copyFeedback() === 'copied'
               ? t('message.copy-success')
-              : t('button.copy-to-clipboard')}
+              : copyFeedback() === 'failed'
+                ? t('message.copy-failed')
+                : t('button.copy-to-clipboard')}
           </Button>
         </SidePanelActions>
       </SidePanelSection>
