@@ -1,4 +1,4 @@
-import { createMemo, createSignal } from 'solid-js';
+import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
   DataTable,
@@ -27,8 +27,20 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
+import {
+  FilterBar,
+  FilterMultiSelect,
+  FilterTextInput,
+  type Filter,
+} from '../ui/elements/selectors/FilterBar';
 import { Button } from '../ui/elements/buttons/Button';
-import { InfoIcon, MessageSquareIcon, StockIcon, TrashIcon } from '../ui/icons';
+import {
+  InfoIcon,
+  LockIcon,
+  MessageSquareIcon,
+  StockIcon,
+  TrashIcon,
+} from '../ui/icons';
 import { Text } from '../ui/elements/typography/Text';
 import { AnatomyTree, Intro, Lead, Note, type AnatomyNode } from './common';
 
@@ -310,11 +322,67 @@ const CellTypesTable = () => {
   );
 };
 
-// 3 — A working table: the four toolbar/footer features a real list ships, all
-// on one table — sortable headers (sort/onSort), a selection checkbox + action
-// footer (enableSelection/selectionActions), the pager (pagination), and the
-// Settings popover (config/setConfig). Each is one optional prop; the page owns
-// the state and hands the table a pre-sorted, pre-sliced page of rows.
+// The working table's filter, in the same shape a real list uses: a GraphQL-
+// native filter object whose keys the FilterBar adds/removes/edits (a key
+// present-as-null is an added-but-empty chip). The page reads it straight into
+// its client-side predicate below — no flat value model (kdd/type-safety).
+type DemoFilter = {
+  search?: string | null;
+  status?: StockStatus[] | null;
+};
+
+// The status options offered in the multi-select, derived from the one STATUS
+// map so the labels stay defined in a single place.
+const STATUS_OPTIONS: { value: StockStatus; label: string }[] = STATUSES.map(
+  s => ({ value: s, label: STATUS[s].label })
+);
+
+// The addable filters (FilterBar's `filters`): a stable module const so the
+// chip <For> reuses rows across edits (see FilterBar's note). Each field owns
+// one key and composes an explicit control (kdd/explicit-composition) — a
+// search box over code/name, and a multi-select over the status enum (match
+// ANY of the chosen statuses).
+const FILTER_FIELDS: Filter<DemoFilter>[] = [
+  {
+    key: 'search',
+    label: () => 'Search',
+    render: props => (
+      <FilterTextInput
+        label="Search"
+        placeholder="Code or name"
+        testId={props.testId}
+        value={props.filter().search ?? ''}
+        // Client-side set, so commit every keystroke (debounceMs 0) rather
+        // than waiting for a server round-trip.
+        debounceMs={0}
+        onInput={value => props.setPartialFilter({ search: value || null })}
+      />
+    ),
+  },
+  {
+    key: 'status',
+    label: () => 'Status',
+    render: props => (
+      <FilterMultiSelect
+        label="Status"
+        testId={props.testId}
+        placeholder="Any"
+        values={props.filter().status ?? []}
+        options={STATUS_OPTIONS}
+        onChange={values =>
+          props.setPartialFilter({ status: values.length ? values : null })
+        }
+      />
+    ),
+  },
+];
+
+// 3 — A working table: the toolbar/footer features a real list ships, all on
+// one table — a filter bar (filters), sortable headers (sort/onSort), a
+// selection checkbox + action footer (enableSelection/selectionActions), the
+// pager (pagination), and the Settings popover (config/setConfig). Each is one
+// optional prop; the page owns the state and hands the table a pre-filtered,
+// pre-sorted, pre-sliced page of rows.
 const WorkingTable = () => {
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
@@ -323,6 +391,7 @@ const WorkingTable = () => {
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [offset, setOffset] = createSignal(0);
   const [pageSize, setPageSize] = createSignal(10);
+  const [filter, setFilter] = createSignal<DemoFilter>({});
   const { config, setConfig } = createViewConfig('table');
   // Reset is offered only when the user has overridden a column (visibility /
   // order / pinning) — mirrors createTableConfig's isConfigDefault.
@@ -330,10 +399,35 @@ const WorkingTable = () => {
     const c = config();
     return !c.columnVisibility && !c.columnOrder && !c.columnPinning;
   };
+  // A filter edit resets to the first page, like a real list — the current
+  // offset may be past the end of the narrowed result set.
+  const onFilterChange = (next: DemoFilter) => {
+    setFilter(next);
+    setOffset(0);
+  };
+
+  // Client-side stand-in for the server's WHERE: search matches code OR name;
+  // status matches ANY of the chosen values. A null/empty value (an added-but-
+  // empty chip) is ignored — mirrors the page stripping empty keys before it
+  // queries.
+  const filtered = createMemo(() => {
+    const { search, status } = filter();
+    const needle = search?.trim().toLowerCase();
+    return DATA.filter(r => {
+      if (status && status.length && !status.includes(r.status)) return false;
+      if (
+        needle &&
+        !r.code.toLowerCase().includes(needle) &&
+        !r.name.toLowerCase().includes(needle)
+      )
+        return false;
+      return true;
+    });
+  });
 
   const sorted = createMemo(() => {
     const { key, desc } = sort();
-    return [...DATA].sort((a, b) => {
+    return [...filtered()].sort((a, b) => {
       const av = sortValue(a, key);
       const bv = sortValue(b, key);
       const cmp =
@@ -405,6 +499,15 @@ const WorkingTable = () => {
       columns={columns()}
       rows={rows()}
       rowKey={r => r.id}
+      // Filters live in the table's own toolbar (ui-standards § tables →
+      // filtering); the page owns the filter state, like a real list.
+      filters={
+        <FilterBar
+          filters={FILTER_FIELDS}
+          filter={filter()}
+          onChange={onFilterChange}
+        />
+      }
       sort={sort()}
       onSort={onSort}
       enableSelection
@@ -422,7 +525,9 @@ const WorkingTable = () => {
       pagination={{
         offset: offset(),
         pageSize: pageSize(),
-        total: DATA.length,
+        // The pager counts the FILTERED set, so the page total tracks the
+        // active filter.
+        total: filtered().length,
         onOffsetChange: setOffset,
         onPageSizeChange: size => {
           setPageSize(size);
@@ -438,9 +543,13 @@ const WorkingTable = () => {
 // rows are disabled (grey) always. Selecting / deselecting shows the gating —
 // verified / warning are white until selected.
 const RowStatesDemo = () => {
+  // Stands in for a "this record is read-only / locked" fact (a real page reads
+  // its own flag). Read-only wins over status → disabled: grey, always.
+  const readOnly = new Set(['sl-6']);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([
     'sl-1',
     'sl-2',
+    'sl-3',
   ]);
   const columns = (): Column<StockLine, SortKey>[] => [
     {
@@ -452,6 +561,25 @@ const RowStatesDemo = () => {
       c: { key: 'name' },
       header: 'Name',
       ...getCellDefinition<StockLine>('name'),
+      // A lock marks the read-only row, so its always-grey disabled tint reads
+      // as "locked", not broken. The glyph inherits the cell's muted colour.
+      cell: info => {
+        const row = info.row.original;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <Show when={readOnly.has(row.id)}>
+              <LockIcon />
+            </Show>
+            {row.name}
+          </span>
+        );
+      },
     },
     {
       c: { key: 'status' },
@@ -473,16 +601,19 @@ const RowStatesDemo = () => {
       enableSelection
       selectedIds={selectedIds()}
       onSelectionChange={setSelectedIds}
-      // The page's ONLY job: map each row to a state from its own facts.
-      // active → verified (green when selected), onHold → warning (amber
-      // when selected), discontinued → disabled (grey always). The DataTable
-      // owns the tints, the selection-gating and the replaces-blue rule.
+      // The page's ONLY job: map each row to a state. Read-only wins (→
+      // disabled, grey always); else active → verified, onHold → warning;
+      // anything else — discontinued here — stays plain, so it takes the
+      // default blue when selected. The DataTable owns the tints, the
+      // selection-gating and the replaces-blue rule.
       rowState={row =>
-        row.status === 'active'
-          ? 'verified'
-          : row.status === 'onHold'
-            ? 'warning'
-            : 'disabled'
+        readOnly.has(row.id)
+          ? 'disabled'
+          : row.status === 'active'
+            ? 'verified'
+            : row.status === 'onHold'
+              ? 'warning'
+              : undefined
       }
     />
   );
@@ -1158,9 +1289,10 @@ export const TableCardShowcase = () => (
 
         <DashboardCard title="Table basics · A working table">
           <Lead>
-            The four features a real list ships, each one prop: sortable headers
-            (<code>sort</code> / <code>onSort</code>), a selection checkbox +
-            action footer (<code>enableSelection</code> /{' '}
+            The features a real list ships, each one prop: a filter bar (
+            <code>filters</code> — add a Search or Status chip), sortable
+            headers (<code>sort</code> / <code>onSort</code>), a selection
+            checkbox + action footer (<code>enableSelection</code> /{' '}
             <code>selectionActions</code>), the pager (<code>pagination</code>)
             and the Settings popover (<code>config</code> /{' '}
             <code>setConfig</code> — show/hide, reorder, pin). The page owns the
@@ -1172,17 +1304,17 @@ export const TableCardShowcase = () => (
         <DashboardCard title="Table basics · Row states & tints">
           <Lead>
             Row background tints come from one prop — <code>rowState</code>, a
-            function mapping each row to{' '}
-            <code>'verified' | 'warning' | 'disabled'</code> (think green /
-            amber / grey) from its own facts (here active → verified, on hold →
-            warning, discontinued → disabled). The catch: <code>verified</code>{' '}
-            and <code>warning</code> are <strong>selection-gated</strong> — the
-            row is plain white until you <strong>select</strong> it, then it
-            tints green / amber instead of the default selection blue (the
-            status chip carries the meaning at rest). <code>disabled</code> is
-            grey always. Two rows are pre-selected so the tints show; select or
-            deselect to watch the gating. Full rules are in{' '}
-            <code>CARD_TABLE_MODEL.md</code>.
+            function mapping each row to <code>'verified'</code>,{' '}
+            <code>'warning'</code>, <code>'disabled'</code> or nothing, from its
+            own facts. Here active → verified (green), on hold → warning
+            (amber); anything else — discontinued included — stays plain. The
+            catch: green / amber are <strong>selection-gated</strong> — a row is
+            white until you <strong>select</strong> it, then it tints (or shows
+            the default blue if it has no state), the status chip carrying the
+            meaning at rest. <code>disabled</code> is the exception: a read-only
+            / locked row (greyed, with a lock) is grey <em>always</em>, selected
+            or not. Three rows are pre-selected; select or deselect any to watch
+            it. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
         </DashboardCard>
