@@ -207,12 +207,16 @@ export type { CellDefinitionKey };
 // The cell RENDERING (meta/cell, no width) for a kind.
 const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
   switch (kind) {
-    // text / shortText / code share the plain-text renderer; they differ only
-    // in width (applied from KIND_WIDTH / the per-key override below).
+    // text / shortText / code share the plain-text renderer; they differ in
+    // width (from KIND_WIDTH / the per-key override below) and — for `code` —
+    // the monospace font (mono), for code-like fields (item code, batch,
+    // location) where fixed-width glyphs read + align better. `mono` rides in
+    // first so a caller's meta still wins (can pass mono: false).
     case 'text':
     case 'shortText':
-    case 'code':
       return getTextCell<T>(meta);
+    case 'code':
+      return getTextCell<T>({ mono: true, ...meta });
     case 'number':
       return getNumberCell<T>(meta);
     case 'percentage':

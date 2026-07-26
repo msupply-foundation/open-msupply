@@ -250,6 +250,15 @@
   transition: background-color var(--table-bg-fade);
 }
 
+/* Monospace value cells — the `code` cell kind (item code, batch, location).
+   A display convention set via meta.mono → data-mono, on the VALUE only: the
+   body cell in table view (.td) and the wrapped value span in card view
+   (.card); the header label stays in the sans UI font. */
+.td[data-mono],
+.card [data-mono] {
+  font-family: var(--font-mono);
+}
+
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
    pinned to the block-end of the scroll area so a summed total stays visible
    while the rows scroll, styled like the header band (toolbar grey, medium

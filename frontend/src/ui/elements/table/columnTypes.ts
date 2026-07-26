@@ -36,6 +36,16 @@ declare module '@tanstack/solid-table' {
      */
     wrapLines?: number;
     /**
+     * Render this column's VALUE cells in the monospace font (--font-mono) —
+     * for code-like fields (item code, batch, location code) where fixed-width
+     * digits/letters read better and align. A display-only convention (like
+     * align): applied via a data-mono attribute on the body cell (table) and
+     * the card field (card), NOT the header label. Set by the `code` cell kind
+     * by default (getCellDefinition('itemCode' | 'batch' | 'code' | 'location'
+     * | …)); overridable per column via the meta merge.
+     */
+    mono?: boolean;
+    /**
      * Where this column's cell renders in the CARD HEADER (card view). The
      * header is the card's top row: a big identity/title inline-start and a
      * badge/chip inline-end, both rendered WITHOUT their label. A column has a
