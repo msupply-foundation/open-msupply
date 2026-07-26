@@ -17,6 +17,7 @@ import type {
   ViewMode,
 } from '../ui/elements/table/tableConfig';
 import { remToPx } from '../ui/utils/rem';
+import { ShellFullScreenContext } from '../ui/layout/AppShell/shellContext';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
@@ -1043,172 +1044,183 @@ const CARD_ANATOMY: AnatomyNode[] = [
   },
 ];
 
+// Mask the shell's full-screen context for this teaching page so every demo
+// table's full-screen button falls back to DataTable's standalone path — a
+// fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
+// real app's chrome-hiding mode. That mode needs the table to be the
+// flex-grow child of a Page/fillBody region, so it fills the viewport as the
+// menu/footer/header hide; here every table is boxed in a DashboardCard
+// within a centred, scrolling column, so chrome-hiding would leave the
+// tables their boxed size. The overlay isn't the real behaviour, but it
+// gives the narrow card demos room when toggled to a table.
 export const TableCardShowcase = () => (
-  <ContentContainer size="wide" align="start">
-    <Stack gap="lg">
-      <Intro>
-        <strong>One column list, two renderings.</strong> The shared{' '}
-        <code>DataTable</code> renders a list of records as a <em>table</em>{' '}
-        (rows × columns) or as a <em>card list</em> (one card per row) from a
-        single <code>Column[]</code> — each column decides, per view, whether it
-        appears and where. This page walks that model up from the simplest
-        three-prop table to a sophisticated card. The two <em>assembled</em>{' '}
-        results, wired over real data, are the Pages demos (
-        <a href="#/showcase/table">List page</a>,{' '}
-        <a href="#/showcase/detail-table">Detail table page</a>); the full field
-        reference is <code>docs/CARD_TABLE_MODEL.md</code> (
-        <code>docs/CELL_TYPES.md</code> for the cell presets).
-      </Intro>
+  <ShellFullScreenContext.Provider value={undefined}>
+    <ContentContainer size="wide" align="start">
+      <Stack gap="lg">
+        <Intro>
+          <strong>One column list, two renderings.</strong> The shared{' '}
+          <code>DataTable</code> renders a list of records as a <em>table</em>{' '}
+          (rows × columns) or as a <em>card list</em> (one card per row) from a
+          single <code>Column[]</code> — each column decides, per view, whether it
+          appears and where. This page walks that model up from the simplest
+          three-prop table to a sophisticated card. The two <em>assembled</em>{' '}
+          results, wired over real data, are the Pages demos (
+          <a href="#/showcase/table">List page</a>,{' '}
+          <a href="#/showcase/detail-table">Detail table page</a>); the full field
+          reference is <code>docs/CARD_TABLE_MODEL.md</code> (
+          <code>docs/CELL_TYPES.md</code> for the cell presets).
+        </Intro>
 
-      <AnatomyTree nodes={CARD_ANATOMY} />
+        <AnatomyTree nodes={CARD_ANATOMY} />
 
-      <Text variant="heading">Tables</Text>
+        <Text variant="heading">Tables</Text>
 
-      <DashboardCard title="Table basics · The simplest table">
-        <Lead>
-          Three props — <code>columns</code>, <code>rows</code>,{' '}
-          <code>rowKey</code>. Each column spells only its identity (
-          <code>c</code>) and a <code>header</code>; TanStack renders the value
-          as-is over a real semantic <code>&lt;table&gt;</code>. Everything
-          after this is one optional prop at a time.
-        </Lead>
-        <BareTable />
-      </DashboardCard>
-
-      <DashboardCard title="Table basics · Cell types & widths">
-        <Lead>
-          <code>getCellDefinition(key)</code> maps a common column key to its
-          cell type — rendering, alignment and a default width in one spread:{' '}
-          <code>code</code> (Code), <code>name</code> (the wide Text sink),{' '}
-          <code>packSize</code> (Number), <code>total</code> (Currency),{' '}
-          <code>expiryDate</code> (red within 3 months) and <code>comment</code>{' '}
-          (an icon + popover). A field that <em>isn't</em> a common key —{' '}
-          <code>quantity</code> — uses the explicit <code>getNumberCell()</code>{' '}
-          and sets its own <code>size</code>. Drag a header edge to resize.
-        </Lead>
-        <CellTypesTable />
-      </DashboardCard>
-
-      <DashboardCard title="Table basics · A working table">
-        <Lead>
-          The four features a real list ships, each one prop: sortable headers (
-          <code>sort</code> / <code>onSort</code>), a selection checkbox +
-          action footer (<code>enableSelection</code> /{' '}
-          <code>selectionActions</code>), the pager (<code>pagination</code>)
-          and the Settings popover (<code>config</code> / <code>setConfig</code>{' '}
-          — show/hide, reorder, pin). The page owns the state; the table is
-          presentation over the page of rows it's handed.
-        </Lead>
-        <WorkingTable />
-      </DashboardCard>
-
-      <Text variant="heading">Cards</Text>
-
-      <DashboardCard title="Card model · One list, two renderings">
-        <Lead>
-          The same columns as a working table, plus <code>showCardToggle</code>.
-          The name declares itself the card <em>title</em> (
-          <code>headerPosition: 'primary'</code>) and the status a{' '}
-          <em>badge</em> (<code>'badge'</code>); flip the toolbar toggle and the
-          identical <code>Column[]</code> renders as cards. Below 600px the
-          table is <em>always</em> cards and the toggle hides.
-        </Lead>
-        <CardToggleDemo />
-      </DashboardCard>
-
-      {/* The card-first demos are capped to the prose measure (~40rem) so
-          each reads as a card, not a full-width band; align start keeps
-          their left edge flush with the wide table demos above. */}
-      <ContentContainer size="prose" align="start">
-        <Stack gap="lg">
-          <DashboardCard title="Card model · Card anatomy">
-            <Lead>
-              A card is a <strong>header</strong> — the <code>primary</code>{' '}
-              title inline-start, the <code>badge</code> inline-end, both
-              unlabelled — over a hairline, then a <strong>body</strong> whose
-              cells are labelled by default (label above value, the same field
-              grid a form uses). Match this against the figure at the top of the
-              page.
-            </Lead>
-            <CardAnatomyDemo />
-          </DashboardCard>
-
-          <DashboardCard title="Card model · Body groups & panels">
-            <Lead>
-              The body renders the default (ungrouped) group first, then each
-              group declared in <code>cardGroups</code>, in order. A column
-              joins one with <code>cardGroup</code>; the group's{' '}
-              <code>panel: true</code> boxes its fields in a captioned, tinted
-              zone (with an optional <code>icon</code>) — good for wide cards,
-              off for small list cards.
-            </Lead>
-            <CardGroupsDemo />
-          </DashboardCard>
-
-          <DashboardCard title="Card model · Disclosure — More details">
-            <Lead>
-              A group with <code>disclosure: 'closed'</code> wraps its fields in
-              a collapsed accordion — secondary content, reachable but out of
-              the way. <code>disclosurePreview</code> shows a row-specific
-              summary (here the total) beside the header while collapsed.
-              Primary vs secondary content is simply: no disclosure vs{' '}
-              <code>disclosure: 'closed'</code>.
-            </Lead>
-            <CardDisclosureDemo />
-          </DashboardCard>
-
-          <DashboardCard title="Card model · Fields that differ by view">
-            <Lead>
-              Two recipes. <strong>One value, two faces</strong>: the code is a
-              plain Code column in table view (<code>hideOnCard</code>) and a
-              second, card-only <code>primary</code> cell rendered{' '}
-              <code>#CODE</code> in card view (<code>hideOnTable</code>) —
-              distinct <code>id</code>s so they never collide.{' '}
-              <strong>A card-only editable field</strong>: the Note input exists
-              only on the card (<code>hideOnTable</code>), sitting alongside the
-              read-only labelled values. Toggle to compare the faces.
-            </Lead>
-            <CardAdvancedDemo />
-          </DashboardCard>
-
-          <DashboardCard title="Assembled · A list card">
-            <Lead>
-              The shape the real pages ship: a title + status badge, a few
-              always-shown facts, and the rest tucked into one "More details"
-              disclosure — with selection and the card⇄table toggle. This is the
-              sophisticated end of the same model; the fully wired versions over
-              real data are the <a href="#/showcase/table">List page</a> and{' '}
-              <a href="#/showcase/detail-table">Detail table page</a>.
-            </Lead>
-            <Note>
-              The Columns popover is a table-shaped control — visibility toggles
-              apply in card view, but "pin left/right" and moving a column
-              between card groups aren't expressible there yet (see the doc's
-              Known limitations).
-            </Note>
-            <AssembledCardDemo />
-          </DashboardCard>
-        </Stack>
-      </ContentContainer>
-
-      {/* The multi-panel card is a form, so it takes the form measure
-          (~58rem) — wider than the list cards so its panels' two-column field
-          grid has room. */}
-      <ContentContainer size="form" align="start">
-        <DashboardCard title="Assembled · A multi-panel card">
+        <DashboardCard title="Table basics · The simplest table">
           <Lead>
-            The richest card: a form-like record whose fields split across
-            boxed, captioned <strong>panels</strong> — a Batch panel always
-            shown, Pricing and Other as collapsed disclosures, each a{' '}
-            <code>panel: true</code> <code>cardGroup</code> with its own icon.
-            This is the shape the line-edit modals use (open a line on the{' '}
-            <a href="#/showcase/detail-table">Detail table page</a>); it earns
-            the wider <em>form</em> measure so its two-column field grid has
-            room.
+            Three props — <code>columns</code>, <code>rows</code>,{' '}
+            <code>rowKey</code>. Each column spells only its identity (
+            <code>c</code>) and a <code>header</code>; TanStack renders the value
+            as-is over a real semantic <code>&lt;table&gt;</code>. Everything
+            after this is one optional prop at a time.
           </Lead>
-          <MultiPanelCardDemo />
+          <BareTable />
         </DashboardCard>
-      </ContentContainer>
-    </Stack>
-  </ContentContainer>
+
+        <DashboardCard title="Table basics · Cell types & widths">
+          <Lead>
+            <code>getCellDefinition(key)</code> maps a common column key to its
+            cell type — rendering, alignment and a default width in one spread:{' '}
+            <code>code</code> (Code), <code>name</code> (the wide Text sink),{' '}
+            <code>packSize</code> (Number), <code>total</code> (Currency),{' '}
+            <code>expiryDate</code> (red within 3 months) and <code>comment</code>{' '}
+            (an icon + popover). A field that <em>isn't</em> a common key —{' '}
+            <code>quantity</code> — uses the explicit <code>getNumberCell()</code>{' '}
+            and sets its own <code>size</code>. Drag a header edge to resize.
+          </Lead>
+          <CellTypesTable />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · A working table">
+          <Lead>
+            The four features a real list ships, each one prop: sortable headers (
+            <code>sort</code> / <code>onSort</code>), a selection checkbox +
+            action footer (<code>enableSelection</code> /{' '}
+            <code>selectionActions</code>), the pager (<code>pagination</code>)
+            and the Settings popover (<code>config</code> / <code>setConfig</code>{' '}
+            — show/hide, reorder, pin). The page owns the state; the table is
+            presentation over the page of rows it's handed.
+          </Lead>
+          <WorkingTable />
+        </DashboardCard>
+
+        <Text variant="heading">Cards</Text>
+
+        <DashboardCard title="Card model · One list, two renderings">
+          <Lead>
+            The same columns as a working table, plus <code>showCardToggle</code>.
+            The name declares itself the card <em>title</em> (
+            <code>headerPosition: 'primary'</code>) and the status a{' '}
+            <em>badge</em> (<code>'badge'</code>); flip the toolbar toggle and the
+            identical <code>Column[]</code> renders as cards. Below 600px the
+            table is <em>always</em> cards and the toggle hides.
+          </Lead>
+          <CardToggleDemo />
+        </DashboardCard>
+
+        {/* The card-first demos are capped to the prose measure (~40rem) so
+            each reads as a card, not a full-width band; align start keeps
+            their left edge flush with the wide table demos above. */}
+        <ContentContainer size="prose" align="start">
+          <Stack gap="lg">
+            <DashboardCard title="Card model · Card anatomy">
+              <Lead>
+                A card is a <strong>header</strong> — the <code>primary</code>{' '}
+                title inline-start, the <code>badge</code> inline-end, both
+                unlabelled — over a hairline, then a <strong>body</strong> whose
+                cells are labelled by default (label above value, the same field
+                grid a form uses). Match this against the figure at the top of the
+                page.
+              </Lead>
+              <CardAnatomyDemo />
+            </DashboardCard>
+
+            <DashboardCard title="Card model · Body groups & panels">
+              <Lead>
+                The body renders the default (ungrouped) group first, then each
+                group declared in <code>cardGroups</code>, in order. A column
+                joins one with <code>cardGroup</code>; the group's{' '}
+                <code>panel: true</code> boxes its fields in a captioned, tinted
+                zone (with an optional <code>icon</code>) — good for wide cards,
+                off for small list cards.
+              </Lead>
+              <CardGroupsDemo />
+            </DashboardCard>
+
+            <DashboardCard title="Card model · Disclosure — More details">
+              <Lead>
+                A group with <code>disclosure: 'closed'</code> wraps its fields in
+                a collapsed accordion — secondary content, reachable but out of
+                the way. <code>disclosurePreview</code> shows a row-specific
+                summary (here the total) beside the header while collapsed.
+                Primary vs secondary content is simply: no disclosure vs{' '}
+                <code>disclosure: 'closed'</code>.
+              </Lead>
+              <CardDisclosureDemo />
+            </DashboardCard>
+
+            <DashboardCard title="Card model · Fields that differ by view">
+              <Lead>
+                Two recipes. <strong>One value, two faces</strong>: the code is a
+                plain Code column in table view (<code>hideOnCard</code>) and a
+                second, card-only <code>primary</code> cell rendered{' '}
+                <code>#CODE</code> in card view (<code>hideOnTable</code>) —
+                distinct <code>id</code>s so they never collide.{' '}
+                <strong>A card-only editable field</strong>: the Note input exists
+                only on the card (<code>hideOnTable</code>), sitting alongside the
+                read-only labelled values. Toggle to compare the faces.
+              </Lead>
+              <CardAdvancedDemo />
+            </DashboardCard>
+
+            <DashboardCard title="Assembled · A list card">
+              <Lead>
+                The shape the real pages ship: a title + status badge, a few
+                always-shown facts, and the rest tucked into one "More details"
+                disclosure — with selection and the card⇄table toggle. This is the
+                sophisticated end of the same model; the fully wired versions over
+                real data are the <a href="#/showcase/table">List page</a> and{' '}
+                <a href="#/showcase/detail-table">Detail table page</a>.
+              </Lead>
+              <Note>
+                The Columns popover is a table-shaped control — visibility toggles
+                apply in card view, but "pin left/right" and moving a column
+                between card groups aren't expressible there yet (see the doc's
+                Known limitations).
+              </Note>
+              <AssembledCardDemo />
+            </DashboardCard>
+          </Stack>
+        </ContentContainer>
+
+        {/* The multi-panel card is a form, so it takes the form measure
+            (~58rem) — wider than the list cards so its panels' two-column field
+            grid has room. */}
+        <ContentContainer size="form" align="start">
+          <DashboardCard title="Assembled · A multi-panel card">
+            <Lead>
+              The richest card: a form-like record whose fields split across
+              boxed, captioned <strong>panels</strong> — a Batch panel always
+              shown, Pricing and Other as collapsed disclosures, each a{' '}
+              <code>panel: true</code> <code>cardGroup</code> with its own icon.
+              This is the shape the line-edit modals use (open a line on the{' '}
+              <a href="#/showcase/detail-table">Detail table page</a>); it earns
+              the wider <em>form</em> measure so its two-column field grid has
+              room.
+            </Lead>
+            <MultiPanelCardDemo />
+          </DashboardCard>
+        </ContentContainer>
+      </Stack>
+    </ContentContainer>
+  </ShellFullScreenContext.Provider>
 );
