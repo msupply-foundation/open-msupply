@@ -237,6 +237,17 @@
   background: var(--secondary-main);
 }
 
+/* The TRAILING column's handle must not overhang the table's right edge. The
+   -0.1875rem straddle above is right for interior column boundaries, but on the
+   last column that edge IS the table's edge, so the handle would jut 3px past
+   it inside the scroll box — enough to show a phantom horizontal scrollbar on a
+   table that otherwise fits exactly (measured: scrollWidth = clientWidth + 3px,
+   independent of column count). The last column has no boundary to straddle, so
+   flush its handle to the edge. */
+.th:last-child .resizeHandle {
+  inset-inline-end: 0;
+}
+
 .td {
   block-size: var(--table-data-row);
   /* Comfortable's cell padding (the ⭐ default) — the density rules below
