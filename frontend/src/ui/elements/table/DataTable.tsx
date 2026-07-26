@@ -764,14 +764,31 @@ export function DataTable<T, K extends string, G extends string = never>(
                         >
                           {/* Partial selection (some rows on this page, not
                               all) shows the indeterminate dash (ui-standards
-                              § tables → row selection). */}
+                              § tables → row selection). From indeterminate the
+                              next click clears (→ select none), not select-all:
+                              any active selection (indeterminate OR all) toggles
+                              off; only an empty selection selects all. NOT
+                              TanStack's default handler, which keys off the
+                              native box's post-click checked value and so goes
+                              indeterminate → all. */}
                           <BareCheckbox
                             class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
                             checked={table.getIsAllRowsSelected()}
                             indeterminate={table.getIsSomeRowsSelected()}
-                            onChange={table.getToggleAllRowsSelectedHandler()}
+                            onChange={e => {
+                              const anySelected =
+                                table.getIsAllRowsSelected() ||
+                                table.getIsSomeRowsSelected();
+                              table.toggleAllRowsSelected(!anySelected);
+                              // The native click already flipped the DOM box to
+                              // checked; toggling OFF from indeterminate leaves
+                              // the controlled `checked` value false→false, so
+                              // Solid's binding never re-runs to undo it. Sync
+                              // the box to the state we just set.
+                              e.currentTarget.checked = !anySelected;
+                            }}
                           />
                         </th>
                       </Show>
