@@ -130,9 +130,9 @@ The DataTable owns the tints, the selection-gating and the replaces-blue rule. T
    <DataTable
      enableSelection // verified/warning only show on selected rows
      rowState={row => {
+       if (row.readOnly) return 'disabled'; // read-only wins → grey, always
        if (row.status === 'VERIFIED') return 'verified'; // green when selected
        if (row.status === 'ON_HOLD') return 'warning'; // amber when selected
-       if (row.readOnly) return 'disabled'; // grey — always
        return undefined; // plain → blue when selected
      }}
      rowTone={row => (failedIds.has(row.id) ? 'error' : undefined)}
