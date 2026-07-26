@@ -2222,6 +2222,7 @@
   "message.confirm-save-new": "Click OK to save the new item, or Cancel to continue editing",
   "message.contact-support": "Please contact support@msupply.foundation about configuring reports",
   "message.continue-to-make-inbound-shipment": "Click Next to continue making an inbound shipment without linking an internal order.",
+  "message.copy-failed": "Copy failed",
   "message.copy-success": "Copied to clipboard successfully",
   "message.create-blank-stocktake": "This will create a blank stocktake",
   "message.database-not-local": "Database is running on a server, so can't be downloaded here",

@@ -665,7 +665,10 @@ const OutboundDetailView: Component = () => {
           id: 'volume',
         },
         header: t('label.volume'),
-        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 5 }),
+        // Same display rounding as the column's cells (ui-standards § tables'
+        // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
+        // mismatch.
+        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
         ...getNumberCell(),
       },
     ];
