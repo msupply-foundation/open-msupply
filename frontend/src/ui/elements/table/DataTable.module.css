@@ -864,6 +864,11 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 .cardBadge {
+  display: flex;
+  align-items: center;
+  /* Space between multiple badge controls (e.g. the actions column's
+     duplicate + delete buttons); harmless for a single chip. */
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
