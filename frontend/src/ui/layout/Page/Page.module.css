@@ -187,6 +187,19 @@
   overflow: hidden;
 }
 
+/* A DataTable that FILLS the region (the single self-scrolling child) drops its
+   own card frame — a full-bleed table reads better than a rounded card hugging
+   the region edges. Scoped to the table root's data hook so ONLY the filling
+   table loses its frame, not another fill-body child (a documents list, an
+   EmptyState). Cross-module: .bodyFill and the table's .root are hashed in
+   separate CSS Modules, so this reaches the table via its unhashed
+   data-datatable attribute rather than a class. Tables in modals /
+   DashboardCards sit outside .bodyFill and keep their frame. */
+.bodyFill [data-datatable] {
+  border: none;
+  border-radius: 0;
+}
+
 /* Tabbed fill-body page: <Tabs> renders as display:contents, so the active tab
    panel is the direct flex child of the body — it must be the "single filling
    child" the fill mode expects, or its own scrolling content (the DataTable,
