@@ -715,6 +715,9 @@ const Body: Component<LineEditModalProps> = props => {
       onClose={props.onClose}
       size="large"
       testId="line-edit-modal"
+      // The title (item selector + its "Unit: …" helper text) is taller than
+      // the Add batch button, so top-align the header row.
+      headerAlign="start"
       title={
         <ItemSelector
           value={item()?.id}
