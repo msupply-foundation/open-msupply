@@ -10,6 +10,7 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
+import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
 import {
@@ -761,13 +762,12 @@ const Body: Component<LineEditModalProps> = props => {
           <Alert severity="info">{t('messages.select-item-to-receive')}</Alert>
         }
       >
-        {/* Read-only Unit field follows the selector (spec S4). */}
+        {/* Unit is a fact of the item, never editable — a LabelledValue, not a
+            disabled input — on its own line below the selector (spec S4). */}
         <Show when={item()?.unitName}>
-          <TextField
-            label={t('label.unit')}
-            value={item()?.unitName ?? ''}
-            disabled
-          />
+          <LabelledValue label={t('label.unit')} variant="field">
+            {item()?.unitName}
+          </LabelledValue>
         </Show>
         <DataTable
           columns={columns()}
