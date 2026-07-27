@@ -26,13 +26,19 @@ import {
 } from './inboundShipmentDetail.generated';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
-import { runInboundBatch } from './inboundShipmentUpdate';
+import {
+  runInboundBatch,
+  updateInboundShipment,
+} from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
-import { ServiceLineModal } from './modals/ServiceLineModal';
-import { CurrencyModal } from './modals/CurrencyModal';
+import { CurrencyModal, ServiceChargesModal } from '../../../domain/invoice';
+import {
+  fetchInboundServiceCharges,
+  saveInboundServiceCharges,
+} from './modals/inboundServiceCharges';
 import { poLabel, ioLabel } from '../linkedOrder';
 import linkStyles from '../linkedOrder.module.css';
 
@@ -191,6 +197,7 @@ export const InboundShipmentSidePanel: Component<
             label={t('label.comment')}
             hideLabel
             width="full"
+            data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
             onInput={e => props.edit.setField('comment', e.currentTarget.value)}
@@ -446,21 +453,45 @@ export const InboundShipmentSidePanel: Component<
         node={props.node}
         onSaved={props.onSaved}
       />
-      <ServiceLineModal
+      {/* The shared service-charges editor (spec S6) with inbound's wire
+          twins (plain vs external batch); a committed batch re-reads the
+          charges block. */}
+      <ServiceChargesModal
         open={serviceOpen()}
         onClose={() => setServiceOpen(false)}
         storeId={props.storeId}
-        invoiceId={props.node.id}
-        isExternal={props.isExternal}
         disabled={props.disabled}
-        onSaved={refreshService}
+        fetchCharges={() =>
+          fetchInboundServiceCharges(props.storeId, props.node.id)
+        }
+        save={async batch => {
+          const result = await saveInboundServiceCharges(
+            props.storeId,
+            props.isExternal,
+            props.node.id,
+            batch
+          );
+          if (result.ok) refreshService();
+          return result;
+        }}
       />
+      {/* The shared change-currency modal with inbound's header update; a
+          saved node replaces the entity in place. */}
       <CurrencyModal
         open={currencyOpen()}
         onClose={() => setCurrencyOpen(false)}
-        storeId={props.storeId}
-        node={props.node}
-        onSaved={props.onSaved}
+        initialCurrencyId={props.node.currency?.id}
+        initialRate={props.node.currencyRate}
+        save={async input => {
+          const result = await updateInboundShipment(
+            props.storeId,
+            props.isExternal,
+            { id: props.node.id, ...input }
+          );
+          if (result.kind !== 'saved') return result;
+          props.onSaved(result.node);
+          return { kind: 'saved' };
+        }}
       />
     </>
   );

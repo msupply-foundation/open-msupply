@@ -51,9 +51,12 @@ export type NamesListState = {
   first: number;
 };
 
-// Default: unfiltered, sorted name ascending (rules › sorting), first page of 20.
+// Default: sorted name ascending (rules › sorting), first page of 20. The
+// name/code search chip is seeded present-as-null so it shows on a pristine
+// list (AC-N13) — the same always-shown pattern as the patient list; stripEmpty
+// drops the empty search from the query until the user types.
 export const DEFAULT_STATE: NamesListState = {
-  filter: {},
+  filter: { codeOrName: null },
   sort: [{ key: 'name', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,

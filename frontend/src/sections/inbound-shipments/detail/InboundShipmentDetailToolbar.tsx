@@ -100,6 +100,7 @@ export const InboundShipmentDetailToolbar: Component<
           hideLabel
           rows={1}
           width="full"
+          data-testid="supplier-reference-field"
           value={props.edit.state.theirReference}
           disabled={props.disabled}
           onInput={e =>

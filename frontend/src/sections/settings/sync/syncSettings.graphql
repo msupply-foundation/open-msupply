@@ -1,6 +1,6 @@
 # Synchronisation settings (spec/settings/contract.md § Synchronisation).
 # The query never returns the password — the form's password field always
-# starts blank (AC-SY2).
+# starts blank (OMS-REG-SET-02.12).
 query syncSettings {
   syncSettings {
     url

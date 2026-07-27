@@ -97,6 +97,12 @@
   gap: var(--space-3);
 }
 
+/* headerAlign="start": top-align the title + actions — for a title taller than
+   the actions (e.g. a selector with helper text below it). */
+.header[data-align='start'] {
+  align-items: flex-start;
+}
+
 /* titleHidden: the heading stays the accessible name but paints nothing (and
    contributes no flex gap to the body column). */
 .header.srOnly {

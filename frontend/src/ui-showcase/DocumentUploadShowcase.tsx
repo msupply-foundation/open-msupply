@@ -6,7 +6,8 @@ import {
   DocumentUploadPanel,
   type DocumentFile,
 } from '../ui/elements/display/DocumentUploadPanel';
-import { Lead } from './common';
+import { Lead, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './DocumentUploadShowcase.module.css';
 
 // The mockup's sample documents (filename, uploaded date, size).
@@ -41,6 +42,29 @@ const INITIAL_DOCUMENTS: DocumentFile[] = [
  * interactive here (uploads append, deletes remove) against local state; a real
  * detail view wires the same callbacks to the sync_files endpoint.
  */
+export const documentUploadMetadata: PageMetadata = {
+  id: 'document-upload',
+  title: 'Document upload',
+  searchTerms: ['file', 'attachment', 'upload'],
+  items: [
+    {
+      id: 'document-upload-full',
+      title: 'Upload zone',
+      searchTerms: ['dropzone', 'attach', 'documents tab'],
+    },
+    {
+      id: 'document-upload-readonly',
+      title: 'Read-only',
+      searchTerms: ['view', 'locked', 'no delete'],
+    },
+    {
+      id: 'document-upload-empty',
+      title: 'Empty state',
+      searchTerms: ['none', 'placeholder'],
+    },
+  ],
+};
+
 export const DocumentUploadShowcase = () => {
   const [documents, setDocuments] = createSignal<DocumentFile[]>([
     ...INITIAL_DOCUMENTS,
@@ -64,7 +88,11 @@ export const DocumentUploadShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Document upload — the whole Documents tab">
+        <SectionTOC page={documentUploadMetadata} />
+        <DashboardCard
+          id="document-upload-full"
+          title="Document upload — the whole Documents tab"
+        >
           <Lead>
             A drag & drop upload zone above a plain file list — file-type icon,
             name link, date uploaded, size, per-row delete. Not a table: a
@@ -81,7 +109,10 @@ export const DocumentUploadShowcase = () => {
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Read-only — no upload zone, no delete">
+        <DashboardCard
+          id="document-upload-readonly"
+          title="Read-only — no upload zone, no delete"
+        >
           <Lead>
             Omit <code>onUpload</code> (or set <code>canUpload=false</code>) to
             hide the zone, and <code>onDelete</code> to drop the delete action —
@@ -92,7 +123,7 @@ export const DocumentUploadShowcase = () => {
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Empty state">
+        <DashboardCard id="document-upload-empty" title="Empty state">
           <Lead>No documents yet — the zone invites the first upload.</Lead>
           <div class={styles.frame}>
             <DocumentUploadPanel documents={[]} onUpload={() => {}} />

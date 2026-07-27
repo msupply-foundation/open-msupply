@@ -62,7 +62,7 @@
 
 .table td[data-mono] {
   color: var(--text-secondary);
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 /* --- Checkbox column ----------------------------------------------------- */

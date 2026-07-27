@@ -59,15 +59,21 @@ describe('toDateInput', () => {
 });
 
 describe('backdateBounds (AC-B1 picker window)', () => {
-  it('bounds the picker to [now − maxDays, now]', () => {
+  it("bounds the picker to [now − (maxDays − 1), now] — the old app's +1 buffer for the server UTC boundary check", () => {
     expect(backdateBounds(new Date(2026, 6, 22, 12, 0, 0), 30)).toEqual({
-      min: '2026-06-22',
+      min: '2026-06-23',
       max: '2026-07-22',
     });
   });
 
-  it('collapses to a single day when maxDays is 0', () => {
+  it('a maximum of 0 (or unset) means NO lower bound — unlimited backdating, never "today only"', () => {
     const b = backdateBounds(new Date(2026, 6, 22, 12, 0, 0), 0);
+    expect(b.min).toBeUndefined();
+    expect(b.max).toBe('2026-07-22');
+  });
+
+  it('maxDays 1 collapses to today only', () => {
+    const b = backdateBounds(new Date(2026, 6, 22, 12, 0, 0), 1);
     expect(b.min).toBe('2026-07-22');
     expect(b.max).toBe('2026-07-22');
   });
@@ -94,6 +100,13 @@ describe('withinBackdateBounds (AC-B1 save-path rejection)', () => {
 
   it('rejects an empty value (a cleared input)', () => {
     expect(withinBackdateBounds(bounds, '')).toBe(false);
+  });
+
+  it('a window with no lower bound accepts any past day, still rejecting the future', () => {
+    const unbounded = { max: '2026-07-22' };
+    expect(withinBackdateBounds(unbounded, '1999-01-01')).toBe(true);
+    expect(withinBackdateBounds(unbounded, '2026-07-22')).toBe(true);
+    expect(withinBackdateBounds(unbounded, '2026-07-23')).toBe(false);
   });
 });
 

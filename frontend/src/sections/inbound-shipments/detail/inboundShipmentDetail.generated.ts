@@ -363,6 +363,10 @@ export type InboundShipmentLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
     equalAny?: Array<"STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE"> | null;
@@ -446,26 +450,6 @@ export const InboundShipmentLines = {
   query: "query inboundShipmentLines($storeId: String!, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!], $page: PaginationInput) {\n  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundLine\n      }\n    }\n  }\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
 } as TypedDocument<InboundShipmentLinesResult, InboundShipmentLinesVariables>;
 
-export type ServiceItemsVariables = {
-  storeId: string;
-};
-
-export type ServiceItemsResult = {
-  items: ({
-  __typename: "ItemConnector";
-} & {
-  totalCount: number;
-  nodes: Array<{
-  id: string;
-  name: string;
-}>;
-});
-};
-
-export const ServiceItems = {
-  query: "query serviceItems($storeId: String!) {\n  items(storeId: $storeId, filter: {type: {equalTo: SERVICE}, isVisible: true}) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
-} as TypedDocument<ServiceItemsResult, ServiceItemsVariables>;
-
 export type InboundServiceLinesVariables = {
   storeId: string;
   filter?: {
@@ -503,6 +487,10 @@ export type InboundServiceLinesVariables = {
     notEqualTo?: string | null;
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
+  } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
