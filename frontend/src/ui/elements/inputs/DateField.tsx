@@ -138,6 +138,10 @@ export const DateField = (props: DateFieldProps) => {
                 value={isoDateToDate(props.value)}
                 min={isoDateToDate(props.min) ?? undefined}
                 max={isoDateToDate(props.max) ?? undefined}
+                // Also stops the calendar DESELECTING (click the selected day
+                // again → null) — the commit() guard below only covers the
+                // typed path.
+                required={props.required}
                 onSelect={d => {
                   apply(d ? dateToIsoDate(d) : null);
                   close();
