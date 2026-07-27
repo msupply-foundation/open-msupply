@@ -20,6 +20,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   manageVaccinesInDoses: false,
   manageVvmStatusForStock: false,
   allowTrackingOfStockByDonor: false,
+  blindStocktake: false,
   sortByVvmStatusThenExpiry: false,
   expiredStockPreventIssue: false,
   expiredStockIssueThreshold: 0,
