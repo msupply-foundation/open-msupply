@@ -5,6 +5,7 @@ import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
@@ -40,7 +41,7 @@ export interface PatientDetailsFormProps {
 // patient is marked deceased (spec/patients field semantics). Age back-derives
 // from date of birth, read-only.
 export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localTodayIso();
   const errorFor = (id: string) => props.errorFor?.(id);
   const age = () => ageFromDob(props.draft.dateOfBirth);
 
