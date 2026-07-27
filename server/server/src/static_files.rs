@@ -26,7 +26,11 @@ use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
 use service::static_files::{StaticFileCategory, StaticFileService};
+use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
+use service::sync::file_synchroniser::{self, FileSynchroniser};
+use service::sync::CentralServerConfig;
 use service::usize_to_i32;
+use std::sync::Arc;
 use thiserror::Error;
 use util::format_error;
 
@@ -298,6 +302,7 @@ async fn download_sync_file(
     settings: Data<Settings>,
     path: web::Path<(String, String, String)>,
     auth_data: Data<AuthData>,
+    service_provider: Data<ServiceProvider>,
 ) -> Result<HttpResponse, Error> {
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
@@ -309,7 +314,8 @@ async fn download_sync_file(
         )
     })?;
 
-    let error = match download_sync_file_inner(&settings, path.into_inner()).await {
+    let error = match download_sync_file_inner(service_provider, &settings, path.into_inner()).await
+    {
         Ok((named_file, file_name)) => {
             let response = named_file
                 .set_content_disposition(ContentDisposition {
@@ -324,14 +330,27 @@ async fn download_sync_file(
     };
 
     let error = match error {
-        DownloadFileError::NotFoundLocally => InternalError::new(
-            "File not found, it may not have been synced from the remote site yet...",
-            StatusCode::NOT_FOUND,
-        ),
-        _ => InternalError::new(
-            "Error downloading file, please see server logs",
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ),
+        DownloadFileError::NotFoundLocallyAndThisIsCentralServer
+        | DownloadFileError::ErrorDownloadingFile(
+            file_synchroniser::DownloadFileError::FileDoesNotExist(_)
+            | file_synchroniser::DownloadFileError::SyncApiV7Error(
+                repository::syncv7::SyncError::SyncFileNotFound(_),
+            ),
+        ) => {
+            // Expected while the origin site hasn't uploaded/synced yet — not an error state.
+            log::info!("Sync file not available yet: {}", format_error(&error));
+            InternalError::new(
+                "File not found, it may not have been synced from the remote site yet...",
+                StatusCode::NOT_FOUND,
+            )
+        }
+        _ => {
+            log::error!("Error downloading sync file: {}", format_error(&error));
+            InternalError::new(
+                "Error downloading file, please see server logs",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        }
     };
 
     Err(error.into())
@@ -343,13 +362,16 @@ enum DownloadFileError {
     DatabaseError(#[from] RepositoryError),
     #[error("File IO error")]
     FileIOError(#[from] std::io::Error),
-    #[error("File not found locally")]
-    NotFoundLocally,
+    #[error("File not found locally and this is the central server")]
+    NotFoundLocallyAndThisIsCentralServer,
+    #[error("Error downloading file from central")]
+    ErrorDownloadingFile(#[from] file_synchroniser::DownloadFileError),
     #[error("Other")]
     Other(#[from] anyhow::Error),
 }
 
 async fn download_sync_file_inner(
+    service_provider: Data<ServiceProvider>,
     settings: &Settings,
     (table_name, parent_record_id, file_id): (String, String, String),
 ) -> Result<(NamedFile, /* file_name */ String), DownloadFileError> {
@@ -360,7 +382,34 @@ async fn download_sync_file_inner(
         return Ok((NamedFile::open(file.path)?, file.name));
     }
 
-    Err(DownloadFileError::NotFoundLocally)
+    // Not on disk. Central *is* the source of file bytes — nothing to fall back to
+    // (the origin site hasn't uploaded the file yet).
+    if CentralServerConfig::is_central_server() {
+        return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
+    }
+
+    // On a remote, fetch the bytes from central on demand and cache them locally, so a
+    // synced file reference is openable as soon as central holds the bytes.
+    let Some(url) = file_sync_central_url(&service_provider) else {
+        return Err(DownloadFileError::Other(anyhow::anyhow!(
+            "File not found locally and no central server URL is available to download it from"
+        )));
+    };
+
+    log::info!("Sync file {file_id} not found locally, downloading from central");
+
+    let file_synchroniser = FileSynchroniser::new(
+        &url,
+        get_sync_settings(&service_provider),
+        service_provider.into_inner(),
+        Arc::new(file_service),
+    )?;
+
+    let file = file_synchroniser
+        .download_file_from_central(&file_id)
+        .await?;
+
+    Ok((NamedFile::open(file.path)?, file.name))
 }
 
 #[cfg(test)]
