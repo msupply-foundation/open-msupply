@@ -962,3 +962,44 @@ describe('date options (AC-R18)', () => {
     expect(dateFieldViolation(after, {}, '2026-07-27')).toBeUndefined();
   });
 });
+
+describe('read-only marking — both wire homes (AC-R6)', () => {
+  // stock-status / item-usage mark read-only on the uiSchema element
+  // (options.readonly, lowercase); expiring-items uses the jsonSchema property
+  // keyword (readOnly). Both must render disabled-but-submitted.
+  const schema = {
+    jsonSchema: {
+      type: 'object',
+      properties: {
+        viaProperty: { type: 'number', readOnly: true },
+        viaOptions: { type: 'number' },
+        editable: { type: 'number' },
+      },
+    },
+    uiSchema: {
+      elements: [
+        { type: 'Control', scope: '#/properties/viaProperty', label: 'A' },
+        {
+          type: 'Control',
+          scope: '#/properties/viaOptions',
+          label: 'B',
+          options: { readonly: true },
+        },
+        { type: 'Control', scope: '#/properties/editable', label: 'C' },
+      ],
+    },
+  };
+  const fields = parseArgumentSchema(schema);
+
+  it('reads the jsonSchema readOnly keyword', () => {
+    expect(byKey(fields, 'viaProperty')).toMatchObject({ readOnly: true });
+  });
+
+  it('reads the uiSchema options.readonly flag', () => {
+    expect(byKey(fields, 'viaOptions')).toMatchObject({ readOnly: true });
+  });
+
+  it('leaves unmarked fields editable', () => {
+    expect(byKey(fields, 'editable')).toMatchObject({ readOnly: false });
+  });
+});
