@@ -1,4 +1,10 @@
-import { createResource, Show, Suspense, type Component } from 'solid-js';
+import {
+  createResource,
+  createSignal,
+  Show,
+  Suspense,
+  type Component,
+} from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { isCentralServer } from '../../../api/serverInfo';
@@ -6,7 +12,10 @@ import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { PlusCircleIcon } from '../../../ui/icons';
 import {
   Tabs,
   TabList,
@@ -29,6 +38,8 @@ import { ActivityLogPanel } from '../../../domain/activityLog';
 import { CustomFieldsView } from '../../../domain/customFields';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
 import { ItemLedgerPanel } from './ItemLedgerPanel';
+import { ItemAncillaryPanel } from './ItemAncillaryPanel';
+import type { AncillaryEditorState } from './AncillaryItemEditModal';
 import { visibleTabs } from './itemDetailTabs';
 import {
   formatMonthsOfStock,
@@ -47,12 +58,12 @@ import {
 // column 2 preserves the spec's group order when the columns wrap to one.
 //
 // Built tabs: General, Store, Master lists, Ledger (ItemLedgerPanel — its own
-// query/filters/pagination, kdd/state-management), Custom fields, Log.
-// Flagged tabs (rendered as a placeholder pending their components):
-// Ancillary items (needs the central-only modals), Variants (needs the
-// variant card + editable packaging grid).
-// Variants' tab PRESENCE is wired now (OMS-REG-CAT-05.1/.2, itemDetailTabs.ts)
-// — central-server-only, ahead of its content.
+// query/filters/pagination, kdd/state-management), Ancillary items
+// (ItemAncillaryPanel — read-only everywhere, central-only add/edit/delete
+// via AncillaryItemEditModal, OMS-REG-CAT-08), Custom fields, Log. Flagged:
+// Variants (needs the variant card + editable packaging grid).
+// Variants' tab PRESENCE is wired (OMS-REG-CAT-05.1/.2, itemDetailTabs.ts) —
+// central-server-only, ahead of its content.
 
 type ItemDetailRow = NonNullable<ItemDetailResult['items']['nodes'][number]>;
 type MasterListRow = NonNullable<ItemDetailRow['masterLists']>[number];
@@ -62,6 +73,13 @@ const ItemDetailView: Component = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams<{ tab?: string }>();
   const activeTab = () => search.tab ?? 'general';
+  // The Ancillary items tab's add/edit modal — its trigger lives in the page
+  // header (a page action, ui-surface S2), so the state is owned here rather
+  // than inside ItemAncillaryPanel (this app has no portal mechanism; mirrors
+  // PrescriptionDetailView's top-level edit-state pattern).
+  const [ancillaryEditor, setAncillaryEditor] = createSignal<
+    AncillaryEditorState | undefined
+  >();
 
   const [data] = createResource(
     () => ({ storeId: params.storeId, itemId: params.itemId }),
@@ -131,6 +149,18 @@ const ItemDetailView: Component = () => {
                       { label: i().name },
                     ]}
                   />
+                  {/* Ancillary items' page action (ui-surface S2) — central
+                      server only, and only while that tab is active. */}
+                  <Show when={activeTab() === 'ancillary' && isCentralServer()}>
+                    <HeaderButtons>
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        onClick={() => setAncillaryEditor({ mode: 'create' })}
+                      >
+                        {t('label.add-ancillary-item')}
+                      </Button>
+                    </HeaderButtons>
+                  </Show>
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -335,9 +365,13 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="ancillary">
-                {/* FLAGGED (BUILD_REPORT): central-only add/edit/delete modals
-                    (S5) not built; read-only listing pending the ratio columns. */}
-                <EmptyState message={t('messages.no-ancillary-items')} />
+                <ItemAncillaryPanel
+                  storeId={params.storeId}
+                  itemId={params.itemId}
+                  isCentral={isCentralServer()}
+                  editor={ancillaryEditor()}
+                  onEditorChange={setAncillaryEditor}
+                />
               </TabPanel>
 
               <TabPanel value="custom-fields">
