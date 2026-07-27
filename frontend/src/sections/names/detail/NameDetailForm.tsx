@@ -12,10 +12,10 @@ import { isStoreName, type NameDetail } from './nameDetail';
 // supplier Details tab (S4) — one component, differing only by `role` (rules ›
 // record detail). Follows the standard detail view
 // (spec/ui-standards/detail-views): centred container, record-name header, then
-// ONE grid of two-column rows (interleaved left/right) plus full-width rows whose
-// values line up with the left column. Everything read-only (AC-N22); supplier
-// trade terms are interleaved into the columns (AC-N25); the supply level is a
-// customer-only full-width row (AC-N25).
+// ONE grid of two-column rows (interleaved left/right) plus full-width rows
+// whose values line up with the left column. Everything read-only (AC-N22);
+// supplier trade terms are interleaved into the columns (AC-N25); the supply
+// level is a customer-only full-width row (AC-N25).
 export const NameDetailForm = (props: {
   name: NameDetail;
   role: 'customer' | 'supplier';
