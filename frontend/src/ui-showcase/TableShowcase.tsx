@@ -351,7 +351,7 @@ export const TableShowcase = () => {
       // truck = external supplier) + name.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       // The wide flex-fill "sink" column (text default), keeping its bespoke
       // swatch + supplier-kind cell. The card's identity title — structural, so
       // it's dropped from the Columns popover.
@@ -389,7 +389,7 @@ export const TableShowcase = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => {
         const status = info.getValue<Row['status']>();
         return (
@@ -412,7 +412,7 @@ export const TableShowcase = () => {
       // user-hideable, so it's dropped from the Columns popover too.
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: '#',
+      header: () => '#',
       // Small + capped — the `invoiceNumber` key carries a tight size/maxSize
       // default (a few digits) in the cell-definition map.
       ...getCellDefinition<Row>('invoiceNumber', {
@@ -428,7 +428,7 @@ export const TableShowcase = () => {
       // card-only, and it carries no sortKey (the table column owns sorting).
       // Structural, so it's out of the Columns popover.
       c: { id: 'invoiceNumberCard' },
-      header: '#',
+      header: () => '#',
       meta: {
         headerPosition: 'primary',
         hideOnTable: true,
@@ -444,7 +444,7 @@ export const TableShowcase = () => {
         accessor: row => linkedOrderOf('demo', row)?.label ?? '',
         id: 'linkedOrder',
       },
-      header: t('label.linked-order'),
+      header: () => t('label.linked-order'),
       cell: info => {
         const linked = linkedOrderOf('demo', info.row.original);
         return (
@@ -469,32 +469,32 @@ export const TableShowcase = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getCellDefinition<Row>('createdDatetime'),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
-      header: t('label.delivered'),
+      header: () => t('label.delivered'),
       cardGroup: 'more',
       ...getCellDefinition<Row>('deliveredDatetime'),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       cardGroup: 'more',
       ...getCellDefinition<Row>('comment'),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
-      header: t('label.reference'),
+      header: () => t('label.reference'),
       cardGroup: 'more',
       ...getCellDefinition<Row>('theirReference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
-      header: t('label.total'),
+      header: () => t('label.total'),
       cardGroup: 'more',
       ...getCellDefinition<Row>('total'),
     },
@@ -504,7 +504,7 @@ export const TableShowcase = () => {
       // header is the field label (LabelledValue renders it above the input);
       // the TextField's own label is hidden but kept for a11y.
       c: { id: 'note' },
-      header: 'Note',
+      header: () => 'Note',
       meta: { hideOnTable: true },
       cell: info => {
         const row = info.row.original;

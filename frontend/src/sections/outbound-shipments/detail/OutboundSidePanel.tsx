@@ -15,6 +15,7 @@ import {
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
@@ -30,9 +31,9 @@ import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
 import { PickedDateField } from './PickedDateField';
-import { CurrencyModal } from './modals/CurrencyModal';
+import { CurrencyModal } from '../../../domain/invoice';
 import { isDeletable } from '../outboundStatus';
-import type { OutboundNode } from './outboundUpdate';
+import { changeShipmentCurrency, type OutboundNode } from './outboundUpdate';
 import { graphqlFetch } from '../../../api/graphql';
 import {
   FullOutbound,
@@ -500,17 +501,20 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.expected-delivery-date')}>
-          <TextField
+          {/* The shared calendar-date input (ui-standards/inputs § dates &
+              times); clearable — the wire value is nullable. */}
+          <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
-            type="date"
+            // Numeric day-first display/parse (27/07/2026) — matches the
+            // panel's localisedDate renderings (created date etc.).
+            format="dd/MM/yyyy"
+            testId="expected-delivery-date-field"
             disabled={props.disabled}
-            value={props.node.expectedDeliveryDate ?? ''}
-            onInput={e =>
+            value={props.node.expectedDeliveryDate ?? null}
+            onChange={value =>
               props.onSaveField({
-                expectedDeliveryDate: {
-                  value: e.currentTarget.value || null,
-                },
+                expectedDeliveryDate: { value },
               })
             }
           />
@@ -565,12 +569,22 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Button>
         </SidePanelActions>
       </SidePanelSection>
+      {/* The shared change-currency modal with outbound's header update; a
+          saved node replaces the entity in place. */}
       <CurrencyModal
         open={currencyOpen()}
         onClose={() => setCurrencyOpen(false)}
-        storeId={props.storeId}
-        node={props.node}
-        onSaved={props.onSaved}
+        initialCurrencyId={props.node.currency?.id}
+        initialRate={props.node.currencyRate}
+        save={async input => {
+          const result = await changeShipmentCurrency(props.storeId, {
+            id: props.node.id,
+            ...input,
+          });
+          if (result.kind !== 'saved') return result;
+          props.onSaved(result.node);
+          return { kind: 'saved' };
+        }}
       />
     </>
   );

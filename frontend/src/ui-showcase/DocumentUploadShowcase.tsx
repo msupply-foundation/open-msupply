@@ -96,9 +96,12 @@ export const DocumentUploadShowcase = () => {
           <Lead>
             A drag & drop upload zone above a plain file list — file-type icon,
             name link, date uploaded, size, per-row delete. Not a table: a
-            semantic <code>&lt;ul&gt;</code> on a shared grid. Presentational
-            and callback-driven (<code>onUpload</code> / <code>onDelete</code>);
-            the caller owns the transport. Try dropping a file, or delete a row.
+            semantic <code>&lt;ul&gt;</code> on a shared grid. The caller owns
+            the upload/delete transport (<code>onUpload</code> /{' '}
+            <code>onDelete</code>); opening the panel owns — the name link
+            routes through the <code>openDocument</code> platform capability
+            (kdd/capacitor-plugins): a browser tab on web, the OS viewer under
+            the Android shell. Try dropping a file, or delete a row.
           </Lead>
           <div class={styles.frame}>
             <DocumentUploadPanel

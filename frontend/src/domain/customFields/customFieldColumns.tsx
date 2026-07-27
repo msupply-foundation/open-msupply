@@ -19,7 +19,7 @@ export const customFieldColumns = <T, K extends string>(
     const field = parseCustomField(def);
     return {
       c: { id: `cf-${def.key}` },
-      header: def.name,
+      header: () => def.name,
       enableSorting: false,
       cell: info => customFieldDisplayString(field, getRaw(info.row.original)),
     };
