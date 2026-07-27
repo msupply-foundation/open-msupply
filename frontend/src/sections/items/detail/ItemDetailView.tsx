@@ -13,7 +13,7 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
+import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { PlusCircleIcon } from '../../../ui/icons';
 import {
@@ -164,56 +164,64 @@ const ItemDetailView: Component = () => {
                       </Button>
                     </HeaderButtons>
                   </Show>
+                  {/* Statistics band (spec/items S2) — in the header's toolbar
+                      row, above the tab strip, mirroring the old app's
+                      AppBarContent slot. The Toolbar's own flex-wrap row lays
+                      the panels out inline (compact, content-sized), wrapping on
+                      narrow viewports. Only the stock-on-hand panel's title
+                      links to the stock register; AMC/MOS have no drill-down (a
+                      Statistic requires an href, so they self-link). */}
+                  <Toolbar>
+                    <StatsPanel
+                      title={t('title.stock-on-hand')}
+                      titleHref={stockHref()}
+                      state={{ status: 'ready' }}
+                    >
+                      <Statistic
+                        label={t('label.units')}
+                        value={formatUnits(i().stats.stockOnHand)}
+                        href={stockHref()}
+                      />
+                      <Show when={i().isVaccine}>
+                        <Statistic
+                          label={t('label.doses')}
+                          value={formatUnits(
+                            dosesEquivalent(i().stats.stockOnHand, i().doses)
+                          )}
+                          href={stockHref()}
+                        />
+                      </Show>
+                    </StatsPanel>
+                    <StatsPanel
+                      title={t('title.average-monthly-consumption')}
+                      state={{ status: 'ready' }}
+                    >
+                      <Statistic
+                        label={t('label.units')}
+                        value={formatUnits(
+                          i().stats.averageMonthlyConsumption,
+                          2
+                        )}
+                        href={selfHref()}
+                      />
+                    </StatsPanel>
+                    <StatsPanel
+                      title={t('title.months-of-stock')}
+                      state={{ status: 'ready' }}
+                    >
+                      <Statistic
+                        label={t('text.months')}
+                        value={formatMonthsOfStock(
+                          i().stats.monthsOfStockOnHand
+                        )}
+                        href={selfHref()}
+                      />
+                    </StatsPanel>
+                  </Toolbar>
                   <TabList tabs={tabs()} />
                 </Header>
               }
             >
-              {/* Statistics band (spec/items S2). Only the stock-on-hand panel's
-                  title links to the stock register; AMC/MOS have no drill-down
-                  (a Statistic requires an href, so they self-link). */}
-              <CardGrid>
-                <StatsPanel
-                  title={t('title.stock-on-hand')}
-                  titleHref={stockHref()}
-                  state={{ status: 'ready' }}
-                >
-                  <Statistic
-                    label={t('label.units')}
-                    value={formatUnits(i().stats.stockOnHand)}
-                    href={stockHref()}
-                  />
-                  <Show when={i().isVaccine}>
-                    <Statistic
-                      label={t('label.doses')}
-                      value={formatUnits(
-                        dosesEquivalent(i().stats.stockOnHand, i().doses)
-                      )}
-                      href={stockHref()}
-                    />
-                  </Show>
-                </StatsPanel>
-                <StatsPanel
-                  title={t('title.average-monthly-consumption')}
-                  state={{ status: 'ready' }}
-                >
-                  <Statistic
-                    label={t('label.units')}
-                    value={formatUnits(i().stats.averageMonthlyConsumption, 2)}
-                    href={selfHref()}
-                  />
-                </StatsPanel>
-                <StatsPanel
-                  title={t('title.months-of-stock')}
-                  state={{ status: 'ready' }}
-                >
-                  <Statistic
-                    label={t('text.months')}
-                    value={formatMonthsOfStock(i().stats.monthsOfStockOnHand)}
-                    href={selfHref()}
-                  />
-                </StatsPanel>
-              </CardGrid>
-
               <TabPanel value="general">
                 <ContentContainer size="form">
                   {/* Two-column groups (spec S2 › General) of read-only
