@@ -22,7 +22,7 @@ import {
   DownloadIcon,
   PrinterIcon,
 } from '../ui/icons';
-import { Lead, PageBody, PageFrame, ToolbarStub } from './common';
+import { Lead, PageBody, PageFrame, SectionTOC, ToolbarStub } from './common';
 import type { PageMetadata } from './metadata';
 
 const EXPORT_OPTIONS = [
@@ -54,8 +54,8 @@ const MOS_OPTIONS = [
  * showcase-wide — see kdd/showcase-harness): page column is ContentContainer
  * + app Stack, demo sections are the app's DashboardCard with a <Lead> child.
  */
-// No TOC is rendered — the page is short (Carl); the metadata is still exported
-// and registered so Search indexes these sections.
+// The section TOC renders at the top now the page carries several sections
+// (Carl 2026-07-27; previously omitted while it was short).
 export const headerMetadata: PageMetadata = {
   id: 'header',
   title: 'Header',
@@ -103,6 +103,7 @@ export const HeaderShowcase = () => {
   return (
     <ContentContainer size="wide" align="start">
       <Stack gap="lg">
+        <SectionTOC page={headerMetadata} />
         <DashboardCard
           id="header-page"
           title="Page header — the Outbound Shipments demo"

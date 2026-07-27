@@ -35,7 +35,7 @@ const ANATOMY: AnatomyNode[] = [
     children: [
       {
         name: 'Header',
-        note: 'breadcrumb h1 + actions + toolbar/tabs — see Header',
+        note: 'breadcrumb h1 + actions + HeaderToolbar field row + tabs — see Header',
       },
       {
         name: 'ContentContainer',
