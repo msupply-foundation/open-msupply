@@ -190,7 +190,7 @@ const namePrimaryCol = <G extends string = never>(): Column<
   G
 > => ({
   c: { key: 'name' },
-  header: 'Name',
+  header: () => 'Name',
   ...getCellDefinition<StockLine>('name', {
     headerPosition: 'primary',
     hideFromColumnSettings: true,
@@ -205,7 +205,7 @@ const statusBadgeCol = <G extends string = never>(): Column<
   G
 > => ({
   c: { key: 'status' },
-  header: 'Status',
+  header: () => 'Status',
   cell: info => <StatusCell status={info.getValue<StockStatus>()} />,
   meta: { headerPosition: 'badge' },
 });
@@ -272,9 +272,9 @@ const sortValue = (r: StockLine, key: SortKey): string | number => {
 // semantic <table>; no toolbar, no footer, no card view.
 const BareTable = () => {
   const columns: Column<StockLine, SortKey>[] = [
-    { c: { key: 'code' }, header: 'Code' },
-    { c: { key: 'name' }, header: 'Name' },
-    { c: { key: 'quantity' }, header: 'Quantity' },
+    { c: { key: 'code' }, header: () => 'Code' },
+    { c: { key: 'name' }, header: () => 'Name' },
+    { c: { key: 'quantity' }, header: () => 'Quantity' },
   ];
   return (
     <DataTable columns={columns} rows={DATA.slice(0, 5)} rowKey={r => r.id} />
@@ -290,38 +290,38 @@ const CellTypesTable = () => {
   const columns: Column<StockLine, SortKey>[] = [
     {
       c: { key: 'code' },
-      header: 'Code',
+      header: () => 'Code',
       ...getCellDefinition<StockLine>('code'),
     },
     {
       c: { key: 'name' },
-      header: 'Name',
+      header: () => 'Name',
       ...getCellDefinition<StockLine>('name'),
     },
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
       size: remToPx(6),
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'total' },
-      header: 'Total',
+      header: () => 'Total',
       ...getCellDefinition<StockLine>('total'),
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
     {
       c: { key: 'comment' },
-      header: 'Comment',
+      header: () => 'Comment',
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -455,49 +455,49 @@ const WorkingTable = () => {
     {
       c: { key: 'code' },
       sortKey: 'code',
-      header: 'Code',
+      header: () => 'Code',
       ...getCellDefinition<StockLine>('code'),
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
-      header: 'Name',
+      header: () => 'Name',
       ...getCellDefinition<StockLine>('name'),
     },
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: 'Status',
+      header: () => 'Status',
       cell: info => <StatusCell status={info.getValue<StockStatus>()} />,
     },
     {
       c: { key: 'quantity' },
       sortKey: 'quantity',
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
       size: remToPx(6),
     },
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: 'Pack size',
+      header: () => 'Pack size',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'total' },
       sortKey: 'total',
-      header: 'Total',
+      header: () => 'Total',
       ...getCellDefinition<StockLine>('total'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: 'Expiry',
+      header: () => 'Expiry',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
     {
       c: { key: 'comment' },
-      header: 'Comment',
+      header: () => 'Comment',
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -562,12 +562,12 @@ const RowStatesDemo = () => {
   const columns = (): Column<StockLine, SortKey>[] => [
     {
       c: { key: 'code' },
-      header: 'Code',
+      header: () => 'Code',
       ...getCellDefinition<StockLine>('code'),
     },
     {
       c: { key: 'name' },
-      header: 'Name',
+      header: () => 'Name',
       ...getCellDefinition<StockLine>('name'),
       // A lock marks the read-only row, so its always-grey disabled tint reads
       // as "locked", not broken. The glyph inherits the cell's muted colour.
@@ -591,12 +591,12 @@ const RowStatesDemo = () => {
     },
     {
       c: { key: 'status' },
-      header: 'Status',
+      header: () => 'Status',
       cell: info => <StatusCell status={info.getValue<StockStatus>()} />,
     },
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
       size: remToPx(6),
     },
@@ -642,17 +642,17 @@ const CardToggleDemo = () => {
     statusBadgeCol(),
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
   ];
@@ -678,22 +678,22 @@ const CardAnatomyDemo = () => {
     statusBadgeCol(),
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
     {
       c: { key: 'total' },
-      header: 'Total',
+      header: () => 'Total',
       ...getCellDefinition<StockLine>('total'),
     },
   ];
@@ -717,29 +717,29 @@ const CardGroupsDemo = () => {
     statusBadgeCol(),
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
     },
     {
       c: { key: 'total' },
-      header: 'Total',
+      header: () => 'Total',
       ...getCellDefinition<StockLine>('total'),
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       cardGroup: 'details',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       cardGroup: 'details',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
     {
       c: { key: 'comment' },
-      header: 'Comment',
+      header: () => 'Comment',
       cardGroup: 'details',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -766,29 +766,29 @@ const CardDisclosureDemo = () => {
     statusBadgeCol(),
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
     {
       c: { key: 'total' },
-      header: 'Total',
+      header: () => 'Total',
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('total'),
     },
     {
       c: { key: 'comment' },
-      header: 'Comment',
+      header: () => 'Comment',
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -819,7 +819,7 @@ const CardAdvancedDemo = () => {
     // Code — TABLE face (a plain Code column, hidden on the card).
     {
       c: { key: 'code' },
-      header: 'Code',
+      header: () => 'Code',
       ...getCellDefinition<StockLine>('code', {
         hideOnCard: true,
         hideFromColumnSettings: true,
@@ -828,7 +828,7 @@ const CardAdvancedDemo = () => {
     // Code — CARD face (a card-only `primary` cell, "#CODE", distinct id).
     {
       c: { id: 'codeCard' },
-      header: 'Code',
+      header: () => 'Code',
       meta: {
         headerPosition: 'primary',
         hideOnTable: true,
@@ -840,7 +840,7 @@ const CardAdvancedDemo = () => {
     statusBadgeCol(),
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
     },
     // A card-only editable field: its header is the label; the input's own
@@ -848,7 +848,7 @@ const CardAdvancedDemo = () => {
     // row click.
     {
       c: { id: 'note' },
-      header: 'Note',
+      header: () => 'Note',
       meta: { hideOnTable: true },
       cell: info => {
         const row = info.row.original;
@@ -895,28 +895,28 @@ const AssembledCardDemo = () => {
     statusBadgeCol(),
     {
       c: { key: 'quantity' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       ...getNumberCell<StockLine>(),
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       ...getCellDefinition<StockLine>('packSize'),
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       ...getCellDefinition<StockLine>('expiryDate'),
     },
     {
       c: { key: 'total' },
-      header: 'Total',
+      header: () => 'Total',
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('total'),
     },
     {
       c: { key: 'comment' },
-      header: 'Comment',
+      header: () => 'Comment',
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -1039,7 +1039,7 @@ const MultiPanelCardDemo = () => {
     {
       // The card identity — the batch code as a labelled primary header field.
       c: { key: 'batch' },
-      header: 'Batch',
+      header: () => 'Batch',
       meta: {
         headerPosition: 'primary',
         showLabel: true,
@@ -1061,7 +1061,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'numberOfPacks' },
-      header: 'Quantity',
+      header: () => 'Quantity',
       cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
@@ -1079,7 +1079,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'packSize' },
-      header: 'Pack size',
+      header: () => 'Pack size',
       cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
@@ -1097,7 +1097,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'expiryDate' },
-      header: 'Expiry',
+      header: () => 'Expiry',
       cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
@@ -1113,7 +1113,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'costPrice' },
-      header: 'Cost price',
+      header: () => 'Cost price',
       cardGroup: 'pricing',
       cell: info => {
         const b = info.row.original;
@@ -1130,7 +1130,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'sellPrice' },
-      header: 'Sell price',
+      header: () => 'Sell price',
       cardGroup: 'pricing',
       cell: info => {
         const b = info.row.original;
@@ -1147,7 +1147,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'location' },
-      header: 'Location',
+      header: () => 'Location',
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -1164,7 +1164,7 @@ const MultiPanelCardDemo = () => {
     },
     {
       c: { key: 'note' },
-      header: 'Note',
+      header: () => 'Note',
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;

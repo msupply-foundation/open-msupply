@@ -254,13 +254,13 @@
   outline-offset: 2px;
 }
 
-/* Full-screen on phones — driven by data-fullscreen, which Dialog.tsx sets when
-   useIsCompact matches on a size="large" dialog OR one that opts in via
-   fullScreenOnCompact (createMediaQuery reads the compact breakpoint from
-   breakpoints.ts, the single source of truth). A media query can't read a CSS
-   var, so the cutoff stays in JS as the repo prefers (CLAUDE.md #7); this is the
-   CSS analogue of the "which layout" createMediaQuery branches. Other dialogs
-   stay centred cards on a phone (their base width/height caps already fit).
+/* Full-screen on phones — driven by data-fullscreen, which Dialog.tsx sets on a
+   size="large" dialog when useIsCompact matches (createMediaQuery reads the
+   compact breakpoint from breakpoints.ts, the single source of truth). A media
+   query can't read a CSS var, so the cutoff stays in JS as the repo prefers
+   (CLAUDE.md #7); this is the CSS analogue of the "which layout" createMediaQuery
+   branches. Only large ("workbench") modals go full-screen — smaller dialogs
+   stay centred cards (their base width/height caps already fit the phone).
    Higher specificity than .large so these rules override its width/height.
    dvh/dvw track the visible viewport as the mobile browser chrome shows/hides;
    plain 100vh would tuck the actions behind the address bar. */

@@ -229,34 +229,34 @@ export const ItemLedgerPanel: Component<{
   const columns = (): Column<LedgerRow, never>[] => [
     {
       c: { accessor: l => l.invoiceType, id: 'type' },
-      header: t('label.type'),
+      header: () => t('label.type'),
       cell: info =>
         `${TYPE_LABEL[info.row.original.invoiceType]} ${info.row.original.invoiceNumber}`,
     },
     {
       c: { key: 'invoiceNumber' },
-      header: t('label.invoice-number'),
+      header: () => t('label.invoice-number'),
       meta: { align: 'right' },
     },
     {
       c: { accessor: l => l.datetime, id: 'date' },
-      header: t('label.date'),
+      header: () => t('label.date'),
       cell: info => localisedDate(info.row.original.datetime),
     },
     {
       c: { accessor: l => l.datetime, id: 'time' },
-      header: t('label.time'),
+      header: () => t('label.time'),
       cell: info => localisedTime(info.row.original.datetime),
     },
-    { c: { key: 'name' }, header: t('label.name') },
+    { c: { key: 'name' }, header: () => t('label.name') },
     {
       c: { accessor: l => l.invoiceStatus, id: 'status' },
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => STATUS_LABEL[info.row.original.invoiceStatus],
     },
     {
       c: { accessor: l => l.expiryDate ?? '', id: 'expiry' },
-      header: t('label.expiry'),
+      header: () => t('label.expiry'),
       cell: info =>
         info.row.original.expiryDate
           ? localisedDate(info.row.original.expiryDate)
@@ -264,35 +264,35 @@ export const ItemLedgerPanel: Component<{
     },
     {
       c: { accessor: l => l.batch ?? '', id: 'batch' },
-      header: t('label.batch'),
+      header: () => t('label.batch'),
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.packSize),
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.num-packs'),
+      header: () => t('label.num-packs'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.numberOfPacks),
     },
     {
       c: { accessor: l => l.movementInUnits, id: 'change' },
-      header: t('label.change'),
+      header: () => t('label.change'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.movementInUnits),
     },
     {
       c: { key: 'balance' },
-      header: t('label.balance'),
+      header: () => t('label.balance'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.balance),
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       meta: { align: 'right' },
       cell: info =>
         formatNumber(info.row.original.costPricePerPack, {
@@ -302,7 +302,7 @@ export const ItemLedgerPanel: Component<{
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       meta: { align: 'right' },
       cell: info =>
         formatNumber(info.row.original.sellPricePerPack, {
@@ -312,7 +312,7 @@ export const ItemLedgerPanel: Component<{
     },
     {
       c: { accessor: l => l.totalBeforeTax ?? 0, id: 'totalBeforeTax' },
-      header: t('label.total-before-tax'),
+      header: () => t('label.total-before-tax'),
       meta: { align: 'right' },
       cell: info =>
         info.row.original.totalBeforeTax == null
@@ -324,11 +324,11 @@ export const ItemLedgerPanel: Component<{
     },
     {
       c: { accessor: l => l.reason ?? '', id: 'reason' },
-      header: t('label.reason'),
+      header: () => t('label.reason'),
     },
     {
       c: { accessor: l => l.user?.username ?? '', id: 'user' },
-      header: t('label.user'),
+      header: () => t('label.user'),
     },
   ];
 

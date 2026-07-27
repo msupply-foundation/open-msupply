@@ -540,6 +540,14 @@ const StocktakeDetailView: Component = () => {
   // entirely otherwise (not merely default-hidden).
   const prefs = () => stocktakePreferences();
 
+  // Blind stocktake (spec/stocktakes › store-preference gates): Snapshot and
+  // Difference hide only while counting (status NEW) and reappear once
+  // finalised; Reason hides for the stocktake's whole life, since no reason
+  // is ever required under this preference.
+  const hideSnapshotStock = () =>
+    prefs().blindStocktake && current()?.status === 'NEW';
+  const hideReason = () => prefs().blindStocktake;
+
   // A memo, not a plain function: read as a JSX prop (DataTable's `columns`),
   // it would otherwise rebuild a fresh array + fresh column objects on EVERY
   // read. TanStack Table treats a new columns identity as a config change and
@@ -554,31 +562,31 @@ const StocktakeDetailView: Component = () => {
       // path); the server sort key is `itemCode`.
       c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'itemCode',
-      header: t('label.code'),
+      header: () => t('label.code'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
       meta: { headerPosition: 'primary', wrapLines: 2 },
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('label.batch'),
+      header: () => t('label.batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('label.expiry-date'),
+      header: () => t('label.expiry-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'manufactureDate' },
       // Unsortable — StocktakeLineSortFieldInput has no manufactureDate key
       // (backend gap; spec/stocktakes contract § backend gaps).
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       ...getDateCell(),
     },
     {
@@ -586,19 +594,19 @@ const StocktakeDetailView: Component = () => {
       // by locationCode.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationCode',
-      header: t('label.location'),
+      header: () => t('label.location'),
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
       // backend gap). Matches OMS's columns.tsx itemUnit, placed after Location.
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
-      header: t('label.unit-name'),
+      header: () => t('label.unit-name'),
     },
     {
       c: { key: 'packSize' },
       // Unsortable in OMS's columns.tsx (no enableSorting) even though the
       // server has a packSize key — matched here.
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       ...getNumberCell(),
     },
     // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
@@ -610,56 +618,62 @@ const StocktakeDetailView: Component = () => {
               accessor: line => dosesPerUnit(line) ?? '',
               id: 'dosesPerUnit',
             },
-            header: t('label.doses-per-unit'),
+            header: () => t('label.doses-per-unit'),
             ...getNumberCell(),
           } satisfies Column<Line, SortKey>,
         ]
       : []),
-    {
-      c: { key: 'snapshotNumberOfPacks' },
-      sortKey: 'snapshotNumberOfPacks',
-      header: t('label.snapshot-num-of-packs'),
-      ...getNumberCell(),
-      // Snapshot cell also carries the line's error inline beneath the count (a
-      // snapshot/current-count mismatch is a "recount this line" message about
-      // the snapshot). Styled inline from the design tokens (a section owns no
-      // stylesheet).
-      cell: info => {
-        const value = info.getValue<number | null | undefined>();
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'flex-direction': 'column',
-              'align-items': 'flex-end',
-            }}
-          >
-            <span>{value ?? ''}</span>
-            <Show
-              when={
-                lineErrors().get(info.row.original.id) ===
-                'SnapshotCountCurrentCountMismatchLine'
-              }
-            >
-              <span
-                style={{
-                  color: 'var(--error-main)',
-                  'font-size': 'var(--text-xs)',
-                  'white-space': 'normal',
-                  'text-align': 'end',
-                }}
-              >
-                {t('error.snapshot-total-mismatch')}
-              </span>
-            </Show>
-          </span>
-        );
-      },
-    },
+    // Snapshot — omitted entirely while counting under blind stocktake (reappears
+    // once finalised; see hideSnapshotStock above).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: { key: 'snapshotNumberOfPacks' },
+            sortKey: 'snapshotNumberOfPacks',
+            header: () => t('label.snapshot-num-of-packs'),
+            ...getNumberCell(),
+            // Snapshot cell also carries the line's error inline beneath the count (a
+            // snapshot/current-count mismatch is a "recount this line" message about
+            // the snapshot). Styled inline from the design tokens (a section owns no
+            // stylesheet).
+            cell: info => {
+              const value = info.getValue<number | null | undefined>();
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'flex-direction': 'column',
+                    'align-items': 'flex-end',
+                  }}
+                >
+                  <span>{value ?? ''}</span>
+                  <Show
+                    when={
+                      lineErrors().get(info.row.original.id) ===
+                      'SnapshotCountCurrentCountMismatchLine'
+                    }
+                  >
+                    <span
+                      style={{
+                        color: 'var(--error-main)',
+                        'font-size': 'var(--text-xs)',
+                        'white-space': 'normal',
+                        'text-align': 'end',
+                      }}
+                    >
+                      {t('error.snapshot-total-mismatch')}
+                    </span>
+                  </Show>
+                </span>
+              );
+            },
+          } satisfies Column<Line, SortKey>,
+        ]),
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
-      header: t('label.counted-num-of-packs'),
+      header: () => t('label.counted-num-of-packs'),
       ...getNumberCell(),
       meta: { align: 'right', headerPosition: 'badge' },
     },
@@ -672,31 +686,45 @@ const StocktakeDetailView: Component = () => {
               accessor: line => dosesCounted(line) ?? '',
               id: 'dosesCounted',
             },
-            header: t('label.doses-counted'),
+            header: () => t('label.doses-counted'),
             ...getNumberCell(),
           } satisfies Column<Line, SortKey>,
         ]
       : []),
     // Difference = counted − snapshot; blank until the line is counted. Derived
-    // (no server field), so unsortable.
-    {
-      c: {
-        accessor: line => lineDifference(line) ?? '',
-        id: 'difference',
-      },
-      header: t('label.difference'),
-      ...getNumberCell(),
-    },
+    // (no server field), so unsortable. Omitted alongside Snapshot under blind
+    // stocktake (same gate — see hideSnapshotStock above).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: {
+              accessor: line => lineDifference(line) ?? '',
+              id: 'difference',
+            },
+            header: () => t('label.difference'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]),
     // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
     // Campaign · Comment. No price columns — Sell/Cost price live only in the
     // line editor's Pricing tab, never as detail-table columns (spec S3).
-    {
-      // The adjustment reason (reasonOption.reason) — an accessor column.
-      // Server sorts by reasonOption.
-      c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
-      sortKey: 'reasonOption',
-      header: t('label.reason'),
-    },
+    // Reason — omitted for the stocktake's whole life under blind stocktake,
+    // since no reason is ever required (see hideReason above).
+    ...(hideReason()
+      ? []
+      : [
+          {
+            // The adjustment reason (reasonOption.reason) — an accessor column.
+            // Server sorts by reasonOption.
+            c: {
+              accessor: line => line.reasonOption?.reason ?? '',
+              id: 'reason',
+            },
+            sortKey: 'reasonOption',
+            header: () => t('label.reason'),
+          } satisfies Column<Line, SortKey>,
+        ]),
     // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
     // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
     // no sortKey (server can't sort it — kdd/type-safety, D23).
@@ -704,7 +732,7 @@ const StocktakeDetailView: Component = () => {
       ? [
           {
             c: { accessor: line => line.donorName ?? '', id: 'donor' },
-            header: t('label.donor'),
+            header: () => t('label.donor'),
           } satisfies Column<Line, SortKey>,
         ]
       : []),
@@ -715,20 +743,20 @@ const StocktakeDetailView: Component = () => {
         accessor: line => line.manufacturer?.name ?? '',
         id: 'manufacturer',
       },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
     },
     {
       // Campaign name (ungated) — campaign.name on the line. Unsortable (no
       // server key; backend gap). Matches OMS's columns.tsx campaign, placed
       // after Manufacturer, before Comment.
       c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
-      header: t('label.campaign-only'),
+      header: () => t('label.campaign-only'),
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
   ]);
@@ -876,6 +904,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
+                      hideReason={hideReason()}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}
