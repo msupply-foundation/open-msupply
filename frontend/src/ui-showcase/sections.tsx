@@ -32,6 +32,10 @@ import { SidePanelShowcase, sidePanelMetadata } from './SidePanelShowcase';
 import { StatisticsShowcase, statisticsMetadata } from './StatisticsShowcase';
 import { InsetPanelShowcase, insetPanelMetadata } from './InsetPanelShowcase';
 import { CardGridShowcase, cardGridMetadata } from './CardGridShowcase';
+import {
+  DetailViewsShowcase,
+  detailViewsMetadata,
+} from './DetailViewsShowcase';
 import { ChartsShowcase, chartsMetadata } from './ChartsShowcase';
 import { PageLayoutShowcase, pageLayoutMetadata } from './PageLayoutShowcase';
 import { FormLayoutShowcase, formLayoutMetadata } from './FormLayoutShowcase';
@@ -221,6 +225,13 @@ export const sections: SectionDef[] = [
     label: 'Card grid',
     component: CardGridShowcase,
     metadata: cardGridMetadata,
+    category: 'layout',
+  },
+  {
+    id: 'detail-views',
+    label: 'Detail views',
+    component: DetailViewsShowcase,
+    metadata: detailViewsMetadata,
     category: 'layout',
   },
   {
