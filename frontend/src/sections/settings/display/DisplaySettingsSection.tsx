@@ -92,6 +92,7 @@ const EditorToggleRow = (props: {
           <Popover
             trigger={<InfoIcon />}
             triggerLabel={props.heading}
+            triggerTestId={`${props.testId}-info`}
             placement="bottom-start"
           >
             <p>{props.info}</p>
