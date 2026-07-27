@@ -9,15 +9,33 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Lead } from './common';
+import type { PageMetadata } from './metadata';
 
 /*
  * Demos for the sync-specific components (src/ui/sync) — this section mirrors
  * that folder group, as every showcase section mirrors its ui/ group.
  */
+// Single-card page: no TOC rendered, but metadata is exported for Search.
+export const syncMetadata: PageMetadata = {
+  id: 'sync',
+  title: 'Sync',
+  searchTerms: ['synchronisation', 'progress'],
+  items: [
+    {
+      id: 'sync-progress',
+      title: 'Progress list',
+      searchTerms: ['steps', 'determinate', 'status'],
+    },
+  ],
+};
+
 export const SyncShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
-      <DashboardCard title="Progress list — determinate sync steps">
+      <DashboardCard
+        id="sync-progress"
+        title="Progress list — determinate sync steps"
+      >
         <Lead>
           The sync surfaces' phase list (<code>ui/sync</code>), rendered as the
           current app's horizontal stepper: circled icon markers joined by

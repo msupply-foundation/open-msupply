@@ -11,7 +11,22 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Lead, Row } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './SidePanelShowcase.module.css';
+
+// Single-card page: no TOC rendered, but metadata is exported for Search.
+export const sidePanelMetadata: PageMetadata = {
+  id: 'side-panel',
+  title: 'Side panel',
+  searchTerms: ['drawer', 'details'],
+  items: [
+    {
+      id: 'side-panel-details',
+      title: 'Details panel',
+      searchTerms: ['slide', 'additional info', 'drawer'],
+    },
+  ],
+};
 
 export const SidePanelShowcase = () => {
   const [open, setOpen] = createSignal(false);
@@ -23,7 +38,10 @@ export const SidePanelShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Details panel — slide it out over the page">
+        <DashboardCard
+          id="side-panel-details"
+          title="Details panel — slide it out over the page"
+        >
           <Lead>
             The detail-view right-hand panel (the current app's DetailPanel):
             additional info, related documents, comments.{' '}

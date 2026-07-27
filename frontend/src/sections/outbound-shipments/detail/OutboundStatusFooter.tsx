@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { CloseIcon } from '../../../ui/icons';
-import { StatusChangeAction } from './actions';
+import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundPreferencesResource';
 import type { OutboundNode } from './outboundUpdate';
@@ -21,13 +21,17 @@ import type { OutboundNode } from './outboundUpdate';
 export interface OutboundStatusFooterProps {
   storeId: string;
   node: OutboundNode;
-  /** Lines exist / placeholders-with-quantity — the pre-flight inputs. */
-  hasLines: boolean;
-  hasOnlyPlaceholders: boolean;
-  zeroQuantityItems: string[];
+  /**
+   * Whole-shipment pre-flight probe (AC-S5/AC-S6), run when the status button
+   * is invoked — the current lines page can't answer for the whole shipment
+   * (rules.md § server-paginated line table). Undefined = the probe failed
+   * (already routed to the global error modal); the action aborts.
+   */
+  preflight: () => Promise<StatusPreflight | undefined>;
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
-  /** A status change saved — replace the node (with its lines) in place. */
+  /** A status change saved — replace the entity in place (the view also
+   * refetches the lines page: leaving NEW trims zero rows server-side). */
   onSaved: (node: OutboundNode) => void;
   /** Close — navigate back to the list. */
   onClose: () => void;
@@ -97,9 +101,7 @@ export const OutboundStatusFooter: Component<
       <StatusChangeAction
         storeId={props.storeId}
         node={props.node}
-        hasLines={props.hasLines}
-        hasOnlyPlaceholders={props.hasOnlyPlaceholders}
-        zeroQuantityItems={props.zeroQuantityItems}
+        preflight={props.preflight}
         onSaved={props.onSaved}
         closeButton={
           // Plain (unbordered) icon button — the same close the inbound

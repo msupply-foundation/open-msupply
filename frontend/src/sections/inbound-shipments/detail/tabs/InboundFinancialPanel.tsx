@@ -95,9 +95,11 @@ export const InboundFinancialPanel: Component<{
   ): Column<Line, never> => ({
     c: { accessor: value, id },
     header,
+    // Spread FIRST: the money cell must override getNumberCell's own
+    // 2-dp number cell, keeping the currency formatting.
+    ...getNumberCell(),
     cell: info => money(info.getValue<number>()),
     ...(footerTotal !== undefined ? { footer: () => money(footerTotal) } : {}),
-    ...getNumberCell(),
   });
 
   // The PO-currency and local-cost columns (poPrice, packCostPrice,

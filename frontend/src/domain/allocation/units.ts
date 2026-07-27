@@ -3,19 +3,58 @@
 // units or packs-of-a-size (doses is the manageVaccinesInDoses-gated
 // extension, AC-AL7); the policy always distributes in units.
 
-/** The quantity-entry lens (AC-AL7). Doses joins when a consumer needs it. */
-export type AllocateUnit = { kind: 'units' } | { kind: 'packs'; size: number };
+/**
+ * The quantity-entry lens (AC-AL7): units, packs-of-a-size, or — for vaccine
+ * items under _manage vaccines in doses_ — doses. `dosesPerUnit` is the
+ * item's doses-per-unit (doses = units × dosesPerUnit).
+ */
+export type AllocateUnit =
+  | { kind: 'units' }
+  | { kind: 'packs'; size: number }
+  | { kind: 'doses'; dosesPerUnit: number };
 
 /**
  * Convert a lens-entered quantity to units (negative or non-finite —
- * NaN/Infinity from unparsed input — → undefined: AC-AL6).
+ * NaN/Infinity from unparsed input — → undefined: AC-AL6). A dose entry
+ * divides by the item's doses-per-unit (a zero/missing rate falls back to 1,
+ * the old app's `dosesPerUnit || 1`); the policy always distributes in units
+ * (AC-AL7 — "lens converts, policy stays in units").
  */
 export const lensToUnits = (
   value: number | null | undefined,
   lens: AllocateUnit
 ): number | undefined => {
   if (value == null || !Number.isFinite(value) || value < 0) return undefined;
-  return lens.kind === 'packs' ? value * lens.size : value;
+  if (lens.kind === 'packs') return value * lens.size;
+  if (lens.kind === 'doses') return value / (lens.dosesPerUnit || 1);
+  return value;
+};
+
+/** Units re-expressed in a lens — the display face of lensToUnits. */
+export const unitsToLens = (units: number, lens: AllocateUnit): number => {
+  if (lens.kind === 'packs') return units / lens.size;
+  if (lens.kind === 'doses') return units * (lens.dosesPerUnit || 1);
+  return units;
+};
+
+/**
+ * Clamp a manual per-batch packs entry (rules.md § whole-pack arithmetic,
+ * AC-AL6): never negative or non-finite. Whole-pack consumers round a
+ * fractional entry UP to whole packs, and an entry beyond availability
+ * clamps DOWN to the batch's whole-pack floor; partial-pack consumers keep
+ * the exact fraction, bounded to the raw (fractional) availability.
+ */
+export const clampManualPacks = (
+  value: number | null | undefined,
+  availablePacks: number,
+  options?: { partialPacks?: boolean }
+): number => {
+  if (value == null || !Number.isFinite(value) || value < 0) return 0;
+  if (options?.partialPacks) return Math.min(value, availablePacks);
+  const wholePacks = Math.ceil(value);
+  return wholePacks > availablePacks
+    ? Math.max(0, Math.floor(availablePacks))
+    : wholePacks;
 };
 
 /** The structural fields the unit sums read. */

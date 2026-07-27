@@ -6,9 +6,8 @@ import {
 } from './dashboardGates';
 import type { StoreContextResult } from '../../api/storeContext.generated';
 
-// The dashboard display gates and label slots (spec/dashboard/rules.md §
-// display gates / § thresholds). Criteria cited from
-// spec/dashboard/acceptance.md.
+// The dashboard display gates and label slots (spec/dashboard/rules.md § display
+// gates / § thresholds). Criteria cited from spec/dashboard/acceptance.md.
 
 type Preferences = StoreContextResult['preferences'];
 type StorePreferences = StoreContextResult['storePreferences'];
