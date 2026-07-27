@@ -22,6 +22,13 @@ export function HeaderCell<T>(props: {
   const canResize = () => column().getCanResize();
   const isResizing = () => column().getIsResizing();
   const align = () => column().columnDef.meta?.align;
+  // A real growth cap (delivered as max-width). TanStack merges its default
+  // maxSize (Number.MAX_SAFE_INTEGER) into every columnDef, so treat only a
+  // value below that sentinel as an actual cap.
+  const maxWidthPx = () => {
+    const max = column().columnDef.maxSize;
+    return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
+  };
   const pin = () => props.pinnedStyle(column());
   const sorted = () => column().getIsSorted();
   // The arrow slot is RESERVED on every sortable header (empty until sorted,
@@ -58,11 +65,18 @@ export function HeaderCell<T>(props: {
       // Cross-FE test-id contract (e2e/TESTIDS.md): every header cell carries
       // `header-<columnId>`, sortable or not.
       data-testid={`header-${column().id}`}
-      // Auto table layout (columns flex to fill); getSize() is applied as a
-      // min-width FLOOR, so a configured size / a resize drag widens the column
-      // without losing the auto-fill. A pinned column additionally gets sticky
-      // position + its edge offset.
-      style={{ 'min-width': `${column().getSize()}px`, ...pin() }}
+      // Auto table layout (columns flex to fill); getSize() is the min-width
+      // FLOOR (a column's `size`, or a resize drag) — a SOFT default the drag
+      // moves both ways. maxSize is the growth cap, applied as max-width
+      // (docs/CELL_TYPES.md). A pinned column additionally gets sticky position
+      // + its edge offset.
+      style={{
+        'min-width': `${column().getSize()}px`,
+        ...(maxWidthPx() !== undefined
+          ? { 'max-width': `${maxWidthPx()}px` }
+          : {}),
+        ...pin(),
+      }}
     >
       <span class={styles.thLabel}>
         {/* Header text wraps up to 2 lines (.thText clamp); the sort indicator is a
