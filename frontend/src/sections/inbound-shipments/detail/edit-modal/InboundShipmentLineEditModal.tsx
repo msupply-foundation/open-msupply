@@ -388,6 +388,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: first.item?.defaultPackSize ?? 1,
       defaultSellPricePerPack: 0,
     });
+    // A PO-linked shipment's existing lines already cite the order line they
+    // fill — inherit it so "Add batch" (another batch for this same item)
+    // carries the link automatically, instead of requiring a re-pick that
+    // update mode's locked selector doesn't even offer (new batches were
+    // otherwise saving with purchaseOrderLineId undefined).
+    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
     // Focus the requested batch, else the first row.
     setPendingFocus({ row: focusLineId ?? first.id });
     setLoadingLines(false);
