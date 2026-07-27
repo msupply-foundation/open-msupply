@@ -41,12 +41,12 @@ export const ContactsTab: Component<{ nameId: string }> = props => {
 
   // Contacts aren't sortable here — no SortKey, so `never`.
   const columns = (): Column<ContactRow, never>[] => [
-    { c: { key: 'firstName' }, header: t('label.first-name') },
-    { c: { key: 'lastName' }, header: t('label.last-name') },
-    { c: { key: 'position' }, header: t('label.position') },
-    { c: { key: 'email' }, header: t('label.email') },
-    { c: { key: 'phone' }, header: t('label.phone') },
-    { c: { key: 'category1' }, header: t('label.category-1') },
+    { c: { key: 'firstName' }, header: () => t('label.first-name') },
+    { c: { key: 'lastName' }, header: () => t('label.last-name') },
+    { c: { key: 'position' }, header: () => t('label.position') },
+    { c: { key: 'email' }, header: () => t('label.email') },
+    { c: { key: 'phone' }, header: () => t('label.phone') },
+    { c: { key: 'category1' }, header: () => t('label.category-1') },
   ];
 
   return (

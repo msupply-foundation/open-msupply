@@ -76,47 +76,47 @@ export const LedgerPanel: Component<{
     {
       c: { accessor: l => l.datetime, id: 'date' },
       sortKey: 'datetime',
-      header: t('label.date'),
+      header: () => t('label.date'),
       cell: info => localisedDate(info.row.original.datetime),
     },
     {
       c: { accessor: l => l.datetime, id: 'time' },
-      header: t('label.time'),
+      header: () => t('label.time'),
       meta: { align: 'right' },
       cell: info => localisedTime(info.row.original.datetime),
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
-      header: t('label.name'),
+      header: () => t('label.name'),
     },
     {
       c: { accessor: l => l.quantity, id: 'quantity' },
       sortKey: 'quantity',
-      header: t('label.unit-quantity'),
+      header: () => t('label.unit-quantity'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.quantity),
     },
     {
       c: { accessor: l => l.runningBalance, id: 'balance' },
-      header: t('label.balance'),
+      header: () => t('label.balance'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.runningBalance),
     },
     {
       c: { accessor: l => l.invoiceType, id: 'type' },
       sortKey: 'invoiceType',
-      header: t('label.type'),
+      header: () => t('label.type'),
       cell: info =>
         `${typeLabel(info.row.original.invoiceType)} ${info.row.original.invoiceNumber}`,
     },
     {
       c: { accessor: l => l.reason ?? '', id: 'reason' },
-      header: t('label.reason'),
+      header: () => t('label.reason'),
     },
     {
       c: { accessor: l => l.user?.username ?? '', id: 'user' },
-      header: t('label.user'),
+      header: () => t('label.user'),
     },
   ];
 

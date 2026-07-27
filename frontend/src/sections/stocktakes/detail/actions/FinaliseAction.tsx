@@ -144,7 +144,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
           description={
             <Switch
               fallback={t('messages.confirm-status-as', {
-                status: 'status.finalised',
+                status: t('status.finalised'),
               })}
             >
               <Match when={phase() === 'success'}>{t('messages.saved')}</Match>

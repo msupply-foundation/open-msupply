@@ -14,12 +14,7 @@ import { isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
-import { StoreSelectionDialog } from '../store/StoreSelectionDialog';
-import {
-  getPreviousStoreId,
-  getRememberedStoreId,
-  setRememberedStoreId,
-} from '../appData';
+import { resolveStorePath } from '../store/StoreGuardLayout';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
 // not with the shell (each vertical is its own lazy chunk).
@@ -72,36 +67,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
-  // the one named by the URL. Activating the store selector opens the
-  // in-place switch modal below (spec SL-6 / AC-SL8, [D14]); the user menu logs
-  // out (spec: explicit logout).
+  // the one named by the URL. Activating the store selector routes to the
+  // store-selection screen (spec SL-6 / AC-SL8); the user menu logs out (spec:
+  // explicit logout).
   const activeStore = () =>
     authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
   const username = () => authUser()?.username ?? '';
-
-  // Store switch (spec chrome › bottom bar, [D14]): an in-place modal over the
-  // current store's content — the shell stays behind the scrim, dismissable so
-  // cancelling leaves you where you are. Confirming a different store navigates
-  // to its root; the bootstrap picker (a URL that resolves no store, no shell
-  // to overlay) stays the routed /resolve-store guard. The list pins the
-  // last-used and default stores to the top and names them so the chips show.
-  const [storeSwitchOpen, setStoreSwitchOpen] = createSignal(false);
-  const switchStores = () => {
-    const user = authUser();
-    if (!user) return [];
-    const nodes = user.stores.nodes;
-    const pinned = [getPreviousStoreId(user.userId), user.defaultStore?.id];
-    const top = nodes.filter(s => pinned.includes(s.id));
-    return [...top, ...nodes.filter(s => !top.includes(s))];
-  };
-  const switchToStore = (id: string, remember: boolean) => {
-    setStoreSwitchOpen(false);
-    // "Remember my choice" (SL-6): persist (or clear) the auto-enter store.
-    const user = authUser();
-    if (user) setRememberedStoreId(user.userId, remember ? id : undefined);
-    if (id !== params.storeId) navigate(`/${id}`);
-  };
 
   // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
   // opens the modal; the shared sync watch (substrate) runs for the whole
@@ -129,27 +101,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         syncBadge={syncIndicator.badge()}
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
-        onStoreClick={() => setStoreSwitchOpen(true)}
+        onStoreClick={() => navigate(resolveStorePath)}
         username={username()}
         onLogout={() => void logout()}
         isCentralServer={isCentralServer()}
       >
         {props.children}
       </AppShell>
-      <StoreSelectionDialog
-        open={storeSwitchOpen()}
-        onClose={() => setStoreSwitchOpen(false)}
-        stores={switchStores()}
-        defaultStoreId={authUser()?.defaultStore?.id}
-        lastUsedStoreId={
-          authUser() ? getPreviousStoreId(authUser()!.userId) : undefined
-        }
-        currentStoreId={params.storeId}
-        defaultRemember={
-          !!(authUser() && getRememberedStoreId(authUser()!.userId))
-        }
-        onSelect={switchToStore}
-      />
       <Show when={syncEverOpened()}>
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
       </Show>
