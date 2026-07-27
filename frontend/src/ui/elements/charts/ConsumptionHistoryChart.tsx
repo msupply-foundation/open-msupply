@@ -1,5 +1,6 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
+import { t } from '../../../intl';
 import { SvgPlot, linePath } from './svgPlot';
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
@@ -29,7 +30,10 @@ export const ConsumptionHistoryChart = (props: {
     d.isHistoric ? styles.historic : d.isCurrent ? styles.current : styles.projected;
 
   return (
-    <Show when={data().length} fallback={<p class={styles.empty}>No data</p>}>
+    <Show
+      when={data().length}
+      fallback={<p class={styles.empty}>{t('error.no-data')}</p>}
+    >
       <div class={styles.chartBlock}>
         <SvgPlot
           count={data().length}
@@ -42,8 +46,13 @@ export const ConsumptionHistoryChart = (props: {
               <div class={styles.tooltipHead}>
                 {format(new Date(data()[i].date), 'MMM yyyy')}
               </div>
-              <div>Consumption: {data()[i].consumption}</div>
-              <div>Moving average: {data()[i].averageMonthlyConsumption}</div>
+              <div>
+                {t('label.consumption')}: {data()[i].consumption}
+              </div>
+              <div>
+                {t('label.moving-average')}:{' '}
+                {data()[i].averageMonthlyConsumption}
+              </div>
             </>
           )}
         >
@@ -74,12 +83,12 @@ export const ConsumptionHistoryChart = (props: {
         </SvgPlot>
         <ChartLegend
           items={[
-            { class: styles.swatchHistoric, label: 'Consumption' },
-            { class: styles.swatchCurrent, label: 'Current' },
-            { class: styles.swatchProjected, label: 'Projected' },
+            { class: styles.swatchHistoric, label: t('label.consumption') },
+            { class: styles.swatchCurrent, label: t('label.current') },
+            { class: styles.swatchProjected, label: t('label.projected') },
             {
               class: styles.swatchMovingAvg,
-              label: 'Moving average',
+              label: t('label.moving-average'),
               line: true,
             },
           ]}

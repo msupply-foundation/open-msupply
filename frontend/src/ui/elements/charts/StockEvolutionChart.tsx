@@ -1,5 +1,6 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
+import { t } from '../../../intl';
 import { SvgPlot, linePath } from './svgPlot';
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
@@ -31,7 +32,10 @@ export const StockEvolutionChart = (props: {
   );
 
   return (
-    <Show when={data().length} fallback={<p class={styles.empty}>No data</p>}>
+    <Show
+      when={data().length}
+      fallback={<p class={styles.empty}>{t('error.no-data')}</p>}
+    >
       <div class={styles.chartBlock}>
         <SvgPlot
           count={data().length}
@@ -44,10 +48,12 @@ export const StockEvolutionChart = (props: {
               <div class={styles.tooltipHead}>
                 {format(new Date(data()[i].date), 'd MMM')}
               </div>
-              <div>Stock level: {data()[i].stockOnHand}</div>
               <div>
-                Min {data()[i].minimumStockOnHand} · Max{' '}
-                {data()[i].maximumStockOnHand}
+                {t('label.stock-level')}: {data()[i].stockOnHand}
+              </div>
+              <div>
+                {t('label.min')} {data()[i].minimumStockOnHand} ·{' '}
+                {t('label.max')} {data()[i].maximumStockOnHand}
               </div>
             </>
           )}
@@ -82,10 +88,10 @@ export const StockEvolutionChart = (props: {
         </SvgPlot>
         <ChartLegend
           items={[
-            { class: styles.swatchPast, label: 'Past' },
-            { class: styles.swatchProjected, label: 'Projected' },
-            { class: styles.swatchMax, label: 'Max', line: true },
-            { class: styles.swatchMin, label: 'Min', line: true },
+            { class: styles.swatchPast, label: t('label.past') },
+            { class: styles.swatchProjected, label: t('label.projected') },
+            { class: styles.swatchMax, label: t('label.max'), line: true },
+            { class: styles.swatchMin, label: t('label.min'), line: true },
           ]}
         />
       </div>
