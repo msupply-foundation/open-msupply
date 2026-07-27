@@ -111,7 +111,10 @@ export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
   const panels = useDashboardPanels(corePanels, widgetContext);
 
   return (
-    <Widget title={t('inventory-management')}>
+    <Widget
+      title={t('inventory-management')}
+      testId="dashboard-widget-inventory"
+    >
       <Grid
         container
         justifyContent="flex-start"
@@ -131,6 +134,7 @@ export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
             Icon={<PlusCircleIcon />}
             label={t('button.order-more')}
             onClick={handleClick}
+            data-testid="dashboard-create-inventory"
           />
         </Grid>
       </Grid>
