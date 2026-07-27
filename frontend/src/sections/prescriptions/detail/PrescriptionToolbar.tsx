@@ -11,7 +11,10 @@ import {
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
-import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import {
+  localTodayIso,
+  utcToLocalParts,
+} from '../../../ui/elements/inputs/dateTimeConvert';
 import { prescriptionDateOf } from '../prescriptionStatus';
 import {
   prescriptionDateInstant,
@@ -53,12 +56,6 @@ export const PrescriptionToolbar: Component<
   // The shown day: the prescription date's LOCAL calendar day.
   const shownDay = () =>
     utcToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
-  const today = () => {
-    const now = new Date();
-    const month = `${now.getMonth() + 1}`.padStart(2, '0');
-    const day = `${now.getDate()}`.padStart(2, '0');
-    return `${now.getFullYear()}-${month}-${day}`;
-  };
 
   const applyOrConfirm = (input: Omit<UpdateInput, 'id'>) => {
     if (hasLines()) setPending(input);
@@ -99,7 +96,7 @@ export const PrescriptionToolbar: Component<
           hideLabel
           testId="date-field"
           value={shownDay()}
-          max={today()}
+          max={localTodayIso()}
           disabled={props.disabled}
           onChange={day => {
             if (!day || day === shownDay()) return;

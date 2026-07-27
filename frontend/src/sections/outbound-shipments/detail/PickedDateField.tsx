@@ -3,6 +3,7 @@ import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { InfoIcon } from '../../../ui/icons';
@@ -17,7 +18,6 @@ import {
   backdateWarnings,
   backdatedDatetimeFor,
   backdatingGate,
-  toDateInput,
   withinBackdateBounds,
   type BackdateWarningKey,
 } from './backdating';
@@ -75,7 +75,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // The effective "as of" day: the backdated day if set, else picked, else the
   // creation day.
   const effectiveDay = () =>
-    toDateInput(
+    dateToIsoDate(
       new Date(
         props.node.backdatedDatetime ??
           props.node.pickedDatetime ??
