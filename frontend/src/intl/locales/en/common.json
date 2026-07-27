@@ -501,6 +501,8 @@
   "error.more-info": "More information",
   "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "error.new-stock-invalid": "Could not add the stock. Check the details and try again.",
+  "error.new-version-available": "A new version is available",
+  "error.new-version-available-detail": "This app has been updated since you opened it. Please refresh the page to continue.",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
   "error.no-asset-create-scan-permission": "You do not have permission to create a new asset via data matrix scan.",
   "error.no-asset-delete-permission": "You do not have permission to delete assets.",
