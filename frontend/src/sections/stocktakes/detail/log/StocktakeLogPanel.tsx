@@ -156,25 +156,25 @@ export const StocktakeLogPanel: Component<{
   const columns = (): Column<Log, never>[] => [
     {
       c: { key: 'datetime' },
-      header: t('label.date'),
+      header: () => t('label.date'),
       ...getDateCell(),
     },
     {
       c: { accessor: log => localisedTime(log.datetime), id: 'time' },
-      header: t('label.time'),
+      header: () => t('label.time'),
       meta: { align: 'right' },
     },
     {
       c: { accessor: log => log.user?.username ?? '', id: 'user' },
-      header: t('label.user'),
+      header: () => t('label.user'),
     },
     {
       c: { accessor: log => eventLabel(log.type), id: 'event' },
-      header: t('label.event'),
+      header: () => t('label.event'),
     },
     {
       c: { id: 'details' },
-      header: t('label.details'),
+      header: () => t('label.details'),
       cell: info => changeDetails(info.row.original.from, info.row.original.to),
     },
   ];

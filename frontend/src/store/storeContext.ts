@@ -70,6 +70,7 @@ const stocktakePreferences = () => {
     manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
     manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
     allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    blindStocktake: prefs?.blindStocktake ?? false,
   };
 };
 

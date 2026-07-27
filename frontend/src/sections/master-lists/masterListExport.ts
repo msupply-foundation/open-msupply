@@ -1,7 +1,8 @@
 // Pure logic for the master-lists list-index export (spec/master-lists § export,
-// AC-E1/E3). Export is ENTIRELY client-side over the already-loaded page — the
-// file therefore covers the current page only (AC-E1). Colocated + pure so the
-// column set, CSV escaping, and filename shape are unit-tested without a screen.
+// OMS-REG-CAT-07.26/.29). Export is ENTIRELY client-side over the already-loaded
+// page — the file therefore covers the current page only (.26). Colocated and
+// pure so the column set, CSV escaping, and filename shape are unit-tested
+// without a screen.
 
 export type MasterListExportRow = {
   id: string;
@@ -18,7 +19,7 @@ export const csvEscape = (value: string): string =>
 // The loaded rows → CSV. Columns: `id` (a LITERAL untranslated header,
 // spec/master-lists ui-surface), then the translated Code / Name / Description
 // headers supplied by the caller. Empty rows → header line only (the screen
-// shows "No data available" instead of downloading — AC-E3).
+// shows "No data available" instead of downloading — .29).
 export const masterListsToCsv = (
   rows: MasterListExportRow[],
   headers: { code: string; name: string; description: string }

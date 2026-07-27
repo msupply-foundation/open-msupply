@@ -21,6 +21,11 @@ export interface ReduceToZeroActionProps {
   storeId: string;
   selectedIds: () => string[];
   disabled: boolean;
+  /**
+   * Blind stocktake (spec/stocktakes › store-preference gates): no reason is
+   * ever required under this preference, so the picker is omitted here too.
+   */
+  hideReason: boolean;
   /** Apply what committed in place (no refetch). */
   onCommit: (commit: LineEditCommit) => void;
   /**
@@ -108,15 +113,17 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <p>{t('messages.confirm-reduce-lines-to-zero')}</p>
-              <FieldRow label={t('label.reason')}>
-                <ReasonSelect
-                  kind="negative"
-                  label={t('label.reason')}
-                  hideLabel
-                  value={reasonId() ?? undefined}
-                  onChange={r => setReasonId(r?.id ?? null)}
-                />
-              </FieldRow>
+              <Show when={!props.hideReason}>
+                <FieldRow label={t('label.reason')}>
+                  <ReasonSelect
+                    kind="negative"
+                    label={t('label.reason')}
+                    hideLabel
+                    value={reasonId() ?? undefined}
+                    onChange={r => setReasonId(r?.id ?? null)}
+                  />
+                </FieldRow>
+              </Show>
             </>
           }
         >

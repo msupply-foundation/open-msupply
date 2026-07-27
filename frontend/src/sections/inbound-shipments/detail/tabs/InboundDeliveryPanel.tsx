@@ -114,35 +114,35 @@ export const InboundDeliveryPanel: Component<{
   const columns = (): Column<DeliveryRow, never>[] => [
     {
       c: { key: 'code' },
-      header: t('label.code'),
+      header: () => t('label.code'),
     },
     {
       c: { key: 'name' },
-      header: t('label.name'),
+      header: () => t('label.name'),
     },
     {
       c: { key: 'previous' },
-      header: t('label.previous-deliveries'),
+      header: () => t('label.previous-deliveries'),
       ...getNumberCell(),
     },
     {
       c: { key: 'thisDelivery' },
-      header: t('label.this-delivery'),
+      header: () => t('label.this-delivery'),
       ...getNumberCell(),
     },
     {
       c: { key: 'inTransit' },
-      header: t('label.in-transit'),
+      header: () => t('label.in-transit'),
       ...getNumberCell(),
     },
     {
       c: { key: 'remaining' },
-      header: t('label.remaining'),
+      header: () => t('label.remaining'),
       ...getNumberCell(),
     },
     {
       c: { key: 'poQuantity' },
-      header: t('label.po-quantity'),
+      header: () => t('label.po-quantity'),
       ...getNumberCell(),
     },
   ];

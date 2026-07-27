@@ -256,24 +256,6 @@ query inboundShipmentLines(
   }
 }
 
-# The store's SERVICE items — for the service-charge modal's Add charge (spec
-# S6; disabled when none exist). First visible service item is the default.
-query serviceItems($storeId: String!) {
-  items(
-    storeId: $storeId
-    filter: { type: { equalTo: SERVICE }, isVisible: true }
-  ) {
-    ... on ItemConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        name
-      }
-    }
-  }
-}
-
 # Service lines (SERVICE type) for the service-charge modal (S6). Few per
 # shipment — fetched unpaginated.
 query inboundServiceLines($storeId: String!, $filter: InvoiceLineFilterInput) {

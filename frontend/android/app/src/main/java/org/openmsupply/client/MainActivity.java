@@ -15,6 +15,13 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Custom CAPACITOR plugins register here, before super.onCreate —
+        // native bridge modules, nothing to do with open-mSupply's own plugin
+        // system (kdd/plugin-loading). This list is also the custom half of
+        // the future client-mode injection list (kdd/capacitor-plugins
+        // Fork 5) — keep it complete.
+        registerPlugin(SaveFilePlugin.class);
+
         super.onCreate(savedInstanceState);
 
         // SPIKE ONLY: trust any cert so fetch() from the capacitor origin can

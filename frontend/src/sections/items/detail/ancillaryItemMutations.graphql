@@ -1,0 +1,72 @@
+# Central-only ancillary-item management (spec/items S5, rules.md § central-only
+# management). Both reach through the `centralServer` namespace, whose
+# field-level gate rejects a non-central server with a top-level "Not a central
+# server" error BEFORE the child mutation (contract wire trap) — unreachable in
+# practice since the add/edit/delete affordances don't render off-central.
+# upsertAncillaryItem's error union carries exactly DuplicateAncillaryItem /
+# AncillaryCycleDetected / AncillaryMaxDepthExceeded (needs max/actual) /
+# DatabaseError / InternalError — self-link, non-positive-ratio, and
+# missing-item rejections are NON-typed top-level errors (contract.md), not
+# part of this union, and are client-guarded already (item picker excludes the
+# principal + existing links; Save disables until both ratio sides are > 0).
+# deleteAncillaryItem has no typed error member at all (DeleteResponse only).
+mutation upsertAncillaryItem(
+  $storeId: String!
+  $input: UpsertAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      upsertAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on AncillaryItemNode {
+          id
+          itemQuantity
+          ancillaryQuantity
+          ancillaryItem {
+            id
+            code
+            name
+          }
+        }
+        ... on UpsertAncillaryItemError {
+          error {
+            __typename
+            description
+            ... on DuplicateAncillaryItem {
+              __typename
+            }
+            ... on AncillaryCycleDetected {
+              __typename
+            }
+            ... on AncillaryMaxDepthExceeded {
+              max
+              actual
+            }
+            ... on DatabaseError {
+              __typename
+            }
+            ... on InternalError {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAncillaryItem(
+  $storeId: String!
+  $input: DeleteAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      deleteAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

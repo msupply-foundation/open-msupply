@@ -80,8 +80,8 @@ export const CustomFieldsEditTab = (props: {
     if (!dirty() || saving() || changed.size === 0) return;
     setSaving(true);
     // Only the changed keys — a partial merge; the server leaves the rest
-    // untouched. A cleared field carries its empty value; the vertical's
-    // `onSave` decides the wire encoding (e.g. null to delete a key).
+    // untouched. A cleared number/date/option carries null (CustomFieldInput's
+    // contract), which the server's patch-merge treats as "remove the key".
     const patch: Record<string, unknown> = {};
     changed.forEach(key => {
       patch[key] = draft[key];

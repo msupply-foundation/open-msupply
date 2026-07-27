@@ -49,15 +49,15 @@ export const HistoryModal: Component<HistoryModalProps> = props => {
       : undefined) ?? [];
 
   const columns = (): Column<HistoryRow, never>[] => [
-    { c: { key: 'itemName' }, header: t('report.item-name') },
+    { c: { key: 'itemName' }, header: () => t('report.item-name') },
     {
       c: { key: 'units' },
-      header: t('label.unit-quantity'),
+      header: () => t('label.unit-quantity'),
       ...getNumberCell(),
     },
-    { c: { key: 'directions' }, header: t('label.directions') },
-    { c: { key: 'date' }, header: t('label.date'), ...getDateCell() },
-    { c: { key: 'prescriber' }, header: t('label.prescriber') },
+    { c: { key: 'directions' }, header: () => t('label.directions') },
+    { c: { key: 'date' }, header: () => t('label.date'), ...getDateCell() },
+    { c: { key: 'prescriber' }, header: () => t('label.prescriber') },
   ];
 
   return (

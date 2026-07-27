@@ -33,12 +33,14 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
-import { helpRoutes } from './sections/help';
+import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
+import { StaleBundleModal } from './StaleBundleModal';
+import { startStaleBundleWatch } from './staleBundle';
 import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
@@ -66,6 +68,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
+  'manage/help-documents': helpDocumentsRoutes,
 };
 
 export const App: Component = () => {
@@ -99,7 +102,11 @@ export const App: Component = () => {
   onMount(() => {
     void runStartup();
     const stopTracking = startActivityTracking();
-    onCleanup(stopTracking);
+    const stopStaleBundleWatch = startStaleBundleWatch();
+    onCleanup(() => {
+      stopTracking();
+      stopStaleBundleWatch();
+    });
   });
 
   // The single owner of document direction/lang, driven by the real i18n locale
@@ -176,6 +183,7 @@ export const App: Component = () => {
       </Switch>
       {/* On top of everything, including other modals. */}
       <UnexpectedErrorModal />
+      <StaleBundleModal />
     </>
   );
 };
