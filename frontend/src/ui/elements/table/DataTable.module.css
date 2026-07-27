@@ -433,6 +433,12 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    Comment.module.css). */
 .selectBox {
   margin-inline: auto;
+  /* Fill the 48px leading cell across its width so a click anywhere in the
+     selection column toggles the row (old-app parity) rather than falling
+     through to row navigation. Inline axis only — the block overhang keeps
+     BareCheckbox's default, so a compact (40px) row's target never bleeds
+     into the row above or below. (48 − 18) / 2 = 15px = 0.9375rem. */
+  --checkbox-hit-inset-inline: 0.9375rem;
 }
 
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
