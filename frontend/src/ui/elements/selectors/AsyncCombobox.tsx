@@ -135,16 +135,27 @@ export const AsyncCombobox = <T,>(
   // regardless of what's typed, masking real matches (found via prescriptions'
   // "changing the patient" — typing a new patient's name kept showing the
   // CURRENTLY-selected one as the first, always-clickable option).
+  //
+  // The seed is a LABEL-ONLY fallback (callers like ItemSearch fill its
+  // non-label fields — e.g. totalUnits — with placeholder zeros, since the
+  // real values aren't known until the item's own page is fetched). So once
+  // `base()` has fetched a real row for this key, that row must WIN over the
+  // seed rather than being replaced by it — otherwise the stub's placeholder
+  // fields (e.g. "0 Units") permanently shadow the real, freshly-fetched data
+  // for as long as the item stays the controlled selection (#549).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
     const key = props.itemToValue(seed);
+    const rest = base().filter(i => props.itemToValue(i) !== key);
+    const real = base().find(i => props.itemToValue(i) === key);
+    if (real) return [real, ...rest];
     const needle = query().toLocaleLowerCase();
     const seedMatches =
       !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
     const isControlledValue = props.value !== undefined && props.value === key;
     if (!seedMatches && !isControlledValue) return base();
-    return [seed, ...base().filter(i => props.itemToValue(i) !== key)];
+    return [seed, ...rest];
   };
 
   const value = () =>
@@ -180,7 +191,26 @@ export const AsyncCombobox = <T,>(
       itemToValue={props.itemToValue}
       itemDisabled={props.itemDisabled}
       renderItem={props.renderItem}
+      // Kobalte fires onInputChange whenever the combobox's controlled
+      // selection changes — not only when the user types. Its resetInputValue
+      // effect resyncs the input text to match a NEW selected/value prop
+      // (e.g. the stocktake line-edit modal opening on a row sets ItemSearch's
+      // value/selectedItem to that row's item), and that resync itself goes
+      // through onInputChange. Left unguarded, this fires a genuine
+      // itemsWithStock search for the row's own label on every row-click open
+      // — nobody typed anything. Guard: a next value that exactly matches the
+      // CURRENTLY selected item's label is that resync, not a keystroke —
+      // skip it. A real edit (even retyping the same text one keystroke at a
+      // time) still goes through query(), which the resync bypasses entirely
+      // (Kobalte sets the whole string in one call), so this can't mask a
+      // genuine search for text that happens to equal the selected label.
       onInputChange={next => {
+        const selected = props.selected;
+        const isSelectedLabelEcho =
+          selected !== undefined &&
+          next === props.itemToString(selected) &&
+          next !== query();
+        if (isSelectedLabelEcho) return;
         setQuery(next);
         search.setSearch(next);
       }}

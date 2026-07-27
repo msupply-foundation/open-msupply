@@ -33,7 +33,7 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
-import { helpRoutes } from './sections/help';
+import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -68,6 +68,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
+  'manage/help-documents': helpDocumentsRoutes,
 };
 
 export const App: Component = () => {

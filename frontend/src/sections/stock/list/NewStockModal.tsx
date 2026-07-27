@@ -26,7 +26,7 @@ import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { stockPreferences } from '../../../store/storeContext';
 import { runInsertStockLine } from '../stockApi';
-import { localTodayIso } from '../stockCalc';
+import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import {
   NewStockItem,

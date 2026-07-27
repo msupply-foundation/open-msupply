@@ -1,4 +1,5 @@
 import { graphqlFetch } from '../../../api/graphql';
+import { localDayToUtc } from '../../../ui/elements/inputs/dateTimeConvert';
 import {
   UpdatePrescription,
   DeletePrescriptionLines,
@@ -69,4 +70,4 @@ export const deleteLines = async (
  * at today so nothing sent here is meaningfully future).
  */
 export const prescriptionDateInstant = (isoDay: string): string =>
-  new Date(`${isoDay}T23:59:59.999`).toISOString();
+  localDayToUtc(isoDay, { endOfDay: true });
