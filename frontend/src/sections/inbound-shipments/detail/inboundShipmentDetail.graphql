@@ -30,6 +30,7 @@ fragment InboundInfo on InvoiceNode {
   transportReference
   colour
   createdDatetime
+  pickedDatetime
   shippedDatetime
   deliveredDatetime
   receivedDatetime
