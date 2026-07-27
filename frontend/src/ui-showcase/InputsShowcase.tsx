@@ -240,9 +240,8 @@ export const InputsShowcase = () => {
           <Lead>
             A TextField variant — the standard masked{' '}
             <code>type="password"</code> input plus a show/hide eye toggle
-            seated in the field frame (the same trailing icon-button affordance
-            as Combobox's clear button). Click the eye to reveal the value,
-            again to mask it; the toggle is keyboard-focusable.
+            seated in the field frame. Click the eye to reveal the value, again
+            to mask it; the toggle is keyboard-focusable.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Default">
