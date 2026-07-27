@@ -1,6 +1,8 @@
-import { For, Show, splitProps, type JSX } from 'solid-js';
+import { createSignal, For, Show, splitProps, type JSX } from 'solid-js';
 import { t, localisedDate, formatFileSize } from '../../../intl';
+import { openDocument } from '../../../platform/openDocument';
 import { FileIcon, TrashIcon } from '../../icons';
+import { Alert } from '../feedback/Alert';
 import { IconButton } from '../buttons/IconButton';
 import { Text } from '../typography/Text';
 import { UploadZone } from '../inputs/UploadZone';
@@ -56,8 +58,12 @@ const FileTypeIcon = (props: { fileName: string }): JSX.Element => (
  * DocumentUploadPanel — the whole "Documents" surface: an optional drag & drop
  * upload zone above a plain file list (file-type icon, name link, date
  * uploaded, size, per-row delete). Not a DataTable — a semantic <ul> laid out
- * on a shared grid so headers and rows align. Presentational + callback-driven;
- * the caller owns the actual upload/delete transport and refresh.
+ * on a shared grid so headers and rows align. The caller owns the
+ * upload/delete transport and refresh (they're record-specific); opening is
+ * fully determined by the row's url + fileName, so the panel owns it —
+ * routed through the openDocument platform capability (browser tab on web,
+ * OS viewer on Android — kdd/capacitor-plugins). Modified clicks (new tab,
+ * copy link) keep native anchor behaviour.
  */
 export const DocumentUploadPanel = (
   props: DocumentUploadPanelProps
@@ -73,6 +79,13 @@ export const DocumentUploadPanel = (
   ]);
 
   const showUpload = () => local.canUpload !== false && !!local.onUpload;
+  const [openError, setOpenError] = createSignal<string>();
+
+  const onOpen = async (url: string, fileName: string) => {
+    setOpenError(undefined);
+    const result = await openDocument(url, fileName);
+    if (!result.ok) setOpenError(result.message);
+  };
 
   return (
     <div class={styles.panel}>
@@ -95,6 +108,11 @@ export const DocumentUploadPanel = (
         <Text variant="heading" level={3} class={styles.heading}>
           {t('heading.uploaded-documents')}
         </Text>
+        <Show when={openError()}>
+          <Alert severity="error" class={styles.openError}>
+            {openError()}
+          </Alert>
+        </Show>
         <div class={styles.headerRow}>
           <span />
           <span>{t('label.file-name')}</span>
@@ -126,6 +144,16 @@ export const DocumentUploadPanel = (
                         href={url()}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={event => {
+                          const modified =
+                            event.ctrlKey ||
+                            event.metaKey ||
+                            event.shiftKey ||
+                            event.altKey;
+                          if (event.button !== 0 || modified) return;
+                          event.preventDefault();
+                          void onOpen(url(), document.fileName);
+                        }}
                       >
                         {document.fileName}
                       </a>

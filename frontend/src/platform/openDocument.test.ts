@@ -1,0 +1,85 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  bytesToBase64,
+  mimeOf,
+  openDocument,
+  sanitizeFileName,
+} from './openDocument';
+
+describe('openDocument (web path)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('hands the URL to the browser and reports ok', async () => {
+    const open = vi.fn();
+    // A browser window without Capacitor: the web fork, no plugin involved.
+    vi.stubGlobal('window', { open });
+
+    const result = await openDocument('/sync_files/invoice/abc/f1', 'a.pdf');
+
+    expect(result).toEqual({ ok: true });
+    expect(open).toHaveBeenCalledWith(
+      '/sync_files/invoice/abc/f1',
+      '_blank',
+      'noreferrer'
+    );
+  });
+
+  it('never fetches on the web path (plugins stay untouched)', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('window', { open: vi.fn() });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    await openDocument('/sync_files/invoice/abc/f1', 'a.pdf');
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('sanitizeFileName', () => {
+  it('keeps ordinary names', () => {
+    expect(sanitizeFileName('report 2026-07.pdf')).toBe('report 2026-07.pdf');
+  });
+
+  it('flattens path separators and reserved characters', () => {
+    expect(sanitizeFileName('a/b\\c:d*e?f"g<h>i|j.pdf')).toBe(
+      'a_b_c_d_e_f_g_h_i_j.pdf'
+    );
+  });
+
+  it('falls back for empty or directory-like names', () => {
+    expect(sanitizeFileName('')).toBe('file');
+    expect(sanitizeFileName('  ')).toBe('file');
+    expect(sanitizeFileName('..')).toBe('file');
+  });
+});
+
+describe('mimeOf', () => {
+  it('strips parameters', () => {
+    expect(mimeOf('application/pdf; charset=binary')).toBe('application/pdf');
+  });
+
+  it('passes a bare type through', () => {
+    expect(mimeOf('image/png')).toBe('image/png');
+  });
+
+  it('falls back to octet-stream for a missing or empty header', () => {
+    expect(mimeOf(null)).toBe('application/octet-stream');
+    expect(mimeOf('')).toBe('application/octet-stream');
+  });
+});
+
+describe('bytesToBase64', () => {
+  it('encodes small payloads', () => {
+    expect(bytesToBase64(new TextEncoder().encode('hello'))).toBe(
+      btoa('hello')
+    );
+  });
+
+  it('encodes payloads larger than one chunk (0x8000 bytes)', () => {
+    const bytes = new Uint8Array(0x8000 + 17).fill(65);
+    const expected = btoa('A'.repeat(0x8000 + 17));
+    expect(bytesToBase64(bytes)).toBe(expected);
+  });
+});
