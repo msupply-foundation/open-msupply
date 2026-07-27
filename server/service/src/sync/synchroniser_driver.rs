@@ -3,6 +3,7 @@ use std::{future::Future, sync::Arc};
 use crate::service_provider::ServiceProvider;
 use crate::sync::{is_initialised, CentralServerConfig};
 
+use super::file_sync_driver::FileSyncTrigger;
 use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
@@ -11,6 +12,7 @@ use tokio::{
 
 pub struct SynchroniserDriver {
     receiver: Receiver<()>,
+    file_sync_trigger: FileSyncTrigger,
 }
 
 #[derive(Clone)]
@@ -22,14 +24,20 @@ pub struct SyncTrigger {
 /// * Expose channel for manually triggering sync
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl SynchroniserDriver {
-    pub fn init() -> (SyncTrigger, SynchroniserDriver) {
+    pub fn init(file_sync_trigger: FileSyncTrigger) -> (SyncTrigger, SynchroniserDriver) {
         // We use a single-element channel so that we can only have one sync pending at a time.
         // We consume this at the *start* of sync, so we could schedule a sync while syncing.
         // Worst-case scenario, we produce an infinite stream of sync instructions and always go
         // straight from one sync to the next, but that's OK.
         let (sender, receiver) = mpsc::channel(1);
 
-        (SyncTrigger { sender }, SynchroniserDriver { receiver })
+        (
+            SyncTrigger { sender },
+            SynchroniserDriver {
+                receiver,
+                file_sync_trigger,
+            },
+        )
     }
 
     /// SynchroniserDriver entry point, this method is meant to be run within main `select!` macro
@@ -82,6 +90,11 @@ impl SynchroniserDriver {
     }
 
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
+        // Pause file sync while the main sync cycle runs; the tus chunk loop observes this at
+        // chunk boundaries and yields, and the first unpause() after initialisation is what
+        // lets the (paused-by-default) FileSyncDriver start uploading at all.
+        self.file_sync_trigger.pause();
+
         // Error is already logged inside the sync flow, keeping result with `_` to avoid compilation warning.
         // We initialise a new instance on every tick since SyncSettings could have changed.
         let settings = get_sync_settings(&service_provider);
@@ -93,6 +106,8 @@ impl SynchroniserDriver {
                 log::error!("Failed to construct synchroniser: {error:#?}");
             }
         }
+
+        self.file_sync_trigger.unpause();
     }
 }
 

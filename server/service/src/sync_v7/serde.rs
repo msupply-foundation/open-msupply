@@ -1,12 +1,14 @@
 use repository::{
     category_row::CategoryRow, contact_trace_row::ContactTraceRow,
-    item_category_row::ItemCategoryJoinRow, syncv7::SyncRecordSerializeError, *,
+    item_category_row::ItemCategoryJoinRow, sync_file_reference_row::SyncFileReferenceWire,
+    syncv7::SyncRecordSerializeError, *,
 };
 use serde::de::DeserializeOwned;
 
 use crate::sync_v7::{
     translations::{
         invoice_line::translate_invoice_line, store::translate_store,
+        sync_file_reference::translate_sync_file_reference,
         temperature_log::translate_temperature_log,
     },
     validate_translate_integrate::{create_changelog, SyncContext},
@@ -90,7 +92,11 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::Vaccination(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocation(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocationLine(r) => serde_json::to_value(r).map_err(map_serde_err),
-        Row::SyncFileReference(r) => serde_json::to_value(r).map_err(map_serde_err),
+        // Wire type, not the row: carries status/error across sites (row serde skips them)
+        // while local-only bookkeeping (direction, retries, transfer progress) stays put.
+        Row::SyncFileReference(r) => {
+            serde_json::to_value(SyncFileReferenceWire::from_row(r)).map_err(map_serde_err)
+        }
         Row::PluginData(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Preference(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::ContactForm(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -149,6 +155,9 @@ pub(crate) fn deserialize(
     let upsert = match table_name {
         // Special
         ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
+        ChangelogTableName::SyncFileReference => {
+            return translate_sync_file_reference(connection, changelog_insert, data)
+        }
         ChangelogTableName::InvoiceLine => {
             return translate_invoice_line(
                 changelog_insert,
@@ -267,7 +276,6 @@ pub(crate) fn deserialize(
         ChangelogTableName::RnrFormLine => from_value::<RnRFormLineRow>(data),
         ChangelogTableName::SyncMessage => from_value::<SyncMessageRow>(data),
         ChangelogTableName::Vaccination => from_value::<VaccinationRow>(data),
-        ChangelogTableName::SyncFileReference => from_value::<SyncFileReferenceRow>(data),
         ChangelogTableName::PluginData => from_value::<PluginDataRow>(data),
         ChangelogTableName::Preference => from_value::<PreferenceRow>(data),
         ChangelogTableName::ContactForm => from_value::<ContactFormRow>(data),
