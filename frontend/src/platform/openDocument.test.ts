@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   bytesToBase64,
   mimeOf,
+  openBlob,
   openDocument,
   sanitizeFileName,
 } from './openDocument';
@@ -34,6 +35,40 @@ describe('openDocument (web path)', () => {
     await openDocument('/sync_files/invoice/abc/f1', 'a.pdf');
 
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('openBlob (web path)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('triggers a browser download via a temporary anchor and reports ok', async () => {
+    const click = vi.fn();
+    const remove = vi.fn();
+    const anchor = { href: '', download: '', click, remove };
+    const appendChild = vi.fn();
+    const createObjectURL = vi.fn(() => 'blob:fake');
+    const revokeObjectURL = vi.fn();
+
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => anchor),
+      body: { appendChild },
+    });
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+
+    const result = await openBlob(
+      new Blob(['a,b\n1,2'], { type: 'text/csv' }),
+      'export.csv'
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(anchor.href).toBe('blob:fake');
+    expect(anchor.download).toBe('export.csv');
+    expect(click).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake');
   });
 });
 

@@ -28,8 +28,10 @@
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.1",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.4.1",
     "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
     "@corvu/calendar": "^0.1.2",
     "@fontsource-variable/inter": "^5.2.8",
     "@kobalte/core": "^0.13.12",
