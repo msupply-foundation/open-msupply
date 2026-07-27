@@ -98,6 +98,26 @@ export type ParsedField =
        * plain dates ('YYYY-MM-DD').
        */
       dateTime: boolean;
+      /**
+       * uiSchema `options.dateOnly` — a date-time field edited as a calendar
+       * day (no time part); the submitted value is still an instant, the day
+       * widened (AC-R18). No effect on plain `format: 'date'` fields.
+       */
+      dateOnly: boolean;
+      /**
+       * uiSchema `options.dateAsEndOfDay` — widen to the day's inclusive end.
+       */
+      dateAsEndOfDay: boolean;
+      /**
+       * uiSchema `options.disableFuture` — days after today are out of range.
+       */
+      disableFuture: boolean;
+      /**
+       * uiSchema `options.min` / `options.max` — sibling scope refs whose
+       * CURRENT form value bounds this field, resolved live (AC-R18).
+       */
+      minKey?: string;
+      maxKey?: string;
     }
   | {
       kind: 'sortToggle';
@@ -360,7 +380,10 @@ export const parseArgumentSchema = (raw: {
     const options = asRecord(el.options);
     const prop = asRecord(properties[key]);
     const nullable = prop ? isNullable(prop) : false;
-    const readOnly = prop?.readOnly === true;
+    // Read-only arrives in either home (contract "Arguments"): the jsonSchema
+    // property keyword (`readOnly`, expiring-items) or the uiSchema element's
+    // `options.readonly` (lowercase, stock-status / item-usage).
+    const readOnly = prop?.readOnly === true || options?.readonly === true;
     const isRequired = required.has(key);
 
     switch (type) {
@@ -414,6 +437,11 @@ export const parseArgumentSchema = (raw: {
             readOnly,
             required: isRequired,
             dateTime: prop.format === 'date-time',
+            dateOnly: options?.dateOnly === true,
+            dateAsEndOfDay: options?.dateAsEndOfDay === true,
+            disableFuture: options?.disableFuture === true,
+            minKey: scopeKey(options?.min),
+            maxKey: scopeKey(options?.max),
           });
         } else if (hasType(prop, 'string')) {
           fields.push({
@@ -628,6 +656,72 @@ export const dayEndInstant = (date: string): string =>
  */
 export const instantToLocalDate = (value: unknown): string =>
   typeof value === 'string' ? (utcToLocalDay(value) ?? '') : '';
+
+/** The date-kind slice of ParsedField the date-entry helpers below read. */
+type DateField = Extract<ParsedField, { kind: 'date' }>;
+
+/**
+ * A date field's committed argument value for a picked calendar day (AC-R18):
+ * a plain `format: 'date'` field holds the day itself; a date-time field holds
+ * an instant — the day widened at the device timezone to its start, or its
+ * inclusive end when the element asks (`dateAsEndOfDay`, the "to date" fields).
+ */
+export const dateArgumentValue = (field: DateField, isoDay: string): string =>
+  !field.dateTime
+    ? isoDay
+    : field.dateAsEndOfDay
+      ? dayEndInstant(isoDay)
+      : dayStartInstant(isoDay);
+
+/**
+ * A date field's stored value → the local calendar day it edits: plain
+ * 'YYYY-MM-DD' values pass through, instant values read back as the local day
+ * (never sliced — see `utcToLocalDay`). '' for absent/garbled values.
+ */
+export const dateArgumentDay = (value: unknown): string => {
+  if (typeof value !== 'string' || value === '') return '';
+  return value.includes('T') ? instantToLocalDate(value) : value;
+};
+
+/**
+ * A date field's selectable day bounds (AC-R18): the sibling values its
+ * `min`/`max` scope refs point at — read live from the form's current values —
+ * with the ceiling tightened to today when the element disallows future days.
+ * ISO days compare lexicographically, so the tighter ceiling is a string
+ * compare. `today` is passed in (this module stays clock-free / pure).
+ */
+export const dateFieldBounds = (
+  field: DateField,
+  values: ReportArgs,
+  today: string
+): { min?: string; max?: string } => {
+  const min = field.minKey ? dateArgumentDay(values[field.minKey]) : '';
+  let max = field.maxKey ? dateArgumentDay(values[field.maxKey]) : '';
+  if (field.disableFuture && (!max || today < max)) max = today;
+  return { ...(min ? { min } : {}), ...(max ? { max } : {}) };
+};
+
+/**
+ * Which bound (if any) the field's current value violates — 'future' when the
+ * element disallows future days and the day is past today, else 'min'/'max'
+ * against the live sibling bounds. The picker can't produce a violation
+ * (out-of-range days are unselectable) but typed entry can; a violation shows
+ * at the field and blocks OK (AC-R18).
+ */
+export const dateFieldViolation = (
+  field: DateField,
+  values: ReportArgs,
+  today: string
+): 'future' | 'min' | 'max' | undefined => {
+  const day = dateArgumentDay(values[field.key]);
+  if (!day) return undefined;
+  if (field.disableFuture && day > today) return 'future';
+  const min = field.minKey ? dateArgumentDay(values[field.minKey]) : '';
+  if (min && day < min) return 'min';
+  const max = field.maxKey ? dateArgumentDay(values[field.maxKey]) : '';
+  if (max && day > max) return 'max';
+  return undefined;
+};
 
 /**
  * The period picker's writes (AC-R16, contract "Arguments") as a key → value
