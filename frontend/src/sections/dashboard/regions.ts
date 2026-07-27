@@ -137,16 +137,16 @@ export interface MergedRegion {
 const END = Number.POSITIVE_INFINITY;
 
 /**
- * Merge plugin contributions into a region's built-ins (AC-D4, AC-D5).
+ * Merge plugin contributions into a region's built-ins (OMS-REG-DB-02.2–.8).
  *
  * Order (deterministic, identical across reloads, independent of plugin load
- * order — AC-D4): anchor position (before/after a published id, else container
+ * order — OMS-REG-DB-02.2–.5): anchor position (before/after a published id, else container
  * end) first, then contribution `order`, then contribution `id`. A contribution
  * whose anchor id does not resolve to a *rendered* built-in (missing, or hidden
  * by its gate, or itself suppressed) falls to the container end and the
  * degradation is recorded in `diagnostics` — never silent.
  *
- * Suppression (AC-D5): a built-in in `suppressed` is removed (the page, whose
+ * Suppression (OMS-REG-DB-02.6–.8): a built-in in `suppressed` is removed (the page, whose
  * built-ins nest, drops the whole subtree when it suppresses a widget or panel).
  * Suppression removes only built-ins; a plugin cannot suppress another plugin's
  * contribution, so `contributions` is never filtered by `suppressed`.
