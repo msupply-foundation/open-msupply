@@ -2,15 +2,20 @@ import { lazy } from 'solid-js';
 import { Route } from '@solidjs/router';
 
 // The internal-orders section route tree, mounted under
-// /{storeId}/replenishment/internal-order by App.tsx. Only the list view (the
-// reference list screen) is built in this cut; the create modal (S2) and detail
-// screen (S3) are out of scope, so a New-order / row-click navigation into the
-// section's detail space currently falls through to the app's not-found entry
-// page until those screens land. Lazy so the section is its own bundle.
+// /{storeId}/replenishment/internal-order by App.tsx. The list screen (S1) and
+// the detail screen (S3, scoped to view + header edits + send) are built; the
+// create modal (S2), line editor (S4), side panel (S5), and master-list picker
+// (S7) are out of scope, so their entry points (New order, Add item, More,
+// row-click-to-line-editor) currently fall through to not-yet-built surfaces.
+// Lazy so the section is its own bundle.
 const InternalOrdersList = lazy(() => import('./list/InternalOrdersList'));
+const InternalOrderDetailView = lazy(
+  () => import('./detail/InternalOrderDetailView')
+);
 
 export const internalOrdersRoutes = () => (
   <>
     <Route path="/" component={InternalOrdersList} />
+    <Route path="/:orderId" component={InternalOrderDetailView} />
   </>
 );

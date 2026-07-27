@@ -1,0 +1,31 @@
+# Store-context reads gating the detail screen's conditional surfaces
+# (spec/internal-orders › store-context gates). Fetched once per store, read
+# non-suspending; each defaults OFF while unresolved so a gated column/field
+# never flashes in before its gate is known.
+#
+# - preferences.selectDestinationStoreForAnInternalOrder → the Destination
+#   customer toolbar field (AC-H5).
+# - preferences.manageVaccinesInDoses → the Doses-per-unit column + the dose
+#   annotations on unit-quantity columns.
+# - preferences.showIndicativePriceInRequisitions → the two indicative-price
+#   columns.
+# - preferences.displayPopulationBasedForecasting → the Target stock
+#   (population) column.
+# - preferences.warningForExcessRequest → the excess-request cue on Requested.
+# - storePreferences.requestRequisitionRequiresAuthorisation → the approval
+#   columns (AC-S6).
+# - storePreferences.useConsumptionAndStockFromCustomersForInternalOrders (with
+#   a program order) → the extended consumption columns + the Area-AMC header.
+query internalOrderDetailContext($storeId: String!) {
+  preferences(storeId: $storeId) {
+    selectDestinationStoreForAnInternalOrder
+    manageVaccinesInDoses
+    showIndicativePriceInRequisitions
+    displayPopulationBasedForecasting
+    warningForExcessRequest
+  }
+  storePreferences(storeId: $storeId) {
+    requestRequisitionRequiresAuthorisation
+    useConsumptionAndStockFromCustomersForInternalOrders
+  }
+}
