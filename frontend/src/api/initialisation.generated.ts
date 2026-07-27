@@ -132,6 +132,16 @@ export const IsCentralServer = {
   query: "query isCentralServer {\n  isCentralServer\n}",
 } as TypedDocument<IsCentralServerResult, IsCentralServerVariables>;
 
+export type ApiVersionVariables = Record<string, never>;
+
+export type ApiVersionResult = {
+  apiVersion: string;
+};
+
+export const ApiVersion = {
+  query: "query apiVersion {\n  apiVersion\n}",
+} as TypedDocument<ApiVersionResult, ApiVersionVariables>;
+
 export type InitialiseSiteVariables = {
   input: {
     url: string;

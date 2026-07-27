@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
+import { serverVersion } from '../api/serverInfo';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
@@ -112,6 +113,13 @@ export const LoginPage: Component = () => {
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
+          {/* Spec (App version, AC-VN2): absent until the startup pass has
+              fetched it — never a placeholder. */}
+          <Show when={serverVersion()}>
+            <p class={styles.version}>
+              <strong>{t('label.server-version')}</strong> {serverVersion()}
+            </p>
+          </Show>
           <LanguageSelector
             language={locale()}
             onSelect={v => void changeLanguage(v)}
