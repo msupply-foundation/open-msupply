@@ -139,6 +139,14 @@
   color: var(--secondary-main);
 }
 
+/* Disabled — the whole control greyed and inert (both halves). */
+.main:disabled,
+.caret:disabled,
+.caret[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* --- Menu (portaled to <body>; inherits dir for RTL) ------------------- */
 .content {
   z-index: 50;
