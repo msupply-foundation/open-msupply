@@ -112,8 +112,25 @@
   border-color: var(--error-main);
 }
 
+/* Keep the red edge when the box is FILLED — the error must survive a checked
+   / indeterminate box (the checked/indeterminate fill rule above sets its own
+   border-color, and this selector is specific enough to win it back). */
+.input:checked + .box[data-error],
+.input:indeterminate + .box[data-error] {
+  border-color: var(--error-main);
+}
+
 .input:focus-visible + .box[data-error] {
   box-shadow: var(--focus-ring-error);
+}
+
+/* Disabled — the box fades as a unit with --disabled-opacity, the SAME
+   treatment the labelled Checkbox applies to its whole row. Used bare (e.g. a
+   locked table selection cell) there is no label wrapper to fade it, so the
+   box owns the fade; the labelled Checkbox fades only its label text, so the
+   composed field looks identical with no double-fade (see Checkbox.module.css). */
+.input:disabled + .box {
+  opacity: var(--disabled-opacity);
 }
 
 @media (prefers-reduced-motion: reduce) {

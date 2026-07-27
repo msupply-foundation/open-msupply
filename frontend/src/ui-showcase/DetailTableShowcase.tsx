@@ -30,10 +30,18 @@ import {
   SidePanelSection,
   SidePanelActions,
 } from '../ui/layout/SidePanel/SidePanel';
+import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
+import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import {
+  StatusIndicator,
+  type StatusStep,
+} from '../ui/elements/feedback/StatusIndicator';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
@@ -41,6 +49,7 @@ import { Select } from '../ui/elements/selectors/Select';
 import { ColourTagPicker } from '../ui/elements/selectors/ColourTag';
 import { DateField } from '../ui/elements/inputs/DateField';
 import {
+  ArrowRightIcon,
   CopyIcon,
   PlusCircleIcon,
   PrinterIcon,
@@ -82,6 +91,16 @@ type SortKey =
 type GroupKey = 'more';
 const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
   { key: 'more', disclosure: 'closed' },
+];
+
+// The status footer's lifecycle steps — the MANUAL inbound flow
+// (New → Delivered → Received → Verified). Reached stages carry the datetime
+// they were hit, for the StatusIndicator's history popover.
+const STATUS_STEPS: StatusStep[] = [
+  { label: 'New', date: '2026-05-15' },
+  { label: 'Delivered', date: '2026-05-18' },
+  { label: 'Received', date: '2026-05-19' },
+  { label: 'Verified' },
 ];
 
 // Mirrors isPlaceholderLine in the real vertical (detail/inboundShipmentUpdate)
@@ -248,6 +267,10 @@ const sortValue = (l: Line, key: SortKey): string | number => {
 // Manufacturer, Note and Pack sell price (inbound-shipment-detail defaults).
 const DEFAULT_CONFIG: LayeredConfig = {
   base: {
+    // Pin the spec's ⭐ default density. Left unset, the DataTable falls back to
+    // the nav-overlay responsive default (spacious below 1024px), which trips
+    // in a narrower/embedded browser; the demo should open at comfortable.
+    viewDensity: 'comfortable',
     columnVisibility: {
       manufactureDate: false,
       manufacturer: false,
@@ -303,6 +326,12 @@ export const DetailTableShowcase = () => {
   // header — the Page frame owns the panel chrome; the page owns only this
   // boolean).
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+
+  // The status footer's On-hold toggle. Toggling confirms first (like the real
+  // inbound footer), so the CheckboxButton opens a ConfirmDialog rather than
+  // flipping directly.
+  const [onHold, setOnHold] = createSignal(false);
+  const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   // Editable header fields (Supplier name, Their reference) + the side panel's
   // editable Colour / Comment. Live local state; a real vertical would flush
@@ -652,6 +681,49 @@ export const DetailTableShowcase = () => {
             </HeaderToolbar>
             <TabList tabs={TABS} />
           </Header>
+        }
+        contentFooter={
+          // The inbound-shipment status footer (mirrors the real detail view):
+          // the On-hold toggle (confirm before toggling), the lifecycle
+          // StatusIndicator (history on hover), and the status-change action.
+          <ContentFooter>
+            <CheckboxButton
+              checked={onHold()}
+              onChange={() => setHoldConfirm(true)}
+            >
+              {t('label.hold')}
+            </CheckboxButton>
+            <StatusIndicator steps={STATUS_STEPS} current={2} />
+            <ContentFooterActions>
+              <SplitButton
+                icon={<ArrowRightIcon />}
+                value="verified"
+                menuLabel={t('label.status')}
+                options={[
+                  {
+                    value: 'verified',
+                    label: `${t('button.confirm')} Verified`,
+                  },
+                ]}
+                onAction={() => {}}
+              />
+            </ContentFooterActions>
+            {/* Toggling hold confirms first, like the real inbound footer. */}
+            <ConfirmDialog
+              open={holdConfirm()}
+              onClose={() => setHoldConfirm(false)}
+              title={t('heading.are-you-sure')}
+              message={
+                onHold()
+                  ? t('messages.off-hold-confirmation')
+                  : t('messages.on-hold-confirmation')
+              }
+              onConfirm={() => {
+                setOnHold(v => !v);
+                setHoldConfirm(false);
+              }}
+            />
+          </ContentFooter>
         }
       >
         <TabPanel value="details">
