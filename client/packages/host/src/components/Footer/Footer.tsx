@@ -29,6 +29,7 @@ interface PaddedCellProps {
   icon: ReactNode;
   tooltip?: string;
   onClick?: () => void;
+  testId?: string;
 }
 
 const PaddedCell: FC<PaddedCellProps> = ({
@@ -37,11 +38,13 @@ const PaddedCell: FC<PaddedCellProps> = ({
   icon,
   tooltip,
   onClick,
+  testId,
 }) => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   return (
     <Box
       onClick={onClick}
+      data-testid={testId}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -117,6 +120,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
         text={t('label.edit')}
         tooltip={t('label.edit-store-properties')}
         onClick={onOpen}
+        testId="footer-store-edit"
       />
       {user ? (
         <>

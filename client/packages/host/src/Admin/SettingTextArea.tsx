@@ -58,6 +58,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
     <>
       <Setting
         infoText={infoText}
+        infoTestId={testId ? `${testId}-info` : undefined}
         component={
           <Switch
             checked={value.enabled}
