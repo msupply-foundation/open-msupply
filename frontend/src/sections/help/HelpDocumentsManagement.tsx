@@ -112,13 +112,13 @@ const HelpDocumentsManagement: Component = () => {
     {
       c: { key: 'title' },
       sortKey: 'title',
-      header: t('label.title'),
+      header: () => t('label.title'),
     },
     {
       // A display column: the value is the first file's name, rendered as a link
       // that opens it inline; empty for a fileless record (OMS-REG-HLP-01.32).
       c: { id: 'filename' },
-      header: t('label.filename'),
+      header: () => t('label.filename'),
       cell: info => {
         const doc = info.row.original;
         const file = fileOf(doc);
@@ -137,7 +137,7 @@ const HelpDocumentsManagement: Component = () => {
     },
     {
       c: { key: 'createdDatetime' },
-      header: t('label.uploaded'),
+      header: () => t('label.uploaded'),
       ...getDateCell(),
     },
   ];
