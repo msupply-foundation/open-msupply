@@ -45,7 +45,7 @@ import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CardViewIcon,
   CloseIcon,
-  ColumnsIcon,
+  Columns3CogIcon,
   MaximiseIcon,
   MinimiseIcon,
   SettingsIcon,
@@ -580,6 +580,26 @@ export function DataTable<T, K extends string, G extends string = never>(
   // needs the table's own fixed overlay.
   const overlay = () => fullScreen() && !shellFullScreen;
 
+  // Per-facet applicability for the Settings popover's resets (issue #572): each
+  // reset is enabled only when that facet actually differs from the default,
+  // derived from the resolved config (reactive) so it needs no extra per-page
+  // plumbing. "Show all columns" keys on any column being hidden, not a user
+  // override, so it's offered whenever there's something to reveal.
+  const columnOrderChanged = () => {
+    const order = props.config?.columnOrder;
+    if (!order || order.length === 0) return false;
+    const def = columnDefs().map(d => d.id);
+    return order.length !== def.length || order.some((id, i) => id !== def[i]);
+  };
+  const anyColumnHidden = () =>
+    Object.values(props.config?.columnVisibility ?? {}).some(v => v === false);
+  const anyColumnSized = () =>
+    Object.keys(props.config?.columnSizing ?? {}).length > 0;
+  const anyColumnPinned = () => {
+    const pinning = props.config?.columnPinning;
+    return (pinning?.left?.length ?? 0) + (pinning?.right?.length ?? 0) > 0;
+  };
+
   return (
     // data-datatable: a stable, un-hashed styling hook so a fill-body page can
     // full-bleed the table from its own CSS module (Page.module.css) — a
@@ -699,8 +719,9 @@ export function DataTable<T, K extends string, G extends string = never>(
           <Show when={props.setConfig}>
             <Popover
               placement="bottom-end"
-              trigger={<ColumnsIcon />}
-              triggerLabel={t('table.columns')}
+              trigger={<Columns3CogIcon />}
+              triggerLabel={t('table.edit-columns')}
+              triggerProps={{ title: t('table.edit-columns') }}
               triggerClass={styles.controlButton}
               class={styles.controlPopover}
             >
@@ -719,15 +740,21 @@ export function DataTable<T, K extends string, G extends string = never>(
               placement="bottom-end"
               trigger={<SettingsIcon />}
               triggerLabel={t('table.settings')}
+              triggerProps={{ title: t('table.settings') }}
               triggerClass={styles.controlButton}
               class={styles.controlPopover}
             >
               <TableSettings
+                table={table}
                 config={props.config}
                 density={viewDensity()}
                 setConfig={props.setConfig}
                 onReset={resetConfig}
                 resetDisabled={props.configIsDefault}
+                orderChanged={columnOrderChanged()}
+                anyColumnHidden={anyColumnHidden()}
+                anyColumnSized={anyColumnSized()}
+                anyColumnPinned={anyColumnPinned()}
                 onSaveGlobalDefault={props.onSaveGlobalDefault}
               />
             </Popover>
@@ -741,7 +768,7 @@ export function DataTable<T, K extends string, G extends string = never>(
               class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
               aria-label={t('table.toggle-full-screen')}
               data-testid="table-fullscreen"
-              title={t('label.full-screen')}
+              title={t('table.toggle-full-screen')}
               onClick={() => setFullScreen(!fullScreen())}
             >
               {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
