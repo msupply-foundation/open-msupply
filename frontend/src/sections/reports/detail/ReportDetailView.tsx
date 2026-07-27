@@ -31,7 +31,7 @@ import type { ReportResult, ReportVariables } from '../api/reports.generated';
 import { generateReport, reportLabel } from '../../../domain/reports';
 import { fetchReportFile, printHtml } from '../../../domain/reportFiles';
 import { isAndroid } from '../../../platform';
-import { openBlob } from '../../../platform/openDocument';
+import { openBlob, saveBlob } from '../../../platform/openDocument';
 import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
 import { timezoneArgument } from '../../../domain/json-forms/schema';
 
@@ -193,11 +193,11 @@ const ReportDetailView: Component = () => {
     if (reportArgs() === undefined) navigate(`/${params.storeId}/reports`);
   };
 
-  // Generate the same report in a file format and deliver it via the platform
-  // capability (browser download on web, OS viewer on Android).
-  const exportAs = async (format: 'EXCEL' | 'PDF') => {
+  // Generate the same report in a file format and fetch the result; null with
+  // the error already surfaced on failure.
+  const generateFile = async (format: 'EXCEL' | 'PDF') => {
     const r = report();
-    if (!r) return;
+    if (!r) return null;
     setActionError(undefined);
     const gen = await generateReport({
       reportId: r.id,
@@ -206,23 +206,29 @@ const ReportDetailView: Component = () => {
     });
     if (gen.kind !== 'fileId') {
       setActionError('error.failed-to-generate-report');
-      return;
+      return null;
     }
     const file = await fetchReportFile(gen.fileId);
     if (file.kind !== 'success') {
       setActionError('error.failed-to-generate-report');
-      return;
+      return null;
     }
-    const delivered = await openBlob(file.blob, file.filename);
-    if (!delivered.ok) setActionError('messages.cannot-open-file');
+    return file;
   };
 
-  // Print: on the web, fetch the current HTML file and open the system print
-  // dialog (spec/reports "Printing and exporting"). The Android WebView has no
-  // window.print — deliver a PDF to the OS viewer instead, where printing (and
-  // save-as) lives on a tablet (spec/android § Files out of the app).
+  // Print — a VIEW intent: on the web, fetch the current HTML file and open
+  // the system print dialog (spec/reports "Printing and exporting"). The
+  // Android WebView has no window.print — hand a PDF to the OS viewer instead,
+  // where printing (and save-as) lives on a tablet (spec/android § Files out
+  // of the app).
   const onPrint = async () => {
-    if (isAndroid()) return exportAs('PDF');
+    if (isAndroid()) {
+      const file = await generateFile('PDF');
+      if (!file) return;
+      const delivered = await openBlob(file.blob, file.filename);
+      if (!delivered.ok) setActionError('messages.cannot-open-file');
+      return;
+    }
     const r = result();
     if (r?.kind !== 'fileId') return;
     setActionError(undefined);
@@ -234,8 +240,14 @@ const ReportDetailView: Component = () => {
     printHtml(await file.blob.text());
   };
 
-  // Export: the same report as an Excel workbook.
-  const onExport = async () => exportAs('EXCEL');
+  // Export — a KEEP intent: the same report as an Excel workbook, delivered
+  // as a download (web) / the OS save picker (Android).
+  const onExport = async () => {
+    const file = await generateFile('EXCEL');
+    if (!file) return;
+    const delivered = await saveBlob(file.blob, file.filename);
+    if (!delivered.ok) setActionError('messages.cannot-save-file');
+  };
 
   // Crumbs are an accessor so t() + the report name re-resolve on locale change
   // (AC-U3). The leaf is the report's translated name.

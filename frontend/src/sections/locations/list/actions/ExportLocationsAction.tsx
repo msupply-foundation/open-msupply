@@ -12,7 +12,7 @@ import {
   listExportCsvFilename,
   listExportExcelFilename,
 } from '../../../../domain/reportFiles';
-import { openBlob } from '../../../../platform/openDocument';
+import { saveBlob } from '../../../../platform/openDocument';
 import { stripEmpty } from '../../../../typeHelpers';
 import { storeCodeOf } from '../../../../auth/authContext';
 import { LocationsList } from '../locations.generated';
@@ -80,9 +80,9 @@ export const ExportLocationsAction: Component<
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') void openBlob(file.blob, file.filename);
+        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
       } else {
-        void openBlob(
+        void saveBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
           listExportCsvFilename(storeCode, listName, new Date())
         );
