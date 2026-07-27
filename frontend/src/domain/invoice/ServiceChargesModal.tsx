@@ -89,8 +89,7 @@ const ServiceChargesContent = (
 
   // One seed fetch per open: the existing charges (into the draft) + the
   // store's service items (the Name lookup's options). The modal mounts fresh
-  // each open (the <Show> wrapper), so this cannot refetch under the user —
-  // the direct read below never suspends past the loading gate.
+  // each open (the <Show> wrapper), so this never refetches under the user.
   const [seed] = createResource(async () => {
     const [charges, itemsResult] = await Promise.all([
       props.fetchCharges(),
@@ -113,7 +112,15 @@ const ServiceChargesContent = (
       ? itemsResult.data.items.nodes
       : [];
   });
-  const serviceItems = () => seed() ?? [];
+  // Read via the .state gate, never seed() directly: this accessor is reached
+  // from headerActions' Add-charge `disabled` WHILE the seed is pending, and a
+  // pending direct read suspends the host view's route <Suspense> — tearing
+  // the side panel out from under the opening modal (kdd/solid-reactivity-
+  // pitfalls › No remounts on interaction; confirmed with detect-remounts).
+  const serviceItems = () =>
+    seed.state === 'ready' || seed.state === 'refreshing'
+      ? (seed.latest ?? [])
+      : [];
   // The default for a NEW charge: the "service" item, else the first (the old
   // client's default-service-item rule).
   const defaultServiceItem = () =>
@@ -332,7 +339,9 @@ const ServiceChargesContent = (
           <DialogSaveButton
             data-testid="dialog-button-ok"
             disabled={props.disabled}
-            loading={saving()}
+            // Also busy while the seed loads — a Save before the existing
+            // charges land in the draft would commit an empty batch.
+            loading={saving() || seed.loading}
             onClick={() => void save()}
           />
         </>
