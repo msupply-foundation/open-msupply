@@ -27,25 +27,6 @@ export type LinkInternalOrderRowFragment = {
 } | null;
 };
 
-export type InboundCurrenciesVariables = Record<string, never>;
-
-export type InboundCurrenciesResult = {
-  currencies: ({
-  __typename: "CurrencyConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  code: string;
-  rate: number;
-  isHomeCurrency: boolean;
-}>;
-});
-};
-
-export const InboundCurrencies = {
-  query: "query inboundCurrencies {\n  currencies(filter: {isActive: true}) {\n    ... on CurrencyConnector {\n      __typename\n      nodes {\n        id\n        code\n        rate\n        isHomeCurrency\n      }\n    }\n  }\n}",
-} as TypedDocument<InboundCurrenciesResult, InboundCurrenciesVariables>;
-
 export type InboundCampaignsVariables = {
   storeId: string;
 };

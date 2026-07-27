@@ -241,11 +241,8 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           description={
             <>
               {t('messages.confirm-status-as', {
-                // $t({{status}}) resolves the KEY against the dictionary — pass
-                // the label key, not the resolved string (else it renders the
-                // literal "$t(Allocated)").
                 status: pendingStatus()
-                  ? STATUS_LABEL_KEYS[pendingStatus()!]
+                  ? t(STATUS_LABEL_KEYS[pendingStatus()!])
                   : '',
               })}
               <Show when={zeroQuantityItems().length > 0}>

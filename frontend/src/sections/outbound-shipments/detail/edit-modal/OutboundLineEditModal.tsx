@@ -660,7 +660,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // getSize() is a min-width floor (auto layout) — without this the
       // header-less tick column gets the 150px default and reads as a gap.
       size: 36,
-      header: '',
+      header: () => '',
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
           <Popover
@@ -676,12 +676,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
+      header: () => t('label.batch'),
       cell: info => info.getValue<string | null>() ?? '—',
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry'),
+      header: () => t('label.expiry'),
       ...getExpiryDateCell(),
     },
     ...(prefs()?.manageVvmStatusForStock
@@ -691,7 +691,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               accessor: (line: DraftLine) => line.vvmStatus?.description ?? '',
               id: 'vvmStatus',
             },
-            header: t('label.vvm-status'),
+            header: () => t('label.vvm-status'),
           } as Column<DraftLine, never>,
         ]
       : []),
@@ -702,11 +702,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
       // Wide enough that the two-word header doesn't wrap mid-word.
       size: 200,
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
-      header: t('label.location'),
+      header: () => t('label.location'),
     },
     ...(prefs()?.allowTrackingOfStockByDonor
       ? [
@@ -715,7 +715,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               accessor: (line: DraftLine) => line.donor?.name ?? '',
               id: 'donor',
             },
-            header: t('label.donor'),
+            header: () => t('label.donor'),
           } as Column<DraftLine, never>,
         ]
       : []),
@@ -724,41 +724,41 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         accessor: line => line.manufacturer?.name ?? '',
         id: 'manufacturer',
       },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.sell-price'),
+      header: () => t('label.sell-price'),
       ...getCurrencyCell(),
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       ...getNumberCell(),
     },
     ...(prefs()?.manageVaccinesInDoses
       ? [
           {
             c: { key: 'dosesPerUnit' },
-            header: t('label.doses-per-unit'),
+            header: () => t('label.doses-per-unit'),
             ...getNumberCell(),
           } as Column<DraftLine, never>,
         ]
       : []),
     {
       c: { key: 'inStorePacks' },
-      header: t('label.in-store'),
+      header: () => t('label.in-store'),
       ...getNumberCell(),
     },
     {
       c: { key: 'availablePacks' },
-      header: t('label.available'),
+      header: () => t('label.available'),
       ...getNumberCell(),
     },
     {
       // Packs issued from this batch (AC-I5), bounded 0…available.
       c: { key: 'numberOfPacks' },
-      header: t('label.issued'),
+      header: () => t('label.issued'),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
@@ -779,7 +779,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { id: 'unitsIssued' },
-      header: t('label.units-issued', { unit: unitName() }),
+      header: () => t('label.units-issued', { unit: unitName() }),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
@@ -801,7 +801,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       : [
           {
             c: { key: 'receivedNumberOfPacks' },
-            header: t('label.packs-received'),
+            header: () => t('label.packs-received'),
             meta: { align: 'right' },
             cell: info => {
               const line = info.row.original;
@@ -821,7 +821,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           } as Column<DraftLine, never>,
           {
             c: { id: 'difference' },
-            header: t('label.difference'),
+            header: () => t('label.difference'),
             meta: { align: 'right' },
             cell: info => {
               const line = info.row.original;

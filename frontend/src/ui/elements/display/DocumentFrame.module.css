@@ -1,7 +1,7 @@
 /*
  * DocumentFrame — the iframe fills its container; a loading overlay covers it
- * until the load event. rem/em sizing; colours from tokens (only px is the
- * hairline border).
+ * until the load event. rem/em sizing; colours from tokens. Chromeless: the
+ * document renders full-bleed, no border or rounding of its own.
  */
 
 .frame {
@@ -9,8 +9,6 @@
   inline-size: 100%;
   block-size: 100%;
   min-block-size: 0;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
   background: var(--bg-white);
   overflow: hidden;
 }

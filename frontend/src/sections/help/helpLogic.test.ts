@@ -8,9 +8,10 @@ import {
 } from './helpLogic';
 
 describe('helpLogic — Help page (spec/help S1)', () => {
-  // AC-V2 — user guide opens the public docs introduction, localised for
-  // es/fr, default otherwise.
-  it('AC-V2: user-guide URL localises for es/fr(+fr-DJ)/pt, default otherwise', () => {
+  // OMS-REG-HLP-01.17 — user guide opens the public docs introduction,
+  // localised for es/fr, default otherwise (pt is implemented ahead of the
+  // case — see BUILD_REPORT.md).
+  it('user-guide URL localises for es/fr(+fr-DJ)/pt, default otherwise (HLP-01.17)', () => {
     expect(userGuideUrl('en')).toBe(
       'https://docs.msupply.foundation/docs/introduction/introduction'
     );
@@ -29,9 +30,10 @@ describe('helpLogic — Help page (spec/help S1)', () => {
     );
   });
 
-  // AC-V3 — the documents block skips fileless documents (and hides entirely
-  // when none are showable — the caller gates on the returned length).
-  it('AC-V3: showable documents are exactly those with a file', () => {
+  // OMS-REG-HLP-01.18/.19 — the documents block skips fileless documents (and
+  // hides entirely when none are showable — the caller gates on the returned
+  // length).
+  it('showable documents are exactly those with a file (HLP-01.18/.19)', () => {
     const docs = [
       { id: 'a', files: { nodes: [{ id: 'f1' }] } },
       { id: 'b', files: { nodes: [] } }, // fileless → absent
@@ -43,7 +45,7 @@ describe('helpLogic — Help page (spec/help S1)', () => {
     expect(showableDocuments([{ id: 'x', files: { nodes: [] } }])).toEqual([]);
   });
 
-  it('AC-V4: file view URL is the sync-files help_document route', () => {
+  it('file view URL is the sync-files help_document route (HLP-01.20)', () => {
     expect(helpDocumentFileUrl('https://host:8890', 'doc1', 'file1')).toBe(
       'https://host:8890/sync_files/help_document/doc1/file1'
     );
@@ -51,8 +53,8 @@ describe('helpLogic — Help page (spec/help S1)', () => {
 });
 
 describe('helpLogic — contact form (spec/help S1)', () => {
-  // AC-CF2 — client email format check.
-  it('AC-CF2: email format check', () => {
+  // OMS-REG-HLP-01.23 — client email format check.
+  it('email format check (HLP-01.23)', () => {
     expect(isValidEmail('a@b.co')).toBe(true);
     expect(isValidEmail('  a@b.co  ')).toBe(true); // trimmed
     expect(isValidEmail('notanemail')).toBe(false);
@@ -60,9 +62,9 @@ describe('helpLogic — contact form (spec/help S1)', () => {
     expect(isValidEmail('')).toBe(false);
   });
 
-  // AC-CF1 — Send enabled iff email valid AND message non-empty; disabled
-  // whenever either stops holding.
-  it('AC-CF1: send-gating requires a valid email and a non-empty message', () => {
+  // OMS-REG-HLP-01.2-.7 — Send enabled iff email valid AND message non-empty;
+  // disabled whenever either stops holding.
+  it('send-gating requires a valid email and a non-empty message (HLP-01.2-.7)', () => {
     expect(canSendContactForm('a@b.co', 'hello')).toBe(true);
     expect(canSendContactForm('a@b.co', '   ')).toBe(false); // blank message
     expect(canSendContactForm('bad', 'hello')).toBe(false); // bad email

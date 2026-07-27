@@ -89,14 +89,6 @@ const KIND_OPTIONS: readonly { value: OriginKind | ''; label: string }[] = [
   { value: 'fromPurchaseOrder', label: t('label.from-purchase-order') },
 ];
 
-// A native date (yyyy-mm-dd) → the day's inclusive datetime bounds, so a
-// DatetimeFilterInput can express a "between" range from date-only inputs.
-const startOfDay = (d: string) => `${d}T00:00:00.000Z`;
-const endOfDay = (d: string) => `${d}T23:59:59.999Z`;
-// A stored bound (full ISO datetime) → the yyyy-mm-dd the date input shows.
-const toDateInput = (iso: string | null | undefined) =>
-  iso ? iso.slice(0, 10) : '';
-
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the inbound-shipments list
  * (spec S1 → filters). The map is keyed by EVERY key of InboundListFilter —
@@ -218,33 +210,17 @@ const FILTERS: Filter<InboundListFilter>[] =
         />
       ),
     },
-    // Created date — a between range from the shared date-range picker; the
-    // picked day pair maps onto the datetime bounds (whole-day inclusive).
+    // Created / Delivered — DateTime fields; FilterDateRange (type="dateTime")
+    // owns the local ⇄ UTC conversion (#456).
     createdDatetime: {
       label: () => t('label.created'),
       render: props => (
         <FilterDateRange
+          type="dateTime"
           label={t('label.created')}
           testId={props.testId}
-          value={{
-            start:
-              toDateInput(props.filter().createdDatetime?.afterOrEqualTo) ||
-              null,
-            end:
-              toDateInput(props.filter().createdDatetime?.beforeOrEqualTo) ||
-              null,
-          }}
-          onChange={({ start, end }) =>
-            props.setPartialFilter({
-              createdDatetime:
-                start || end
-                  ? {
-                      afterOrEqualTo: start ? startOfDay(start) : undefined,
-                      beforeOrEqualTo: end ? endOfDay(end) : undefined,
-                    }
-                  : null,
-            })
-          }
+          value={props.filter().createdDatetime}
+          onChange={value => props.setPartialFilter({ createdDatetime: value })}
         />
       ),
     },
@@ -252,26 +228,12 @@ const FILTERS: Filter<InboundListFilter>[] =
       label: () => t('label.delivered'),
       render: props => (
         <FilterDateRange
+          type="dateTime"
           label={t('label.delivered')}
           testId={props.testId}
-          value={{
-            start:
-              toDateInput(props.filter().deliveredDatetime?.afterOrEqualTo) ||
-              null,
-            end:
-              toDateInput(props.filter().deliveredDatetime?.beforeOrEqualTo) ||
-              null,
-          }}
-          onChange={({ start, end }) =>
-            props.setPartialFilter({
-              deliveredDatetime:
-                start || end
-                  ? {
-                      afterOrEqualTo: start ? startOfDay(start) : undefined,
-                      beforeOrEqualTo: end ? endOfDay(end) : undefined,
-                    }
-                  : null,
-            })
+          value={props.filter().deliveredDatetime}
+          onChange={value =>
+            props.setPartialFilter({ deliveredDatetime: value })
           }
         />
       ),
