@@ -15,6 +15,7 @@ import {
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
@@ -500,17 +501,16 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.expected-delivery-date')}>
-          <TextField
+          {/* The shared calendar-date input (ui-standards/inputs § dates &
+              times); clearable — the wire value is nullable. */}
+          <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
-            type="date"
             disabled={props.disabled}
-            value={props.node.expectedDeliveryDate ?? ''}
-            onInput={e =>
+            value={props.node.expectedDeliveryDate ?? null}
+            onChange={value =>
               props.onSaveField({
-                expectedDeliveryDate: {
-                  value: e.currentTarget.value || null,
-                },
+                expectedDeliveryDate: { value },
               })
             }
           />
