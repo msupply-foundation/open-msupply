@@ -23,6 +23,13 @@ export type DatePickerPanelProps = {
   min?: Date;
   /** Latest selectable local date, inclusive. */
   max?: Date;
+  /**
+   * Prevent DESELECTION: corvu toggles a selected day off when it's clicked
+   * again, emitting null — a field whose value must always exist passes
+   * `required` so the calendar can't blank it (its typed-path guard alone
+   * can't; a calendar pick bypasses the text commit).
+   */
+  required?: boolean;
 } & (
   | {
       mode?: 'single';
@@ -292,6 +299,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       month={month()}
       onMonthChange={setMonth}
       disabled={disabled}
+      required={props.required}
     >
       {ctx => body(ctx)}
     </Calendar>
@@ -303,6 +311,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       month={month()}
       onMonthChange={setMonth}
       disabled={disabled}
+      required={props.required}
     >
       {ctx => body(ctx)}
     </Calendar>
