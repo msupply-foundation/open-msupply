@@ -4,9 +4,9 @@ import {
   backdateWarnings,
   backdatedDatetimeFor,
   backdatingGate,
-  toDateInput,
   withinBackdateBounds,
 } from './backdating';
+import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
 
 describe('backdatingGate (AC-B1)', () => {
   it('is enabled while NEW with the preference on and the panel editable', () => {
@@ -48,13 +48,6 @@ describe('backdatingGate (AC-B1)', () => {
         panelDisabled: true,
       })
     ).toEqual({ enabled: false });
-  });
-});
-
-describe('toDateInput', () => {
-  it('formats a local date as zero-padded YYYY-MM-DD', () => {
-    expect(toDateInput(new Date(2026, 0, 5, 12, 0, 0))).toBe('2026-01-05');
-    expect(toDateInput(new Date(2026, 6, 22, 9, 30, 0))).toBe('2026-07-22');
   });
 });
 
@@ -117,7 +110,7 @@ describe('backdatedDatetimeFor', () => {
     const iso = backdatedDatetimeFor(now, '2026-07-15');
     expect(iso).toBe(new Date(2026, 6, 15, 23, 59, 59, 999).toISOString());
     // Round-trips to the chosen local day, whatever the device zone.
-    expect(toDateInput(new Date(iso))).toBe('2026-07-15');
+    expect(dateToIsoDate(new Date(iso))).toBe('2026-07-15');
   });
 
   it('today keeps the actual current moment (not backdated)', () => {

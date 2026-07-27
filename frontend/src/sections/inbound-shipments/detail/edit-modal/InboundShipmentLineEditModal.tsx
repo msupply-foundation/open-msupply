@@ -16,6 +16,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
+import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import {
   DataTable,
@@ -1130,7 +1131,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.manufacture-date')}
             hideLabel
             value={b.manufactureDate}
-            max={new Date().toISOString().slice(0, 10)}
+            max={localTodayIso()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );

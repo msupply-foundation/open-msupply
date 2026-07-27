@@ -1,4 +1,5 @@
 import { t } from '../../../intl';
+import { isoDateToDate } from '../../../ui/elements/inputs/dateTimeConvert';
 import type { FieldError } from '../../../ui/layout/Form/formValidation';
 import type { Gender } from '../../../domain/patient';
 import type { InsertPatientVariables } from '../list/insertPatient.generated';
@@ -126,8 +127,8 @@ export const toUpdateInput = (
 // floor(days-since-dob / 365). Undefined when there is no (or a future) dob.
 export const ageFromDob = (dob: string | null): number | undefined => {
   if (!dob) return undefined;
-  const birth = new Date(`${dob}T00:00:00`);
-  if (Number.isNaN(birth.getTime())) return undefined;
+  const birth = isoDateToDate(dob);
+  if (!birth) return undefined;
   const ms = Date.now() - birth.getTime();
   if (ms < 0) return undefined;
   return Math.floor(ms / (365 * 24 * 60 * 60 * 1000));
