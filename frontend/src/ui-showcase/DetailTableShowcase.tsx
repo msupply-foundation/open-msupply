@@ -22,8 +22,8 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
-import { Stack } from '../ui/layout/Stack/Stack';
 import { FormRow } from '../ui/layout/Form/FormRow';
+import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -32,6 +32,7 @@ import { Button } from '../ui/elements/buttons/Button';
 import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
@@ -611,41 +612,59 @@ export const DetailTableShowcase = () => {
                 </Button>
               </Show>
             </HeaderButtons>
-            {/* The header field cluster. Fixing the real toolbar's cramped
-                inline-label FieldRows: standard label-ABOVE inputs, laid out in
-                a FormRow that shares the width and stacks to one column on
-                narrow screens. The Received date is a disabled input rather
-                than a LabelledValue because it IS a field — editable when the
-                shipment is Received and backdating is on, disabled otherwise.
-                The info banner sits full-width above the fields. */}
+            {/* Toolbar layout (Carl 2026-07-27): ONE row. Everything — the
+                fields, the read-only Status, and the compact Alert — lives in a
+                single FormRow, inside a flex-grow wrapper that makes it FILL the
+                toolbar width (otherwise it content-sizes narrower than the
+                toolbar and wraps early). The FIELDS share equally and grow at an
+                11rem min; the compact Alert hugs its content (flex: 0 1 auto,
+                set in Alert.module.css) so it takes no equal share. It rides one
+                row until the fields' minimums + the alert's content outgrow the
+                toolbar (≈ 4×10rem + alert ≈ 1075px), past which the alert wraps
+                first. Fields take width="full" so each fills its FormRow share.
+                (10rem, not 13rem: 4×13rem + the alert needs a ~1267px toolbar to
+                stay on one line — 10rem drops that to ~1075px.) */}
             <Toolbar>
-              <Stack gap="sm" style={{ width: '100%' }}>
-                <Alert severity="info">
-                  This shipment was created manually; its delivery status will
-                  not update automatically.
-                </Alert>
-                <FormRow minItemWidth="13rem">
+              <div style={{ flex: '1 1 auto', 'min-inline-size': 0 }}>
+                <FormRow minItemWidth="10rem">
                   <Select
                     label={t('label.supplier-name')}
+                    size="small"
+                    width="full"
                     options={SUPPLIERS}
                     value={supplier()}
                     onValueChange={setSupplier}
                   />
                   <TextField
                     label={t('label.reference')}
+                    size="small"
                     width="full"
                     value={reference()}
                     onInput={e => setReference(e.currentTarget.value)}
                   />
                   <DateField
                     label={t('label.received')}
+                    size="small"
                     width="full"
                     format="dd MMM yyyy"
                     value="2026-05-19"
                     disabled
                   />
+                  <LabelledValue
+                    label={t('label.status')}
+                    variant="field"
+                    size="small"
+                  >
+                    <StatusChip
+                      label="Received"
+                      colour="var(--status-received)"
+                    />
+                  </LabelledValue>
+                  <Alert severity="info" compact>
+                    Created manually; status won't update automatically.
+                  </Alert>
                 </FormRow>
-              </Stack>
+              </div>
             </Toolbar>
             <TabList tabs={TABS} />
           </Header>

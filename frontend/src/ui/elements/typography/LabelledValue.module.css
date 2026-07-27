@@ -37,3 +37,13 @@
   color: var(--text-body);
   overflow-wrap: anywhere;
 }
+
+/* Small size — 13px label AND value (--input-font-sm), mirroring the input
+   components' `size="small"` (TextField/DateField), so a read-only value reads
+   the same as the small inputs it sits beside in a dense row like the header
+   toolbar. Two-class + attribute selector (0,3,0) outweighs Text's own body
+   variant class, so the value font-size override lands. */
+.field[data-size='small'] .label,
+.field[data-size='small'] .value {
+  font-size: var(--input-font-sm);
+}

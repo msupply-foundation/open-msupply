@@ -16,7 +16,9 @@
   position: relative;
 }
 
-/* Width caps, TextField's data-width vocabulary (FieldShell `width`). */
+/* Width caps, TextField's data-width vocabulary (FieldShell `width`). The
+   compact cap narrows only the control box; it lives after the base .control
+   rules below (to satisfy no-descending-specificity). */
 .field[data-width='full'] {
   max-width: 100%;
 }
@@ -84,6 +86,13 @@
   background: var(--bg-disabled);
   border-color: var(--color-divider);
   color: var(--text-disabled);
+}
+
+/* Compact width: narrow only the control box to 10rem (the field keeps its
+   short cap). Placed after the base .control rules so specificity ascends —
+   for a dense row like a page-header toolbar. */
+.field[data-width='compact'] .control {
+  max-width: var(--input-max-compact);
 }
 
 /* The date portion: a bare button filling the free space, calendar icon at the
