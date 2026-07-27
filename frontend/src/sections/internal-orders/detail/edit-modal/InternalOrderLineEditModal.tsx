@@ -1,11 +1,13 @@
 import {
   createMemo,
+  createResource,
   createSignal,
   onCleanup,
   onMount,
   Show,
   type JSX,
 } from 'solid-js';
+import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { homeCurrency } from '../../../../intl/currency';
@@ -22,8 +24,14 @@ import {
   DialogSaveButton,
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
+import {
+  TargetQuantityBreakdown,
+  ConsumptionHistoryChart,
+  StockEvolutionChart,
+} from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
+import { RequisitionLineChart } from './lineChart.generated';
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
 import {
   buildAddPreview,
@@ -42,10 +50,10 @@ import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
 // mode, general orders only — AC-LN1) or fill one line (edit mode, any status;
-// read-only opens with every control disabled). The context CHARTS (target
-// quantity, consumption, stock evolution) and the population-forecast
-// calculation display are out of this cut — the panels here are the item's
-// statistics, its stock movements (extended gate), and the edits.
+// read-only opens with every control disabled). Panels: the item's statistics,
+// its stock movements (extended gate), the edits, and below them the read-only
+// context charts (target-quantity breakdown + consumption / stock-evolution).
+// The population-forecast calculation display is a later cut.
 
 const money = (value: number): string =>
   formatNumber(value, {
@@ -130,6 +138,41 @@ const LineEditContent = (
 
   let disposed = false;
   onCleanup(() => (disposed = true));
+
+  // The context charts' server data (spec S4 § charts): the consumption-history
+  // and stock-evolution series, keyed by a SAVED line's id — so it fetches only
+  // once a real line exists (edit mode, or an on-order item loaded in add
+  // mode), never for an unsaved add draft. The target-quantity breakdown is
+  // derived client-side from the line's stats, so it needs no read. Read
+  // NON-suspending (the `.state` gate) — the resource first-fetches on the
+  // interaction of opening/advancing, so a direct read would remount the modal
+  // (kdd/solid-reactivity-pitfalls § no remounts).
+  const chartKey = () => {
+    const editorLine = line();
+    return editorLine && !editorLine.isNew
+      ? { storeId: props.storeId, lineId: editorLine.lineId }
+      : false;
+  };
+  const [chart] = createResource(chartKey, async variables => {
+    const result = await graphqlFetch(RequisitionLineChart, variables);
+    if (result.kind !== 'success') return undefined;
+    const response = result.data.requisitionLineChart;
+    return response.__typename === 'ItemChartNode' ? response : undefined;
+  });
+  const chartData = () =>
+    chart.state === 'ready' || chart.state === 'refreshing'
+      ? chart.latest
+      : undefined;
+  // The history/evolution pair shows only when the server returned series (an
+  // order with no expected-delivery-date returns both null — then only the
+  // target-quantity breakdown shows, spec S4 § charts).
+  const hasSeries = () => {
+    const data = chartData();
+    return !!(
+      data?.consumptionHistory?.nodes.length ||
+      data?.stockEvolution?.nodes.length
+    );
+  };
 
   // Land the editor on a line — an existing line (edit) or an add-mode
   // preview. Seeds the entry mode from the store preference (AC-LN18) and the
@@ -231,8 +274,7 @@ const LineEditContent = (
   // program order (AC-R1); at equality the reason control is disabled and the
   // stored reason is cleared (AC-R2).
   const variance = () => requestedUnits() !== suggested();
-  const excess = () =>
-    props.showExcess && requestedUnits() - suggested() >= 1;
+  const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
   // A statistic (units) rendered in the active mode with its measure word.
   const stat = (units: number, roundUp = false): string =>
@@ -309,7 +351,8 @@ const LineEditContent = (
   const entryOptions = createMemo(() => {
     const unit = current()?.unitName ?? t('label.unit');
     const options = [{ value: 'units', label: unit }];
-    if (packSize() > 0) options.push({ value: 'packs', label: t('label.pack') });
+    if (packSize() > 0)
+      options.push({ value: 'packs', label: t('label.pack') });
     if (dosesApply()) options.push({ value: 'doses', label: t('label.dose') });
     return options;
   });
@@ -323,7 +366,10 @@ const LineEditContent = (
     value: string;
     highlight?: boolean;
   }): JSX.Element => (
-    <FieldRow label={rowProps.label} class={rowProps.highlight ? styles.highlight : undefined}>
+    <FieldRow
+      label={rowProps.label}
+      class={rowProps.highlight ? styles.highlight : undefined}
+    >
       <span class={styles.statValue}>{rowProps.value}</span>
     </FieldRow>
   );
@@ -403,185 +449,242 @@ const LineEditContent = (
 
       <Show when={current()}>
         {editorLine => (
-          <div class={styles.panels}>
-            {/* Left — the line's statistics (AC-LN19: every stock quantity in
+          <>
+            <div class={styles.panels}>
+              {/* Left — the line's statistics (AC-LN19: every stock quantity in
                 the active entry mode; time quantities exempt). */}
-            <div class={styles.column}>
-              <Show when={editorLine().unitName}>
-                <StatRow label={t('label.unit')} value={editorLine().unitName!} />
-              </Show>
-              <Show when={editorLine().defaultPackSize > 0}>
-                <StatRow
-                  label={t('label.default-pack-size')}
-                  value={formatNumber(editorLine().defaultPackSize)}
-                />
-              </Show>
-              <Show when={dosesApply()}>
-                <StatRow
-                  label={t('label.doses-per-unit')}
-                  value={formatNumber(editorLine().doses)}
-                />
-              </Show>
-              <StatRow
-                label={t('label.our-soh')}
-                value={stat(editorLine().availableStockOnHand)}
-              />
-              <StatRow
-                label={props.showExtended ? t('label.area-amc') : t('label.amc/amd')}
-                value={stat(editorLine().averageMonthlyConsumption, true)}
-              />
-              <StatRow
-                label={t('label.months-of-stock')}
-                value={`${editorLine().monthsOfStock.toFixed(1)} ${t('label.months')}`}
-              />
-              <Show
-                when={
-                  props.showForecast && editorLine().forecastTotalUnits != null
-                }
-              >
-                <StatRow
-                  label={t('label.target-stock-population')}
-                  value={stat(Math.ceil(editorLine().forecastTotalUnits ?? 0))}
-                />
-              </Show>
-              <Show when={props.showExtended}>
-                <StatRow
-                  label={t('label.short-expiry')}
-                  value={stat(editorLine().expiringUnits)}
-                />
-              </Show>
-            </div>
-
-            {/* Middle — stock movements (extended gate only). */}
-            <Show when={props.showExtended}>
               <div class={styles.column}>
-                <StatRow
-                  label={t('label.suggested')}
-                  value={stat(editorLine().suggestedQuantity, true)}
-                  highlight
-                />
-                <StatRow
-                  label={t('label.incoming-stock')}
-                  value={stat(editorLine().incomingUnits)}
-                />
-                <StatRow
-                  label={t('label.outgoing')}
-                  value={stat(editorLine().outgoingUnits)}
-                />
-                <StatRow
-                  label={t('label.losses')}
-                  value={stat(editorLine().lossInUnits)}
-                />
-                <StatRow
-                  label={t('label.additions')}
-                  value={stat(editorLine().additionInUnits)}
-                />
-                <StatRow
-                  label={t('label.days-out-of-stock')}
-                  value={`${formatNumber(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
-                />
-              </div>
-            </Show>
-
-            {/* Right — the edits, on a recessed inset panel. */}
-            <InsetPanel class={styles.edits}>
-              {/* Suggested here only when the movements panel is absent. */}
-              <Show when={!props.showExtended}>
-                <StatRow
-                  label={t('label.suggested')}
-                  value={stat(editorLine().suggestedQuantity, true)}
-                />
-              </Show>
-
-              <FieldRow label={t('label.requested')}>
-                <div class={styles.requestedRow}>
-                  <NumberField
-                    label={t('label.requested')}
-                    hideLabel
-                    width="full"
-                    min={0}
-                    decimalLimit={2}
-                    data-testid="requested-quantity-input"
-                    disabled={disabled() || saving()}
-                    value={requestedDisplay()}
-                    onChange={onRequestedChange}
+                <Show when={editorLine().unitName}>
+                  <StatRow
+                    label={t('label.unit')}
+                    value={editorLine().unitName!}
                   />
-                  <Select
-                    label={t('label.units')}
-                    hideLabel
-                    width="full"
-                    value={entryMode()}
-                    options={entryOptions()}
-                    disabled={disabled() || saving()}
-                    onValueChange={value => setEntryMode(value as EntryMode)}
+                </Show>
+                <Show when={editorLine().defaultPackSize > 0}>
+                  <StatRow
+                    label={t('label.default-pack-size')}
+                    value={formatNumber(editorLine().defaultPackSize)}
+                  />
+                </Show>
+                <Show when={dosesApply()}>
+                  <StatRow
+                    label={t('label.doses-per-unit')}
+                    value={formatNumber(editorLine().doses)}
+                  />
+                </Show>
+                <StatRow
+                  label={t('label.our-soh')}
+                  value={stat(editorLine().availableStockOnHand)}
+                />
+                <StatRow
+                  label={
+                    props.showExtended
+                      ? t('label.area-amc')
+                      : t('label.amc/amd')
+                  }
+                  value={stat(editorLine().averageMonthlyConsumption, true)}
+                />
+                <StatRow
+                  label={t('label.months-of-stock')}
+                  value={`${editorLine().monthsOfStock.toFixed(1)} ${t('label.months')}`}
+                />
+                <Show
+                  when={
+                    props.showForecast &&
+                    editorLine().forecastTotalUnits != null
+                  }
+                >
+                  <StatRow
+                    label={t('label.target-stock-population')}
+                    value={stat(
+                      Math.ceil(editorLine().forecastTotalUnits ?? 0)
+                    )}
+                  />
+                </Show>
+                <Show when={props.showExtended}>
+                  <StatRow
+                    label={t('label.short-expiry')}
+                    value={stat(editorLine().expiringUnits)}
+                  />
+                </Show>
+              </div>
+
+              {/* Middle — stock movements (extended gate only). */}
+              <Show when={props.showExtended}>
+                <div class={styles.column}>
+                  <StatRow
+                    label={t('label.suggested')}
+                    value={stat(editorLine().suggestedQuantity, true)}
+                    highlight
+                  />
+                  <StatRow
+                    label={t('label.incoming-stock')}
+                    value={stat(editorLine().incomingUnits)}
+                  />
+                  <StatRow
+                    label={t('label.outgoing')}
+                    value={stat(editorLine().outgoingUnits)}
+                  />
+                  <StatRow
+                    label={t('label.losses')}
+                    value={stat(editorLine().lossInUnits)}
+                  />
+                  <StatRow
+                    label={t('label.additions')}
+                    value={stat(editorLine().additionInUnits)}
+                  />
+                  <StatRow
+                    label={t('label.days-out-of-stock')}
+                    value={`${formatNumber(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
                   />
                 </div>
-              </FieldRow>
-              <Show when={requestedCaption()}>
-                {caption => <div class={styles.caption}>{caption()}</div>}
               </Show>
 
-              {/* Excess-request warning (AC-LN13). */}
-              <Show when={excess()}>
-                <Alert severity="warning">
-                  {t('warning.requested-exceeds-suggested')}
-                </Alert>
-              </Show>
+              {/* Right — the edits, on a recessed inset panel. */}
+              <InsetPanel class={styles.edits}>
+                {/* Suggested here only when the movements panel is absent. */}
+                <Show when={!props.showExtended}>
+                  <StatRow
+                    label={t('label.suggested')}
+                    value={stat(editorLine().suggestedQuantity, true)}
+                  />
+                </Show>
 
-              {/* Indicative price rows (AC-IP6) — never re-expressed by the
+                <FieldRow label={t('label.requested')}>
+                  <div class={styles.requestedRow}>
+                    <NumberField
+                      label={t('label.requested')}
+                      hideLabel
+                      width="full"
+                      min={0}
+                      decimalLimit={2}
+                      data-testid="requested-quantity-input"
+                      disabled={disabled() || saving()}
+                      value={requestedDisplay()}
+                      onChange={onRequestedChange}
+                    />
+                    <Select
+                      label={t('label.units')}
+                      hideLabel
+                      width="full"
+                      value={entryMode()}
+                      options={entryOptions()}
+                      disabled={disabled() || saving()}
+                      onValueChange={value => setEntryMode(value as EntryMode)}
+                    />
+                  </div>
+                </FieldRow>
+                <Show when={requestedCaption()}>
+                  {caption => <div class={styles.caption}>{caption()}</div>}
+                </Show>
+
+                {/* Excess-request warning (AC-LN13). */}
+                <Show when={excess()}>
+                  <Alert severity="warning">
+                    {t('warning.requested-exceeds-suggested')}
+                  </Alert>
+                </Show>
+
+                {/* Indicative price rows (AC-IP6) — never re-expressed by the
                   entry mode; the total tracks the requested units live. */}
-              <Show when={props.showPricing}>
-                <StatRow
-                  label={t('label.indicative-price-per-unit')}
-                  value={
-                    editorLine().pricePerUnit == null
-                      ? '-'
-                      : money(editorLine().pricePerUnit!)
-                  }
-                />
-                <StatRow
-                  label={t('label.indicative-price')}
-                  value={money(
-                    (editorLine().pricePerUnit ?? 0) * requestedUnits()
-                  )}
-                />
-              </Show>
+                <Show when={props.showPricing}>
+                  <StatRow
+                    label={t('label.indicative-price-per-unit')}
+                    value={
+                      editorLine().pricePerUnit == null
+                        ? '-'
+                        : money(editorLine().pricePerUnit!)
+                    }
+                  />
+                  <StatRow
+                    label={t('label.indicative-price')}
+                    value={money(
+                      (editorLine().pricePerUnit ?? 0) * requestedUnits()
+                    )}
+                  />
+                </Show>
 
-              {/* Reason (extended gate) — disabled/empty at equality (AC-R2). */}
-              <Show when={props.showExtended}>
-                <FieldRow label={t('label.reason')}>
-                  <ReasonSelect
-                    kind="requisition"
-                    label={t('label.reason')}
+                {/* Reason (extended gate) — disabled/empty at equality (AC-R2). */}
+                <Show when={props.showExtended}>
+                  <FieldRow label={t('label.reason')}>
+                    <ReasonSelect
+                      kind="requisition"
+                      label={t('label.reason')}
+                      hideLabel
+                      disabled={disabled() || saving() || !variance()}
+                      value={variance() ? (reasonId() ?? undefined) : undefined}
+                      onChange={reason => {
+                        setReasonId(reason?.id ?? null);
+                        setDirty(true);
+                      }}
+                    />
+                  </FieldRow>
+                </Show>
+
+                <FieldRow label={t('label.comment')}>
+                  <TextArea
+                    label={t('label.comment')}
                     hideLabel
-                    disabled={disabled() || saving() || !variance()}
-                    value={variance() ? (reasonId() ?? undefined) : undefined}
-                    onChange={reason => {
-                      setReasonId(reason?.id ?? null);
+                    rows={3}
+                    disabled={disabled() || saving()}
+                    value={comment()}
+                    onInput={e => {
+                      setComment(e.currentTarget.value);
                       setDirty(true);
                     }}
                   />
                 </FieldRow>
-              </Show>
+              </InsetPanel>
+            </div>
 
-              <FieldRow label={t('label.comment')}>
-                <TextArea
-                  label={t('label.comment')}
-                  hideLabel
-                  rows={3}
-                  disabled={disabled() || saving()}
-                  value={comment()}
-                  onInput={e => {
-                    setComment(e.currentTarget.value);
-                    setDirty(true);
-                  }}
+            {/* Below — the read-only context charts (spec S4 § charts): the
+              target-quantity breakdown (client-side from the line's stats)
+              atop the consumption-history + stock-evolution pair. The pair
+              needs a saved line's server series (chartData); absent it — an
+              add-mode draft, or an order with no expected-delivery-date — only
+              the breakdown shows. The population-forecast calculation display
+              is a later cut. */}
+            <div class={styles.charts}>
+              <div class={styles.chartSection}>
+                <h3 class={styles.chartHeading}>
+                  {t('heading.target-quantity')}
+                </h3>
+                <TargetQuantityBreakdown
+                  averageMonthlyConsumption={
+                    editorLine().averageMonthlyConsumption
+                  }
+                  availableStockOnHand={editorLine().availableStockOnHand}
+                  suggestedQuantity={editorLine().suggestedQuantity}
+                  thresholdMonths={props.minMonths}
+                  targetMonths={props.maxMonths}
                 />
-              </FieldRow>
-            </InsetPanel>
-          </div>
+              </div>
+              <Show when={hasSeries() && chartData()}>
+                {data => (
+                  <div class={styles.chartPair}>
+                    <div class={styles.chartSection}>
+                      <h3 class={styles.chartHeading}>
+                        {t('heading.consumption-history')}
+                      </h3>
+                      <ConsumptionHistoryChart
+                        data={data().consumptionHistory?.nodes ?? []}
+                      />
+                    </div>
+                    <div class={styles.chartSection}>
+                      <h3 class={styles.chartHeading}>
+                        {t('heading.stock-evolution')}
+                      </h3>
+                      <StockEvolutionChart
+                        data={data().stockEvolution?.nodes ?? []}
+                      />
+                    </div>
+                  </div>
+                )}
+              </Show>
+            </div>
+          </>
         )}
       </Show>
-
     </Dialog>
   );
 };

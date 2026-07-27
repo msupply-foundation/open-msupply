@@ -68,6 +68,34 @@
   min-inline-size: 0;
 }
 
+/* Below — the read-only context charts (spec S4): the target-quantity
+   breakdown on its own row, then the consumption / stock-evolution pair side by
+   side (wrapping on narrow viewports), each centred in its row. */
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-block-start: var(--space-5);
+}
+
+.chartPair {
+  display: flex;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.chartSection {
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.chartHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
 /* The dose caption directly beneath the entered number, right-aligned under it. */
 .caption {
   text-align: end;
