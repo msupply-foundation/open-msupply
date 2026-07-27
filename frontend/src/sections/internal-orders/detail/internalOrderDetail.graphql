@@ -70,10 +70,12 @@ fragment InternalOrderInfo on RequisitionNode {
   minMonthsOfStock
   maxMonthsOfStock
   program {
+    id
     name
   }
   orderType
   period {
+    id
     name
   }
   approvalStatus
