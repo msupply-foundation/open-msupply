@@ -7,15 +7,29 @@ import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterAc
 import { Button } from '../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import {
+  StatusIndicator,
+  type StatusStep,
+} from '../ui/elements/feedback/StatusIndicator';
+import {
   CancelButton,
   SaveButton,
 } from '../ui/elements/buttons/StandardButtons';
-import { ClockIcon, CopyIcon, MinusCircleIcon, TrashIcon } from '../ui/icons';
+import { CopyIcon, MinusCircleIcon, TrashIcon } from '../ui/icons';
 import { Lead, PageBody, PageFrame } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './ContentFooterShowcase.module.css';
 
 const DEMO_ROWS = ['OS-001024', 'OS-001025', 'OS-001026'];
+
+// The status progression shown at the footer's inline-start edge — the
+// StatusIndicator replaces a separate "History" button, since its hover popover
+// is the status history (mirrors the app's real detail footers).
+const SHIPMENT_STEPS: StatusStep[] = [
+  { label: 'New', date: '2026-03-01' },
+  { label: 'Allocated', date: '2026-03-02' },
+  { label: 'Picked', date: '2026-03-03' },
+  { label: 'Shipped' },
+];
 
 // No TOC is rendered — the page is short (Carl); the metadata is still exported
 // and registered so Search indexes these sections.
@@ -27,7 +41,7 @@ export const contentFooterMetadata: PageMetadata = {
     {
       id: 'content-footer-detail-bar',
       title: 'Detail-page bar',
-      searchTerms: ['save', 'cancel', 'history', 'actions'],
+      searchTerms: ['save', 'cancel', 'status', 'history', 'actions'],
     },
     {
       id: 'content-footer-contextual',
@@ -54,7 +68,7 @@ export const ContentFooterShowcase = () => {
       <Stack gap="lg">
         <DashboardCard
           id="content-footer-detail-bar"
-          title="Detail-page bar — History / Cancel / Save"
+          title="Detail-page bar — Status / Cancel / Save"
         >
           <Lead>
             The pinned action bar from last week's demo (the current app's blue
@@ -62,19 +76,21 @@ export const ContentFooterShowcase = () => {
             pure layout with zero state, the same contract as{' '}
             <code>&lt;Header&gt;</code>: loose children flow from the
             inline-start edge, and <code>&lt;ContentFooterActions&gt;</code>{' '}
-            pins the button cluster inline-end. The page owns every handler —
-            here Save opens the standard <code>&lt;ConfirmDialog&gt;</code>{' '}
-            (native <code>&lt;dialog&gt;</code> — see the Feedback section).
-            Inside the app it pins between the scrolling body and the app footer
-            via the Page frame's <code>contentFooter</code> slot — see the
-            Outbound Shipments page in the Full page group.
+            pins the button cluster inline-end. Here the inline-start slot holds
+            a <code>&lt;StatusIndicator&gt;</code> (see the Progress section) —
+            its hover popover is the status history, so it stands in for a
+            separate History button, as the app's real detail footers do. The
+            page owns every handler — here Save opens the standard{' '}
+            <code>&lt;ConfirmDialog&gt;</code> (native{' '}
+            <code>&lt;dialog&gt;</code> — see the Feedback section). Inside the
+            app it pins between the scrolling body and the app footer via the
+            Page frame's <code>contentFooter</code> slot — see the Outbound
+            Shipments page in the Full page group.
           </Lead>
           <PageFrame>
             <PageBody />
             <ContentFooter>
-              <Button variant="secondary" icon={<ClockIcon />}>
-                History
-              </Button>
+              <StatusIndicator steps={SHIPMENT_STEPS} current={2} />
               <ContentFooterActions>
                 <CancelButton />
                 <SaveButton onClick={() => setConfirmSave(true)} />
@@ -124,9 +140,7 @@ export const ContentFooterShowcase = () => {
                 when={picked().size > 0}
                 fallback={
                   <>
-                    <Button variant="secondary" icon={<ClockIcon />}>
-                      History
-                    </Button>
+                    <StatusIndicator steps={SHIPMENT_STEPS} current={2} />
                     <ContentFooterActions>
                       <CancelButton />
                       <SaveButton />
