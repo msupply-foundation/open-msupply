@@ -15,8 +15,10 @@ export interface PasswordFieldProps extends Omit<
   'data-testid'?: string;
   /**
    * `data-testid` for the show/hide toggle button (locale-stable test hook,
-   * e2e/TESTIDS.md). Defaults to `<data-testid>-toggle` when the field itself
-   * has a `data-testid`, so most call sites need only the one id.
+   * e2e/TESTIDS.md). Defaults to `<data-testid>-visibility` when the field
+   * itself has a `data-testid` (the shared e2e contract id, e.g.
+   * `sync-settings-password-visibility`), so most call sites need only the one
+   * id.
    */
   toggleTestId?: string;
 }
@@ -36,7 +38,7 @@ export const PasswordField = (props: PasswordFieldProps) => {
   const toggleTestId = () => {
     if (local.toggleTestId) return local.toggleTestId;
     const fieldTestId = rest['data-testid'];
-    return fieldTestId ? `${fieldTestId}-toggle` : undefined;
+    return fieldTestId ? `${fieldTestId}-visibility` : undefined;
   };
 
   return (
