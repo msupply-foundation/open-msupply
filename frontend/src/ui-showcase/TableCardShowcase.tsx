@@ -16,6 +16,7 @@ import {
   getCellDefinition,
   getNumberCell,
 } from '../ui/elements/table/tableHelpers';
+import { Pagination } from '../ui/elements/table/Pagination';
 import type {
   TableConfig,
   TableConfigKey,
@@ -1244,6 +1245,26 @@ const CARD_ANATOMY: AnatomyNode[] = [
   },
 ];
 
+// A standalone Pagination demo — the list footer's pager over a synthetic
+// 38-row result. Local signals stand in for the offset/pageSize a real list
+// keeps in URL params; a size change resets to the first page.
+const PaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  const [pageSize, setPageSize] = createSignal(10);
+  return (
+    <Pagination
+      offset={offset()}
+      pageSize={pageSize()}
+      total={38}
+      onOffsetChange={setOffset}
+      onPageSizeChange={size => {
+        setPageSize(size);
+        setOffset(0);
+      }}
+    />
+  );
+};
+
 // Mask the shell's full-screen context for this teaching page so every demo
 // table's full-screen button falls back to DataTable's standalone path — a
 // fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
@@ -1262,6 +1283,11 @@ export const tableCardMetadata: PageMetadata = {
       id: 'table-card-basics',
       title: 'Table basics',
       searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+    },
+    {
+      id: 'table-card-pagination',
+      title: 'Pagination',
+      searchTerms: ['pager', 'page', 'rows per page', 'offset', 'footer'],
     },
     {
       id: 'table-card-model',
@@ -1358,6 +1384,25 @@ export const TableCardShowcase = () => (
             it. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-pagination"
+          title="Table basics · Pagination"
+        >
+          <Lead>
+            The list footer on its own — the same pager the DataTable mounts
+            from its <code>pagination</code> prop (in "A working table" above),
+            shown standalone. One inline-end cluster: a rows-per-page{' '}
+            <code>Select</code> (omit <code>onPageSizeChange</code> to hide it),
+            the quiet range "1–10 of 38", then a fixed-slot pager —{' '}
+            <code>[1] ‹ [k] › [N]</code> — so nothing shifts as you page. The
+            parent owns <code>offset</code>/<code>pageSize</code> (bound for URL
+            params); the component is pure presentation over them and resets to
+            the first page on a size change. Below 480px the selector and number
+            slots collapse to <code>‹ ›</code> + the range.
+          </Lead>
+          <PaginationDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>
