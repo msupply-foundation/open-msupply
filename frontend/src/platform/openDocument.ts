@@ -2,20 +2,28 @@ import { isAndroid } from './index';
 import { t } from '../intl';
 
 // Getting a file in front of the user — the reference capability wrappers for
-// kdd/capacitor-plugins. Two entry points with different web behaviours:
+// kdd/capacitor-plugins. The open-vs-save verb is the CALLER's choice (a
+// document tap means "look at this"; an export/download means "keep this"):
 //
-// - openDocument(url, fileName): a server-stored file addressed by URL (a
-//   domain/syncFiles link). Web: the browser handles it in a new tab (its own
-//   viewer). Android: the WebView would render it inline (or silently do
-//   nothing for PDFs) with no way back, so it's fetched and handed to the OS.
-// - openBlob(blob, fileName): a file the app already holds (generated report,
-//   CSV export). Web: a plain browser download. Android: handed to the OS.
+// - openDocument(url, fileName): view a server-stored file addressed by URL
+//   (a domain/syncFiles link). Web: the browser handles it in a new tab.
+//   Android: the WebView would render it inline (or silently do nothing for
+//   PDFs) with no way back, so it's fetched and handed to the OS viewer,
+//   falling back to the share sheet.
+// - openBlob(blob, fileName): view a file the app already holds. Web: a plain
+//   browser download (browsers have no "view a blob" affordance). Android:
+//   OS viewer, falling back to the share sheet.
+// - saveBlob(blob, fileName): keep a file the app already holds. Web: a plain
+//   browser download. Android: the OS save-location picker (SAF, via our own
+//   SaveFile shell plugin) — the user picks Downloads/Drive/SD card.
 //
-// Both route through the same Android core: write to the app cache, open with
-// the OS viewer (spec/android/behaviours.md § Files out of the app). Never
-// throws — the same discriminated result shape as domain/syncFiles.
+// All per spec/android/behaviours.md § Files out of the app. Never throws —
+// the same discriminated result shape as domain/syncFiles.
 
 export type OpenDocumentResult = { ok: boolean; message?: string };
+/** `saved: false` = the user cancelled the picker — declined, not failed. */
+export type SaveBlobResult =
+  { ok: true; saved: boolean } | { ok: false; message: string };
 
 // Filesystem.writeFile paths are cache-relative: keep the name flat and free
 // of path/reserved characters (a slash would silently create directories).
@@ -111,22 +119,67 @@ export const openDocument = async (
   }
 };
 
+// Browser download: object URL + a programmatic anchor click, revoked
+// immediately after. The web path for both openBlob and saveBlob — a browser
+// has one "here's a file" affordance and it already lets the user pick the
+// destination (per their download settings).
+const browserDownload = (blob: Blob, fileName: string): void => {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
 export const openBlob = async (
   blob: Blob,
   fileName: string
 ): Promise<OpenDocumentResult> => {
   if (!isAndroid()) {
-    // Browser download: object URL + a programmatic anchor click, revoked
-    // immediately after.
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+    browserDownload(blob, fileName);
     return { ok: true };
   }
   return openBlobAndroid(blob, fileName);
+};
+
+// Our own custom Capacitor plugin (android/.../SaveFilePlugin.java,
+// registered in MainActivity — a native bridge module, unrelated to
+// open-mSupply's plugin system): SAF ACTION_CREATE_DOCUMENT save picker.
+// registerPlugin is idempotent enough for our use, but keep one proxy per
+// session anyway.
+type SaveFilePlugin = {
+  save(options: {
+    data: string;
+    fileName: string;
+    mimeType: string;
+  }): Promise<{ saved: boolean }>;
+};
+let saveFilePlugin: SaveFilePlugin | undefined;
+
+export const saveBlob = async (
+  blob: Blob,
+  fileName: string
+): Promise<SaveBlobResult> => {
+  if (!isAndroid()) {
+    browserDownload(blob, fileName);
+    return { ok: true, saved: true };
+  }
+  try {
+    if (!saveFilePlugin) {
+      const { registerPlugin } = await import('@capacitor/core');
+      saveFilePlugin = registerPlugin<SaveFilePlugin>('SaveFile');
+    }
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const { saved } = await saveFilePlugin.save({
+      data: bytesToBase64(bytes),
+      fileName: sanitizeFileName(fileName),
+      mimeType: mimeOf(blob.type || null),
+    });
+    return { ok: true, saved };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
 };

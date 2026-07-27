@@ -5,6 +5,7 @@ import {
   openBlob,
   openDocument,
   sanitizeFileName,
+  saveBlob,
 } from './openDocument';
 
 describe('openDocument (web path)', () => {
@@ -69,6 +70,32 @@ describe('openBlob (web path)', () => {
     expect(click).toHaveBeenCalledOnce();
     expect(remove).toHaveBeenCalledOnce();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake');
+  });
+});
+
+describe('saveBlob (web path)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('is a browser download on the web — same affordance as openBlob', async () => {
+    const click = vi.fn();
+    const anchor = { href: '', download: '', click, remove: vi.fn() };
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => anchor),
+      body: { appendChild: vi.fn() },
+    });
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:fake'),
+      revokeObjectURL: vi.fn(),
+    });
+
+    const result = await saveBlob(new Blob(['x']), 'report.xlsx');
+
+    expect(result).toEqual({ ok: true, saved: true });
+    expect(anchor.download).toBe('report.xlsx');
+    expect(click).toHaveBeenCalledOnce();
   });
 });
 
