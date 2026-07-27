@@ -38,6 +38,10 @@ query storeContext($storeId: String!) {
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor
+    # Blind stocktake (spec/stocktakes › store-preference gates): hides
+    # Snapshot/Difference while counting and Reason for the stocktake's whole
+    # life, in the detail line table, line editor, and create modal.
+    blindStocktake
     # spec/stock: the VVM status FIELD (S2/S3) shows when this OR
     # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
     # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.

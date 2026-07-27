@@ -204,7 +204,7 @@ const OutboundShipmentsList: Component = () => {
       // editable; a read-only dot otherwise).
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { headerPosition: 'primary', wrapLines: 2 },
       cell: info => {
         const row = info.row.original;
@@ -234,7 +234,7 @@ const OutboundShipmentsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => {
         const status = info.getValue<ShipmentRow['status']>();
         return (
@@ -249,25 +249,25 @@ const OutboundShipmentsList: Component = () => {
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: t('label.number'),
+      header: () => t('label.number'),
       ...getNumberCell(),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       // Reference is not sortable (ui-surface S1 columns table).
       c: { key: 'theirReference' },
-      header: t('label.reference'),
+      header: () => t('label.reference'),
     },
     {
       // Comment is the shared comment cell (bubble + hover popover, as the
       // inbound list renders it) — not sortable (ui-surface S1).
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
     {
@@ -276,7 +276,7 @@ const OutboundShipmentsList: Component = () => {
         accessor: row => row.pricing.totalAfterTax,
         id: 'totalAfterTax',
       },
-      header: t('label.total'),
+      header: () => t('label.total'),
       ...getCurrencyCell(),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.

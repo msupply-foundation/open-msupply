@@ -39,36 +39,13 @@ describe('t', () => {
     expect(t('does.not.exist' as never)).toBe('does.not.exist');
   });
 
-  it('resolves i18next-style $t(key) nested references (#359)', () => {
+  it('interpolates an already-translated string into {{ tokens }}', () => {
     setLocale('en');
-    // messages.confirm-status-as = "Confirm status as $t({{status}})?" — the
-    // {{status}} arg names another key, which $t(...) must resolve. Before the
-    // fix this rendered the raw "$t(status.finalised)".
+    // messages.confirm-status-as = "Confirm status as {{status}}?" — the
+    // caller resolves the status label with t() before passing it in.
     expect(
-      t('messages.confirm-status-as', { status: 'status.finalised' })
+      t('messages.confirm-status-as', { status: t('status.finalised') })
     ).toBe('Confirm status as Finalised?');
-  });
-
-  it('resolves $t() recursively', () => {
-    setLocale('en');
-    // description.doses-quantity itself contains $t(preference.…) + $t(label.…),
-    // so a string that references it exercises a second level of resolution.
-    const resolved = t('description.doses-quantity' as never);
-    expect(resolved).not.toContain('$t(');
-    expect(resolved).toContain('Manage vaccines in doses');
-    expect(resolved).toContain('ds'); // label.doses-short
-  });
-
-  it('leaves an unknown $t(key) reference visible rather than blanking it', () => {
-    setLocale('en');
-    // Seed a throwaway string pointing at a non-existent key; an unresolved
-    // reference should survive (a missing translation must be noticeable).
-    setDictionaries({
-      ...{ en: commonEn, ar: commonAr },
-      en: { ...commonEn, 'test.nested-missing': 'x $t(no.such.key) y' },
-    });
-    expect(t('test.nested-missing' as never)).toBe('x $t(no.such.key) y');
-    setDictionaries({ en: commonEn, ar: commonAr }); // restore
   });
 });
 

@@ -388,6 +388,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: first.item?.defaultPackSize ?? 1,
       defaultSellPricePerPack: 0,
     });
+    // A PO-linked shipment's existing lines already cite the order line they
+    // fill — inherit it so "Add batch" (another batch for this same item)
+    // carries the link automatically, instead of requiring a re-pick that
+    // update mode's locked selector doesn't even offer (new batches were
+    // otherwise saving with purchaseOrderLineId undefined).
+    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
     // Focus the requested batch, else the first row.
     setPendingFocus({ row: focusLineId ?? first.id });
     setLoadingLines(false);
@@ -769,7 +775,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
+      header: () => t('label.batch'),
       meta: { headerPosition: 'primary' },
       cell: info => {
         const b = info.row.original;
@@ -786,7 +792,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
+      header: () => t('label.pack-quantity'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -809,7 +815,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -839,7 +845,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'shippedNumberOfPacks' },
-            header: t('label.shipped-number-of-packs'),
+            header: () => t('label.shipped-number-of-packs'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
@@ -859,7 +865,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
           {
             c: { id: 'shippedPackSize' },
-            header: t('label.shipped-pack-size'),
+            header: () => t('label.shipped-pack-size'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
@@ -882,9 +888,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Units received (computed) — packs received × pack size (spec S4).
     {
       c: { id: 'unitsReceived' },
-      header: t('label.units-received', {
-        unit: item()?.unitName ?? t('label.units'),
-      }),
+      header: () =>
+        t('label.units-received', {
+          unit: item()?.unitName ?? t('label.units'),
+        }),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -918,7 +925,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'authStatus' },
-            header: t('label.auth-status'),
+            header: () => t('label.auth-status'),
             cardGroup: 'batch',
             cell: info => {
               const b = info.row.original;
@@ -973,7 +980,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'dosesPerUnit' },
-            header: t('label.doses-per-unit'),
+            header: () => t('label.doses-per-unit'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: () => (
@@ -990,7 +997,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       : []),
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry'),
+      header: () => t('label.expiry'),
       cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
@@ -1010,7 +1017,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'vvmStatus' },
-            header: t('label.vvm-status'),
+            header: () => t('label.vvm-status'),
             cardGroup: 'batch',
             cell: info => {
               const b = info.row.original;
@@ -1030,7 +1037,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       : []),
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1049,7 +1056,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1068,7 +1075,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Line total (computed) — packs received × pack cost price (spec S4).
     {
       c: { id: 'lineTotal' },
-      header: t('label.line-total'),
+      header: () => t('label.line-total'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1086,7 +1093,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { id: 'location' },
-      header: t('label.location'),
+      header: () => t('label.location'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -1104,7 +1111,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -1124,7 +1131,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'donor' },
-            header: t('label.donor'),
+            header: () => t('label.donor'),
             cardGroup: 'other',
             cell: info => {
               const b = info.row.original;
@@ -1160,7 +1167,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Manufacturer (Other tab, spec S4) — a name lookup, manufacturer role.
     {
       c: { id: 'manufacturer' },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -1196,7 +1203,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // other (the select routes the choice to the right wire field).
     {
       c: { id: 'campaignOrProgram' },
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -1219,7 +1226,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Volume per pack (Other tab, spec S4).
     {
       c: { id: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
+      header: () => t('label.volume-per-pack'),
       cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
@@ -1239,7 +1246,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'note' },
-      header: t('label.note'),
+      header: () => t('label.note'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -1256,7 +1263,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { id: 'actions' },
-      header: t('label.actions'),
+      header: () => t('label.actions'),
       meta: { headerPosition: 'badge', align: 'right' },
       cell: info => {
         const b = info.row.original;

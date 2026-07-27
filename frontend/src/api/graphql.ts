@@ -181,6 +181,14 @@ type ResponseBody<TResult> = {
   errors?: GraphqlErrorItem[];
 };
 
+// Best-effort operation name, parsed off the query string — purely cosmetic
+// metadata appended to the request URL (below) so the operation is
+// identifiable in the browser network tab / server access logs without
+// opening the POST body. The GraphQL server ignores unknown query params; the
+// actual operation is still driven entirely by the body.
+const operationName = (query: string): string =>
+  /(?:query|mutation)\s+(\w+)/.exec(query)?.[1] ?? 'anonymous';
+
 export async function graphqlFetch<TResult, TVariables>(
   document: TypedDocument<TResult, TVariables>,
   variables: TVariables,
@@ -191,10 +199,11 @@ export async function graphqlFetch<TResult, TVariables>(
     if (!options.background) setUnexpectedError(message);
     return { kind: 'unexpectedError' };
   };
+  const requestUrl = `${options.endpoint ?? GRAPHQL_URL}?opName=${encodeURIComponent(operationName(document.query))}`;
   let response: Response;
   try {
     // Auth is cookie-based (HttpOnly session cookie); no token headers.
-    response = await fetch(options.endpoint ?? GRAPHQL_URL, {
+    response = await fetch(requestUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
