@@ -5,6 +5,7 @@ import {
   type InternalOrderInfoFragment,
   type UpdateInternalOrderVariables,
 } from './internalOrderDetail.generated';
+import { DeleteInternalOrders } from '../list/internalOrders.generated';
 
 // Order-LEVEL mutations for the detail screen, split by how their errors are
 // handled (the returnUpdate / stocktakeUpdate convention).
@@ -96,5 +97,44 @@ export const sendInternalOrder = async (
   return {
     kind: 'error',
     message: mapSendError(response.error.__typename, response.error.description),
+  };
+};
+
+// --- Delete (side-panel single) ---------------------------------------------
+
+// The side-panel single delete rides the SAME batchRequestRequisition mutation
+// as the list bulk delete (contract › deletion), sending a one-element array.
+// The batch is all-or-nothing; a per-member "success" can survive a rollback
+// (contract wire trap), so judge only by whether any member errored.
+export type DeleteResult =
+  | { kind: 'deleted' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const deleteInternalOrder = async (
+  storeId: string,
+  id: string
+): Promise<DeleteResult> => {
+  const result = await graphqlFetch(DeleteInternalOrders, {
+    storeId,
+    ids: [{ id }],
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const members =
+    result.data.batchRequestRequisition.deleteRequestRequisitions ?? [];
+  const failed = members.find(
+    m => m.response.__typename === 'DeleteRequestRequisitionError'
+  );
+  if (!failed) return { kind: 'deleted' };
+  const error =
+    failed.response.__typename === 'DeleteRequestRequisitionError'
+      ? failed.response.error
+      : undefined;
+  return {
+    kind: 'error',
+    message:
+      error?.__typename === 'CannotEditRequisition'
+        ? t('error.cannot-edit-requisition')
+        : (error?.description ?? t('error.cannot-edit-requisition')),
   };
 };

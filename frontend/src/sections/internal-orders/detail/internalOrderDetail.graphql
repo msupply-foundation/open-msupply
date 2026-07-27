@@ -75,6 +75,39 @@ fragment InternalOrderInfo on RequisitionNode {
   createdDatetime
   sentDatetime
   finalisedDatetime
+  # Side panel (S5): the creating user (entered-by), the fulfilling inbound
+  # shipments (AC-RD1), and the source customer requisition this order was
+  # created from (AC-RD2, display gated on a preference). Documents (AC-F1) come
+  # from the same node so the Documents tab lists them and Copy carries them.
+  user {
+    username
+  }
+  shipments {
+    nodes {
+      id
+      invoiceNumber
+      createdDatetime
+      user {
+        username
+      }
+    }
+  }
+  createdFromRequisition {
+    id
+    requisitionNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
+  }
   lines {
     totalCount
     nodes {

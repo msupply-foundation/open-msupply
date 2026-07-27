@@ -13,6 +13,7 @@ export type InternalOrderDetailContextResult = {
   showIndicativePriceInRequisitions: boolean;
   displayPopulationBasedForecasting: boolean;
   warningForExcessRequest: boolean;
+  canCreateInternalOrderFromARequisition: boolean;
 };
   storePreferences: {
   requestRequisitionRequiresAuthorisation: boolean;
@@ -21,5 +22,5 @@ export type InternalOrderDetailContextResult = {
 };
 
 export const InternalOrderDetailContext = {
-  query: "query internalOrderDetailContext($storeId: String!) {\n  preferences(storeId: $storeId) {\n    selectDestinationStoreForAnInternalOrder\n    manageVaccinesInDoses\n    showIndicativePriceInRequisitions\n    displayPopulationBasedForecasting\n    warningForExcessRequest\n  }\n  storePreferences(storeId: $storeId) {\n    requestRequisitionRequiresAuthorisation\n    useConsumptionAndStockFromCustomersForInternalOrders\n  }\n}",
+  query: "query internalOrderDetailContext($storeId: String!) {\n  preferences(storeId: $storeId) {\n    selectDestinationStoreForAnInternalOrder\n    manageVaccinesInDoses\n    showIndicativePriceInRequisitions\n    displayPopulationBasedForecasting\n    warningForExcessRequest\n    canCreateInternalOrderFromARequisition\n  }\n  storePreferences(storeId: $storeId) {\n    requestRequisitionRequiresAuthorisation\n    useConsumptionAndStockFromCustomersForInternalOrders\n  }\n}",
 } as TypedDocument<InternalOrderDetailContextResult, InternalOrderDetailContextVariables>;
