@@ -300,6 +300,34 @@ export const InboundShipment = {
   query: "query inboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
 } as TypedDocument<InboundShipmentResult, InboundShipmentVariables>;
 
+export type FullInboundShipmentVariables = {
+  storeId: string;
+  id: string;
+  type?: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "INBOUND_SHIPMENT_EXTERNAL" | "PRESCRIPTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | null;
+};
+
+export type FullInboundShipmentResult = {
+  invoice: ({
+  __typename: "InvoiceNode";
+} & {
+  lines: {
+  totalCount: number;
+  nodes: Array<InboundLineFragment>;
+};
+} & InboundInfoFragment) | ({
+  __typename: "NodeError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const FullInboundShipment = {
+  query: "query fullInboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...InboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
+} as TypedDocument<FullInboundShipmentResult, FullInboundShipmentVariables>;
+
 export type InboundShipmentByNumberVariables = {
   storeId: string;
   invoiceNumber: number;

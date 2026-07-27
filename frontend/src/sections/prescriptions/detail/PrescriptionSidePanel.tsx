@@ -14,7 +14,8 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
-import { CopyIcon, MinusCircleIcon, TrashIcon } from '../../../ui/icons';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
+import { MinusCircleIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import {
@@ -71,7 +72,6 @@ export const PrescriptionSidePanel: Component<
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
   const [cancelConfirm, setCancelConfirm] = createSignal(false);
   const [deleting, setDeleting] = createSignal(false);
-  const [copied, setCopied] = createSignal(false);
 
   const status = () => asPrescriptionStatus(props.node.status);
 
@@ -92,15 +92,6 @@ export const PrescriptionSidePanel: Component<
     setDeleting(false);
     if (result.kind !== 'success') return;
     if ('id' in result.data.deletePrescription) props.onDeleted();
-  };
-
-  const copyToClipboard = () => {
-    void navigator.clipboard
-      .writeText(JSON.stringify(props.node, null, 2))
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
   };
 
   const insurance = () => props.node.insurancePolicy;
@@ -304,13 +295,10 @@ export const PrescriptionSidePanel: Component<
               {t('label.cancel-prescription')}
             </Button>
           </Show>
-          <Button
-            variant="secondary"
-            icon={<CopyIcon />}
-            onClick={copyToClipboard}
-          >
-            {copied() ? t('message.copy-success') : t('link.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard). No extra fetch: the detail node this panel renders is
+              already the whole prescription, its lines connector unpaginated. */}
+          <CopyToClipboardButton load={() => props.node} />
         </SidePanelActions>
       </SidePanelSection>
 
@@ -349,4 +337,3 @@ const genderDisplay = (gender: string): string => {
   const key = keyByValue[gender];
   return key ? t(key) : gender;
 };
-
