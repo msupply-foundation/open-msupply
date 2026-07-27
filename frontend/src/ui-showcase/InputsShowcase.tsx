@@ -27,7 +27,7 @@ import {
   locale,
   setHomeCurrency,
 } from '../intl';
-import { FormPreview, Lead, Note, SectionTOC } from './common';
+import { FormPreview, Intro, Lead, Note, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './InputsShowcase.module.css';
 
@@ -174,6 +174,13 @@ export const InputsShowcase = () => {
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <SectionTOC page={inputsMetadata} />
+        <Intro>
+          To show a read-only value <em>alongside</em> these inputs — a fixed
+          fact that reads as a field but has no input box — use{' '}
+          <code>&lt;LabelledValue&gt;</code> with <code>variant="field"</code>,
+          which matches the input label→control gap so the two line up. See{' '}
+          <a href="#/showcase/display">Display › Labelled value</a>.
+        </Intro>
         <DashboardCard id="inputs-text" title="Text field states">
           <Lead>
             The company-spec text input: a plain HTML <code>&lt;input&gt;</code>{' '}
