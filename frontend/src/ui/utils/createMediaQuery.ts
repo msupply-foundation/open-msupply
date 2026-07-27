@@ -18,14 +18,16 @@ export const createMediaQuery = (query: string): (() => boolean) => {
 };
 
 /**
- * True when the viewport is narrow enough that the nav should be an overlay.
+ * True when the viewport is narrow enough (tablet portrait and below) that the
+ * nav should be an overlay. The same "narrow viewport" line also drives modal
+ * dialogs to full screen — see Dialog.tsx.
  */
 export const useIsNavOverlay = () => createMediaQuery(mediaQuery.navOverlay);
 
 /**
- * True on phone-ish widths (below the compact breakpoint) — where modal dialogs
- * go full-screen. Keeps the 600px cutoff living once in breakpoints.ts (a CSS
- * media query can't read a custom property, so the value stays in JS, per
- * CLAUDE.md #7 — createMediaQuery is the intended consumer).
+ * True on phone-ish widths (below the compact breakpoint) — where the DataTable
+ * switches to its card layout and index.css drops the root font-size. Keeps the
+ * 600px cutoff living once in breakpoints.ts (a CSS media query can't read a
+ * custom property, so the value stays in JS, per CLAUDE.md #7).
  */
 export const useIsCompact = () => createMediaQuery(mediaQuery.compact);

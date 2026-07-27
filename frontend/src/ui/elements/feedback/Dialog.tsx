@@ -10,7 +10,7 @@ import {
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
-import { useIsCompact } from '../../utils/createMediaQuery';
+import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import styles from './Dialog.module.css';
 
 export interface DialogProps {
@@ -146,10 +146,11 @@ export const Dialog = (props: DialogProps) => {
   // descendant of that Provider — anywhere else, usePortalMount() resolves
   // to undefined and the popup falls back to the default <body> portal.
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
-  // Large ("workbench") modals go full-screen on phone-ish widths;
-  // data-fullscreen drives the CSS. The 600px cutoff lives once in
-  // breakpoints.ts (createMediaQuery).
-  const compact = useIsCompact();
+  // Large ("workbench") modals go full-screen on tablet portrait and phones —
+  // the same "narrow viewport" line as the nav overlay, so we reuse navOverlay
+  // (1024) rather than mint a fourth breakpoint. data-fullscreen drives the
+  // CSS; the cutoff lives once in breakpoints.ts (createMediaQuery).
+  const fullscreen = useIsNavOverlay();
   // Every JSX-element prop (title, icon, description, footer, actions,
   // actionsLead, headerActions) is resolved via children() — see the note on
   // dialogEl above for why (PortalMountContext). Creating each accessor HERE
@@ -209,7 +210,7 @@ export const Dialog = (props: DialogProps) => {
           : styles.dialog
       }
       data-testid={props.testId}
-      data-fullscreen={compact() && props.size === 'large' ? '' : undefined}
+      data-fullscreen={fullscreen() && props.size === 'large' ? '' : undefined}
       style={{
         // widthRem is ignored in large mode (it goes full-bleed via the .large
         // class).
