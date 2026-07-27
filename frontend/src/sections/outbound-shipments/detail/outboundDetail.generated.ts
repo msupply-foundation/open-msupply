@@ -573,25 +573,6 @@ export const AddToOutboundFromMasterList = {
   query: "mutation addToOutboundFromMasterList($storeId: String!, $shipmentId: String!, $masterListId: String!) {\n  addToOutboundShipmentFromMasterList(\n    storeId: $storeId\n    input: {shipmentId: $shipmentId, masterListId: $masterListId}\n  ) {\n    __typename\n    ... on InvoiceLineConnector {\n      totalCount\n    }\n    ... on AddToOutboundShipmentFromMasterListError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<AddToOutboundFromMasterListResult, AddToOutboundFromMasterListVariables>;
 
-export type OutboundCurrenciesVariables = Record<string, never>;
-
-export type OutboundCurrenciesResult = {
-  currencies: ({
-  __typename: "CurrencyConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  code: string;
-  rate: number;
-  isHomeCurrency: boolean;
-}>;
-});
-};
-
-export const OutboundCurrencies = {
-  query: "query outboundCurrencies {\n  currencies(filter: {isActive: true}) {\n    ... on CurrencyConnector {\n      __typename\n      nodes {\n        id\n        code\n        rate\n        isHomeCurrency\n      }\n    }\n  }\n}",
-} as TypedDocument<OutboundCurrenciesResult, OutboundCurrenciesVariables>;
-
 export type CustomerMasterListsVariables = {
   storeId: string;
   customerNameId: string;

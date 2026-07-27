@@ -1,29 +1,40 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { Select } from '../../../../ui/elements/selectors/Select';
-import { NumberField } from '../../../../ui/elements/inputs/NumberField';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
-import { XCircleIcon } from '../../../../ui/icons';
-import { OutboundCurrencies } from '../outboundDetail.generated';
-import { changeShipmentCurrency, type OutboundNode } from '../outboundUpdate';
+import { t } from '../../intl';
+import { graphqlFetch } from '../../api/graphql';
+import { Dialog } from '../../ui/elements/feedback/Dialog';
+import { Alert } from '../../ui/elements/feedback/Alert';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../ui/elements/buttons/StandardButtons';
+import { Select } from '../../ui/elements/selectors/Select';
+import { NumberField } from '../../ui/elements/inputs/NumberField';
+import { Spinner } from '../../ui/elements/feedback/Spinner';
+import { ActiveCurrencies } from './invoiceModals.generated';
+
+// The change-currency modal BOTH shipment verticals host (outbound S3 side
+// panel, inbound S3 charges): a non-home currency + its exchange rate, saved
+// via the hosting vertical's `save` (each maps to its own header update).
+// The server rejects a foreign currency the store doesn't allow (or a
+// store-linked other party) and requires a positive rate — the typed message
+// surfaces inline; a transport failure is already surfaced globally.
+
+export type CurrencySaveResult =
+  { kind: 'saved' } | { kind: 'error'; message: string } | { kind: 'failed' };
 
 export interface CurrencyModalProps {
   open: boolean;
   onClose: () => void;
-  storeId: string;
-  node: OutboundNode;
-  onSaved: (node: OutboundNode) => void;
+  /** The shipment's current currency/rate, seeding the fields. */
+  initialCurrencyId: string | undefined;
+  initialRate: number;
+  /** Commit {currencyId, currencyRate}; 'saved' closes the modal. */
+  save: (input: {
+    currencyId: string;
+    currencyRate: number;
+  }) => Promise<CurrencySaveResult>;
 }
 
-// The change-currency modal (spec S3 side panel → foreign currency; ported
-// from the inbound CurrencyModal). Sets a non-home currency + its exchange
-// rate; the server rejects a foreign currency when the store doesn't allow it
-// or the customer is itself a store, and requires a positive rate — surfaced
-// inline.
 export const CurrencyModal: Component<CurrencyModalProps> = props => (
   <Show when={props.open}>
     <Body {...props} />
@@ -32,14 +43,14 @@ export const CurrencyModal: Component<CurrencyModalProps> = props => (
 
 const Body: Component<CurrencyModalProps> = props => {
   const [currencyId, setCurrencyId] = createSignal(
-    props.node.currency?.id ?? ''
+    props.initialCurrencyId ?? ''
   );
-  const [rate, setRate] = createSignal(props.node.currencyRate);
+  const [rate, setRate] = createSignal(props.initialRate);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
   const [data] = createResource(async () => {
-    const result = await graphqlFetch(OutboundCurrencies, {});
+    const result = await graphqlFetch(ActiveCurrencies, {});
     return result.kind === 'success' &&
       result.data.currencies.__typename === 'CurrencyConnector'
       ? result.data.currencies.nodes
@@ -51,18 +62,13 @@ const Body: Component<CurrencyModalProps> = props => {
     if (saving()) return;
     setSaving(true);
     setErrorMessage(undefined);
-    const result = await changeShipmentCurrency(props.storeId, {
-      id: props.node.id,
+    const result = await props.save({
       currencyId: currencyId(),
       currencyRate: rate(),
     });
     setSaving(false);
-    if (result.kind === 'saved') {
-      props.onSaved(result.node);
-      props.onClose();
-    } else if (result.kind === 'error') {
-      setErrorMessage(result.message);
-    }
+    if (result.kind === 'saved') props.onClose();
+    else if (result.kind === 'error') setErrorMessage(result.message);
   };
 
   return (
@@ -79,21 +85,16 @@ const Body: Component<CurrencyModalProps> = props => {
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
+          />
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={!currencyId()}
             onClick={() => void save()}
-          >
-            {t('button.ok')}
-          </Button>
+          />
         </>
       }
     >
