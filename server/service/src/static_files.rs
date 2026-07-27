@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 use util::uuid::uuid;
 use util::{move_file, sanitize_filename};
 
@@ -173,6 +174,23 @@ impl StaticFileService {
         }))
     }
 
+    /// Look up a synced file on disk and open it for serving over HTTP. Shared by the
+    /// v6 and v7 central `download_file` endpoints (auth differs per transport; the
+    /// file lookup does not). `None` = no file with this id on disk.
+    pub fn open_sync_file(
+        &self,
+        table_name: String,
+        record_id: String,
+        id: &str,
+    ) -> anyhow::Result<Option<(actix_files::NamedFile, StaticFile)>> {
+        let category = StaticFileCategory::SyncFile(table_name, record_id);
+        let Some(file) = self.find_file(id, category)? else {
+            return Ok(None);
+        };
+        let named_file = actix_files::NamedFile::open(&file.path)?;
+        Ok(Some((named_file, file)))
+    }
+
     pub async fn download_file_in_chunks(
         &self,
         sync_file: &SyncFileReferenceRow,
@@ -183,16 +201,41 @@ impl StaticFileService {
 
         let file =
             self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
-        let mut file_handle = File::create(&file.path).await?;
 
-        loop {
-            log::info!("Downloading chunk");
-            let Some(bytes) = download_response.chunk().await? else {
-                break;
-            };
+        // Stream into a `partial_`-prefixed name that find_file's `{id}_` prefix match can
+        // never surface, then rename into place once the stream completes — so an aborted
+        // download (dropped request, connection failure) is never served as a complete file.
+        // A stale partial file (e.g. this future dropped mid-await) is invisible to lookups
+        // and gets truncated by File::create on the next attempt.
+        let final_path = PathBuf::from(&file.path);
+        let partial_path = final_path.with_file_name(format!(
+            "partial_{}",
+            final_path
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default()
+        ));
 
-            tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
+        let download = async {
+            let mut file_handle = File::create(&partial_path).await?;
+            loop {
+                let Some(bytes) = download_response.chunk().await? else {
+                    break;
+                };
+
+                tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
+            }
+            file_handle.flush().await?;
+            Ok::<_, anyhow::Error>(())
+        };
+
+        if let Err(error) = download.await {
+            let _ = std::fs::remove_file(&partial_path);
+            return Err(error);
         }
+
+        // Same directory, so the rename is atomic.
+        std::fs::rename(&partial_path, &final_path)?;
 
         Ok(StaticFile {
             id: sync_file.id.clone(),
@@ -336,5 +379,58 @@ mod test {
 
         // Clean up
         fs::remove_dir_all(&test_dir).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn download_file_in_chunks_only_exposes_completed_files() {
+        use httpmock::{Method::GET, MockServer};
+        use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+        let mock_server = MockServer::start();
+        mock_server.mock(|when, then| {
+            when.method(GET).path("/file");
+            then.status(200).body("hello file bytes");
+        });
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().to_path_buf();
+
+        let sync_file = SyncFileReferenceRow {
+            id: "file1".to_string(),
+            table_name: "asset".to_string(),
+            record_id: "rec1".to_string(),
+            file_name: "hello.txt".to_string(),
+            ..Default::default()
+        };
+        let category = StaticFileCategory::SyncFile("asset".to_string(), "rec1".to_string());
+
+        let response = reqwest::get(format!("{}/file", mock_server.base_url()))
+            .await
+            .unwrap();
+
+        let file = service
+            .download_file_in_chunks(&sync_file, response)
+            .await
+            .unwrap();
+
+        assert_eq!(fs::read_to_string(&file.path).unwrap(), "hello file bytes");
+
+        // The completed file is served under its final name…
+        assert!(service.find_file("file1", category.clone()).unwrap().is_some());
+
+        // …and no partial_ working file remains in the directory.
+        let dir = temp_dir.path().join(category.to_path_buf());
+        let leftovers: Vec<_> = fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .filter(|name| name.starts_with("partial_"))
+            .collect();
+        assert!(
+            leftovers.is_empty(),
+            "partial files left behind: {:?}",
+            leftovers
+        );
     }
 }
