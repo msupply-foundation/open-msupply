@@ -33,6 +33,10 @@ export type InternalOrderLineFragment = {
   reason: {
   reason: string;
 } | null;
+  ancillaryParents: Array<{
+  id: string;
+  name: string;
+}>;
 };
 
 export type InternalOrderInfoFragment = {
@@ -96,6 +100,29 @@ export type InternalOrderInfoFragment = {
   totalBytes: number;
 }>;
 };
+  ancillaryState: {
+  state: "NONE" | "NEEDS_ADD" | "NEEDS_UPDATE";
+  count: number;
+  toAdd: Array<{
+  itemId: string;
+  requiredQuantity: number;
+  item: {
+  code: string;
+  name: string;
+  unitName: string | null;
+};
+}>;
+  toUpdate: Array<{
+  itemId: string;
+  requiredQuantity: number;
+  currentQuantity: number | null;
+  item: {
+  code: string;
+  name: string;
+  unitName: string | null;
+};
+}>;
+};
   lines: {
   totalCount: number;
   nodes: Array<InternalOrderLineFragment>;
@@ -116,7 +143,7 @@ export type InternalOrderDetailResult = {
 };
 
 export const InternalOrderDetail = {
-  query: "query internalOrderDetail($storeId: String!, $id: String!) {\n  requisition(storeId: $storeId, id: $id) {\n    __typename\n    ... on RequisitionNode {\n      ...InternalOrderInfo\n    }\n    ... on RecordNotFound {\n      __typename\n    }\n  }\n}\n\nfragment InternalOrderInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  minMonthsOfStock\n  maxMonthsOfStock\n  program {\n    name\n  }\n  orderType\n  period {\n    name\n  }\n  approvalStatus\n  isEmergency\n  createdDatetime\n  sentDatetime\n  finalisedDatetime\n  user {\n    username\n  }\n  shipments {\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  createdFromRequisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...InternalOrderLine\n    }\n  }\n}\n\nfragment InternalOrderLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  requestedQuantity\n  suggestedQuantity\n  approvedQuantity\n  approvalComment\n  availableStockOnHand\n  averageMonthlyConsumption\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  pricePerUnit\n  forecastTotalUnits\n  optionId\n  reason {\n    reason\n  }\n}",
+  query: "query internalOrderDetail($storeId: String!, $id: String!) {\n  requisition(storeId: $storeId, id: $id) {\n    __typename\n    ... on RequisitionNode {\n      ...InternalOrderInfo\n    }\n    ... on RecordNotFound {\n      __typename\n    }\n  }\n}\n\nfragment InternalOrderInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  minMonthsOfStock\n  maxMonthsOfStock\n  program {\n    name\n  }\n  orderType\n  period {\n    name\n  }\n  approvalStatus\n  isEmergency\n  createdDatetime\n  sentDatetime\n  finalisedDatetime\n  user {\n    username\n  }\n  shipments {\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  createdFromRequisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  ancillaryState {\n    state\n    count\n    toAdd {\n      itemId\n      requiredQuantity\n      item {\n        code\n        name\n        unitName\n      }\n    }\n    toUpdate {\n      itemId\n      requiredQuantity\n      currentQuantity\n      item {\n        code\n        name\n        unitName\n      }\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...InternalOrderLine\n    }\n  }\n}\n\nfragment InternalOrderLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  requestedQuantity\n  suggestedQuantity\n  approvedQuantity\n  approvalComment\n  availableStockOnHand\n  averageMonthlyConsumption\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  pricePerUnit\n  forecastTotalUnits\n  optionId\n  reason {\n    reason\n  }\n  ancillaryParents {\n    id\n    name\n  }\n}",
 } as TypedDocument<InternalOrderDetailResult, InternalOrderDetailVariables>;
 
 export type UpdateInternalOrderVariables = {
@@ -151,8 +178,33 @@ export type UpdateInternalOrderResult = {
 };
 
 export const UpdateInternalOrder = {
-  query: "mutation updateInternalOrder($storeId: String!, $input: UpdateRequestRequisitionInput!) {\n  updateRequestRequisition(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionNode {\n      ...InternalOrderInfo\n    }\n    ... on UpdateRequestRequisitionError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InternalOrderInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  minMonthsOfStock\n  maxMonthsOfStock\n  program {\n    name\n  }\n  orderType\n  period {\n    name\n  }\n  approvalStatus\n  isEmergency\n  createdDatetime\n  sentDatetime\n  finalisedDatetime\n  user {\n    username\n  }\n  shipments {\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  createdFromRequisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...InternalOrderLine\n    }\n  }\n}\n\nfragment InternalOrderLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  requestedQuantity\n  suggestedQuantity\n  approvedQuantity\n  approvalComment\n  availableStockOnHand\n  averageMonthlyConsumption\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  pricePerUnit\n  forecastTotalUnits\n  optionId\n  reason {\n    reason\n  }\n}",
+  query: "mutation updateInternalOrder($storeId: String!, $input: UpdateRequestRequisitionInput!) {\n  updateRequestRequisition(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionNode {\n      ...InternalOrderInfo\n    }\n    ... on UpdateRequestRequisitionError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InternalOrderInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  minMonthsOfStock\n  maxMonthsOfStock\n  program {\n    name\n  }\n  orderType\n  period {\n    name\n  }\n  approvalStatus\n  isEmergency\n  createdDatetime\n  sentDatetime\n  finalisedDatetime\n  user {\n    username\n  }\n  shipments {\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  createdFromRequisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  ancillaryState {\n    state\n    count\n    toAdd {\n      itemId\n      requiredQuantity\n      item {\n        code\n        name\n        unitName\n      }\n    }\n    toUpdate {\n      itemId\n      requiredQuantity\n      currentQuantity\n      item {\n        code\n        name\n        unitName\n      }\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...InternalOrderLine\n    }\n  }\n}\n\nfragment InternalOrderLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  requestedQuantity\n  suggestedQuantity\n  approvedQuantity\n  approvalComment\n  availableStockOnHand\n  averageMonthlyConsumption\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  pricePerUnit\n  forecastTotalUnits\n  optionId\n  reason {\n    reason\n  }\n  ancillaryParents {\n    id\n    name\n  }\n}",
 } as TypedDocument<UpdateInternalOrderResult, UpdateInternalOrderVariables>;
+
+export type RefreshAncillaryItemsVariables = {
+  storeId: string;
+  input: {
+    requisitionId: string;
+    action: "ADD" | "UPDATE";
+  };
+};
+
+export type RefreshAncillaryItemsResult = {
+  refreshAncillaryItems: ({
+  __typename: "RefreshAncillaryItemsSuccess";
+}) | ({
+  __typename: "RefreshAncillaryItemsError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const RefreshAncillaryItems = {
+  query: "mutation refreshAncillaryItems($storeId: String!, $input: RefreshAncillaryItemsInput!) {\n  refreshAncillaryItems(storeId: $storeId, input: $input) {\n    __typename\n    ... on RefreshAncillaryItemsSuccess {\n      __typename\n    }\n    ... on RefreshAncillaryItemsError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<RefreshAncillaryItemsResult, RefreshAncillaryItemsVariables>;
 
 export type InternalOrderLogVariables = {
   storeId: string;

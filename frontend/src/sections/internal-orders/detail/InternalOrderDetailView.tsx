@@ -16,6 +16,7 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { SidebarIcon } from '../../../ui/icons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
@@ -48,6 +49,7 @@ import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { InternalOrderLogTab } from './InternalOrderLogTab';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
+import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
@@ -294,6 +296,30 @@ const InternalOrderDetailView: Component = () => {
       sortKey: 'name',
       header: () => t('label.name'),
       meta: { headerPosition: 'primary', wrapLines: 2 },
+      // An ancillary line carries an "Ancillary of …" flag naming its
+      // principal item(s) (AC-A8); a non-ancillary line shows a plain name.
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-1)',
+            }}
+          >
+            {line.itemName}
+            <Show when={line.ancillaryParents.length > 0}>
+              <InfoTooltip
+                label={t('label.ancillary-of')}
+                text={`${t('label.ancillary-of')}: ${line.ancillaryParents
+                  .map(parent => parent.name)
+                  .join(', ')}`}
+              />
+            </Show>
+          </span>
+        );
+      },
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
@@ -567,6 +593,15 @@ const InternalOrderDetailView: Component = () => {
                     onHideOverMinChange={setHideOverMin}
                     itemFilter={itemFilter()}
                     onItemFilterChange={setItemFilter}
+                  />
+                  {/* The ancillary banner claims its own full-width row beneath
+                      the toolbar block (spec S3 § toolbar). */}
+                  <InternalOrderAncillaryBanner
+                    storeId={params.storeId}
+                    requisitionId={node().id}
+                    ancillary={node().ancillaryState}
+                    editable={editable()}
+                    onRefreshed={() => void refetch()}
                   />
                 </Toolbar>
               </Header>
