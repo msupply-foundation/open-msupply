@@ -38,7 +38,16 @@ export const feedbackMetadata: PageMetadata = {
     {
       id: 'feedback-alerts',
       title: 'Alerts',
-      searchTerms: ['error', 'warning', 'info', 'success', 'banner'],
+      searchTerms: [
+        'error',
+        'warning',
+        'info',
+        'success',
+        'banner',
+        'compact',
+        'inline',
+        'chip',
+      ],
     },
     {
       id: 'feedback-popovers',
@@ -112,6 +121,38 @@ export const FeedbackShowcase = () => {
               notice, glyph overridden by intent.
             </Alert>
           </Stack>
+
+          <Lead>
+            <strong>Compact footprint.</strong> The <code>compact</code> prop is
+            the ui-standards <code>fb-banner--compact</code>: the same alert
+            (severity, tint, icon) shrunk to an inline chip that tucks into a
+            page-header meta strip — persistent, low-urgency context (read-only
+            / auto-created record, locked document) that shouldn't cost a
+            content row. It's a single line while it fits and wraps once it hits
+            the container rather than overflowing. Same colour language, smaller
+            footprint; never shrink an error the user must fix.
+          </Lead>
+          <Stack gap="sm" class={styles.hugStart}>
+            <Alert severity="info">
+              This shipment is updated automatically; its status follows the
+              sending side.
+            </Alert>
+            <Alert severity="info" compact>
+              This shipment is updated automatically; its status follows the
+              sending side.
+            </Alert>
+          </Stack>
+          <Row gap="sm">
+            <Alert severity="warning" compact>
+              Auto-created — status won't update
+            </Alert>
+            <Alert severity="neutral" compact icon={CheckCircleIcon}>
+              Read-only
+            </Alert>
+            <Alert severity="success" compact>
+              Verified
+            </Alert>
+          </Row>
         </DashboardCard>
 
         <DashboardCard
