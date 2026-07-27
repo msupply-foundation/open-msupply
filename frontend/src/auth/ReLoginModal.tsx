@@ -58,7 +58,11 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
     setFieldErrors(errors);
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
-    const result = await login(values().username, values().password);
+    // Re-login keeps the user in their current store (workflow preserved) —
+    // it must not re-trigger the store picker.
+    const result = await login(values().username, values().password, {
+      isReLogin: true,
+    });
     if (result.kind === 'error')
       setSubmitState({ kind: 'error', message: result.message });
     // 'success' closes the modal reactively; 'pending' is globally handled —
