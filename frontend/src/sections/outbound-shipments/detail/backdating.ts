@@ -43,15 +43,22 @@ export const toDateInput = (value: Date): string => {
   return `${value.getFullYear()}-${month}-${day}`;
 };
 
-// AC-B1: the picker window is [now − maxDays, now] — a future date or one
-// beyond the maximum can't be chosen.
+// AC-B1: the picker window is [now − (maxDays − 1), now] — a future date or
+// one beyond the maximum can't be chosen. A maximum of zero (or unset) means
+// NO lower bound — unlimited backdating, the old app's semantics (a deployed
+// pref of {shipmentsEnabled: true, maxDays: 0} must not collapse the window
+// to "today only"). The +1 on the lower bound is the old app's deliberate
+// buffer: the server's UTC boundary check would reject the exact
+// now−maxDays day for stores ahead of UTC.
 export const backdateBounds = (
   now: Date,
   maxDays: number
-): { min: string; max: string } => {
+): { min?: string; max: string } => {
+  const max = toDateInput(now);
+  if (maxDays <= 0) return { max };
   const earliest = new Date(now);
-  earliest.setDate(earliest.getDate() - maxDays);
-  return { min: toDateInput(earliest), max: toDateInput(now) };
+  earliest.setDate(earliest.getDate() - (maxDays - 1));
+  return { min: toDateInput(earliest), max };
 };
 
 // AC-B1 rejection on the SAVE path: the native min/max only constrain the
@@ -59,9 +66,9 @@ export const backdateBounds = (
 // day is re-checked against the window before anything saves. YYYY-MM-DD
 // compares lexicographically, so plain string comparison is exact.
 export const withinBackdateBounds = (
-  bounds: { min: string; max: string },
+  bounds: { min?: string; max: string },
   day: string
-): boolean => day >= bounds.min && day <= bounds.max;
+): boolean => (bounds.min == null || day >= bounds.min) && day <= bounds.max;
 
 // A chosen day → an ISO datetime on that day at `now`'s time (recorded "as of"
 // that day; the picker bounds it to the window above).

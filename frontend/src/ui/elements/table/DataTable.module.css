@@ -1,12 +1,11 @@
 /*
  * DataTable — the shared, TanStack-driven data table (list views).
  *
- * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs
- * for the table BODY (rows, headers, selection, hover) — those follow the same
- * tokens as the old display-shell Table.module.css. But the toolbar
- * (full-screen button) and the full-screen surface have NO design yet;
- * everything below the "PLACEHOLDER" marker is a functional, token-driven
- * stand-in meant to be replaced once designed.
+ * Body (rows, headers, selection, hover) and the band chrome (toolbar,
+ * footer, frame) are reconciled to ui-standards § tables (see
+ * docs/DESIGN_STANDARDS.md › Tables ledger). Still PLACEHOLDER: the
+ * toolbar's control-button/popover look (unit 13) and the full-screen
+ * surface — see the marker below.
  */
 
 /* --- Table body (designed) -------------------------------------------------- */
@@ -14,13 +13,29 @@
 /* The DataTable fills the space its container gives it (a flex child in the
    page body) and owns its own scroll — so the column headers stay pinned and
    horizontal scroll is available immediately, rather than the whole page body
-   scrolling. */
+   scrolling.
+
+   The FRAME (ui-standards § tables, unit 10): the table is ONE enclosed
+   card — toolbar band / scroll box / footer bar stacked inside a single
+   hairline frame, every band seam a single full-width hairline (the
+   deployed spec demo renders a DOUBLED toolbar/thead seam — two adjacent
+   1px #E0E0E0 borders — recorded as WIP sloppiness we deliberately don't
+   copy; same reason the spec's thead border-top is NOT adopted).
+   overflow: clip keeps children's square-cornered fills inside the
+   rounded frame; every floating surface that originates inside escapes
+   it — Columns/Settings/comment/calendar ride the native Popover API
+   (top layer), filter menus and the rows-per-page listbox portal to
+   <body> (Kobalte). */
 .root {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-block-size: 0;
   min-inline-size: 0;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  overflow: clip;
 
   /* Width of each leading fixed column (expander / select). The ONE source of
      truth for that box — the .selectCell/.expanderCell rules size to it, and
@@ -47,13 +62,13 @@
 
 /* Refreshing bar — a thin indeterminate progress bar shown above the scroll
    area during a keep-previous-data refetch (filter/sort/page). Signals
-   "updating" without blanking or remounting the table (issue #160/#196). */
+   "updating" without blanking or remounting the table (issue #160/#196).
+   Flush edge-to-edge: it sits just under the toolbar's hairline, inside
+   the frame. */
 .refreshingBar {
   position: relative;
   block-size: 0.1875rem;
   overflow: hidden;
-  border-start-start-radius: var(--radius-md);
-  border-start-end-radius: var(--radius-md);
   background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
 }
 
@@ -92,25 +107,22 @@
   min-block-size: 0;
 }
 
-/* The bordered box starts here (the table itself), so the transparent toolbar
-   above sits OUTSIDE the border rather than being enclosed by it. */
+/* The scroll box is borderless — the frame on .root encloses it, the
+   toolbar's hairline sits above it and the footer's hairline below it
+   (single seams; unit 10). */
 .tableScroll {
   flex: 1;
   min-block-size: 0;
   overflow: auto;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  background: var(--bg-white);
 }
 
-/* Empty (or initial-loading) table: drop the bordered box (matching the current
-   app's borderless empty state) and become a flex column so the empty state /
-   spinner fills the space BELOW the still-visible column headers. Keep the 1px
-   as transparent (not border:none) so the layout doesn't shift when rows land. */
+/* Empty (or initial-loading) table: become a flex column so the empty state /
+   spinner fills the space BELOW the still-visible column headers. (The old
+   borderless-when-empty look predates the framed card — the frame now stays,
+   with the empty state inside it.) */
 .tableScroll[data-empty] {
   display: flex;
   flex-direction: column;
-  border-color: transparent;
 }
 
 /* The empty-state / spinner region under the header row — fills the remaining
@@ -143,12 +155,24 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 2;
-  padding: var(--space-3) var(--space-4);
+  padding-block: var(--space-3);
   border-block-end: 1px solid var(--color-divider);
+
+  /* Inline padding is ALIGNMENT-AWARE (see the .th[data-align] rules below):
+     the content-side padding matches the body cell so header text lines up
+     with its column, the free side is trimmed. --th-pad-inline is that matched
+     value, defaulted here and set per density in the density block. */
+  --th-pad-inline: var(--space-4);
+
   background: var(--bg-toolbar);
   color: var(--text-body);
   font-weight: var(--weight-medium);
-  line-height: var(--table-line-height);
+  /* Tighter than the body's --table-line-height (1.43) — a deliberate
+     header deviation (Carl 2026-07-24): only ever visible when a header
+     WRAPS to two lines, where it pulls the two lines closer and keeps the
+     wrapped header under ~50px. Single-line headers are centred in the
+     block-size floor regardless, so this doesn't change their look. */
+  line-height: 1.2;
   text-align: start;
   /* Header text may wrap (up to 2 lines — see .thText); the sort indicator
      stays visible, vertically centered beside it. Body cells keep nowrap unless
@@ -165,43 +189,63 @@
   user-select: none;
 }
 
-/* Column resize handle — a thin hit target on the trailing edge of a resizable
-   header. Invisible at rest (a faint divider on hover), highlighted with the
-   brand tone while dragging. Sticky positioning on .th is a containing block
-   for this absolute child. */
+/* Column resize handle (ui-standards § tables .col-resize-handle, unit 11): a
+   0.75rem hit target STRADDLING the trailing header edge — it overhangs the
+   edge by 0.1875rem so the grab zone spans the column boundary, and z-index
+   lifts it clear of the neighbouring sticky header. Invisible at rest; a
+   centred 0.125rem bar (inset to 60% height, rounded) fades to the action blue
+   on hover AND throughout a resize drag (.resizeHandleActive keeps it lit once
+   the pointer leaves the handle mid-drag — hover alone would drop it). Sticky
+   positioning on .th is the containing block for this absolute child.
+   TODO (WCAG 2.5.7, flagged Carl 2026-07-24): drag-resize still has NO
+   non-drag alternative — add keyboard arrow-key resize on a focusable handle
+   (or a width control) in a later a11y pass. */
 .resizeHandle {
   position: absolute;
   inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: var(--space-2);
+  inset-inline-end: -0.1875rem;
+  inline-size: var(--space-3);
+  z-index: 10;
   cursor: col-resize;
   touch-action: none;
   user-select: none;
+  background: transparent;
 }
 
 .resizeHandle::after {
   content: '';
   position: absolute;
-  inset-block: 0;
-  inset-inline-end: 0;
-  inline-size: 2px;
+  /* 60% height, vertically centred (spec top/bottom 20%). */
+  inset-block: 20%;
+  /* Centre the bar in the hit area, RTL-safe: auto margins over a fixed
+     inline-size (not a physical left + translateX). */
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: 0.125rem;
+  border-radius: 0.125rem;
   background: transparent;
-  transition: background 120ms ease;
+  /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
+     rule on .root — so no separate reduced-motion block is needed here. */
+  transition: background var(--table-bg-fade);
 }
 
-.resizeHandle:hover::after {
-  background: var(--color-divider);
+/* Blue on hover AND while resizing — the spec draws no grey stage and no
+   distinct active colour (this retires the last orange interaction accent;
+   focus ring / sort arrow / selection / pins all unified to blue earlier). */
+.resizeHandle:hover::after,
+.resizeHandleActive::after {
+  background: var(--secondary-main);
 }
 
-.resizeHandleActive::after,
-.resizeHandleActive:hover::after {
-  background: var(--primary-main);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .resizeHandle::after {
-    transition: none;
-  }
+/* The TRAILING column's handle must not overhang the table's right edge. The
+   -0.1875rem straddle above is right for interior column boundaries, but on the
+   last column that edge IS the table's edge, so the handle would jut 3px past
+   it inside the scroll box — enough to show a phantom horizontal scrollbar on a
+   table that otherwise fits exactly (measured: scrollWidth = clientWidth + 3px,
+   independent of column count). The last column has no boundary to straddle, so
+   flush its handle to the edge. */
+.th:last-child .resizeHandle {
+  inset-inline-end: 0;
 }
 
 .td {
@@ -215,6 +259,15 @@
   line-height: var(--table-line-height);
   white-space: nowrap;
   transition: background-color var(--table-bg-fade);
+}
+
+/* Monospace value cells — the `code` cell kind (item code, batch, location).
+   A display convention set via meta.mono → data-mono, on the VALUE only: the
+   body cell in table view (.td) and the wrapped value span in card view
+   (.card); the header label stays in the sans UI font. */
+.td[data-mono],
+.card [data-mono] {
+  font-family: var(--font-mono);
 }
 
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
@@ -272,11 +325,14 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    clipping. Placed after .td so it wins the white-space. */
 .td[data-wrap] {
   white-space: normal;
-  /* Multi-line cells read from the top (ui-standards § tables — the
-     spec's global td top-align only ever SHOWS on multi-line rows);
-     single-line cells keep the default middle so they sit centred in
-     the fixed row height. */
-  vertical-align: top;
+  /* All body cells stay vertically centred (the default middle), wrapping
+     columns included (Carl 2026-07-26): CSS can't tell whether a cell actually
+     wrapped, so a `vertical-align: top` here raised EVERY single-line row in a
+     wrapping column a few px above its centred neighbours in the fixed row
+     height — visible misalignment (the Name column). A genuine 2-line cell now
+     centres as a block in the grown row, still aligned with its neighbours.
+     Diverges from the ui-standards note that multi-line cells read from the
+     top — deliberate, since our density model uses fixed row heights. */
 }
 
 .tdClamp {
@@ -308,6 +364,23 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 .th[data-align='center'],
 .td[data-align='center'] {
   text-align: center;
+}
+
+/* Header inline padding aligns the header text with the body content below it,
+   while trimming the "free" side so labels get room (Carl 2026-07-24). Left
+   headers pad the START (= --th-pad-inline, the body cell's inline padding) and
+   zero the END; right headers mirror it so numbers line up at the end; centre
+   headers stay symmetric. The fixed leading select cell keeps its own box. */
+.th:not(.selectCell) {
+  padding-inline: var(--th-pad-inline) 0;
+}
+
+.th[data-align='right']:not(.selectCell) {
+  padding-inline: 0 var(--th-pad-inline);
+}
+
+.th[data-align='center']:not(.selectCell) {
+  padding-inline: var(--space-1);
 }
 
 .thLabel {
@@ -456,10 +529,40 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    vertical scroll. */
 .selectCell[data-pinned] {
   background: var(--bg-toolbar);
-  box-shadow:
-    inset -1px 0 0 0 var(--color-divider),
-    0.375rem 0 0.5rem -0.25rem
-      color-mix(in srgb, var(--gray-main) 35%, transparent);
+  /* Just the 1px divider seam here; the soft freeze shadow is the ::after
+     strip below. A per-cell drop shadow (the old second layer) blurs at every
+     cell's top/bottom edge, so the column reads as a stack of lumps fading in
+     and out at each row seam instead of one shadow. */
+  box-shadow: inset -1px 0 0 0 var(--color-divider);
+}
+
+/* The freeze depth cue as ONE continuous shadow down the whole frozen column:
+   a full-row-height gradient strip just past the cell's edge. It's uniform
+   vertically, so each row's strip abuts the next into one unbroken shadow — no
+   per-cell blur, no lumps. Physical left/right (not logical): the leading
+   column is pinned to the PHYSICAL-left edge in both directions (see
+   leadingPinnedStyle), so the shadow always falls physically right into the
+   scrolling content — matching the box-shadow it replaces.
+
+   top/bottom:0 spans the padding box, so the strip stops AT the collapsed 1px
+   row divider rather than covering it — the divider sits in the 1px gap
+   between adjacent rows' strips and shows through at its own light grey. (A
+   -1px bleed over the divider would composite grey shadow over grey divider
+   and read too dark; the hard-edged strips keep the shadow continuous either
+   way, so the gap costs no lumps.) */
+.selectCell[data-pinned]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 0.5rem;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--gray-main) 35%, transparent),
+    transparent
+  );
+  pointer-events: none;
 }
 
 /* Opaque hover variants for the sticky cells — the translucent row wash
@@ -503,19 +606,30 @@ tr[data-row-state='disabled'] > .selectCell {
    spacious below the nav-overlay width — see viewDensity in DataTable).
    Each band sets the spec's row height + cell padding (compact 8/12,
    comfortable 12/16, spacious 16/20 — 1.25rem literal: 20px has no space
-   token), and the HEADER row breathes with the same paddings (Carl
-   2026-07-24) — except the leading select cell, whose fixed box owns its
-   own padding (checkbox centring). block-size acts as a MINIMUM under
-   table layout, so wrapping cells still grow the row. Sits BEFORE the
-   selection/state tint rules — those carry higher specificity on the .td
-   key, and no-descending-specificity wants ascending order. */
+   token). block-size acts as a MINIMUM under table layout, so wrapping
+   cells still grow the row. Sits BEFORE the selection/state tint rules —
+   those carry higher specificity on the .td key, and
+   no-descending-specificity wants ascending order.
+
+   HEADER cells take a min-height FLOOR (block-size) + a SMALLER vertical
+   padding than the data cells (Carl 2026-07-24): a single-line header
+   sits generously centred in the floor (vertical-align: middle), while a
+   header that WRAPS to two lines grows from the small padding instead of
+   ballooning to floor-plus-full-padding. Same block-size-as-minimum model
+   as .td. Inline padding is alignment-aware (the .th[data-align] rules above):
+   each density sets --th-pad-inline to the BODY cell's inline padding, applied
+   to the header's content side (start for left, end for right) so the header
+   text lines up with its column; the free side is zeroed to give labels room.
+   The leading select th keeps its own fixed box (checkbox centring). */
 .table[data-density='compact'] .td {
   block-size: 2.5rem; /* 40px */
   padding: var(--space-2) var(--space-3);
 }
 
 .table[data-density='compact'] .th:not(.selectCell) {
-  padding: var(--space-2) var(--space-3);
+  block-size: 2.25rem; /* 36px min (single line) */
+  padding-block: var(--space-1);
+  --th-pad-inline: var(--space-3); /* = body compact inline padding */
 }
 
 .table[data-density='comfortable'] .td {
@@ -524,7 +638,9 @@ tr[data-row-state='disabled'] > .selectCell {
 }
 
 .table[data-density='comfortable'] .th:not(.selectCell) {
-  padding: var(--space-3) var(--space-4);
+  block-size: 2.75rem; /* 44px min (single line) */
+  padding-block: var(--space-1);
+  --th-pad-inline: var(--space-4); /* = body comfortable inline padding */
 }
 
 .table[data-density='spacious'] .td {
@@ -533,7 +649,9 @@ tr[data-row-state='disabled'] > .selectCell {
 }
 
 .table[data-density='spacious'] .th:not(.selectCell) {
-  padding: var(--space-4) 1.25rem;
+  block-size: 3.25rem; /* 52px min (single line) */
+  padding-block: var(--space-2);
+  --th-pad-inline: 1.25rem; /* = body spacious inline padding */
 }
 
 tr[data-selected]:not([data-row-state]) > .td,
@@ -593,7 +711,9 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 /* ==========================================================================
- * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
+ * PLACEHOLDER — the full-screen surface + the toolbar's control-button look
+ * below await their design pass (the buttons/popovers are unit 13; the
+ * toolbar BAND itself is reconciled — see .toolbar above).
  * ========================================================================== */
 
 /* When full screen, the table area covers the viewport above everything. Still a flex
@@ -606,23 +726,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   background: var(--bg-white);
 }
 
-/* The table toolbar (ui-standards § tables): the page-composed filter bar
-   inline-start, the icon-control cluster inline-end. One flex-wrap row —
-   squeezed, the controls wrap under the filters intrinsically (no
-   breakpoints). It sits outside the scroll region, so it never moves when the
-   table scrolls (either axis). Transparent, and NO bottom border — the
-   bordered table box below it delineates the boundary; a border here would
-   double up against the table's own top border. */
+/* The table toolbar (ui-standards § tables .mrt-toolbar, unit 10): the
+   page-composed filter bar inline-start, the icon-control cluster
+   inline-end, inside the frame as the card's top band — the spec's
+   0.75rem × 1.5rem padding, a single hairline below it (the spec's thead
+   border-top is deliberately NOT also drawn — see the .root comment).
+   One flex-wrap row — squeezed, the controls wrap under the filters
+   intrinsically (no breakpoints). It sits outside the scroll region, so
+   it never moves when the table scrolls (either axis). */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  min-block-size: 2.75rem;
-  padding-inline: var(--space-1);
-  /* Symmetric block padding — an end-only pad shifted the centred chips
-     visibly above the toolbar's midline. */
-  padding-block: var(--space-1);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  border-block-end: 1px solid var(--color-border-value);
 }
 
 /* The filter-bar slot — claims the inline-start and the free width (its chips
@@ -641,6 +759,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   display: flex;
   align-items: center;
   align-self: stretch;
+  gap: var(--space-1);
   margin-inline-start: auto;
 }
 
@@ -655,16 +774,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Shared look for the toolbar's icon controls (full-screen button + the settings popover
-   trigger, which gets this via Popover's triggerClass). Transparent, secondary-tone icon,
-   subtle hover — matches the OMS toolbar. */
+/* The toolbar's icon controls (ui-standards § tables .mrt-ib — the Columns +
+   Settings popover triggers, via Popover's triggerClass, and the full-screen
+   button): a 2.25rem transparent square, muted icon, soft hover wash. No
+   border (the old 1px transparent hack is gone). */
 .controlButton,
 .fullScreenButton {
-  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: none;
   background: transparent;
   cursor: pointer;
   color: var(--text-secondary);
-  padding: var(--space-1) var(--space-2);
   font-size: var(--text-lg);
   line-height: 1;
   border-radius: var(--radius-sm);
@@ -672,55 +796,95 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 
 .controlButton:hover,
 .fullScreenButton:hover {
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
 }
 
-.controlButtonActive {
-  background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
-  border-color: color-mix(in srgb, var(--secondary-main) 45%, transparent);
+/* Active trigger (full-screen on) — the spec's 8% blue tint + blue icon, no
+   border. */
+.controlButtonActive,
+.controlButtonActive:hover {
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
   color: var(--secondary-main);
 }
 
-/* --- Card view (ui-standards § tables, mobile card layout) ------------------- */
+/* Open popover trigger takes the same active tint (spec .mrt-ib.active), keyed
+   off the aria-expanded the Popover sets — so the Columns/Settings buttons
+   light up while their panel is open, with no extra state wiring. Placed after
+   the :hover rule so it wins while an open trigger is also hovered. */
+.controlButton[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
+  color: var(--secondary-main);
+}
 
-/* Card view is now rows in the SAME <table> as table view (each card is a full-width
-   <tr>). One card per row, stacked vertically — no wrapping grid — so a card bounds
-   itself to the table's width and its fields WRAP rather than scrolling horizontally.
-   The header row is hidden in card view (DataTable), so the card's own field labels
-   (LabelledValue) carry the naming. */
+/* The two control popovers (Columns / Settings) — the spec's dense .mrt-pop
+   panel: tight 0.375rem padding (the panel's rows carry their own), overriding
+   the shared Popover .panel's roomier default. Scoped under .root so it
+   OUT-SPECIFIES that base rule deterministically (the panel is a DOM
+   descendant of .root even in the native top layer) rather than tying with it
+   on bundle order. Comment/date-picker popovers keep the roomy default. */
+.root .controlPopover {
+  padding: 0.375rem;
+}
 
-/* The single spanning <td> that holds the card. Padding gives the card breathing room
-   inside the row; the border separates one card from the next. */
+/* --- Card view (ui-standards § tables card layout) -------------------------- */
+
+/* Card view is rows in the SAME <table> as table view (each card is a full-width
+   <tr>), so columns/scroll/selection are shared and the header row is simply
+   hidden. Each card is a discrete BOX on a recessed grey list (ui-standards
+   `.card-table-list` / `.card-table-card`): identity + badge in a header, a
+   hairline dividing the header from the body, then the body fields as an
+   auto-fitting grid — two columns on a phone card, more on a wide modal card.
+   The card's own field labels (LabelledValue) carry the naming. */
+
+/* Recessed list surface behind the cards — card view only (table view keeps the
+   plain scroll background). Makes the raised white cards lift off it. */
+.tableScroll[data-view='card'] {
+  background: var(--table-card-surface);
+}
+
+/* The spanning <td> — just the GAP around each card (the spec's
+   `.card-table-list` padding + inter-card gap); the card box carries the frame. */
 .cardCell {
-  padding: var(--space-3);
-  border-block-end: 1px solid var(--color-divider);
+  padding: var(--space-2);
   white-space: normal;
   vertical-align: top;
 }
 
-/* Selected card <tr> — tints the whole row (the action-blue selection
-   tint, matching table-row selection). */
-.cardRow[data-selected] > .cardCell {
-  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
-}
-
-/* The card body — a vertical stack (header row, then the secondary field rows). It
-   fills the cell, so its content bounds to the table width and wraps. */
+/* The card box — raised (white in light) on the recessed list, hairline border
+   + radius (ui-standards `.card-table-card`). */
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
 }
 
-/* Top row: identity (title + secondary) on the left, badge pinned top-right. */
+/* Selected card — blue border + faint blue fill (ui-standards `.selected-card`),
+   replacing the neutral border; keyed off the row's data-selected. */
+.cardRow[data-selected] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--secondary-main) 40%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--secondary-main) 5%,
+    var(--surface-raised)
+  );
+}
+
+/* Header: selection checkbox, identity title and badge on one row, vertically
+   centred so the checkbox, the identity's colour dot / icon / name and the badge
+   all line up (the identity is single-line; a future code-beneath would move
+   this back to flex-start with the checkbox aligned to the title line). */
 .cardHeader {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .cardSelect {
-  margin-block-start: var(--space-1);
   flex-shrink: 0;
 }
 
@@ -733,86 +897,93 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 .cardIdentity {
   flex: 1;
   min-width: 0;
+  /* A row of the header's 'primary' cells (inline-start), so a second primary
+     — e.g. a "#" number beside the name — sits BESIDE the title, not under it.
+     The common single-primary case is a one-item row (unchanged). Wraps when
+     the identity block runs out of width rather than overflowing. */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
 }
 
+/* Identity title (ui-standards `.card-table-card-primary`). No line-height
+   override — it's box-centred by .cardHeader's align-items, and every box
+   centre (checkbox, colour dot, icon, title, badge) is identical, verified in
+   BOTH Chromium and Firefox. Any residual glyph-within-box offset is the
+   rasteriser's own leading distribution, which differs per engine in OPPOSITE
+   directions, so tightening line-height helps one and hurts the other — left to
+   the default. */
 .cardPrimary {
   color: var(--text-body);
+  font-size: var(--text-md);
   font-weight: var(--weight-medium);
   overflow-wrap: anywhere;
+  /* Shrink + wrap inside .cardIdentity's flex row instead of forcing the row
+     wider than the card (matters once a second primary shares the row). */
+  min-width: 0;
 }
 
 .cardBadge {
+  display: flex;
+  align-items: center;
+  /* Space between multiple badge controls (e.g. the actions column's
+     duplicate + delete buttons); harmless for a single chip. */
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
-/* Secondary fields — a WRAPPING row of stacked label-above-value units (LabelledValue).
-   Not a fixed grid: each field takes its natural width and the row wraps to as many
-   columns as fit (ui-standards § tables; CLAUDE.md #7 intrinsic layout). column-gap
-   separates fields across; row-gap separates wrapped rows. */
+/* Card body — divided from the header by a hairline (ui-standards
+   `.card-table-fields` top border); stacks the default group + declared
+   groups. */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--color-divider);
+}
+
+/* Field grid — LabelledValue units in an auto-fitting column grid (ui-standards
+   `.card-table-fields` is a fixed two columns; auto-fit so a wide card also
+   fills across, one column on a very narrow card; CLAUDE.md #7). The min track
+   is the DENSITY knob: it's the smallest a column may get, so short read-fields
+   (a code, a date) pack tighter at a lower floor. Kept modest for flat display
+   fields; panels (editable inputs) widen it below. */
 .cardFields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--space-3) var(--space-4);
 }
 
-/* Group tabs (kdd/edit-line-card-table) — a row of tab buttons living INSIDE the toolbar,
-   inline-start (after any filter bar); the icon-control cluster (.toolbarControls) holds
-   the inline-end via its own auto margin. Switching sets the active field-group (a
-   secondary column filter); the active tab carries the brand underline (the app's tab
-   idiom, hand-rolled as a plain in-bar strip). */
-.groupTabs {
-  display: flex;
-  align-self: stretch;
-  align-items: stretch;
-  gap: var(--space-1);
+/* Fields inside a panel are usually editable inputs (the modal cards), which
+   need more room than a read-only value — so give panel tracks a wider floor. */
+.cardPanel .cardFields {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
-.groupTab {
-  display: inline-flex;
+/* --- Card body groups ------------------------------------------------------- */
+
+/* A body group's block (non-disclosure): its optional caption then its field
+   flow. Ungrouped fields render straight as .cardFields with no wrapper. */
+.cardGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Group caption — a leading icon + label reading as a section header for a
+   captioned group; the icon is brand-toned. Absent for the default group. */
+.cardGroupCaption {
+  display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-inline: var(--space-2);
-  border: none;
-  background: none;
-  color: var(--text-secondary);
+  color: var(--text-body);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  cursor: pointer;
-  border-block-end: 2px solid transparent;
 }
 
-.groupTab:hover {
-  color: var(--text-body);
-}
-
-.groupTab[data-active] {
-  color: var(--primary-main);
-  border-block-end-color: var(--primary-main);
-}
-
-.groupTab:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
-}
-
-.groupTabIcon {
-  display: inline-flex;
-}
-
-.groupTabIcon svg {
-  inline-size: 1.125rem;
-  block-size: 1.125rem;
-}
-
-/* Card-view group marker (kdd/edit-line-card-table) — NOT a section header. The card's fields
-   flow as one list; each group contributes this as just another secondary element inline before
-   its fields: the 'secondary' text look (muted, --text-sm) with a bigger brand icon prepended.
-   It claims a full row of the wrapping cardFields flex so it reads as the lead-in to its fields,
-   but carries no divider/heading chrome. */
-/* Group icon — the icon-only marker that leads each group's cells in the secondary flow
-   (kdd/edit-line-card-table). It's just one more element in the .cardFields flex (no
-   flex-basis / row-claim), so the group's fields sit right after it, inline; a bigger,
-   brand-toned icon so the grouping reads at a glance. */
+/* The group's leading icon (caption + disclosure header). */
 .cardGroupIcon {
   display: inline-flex;
   align-items: center;
@@ -821,12 +992,134 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 }
 
 .cardGroupIcon svg {
-  inline-size: 1.5rem;
-  block-size: 1.5rem;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
 }
 
-/* --- Table footer (ui-standards § tables → pagination) ---------------------- */
-/* The footer bar itself is the shared ContentFooter layout component (one bar:
-   the pager by default, the selection action bar while rows are selected — see
-   DataTable.tsx). No table-scoped footer CSS yet; its look is reconciled in the
-   Phase 2 styling pass. */
+/* Panel — a contained "zone" around a group's fields (opt-in via CardGroup.panel;
+   the wide modal cards use it, small list cards stay flat). The mockup's tinted
+   zone: a faint fill + hairline so white field controls don't look washed out
+   on the card. */
+.cardPanel {
+  background: color-mix(in srgb, var(--text-body) 3%, var(--surface-raised));
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+/* Disclosure group — the fields live inside an Accordion (open/closed). The head
+   stacks the trigger and, while collapsed, an optional row preview. */
+.cardDisclosureHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Disclosure trigger — the mockup's inline blue "More details" link (not the
+   Accordion's default full-width bold bar): a compact, brand-blue, medium-weight
+   label + chevron, hover-underlined. Scoped under .card so it out-specifies the
+   shared Accordion `.trigger` deterministically (both are single-class). */
+.card .cardDisclosureTrigger {
+  inline-size: auto;
+  justify-content: flex-start;
+  /* Gap between the caption lead and the chevron (the icon→label gap lives on
+     the shared .cardGroupCaption inside, so it matches the plain caption). */
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  color: var(--secondary-main);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* The reused caption lead sets its own body colour; in a disclosure it takes
+   the trigger's brand-blue link colour instead. */
+.card .cardDisclosureTrigger .cardGroupCaption {
+  color: var(--secondary-main);
+}
+
+.card .cardDisclosureTrigger:hover {
+  text-decoration: underline;
+}
+
+.cardPreview {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* --- Toolbar: sort control --------------------------------------------------- */
+
+/* Sort trigger — a labelled pill (field name + direction arrow), card view only. */
+.sortTrigger {
+  display: inline-flex;
+  align-items: center;
+  /* Label inline-start, direction glyph pinned inline-end — the glyph stays on
+     the right whatever the field-name width. */
+  justify-content: space-between;
+  gap: var(--space-2);
+  block-size: 2.25rem;
+  /* Floor so a short field name (e.g. "#") doesn't collapse the pill to a stub;
+     it grows past this for longer names. */
+  min-inline-size: 6rem;
+  padding-inline: var(--space-3);
+  /* Extra separation from the icon controls — the labelled pill needs more air
+     from them than the icons need from each other (the cluster gap alone). */
+  margin-inline-end: var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.sortTrigger:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+.sortTriggerLabel {
+  font-weight: var(--weight-medium);
+}
+
+.sortMenu {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 10rem;
+}
+
+.sortMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  text-align: start;
+  border-radius: var(--radius-sm);
+}
+
+.sortMenuItem:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+.sortMenuItem[data-active] {
+  color: var(--secondary-main);
+  font-weight: var(--weight-medium);
+}
+
+/* --- Table footer (ui-standards § tables → pagination, unit 10) ------------- */
+/* The footer bar is the shared ContentFooter layout component (one bar: the
+   pager by default, the selection action bar while rows are selected — see
+   DataTable.tsx), passed this override class as the table's in-frame band:
+   the spec's tighter 0.5rem block padding (ContentFooter's own inline
+   --space-5 already equals the spec's 1.5rem). Its top hairline
+   (--color-border-value, from ContentFooter) is the footer seam — single,
+   since the scroll box above is borderless. Scoped under .root so the
+   override OUT-SPECIFIES ContentFooter's own padding rather than tying
+   with it (a same-specificity tie is decided by bundle order — fragile). */
+.root > .tableFooter {
+  padding-block: var(--space-2);
+}

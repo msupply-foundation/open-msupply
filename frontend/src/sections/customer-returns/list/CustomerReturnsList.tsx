@@ -257,7 +257,7 @@ const CustomerReturnsList: Component = () => {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
+      meta: { headerPosition: 'primary', wrapLines: 2 },
       cell: info => {
         const row = info.row.original;
         return (
@@ -292,7 +292,7 @@ const CustomerReturnsList: Component = () => {
       cell: info => (
         <StatusChip {...statusMeta(info.getValue<ReturnRow['status']>())} />
       ),
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },

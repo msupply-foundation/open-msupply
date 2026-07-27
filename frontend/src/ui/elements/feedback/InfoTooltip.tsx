@@ -1,4 +1,4 @@
-import { InfoOutlineIcon } from '../../icons';
+import { InfoIcon } from '../../icons';
 import { t } from '../../../intl';
 import { Popover, type PopoverPlacement } from './Popover';
 import styles from './InfoTooltip.module.css';
@@ -31,7 +31,7 @@ export const InfoTooltip = (props: InfoTooltipProps) => (
     <Popover
       openOnHover
       placement={props.placement ?? 'top'}
-      trigger={<InfoOutlineIcon />}
+      trigger={<InfoIcon />}
       triggerLabel={props.label ?? t('label.more-information')}
       triggerClass={styles.trigger}
       triggerTestId={props.triggerTestId}

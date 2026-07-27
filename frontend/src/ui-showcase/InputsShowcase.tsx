@@ -25,7 +25,8 @@ import {
   locale,
   setHomeCurrency,
 } from '../intl';
-import { FormPreview, Lead } from './common';
+import { FormPreview, Lead, Note, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './InputsShowcase.module.css';
 
 // Mock source for the home-currency selector: the currencies old OMS shipped
@@ -87,6 +88,49 @@ const Field = (props: {
  * inside a dialog/panel. InsetPanel, the recessed grouping container, is a
  * layout element (see the Layout › Inset panel section).
  */
+export const inputsMetadata: PageMetadata = {
+  id: 'inputs',
+  title: 'Inputs',
+  searchTerms: ['field', 'form', 'control'],
+  items: [
+    {
+      id: 'inputs-text',
+      title: 'Text fields',
+      searchTerms: ['string', 'textfield', 'states', 'size'],
+    },
+    {
+      id: 'inputs-multiline',
+      title: 'Multi-line text',
+      searchTerms: ['textarea', 'notes', 'comment', 'paragraph'],
+    },
+    {
+      id: 'inputs-numbers',
+      title: 'Number field',
+      searchTerms: ['numeric', 'quantity', 'integer', 'decimal'],
+    },
+    {
+      id: 'inputs-currency',
+      title: 'Currency field',
+      searchTerms: ['money', 'price', 'cost', 'amount'],
+    },
+    {
+      id: 'inputs-field-row',
+      title: 'Field row',
+      searchTerms: ['inline', 'label', 'row'],
+    },
+    {
+      id: 'inputs-choices',
+      title: 'Choices',
+      searchTerms: ['radio', 'checkbox', 'toggle', 'switch', 'option'],
+    },
+    {
+      id: 'inputs-date-time',
+      title: 'Date & time',
+      searchTerms: ['calendar', 'picker', 'datetime', 'range'],
+    },
+  ],
+};
+
 export const InputsShowcase = () => {
   // RadioGroup demo: a stocktake-type choice, plus an indented include-all
   // sub-choice — the exact shape the create-stocktake modal uses.
@@ -133,7 +177,8 @@ export const InputsShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Text field states">
+        <SectionTOC page={inputsMetadata} />
+        <DashboardCard id="inputs-text" title="Text field states">
           <Lead>
             The company-spec text input: a plain HTML <code>&lt;input&gt;</code>{' '}
             + CSS, no library — label, helper/error message, required marker,
@@ -196,11 +241,10 @@ export const InputsShowcase = () => {
             form fields, modals and drawers; <code>size="small"</code> (2.25rem
             / 36px, <strong>13px</strong> text <em>and</em> label) for dense
             contexts — table inline editing, filter bars, toolbars, sidebars.
-            Small shrinks the height <em>and</em> the type; on touch the default
-            grows to the 48px target while small stays dense (density is the
-            point). The one <code>size</code> prop flows to{' '}
-            <code>NumberField</code>, <code>CurrencyField</code> and the date
-            fields — compare each pair below.
+            Small shrinks the height <em>and</em> the type. The one{' '}
+            <code>size</code> prop flows to <code>NumberField</code>,{' '}
+            <code>CurrencyField</code> and the date fields — compare each pair
+            below.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Default — 40px · 14px">
@@ -240,9 +284,22 @@ export const InputsShowcase = () => {
               />
             </Field>
           </div>
+          <Note>
+            <strong>Touch enforcement:</strong> on coarse pointers (phones,
+            tablets) every input grows to a WCAG 2.5.5 (AAA) tap target —{' '}
+            <strong>default → 48px</strong>, <strong>small → 44px</strong> — and
+            the text bumps to 16px so iOS Safari doesn&rsquo;t zoom on focus.
+            Both heights are absolute px, so the narrow-viewport root shrink
+            can&rsquo;t erode them. Every field reads the same four{' '}
+            <code>--input-height*</code> tokens, so they stay aligned side by
+            side. Emulate a touch device (or resize on a real one) to see it.
+          </Note>
         </DashboardCard>
 
-        <DashboardCard title="Multi-line text — native <textarea>">
+        <DashboardCard
+          id="inputs-multiline"
+          title="Multi-line text — native <textarea>"
+        >
           <Lead>
             The TextField spec on a plain HTML <code>&lt;textarea&gt;</code> —
             same border, focus ring, label and helper/error wiring. The{' '}
@@ -289,7 +346,10 @@ export const InputsShowcase = () => {
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Number field — numeric input over TextField">
+        <DashboardCard
+          id="inputs-numbers"
+          title="Number field — numeric input over TextField"
+        >
           <Lead>
             The old OMS NumericTextInput rebuilt: a TextField (always{' '}
             <code>type="text"</code> — never <code>type="number"</code>) with
@@ -402,7 +462,10 @@ export const InputsShowcase = () => {
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Currency field — money over NumberField">
+        <DashboardCard
+          id="inputs-currency"
+          title="Currency field — money over NumberField"
+        >
           <Lead>
             A NumberField whose decimal rules and symbol come from the currency,
             all derived from <code>Intl</code> — no hand-maintained table (the
@@ -480,7 +543,10 @@ export const InputsShowcase = () => {
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Field row — inline label + control">
+        <DashboardCard
+          id="inputs-field-row"
+          title="Field row — inline label + control"
+        >
           <Lead>
             A compact form row: a bold label on the inline-start, the control
             filling the inline-end — the app's dense dialog/panel layout (the
@@ -507,7 +573,10 @@ export const InputsShowcase = () => {
           </FormPreview>
         </DashboardCard>
 
-        <DashboardCard title="Radio group — native <input type=radio>">
+        <DashboardCard
+          id="inputs-choices"
+          title="Radio group — native <input type=radio>"
+        >
           <Lead>
             Single choice among fixed options — the "own the simple" case with{' '}
             <strong>no</strong> library. A shared <code>name</code> gives the
@@ -617,7 +686,10 @@ export const InputsShowcase = () => {
           </FormPreview>
         </DashboardCard>
 
-        <DashboardCard title="Date & time — headless (corvu)">
+        <DashboardCard
+          id="inputs-date-time"
+          title="Date & time — headless (corvu)"
+        >
           <Lead>
             <code>DateField</code>, <code>DateRangeField</code>,{' '}
             <code>DateTimeField</code> and <code>TimeField</code>: a popover

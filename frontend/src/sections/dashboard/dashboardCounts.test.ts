@@ -21,8 +21,8 @@ const DOCUMENTS = {
 };
 
 describe('dashboard wire surface', () => {
-  // AC-D1 — read-only and store-scoped: the vertical issues only count
-  // queries (no mutations), every one carrying the required storeId.
+  // AC-D1 — read-only and store-scoped: the vertical issues only count queries
+  // (no mutations), every one carrying the required storeId.
   it('AC-D1: every operation is a query and requires storeId', () => {
     for (const doc of Object.values(DOCUMENTS)) {
       expect(doc.query.trimStart().startsWith('query ')).toBe(true);
@@ -39,16 +39,16 @@ describe('dashboard wire surface', () => {
     }
   });
 
-  // contract.md § deprecated combined query — new work must use the three
-  // split invoice-count queries, never invoiceCounts.
+  // contract.md § deprecated combined query — new work must use the three split
+  // invoice-count queries, never invoiceCounts.
   it('never uses the deprecated invoiceCounts query', () => {
     for (const doc of Object.values(DOCUMENTS)) {
       expect(doc.query).not.toMatch(/\binvoiceCounts\s*\(/);
     }
   });
 
-  // contract.md § stock levels — the threshold arguments are declared so the
-  // app can always send them explicitly (AC-S8); stockCounts declares
+  // contract.md § stock levels — the threshold arguments are declared so the app
+  // can always send them explicitly (AC-S8); stockCounts declares
   // daysTillExpired for the same reason.
   it('AC-S8: declares the explicit threshold arguments', () => {
     expect(ItemCounts.query).toContain('$lowStockThreshold: Float');

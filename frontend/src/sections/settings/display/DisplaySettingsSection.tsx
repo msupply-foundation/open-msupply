@@ -8,7 +8,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { LanguageSelector } from '../../../ui/layout/AppShell/LanguageSelector';
-import { InfoOutlineIcon, SaveIcon } from '../../../ui/icons';
+import { InfoIcon, SaveIcon } from '../../../ui/icons';
 import { changeLanguage, locale, t } from '../../../intl';
 import {
   logoClearInput,
@@ -90,7 +90,7 @@ const EditorToggleRow = (props: {
         />
         <Show when={props.info}>
           <Popover
-            trigger={<InfoOutlineIcon />}
+            trigger={<InfoIcon />}
             triggerLabel={props.heading}
             placement="bottom-start"
           >

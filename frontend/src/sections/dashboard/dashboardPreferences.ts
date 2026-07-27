@@ -13,8 +13,8 @@ import {
 // the reactive guard-3 context.
 //
 // Undefined while the context is unresolved — the page holds each gated piece
-// absent until the gates are known (the D7 principle: unresolved ⇒ the
-// plainer surface). Reactive, so a post-sync refetch re-gates in place.
+// absent until the gates are known (unresolved ⇒ the plainer surface).
+// Reactive, so a post-sync refetch re-gates in place.
 
 export const dashboardGates = (): DashboardGates | undefined => {
   const ctx = storeContext();

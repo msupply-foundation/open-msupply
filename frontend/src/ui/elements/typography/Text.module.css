@@ -37,3 +37,11 @@
   line-height: var(--line-tight);
   font-weight: var(--weight-semibold);
 }
+
+/* Monospace family — codes, batches, IDs (ui-standards › typography). A family
+   swap only: orthogonal to the size/weight variants above, and like them sets
+   no colour. Compose with a variant for size (e.g. bodySmall for the spec's
+   slightly-smaller code) and let the container own the colour. */
+.mono {
+  font-family: var(--font-mono);
+}

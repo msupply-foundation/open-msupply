@@ -4,7 +4,7 @@
 # touching its siblings). All are store-scoped; none mutate (AC-D1).
 #
 # timezoneOffset is deliberately omitted everywhere — the app sends no offset,
-# so the server buckets "today"/"this week" in its own local timezone
+# so the server buckets "today" / "this week" in its own local timezone
 # (contract.md § time windows, incl. the wire trap: the default is
 # server-local, NOT UTC).
 

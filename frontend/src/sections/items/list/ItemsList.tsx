@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal } from 'solid-js';
+import { createMemo, createResource } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
@@ -151,9 +151,6 @@ const ItemsList: Component = () => {
 
   const onFilterChange = (filter: ItemsListFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
-
-  const [selectedIds] = createSignal<string[]>([]);
-  void selectedIds; // no row selection on this screen (read-only catalogue)
 
   return (
     <Page
