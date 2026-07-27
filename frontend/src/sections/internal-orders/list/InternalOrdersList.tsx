@@ -46,6 +46,9 @@ import {
   DeleteInternalOrdersAction,
   ExportInternalOrdersAction,
 } from './actions';
+import { CreateInternalOrderModal } from './create/CreateInternalOrderModal';
+import { StocktakeWarningDialog } from './create/StocktakeWarningDialog';
+import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
 
 // The internal-orders list view (spec/internal-orders S1). An internal order is
 // a REQUEST requisition; `type` is pinned to REQUEST on every read. Mirrors the
@@ -90,6 +93,11 @@ const InternalOrdersList: Component = () => {
   const navigate = useNavigate();
   const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Create-flow state: the modal, the recent-stocktake warning gate, and the
+  // in-flight stocktake check that decides between them (spec S2 / AC-C5).
+  const [createOpen, setCreateOpen] = createSignal(false);
+  const [gateOpen, setGateOpen] = createSignal(false);
+  const [checking, setChecking] = createSignal(false);
 
   // Column config (order/sizing/pinning/visibility), resolved default → global
   // → user and by breakpoint band (kdd/table-state). On compact (narrow) the
@@ -163,6 +171,35 @@ const InternalOrdersList: Component = () => {
     false;
   const hasPrograms = () =>
     (context.latest?.supplierProgramRequisitionSettings.length ?? 0) > 0;
+  const warnStocktake = () =>
+    context.latest?.preferences.warnWhenMissingRecentStocktake;
+
+  // New order (AC-C1/AC-C5): where the store warns on missing recent
+  // stocktakes, evaluate them first — a shortfall diverts through the warning
+  // gate; otherwise (and when the preference is off) the create modal opens
+  // directly. The New-order button is disabled until the context read resolves,
+  // so the gate is always decided before the modal can open.
+  const startCreate = async () => {
+    const warn = warnStocktake();
+    if (!warn?.enabled) {
+      setCreateOpen(true);
+      return;
+    }
+    setChecking(true);
+    const insufficient = await recentStocktakeIsInsufficient(
+      params.storeId,
+      warn.maxAge,
+      warn.minItems
+    );
+    setChecking(false);
+    if (insufficient) setGateOpen(true);
+    else setCreateOpen(true);
+  };
+
+  const onCreated = (id: string) => {
+    setCreateOpen(false);
+    navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
+  };
 
   // Bulk delete is offered only while EVERY selected row is Draft (and its
   // supplier's store enabled) — a deliberate UI narrowing of the server's guard
@@ -341,11 +378,11 @@ const InternalOrdersList: Component = () => {
             <Button
               icon={<PlusCircleIcon />}
               data-testid="new-internal-order-button"
-              onClick={() =>
-                navigate(
-                  `/${params.storeId}/replenishment/internal-order/new`
-                )
-              }
+              // Disabled until the store context (and so the stocktake-warning
+              // gate) is known; busy while the on-click stocktake check runs.
+              disabled={context.loading || checking()}
+              loading={checking()}
+              onClick={() => void startCreate()}
             >
               {t('label.new-internal-order')}
             </Button>
@@ -358,6 +395,26 @@ const InternalOrdersList: Component = () => {
         </Header>
       }
     >
+      <StocktakeWarningDialog
+        open={gateOpen()}
+        minItems={warnStocktake()?.minItems ?? 0}
+        maxAge={warnStocktake()?.maxAge ?? 0}
+        onCancel={() => setGateOpen(false)}
+        onContinue={() => {
+          setGateOpen(false);
+          setCreateOpen(true);
+        }}
+        onGoToStocktakes={() => {
+          setGateOpen(false);
+          navigate(`/${params.storeId}/inventory/stocktakes`);
+        }}
+      />
+      <CreateInternalOrderModal
+        storeId={params.storeId}
+        open={createOpen()}
+        onClose={() => setCreateOpen(false)}
+        onCreated={onCreated}
+      />
       <DataTable
         columns={columns()}
         rows={rows()}
@@ -384,9 +441,8 @@ const InternalOrdersList: Component = () => {
           <Button
             icon={<PlusCircleIcon />}
             data-testid="nothing-here-create-button"
-            onClick={() =>
-              navigate(`/${params.storeId}/replenishment/internal-order/new`)
-            }
+            disabled={context.loading || checking()}
+            onClick={() => void startCreate()}
           >
             {t('label.new-internal-order')}
           </Button>

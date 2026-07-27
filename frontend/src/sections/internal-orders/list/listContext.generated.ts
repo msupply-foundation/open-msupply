@@ -13,8 +13,15 @@ export type InternalOrderListContextResult = {
   supplierProgramRequisitionSettings: Array<{
   programId: string;
 }>;
+  preferences: {
+  warnWhenMissingRecentStocktake: {
+  enabled: boolean;
+  maxAge: number;
+  minItems: number;
+};
+};
 };
 
 export const InternalOrderListContext = {
-  query: "query internalOrderListContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    requestRequisitionRequiresAuthorisation\n  }\n  supplierProgramRequisitionSettings(storeId: $storeId) {\n    programId\n  }\n}",
+  query: "query internalOrderListContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    requestRequisitionRequiresAuthorisation\n  }\n  supplierProgramRequisitionSettings(storeId: $storeId) {\n    programId\n  }\n  preferences(storeId: $storeId) {\n    warnWhenMissingRecentStocktake {\n      enabled\n      maxAge\n      minItems\n    }\n  }\n}",
 } as TypedDocument<InternalOrderListContextResult, InternalOrderListContextVariables>;
