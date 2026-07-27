@@ -226,10 +226,16 @@
 /* Monospace value cells — the `code` cell kind (item code, batch, location).
    A display convention set via meta.mono → data-mono, on the VALUE only: the
    body cell in table view (.td) and the wrapped value span in card view
-   (.card); the header label stays in the sans UI font. */
+   (.card); the header label stays in the sans UI font. Sized as a proportion
+   of the surrounding cell — 92.857% ≈ 13px against the 14px (--text-sm) body
+   — and muted, because Courier renders visually larger at the same px, so
+   codes/batches over-weighted the row (issue #614). Using a percentage rather
+   than a token keeps mono a fixed fraction of whatever text it sits in. */
 .td[data-mono],
 .card [data-mono] {
   font-family: var(--font-mono);
+  font-size: 92.857%;
+  color: var(--text-secondary);
 }
 
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
