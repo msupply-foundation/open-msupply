@@ -49,7 +49,7 @@ import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
-import { localTodayIso } from '../stockCalc';
+import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import {

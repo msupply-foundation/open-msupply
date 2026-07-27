@@ -9,7 +9,7 @@ import type { ItemsVariables } from './items.generated';
 // generated ItemFilterInput (kdd/type-safety — the lens/at-risk choice is a UI
 // concept, not a wire field; everything it produces conforms to the generated
 // type). Kept pure + colocated so the population rules are unit-tested
-// (AC-L1/L2/L4/L5/L6, AC-P2/P3) without standing up the screen.
+// (OMS-REG-CAT-04.25/.26/.28/.29/.30, .37/.39) without standing up the screen.
 
 export type WireFilter = NonNullable<ItemsVariables['filter']>;
 
@@ -54,9 +54,9 @@ export const expandLens = (lens: StockStatusLens): Partial<WireFilter> => {
 
 // The UI filter state → the wire ItemFilterInput. Always carries the base
 // population (active, stock-type). With no lens it adds isVisibleOrOnHand:true
-// (the default visible-or-on-hand population, AC-L1); a lens REPLACES that with
-// its own expansion (AC-L2). Search, master-list, MOS bounds, at-risk and
-// custom-field property filters all combine as AND (AC-L3/L4/L5/L6, AC-P2).
+// (the default visible-or-on-hand population, OMS-REG-CAT-04.25); a lens
+// REPLACES that with its own expansion (.26). Search, master-list, MOS bounds,
+// at-risk and custom-field property filters all combine as AND (.27/.28/.29/.30, .37).
 export const buildItemFilter = (f: ItemsListFilter): WireFilter => {
   const filter: WireFilter = {
     isActive: true,

@@ -33,22 +33,22 @@ export const VvmHistoryPanel: Component<{
   const columns = (): Column<Log, never>[] => [
     {
       c: { accessor: l => l.createdDatetime, id: 'date' },
-      header: t('label.date'),
+      header: () => t('label.date'),
       cell: info => localisedDate(info.row.original.createdDatetime),
     },
     {
       c: { accessor: l => l.createdDatetime, id: 'time' },
-      header: t('label.time'),
+      header: () => t('label.time'),
       meta: { align: 'right' },
       cell: info => localisedTime(info.row.original.createdDatetime),
     },
     {
       c: { accessor: l => l.status?.description ?? '', id: 'status' },
-      header: t('label.vvm-status'),
+      header: () => t('label.vvm-status'),
     },
     {
       c: { accessor: l => l.status?.priority ?? '', id: 'priority' },
-      header: t('label.distribution-priority'),
+      header: () => t('label.distribution-priority'),
       meta: { align: 'right' },
       cell: info =>
         info.row.original.status
@@ -57,11 +57,11 @@ export const VvmHistoryPanel: Component<{
     },
     {
       c: { accessor: l => l.user?.username ?? '', id: 'user' },
-      header: t('label.entered-by'),
+      header: () => t('label.entered-by'),
     },
     {
       c: { accessor: l => l.comment ?? '', id: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       meta: { wrapLines: 2 },
     },
   ];

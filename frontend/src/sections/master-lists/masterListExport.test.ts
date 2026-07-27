@@ -12,9 +12,10 @@ const ROWS: MasterListExportRow[] = [
 const HEADERS = { code: 'Code', name: 'Name', description: 'Description' };
 
 describe('masterListExport (spec/master-lists § export)', () => {
-  // AC-E1 — export covers exactly the loaded rows (current page only); columns
-  // are the literal `id` then the translated Code/Name/Description.
-  it('AC-E1: CSV = literal id header + translated headers + the loaded rows', () => {
+  // OMS-REG-CAT-07.26 — export covers exactly the loaded rows (current page
+  // only); columns are the literal `id` then the translated
+  // Code/Name/Description.
+  it('CSV = literal id header + translated headers + the loaded rows (CAT-07.26)', () => {
     const csv = masterListsToCsv(ROWS, HEADERS);
     expect(csv.split('\n')[0]).toBe('id,Code,Name,Description');
     expect(csv).toContain('m1,ML01,Essential meds,core list');
@@ -24,9 +25,9 @@ describe('masterListExport (spec/master-lists § export)', () => {
     expect(csv.split('\n')).toHaveLength(3);
   });
 
-  // AC-E3 — no rows loaded → no data to export (header-only; the screen shows
-  // "No data available" rather than downloading).
-  it('AC-E3: empty rows produce a header-only document', () => {
+  // OMS-REG-CAT-07.29 — no rows loaded → no data to export (header-only; the
+  // screen shows "No data available" rather than downloading).
+  it('empty rows produce a header-only document (CAT-07.29)', () => {
     expect(masterListsToCsv([], HEADERS)).toBe('id,Code,Name,Description');
   });
 

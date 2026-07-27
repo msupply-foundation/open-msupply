@@ -80,7 +80,8 @@ const CustomerSearchModal = lazy(() =>
 );
 
 // One count family = one resource owning one panel's loading / error state
-// (ui-surface S2: panels load independently and fail independently — AC-D2).
+// (ui-surface S2: panels load independently and fail independently —
+// OMS-REG-DB-01.23).
 // Forbidden is handled IN the panel (returnGraphqlErrors), not by the global
 // permission modal: a count the user can't read shows an error in place of a
 // value while every other panel keeps working. The outcome → panel-state
@@ -140,15 +141,16 @@ const createCountResource = <TResult, TVariables>(
 // S1 — the dashboard screen (spec/dashboard/ui-surface.md): three widgets in the
 // card grid (Replenishment, Distribution, Inventory Management), each a
 // DashboardCard of StatsPanels with a footer create shortcut. Read-only and
-// store-scoped (AC-D1) — the only actions are the stat links and the three
-// permission-gated create shortcuts (AC-X1).
+// store-scoped (OMS-REG-DB-01.21/.24) — the only actions are the stat links
+// and the three permission-gated create shortcuts (OMS-REG-DB-01.56).
 //
 // Every widget / panel / stat is a built-in with a stable published id
 // (ui-surface § S3); the `id:` markers below mirror the published-id registry
 // (`DASHBOARD_IDS` in `regions.ts`, the single source of truth for the ids).
 // The dashboard OWNS the plugin-region merge / suppression semantics in
 // `regions.ts` (published-id tree + `mergeRegion`, unit-tested against an empty
-// contribution set — AC-D3/D4/D5). The RENDER integration of those semantics
+// contribution set — OMS-REG-DB-01.58 + OMS-REG-DB-02.2–.8). The RENDER
+// integration of those semantics
 // (mounting contributions, honouring suppression at render) belongs with the
 // plugins vertical that supplies contributions — greenfield today — so the page
 // stays explicit composition: built-ins render directly, gated only by their
@@ -158,8 +160,9 @@ const DashboardPage: Component = () => {
   // switch re-fetches every panel (ui-surface § cross-cutting).
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  // The window boundaries the stat links restate (AC-N1). Captured per mount:
-  // the counts themselves are server-computed, this only feeds the links.
+  // The window boundaries the stat links restate (OMS-REG-DB-01.55). Captured
+  // per mount: the counts themselves are server-computed, this only feeds the
+  // links.
   const today = new Date();
 
   const gates = dashboardGates;
@@ -172,8 +175,8 @@ const DashboardPage: Component = () => {
     InboundShipmentCountsResult,
     { storeId: string }
   >(InboundShipmentCounts, storeVars);
-  // Fetched only while the procurement gate shows the panel (AC-D6's principle:
-  // a hidden piece costs nothing).
+  // Fetched only while the procurement gate shows the panel
+  // (OMS-REG-DB-02.10's principle: a hidden piece costs nothing).
   const inboundExternal = createCountResource<
     InboundShipmentExternalCountsResult,
     { storeId: string }
@@ -204,7 +207,7 @@ const DashboardPage: Component = () => {
     () => itemCountsThresholds(params.storeId, slots())
   );
 
-  // ── create shortcuts (AC-X1) ──────────────────────────────────────────────
+  // ── create shortcuts (OMS-REG-DB-01.56) ───────────────────────────────────
   const [inboundCreateOpen, setInboundCreateOpen] = createSignal(false);
   const [outboundCreateOpen, setOutboundCreateOpen] = createSignal(false);
 
@@ -223,8 +226,8 @@ const DashboardPage: Component = () => {
     setOutboundCreateOpen(true);
   };
   // The internal-order create flow is the requisitions vertical's, which isn't
-  // built yet — the shortcut degrades to its registered placeholder (the AC-N1
-  // rule for unbuilt targets), still permission-gated.
+  // built yet — the shortcut degrades to its registered placeholder (the
+  // OMS-REG-DB-01.57 rule for unbuilt targets), still permission-gated.
   const orderMore = () => {
     if (!hasPermission('REQUISITION_MUTATE')) {
       reportPermissionDenied(['RequisitionMutate']);
@@ -285,8 +288,9 @@ const DashboardPage: Component = () => {
               href={inboundNotDeliveredHref(params.storeId)}
             />
           </StatsPanel>
-          {/* id: replenishment.inbound-external — procurement gate (AC-R2);
-              absent entirely when off, not shown disabled. */}
+          {/* id: replenishment.inbound-external — procurement gate
+              (OMS-REG-DB-01.36); absent entirely when off, not shown
+              disabled. */}
           <Show when={gates()?.externalInboundPanel}>
             <StatsPanel
               title={t('dashboard.inbound-shipment-external')}
@@ -380,7 +384,7 @@ const DashboardPage: Component = () => {
               href={customerRequisitionListHref(params.storeId)}
             />
             {/* id: distribution.customer-requisition.emergency — program-module
-                gate (AC-T3); alert emphasis when > 0. */}
+                gate (OMS-REG-DB-01.39); alert emphasis when > 0. */}
             <Show when={gates()?.emergencyStat}>
               <Statistic
                 label={t('label.emergency')}
@@ -444,7 +448,7 @@ const DashboardPage: Component = () => {
               href={expiringNextThreeMonthsHref(params.storeId, today)}
             />
             {/* id: inventory.expiring-stock.expiring-between — expiry thresholds
-                gate (AC-E4). */}
+                gate (OMS-REG-DB-01.45). */}
             <Show when={gates()?.expiringBetweenThresholdsStat && slots()}>
               {s => (
                 <Statistic
@@ -473,7 +477,7 @@ const DashboardPage: Component = () => {
             state={items.state()}
           >
             {/* id: inventory.stock-levels.out-of-stock-recently-used —
-                consumption look-back gate (AC-S3). */}
+                consumption look-back gate (OMS-REG-DB-01.48). */}
             <Show when={gates()?.outOfStockRecentlyUsedStat && slots()}>
               {s => (
                 <Statistic
@@ -493,8 +497,9 @@ const DashboardPage: Component = () => {
               value={num(items.data()?.itemCounts.itemCounts.noStock)}
               href={itemsOutOfStockHref(params.storeId)}
             />
-            {/* id: inventory.stock-levels.at-risk — low-stock-alert gate (AC-S6);
-                the tooltip's months slot is the same preference. */}
+            {/* id: inventory.stock-levels.at-risk — low-stock-alert gate
+                (OMS-REG-DB-01.51); the tooltip's months slot is the same
+                preference. */}
             <Show when={gates()?.atRiskStat && slots()}>
               {s => (
                 <Statistic
@@ -525,8 +530,8 @@ const DashboardPage: Component = () => {
               )}
             </Show>
             {/* id: inventory.stock-levels.overstocked — over-stock-alert gate
-                (AC-S7: the threshold-0 degenerate count is never displayed).
-                Always plural (the one (s)-less label). */}
+                (OMS-REG-DB-01.52: the threshold-0 degenerate count is never
+                displayed). Always plural (the one (s)-less label). */}
             <Show when={gates()?.overstockedStat && slots()}>
               {s => (
                 <Statistic

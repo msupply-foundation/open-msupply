@@ -258,10 +258,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const columns = createMemo((): Column<DraftLine, never>[] => {
     const vaccine = itemInfo()?.isVaccine ?? false;
     const cols: Column<DraftLine, never>[] = [
-      { c: { key: 'batch' }, header: t('label.batch') },
+      { c: { key: 'batch' }, header: () => t('label.batch') },
       {
         c: { key: 'expiryDate' },
-        header: t('label.expiry'),
+        header: () => t('label.expiry'),
         ...getExpiryDateCell(),
       },
     ];
@@ -274,18 +274,18 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           accessor: line => line.vvmStatus?.description ?? '',
           id: 'vvmStatus',
         },
-        header: t('label.vvm-status'),
+        header: () => t('label.vvm-status'),
       });
     if (vaccine && prefs().manageVaccinesInDoses)
       cols.push({
         c: { accessor: () => dosesPerUnit(), id: 'dosesPerUnit' },
-        header: t('label.doses-per-unit'),
+        header: () => t('label.doses-per-unit'),
         ...getNumberCell(),
       });
     else
       cols.push({
         c: { key: 'packSize' },
-        header: t('label.pack-size'),
+        header: () => t('label.pack-size'),
         ...getNumberCell(),
       });
     cols.push(
@@ -294,7 +294,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           accessor: line => line.inStorePacks * line.packSize,
           id: 'unitsInStock',
         },
-        header: t('label.units-in-stock', { unit: unitName() }),
+        header: () => t('label.units-in-stock', { unit: unitName() }),
         ...getNumberCell(),
       },
       {
@@ -302,7 +302,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           accessor: line => line.availablePacks * line.packSize,
           id: 'unitsAvailable',
         },
-        header: t('label.units-available', { unit: unitName() }),
+        header: () => t('label.units-available', { unit: unitName() }),
         ...getNumberCell(),
       },
       {
@@ -310,7 +310,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           accessor: line => line.numberOfPacks * line.packSize,
           id: 'unitsIssued',
         },
-        header: t('label.units-issued', { unit: unitName() }),
+        header: () => t('label.units-issued', { unit: unitName() }),
         cell: info => {
           const line = info.row.original;
           return (
@@ -338,7 +338,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             line.stockLineOnHold || (line.location?.onHold ?? false),
           id: 'onHold',
         },
-        header: t('label.on-hold'),
+        header: () => t('label.on-hold'),
         ...getBooleanCell({ display: 'dot', label: t('label.on-hold') }),
       }
     );
@@ -354,7 +354,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       title={isEdit ? t('heading.edit-line') : t('heading.add-item')}
       actionsLead={
         <Show when={saveError()}>
-          <Alert severity="error">{saveError()}</Alert>
+          <Alert severity="error" testId="prescription-line-error">
+            {saveError()}
+          </Alert>
         </Show>
       }
       actions={
@@ -421,6 +423,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           <NumberField
             label={t('label.issue')}
             hideLabel
+            data-testid="issue-field"
             value={issueUnits()}
             min={0}
             decimalLimit={0}
@@ -451,6 +454,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             <NumberField
               label={t('label.prescribed-quantity')}
               hideLabel
+              data-testid="prescribed-quantity-field"
               value={prescribedQuantity()}
               min={0}
               decimalLimit={0}
@@ -485,7 +489,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         {/* The shortfall banner (stock-allocation § reporting — nothing
             narrows silently; the prescription has no placeholder). */}
         <Show when={shortfall() > 0}>
-          <Alert severity="warning">
+          <Alert severity="warning" testId="prescription-shortfall-warning">
             {t('messages.prescription-shortfall', {
               allocated: formatNumber(allocatedUnits()),
               requested: formatNumber(allocatedUnits() + shortfall()),
@@ -506,6 +510,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             <TextField
               label={t('label.abbreviation')}
               hideLabel
+              data-testid="abbreviation-field"
               value={abbrevEntry()}
               onInput={e => setAbbrevEntry(e.currentTarget.value)}
               onBlur={applyAbbreviation}
