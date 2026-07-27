@@ -2340,6 +2340,7 @@
   "messages.click-to-return-to-contact-traces": "Unable to find an contact trace with that ID. Click OK to return to the contact traces list",
   "messages.click-to-return-to-customer-returns": "Unable to find a return with that ID. Click OK to return to the customer returns list",
   "messages.click-to-return-to-encounters": "Unable to find an encounter with that ID. Click OK to return to the encounter list",
+  "messages.click-to-return-to-internal-orders": "Unable to find an internal order with that ID. Click OK to return to the internal orders list",
   "messages.click-to-return-to-item-list": "Unable to find an item with that ID. Click OK to return to the list of items.",
   "messages.click-to-return-to-master-lists": "Unable to find a master list with that ID. Click OK to return to the list of master lists",
   "messages.click-to-return-to-prescriptions": "Unable to find a prescription with that ID. Click OK to return to the prescription list",
