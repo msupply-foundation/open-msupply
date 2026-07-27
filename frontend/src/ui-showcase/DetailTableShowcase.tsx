@@ -20,10 +20,8 @@ import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
 import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
-import { FormRow } from '../ui/layout/Form/FormRow';
-import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -32,7 +30,6 @@ import { Button } from '../ui/elements/buttons/Button';
 import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
@@ -612,60 +609,42 @@ export const DetailTableShowcase = () => {
                 </Button>
               </Show>
             </HeaderButtons>
-            {/* Toolbar layout (Carl 2026-07-27): ONE row. Everything — the
-                fields, the read-only Status, and the compact Alert — lives in a
-                single FormRow, inside a flex-grow wrapper that makes it FILL the
-                toolbar width (otherwise it content-sizes narrower than the
-                toolbar and wraps early). The FIELDS share equally and grow at an
-                11rem min; the compact Alert hugs its content (flex: 0 1 auto,
-                set in Alert.module.css) so it takes no equal share. It rides one
-                row until the fields' minimums + the alert's content outgrow the
-                toolbar (≈ 4×10rem + alert ≈ 1075px), past which the alert wraps
-                first. Fields take width="full" so each fills its FormRow share.
-                (10rem, not 13rem: 4×13rem + the alert needs a ~1267px toolbar to
-                stay on one line — 10rem drops that to ~1075px.) */}
-            <Toolbar>
-              <div style={{ flex: '1 1 auto', 'min-inline-size': 0 }}>
-                <FormRow minItemWidth="10rem">
-                  <Select
-                    label={t('label.supplier-name')}
-                    size="small"
-                    width="full"
-                    options={SUPPLIERS}
-                    value={supplier()}
-                    onValueChange={setSupplier}
-                  />
-                  <TextField
-                    label={t('label.reference')}
-                    size="small"
-                    width="full"
-                    value={reference()}
-                    onInput={e => setReference(e.currentTarget.value)}
-                  />
-                  <DateField
-                    label={t('label.received')}
-                    size="small"
-                    width="full"
-                    format="dd MMM yyyy"
-                    value="2026-05-19"
-                    disabled
-                  />
-                  <LabelledValue
-                    label={t('label.status')}
-                    variant="field"
-                    size="small"
-                  >
-                    <StatusChip
-                      label="Received"
-                      colour="var(--status-received)"
-                    />
-                  </LabelledValue>
-                  <Alert severity="info" compact>
-                    Created manually; status won't update automatically.
-                  </Alert>
-                </FormRow>
-              </div>
-            </Toolbar>
+            {/* The header field cluster via HeaderToolbar (Carl 2026-07-27):
+                fields flow into its FormRow (equal shares at a 10rem min,
+                growing to fill and wrapping as a unit); the compact Alert goes
+                to the `alert` prop, rendered as a content-hugging chip pinned to
+                the bottom baseline. Fields take width="full" to fill the share. */}
+            <HeaderToolbar
+              alert={
+                <Alert severity="info" compact>
+                  Created manually; status won't update automatically.
+                </Alert>
+              }
+            >
+              <Select
+                label={t('label.supplier-name')}
+                size="small"
+                width="full"
+                options={SUPPLIERS}
+                value={supplier()}
+                onValueChange={setSupplier}
+              />
+              <TextField
+                label={t('label.reference')}
+                size="small"
+                width="full"
+                value={reference()}
+                onInput={e => setReference(e.currentTarget.value)}
+              />
+              <DateField
+                label={t('label.received')}
+                size="small"
+                width="full"
+                format="dd MMM yyyy"
+                value="2026-05-19"
+                disabled
+              />
+            </HeaderToolbar>
             <TabList tabs={TABS} />
           </Header>
         }

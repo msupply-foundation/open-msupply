@@ -7,15 +7,9 @@
  * totals" — several controls, not one): children flow inline-start with a
  * consistent gap and wrap intrinsically, so a search box + a filter bar +
  * a labelled field line up on a shared baseline instead of stacking ragged.
- * A single child (the list's FilterBar) is unaffected.
- *
- * Cross-axis is flex-start (Carl 2026-07-27): the header field pattern puts
- * label-above inputs / LabelledValues in this row, and top-aligning them lines
- * their LABELS up along the top edge even when the controls differ in height (a
- * small input vs a short status chip). align-items only bites when items of
- * unequal height share one line, so the existing list/detail toolbars — a lone
- * FilterBar, or a full-width Alert that wraps to its own line above uniform
- * fields — are unaffected.
+ * A single child (the list's FilterBar) is unaffected. The header field-cluster
+ * layout (FormRow + a trailing compact Alert) is NOT here — it lives in
+ * HeaderToolbar, which composes this generic row.
  */
 
 .toolbar {
@@ -23,17 +17,6 @@
   min-inline-size: 0;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-2) var(--space-3);
-}
-
-/*
- * A leading compact Alert (the meta chip that carries persistent context — see
- * Alert `compact`) drops to the BOTTOM of the row: it sits on the fields'
- * input-box line while every field label lines up along the top. data-compact
- * is the Alert's own hook; matched as a direct child so only a chip placed
- * straight into the toolbar is pinned (a nested one is untouched).
- */
-.toolbar > [data-compact] {
-  align-self: flex-end;
 }
