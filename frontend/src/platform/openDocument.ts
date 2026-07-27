@@ -1,13 +1,19 @@
 import { isAndroid } from './index';
 import { t } from '../intl';
 
-// Open a server-stored document (a domain/syncFiles URL) outside the app —
-// the reference capability wrapper for kdd/capacitor-plugins. On the web the
-// browser handles it (new tab / its own viewer); under the Android shell the
-// WebView would render it inline instead, so the file is fetched with the
-// session cookie, written to the app cache, and handed to the OS viewer
-// (spec/android/behaviours.md § Files out of the app). Never throws — the
-// same discriminated result shape as domain/syncFiles.
+// Getting a file in front of the user — the reference capability wrappers for
+// kdd/capacitor-plugins. Two entry points with different web behaviours:
+//
+// - openDocument(url, fileName): a server-stored file addressed by URL (a
+//   domain/syncFiles link). Web: the browser handles it in a new tab (its own
+//   viewer). Android: the WebView would render it inline (or silently do
+//   nothing for PDFs) with no way back, so it's fetched and handed to the OS.
+// - openBlob(blob, fileName): a file the app already holds (generated report,
+//   CSV export). Web: a plain browser download. Android: handed to the OS.
+//
+// Both route through the same Android core: write to the app cache, open with
+// the OS viewer (spec/android/behaviours.md § Files out of the app). Never
+// throws — the same discriminated result shape as domain/syncFiles.
 
 export type OpenDocumentResult = { ok: boolean; message?: string };
 
@@ -36,6 +42,51 @@ export const bytesToBase64 = (bytes: Uint8Array): string => {
   return btoa(binary);
 };
 
+// The Android core: cache the bytes, hand them to the OS viewer. Dynamic
+// imports keep the plugin JS out of the eager bundle — only ever fetched on
+// device (kdd/capacitor-plugins Fork 2).
+const openBlobAndroid = async (
+  blob: Blob,
+  fileName: string
+): Promise<OpenDocumentResult> => {
+  try {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+    const written = await Filesystem.writeFile({
+      path: sanitizeFileName(fileName),
+      data: bytesToBase64(bytes),
+      directory: Directory.Cache,
+    });
+
+    const { FileOpener } = await import('@capacitor-community/file-opener');
+    try {
+      await FileOpener.open({
+        filePath: written.uri,
+        contentType: mimeOf(blob.type || null),
+      });
+      return { ok: true };
+    } catch {
+      // No installed app views this type (e.g. a tablet with no PDF viewer).
+      // Fall back to the OS share sheet — spec/android § Files out of the
+      // app's "platform share/save flow": Drive, mail, Quick Share, print
+      // services all remain available without a viewer.
+      try {
+        const { Share } = await import('@capacitor/share');
+        await Share.share({ title: fileName, files: [written.uri] });
+        return { ok: true };
+      } catch (e) {
+        // Dismissing the sheet rejects too — the user saw and declined it,
+        // which isn't a failure to report.
+        const message = e instanceof Error ? e.message : String(e);
+        if (/cancel/i.test(message)) return { ok: true };
+        return { ok: false, message: t('messages.cannot-open-file') };
+      }
+    }
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+};
+
 export const openDocument = async (
   url: string,
   fileName: string
@@ -47,27 +98,35 @@ export const openDocument = async (
   try {
     const response = await fetch(url, { credentials: 'same-origin' });
     if (!response.ok) return { ok: false, message: `HTTP ${response.status}` };
-    const contentType = mimeOf(response.headers.get('Content-Type'));
-    const bytes = new Uint8Array(await response.arrayBuffer());
-
-    // Dynamic imports: the plugin JS never enters the eager bundle and is
-    // only ever fetched on device (kdd/capacitor-plugins Fork 2).
-    const { Filesystem, Directory } = await import('@capacitor/filesystem');
-    const written = await Filesystem.writeFile({
-      path: sanitizeFileName(fileName),
-      data: bytesToBase64(bytes),
-      directory: Directory.Cache,
-    });
-
-    const { FileOpener } = await import('@capacitor-community/file-opener');
-    try {
-      await FileOpener.open({ filePath: written.uri, contentType });
-    } catch {
-      // The one user-fixable failure: nothing installed handles this type.
-      return { ok: false, message: t('messages.cannot-open-file') };
-    }
-    return { ok: true };
+    const blob = await response.blob();
+    // Prefer the response's Content-Type when the blob carries none.
+    const typed = blob.type
+      ? blob
+      : new Blob([blob], {
+          type: mimeOf(response.headers.get('Content-Type')),
+        });
+    return openBlobAndroid(typed, fileName);
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }
+};
+
+export const openBlob = async (
+  blob: Blob,
+  fileName: string
+): Promise<OpenDocumentResult> => {
+  if (!isAndroid()) {
+    // Browser download: object URL + a programmatic anchor click, revoked
+    // immediately after.
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    return { ok: true };
+  }
+  return openBlobAndroid(blob, fileName);
 };

@@ -8,11 +8,11 @@ import {
 import { DownloadIcon } from '../../../../ui/icons';
 import {
   csvToExcel,
-  downloadBlob,
   fetchReportFile,
   listExportCsvFilename,
   listExportExcelFilename,
 } from '../../../../domain/reportFiles';
+import { openBlob } from '../../../../platform/openDocument';
 import { stripEmpty } from '../../../../typeHelpers';
 import { storeCodeOf } from '../../../../auth/authContext';
 import { LocationsList } from '../locations.generated';
@@ -80,9 +80,9 @@ export const ExportLocationsAction: Component<
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') downloadBlob(file.blob, file.filename);
+        if (file.kind === 'success') void openBlob(file.blob, file.filename);
       } else {
-        downloadBlob(
+        void openBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
           listExportCsvFilename(storeCode, listName, new Date())
         );

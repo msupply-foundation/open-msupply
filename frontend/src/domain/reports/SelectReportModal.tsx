@@ -8,10 +8,11 @@ import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DownloadIcon, PrinterIcon, XCircleIcon } from '../../ui/icons';
 import {
   fetchReportFile,
-  downloadBlob,
   printHtml,
   type GenerateResult,
 } from '../reportFiles';
+import { isAndroid } from '../../platform';
+import { openBlob } from '../../platform/openDocument';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
 import { timezoneArgument } from '../json-forms/schema';
 import { listReportsByContext, type Report } from './reportsResource';
@@ -96,7 +97,14 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     if (format === 'HTML') {
       printHtml(await file.blob.text());
     } else {
-      downloadBlob(file.blob, file.filename);
+      // Await the platform delivery: a failed open (e.g. no viewer and the
+      // share sheet failed) keeps the dialog up with the inline error rather
+      // than closing as if it worked.
+      const delivered = await openBlob(file.blob, file.filename);
+      if (!delivered.ok) {
+        setPhase('error');
+        return;
+      }
     }
     props.onClose();
   };
@@ -123,8 +131,12 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   };
 
   // A format button: if the report declares filters, open S3 first (holding the
-  // format); otherwise generate straight away.
-  const onFormat = (format: PrintFormat): void => {
+  // format); otherwise generate straight away. On Android, Print becomes a PDF
+  // delivered to the OS viewer — the WebView has no window.print, and printing
+  // (and save-as) lives in the viewer on a tablet (spec/android § Files out of
+  // the app).
+  const onFormat = (chosen: PrintFormat): void => {
+    const format = isAndroid() && chosen === 'HTML' ? 'PDF' : chosen;
     const report = selected();
     if (!report) return;
     if (report.argumentSchema) {

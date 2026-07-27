@@ -11,12 +11,18 @@ importers:
       '@capacitor-community/file-opener':
         specifier: ^8.0.1
         version: 8.0.1(@capacitor/core@8.4.1)
+      '@capacitor/app':
+        specifier: ^8.1.1
+        version: 8.1.1(@capacitor/core@8.4.1)
       '@capacitor/core':
         specifier: ^8.4.1
         version: 8.4.1
       '@capacitor/filesystem':
         specifier: ^8.1.2
         version: 8.1.2(@capacitor/core@8.4.1)
+      '@capacitor/share':
+        specifier: ^8.0.1
+        version: 8.0.1(@capacitor/core@8.4.1)
       '@corvu/calendar':
         specifier: ^0.1.2
         version: 0.1.2(solid-js@1.9.14)
@@ -215,6 +221,11 @@ packages:
     peerDependencies:
       '@capacitor/core': ^8.4.0
 
+  '@capacitor/app@8.1.1':
+    resolution: {integrity: sha512-xM2ZTX5jK60tFtmjsmJv+Cdj1Qsb6NcavkqmdEnCPQBeya9oKhamZJxYOnQNj1ZvcJM7sWfG6BEtSLx42pisbA==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
   '@capacitor/cli@8.4.1':
     resolution: {integrity: sha512-t7F2s7fFHCq113xgrggrmK6ctV0/8E5YfLNVLfPHp4GCTDO+tly9fZvWPf2/sOI8lMm18dLT43qbXLRTz/OZgw==}
     engines: {node: '>=22.0.0'}
@@ -225,6 +236,11 @@ packages:
 
   '@capacitor/filesystem@8.1.2':
     resolution: {integrity: sha512-doaaMfGoFR2hWU6aV6u83I+5ZsGyJVq+Gz4r9lMpJzUKMm1eMu0hLnFdV1aXZlU9FlK/RndFrVD8oRZfNOqWgQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/share@8.0.1':
+    resolution: {integrity: sha512-3cSBKBCJVon54rKDROP2rqGyeGks4pBh9TbaEk9S375Kbek/ZHe72N50zIa0Vn9Eac/SuhwgehO/mmA4CsUOiw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -2865,6 +2881,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.4.1
 
+  '@capacitor/app@8.1.1(@capacitor/core@8.4.1)':
+    dependencies:
+      '@capacitor/core': 8.4.1
+
   '@capacitor/cli@8.4.1':
     dependencies:
       '@ionic/cli-framework-output': 2.2.8
@@ -2895,6 +2915,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.4.1
       '@capacitor/synapse': 1.0.4
+
+  '@capacitor/share@8.0.1(@capacitor/core@8.4.1)':
+    dependencies:
+      '@capacitor/core': 8.4.1
 
   '@capacitor/synapse@1.0.4': {}
 

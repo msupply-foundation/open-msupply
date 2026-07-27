@@ -8,11 +8,11 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { DownloadIcon } from '../../../ui/icons';
 import {
   csvToExcel,
-  downloadBlob,
   fetchReportFile,
   listExportCsvFilename,
   listExportExcelFilename,
 } from '../../../domain/reportFiles';
+import { openBlob } from '../../../platform/openDocument';
 import { currentStoreId } from '../../../store/storeContext';
 import { storeCodeOf } from '../../../auth/authContext';
 import {
@@ -69,9 +69,9 @@ export const ExportMasterListsAction: Component<{
         });
         if (generated.kind !== 'fileId') return;
         const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') downloadBlob(file.blob, file.filename);
+        if (file.kind === 'success') void openBlob(file.blob, file.filename);
       } else {
-        downloadBlob(
+        void openBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
           listExportCsvFilename(storeCode, listName, new Date())
         );
