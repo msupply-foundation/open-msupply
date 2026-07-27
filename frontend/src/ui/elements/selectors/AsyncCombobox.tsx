@@ -135,16 +135,27 @@ export const AsyncCombobox = <T,>(
   // regardless of what's typed, masking real matches (found via prescriptions'
   // "changing the patient" — typing a new patient's name kept showing the
   // CURRENTLY-selected one as the first, always-clickable option).
+  //
+  // The seed is a LABEL-ONLY fallback (callers like ItemSearch fill its
+  // non-label fields — e.g. totalUnits — with placeholder zeros, since the
+  // real values aren't known until the item's own page is fetched). So once
+  // `base()` has fetched a real row for this key, that row must WIN over the
+  // seed rather than being replaced by it — otherwise the stub's placeholder
+  // fields (e.g. "0 Units") permanently shadow the real, freshly-fetched data
+  // for as long as the item stays the controlled selection (#549).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
     const key = props.itemToValue(seed);
+    const rest = base().filter(i => props.itemToValue(i) !== key);
+    const real = base().find(i => props.itemToValue(i) === key);
+    if (real) return [real, ...rest];
     const needle = query().toLocaleLowerCase();
     const seedMatches =
       !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
     const isControlledValue = props.value !== undefined && props.value === key;
     if (!seedMatches && !isControlledValue) return base();
-    return [seed, ...base().filter(i => props.itemToValue(i) !== key)];
+    return [seed, ...rest];
   };
 
   const value = () =>
