@@ -16,6 +16,8 @@
 #   columns (AC-S6).
 # - storePreferences.useConsumptionAndStockFromCustomersForInternalOrders (with
 #   a program order) → the extended consumption columns + the Area-AMC header.
+# - preferences.canCreateInternalOrderFromARequisition → the side panel's
+#   "Created from requisition" related-document row (AC-RD2, display-only).
 query internalOrderDetailContext($storeId: String!) {
   preferences(storeId: $storeId) {
     selectDestinationStoreForAnInternalOrder
@@ -23,6 +25,7 @@ query internalOrderDetailContext($storeId: String!) {
     showIndicativePriceInRequisitions
     displayPopulationBasedForecasting
     warningForExcessRequest
+    canCreateInternalOrderFromARequisition
   }
   storePreferences(storeId: $storeId) {
     requestRequisitionRequiresAuthorisation

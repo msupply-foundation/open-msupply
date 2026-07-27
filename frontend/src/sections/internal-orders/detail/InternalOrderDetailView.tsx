@@ -11,8 +11,12 @@ import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { SidebarIcon } from '../../../ui/icons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
@@ -42,11 +46,14 @@ import {
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { InternalOrderLogTab } from './InternalOrderLogTab';
+import { InternalOrderSidePanel } from './InternalOrderSidePanel';
+import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
+import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 
-// The internal-order detail view (spec/internal-orders S3), scoped to
-// view + header edits + send. The line editor (S4), side panel (S5),
-// master-list picker (S7), the reports/print selector, the Documents and
-// Indicators tabs, and the ancillary Add/Update actions are out of this cut.
+// The internal-order detail view (spec/internal-orders S3): view, header edits,
+// send, the side panel (S5), the Documents tab, and Export/Print (reports S4).
+// The line editor (S4), master-list picker (S7), the Indicators tab, and the
+// ancillary Add/Update actions are out of this cut.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -76,6 +83,7 @@ const InternalOrderDetailView: Component = () => {
     desc: false,
   });
   const [supplierError, setSupplierError] = createSignal<string>();
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
 
   const tableConfig = createTableConfig({
     tableId: 'internal-order-detail',
@@ -91,7 +99,7 @@ const InternalOrderDetailView: Component = () => {
   // with `mutate` (no refetch → no suspend → no remount,
   // kdd/solid-reactivity-pitfalls). Reading `data()` suspends only on the
   // screen's FIRST load (nothing live to lose), under the <Suspense> below.
-  const [data, { mutate }] = createResource(
+  const [data, { mutate, refetch }] = createResource(
     () => ({ storeId: params.storeId, id: params.orderId }),
     async (variables): Promise<InternalOrderInfoFragment | undefined> => {
       const result = await graphqlFetch(InternalOrderDetail, variables);
@@ -134,6 +142,12 @@ const InternalOrderDetailView: Component = () => {
       false);
   const showApproval = () =>
     requiresAuth() && (info()?.approvalStatus ?? 'NONE') !== 'NONE';
+  // The side panel's "Created from requisition" row (display-only, AC-RD2).
+  const showSourceLink = () =>
+    prefs()?.canCreateInternalOrderFromARequisition ?? false;
+  // Documents upload/remove are offered on any status, but withheld when the
+  // supplier's store is disabled (AC-F2/F5).
+  const supplierEnabled = () => !info()?.otherParty.store?.isDisabled;
 
   const editable = () => {
     const node = info();
@@ -496,9 +510,46 @@ const InternalOrderDetailView: Component = () => {
         {node => (
           <Page
             fillBody
+            sidePanelOpen={sidePanelOpen()}
+            sidePanelTitle={t('heading.details')}
+            onSidePanelClose={() => setSidePanelOpen(false)}
+            sidePanelContent={
+              <InternalOrderSidePanel
+                storeId={params.storeId}
+                node={node()}
+                editable={editable()}
+                isProgram={isProgram()}
+                showApproval={showApproval()}
+                showPricing={showPricing()}
+                showSourceLink={showSourceLink()}
+                edit={edit}
+                onSaveField={patch => void saveField(patch)}
+                onDeleted={() =>
+                  navigate(
+                    `/${params.storeId}/replenishment/internal-order`,
+                    { replace: true }
+                  )
+                }
+              />
+            }
             header={
               <Header>
                 <Breadcrumb crumbs={crumbs(node())} />
+                <HeaderButtons>
+                  {/* Export/Print — a read, offered on every status (AC-PR1). */}
+                  <ExportPrintInternalOrderAction orderId={node().id} />
+                  {/* More — reopens the side panel; shown only while closed. */}
+                  <Show when={!sidePanelOpen()}>
+                    <Button
+                      variant="secondary"
+                      icon={<SidebarIcon />}
+                      data-testid="open-detail-panel-button"
+                      onClick={() => setSidePanelOpen(true)}
+                    >
+                      {t('button.more')}
+                    </Button>
+                  </Show>
+                </HeaderButtons>
                 <Toolbar>
                   <InternalOrderToolbar
                     storeId={params.storeId}
@@ -529,12 +580,13 @@ const InternalOrderDetailView: Component = () => {
               />
             }
           >
-            {/* Details | Log (spec S3 § tabs). Documents / Indicators are out of
+            {/* Details | Documents | Log (spec S3 § tabs). Indicators is out of
                 this cut. */}
             <Tabs defaultValue="details">
               <TabList
                 tabs={[
                   { value: 'details', label: t('label.details') },
+                  { value: 'documents', label: t('label.documents') },
                   { value: 'log', label: t('label.log') },
                 ]}
               />
@@ -553,6 +605,14 @@ const InternalOrderDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                />
+              </TabPanel>
+              <TabPanel value="documents">
+                <InternalOrderDocumentsTab
+                  storeId={params.storeId}
+                  node={node()}
+                  supplierEnabled={supplierEnabled()}
+                  onChanged={() => void refetch()}
                 />
               </TabPanel>
               <TabPanel value="log">
