@@ -37,6 +37,17 @@ const cellMaxWidthPx = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
 };
 
+// Native hover-reveal for a single-line cell whose text may be ellipsised
+// (issue #432): the plain-string leaf value as a `title`. Strings only —
+// numbers/dates/booleans render short and objects aren't display text — and
+// only for non-wrapping cells (a wrapping cell shows its full text already).
+// Cheap: a value read, no layout measurement.
+const cellTitle = <T,>(cell: TanCell<T, unknown>): string | undefined => {
+  if (cellWrapLines(cell)) return undefined;
+  const value = cell.getValue();
+  return typeof value === 'string' && value !== '' ? value : undefined;
+};
+
 // A body row: its cells, clickable when onRowClick is set. Extracted from
 // DataTable.tsx (table-view row rendering).
 export function TableRow<T>(props: {
@@ -119,6 +130,8 @@ export function TableRow<T>(props: {
               // Cross-FE test-id contract (e2e/TESTIDS.md): `cell-<columnId>`,
               // scoped by row (row.getByTestId('cell-batch')).
               data-testid={`cell-${cell.column.id}`}
+              // Hover-reveal for an ellipsised value (issue #432).
+              title={cellTitle(cell)}
               data-align={cellAlign(cell)}
               data-mono={cellMono(cell) ? '' : undefined}
               data-pinned={cell.column.getIsPinned() || undefined}
