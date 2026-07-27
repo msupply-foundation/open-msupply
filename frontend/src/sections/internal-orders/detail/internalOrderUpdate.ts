@@ -8,6 +8,7 @@ import {
   type RefreshAncillaryItemsVariables,
 } from './internalOrderDetail.generated';
 import { DeleteInternalOrders } from '../list/internalOrders.generated';
+import { AddInternalOrderFromMasterList } from './edit-modal/masterList.generated';
 
 // Order-LEVEL mutations for the detail screen, split by how their errors are
 // handled (the returnUpdate / stocktakeUpdate convention).
@@ -174,4 +175,25 @@ export const refreshAncillaryItems = async (
         ? t('error.cannot-edit-requisition')
         : response.error.description,
   };
+};
+
+// --- Add from master list (spec S7, AC-LN7/LN8) -----------------------------
+
+// The bulk add (confirmed from the master-list picker): one line per stock item
+// on the list not already on the order. Idempotent (a re-run adds nothing).
+// The caller refetches the order's page on success; a rejection (its only
+// surface is a description) is returned for display.
+export const addInternalOrderFromMasterList = async (
+  storeId: string,
+  requestRequisitionId: string,
+  masterListId: string
+): Promise<RefreshResult> => {
+  const result = await graphqlFetch(AddInternalOrderFromMasterList, {
+    storeId,
+    input: { requestRequisitionId, masterListId },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.addFromMasterList;
+  if (response.__typename === 'RequisitionLineConnector') return { kind: 'done' };
+  return { kind: 'error', message: response.error.description };
 };

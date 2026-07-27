@@ -44,7 +44,10 @@ import {
   InternalOrderIndicators,
 } from './indicators.generated';
 import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
-import { saveInternalOrderFields } from './internalOrderUpdate';
+import {
+  saveInternalOrderFields,
+  addInternalOrderFromMasterList,
+} from './internalOrderUpdate';
 import { isOrderEditable } from './internalOrderDetailStatus';
 import {
   InternalOrderToolbar,
@@ -57,6 +60,8 @@ import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
+import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { PlusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
@@ -99,6 +104,17 @@ const InternalOrderDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+  // The Add split button's remembered choice (its primary half reflects the
+  // last-picked option, spec S3 § page actions).
+  const [addChoice, setAddChoice] = createSignal('item');
+  // The master-list picker (S7) and the chosen list awaiting its add
+  // confirmation; a rejection surfaces as a blocking notice.
+  const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
+  const [pendingMasterList, setPendingMasterList] = createSignal<{
+    id: string;
+    name: string;
+  }>();
+  const [masterListError, setMasterListError] = createSignal<string>();
 
   const tableConfig = createTableConfig({
     tableId: 'internal-order-detail',
@@ -238,6 +254,34 @@ const InternalOrderDetailView: Component = () => {
     for (let index = start + 1; index < ordered.length; index++)
       if (!covered.has(ordered[index]!.id)) return ordered[index];
     return ordered.find(line => !covered.has(line.id));
+  };
+
+  // The order's existing line for an item (add mode loads it rather than
+  // duplicating, AC-LN2/LN6).
+  const findLineForItem = (itemId: string): Line | undefined =>
+    info()?.lines.nodes.find(line => line.itemId === itemId);
+
+  // The Add split button's action (AC-LN1): Add item opens the line editor,
+  // Add from master list opens the S7 picker.
+  const onAddAction = (choice: string) => {
+    if (choice === 'master-list') setMasterListPickerOpen(true);
+    else setEditorLine({ mode: 'add' });
+  };
+
+  // The confirmed master-list bulk add (AC-LN7/LN8): add, then refetch the
+  // page; a rejection replaces the confirmation with a notice.
+  const confirmAddFromMasterList = async () => {
+    const list = pendingMasterList();
+    const node = info();
+    if (!list || !node) return;
+    setPendingMasterList(undefined);
+    const result = await addInternalOrderFromMasterList(
+      params.storeId,
+      node.id,
+      list.id
+    );
+    if (result.kind === 'done') void refetch();
+    else if (result.kind === 'error') setMasterListError(result.message);
   };
 
   // ONE debounced buffer for the as-you-type reference (comment rides the same
@@ -645,18 +689,25 @@ const InternalOrderDetailView: Component = () => {
               <Header>
                 <Breadcrumb crumbs={crumbs(node())} />
                 <HeaderButtons>
-                  {/* Add item — opens the line editor in add mode; disabled on
-                      program and read-only orders (AC-LN1). The master-list
-                      path and use-suggested are a later cut. */}
+                  {/* Add — a split of Add item (line editor) and Add from
+                      master list (S7 picker); the whole control is withheld on
+                      program and read-only orders (AC-LN1). Use-suggested is a
+                      later cut. */}
                   <Show when={canAddLines()}>
-                    <Button
-                      variant="primary"
+                    <SplitButton
                       icon={<PlusCircleIcon />}
-                      data-testid="add-item-button"
-                      onClick={() => setEditorLine({ mode: 'add' })}
-                    >
-                      {t('button.add-item')}
-                    </Button>
+                      testId="add-item-button"
+                      value={addChoice()}
+                      onValueChange={setAddChoice}
+                      onAction={onAddAction}
+                      options={[
+                        { value: 'item', label: t('button.add-item') },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                      ]}
+                    />
                   </Show>
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
                   <ExportPrintInternalOrderAction orderId={node().id} />
@@ -792,8 +843,43 @@ const InternalOrderDetailView: Component = () => {
                   : undefined
               }
               nextLine={resolveNextLine}
+              findLineForItem={findLineForItem}
               onCommitted={() => void refetch()}
             />
+
+            {/* Add from master list (S7): the picker, then an are-you-sure
+                confirmation, then the bulk add. */}
+            <MasterListPickerModal
+              open={masterListPickerOpen()}
+              onClose={() => setMasterListPickerOpen(false)}
+              storeId={params.storeId}
+              onSelect={list => {
+                setMasterListPickerOpen(false);
+                setPendingMasterList(list);
+              }}
+            />
+            <Show when={pendingMasterList()}>
+              <ConfirmDialog
+                open
+                title={t('heading.are-you-sure')}
+                message={t('messages.confirm-add-from-master-list')}
+                confirmLabel={t('button.ok')}
+                onConfirm={() => void confirmAddFromMasterList()}
+                onClose={() => setPendingMasterList(undefined)}
+              />
+            </Show>
+            <Show when={masterListError()}>
+              {message => (
+                <ConfirmDialog
+                  open
+                  title={t('error.something-wrong')}
+                  message={message()}
+                  confirmLabel={t('button.ok')}
+                  onConfirm={() => setMasterListError(undefined)}
+                  onClose={() => setMasterListError(undefined)}
+                />
+              )}
+            </Show>
           </Page>
         )}
       </Show>
