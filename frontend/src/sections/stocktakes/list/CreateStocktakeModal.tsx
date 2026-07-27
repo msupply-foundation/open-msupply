@@ -373,6 +373,15 @@ export const CreateStocktakeModal = (props: {
         </>
       }
     >
+      {/* Blind stocktake (spec/stocktakes › store-preference gates): an
+          informational banner shown regardless of mode — there is no control
+          here to turn the preference on or off per-stocktake, it only informs. */}
+      <Show when={stocktakePreferences().blindStocktake}>
+        <Alert severity="info" testId="blind-stocktake-notice">
+          {t('message.blind-stocktake-enabled')}
+        </Alert>
+      </Show>
+
       {/* The three type radios, tight together at the top. */}
       <RadioGroup
         value={form().type}

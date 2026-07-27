@@ -297,7 +297,10 @@ const StocktakeDetailView: Component = () => {
   // read via `.latest` so a refetch never trips the view's Suspense boundary.
   const [locationsData, { refetch: refetchLocations }] = createResource(
     () => params.storeId,
-    fetchLocationsWithVolume
+    async storeId => {
+      const result = await fetchLocationsWithVolume(storeId);
+      return result;
+    }
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
@@ -324,7 +327,12 @@ const StocktakeDetailView: Component = () => {
   // A fresh lines page clears stale per-line errors. lineErrors is
   // independently stamped by save failures, so it stays its own signal — this
   // effect only resets it when a new page lands.
-  createEffect(on(linesData, () => setLineErrors(new Map())));
+  createEffect(
+    on(
+      () => linesData.latest,
+      () => setLineErrors(new Map())
+    )
+  );
 
   // A stocktake can be finalised only when it has at least one counted line
   // (OMS no-lines guard). Best-effort over the CURRENT page — a fuller guard
@@ -532,7 +540,23 @@ const StocktakeDetailView: Component = () => {
   // entirely otherwise (not merely default-hidden).
   const prefs = () => stocktakePreferences();
 
-  const columns = (): Column<Line, SortKey>[] => [
+  // Blind stocktake (spec/stocktakes › store-preference gates): Snapshot and
+  // Difference hide only while counting (status NEW) and reappear once
+  // finalised; Reason hides for the stocktake's whole life, since no reason
+  // is ever required under this preference.
+  const hideSnapshotStock = () =>
+    prefs().blindStocktake && current()?.status === 'NEW';
+  const hideReason = () => prefs().blindStocktake;
+
+  // A memo, not a plain function: read as a JSX prop (DataTable's `columns`),
+  // it would otherwise rebuild a fresh array + fresh column objects on EVERY
+  // read. TanStack Table treats a new columns identity as a config change and
+  // updates its internal state accordingly, which re-triggers this prop's
+  // reactive scope — a self-sustaining loop with no real dependency change
+  // behind it (this caused a genuine slow-load bug; root-caused via targeted
+  // logging that confirmed every actual dependency stayed unchanged across
+  // dozens of re-fires per second).
+  const columns = createMemo((): Column<Line, SortKey>[] => [
     {
       // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
       // path); the server sort key is `itemCode`.
@@ -599,47 +623,53 @@ const StocktakeDetailView: Component = () => {
           } satisfies Column<Line, SortKey>,
         ]
       : []),
-    {
-      c: { key: 'snapshotNumberOfPacks' },
-      sortKey: 'snapshotNumberOfPacks',
-      header: t('label.snapshot-num-of-packs'),
-      ...getNumberCell(),
-      // Snapshot cell also carries the line's error inline beneath the count (a
-      // snapshot/current-count mismatch is a "recount this line" message about
-      // the snapshot). Styled inline from the design tokens (a section owns no
-      // stylesheet).
-      cell: info => {
-        const value = info.getValue<number | null | undefined>();
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'flex-direction': 'column',
-              'align-items': 'flex-end',
-            }}
-          >
-            <span>{value ?? ''}</span>
-            <Show
-              when={
-                lineErrors().get(info.row.original.id) ===
-                'SnapshotCountCurrentCountMismatchLine'
-              }
-            >
-              <span
-                style={{
-                  color: 'var(--error-main)',
-                  'font-size': 'var(--text-xs)',
-                  'white-space': 'normal',
-                  'text-align': 'end',
-                }}
-              >
-                {t('error.snapshot-total-mismatch')}
-              </span>
-            </Show>
-          </span>
-        );
-      },
-    },
+    // Snapshot — omitted entirely while counting under blind stocktake (reappears
+    // once finalised; see hideSnapshotStock above).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: { key: 'snapshotNumberOfPacks' },
+            sortKey: 'snapshotNumberOfPacks',
+            header: t('label.snapshot-num-of-packs'),
+            ...getNumberCell(),
+            // Snapshot cell also carries the line's error inline beneath the count (a
+            // snapshot/current-count mismatch is a "recount this line" message about
+            // the snapshot). Styled inline from the design tokens (a section owns no
+            // stylesheet).
+            cell: info => {
+              const value = info.getValue<number | null | undefined>();
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'flex-direction': 'column',
+                    'align-items': 'flex-end',
+                  }}
+                >
+                  <span>{value ?? ''}</span>
+                  <Show
+                    when={
+                      lineErrors().get(info.row.original.id) ===
+                      'SnapshotCountCurrentCountMismatchLine'
+                    }
+                  >
+                    <span
+                      style={{
+                        color: 'var(--error-main)',
+                        'font-size': 'var(--text-xs)',
+                        'white-space': 'normal',
+                        'text-align': 'end',
+                      }}
+                    >
+                      {t('error.snapshot-total-mismatch')}
+                    </span>
+                  </Show>
+                </span>
+              );
+            },
+          } satisfies Column<Line, SortKey>,
+        ]),
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
@@ -662,25 +692,39 @@ const StocktakeDetailView: Component = () => {
         ]
       : []),
     // Difference = counted − snapshot; blank until the line is counted. Derived
-    // (no server field), so unsortable.
-    {
-      c: {
-        accessor: line => lineDifference(line) ?? '',
-        id: 'difference',
-      },
-      header: t('label.difference'),
-      ...getNumberCell(),
-    },
+    // (no server field), so unsortable. Omitted alongside Snapshot under blind
+    // stocktake (same gate — see hideSnapshotStock above).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: {
+              accessor: line => lineDifference(line) ?? '',
+              id: 'difference',
+            },
+            header: t('label.difference'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]),
     // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
     // Campaign · Comment. No price columns — Sell/Cost price live only in the
     // line editor's Pricing tab, never as detail-table columns (spec S3).
-    {
-      // The adjustment reason (reasonOption.reason) — an accessor column.
-      // Server sorts by reasonOption.
-      c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
-      sortKey: 'reasonOption',
-      header: t('label.reason'),
-    },
+    // Reason — omitted for the stocktake's whole life under blind stocktake,
+    // since no reason is ever required (see hideReason above).
+    ...(hideReason()
+      ? []
+      : [
+          {
+            // The adjustment reason (reasonOption.reason) — an accessor column.
+            // Server sorts by reasonOption.
+            c: {
+              accessor: line => line.reasonOption?.reason ?? '',
+              id: 'reason',
+            },
+            sortKey: 'reasonOption',
+            header: t('label.reason'),
+          } satisfies Column<Line, SortKey>,
+        ]),
     // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
     // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
     // no sortKey (server can't sort it — kdd/type-safety, D23).
@@ -715,7 +759,7 @@ const StocktakeDetailView: Component = () => {
       header: t('label.comment'),
       ...getCommentCell(),
     },
-  ];
+  ]);
 
   return (
     // Local Suspense boundary: the FIRST read of data() (info()) suspends until
@@ -754,25 +798,25 @@ const StocktakeDetailView: Component = () => {
                   <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
                     {/* "Add item" — opens the line-edit modal in the item-search
-                      state. Only while the stocktake is editable. */}
+                    state. Only while the stocktake is editable. */}
                     <Show when={!isDisabled(node())}>
                       <Button icon={<PlusCircleIcon />} onClick={openAdd}>
                         {t('button.add-item')}
                       </Button>
                     </Show>
                     {/* Export/Print — always available (unlike Add item, it
-                        does not depend on editability): print/export a report of
-                        this stocktake, respecting the line table's current sort
-                        (spec/stocktakes S3 → spec/reports S4). */}
+                      does not depend on editability): print/export a report of
+                      this stocktake, respecting the line table's current sort
+                      (spec/stocktakes S3 → spec/reports S4). */}
                     <ExportPrintAction
                       stocktakeId={node().id}
                       sort={reportSort()}
                     />
                     {/* More — the closed-panel reopen affordance, at the end of
-                        the app-bar page-action cluster (spec ui-standards/
-                        layout.md → page regions). Shows ONLY while the panel is
-                        closed; uses the sidebar glyph (not the info icon), and
-                        reopening counts as the user's explicit open choice. */}
+                      the app-bar page-action cluster (spec ui-standards/
+                      layout.md → page regions). Shows ONLY while the panel is
+                      closed; uses the sidebar glyph (not the info icon), and
+                      reopening counts as the user's explicit open choice. */}
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"
@@ -795,7 +839,7 @@ const StocktakeDetailView: Component = () => {
                     />
                   </Toolbar>
                   {/* Last child of the Header → the tab strip claims its bottom
-                    edge (Header.module.css / Tabs). Details + Log. */}
+                  edge (Header.module.css / Tabs). Details + Log. */}
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -834,10 +878,10 @@ const StocktakeDetailView: Component = () => {
                       {selectedIds().length} {t('label.selected')}
                     </strong>
                     {/* Each action owns its own button + confirm/working/success/
-                      error modal + run; the view supplies storeId/selection and
-                      refetches the page on any commit (onCommit → onLinesChanged),
-                      stamps failed lines inline (onError), and clears selection on
-                      the error phase's "Show error lines" (onShowErrors). */}
+                    error modal + run; the view supplies storeId/selection and
+                    refetches the page on any commit (onCommit → onLinesChanged),
+                    stamps failed lines inline (onError), and clears selection on
+                    the error phase's "Show error lines" (onShowErrors). */}
                     <DeleteLinesAction
                       storeId={params.storeId}
                       selectedIds={selectedIds}
@@ -860,6 +904,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
+                      hideReason={hideReason()}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}
@@ -934,8 +979,8 @@ const StocktakeDetailView: Component = () => {
                 />
               </TabPanel>
               {/* Log tab: the stocktake's activity log — its own query (OMS
-                parity), mounted only while this tab is active (Kobalte unmounts
-                inactive panels), so it fetches on first visit. */}
+              parity), mounted only while this tab is active (Kobalte unmounts
+              inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
                 <StocktakeLogPanel
                   storeId={params.storeId}
@@ -943,8 +988,8 @@ const StocktakeDetailView: Component = () => {
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a
-                direct child of the Page so a row-click on Details opens it
-                regardless of which tab last had focus. */}
+              direct child of the Page so a row-click on Details opens it
+              regardless of which tab last had focus. */}
               <StocktakeLineEditModal
                 open={editState() != null}
                 onClose={() => setEditState(undefined)}

@@ -60,9 +60,6 @@ export const PrescriptionStatusFooter: Component<
   const options = () =>
     nextStatuses(status()).map(next => ({
       value: next,
-      // `button.save-and-confirm-status` is plain "Confirm {{status}}" — it
-      // takes the TRANSLATED label (unlike confirm-status-as below, whose
-      // "$t({{status}})" nests the key).
       label: t('button.save-and-confirm-status', {
         status: t(STATUS_LABEL_KEYS[next]),
       }),
@@ -193,7 +190,7 @@ export const PrescriptionStatusFooter: Component<
                   zeroCount() > 0
                     ? t('messages.confirm-zero-quantity-status')
                     : t('messages.confirm-status-as', {
-                        status: STATUS_LABEL_KEYS[next()],
+                        status: t(STATUS_LABEL_KEYS[next()]),
                       })
                 }
               >

@@ -1,4 +1,4 @@
-import { t } from '../../intl';
+import { t, type LocaleKey } from '../../intl';
 
 // The outbound-shipment status lifecycle (spec/outbound-shipments rules.md §
 // status lifecycle): NEW → ALLOCATED → PICKED → SHIPPED for the sending store,
@@ -48,11 +48,13 @@ export const STATUS_LABELS: Record<OutboundStatus | 'CANCELLED', string> = {
   },
 };
 
-// The label KEY per status — for $t()-nesting messages (e.g.
-// messages.confirm-status-as: "Confirm status as $t({{status}})?"), which
-// resolve $t({{status}}) against the dictionary and so need the KEY, not the
-// already-resolved string. Kept in lock-step with STATUS_LABELS above.
-export const STATUS_LABEL_KEYS: Record<OutboundStatus | 'CANCELLED', string> = {
+// The label KEY per status — callers t()-resolve this themselves before
+// interpolating into messages.confirm-status-as. Kept in lock-step with
+// STATUS_LABELS above.
+export const STATUS_LABEL_KEYS: Record<
+  OutboundStatus | 'CANCELLED',
+  LocaleKey
+> = {
   NEW: 'label.new',
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
