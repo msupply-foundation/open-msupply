@@ -7,7 +7,10 @@ import {
   RefreshToken,
   type UserInfoFragment,
 } from '../api/auth.generated';
-import { refetchStoreContext } from '../store/storeContext';
+import {
+  refetchStoreContext,
+  setForceStorePicker,
+} from '../store/storeContext';
 import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 
 // All authentication context lives here: the user, the unauthenticated and
@@ -93,7 +96,12 @@ export type LoginResult =
 
 export const login = async (
   username: string,
-  password: string
+  password: string,
+  // The timeout / unexpected-logout re-login modal passes `isReLogin` to
+  // PRESERVE the workflow — it keeps the user in their current store rather than
+  // re-showing the store picker. A login-page sign-in leaves it off, so a fresh
+  // session re-picks its store (spec SL-6).
+  options?: { isReLogin?: boolean }
 ): Promise<LoginResult> => {
   const result = await graphqlFetch(AuthToken, { username, password });
   if (result.kind !== 'success') {
@@ -111,6 +119,11 @@ export const login = async (
   setUser(auth.user);
   clearUnauthenticated();
   setInactivityExpired(false);
+  // A fresh login-page sign-in goes through the store picker (spec SL-6) — even
+  // if the URL still names a store from a previous session — unless a store is
+  // remembered / the user has one. NOT on a re-login (the timeout modal keeps
+  // the user's workflow) and NOT on a refresh (checkAuth doesn't call login).
+  if (!options?.isReLogin) setForceStorePicker(true);
   return { kind: 'success' };
 };
 
