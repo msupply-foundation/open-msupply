@@ -195,7 +195,7 @@ const ServiceChargesContent = (
   const columns = (): Column<ServiceChargeDraft, never>[] => [
     {
       c: { key: 'itemId' },
-      header: t('label.name'),
+      header: () => t('label.name'),
       size: 220,
       cell: info => {
         const charge = info.row.original;
@@ -217,7 +217,7 @@ const ServiceChargesContent = (
     },
     {
       c: { key: 'note' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       cell: info => {
         const charge = info.row.original;
         return (
@@ -234,7 +234,7 @@ const ServiceChargesContent = (
     },
     {
       c: { key: 'totalBeforeTax' },
-      header: t('label.amount'),
+      header: () => t('label.amount'),
       meta: { align: 'right' },
       cell: info => {
         const charge = info.row.original;
@@ -252,7 +252,7 @@ const ServiceChargesContent = (
     },
     {
       c: { key: 'taxPercentage' },
-      header: t('label.tax'),
+      header: () => t('label.tax'),
       meta: { align: 'right' },
       cell: info => {
         const charge = info.row.original;
@@ -276,7 +276,7 @@ const ServiceChargesContent = (
     },
     {
       c: { id: 'totalAfterTax' },
-      header: t('label.total'),
+      header: () => t('label.total'),
       meta: { align: 'right' },
       // JSX-wrapped so the store reads live in a tracked expression — a bare
       // string computed in the cell fn freezes at its first value when
@@ -288,7 +288,7 @@ const ServiceChargesContent = (
     },
     {
       c: { id: 'actions' },
-      header: t('label.delete'),
+      header: () => t('label.delete'),
       meta: { align: 'right' },
       cell: info => (
         <IconButton

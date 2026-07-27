@@ -94,7 +94,7 @@ export const InboundFinancialPanel: Component<{
     footerTotal?: number
   ): Column<Line, never> => ({
     c: { accessor: value, id },
-    header,
+    header: () => header,
     // Spread FIRST: the money cell must override getNumberCell's own
     // 2-dp number cell, keeping the currency formatting.
     ...getNumberCell(),
@@ -112,7 +112,7 @@ export const InboundFinancialPanel: Component<{
     return [
       {
         c: { accessor: line => line.itemName, id: 'itemName' },
-        header: t('label.name'),
+        header: () => t('label.name'),
         footer: () => t('label.total'),
       },
       {
@@ -120,22 +120,22 @@ export const InboundFinancialPanel: Component<{
           accessor: line => line.purchaseOrderLine?.lineNumber ?? '',
           id: 'poLine',
         },
-        header: t('label.po-line-number'),
+        header: () => t('label.po-line-number'),
         ...getNumberCell(),
       },
       {
         c: { key: 'numberOfPacks' },
-        header: t('label.pack-quantity'),
+        header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
       {
         c: { key: 'packSize' },
-        header: t('label.pack-size'),
+        header: () => t('label.pack-size'),
         ...getNumberCell(),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unit' },
-        header: t('label.unit'),
+        header: () => t('label.unit'),
       },
       ...(foreign()
         ? [
