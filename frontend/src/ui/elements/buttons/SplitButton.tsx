@@ -55,6 +55,15 @@ interface SplitButtonProps {
   /** Accessible name for the caret trigger (it has no visible text). */
   menuLabel?: string;
   /**
+   * Disable the whole control — both the main action and the caret menu. Prefer
+   * this (with `disabledTitle`) over hiding the button when the action is
+   * temporarily unavailable ("disable with an explanation" — ui-surface
+   * cross-cutting).
+   */
+  disabled?: boolean;
+  /** Native tooltip shown while `disabled` — the reason the action is unavailable. */
+  disabledTitle?: string;
+  /**
    * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main
    * button, `<testId>-dropdown` on the caret, and `<testId>-option-<value>`
    * on each menu item (e.g. `status-change-button`, `export-csv`).
@@ -100,8 +109,12 @@ export const SplitButton = (props: SplitButtonProps) => {
         class={styles.main}
         data-variant={variant()}
         data-testid={props.testId ? `${props.testId}-main` : undefined}
-        onClick={() => props.onAction?.(selectedValue())}
-        onPointerDown={mainRipple.onPointerDown}
+        disabled={props.disabled}
+        title={props.disabled ? props.disabledTitle : undefined}
+        onClick={() => {
+          if (!props.disabled) props.onAction?.(selectedValue());
+        }}
+        onPointerDown={props.disabled ? undefined : mainRipple.onPointerDown}
       >
         <Show when={props.icon}>
           <span class={styles.icon}>{props.icon}</span>
@@ -116,7 +129,9 @@ export const SplitButton = (props: SplitButtonProps) => {
           data-variant={variant()}
           data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
           aria-label={props.menuLabel ?? 'More options'}
-          onPointerDown={caretRipple.onPointerDown}
+          disabled={props.disabled}
+          title={props.disabled ? props.disabledTitle : undefined}
+          onPointerDown={props.disabled ? undefined : caretRipple.onPointerDown}
         >
           <ChevronDownIcon class={styles.caretIcon} />
           <Ripple

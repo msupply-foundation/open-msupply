@@ -21,8 +21,11 @@ const asNumber = (value: unknown): number | undefined => {
 // component (kdd/explicit-composition, kdd/report-argument-forms). An
 // `unsupported` kind (a value type a newer server added) degrades to a disabled
 // placeholder in the fallback, never crashes. `value` is the field's raw stored
-// value; `onChange` emits the new value to store — a boolean, a number
-// (undefined when cleared), an ISO date string or null, the option id, or text.
+// value; `onChange` emits the new value to store — a boolean, a number, an ISO
+// date string, the option id, or text. A CLEARED number/date/option emits null,
+// never undefined: the wire patch is JSON (an undefined value drops out of
+// serialisation, so the save would silently no-op), and the server's
+// patch-merge removes a key on null (spec/ui-standards/custom-fields § saving).
 //
 // By default the control shows its own label ABOVE it — the sectioned-edit-form
 // row used in the custom-fields tab (matches the patient/stock detail forms).
@@ -86,7 +89,7 @@ export const CustomFieldInput = (props: {
             decimalLimit={numberField().integer ? 0 : 6}
             value={asNumber(props.value)}
             disabled={props.disabled}
-            onChange={n => props.onChange(n)}
+            onChange={n => props.onChange(n ?? null)}
           />
         )}
       </Match>
@@ -109,7 +112,7 @@ export const CustomFieldInput = (props: {
             disabled={props.disabled}
             hideLabel={props.hideLabel}
             testId={testId()}
-            onChange={id => props.onChange(id || undefined)}
+            onChange={id => props.onChange(id || null)}
           />
         )}
       </Match>

@@ -2,6 +2,7 @@ import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -143,15 +144,11 @@ export const SyncSection = () => {
           data-testid="sync-settings-username"
         />
       </FieldRow>
-      {/* Plain masked input — the shared library has no visibility-toggle
-          affordance yet (registry gap, flagged in BUILD_REPORT.md); matches
-          the app's other password fields (login, initialisation). */}
       <FieldRow label={t('label.settings-password')}>
-        <TextField
+        <PasswordField
           label={t('label.settings-password')}
           hideLabel
           width="long"
-          type="password"
           autocomplete="off"
           value={form().password}
           onInput={e => edit({ password: e.currentTarget.value })}

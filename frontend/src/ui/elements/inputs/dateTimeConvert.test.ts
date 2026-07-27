@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  dateToIsoDate,
   dateToOffsetIso,
   localDayToUtc,
   localIsoDaysAgo,
@@ -15,6 +16,15 @@ import {
 // built with the local Date constructor, so every assertion holds in any
 // device timezone the suite runs in — asserting literal `...Z` strings would
 // pin the suite to one zone and hide exactly the off-by-one this module kills.
+
+describe('dateToIsoDate', () => {
+  it('formats a local Date as zero-padded YYYY-MM-DD (its local calendar day)', () => {
+    // Local components, so the day is the device's day whatever the zone — a
+    // mid-day time can never slip to an adjacent UTC day.
+    expect(dateToIsoDate(new Date(2026, 0, 5, 12, 0, 0))).toBe('2026-01-05');
+    expect(dateToIsoDate(new Date(2026, 6, 22, 9, 30, 0))).toBe('2026-07-22');
+  });
+});
 
 describe('localDayToUtc', () => {
   it('widens a day to its first LOCAL instant as a UTC instant', () => {

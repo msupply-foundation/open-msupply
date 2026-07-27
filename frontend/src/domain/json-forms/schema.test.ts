@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   cleanArguments,
+  dateArgumentDay,
+  dateArgumentValue,
+  dateFieldBounds,
+  dateFieldViolation,
   instantToLocalDate,
   parseArgumentSchema,
   periodSearchWrites,
@@ -364,6 +368,11 @@ describe('parseArgumentSchema — numbers, dates, readOnly, required', () => {
       readOnly: false,
       required: false,
       dateTime: false,
+      dateOnly: false,
+      dateAsEndOfDay: false,
+      disableFuture: false,
+      minKey: undefined,
+      maxKey: undefined,
     });
     const fromDatetime = byKey(fields, 'fromDatetime');
     if (fromDatetime.kind !== 'date') throw new Error('expected date');
@@ -780,5 +789,217 @@ describe('instantToLocalDate', () => {
     expect(instantToLocalDate(undefined)).toBe('');
     expect(instantToLocalDate('')).toBe('');
     expect(instantToLocalDate('not-a-date')).toBe('');
+  });
+});
+
+// The customer-returns shape (AC-R18): date-time properties whose elements ask
+// for date-only entry, end-of-day widening on the "to" bound, no-future, and
+// live sibling min/max scope refs — the exact options the standard shipments /
+// returns / adjustments / encounters schemas carry.
+const dateOptionsSchema = {
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      after: { type: 'string', format: 'date-time' },
+      before: { type: 'string', format: 'date-time' },
+      plainDay: { type: 'string', format: 'date' },
+    },
+  },
+  uiSchema: {
+    elements: [
+      {
+        type: 'Control',
+        scope: '#/properties/after',
+        label: 'From date',
+        options: {
+          dateOnly: true,
+          disableFuture: true,
+          max: '#/properties/before',
+        },
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/before',
+        label: 'To date',
+        options: {
+          dateOnly: true,
+          disableFuture: true,
+          min: '#/properties/after',
+          dateAsEndOfDay: true,
+        },
+      },
+      { type: 'Control', scope: '#/properties/plainDay', label: 'Plain' },
+    ],
+  },
+};
+
+describe('date options (AC-R18)', () => {
+  const fields = parseArgumentSchema(dateOptionsSchema);
+  const dateByKey = (key: string) => {
+    const field = byKey(fields, key);
+    if (field.kind !== 'date') throw new Error('expected date');
+    return field;
+  };
+  const after = dateByKey('after');
+  const before = dateByKey('before');
+  const plain = dateByKey('plainDay');
+
+  it('parses dateOnly / dateAsEndOfDay / disableFuture / sibling bound refs', () => {
+    expect(after).toMatchObject({
+      dateTime: true,
+      dateOnly: true,
+      dateAsEndOfDay: false,
+      disableFuture: true,
+      minKey: undefined,
+      maxKey: 'before',
+    });
+    expect(before).toMatchObject({
+      dateTime: true,
+      dateOnly: true,
+      dateAsEndOfDay: true,
+      disableFuture: true,
+      minKey: 'after',
+      maxKey: undefined,
+    });
+  });
+
+  it('defaults every option off for an element without them', () => {
+    expect(plain).toMatchObject({
+      dateTime: false,
+      dateOnly: false,
+      dateAsEndOfDay: false,
+      disableFuture: false,
+      minKey: undefined,
+      maxKey: undefined,
+    });
+  });
+
+  it('widens a picked day to a start-of-day instant', () => {
+    expect(dateArgumentValue(after, '2026-06-01')).toBe(
+      new Date('2026-06-01T00:00:00').toISOString()
+    );
+  });
+
+  it('widens the end-of-day field to the inclusive last instant', () => {
+    expect(dateArgumentValue(before, '2026-06-30')).toBe(
+      new Date('2026-06-30T23:59:59.999').toISOString()
+    );
+  });
+
+  it('passes a plain date field value through as the calendar day', () => {
+    expect(dateArgumentValue(plain, '2026-06-01')).toBe('2026-06-01');
+  });
+
+  it('reads a stored instant back as the local day it fell on', () => {
+    const stored = new Date('2026-06-30T23:59:59.999').toISOString();
+    expect(dateArgumentDay(stored)).toBe('2026-06-30');
+    expect(dateArgumentDay('2026-06-01')).toBe('2026-06-01');
+    expect(dateArgumentDay(undefined)).toBe('');
+  });
+
+  it('resolves the max bound live from the sibling instant value', () => {
+    const values = {
+      before: new Date('2026-06-15T23:59:59.999').toISOString(),
+    };
+    expect(dateFieldBounds(after, values, '2026-07-27')).toEqual({
+      max: '2026-06-15',
+    });
+  });
+
+  it('tightens the ceiling to today when the sibling bound is later', () => {
+    const values = {
+      before: new Date('2026-12-31T23:59:59.999').toISOString(),
+    };
+    expect(dateFieldBounds(after, values, '2026-07-27')).toEqual({
+      max: '2026-07-27',
+    });
+  });
+
+  it('caps at today with no sibling bound set (disableFuture)', () => {
+    expect(dateFieldBounds(after, {}, '2026-07-27')).toEqual({
+      max: '2026-07-27',
+    });
+  });
+
+  it('resolves the min bound from the sibling start instant', () => {
+    const values = { after: new Date('2026-06-01T00:00:00').toISOString() };
+    expect(dateFieldBounds(before, values, '2026-07-27')).toEqual({
+      min: '2026-06-01',
+      max: '2026-07-27',
+    });
+  });
+
+  it('flags a future day when the element disallows it', () => {
+    const values = {
+      after: new Date('2026-08-01T00:00:00').toISOString(),
+    };
+    expect(dateFieldViolation(after, values, '2026-07-27')).toBe('future');
+  });
+
+  it('flags a day past the sibling max', () => {
+    const values = {
+      after: new Date('2026-06-20T00:00:00').toISOString(),
+      before: new Date('2026-06-15T23:59:59.999').toISOString(),
+    };
+    expect(dateFieldViolation(after, values, '2026-07-27')).toBe('max');
+  });
+
+  it('flags a day before the sibling min', () => {
+    const values = {
+      after: new Date('2026-06-20T00:00:00').toISOString(),
+      before: new Date('2026-06-15T23:59:59.999').toISOString(),
+    };
+    expect(dateFieldViolation(before, values, '2026-07-27')).toBe('min');
+  });
+
+  it('reports no violation for an in-range or empty value', () => {
+    const values = {
+      after: new Date('2026-06-10T00:00:00').toISOString(),
+      before: new Date('2026-06-15T23:59:59.999').toISOString(),
+    };
+    expect(dateFieldViolation(after, values, '2026-07-27')).toBeUndefined();
+    expect(dateFieldViolation(before, values, '2026-07-27')).toBeUndefined();
+    expect(dateFieldViolation(after, {}, '2026-07-27')).toBeUndefined();
+  });
+});
+
+describe('read-only marking — both wire homes (AC-R6)', () => {
+  // stock-status / item-usage mark read-only on the uiSchema element
+  // (options.readonly, lowercase); expiring-items uses the jsonSchema property
+  // keyword (readOnly). Both must render disabled-but-submitted.
+  const schema = {
+    jsonSchema: {
+      type: 'object',
+      properties: {
+        viaProperty: { type: 'number', readOnly: true },
+        viaOptions: { type: 'number' },
+        editable: { type: 'number' },
+      },
+    },
+    uiSchema: {
+      elements: [
+        { type: 'Control', scope: '#/properties/viaProperty', label: 'A' },
+        {
+          type: 'Control',
+          scope: '#/properties/viaOptions',
+          label: 'B',
+          options: { readonly: true },
+        },
+        { type: 'Control', scope: '#/properties/editable', label: 'C' },
+      ],
+    },
+  };
+  const fields = parseArgumentSchema(schema);
+
+  it('reads the jsonSchema readOnly keyword', () => {
+    expect(byKey(fields, 'viaProperty')).toMatchObject({ readOnly: true });
+  });
+
+  it('reads the uiSchema options.readonly flag', () => {
+    expect(byKey(fields, 'viaOptions')).toMatchObject({ readOnly: true });
+  });
+
+  it('leaves unmarked fields editable', () => {
+    expect(byKey(fields, 'editable')).toMatchObject({ readOnly: false });
   });
 });

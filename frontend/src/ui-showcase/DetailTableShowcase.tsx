@@ -8,6 +8,10 @@ import {
 } from '../ui/elements/table/DataTable';
 import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
+  dateToIsoDate,
+  localDayToUtc,
+} from '../ui/elements/inputs/dateTimeConvert';
+import {
   resolveTableConfig,
   type Band,
   type LayeredConfig,
@@ -122,9 +126,10 @@ const SUPPLIERS = [
   { value: 'carepoint', label: 'CarePoint Distribution' },
 ];
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const isoDay = (month: number, day: number, year: number) =>
-  `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`;
+// A stored instant for the given local calendar day, via the shared
+// conversion — so the mock rows display the intended day in any timezone.
+const isoDay = (month: number, day: number, year: number): string =>
+  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry error tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
