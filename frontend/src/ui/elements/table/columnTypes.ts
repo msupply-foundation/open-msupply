@@ -163,14 +163,31 @@ export const toColumnDef = <T, K extends string, G extends string>(
   col: Column<T, K, G>
 ): ColumnDef<T> => {
   const { c, ...rest } = col;
+  // Sortability follows `sortKey`: a column is sortable only when it declares
+  // one (its server sort field). Without this, TanStack's getCanSort() defaults
+  // to true for every accessor column, so a non-sortable header (e.g. Mobile /
+  // Gender) would wrongly show the pointer cursor + reserved sort indicator and
+  // take a dead click that maps to no sortKey (onSort never fires). An explicit
+  // enableSorting on the column still wins.
   // `rest` already carries TanStack's own fields — including
   // `aggregationFn`/`aggregatedCell` for row grouping (from ColumnDefBase) — so
-  // a caller sets those directly; nothing to remap.
+  // a caller sets those directly; nothing else to remap.
+  const enableSorting = rest.enableSorting ?? rest.sortKey !== undefined;
   if (c.key !== undefined)
-    return { ...rest, accessorKey: c.key, id: String(c.key) } as ColumnDef<T>;
+    return {
+      ...rest,
+      enableSorting,
+      accessorKey: c.key,
+      id: String(c.key),
+    } as ColumnDef<T>;
   if (c.accessor !== undefined)
-    return { ...rest, accessorFn: c.accessor, id: c.id } as ColumnDef<T>;
-  return { ...rest, id: c.id } as ColumnDef<T>;
+    return {
+      ...rest,
+      enableSorting,
+      accessorFn: c.accessor,
+      id: c.id,
+    } as ColumnDef<T>;
+  return { ...rest, enableSorting, id: c.id } as ColumnDef<T>;
 };
 
 // A card BODY group — how one `cardGroup` key presents in card view. The table
