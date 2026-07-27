@@ -151,6 +151,7 @@ export const CreatePrescriptionModal: Component<
         <DateField
           label={t('label.date')}
           hideLabel
+          testId="date-field"
           value={date()}
           max={localToday()}
           onChange={value => setDate(value ?? localToday())}
@@ -160,6 +161,7 @@ export const CreatePrescriptionModal: Component<
         <TextField
           label={t('label.reference')}
           hideLabel
+          data-testid="customer-reference-field"
           value={reference()}
           onInput={e => setReference(e.currentTarget.value)}
         />
@@ -168,6 +170,7 @@ export const CreatePrescriptionModal: Component<
         <ClinicianSelect
           label={t('label.clinician')}
           hideLabel
+          inputTestId="clinician-select"
           value={clinicianId()}
           onChange={clinician => setClinicianId(clinician?.id)}
         />
@@ -176,6 +179,7 @@ export const CreatePrescriptionModal: Component<
         <ProgramNameSelect
           label={t('label.program')}
           hideLabel
+          testId="program-select"
           value={programId()}
           onChange={id => setProgramId(id ?? undefined)}
         />
