@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
@@ -81,10 +82,9 @@ export const LoginPage: Component = () => {
               error={fieldErrors().username || undefined}
               onInput={e => setUsername(e.currentTarget.value)}
             />
-            <TextField
+            <PasswordField
               label={t('heading.password')}
               width="full"
-              type="password"
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
