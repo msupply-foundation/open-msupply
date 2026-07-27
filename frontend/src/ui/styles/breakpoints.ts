@@ -9,7 +9,12 @@
  * by CSS media queries. This list stays short on purpose.
  */
 export const breakpoints = {
-  /** Below this, the menu bar becomes a hamburger overlay instead of docked. */
+  /**
+   * Below this, the menu bar becomes a hamburger overlay instead of docked (and
+   * the side panel an off-canvas drawer). Also the "narrow viewport" line —
+   * tablet portrait and below — at which modal dialogs expand to full screen
+   * (ui-standards responsive: tablet portrait / small screen is 600–1023px).
+   */
   navOverlay: 1024,
   /** Below this = phone-ish; index.css drops the root font-size here. */
   compact: 600,
