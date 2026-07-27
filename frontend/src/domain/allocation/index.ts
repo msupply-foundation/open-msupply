@@ -9,15 +9,21 @@ export {
   type Distribution,
 } from './distributeIssue';
 export {
+  autoAllocateBarReasons,
   barReasons,
   isBarred,
+  rowHasAllocatableStock,
   fefoCompare,
+  fillOrderCompare,
   type AllocationPreferences,
   type BarrableBatch,
   type BarReason,
+  type OrderableBatch,
 } from './policy';
 export {
+  clampManualPacks,
   lensToUnits,
+  unitsToLens,
   availableUnits,
   issuedUnits,
   distinctPackSizes,

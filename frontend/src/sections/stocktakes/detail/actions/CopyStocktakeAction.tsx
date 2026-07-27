@@ -28,12 +28,17 @@ const COPIED_MS = 2000;
 export const CopyStocktakeAction: Component<
   CopyStocktakeActionProps
 > = props => {
-  // busy while the fetch is in flight; copied briefly after a successful write
-  // (drives the button's label/icon swap).
+  // busy while the fetch is in flight; feedback briefly after the write
+  // succeeds or fails (drives the button's label/icon swap).
   const [busy, setBusy] = createSignal(false);
-  const [copied, setCopied] = createSignal(false);
+  const [feedback, setFeedback] = createSignal<'copied' | 'failed'>();
   let timer: ReturnType<typeof setTimeout> | undefined;
   onCleanup(() => clearTimeout(timer));
+  const flashFeedback = (kind: 'copied' | 'failed') => {
+    setFeedback(kind);
+    clearTimeout(timer);
+    timer = setTimeout(() => setFeedback(undefined), COPIED_MS);
+  };
 
   const run = async () => {
     if (busy()) return; // re-entry guard
@@ -55,14 +60,18 @@ export const CopyStocktakeAction: Component<
       if (result.kind !== 'success') return;
       if (result.data.stocktake.__typename !== 'StocktakeNode') return;
 
-      // The full result, pretty-printed — faithful to "the full graphql result,
-      // stocktake and lines".
-      const json = JSON.stringify(result.data, null, 2);
-      await navigator.clipboard.writeText(json);
-
-      setCopied(true);
-      clearTimeout(timer);
-      timer = setTimeout(() => setCopied(false), COPIED_MS);
+      // The node itself, pretty-printed — the old app copies the record, not
+      // the query wrapper ({"stocktake": …}).
+      const json = JSON.stringify(result.data.stocktake, null, 2);
+      try {
+        await navigator.clipboard.writeText(json);
+      } catch {
+        // Clipboard write refused — e.g. Safari's user-activation window
+        // expired over a slow fetch. Surface in the same in-place slot.
+        flashFeedback('failed');
+        return;
+      }
+      flashFeedback('copied');
     } finally {
       setBusy(false);
     }
@@ -75,12 +84,16 @@ export const CopyStocktakeAction: Component<
     <Button
       variant="secondary"
       aria-live="polite"
-      icon={copied() ? <CheckIcon /> : <CopyIcon />}
+      icon={feedback() === 'copied' ? <CheckIcon /> : <CopyIcon />}
       loading={busy()}
       data-testid="copy-stocktake-button"
       onClick={() => void run()}
     >
-      {copied() ? t('message.copy-success') : t('button.copy-to-clipboard')}
+      {feedback() === 'copied'
+        ? t('message.copy-success')
+        : feedback() === 'failed'
+          ? t('message.copy-failed')
+          : t('button.copy-to-clipboard')}
     </Button>
   );
 };

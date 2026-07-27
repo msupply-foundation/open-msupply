@@ -25,3 +25,4 @@ export { Lead } from './Lead';
 export { PageFrame, PageBody } from './PageFrame';
 export { ToolbarStub } from './ToolbarStub';
 export { FormPreview } from './FormPreview';
+export { SectionTOC } from './SectionTOC';

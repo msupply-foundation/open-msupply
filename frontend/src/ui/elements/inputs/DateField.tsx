@@ -39,6 +39,8 @@ export interface DateFieldProps {
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
   id?: string;
+  /** `data-testid` for the typed-entry text input (locale-stable test hook, e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 /*
@@ -104,6 +106,7 @@ export const DateField = (props: DateFieldProps) => {
             id={id()}
             type="text"
             class={styles.dateInput}
+            data-testid={props.testId}
             value={text()}
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}

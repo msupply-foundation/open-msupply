@@ -13,10 +13,10 @@ import styles from '../Settings.module.css';
  *  - Server log: pick and view any of the server's log files (S3).
  *  - Download database: GET /support/database — the server vacuums the
  *    database in place, then streams the file, inside this one authenticated
- *    request (AC-SU3 — server-side effect). On this web/desktop build the
+ *    request (rules § Support — server-side effect). On this web/desktop build the
  *    button is never disabled: it always downloads from the connected server,
  *    so the Android-only "device isn't hosting the database" gate does not
- *    apply (AC-SU4).
+ *    apply (OMS-REG-SET-04.5 / OMS-REG-SET-03.7).
  */
 export const SupportSection = () => {
   const [logOpen, setLogOpen] = createSignal(false);
