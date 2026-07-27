@@ -78,12 +78,22 @@ export const DateField = (props: DateFieldProps) => {
 
   const commit = () => {
     const parsed = parseDateInput(text(), fmt());
+    // Rejection gate — parseDateInput is tri-state (undefined = unparseable,
+    // null = deliberately blanked, string = a valid ISO date). Any arm true →
+    // the entry reverts to the last good value, like invalid input; onChange
+    // never fires. ISO YYYY-MM-DD compares chronologically as a plain string.
     if (
+      // Unparseable text: gibberish, or an impossible date (31 Feb).
       parsed === undefined ||
-      // min/max constrain TYPED entries too, not just the calendar; and a
-      // required field can't be blanked — all revert like invalid input.
+      // Blanked a required field: a required value must always exist, so a
+      // blank reverts. (Non-required fields pass null through — the "cleared"
+      // path.) The calendar's deselect is guarded separately, via corvu's own
+      // required prop on DatePickerPanel.
       (parsed === null && props.required) ||
+      // A valid date, but TYPED earlier than min — the calendar already makes
+      // such days unselectable; this closes the typed path.
       (parsed != null && props.min !== undefined && parsed < props.min) ||
+      // A valid date, but TYPED later than max — same as min, other bound.
       (parsed != null && props.max !== undefined && parsed > props.max)
     ) {
       setText(formatIsoDate(props.value, fmt())); // invalid → revert
