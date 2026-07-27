@@ -341,6 +341,9 @@ const OutboundDetailView: Component = () => {
     tableId: 'outbound-detail',
     defaultConfig: {
       base: {
+        // Code starts pinned left (spec S3 § line table: "item code, pinned
+        // left") — the row anchor stays visible while the wide table scrolls.
+        columnPinning: { left: ['itemCode'] },
         columnVisibility: {
           // The denser columns start hidden (spec S1's hidden-by-default idea
           // applied to the detail table); the user reveals them via column
