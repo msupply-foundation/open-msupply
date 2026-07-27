@@ -15,6 +15,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
+import { BareCheckbox } from '../../../../ui/elements/inputs/BareCheckbox';
 import {
   DataTable,
   type Column,
@@ -794,17 +795,25 @@ const StocktakeLineEditContent = (
   };
 
   // ---- Columns: one set, split across groups; batch is the anchor. ----
-  // (Unchanged from the original — each cell edits the draft store via update().)
+  // (Unchanged from the original — each cell edits the draft store via
+  // update().)
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       c: { id: 'countThisLine' },
       header: () => t('label.count-this-line'),
-      meta: { align: 'center' },
+      // Card view: the count toggle rides in the header BADGE slot
+      // (inline-end), captioned by the badge's FieldRow (showLabel) — so the
+      // control itself is the bare box with an aria-label, no doubled caption.
+      // Structural — keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
-          <input
-            type="checkbox"
+          <BareCheckbox
             aria-label={t('label.count-this-line')}
             checked={line.countThisLine}
             onChange={e =>
@@ -817,7 +826,14 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
-      meta: { headerPosition: 'primary' },
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity): keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
@@ -825,6 +841,9 @@ const StocktakeLineEditContent = (
             label={t('label.batch')}
             hideLabel
             size="small"
+            // Narrow: a batch code is short, and it's the card's inline header
+            // field (the FieldRow control cell is otherwise full-width).
+            width="compact"
             disabled={!line.countThisLine}
             value={line.batch ?? ''}
             onInput={e =>
@@ -1322,7 +1341,13 @@ const StocktakeLineEditContent = (
     {
       c: { id: 'actions' },
       header: () => t('label.actions'),
-      meta: { headerPosition: 'badge', align: 'right' },
+      // Structural row-actions column — not user-configurable, so keep it out
+      // of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (

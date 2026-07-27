@@ -776,7 +776,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
-      meta: { headerPosition: 'primary' },
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity): keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const b = info.row.original;
         return (
@@ -784,6 +791,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.batch')}
             hideLabel
             size="small"
+            // Narrow: a batch code is short, and it's the card's inline header
+            // field (the FieldRow control cell is otherwise full-width).
+            width="compact"
             value={b.batch}
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
@@ -1264,7 +1274,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { id: 'actions' },
       header: () => t('label.actions'),
-      meta: { headerPosition: 'badge', align: 'right' },
+      // Structural row-actions column — not user-configurable, so keep it out
+      // of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const b = info.row.original;
         return (

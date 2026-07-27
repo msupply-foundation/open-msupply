@@ -3,6 +3,7 @@ import type { JSX } from 'solid-js';
 import {
   flexRender,
   type Cell as TanCell,
+  type HeaderContext,
   type Table,
 } from '@tanstack/solid-table';
 import { LabelledValue } from '../typography/LabelledValue';
@@ -29,14 +30,20 @@ const headerSlot = <T,>(
 const cellGroup = <T,>(cell: TanCell<T, unknown>): string | undefined =>
   (cell.column.columnDef as { cardGroup?: string }).cardGroup;
 
-// The column's header text, for a field label. Headers may be a string or
-// JSX/function; only the string case yields a readable label (our columns use
-// strings), else no label.
+// The column's header text, for a card field label. Our columns' `header` is
+// always a FUNCTION now (columnTypes.ts narrows it to function-only so the text
+// reacts to locale changes — kdd/solid-reactivity-pitfalls §14), so call it the
+// same way HeaderCell.tsx does via flexRender and ColumnSettings.tsx does for
+// its row labels. None of our headers read the context argument, so an empty
+// one is safe. A non-function header (or none) yields no label — the cell then
+// fills its slot unlabelled.
 const columnHeaderText = <T,>(
   cell: TanCell<T, unknown>
-): string | undefined => {
+): JSX.Element | undefined => {
   const header = cell.column.columnDef.header;
-  return typeof header === 'string' ? header : undefined;
+  return typeof header === 'function'
+    ? header({} as HeaderContext<T, unknown>)
+    : undefined;
 };
 
 // Whether a cell shows its field label in card view. Default follows the slot
