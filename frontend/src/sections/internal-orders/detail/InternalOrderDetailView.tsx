@@ -126,10 +126,16 @@ const InternalOrderDetailView: Component = () => {
     },
   });
 
-  // The header read. The resource IS the local state: every save writes back
-  // with `mutate` (no refetch → no suspend → no remount,
-  // kdd/solid-reactivity-pitfalls). Reading `data()` suspends only on the
-  // screen's FIRST load (nothing live to lose), under the <Suspense> below.
+  // The header read. The resource IS the local state: header saves write back
+  // with `mutate` (no refetch → no remount), but the ancillary Add/Update, the
+  // Documents tab, the line editor, and the master-list add all `refetch()`
+  // while the screen — and often an OPEN dialog (the line editor) — stays up.
+  // So `info()` must read `.latest` NON-suspending: a `data()` read would
+  // re-suspend the <Suspense> on every refetch, remounting the subtree and
+  // detaching the open <dialog> from the top layer (its backdrop vanishes and
+  // the page shows through — kdd/solid-reactivity-pitfalls § no remounts).
+  // `.latest` suspends only until the FIRST load resolves, so the initial
+  // spinner (the fallback below, gated on `data.loading`) is unchanged.
   const [data, { mutate, refetch }] = createResource(
     () => ({ storeId: params.storeId, id: params.orderId }),
     async (variables): Promise<InternalOrderInfoFragment | undefined> => {
@@ -140,7 +146,7 @@ const InternalOrderDetailView: Component = () => {
         : undefined;
     }
   );
-  const info = (): InternalOrderInfoFragment | undefined => data();
+  const info = (): InternalOrderInfoFragment | undefined => data.latest;
 
   // Store-context gates, fetched once per store, read non-suspending (safe
   // default OFF while unresolved).

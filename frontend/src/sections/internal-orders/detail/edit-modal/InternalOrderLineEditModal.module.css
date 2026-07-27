@@ -44,6 +44,14 @@
   padding-inline: var(--space-2);
 }
 
+/* The item picker fills the modal's full width (the combobox otherwise caps at
+   its long max-width, leaving it half-width in the large modal). The doubled
+   class outranks the component's own max-width rule. */
+.itemField.itemField {
+  max-inline-size: 100%;
+  inline-size: 100%;
+}
+
 /* The requested number + entry-mode select fill the row's full width, split
    evenly — so they're evenly spaced when the panel is wide (two columns) and
    scale down together when it's narrow (three columns). Both controls are
