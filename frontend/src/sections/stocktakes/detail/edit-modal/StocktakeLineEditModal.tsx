@@ -798,7 +798,7 @@ const StocktakeLineEditContent = (
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       c: { id: 'countThisLine' },
-      header: t('label.count-this-line'),
+      header: () => t('label.count-this-line'),
       meta: { align: 'center' },
       cell: info => {
         const line = info.row.original;
@@ -816,7 +816,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
+      header: () => t('label.batch'),
       meta: { headerPosition: 'primary' },
       cell: info => {
         const line = info.row.original;
@@ -836,7 +836,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry-date'),
+      header: () => t('label.expiry-date'),
       cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
@@ -854,7 +854,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
@@ -877,7 +877,7 @@ const StocktakeLineEditContent = (
       : [
           {
             c: { key: 'snapshotNumberOfPacks' },
-            header: t('label.snapshot-num-of-packs'),
+            header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
@@ -916,7 +916,7 @@ const StocktakeLineEditContent = (
         ]),
     {
       c: { key: 'countedNumberOfPacks' },
-      header: t('label.counted-num-of-packs'),
+      header: () => t('label.counted-num-of-packs'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -948,7 +948,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -973,7 +973,7 @@ const StocktakeLineEditContent = (
     // already open, rather than requiring a tab switch.
     {
       c: { key: 'location' },
-      header: t('label.location'),
+      header: () => t('label.location'),
       cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
@@ -1007,7 +1007,7 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'vvmStatus' },
-            header: t('label.vvm-status'),
+            header: () => t('label.vvm-status'),
             cardGroup: 'batch',
             cell: info => {
               const line = info.row.original;
@@ -1043,7 +1043,7 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'dosesCounted' },
-            header: t('label.doses-counted'),
+            header: () => t('label.doses-counted'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
@@ -1055,7 +1055,7 @@ const StocktakeLineEditContent = (
       : []),
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1076,7 +1076,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1097,7 +1097,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
+      header: () => t('label.volume-per-pack'),
       cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
@@ -1126,7 +1126,7 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'donor' },
-            header: t('label.donor'),
+            header: () => t('label.donor'),
             cardGroup: 'other',
             cell: info => {
               const line = info.row.original;
@@ -1168,7 +1168,7 @@ const StocktakeLineEditContent = (
     // clears the other. buildBatch sends campaignId/programId accordingly.
     {
       c: { id: 'campaignOrProgram' },
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1196,7 +1196,7 @@ const StocktakeLineEditContent = (
     // saved via manufacturerId in buildBatch.
     {
       c: { id: 'manufacturer' },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1239,7 +1239,7 @@ const StocktakeLineEditContent = (
       : [
           {
             c: { id: 'inventoryAdjustmentReasonInput' },
-            header: t('label.reason'),
+            header: () => t('label.reason'),
             cardGroup: 'batch',
             cell: info => {
               const line = info.row.original;
@@ -1281,7 +1281,7 @@ const StocktakeLineEditContent = (
         ]),
     {
       c: { key: 'note' },
-      header: t('label.note'),
+      header: () => t('label.note'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1301,7 +1301,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'comment' },
-      header: t('label.stocktake-comment'),
+      header: () => t('label.stocktake-comment'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1321,7 +1321,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { id: 'actions' },
-      header: t('label.actions'),
+      header: () => t('label.actions'),
       meta: { headerPosition: 'badge', align: 'right' },
       cell: info => {
         const line = info.row.original;
