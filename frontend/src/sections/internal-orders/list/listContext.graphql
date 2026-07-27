@@ -1,0 +1,17 @@
+# The store-context reads that gate the internal-orders list's conditional
+# columns (spec/internal-orders › store-context gates). Fetched once per store,
+# read non-suspending; a gated column stays hidden until its read resolves (safe
+# default OFF — a gated column never flashes in before its gate is known).
+#
+# - requestRequisitionRequiresAuthorisation → the Approval status column (AC-L9).
+# - supplierProgramRequisitionSettings non-empty → the Program / Order type /
+#   Period columns (AC-L8): the store is set up to order under at least one
+#   supplier program.
+query internalOrderListContext($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    requestRequisitionRequiresAuthorisation
+  }
+  supplierProgramRequisitionSettings(storeId: $storeId) {
+    programId
+  }
+}
