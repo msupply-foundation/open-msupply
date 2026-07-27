@@ -3,15 +3,11 @@ import { createStore } from 'solid-js/store';
 import { t } from '../intl';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getCurrencyCell,
-  getDateCell,
-  getNumberCell,
-} from '../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -27,6 +23,7 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Button } from '../ui/elements/buttons/Button';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
+import { TextField } from '../ui/elements/inputs/TextField';
 import {
   ColourTagPicker,
   TAG_COLOURS,
@@ -82,6 +79,19 @@ type SortKey =
   | 'createdDatetime'
   | 'deliveredDatetime'
   | 'theirReference';
+
+// Card-view grouping for the list card: the supplier NAME is the card title
+// (headerPosition 'primary') and the status its badge; the primary columns (#,
+// linked order, created, note) form the always-shown default group, and the
+// secondary columns (Delivered, Comment, Reference, Total) drop into one
+// collapsed "More details" disclosure — same treatment as the Detail table.
+// These four were previously hidden outright below 600px; surfacing them in a
+// disclosure keeps them reachable without cluttering the card. No labelKey →
+// the disclosure header falls back to "More details".
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Row, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
 
 // External suppliers read as a truck; the store suppliers (another store in the
 // system) read as a house — the list's column-1 kind icon.
@@ -229,25 +239,14 @@ const sortValue = (r: Row, key: SortKey): string | number => {
   }
 };
 
-// The real page's default column config: the base table hides Delivered /
-// Reference / Total, and below 600px the list flips to card view and also drops
-// the comment column (inboundShipments list createTableConfig defaults).
+// Default column config for the showcase: the base (desktop) table starts with
+// ALL columns visible — so the full column set + their widths are on show;
+// below 600px the list flips to card view. The secondary columns aren't hidden
+// there — they render inside each card's "More details" disclosure (see
+// CARD_GROUPS), so nothing is dropped.
 const DEFAULT_CONFIG: LayeredConfig = {
-  base: {
-    columnVisibility: {
-      deliveredDatetime: false,
-      theirReference: false,
-      total: false,
-    },
-  },
   compact: {
     viewMode: 'card',
-    columnVisibility: {
-      deliveredDatetime: false,
-      theirReference: false,
-      total: false,
-      comment: false,
-    },
   },
 };
 
@@ -266,6 +265,13 @@ export const TableShowcase = () => {
   // picking a colour updates only that row's cell.
   const [colours, setColours] = createStore<Record<string, string | null>>(
     Object.fromEntries(DATA.map(r => [r.id, r.colour]))
+  );
+
+  // A card-only EDITABLE field (see the `note` column below, meta.hideOnTable):
+  // demonstrates how an input sits alongside the read-only LabelledValue fields
+  // in card view. Buffered locally like `colours` (no backend).
+  const [notes, setNotes] = createStore<Record<string, string>>(
+    Object.fromEntries(DATA.map(r => [r.id, r.theirReference ?? '']))
   );
 
   // Local column config, standing in for createTableConfig (which needs store
@@ -339,14 +345,20 @@ export const TableShowcase = () => {
     selectedRows().length > 0 && selectedRows().every(r => r.status === 'NEW');
   const singleSelected = () => selectedIds().length === 1;
 
-  const columns = (): Column<Row, SortKey>[] => [
+  const columns = (): Column<Row, SortKey, GroupKey>[] => [
     {
       // Supplier — inline colour swatch + kind icon (house = another store,
       // truck = external supplier) + name.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: t('label.name'),
-      meta: { card: { region: 'primary' } },
+      // The wide flex-fill "sink" column (text default), keeping its bespoke
+      // swatch + supplier-kind cell. The card's identity title — structural, so
+      // it's dropped from the Columns popover.
+      ...getCellDefinition<Row>('otherPartyName', {
+        headerPosition: 'primary',
+        hideFromColumnSettings: true,
+      }),
       cell: info => {
         const row = info.row.original;
         return (
@@ -387,13 +399,42 @@ export const TableShowcase = () => {
           />
         );
       },
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
+      // TABLE face of the invoice number — a plain "#"-headed number column
+      // (label from the header row, value in the cell). The CARD face is the
+      // next column (invoiceNumberCard), which bunches it as "#1200" in the
+      // card header. Splitting the two is the card model's "one value, two
+      // faces": each view renders the same source field its own way. hideOnCard
+      // keeps this column out of the card, but it still supplies the card's "#"
+      // SORT option (sort options read every column's sortKey, any view). Not
+      // user-hideable, so it's dropped from the Columns popover too.
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: '#',
-      ...getNumberCell(),
+      // Small + capped — the `invoiceNumber` key carries a tight size/maxSize
+      // default (a few digits) in the cell-definition map.
+      ...getCellDefinition<Row>('invoiceNumber', {
+        hideOnCard: true,
+        hideFromColumnSettings: true,
+      }),
+    },
+    {
+      // CARD face of the invoice number — a second card-header 'primary' cell
+      // (renders after the name), with the "#" bunched INTO the value ("#1200")
+      // and no separate label. A display column with its own id so it doesn't
+      // clash with the table column's `invoiceNumber` id; hideOnTable keeps it
+      // card-only, and it carries no sortKey (the table column owns sorting).
+      // Structural, so it's out of the Columns popover.
+      c: { id: 'invoiceNumberCard' },
+      header: '#',
+      meta: {
+        headerPosition: 'primary',
+        hideOnTable: true,
+        hideFromColumnSettings: true,
+      },
+      cell: info => <span>{`#${info.row.original.invoiceNumber}`}</span>,
     },
     {
       // Linked order — PO-<n> (secondary colour) or IO-<n> (primary colour),
@@ -429,28 +470,57 @@ export const TableShowcase = () => {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition<Row>('createdDatetime'),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
       header: t('label.delivered'),
-      ...getDateCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Row>('deliveredDatetime'),
     },
     {
       c: { key: 'comment' },
       header: t('label.comment'),
-      ...getCommentCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Row>('comment'),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
       header: t('label.reference'),
+      cardGroup: 'more',
+      ...getCellDefinition<Row>('theirReference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
       header: t('label.total'),
-      ...getCurrencyCell(),
+      cardGroup: 'more',
+      ...getCellDefinition<Row>('total'),
+    },
+    {
+      // CARD-ONLY editable field (meta.hideOnTable) — shows how an input reads
+      // alongside the read-only LabelledValue fields in card view. The column
+      // header is the field label (LabelledValue renders it above the input);
+      // the TextField's own label is hidden but kept for a11y.
+      c: { id: 'note' },
+      header: 'Note',
+      meta: { hideOnTable: true },
+      cell: info => {
+        const row = info.row.original;
+        return (
+          <TextField
+            label="Note"
+            hideLabel
+            size="small"
+            width="full"
+            value={notes[row.id]}
+            onInput={e => setNotes(row.id, e.currentTarget.value)}
+            // Don't let typing/clicking the input open the row.
+            onClick={e => e.stopPropagation()}
+          />
+        );
+      },
     },
   ];
 
@@ -483,6 +553,7 @@ export const TableShowcase = () => {
     >
       <DataTable
         columns={columns()}
+        cardGroups={CARD_GROUPS}
         rows={rows()}
         rowKey={r => r.id}
         // Filters live in the table's own toolbar (ui-standards § tables →
@@ -496,6 +567,10 @@ export const TableShowcase = () => {
         }
         sort={sort()}
         onSort={onSort}
+        // Offer the card ⇄ table toggle above the compact band (below 600px the
+        // list is card-only regardless). In card view the Sort control appears
+        // in the toolbar (no clickable headers there).
+        showCardToggle
         // The real page navigates to the detail route on row click; a no-op
         // here so the click-to-open row affordance (hover / pointer) still
         // shows.

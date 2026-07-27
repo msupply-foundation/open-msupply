@@ -8,7 +8,8 @@ import {
   type ConsumptionHistoryPoint,
   type StockEvolutionPoint,
 } from '../ui/elements/charts';
-import { Lead, Row } from './common';
+import { Lead, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 
 // --- Sample data, shaped like the wire nodes the real charts consume. ---
 
@@ -66,10 +67,34 @@ const stockData: StockEvolutionPoint[] = (() => {
   }));
 })();
 
+export const chartsMetadata: PageMetadata = {
+  id: 'charts',
+  title: 'Charts',
+  searchTerms: ['graph', 'plot', 'visualisation', 'data'],
+  items: [
+    {
+      id: 'charts-target',
+      title: 'Target quantity',
+      searchTerms: ['gauge', 'goal'],
+    },
+    {
+      id: 'charts-consumption',
+      title: 'Consumption history',
+      searchTerms: ['bar', 'monthly', 'usage'],
+    },
+    {
+      id: 'charts-evolution',
+      title: 'Stock evolution',
+      searchTerms: ['line', 'projection', 'forecast', 'soh'],
+    },
+  ],
+};
+
 export const ChartsShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
-      <DashboardCard title="Target quantity">
+      <SectionTOC page={chartsMetadata} />
+      <DashboardCard id="charts-target" title="Target quantity">
         <Lead>
           The target-quantity breakdown (original <code>StockDistribution</code>
           ) — a month-marker axis (0 → target months, each cell a month of AMC,
@@ -97,7 +122,10 @@ export const ChartsShowcase = () => (
         </Row>
       </DashboardCard>
 
-      <DashboardCard title="Consumption History (monthly)">
+      <DashboardCard
+        id="charts-consumption"
+        title="Consumption History (monthly)"
+      >
         <Lead>
           Bars for monthly consumption, coloured by historic / current /
           projected, with a moving-average line overlaid, plus a per-band hover
@@ -106,7 +134,10 @@ export const ChartsShowcase = () => (
         <ConsumptionHistoryChart data={consumptionData} />
       </DashboardCard>
 
-      <DashboardCard title="Stock evolution (past & projected)">
+      <DashboardCard
+        id="charts-evolution"
+        title="Stock evolution (past & projected)"
+      >
         <Lead>
           Stock-on-hand bars split past vs projected, with dashed min / max
           threshold lines drawn as two SVG paths. Same composition shape as

@@ -46,6 +46,9 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Hint text shown below the input (below the error, when both). Passed
+   * through to the Combobox. */
+  helperText?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
   class?: string;
@@ -164,6 +167,7 @@ export const AsyncCombobox = <T,>(
       class={props.class}
       disabled={props.disabled}
       error={props.error}
+      helperText={props.helperText}
       clearable={props.clearable}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}

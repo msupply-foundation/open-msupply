@@ -155,6 +155,12 @@ interface ComboboxProps<T> {
    * narrow field.
    */
   matchTriggerWidth?: boolean;
+  /**
+   * Control size. 'default' is the form-field size; 'small' is the compact
+   * variant for dense contexts (e.g. cards). Matches the shared input size
+   * scale (see --input-height*).
+   */
+  size?: 'default' | 'small';
   class?: string;
 }
 
@@ -294,6 +300,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-size={props.size ?? 'default'}
       options={options()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
