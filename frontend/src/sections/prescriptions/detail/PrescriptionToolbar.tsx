@@ -85,6 +85,7 @@ export const PrescriptionToolbar: Component<
         <ClinicianSelect
           label={t('label.clinician')}
           hideLabel
+          inputTestId="clinician-select"
           value={props.node.clinicianId ?? undefined}
           disabled={props.disabled}
           onChange={clinician =>
@@ -96,6 +97,7 @@ export const PrescriptionToolbar: Component<
         <DateField
           label={t('label.date')}
           hideLabel
+          testId="date-field"
           value={shownDay()}
           max={today()}
           disabled={props.disabled}
@@ -109,6 +111,7 @@ export const PrescriptionToolbar: Component<
         <ProgramNameSelect
           label={t('label.program')}
           hideLabel
+          testId="program-select"
           value={props.node.programId ?? undefined}
           disabled={props.disabled}
           onChange={programId => {

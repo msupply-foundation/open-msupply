@@ -7,8 +7,8 @@ import {
 import type { StoreContextResult } from '../../api/storeContext.generated';
 
 // The dashboard display gates and label slots (spec/dashboard/rules.md §
-// display gates / § thresholds). Criteria cited from
-// spec/dashboard/acceptance.md.
+// display gates / § thresholds). Behaviours cited from
+// spec/dashboard/cases/.
 
 type Preferences = StoreContextResult['preferences'];
 type StorePreferences = StoreContextResult['storePreferences'];
@@ -59,8 +59,9 @@ const store = (
 });
 
 describe('dashboard display gates', () => {
-  // AC-R2 — the external-inbound panel exists only while procurement is on.
-  it('AC-R2: external inbound panel follows the procurement capability', () => {
+  // OMS-REG-DB-01.36 — the external-inbound panel exists only while
+  // procurement is on.
+  it('OMS-REG-DB-01.36: external inbound panel follows the procurement capability', () => {
     expect(computeDashboardGates(prefs(), store()).externalInboundPanel).toBe(
       false
     );
@@ -72,8 +73,9 @@ describe('dashboard display gates', () => {
     ).toBe(true);
   });
 
-  // AC-T3 — the emergency stat exists only while the program module is on.
-  it('AC-T3: emergency stat follows the program-module store preference', () => {
+  // OMS-REG-DB-01.39 — the emergency stat exists only while the program module
+  // is on.
+  it('OMS-REG-DB-01.39: emergency stat follows the program-module store preference', () => {
     expect(computeDashboardGates(prefs(), store()).emergencyStat).toBe(false);
     expect(
       computeDashboardGates(prefs(), store({ omProgramModule: true }))
@@ -81,9 +83,9 @@ describe('dashboard display gates', () => {
     ).toBe(true);
   });
 
-  // AC-S3 — out-of-stock (recently used) is shown only when the consumption
-  // look-back preference is set.
-  it('AC-S3: out-of-stock (recently used) follows the look-back preference', () => {
+  // OMS-REG-DB-01.48 — out-of-stock (recently used) is shown only when the
+  // consumption look-back preference is set.
+  it('OMS-REG-DB-01.48: out-of-stock (recently used) follows the look-back preference', () => {
     expect(
       computeDashboardGates(prefs(), store()).outOfStockRecentlyUsedStat
     ).toBe(false);
@@ -97,8 +99,9 @@ describe('dashboard display gates', () => {
     ).toBe(true);
   });
 
-  // AC-S6 — at-risk is hidden while the low-stock-alert threshold is 0.
-  it('AC-S6: at-risk stat gated by the low-stock-alert threshold', () => {
+  // OMS-REG-DB-01.51 — at-risk is hidden while the low-stock-alert threshold
+  // is 0.
+  it('OMS-REG-DB-01.51: at-risk stat gated by the low-stock-alert threshold', () => {
     expect(computeDashboardGates(prefs(), store()).atRiskStat).toBe(false);
     expect(
       computeDashboardGates(
@@ -108,10 +111,10 @@ describe('dashboard display gates', () => {
     ).toBe(true);
   });
 
-  // AC-S7 — overstocked is hidden while the over-stock-alert threshold is 0;
-  // the hiding is load-bearing (the threshold-0 degenerate count counts every
-  // consuming item and must never be displayed).
-  it('AC-S7: overstocked stat gated by the over-stock-alert threshold', () => {
+  // OMS-REG-DB-01.52 — overstocked is hidden while the over-stock-alert
+  // threshold is 0; the hiding is load-bearing (the threshold-0 degenerate
+  // count counts every consuming item and must never be displayed).
+  it('OMS-REG-DB-01.52: overstocked stat gated by the over-stock-alert threshold', () => {
     expect(computeDashboardGates(prefs(), store()).overstockedStat).toBe(false);
     expect(
       computeDashboardGates(
@@ -121,9 +124,9 @@ describe('dashboard display gates', () => {
     ).toBe(true);
   });
 
-  // AC-E4 — between-thresholds is hidden only when BOTH expiry thresholds are
-  // 0; one set threshold is enough to show it.
-  it('AC-E4: expiring-between-thresholds gated on either expiry threshold', () => {
+  // OMS-REG-DB-01.45 — between-thresholds is hidden only when BOTH expiry
+  // thresholds are 0; one set threshold is enough to show it.
+  it('OMS-REG-DB-01.45: expiring-between-thresholds gated on either expiry threshold', () => {
     expect(
       computeDashboardGates(prefs(), store()).expiringBetweenThresholdsStat
     ).toBe(false);
@@ -181,9 +184,10 @@ describe('dashboard label slots', () => {
 });
 
 describe('itemCounts thresholds', () => {
-  // AC-S8 — the low/high thresholds are always sent explicitly from the store
-  // understock / overstock preferences; no fetch happens before they resolve.
-  it('AC-S8: sends explicit store-preference thresholds once resolved', () => {
+  // OMS-REG-DB-01.54 — the low/high thresholds are always sent explicitly from
+  // the store understock / overstock preferences; no fetch happens before they
+  // resolve.
+  it('OMS-REG-DB-01.54: sends explicit store-preference thresholds once resolved', () => {
     expect(itemCountsThresholds('store-a', undefined)).toBeUndefined();
     const key = itemCountsThresholds(
       'store-a',

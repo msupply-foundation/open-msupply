@@ -28,7 +28,8 @@ import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
-import { Lead, Row } from './common';
+import { Lead, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './SelectorsShowcase.module.css';
 
 /**
@@ -227,6 +228,39 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   },
 ];
 
+export const selectorsMetadata: PageMetadata = {
+  id: 'selectors',
+  title: 'Selectors',
+  searchTerms: ['dropdown', 'picker', 'choose'],
+  items: [
+    {
+      id: 'selectors-select',
+      title: 'Drop-down',
+      searchTerms: ['select', 'status', 'enum'],
+    },
+    {
+      id: 'selectors-autocomplete',
+      title: 'Autocomplete / combobox',
+      searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
+    },
+    {
+      id: 'selectors-in-dialog',
+      title: 'In a dialog',
+      searchTerms: ['modal', 'portal'],
+    },
+    {
+      id: 'selectors-filter-bar',
+      title: 'Filter bar',
+      searchTerms: ['filter', 'chip', 'query', 'multi-select', 'enum'],
+    },
+    {
+      id: 'selectors-colour-tag',
+      title: 'Colour tag',
+      searchTerms: ['color', 'swatch', 'dot', 'tag'],
+    },
+  ],
+};
+
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
@@ -235,7 +269,6 @@ export const SelectorsShowcase = () => {
   const [asyncPicked, setAsyncPicked] = createSignal<DemoItem | null>(
     ITEMS[ITEMS.length - 1]
   );
-  const [statusFilter, setStatusFilter] = createSignal<string[]>([]);
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
   // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
   // behind it).
@@ -243,8 +276,13 @@ export const SelectorsShowcase = () => {
   const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null);
   const [dialogStatus, setDialogStatus] = createSignal('new');
   // Seeded non-empty to show chips restoring from an existing filter (a key
-  // being present is what shows its chip — here status starts on 'new').
-  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
+  // being present is what shows its chip): a single-select `status` and a
+  // multi-select `statuses` both start present, so the bar shows both the
+  // FilterSelect and FilterMultiSelect controls in their chip habitat on load.
+  const [filters, setFilters] = createSignal<InvoiceFilter>({
+    status: 'new',
+    statuses: ['allocated', 'picked'],
+  });
   // Colour-tag demo: starts untagged so the empty dashed ring shows first.
   const [tagColour, setTagColour] = createSignal<string | null>(null);
   const tagName = () => {
@@ -277,7 +315,11 @@ export const SelectorsShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Styled drop-down — Kobalte Select">
+        <SectionTOC page={selectorsMetadata} />
+        <DashboardCard
+          id="selectors-select"
+          title="Styled drop-down — Kobalte Select"
+        >
           <Lead>
             Pick one from a fixed list, but the options carry a status colour a
             native <code>&lt;option&gt;</code> can't render. Kobalte Select buys
@@ -297,7 +339,10 @@ export const SelectorsShowcase = () => {
           />
         </DashboardCard>
 
-        <DashboardCard title="Autocomplete / combobox — Kobalte Combobox">
+        <DashboardCard
+          id="selectors-autocomplete"
+          title="Autocomplete / combobox — Kobalte Combobox"
+        >
           <Lead>
             The flagged hard widget: type to filter a large item list and pick
             one. Filters on <strong>code or name</strong>, renders a two-line
@@ -392,7 +437,10 @@ export const SelectorsShowcase = () => {
           />
         </DashboardCard>
 
-        <DashboardCard title="Selectors in a dialog — portal-into-dialog">
+        <DashboardCard
+          id="selectors-in-dialog"
+          title="Selectors in a dialog — portal-into-dialog"
+        >
           <Lead>
             The case that needs care: a{' '}
             <strong>Combobox / Select opened inside a modal dialog</strong>. A
@@ -460,7 +508,10 @@ export const SelectorsShowcase = () => {
           </Dialog>
         </DashboardCard>
 
-        <DashboardCard title="Filter bar — Kobalte DropdownMenu">
+        <DashboardCard
+          id="selectors-filter-bar"
+          title="Filter bar — Kobalte DropdownMenu"
+        >
           <Lead>
             The app's FilterMenu pattern: a <strong>Filters</strong> dropdown
             lists the addable fields; picking one adds an inline editor chip
@@ -482,35 +533,10 @@ export const SelectorsShowcase = () => {
           </p>
         </DashboardCard>
 
-        <DashboardCard title="Filter bar — multi-select enum filter">
-          <Lead>
-            <code>FilterMultiSelect</code>: the TESTIDS contract's multi-select
-            enum filter (each option stamps{' '}
-            <code>filter-option-&lt;VALUE&gt;</code>) — a status filter that
-            maps straight onto a wire <code>equalAny</code>. The trigger
-            summarises the selection, or shows the placeholder while empty.
-          </Lead>
-          <FilterMultiSelect
-            label="Status"
-            placeholder="Any"
-            values={statusFilter()}
-            options={INVOICE_STATUSES.map(status => ({
-              value: status.value,
-              label: status.label,
-            }))}
-            onChange={setStatusFilter}
-          />
-          <p class={styles.filterReadout}>
-            Wire filter:{' '}
-            <code>
-              {statusFilter().length
-                ? `status: { equalAny: [${statusFilter().join(', ')}] }`
-                : '(no status filter)'}
-            </code>
-          </p>
-        </DashboardCard>
-
-        <DashboardCard title="Colour tag — dot + swatch picker">
+        <DashboardCard
+          id="selectors-colour-tag"
+          title="Colour tag — dot + swatch picker"
+        >
           <Lead>
             User-set colour on a record for visual grouping only. The{' '}
             <code>ColourTagDot</code> is read-only and hides the dot for

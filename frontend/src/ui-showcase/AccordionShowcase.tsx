@@ -9,7 +9,8 @@ import {
   AccordionContent,
   useAccordionItemExpanded,
 } from '../ui/elements/accordion/Accordion';
-import { Lead } from './common';
+import { Lead, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './AccordionShowcase.module.css';
 
 const SINGLE_OPEN_ITEMS = [
@@ -48,11 +49,35 @@ const PreviewTriggerLabel = (props: { label: string; preview: string }) => {
   );
 };
 
+export const accordionMetadata: PageMetadata = {
+  id: 'accordion',
+  title: 'Accordion',
+  searchTerms: ['collapse', 'expand', 'disclosure'],
+  items: [
+    {
+      id: 'accordion-single',
+      title: 'Single-open group',
+      searchTerms: ['exclusive', 'one'],
+    },
+    {
+      id: 'accordion-independent',
+      title: 'Independent list',
+      searchTerms: ['multiple', 'many'],
+    },
+    {
+      id: 'accordion-closed',
+      title: 'Closed-state preview',
+      searchTerms: ['collapsed', 'default'],
+    },
+  ],
+};
+
 export const AccordionShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Single-open group">
+        <SectionTOC page={accordionMetadata} />
+        <DashboardCard id="accordion-single" title="Single-open group">
           <Lead>
             One shared <code>collapsible</code> root — opening a section closes
             whichever was open. This is the shape a page of permission-gated
@@ -77,7 +102,7 @@ export const AccordionShowcase = () => {
           </Accordion>
         </DashboardCard>
 
-        <DashboardCard title="Independent list">
+        <DashboardCard id="accordion-independent" title="Independent list">
           <Lead>
             One shared <code>multiple</code> root wrapping a list — each item
             toggles independently.
@@ -96,7 +121,7 @@ export const AccordionShowcase = () => {
           </Accordion>
         </DashboardCard>
 
-        <DashboardCard title="Closed-state preview">
+        <DashboardCard id="accordion-closed" title="Closed-state preview">
           <Lead>
             <code>useAccordionItemExpanded()</code> reads the enclosing item's
             open state, so a trigger's own label can show a compact preview

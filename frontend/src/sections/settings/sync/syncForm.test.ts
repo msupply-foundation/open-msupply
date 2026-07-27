@@ -15,9 +15,9 @@ const filled = {
   intervalSeconds: 300,
 };
 
-// AC-SY1 — Save disabled until all fields are filled: any one of URL, site,
+// OMS-REG-SET-02.7/.8 — Save disabled until all fields are filled: any one of URL, site,
 // password, or interval empty keeps Save disabled.
-describe('AC-SY1 — save disabled until all four fields are filled', () => {
+describe('save disabled until all four fields are filled (SET-02.7/.8)', () => {
   it('enables save only when every field has a value', () => {
     expect(canSaveSyncSettings(filled)).toBe(true);
   });
@@ -34,10 +34,10 @@ describe('AC-SY1 — save disabled until all four fields are filled', () => {
   });
 });
 
-// AC-SY2 — Password always starts blank: seeding the form from existing
+// OMS-REG-SET-02.12 — Password always starts blank: seeding the form from existing
 // settings pre-fills url/site/interval but never the password (the query
 // cannot return it — the server stores only a hash).
-describe('AC-SY2 — password always starts blank', () => {
+describe('password always starts blank (SET-02.12)', () => {
   it('pre-fills url, site, and interval from stored settings, password empty', () => {
     expect(
       initialSyncForm({
@@ -82,10 +82,10 @@ describe('interval normalisation (rules § Synchronisation)', () => {
   });
 });
 
-// AC-SY3 — a failed save shows a reason-specific message resolved from the
+// OMS-REG-SET-02.9 — a failed save shows a reason-specific message resolved from the
 // returned sync error variant; unstructured failures fall back to
 // error.unable-to-save-settings (ui-surface § Synchronisation).
-describe('AC-SY3 — failure messages name the reason', () => {
+describe('failure messages name the reason (SET-02.9)', () => {
   it('maps a V5/V6 error variant to its summary key', () => {
     expect(
       syncSaveErrorKey({

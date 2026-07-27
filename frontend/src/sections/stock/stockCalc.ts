@@ -12,19 +12,6 @@ export const packsToUnits = (packs: number, packSize: number): number =>
 export const packsToValue = (packs: number, costPricePerPack: number): number =>
   packs * costPricePerPack;
 
-// The distinct-or-"multiple" reduction for the grouped-by-item view (spec/stock
-// AC-L5): the single value when every batch agrees, else the multiple marker.
-export const singleOrMultipleValue = (
-  values: string[],
-  multipleLabel: string,
-  emptyLabel: string
-): string => {
-  const distinct = new Set(values.filter(v => v !== ''));
-  if (distinct.size === 0) return emptyLabel;
-  if (distinct.size === 1) return [...distinct][0];
-  return multipleLabel;
-};
-
 // Repack (spec/stock rules › repack): the new line's pack count = packs × old
 // pack size ÷ new pack size. Undefined when the new pack size is not positive.
 export const repackNewPacks = (

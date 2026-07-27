@@ -1,29 +1,26 @@
 /*
- * Settings panel — the content inside the toolbar's ⚙ popover (table-wide
- * settings, mirroring the spec's settings popover: the Density radio group,
- * a divider, then Reset table to default + save-as-global-default). The
- * per-column rows live in the Columns popover (ColumnSettings.module.css).
- * Bare CSS + tokens only; colours are tokens, sizes rem (only px is the
- * hairline divider, per the sizing rule).
+ * Settings panel — the content inside the toolbar's ⚙ popover (ui-standards §
+ * tables, the advanced example's #mrt-settings-pop): the Density radio group,
+ * a divider, then Reset table to default (+ our admin save-as-global-default).
+ * The per-column rows live in the Columns popover (ColumnSettings). Bare CSS +
+ * tokens; the outer panel padding comes from the Popover's .controlPopover
+ * override (DataTable.module.css). Only px are the hairline divider.
  */
 .panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-1);
-  min-inline-size: 14rem;
-  padding: var(--space-2);
+  min-inline-size: 13.125rem;
 }
 
-/* Small muted section heading ("Density") — the spec popover's uppercase
-   mini-title. */
+/* Muted section heading ("Density") — the spec popover's mini-title: small,
+   semibold, muted, NOT uppercase. 0.6875rem (11px) is below --text-xs, so a
+   literal (the spacious-density 1.25rem precedent). */
 .sectionTitle {
-  padding: var(--space-1) var(--space-2);
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
+  padding: 0.375rem var(--space-2);
+  color: var(--gray-main);
+  font-size: 0.6875rem;
   font-weight: var(--weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 .densityGroup {
@@ -31,13 +28,13 @@
   flex-direction: column;
 }
 
-/* One radio row per density preset — a full-width hover-highlighted label,
-   like the spec's .mrt-pop-item rows. */
+/* One radio row per density preset (ui-standards .mrt-pop-item): a full-width
+   hover-highlighted label. */
 .densityOption {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  padding: 0.4375rem var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--text-body);
   font-size: var(--text-sm);
@@ -60,45 +57,46 @@
   background: var(--color-divider);
 }
 
-/* Shared look for the panel's text actions (Reset, save-as-default) — matches
-   the Columns panel's .action so the two popovers read as one family. */
-.action {
-  display: inline-flex;
+/* Panel action rows (ui-standards .mrt-pop-btn): full-width, left-aligned,
+   charcoal text, hover wash — Reset and the admin save-as-default. NOT the old
+   orange uppercase link. */
+.popBtn {
+  display: flex;
   align-items: center;
-  align-self: flex-start;
-  gap: var(--space-1);
+  gap: var(--space-2);
+  inline-size: 100%;
+  padding: 0.4375rem var(--space-2);
   border: none;
-  background: none;
-  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  color: var(--primary-main);
+  background: none;
+  color: var(--text-body);
   font: inherit;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: var(--text-sm);
+  text-align: start;
   cursor: pointer;
 }
 
 /* Disabled = "nothing to reset" (already at default) / "save in flight" — kept
    visible so the action stays discoverable (ui-standards § tables → column
-   management). */
-.action:disabled {
-  color: var(--text-secondary);
+   management), greyed to read as inert. Ordered before :hover for
+   no-descending-specificity. */
+.popBtn:disabled {
+  color: var(--text-disabled);
   cursor: default;
 }
 
-.action:not(:disabled):hover {
-  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+.popBtn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
 }
 
 /* Save-as-global-default — the central-admin action to promote the current
-   layout to the install-wide default. Its own row + top divider set it apart
-   from the per-user settings; feedback (saving/saved/error) sits inline beside
+   layout to the install-wide default. Its own block + top divider set it apart
+   from the per-user settings; feedback (saving/saved/error) sits inline below
    the button. */
 .saveDefault {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: var(--space-1);
   margin-block-start: var(--space-1);
   padding-block-start: var(--space-2);
   border-block-start: 1px solid var(--color-divider);
@@ -110,6 +108,7 @@
 }
 
 .saveStatus {
+  padding-inline: var(--space-2);
   font-size: var(--text-xs);
   color: var(--text-secondary);
 }

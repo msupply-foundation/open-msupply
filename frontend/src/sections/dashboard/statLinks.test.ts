@@ -11,13 +11,19 @@ import {
   internalOrderListHref,
   customerRequisitionListHref,
   itemCatalogueHref,
+  itemsAtRiskHref,
+  itemsHighStockHref,
+  itemsLowStockHref,
+  itemsOutOfStockHref,
+  itemsOutOfStockRecentlyUsedHref,
+  itemsOverstockedHref,
   outboundNotShippedHref,
 } from './statLinks';
 
 // The stat links' navigation correspondence (spec/dashboard/rules.md §
 // navigation correspondence): each link's filter restates the count's
 // definition, so the number and the opened list describe the same set.
-// Criteria cited from spec/dashboard/acceptance.md.
+// Behaviours cited from spec/dashboard/cases/.
 
 // Decode the `?query=` JSON a link carries for the target list.
 const filterOf = (href: string): Record<string, unknown> => {
@@ -31,12 +37,13 @@ const filterOf = (href: string): Record<string, unknown> => {
 const wednesday = new Date(2026, 6, 22); // 2026-07-22
 
 describe('replenishment links', () => {
-  // AC-N1/AC-R1 — the date windows are explicit from–to ranges matching the
-  // count window (contract.md § navigation correspondence): today spans start
-  // of day to end of day; this week spans Monday to end of Sunday.
-  // Bounds are the LOCAL day widened to UTC instants (#456); expected values
-  // built with the local Date constructor so the assertions hold in any zone.
-  it('AC-N1: inbound today is a from–to range over the whole local day', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.33/.34 — the date windows are explicit
+  // from–to ranges matching the count window (contract.md § navigation
+  // correspondence): today spans start of day to end of day; this week
+  // spans Monday to end of Sunday. Bounds are the LOCAL day widened to UTC
+  // instants (#456); expected values built with the local Date constructor so
+  // the assertions hold in any zone.
+  it('OMS-REG-DB-01.55: inbound today is a from–to range over the whole day', () => {
     expect(filterOf(inboundTodayHref('s1', wednesday))).toEqual({
       createdDatetime: {
         afterOrEqualTo: new Date(2026, 6, 22).toISOString(),
@@ -45,7 +52,7 @@ describe('replenishment links', () => {
     });
   });
 
-  it('AC-N1: inbound this-week spans Monday to end of Sunday', () => {
+  it('OMS-REG-DB-01.55: inbound this-week spans Monday to end of Sunday', () => {
     expect(filterOf(inboundThisWeekHref('s1', wednesday))).toEqual({
       createdDatetime: {
         afterOrEqualTo: new Date(2026, 6, 20).toISOString(),
@@ -54,15 +61,15 @@ describe('replenishment links', () => {
     });
   });
 
-  it('AC-N1: inbound not-delivered filters status to New/Shipped', () => {
+  it('OMS-REG-DB-01.55: inbound not-delivered filters status to New/Shipped', () => {
     expect(filterOf(inboundNotDeliveredHref('s1'))).toEqual({
       status: { equalAny: ['NEW', 'SHIPPED'] },
     });
   });
 
-  // AC-N1 — the internal-order list is not built: its links land on the
-  // registered placeholder, unfiltered.
-  it('AC-N1: internal-order link is the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.57 — the internal-order list is not built: its links land
+  // on the registered placeholder, unfiltered.
+  it('OMS-REG-DB-01.57: internal-order link is the registered placeholder, unfiltered', () => {
     expect(internalOrderListHref('s1')).toBe(
       '/s1/replenishment/internal-order'
     );
@@ -70,15 +77,15 @@ describe('replenishment links', () => {
 });
 
 describe('distribution links', () => {
-  // AC-N1/AC-T1 — not shipped = New/Allocated/Picked exactly (Shipped and
-  // later excluded).
-  it('AC-N1: outbound not-shipped filters status to New/Allocated/Picked', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.37 — not shipped = New/Allocated/Picked
+  // exactly (Shipped and later excluded).
+  it('OMS-REG-DB-01.55: outbound not-shipped filters status to New/Allocated/Picked', () => {
     expect(filterOf(outboundNotShippedHref('s1'))).toEqual({
       status: { equalAny: ['NEW', 'ALLOCATED', 'PICKED'] },
     });
   });
 
-  it('AC-N1: customer-requisition link is the registered placeholder, unfiltered', () => {
+  it('OMS-REG-DB-01.57: customer-requisition link is the registered placeholder, unfiltered', () => {
     expect(customerRequisitionListHref('s1')).toBe(
       '/s1/distribution/customer-requisition'
     );
@@ -86,15 +93,16 @@ describe('distribution links', () => {
 });
 
 describe('inventory links', () => {
-  // AC-N1/AC-E1 — expired: expiry on or before today.
-  it('AC-N1: expired filters expiry ≤ today', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.41 — expired: expiry on or before today.
+  it('OMS-REG-DB-01.55: expired filters expiry ≤ today', () => {
     expect(filterOf(expiredHref('s1', wednesday))).toEqual({
       expiryDate: { beforeOrEqualTo: '2026-07-22' },
     });
   });
 
-  // AC-N1/AC-E2 — expiring soon: the same 30-day window the count uses.
-  it('AC-N1: expiring soon spans today … today + 30 days', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: the same 30-day window
+  // the count uses.
+  it('OMS-REG-DB-01.55: expiring soon spans today … today + 30 days', () => {
     expect(DAYS_TILL_EXPIRED).toBe(30);
     expect(filterOf(expiringSoonHref('s1', wednesday))).toEqual({
       expiryDate: {
@@ -104,8 +112,9 @@ describe('inventory links', () => {
     });
   });
 
-  // AC-N1/AC-E3 — the fixed 30–89-day slice: the 90th day is excluded.
-  it('AC-N1/AC-E3: next-three-months spans day 30 … day 89 (90 excluded)', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.44 — the fixed 30–89-day slice: the 90th
+  // day is excluded.
+  it('OMS-REG-DB-01.55/.44: next-three-months spans day 30 … day 89 (90 excluded)', () => {
     expect(filterOf(expiringNextThreeMonthsHref('s1', wednesday))).toEqual({
       expiryDate: {
         afterOrEqualTo: '2026-08-21', // +30d
@@ -114,9 +123,9 @@ describe('inventory links', () => {
     });
   });
 
-  // AC-N1/AC-E4 — between thresholds: today + first … today + second, whole
-  // days from the store preferences.
-  it('AC-N1/AC-E4: between-thresholds spans today+first … today+second days', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.45 — between thresholds: today + first …
+  // today + second, whole days from the store preferences.
+  it('OMS-REG-DB-01.55/.45: between-thresholds spans today+first … today+second days', () => {
     expect(
       filterOf(expiringBetweenThresholdsHref('s1', wednesday, 100, 200))
     ).toEqual({
@@ -127,10 +136,52 @@ describe('inventory links', () => {
     });
   });
 
-  // AC-N1 — the item catalogue is not built: every stock-level stat lands on
-  // its registered placeholder, unfiltered (total items is unfiltered by
-  // definition).
-  it('AC-N1: item-catalogue links are the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.55 — the stock-level stats link into the item catalogue
+  // filtered to the records each counts, conforming to the list's OWN filter
+  // contract (ItemsListFilter: lens / atRisk / months-of-stock), verified by
+  // decoding the emitted link through that shape.
+  it('OMS-REG-DB-01.55/.47: out-of-stock (all) → lens out-of-stock', () => {
+    expect(filterOf(itemsOutOfStockHref('s1'))).toEqual({
+      lens: 'out-of-stock',
+    });
+  });
+
+  it('OMS-REG-DB-01.55/.48: out-of-stock (recently used) → lens out-of-stock-recent', () => {
+    expect(filterOf(itemsOutOfStockRecentlyUsedHref('s1'))).toEqual({
+      lens: 'out-of-stock-recent',
+    });
+  });
+
+  it('OMS-REG-DB-01.55/.51: at-risk → the list at-risk lens', () => {
+    expect(filterOf(itemsAtRiskHref('s1'))).toEqual({ atRisk: 'at-risk' });
+  });
+
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.49 — low stock: months of stock ≤ the
+  // understock threshold.
+  it('OMS-REG-DB-01.55/.49: low stock → maxMonthsOfStock = understock months', () => {
+    expect(filterOf(itemsLowStockHref('s1', 3))).toEqual({
+      maxMonthsOfStock: 3,
+    });
+  });
+
+  // OMS-REG-DB-01.55/.50 — high stock: months of stock ≥ the overstock threshold.
+  it('OMS-REG-DB-01.55/.50: high stock → minMonthsOfStock = overstock months', () => {
+    expect(filterOf(itemsHighStockHref('s1', 6))).toEqual({
+      minMonthsOfStock: 6,
+    });
+  });
+
+  // OMS-REG-DB-01.55/.52 — overstocked uses the over-stock-ALERT threshold, a
+  // different knob from high stock (rules § stock levels).
+  it('OMS-REG-DB-01.55/.52: overstocked → minMonthsOfStock = over-stock-alert months', () => {
+    expect(filterOf(itemsOverstockedHref('s1', 9))).toEqual({
+      minMonthsOfStock: 9,
+    });
+  });
+
+  // OMS-REG-DB-01.55 — total items (and the panel title) open the unfiltered
+  // catalogue.
+  it('OMS-REG-DB-01.55: total-items / panel link is the unfiltered catalogue', () => {
     expect(itemCatalogueHref('s1')).toBe('/s1/catalogue/items');
   });
 });

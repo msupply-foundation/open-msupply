@@ -15,8 +15,8 @@ type AppData = {
   tableConfigByUserId?: Record<string, Record<string, LayeredConfig>>;
   // Label printer "print via USB" (spec/settings rules § Devices — label
   // printer): a DEVICE-local preference, deliberately not keyed by user and
-  // never sent to the server (AC-LP3) — it describes how this machine reaches
-  // the printer, not a user's or the store's choice.
+  // never sent to the server (OMS-REG-SET-05.22) — it describes how this
+  // machine reaches the printer, not a user's or the store's choice.
   labelPrinterUseUsb?: boolean;
   // Mock barcode scanner toggle (spec/settings rules § Devices — barcode
   // scanner): remembered on this device, never sent to the server — a
@@ -84,8 +84,8 @@ export const setUserTableConfig = (
   );
 };
 
-// Device-local label-printer USB preference (spec/settings AC-LP3): read and
-// written only here; never part of LabelPrinterSettingsInput.
+// Device-local label-printer USB preference (spec/settings OMS-REG-SET-05.22):
+// read and written only here; never part of LabelPrinterSettingsInput.
 export const getLabelPrinterUseUsb = (): boolean =>
   readAppData().labelPrinterUseUsb ?? false;
 

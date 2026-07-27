@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   packsToUnits,
   packsToValue,
-  singleOrMultipleValue,
   repackNewPacks,
   isWholePacks,
   signedAdjustment,
@@ -20,22 +19,6 @@ describe('stock units & value (spec/stock S1 columns)', () => {
   it('units = packs × pack size, value = packs × cost', () => {
     expect(packsToUnits(12, 100)).toBe(1200);
     expect(packsToValue(12, 2.5)).toBe(30);
-  });
-});
-
-describe('AC-L5 grouped-by-item single-or-multiple', () => {
-  it('shows the single value when every batch agrees', () => {
-    expect(singleOrMultipleValue(['A', 'A'], 'Multiple', '—')).toBe('A');
-  });
-  it('marks differing values as multiple', () => {
-    expect(singleOrMultipleValue(['A', 'B'], 'Multiple', '—')).toBe('Multiple');
-  });
-  it('empty when no batch has a value', () => {
-    expect(singleOrMultipleValue(['', ''], 'Multiple', '—')).toBe('—');
-    expect(singleOrMultipleValue([], 'Multiple', '—')).toBe('—');
-  });
-  it('ignores blanks when deciding single vs multiple', () => {
-    expect(singleOrMultipleValue(['', 'A'], 'Multiple', '—')).toBe('A');
   });
 });
 

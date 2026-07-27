@@ -17,7 +17,14 @@ export type IssueWarning =
    * Barred stock with availability was passed over, with each category that
    * applied (AC-AL2 — the shared skip vocabulary).
    */
-  | { kind: 'skipped-barred'; reasons: readonly BarReason[] };
+  | { kind: 'skipped-barred'; reasons: readonly BarReason[] }
+  /**
+   * The allocation split a pack (partial-packs consumers, AC-AL12) — the
+   * user should confirm packs can actually be broken. `nearestAboveUnits` is
+   * the allocation with every fractional take rounded up to a whole pack —
+   * the old app's "nearest above" figure.
+   */
+  | { kind: 'partial-packs'; nearestAboveUnits: number };
 
 export const deriveIssueWarnings = (
   distribution: Distribution,
@@ -28,6 +35,12 @@ export const deriveIssueWarnings = (
      * the shortfall itself is always in the Distribution regardless.
      */
     reportShortfall: boolean;
+    /**
+     * The allocated units, for the partial-packs warning's nearest-above
+     * figure (AC-AL12). Omitted (or a whole-pack distribution) never raises
+     * the warning.
+     */
+    allocatedUnits?: number;
   }
 ): IssueWarning[] => {
   const warnings: IssueWarning[] = [];
@@ -42,6 +55,12 @@ export const deriveIssueWarnings = (
     warnings.push({
       kind: 'skipped-barred',
       reasons: [...distribution.skippedReasons],
+    });
+  if (distribution.wholePackGapUnits > 0 && options.allocatedUnits != null)
+    warnings.push({
+      kind: 'partial-packs',
+      nearestAboveUnits:
+        options.allocatedUnits + distribution.wholePackGapUnits,
     });
   return warnings;
 };

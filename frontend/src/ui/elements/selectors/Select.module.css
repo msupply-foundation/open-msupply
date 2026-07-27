@@ -61,9 +61,9 @@
 }
 
 .trigger[data-disabled] {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
@@ -129,7 +129,7 @@
 }
 
 .item[data-disabled] {
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: default;
 }
 
@@ -166,27 +166,39 @@
 }
 
 @media (pointer: coarse) {
-  .trigger,
+  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input.
+     Dropdown .item rows keep the generic --touch-target tap floor. */
+  .trigger {
+    min-height: var(--input-height-touch);
+  }
+
+  .field[data-size='small'] .trigger {
+    min-height: var(--input-height-sm-touch);
+  }
+
   .item {
     min-height: var(--touch-target);
   }
 }
 
-/* Compact variant (size="sm"): redefine the size tokens the trigger/label/icon already
-   read, so the whole control scales down from one place. Placed after the base rules so
+/* Small variant: denser height + 13px text, matching the shared input scale
+   (36px / --input-font-sm — NOT a bespoke size). Placed after the base rules so
    specificity ascends. */
-.field[data-size='sm'] {
-  --input-height: 1.75rem;
+.field[data-size='small'] {
   --input-padding-x: var(--space-2);
 
   gap: var(--space-1);
 }
 
-.field[data-size='sm'] .label,
-.field[data-size='sm'] .trigger {
-  font-size: var(--text-xs);
+.field[data-size='small'] .trigger {
+  height: var(--input-height-sm);
 }
 
-.field[data-size='sm'] .triggerIcon {
+.field[data-size='small'] .label,
+.field[data-size='small'] .trigger {
+  font-size: var(--input-font-sm);
+}
+
+.field[data-size='small'] .triggerIcon {
   font-size: 1rem;
 }

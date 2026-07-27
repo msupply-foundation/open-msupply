@@ -38,7 +38,7 @@
   margin: 0;
   flex: 0 1 auto;
   font-size: var(--text-xs);
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   color: var(--text-secondary);
 }
 

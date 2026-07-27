@@ -69,23 +69,3 @@ export type SaveOutboundServiceLinesResult = {
 export const SaveOutboundServiceLines = {
   query: "mutation saveOutboundServiceLines($storeId: String!, $inserts: [InsertOutboundShipmentServiceLineInput!], $updates: [UpdateOutboundShipmentServiceLineInput!], $deletes: [DeleteOutboundShipmentServiceLineInput!]) {\n  batchOutboundShipment(\n    storeId: $storeId\n    input: {insertOutboundShipmentServiceLines: $inserts, updateOutboundShipmentServiceLines: $updates, deleteOutboundShipmentServiceLines: $deletes}\n  ) {\n    insertOutboundShipmentServiceLines {\n      id\n      response {\n        __typename\n        ... on InsertOutboundShipmentServiceLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n    updateOutboundShipmentServiceLines {\n      id\n      response {\n        __typename\n        ... on UpdateOutboundShipmentServiceLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n    deleteOutboundShipmentServiceLines {\n      id\n      response {\n        __typename\n        ... on DeleteOutboundShipmentServiceLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SaveOutboundServiceLinesResult, SaveOutboundServiceLinesVariables>;
-
-export type ServiceItemsVariables = {
-  storeId: string;
-};
-
-export type ServiceItemsResult = {
-  items: ({
-  __typename: "ItemConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  code: string;
-  name: string;
-}>;
-});
-};
-
-export const ServiceItems = {
-  query: "query serviceItems($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {type: {equalTo: SERVICE}, isActive: true, isVisible: true}\n    page: {first: 100}\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
-} as TypedDocument<ServiceItemsResult, ServiceItemsVariables>;
