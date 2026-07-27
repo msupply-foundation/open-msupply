@@ -3,13 +3,20 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { authUser } from '../auth/authContext';
-import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
+import {
+  getPreviousStoreId,
+  recordPreviousStoreId,
+  getRememberedStoreId,
+  setRememberedStoreId,
+} from '../appData';
 import {
   currentStoreId,
   refetchStoreContext,
   storeContext,
+  forceStorePicker,
+  setForceStorePicker,
 } from './storeContext';
-import { StoreSelectionScreen } from './StoreSelectionScreen';
+import { StoreSelectionDialog } from './StoreSelectionDialog';
 import { setHomeCurrency, t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
@@ -26,9 +33,11 @@ export type StoreSummary = {
 };
 
 // Spec (Store Login, Guards 2 and 3), applied as common logic to whatever
-// first URL segment we are looking at. The store to enter is the URL's store,
-// or the only store the user has; otherwise there is none and we show the
-// store-selection screen ([D14]: a routed page at /resolve-store, not a modal).
+// first URL segment we are looking at. The store to enter is a remembered store,
+// the only store the user has, or — except right after a fresh login (SL-6,
+// forceStorePicker) — the URL's store; otherwise there is none and we show the
+// store-selection modal ([D14]: one blocking in-place modal for both the login
+// pick and the bottom-bar switch, wired here and in ShellLayout).
 // Entering records the store and fetches its context; the routed section shows
 // a loading state until that context is loaded for this store and user (so
 // re-authenticating as a different user re-loads even for the same store).
@@ -38,9 +47,26 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const user = () => authUser();
   const stores = () => user()?.stores.nodes ?? [];
 
-  const storeToEnter = () =>
-    stores().find(s => s.id === params.storeId) ??
-    (stores().length === 1 ? stores()[0] : undefined);
+  // "Remember my choice" (SL-6): a stored store auto-enters on login, so the
+  // picker isn't shown. Only used when the URL names no store; ignored if the
+  // remembered store is no longer in the user's list.
+  const rememberedStore = () => {
+    const currentUser = user();
+    if (!currentUser) return undefined;
+    const id = getRememberedStoreId(currentUser.userId);
+    return id ? stores().find(s => s.id === id) : undefined;
+  };
+
+  const storeToEnter = () => {
+    // A remembered store, or a single-store user, always enters directly.
+    const remembered = rememberedStore();
+    if (remembered) return remembered;
+    if (stores().length === 1) return stores()[0];
+    // A fresh login (SL-6) shows the picker even if the URL names a store;
+    // otherwise (refresh / in-session navigation) the URL is authoritative.
+    if (forceStorePicker()) return undefined;
+    return stores().find(s => s.id === params.storeId);
+  };
 
   // Loaded for THIS {store, user} (SL-5). Keyed on the id the context was
   // FETCHED with (currentStoreId), never the response's storePreferences.id —
@@ -87,13 +113,26 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     <Show
       when={storeToEnter()}
       fallback={
-        <StoreSelectionScreen
+        <StoreSelectionDialog
+          open
+          onClose={() => {}}
           stores={pickerStores()}
           defaultStoreId={user()?.defaultStore?.id}
           lastUsedStoreId={
             user() ? getPreviousStoreId(user()!.userId) : undefined
           }
-          onSelect={id => navigate(`/${id}`)}
+          defaultRemember={!!(user() && getRememberedStoreId(user()!.userId))}
+          onSelect={(id, remember) => {
+            const currentUser = user();
+            if (currentUser)
+              setRememberedStoreId(
+                currentUser.userId,
+                remember ? id : undefined
+              );
+            // The pick satisfies the fresh-login gate; from here the URL rules.
+            setForceStorePicker(false);
+            navigate(`/${id}`);
+          }}
         />
       }
     >

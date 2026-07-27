@@ -1785,6 +1785,7 @@
   "label.remaining": "Remaining",
   "label.remaining-quantity-to-receive": "Remaining quantity to receive: {{count}}",
   "label.remaining-to-supply": "Remaining",
+  "label.remember-my-choice": "Remember my choice",
   "label.remove": "Remove",
   "label.remove-all-filters": "Remove all filters",
   "label.repack": "Repack",
@@ -2834,7 +2835,9 @@
   "messages.select-rows-to-reject": "Select rows to reject them",
   "messages.select-rows-to-return": "Select rows to return them",
   "messages.select-single-shipment-to-copy": "Select a single shipment to make a copy",
-  "messages.select-store-instructions": "Choose which store to work in. You can switch stores at any time from the bottom bar.",
+
+  "messages.select-store-instructions": "Choose which store to work in. You can switch stores at any time from the bottom bar in the application.",
+
   "messages.service-charges-description": "Total amounts of service charges. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all service charges.",
   "messages.shipment-copied": "Shipment #{{newNumber}} created as a copy of #{{sourceNumber}}.",
   "messages.shipment-copied-skipped-items_one": "{{count}} item was not copied because it is no longer in the catalogue.",
@@ -3505,7 +3508,6 @@
   "store.search": "Search stores",
   "store.search-placeholder": "Search store name or code…",
   "store.select": "Select a store",
-  "store.select-instructions": "Choose which store to work in. You can switch stores at any time from the bottom bar.",
   "stores": "Stores",
   "success": "Success!",
   "success.data-deleted": "Deleted successfully",

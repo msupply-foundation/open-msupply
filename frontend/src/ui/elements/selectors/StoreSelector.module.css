@@ -13,6 +13,14 @@
   max-inline-size: 100%;
 }
 
+/* Fill a fixed-height host: the panel stretches and the list region (not the
+   whole panel) becomes the flexible, scrolling part. */
+.panel[data-fill] {
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
 .instructions {
   margin: 0;
   font-size: var(--text-sm);
@@ -20,14 +28,24 @@
   color: var(--text-secondary);
 }
 
-/* Bordered list container — paper surface, rounded, scrolls when tall. */
+/* Bordered list container — paper surface, rounded, a FIXED height so filtering
+   the list never resizes the panel (the modal stays put); rows scroll inside. */
 .listPanel {
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
   overflow: hidden;
-  max-block-size: 17rem;
+  block-size: 17rem;
   display: flex;
   flex-direction: column;
+}
+
+/* Fill mode: instead of the fixed height, the list region takes a
+   height-constrained host's leftover space (a full-screen sheet), still
+   scrolling inside it. */
+.panel[data-fill] .listPanel {
+  flex: 1 1 0;
+  min-block-size: 0;
+  block-size: auto;
 }
 
 .list {
@@ -35,6 +53,10 @@
   padding: 0;
   list-style: none;
   overflow-y: auto;
+  /* Fill the fixed-height panel and scroll — the vertical scrollbar shows only
+     when the rows overflow. */
+  flex: 1;
+  min-block-size: 0;
 }
 
 .row {
@@ -105,6 +127,9 @@
 }
 
 .empty {
+  flex: 1;
+  display: grid;
+  place-content: center;
   padding: var(--space-5);
   text-align: center;
   color: var(--text-secondary);
@@ -116,4 +141,11 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-3);
+}
+
+/* "Remember my choice" sits at the inline-start; the auto margin pushes the
+   Continue button to the inline-end (and the button stays there when there's
+   no checkbox). */
+.remember {
+  margin-inline-end: auto;
 }
