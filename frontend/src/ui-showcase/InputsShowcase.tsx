@@ -10,6 +10,7 @@ import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
+import { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
@@ -134,6 +135,10 @@ export const InputsShowcase = () => {
   // Checkbox / ToggleSwitch demos.
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
+  // BareCheckbox demo: interactive boxes for the selectable + error states
+  // (the rest are state displays).
+  const [bareSelected, setBareSelected] = createSignal(false);
+  const [bareError, setBareError] = createSignal(false);
   const [showFinalised, setShowFinalised] = createSignal(false);
   const [onHold, setOnHold] = createSignal(true);
   // Date & time demos (ISO strings / UTC instant in/out).
@@ -690,6 +695,46 @@ export const InputsShowcase = () => {
             />
             <Checkbox label="Disabled option" disabled checked />
           </FormPreview>
+        </DashboardCard>
+
+        <DashboardCard title="Bare checkbox — the box, no label">
+          <Lead>
+            The primitive <code>Checkbox</code> wraps: THE box every checkbox in
+            the app renders — one look by construction, the native{' '}
+            <code>&lt;input type=checkbox&gt;</code> as the state owner. It
+            renders <strong>no label</strong>, so it's used bare where something
+            else names it — a table's selection cells, given an{' '}
+            <code>aria-label</code> (the row already identifies it). It adds{' '}
+            <code>indeterminate</code> (the tri-state select-all dash) and an{' '}
+            <code>error</code> look; when you need a visible label, reach for{' '}
+            <code>Checkbox</code> above.
+          </Lead>
+          <div style={{ display: 'flex', 'flex-wrap': 'wrap', gap: '2.5rem' }}>
+            <Field caption="Selectable">
+              <BareCheckbox
+                aria-label="Select row"
+                checked={bareSelected()}
+                onChange={e => setBareSelected(e.currentTarget.checked)}
+              />
+            </Field>
+            <Field caption="Indeterminate">
+              <BareCheckbox aria-label="Select all rows" indeterminate />
+            </Field>
+            <Field caption="Error">
+              <BareCheckbox
+                aria-label="Required selection"
+                error
+                checked={bareError()}
+                onChange={e => setBareError(e.currentTarget.checked)}
+              />
+            </Field>
+            <Field caption="Disabled">
+              <BareCheckbox aria-label="Locked selection" disabled />
+            </Field>
+            <Field caption="Disabled (checked)">
+              <BareCheckbox aria-label="Locked selection" disabled checked />
+            </Field>
+          </div>
         </DashboardCard>
 
         <DashboardCard title="Toggle switch — on/off toggle (role=switch)">
