@@ -12,6 +12,7 @@ import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
+import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
 import { TimeField } from '../ui/elements/inputs/TimeField';
 import {
   DateRangeField,
@@ -61,13 +62,6 @@ const ValueReadout = (props: { value: number | undefined }) => (
     </code>
   </output>
 );
-
-/** Today as ISO `YYYY-MM-DD`, for the "future dates unselectable" demo. */
-const todayIso = (): string => {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
 
 const Field = (props: {
   caption: string;
@@ -733,7 +727,7 @@ export const InputsShowcase = () => {
             <Field caption="Bounded — future unselectable">
               <DateField
                 label="Manufacture date"
-                max={todayIso()}
+                max={localTodayIso()}
                 value={manufacture()}
                 onChange={setManufacture}
                 helperText={`max = today; later dates greyed out. Stored: ${
