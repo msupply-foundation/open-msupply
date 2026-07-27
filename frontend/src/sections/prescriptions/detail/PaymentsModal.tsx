@@ -9,6 +9,7 @@ import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
@@ -56,14 +57,14 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
         : undefined;
     }
   );
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localTodayIso();
   // State-gated (never suspends) — the window first-fetches while open.
   const policies = (): Policy[] =>
-    ((policiesData.state === 'ready' || policiesData.state === 'refreshing'
-      ? policiesData.latest
-      : undefined) ?? []).filter(
-      policy => policy.isActive && policy.expiryDate >= today
-    );
+    (
+      (policiesData.state === 'ready' || policiesData.state === 'refreshing'
+        ? policiesData.latest
+        : undefined) ?? []
+    ).filter(policy => policy.isActive && policy.expiryDate >= today);
 
   const selected = () => policies().find(policy => policy.id === policyId());
   const total = () => props.node.pricing.totalAfterTax;
