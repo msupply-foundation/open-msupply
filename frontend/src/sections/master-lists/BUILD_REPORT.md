@@ -25,13 +25,11 @@ Scoped build of the master-lists vertical (`spec/master-lists`) — a read-only 
 
 ## Flags
 
-- **Store CODE in the CSV filename** — the case (`.27`) wants `<iso>_<store code>_master-lists.csv`, but only `currentStoreId()` is exported (no active-store-**code** accessor), so the filename currently uses the store **id**. Needs an exported active-store-code accessor (see Follow-ups) — a real gap against the case, not a pending/unbuilt feature.
 - **Plugin columns (list)** — the plugin-column seam isn't wired; no plugin system is built. Flagged, not improvised.
 - No live/visual verification — the app proxies `:8000` (remote, PRE_INITIALISATION). The read-only queries were exercised live on `:8890` during the reverse spec.
 
 ## Follow-ups
 
-- **Active-store-code accessor** _(shared)_ — the one thing between the export and a spec-exact filename. Only `currentStoreId()` exists today; a store-**code** accessor would let the CSV name match `<iso>_<store code>_master-lists.csv`.
 - **Plugin-column seam** — wire once a plugin system exists; not improvised here.
 - **Live/visual verification** — pending a working `:8000` (currently PRE_INITIALISATION). Read-only queries verified on `:8890` during the reverse spec.
 - **Codegen env** — types were generated via a scoped runner against `:8890`; repo `pnpm codegen` still fails on the pre-existing `auth.graphql` mismatch. Not master-lists-specific — affects every build.

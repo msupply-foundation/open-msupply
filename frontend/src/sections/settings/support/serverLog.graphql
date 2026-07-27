@@ -1,6 +1,6 @@
 # Server-log viewer (spec/settings/contract.md § Support). Both queries return
 # the same LogNode shape; each populates only the field it's for. Viewing never
-# changes anything (AC-SU2). The database download is REST, not GraphQL — see
+# changes anything (rules § Support). The database download is REST, not GraphQL — see
 # SupportSection.tsx.
 query logFileNames {
   logFileNames {

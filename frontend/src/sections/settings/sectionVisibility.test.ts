@@ -10,11 +10,11 @@ const adminRemote = { serverAdmin: true, centralServer: false };
 const adminCentral = { serverAdmin: true, centralServer: true };
 const nonAdminCentral = { serverAdmin: false, centralServer: true };
 
-// AC-A1 — Section visibility by permission: a signed-in non-Server-Admin sees
-// Display settings (language only) and the label-printer half of Devices;
-// Synchronisation, Support, the barcode-scanner half, and Configuration are
-// not shown.
-describe('AC-A1 — section visibility by permission', () => {
+// OMS-REG-SET-01.14, -02.11, -03.14, -05.20, -05.23 — Section visibility by
+// permission: a signed-in non-Server-Admin sees Display settings (language
+// only) and the label-printer half of Devices; Synchronisation, Support, the
+// barcode-scanner half, and Configuration are not shown.
+describe('section visibility by permission (SET-01.14, -02.11, -03.14, -05.20, -05.23)', () => {
   it('shows only Display settings and Devices to a non-Server-Admin', () => {
     expect(visibleSections(nonAdmin)).toEqual(['display-settings', 'devices']);
   });
@@ -44,9 +44,9 @@ describe('AC-A1 — section visibility by permission', () => {
   });
 });
 
-// AC-A2 — Configuration requires central server, not just Server Admin:
-// neither alone is enough.
-describe('AC-A2 — Configuration requires central server AND Server Admin', () => {
+// OMS-REG-SET-05.24 — Configuration requires central server, not just Server
+// Admin: neither alone is enough.
+describe('Configuration requires central server AND Server Admin (SET-05.24)', () => {
   it('is hidden from a Server Admin on a non-central server', () => {
     expect(visibleSections(adminRemote)).not.toContain('configuration');
   });
@@ -60,10 +60,10 @@ describe('AC-A2 — Configuration requires central server AND Server Admin', () 
   });
 });
 
-// AC-BS1 — the barcode-scanner half of Devices is Server-Admin-only, strictly
-// stricter than the label printer beside it (which AC-A1 above shows to
-// everyone via the Devices section itself — AC-LP1's visibility half).
-describe('AC-BS1 — barcode-scanner rows are Server-Admin-only', () => {
+// OMS-REG-SET-05.23 — the barcode-scanner half of Devices is Server-Admin-only,
+// strictly stricter than the label printer beside it (which the visibility test
+// above shows to everyone via the Devices section — SET-05.20's visibility half).
+describe('barcode-scanner rows are Server-Admin-only (SET-05.23)', () => {
   it('hides the scanner rows from a non-Server-Admin while Devices stays visible', () => {
     expect(visibleSections(nonAdmin)).toContain('devices');
     expect(showBarcodeScannerRows(nonAdmin)).toBe(false);

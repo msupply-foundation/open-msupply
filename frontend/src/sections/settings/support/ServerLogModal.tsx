@@ -14,7 +14,7 @@ import { LogContents, LogFileNames } from './serverLog.generated';
  * S3 — Server log viewer (spec/settings/ui-surface.md § S3): pick any one of
  * the server's log files — the current log and its rotated/compressed
  * history — and view its raw text; copy it to the clipboard or save it to a
- * file. Viewing never changes anything (AC-SU1, AC-SU2).
+ * file. Viewing never changes anything (OMS-REG-SET-03.1/.2/.3; rules § Support).
  *
  * Both resources are read via the .state gate, never suspending — this modal
  * lives inside an already-open page, and a suspending read would detach the
@@ -48,7 +48,7 @@ export const ServerLogModal = (props: {
       : undefined;
   const fileNames = () => names()?.fileNames ?? [];
 
-  // No file preselected — content loads when the user picks one (AC-SU1;
+  // No file preselected — content loads when the user picks one (OMS-REG-SET-03.1/.2/.3;
   // matches the reference viewer's initial state).
   const file = () => selectedFile();
 

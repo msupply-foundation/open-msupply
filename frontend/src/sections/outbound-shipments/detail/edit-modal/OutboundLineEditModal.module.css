@@ -1,28 +1,3 @@
-/* One item-picker option row: "code name" takes the free space at the
-   inline-start, the item's available stock pins to the inline-end. Mirrors the
-   shared ItemSearch row (the real OMS item picker shows on-hand stock here). */
-.itemOption {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  inline-size: 100%;
-  min-inline-size: 0;
-}
-
-.itemLabel {
-  flex: 1 1 auto;
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.itemStock {
-  flex-shrink: 0;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
 /* The issue row: Issue quantity + Allocate-in lens, with the placeholder
    notice filling the rest (spec S4). Stacks one control per row below the
    compact breakpoint (599px = breakpoints.compact − 1, the same cutoff where

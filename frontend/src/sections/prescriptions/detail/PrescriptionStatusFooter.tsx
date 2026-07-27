@@ -1,5 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t, tPlural } from '../../../intl';
+import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -191,10 +191,7 @@ export const PrescriptionStatusFooter: Component<
                 when={rejection()}
                 fallback={
                   zeroCount() > 0
-                    ? tPlural(
-                        'messages.confirm-zero-quantity-status',
-                        zeroCount()
-                      )
+                    ? t('messages.confirm-zero-quantity-status')
                     : t('messages.confirm-status-as', {
                         status: STATUS_LABEL_KEYS[next()],
                       })

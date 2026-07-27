@@ -1,4 +1,4 @@
-export { StatusChangeAction } from './StatusChangeAction';
+export { StatusChangeAction, type StatusPreflight } from './StatusChangeAction';
 export { DeleteLinesAction } from './DeleteLinesAction';
 export { AllocateLinesAction } from './AllocateLinesAction';
 export { AddFromMasterListAction } from './AddFromMasterListAction';
