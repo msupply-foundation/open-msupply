@@ -21,6 +21,8 @@ export interface StatisticProps {
    * chip's text, never by colour alone (accessibility § colour independence).
    */
   alertLabel?: string;
+  /** e2e testid — the stat's published id (e2e/TESTIDS.md § Dashboard). */
+  testId?: string;
 }
 
 /*
@@ -37,6 +39,7 @@ export const Statistic = (props: StatisticProps) => (
   <A
     href={props.href}
     class={styles.stat}
+    data-testid={props.testId}
     aria-label={`${props.value} ${props.label}${
       props.alert && props.alertLabel ? `, ${props.alertLabel}` : ''
     }`}

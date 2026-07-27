@@ -17,6 +17,8 @@ export interface DashboardCardProps {
   icon?: JSX.Element;
   /** Optional footer action (e.g. a create shortcut), pinned to the bottom-inline-end. */
   footer?: JSX.Element;
+  /** e2e testid — the widget's published id (e2e/TESTIDS.md § Dashboard). */
+  testId?: string;
   /** The StatsPanel children. */
   children?: JSX.Element;
 }
@@ -36,7 +38,7 @@ export const DashboardCard = (props: DashboardCardProps) => {
   const footer = children(() => props.footer);
   const icon = children(() => props.icon);
   return (
-    <section class={styles.card} id={props.id}>
+    <section class={styles.card} id={props.id} data-testid={props.testId}>
       <h2 class={styles.title}>
         <Show when={icon()}>
           <span class={styles.icon} aria-hidden="true">
