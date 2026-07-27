@@ -794,6 +794,7 @@ const InboundShipmentDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        data-testid="open-detail-panel-button"
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
