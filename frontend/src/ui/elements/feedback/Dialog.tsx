@@ -116,100 +116,6 @@ export interface DialogProps {
   testId?: string;
 }
 
-interface DialogHeaderProps {
-  title: string | JSX.Element;
-  titleIsString: boolean;
-  titleId: string;
-  titleHidden?: boolean;
-  align?: 'center' | 'start';
-  icon?: JSX.Element;
-  headerActions?: JSX.Element;
-}
-
-// The header, as its own component so its JSX-element props (icon, title,
-// headerActions) are resolved UNDER PortalMountContext — a combobox in the
-// title/actions then mounts its popup into the dialog (top layer), not <body>
-// (where the top-layer dialog would hide it). Each element prop is read once
-// via children() (§3): a guard-plus-insert would otherwise create it twice.
-// DialogBody below exists for the same reason, covering the other element
-// props (description / footer / actions / actionsLead).
-const DialogHeader = (props: DialogHeaderProps): JSX.Element => {
-  const icon = children(() => props.icon);
-  const title = children(() => props.title);
-  const headerActions = children(() => props.headerActions);
-  return (
-    <header
-      class={styles.header}
-      classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
-      data-align={props.align === 'start' ? 'start' : undefined}
-    >
-      <Show when={icon()}>
-        <span class={styles.icon}>{icon()}</span>
-      </Show>
-      {/* A string title is the <h2> (and the aria-labelledby target); a
-          component title renders inline in the same heading slot (the
-          accessible name then comes from ariaLabel on the dialog). */}
-      <Show
-        when={props.titleIsString}
-        fallback={<div class={styles.title}>{title()}</div>}
-      >
-        <h2 class={styles.title} id={props.titleId}>
-          {title()}
-        </h2>
-      </Show>
-      <Show when={headerActions()}>
-        <div class={styles.headerActions}>{headerActions()}</div>
-      </Show>
-    </header>
-  );
-};
-
-interface DialogBodyProps {
-  descriptionId: string;
-  description?: JSX.Element;
-  footer?: JSX.Element;
-  actions?: JSX.Element;
-  actionsLead?: JSX.Element;
-  children?: JSX.Element;
-}
-
-// The body content, as its own component for the same reason as DialogHeader:
-// its JSX-element props are resolved UNDER PortalMountContext, so a combobox
-// in the description or actions (e.g. the reduce-to-zero reason select)
-// mounts its popup into the dialog rather than portaling to <body>, where the
-// top-layer dialog would paint over it AND leave it inert (unclickable).
-const DialogBody = (props: DialogBodyProps): JSX.Element => {
-  const description = children(() => props.description);
-  const footer = children(() => props.footer);
-  const actions = children(() => props.actions);
-  const actionsLead = children(() => props.actionsLead);
-  return (
-    <>
-      <Show when={description()}>
-        <p class={styles.description} id={props.descriptionId}>
-          {description()}
-        </p>
-      </Show>
-      {props.children}
-      <Show when={footer()}>
-        <div class={styles.footer}>{footer()}</div>
-      </Show>
-      <Show when={actions()}>
-        <div
-          class={styles.actions}
-          data-has-lead={actionsLead() ? '' : undefined}
-        >
-          {/* Lead content sits at the inline-start; the buttons group at the inline-end. */}
-          <Show when={actionsLead()}>
-            <div class={styles.actionsLead}>{actionsLead()}</div>
-          </Show>
-          <div class={styles.actionsButtons}>{actions()}</div>
-        </div>
-      </Show>
-    </>
-  );
-};
-
 /*
  * Modal dialog — native <dialog> + showModal(), NO library (unlike the RnD
  * prototype, which bought Radix Dialog — see kdd/own-simple-buy-hard). The
@@ -229,27 +135,58 @@ export const Dialog = (props: DialogProps) => {
   let dialog!: HTMLDialogElement;
   const titleId = createUniqueId();
   const descriptionId = createUniqueId();
-  // Popups (Select / Combobox) opened inside this dialog must MOUNT INTO it —
-  // a popup portaled to <body> would be `inert` (unclickable) and painted
-  // behind the top-layer dialog. We expose the dialog element via context;
-  // nested popups mount here. The dialog box is overflow:visible (the clip
-  // lives on the inner .body) so the popup isn't cut off.
+  // Popups (Select / Combobox) opened inside this dialog must MOUNT INTO it,
+  // not <body> — see ui/utils/portalMount.ts for why (top-layer + inert
+  // interaction). We expose the dialog element via PortalMountContext
+  // (provided below); nested popups read it and mount there. The dialog box
+  // is overflow:visible (the clip lives on the inner .body) so the popup
+  // isn't cut off. Every note below about children()/reading props exactly
+  // once, and about PortalMountContext.Provider, exists to get a popup-
+  // bearing prop (title, description, etc.) constructed as a genuine
+  // descendant of that Provider — anywhere else, usePortalMount() resolves
+  // to undefined and the popup falls back to the default <body> portal.
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
   // Large ("workbench") modals go full-screen on phone-ish widths;
   // data-fullscreen drives the CSS. The 600px cutoff lives once in
   // breakpoints.ts (createMediaQuery).
   const compact = useIsCompact();
-  // A string title doubles as the accessible name (aria-labelledby → the <h2>).
-  // A component title can't be an accessible name, so callers pass `ariaLabel`
-  // and we use aria-label instead.
-  const titleIsString = () => typeof props.title === 'string';
-  // NB: EVERY JSX-element prop is resolved INSIDE an inner component
-  // (DialogHeader / DialogBody), never hoisted here — a component in any of
-  // them (e.g. a combobox in the description) must be created UNDER
-  // PortalMountContext so its popup mounts into this dialog (top layer,
-  // non-inert), not portaled to <body> where the top-layer dialog would hide
-  // it AND leave it inert. Resolving them here (above the Provider) would
-  // create them outside that context.
+  // Every JSX-element prop (title, icon, description, footer, actions,
+  // actionsLead, headerActions) is resolved via children() — see the note on
+  // dialogEl above for why (PortalMountContext). Creating each accessor HERE
+  // is inert: children() wraps a lazy createMemo (see solid-js's source), so
+  // this doesn't construct anything yet. Construction — and so any component
+  // inside (e.g. this modal's item search, in title) mounting under the RIGHT
+  // context — only happens the first time the accessor is CALLED. So every
+  // call site below lives inside the JSX nested in
+  // <PortalMountContext.Provider> further down. Reading the SAME memoized
+  // accessor from more than one such call site is fine (title() is read both
+  // by the header's own display and by reportTitleIsString below); what's
+  // unsafe is a call site OUTSIDE the Provider, or bypassing children()
+  // entirely to read props.title raw — which was exactly the bug: title used
+  // to be a plain function reading props.title directly, called from 3
+  // places, each an independent re-invocation of the whole JSX factory (i.e.
+  // a fresh mount). Four reads total meant one dialog open mounted the item
+  // search 4 times, each firing its own initial fetch (#549).
+  const title = children(() => props.title);
+  const icon = children(() => props.icon);
+  const headerActions = children(() => props.headerActions);
+  const description = children(() => props.description);
+  const footer = children(() => props.footer);
+  const actions = children(() => props.actions);
+  const actionsLead = children(() => props.actionsLead);
+  // The <dialog> element's OWN aria-labelledby/aria-label (below) need
+  // titleIsString before PortalMountContext.Provider exists in the tree — so,
+  // unlike every other derived value here, they can't just call title()
+  // directly at that point (that would be the second, wrongly-contexted read
+  // this whole note warns about — see title's declaration above). Solved by a
+  // signal, SET from an effect created inside <PortalMountContext.Provider>
+  // (see reportTitleIsString below, called once from the body div) rather
+  // than read again up here.
+  const [titleIsString, setTitleIsString] = createSignal(false);
+  const reportTitleIsString = (): null => {
+    createEffect(() => setTitleIsString(typeof title() === 'string'));
+    return null;
+  };
 
   createEffect(() => {
     if (props.open && !dialog.open) dialog.showModal();
@@ -289,9 +226,9 @@ export const Dialog = (props: DialogProps) => {
       aria-labelledby={titleIsString() ? titleId : undefined}
       aria-label={titleIsString() ? undefined : props.ariaLabel}
       // Presence check via `in` — reading the getter here would CREATE the
-      // description element outside the Provider (the §3 hazard DialogBody
-      // exists to avoid). A caller passing an explicit `undefined` gets a
-      // dangling idref, which assistive tech ignores.
+      // description element outside the Provider (the exact hazard the note
+      // on `title` above warns about). A caller passing an explicit
+      // `undefined` gets a dangling idref, which assistive tech ignores.
       aria-describedby={'description' in props ? descriptionId : undefined}
       // Escape arrives as `cancel` before the dialog closes — a blocking
       // dialog swallows it here, so the element never closes underneath the
@@ -327,6 +264,7 @@ export const Dialog = (props: DialogProps) => {
             programmatically focusable; the first Tab reaches the first
             control. */}
         <div class={styles.body} tabindex="-1" autofocus>
+          {reportTitleIsString()}
           <Show when={props.closeButton && props.dismissable !== false}>
             <button
               type="button"
@@ -337,24 +275,54 @@ export const Dialog = (props: DialogProps) => {
               <CloseIcon />
             </button>
           </Show>
-          <DialogHeader
-            title={props.title}
-            titleIsString={titleIsString()}
-            titleId={titleId}
-            titleHidden={props.titleHidden}
-            align={props.headerAlign}
-            icon={props.icon}
-            headerActions={props.headerActions}
-          />
-          <DialogBody
-            descriptionId={descriptionId}
-            description={props.description}
-            footer={props.footer}
-            actions={props.actions}
-            actionsLead={props.actionsLead}
+          <header
+            class={styles.header}
+            classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
+            data-align={props.headerAlign === 'start' ? 'start' : undefined}
           >
-            {props.children}
-          </DialogBody>
+            <Show when={icon()}>
+              <span class={styles.icon}>{icon()}</span>
+            </Show>
+            {/* A string title is the <h2> (and the aria-labelledby target);
+                a component title renders inline in the same heading slot
+                (the accessible name then comes from ariaLabel on the
+                dialog). titleIsString (used by the <dialog>'s own
+                aria-labelledby/aria-label above) is reported from the effect
+                near title's declaration — not read again here. */}
+            <Show
+              when={titleIsString()}
+              fallback={<div class={styles.title}>{title()}</div>}
+            >
+              <h2 class={styles.title} id={titleId}>
+                {title()}
+              </h2>
+            </Show>
+            <Show when={headerActions()}>
+              <div class={styles.headerActions}>{headerActions()}</div>
+            </Show>
+          </header>
+          <Show when={description()}>
+            <p class={styles.description} id={descriptionId}>
+              {description()}
+            </p>
+          </Show>
+          {props.children}
+          <Show when={footer()}>
+            <div class={styles.footer}>{footer()}</div>
+          </Show>
+          <Show when={actions()}>
+            <div
+              class={styles.actions}
+              data-has-lead={actionsLead() ? '' : undefined}
+            >
+              {/* Lead content sits at the inline-start; the buttons group at
+                  the inline-end. */}
+              <Show when={actionsLead()}>
+                <div class={styles.actionsLead}>{actionsLead()}</div>
+              </Show>
+              <div class={styles.actionsButtons}>{actions()}</div>
+            </div>
+          </Show>
         </div>
       </PortalMountContext.Provider>
     </dialog>

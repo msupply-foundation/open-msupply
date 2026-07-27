@@ -2,7 +2,7 @@
 
 **Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
 
-Scoped build of the help vertical (`spec/help`), stacked on the help reverse-spec (PR #440). Gates green repo-wide: `pnpm check` ✓ · `pnpm test` ✓ (341, incl. 5 new help AC tests) · `pnpm build` ✓. GraphQL generated against `:8890` (`develop`, central) via the scoped codegen runner (`:8000` is the remote / `PRE_INITIALISATION`).
+Scoped build of the help vertical (`spec/help`), stacked on the help reverse-spec (PR #440); S1 first, then the central-only S2/S3 management + upload follow-up. Gates green repo-wide: `pnpm check` ✓ · `pnpm test` ✓ · `pnpm build` ✓. GraphQL generated against `:8890` (`develop`, central) via the scoped codegen runner (`:8000` is the remote / `PRE_INITIALISATION`).
 
 ## Built — S1 Help page (universal)
 
@@ -11,21 +11,28 @@ Scoped build of the help vertical (`spec/help`), stacked on the help reverse-spe
 
 ## Behaviour coverage (`OMS-REG-HLP-01.*` — [case](../../../spec/help/cases/OMS-REG-HLP-01%20-%20Validate%20Help%20Page%20and%20Contact%20Form.md))
 
-| Behaviour                                                    | Where               | Status                                                                                                |
-| ------------------------------------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------- |
-| `.17` user-guide localised URL                               | `helpLogic.test.ts` | ✅ tested                                                                                             |
-| `.18`/`.19` documents block skips fileless / hides empty     | `helpLogic.test.ts` | ✅ tested                                                                                             |
-| `.20` file-view URL                                          | `helpLogic.test.ts` | ✅ tested                                                                                             |
-| `.2`-`.7` send-gating; `.23` email format                    | `helpLogic.test.ts` | ✅ tested                                                                                             |
-| `.15` universal ordered page; `.25`/`.26` outcome+reset      | `HelpPage.tsx`      | ⚠️ built, not unit-tested (UI-level)                                                                  |
-| `.24` server guard; `.21` view-session; `.22` not-synced 404 | —                   | ❌ server/HTTP — re-verified live on `develop` during the reverse spec (#440), not unit-testable here |
-| `.28`-`.35` management; `.36`/`.37` distribution             | —                   | ❌ not built (flagged)                                                                                |
+| Behaviour                                                    | Where                                                                       | Status                                                                                                |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `.17` user-guide localised URL                               | `helpLogic.test.ts`                                                         | ✅ tested                                                                                             |
+| `.18`/`.19` documents block skips fileless / hides empty     | `helpLogic.test.ts`                                                         | ✅ tested                                                                                             |
+| `.20` file-view URL                                          | `helpLogic.test.ts`                                                         | ✅ tested                                                                                             |
+| `.2`-`.7` send-gating; `.23` email format                    | `helpLogic.test.ts`                                                         | ✅ tested                                                                                             |
+| `.15` universal ordered page; `.25`/`.26` outcome+reset      | `HelpPage.tsx`                                                              | ⚠️ built, not unit-tested (UI-level)                                                                  |
+| `.24` server guard; `.21` view-session; `.22` not-synced 404 | —                                                                           | ❌ server/HTTP — re-verified live on `develop` during the reverse spec (#440), not unit-testable here |
+| `.29`/`.30` title required + trim; `.33` list sort           | `helpDocumentsLogic.test.ts`                                                | ✅ tested                                                                                             |
+| `.28` central-only nav+guard; `.31`/`.32`/`.34`/`.35` mgmt   | `HelpDocumentsManagement.tsx` / `UploadHelpDocumentModal.tsx` / `index.tsx` | ⚠️ built, not unit-tested (UI/wire-level)                                                             |
+| `.36`/`.37` distribution                                     | —                                                                           | ❌ sync-level (central → remote after sync); not FE-testable                                          |
 
-## Flags — not built (S2 management + S3 upload, central-only)
+## Built — S2 management + S3 upload (central-only)
 
-- **Central-presence nav gating is unsupported by the current chrome nav** — `NavItem` has no central flag and `MenuBar` doesn't filter, so the spec's "Manage › Help documents entry **absent** on non-central" (`.28`) can't be expressed yet. Needs a chrome/nav addition (candidate spec/infra refinement).
-- **File-upload HTTP route** (`POST /sync_files/help_document/{id}`, multipart, **session-cookie** auth) — this app authenticates by **bearer token**, so whether the login cookie that route requires is present is **unverified** (integration risk). Same for the inline file **view** (`GET`), which the built S1 links to.
-- The record-level ops are ready (`insertHelpDocument`/`deleteHelpDocument` generated) and the components exist (`DocumentUploadPanel` + `UploadZone` — the registry rows the spec PR added), so S2/S3 is a bounded follow-up once the two gaps above are resolved.
+- **S2 management** (`HelpDocumentsManagement.tsx`) at `manage/help-documents`: server-wide list (no store scope), newest-first, client-side Title sort, selection; columns Title / Filename (link, **empty** for a fileless record) / Uploaded; empty state `error.no-help-documents`; selection footer — Download (sequential per file) · Delete (confirmation stating the count, per-document independent — `.34`) · Clear (`.33`).
+- **S3 upload** (`UploadHelpDocumentModal.tsx`): title (required, trimmed) then a single-file dropzone that starts the two-step publish immediately — `insertHelpDocument` (record) then `uploadSyncFiles('help_document', …)` (file). Empty-title client refusal (`.29`/`.30`); duplicate / central / oversize rejections shown in-dialog (`error.an-error-occurred`); a file-step failure leaves the title-only record (`.32`) and still refetches so it lists.
+- **Pure-logic core** (`helpDocumentsLogic.ts`) + 7 behaviour-citing tests (`.29`/`.30`/`.33`). Reuses the generated `insertHelpDocument`/`deleteHelpDocument`, `domain/syncFiles`, `UploadZone`, `DataTable`, `ConfirmDialog`.
+
+## Resolved blockers
+
+- **Central-only nav gating** — now a declarative `central` flag on the nav config (`src/nav/navConfig.ts` `NavItem`), threaded through `navModel`, and gated **reactively** in `ShellLayout` on central server + `SERVER_ADMIN`; the help section adds a matching route guard (`CentralAdminOnly`) for direct-URL entry (`.28`). New chrome infrastructure, reusable for any future central-only destination.
+- **File-upload HTTP route auth** — not a mismatch: `src/api/graphql.ts` authenticates by the same-origin **session cookie** (no bearer token), exactly what `domain/syncFiles` sends; the inbound-shipments documents tab already ships on it. The upload + inline-view links carry the login cookie.
 
 ## Environment / verification
 
@@ -34,4 +41,4 @@ Scoped build of the help vertical (`spec/help`), stacked on the help reverse-spe
 ## Candidate spec refinements
 
 - **`.17`** says the user guide localises for es/fr; the real client also localises **pt** (implemented from the client source) — the case undercounts.
-- **Central-presence nav gating** (`.28`) has no home in the current chrome nav model — worth a chrome/`ui-standards` note on how a central-only destination is expressed.
+- **Central-only nav gating** now has a home — the `central` flag on `navConfig` + the `ShellLayout` gate. Worth a short chrome/`ui-standards` note documenting the pattern so future central-only destinations reuse it rather than re-deriving.

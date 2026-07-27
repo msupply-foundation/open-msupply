@@ -2,7 +2,7 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
-import { TextField } from '../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../ui/elements/inputs/DateField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { InfoIcon } from '../../../ui/icons';
@@ -161,34 +161,36 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           gap: 'var(--space-2)',
         }}
       >
-        <TextField
-          label={t('label.picked-date')}
-          hideLabel
-          type="date"
-          // Explicit width (spread onto the <input>): the input's default
-          // `width: 100%` fills the panel row's whole control column, pushing
-          // the disabled-reason info bubble past the panel edge where its own
-          // scroll clips it. A dd/mm/yyyy date fits in 8rem, leaving room for
-          // the bubble beside it. The width-cap variants can't do this — they
-          // only cap, and the column is narrower than every cap.
-          style={{ width: '8rem' }}
-          data-testid="picked-date-field"
-          value={shown()}
-          min={enabled() ? bounds().min : undefined}
-          max={enabled() ? bounds().max : undefined}
-          disabled={!enabled()}
-          onChange={e => {
-            // AC-B1 rejection on the save path: min/max only constrain the
-            // picker UI — a TYPED out-of-range day still fires change with
-            // the value — so re-check the window here and snap the input
-            // back to the last effective day instead of picking.
-            if (!withinBackdateBounds(bounds(), e.currentTarget.value)) {
-              e.currentTarget.value = shown();
-              return;
-            }
-            void onPick(e.currentTarget.value);
-          }}
-        />
+        {/* Fixed 8rem footprint (the same width the field had as a native
+            date input): left free, the field fills the panel row's whole
+            control column — clipping at the panel edge and leaving no room
+            for the disabled-reason bubble beside it. Grid so the field
+            stretches to the cell and shrinks (its input has min-width 0). */}
+        <span style={{ display: 'grid', width: '8rem' }}>
+          <DateField
+            label={t('label.picked-date')}
+            hideLabel
+            // The shared calendar-date input (ui-standards/inputs § dates &
+            // times — typed entry or the picker, never a native date input).
+            // `required`: a picked date always has an effective day — blanking
+            // the text reverts rather than clearing.
+            required
+            // Numeric day-first display/parse (27/07/2026) — matches the
+            // panel's localisedDate renderings (created date etc.).
+            format="dd/MM/yyyy"
+            testId="picked-date-field"
+            value={shown()}
+            min={enabled() ? bounds().min : undefined}
+            max={enabled() ? bounds().max : undefined}
+            disabled={!enabled()}
+            onChange={value => {
+              // AC-B1 re-check as defence in depth — DateField already reverts
+              // typed out-of-range entries against min/max.
+              if (!value || !withinBackdateBounds(bounds(), value)) return;
+              void onPick(value);
+            }}
+          />
+        </span>
         {/* When a backdating gate disables the field (pref off / past NEW), an
             info popover explains why on hover / focus / tap — disable-with-
             reason (spec S3), reusing the ported reason messages. */}
