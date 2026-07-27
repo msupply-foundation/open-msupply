@@ -18,6 +18,7 @@ import {
   utcBoundsFromLocalDays,
   utcToLocalDay,
 } from '../inputs/dateTimeConvert';
+import { DateTimeField } from '../inputs/DateTimeField';
 import styles from './FilterBar.module.css';
 
 /*
@@ -739,6 +740,56 @@ export const FilterDateRange = (props: {
     </span>
   );
 };
+
+/** A datetime range as UTC ISO instants, either side nullable — see
+ * FilterDateTimeRange. */
+export interface IsoDateTimeRange {
+  start: string | null;
+  end: string | null;
+}
+
+/**
+ * A date-TIME range filter — two independent DateTimeFields (From/To)
+ * de-boxed onto the chip pill via .bareField. Unlike FilterDateRange (one
+ * corvu range-mode calendar, date-only), there is no shared range primitive
+ * that also picks time, so this composes two whole fields rather than
+ * extending DateRangeField — the items Ledger tab is the first caller
+ * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time").
+ * Value is a `{ start, end }` pair of UTC ISO instants; the caller maps it
+ * onto its filter's bounds (e.g. after/beforeOrEqualTo).
+ */
+export const FilterDateTimeRange = (props: {
+  value: IsoDateTimeRange;
+  onChange: (value: IsoDateTimeRange) => void;
+  fromLabel: string;
+  toLabel: string;
+  /** `data-testid` stem for the two fields (FilterBar supplies
+   *  `filter-input-<key>`), stamped on each field's wrapper — DateTimeField
+   *  has no testId prop of its own. Rendered as `<testId>-from` / `<testId>-to`. */
+  testId?: string;
+}) => (
+  <span class={styles.bareField}>
+    <span data-testid={props.testId && `${props.testId}-from`}>
+      <DateTimeField
+        label={props.fromLabel}
+        hideLabel
+        size="small"
+        value={props.value.start}
+        onChange={start => props.onChange({ ...props.value, start })}
+      />
+    </span>
+    <span aria-hidden="true">–</span>
+    <span data-testid={props.testId && `${props.testId}-to`}>
+      <DateTimeField
+        label={props.toLabel}
+        hideLabel
+        size="small"
+        value={props.value.end}
+        onChange={end => props.onChange({ ...props.value, end })}
+      />
+    </span>
+  </span>
+);
 
 /**
  * A date filter — a native date input behind the calendar icon, sharing the

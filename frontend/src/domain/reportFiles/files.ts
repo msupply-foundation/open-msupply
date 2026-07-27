@@ -51,19 +51,6 @@ export const fetchReportFile = async (
   }
 };
 
-// Trigger a browser download of a blob under the given filename — object URL +
-// a programmatic anchor click, revoked immediately after.
-export const downloadBlob = (blob: Blob, filename: string): void => {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-};
-
 // Open the system print dialog for a finished HTML document (spec/reports
 // "Printing and exporting", desktop browser path): a hidden iframe carrying the
 // HTML via srcdoc, print() called once it loads, and the iframe torn down after

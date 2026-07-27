@@ -30,16 +30,16 @@ export const quantityColumns = (
 ): Column<DraftReturnLine, never>[] => [
   {
     c: { key: 'itemCode' },
-    header: t('label.code'),
+    header: () => t('label.code'),
   },
   {
     c: { key: 'itemName' },
-    header: t('label.name'),
+    header: () => t('label.name'),
     meta: { headerPosition: 'primary', wrapLines: 2 },
   },
   {
     c: { key: 'batch' },
-    header: t('label.batch'),
+    header: () => t('label.batch'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -55,7 +55,7 @@ export const quantityColumns = (
   },
   {
     c: { key: 'expiryDate' },
-    header: t('label.expiry'),
+    header: () => t('label.expiry'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -77,12 +77,12 @@ export const quantityColumns = (
     // from-shipment drafts only (contract § draft-line generation); blank on
     // per-item drafts. Read-only.
     c: { key: 'numberOfPacksIssued' },
-    header: t('label.pack-quantity-issued'),
+    header: () => t('label.pack-quantity-issued'),
     ...getNumberCell(),
   },
   {
     c: { key: 'packSize' },
-    header: t('label.pack-size'),
+    header: () => t('label.pack-size'),
     ...getNumberCell(),
     // NumberField (not a raw controlled input): it clamps to min/max and
     // repairs the DOM when a keystroke is rejected — the §13 pitfall
@@ -106,7 +106,7 @@ export const quantityColumns = (
     // Quantity returned: min 0; capped at packs issued where known — a
     // UI-only cap (rules § creation; AC-E5).
     c: { key: 'numberOfPacksReturned' },
-    header: t('label.quantity-returned'),
+    header: () => t('label.quantity-returned'),
     ...getNumberCell(),
     cell: info => {
       const line = info.row.original;
@@ -132,7 +132,7 @@ export const quantityColumns = (
   },
   {
     c: { key: 'volumePerPack' },
-    header: t('label.volume-per-pack'),
+    header: () => t('label.volume-per-pack'),
     ...getNumberCell(),
     cell: info => {
       const line = info.row.original;
@@ -157,24 +157,24 @@ export const quantityColumns = (
 export const reasonColumns = (
   update: UpdateLine
 ): Column<DraftReturnLine, never>[] => [
-  { c: { key: 'itemCode' }, header: t('label.code') },
+  { c: { key: 'itemCode' }, header: () => t('label.code') },
   {
     c: { key: 'itemName' },
-    header: t('label.name'),
+    header: () => t('label.name'),
     meta: { headerPosition: 'primary', wrapLines: 2 },
   },
-  { c: { key: 'batch' }, header: t('label.batch') },
+  { c: { key: 'batch' }, header: () => t('label.batch') },
   {
     // Expiry, read-only here (edited in the quantity step) — matches the
     // current app's reason-step table (ReturnReasonsTable: batch · expiry ·
     // reason · comment; no quantity column).
     c: { key: 'expiryDate' },
-    header: t('label.expiry'),
+    header: () => t('label.expiry'),
     ...getDateCell(),
   },
   {
     c: { id: 'returnReasonInput' },
-    header: t('label.reason'),
+    header: () => t('label.reason'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -190,7 +190,7 @@ export const reasonColumns = (
   },
   {
     c: { key: 'note' },
-    header: t('label.comment'),
+    header: () => t('label.comment'),
     cell: info => {
       const line = info.row.original;
       return (

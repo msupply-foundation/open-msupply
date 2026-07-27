@@ -269,6 +269,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
           alone, so it uses the control's built-in label (ui-standards). */}
       <TextField
         ref={nameInput}
+        data-testid="location-name-input"
         label={t('label.name')}
         required
         autofocus
@@ -277,6 +278,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
         onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
       />
       <TextField
+        data-testid="location-code-input"
         label={t('label.code')}
         required
         disabled={saving() !== null}
@@ -305,6 +307,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       <div class={styles.volumeRow}>
         {/* label.volume carries the m³ unit ("Volume (m³)"). */}
         <NumberField
+          data-testid="location-volume-input"
           label={t('label.volume')}
           decimalLimit={10}
           disabled={saving() !== null}
