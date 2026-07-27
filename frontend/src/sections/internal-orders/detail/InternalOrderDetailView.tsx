@@ -696,25 +696,27 @@ const InternalOrderDetailView: Component = () => {
                 <Breadcrumb crumbs={crumbs(node())} />
                 <HeaderButtons>
                   {/* Add — a split of Add item (line editor) and Add from
-                      master list (S7 picker); the whole control is withheld on
-                      program and read-only orders (AC-LN1). Use-suggested is a
-                      later cut. */}
-                  <Show when={canAddLines()}>
-                    <SplitButton
-                      icon={<PlusCircleIcon />}
-                      testId="add-item-button"
-                      value={addChoice()}
-                      onValueChange={setAddChoice}
-                      onAction={onAddAction}
-                      options={[
-                        { value: 'item', label: t('button.add-item') },
-                        {
-                          value: 'master-list',
-                          label: t('button.add-from-master-list'),
-                        },
-                      ]}
-                    />
-                  </Show>
+                      master list (S7 picker). Shown always but DISABLED on
+                      program orders (their item set is fixed at creation) and
+                      on read-only orders, with a reason tooltip (AC-LN1 —
+                      "disable with an explanation", not hide). Use-suggested is
+                      a later cut. */}
+                  <SplitButton
+                    icon={<PlusCircleIcon />}
+                    testId="add-item-button"
+                    disabled={!canAddLines()}
+                    disabledTitle={t('error.cannot-add-items-to-requisition')}
+                    value={addChoice()}
+                    onValueChange={setAddChoice}
+                    onAction={onAddAction}
+                    options={[
+                      { value: 'item', label: t('button.add-item') },
+                      {
+                        value: 'master-list',
+                        label: t('button.add-from-master-list'),
+                      },
+                    ]}
+                  />
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
                   <ExportPrintInternalOrderAction orderId={node().id} />
                   {/* More — reopens the side panel; shown only while closed. */}
