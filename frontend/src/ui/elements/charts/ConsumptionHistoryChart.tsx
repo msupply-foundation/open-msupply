@@ -1,7 +1,10 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
+import { formatNumber } from '../../../intl/formatNumber';
 import { SvgPlot, linePath } from './svgPlot';
+
+const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
 
@@ -47,11 +50,11 @@ export const ConsumptionHistoryChart = (props: {
                 {format(new Date(data()[i].date), 'MMM yyyy')}
               </div>
               <div>
-                {t('label.consumption')}: {data()[i].consumption}
+                {t('label.consumption')}: {fmt(data()[i].consumption)}
               </div>
               <div>
                 {t('label.moving-average')}:{' '}
-                {data()[i].averageMonthlyConsumption}
+                {fmt(data()[i].averageMonthlyConsumption)}
               </div>
             </>
           )}

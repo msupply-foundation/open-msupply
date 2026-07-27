@@ -645,7 +645,7 @@ const LineEditContent = (
               the breakdown shows. The population-forecast calculation display
               is a later cut. */}
             <div class={styles.charts}>
-              <div class={styles.chartSection}>
+              <div class={styles.breakdown}>
                 <h3 class={styles.chartHeading}>
                   {t('heading.target-quantity')}
                 </h3>

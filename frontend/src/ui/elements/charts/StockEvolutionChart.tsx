@@ -1,7 +1,10 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
+import { formatNumber } from '../../../intl/formatNumber';
 import { SvgPlot, linePath } from './svgPlot';
+
+const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
 
@@ -49,11 +52,11 @@ export const StockEvolutionChart = (props: {
                 {format(new Date(data()[i].date), 'd MMM')}
               </div>
               <div>
-                {t('label.stock-level')}: {data()[i].stockOnHand}
+                {t('label.stock-level')}: {fmt(data()[i].stockOnHand)}
               </div>
               <div>
-                {t('label.min')} {data()[i].minimumStockOnHand} ·{' '}
-                {t('label.max')} {data()[i].maximumStockOnHand}
+                {t('label.min')} {fmt(data()[i].minimumStockOnHand)} ·{' '}
+                {t('label.max')} {fmt(data()[i].maximumStockOnHand)}
               </div>
             </>
           )}

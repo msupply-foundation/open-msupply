@@ -1,8 +1,11 @@
 import { For, Show } from 'solid-js';
 import { t } from '../../../intl';
+import { formatNumber } from '../../../intl/formatNumber';
 import styles from './TargetQuantityBreakdown.module.css';
 
 const round = (n: number) => Math.round(n);
+// Displayed values to 2 decimal places (the layout maths below keep round()).
+const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
 
 // One horizontal value bar (stock on hand / suggested order). A zero-value bar
 // collapses to just its start divider — mirrors the app's original ValueBar.
@@ -25,11 +28,11 @@ const ValueBar = (props: {
       <div
         class={styles.valueBar}
         style={{ 'flex-basis': `${flex()}%`, 'flex-grow': 1 }}
-        title={`${props.label}: ${round(props.value)}`}
+        title={`${props.label}: ${fmt(props.value)}`}
       >
         <div class={`${styles.valueFill} ${props.fillClass}`}>
           <Show when={flex() > 5}>
-            <span class={styles.valueNum}>{round(props.value)}</span>
+            <span class={styles.valueNum}>{fmt(props.value)}</span>
           </Show>
         </div>
         <Show when={flex() > 10}>
@@ -72,9 +75,9 @@ export const TargetQuantityBreakdown = (props: {
   const showText = () => targetWidth() > 5;
   const months = () =>
     Array.from({ length: props.targetMonths }, (_, i) => i + 1);
-  const monthValue = (m: number) => round(amc() * m);
+  const monthValue = (m: number) => amc() * m;
   const monthText = (m: number) =>
-    `${monthValue(m)}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
+    `${fmt(monthValue(m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
   const additional = (m: number) =>
     m === props.targetMonths
       ? t('label.max-months-of-stock')
