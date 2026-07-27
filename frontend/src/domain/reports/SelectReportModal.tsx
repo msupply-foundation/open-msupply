@@ -8,10 +8,11 @@ import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DownloadIcon, PrinterIcon, XCircleIcon } from '../../ui/icons';
 import {
   fetchReportFile,
-  downloadBlob,
   printHtml,
   type GenerateResult,
 } from '../reportFiles';
+import { isAndroid } from '../../platform';
+import { openBlob, saveBlob } from '../../platform/openDocument';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
 import { timezoneArgument } from '../json-forms/schema';
 import { listReportsByContext, type Report } from './reportsResource';
@@ -76,9 +77,13 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // banner (spec/reports S5). A dataError from generation likewise surfaces
   // inline; a `failed` result means the global modal already showed the fault,
   // so we just drop back to idle.
+  // The chosen format carries the user's INTENT (HTML = print/view, Excel and
+  // PDF = keep) — delivery forks on it. Await the platform delivery: a failure
+  // keeps the dialog up with the inline error rather than closing as if it
+  // worked.
   const deliver = async (
     result: GenerateResult,
-    format: PrintFormat
+    chosen: PrintFormat
   ): Promise<void> => {
     if (result.kind === 'dataError') {
       setPhase('error');
@@ -93,21 +98,41 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
       setPhase('error');
       return;
     }
-    if (format === 'HTML') {
-      printHtml(await file.blob.text());
+    if (chosen === 'HTML') {
+      // Print. Android has no window.print — the generated file is a PDF
+      // (see runGenerate), viewed via the OS where printing lives.
+      if (isAndroid()) {
+        const delivered = await openBlob(file.blob, file.filename);
+        if (!delivered.ok) {
+          setPhase('error');
+          return;
+        }
+      } else {
+        printHtml(await file.blob.text());
+      }
     } else {
-      downloadBlob(file.blob, file.filename);
+      // Export/download: the user picks the destination (browser download on
+      // web, the OS save picker on Android).
+      const delivered = await saveBlob(file.blob, file.filename);
+      if (!delivered.ok) {
+        setPhase('error');
+        return;
+      }
     }
     props.onClose();
   };
 
   const runGenerate = async (
-    format: PrintFormat,
+    chosen: PrintFormat,
     args?: Record<string, unknown>
   ): Promise<void> => {
     const report = selected();
     if (!report) return;
     setPhase('generating');
+    // Print on Android generates a PDF instead of HTML (no window.print in
+    // the WebView — spec/android § Files out of the app); `chosen` still
+    // travels to deliver() so the print INTENT survives the substitution.
+    const format = isAndroid() && chosen === 'HTML' ? 'PDF' : chosen;
     // The user's timezone travels even when the report has no argument form —
     // shipped templates read `arguments.timezone` unconditionally, and the
     // captured client sends `{ timezone }` alone on this path (AC-R11). Form
@@ -119,7 +144,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
       args: { ...timezoneArgument(), ...args },
       sort: props.sort,
     });
-    await deliver(result, format);
+    await deliver(result, chosen);
   };
 
   // A format button: if the report declares filters, open S3 first (holding the

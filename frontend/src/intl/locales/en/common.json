@@ -2297,6 +2297,8 @@
   "messages.cancel-prescription-not-allowed": "You don't have permission to cancel this prescription",
   "messages.cannot-add-directions": "Add a quantity to add directions.",
   "messages.cannot-bundle": "You can't bundle other item variants with this one, as this variant is already bundled with other items",
+  "messages.cannot-open-file": "No app on this device can open this file type",
+  "messages.cannot-save-file": "The file could not be saved",
   "messages.cannot-change-location-multiple-types": "No locations available because the selected lines have different restriction types.",
   "messages.cannot-change-status-purchase-order-placeholder-lines": "Cannot change the status until all lines have a requested quantity",
   "messages.cannot-close-purchase-order-lines": "Some lines cannot be closed because they have already been closed",
