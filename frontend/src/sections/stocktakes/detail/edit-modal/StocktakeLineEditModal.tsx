@@ -415,21 +415,23 @@ const StocktakeLineEditContent = (
   // opt-in (unchecked) when the item already has stocktake lines, all-counted
   // for a brand-new item. Records the item in the covered set for the walk.
   // `focusLineId` is the batch to focus once loaded (a row-click open focuses
-  // the clicked line); omitted → focus the first row.
+  // the clicked line); omitted → focus the first row. `knownExisting` lets a
+  // caller that already fetched this item's existing lines (loadItemById, to
+  // resolve the item descriptor) pass them straight through instead of this
+  // function re-fetching the identical stocktakeLines query a moment later.
   const seedItem = async (
     item: StocktakeLineEditItem,
-    focusLineId?: string
+    focusLineId?: string,
+    knownExisting?: StocktakeLineFragment[]
   ) => {
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setLoadingLines(true);
-    const existing = await fetchExistingLines(
-      props.storeId,
-      props.stocktakeId,
-      item.id
-    );
+    const existing =
+      knownExisting ??
+      (await fetchExistingLines(props.storeId, props.stocktakeId, item.id));
     const seeded = await buildDraft(
       props.storeId,
       item,
@@ -457,7 +459,9 @@ const StocktakeLineEditContent = (
 
   // Row-open path: resolve the item descriptor from its existing lines (the
   // fetch we need for the draft anyway), then seed. If the item has no lines
-  // (vanished), close.
+  // (vanished), close. Passes `existing` straight through to seedItem (its
+  // `knownExisting`) rather than letting it re-run the identical
+  // stocktakeLines query it would otherwise fetch for itself.
   const loadItemById = async (id: string) => {
     setLoadingLines(true);
     const existing = await fetchExistingLines(
@@ -480,7 +484,8 @@ const StocktakeLineEditContent = (
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
-      props.initialLineId
+      props.initialLineId,
+      existing
     );
   };
 
