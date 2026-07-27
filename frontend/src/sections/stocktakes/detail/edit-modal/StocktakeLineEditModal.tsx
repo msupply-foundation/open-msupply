@@ -390,6 +390,14 @@ const StocktakeLineEditContent = (
   // vaccine item's rows (isVaccine off → blank).
   const prefs = () => stocktakePreferences();
 
+  // Blind stocktake (spec/stocktakes › store-preference gates): the editor is
+  // only ever open on a NEW stocktake (the detail view blocks the row-click
+  // that opens it once finalised/locked), so Snapshot hides unconditionally
+  // on the preference, with no separate status check. Reason hides the same
+  // way, for the same reason no reason is ever required under this preference.
+  const hideSnapshotStock = () => prefs().blindStocktake;
+  const hideReason = () => prefs().blindStocktake;
+
   // No item picked yet → the search state (Cancel-only footer, prompt in place
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
@@ -862,44 +870,50 @@ const StocktakeLineEditContent = (
         );
       },
     },
-    {
-      c: { key: 'snapshotNumberOfPacks' },
-      header: t('label.snapshot-num-of-packs'),
-      cardGroup: 'batch',
-      ...getNumberCell(),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'flex-direction': 'column',
-              'align-items': 'flex-end',
-            }}
-          >
-            <span>{line.snapshotNumberOfPacks ?? '—'}</span>
-            <Show
-              when={
-                lineErrors().get(line.id) ===
-                'SnapshotCountCurrentCountMismatchLine'
-              }
-            >
-              <span
-                data-testid="stocktake-line-error"
-                style={{
-                  color: 'var(--error-main)',
-                  'font-size': 'var(--text-xs)',
-                  'white-space': 'normal',
-                  'text-align': 'end',
-                }}
-              >
-                {t('error.snapshot-total-mismatch')}
-              </span>
-            </Show>
-          </span>
-        );
-      },
-    },
+    // Snapshot — omitted entirely under blind stocktake (see hideSnapshotStock
+    // above; the editor is only ever open on a NEW stocktake).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: { key: 'snapshotNumberOfPacks' },
+            header: t('label.snapshot-num-of-packs'),
+            cardGroup: 'batch',
+            ...getNumberCell(),
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'flex-direction': 'column',
+                    'align-items': 'flex-end',
+                  }}
+                >
+                  <span>{line.snapshotNumberOfPacks ?? '—'}</span>
+                  <Show
+                    when={
+                      lineErrors().get(line.id) ===
+                      'SnapshotCountCurrentCountMismatchLine'
+                    }
+                  >
+                    <span
+                      data-testid="stocktake-line-error"
+                      style={{
+                        color: 'var(--error-main)',
+                        'font-size': 'var(--text-xs)',
+                        'white-space': 'normal',
+                        'text-align': 'end',
+                      }}
+                    >
+                      {t('error.snapshot-total-mismatch')}
+                    </span>
+                  </Show>
+                </span>
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]),
     {
       c: { key: 'countedNumberOfPacks' },
       header: t('label.counted-num-of-packs'),
@@ -1218,47 +1232,53 @@ const StocktakeLineEditContent = (
         );
       },
     },
-    {
-      c: { id: 'inventoryAdjustmentReasonInput' },
-      header: t('label.reason'),
-      cardGroup: 'batch',
-      cell: info => {
-        const line = info.row.original;
-        const error = () => {
-          const err = lineErrors().get(line.id);
-          if (err === 'AdjustmentReasonNotProvided')
-            return t('error.provide-reason');
-          if (err === 'AdjustmentReasonNotValid')
-            return t('error.provide-valid-reason');
-          return undefined;
-        };
-        // Offer only reasons valid for the line's adjustment direction; a zero
-        // variance (or uncounted) line has no direction, so the picker is
-        // disabled — a zero adjustment never takes a reason (rules.md §reason
-        // rules). setCounted clears a now-mismatched reason when the count
-        // changes direction, so the disabled default 'positive' is never read.
-        const direction = () => adjustmentDirection(line);
-        return (
-          <ReasonSelect
-            kind={direction() ?? 'positive'}
-            label={t('label.reason')}
-            hideLabel
-            disabled={!line.countThisLine || direction() === null}
-            value={line.reasonOption?.id}
-            error={error()}
-            errorTestId="stocktake-line-error"
-            placeholder={t('label.select-reason')}
-            onChange={r =>
-              update(
-                line.id,
-                'reasonOption',
-                r ? { id: r.id, type: r.type, reason: r.reason } : null
-              )
-            }
-          />
-        );
-      },
-    },
+    // Reason — omitted entirely under blind stocktake, since no reason is
+    // ever required (see hideReason above).
+    ...(hideReason()
+      ? []
+      : [
+          {
+            c: { id: 'inventoryAdjustmentReasonInput' },
+            header: t('label.reason'),
+            cardGroup: 'batch',
+            cell: info => {
+              const line = info.row.original;
+              const error = () => {
+                const err = lineErrors().get(line.id);
+                if (err === 'AdjustmentReasonNotProvided')
+                  return t('error.provide-reason');
+                if (err === 'AdjustmentReasonNotValid')
+                  return t('error.provide-valid-reason');
+                return undefined;
+              };
+              // Offer only reasons valid for the line's adjustment direction; a zero
+              // variance (or uncounted) line has no direction, so the picker is
+              // disabled — a zero adjustment never takes a reason (rules.md §reason
+              // rules). setCounted clears a now-mismatched reason when the count
+              // changes direction, so the disabled default 'positive' is never read.
+              const direction = () => adjustmentDirection(line);
+              return (
+                <ReasonSelect
+                  kind={direction() ?? 'positive'}
+                  label={t('label.reason')}
+                  hideLabel
+                  disabled={!line.countThisLine || direction() === null}
+                  value={line.reasonOption?.id}
+                  error={error()}
+                  errorTestId="stocktake-line-error"
+                  placeholder={t('label.select-reason')}
+                  onChange={r =>
+                    update(
+                      line.id,
+                      'reasonOption',
+                      r ? { id: r.id, type: r.type, reason: r.reason } : null
+                    )
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]),
     {
       c: { key: 'note' },
       header: t('label.note'),

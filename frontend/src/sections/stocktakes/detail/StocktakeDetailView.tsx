@@ -540,6 +540,14 @@ const StocktakeDetailView: Component = () => {
   // entirely otherwise (not merely default-hidden).
   const prefs = () => stocktakePreferences();
 
+  // Blind stocktake (spec/stocktakes › store-preference gates): Snapshot and
+  // Difference hide only while counting (status NEW) and reappear once
+  // finalised; Reason hides for the stocktake's whole life, since no reason
+  // is ever required under this preference.
+  const hideSnapshotStock = () =>
+    prefs().blindStocktake && current()?.status === 'NEW';
+  const hideReason = () => prefs().blindStocktake;
+
   // A memo, not a plain function: read as a JSX prop (DataTable's `columns`),
   // it would otherwise rebuild a fresh array + fresh column objects on EVERY
   // read. TanStack Table treats a new columns identity as a config change and
@@ -615,47 +623,53 @@ const StocktakeDetailView: Component = () => {
           } satisfies Column<Line, SortKey>,
         ]
       : []),
-    {
-      c: { key: 'snapshotNumberOfPacks' },
-      sortKey: 'snapshotNumberOfPacks',
-      header: t('label.snapshot-num-of-packs'),
-      ...getNumberCell(),
-      // Snapshot cell also carries the line's error inline beneath the count (a
-      // snapshot/current-count mismatch is a "recount this line" message about
-      // the snapshot). Styled inline from the design tokens (a section owns no
-      // stylesheet).
-      cell: info => {
-        const value = info.getValue<number | null | undefined>();
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'flex-direction': 'column',
-              'align-items': 'flex-end',
-            }}
-          >
-            <span>{value ?? ''}</span>
-            <Show
-              when={
-                lineErrors().get(info.row.original.id) ===
-                'SnapshotCountCurrentCountMismatchLine'
-              }
-            >
-              <span
-                style={{
-                  color: 'var(--error-main)',
-                  'font-size': 'var(--text-xs)',
-                  'white-space': 'normal',
-                  'text-align': 'end',
-                }}
-              >
-                {t('error.snapshot-total-mismatch')}
-              </span>
-            </Show>
-          </span>
-        );
-      },
-    },
+    // Snapshot — omitted entirely while counting under blind stocktake (reappears
+    // once finalised; see hideSnapshotStock above).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: { key: 'snapshotNumberOfPacks' },
+            sortKey: 'snapshotNumberOfPacks',
+            header: t('label.snapshot-num-of-packs'),
+            ...getNumberCell(),
+            // Snapshot cell also carries the line's error inline beneath the count (a
+            // snapshot/current-count mismatch is a "recount this line" message about
+            // the snapshot). Styled inline from the design tokens (a section owns no
+            // stylesheet).
+            cell: info => {
+              const value = info.getValue<number | null | undefined>();
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'flex-direction': 'column',
+                    'align-items': 'flex-end',
+                  }}
+                >
+                  <span>{value ?? ''}</span>
+                  <Show
+                    when={
+                      lineErrors().get(info.row.original.id) ===
+                      'SnapshotCountCurrentCountMismatchLine'
+                    }
+                  >
+                    <span
+                      style={{
+                        color: 'var(--error-main)',
+                        'font-size': 'var(--text-xs)',
+                        'white-space': 'normal',
+                        'text-align': 'end',
+                      }}
+                    >
+                      {t('error.snapshot-total-mismatch')}
+                    </span>
+                  </Show>
+                </span>
+              );
+            },
+          } satisfies Column<Line, SortKey>,
+        ]),
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
@@ -678,25 +692,39 @@ const StocktakeDetailView: Component = () => {
         ]
       : []),
     // Difference = counted − snapshot; blank until the line is counted. Derived
-    // (no server field), so unsortable.
-    {
-      c: {
-        accessor: line => lineDifference(line) ?? '',
-        id: 'difference',
-      },
-      header: t('label.difference'),
-      ...getNumberCell(),
-    },
+    // (no server field), so unsortable. Omitted alongside Snapshot under blind
+    // stocktake (same gate — see hideSnapshotStock above).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: {
+              accessor: line => lineDifference(line) ?? '',
+              id: 'difference',
+            },
+            header: t('label.difference'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]),
     // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
     // Campaign · Comment. No price columns — Sell/Cost price live only in the
     // line editor's Pricing tab, never as detail-table columns (spec S3).
-    {
-      // The adjustment reason (reasonOption.reason) — an accessor column.
-      // Server sorts by reasonOption.
-      c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
-      sortKey: 'reasonOption',
-      header: t('label.reason'),
-    },
+    // Reason — omitted for the stocktake's whole life under blind stocktake,
+    // since no reason is ever required (see hideReason above).
+    ...(hideReason()
+      ? []
+      : [
+          {
+            // The adjustment reason (reasonOption.reason) — an accessor column.
+            // Server sorts by reasonOption.
+            c: {
+              accessor: line => line.reasonOption?.reason ?? '',
+              id: 'reason',
+            },
+            sortKey: 'reasonOption',
+            header: t('label.reason'),
+          } satisfies Column<Line, SortKey>,
+        ]),
     // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
     // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
     // no sortKey (server can't sort it — kdd/type-safety, D23).
@@ -876,6 +904,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
+                      hideReason={hideReason()}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}
