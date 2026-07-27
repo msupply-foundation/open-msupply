@@ -113,11 +113,15 @@ export const reachableStatuses = (
   return flow.filter((s, i) => i > currentIdx && SETTABLE.includes(s));
 };
 
-// The per-stage timestamp used by the StatusIndicator history popover.
+// The per-stage timestamp used by the StatusIndicator history popover. On a
+// transfer, Picked and Shipped are the SENDING store's timestamps — the server
+// copies them across when it generates this shipment, so they are present from
+// the moment it appears here rather than stamped by any local advance.
 export const statusDatetime = (
   info: Pick<
     InboundInfoFragment,
     | 'createdDatetime'
+    | 'pickedDatetime'
     | 'shippedDatetime'
     | 'deliveredDatetime'
     | 'receivedDatetime'
@@ -128,6 +132,8 @@ export const statusDatetime = (
   switch (status) {
     case 'NEW':
       return info.createdDatetime;
+    case 'PICKED':
+      return info.pickedDatetime;
     case 'SHIPPED':
       return info.shippedDatetime;
     case 'DELIVERED':
