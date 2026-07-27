@@ -7,11 +7,12 @@ export interface FieldShellProps {
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
   /**
-   * Max-width cap, TextField's vocabulary: `short` (default — dates are
-   * short) or `full` to fill the container (e.g. the report argument form,
-   * where every row spans the modal).
+   * Max-width cap, TextField's vocabulary: `compact` (10rem — narrows only the
+   * control box, for a dense row like a page-header toolbar), `short`
+   * (default — dates are short) or `full` to fill the container (e.g. the
+   * report argument form, where every row spans the modal).
    */
-  width?: 'short' | 'full';
+  width?: 'compact' | 'short' | 'full';
   required?: boolean;
   /** Error message — presence switches the field to the error state. */
   error?: string;
