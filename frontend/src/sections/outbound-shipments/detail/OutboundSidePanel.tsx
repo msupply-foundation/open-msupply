@@ -30,9 +30,9 @@ import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
 import { PickedDateField } from './PickedDateField';
-import { CurrencyModal } from './modals/CurrencyModal';
+import { CurrencyModal } from '../../../domain/invoice';
 import { isDeletable } from '../outboundStatus';
-import type { OutboundNode } from './outboundUpdate';
+import { changeShipmentCurrency, type OutboundNode } from './outboundUpdate';
 import { graphqlFetch } from '../../../api/graphql';
 import {
   FullOutbound,
@@ -565,12 +565,22 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Button>
         </SidePanelActions>
       </SidePanelSection>
+      {/* The shared change-currency modal with outbound's header update; a
+          saved node replaces the entity in place. */}
       <CurrencyModal
         open={currencyOpen()}
         onClose={() => setCurrencyOpen(false)}
-        storeId={props.storeId}
-        node={props.node}
-        onSaved={props.onSaved}
+        initialCurrencyId={props.node.currency?.id}
+        initialRate={props.node.currencyRate}
+        save={async input => {
+          const result = await changeShipmentCurrency(props.storeId, {
+            id: props.node.id,
+            ...input,
+          });
+          if (result.kind !== 'saved') return result;
+          props.onSaved(result.node);
+          return { kind: 'saved' };
+        }}
       />
     </>
   );

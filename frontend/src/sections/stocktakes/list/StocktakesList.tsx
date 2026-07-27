@@ -244,7 +244,7 @@ const StocktakesList: Component = () => {
       sortKey: 'stocktakeNumber',
       // Language-neutral '#' for the number column (universal symbol; no t()
       // needed).
-      header: '#',
+      header: () => '#',
       // getNumberCell merges extra meta — card:'primary' makes the number the
       // card's title (top-left); right-aligned in table view.
       ...getNumberCell({ headerPosition: 'primary' }),
@@ -252,7 +252,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => <StatusChip {...statusMeta(info.row.original)} />,
       // Card view: the status chip is the top-right badge.
       meta: { headerPosition: 'badge' },
@@ -261,7 +261,7 @@ const StocktakesList: Component = () => {
       c: { key: 'description' },
       // Not sortable — matches OMS's list (Description has no sort control) and
       // the spec column table.
-      header: t('label.description'),
+      header: () => t('label.description'),
       // Card view: the description flows in the secondary area. Wraps to 2
       // lines.
       meta: { wrapLines: 2 },
@@ -269,13 +269,13 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
       // Not sortable — matches OMS's list column set.
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
   ];

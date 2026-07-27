@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { countPanelState } from './panelState';
 
-// Panel-level failure isolation (spec/dashboard ui-surface S2). Criteria cited
-// from spec/dashboard/acceptance.md.
+// Panel-level failure isolation (spec/dashboard ui-surface S2).
+// Behaviours cited from spec/dashboard/cases/.
 
 describe('countPanelState', () => {
-  // AC-D2 — a family the user cannot read shows a permission error in place
-  // of a value (never a number); other outcomes are unaffected.
-  it('AC-D2: forbidden maps to an in-panel permission error, not a value', () => {
+  // OMS-REG-DB-01.22/.23 — a family the user cannot read shows a permission
+  // error in place of a value (never a number); other outcomes are unaffected.
+  it('OMS-REG-DB-01.22/.23: forbidden maps to an in-panel permission error, not a value', () => {
     expect(countPanelState({ kind: 'forbidden' })).toEqual({
       status: 'error',
       messageKey: 'error.no-permission',
     });
   });
 
-  it('AC-D2: an unexpected failure shows a generic in-panel error', () => {
+  it('OMS-REG-DB-01.23: an unexpected failure shows a generic in-panel error', () => {
     expect(countPanelState({ kind: 'error' })).toEqual({
       status: 'error',
       messageKey: 'error.no-data',
