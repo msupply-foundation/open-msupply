@@ -41,7 +41,7 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
         accessor: r => r.document.documentRegistry?.name ?? r.type,
         id: 'type',
       },
-      header: t('label.encounter-type'),
+      header: () => t('label.encounter-type'),
     },
     {
       c: {
@@ -49,16 +49,16 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
           r.programEnrolment?.document.documentRegistry?.name ?? '',
         id: 'program',
       },
-      header: t('label.program'),
+      header: () => t('label.program'),
     },
     {
       c: { key: 'startDatetime' },
-      header: t('label.date'),
+      header: () => t('label.date'),
       ...getDateCell(),
     },
     {
       c: { accessor: r => statusLabel(r.status), id: 'status' },
-      header: t('label.status'),
+      header: () => t('label.status'),
     },
   ];
 

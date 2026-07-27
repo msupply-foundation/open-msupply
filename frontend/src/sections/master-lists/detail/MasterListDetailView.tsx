@@ -100,18 +100,18 @@ const MasterListDetailView: Component = () => {
   const columns = (): Column<LineRow, LineSortKey>[] => [
     {
       c: { accessor: row => row.item.code, id: 'code' },
-      header: t('label.code'),
+      header: () => t('label.code'),
       enableSorting: false,
     },
     {
       c: { accessor: row => row.item.name, id: 'name' },
       sortKey: 'name',
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { wrapLines: 2 },
     },
     {
       c: { accessor: row => row.item.unitName ?? '', id: 'unit' },
-      header: t('label.unit'),
+      header: () => t('label.unit'),
       enableSorting: false,
     },
   ];

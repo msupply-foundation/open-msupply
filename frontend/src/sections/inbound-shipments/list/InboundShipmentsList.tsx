@@ -224,7 +224,7 @@ const InboundShipmentsList: Component = () => {
       // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { headerPosition: 'primary' },
       cell: info => {
         const row = info.row.original;
@@ -256,7 +256,7 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => {
         const status = info.getValue<Row['status']>();
         return (
@@ -271,7 +271,7 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: '#',
+      header: () => '#',
       ...getNumberCell(),
     },
     {
@@ -283,7 +283,7 @@ const InboundShipmentsList: Component = () => {
         accessor: row => linkedOrderOf(params.storeId, row)?.label ?? '',
         id: 'linkedOrder',
       },
-      header: t('label.linked-order'),
+      header: () => t('label.linked-order'),
       cell: info => {
         const linked = linkedOrderOf(params.storeId, info.row.original);
         return (
@@ -306,28 +306,28 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
-      header: t('label.delivered'),
+      header: () => t('label.delivered'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
-      header: t('label.reference'),
+      header: () => t('label.reference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
-      header: t('label.total'),
+      header: () => t('label.total'),
       ...getCurrencyCell(),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.

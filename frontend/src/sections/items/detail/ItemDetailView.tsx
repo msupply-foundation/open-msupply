@@ -110,11 +110,11 @@ const ItemDetailView: Component = () => {
   const selfHref = () => `/${params.storeId}/catalogue/items/${params.itemId}`;
 
   const masterListColumns = (): Column<MasterListRow, never>[] => [
-    { c: { key: 'code' }, header: t('label.code'), enableSorting: false },
-    { c: { key: 'name' }, header: t('label.name'), enableSorting: false },
+    { c: { key: 'code' }, header: () => t('label.code'), enableSorting: false },
+    { c: { key: 'name' }, header: () => t('label.name'), enableSorting: false },
     {
       c: { key: 'description' },
-      header: t('label.description'),
+      header: () => t('label.description'),
       enableSorting: false,
     },
   ];

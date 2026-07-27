@@ -538,13 +538,13 @@ const OutboundDetailView: Component = () => {
       {
         c: { key: 'itemCode' },
         sortKey: 'itemCode',
-        header: t('label.code'),
+        header: () => t('label.code'),
         footer: () => t('label.total'),
       },
       {
         c: { key: 'itemName' },
         sortKey: 'itemName',
-        header: t('label.name'),
+        header: () => t('label.name'),
         meta: { headerPosition: 'primary', wrapLines: 2 },
       },
       {
@@ -556,12 +556,12 @@ const OutboundDetailView: Component = () => {
           id: 'batch',
         },
         sortKey: 'batch',
-        header: t('label.batch'),
+        header: () => t('label.batch'),
       },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
-        header: t('label.expiry-date'),
+        header: () => t('label.expiry-date'),
         ...getExpiryDateCell(),
       },
       ...(vvmOn()
@@ -571,7 +571,7 @@ const OutboundDetailView: Component = () => {
                 accessor: (line: Line) => line.vvmStatus?.description ?? '',
                 id: 'vvmStatus',
               },
-              header: t('label.vvm-status'),
+              header: () => t('label.vvm-status'),
             } as Column<Line, SortKey>,
           ]
         : []),
@@ -580,16 +580,16 @@ const OutboundDetailView: Component = () => {
         // The server key sorts by location NAME; code is what we display —
         // near enough in practice (codes prefix names in this dataset).
         sortKey: 'locationName',
-        header: t('label.location'),
+        header: () => t('label.location'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
-        header: t('label.unit'),
+        header: () => t('label.unit'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
-        header: t('label.pack-size'),
+        header: () => t('label.pack-size'),
         ...getNumberCell(),
       },
       ...(dosesOn()
@@ -600,19 +600,19 @@ const OutboundDetailView: Component = () => {
                   line.item.isVaccine ? line.item.doses : null,
                 id: 'dosesPerUnit',
               },
-              header: t('label.doses-per-unit'),
+              header: () => t('label.doses-per-unit'),
               ...getNumberCell(),
             } as Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
-        header: t('label.pack-quantity'),
+        header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
       {
         c: { key: 'receivedNumberOfPacks' },
-        header: t('label.packs-received'),
+        header: () => t('label.packs-received'),
         ...getNumberCell(),
       },
       {
@@ -623,7 +623,7 @@ const OutboundDetailView: Component = () => {
               : null,
           id: 'difference',
         },
-        header: t('label.difference'),
+        header: () => t('label.difference'),
         ...getNumberCell(),
       },
       {
@@ -631,7 +631,7 @@ const OutboundDetailView: Component = () => {
           accessor: line => line.numberOfPacks * line.packSize,
           id: 'unitQuantity',
         },
-        header: t('label.unit-quantity'),
+        header: () => t('label.unit-quantity'),
         ...getNumberCell(),
       },
       ...(dosesOn()
@@ -644,19 +644,19 @@ const OutboundDetailView: Component = () => {
                     : null,
                 id: 'doses',
               },
-              header: t('label.doses'),
+              header: () => t('label.doses'),
               ...getNumberCell(),
             } as Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'sellPricePerPack' },
-        header: t('label.unit-sell-price'),
+        header: () => t('label.unit-sell-price'),
         ...getCurrencyCell(),
       },
       {
         c: { key: 'totalAfterTax' },
-        header: t('label.total'),
+        header: () => t('label.total'),
         footer: () => formatCurrencyCell(totals.price),
         ...getCurrencyCell(),
       },
@@ -668,7 +668,7 @@ const OutboundDetailView: Component = () => {
           accessor: line => line.volumePerPack * line.numberOfPacks,
           id: 'volume',
         },
-        header: t('label.volume'),
+        header: () => t('label.volume'),
         // Same display rounding as the column's cells (ui-standards § tables'
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.

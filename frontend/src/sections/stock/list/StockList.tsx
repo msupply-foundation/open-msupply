@@ -169,14 +169,14 @@ const StockList: Component = () => {
       // Code — table face (OMS position 1): sortable, hidden on the card.
       c: { accessor: r => r.item.code, id: 'itemCode' },
       sortKey: 'itemCode',
-      header: t('label.code'),
+      header: () => t('label.code'),
       ...getCellDefinition('itemCode', { hideOnCard: true }),
     },
     {
       // Name — primary in both views (card title).
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       ...getCellDefinition('itemName', {
         headerPosition: 'primary',
         wrapLines: 2,
@@ -186,7 +186,7 @@ const StockList: Component = () => {
       // Code — card face: the second primary, after Name; absent from the table
       // and from the Columns popover (structural).
       c: { accessor: r => r.item.code, id: 'itemCodeCard' },
-      header: t('label.code'),
+      header: () => t('label.code'),
       ...getCellDefinition('itemCode', {
         headerPosition: 'primary',
         hideOnTable: true,
@@ -199,7 +199,7 @@ const StockList: Component = () => {
         accessor: r => (r.item.masterLists ?? []).map(m => m.name),
         id: 'masterLists',
       },
-      header: t('label.master-lists'),
+      header: () => t('label.master-lists'),
       enableSorting: false,
       ...getCellDefinition('masterLists'),
     },
@@ -207,21 +207,21 @@ const StockList: Component = () => {
       // Batch — card: badge.
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('label.batch'),
+      header: () => t('label.batch'),
       ...getCellDefinition('batch', { headerPosition: 'badge' }),
     },
     {
       // Expiry — card: always shown.
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('label.expiry-date'),
+      header: () => t('label.expiry-date'),
       ...getCellDefinition('expiryDate'),
     },
     {
       // Manufacture date — card: More details.
       c: { key: 'manufactureDate' },
       sortKey: 'manufactureDate',
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       cardGroup: 'more',
       ...getCellDefinition('manufactureDate'),
     },
@@ -234,7 +234,7 @@ const StockList: Component = () => {
                 r.item.isVaccine ? (r.vvmStatus?.description ?? '') : '',
               id: 'vvmStatus',
             },
-            header: t('label.vvm-status'),
+            header: () => t('label.vvm-status'),
             enableSorting: false,
             cardGroup: 'more',
           } satisfies Column<Row, SortKey, GroupKey>,
@@ -244,7 +244,7 @@ const StockList: Component = () => {
       // Location code — card: More details.
       c: { accessor: r => r.location?.code ?? '', id: 'locationCode' },
       sortKey: 'locationCode',
-      header: t('label.location-code'),
+      header: () => t('label.location-code'),
       cardGroup: 'more',
       ...getCellDefinition('location'),
     },
@@ -254,7 +254,7 @@ const StockList: Component = () => {
         accessor: r => r.location?.name ?? r.locationName ?? '',
         id: 'locationName',
       },
-      header: t('label.location-name'),
+      header: () => t('label.location-name'),
       enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('locationName'),
@@ -262,7 +262,7 @@ const StockList: Component = () => {
     {
       // Unit — card: always shown.
       c: { accessor: r => r.item.unitName ?? '', id: 'unit' },
-      header: t('label.unit'),
+      header: () => t('label.unit'),
       enableSorting: false,
       ...getCellDefinition('unit'),
     },
@@ -270,7 +270,7 @@ const StockList: Component = () => {
       // Pack size — card: always shown.
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       ...getCellDefinition('packSize'),
       cell: info => formatNumber(info.getValue<number>()),
     },
@@ -278,7 +278,7 @@ const StockList: Component = () => {
       // Pack qty — card: More details.
       c: { accessor: r => r.totalNumberOfPacks, id: 'numberOfPacks' },
       sortKey: 'numberOfPacks',
-      header: t('label.pack-qty'),
+      header: () => t('label.pack-qty'),
       cardGroup: 'more',
       ...getCellDefinition('numberOfPacks'),
       cell: info => formatNumber(info.getValue<number>()),
@@ -286,7 +286,7 @@ const StockList: Component = () => {
     {
       // SOH — card: More details.
       c: { accessor: r => lineUnits(r), id: 'soh' },
-      header: t('label.soh'),
+      header: () => t('label.soh'),
       enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('units'),
@@ -300,7 +300,7 @@ const StockList: Component = () => {
     {
       // Available stock — card: always shown.
       c: { accessor: r => lineAvailUnits(r), id: 'availableStock' },
-      header: t('label.available-stock'),
+      header: () => t('label.available-stock'),
       enableSorting: false,
       ...getCellDefinition('units'),
       cell: info =>
@@ -314,7 +314,7 @@ const StockList: Component = () => {
       // Cost price — card: More details.
       c: { key: 'costPricePerPack' },
       sortKey: 'costPricePerPack',
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       cardGroup: 'more',
       ...getCellDefinition('costPricePerPack'),
     },
@@ -322,14 +322,14 @@ const StockList: Component = () => {
       // Sell price — card: More details.
       c: { key: 'sellPricePerPack' },
       sortKey: 'sellPricePerPack',
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       cardGroup: 'more',
       ...getCellDefinition('sellPricePerPack'),
     },
     {
       // Total — card: More details.
       c: { accessor: r => lineValue(r), id: 'total' },
-      header: t('label.total'),
+      header: () => t('label.total'),
       enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('total'),
@@ -337,7 +337,7 @@ const StockList: Component = () => {
     {
       // Manufacturer — card: More details.
       c: { accessor: r => r.manufacturer?.name ?? '', id: 'manufacturer' },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
       enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('manufacturer'),
@@ -346,7 +346,7 @@ const StockList: Component = () => {
       // Supplier — card: More details. Blank renders "Inventory adjustment".
       c: { accessor: r => r.supplierName ?? '', id: 'supplierName' },
       sortKey: 'supplierName',
-      header: t('label.supplier'),
+      header: () => t('label.supplier'),
       cardGroup: 'more',
       cell: info => {
         const supplier = info.getValue<string>();

@@ -81,12 +81,12 @@ const MasterListsList: Component = () => {
     {
       c: { key: 'name' },
       sortKey: 'name',
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { wrapLines: 2 },
     },
     {
       c: { key: 'description' },
-      header: t('label.description'),
+      header: () => t('label.description'),
       enableSorting: false,
       meta: { wrapLines: 2 },
     },
