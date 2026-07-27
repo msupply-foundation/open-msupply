@@ -1,7 +1,7 @@
 // Synchronisation form logic (spec/settings/rules.md § Synchronisation), pure
-// for the unit tests: the all-four-filled Save gate (AC-SY1), the
-// always-blank password seed (AC-SY2), the positive-whole-second interval
-// normalisation, and the failure-message resolution (AC-SY3's reason-specific
+// for the unit tests: the all-four-filled Save gate (OMS-REG-SET-02.7/.8), the
+// always-blank password seed (OMS-REG-SET-02.12), the positive-whole-second interval
+// normalisation, and the failure-message resolution (OMS-REG-SET-02.9's reason-specific
 // message with the unstructured-failure fallback).
 
 import type { LocaleKey } from '../../../intl';
@@ -20,7 +20,7 @@ export type SyncFormState = {
 };
 
 // Seed from stored settings — url/site/interval pre-fill, the password NEVER
-// does (AC-SY2): the server stores only a hash and the query cannot return it.
+// does (OMS-REG-SET-02.12): the server stores only a hash and the query cannot return it.
 export const initialSyncForm = (
   stored: SyncSettingsResult['syncSettings']
 ): SyncFormState => ({
@@ -30,7 +30,7 @@ export const initialSyncForm = (
   intervalSeconds: stored?.intervalSeconds,
 });
 
-// Save stays disabled until every one of the four fields has a value (AC-SY1).
+// Save stays disabled until every one of the four fields has a value (OMS-REG-SET-02.7/.8).
 export const canSaveSyncSettings = (form: SyncFormState): boolean =>
   form.url.trim() !== '' &&
   form.username.trim() !== '' &&

@@ -384,7 +384,7 @@ const Body: Component<LineEditModalProps> = props => {
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
+      header: () => t('label.batch'),
       // The card's identity field, captioned "Batch" — a header field is
       // unlabelled by default, so opt the label in. Structural: not
       // user-configurable, so keep it out of the Columns popover.
@@ -411,7 +411,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
+      header: () => t('label.pack-quantity'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -431,7 +431,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -451,7 +451,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'shippedNumberOfPacks' },
-      header: t('label.shipped-number-of-packs'),
+      header: () => t('label.shipped-number-of-packs'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -471,7 +471,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'shippedPackSize' },
-      header: t('label.shipped-pack-size'),
+      header: () => t('label.shipped-pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -492,7 +492,7 @@ const Body: Component<LineEditModalProps> = props => {
     // Units received (computed) — packs received × pack size (spec S4).
     {
       c: { id: 'unitsReceived' },
-      header: t('label.units-received', { unit: unitLabel() }),
+      header: () => t('label.units-received', { unit: unitLabel() }),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -511,7 +511,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry'),
+      header: () => t('label.expiry'),
       cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
@@ -527,7 +527,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -545,7 +545,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -564,7 +564,7 @@ const Body: Component<LineEditModalProps> = props => {
     // Line total (computed) — packs received × pack cost price (spec S4).
     {
       c: { id: 'lineTotal' },
-      header: t('label.line-total'),
+      header: () => t('label.line-total'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -582,7 +582,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { id: 'location' },
-      header: t('label.location'),
+      header: () => t('label.location'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -599,7 +599,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -616,7 +616,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { id: 'manufacturer' },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -633,7 +633,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { id: 'campaignOrProgram' },
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -650,7 +650,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
+      header: () => t('label.volume-per-pack'),
       cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
@@ -670,7 +670,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { key: 'note' },
-      header: t('label.note'),
+      header: () => t('label.note'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
@@ -687,7 +687,7 @@ const Body: Component<LineEditModalProps> = props => {
     },
     {
       c: { id: 'actions' },
-      header: t('label.actions'),
+      header: () => t('label.actions'),
       // Structural row-actions column — not user-configurable, so keep it out
       // of the Columns popover.
       meta: {

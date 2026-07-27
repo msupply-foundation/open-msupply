@@ -42,10 +42,10 @@ import styles from '../Settings.module.css';
  * Devices (spec/settings/ui-surface.md § Devices).
  *  - Label printer: visible and usable by ANY signed-in user — deliberately
  *    no Server Admin requirement, unlike every other write in this vertical
- *    (AC-LP1). Test and Save both require all four network/label fields,
- *    even in USB mode (AC-LP2); the USB preference is device-local and never
- *    saved to the server (AC-LP3).
- *  - Barcode scanner: Server Admin only (AC-BS1) — a diagnostic surface over
+ *    (OMS-REG-SET-05.20). Test and Save both require all four network/label fields,
+ *    even in USB mode (OMS-REG-SET-05.21); the USB preference is device-local and never
+ *    saved to the server (OMS-REG-SET-05.22).
+ *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic surface over
  *    local-device state; it never decides which screen accepts a scan (owned
  *    by spec/android).
  */
@@ -95,7 +95,7 @@ export const DevicesSection = () => {
   };
 
   // The USB choice is remembered only on this device and never sent to the
-  // server (AC-LP3).
+  // server (OMS-REG-SET-05.22).
   const toggleUsb = (checked: boolean) => {
     setUseUsb(checked);
     setLabelPrinterUseUsb(checked);
@@ -137,7 +137,7 @@ export const DevicesSection = () => {
   };
 
   // Save persists the four network/label fields for the store — the USB
-  // preference is not part of what's saved (AC-LP3).
+  // preference is not part of what's saved (OMS-REG-SET-05.22).
   const save = async () => {
     setBusy('save');
     setOutcome(undefined);
@@ -250,7 +250,7 @@ export const DevicesSection = () => {
       </FormSection>
 
       {/* Barcode scanner — Server Admin only, strictly stricter than the
-          label printer beside it (AC-BS1). All state is local-device; nothing
+          label printer beside it (OMS-REG-SET-05.23). All state is local-device; nothing
           here reaches the server (contract § Devices — barcode scanner). */}
       <Show when={hasPermission('SERVER_ADMIN')}>
         <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">

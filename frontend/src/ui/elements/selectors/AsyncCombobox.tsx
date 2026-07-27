@@ -121,12 +121,20 @@ export const AsyncCombobox = <T,>(
 
   // The caller's selected node leads the list (deduped) so a controlled value
   // resolves even before its page is fetched. We seed it when it either matches
-  // the typed query OR IS the controlled selection: the latter guarantees a
+  // the typed query OR IS the controlled `value` prop: the latter guarantees a
   // controlled selection's label never blanks — e.g. when the parent advances
   // the value externally ("OK & next" steps to a new item) while the input
   // still holds the previous item's text as a stale, non-matching query. We
   // still drop an unmatched seed that ISN'T the current value, so a free-text
   // search doesn't sort a stale seed above real matches or mask "no matches".
+  //
+  // isControlledValue MUST check props.value (not the derived value() getter):
+  // when a caller only passes `selected` (no separate `value` id — e.g.
+  // PatientSearch), value() is DEFINED as itemToValue(selected), so comparing
+  // against it is a tautology — the seed would pin to the top of every search
+  // regardless of what's typed, masking real matches (found via prescriptions'
+  // "changing the patient" — typing a new patient's name kept showing the
+  // CURRENTLY-selected one as the first, always-clickable option).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
@@ -134,7 +142,7 @@ export const AsyncCombobox = <T,>(
     const needle = query().toLocaleLowerCase();
     const seedMatches =
       !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
-    const isControlledValue = value() === key;
+    const isControlledValue = props.value !== undefined && props.value === key;
     if (!seedMatches && !isControlledValue) return base();
     return [seed, ...base().filter(i => props.itemToValue(i) !== key)];
   };

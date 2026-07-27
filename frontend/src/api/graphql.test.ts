@@ -42,7 +42,7 @@ describe('graphqlFetch', () => {
     const result = await graphqlFetch(document, {});
     expect(result).toEqual({ kind: 'success', data: { thing: { id: '1' } } });
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('/graphql');
+    expect(url).toBe('/graphql?opName=thing');
     expect(JSON.parse(String(init.body))).toEqual({
       query: document.query,
       variables: {},

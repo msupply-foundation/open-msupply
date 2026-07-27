@@ -30,11 +30,12 @@ import {
 } from '../masterListLines.generated';
 
 // S2 — master-list detail (spec/master-lists). Read-only: the list's header
-// (description field, present only when non-empty) + its item-membership lines.
-// The header re-reads the masterLists query filtered by id (no store scoping, so
-// a non-joined list is reachable by deep link); exactly-one-node = found, else
-// the not-found blocking alert (AC-L5). Lines are selected by the masterListId
-// ARGUMENT (never a filter field — contract trap), sorted by item name.
+// (description field, present only when non-empty, OMS-REG-CAT-07.11/.31) +
+// its item-membership lines. The header re-reads the masterLists query
+// filtered by id (no store scoping, so a non-joined list is reachable by deep
+// link — .23); exactly-one-node = found, else the not-found blocking alert
+// (.22). Lines are selected by the masterListId ARGUMENT (never a filter
+// field — contract trap), sorted by item name.
 
 const DEFAULT_PAGE_SIZE = 20;
 type LineRow = MasterListLinesResult['masterListLines']['nodes'][number];
@@ -70,7 +71,7 @@ const MasterListDetailView: Component = () => {
       });
       if (result.kind !== 'success') return undefined;
       const nodes = result.data.masterLists.nodes;
-      // exactly one node = found; anything else = not found (AC-L5)
+      // exactly one node = found; anything else = not found (OMS-REG-CAT-07.22)
       return nodes.length === 1 ? nodes[0] : undefined;
     }
   );
@@ -99,18 +100,18 @@ const MasterListDetailView: Component = () => {
   const columns = (): Column<LineRow, LineSortKey>[] => [
     {
       c: { accessor: row => row.item.code, id: 'code' },
-      header: t('label.code'),
+      header: () => t('label.code'),
       enableSorting: false,
     },
     {
       c: { accessor: row => row.item.name, id: 'name' },
       sortKey: 'name',
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { wrapLines: 2 },
     },
     {
       c: { accessor: row => row.item.unitName ?? '', id: 'unit' },
-      header: t('label.unit'),
+      header: () => t('label.unit'),
       enableSorting: false,
     },
   ];
@@ -155,7 +156,7 @@ const MasterListDetailView: Component = () => {
                     { label: ml().name },
                   ]}
                 />
-                {/* Description field — present only when non-empty (AC-D4). */}
+                {/* Description field — present only when non-empty (OMS-REG-CAT-07.11/.31). */}
                 <Show when={ml().description}>
                   <Toolbar>
                     <TextField

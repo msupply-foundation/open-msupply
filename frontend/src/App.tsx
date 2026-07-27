@@ -39,6 +39,8 @@ import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
+import { StaleBundleModal } from './StaleBundleModal';
+import { startStaleBundleWatch } from './staleBundle';
 import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
@@ -99,7 +101,11 @@ export const App: Component = () => {
   onMount(() => {
     void runStartup();
     const stopTracking = startActivityTracking();
-    onCleanup(stopTracking);
+    const stopStaleBundleWatch = startStaleBundleWatch();
+    onCleanup(() => {
+      stopTracking();
+      stopStaleBundleWatch();
+    });
   });
 
   // The single owner of document direction/lang, driven by the real i18n locale
@@ -176,6 +182,7 @@ export const App: Component = () => {
       </Switch>
       {/* On top of everything, including other modals. */}
       <UnexpectedErrorModal />
+      <StaleBundleModal />
     </>
   );
 };

@@ -1,5 +1,6 @@
 import {
   createEffect,
+  createMemo,
   createSignal,
   For,
   Match,
@@ -278,7 +279,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // the current sorting() to read the concrete next state. TanStack has already
   // computed the next direction, so we pass its desc straight through rather
   // than re-deriving the asc/desc cycle.
-  const sorting = (): SortingState =>
+  //
+  // Memoized: every state field handed to createSolidTable is read via a
+  // `get` in its config, and TanStack recomputes internal state off a
+  // field's IDENTITY, not deep equality. A plain function here would build a
+  // fresh array/object on EVERY read regardless of whether the underlying
+  // props changed, which can sustain a self-triggering re-render loop with no
+  // real dependency change behind it (this shape of bug caused a genuine
+  // slow-load regression in the stocktake detail view — see the `columns`
+  // memo below, the same fix applied to every state getter in this file).
+  const sorting = createMemo<SortingState>(() =>
     props.sort
       ? [
           {
@@ -286,7 +296,8 @@ export function DataTable<T, K extends string, G extends string = never>(
             desc: props.sort.desc,
           },
         ]
-      : [];
+      : []
+  );
   const onSortingChange = (updater: Updater<SortingState>) => {
     const sort = functionalUpdate(updater, sorting())[0];
     if (!sort) return;
@@ -297,8 +308,9 @@ export function DataTable<T, K extends string, G extends string = never>(
   // --- Selection ⇄ the page's selectedIds (controlled, like sort/config) ---
   // rowSelection is derived from props.selectedIds; a change is resolved
   // against it and reported back.
-  const rowSelection = (): RowSelectionState =>
-    Object.fromEntries((props.selectedIds ?? []).map(id => [id, true]));
+  const rowSelection = createMemo<RowSelectionState>(() =>
+    Object.fromEntries((props.selectedIds ?? []).map(id => [id, true]))
+  );
   const onRowSelectionChange = (u: Updater<RowSelectionState>) => {
     const next = functionalUpdate(u, rowSelection());
     const ids = Object.keys(next).filter(id => next[id]);
@@ -321,11 +333,15 @@ export function DataTable<T, K extends string, G extends string = never>(
   // sort/selection above) and hands the concrete value to setConfig — so the
   // page receives a value, not an updater. Inlined per field (no generic
   // helper) — four small, click-through handlers.
-  const columnOrder = (): ColumnOrderState => props.config?.columnOrder ?? [];
-  const columnPinning = (): ColumnPinningState =>
-    props.config?.columnPinning ?? {};
-  const columnVisibility = (): VisibilityState =>
-    props.config?.columnVisibility ?? {};
+  const columnOrder = createMemo<ColumnOrderState>(
+    () => props.config?.columnOrder ?? []
+  );
+  const columnPinning = createMemo<ColumnPinningState>(
+    () => props.config?.columnPinning ?? {}
+  );
+  const columnVisibility = createMemo<VisibilityState>(
+    () => props.config?.columnVisibility ?? {}
+  );
 
   // View mode is a config field but NOT a TanStack state (no on*Change) — read
   // it directly. Below the compact breakpoint the table is ALWAYS card (the
@@ -395,12 +411,12 @@ export function DataTable<T, K extends string, G extends string = never>(
   // come through setConfig directly and persist immediately.
   const [transientSizing, setTransientSizing] =
     createSignal<ColumnSizingState | null>(null);
-  const configSizingPx = (): ColumnSizingState => {
+  const configSizingPx = createMemo<ColumnSizingState>(() => {
     const rem = props.config?.columnSizing ?? {};
     return Object.fromEntries(
       Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
     );
-  };
+  });
   const pxToRemSizing = (px: ColumnSizingState): ColumnSizingState =>
     Object.fromEntries(Object.entries(px).map(([id, p]) => [id, pxToRem(p)]));
   const columnSizing = (): ColumnSizingState =>
@@ -421,15 +437,20 @@ export function DataTable<T, K extends string, G extends string = never>(
   // band renders at all — a table with no summed columns has no <tfoot>.
   const hasFooter = (): boolean =>
     props.columns.some(col => col.footer !== undefined && showInTableView(col));
+  // Memoized: TanStack treats a new `columns` identity as a config change and
+  // updates its internal state accordingly, which (via the getter below) can
+  // re-trigger whatever reactive scope reads `props.columns` — a loop with no
+  // real change behind it if `.map()` reran on every read regardless of
+  // whether `props.columns` itself changed. Memoizing on `props.columns`
+  // breaks that: the mapped array is only rebuilt when the caller's columns
+  // actually change.
+  const columnDefs = createMemo(() => props.columns.map(toColumnDef));
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
     },
     get columns() {
-      // Our Column carries a typed identity union + extension fields; map each
-      // to the raw TanStack ColumnDef (identity → accessorKey/accessorFn/id,
-      // always an explicit id).
-      return props.columns.map(toColumnDef);
+      return columnDefs();
     },
     state: {
       get sorting() {
@@ -728,19 +749,6 @@ export function DataTable<T, K extends string, G extends string = never>(
           </Show>
         </div>
       </div>
-      {/* Refreshing bar — a thin indeterminate progress bar pinned above the
-          scroll area while a fetch runs AND rows are already showing (a refetch
-          on filter/sort/page — keepPreviousData keeps the old rows in place). It
-          signals "updating" without blanking the table or remounting it (issue
-          #160/#196). The initial load (no rows yet) uses the centred spinner
-          below instead, so the two never show together. */}
-      <Show when={props.loading && table.getRowModel().rows.length > 0}>
-        <div
-          class={styles.refreshingBar}
-          role="status"
-          aria-label={t('loading')}
-        />
-      </Show>
       {/* tableArea fills the remaining height between the toolbar and the
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
