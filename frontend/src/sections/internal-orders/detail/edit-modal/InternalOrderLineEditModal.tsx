@@ -84,6 +84,12 @@ export interface InternalOrderLineEditModalProps {
     currentLineId: string,
     covered: Set<string>
   ) => InternalOrderLineFragment | undefined;
+  /**
+   * The order's existing line for an item, if any — so add mode loads that
+   * line to edit rather than starting a duplicate (AC-LN2/LN6, the
+   * one-line-per-item rule).
+   */
+  findLineForItem: (itemId: string) => InternalOrderLineFragment | undefined;
   /** A save committed — the parent refetches the line table (AC-LN21). */
   onCommitted: () => void;
 }
@@ -147,6 +153,14 @@ const LineEditContent = (
   };
 
   const pickItem = async (itemId: string) => {
+    // An item already on the order loads its EXISTING line to edit — no
+    // duplicate (AC-LN2/LN6). The picker stays live (mode stays 'add'), but
+    // the loaded line's isNew=false makes the save an update, not an insert.
+    const existing = props.findLineForItem(itemId);
+    if (existing) {
+      seedLine(editorLineFromLine(existing));
+      return;
+    }
     setLoading(true);
     setErrorMessage(undefined);
     const preview = await buildAddPreview(
@@ -175,6 +189,16 @@ const LineEditContent = (
 
   onMount(() => {
     if (props.initialLine) seedLine(editorLineFromLine(props.initialLine));
+    // Add mode opens on the item search, focused (spec S4). Deferred a frame so
+    // the dialog + input have painted.
+    else
+      requestAnimationFrame(() =>
+        document
+          .querySelector<HTMLInputElement>(
+            '[data-testid="internal-order-line-edit-modal"] [data-testid="item-search-input"]'
+          )
+          ?.focus()
+      );
   });
 
   const updateMode = () => mode() === 'update';
