@@ -628,6 +628,67 @@ export const ColumnsIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Columns with a settings cog — the table's "edit columns" control (issue
+   #572), distinct from the plain Columns3 glyph so it doesn't read as the
+   card/grid view switch. */
+/* Hugeicons: ColumnsThreeCog */
+export const Columns3CogIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 17.5C20 18.8807 18.8807 20 17.5 20M20 17.5C20 16.1193 18.8807 15 17.5 15M20 17.5H21.5M17.5 20C16.1193 20 15 18.8807 15 17.5M17.5 20V21.5M15 17.5C15 16.1193 16.1193 15 17.5 15M15 17.5H13.5M17.5 15V13.5M19.2678 15.7322L20.3284 14.6716M15.7322 19.2678L14.6716 20.3284M19.2678 19.2678L20.3284 20.3284M15.7322 15.7322L14.6716 14.6716" />
+    <path d="M20.4993 10.5C20.4912 6.91543 20.3921 5.02814 19.182 3.81802C17.864 2.5 15.7426 2.5 11.5 2.5C7.25736 2.5 5.13604 2.5 3.81802 3.81802C2.5 5.13604 2.5 7.25736 2.5 11.5C2.5 15.7426 2.5 17.864 3.81802 19.182C5.02814 20.3921 6.91543 20.4912 10.5 20.4993" />
+    <path d="M8.5 3V20" />
+    <path d="M14.5 3V10.5" />
+  </Stroke>
+);
+
+/* Two horizontal transfer arrows — the table settings' "reset column order". */
+/* Hugeicons: ArrowDataTransferHorizontal */
+export const TransferHorizontalIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M19 9H6.65856C5.65277 9 5.14987 9 5.02472 8.69134C4.89957 8.38268 5.25517 8.01942 5.96637 7.29289L8.21091 5" />
+    <path d="M5 15H17.3414C18.3472 15 18.8501 15 18.9753 15.3087C19.1004 15.6173 18.7448 15.9806 18.0336 16.7071L15.7891 19" />
+  </Stroke>
+);
+
+/* Single circular reload arrow — the table settings' "reset column sizes". */
+/* Hugeicons: Refresh01 */
+export const ReloadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20.4879 15C19.2524 18.4956 15.9187 21 12 21C7.02943 21 3 16.9706 3 12C3 7.02943 7.02943 3 12 3C15.7292 3 18.9286 5.26806 20.2941 8.5" />
+    <path d="M15 9H18C19.4142 9 20.1213 9 20.5607 8.56066C21 8.12132 21 7.41421 21 6V3" />
+  </Stroke>
+);
+
+/* Double circular refresh arrows — the table settings' "reset table to
+   defaults" (its button renders it red). */
+/* Hugeicons: Refresh03 */
+export const RefreshIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20.9451 13C20.9814 12.6717 21 12.338 21 12C21 7.02944 16.9706 3 12 3C9.17273 3 6.64996 4.30367 5 6.34267M3.05493 11C3.01863 11.3283 3 11.662 3 12C3 16.9706 7.02944 21 12 21C14.8273 21 17.35 19.6963 19 17.6573" />
+    <path d="M8 7H7C5.58579 7 4.87868 7 4.43934 6.56066C4 6.12132 4 5.41421 4 4V3" />
+    <path d="M16 17H17C18.4142 17 19.1213 17 19.5607 17.4393C20 17.8787 20 18.5858 20 20V21" />
+  </Stroke>
+);
+
+/* Push-pin — the table settings' "reset pinned columns". */
+/* Hugeicons: Pin */
+export const PinIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3 21L8 16" />
+    <path d="M13.2585 18.8714C9.51516 18.0215 5.97844 14.4848 5.12853 10.7415C4.99399 10.1489 4.92672 9.85266 5.12161 9.37197C5.3165 8.89129 5.55457 8.74255 6.03071 8.44509C7.10705 7.77265 8.27254 7.55888 9.48209 7.66586C11.1793 7.81598 12.0279 7.89104 12.4512 7.67048C12.8746 7.44991 13.1622 6.93417 13.7376 5.90269L14.4664 4.59604C14.9465 3.73528 15.1866 3.3049 15.7513 3.10202C16.316 2.89913 16.6558 3.02199 17.3355 3.26771C18.9249 3.84236 20.1576 5.07505 20.7323 6.66449C20.978 7.34417 21.1009 7.68401 20.898 8.2487C20.6951 8.8134 20.2647 9.05346 19.4039 9.53358L18.0672 10.2792C17.0376 10.8534 16.5229 11.1406 16.3024 11.568C16.0819 11.9955 16.162 12.8256 16.3221 14.4859C16.4399 15.7068 16.2369 16.88 15.5555 17.9697C15.2577 18.4458 15.1088 18.6839 14.6283 18.8786C14.1477 19.0733 13.8513 19.006 13.2585 18.8714Z" />
+  </Stroke>
+);
+
+/* Three horizontal lines — the table settings' "toggle density". */
+/* Hugeicons: Menu01 */
+export const MenuLinesIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M4 5L20 5" />
+    <path d="M4 12L20 12" />
+    <path d="M4 19L20 19" />
+  </Stroke>
+);
+
 // Column-visibility toggle in the Columns panel (ui-standards § tables → column
 // management): shown = eye, hidden = eye with a slash. The <input> stays the
 // accessible control (visually hidden); these are decorative. Paths are the
