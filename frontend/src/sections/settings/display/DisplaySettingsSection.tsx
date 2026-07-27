@@ -180,6 +180,7 @@ export const DisplaySettingsSection = () => {
         <LanguageSelector
           language={locale()}
           onSelect={v => void changeLanguage(v)}
+          testId="settings-language"
         />
       </FieldRow>
       <Show when={hasPermission('SERVER_ADMIN')}>
