@@ -40,6 +40,8 @@ import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
 import { ItemLedgerPanel } from './ItemLedgerPanel';
 import { ItemAncillaryPanel } from './ItemAncillaryPanel';
 import type { AncillaryEditorState } from './AncillaryItemEditModal';
+import { ItemVariantsPanel } from './ItemVariantsPanel';
+import type { ItemVariantEditorState } from './ItemVariantEditModal';
 import { visibleTabs } from './itemDetailTabs';
 import {
   formatMonthsOfStock,
@@ -82,6 +84,11 @@ const ItemDetailView: Component = () => {
   // PrescriptionDetailView's top-level edit-state pattern).
   const [ancillaryEditor, setAncillaryEditor] = createSignal<
     AncillaryEditorState | undefined
+  >();
+  // The Variants tab's add/edit modal — same reasoning as ancillaryEditor
+  // above (the "Add variant" trigger is a page-header action, ui-surface S2).
+  const [variantEditor, setVariantEditor] = createSignal<
+    ItemVariantEditorState | undefined
   >();
 
   const [data] = createResource(
@@ -161,6 +168,19 @@ const ItemDetailView: Component = () => {
                         onClick={() => setAncillaryEditor({ mode: 'create' })}
                       >
                         {t('label.add-ancillary-item')}
+                      </Button>
+                    </HeaderButtons>
+                  </Show>
+                  {/* Variants' page action (ui-surface S2) — the tab itself is
+                      already central-only (itemDetailTabs.ts), so this only
+                      needs to check the active tab. */}
+                  <Show when={activeTab() === 'variants' && isCentralServer()}>
+                    <HeaderButtons>
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        onClick={() => setVariantEditor({ mode: 'create' })}
+                      >
+                        {t('label.add-variant')}
                       </Button>
                     </HeaderButtons>
                   </Show>
@@ -446,12 +466,15 @@ const ItemDetailView: Component = () => {
 
               <Show when={isCentralServer()}>
                 <TabPanel value="variants">
-                  {/* FLAGGED (BUILD_REPORT): the variant card + editable
-                      packaging grid aren't built yet — this slice only wires
-                      the tab's central-only PRESENCE (OMS-REG-CAT-05.1/.2).
-                      Gated here too (not just in tabs()) so a stale ?tab=
+                  {/* Gated here too (not just in tabs()) so a stale ?tab=
                       param on a remote site can't render central content. */}
-                  <EmptyState message={t('messages.no-item-variants')} />
+                  <ItemVariantsPanel
+                    storeId={params.storeId}
+                    itemId={params.itemId}
+                    isVaccine={i().isVaccine}
+                    editor={variantEditor()}
+                    onEditorChange={setVariantEditor}
+                  />
                 </TabPanel>
               </Show>
 
