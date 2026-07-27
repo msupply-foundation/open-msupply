@@ -308,6 +308,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       if (placed > 0)
         setWarnings(prev => [t('messages.auto-allocated-lines'), ...prev]);
     }
+
+    // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): an item
+    // with exactly ONE distinct pack size opens in packs-of-that-size — with the
+    // store's pack-to-one preference every batch is pack size 1, so this reads
+    // "packs of 1" rather than the item's unit. Applied AFTER auto-allocation so
+    // the distribution ran in units; the switch only re-expresses the seeded
+    // quantity (a single-pack-size item's packs lens fills the very same batches,
+    // so nothing moves). A vaccine on the doses lens is left in units as before —
+    // the doses default is a separate parity gap, not touched here.
+    const sizes = distinctPackSizes();
+    const onlySize = sizes.length === 1 ? sizes[0] : undefined;
+    const vaccineInDoses =
+      !!prefs()?.manageVaccinesInDoses && !!item()?.isVaccine;
+    if (!vaccineInDoses && onlySize)
+      switchLensTo({ kind: 'packs', size: onlySize });
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by
@@ -450,6 +465,20 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (lens.kind === 'units') return 'units';
     if (lens.kind === 'doses') return 'doses';
     return `packs-${lens.size}`;
+  };
+
+  // Switch the display lens WITHOUT redistributing: re-express the current
+  // Issue quantity in the new unit — the units equivalent is preserved and
+  // nothing redistributes (spec S4 § issue field seed; re-running distribution
+  // here would silently rewrite a seeded or hand-tuned allocation on a mere
+  // display-unit switch). Shared by the lens <Select> and the on-open default.
+  const switchLensTo = (next: AllocateUnit) => {
+    const previous = allocateIn();
+    setAllocateIn(next);
+    const v = issueValue();
+    if (v == null) return;
+    const units = lensToUnits(v, previous) ?? 0;
+    setIssueValue(Math.round(unitsToLens(units, next) * 100) / 100);
   };
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
@@ -962,24 +991,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               })),
             ]}
             onValueChange={value => {
-              const previous = allocateIn();
               const next: AllocateUnit =
                 value === 'units'
                   ? { kind: 'units' }
                   : value === 'doses'
                     ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
                     : { kind: 'packs', size: Number(value.slice(6)) };
-              setAllocateIn(next);
-              // Re-EXPRESS the current quantity in the new lens — the units
-              // equivalent is preserved and NOTHING redistributes (matching
-              // the old app; spec S4 § issue field seed). Re-running the
-              // distribution here would silently rewrite the allocation —
-              // seeded or hand-tuned — on a mere display-unit switch.
-              const v = issueValue();
-              if (v != null) {
-                const units = lensToUnits(v, previous) ?? 0;
-                setIssueValue(Math.round(unitsToLens(units, next) * 100) / 100);
-              }
+              switchLensTo(next);
             }}
           />
           {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
