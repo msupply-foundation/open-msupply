@@ -7,11 +7,22 @@
 # - supplierProgramRequisitionSettings non-empty → the Program / Order type /
 #   Period columns (AC-L8): the store is set up to order under at least one
 #   supplier program.
+# - warnWhenMissingRecentStocktake → the New-order recent-stocktake warning gate
+#   (AC-C5): when enabled, New order first evaluates the store's finalised
+#   stocktakes before opening the create modal (the button is disabled until this
+#   read resolves, so the gate is always decided before the modal can open).
 query internalOrderListContext($storeId: String!) {
   storePreferences(storeId: $storeId) {
     requestRequisitionRequiresAuthorisation
   }
   supplierProgramRequisitionSettings(storeId: $storeId) {
     programId
+  }
+  preferences(storeId: $storeId) {
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
   }
 }

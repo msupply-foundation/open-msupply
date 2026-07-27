@@ -34,6 +34,13 @@ export interface NameSearchProps {
   inputTestId?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
+  /**
+   * Narrow to store-backed parties only (isStore) — a supplier/customer that is
+   * itself another store in the system. Used by the internal-order create
+   * picker (spec/internal-orders AC-C3). Default false (every visible party of
+   * the role).
+   */
+  storeBacked?: boolean;
   class?: string;
 }
 
@@ -87,7 +94,8 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     fetchPage={namePageFetcher(
       props.storeId,
       props.role ?? 'supplier',
-      PAGE_SIZE
+      PAGE_SIZE,
+      props.storeBacked
     )}
     // The selected value's input text is just the name; the dropdown row still
     // shows code + name. Server mode disables the client filter, so this isn't
