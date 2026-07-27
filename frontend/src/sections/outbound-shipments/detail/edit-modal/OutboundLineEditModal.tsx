@@ -1000,17 +1000,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
-        <DataTable
-          columns={columns()}
-          rows={draftRows()}
-          rowKey={line => line.id}
-          loading={loadingLines()}
-          showFullScreen={false}
-          rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-          emptyMessage={t('messages.no-stock-available')}
-          config={tableConfig.config()}
-          setConfig={tableConfig.setConfig}
-        />
+        <div class={styles.batchGrid}>
+          <DataTable
+            columns={columns()}
+            rows={draftRows()}
+            rowKey={line => line.id}
+            loading={loadingLines()}
+            showFullScreen={false}
+            rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+            emptyMessage={t('messages.no-stock-available')}
+            config={tableConfig.config()}
+            setConfig={tableConfig.setConfig}
+          />
+        </div>
 
         {/* Grid footer: placeholder + running total (spec S4). */}
         <div
