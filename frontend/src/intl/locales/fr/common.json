@@ -3317,6 +3317,7 @@
   "store.search": "Rechercher des magasins",
   "store.search-placeholder": "Rechercher par nom ou code du magasin…",
   "store.select": "Sélectionner un magasin",
+  "store.select-instructions": "Choisissez le magasin dans lequel travailler. Vous pouvez changer de magasin à tout moment depuis la barre inférieure.",
   "stores": "Dépôts",
   "success": "Réussi !",
   "success.data-deleted": "Supprimé avec succès",

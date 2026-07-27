@@ -111,14 +111,6 @@ export interface DialogProps {
    * DataTable) fills the tall space.
    */
   size?: 'auto' | 'large';
-  /**
-   * Go full-screen (edge-to-edge sheet) on compact/phone widths even at the
-   * default `'auto'` size — for a modal whose bounded desktop card would be
-   * cramped on a phone (e.g. the store picker). `'large'` already does this;
-   * this extends it to an auto-size dialog. No effect above the compact
-   * breakpoint (it stays a centred card).
-   */
-  fullScreenOnCompact?: boolean;
   /** `data-testid` for the <dialog> element (locale-stable test hook,
    * e2e/TESTIDS.md). */
   testId?: string;
@@ -280,11 +272,7 @@ export const Dialog = (props: DialogProps) => {
           : styles.dialog
       }
       data-testid={props.testId}
-      data-fullscreen={
-        compact() && (props.size === 'large' || props.fullScreenOnCompact)
-          ? ''
-          : undefined
-      }
+      data-fullscreen={compact() && props.size === 'large' ? '' : undefined}
       style={{
         // widthRem is ignored in large mode (it goes full-bleed via the .large
         // class).
@@ -315,18 +303,9 @@ export const Dialog = (props: DialogProps) => {
       // selection and collapses the section AROUND the open dialog. A modal
       // <dialog> detached that way (its host subtree hidden or removed while
       // open) loses its top layer and later re-renders in-flow. Stop
-      // propagation so it never reaches those handlers.
-      //
-      // For a BLOCKING dialog, also preventDefault the Escape keydown: canceling
-      // the `cancel` event (above) isn't enough because Chrome force-closes a
-      // modal <dialog> on a third repeated Escape even when cancel is prevented
-      // (an anti-trap heuristic). Stopping the keydown's default action kills the
-      // UA close request at the source, so no cancel ever fires.
-      onKeyDown={event => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        if (props.dismissable === false) event.preventDefault();
-      }}
+      // propagation only — the UA's own default action (the `cancel` event
+      // above) is not propagation-dependent and still closes the dialog.
+      onKeyDown={event => event.key === 'Escape' && event.stopPropagation()}
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
