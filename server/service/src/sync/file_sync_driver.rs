@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use repository::SyncVersion;
+
 use crate::sync::is_initialised;
 use crate::{
     service_provider::ServiceProvider, settings::Settings, static_files::StaticFileService,
@@ -129,14 +131,14 @@ impl FileSyncDriver {
             // across the await point and the whole `run` future becomes !Send.
             let paused = *self.pause_rx.borrow();
 
-            // If not stopped or paused and we have central server URL
-            if let (false, false, CentralServerConfig::CentralServerUrl(url)) =
-                (stopped, paused, CentralServerConfig::get())
-            {
-                // for now we only sync if we're not the central server
-                files_to_upload = self
-                    .sync(&url, service_provider.clone(), self.pause_rx.clone())
-                    .await;
+            // If not stopped or paused and we have a central server URL to upload to
+            // (file bytes only ever transfer remote ↔ central, never on central itself)
+            if !stopped && !paused {
+                if let Some(url) = file_sync_central_url(&service_provider) {
+                    files_to_upload = self
+                        .sync(&url, service_provider.clone(), self.pause_rx.clone())
+                        .await;
+                }
             }
         }
     }
@@ -219,4 +221,95 @@ pub fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
         .sync_settings(&ctx)
         .unwrap()
         .expect("Sync settings should be in database after initialisation was started")
+}
+
+/// Resolve the central server URL used to transfer file bytes (upload and on-demand
+/// download). File bytes only ever move remote ↔ central, so `None` means this server
+/// has no upstream to transfer with: it *is* the central server, or sync isn't
+/// configured/initialised yet.
+///
+/// V5/V6 sites learn the OMS central URL from v5 site info (`CentralServerConfig`);
+/// V7 sites sync directly against the URL in their sync settings.
+pub fn file_sync_central_url(service_provider: &ServiceProvider) -> Option<String> {
+    if CentralServerConfig::is_central_server() {
+        return None;
+    }
+
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            log::error!("Failed to get context for file sync url: {error:#?}");
+            return None;
+        }
+    };
+
+    match SyncVersion::get(&ctx.connection, false) {
+        Ok(SyncVersion::V7) => match service_provider.settings.sync_settings(&ctx) {
+            Ok(settings) => settings.map(|s| s.url),
+            Err(error) => {
+                log::error!("Failed to read sync settings for file sync url: {error:#?}");
+                None
+            }
+        },
+        Ok(SyncVersion::V5V6) => match CentralServerConfig::get() {
+            CentralServerConfig::CentralServerUrl(url) => Some(url),
+            _ => None,
+        },
+        Err(error) => {
+            log::error!("Failed to read sync version for file sync url: {error:#?}");
+            None
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    use super::*;
+    use crate::sync::{test_util_set_central_server_url, test_util_set_is_central_server};
+
+    #[actix_rt::test]
+    async fn file_sync_central_url_dispatches_on_sync_version() {
+        let (_, connection, connection_manager, _) =
+            setup_all("file_sync_central_url", MockDataInserts::none()).await;
+        let service_provider = ServiceProvider::new(connection_manager);
+
+        // Nothing configured — no URL
+        assert_eq!(file_sync_central_url(&service_provider), None);
+
+        // V5/V6 site (fresh DBs are stamped V7 by migrations, so set it explicitly):
+        // URL comes from CentralServerConfig (learned via v5 site info)
+        SyncVersion::set(&connection, SyncVersion::V5V6).unwrap();
+        test_util_set_central_server_url("http://central-oms:2000".to_string());
+        assert_eq!(
+            file_sync_central_url(&service_provider),
+            Some("http://central-oms:2000".to_string())
+        );
+
+        // V7 site: URL comes straight from sync settings
+        SyncVersion::set(&connection, SyncVersion::V7).unwrap();
+        let ctx = service_provider.basic_context().unwrap();
+        service_provider
+            .settings
+            .update_sync_settings(
+                &ctx,
+                &SyncSettings {
+                    url: "http://central-v7:8000".to_string(),
+                    username: "site".to_string(),
+                    password_sha256: "abc".to_string(),
+                    interval_seconds: 300,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            file_sync_central_url(&service_provider),
+            Some("http://central-v7:8000".to_string())
+        );
+
+        // The central server itself never has an upstream to transfer file bytes with
+        test_util_set_is_central_server(true);
+        assert_eq!(file_sync_central_url(&service_provider), None);
+    }
 }

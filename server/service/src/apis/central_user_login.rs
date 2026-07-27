@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use reqwest::{ClientBuilder, StatusCode, Url};
+use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
