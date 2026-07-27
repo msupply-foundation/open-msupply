@@ -383,9 +383,6 @@ export const parseArgumentSchema = (raw: {
     // Read-only arrives in either home (contract "Arguments"): the jsonSchema
     // property keyword (`readOnly`, expiring-items) or the uiSchema element's
     // `options.readonly` (lowercase, stock-status / item-usage).
-    // Read-only arrives in either home (contract "Arguments"): the jsonSchema
-    // property keyword (`readOnly`, expiring-items) or the uiSchema element's
-    // `options.readonly` (lowercase, stock-status / item-usage).
     const readOnly = prop?.readOnly === true || options?.readonly === true;
     const isRequired = required.has(key);
 
