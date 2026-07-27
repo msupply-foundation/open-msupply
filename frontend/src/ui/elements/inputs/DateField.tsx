@@ -78,7 +78,14 @@ export const DateField = (props: DateFieldProps) => {
 
   const commit = () => {
     const parsed = parseDateInput(text(), fmt());
-    if (parsed === undefined) {
+    if (
+      parsed === undefined ||
+      // min/max constrain TYPED entries too, not just the calendar; and a
+      // required field can't be blanked — all revert like invalid input.
+      (parsed === null && props.required) ||
+      (parsed != null && props.min !== undefined && parsed < props.min) ||
+      (parsed != null && props.max !== undefined && parsed > props.max)
+    ) {
       setText(formatIsoDate(props.value, fmt())); // invalid → revert
       return;
     }
