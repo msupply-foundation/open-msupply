@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
@@ -90,10 +91,9 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
             setValues(previous => ({ ...previous, username }));
           }}
         />
-        <TextField
+        <PasswordField
           label={t('heading.password')}
           width="full"
-          type="password"
           name="password"
           autocomplete="current-password"
           value={values().password}

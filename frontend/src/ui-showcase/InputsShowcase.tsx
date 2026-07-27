@@ -3,6 +3,7 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
@@ -167,6 +168,7 @@ export const InputsShowcase = () => {
   const [yenPrice, setYenPrice] = createSignal<number | undefined>(5800);
   const [unitCost, setUnitCost] = createSignal<number | undefined>(1.5025);
   const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
+  const [password, setPassword] = createSignal('sekret-123');
 
   return (
     <ContentContainer size="form" align="start">
@@ -224,6 +226,35 @@ export const InputsShowcase = () => {
                 placeholder="Longer free-text field"
                 helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
               />
+            </Field>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard title="Password field">
+          <Lead>
+            A TextField variant — the standard masked{' '}
+            <code>type="password"</code> input plus a show/hide eye toggle
+            seated in the field frame. Click the eye to reveal the value, again
+            to mask it; the toggle is keyboard-focusable.
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Default">
+              <PasswordField
+                label="Site password"
+                value={password()}
+                onInput={e => setPassword(e.currentTarget.value)}
+                helperText="Click the eye to reveal"
+              />
+            </Field>
+            <Field caption="Error">
+              <PasswordField
+                label="Site password"
+                value="wrong"
+                error="Incorrect password"
+              />
+            </Field>
+            <Field caption="Disabled">
+              <PasswordField label="Site password" value="locked" disabled />
             </Field>
           </div>
         </DashboardCard>
