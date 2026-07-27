@@ -41,6 +41,12 @@ fragment InternalOrderLine on RequisitionLineNode {
   reason {
     reason
   }
+  # The items this line's item is configured as an ancillary of — backs the
+  # "Ancillary of" flag on the Name column (AC-A8); empty when none.
+  ancillaryParents {
+    id
+    name
+  }
 }
 
 fragment InternalOrderInfo on RequisitionNode {
@@ -108,6 +114,32 @@ fragment InternalOrderInfo on RequisitionNode {
       totalBytes
     }
   }
+  # The ancillary plan (AC-A1/A2), computed server-side on every read: the state
+  # drives the toolbar banner + send warning, the deltas back the plan popover.
+  # Both lists are always populated regardless of state.
+  ancillaryState {
+    state
+    count
+    toAdd {
+      itemId
+      requiredQuantity
+      item {
+        code
+        name
+        unitName
+      }
+    }
+    toUpdate {
+      itemId
+      requiredQuantity
+      currentQuantity
+      item {
+        code
+        name
+        unitName
+      }
+    }
+  }
   lines {
     totalCount
     nodes {
@@ -141,6 +173,28 @@ mutation updateInternalOrder(
       ...InternalOrderInfo
     }
     ... on UpdateRequestRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Ancillary refresh (spec S3 § ancillary items, AC-A3/A4): ADD inserts the
+# missing ancillary lines, UPDATE overwrites stale quantities. The client
+# re-queries the order after, so only the outcome __typename is needed; a typed
+# error surfaces inline.
+mutation refreshAncillaryItems(
+  $storeId: String!
+  $input: RefreshAncillaryItemsInput!
+) {
+  refreshAncillaryItems(storeId: $storeId, input: $input) {
+    __typename
+    ... on RefreshAncillaryItemsSuccess {
+      __typename
+    }
+    ... on RefreshAncillaryItemsError {
       error {
         __typename
         description

@@ -2,8 +2,10 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t, type LocaleKey } from '../../../intl';
 import {
   UpdateInternalOrder,
+  RefreshAncillaryItems,
   type InternalOrderInfoFragment,
   type UpdateInternalOrderVariables,
+  type RefreshAncillaryItemsVariables,
 } from './internalOrderDetail.generated';
 import { DeleteInternalOrders } from '../list/internalOrders.generated';
 
@@ -136,5 +138,40 @@ export const deleteInternalOrder = async (
       error?.__typename === 'CannotEditRequisition'
         ? t('error.cannot-edit-requisition')
         : (error?.description ?? t('error.cannot-edit-requisition')),
+  };
+};
+
+// --- Ancillary refresh (Add / Update) ---------------------------------------
+
+// The toolbar banner's Add/Update (spec S3 § ancillary items, AC-A3–A5). The
+// caller re-queries the order on success (the plan + lines re-read). A typed
+// rejection surfaces inline; CannotEditRequisition is the only one reachable
+// from an editable-gated banner, but any is mapped.
+type RefreshAction = RefreshAncillaryItemsVariables['input']['action'];
+
+export type RefreshResult =
+  | { kind: 'done' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const refreshAncillaryItems = async (
+  storeId: string,
+  requisitionId: string,
+  action: RefreshAction
+): Promise<RefreshResult> => {
+  const result = await graphqlFetch(RefreshAncillaryItems, {
+    storeId,
+    input: { requisitionId, action },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.refreshAncillaryItems;
+  if (response.__typename === 'RefreshAncillaryItemsSuccess')
+    return { kind: 'done' };
+  return {
+    kind: 'error',
+    message:
+      response.error.__typename === 'CannotEditRequisition'
+        ? t('error.cannot-edit-requisition')
+        : response.error.description,
   };
 };

@@ -1,6 +1,6 @@
 import { createSignal, Show, Switch, Match, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { t } from '../../../intl';
+import { t, tPlural } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -50,6 +50,23 @@ export const InternalOrderStatusFooter: Component<
 
   const hasSendableLine = () =>
     props.node.lines.nodes.some(line => line.requestedQuantity > 0);
+
+  // Outstanding-ancillary send warning (AC-A9): alert-styled, never blocks the
+  // send. The plan is computed server-side and rides the node.
+  const ancillaryWarning = () => {
+    const ancillary = props.node.ancillaryState;
+    if (ancillary.state === 'NEEDS_ADD')
+      return tPlural(
+        'warning.confirm-send-ancillary-items-missing',
+        ancillary.count
+      );
+    if (ancillary.state === 'NEEDS_UPDATE')
+      return tPlural(
+        'warning.confirm-send-ancillary-items-stale',
+        ancillary.count
+      );
+    return undefined;
+  };
 
   const onConfirmSend = () => {
     // Empty-order refusal is a client check — no call (AC-S4).
@@ -114,9 +131,18 @@ export const InternalOrderStatusFooter: Component<
           title={t('heading.are-you-sure')}
           description={
             <Switch
-              fallback={t('messages.confirm-status-as', {
-                status: t('label.sent'),
-              })}
+              fallback={
+                <>
+                  {/* Outstanding-ancillary warning above the confirm prompt;
+                      confirming still sends (AC-A9). */}
+                  <Show when={ancillaryWarning()}>
+                    <Alert severity="warning">{ancillaryWarning()}</Alert>
+                  </Show>
+                  {t('messages.confirm-status-as', {
+                    status: t('label.sent'),
+                  })}
+                </>
+              }
             >
               <Match when={phase() === 'empty'}>
                 <Alert severity="warning">{t('messages.cant-send-order')}</Alert>
