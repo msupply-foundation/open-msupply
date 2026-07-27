@@ -34,8 +34,9 @@ import { ConfigurationSection } from './configuration/ConfigurationSection';
  * five collapsible sections in fixed order (Display settings →
  * Synchronisation → Support → Devices → Configuration), SINGLE-open: opening
  * one closes whichever was open. Hidden sections are omitted, not shown
- * disabled (AC-A1, AC-A2) — visibility is a UX convenience; every write is
- * independently checked server-side (AC-A3).
+ * disabled (OMS-REG-SET-01.14, -02.11, -03.14, -05.20, -05.23, -05.24) —
+ * visibility is a UX convenience; every write is independently checked
+ * server-side (spec/settings/rules.md § Access).
  *
  * The app-bar's end-region content here is shared chrome (the version shown
  * via HeaderButtons, as on Help) — not owned by this vertical.

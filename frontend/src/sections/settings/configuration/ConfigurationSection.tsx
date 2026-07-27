@@ -23,15 +23,15 @@ import styles from '../Settings.module.css';
 
 /*
  * Configuration (spec/settings/ui-surface.md § Configuration) — shown only to
- * a Server Admin on the central server (gated by the page, AC-A2). Each
- * action is independently gated FURTHER (rules § Configuration):
+ * a Server Admin on the central server (gated by the page, OMS-REG-SET-05.24).
+ * Each action is independently gated FURTHER (rules § Configuration):
  *  - The two Initialise actions need EDIT_CENTRAL_DATA + NAME_PROPERTIES_
  *    MUTATE together, checked server-side; a Forbidden response surfaces
  *    through the app's global Permission-denied surface — graphqlFetch
  *    detects the error before any nested field is read, so the reference
- *    app's crash is not reproduced (AC-CN4, D51).
+ *    app's crash is not reproduced (OMS-REG-SET-05.25, D51).
  *  - Configure supply levels is permission-checked client-side BEFORE its
- *    editor opens (AC-CN5).
+ *    editor opens (OMS-REG-SET-05.26).
  */
 export const ConfigurationSection = () => {
   // The catalogue of existing name properties: drives the
@@ -63,9 +63,10 @@ export const ConfigurationSection = () => {
   const [supplyDenied, setSupplyDenied] = createSignal(false);
 
   // Initialise / Re-initialise — the same idempotent, all-or-nothing upsert
-  // either time (AC-CN1–CN3; atomicity is server-side). Default fetch options
-  // on purpose: a Forbidden routes to the global Permission-denied modal
-  // (AC-CN4, D51), any other failure to the global unexpected-error modal.
+  // either time (OMS-REG-SET-05.15/.16; atomicity is server-side, contract
+  // § Configuration). Default fetch options on purpose: a Forbidden routes to
+  // the global Permission-denied modal (OMS-REG-SET-05.25, D51), any other
+  // failure to the global unexpected-error modal.
   const initialise = async (
     which: 'gaps' | 'forecasting',
     input: NamePropertyInput[]
@@ -81,7 +82,7 @@ export const ConfigurationSection = () => {
 
   // The editor's own gate, checked before it opens: EDIT_CENTRAL_DATA alone,
   // client-side — on failure a plain permission-denied message and the modal
-  // never appears, no request sent (AC-CN5).
+  // never appears, no request sent (OMS-REG-SET-05.26).
   const openSupplyLevels = () => {
     if (!hasPermission('EDIT_CENTRAL_DATA')) {
       setSupplyDenied(true);
@@ -93,9 +94,7 @@ export const ConfigurationSection = () => {
 
   return (
     <div class={styles.sectionBody}>
-      <FieldRow
-        label={t('label.initialise-store-properties-gaps')}
-      >
+      <FieldRow label={t('label.initialise-store-properties-gaps')}>
         <Button
           variant="secondary"
           loading={initialising() === 'gaps'}

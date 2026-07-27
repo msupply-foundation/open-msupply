@@ -3,22 +3,6 @@
 # campaign/program bulk-edit pickers, and the add-from-internal-order line
 # picker. Kept out of inboundShipmentDetail.graphql (no shared fragments).
 
-# Active currencies for the change-currency modal (spec S3 charges → foreign
-# currency). No storeId arg on this query.
-query inboundCurrencies {
-  currencies(filter: { isActive: true }) {
-    ... on CurrencyConnector {
-      __typename
-      nodes {
-        id
-        code
-        rate
-        isHomeCurrency
-      }
-    }
-  }
-}
-
 # Campaigns for the bulk change-campaign action.
 query inboundCampaigns($storeId: String!) {
   campaigns(storeId: $storeId) {

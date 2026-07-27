@@ -79,7 +79,11 @@ import {
   OutboundLineEditModal,
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
-import { ServiceChargesModal } from './service-charges/ServiceChargesModal';
+import { ServiceChargesModal } from '../../../domain/invoice';
+import {
+  fetchOutboundServiceCharges,
+  saveOutboundServiceCharges,
+} from './service-charges/outboundServiceCharges';
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
 // the returns vertical — AC-V3 hands over to it). Lazy so the returns graph it
 // pulls in stays out of this section's eager chunk, loading only when a return
@@ -1022,14 +1026,26 @@ const OutboundDetailView: Component = () => {
                 nextItem={nextItem}
                 onCommitted={onLineOpsCommitted}
               />
+              {/* The shared service-charges editor (spec S5) with outbound's
+                  wire twins; a committed batch refetches like any other
+                  line-level change (the totals are entity aggregates). */}
               <ServiceChargesModal
                 open={serviceOpen()}
                 onClose={() => setServiceOpen(false)}
                 storeId={params.storeId}
-                invoiceId={current().id}
                 disabled={!editable()}
-                serviceLines={serviceLines()}
-                onCommitted={onLineOpsCommitted}
+                fetchCharges={() =>
+                  fetchOutboundServiceCharges(params.storeId, current().id)
+                }
+                save={async batch => {
+                  const result = await saveOutboundServiceCharges(
+                    params.storeId,
+                    current().id,
+                    batch
+                  );
+                  if (result.ok) onLineOpsCommitted();
+                  return result;
+                }}
               />
               {/* Returns need a shipped shipment (AC-V3) — an info-only
                   notice; the return flow is the returns vertical's. */}

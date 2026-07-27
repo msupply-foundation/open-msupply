@@ -33,8 +33,18 @@ export interface AlertProps {
    */
   icon?: Component<IconProps>;
   children: JSX.Element;
+  /**
+   * Compact footprint — the ui-standards `fb-banner--compact`: the same alert
+   * (severity, tint, icon), shrunk to an inline chip (single line while it
+   * fits, wrapping once it hits the container) for a page-header meta strip
+   * carrying persistent, low-urgency context (read-only
+   * / auto-created record, locked document) that shouldn't cost a content row.
+   * Not for errors or anything the user must act on — those keep full width.
+   */
+  compact?: boolean;
   class?: string;
-  /** `data-testid` for the alert panel (locale-stable test hook, e2e/TESTIDS.md). */
+  /** `data-testid` for the alert panel (locale-stable test hook,
+   * e2e/TESTIDS.md). */
   testId?: string;
 }
 
@@ -50,6 +60,7 @@ export interface AlertProps {
 export const Alert = (props: AlertProps) => (
   <div
     class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
+    classList={{ [styles.compact ?? '']: props.compact === true }}
     data-severity={props.severity}
     data-testid={props.testId}
     role="alert"
