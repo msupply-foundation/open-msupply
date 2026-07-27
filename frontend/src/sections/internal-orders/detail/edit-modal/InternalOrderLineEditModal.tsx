@@ -372,6 +372,7 @@ const LineEditContent = (
         fallback={
           <ItemSearch
             label={t('label.item')}
+            class={styles.itemField}
             storeId={props.storeId}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
             value={current()?.itemId}
