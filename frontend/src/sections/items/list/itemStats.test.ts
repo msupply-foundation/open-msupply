@@ -4,6 +4,7 @@ import {
   formatMonthsOfStock,
   shouldShowDoses,
   truncateToTwoDecimals,
+  unitsWithDoses,
 } from './itemStats';
 
 describe('itemStats — item statistics display (spec/items S1/S2)', () => {
@@ -47,5 +48,17 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
       text: '2.5',
       truncated: false,
     });
+  });
+
+  // ITEMS-F1 — the AMC/stock-on-hand cells format through `unitsWithDoses`.
+  // The bug: it was wired to a 0-decimal formatter, so a real AMC of 0.33
+  // rendered as "0". These pin that the cell uses the numeric-cell rule
+  // (ui-surface.md:47). Non-vaccine path (showDoses=false) needs no `t()`.
+  it('formats a fractional AMC to 2dp, not a rounded 0 (ITEMS-F1)', () => {
+    const row = { isVaccine: false, doses: 0 };
+    expect(unitsWithDoses(0.33, row, false)).toBe('0.33');
+    expect(unitsWithDoses(0.3333, row, false)).toBe('0.33…');
+    // integer stock-on-hand is unchanged — no decimals, no ellipsis
+    expect(unitsWithDoses(12499, row, false)).toBe('12,499');
   });
 });
