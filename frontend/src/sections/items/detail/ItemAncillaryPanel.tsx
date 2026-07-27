@@ -67,24 +67,24 @@ export const ItemAncillaryPanel: Component<{
     const cols: Column<AncillaryRow, never>[] = [
       {
         c: { accessor: row => row.ancillaryItem?.name ?? '', id: 'name' },
-        header: t('label.ancillary-item'),
+        header: () => t('label.ancillary-item'),
       },
       {
         c: { accessor: row => row.ancillaryItem?.code ?? '', id: 'code' },
-        header: t('label.code'),
+        header: () => t('label.code'),
       },
       {
         c: {
           accessor: row => formatRatio(row.itemQuantity, row.ancillaryQuantity),
           id: 'ratio',
         },
-        header: t('label.ratio'),
+        header: () => t('label.ratio'),
       },
     ];
     if (props.isCentral) {
       cols.push({
         c: { id: 'delete' },
-        header: t('label.delete'),
+        header: () => t('label.delete'),
         cell: info => (
           <IconButton
             icon={<TrashIcon />}

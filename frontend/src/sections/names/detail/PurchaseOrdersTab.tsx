@@ -52,32 +52,36 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
       : [];
 
   const columns = (): Column<PoRow, never>[] => [
-    { c: { key: 'number' }, header: t('label.number'), ...getNumberCell() },
+    {
+      c: { key: 'number' },
+      header: () => t('label.number'),
+      ...getNumberCell(),
+    },
     {
       c: { key: 'createdDatetime' },
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'confirmedDatetime' },
-      header: t('label.confirmed'),
+      header: () => t('label.confirmed'),
       ...getDateCell(),
     },
     {
       c: { accessor: row => poStatusLabel(row.status), id: 'status' },
-      header: t('label.status'),
+      header: () => t('label.status'),
     },
     {
       c: { key: 'targetMonths' },
-      header: t('label.target-months'),
+      header: () => t('label.target-months'),
       ...getNumberCell(),
     },
     {
       c: { accessor: row => row.lines.totalCount, id: 'lines' },
-      header: t('label.lines'),
+      header: () => t('label.lines'),
       ...getNumberCell(),
     },
-    { c: { key: 'comment' }, header: t('label.comment') },
+    { c: { key: 'comment' }, header: () => t('label.comment') },
   ];
 
   return (

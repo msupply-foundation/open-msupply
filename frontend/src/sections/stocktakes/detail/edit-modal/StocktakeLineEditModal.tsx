@@ -15,6 +15,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
+import { BareCheckbox } from '../../../../ui/elements/inputs/BareCheckbox';
 import {
   DataTable,
   type Column,
@@ -415,21 +416,23 @@ const StocktakeLineEditContent = (
   // opt-in (unchecked) when the item already has stocktake lines, all-counted
   // for a brand-new item. Records the item in the covered set for the walk.
   // `focusLineId` is the batch to focus once loaded (a row-click open focuses
-  // the clicked line); omitted → focus the first row.
+  // the clicked line); omitted → focus the first row. `knownExisting` lets a
+  // caller that already fetched this item's existing lines (loadItemById, to
+  // resolve the item descriptor) pass them straight through instead of this
+  // function re-fetching the identical stocktakeLines query a moment later.
   const seedItem = async (
     item: StocktakeLineEditItem,
-    focusLineId?: string
+    focusLineId?: string,
+    knownExisting?: StocktakeLineFragment[]
   ) => {
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setLoadingLines(true);
-    const existing = await fetchExistingLines(
-      props.storeId,
-      props.stocktakeId,
-      item.id
-    );
+    const existing =
+      knownExisting ??
+      (await fetchExistingLines(props.storeId, props.stocktakeId, item.id));
     const seeded = await buildDraft(
       props.storeId,
       item,
@@ -457,7 +460,9 @@ const StocktakeLineEditContent = (
 
   // Row-open path: resolve the item descriptor from its existing lines (the
   // fetch we need for the draft anyway), then seed. If the item has no lines
-  // (vanished), close.
+  // (vanished), close. Passes `existing` straight through to seedItem (its
+  // `knownExisting`) rather than letting it re-run the identical
+  // stocktakeLines query it would otherwise fetch for itself.
   const loadItemById = async (id: string) => {
     setLoadingLines(true);
     const existing = await fetchExistingLines(
@@ -480,7 +485,8 @@ const StocktakeLineEditContent = (
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
-      props.initialLineId
+      props.initialLineId,
+      existing
     );
   };
 
@@ -794,17 +800,25 @@ const StocktakeLineEditContent = (
   };
 
   // ---- Columns: one set, split across groups; batch is the anchor. ----
-  // (Unchanged from the original — each cell edits the draft store via update().)
+  // (Unchanged from the original — each cell edits the draft store via
+  // update().)
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       c: { id: 'countThisLine' },
-      header: t('label.count-this-line'),
-      meta: { align: 'center' },
+      header: () => t('label.count-this-line'),
+      // Card view: the count toggle rides in the header BADGE slot
+      // (inline-end), captioned by the badge's FieldRow (showLabel) — so the
+      // control itself is the bare box with an aria-label, no doubled caption.
+      // Structural — keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
-          <input
-            type="checkbox"
+          <BareCheckbox
             aria-label={t('label.count-this-line')}
             checked={line.countThisLine}
             onChange={e =>
@@ -816,8 +830,15 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
-      meta: { headerPosition: 'primary' },
+      header: () => t('label.batch'),
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity): keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
@@ -825,6 +846,9 @@ const StocktakeLineEditContent = (
             label={t('label.batch')}
             hideLabel
             size="small"
+            // Narrow: a batch code is short, and it's the card's inline header
+            // field (the FieldRow control cell is otherwise full-width).
+            width="compact"
             disabled={!line.countThisLine}
             value={line.batch ?? ''}
             onInput={e =>
@@ -836,7 +860,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry-date'),
+      header: () => t('label.expiry-date'),
       cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
@@ -854,7 +878,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
@@ -877,7 +901,7 @@ const StocktakeLineEditContent = (
       : [
           {
             c: { key: 'snapshotNumberOfPacks' },
-            header: t('label.snapshot-num-of-packs'),
+            header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
@@ -916,7 +940,7 @@ const StocktakeLineEditContent = (
         ]),
     {
       c: { key: 'countedNumberOfPacks' },
-      header: t('label.counted-num-of-packs'),
+      header: () => t('label.counted-num-of-packs'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -948,7 +972,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -973,7 +997,7 @@ const StocktakeLineEditContent = (
     // already open, rather than requiring a tab switch.
     {
       c: { key: 'location' },
-      header: t('label.location'),
+      header: () => t('label.location'),
       cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
@@ -1007,7 +1031,7 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'vvmStatus' },
-            header: t('label.vvm-status'),
+            header: () => t('label.vvm-status'),
             cardGroup: 'batch',
             cell: info => {
               const line = info.row.original;
@@ -1043,7 +1067,7 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'dosesCounted' },
-            header: t('label.doses-counted'),
+            header: () => t('label.doses-counted'),
             cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
@@ -1055,7 +1079,7 @@ const StocktakeLineEditContent = (
       : []),
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1076,7 +1100,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
@@ -1097,7 +1121,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
+      header: () => t('label.volume-per-pack'),
       cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
@@ -1126,7 +1150,7 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'donor' },
-            header: t('label.donor'),
+            header: () => t('label.donor'),
             cardGroup: 'other',
             cell: info => {
               const line = info.row.original;
@@ -1168,7 +1192,7 @@ const StocktakeLineEditContent = (
     // clears the other. buildBatch sends campaignId/programId accordingly.
     {
       c: { id: 'campaignOrProgram' },
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1196,7 +1220,7 @@ const StocktakeLineEditContent = (
     // saved via manufacturerId in buildBatch.
     {
       c: { id: 'manufacturer' },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1239,7 +1263,7 @@ const StocktakeLineEditContent = (
       : [
           {
             c: { id: 'inventoryAdjustmentReasonInput' },
-            header: t('label.reason'),
+            header: () => t('label.reason'),
             cardGroup: 'batch',
             cell: info => {
               const line = info.row.original;
@@ -1281,7 +1305,7 @@ const StocktakeLineEditContent = (
         ]),
     {
       c: { key: 'note' },
-      header: t('label.note'),
+      header: () => t('label.note'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1301,7 +1325,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'comment' },
-      header: t('label.stocktake-comment'),
+      header: () => t('label.stocktake-comment'),
       cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
@@ -1321,8 +1345,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { id: 'actions' },
-      header: t('label.actions'),
-      meta: { headerPosition: 'badge', align: 'right' },
+      header: () => t('label.actions'),
+      // Structural row-actions column — not user-configurable, so keep it out
+      // of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (

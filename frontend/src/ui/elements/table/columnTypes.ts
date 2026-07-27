@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js';
 import type {
   ColumnDef,
+  HeaderContext,
   IdentifiedColumnDef,
   RowData,
 } from '@tanstack/solid-table';
@@ -131,6 +132,19 @@ export type ColumnIdentity<T> =
 // CardGroup + CardView). Header columns (meta.headerPosition) ignore cardGroup.
 // Display-only conventions (align, header slot) live in `meta` —
 // kdd/table-state.
+//
+// `header` is narrowed to FUNCTION-ONLY here (TanStack itself also allows a
+// bare string). A bare string bakes the CURRENT locale's translated text into
+// the column at whatever moment the column array was built, with nothing left
+// to react when the locale later changes — the only way to refresh it is to
+// rebuild the entire columns array (and thus reallocate every column/cell
+// closure) from scratch, which is what pulled `t()` into columns' dependency
+// list and made it churn on every locale change. A function is called by
+// TanStack's `flexRender` on every header render (HeaderCell.tsx), same as
+// `cell`/`footer` already work — so `header: () => t('label.code')` reacts to
+// locale changes at the header-cell level, same fine-grained reactivity as any
+// other Solid read, and never needs to appear in a `columns` memo's dependency
+// list at all.
 export type Column<T, K extends string, G extends string = never> = {
   /**
    * The column's identity — one of key / id / accessor+id (see
@@ -139,7 +153,8 @@ export type Column<T, K extends string, G extends string = never> = {
    *  fields and sortKey.
    */
   c: ColumnIdentity<T>;
-} & Omit<IdentifiedColumnDef<T>, 'id' | 'minSize'> & {
+} & Omit<IdentifiedColumnDef<T>, 'id' | 'minSize' | 'header'> & {
+    header: (context: HeaderContext<T, unknown>) => JSX.Element;
     sortKey?: K;
     cardGroup?: G;
   };
