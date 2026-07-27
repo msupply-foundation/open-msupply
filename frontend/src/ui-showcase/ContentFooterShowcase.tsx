@@ -12,9 +12,30 @@ import {
 } from '../ui/elements/buttons/StandardButtons';
 import { ClockIcon, CopyIcon, MinusCircleIcon, TrashIcon } from '../ui/icons';
 import { Lead, PageBody, PageFrame } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './ContentFooterShowcase.module.css';
 
 const DEMO_ROWS = ['OS-001024', 'OS-001025', 'OS-001026'];
+
+// No TOC is rendered — the page is short (Carl); the metadata is still exported
+// and registered so Search indexes these sections.
+export const contentFooterMetadata: PageMetadata = {
+  id: 'content-footer',
+  title: 'Content footer',
+  searchTerms: ['footer', 'action bar', 'bottom'],
+  items: [
+    {
+      id: 'content-footer-detail-bar',
+      title: 'Detail-page bar',
+      searchTerms: ['save', 'cancel', 'history', 'actions'],
+    },
+    {
+      id: 'content-footer-contextual',
+      title: 'Contextual content',
+      searchTerms: ['context', 'conditional', 'two'],
+    },
+  ],
+};
 
 export const ContentFooterShowcase = () => {
   const [confirmSave, setConfirmSave] = createSignal(false);
@@ -31,7 +52,10 @@ export const ContentFooterShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Detail-page bar — History / Cancel / Save">
+        <DashboardCard
+          id="content-footer-detail-bar"
+          title="Detail-page bar — History / Cancel / Save"
+        >
           <Lead>
             The pinned action bar from last week's demo (the current app's blue
             bar above the orange footer). <code>&lt;ContentFooter&gt;</code> is
@@ -65,7 +89,10 @@ export const ContentFooterShowcase = () => {
           </PageFrame>
         </DashboardCard>
 
-        <DashboardCard title="Contextual content — one bar, two contexts">
+        <DashboardCard
+          id="content-footer-contextual"
+          title="Contextual content — one bar, two contexts"
+        >
           <Lead>
             The bar's content is contextual <em>by composition</em>, not by a
             store: when a page has a selection it swaps the bar's children for

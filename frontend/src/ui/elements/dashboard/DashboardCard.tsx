@@ -5,6 +5,12 @@ export interface DashboardCardProps {
   /** Card heading, already translated. */
   title: string;
   /**
+   * Optional DOM id on the card's `<section>` — an in-page anchor target (e.g.
+   * a Table-of-Contents link scrolls to it). Anchored cards get scroll-margin
+   * so the heading isn't flush to the viewport top (see the CSS).
+   */
+  id?: string;
+  /**
    * Optional leading icon beside the title, rendered in the app's tinted
    * icon-chip convention (decorative — the title carries the name).
    */
@@ -30,7 +36,7 @@ export const DashboardCard = (props: DashboardCardProps) => {
   const footer = children(() => props.footer);
   const icon = children(() => props.icon);
   return (
-    <section class={styles.card}>
+    <section class={styles.card} id={props.id}>
       <h2 class={styles.title}>
         <Show when={icon()}>
           <span class={styles.icon} aria-hidden="true">

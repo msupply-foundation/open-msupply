@@ -227,7 +227,7 @@ const CustomerReturnDetailView: Component = () => {
     {
       c: { key: 'itemName' },
       header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
+      meta: { headerPosition: 'primary', wrapLines: 2 },
     },
     {
       c: { key: 'batch' },
@@ -251,7 +251,7 @@ const CustomerReturnDetailView: Component = () => {
       c: { key: 'numberOfPacks' },
       header: t('label.num-packs'),
       ...getNumberCell(),
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: {

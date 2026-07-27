@@ -31,6 +31,14 @@ if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
 
 Add an entry to the registry in [`sections.tsx`](./sections.tsx) (id, label, component, menu category) and create the matching `<Name>Showcase.tsx` (+ optional `.module.css`) beside it. The shell derives the menu and panels from the registry; the section id becomes its hash.
 
+### Keep the page metadata + TOC in sync
+
+Each standard section page (Components + Layout) also exports a [`PageMetadata`](./metadata.ts) — the hand-authored data behind the page's Table of Contents (`common/SectionTOC`) and the not-yet-built showcase Search (`buildSearchIndex` in `metadata.ts`). It lives beside the component and **must be kept current as the showcase changes**, or the TOC links (and, later, Search) silently drift from what's on the page:
+
+- **New section page:** export a `<name>Metadata: PageMetadata` beside the component, set it on the section's `SectionDef` (`metadata:` in `sections.tsx`), and render `<SectionTOC page={<name>Metadata} />` as the first child of the page's content `Stack`. A short or single-card page omits the render but still exports the metadata, so Search indexes it (`SectionTOC` also self-hides below two items).
+- **Adding / renaming / removing / reordering a card:** update that page's `PageMetadata.items` to match. Every `item.id` must be the `id` on a real `DashboardCard` on the page — it is both the TOC scroll target and the search key — page-id-prefixed and kebab-case (e.g. `inputs-numbers`). Curated coarser groups are expected (a group's `id` sits on its first card); not every card needs an entry.
+- `searchTerms` hold only the _extra_ keywords a `title` doesn't already contain — title words are indexed automatically, so don't repeat them.
+
 ## Page scaffolding (`common/`)
 
 The chrome _around_ the demos — the section cards, lead/note copy, layout rows — is shared, one component per file in [`common/`](./common/index.ts): `Stack`, `Card`, `Row`, `Col`, `Note`, `Intro`, `PageFrame`/`PageBody`, `ToolbarStub`, `FormPreview`. A typical section page is a `<Stack>` of `<Card title lead>` blocks and owns **no CSS of its own** unless it has genuinely bespoke demo furniture (the icon gallery's glyph grid, the typography specimens, …) — that stays in the page's slim `.module.css` rather than growing single-use components in `common/`. Two rules hold: components _under demo_ are always real `src/ui` components, never showcase lookalikes; and anything in `common/` must be pure demo chrome no real page would ship.

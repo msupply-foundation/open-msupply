@@ -155,6 +155,12 @@ interface ComboboxProps<T> {
    * narrow field.
    */
   matchTriggerWidth?: boolean;
+  /**
+   * Control size. 'default' is the form-field size; 'small' is the compact
+   * variant for dense contexts (e.g. cards). Matches the shared input size
+   * scale (see --input-height*).
+   */
+  size?: 'default' | 'small';
   class?: string;
 }
 
@@ -194,29 +200,32 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // input, rather than the input keeping the stale item). When the key isn't in
   // `items` (a server-fed selection from outside the current result page), fall
   // back to `selectedItem` if the caller supplied it. Guarded by
-  // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
+  // `on([value, items], ...)` so it only reacts to those two, not the user's
+  // own pick — tracking `items` too (not just `value`) matters for a
+  // non-suspending resource: a picker that mounts with `value` already set
+  // (e.g. a detail screen loaded with a clinician already attached) resolves
+  // against an empty `items` on the first run, and without `items` in the
+  // dependency list the lookup would never re-run once the resource's fetch
+  // actually lands — leaving the field permanently blank.
   //
   // Async/server pickers whose current selection may not be in the loaded page
   // keep it visible by seeding it into `items` themselves (see AsyncCombobox) —
   // the resolution here is a plain lookup against whatever `items` holds.
   createEffect(
-    on(
-      () => props.value,
-      value => {
-        const inItems =
-          value === undefined
-            ? null
-            : (props.items.find(item => keyOf(item) === value) ?? null);
-        const fallback =
-          value !== undefined &&
-          props.selectedItem &&
-          keyOf(props.selectedItem) === value
-            ? props.selectedItem
-            : null;
-        const match = inItems ?? fallback;
-        if (match !== selected()) setSelected(() => match);
-      }
-    )
+    on([() => props.value, () => props.items], ([value, items]) => {
+      const inItems =
+        value === undefined
+          ? null
+          : (items.find(item => keyOf(item) === value) ?? null);
+      const fallback =
+        value !== undefined &&
+        props.selectedItem &&
+        keyOf(props.selectedItem) === value
+          ? props.selectedItem
+          : null;
+      const match = inItems ?? fallback;
+      if (match !== selected()) setSelected(() => match);
+    })
   );
   // Inside a Dialog, mount the listbox into the dialog element (top layer +
   // non-inert); outside one this is undefined and Kobalte's default <body>
@@ -291,6 +300,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-size={props.size ?? 'default'}
       options={options()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}

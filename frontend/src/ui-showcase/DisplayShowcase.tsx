@@ -7,7 +7,8 @@ import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
 import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { ReportsIcon, StockIcon, TruckIcon, PrinterIcon } from '../ui/icons';
-import { Lead, Note } from './common';
+import { Lead, Note, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './DisplayShowcase.module.css';
 
 /* A small self-contained HTML document (no scripts) to show the sandboxed
@@ -33,6 +34,29 @@ const REPORT_HTML = `<!doctype html>
  * vertical needs: WidgetCard (a whole-card link/button) and DocumentFrame (a
  * sandboxed iframe for server-rendered HTML documents).
  */
+export const displayMetadata: PageMetadata = {
+  id: 'display',
+  title: 'Display',
+  searchTerms: ['tile', 'card', 'output'],
+  items: [
+    {
+      id: 'display-stat-comparison',
+      title: 'Stat comparison tile',
+      searchTerms: ['before', 'after', 'adjusted', 'preview'],
+    },
+    {
+      id: 'display-widget-card',
+      title: 'Widget card',
+      searchTerms: ['clickable', 'dashboard', 'link'],
+    },
+    {
+      id: 'display-document-frame',
+      title: 'Document frame',
+      searchTerms: ['iframe', 'report', 'sandbox', 'print'],
+    },
+  ],
+};
+
 export const DisplayShowcase = () => {
   const [lastClicked, setLastClicked] = createSignal('');
   // Stat-comparison-tile demo: a live "adjust by N" input drives the preview.
@@ -45,7 +69,11 @@ export const DisplayShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Stat comparison tile — current → adjusted preview">
+        <SectionTOC page={displayMetadata} />
+        <DashboardCard
+          id="display-stat-comparison"
+          title="Stat comparison tile — current → adjusted preview"
+        >
           <Lead>
             A labelled tile showing a value beside its adjusted/preview
             counterpart (the stock adjustment modal's Available packs / Packs on
@@ -79,7 +107,10 @@ export const DisplayShowcase = () => {
             />
           </div>
         </DashboardCard>
-        <DashboardCard title="Widget card — clickable dashboard tile">
+        <DashboardCard
+          id="display-widget-card"
+          title="Widget card — clickable dashboard tile"
+        >
           <Lead>
             A titled card where the <strong>whole surface</strong> is one
             interactive element — an <code>&lt;a href&gt;</code> (router
@@ -119,7 +150,10 @@ export const DisplayShowcase = () => {
           </Note>
         </DashboardCard>
 
-        <DashboardCard title="Document frame — sandboxed report output">
+        <DashboardCard
+          id="display-document-frame"
+          title="Document frame — sandboxed report output"
+        >
           <Lead>
             A sandboxed <code>&lt;iframe&gt;</code> for server-rendered HTML
             documents. Fills its container, shows a centred Spinner until the

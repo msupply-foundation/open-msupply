@@ -21,7 +21,7 @@
 
 .root[data-disabled] {
   cursor: default;
-  opacity: 0.5;
+  opacity: var(--disabled-opacity);
 }
 
 /* Placement of the control in the label row: nudged to the first label
