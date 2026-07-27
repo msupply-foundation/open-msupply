@@ -23,9 +23,9 @@ import styles from '../Settings.module.css';
  * Server Admin only (gated by the page). Saving is not merely storing four
  * fields: the SERVER performs a live authentication round-trip against the
  * target before persisting anything, unless url/site/password all evaluate as
- * unchanged (AC-SY3–SY5 — server-enforced; this form just reports the
- * outcome). Save stays disabled until all four fields are filled (AC-SY1) and
- * the password always starts blank (AC-SY2).
+ * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just reports the
+ * outcome). Save stays disabled until all four fields are filled (OMS-REG-SET-02.7/.8) and
+ * the password always starts blank (OMS-REG-SET-02.12).
  */
 export const SyncSection = () => {
   // Stored settings (never includes the password). Non-suspending read —
@@ -55,7 +55,7 @@ export const SyncSection = () => {
   };
 
   // Seed url/site/interval from the stored settings once they arrive; the
-  // password field deliberately stays blank (AC-SY2). Only seed while the
+  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed while the
   // user hasn't started editing (their in-progress input must never be
   // overwritten by a late fetch).
   let touched = false;
@@ -76,7 +76,7 @@ export const SyncSection = () => {
     setOutcome(undefined);
     // `background` keeps a plain network failure out of the global
     // unexpected-error modal: this form owns its failure surface (the
-    // previous settings remain in effect either way — AC-SY3's fallback).
+    // previous settings remain in effect either way — OMS-REG-SET-02.9's fallback).
     const result = await graphqlFetch(
       UpdateSyncSettings,
       { input: buildSyncInput(form()) },
@@ -86,14 +86,14 @@ export const SyncSection = () => {
       const payload = result.data.updateSyncSettings;
       if (payload.__typename === 'SyncSettingsNode') {
         // Persisted — confirm, re-read the stored settings, and blank the
-        // password again (AC-SY2, AC-SY4).
+        // password again (OMS-REG-SET-02.12, OMS-REG-SET-02.13).
         setOutcome('success');
         touched = false;
         setForm({ ...form(), password: '' });
         await refetch();
       } else {
         // The server's live check failed — a reason-specific message from
-        // the returned variant; nothing was stored (AC-SY3).
+        // the returned variant; nothing was stored (OMS-REG-SET-02.9).
         setOutcome({
           message: t(syncSaveErrorKey(payload)),
           detail: payload.fullError,
