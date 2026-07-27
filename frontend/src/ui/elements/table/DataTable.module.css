@@ -60,44 +60,6 @@
   }
 }
 
-/* Refreshing bar — a thin indeterminate progress bar shown above the scroll
-   area during a keep-previous-data refetch (filter/sort/page). Signals
-   "updating" without blanking or remounting the table (issue #160/#196).
-   Flush edge-to-edge: it sits just under the toolbar's hairline, inside
-   the frame. */
-.refreshingBar {
-  position: relative;
-  block-size: 0.1875rem;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
-}
-
-.refreshingBar::after {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  inline-size: 40%;
-  background: var(--secondary-main);
-  border-radius: inherit;
-  animation: table-refreshing 1.1s ease-in-out infinite;
-}
-
-@keyframes table-refreshing {
-  from {
-    inset-inline-start: -40%;
-  }
-
-  to {
-    inset-inline-start: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .refreshingBar::after {
-    animation-duration: 2.2s;
-  }
-}
-
 /* Fills the remaining height between the toolbar and the footer bar, so the
    scroll box inside it is full-height even for a short list. */
 .tableArea {
