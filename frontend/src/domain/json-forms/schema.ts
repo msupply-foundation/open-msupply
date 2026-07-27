@@ -380,7 +380,13 @@ export const parseArgumentSchema = (raw: {
     const options = asRecord(el.options);
     const prop = asRecord(properties[key]);
     const nullable = prop ? isNullable(prop) : false;
-    const readOnly = prop?.readOnly === true;
+    // Read-only arrives in either home (contract "Arguments"): the jsonSchema
+    // property keyword (`readOnly`, expiring-items) or the uiSchema element's
+    // `options.readonly` (lowercase, stock-status / item-usage).
+    // Read-only arrives in either home (contract "Arguments"): the jsonSchema
+    // property keyword (`readOnly`, expiring-items) or the uiSchema element's
+    // `options.readonly` (lowercase, stock-status / item-usage).
+    const readOnly = prop?.readOnly === true || options?.readonly === true;
     const isRequired = required.has(key);
 
     switch (type) {
