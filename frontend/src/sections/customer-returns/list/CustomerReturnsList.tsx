@@ -256,7 +256,7 @@ const CustomerReturnsList: Component = () => {
     {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { headerPosition: 'primary', wrapLines: 2 },
       cell: info => {
         const row = info.row.original;
@@ -288,7 +288,7 @@ const CustomerReturnsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => (
         <StatusChip {...statusMeta(info.getValue<ReturnRow['status']>())} />
       ),
@@ -297,25 +297,25 @@ const CustomerReturnsList: Component = () => {
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: t('label.number'),
+      header: () => t('label.number'),
       ...getNumberCell(),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
-      header: t('label.reference'),
+      header: () => t('label.reference'),
       meta: { wrapLines: 2 },
     },
     // Configured custom-field columns — not sortable; value chosen by kind.
