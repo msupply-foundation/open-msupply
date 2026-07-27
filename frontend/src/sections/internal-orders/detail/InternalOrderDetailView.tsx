@@ -39,6 +39,11 @@ import {
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
+import {
+  StoreOwnName,
+  InternalOrderIndicators,
+} from './indicators.generated';
+import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
 import { saveInternalOrderFields } from './internalOrderUpdate';
 import { isOrderEditable } from './internalOrderDetailStatus';
 import {
@@ -127,6 +132,45 @@ const InternalOrderDetailView: Component = () => {
   );
   const prefs = () => context.latest?.preferences;
   const storePrefs = () => context.latest?.storePreferences;
+
+  // The active store's own name id — the customer identity the indicator values
+  // are keyed to. Fetched once per store, read non-suspending.
+  const [ownName] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(StoreOwnName, { storeId });
+      if (result.kind !== 'success') return undefined;
+      return result.data.stores.nodes[0]?.name.id;
+    }
+  );
+
+  // The Indicators tab's data (definitions + this period's values). Fetched
+  // only for a program order once its period and the store name id resolve; the
+  // serialised variables are the resource key so identical content never
+  // refetches. Read non-suspending so it never remounts the open screen.
+  const indicatorVariables = () => {
+    const node = info();
+    const nameId = ownName.latest;
+    if (!node?.program || !node.period || !nameId) return false;
+    return JSON.stringify({
+      storeId: params.storeId,
+      programId: node.program.id,
+      periodId: node.period.id,
+      customerNameId: nameId,
+    });
+  };
+  const [indicators] = createResource(indicatorVariables, async serialised => {
+    const result = await graphqlFetch(
+      InternalOrderIndicators,
+      JSON.parse(serialised)
+    );
+    if (result.kind !== 'success') return undefined;
+    return result.data.programIndicators.nodes;
+  });
+  const indicatorNodes = () =>
+    indicators.state === 'ready' || indicators.state === 'refreshing'
+      ? (indicators.latest ?? [])
+      : [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
   const showForecast = () =>
@@ -150,6 +194,18 @@ const InternalOrderDetailView: Component = () => {
   // Documents upload/remove are offered on any status, but withheld when the
   // supplier's store is disabled (AC-F2/F5).
   const supplierEnabled = () => !info()?.otherParty.store?.isDisabled;
+
+  // Indicators tab gate (AC-I1): a non-emergency program order, a store-backed
+  // supplier, and the program defines ≥1 indicator. Independent of the
+  // customer-statistics prefs (those only gate the breakdown panel, AC-I10).
+  const showIndicators = () =>
+    isProgram() &&
+    info()?.isEmergency === false &&
+    !!info()?.otherParty.store &&
+    indicatorNodes().length > 0;
+  const showCustomerBreakdown = () =>
+    (storePrefs()?.useConsumptionAndStockFromCustomersForInternalOrders ??
+      false) && (storePrefs()?.extraFieldsInRequisition ?? false);
 
   const editable = () => {
     const node = info();
@@ -615,14 +671,16 @@ const InternalOrderDetailView: Component = () => {
               />
             }
           >
-            {/* Details | Documents | Log (spec S3 § tabs). Indicators is out of
-                this cut. */}
+            {/* Details | Documents | Log | (gated) Indicators (spec S3 § tabs). */}
             <Tabs defaultValue="details">
               <TabList
                 tabs={[
                   { value: 'details', label: t('label.details') },
                   { value: 'documents', label: t('label.documents') },
                   { value: 'log', label: t('label.log') },
+                  ...(showIndicators()
+                    ? [{ value: 'indicators', label: t('label.indicators') }]
+                    : []),
                 ]}
               />
               <TabPanel value="details">
@@ -656,6 +714,16 @@ const InternalOrderDetailView: Component = () => {
                   recordId={node().id}
                 />
               </TabPanel>
+              <Show when={showIndicators()}>
+                <TabPanel value="indicators">
+                  <InternalOrderIndicatorsTab
+                    storeId={params.storeId}
+                    nodes={indicatorNodes()}
+                    editable={editable()}
+                    showCustomerBreakdown={showCustomerBreakdown()}
+                  />
+                </TabPanel>
+              </Show>
             </Tabs>
           </Page>
         )}
