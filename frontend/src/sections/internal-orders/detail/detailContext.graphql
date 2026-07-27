@@ -26,6 +26,9 @@ query internalOrderDetailContext($storeId: String!) {
     displayPopulationBasedForecasting
     warningForExcessRequest
     canCreateInternalOrderFromARequisition
+    # The line editor's default entry mode (AC-LN18): packs where the store
+    # orders in packs, else doses for a dose-managed vaccine, else units.
+    orderInPacks
   }
   storePreferences(storeId: $storeId) {
     requestRequisitionRequiresAuthorisation

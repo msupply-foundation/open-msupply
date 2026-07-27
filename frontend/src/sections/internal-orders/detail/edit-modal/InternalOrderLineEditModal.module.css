@@ -1,0 +1,68 @@
+/* The line editor's panels (spec/internal-orders S4): the item's statistics
+   and (under the extended gate) its stock movements on the inline-start, the
+   edits on a recessed inset panel at the inline-end; they stack on narrow
+   viewports. */
+.panels {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-3);
+}
+
+.column {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.edits {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Every statistics value sits right-aligned at the row's end. */
+.statValue {
+  display: block;
+  text-align: end;
+  inline-size: 100%;
+}
+
+/* The middle-panel Suggested row (spec S4): tinted like the edits inset panel —
+   the requested block it is read against. The negative inline margin lets the
+   tint extend slightly past both sides, while the matching inline padding keeps
+   the row's text aligned with the column's other (un-highlighted) rows. */
+.highlight {
+  background: var(--bg-group-light);
+  border-radius: var(--radius-md);
+  margin-inline: calc(-1 * var(--space-2));
+  padding-inline: var(--space-2);
+}
+
+/* The requested number + entry-mode select fill the row's full width, split
+   evenly — so they're evenly spaced when the panel is wide (two columns) and
+   scale down together when it's narrow (three columns). Both controls are
+   width="full" so neither keeps its default max-width cap. */
+.requestedRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  inline-size: 100%;
+}
+
+.requestedRow > * {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+/* The dose caption directly beneath the entered number, right-aligned under it. */
+.caption {
+  text-align: end;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
