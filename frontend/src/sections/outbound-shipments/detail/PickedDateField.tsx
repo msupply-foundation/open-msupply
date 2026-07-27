@@ -161,26 +161,33 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           gap: 'var(--space-2)',
         }}
       >
-        <DateField
-          label={t('label.picked-date')}
-          hideLabel
-          // The shared calendar-date input (ui-standards/inputs § dates &
-          // times — typed entry or the picker, never a native date input).
-          // `required`: a picked date always has an effective day — blanking
-          // the text reverts rather than clearing.
-          required
-          testId="picked-date-field"
-          value={shown()}
-          min={enabled() ? bounds().min : undefined}
-          max={enabled() ? bounds().max : undefined}
-          disabled={!enabled()}
-          onChange={value => {
-            // AC-B1 re-check as defence in depth — DateField already reverts
-            // typed out-of-range entries against min/max.
-            if (!value || !withinBackdateBounds(bounds(), value)) return;
-            void onPick(value);
-          }}
-        />
+        {/* Fixed 8rem footprint (the same width the field had as a native
+            date input): left free, the field fills the panel row's whole
+            control column — clipping at the panel edge and leaving no room
+            for the disabled-reason bubble beside it. Grid so the field
+            stretches to the cell and shrinks (its input has min-width 0). */}
+        <span style={{ display: 'grid', width: '8rem' }}>
+          <DateField
+            label={t('label.picked-date')}
+            hideLabel
+            // The shared calendar-date input (ui-standards/inputs § dates &
+            // times — typed entry or the picker, never a native date input).
+            // `required`: a picked date always has an effective day — blanking
+            // the text reverts rather than clearing.
+            required
+            testId="picked-date-field"
+            value={shown()}
+            min={enabled() ? bounds().min : undefined}
+            max={enabled() ? bounds().max : undefined}
+            disabled={!enabled()}
+            onChange={value => {
+              // AC-B1 re-check as defence in depth — DateField already reverts
+              // typed out-of-range entries against min/max.
+              if (!value || !withinBackdateBounds(bounds(), value)) return;
+              void onPick(value);
+            }}
+          />
+        </span>
         {/* When a backdating gate disables the field (pref off / past NEW), an
             info popover explains why on hover / focus / tap — disable-with-
             reason (spec S3), reusing the ported reason messages. */}
