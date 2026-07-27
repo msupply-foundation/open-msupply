@@ -77,6 +77,12 @@
   flex-direction: column;
   gap: var(--space-4);
   margin-block-start: var(--space-4);
+  /* Cap the region and centre it as a cohesive block, so the charts don't
+     sprawl across the full-width large modal (they'd read as uncentered). Wide
+     enough for the two ~29rem charts + gap + padding side by side. */
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  margin-inline: auto;
 }
 
 /* The breakdown row — centred, width-capped like the original's maxWidth 900. */
