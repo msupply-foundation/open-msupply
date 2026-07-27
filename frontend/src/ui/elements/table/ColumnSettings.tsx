@@ -93,10 +93,11 @@ export function ColumnSettings<T>(props: {
 
   return (
     <div class={styles.panel}>
-      {/* Bulk visibility — Show all / Hide all (ui-standards § tables → column
-          management), scoped to the columns this view lists (see
-          setAllListedVisible); only columns that CAN hide are touched, so
-          structural columns are safe. */}
+      {/* Bulk actions — Show all / Hide all scope to the columns this view lists
+          (see setAllListedVisible; only hideable columns are touched, so
+          structural columns are safe); Reset order and Unpin all clear the
+          whole-table order / pinning overrides (issue #572 — matching the
+          current app's columns menu). Each write goes through setConfig. */}
       <div class={styles.actions}>
         <button
           type="button"
@@ -114,6 +115,24 @@ export function ColumnSettings<T>(props: {
         >
           {t('table.hide-all')}
         </button>
+        <button
+          type="button"
+          class={styles.action}
+          data-testid="table-reset-order"
+          onClick={() => props.setConfig?.('columnOrder', undefined)}
+        >
+          {t('table.reset-order')}
+        </button>
+        <Show when={props.table.getAllLeafColumns().some(c => c.getCanPin())}>
+          <button
+            type="button"
+            class={styles.action}
+            data-testid="table-unpin-all"
+            onClick={() => props.setConfig?.('columnPinning', undefined)}
+          >
+            {t('table.unpin-all')}
+          </button>
+        </Show>
       </div>
 
       {/* Muted column header labelling the row controls. */}

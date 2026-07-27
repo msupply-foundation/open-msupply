@@ -1,8 +1,9 @@
 /*
- * Settings panel — the content inside the toolbar's ⚙ popover (ui-standards §
- * tables, the advanced example's #mrt-settings-pop): the Density radio group,
- * a divider, then Reset table to default (+ our admin save-as-global-default).
- * The per-column rows live in the Columns popover (ColumnSettings). Bare CSS +
+ * Settings panel — the content inside the toolbar's ⚙ popover (issue #572,
+ * matching the current app's settings menu): the granular resets (order /
+ * visibility / sizes / pinning), a Toggle-density action, the admin
+ * save-as-global-default, and the red destructive Reset-table-to-defaults. The
+ * per-column rows live in the Columns popover (ColumnSettings). Bare CSS +
  * tokens; the outer panel padding comes from the Popover's .controlPopover
  * override (DataTable.module.css). Only px are the hairline divider.
  */
@@ -13,44 +14,24 @@
   min-inline-size: 13.125rem;
 }
 
-/* Muted section heading ("Density") — the spec popover's mini-title: small,
-   semibold, muted, NOT uppercase. 0.6875rem (11px) is below --text-xs, so a
-   literal (the spacious-density 1.25rem precedent). */
-.sectionTitle {
+/* Panel heading ("Settings") — bold, non-interactive, above the actions
+   (issue #572). */
+.title {
   padding: 0.375rem var(--space-2);
-  color: var(--gray-main);
-  font-size: 0.6875rem;
-  font-weight: var(--weight-semibold);
-}
-
-.densityGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-/* One radio row per density preset (ui-standards .mrt-pop-item): a full-width
-   hover-highlighted label. */
-.densityOption {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0.4375rem var(--space-2);
-  border-radius: var(--radius-sm);
   color: var(--text-body);
   font-size: var(--text-sm);
-  cursor: pointer;
+  font-weight: var(--weight-bold);
 }
 
-.densityOption:hover {
-  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+/* Leading icon on each action row — inherits the row's text colour, so the red
+   reset's icon goes red and disabled rows grey with the label. */
+.itemIcon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
 }
 
-.densityOption input {
-  accent-color: var(--secondary-main);
-  cursor: pointer;
-}
-
-/* Hairline between the density group and the reset/save actions. */
+/* Hairline separating the panel's action groups. */
 .separator {
   block-size: 1px;
   margin-block: var(--space-1);
@@ -89,6 +70,13 @@
   background: color-mix(in srgb, var(--text-body) 6%, transparent);
 }
 
+/* Destructive whole-table reset — red text (issue #572). Defined after .popBtn
+   so it wins the equal-specificity colour; .popBtn:disabled (higher specificity)
+   still greys it out when there's nothing to reset. */
+.reset {
+  color: var(--error-main);
+}
+
 /* Save-as-global-default — the central-admin action to promote the current
    layout to the install-wide default. Its own block + top divider set it apart
    from the per-user settings; feedback (saving/saved/error) sits inline below
@@ -100,11 +88,6 @@
   margin-block-start: var(--space-1);
   padding-block-start: var(--space-2);
   border-block-start: 1px solid var(--color-divider);
-}
-
-.saveIcon {
-  inline-size: 0.875rem;
-  block-size: 0.875rem;
 }
 
 .saveStatus {

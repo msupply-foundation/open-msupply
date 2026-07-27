@@ -1,69 +1,92 @@
-import { For, Show, createSignal } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
+import type { Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
-import { SaveIcon } from '../../icons';
+import {
+  EyeIcon,
+  MenuLinesIcon,
+  PinIcon,
+  RefreshIcon,
+  ReloadIcon,
+  SaveIcon,
+  TransferHorizontalIcon,
+} from '../../icons';
 import type { Density, TableConfig, TableConfigKey } from './tableConfig';
 import styles from './TableSettings.module.css';
 
-// The three density presets, in the spec's order (ui-standards § tables → row
-// heights): comfortable is the ⭐ default, compact the dense power-user
-// option, spacious the tablet/touch one.
-const DENSITIES: Density[] = ['comfortable', 'compact', 'spacious'];
-const densityLabel = (density: Density): string =>
-  ({
-    comfortable: t('table.density-comfortable'),
-    compact: t('table.density-compact'),
-    spacious: t('table.density-spacious'),
-  })[density];
+// The density cycle for the "Toggle density" action (issue #572), matching the
+// current app's order: compact → spacious → comfortable → compact.
+const DENSITY_CYCLE: Density[] = ['compact', 'spacious', 'comfortable'];
 
 // The Settings panel — the content inside the toolbar's ⚙ popover: TABLE-WIDE
 // settings, as opposed to the per-column rows of the Columns popover
-// (ColumnSettings). Mirrors the spec's settings popover (ui-standards § tables,
-// the advanced example's mrt-settings-pop): the Density radio group, then a
-// divider, then the single "Reset table to default" (ONE reset restoring
-// order, sizes, pinning, visibility AND density — no per-facet resets; kept
-// VISIBLE but disabled while the layout is already at default, so it stays
-// discoverable), plus the central-admin save-as-global-default.
-export function TableSettings(props: {
-  /** The resolved config (written via setConfig; density is read from the
-   *  dedicated prop below, which includes the responsive default). */
+// (ColumnSettings). Matches the current app's settings menu (issue #572): the
+// granular resets (order / visibility / sizes / pinning), a "Toggle density"
+// cycle, the optional central-admin save-as-global-default, and finally the
+// destructive (red) "Reset table to defaults" that clears ALL overrides at once
+// — kept visible but disabled while the layout is already at default.
+//
+// Writes go through setConfig (the same controlled path DataTable uses); a
+// per-facet reset writes `undefined` for that key so resolution falls back to
+// the global/default layers (NOT TanStack's reset*, which would write empty
+// state INTO the user layer and shadow the page's defaults).
+export function TableSettings<T>(props: {
+  table: Table<T>;
+  /** The resolved config (density is read from the dedicated prop below, which
+   *  includes the responsive default). */
   config?: TableConfig;
-  /** The EFFECTIVE density the table is rendering — an explicit config
-   *  choice, or the responsive default (spacious below the nav-overlay
-   *  width). Shown checked in the radio. */
+  /** The EFFECTIVE density the table is rendering — an explicit config choice,
+   *  or the responsive default. Drives the density cycle's next value. */
   density: Density;
   /** Write one config field (the controlled path DataTable already uses). */
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /**
-   * Reset the table to its default layout. The DataTable supplies this — it
-   * clears every user-layer override for the current band via setConfig, so
-   * resolution falls back to the global/default layers (NOT TanStack's
-   * reset*, which would write TanStack's own empty state INTO the user layer
-   * and shadow the page's defaults, e.g. its start-hidden columns).
+   * Reset the WHOLE table to its default layout — clears every user-layer
+   * override for the current band (order, sizes, pinning, visibility, density).
+   * Supplied by DataTable.
    */
   onReset: () => void;
   /**
-   * The layout already equals its default (no user overrides) — disables
-   * Reset. Comes from the page's config controller (createTableConfig's
-   * isConfigDefault), which owns the layers; when the page doesn't wire it,
-   * Reset stays enabled (a no-op at default is harmless).
+   * The layout already equals its default (no user overrides) — disables the
+   * whole-table Reset. From the page's config controller.
    */
   resetDisabled?: boolean;
   /**
+   * Per-facet applicability (issue #572): each granular reset is disabled unless
+   * that facet actually differs from the default — e.g. Reset column order is
+   * offered only once the columns have been reordered. Supplied by DataTable
+   * (derived from the resolved config); undefined leaves the action enabled.
+   */
+  orderChanged?: boolean;
+  anyColumnHidden?: boolean;
+  anyColumnSized?: boolean;
+  anyColumnPinned?: boolean;
+  /**
    * Promote the current layout to the shared install-wide default. Present ONLY
-   * when the host has decided the current user may do so (central server +
-   * EDIT_CENTRAL_DATA — the gate is the host's, kept out of this generic
-   * component); absent → the action isn't offered. Resolves true on success,
-   * false on failure, which this panel reflects inline.
+   * when the host allows it (central server + EDIT_CENTRAL_DATA); absent → the
+   * action isn't offered. Resolves true on success, false on failure.
    */
   onSaveGlobalDefault?: () => Promise<boolean>;
 }): JSX.Element {
-  const density = (): Density => props.density;
+  // Cycle the density (issue #572 — one "Toggle density" action, not a radio).
+  const toggleDensity = () => {
+    const i = DENSITY_CYCLE.indexOf(props.density);
+    const next = DENSITY_CYCLE[(i + 1) % DENSITY_CYCLE.length] ?? 'comfortable';
+    props.setConfig?.('viewDensity', next);
+  };
+
+  // Show every hideable column (issue #572). Sets each getCanHide() column
+  // visible; structural columns (can't hide) are already visible, so untouched.
+  const showAllColumns = () => {
+    const next = { ...props.table.getState().columnVisibility };
+    for (const column of props.table.getAllLeafColumns()) {
+      if (column.getCanHide()) next[column.id] = true;
+    }
+    props.setConfig?.('columnVisibility', next);
+  };
 
   // Inline status for the save-as-global-default action (this app surfaces
-  // feedback inline via Alert-style notices rather than a global toast). Reset
-  // to idle when the panel is re-opened is unnecessary — the popover unmounts
-  // its contents on close.
+  // feedback inline rather than via a global toast).
   const [saveStatus, setSaveStatus] = createSignal<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
@@ -75,48 +98,68 @@ export function TableSettings(props: {
 
   return (
     <div class={styles.panel}>
-      {/* Density — one radio per preset, applied immediately via setConfig
-          (persisted per band like the rest of the config). */}
-      <div class={styles.sectionTitle}>{t('table.density')}</div>
-      <div
-        class={styles.densityGroup}
-        role="radiogroup"
-        aria-label={t('table.density')}
-      >
-        <For each={DENSITIES}>
-          {option => (
-            <label class={styles.densityOption}>
-              <input
-                type="radio"
-                name="table-density"
-                value={option}
-                checked={density() === option}
-                data-testid={`table-density-${option}`}
-                onChange={() => props.setConfig?.('viewDensity', option)}
-              />
-              {densityLabel(option)}
-            </label>
-          )}
-        </For>
-      </div>
-
+      {/* Panel heading (issue #572 — matches the current app's settings menu). */}
+      <div class={styles.title}>{t('table.settings')}</div>
       <div class={styles.separator} />
 
+      {/* Granular resets — each clears one facet's user override (order /
+          visibility / sizes / pinning). */}
       <button
         type="button"
         class={styles.popBtn}
-        disabled={props.resetDisabled}
-        data-testid="table-reset-default"
-        onClick={() => props.onReset()}
+        disabled={!props.orderChanged}
+        data-testid="table-reset-column-order"
+        onClick={() => props.setConfig?.('columnOrder', undefined)}
       >
-        {t('table.reset-default')}
+        <TransferHorizontalIcon class={styles.itemIcon} />
+        {t('label.reset-column-order')}
+      </button>
+      <button
+        type="button"
+        class={styles.popBtn}
+        disabled={!props.anyColumnHidden}
+        data-testid="table-show-all-columns-setting"
+        onClick={showAllColumns}
+      >
+        <EyeIcon class={styles.itemIcon} />
+        {t('label.show-all-columns')}
+      </button>
+      <button
+        type="button"
+        class={styles.popBtn}
+        disabled={!props.anyColumnSized}
+        data-testid="table-reset-column-sizes"
+        onClick={() => props.setConfig?.('columnSizing', undefined)}
+      >
+        <ReloadIcon class={styles.itemIcon} />
+        {t('label.reset-column-sizes')}
+      </button>
+      <button
+        type="button"
+        class={styles.popBtn}
+        disabled={!props.anyColumnPinned}
+        data-testid="table-reset-pinned-columns"
+        onClick={() => props.setConfig?.('columnPinning', undefined)}
+      >
+        <PinIcon class={styles.itemIcon} />
+        {t('label.reset-pinned-columns')}
       </button>
 
-      {/* Save-as-global-default — only for central-server admins (the host
-          gates the callback's presence). Divider above sets it apart from the
-          per-user settings: this writes the INSTALL-WIDE default, not local
-          state. Feedback is inline (saving / saved / error) — no global
-          toast. */}
+      <div class={styles.separator} />
+
+      {/* Toggle density — cycles compact → spacious → comfortable. */}
+      <button
+        type="button"
+        class={styles.popBtn}
+        data-testid="table-toggle-density"
+        onClick={toggleDensity}
+      >
+        <MenuLinesIcon class={styles.itemIcon} />
+        {t('label.toggle-density')}
+      </button>
+
+      {/* Save-as-global-default — central-server admins only (the host gates the
+          callback's presence). Own block + divider; feedback is inline. */}
       <Show when={props.onSaveGlobalDefault}>
         <div class={styles.saveDefault}>
           <button
@@ -126,7 +169,7 @@ export function TableSettings(props: {
             data-testid="table-save-global-default"
             onClick={saveGlobalDefault}
           >
-            <SaveIcon class={styles.saveIcon} />
+            <SaveIcon class={styles.itemIcon} />
             {t('table.save-global-default')}
           </button>
           <Show when={saveStatus() !== 'idle'}>
@@ -143,6 +186,21 @@ export function TableSettings(props: {
           </Show>
         </div>
       </Show>
+
+      <div class={styles.separator} />
+
+      {/* Destructive whole-table reset (red). Visible but disabled while the
+          layout is already at default, so it stays discoverable. */}
+      <button
+        type="button"
+        class={`${styles.popBtn} ${styles.reset}`}
+        disabled={props.resetDisabled}
+        data-testid="table-reset-default"
+        onClick={() => props.onReset()}
+      >
+        <RefreshIcon class={styles.itemIcon} />
+        {t('label.reset-table-defaults')}
+      </button>
     </div>
   );
 }
