@@ -19,6 +19,7 @@ import {
 import { syncErrorSummary } from '../sections/sync-modal/syncErrors';
 import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
@@ -249,10 +250,9 @@ export const InitialisationPage: Component<{
               error={fieldErrors().siteName || undefined}
               disabled={locked()}
             />
-            <TextField
+            <PasswordField
               label={t('label.settings-password')}
               width="full"
-              type="password"
               value={values().password}
               onInput={e => {
                 const password = e.currentTarget.value;
