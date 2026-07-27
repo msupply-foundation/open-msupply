@@ -24,12 +24,10 @@ import {
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import {
-  membershipInTab,
   toColumnDef,
+  type CardGroup,
   type Column,
-  type Membership,
   type SortState,
-  type TabAndCardGroup,
 } from './columnTypes';
 import { HeaderCell } from './HeaderCell';
 import { TableRow } from './TableRow';
@@ -41,9 +39,10 @@ import {
   type ViewMode,
 } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { useIsNavOverlay, useIsCompact } from '../../utils/createMediaQuery';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
+  CardViewIcon,
   CloseIcon,
   ColumnsIcon,
   MaximiseIcon,
@@ -64,18 +63,18 @@ import { t } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
-// (Column/ColumnIdentity/toColumnDef/TabAndCardGroup/ALL_TABS/SortState + the
-// ColumnMeta augmentation) lives in columnTypes.ts, re-exported here so
-// consumers keep importing from './DataTable'. The three render paths
-// (HeaderCell / TableRow / CardView) are their own files. What remains in THIS
-// file is the stateful table controller.
+// (Column/ColumnIdentity/toColumnDef/CardGroup/SortState + the ColumnMeta
+// augmentation) lives in columnTypes.ts, re-exported here so consumers keep
+// importing from './DataTable'. The three render paths (HeaderCell / TableRow /
+// CardView) are their own files. What remains in THIS file is the stateful
+// table controller.
 export type {
+  CardGroup,
   Column,
   ColumnIdentity,
   SortState,
-  TabAndCardGroup,
 } from './columnTypes';
-export { ALL_TABS, toColumnDef } from './columnTypes';
+export { toColumnDef } from './columnTypes';
 
 // Generic, server-driven data table shared across list pages
 // (kdd/explicit-composition treats the data table as its sanctioned
@@ -118,17 +117,20 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   filters?: JSX.Element;
 
-  // --- Card groups (optional; kdd/edit-line-card-table). Each shows as a TAB
-  // in table view. --- When `tabsAndCardGroups` is set the table shows a tab
-  // strip and only the active card group's columns. "Active card group's
-  // columns" = columns whose `tabsAndCardGroups` includes the active card group
-  // OR the ALL_TABS sentinel. This is a SECONDARY visibility filter baked in
-  // here — it filters props.columns before they reach the table, deliberately
-  // separate from the config's columnVisibility so it never touches the user's
-  // persisted column layout. The TABLE owns the active card group entirely (an
-  // internal signal, defaulting to the first): the caller just declares
-  // `tabsAndCardGroups`. No active-card-group state leaks to the page.
-  tabsAndCardGroups?: TabAndCardGroup<G>[];
+  // --- Card groups (optional). How the CARD body is organised: each column's
+  // `cardGroup` names a group, and this list declares each group's presentation
+  // — icon, panel, disclosure (see CardGroup + CardView). Card-view only; table
+  // view ignores it (a page wanting tabbed column subsets renders a table per
+  // tab itself). Ungrouped columns form the default group. Omit for a plain
+  // (single flat group) card.
+  cardGroups?: CardGroup<T, G>[];
+  /**
+   * Offer the card ⇄ table view toggle in the toolbar (above the compact
+   * breakpoint only — below it the table is always card, so no toggle). The
+   * chosen view persists via `viewMode` config. Default false: a table with no
+   * meaningful card layout stays table-only. Needs `setConfig` to persist.
+   */
+  showCardToggle?: boolean;
 
   /** Current sort, or undefined when unsorted. */
   sort?: SortState<K>;
@@ -326,9 +328,36 @@ export function DataTable<T, K extends string, G extends string = never>(
     props.config?.columnVisibility ?? {};
 
   // View mode is a config field but NOT a TanStack state (no on*Change) — read
-  // it directly. Defaults to 'table' when unset; the compact band's config
-  // default typically flips it to 'card'.
-  const viewMode = (): ViewMode => props.config?.viewMode ?? 'table';
+  // it directly. Below the compact breakpoint the table is ALWAYS card (the
+  // toggle is suppressed there); above it, the persisted `viewMode` wins,
+  // defaulting to 'table'. A page opts a table into card-by-default by seeding
+  // its base-band `viewMode: 'card'` config.
+  const isCompact = useIsCompact();
+  const viewMode = (): ViewMode =>
+    isCompact() ? 'card' : (props.config?.viewMode ?? 'table');
+
+  // --- Sort control (card view). With no clickable column headers, sorting
+  // moves to a toolbar popover. Its options are the sortable columns (those
+  // declaring a sortKey); picking one sorts ascending, re-picking the active one
+  // flips direction — the SAME onSort a header click calls, so the page's sort
+  // state model is untouched. Shown only in card view (headers handle it in
+  // table view) and only when the page wired onSort + has sortable columns.
+  const sortableColumns = () =>
+    props.columns.filter(c => c.sortKey !== undefined);
+  const columnLabel = (c: Column<T, K, G>): string =>
+    typeof c.header === 'string' ? c.header : (c.sortKey ?? '');
+  const activeSortColumn = (): Column<T, K, G> | undefined =>
+    props.sort
+      ? sortableColumns().find(c => c.sortKey === props.sort!.key)
+      : undefined;
+  const chooseSort = (key: K) => {
+    if (props.sort?.key === key) props.onSort?.(key, !props.sort.desc);
+    else props.onSort?.(key, false);
+  };
+  const showSortControl = () =>
+    viewMode() === 'card' &&
+    props.onSort !== undefined &&
+    sortableColumns().length > 0;
 
   // Row density (ui-standards § tables → row heights) — a view-level config
   // field like viewMode, chosen in the Settings popover and stamped as
@@ -377,44 +406,21 @@ export function DataTable<T, K extends string, G extends string = never>(
   const columnSizing = (): ColumnSizingState =>
     transientSizing() ?? configSizingPx();
 
-  // --- Card groups: the SECONDARY visibility filter
-  // (kdd/edit-line-card-table). Each card --- group is a TAB in table view. The
-  // table OWNS the active card group (an internal signal). `activeTab()`
-  // resolves to the selected card group when it's still one of the declared
-  // ones, else falls back to the first (covers the initial render + a
-  // card-group list that changed). Undefined when the table has no card groups.
-  const [selectedTab, setSelectedTab] = createSignal<G>();
-  const activeTab = (): G | undefined => {
-    const cardGroups = props.tabsAndCardGroups;
-    if (!cardGroups || cardGroups.length === 0) return undefined;
-    const selected = selectedTab();
-    return selected && cardGroups.some(g => g.key === selected)
-      ? selected
-      : cardGroups[0].key;
-  };
-  // Card-group membership is a DISPLAY-TIME filter, NOT a column filter:
-  // TanStack always holds the FULL column set, so
-  // config/column-settings/order/visibility operate on every column
-  // consistently (hiding a shared column is unambiguously global — see
-  // kdd/table-state). We instead skip rendering the header/body cells of
-  // columns not in the active card group, in the table-view render below.
-  // `columnInActiveTab` is the predicate: a column shows in the active card
-  // group (tab) when its `tabsAndCardGroups` includes it OR the ALL_TABS
-  // sentinel; when the table has no card groups every column shows.
-  const columnInActiveTab = (
-    col: { tabsAndCardGroups?: Membership } | undefined
-  ): boolean => {
-    const cardGroup = activeTab();
-    if (!props.tabsAndCardGroups || cardGroup === undefined) return true;
-    return membershipInTab(col?.tabsAndCardGroups, cardGroup);
-  };
+  // Table view shows a column unless it's declared card-only (meta.hideOnTable).
+  // TanStack keeps the FULL column set (config/order/sizing stay whole); we just
+  // skip rendering a card-only column's header/body/footer cells here, and the
+  // Columns popover drops card-only columns in table view (see ColumnSettings).
+  // A card-only column with a footer must not force a <tfoot>, so hasFooter
+  // gates on this too. (Card grouping is card-view only — see props.cardGroups /
+  // CardView — so table view no longer filters by group.)
+  const showInTableView = (columnDef: {
+    meta?: { hideOnTable?: boolean };
+  }): boolean => !columnDef.meta?.hideOnTable;
 
-  // Does any active-tab column declare a `footer`? Drives whether the footer
+  // Does any table-view column declare a `footer`? Drives whether the footer
   // band renders at all — a table with no summed columns has no <tfoot>.
   const hasFooter = (): boolean =>
-    props.columns.some(
-      col => col.footer !== undefined && columnInActiveTab(col)
-    );
+    props.columns.some(col => col.footer !== undefined && showInTableView(col));
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -554,7 +560,13 @@ export function DataTable<T, K extends string, G extends string = never>(
   const overlay = () => fullScreen() && !shellFullScreen;
 
   return (
-    <div class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}>
+    // data-datatable: a stable, un-hashed styling hook so a fill-body page can
+    // full-bleed the table from its own CSS module (Page.module.css) — a
+    // descendant selector can't name this .root class across CSS Modules.
+    <div
+      class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
+      data-datatable
+    >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
           inline-end. Outside the scroll region, so it never scrolls with the
@@ -567,43 +579,9 @@ export function DataTable<T, K extends string, G extends string = never>(
         <Show when={props.filters}>
           <div class={styles.toolbarFilters}>{props.filters}</div>
         </Show>
-        {/* Card-group tabs (inline-start, after any filters). Only in table view — card view
-            shows the card groups as rows. A lightweight role=tablist (buttons): swapping the
-            active card group is a secondary column filter on ONE table, not a panel swap, so
-            no Kobalte Tabs. */}
-        <Show when={props.tabsAndCardGroups && viewMode() === 'table'}>
-          <div
-            class={styles.groupTabs}
-            role="tablist"
-            aria-label={t('table.card-groups')}
-          >
-            <For each={props.tabsAndCardGroups}>
-              {cardGroup => (
-                <button
-                  type="button"
-                  role="tab"
-                  class={styles.groupTab}
-                  // tab-<key> per e2e/TESTIDS.md — the group key is the
-                  // locale-stable value (the label is translated).
-                  data-testid={`tab-${cardGroup.key}`}
-                  data-active={cardGroup.key === activeTab() ? '' : undefined}
-                  aria-selected={cardGroup.key === activeTab()}
-                  onClick={() => setSelectedTab(() => cardGroup.key)}
-                >
-                  <Show when={cardGroup.icon}>
-                    {icon => (
-                      <span class={styles.groupTabIcon}>{icon()()}</span>
-                    )}
-                  </Show>
-                  {/* icon()() — Show's accessor yields the factory (cardGroup.icon); the 2nd call renders it. */}
-                  {t(cardGroup.labelKey)}
-                </button>
-              )}
-            </For>
-          </div>
-        </Show>
-        {/* The control cluster — the toolbar's icon controls, held at the
-            inline-end by its own auto margin. */}
+        {/* The control cluster — the toolbar's controls, held at the inline-end
+            by its own auto margin. Wraps to its own line under the filters at
+            narrow widths (.toolbar is flex-wrap). */}
         <div class={styles.toolbarControls}>
           {/* Loading indicator — a small inline spinner just to the LEFT of the
               icon controls while a fetch runs AND rows are already showing (a
@@ -616,10 +594,83 @@ export function DataTable<T, K extends string, G extends string = never>(
               <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
             </span>
           </Show>
-          {/* NO manual table/card view switch here (the spec's toolbar is
-              exactly three controls: Columns, Settings, full-screen). viewMode
-              still works — the compact band's config default flips to card view
-              — and the switch button returns with the card-view pass (Phase 3). */}
+          {/* Sort control — card view only (no clickable headers there): a
+              labelled popover showing the active sort field + direction, listing
+              the sortable columns. Calls the same onSort as a header click. */}
+          <Show when={showSortControl()}>
+            <Popover
+              placement="bottom-end"
+              triggerClass={styles.sortTrigger}
+              triggerTestId="table-sort"
+              triggerLabel={t('table.sort')}
+              closeOnClickInside
+              class={styles.controlPopover}
+              trigger={
+                <>
+                  <span class={styles.sortTriggerLabel}>
+                    {activeSortColumn()
+                      ? columnLabel(activeSortColumn()!)
+                      : t('table.sort')}
+                  </span>
+                  {/* Same direction glyph as the table header's sort indicator
+                      (↓ desc / ↑ asc, .sortIndicator), pushed to the pill's
+                      trailing edge (justify-content) regardless of label width. */}
+                  <Show when={props.sort}>
+                    <span class={styles.sortIndicator} aria-hidden="true">
+                      {props.sort!.desc ? '↓' : '↑'}
+                    </span>
+                  </Show>
+                </>
+              }
+            >
+              <div class={styles.sortMenu}>
+                <For each={sortableColumns()}>
+                  {col => (
+                    <button
+                      type="button"
+                      class={styles.sortMenuItem}
+                      data-testid={`table-sort-${col.sortKey}`}
+                      data-active={
+                        props.sort?.key === col.sortKey ? '' : undefined
+                      }
+                      onClick={() => chooseSort(col.sortKey!)}
+                    >
+                      <span>{columnLabel(col)}</span>
+                      <Show when={props.sort?.key === col.sortKey}>
+                        <span class={styles.sortIndicator} aria-hidden="true">
+                          {props.sort!.desc ? '↓' : '↑'}
+                        </span>
+                      </Show>
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Popover>
+          </Show>
+          {/* View toggle — a single Card-view control matching the other icon
+              controls (no border): grey when in table view, blue when card view
+              is active; clicking flips between the two. Above the compact
+              breakpoint only (below it the table is always card, so it's
+              hidden). Opt-in per table (showCardToggle) and needs setConfig to
+              persist the choice. */}
+          <Show when={props.showCardToggle && !isCompact() && props.setConfig}>
+            <button
+              type="button"
+              class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
+              data-testid="table-view-toggle"
+              aria-pressed={viewMode() === 'card'}
+              aria-label={t('table.view-cards')}
+              title={t('table.view-cards')}
+              onClick={() =>
+                props.setConfig?.(
+                  'viewMode',
+                  viewMode() === 'card' ? 'table' : 'card'
+                )
+              }
+            >
+              <CardViewIcon />
+            </button>
+          </Show>
           {/* Columns — the per-column panel (show / move / pin;
               ui-standards § tables → column management: one predictable place,
               headers stay clean). Only when the page wired config controls
@@ -635,7 +686,7 @@ export function DataTable<T, K extends string, G extends string = never>(
               <ColumnSettings
                 table={table}
                 setConfig={props.setConfig}
-                tabsAndCardGroups={props.tabsAndCardGroups}
+                viewMode={viewMode()}
               />
             </Popover>
           </Show>
@@ -696,6 +747,7 @@ export function DataTable<T, K extends string, G extends string = never>(
       <div class={styles.tableArea}>
         <div
           class={styles.tableScroll}
+          data-view={viewMode()}
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
@@ -718,28 +770,39 @@ export function DataTable<T, K extends string, G extends string = never>(
                         >
                           {/* Partial selection (some rows on this page, not
                               all) shows the indeterminate dash (ui-standards
-                              § tables → row selection). */}
+                              § tables → row selection). From indeterminate the
+                              next click clears (→ select none), not select-all:
+                              any active selection (indeterminate OR all) toggles
+                              off; only an empty selection selects all. NOT
+                              TanStack's default handler, which keys off the
+                              native box's post-click checked value and so goes
+                              indeterminate → all. */}
                           <BareCheckbox
                             class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
                             checked={table.getIsAllRowsSelected()}
                             indeterminate={table.getIsSomeRowsSelected()}
-                            onChange={table.getToggleAllRowsSelectedHandler()}
+                            onChange={e => {
+                              const anySelected =
+                                table.getIsAllRowsSelected() ||
+                                table.getIsSomeRowsSelected();
+                              table.toggleAllRowsSelected(!anySelected);
+                              // The native click already flipped the DOM box to
+                              // checked; toggling OFF from indeterminate leaves
+                              // the controlled `checked` value false→false, so
+                              // Solid's binding never re-runs to undo it. Sync
+                              // the box to the state we just set.
+                              e.currentTarget.checked = !anySelected;
+                            }}
                           />
                         </th>
                       </Show>
-                      {/* Display-time tab filter: render only the active tab's header cells
-                          (TanStack still holds every column — see columnInActiveTab). */}
+                      {/* Skip a card-only column's header cell (meta.hideOnTable);
+                          TanStack still holds every column — see showInTableView. */}
                       <For each={headerGroup.headers}>
                         {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )}
-                          >
+                          <Show when={showInTableView(header.column.columnDef)}>
                             <HeaderCell
                               header={header}
                               pinnedStyle={pinnedStyle}
@@ -762,7 +825,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                   <Match when={viewMode() === 'card'}>
                     <CardView
                       table={table}
-                      tabsAndCardGroups={props.tabsAndCardGroups}
+                      cardGroups={props.cardGroups}
                       enableSelection={props.enableSelection ?? false}
                       onRowClick={props.onRowClick}
                     />
@@ -779,11 +842,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}
                           cellVisible={cell =>
-                            columnInActiveTab(
-                              cell.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )
+                            showInTableView(cell.column.columnDef)
                           }
                         />
                       )}
@@ -817,13 +876,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       </Show>
                       <For each={footerGroup.headers}>
                         {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )}
-                          >
+                          <Show when={showInTableView(header.column.columnDef)}>
                             <td
                               class={styles.tf}
                               data-align={header.column.columnDef.meta?.align}

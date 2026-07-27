@@ -32,12 +32,11 @@ interface SelectProps {
   helperText?: string;
   disabled?: boolean;
   /**
-   * Control size. 'md' (default) is the form-field size; 'sm' is a compact
-   * variant
-   *  for dense contexts like a toolbar or the pagination rows-per-page
-   *  control.
+   * Control size. 'default' is the form-field size; 'small' is a compact
+   * variant for dense contexts like a toolbar or the pagination rows-per-page
+   * control. Matches the shared input size scale (see --input-height*).
    */
-  size?: 'md' | 'sm';
+  size?: 'default' | 'small';
   /**
    * Max-width cap (the container can always be narrower), mirroring
    * {@link TextField}: `short` (default) / `long` for form fields, `full` to
@@ -79,7 +78,7 @@ export const Select = (props: SelectProps) => {
   return (
     <KSelect.Root<SelectOption>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
-      data-size={props.size ?? 'md'}
+      data-size={props.size ?? 'default'}
       data-width={props.width ?? 'short'}
       options={props.options}
       optionValue="value"
