@@ -18,17 +18,27 @@ struct PackageJson {
 }
 
 impl PackageJsonAsset {
-    fn version() -> String {
+    fn raw_version() -> String {
         // Since #[folder] of RustEmbed is pointed at a file, need to use empty string to access the file
         let package_json = PackageJsonAsset::get("").expect("Embedded package json not found");
         let package: PackageJson = serde_json::from_slice(&package_json.data)
             .expect("Embedded package json cannot be parsed");
+
+        package.version
+    }
+
+    fn version() -> String {
         // strip out the -rc1 or -test detail from the version
         let re = regex::Regex::new(r"\-.*").unwrap();
-        let version = re.replace(&package.version, "").to_string();
-
-        version
+        re.replace(&Self::raw_version(), "").to_string()
     }
+}
+
+/// The app version exactly as written in the repo-root package.json (e.g. "3.00.00-RC"),
+/// for display. `Version::from_package_json()` instead normalises the numbers and drops
+/// the pre-release suffix, for comparisons (migrations, sync, plugin compatibility).
+pub fn raw_app_version() -> String {
+    PackageJsonAsset::raw_version()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TS)]
@@ -135,6 +145,16 @@ impl PartialEq for Version {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn raw_app_version_is_the_package_json_version() {
+        let raw = raw_app_version();
+        assert!(!raw.is_empty());
+        // Same version the migrations use, but with the package.json
+        // formatting (zero padding, pre-release suffix) intact.
+        assert_eq!(Version::from_str(&raw), Version::from_package_json());
+    }
+
     #[test]
     fn parsing_version() {
         assert_eq!(
