@@ -30,7 +30,7 @@ describe('localDayToUtc', () => {
   });
 
   it('is the local day, not the UTC day (they differ off UTC)', () => {
-    // In any zone with a non-zero offset the naive spelling `${day}T00:00:00Z`
+    // In any zone with a non-zero offset the naive string `${day}T00:00:00Z`
     // names a different instant than the local start of day. Guard the
     // relationship rather than a zone-specific literal.
     const naive = '2026-07-15T00:00:00.000Z';
@@ -133,16 +133,19 @@ describe('addDays / startOfWeek', () => {
 });
 
 describe('dateToOffsetIso (offset-preserving serialization)', () => {
-  it('names the same instant as the UTC form but shows the LOCAL calendar day', () => {
+  it('serializes to SECONDS precision with the local offset — no milliseconds (matches OMS localIsoString)', () => {
     const d = new Date(2026, 6, 22, 9, 30, 15, 250);
     const iso = dateToOffsetIso(d);
-    // Same instant on the wire...
-    expect(new Date(iso).getTime()).toBe(d.getTime());
-    // ...but the date on the string's face is the local day, whatever the zone
-    // (this is what a wire-local-date server log reads).
+    // Local date + time to the second, then a ±HH:MM offset — no `.mmm`.
+    // (Local components come from the Date's own fields, so this holds in any
+    // device zone; only the offset varies.)
+    expect(iso).toMatch(/^2026-07-22T09:30:15[+-]\d{2}:\d{2}$/);
+    // The date on the string's face is the local day a wire-local server log reads.
     expect(iso.slice(0, 10)).toBe('2026-07-22');
-    // The offset field is a well-formed ±HH:MM (or +00:00 under UTC).
-    expect(iso).toMatch(/[+-]\d{2}:\d{2}$/);
+    // Same instant, to the second (sub-second dropped, like OMS).
+    expect(Math.floor(new Date(iso).getTime() / 1000)).toBe(
+      Math.floor(d.getTime() / 1000)
+    );
   });
 
   it('round-trips through utcToLocalDay to the same local day, even at midnight', () => {

@@ -104,21 +104,22 @@ export const utcBoundsFromLocalDays = (
 
 /**
  * A `Date` → an RFC3339 instant keeping the device's local offset (e.g.
- * `…+13:00`) instead of `Z`. Same instant as `localDayToUtc`, but the wire
- * string shows the local calendar day on its face. Use for a wire field whose
- * input preserves the offset AND whose server records the wire-local date —
- * the inbound received-date write (input `DateTime<FixedOffset>`; its
- * `INVOICE_DATE_BACKDATED` log formats in the wire offset, so a `Z` value logs
- * the day before off UTC — server-verified). Elsewhere (filters, `DateTime<Utc>`
- * inputs) only the instant matters, so use `localDayToUtc`.
+ * `…09:30:15+13:00`) instead of `Z`, at SECONDS precision (no milliseconds) —
+ * byte-for-byte the current app's `Formatter.localIsoString`. Same instant as
+ * `localDayToUtc`, but the wire string shows the local calendar day on its
+ * face. Use for a wire field whose input preserves the offset AND whose server
+ * records the wire-local date — the inbound received-date write (input
+ * `DateTime<FixedOffset>`; its `INVOICE_DATE_BACKDATED` log formats in the wire
+ * offset, so a `Z` value logs the day before off UTC — server-verified).
+ * Elsewhere (filters, `DateTime<Utc>` inputs) only the instant matters, so use
+ * `localDayToUtc`.
  */
 export const dateToOffsetIso = (d: Date): string => {
   const offsetMinutes = -d.getTimezoneOffset(); // minutes east of UTC
   const sign = offsetMinutes >= 0 ? '+' : '-';
   const abs = Math.abs(offsetMinutes);
-  const ms = String(d.getMilliseconds()).padStart(3, '0');
   return (
-    `${dateToIsoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${ms}` +
+    `${dateToIsoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
     `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
   );
 };
