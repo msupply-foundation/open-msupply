@@ -506,6 +506,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
+            testId="expected-delivery-date-field"
             disabled={props.disabled}
             value={props.node.expectedDeliveryDate ?? null}
             onChange={value =>
