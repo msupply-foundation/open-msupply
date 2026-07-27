@@ -149,10 +149,19 @@ export const createDebouncedEdit = <T extends object>(
   // diffs the flat record key-by-key (our T has no `id` field to key on, so
   // merge is the correct keyless form) — a plain replace that only notifies the
   // readers of changed keys.
+  //
+  // The same-id guard is load-bearing: `id()` usually derives from the view's
+  // entity resource (`node().id`), so the effect ALSO re-runs whenever a save
+  // splices a fresh node back — same id string, new upstream signal (`on`
+  // re-fires on any source change; it never equality-checks the derived
+  // value). Re-seeding on that splice would overwrite the buffer with the
+  // server echo — wiping in-flight typing, and reverting a buffered value the
+  // echo disagrees with (how the custom-fields clear used to snap back).
   createEffect(
     on(
       options.id,
-      () => {
+      (id, prevId) => {
+        if (id === prevId) return; // same entity — a node splice, not a nav
         flush();
         setState(reconcile(options.initial(), { merge: true }));
       },
