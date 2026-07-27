@@ -506,6 +506,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
+            // Numeric day-first display/parse (27/07/2026) — matches the
+            // panel's localisedDate renderings (created date etc.).
+            format="dd/MM/yyyy"
             testId="expected-delivery-date-field"
             disabled={props.disabled}
             value={props.node.expectedDeliveryDate ?? null}
