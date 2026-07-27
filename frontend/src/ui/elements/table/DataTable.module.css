@@ -433,6 +433,12 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    Comment.module.css). */
 .selectBox {
   margin-inline: auto;
+  /* Square 42px click target over the 18px box: (42 − 18) / 2 = 12px =
+     0.75rem on each axis. Sits within the 48px selection column (3px dead each
+     side) so a click almost anywhere in the column toggles the row (old-app
+     parity); a compact 40px row leaves a negligible 1px block overhang. */
+  --checkbox-hit-inset-inline: 0.75rem;
+  --checkbox-hit-inset-block: 0.75rem;
 }
 
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
