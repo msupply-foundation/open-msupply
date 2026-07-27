@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { Table } from '@tanstack/solid-table';
+import type { HeaderContext, Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import {
   ChevronDownIcon,
@@ -82,13 +82,15 @@ export function ColumnSettings<T>(props: {
     props.setConfig?.('columnVisibility', next);
   };
 
-  // Header text for the row label. TanStack headers can be a string or a
-  // function/JSX; we only render the string case here (our columns use string
-  // headers) and fall back to the column id otherwise, so the panel always has
-  // a readable label.
-  const label = (id: string) => {
+  // Header text for the row label. Our columns' `header` is always a function
+  // (kdd/… — columnTypes.ts narrows it to function-only so header text reacts
+  // to locale changes), called the same way HeaderCell.tsx calls it via
+  // flexRender — none of our headers read the context argument, so an empty
+  // one is safe here. Falls back to the column id if a column has no header.
+  const label = (id: string): JSX.Element => {
     const header = props.table.getColumn(id)?.columnDef.header;
-    return typeof header === 'string' ? header : id;
+    if (typeof header !== 'function') return id;
+    return header({} as HeaderContext<T, unknown>);
   };
 
   return (

@@ -144,12 +144,12 @@ const LocationsList: Component = () => {
     {
       c: { key: 'code' },
       sortKey: 'code',
-      header: t('label.code'),
+      header: () => t('label.code'),
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
-      header: t('label.name'),
+      header: () => t('label.name'),
       // Card view: the name is the card's title.
       meta: { headerPosition: 'primary' },
     },
@@ -160,11 +160,11 @@ const LocationsList: Component = () => {
         accessor: row => locationTypeLabel(row.locationType),
         id: 'locationType',
       },
-      header: t('label.location-type'),
+      header: () => t('label.location-type'),
     },
     {
       c: { key: 'volume' },
-      header: t('label.volume'),
+      header: () => t('label.volume'),
       ...getNumberCell(),
     },
     {
@@ -172,7 +172,7 @@ const LocationsList: Component = () => {
       // is 0 (OMS-REG-INV-01.31). Registry gap: the proportion-BAR treatment has no built
       // component yet, so this renders the percentage text (see BUILD_REPORT).
       c: { accessor: fullnessLabel, id: 'volumeUsed' },
-      header: t('label.volume-used'),
+      header: () => t('label.volume-used'),
       ...getNumberCell(),
     },
     {
@@ -183,7 +183,7 @@ const LocationsList: Component = () => {
         accessor: row => (row.onHold ? t('label.on-hold') : ''),
         id: 'onHold',
       },
-      header: t('label.on-hold'),
+      header: () => t('label.on-hold'),
     },
   ];
 

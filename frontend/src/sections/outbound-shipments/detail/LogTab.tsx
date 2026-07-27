@@ -54,16 +54,16 @@ export const LogTab: Component<{
   const columns = (): Column<LogRow, never>[] => [
     {
       c: { key: 'datetime' },
-      header: t('label.date-time'),
+      header: () => t('label.date-time'),
       cell: info => localisedDateTime(info.getValue<string>()),
     },
     {
       c: { accessor: row => row.user?.username ?? '—', id: 'user' },
-      header: t('label.user'),
+      header: () => t('label.user'),
     },
     {
       c: { accessor: row => eventLabel(row), id: 'event' },
-      header: t('label.event'),
+      header: () => t('label.event'),
     },
   ];
 

@@ -268,13 +268,13 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   };
 
   const resultColumns = (): Column<MatchRow, never>[] => [
-    { c: { key: 'code' }, header: t('label.patient-id') },
-    { c: { key: 'code2' }, header: t('label.patient-nuic') },
-    { c: { key: 'firstName' }, header: t('label.first-name') },
-    { c: { key: 'lastName' }, header: t('label.last-name') },
+    { c: { key: 'code' }, header: () => t('label.patient-id') },
+    { c: { key: 'code2' }, header: () => t('label.patient-nuic') },
+    { c: { key: 'firstName' }, header: () => t('label.first-name') },
+    { c: { key: 'lastName' }, header: () => t('label.last-name') },
     {
       c: { key: 'dateOfBirth' },
-      header: t('label.date-of-birth'),
+      header: () => t('label.date-of-birth'),
       ...getDateCell(),
     },
     {
@@ -283,16 +283,16 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           row.gender ? genderLabel(row.gender) : '',
         id: 'gender',
       },
-      header: t('label.gender'),
+      header: () => t('label.gender'),
     },
     {
       c: { key: 'isDeceased' },
-      header: t('label.deceased'),
+      header: () => t('label.deceased'),
       ...getBooleanCell({ display: 'yesNo' }),
     },
     {
       c: { id: 'action' },
-      header: '',
+      header: () => '',
       cell: info => {
         const row = info.row.original;
         return row.kind === 'central' ? (

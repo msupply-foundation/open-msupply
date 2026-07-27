@@ -222,34 +222,34 @@ const CustomerReturnDetailView: Component = () => {
   const columns = (): Column<Line, never>[] => [
     {
       c: { accessor: line => line.item.code, id: 'item.code' },
-      header: t('label.code'),
+      header: () => t('label.code'),
     },
     {
       c: { key: 'itemName' },
-      header: t('label.name'),
+      header: () => t('label.name'),
       meta: { headerPosition: 'primary', wrapLines: 2 },
     },
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
+      header: () => t('label.batch'),
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry'),
+      header: () => t('label.expiry'),
       ...getDateCell(),
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
-      header: t('label.unit'),
+      header: () => t('label.unit'),
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       ...getNumberCell(),
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.num-packs'),
+      header: () => t('label.num-packs'),
       ...getNumberCell(),
       meta: { headerPosition: 'badge' },
     },
@@ -258,12 +258,12 @@ const CustomerReturnDetailView: Component = () => {
         accessor: line => line.packSize * line.numberOfPacks,
         id: 'totalQuantity',
       },
-      header: t('label.total-quantity'),
+      header: () => t('label.total-quantity'),
       ...getNumberCell(),
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       ...getCurrencyCell(),
     },
     {
@@ -271,12 +271,12 @@ const CustomerReturnDetailView: Component = () => {
         accessor: line => line.sellPricePerPack * line.numberOfPacks,
         id: 'lineTotal',
       },
-      header: t('label.line-total'),
+      header: () => t('label.line-total'),
       ...getCurrencyCell(),
     },
     {
       c: { key: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
+      header: () => t('label.volume-per-pack'),
       ...getNumberCell(),
     },
   ];

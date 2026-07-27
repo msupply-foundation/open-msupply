@@ -29,11 +29,9 @@ import type { ReportResult, ReportVariables } from '../api/reports.generated';
 // domain/reports (shared with the S4 record-screen selector); dataId is
 // omitted — S2's standalone reports render against the store, not a record.
 import { generateReport, reportLabel } from '../../../domain/reports';
-import {
-  downloadBlob,
-  fetchReportFile,
-  printHtml,
-} from '../../../domain/reportFiles';
+import { fetchReportFile, printHtml } from '../../../domain/reportFiles';
+import { isAndroid } from '../../../platform';
+import { openBlob, saveBlob } from '../../../platform/openDocument';
 import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
 import { timezoneArgument } from '../../../domain/json-forms/schema';
 
@@ -195,10 +193,42 @@ const ReportDetailView: Component = () => {
     if (reportArgs() === undefined) navigate(`/${params.storeId}/reports`);
   };
 
-  // Print (desktop path): fetch the current HTML file and open the system print
-  // dialog (spec/reports "Printing and exporting"). Only meaningful once a
-  // document exists.
+  // Generate the same report in a file format and fetch the result; null with
+  // the error already surfaced on failure.
+  const generateFile = async (format: 'EXCEL' | 'PDF') => {
+    const r = report();
+    if (!r) return null;
+    setActionError(undefined);
+    const gen = await generateReport({
+      reportId: r.id,
+      format,
+      args: reportArgs() ?? timezoneArgument(),
+    });
+    if (gen.kind !== 'fileId') {
+      setActionError('error.failed-to-generate-report');
+      return null;
+    }
+    const file = await fetchReportFile(gen.fileId);
+    if (file.kind !== 'success') {
+      setActionError('error.failed-to-generate-report');
+      return null;
+    }
+    return file;
+  };
+
+  // Print — a VIEW intent: on the web, fetch the current HTML file and open
+  // the system print dialog (spec/reports "Printing and exporting"). The
+  // Android WebView has no window.print — hand a PDF to the OS viewer instead,
+  // where printing (and save-as) lives on a tablet (spec/android § Files out
+  // of the app).
   const onPrint = async () => {
+    if (isAndroid()) {
+      const file = await generateFile('PDF');
+      if (!file) return;
+      const delivered = await openBlob(file.blob, file.filename);
+      if (!delivered.ok) setActionError('messages.cannot-open-file');
+      return;
+    }
     const r = result();
     if (r?.kind !== 'fileId') return;
     setActionError(undefined);
@@ -210,26 +240,13 @@ const ReportDetailView: Component = () => {
     printHtml(await file.blob.text());
   };
 
-  // Export: generate the same report as an Excel workbook and download it.
+  // Export — a KEEP intent: the same report as an Excel workbook, delivered
+  // as a download (web) / the OS save picker (Android).
   const onExport = async () => {
-    const r = report();
-    if (!r) return;
-    setActionError(undefined);
-    const gen = await generateReport({
-      reportId: r.id,
-      format: 'EXCEL',
-      args: reportArgs() ?? timezoneArgument(),
-    });
-    if (gen.kind !== 'fileId') {
-      setActionError('error.failed-to-generate-report');
-      return;
-    }
-    const file = await fetchReportFile(gen.fileId);
-    if (file.kind !== 'success') {
-      setActionError('error.failed-to-generate-report');
-      return;
-    }
-    downloadBlob(file.blob, file.filename);
+    const file = await generateFile('EXCEL');
+    if (!file) return;
+    const delivered = await saveBlob(file.blob, file.filename);
+    if (!delivered.ok) setActionError('messages.cannot-save-file');
   };
 
   // Crumbs are an accessor so t() + the report name re-resolve on locale change

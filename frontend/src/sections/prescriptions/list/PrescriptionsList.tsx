@@ -186,7 +186,7 @@ const PrescriptionsList: Component = () => {
     {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       cell: info => {
         const row = info.row.original;
         return (
@@ -214,7 +214,7 @@ const PrescriptionsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => {
         const status = rowStatus(info.row.original);
         return (
@@ -229,7 +229,7 @@ const PrescriptionsList: Component = () => {
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: t('label.number'),
+      header: () => t('label.number'),
       ...getNumberCell(),
     },
     {
@@ -237,17 +237,17 @@ const PrescriptionsList: Component = () => {
       // server sort key is the same coalescence.
       c: { accessor: prescriptionDateOf, id: 'prescriptionDatetime' },
       sortKey: 'invoiceDatetime',
-      header: t('label.prescription-date'),
+      header: () => t('label.prescription-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
-      header: t('label.reference'),
+      header: () => t('label.reference'),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
     // A column per configured prescription custom field (AC-CF4) — not

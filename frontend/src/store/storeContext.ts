@@ -14,14 +14,6 @@ import { authUser } from '../auth/authContext';
 
 const [storeContext, setStoreContext] = createSignal<StoreContextResult>();
 
-// Fresh-login store-picker gate (spec SL-6). A brand-new login (authContext
-// login()) sets this so the store picker is shown even when the URL still names
-// a store from a previous session — the user re-picks (unless a store is
-// remembered, or they have exactly one). A page refresh restores the session
-// via checkAuth() WITHOUT setting it, so the URL is respected and the user stays
-// in their store. Cleared once a store is chosen (StoreGuardLayout).
-const [forceStorePicker, setForceStorePicker] = createSignal(false);
-
 // The store the loaded context belongs to — keyed on the REQUEST, not derived
 // from the response: storePreferences.id is the store id only when the store
 // has a preference row; for a store without one the server answers with a
@@ -220,8 +212,6 @@ const hasPermission = (permission: UserPermission): boolean => {
 export {
   storeContext,
   refetch as refetchStoreContext,
-  forceStorePicker,
-  setForceStorePicker,
   currentStoreId,
   currentUserId,
   stocktakePreferences,
