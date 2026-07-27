@@ -562,31 +562,31 @@ const StocktakeDetailView: Component = () => {
       // path); the server sort key is `itemCode`.
       c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'itemCode',
-      header: t('label.code'),
+      header: () => t('label.code'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
       meta: { headerPosition: 'primary', wrapLines: 2 },
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('label.batch'),
+      header: () => t('label.batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('label.expiry-date'),
+      header: () => t('label.expiry-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'manufactureDate' },
       // Unsortable — StocktakeLineSortFieldInput has no manufactureDate key
       // (backend gap; spec/stocktakes contract § backend gaps).
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       ...getDateCell(),
     },
     {
@@ -594,19 +594,19 @@ const StocktakeDetailView: Component = () => {
       // by locationCode.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationCode',
-      header: t('label.location'),
+      header: () => t('label.location'),
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
       // backend gap). Matches OMS's columns.tsx itemUnit, placed after Location.
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
-      header: t('label.unit-name'),
+      header: () => t('label.unit-name'),
     },
     {
       c: { key: 'packSize' },
       // Unsortable in OMS's columns.tsx (no enableSorting) even though the
       // server has a packSize key — matched here.
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       ...getNumberCell(),
     },
     // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
@@ -618,7 +618,7 @@ const StocktakeDetailView: Component = () => {
               accessor: line => dosesPerUnit(line) ?? '',
               id: 'dosesPerUnit',
             },
-            header: t('label.doses-per-unit'),
+            header: () => t('label.doses-per-unit'),
             ...getNumberCell(),
           } satisfies Column<Line, SortKey>,
         ]
@@ -631,7 +631,7 @@ const StocktakeDetailView: Component = () => {
           {
             c: { key: 'snapshotNumberOfPacks' },
             sortKey: 'snapshotNumberOfPacks',
-            header: t('label.snapshot-num-of-packs'),
+            header: () => t('label.snapshot-num-of-packs'),
             ...getNumberCell(),
             // Snapshot cell also carries the line's error inline beneath the count (a
             // snapshot/current-count mismatch is a "recount this line" message about
@@ -673,7 +673,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
-      header: t('label.counted-num-of-packs'),
+      header: () => t('label.counted-num-of-packs'),
       ...getNumberCell(),
       meta: { align: 'right', headerPosition: 'badge' },
     },
@@ -686,7 +686,7 @@ const StocktakeDetailView: Component = () => {
               accessor: line => dosesCounted(line) ?? '',
               id: 'dosesCounted',
             },
-            header: t('label.doses-counted'),
+            header: () => t('label.doses-counted'),
             ...getNumberCell(),
           } satisfies Column<Line, SortKey>,
         ]
@@ -702,7 +702,7 @@ const StocktakeDetailView: Component = () => {
               accessor: line => lineDifference(line) ?? '',
               id: 'difference',
             },
-            header: t('label.difference'),
+            header: () => t('label.difference'),
             ...getNumberCell(),
           } satisfies Column<Line, SortKey>,
         ]),
@@ -722,7 +722,7 @@ const StocktakeDetailView: Component = () => {
               id: 'reason',
             },
             sortKey: 'reasonOption',
-            header: t('label.reason'),
+            header: () => t('label.reason'),
           } satisfies Column<Line, SortKey>,
         ]),
     // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
@@ -732,7 +732,7 @@ const StocktakeDetailView: Component = () => {
       ? [
           {
             c: { accessor: line => line.donorName ?? '', id: 'donor' },
-            header: t('label.donor'),
+            header: () => t('label.donor'),
           } satisfies Column<Line, SortKey>,
         ]
       : []),
@@ -743,20 +743,20 @@ const StocktakeDetailView: Component = () => {
         accessor: line => line.manufacturer?.name ?? '',
         id: 'manufacturer',
       },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
     },
     {
       // Campaign name (ungated) — campaign.name on the line. Unsortable (no
       // server key; backend gap). Matches OMS's columns.tsx campaign, placed
       // after Manufacturer, before Comment.
       c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
-      header: t('label.campaign-only'),
+      header: () => t('label.campaign-only'),
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
   ]);

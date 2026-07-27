@@ -366,7 +366,7 @@ export const DetailTableShowcase = () => {
     {
       c: { accessor: line => line.itemCode, id: 'itemCode' },
       sortKey: 'itemCode',
-      header: t('label.code'),
+      header: () => t('label.code'),
       ...getCellDefinition<Line>('itemCode'),
       cell: info => {
         const line = info.row.original;
@@ -384,7 +384,7 @@ export const DetailTableShowcase = () => {
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('label.name'),
+      header: () => t('label.name'),
       ...getCellDefinition<Line>('itemName', {
         headerPosition: 'primary',
         wrapLines: 2,
@@ -393,37 +393,37 @@ export const DetailTableShowcase = () => {
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('label.batch'),
+      header: () => t('label.batch'),
       ...getCellDefinition<Line>('batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('label.expiry'),
+      header: () => t('label.expiry'),
       ...getCellDefinition<Line>('expiryDate'),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationName',
-      header: t('label.location'),
+      header: () => t('label.location'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('location'),
     },
     {
       c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
-      header: t('label.unit'),
+      header: () => t('label.unit'),
       ...getCellDefinition<Line>('unitName'),
     },
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
+      header: () => t('label.pack-quantity'),
       // Badge cells drop their label by default; keep it so the card's chip
       // reads "Num. of packs: 12", not a bare number.
       ...getCellDefinition<Line>('numberOfPacks', {
@@ -440,7 +440,7 @@ export const DetailTableShowcase = () => {
             : '',
         id: 'difference',
       },
-      header: t('label.difference'),
+      header: () => t('label.difference'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('difference'),
     },
@@ -449,19 +449,19 @@ export const DetailTableShowcase = () => {
         accessor: line => line.packSize * line.numberOfPacks,
         id: 'unitQuantity',
       },
-      header: t('label.unit-quantity'),
+      header: () => t('label.unit-quantity'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('unitQuantity'),
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
+      header: () => t('label.pack-cost-price'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('costPricePerPack'),
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
+      header: () => t('label.pack-sell-price'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('sellPricePerPack'),
     },
@@ -470,7 +470,7 @@ export const DetailTableShowcase = () => {
         accessor: line => (isPlaceholderLine(line) ? null : line.totalAfterTax),
         id: 'total',
       },
-      header: t('label.total'),
+      header: () => t('label.total'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('total'),
     },
@@ -479,13 +479,13 @@ export const DetailTableShowcase = () => {
         accessor: line => line.manufacturer?.name ?? '',
         id: 'manufacturer',
       },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('manufacturer'),
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
+      header: () => t('label.manufacture-date'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('manufactureDate'),
     },
@@ -494,12 +494,12 @@ export const DetailTableShowcase = () => {
         accessor: line => line.campaign?.name ?? line.program?.name ?? '',
         id: 'campaignProgram',
       },
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
       cardGroup: 'more',
     },
     {
       c: { key: 'note' },
-      header: t('label.note'),
+      header: () => t('label.note'),
       cardGroup: 'more',
       ...getCellDefinition<Line>('note'),
     },

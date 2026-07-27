@@ -35,22 +35,22 @@ export const ProgramEnrolmentsPanel: Component<
         accessor: r => r.document.documentRegistry?.name ?? r.type,
         id: 'program',
       },
-      header: t('label.enrolment-program'),
+      header: () => t('label.enrolment-program'),
     },
     {
       c: {
         accessor: r => r.programEnrolmentId ?? '',
         id: 'programEnrolmentId',
       },
-      header: t('label.enrolment-patient-id'),
+      header: () => t('label.enrolment-patient-id'),
     },
     {
       c: { accessor: r => r.status ?? '', id: 'status' },
-      header: t('label.program-status'),
+      header: () => t('label.program-status'),
     },
     {
       c: { key: 'enrolmentDatetime' },
-      header: t('label.enrolment-datetime'),
+      header: () => t('label.enrolment-datetime'),
       ...getDateCell(),
     },
   ];

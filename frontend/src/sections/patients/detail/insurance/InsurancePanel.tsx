@@ -39,27 +39,27 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
   const columns = (): Column<Policy, never>[] => [
     {
       c: { key: 'policyNumber' },
-      header: t('label.policy-number'),
+      header: () => t('label.policy-number'),
     },
     {
       c: {
         accessor: p => p.insuranceProviders?.providerName ?? '',
         id: 'providerName',
       },
-      header: t('label.provider-name'),
+      header: () => t('label.provider-name'),
     },
     {
       c: { accessor: p => policyTypeLabel(p.policyType), id: 'policyType' },
-      header: t('label.policy-type'),
+      header: () => t('label.policy-type'),
     },
     {
       c: { accessor: p => `${p.discountPercentage}%`, id: 'discountRate' },
-      header: t('label.discount-rate'),
+      header: () => t('label.discount-rate'),
       meta: { align: 'right' },
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry-date'),
+      header: () => t('label.expiry-date'),
       ...getDateCell(),
     },
     {
@@ -67,7 +67,7 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
         accessor: p => (p.isActive ? t('label.active') : t('label.inactive')),
         id: 'status',
       },
-      header: t('label.status'),
+      header: () => t('label.status'),
     },
   ];
 
