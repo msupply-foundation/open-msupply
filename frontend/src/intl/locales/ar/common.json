@@ -1972,7 +1972,6 @@
   "store.search": "البحث عن المتاجر",
   "store.search-placeholder": "ابحث باسم المتجر أو رمزه…",
   "store.select": "اختر متجرًا",
-  "store.select-instructions": "اختر المتجر الذي تريد العمل فيه. يمكنك تبديل المتاجر في أي وقت من الشريط السفلي.",
   "success": "نجاح!",
   "success.data-deleted": "تم الحذف بنجاح",
   "success.data-saved": "تم الحفظ بنجاح",

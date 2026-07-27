@@ -1,5 +1,6 @@
 import { createSignal, createMemo, onMount, For, Show } from 'solid-js';
 import { TextField } from '../inputs/TextField';
+import { Checkbox } from '../inputs/Checkbox';
 import { StatusChip } from '../feedback/StatusChip';
 import { Button } from '../buttons/Button';
 import { ArrowRightIcon } from '../../icons';
@@ -32,10 +33,30 @@ export const StoreSelector = (props: {
   stores: StoreOption[];
   defaultStoreId?: string;
   lastUsedStoreId?: string;
-  onConfirm: (storeId: string) => void;
+  /**
+   * Highlight this store first (before default / last-used) — e.g. the store
+   * the user is currently in when switching, so confirming without picking a
+   * different one keeps them where they are.
+   */
+  initialStoreId?: string;
+  /**
+   * Stretch the panel to fill a height-constrained host (a fixed-height modal),
+   * so the store list — not the whole panel — flexes and scrolls. Off by
+   * default: the panel is content-height with the list capped (dialog/showcase).
+   */
+  fillHeight?: boolean;
+  /**
+   * Show a "Remember my choice" checkbox (spec startup SL-6). Its state is
+   * reported as the second `onConfirm` argument so the host can persist it.
+   */
+  rememberOption?: boolean;
+  /** Initial checked state of the remember checkbox (e.g. already remembered). */
+  defaultRemember?: boolean;
+  onConfirm: (storeId: string, remember: boolean) => void;
 }) => {
   const [query, setQuery] = createSignal('');
   const [selected, setSelected] = createSignal<string | undefined>();
+  const [remember, setRemember] = createSignal(props.defaultRemember ?? false);
 
   // Focus the search on mount so the keyboard path works from the moment the
   // panel appears: type to filter, Enter to confirm — no click needed first.
@@ -74,7 +95,7 @@ export const StoreSelector = (props: {
     const id = row?.getAttribute('data-store-id') ?? selectedId();
     if (!id) return;
     e.preventDefault();
-    props.onConfirm(id);
+    props.onConfirm(id, remember());
   };
 
   // Android soft keyboards (GBoard) report Enter with isComposing=true while
@@ -88,7 +109,7 @@ export const StoreSelector = (props: {
     if (e.inputType !== 'insertLineBreak') return;
     e.preventDefault();
     const id = selectedId();
-    if (id) props.onConfirm(id);
+    if (id) props.onConfirm(id, remember());
   };
 
   const visible = createMemo(() => {
@@ -104,6 +125,7 @@ export const StoreSelector = (props: {
   const selectedId = createMemo(() => {
     const candidates = [
       selected(),
+      props.initialStoreId,
       props.defaultStoreId,
       props.lastUsedStoreId,
     ];
@@ -116,6 +138,7 @@ export const StoreSelector = (props: {
   return (
     <div
       class={styles.panel}
+      data-fill={props.fillHeight ? '' : undefined}
       onKeyDown={handleKeyDown}
       onBeforeInput={handleBeforeInput}
     >
@@ -154,7 +177,7 @@ export const StoreSelector = (props: {
                     data-active={store.id === selectedId() ? '' : undefined}
                     data-store-id={store.id}
                     onClick={() => setSelected(store.id)}
-                    onDblClick={() => props.onConfirm(store.id)}
+                    onDblClick={() => props.onConfirm(store.id, remember())}
                   >
                     <span class={styles.storeName}>{store.name}</span>
                     <span class={styles.tags}>
@@ -180,12 +203,23 @@ export const StoreSelector = (props: {
       </div>
 
       <div class={styles.footer}>
+        <Show when={props.rememberOption}>
+          <div class={styles.remember}>
+            <Checkbox
+              label={t('label.remember-my-choice')}
+              checked={remember()}
+              onChange={setRemember}
+            />
+          </div>
+        </Show>
         <Button
           variant="secondary"
           icon={<ArrowRightIcon />}
           iconPosition="end"
           disabled={!selectedId()}
-          onClick={() => selectedId() && props.onConfirm(selectedId()!)}
+          onClick={() =>
+            selectedId() && props.onConfirm(selectedId()!, remember())
+          }
         >
           {t('button.continue')}
         </Button>

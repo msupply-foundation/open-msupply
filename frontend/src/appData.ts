@@ -12,6 +12,10 @@ import type { LayeredConfig } from './ui/elements/table/tableConfig';
 // TableConfig) — the exact type DataTable resolves.
 type AppData = {
   previousStoreIdByUserId?: Record<string, string>;
+  // "Remember my choice" on the store picker (spec startup SL-6): a per-user
+  // device preference that auto-enters this store on the next login without
+  // showing the picker. Cleared when the user confirms with the box unticked.
+  rememberedStoreIdByUserId?: Record<string, string>;
   tableConfigByUserId?: Record<string, Record<string, LayeredConfig>>;
   // Label printer "print via USB" (spec/settings rules § Devices — label
   // printer): a DEVICE-local preference, deliberately not keyed by user and
@@ -51,6 +55,26 @@ export const recordPreviousStoreId = (
         [userId]: storeId,
       },
     })
+  );
+};
+
+// "Remember my choice" store for a user (spec startup SL-6): the store to
+// auto-enter on login instead of showing the picker. Undefined once cleared.
+export const getRememberedStoreId = (userId: string): string | undefined =>
+  readAppData().rememberedStoreIdByUserId?.[userId];
+
+// Set (remember ticked) or clear (unticked) the remembered store for a user.
+export const setRememberedStoreId = (
+  userId: string,
+  storeId: string | undefined
+): void => {
+  const data = readAppData();
+  const byUser = { ...data.rememberedStoreIdByUserId };
+  if (storeId) byUser[userId] = storeId;
+  else delete byUser[userId];
+  localStorage.setItem(
+    APP_DATA_KEY,
+    JSON.stringify({ ...data, rememberedStoreIdByUserId: byUser })
   );
 };
 
