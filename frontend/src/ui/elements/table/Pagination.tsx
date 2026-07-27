@@ -4,7 +4,7 @@ import { Select } from '../selectors/Select';
 import { t } from '../../../intl';
 import styles from './Pagination.module.css';
 
-const DEFAULT_PAGE_SIZES = [20, 50, 100];
+const DEFAULT_PAGE_SIZES = [10, 20, 50, 100];
 
 export interface PaginationProps {
   /** Zero-based row offset of the current page. */
@@ -25,15 +25,20 @@ export interface PaginationProps {
 }
 
 /*
- * List pagination, styled to match the current Open mSupply app: a "Showing
- * X-Y of Z" summary on the inline-start edge, then a rows-per-page selector
- * and a numbered page pager (first / previous / 1 2 3 … N / next / last) on
- * the inline-end edge (spec/ui-standards/tables › pagination).
+ * List pagination (ui-standards § tables → pagination, unit 10): ONE
+ * inline-end cluster — rows-per-page selector, the range "1–20 of 38"
+ * (quiet, tabular-nums; the old bold far-left "Showing X-Y of Z" summary
+ * is retired), then the pager. The pager keeps our fixed-slot layout
+ * ([1] ‹ [k] › [N] — a recorded deviation from the spec's plain pill
+ * list, which has no truncation model for many pages) restyled to the
+ * spec: action-blue current pill, --radius-sm, quiet hover. At ≤480px
+ * the rows-per-page selector and the number slots hide, leaving ‹ › +
+ * the range (the spec's mobile collapse).
  *
  * Hand-rolled over native <button>s (role + keyboard + disabled for free); the
- * summary is a live region so a screen reader hears the page change. The
+ * range is a live region so a screen reader hears the page change. The
  * parent owns offset/pageSize (destined for URL params); this component is
- * pure presentation over them. The pager arrows (first / prev / next / last)
+ * pure presentation over them. The pager arrows (prev / next)
  * are ported verbatim from the current app's MUI icons so they pixel-match;
  * RTL mirrors via the icons' data-flip-rtl.
  */
@@ -85,39 +90,35 @@ export const Pagination = (props: PaginationProps) => {
       aria-label={t('pagination.label')}
       data-testid="table-pagination"
     >
-      {/* "X-Y of Z" — the range and total are emphasised (bold), the "of" is not. */}
-      <span class={styles.summary} aria-live="polite">
-        <strong class={styles.summaryNumber}>
-          {from()}-{to()}
-        </strong>{' '}
-        {t('pagination.of')}{' '}
-        <strong class={styles.summaryNumber}>{props.total}</strong>
+      <Show when={props.onPageSizeChange}>
+        <Select
+          class={styles.pageSize}
+          size="small"
+          label={t('pagination.rows')}
+          testId="rows-per-page-select"
+          value={String(props.pageSize)}
+          options={pageSizes().map(size => ({
+            value: String(size),
+            label: String(size),
+          }))}
+          // Guard against no-op emissions: the Select re-fires onValueChange
+          // when it re-mounts (e.g. this pager now lives inside the DataTable
+          // overlay, which re-renders on data change), and onPageSizeChange
+          // resets the page to 0 — so an unguarded no-op would snap the page
+          // back to 1 right after the user navigated. Only fire on a REAL size
+          // change.
+          onValueChange={v => {
+            const next = Number(v);
+            if (next !== props.pageSize) props.onPageSizeChange!(next);
+          }}
+        />
+      </Show>
+      {/* The range "1–20 of 38" — quiet body-tone text (no bold; unit 10),
+          tabular-nums so the digits keep constant width while paging. */}
+      <span class={styles.range} aria-live="polite">
+        {from()}–{to()} {t('pagination.of')} {props.total}
       </span>
-      <div class={styles.controls}>
-        <Show when={props.onPageSizeChange}>
-          <Select
-            class={styles.pageSize}
-            size="sm"
-            label={t('pagination.rows')}
-            testId="rows-per-page-select"
-            value={String(props.pageSize)}
-            options={pageSizes().map(size => ({
-              value: String(size),
-              label: String(size),
-            }))}
-            // Guard against no-op emissions: the Select re-fires onValueChange
-            // when it re-mounts (e.g. this pager now lives inside the DataTable
-            // overlay, which re-renders on data change), and onPageSizeChange
-            // resets the page to 0 — so an unguarded no-op would snap the page
-            // back to 1 right after the user navigated. Only fire on a REAL size
-            // change.
-            onValueChange={v => {
-              const next = Number(v);
-              if (next !== props.pageSize) props.onPageSizeChange!(next);
-            }}
-          />
-        </Show>
-        {/* Compact pager, fixed slots so nothing shifts as you page within a
+      {/* Compact pager, fixed slots so nothing shifts as you page within a
             dataset: [first] ‹ [middle] › [last]. first(1)/last(N) are jump
             buttons that render as the current-page style when you're ON that
             page; prev/next stay put and disable at the boundaries; the middle
@@ -127,110 +128,109 @@ export const Pagination = (props: PaginationProps) => {
             page N → 1 ‹ N-1 › (N). The middle only exists when N > 2 (with ≤ 2
             pages first/last already cover them); the last slot only when N > 1
             (a single page is just the "(1)" first slot + disabled arrows). */}
-        <div class={styles.pager}>
-          {/* First slot — the current-page display when on page 1, else a
+      <div class={styles.pager}>
+        {/* First slot — the current-page display when on page 1, else a
               jump-to-first button. */}
+        <Show
+          when={!onFirst()}
+          fallback={
+            <span
+              class={`${styles.pageCurrent} ${styles.numberSlot}`}
+              data-testid="pagination-current-page"
+              aria-current="page"
+            >
+              1
+            </span>
+          }
+        >
+          <button
+            type="button"
+            class={`${styles.pageButton} ${styles.numberSlot}`}
+            onClick={() => goToPage(1)}
+            data-testid="pagination-first"
+            aria-label={t('pagination.first')}
+          >
+            1
+          </button>
+        </Show>
+        <button
+          type="button"
+          class={styles.pageButton}
+          onClick={() => goToPage(currentPage() - 1)}
+          disabled={!hasPrev()}
+          data-testid="pagination-previous"
+          aria-label={t('pagination.previous')}
+        >
+          <NavigateBeforeIcon />
+        </button>
+        {/* Middle slot — only meaningful with > 2 pages (with ≤ 2, the
+              first/last slots already show every page). Always a number so the
+              row width is constant: the current page (current-style) on
+              in-between pages, else a clickable jump to the neighbour towards
+              the middle (page 2 on the first page, page N-1 on the last). */}
+        <Show when={pageCount() > 2}>
           <Show
-            when={!onFirst()}
+            when={middleIsCurrent()}
+            fallback={
+              <button
+                type="button"
+                class={`${styles.pageButton} ${styles.numberSlot}`}
+                onClick={() => goToPage(middlePage())}
+                data-testid="pagination-middle"
+                aria-label={t('pagination.go-to-page', {
+                  page: middlePage(),
+                })}
+              >
+                {middlePage()}
+              </button>
+            }
+          >
+            <span
+              class={`${styles.pageCurrent} ${styles.numberSlot}`}
+              data-testid="pagination-current-page"
+              aria-current="page"
+            >
+              {currentPage()}
+            </span>
+          </Show>
+        </Show>
+        <button
+          type="button"
+          class={styles.pageButton}
+          onClick={() => goToPage(currentPage() + 1)}
+          disabled={!hasNext()}
+          data-testid="pagination-next"
+          aria-label={t('pagination.next')}
+        >
+          <NavigateNextIcon />
+        </button>
+        {/* Last slot — only when there's more than one page (a single page is
+              just the "(1)" first slot). The current-page display when on the
+              last page, else a jump-to-last button. */}
+        <Show when={pageCount() > 1}>
+          <Show
+            when={!onLast()}
             fallback={
               <span
-                class={styles.pageCurrent}
+                class={`${styles.pageCurrent} ${styles.numberSlot}`}
                 data-testid="pagination-current-page"
                 aria-current="page"
               >
-                1
+                {pageCount()}
               </span>
             }
           >
             <button
               type="button"
-              class={styles.pageButton}
-              onClick={() => goToPage(1)}
-              data-testid="pagination-first"
-              aria-label={t('pagination.first')}
+              class={`${styles.pageButton} ${styles.numberSlot}`}
+              onClick={() => goToPage(pageCount())}
+              data-testid="pagination-last"
+              aria-label={t('pagination.last')}
             >
-              1
+              {pageCount()}
             </button>
           </Show>
-          <button
-            type="button"
-            class={styles.pageButton}
-            onClick={() => goToPage(currentPage() - 1)}
-            disabled={!hasPrev()}
-            data-testid="pagination-previous"
-            aria-label={t('pagination.previous')}
-          >
-            <NavigateBeforeIcon />
-          </button>
-          {/* Middle slot — only meaningful with > 2 pages (with ≤ 2, the
-              first/last slots already show every page). Always a number so the
-              row width is constant: the current page (current-style) on
-              in-between pages, else a clickable jump to the neighbour towards
-              the middle (page 2 on the first page, page N-1 on the last). */}
-          <Show when={pageCount() > 2}>
-            <Show
-              when={middleIsCurrent()}
-              fallback={
-                <button
-                  type="button"
-                  class={styles.pageButton}
-                  onClick={() => goToPage(middlePage())}
-                  data-testid="pagination-middle"
-                  aria-label={t('pagination.go-to-page', {
-                    page: middlePage(),
-                  })}
-                >
-                  {middlePage()}
-                </button>
-              }
-            >
-              <span
-                class={styles.pageCurrent}
-                data-testid="pagination-current-page"
-                aria-current="page"
-              >
-                {currentPage()}
-              </span>
-            </Show>
-          </Show>
-          <button
-            type="button"
-            class={styles.pageButton}
-            onClick={() => goToPage(currentPage() + 1)}
-            disabled={!hasNext()}
-            data-testid="pagination-next"
-            aria-label={t('pagination.next')}
-          >
-            <NavigateNextIcon />
-          </button>
-          {/* Last slot — only when there's more than one page (a single page is
-              just the "(1)" first slot). The current-page display when on the
-              last page, else a jump-to-last button. */}
-          <Show when={pageCount() > 1}>
-            <Show
-              when={!onLast()}
-              fallback={
-                <span
-                  class={styles.pageCurrent}
-                  data-testid="pagination-current-page"
-                  aria-current="page"
-                >
-                  {pageCount()}
-                </span>
-              }
-            >
-              <button
-                type="button"
-                class={styles.pageButton}
-                onClick={() => goToPage(pageCount())}
-                data-testid="pagination-last"
-                aria-label={t('pagination.last')}
-              >
-                {pageCount()}
-              </button>
-            </Show>
-          </Show>
-        </div>
+        </Show>
       </div>
     </nav>
   );

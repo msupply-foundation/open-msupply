@@ -9,6 +9,7 @@ import { Button } from '../ui/elements/buttons/Button';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { TruckIcon, PlusCircleIcon, DownloadIcon } from '../ui/icons';
 import { Lead, PageBody, PageFrame, ToolbarStub } from './common';
+import type { PageMetadata } from './metadata';
 
 const EXPORT_OPTIONS = [
   { value: 'csv', label: 'Export CSV' },
@@ -20,10 +21,33 @@ const EXPORT_OPTIONS = [
  * showcase-wide — see kdd/showcase-harness): page column is ContentContainer
  * + app Stack, demo sections are the app's DashboardCard with a <Lead> child.
  */
+// No TOC is rendered — the page is short (Carl); the metadata is still exported
+// and registered so Search indexes these sections.
+export const headerMetadata: PageMetadata = {
+  id: 'header',
+  title: 'Header',
+  searchTerms: ['page header', 'top bar', 'title'],
+  items: [
+    {
+      id: 'header-page',
+      title: 'Page header',
+      searchTerms: ['title', 'actions', 'outbound'],
+    },
+    {
+      id: 'header-breadcrumb',
+      title: 'Trail links',
+      searchTerms: ['breadcrumb', 'crumbs', 'navigation'],
+    },
+  ],
+};
+
 export const HeaderShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
-      <DashboardCard title="Page header — the Outbound Shipments demo">
+      <DashboardCard
+        id="header-page"
+        title="Page header — the Outbound Shipments demo"
+      >
         <Lead>
           The core page-layout atom, reproducing last week's demo.{' '}
           <code>&lt;Header&gt;</code> is pure layout with zero state — the page
@@ -56,7 +80,10 @@ export const HeaderShowcase = () => (
         </PageFrame>
       </DashboardCard>
 
-      <DashboardCard title="Trail links, omission, intrinsic wrap">
+      <DashboardCard
+        id="header-breadcrumb"
+        title="Trail links, omission, intrinsic wrap"
+      >
         <Lead>
           A deeper trail on a detail page: ancestor crumbs with a{' '}
           <code>to</code> render as real links, and the current page renders as

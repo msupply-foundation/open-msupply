@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { countPanelState } from './panelState';
 
-// Panel-level failure isolation (spec/dashboard ui-surface S2). Criteria
-// cited from spec/dashboard/acceptance.md.
+// Panel-level failure isolation (spec/dashboard ui-surface S2). Criteria cited
+// from spec/dashboard/acceptance.md.
 
 describe('countPanelState', () => {
   // AC-D2 — a family the user cannot read shows a permission error in place
@@ -21,8 +21,8 @@ describe('countPanelState', () => {
     });
   });
 
-  // ui-surface S2 — a panel is loading until its own query resolves; a
-  // resolved family shows its stats.
+  // ui-surface S2 — a panel is loading until its own query resolves; a resolved
+  // family shows its stats.
   it('loads until the family resolves, then shows the stats', () => {
     expect(countPanelState(undefined)).toEqual({ status: 'loading' });
     expect(countPanelState({ kind: 'ready', data: { n: 1 } })).toEqual({

@@ -54,5 +54,9 @@ export const issueWarningMessages = (
         ];
       case 'shortfall':
         return [];
+      // Outbound distributes whole packs only — the partial-packs warning is
+      // the prescriptions (partial-pack dispensing) consumer's (AC-AL12).
+      case 'partial-packs':
+        return [];
     }
   });
