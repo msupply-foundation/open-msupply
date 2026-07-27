@@ -16,8 +16,9 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateFieldProps {
   label: string;
-  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
-  width?: 'short' | 'full';
+  /** Max-width cap: `compact` (10rem box), `short` (default) or `full` (see
+   * FieldShell). */
+  width?: 'compact' | 'short' | 'full';
   /** ISO calendar date `YYYY-MM-DD`, or null/undefined when empty. */
   value?: string | null;
   /** Fired with the new ISO date, or null when cleared. */

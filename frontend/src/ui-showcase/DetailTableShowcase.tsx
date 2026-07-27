@@ -24,10 +24,8 @@ import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
 import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
-import { Stack } from '../ui/layout/Stack/Stack';
-import { FormRow } from '../ui/layout/Form/FormRow';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -616,42 +614,42 @@ export const DetailTableShowcase = () => {
                 </Button>
               </Show>
             </HeaderButtons>
-            {/* The header field cluster. Fixing the real toolbar's cramped
-                inline-label FieldRows: standard label-ABOVE inputs, laid out in
-                a FormRow that shares the width and stacks to one column on
-                narrow screens. The Received date is a disabled input rather
-                than a LabelledValue because it IS a field — editable when the
-                shipment is Received and backdating is on, disabled otherwise.
-                The info banner sits full-width above the fields. */}
-            <Toolbar>
-              <Stack gap="sm" style={{ width: '100%' }}>
-                <Alert severity="info">
-                  This shipment was created manually; its delivery status will
-                  not update automatically.
+            {/* The header field cluster via HeaderToolbar (Carl 2026-07-27):
+                fields flow into its FormRow (equal shares at a 10rem min,
+                growing to fill and wrapping as a unit); the compact Alert goes
+                to the `alert` prop, rendered as a content-hugging chip pinned to
+                the bottom baseline. Fields take width="full" to fill the share. */}
+            <HeaderToolbar
+              alert={
+                <Alert severity="info" compact>
+                  Created manually; status won't update automatically.
                 </Alert>
-                <FormRow minItemWidth="13rem">
-                  <Select
-                    label={t('label.supplier-name')}
-                    options={SUPPLIERS}
-                    value={supplier()}
-                    onValueChange={setSupplier}
-                  />
-                  <TextField
-                    label={t('label.reference')}
-                    width="full"
-                    value={reference()}
-                    onInput={e => setReference(e.currentTarget.value)}
-                  />
-                  <DateField
-                    label={t('label.received')}
-                    width="full"
-                    format="dd MMM yyyy"
-                    value="2026-05-19"
-                    disabled
-                  />
-                </FormRow>
-              </Stack>
-            </Toolbar>
+              }
+            >
+              <Select
+                label={t('label.supplier-name')}
+                size="small"
+                width="full"
+                options={SUPPLIERS}
+                value={supplier()}
+                onValueChange={setSupplier}
+              />
+              <TextField
+                label={t('label.reference')}
+                size="small"
+                width="full"
+                value={reference()}
+                onInput={e => setReference(e.currentTarget.value)}
+              />
+              <DateField
+                label={t('label.received')}
+                size="small"
+                width="full"
+                format="dd MMM yyyy"
+                value="2026-05-19"
+                disabled
+              />
+            </HeaderToolbar>
             <TabList tabs={TABS} />
           </Header>
         }

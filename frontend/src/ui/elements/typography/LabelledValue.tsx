@@ -16,6 +16,13 @@ export interface LabelledValueProps extends JSX.HTMLAttributes<HTMLDivElement> {
    */
   variant?: 'card' | 'field';
   /**
+   * Type scale, matching the input components' `size`: `default` (14px label /
+   * body value) or `small` (13px, `--input-font-sm`), so a read-only value
+   * lines up with the small inputs it sits among — e.g. in a page-header
+   * toolbar row (see the Detail-table showcase).
+   */
+  size?: 'default' | 'small';
+  /**
    * The value, shown below the label in body text. Pass any node (text, a
    * chip, etc.).
    */
@@ -40,12 +47,14 @@ export const LabelledValue = (props: LabelledValueProps) => {
     'label',
     'children',
     'variant',
+    'size',
     'class',
   ]);
   return (
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-variant={local.variant ?? 'card'}
+      data-size={local.size ?? 'default'}
       {...rest}
     >
       <span class={styles.label}>{local.label}</span>

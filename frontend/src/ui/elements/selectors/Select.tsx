@@ -39,11 +39,13 @@ interface SelectProps {
   size?: 'default' | 'small';
   /**
    * Max-width cap (the container can always be narrower), mirroring
-   * {@link TextField}: `short` (default) / `long` for form fields, `full` to
-   * fill the available width — e.g. a detail row's value column so the dropdown
-   * aligns with the text fields beside it.
+   * {@link TextField}: `compact` (10rem — the trigger box only, for a dense
+   * row like a page-header toolbar; the selected value ellipsises if it
+   * overruns), `short` (default) / `long` for form fields, `full` to fill the
+   * available width — e.g. a detail row's value column so the dropdown aligns
+   * with the text fields beside it.
    */
-  width?: 'short' | 'long' | 'full';
+  width?: 'compact' | 'short' | 'long' | 'full';
   class?: string;
   /** `data-testid` for the trigger button (locale-stable test hook, e2e/TESTIDS.md). */
   testId?: string;
