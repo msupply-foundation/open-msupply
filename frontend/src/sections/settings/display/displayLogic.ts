@@ -1,8 +1,8 @@
 // Display-settings logic (spec/settings/rules.md § Display settings), pure so
 // the theme/logo asymmetry is unit-testable:
-//  - theme saves gate on a shallow client-side JSON parse (AC-DS2); the logo
-//    has NO content validation at all (AC-DS5).
-//  - toggling OFF clears immediately with no Save step (AC-DS4, AC-DS6);
+//  - theme saves gate on a shallow client-side JSON parse (OMS-REG-SET-01.13); the logo
+//    has NO content validation at all (OMS-REG-SET-01.18).
+//  - toggling OFF clears immediately with no Save step (OMS-REG-SET-01.17);
 //    toggling ON requires an explicit Save.
 
 import type { UpdateDisplaySettingsVariables } from './displaySettings.generated';
