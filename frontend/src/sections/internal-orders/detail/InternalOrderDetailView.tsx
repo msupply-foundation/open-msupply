@@ -56,11 +56,14 @@ import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
+import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
+import { PlusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
-// send, the side panel (S5), the Documents tab, and Export/Print (reports S4).
-// The line editor (S4), master-list picker (S7), the Indicators tab, and the
-// ancillary Add/Update actions are out of this cut.
+// send, the side panel (S5), the Documents tab, Export/Print (reports S4), the
+// Indicators tab, the ancillary Add/Update actions, and the line editor (S4 —
+// Add item + row-click edit). The master-list picker (S7), use-suggested, and
+// the editor's context charts / forecast-calculation display are a later cut.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -91,6 +94,11 @@ const InternalOrderDetailView: Component = () => {
   });
   const [supplierError, setSupplierError] = createSignal<string>();
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  // The line editor (S4): closed, open in add mode (undefined line), or open on
+  // an existing line (edit mode). One signal drives both.
+  const [editorLine, setEditorLine] = createSignal<
+    { mode: 'add' } | { mode: 'edit'; line: Line }
+  >();
 
   const tableConfig = createTableConfig({
     tableId: 'internal-order-detail',
@@ -212,6 +220,25 @@ const InternalOrderDetailView: Component = () => {
     return node ? isOrderEditable(node) : false;
   };
   const isProgram = () => !!info()?.program;
+  const orderInPacks = () => prefs()?.orderInPacks ?? false;
+  // The Add-item affordance / add mode (AC-LN1): a Draft general order whose
+  // supplier's store is enabled — program orders' item sets are fixed.
+  const canAddLines = () => editable() && !isProgram();
+
+  // Save & next's walk (AC-LN22): the next line after the current in the
+  // table's current sort/filter order, skipping ones already visited this run.
+  // The client-side table holds every line (the server-paginated walk collapses
+  // to a plain scan here), so no page advance is needed.
+  const resolveNextLine = (
+    currentLineId: string,
+    covered: Set<string>
+  ): Line | undefined => {
+    const ordered = rows();
+    const start = ordered.findIndex(line => line.id === currentLineId);
+    for (let index = start + 1; index < ordered.length; index++)
+      if (!covered.has(ordered[index]!.id)) return ordered[index];
+    return ordered.find(line => !covered.has(line.id));
+  };
 
   // ONE debounced buffer for the as-you-type reference (comment rides the same
   // buffer for the side panel / send, out of this cut).
@@ -618,6 +645,19 @@ const InternalOrderDetailView: Component = () => {
               <Header>
                 <Breadcrumb crumbs={crumbs(node())} />
                 <HeaderButtons>
+                  {/* Add item — opens the line editor in add mode; disabled on
+                      program and read-only orders (AC-LN1). The master-list
+                      path and use-suggested are a later cut. */}
+                  <Show when={canAddLines()}>
+                    <Button
+                      variant="primary"
+                      icon={<PlusCircleIcon />}
+                      data-testid="add-item-button"
+                      onClick={() => setEditorLine({ mode: 'add' })}
+                    >
+                      {t('button.add-item')}
+                    </Button>
+                  </Show>
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
                   <ExportPrintInternalOrderAction orderId={node().id} />
                   {/* More — reopens the side panel; shown only while closed. */}
@@ -691,6 +731,9 @@ const InternalOrderDetailView: Component = () => {
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
+                  // A row click opens the line editor on that line (AC-LN11);
+                  // on a read-only order it opens with every control disabled.
+                  onRowClick={line => setEditorLine({ mode: 'edit', line })}
                   emptyMessage={
                     itemFilter().trim()
                       ? t('error.no-items-filter-on')
@@ -725,6 +768,32 @@ const InternalOrderDetailView: Component = () => {
                 </TabPanel>
               </Show>
             </Tabs>
+
+            {/* The line editor (S4) — add mode (general orders) or edit mode
+                (a clicked line). A committed save refetches the line table. */}
+            <InternalOrderLineEditModal
+              open={!!editorLine()}
+              onClose={() => setEditorLine(undefined)}
+              storeId={params.storeId}
+              requisitionId={node().id}
+              minMonths={node().minMonthsOfStock}
+              maxMonths={node().maxMonthsOfStock}
+              editable={editable()}
+              canAdd={canAddLines()}
+              showDoses={showDoses()}
+              showPricing={showPricing()}
+              showForecast={showForecast()}
+              showExcess={showExcess()}
+              showExtended={showExtended()}
+              orderInPacks={orderInPacks()}
+              initialLine={
+                editorLine()?.mode === 'edit'
+                  ? (editorLine() as { mode: 'edit'; line: Line }).line
+                  : undefined
+              }
+              nextLine={resolveNextLine}
+              onCommitted={() => void refetch()}
+            />
           </Page>
         )}
       </Show>
