@@ -2,25 +2,13 @@ import { t } from '../../../intl';
 import { type Column } from '../../../ui/elements/table/DataTable';
 import { getChipListCell } from '../../../ui/elements/table/ChipListCell';
 import type { ItemsResult } from './items.generated';
-import { formatMonthsOfStock, formatUnits, dosesEquivalent } from './itemStats';
+import { formatMonthsOfStock, unitsWithDoses } from './itemStats';
 
 export type ItemRow = ItemsResult['items']['nodes'][number];
 
 // Only Code and Name are sortable — the sort surface matches the wire's sort
 // keys (spec/items S1 › Columns). Clicking any other header does nothing.
 export type SortKey = 'name' | 'code';
-
-// A vaccine unit figure, with the doses equivalent appended (suffix "ds") when
-// the manage-vaccines-in-doses preference is on (spec/items S1, OMS-REG-CAT-04.35).
-const unitsWithDoses = (
-  units: number,
-  row: ItemRow,
-  showDoses: boolean
-): string => {
-  const base = formatUnits(units);
-  if (!showDoses || !row.isVaccine) return base;
-  return `${base} (${formatUnits(dosesEquivalent(units, row.doses))} ${t('label.doses-short')})`;
-};
 
 // The fixed item columns (spec/items S1). Default sort name ascending; only
 // Code + Name sortable. Master lists is a chip-list cell; MOS is blank (dash)
