@@ -92,6 +92,7 @@ const EditorToggleRow = (props: {
           <Popover
             trigger={<InfoIcon />}
             triggerLabel={props.heading}
+            triggerTestId={`${props.testId}-info`}
             placement="bottom-start"
           >
             <p>{props.info}</p>
@@ -180,6 +181,7 @@ export const DisplaySettingsSection = () => {
         <LanguageSelector
           language={locale()}
           onSelect={v => void changeLanguage(v)}
+          testId="settings-language"
         />
       </FieldRow>
       <Show when={hasPermission('SERVER_ADMIN')}>
