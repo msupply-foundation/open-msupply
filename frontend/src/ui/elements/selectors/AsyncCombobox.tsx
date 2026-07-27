@@ -55,11 +55,25 @@ export interface AsyncComboboxProps<T> {
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
   /**
-   * Status text shown when the settled option list is empty — a domain hint
-   * (e.g. the patient picker's "Start typing to search"). Passed through to the
-   * Combobox; defaults there to "No matching items".
+   * Status text shown when a settled search matched nothing — a domain
+   * message (e.g. the patient picker's "No matching patients"). Passed through
+   * to the Combobox; defaults there to "No matching items".
    */
   noResultsMessage?: string;
+  /**
+   * Status text shown while nothing has been typed — the type-to-search
+   * prompt of a picker whose `fetchPage` returns nothing for the empty query.
+   * Passed through to the Combobox, where it defaults to `noResultsMessage`.
+   */
+  emptyQueryMessage?: string;
+  /**
+   * An action row pinned under the options (e.g. the patient picker's "Create
+   * patient" entry). Handed the typed text as an ACCESSOR, not a value —
+   * server-mode callers usually show theirs only once a search has been made,
+   * and gating inside the slot (a `<Show>`) keeps the row itself stable
+   * instead of rebuilding it on every keystroke.
+   */
+  listboxFooter?: (query: () => string) => JSX.Element;
 }
 
 /*
@@ -183,6 +197,8 @@ export const AsyncCombobox = <T,>(
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       noResultsMessage={props.noResultsMessage}
+      emptyQueryMessage={props.emptyQueryMessage}
+      listboxFooter={props.listboxFooter?.(query)}
       items={items()}
       loading={loading()}
       loadingMore={search.loadingMore()}
