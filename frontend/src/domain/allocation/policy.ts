@@ -6,6 +6,11 @@
 // preference fields), so any issue-side vertical can feed it from its own
 // preferences query.
 
+import {
+  addDays,
+  dateToIsoDate,
+} from '../../ui/elements/inputs/dateTimeConvert';
+
 /** The preference values that shape barring and ordering (consumer-resolved). */
 export interface AllocationPreferences {
   expiredStockPreventIssue: boolean;
@@ -52,25 +57,16 @@ export interface BarrableBatch {
   isVaccineItem?: boolean;
 }
 
-/** Local calendar date as YYYY-MM-DD (the store clock's day). */
-const localDay = (date: Date): string => {
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-};
-
 // The expiry guard compares calendar DAYS (`today + threshold` vs the
 // expiry's date part), so the verdict is stable across the whole day rather
-// than flipping with the time of day the check happens to run.
+// than flipping with the time of day the check happens to run. Both sides are
+// the LOCAL day (the store clock's), via the shared conversion.
 const expiredWithin = (
   expiryDate: string,
   thresholdDays: number,
   today: Date
-): boolean => {
-  const limit = new Date(today);
-  limit.setDate(limit.getDate() + thresholdDays);
-  return expiryDate.slice(0, 10) <= localDay(limit);
-};
+): boolean =>
+  expiryDate.slice(0, 10) <= dateToIsoDate(addDays(today, thresholdDays));
 
 /**
  * Every category BARRING a batch from issue entirely — manual entry included
@@ -93,10 +89,7 @@ export const barReasons = (
   // consumer passes, so zeroing the row mid-edit doesn't lock it.
   const heldButAdjustable =
     (batch.numberOfPacks ?? 0) > 0 && (batch.availablePacks ?? 0) > 0;
-  if (
-    (batch.stockLineOnHold || batch.location?.onHold) &&
-    !heldButAdjustable
-  )
+  if ((batch.stockLineOnHold || batch.location?.onHold) && !heldButAdjustable)
     reasons.push('on-hold');
   if (
     prefs.expiredStockPreventIssue &&

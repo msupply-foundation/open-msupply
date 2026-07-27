@@ -8,6 +8,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
@@ -23,13 +24,6 @@ import { InsertPrescription } from './createPrescription.generated';
 // in-dialog with input preserved (controls › dialogs); success navigates to
 // the new prescription's detail.
 
-const localToday = (): string => {
-  const now = new Date();
-  const month = `${now.getMonth() + 1}`.padStart(2, '0');
-  const day = `${now.getDate()}`.padStart(2, '0');
-  return `${now.getFullYear()}-${month}-${day}`;
-};
-
 export interface CreatePrescriptionModalProps {
   open: boolean;
   onClose: () => void;
@@ -42,7 +36,7 @@ export const CreatePrescriptionModal: Component<
   const navigate = useNavigate();
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
-  const [date, setDate] = createSignal<string>(localToday());
+  const [date, setDate] = createSignal<string>(localTodayIso());
   const [reference, setReference] = createSignal('');
   const [clinicianId, setClinicianId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
@@ -55,7 +49,7 @@ export const CreatePrescriptionModal: Component<
 
   const reset = () => {
     setPatient(null);
-    setDate(localToday());
+    setDate(localTodayIso());
     setReference('');
     setClinicianId(undefined);
     setProgramId(undefined);
@@ -153,8 +147,8 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           testId="date-field"
           value={date()}
-          max={localToday()}
-          onChange={value => setDate(value ?? localToday())}
+          max={localTodayIso()}
+          onChange={value => setDate(value ?? localTodayIso())}
         />
       </FieldRow>
       <FieldRow label={t('label.reference')}>

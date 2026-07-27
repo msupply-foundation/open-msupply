@@ -24,6 +24,7 @@ import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import {
   DownloadIcon,
@@ -445,7 +446,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               <DateField
                 label={t('label.date-of-birth')}
                 width="full"
-                max={new Date().toISOString().slice(0, 10)}
+                max={localTodayIso()}
                 value={search.dateOfBirth}
                 onChange={value => setSearch('dateOfBirth', value)}
               />

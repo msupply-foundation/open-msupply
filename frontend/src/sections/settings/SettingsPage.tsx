@@ -56,7 +56,10 @@ const SettingsPage: Component = () => {
         <Header>
           <Breadcrumb crumbs={[{ label: t('settings') }]} />
           <HeaderButtons>
-            <LabelledValue label={t('label.app-version')}>
+            <LabelledValue
+              label={t('label.app-version')}
+              data-testid="app-version"
+            >
               {APP_VERSION}
             </LabelledValue>
           </HeaderButtons>

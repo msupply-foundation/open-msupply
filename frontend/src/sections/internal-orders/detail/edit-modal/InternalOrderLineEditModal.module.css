@@ -1,0 +1,128 @@
+/* The line editor's panels (spec/internal-orders S4): the item's statistics
+   and (under the extended gate) its stock movements on the inline-start, the
+   edits on a recessed inset panel at the inline-end; they stack on narrow
+   viewports. */
+.panels {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-3);
+}
+
+.column {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.edits {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Every statistics value sits right-aligned at the row's end. */
+.statValue {
+  display: block;
+  text-align: end;
+  inline-size: 100%;
+}
+
+/* The middle-panel Suggested row (spec S4): tinted like the edits inset panel —
+   the requested block it is read against. The negative inline margin lets the
+   tint extend slightly past both sides, while the matching inline padding keeps
+   the row's text aligned with the column's other (un-highlighted) rows. */
+.highlight {
+  background: var(--bg-group-light);
+  border-radius: var(--radius-md);
+  margin-inline: calc(-1 * var(--space-2));
+  padding-inline: var(--space-2);
+}
+
+/* The item picker fills the modal's full width (the combobox otherwise caps at
+   its long max-width, leaving it half-width in the large modal). The doubled
+   class outranks the component's own max-width rule. */
+.itemField.itemField {
+  max-inline-size: 100%;
+  inline-size: 100%;
+}
+
+/* The requested number + entry-mode select fill the row's full width, split
+   evenly — so they're evenly spaced when the panel is wide (two columns) and
+   scale down together when it's narrow (three columns). Both controls are
+   width="full" so neither keeps its default max-width cap. */
+.requestedRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  inline-size: 100%;
+}
+
+.requestedRow > * {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+/* Below — the read-only context charts (spec S4), matching the original
+   open-msupply: the target-quantity breakdown centred on its own row (capped
+   width), then the consumption / stock-evolution pair centred beneath it — a
+   row on wide viewports, stacked on narrow. A single 1rem gap between them. */
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-block-start: var(--space-4);
+  /* Cap the region and centre it as a cohesive block, so the charts don't
+     sprawl across the full-width large modal (they'd read as uncentered). Wide
+     enough for the two ~29rem charts + gap + padding side by side. */
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  margin-inline: auto;
+}
+
+/* The breakdown row — centred, width-capped like the original's maxWidth 900. */
+.breakdown {
+  inline-size: 100%;
+  max-inline-size: 56rem;
+  margin-inline: auto;
+  padding: var(--space-2) var(--space-4);
+}
+
+.chartPair {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+}
+
+.chartHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+  text-align: center;
+}
+
+/* Each chart is a fixed-width SVG; the section sizes to it (never stretched)
+   so the pair sits centred with a gap, matching the original. The heading and
+   chart stack centred within it. */
+.chartSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 1 auto;
+}
+
+/* The dose caption directly beneath the entered number, right-aligned under it. */
+.caption {
+  text-align: end;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

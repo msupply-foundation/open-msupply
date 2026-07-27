@@ -9,6 +9,7 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
+import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
 import { Select } from '../ui/elements/selectors/Select';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
@@ -608,7 +609,7 @@ const Body: Component<LineEditModalProps> = props => {
             label={t('label.manufacture-date')}
             hideLabel
             value={b.manufactureDate}
-            max={new Date().toISOString().slice(0, 10)}
+            max={localTodayIso()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );

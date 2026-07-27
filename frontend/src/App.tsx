@@ -26,6 +26,7 @@ import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { internalOrdersRoutes } from './sections/internal-orders';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
@@ -33,7 +34,7 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
-import { helpRoutes } from './sections/help';
+import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -59,6 +60,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'distribution/customer-return': customerReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
+  'replenishment/internal-order': internalOrdersRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
@@ -68,6 +70,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
+  'manage/help-documents': helpDocumentsRoutes,
 };
 
 export const App: Component = () => {
