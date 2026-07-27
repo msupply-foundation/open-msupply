@@ -209,7 +209,7 @@ const PrescriptionsList: Component = () => {
           </Show>
         );
       },
-      meta: { card: { region: 'primary' } },
+      meta: { headerPosition: 'primary' },
     },
     {
       c: { key: 'status' },
@@ -224,7 +224,7 @@ const PrescriptionsList: Component = () => {
           />
         );
       },
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },

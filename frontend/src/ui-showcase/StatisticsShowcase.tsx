@@ -10,7 +10,8 @@ import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, StockIcon, ThermometerIcon } from '../ui/icons';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
-import { Lead } from './common';
+import { Lead, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './StatisticsShowcase.module.css';
 
 /*
@@ -166,7 +167,10 @@ const PluginOutletCard = () => {
       ? demoPlugin.latest.demoPluginWidgetContributions
       : [];
   return (
-    <DashboardCard title="PluginRegionOutlet — plugin contribution mount point">
+    <DashboardCard
+      id="statistics-plugin-outlet"
+      title="PluginRegionOutlet — plugin contribution mount point"
+    >
       <Lead>
         The mount point for plugin contributions inside a dashboard container.
         It renders the list it is given, in that order (merging is the
@@ -214,7 +218,11 @@ const Demo = () => (
   <Stack gap="lg">
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="SectionTitle — iconed action-tone panel heading">
+        <SectionTOC page={statisticsMetadata} />
+        <DashboardCard
+          id="statistics-building-blocks"
+          title="SectionTitle — iconed action-tone panel heading"
+        >
           <Lead>
             Hand-rolled, pure CSS — an <code>&lt;h3&gt;</code> with an optional
             leading icon and text in the action tone (
@@ -328,7 +336,10 @@ const Demo = () => (
       </Stack>
     </ContentContainer>
 
-    <DashboardCard title="Composition — CardGrid laying out DashboardCards">
+    <DashboardCard
+      id="statistics-composition"
+      title="Composition — CardGrid laying out DashboardCards"
+    >
       <Lead>
         <code>CardGrid</code> is a generic intrinsic grid (ui-standards §
         Layout): <code>repeat(auto-fit, minmax(minColumnWidth, 1fr))</code> — it
@@ -349,6 +360,35 @@ const Demo = () => (
     </DashboardCard>
   </Stack>
 );
+
+export const statisticsMetadata: PageMetadata = {
+  id: 'statistics',
+  title: 'Statistics',
+  searchTerms: ['dashboard', 'stat', 'widget', 'metric'],
+  items: [
+    {
+      id: 'statistics-building-blocks',
+      title: 'Building blocks',
+      searchTerms: [
+        'section title',
+        'statistic',
+        'stats panel',
+        'dashboard card',
+        'kpi',
+      ],
+    },
+    {
+      id: 'statistics-plugin-outlet',
+      title: 'Plugin outlet',
+      searchTerms: ['plugin', 'region', 'contribution', 'mount point'],
+    },
+    {
+      id: 'statistics-composition',
+      title: 'Composition',
+      searchTerms: ['cardgrid', 'grid', 'layout', 'assembled'],
+    },
+  ],
+};
 
 export const StatisticsShowcase = () => (
   <MemoryRouter>

@@ -61,6 +61,13 @@ export interface DialogProps {
    * than the footer). The title takes the free space; these group at the end.
    */
   headerActions?: JSX.Element;
+  /**
+   * Vertical alignment of the header row. `center` (default) suits a
+   * single-line title + actions. `start` top-aligns them — for a title that's
+   * taller than the actions (e.g. a selector with helper text below it), so the
+   * actions sit against the title's top edge rather than its centre.
+   */
+  headerAlign?: 'center' | 'start';
   description?: JSX.Element;
   children?: JSX.Element;
   /**
@@ -114,6 +121,7 @@ interface DialogHeaderProps {
   titleIsString: boolean;
   titleId: string;
   titleHidden?: boolean;
+  align?: 'center' | 'start';
   icon?: JSX.Element;
   headerActions?: JSX.Element;
 }
@@ -133,6 +141,7 @@ const DialogHeader = (props: DialogHeaderProps): JSX.Element => {
     <header
       class={styles.header}
       classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
+      data-align={props.align === 'start' ? 'start' : undefined}
     >
       <Show when={icon()}>
         <span class={styles.icon}>{icon()}</span>
@@ -288,6 +297,15 @@ export const Dialog = (props: DialogProps) => {
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
       onCancel={event => props.dismissable === false && event.preventDefault()}
+      // A modal dialog is an event boundary for Escape: the dialog renders in
+      // place (not portaled), so the keydown would bubble on into ancestor
+      // key handlers — e.g. Kobalte's accordion root, whose Escape clears the
+      // selection and collapses the section AROUND the open dialog. A modal
+      // <dialog> detached that way (its host subtree hidden or removed while
+      // open) loses its top layer and later re-renders in-flow. Stop
+      // propagation only — the UA's own default action (the `cancel` event
+      // above) is not propagation-dependent and still closes the dialog.
+      onKeyDown={event => event.key === 'Escape' && event.stopPropagation()}
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
@@ -324,6 +342,7 @@ export const Dialog = (props: DialogProps) => {
             titleIsString={titleIsString()}
             titleId={titleId}
             titleHidden={props.titleHidden}
+            align={props.headerAlign}
             icon={props.icon}
             headerActions={props.headerActions}
           />

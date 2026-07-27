@@ -71,8 +71,25 @@ const sectionFromHash = () => {
   return sections.some(s => s.id === id) ? id : sections[0].id;
 };
 
+// Find the nearest scrollable ancestor of `el` — the Page frame's overflow:auto
+// body in the showcase's shell — by walking up; undefined if none.
+const scrollableAncestor = (
+  el: HTMLElement | undefined
+): HTMLElement | undefined => {
+  let node = el?.parentElement;
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY;
+    if (overflowY === 'auto' || overflowY === 'scroll') return node;
+    node = node.parentElement;
+  }
+  return undefined;
+};
+
 export function ShowcaseApp() {
   const [activeId, setActiveId] = createSignal(sectionFromHash());
+  // A transparent (display: contents) anchor inside the Page body, so the
+  // effect below can find the scrolling body and reset it on a section switch.
+  let contentBodyAnchor: HTMLDivElement | undefined;
 
   const onHashChange = () => setActiveId(sectionFromHash());
   window.addEventListener('hashchange', onHashChange);
@@ -87,6 +104,18 @@ export function ShowcaseApp() {
   createEffect(() => {
     document.documentElement.dir = isRtl() ? 'rtl' : 'ltr';
     document.documentElement.lang = locale();
+  });
+
+  // Switching sections must land at the TOP of the new page. Every non-fill
+  // section renders inside ONE persistent <Page> — only the <Dynamic> body
+  // swaps — so the scrolling body would otherwise keep the previous section's
+  // scroll offset. The real app resets scroll via @solidjs/router on route
+  // change; the hash-nav showcase does it here. (A fill section mounts its own
+  // fresh Page and starts at the top; the anchor is then detached, so
+  // scrollableAncestor returns undefined and this is a no-op.)
+  createEffect(() => {
+    activeId(); // re-run on every section switch
+    scrollableAncestor(contentBodyAnchor)?.scrollTo({ top: 0 });
   });
 
   // The hash stays the single source of truth: selecting a menu item writes
@@ -157,7 +186,9 @@ export function ShowcaseApp() {
             </Header>
           }
         >
-          <Dynamic component={active().component} />
+          <div style={{ display: 'contents' }} ref={contentBodyAnchor}>
+            <Dynamic component={active().component} />
+          </div>
         </Page>
       </Show>
     </AppShell>
