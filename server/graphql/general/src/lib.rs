@@ -70,8 +70,12 @@ pub struct GeneralQueries;
 
 #[Object]
 impl GeneralQueries {
-    /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
     pub async fn api_version(&self) -> String {
+        env!("CARGO_PKG_VERSION").to_string()
+    }
+
+    /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
+    pub async fn server_version(&self) -> String {
         repository::migrations::raw_app_version()
     }
 
@@ -686,7 +690,7 @@ impl InitialisationQueries {
     }
 
     /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
-    pub async fn api_version(&self) -> String {
+    pub async fn server_version(&self) -> String {
         repository::migrations::raw_app_version()
     }
 }
