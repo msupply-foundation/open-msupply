@@ -112,7 +112,7 @@ jobs:
           E2E_META_PR: ${{ github.event.pull_request.number }}
           E2E_META_BRANCH: ${{ github.head_ref || github.ref_name }}
           E2E_META_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: cd client && yarn e2e:local stocktake-regression distribution-regression
+        run: cd client && yarn e2e:local stocktake-regression distribution-regression names-regression
 
       - name: Upload Playwright report (html + results.json)
         uses: actions/upload-artifact@v4
