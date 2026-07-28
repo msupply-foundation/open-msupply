@@ -137,7 +137,7 @@ export const AsyncCombobox = <T,>(
   // CURRENTLY-selected one as the first, always-clickable option).
   //
   // The seed is a LABEL-ONLY fallback (callers like ItemSearch fill its
-  // non-label fields — e.g. totalUnits — with placeholder zeros, since the
+  // non-label fields — e.g. availableUnits — with placeholder zeros, since the
   // real values aren't known until the item's own page is fetched). So once
   // `base()` has fetched a real row for this key, that row must WIN over the
   // seed rather than being replaced by it — otherwise the stub's placeholder
