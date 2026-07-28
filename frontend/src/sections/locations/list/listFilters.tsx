@@ -63,8 +63,11 @@ const FILTERS: Filter<LocationFilter>[] = constructFilters<LocationFilter>({
     label: () => t('label.on-hold'),
     render: props => (
       <Checkbox
+        // The labelled Checkbox, not FilterCheckbox — a control from outside
+        // FilterBar, so the chip's focus target is bound by hand here.
         label={t('label.on-hold')}
         testId={props.testId}
+        focusTarget={props.focusTarget}
         checked={props.filter().onHold === true}
         // Checked → only on-hold locations; unchecked → null (the chip stays,
         // added-but-empty) — there is no "not on hold" filter (spec/locations
