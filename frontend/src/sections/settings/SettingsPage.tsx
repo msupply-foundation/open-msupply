@@ -4,7 +4,8 @@ import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
-import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
+import { ServerInfo } from './support/ServerInfo';
 import {
   Accordion,
   AccordionContent,
@@ -56,14 +57,15 @@ const SettingsPage: Component = () => {
         <Header>
           <Breadcrumb crumbs={[{ label: t('settings') }]} />
           <HeaderButtons>
-            <LabelledValue label={t('label.app-version')}>
-              {APP_VERSION}
-            </LabelledValue>
+            {/* Server-info block (issue #500) — the settings-owned mirror of
+                the reference's Admin/ServerInfo, which mounts it in the Settings
+                app-bar region (always visible), not inside a section. */}
+            <ServerInfo />
           </HeaderButtons>
         </Header>
       }
     >
-      <div class={styles.measure}>
+      <ContentContainer size="form" align="start">
         <Accordion collapsible>
           <Show when={visible('display-settings')}>
             <AccordionItem value="display-settings">
@@ -131,7 +133,7 @@ const SettingsPage: Component = () => {
             </AccordionItem>
           </Show>
         </Accordion>
-      </div>
+      </ContentContainer>
     </Page>
   );
 };

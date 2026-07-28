@@ -1,0 +1,111 @@
+# Internal-orders LIST screen (spec/internal-orders S1) + list bulk delete +
+# the inline row colour-tag edit.
+#
+# An internal order is a REQUEST requisition (contract › "Internal orders
+# only"): the client pins RequisitionFilterInput.type = { equalTo: REQUEST } on
+# every list read — nothing else on this query distinguishes the request side
+# from the response side. Store scope is forced server-side. Filter / sort /
+# pagination are carried as the generated GraphQL input types so the URL state
+# maps straight onto them with no remapping (kdd/type-safety).
+
+fragment InternalOrderRow on RequisitionNode {
+  id
+  requisitionNumber
+  status
+  createdDatetime
+  colour
+  theirReference
+  comment
+  otherPartyName
+  # The supplier's own store, when the supplier is itself a store in the system.
+  # `isDisabled` is the "supplier store disabled" half of the editability
+  # boundary (rules › editability): a disabled-store row is read-only — its
+  # colour-tag picker is withheld and it can't be deleted — exactly as a
+  # non-Draft row is (AC-L7).
+  otherParty(storeId: $storeId) {
+    store {
+      isDisabled
+    }
+  }
+  # Approval status is read from the linked response requisition's copy; the
+  # RequisitionNode surfaces it directly as approvalStatus (AC-L9).
+  approvalStatus
+  # Program columns (AC-L8): empty on a non-program order.
+  program {
+    name
+  }
+  orderType
+  period {
+    name
+  }
+  # Line count — the condensed-tablet "Number of rows" column (spec S1 col 6).
+  lines {
+    totalCount
+  }
+}
+
+query internalOrders(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $sort: [RequisitionSortInput!]
+  $page: PaginationInput
+) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on RequisitionConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InternalOrderRow
+      }
+    }
+  }
+}
+
+# Bulk delete from the list (spec AC-D1). One batch, all-or-nothing by default —
+# continueOnError is left unset so any member error rolls the whole batch back
+# (contract › deletion). Per-id typed error surfaces on
+# DeleteRequestRequisitionError. The UI only OFFERS delete when every selected
+# row is Draft (a UI narrowing, AC-D3); the server enforces the same regardless.
+mutation deleteInternalOrders(
+  $storeId: String!
+  $ids: [DeleteRequestRequisitionInput!]!
+) {
+  batchRequestRequisition(
+    storeId: $storeId
+    input: { deleteRequestRequisitions: $ids }
+  ) {
+    deleteRequestRequisitions {
+      id
+      response {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteRequestRequisitionError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Inline row colour-tag edit (spec S1 col 1 / AC-T1): the swatch picker on an
+# editable (Draft, supplier-store-enabled) row writes the colour through the
+# shared header update. Colour carries no domain meaning. The RequisitionNode
+# member is selected so the caller can confirm the save.
+mutation updateInternalOrderColour(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(storeId: $storeId, input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+      colour
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import { masterListsResource, type MasterList } from './masterListResource';
 
 export interface MasterListSelectProps {
@@ -13,6 +14,11 @@ export interface MasterListSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the picker's input — for an owner
+   * that focuses it after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -33,6 +39,7 @@ export const MasterListSelect = (props: MasterListSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    focusTarget={props.focusTarget}
     onChange={m => props.onChange(m?.id ?? null)}
   />
 );

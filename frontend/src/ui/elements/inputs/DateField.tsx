@@ -16,8 +16,9 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateFieldProps {
   label: string;
-  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
-  width?: 'short' | 'full';
+  /** Max-width cap: `compact` (10rem box), `short` (default) or `full` (see
+   * FieldShell). */
+  width?: 'compact' | 'short' | 'full';
   /** ISO calendar date `YYYY-MM-DD`, or null/undefined when empty. */
   value?: string | null;
   /** Fired with the new ISO date, or null when cleared. */
@@ -78,7 +79,24 @@ export const DateField = (props: DateFieldProps) => {
 
   const commit = () => {
     const parsed = parseDateInput(text(), fmt());
-    if (parsed === undefined) {
+    // Rejection gate — parseDateInput is tri-state (undefined = unparseable,
+    // null = deliberately blanked, string = a valid ISO date). Any arm true →
+    // the entry reverts to the last good value, like invalid input; onChange
+    // never fires. ISO YYYY-MM-DD compares chronologically as a plain string.
+    if (
+      // Unparseable text: gibberish, or an impossible date (31 Feb).
+      parsed === undefined ||
+      // Blanked a required field: a required value must always exist, so a
+      // blank reverts. (Non-required fields pass null through — the "cleared"
+      // path.) The calendar's deselect is guarded separately, via corvu's own
+      // required prop on DatePickerPanel.
+      (parsed === null && props.required) ||
+      // A valid date, but TYPED earlier than min — the calendar already makes
+      // such days unselectable; this closes the typed path.
+      (parsed != null && props.min !== undefined && parsed < props.min) ||
+      // A valid date, but TYPED later than max — same as min, other bound.
+      (parsed != null && props.max !== undefined && parsed > props.max)
+    ) {
       setText(formatIsoDate(props.value, fmt())); // invalid → revert
       return;
     }
@@ -131,6 +149,10 @@ export const DateField = (props: DateFieldProps) => {
                 value={isoDateToDate(props.value)}
                 min={isoDateToDate(props.min) ?? undefined}
                 max={isoDateToDate(props.max) ?? undefined}
+                // Also stops the calendar DESELECTING (click the selected day
+                // again → null) — the commit() guard below only covers the
+                // typed path.
+                required={props.required}
                 onSelect={d => {
                   apply(d ? dateToIsoDate(d) : null);
                   close();

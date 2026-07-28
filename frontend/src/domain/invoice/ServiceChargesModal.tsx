@@ -1,3 +1,4 @@
+import { generateUUID } from '../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
@@ -19,6 +20,7 @@ import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import { formatCurrencyCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
 import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
+import styles from './ServiceChargesModal.module.css';
 import { ServiceItems } from './invoiceModals.generated';
 import {
   chargeTotalAfterTax,
@@ -150,7 +152,7 @@ const ServiceChargesContent = (
     setDraft(
       produce(charges =>
         charges.push({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           isNew: true,
           deleted: false,
           itemId: item.id,
@@ -361,14 +363,16 @@ const ServiceChargesContent = (
             </Alert>
           }
         >
-          <DataTable
-            columns={columns()}
-            rows={rows()}
-            rowKey={charge => charge.id}
-            showFullScreen={false}
-            config={tableConfig.config()}
-            setConfig={tableConfig.setConfig}
-          />
+          <div class={styles.chargesGrid}>
+            <DataTable
+              columns={columns()}
+              rows={rows()}
+              rowKey={charge => charge.id}
+              showFullScreen={false}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
+            />
+          </div>
         </Show>
       </Show>
     </Dialog>

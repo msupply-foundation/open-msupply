@@ -20,17 +20,26 @@
   inline-size: fit-content;
 }
 
-/* The native input: invisible but full-size OVER the box, so it is the real
-   click target (and Playwright-visible — e2e checks the input by test id;
-   opacity: 0 keeps a bounding box where clip-path hiding would not). The
-   explicit 100% sizes matter: a checkbox is a REPLACED element, so inset: 0
-   alone doesn't stretch it — it stays at its ~13px intrinsic size in a
-   corner, leaving most of the drawn box click-dead. */
+/* The native input: invisible, positioned OVER the drawn box and larger than
+   it, so it is the real (forgiving) click target — and still Playwright-
+   visible, e2e checks the input by test id; opacity: 0 keeps a bounding box
+   where clip-path hiding would not. Explicit size matters: a checkbox is a
+   REPLACED element, so inset alone won't stretch it — it stays at its ~13px
+   intrinsic size in a corner. It overhangs the drawn box by
+   --checkbox-hit-inset-{inline,block} on each side (default 0.5rem → a ~34px
+   target; WCAG 2.5.8 target-size minimum is 24px), centred on the box.
+   Absolute positioning keeps the enlargement off the layout, so the drawn
+   box, its neighbours and the focus ring never move. A host widens the
+   hitbox by SETTING those vars on an ancestor — split by axis so it can grow
+   across a column without also growing down it (the table's .selectBox fills
+   the 48px cell width but leaves the block overhang at the default, so a
+   compact row's target never bleeds into the row above or below). */
 .input {
   position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
+  inset-block-start: calc(-1 * var(--checkbox-hit-inset-block, 0.5rem));
+  inset-inline-start: calc(-1 * var(--checkbox-hit-inset-inline, 0.5rem));
+  inline-size: calc(100% + 2 * var(--checkbox-hit-inset-inline, 0.5rem));
+  block-size: calc(100% + 2 * var(--checkbox-hit-inset-block, 0.5rem));
   margin: 0;
   opacity: 0;
   cursor: pointer;
@@ -103,8 +112,25 @@
   border-color: var(--error-main);
 }
 
+/* Keep the red edge when the box is FILLED — the error must survive a checked
+   / indeterminate box (the checked/indeterminate fill rule above sets its own
+   border-color, and this selector is specific enough to win it back). */
+.input:checked + .box[data-error],
+.input:indeterminate + .box[data-error] {
+  border-color: var(--error-main);
+}
+
 .input:focus-visible + .box[data-error] {
   box-shadow: var(--focus-ring-error);
+}
+
+/* Disabled — the box fades as a unit with --disabled-opacity, the SAME
+   treatment the labelled Checkbox applies to its whole row. Used bare (e.g. a
+   locked table selection cell) there is no label wrapper to fade it, so the
+   box owns the fade; the labelled Checkbox fades only its label text, so the
+   composed field looks identical with no double-fade (see Checkbox.module.css). */
+.input:disabled + .box {
+  opacity: var(--disabled-opacity);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,14 +1,14 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
-import { t, tPlural } from '../../../../intl';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
+import { t, tPlural } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
   CheckIcon,
   SearchIcon,
   TrashIcon,
   XCircleIcon,
-} from '../../../../ui/icons';
+} from '@/ui/icons';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,

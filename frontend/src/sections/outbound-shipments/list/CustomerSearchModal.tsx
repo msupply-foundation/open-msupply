@@ -1,8 +1,10 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type JSX } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { XCircleIcon } from '../../../ui/icons';
@@ -39,7 +41,7 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
       {
         storeId: params.storeId,
         // The id is client-generated so the create can navigate (AC-C1).
-        input: { id: crypto.randomUUID(), otherPartyId: customer.id },
+        input: { id: generateUUID(), otherPartyId: customer.id },
       },
       { returnGraphqlErrors: true }
     );
@@ -66,9 +68,14 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
     );
   };
 
+  // The customer lookup is this dialog's only control, so the dialog opens on
+  // it (ui-standards › accessibility › keyboard).
+  const customerSearch = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={customerSearch}
       testId="customer-search-modal"
       title={t('customers')}
       dismissable={!creating()}
@@ -94,6 +101,7 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
         placeholder={t('placeholder.search-by-name')}
         disabled={creating()}
         inputTestId="customer-search-input"
+        focusTarget={customerSearch}
         clearable={false}
         onSelect={customer => void create(customer)}
       />

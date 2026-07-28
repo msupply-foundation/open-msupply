@@ -3,7 +3,11 @@
 // branching + date math are testable in isolation (the component resolves the
 // returned message KEYS via t() and owns the stocktake-conflict query).
 
-import { localDayToUtc } from '../../../ui/elements/inputs/dateTimeConvert';
+import {
+  addDays,
+  dateToIsoDate,
+  localDayToUtc,
+} from '../../../ui/elements/inputs/dateTimeConvert';
 
 export type BackdatingReasonKey =
   | 'messages.received-date-backdating-not-enabled'
@@ -37,30 +41,21 @@ export const backdatingGate = (opts: {
   return { enabled };
 };
 
-// Local YYYY-MM-DD (the store clock's day) — slicing an ISO string would use
-// UTC and can shift the day.
-export const toDateInput = (value: Date): string => {
-  const month = `${value.getMonth() + 1}`.padStart(2, '0');
-  const day = `${value.getDate()}`.padStart(2, '0');
-  return `${value.getFullYear()}-${month}-${day}`;
-};
-
 // AC-B1: the picker window is [now − (maxDays − 1), now] — a future date or
 // one beyond the maximum can't be chosen. A maximum of zero (or unset) means
 // NO lower bound — unlimited backdating, the old app's semantics (a deployed
 // pref of {shipmentsEnabled: true, maxDays: 0} must not collapse the window
 // to "today only"). The +1 on the lower bound is the old app's deliberate
 // buffer: the server's UTC boundary check would reject the exact
-// now−maxDays day for stores ahead of UTC.
+// now−maxDays day for stores ahead of UTC. Bounds are LOCAL days (the store
+// clock's) via the shared conversion.
 export const backdateBounds = (
   now: Date,
   maxDays: number
 ): { min?: string; max: string } => {
-  const max = toDateInput(now);
+  const max = dateToIsoDate(now);
   if (maxDays <= 0) return { max };
-  const earliest = new Date(now);
-  earliest.setDate(earliest.getDate() - (maxDays - 1));
-  return { min: toDateInput(earliest), max };
+  return { min: dateToIsoDate(addDays(now, -(maxDays - 1))), max };
 };
 
 // AC-B1 rejection on the SAVE path: the native min/max only constrain the
@@ -77,7 +72,7 @@ export const withinBackdateBounds = (
 // stamped at its LOCAL end-of-day via the shared conversion (#456), so the
 // entry sorts after same-day activity. Input is a `DateTime<Utc>`.
 export const backdatedDatetimeFor = (now: Date, day: string): string =>
-  day === toDateInput(now)
+  day === dateToIsoDate(now)
     ? now.toISOString()
     : localDayToUtc(day, { endOfDay: true });
 

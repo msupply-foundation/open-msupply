@@ -1,7 +1,7 @@
 {
   "name": "open-msupply-frontend",
   "private": true,
-  "version": "3.00.0",
+  "version": "0.0.0",
   "type": "module",
   "packageManager": "pnpm@10.33.4",
   "scripts": {
@@ -22,6 +22,7 @@
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:local": "bash scripts/e2e/run-e2e.sh",
     "dev-android": "./scripts/dev-android.sh",
+    "worktree": "./scripts/worktree.sh",
     "build-android": "./scripts/build-android.sh",
     "brief": "python3 exploratory/tools/behaviour_brief.py",
     "check:anchors": "python3 exploratory/tools/check_anchor_refs.py"
@@ -39,7 +40,8 @@
     "@solidjs/router": "^0.15.3",
     "@tanstack/solid-table": "^8.21.3",
     "date-fns": "^4.4.0",
-    "solid-js": "^1.9.13"
+    "solid-js": "^1.9.13",
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@capacitor/android": "^8.4.1",

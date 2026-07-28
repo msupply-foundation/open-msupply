@@ -62,6 +62,7 @@ export const Alert = (props: AlertProps) => (
     class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
     classList={{ [styles.compact ?? '']: props.compact === true }}
     data-severity={props.severity}
+    data-compact={props.compact ? '' : undefined}
     data-testid={props.testId}
     role="alert"
   >

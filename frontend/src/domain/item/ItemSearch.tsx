@@ -1,8 +1,9 @@
-import { type JSX } from 'solid-js';
+import { createSignal, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
 import { itemPageFetcher, type ItemOption } from './itemResource';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import styles from './ItemSearch.module.css';
 
 const PAGE_SIZE = 30;
@@ -36,6 +37,11 @@ export interface ItemSearchProps {
   /** Read-only: show the selected item but don't allow searching/changing it. */
   disabled?: boolean;
   error?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the search input — for an owner
+   * that focuses this picker after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
 }
@@ -54,7 +60,7 @@ const renderRow = (item: ItemOption): JSX.Element => (
     <span class={styles.total}>
       {/* Fixed, localised "Units" label for every item (old-app parity — the
           item's own unitName is untranslatable catalogue data). */}
-      {formatNumber(item.totalUnits)} {t('label.units')}
+      {formatNumber(item.availableUnits)} {t('label.units')}
     </span>
   </span>
 );
@@ -75,6 +81,33 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     PAGE_SIZE
   );
 
+  // Remember the last full option the user picked. Once an item is selected the
+  // input holds its "code - name" label, which the server's codeOrName search
+  // can't match — so a reopened dropdown fetches NO rows for it, and the
+  // combobox would fall back to the label-only seed (placeholder zeros → "0
+  // Units"). Seeding the picked option keeps its real available figure; ignored
+  // once the controlled value moves off it, and null again on deselect.
+  const [picked, setPicked] = createSignal<ItemOption | null>(null);
+  const seed = (): ItemOption | undefined => {
+    const p = picked();
+    if (p && props.value === p.id) return p;
+    if (!props.selectedItem) return undefined;
+    // Label-only fallback for a row-click / walk-advance open (no pick this
+    // session — the picker is read-only there, so these zeros never surface in a
+    // reopened dropdown). Only code/name feed the label.
+    return {
+      id: props.selectedItem.id,
+      code: props.selectedItem.code,
+      name: props.selectedItem.name,
+      unitName: null,
+      availableUnits: 0,
+      isVaccine: false,
+      doses: 0,
+      defaultPackSize: 1,
+      defaultSellPricePerPack: 0,
+    };
+  };
+
   return (
     <AsyncCombobox<ItemOption>
       label={props.label}
@@ -87,32 +120,17 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       // stamped here (like ConfirmDialog's confirmation-modal), not per call
       // site (e2e/TESTIDS.md).
       inputTestId="item-search-input"
+      focusTarget={props.focusTarget}
       fetchPage={fetchPage}
       value={props.value}
-      // Fallback so the field shows a label when `value` is an item that isn't
-      // in the current search results (opened from outside the search). Only
-      // code/name feed the label; the dropdown-only fields get safe defaults.
-      selected={
-        props.selectedItem
-          ? {
-              id: props.selectedItem.id,
-              code: props.selectedItem.code,
-              name: props.selectedItem.name,
-              unitName: null,
-              totalUnits: 0,
-              // Label-only fallback: the dropdown-only fields get safe defaults
-              // (the real values arrive with the item's own search page).
-              isVaccine: false,
-              doses: 0,
-              defaultPackSize: 1,
-              defaultSellPricePerPack: 0,
-            }
-          : undefined
-      }
+      selected={seed()}
       itemToString={item => `${item.code} - ${item.name}`}
       itemToValue={item => item.id}
       renderItem={renderRow}
-      onSelect={item => props.onSelect(item)}
+      onSelect={item => {
+        setPicked(item);
+        props.onSelect(item);
+      }}
     />
   );
 };

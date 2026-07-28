@@ -1,5 +1,6 @@
 import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   reasonOptionsResource,
   type ReasonOption,
@@ -20,7 +21,11 @@ import {
 //   passes 'negative' too (reduce-to-zero is always a reduction).
 // - 'return' — a customer-return line's optional "why it came back"
 //   (spec/customer-returns/rules.md § line rules): the active return reasons.
-export type ReasonKind = 'positive' | 'negative' | 'return';
+// - 'requisition' — a requisition line's variance reason, required when a
+//   requested quantity departs from the suggestion on a customer-statistics
+//   program order (spec/internal-orders/rules.md § editing lines, AC-R1/R2):
+//   the active requisition-line-variance reasons.
+export type ReasonKind = 'positive' | 'negative' | 'return' | 'requisition';
 
 const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
   positive: new Set(['POSITIVE_INVENTORY_ADJUSTMENT']),
@@ -30,6 +35,7 @@ const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
     'CLOSED_VIAL_WASTAGE',
   ]),
   return: new Set(['RETURN_REASON']),
+  requisition: new Set(['REQUISITION_LINE_VARIANCE']),
 };
 
 /**
@@ -68,6 +74,11 @@ export interface ReasonSelectProps {
   /** `data-testid` for the error message — forwarded to the Combobox. */
   errorTestId?: string;
   placeholder?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the picker's input — for an owner
+   * that focuses it after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -90,6 +101,7 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     error={props.error}
     errorTestId={props.errorTestId}
     placeholder={props.placeholder}
+    focusTarget={props.focusTarget}
     onChange={r => props.onChange(r)}
   />
 );

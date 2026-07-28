@@ -8,6 +8,10 @@ import {
 } from '../ui/elements/table/DataTable';
 import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
+  dateToIsoDate,
+  localDayToUtc,
+} from '../ui/elements/inputs/dateTimeConvert';
+import {
   resolveTableConfig,
   type Band,
   type LayeredConfig,
@@ -20,18 +24,24 @@ import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
 import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
-import { Stack } from '../ui/layout/Stack/Stack';
-import { FormRow } from '../ui/layout/Form/FormRow';
 import {
   SidePanelSection,
   SidePanelActions,
 } from '../ui/layout/SidePanel/SidePanel';
+import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
+import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import {
+  StatusIndicator,
+  type StatusStep,
+} from '../ui/elements/feedback/StatusIndicator';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
@@ -39,6 +49,7 @@ import { Select } from '../ui/elements/selectors/Select';
 import { ColourTagPicker } from '../ui/elements/selectors/ColourTag';
 import { DateField } from '../ui/elements/inputs/DateField';
 import {
+  ArrowRightIcon,
   CopyIcon,
   PlusCircleIcon,
   PrinterIcon,
@@ -80,6 +91,16 @@ type SortKey =
 type GroupKey = 'more';
 const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
   { key: 'more', disclosure: 'closed' },
+];
+
+// The status footer's lifecycle steps — the MANUAL inbound flow
+// (New → Delivered → Received → Verified). Reached stages carry the datetime
+// they were hit, for the StatusIndicator's history popover.
+const STATUS_STEPS: StatusStep[] = [
+  { label: 'New', date: '2026-05-15' },
+  { label: 'Delivered', date: '2026-05-18' },
+  { label: 'Received', date: '2026-05-19' },
+  { label: 'Verified' },
 ];
 
 // Mirrors isPlaceholderLine in the real vertical (detail/inboundShipmentUpdate)
@@ -124,9 +145,10 @@ const SUPPLIERS = [
   { value: 'carepoint', label: 'CarePoint Distribution' },
 ];
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const isoDay = (month: number, day: number, year: number) =>
-  `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`;
+// A stored instant for the given local calendar day, via the shared
+// conversion — so the mock rows display the intended day in any timezone.
+const isoDay = (month: number, day: number, year: number): string =>
+  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry error tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -245,6 +267,10 @@ const sortValue = (l: Line, key: SortKey): string | number => {
 // Manufacturer, Note and Pack sell price (inbound-shipment-detail defaults).
 const DEFAULT_CONFIG: LayeredConfig = {
   base: {
+    // Pin the spec's ⭐ default density. Left unset, the DataTable falls back to
+    // the nav-overlay responsive default (spacious below 1024px), which trips
+    // in a narrower/embedded browser; the demo should open at comfortable.
+    viewDensity: 'comfortable',
     columnVisibility: {
       manufactureDate: false,
       manufacturer: false,
@@ -300,6 +326,12 @@ export const DetailTableShowcase = () => {
   // header — the Page frame owns the panel chrome; the page owns only this
   // boolean).
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+
+  // The status footer's On-hold toggle. Toggling confirms first (like the real
+  // inbound footer), so the CheckboxButton opens a ConfirmDialog rather than
+  // flipping directly.
+  const [onHold, setOnHold] = createSignal(false);
+  const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   // Editable header fields (Supplier name, Their reference) + the side panel's
   // editable Colour / Comment. Live local state; a real vertical would flush
@@ -611,44 +643,87 @@ export const DetailTableShowcase = () => {
                 </Button>
               </Show>
             </HeaderButtons>
-            {/* The header field cluster. Fixing the real toolbar's cramped
-                inline-label FieldRows: standard label-ABOVE inputs, laid out in
-                a FormRow that shares the width and stacks to one column on
-                narrow screens. The Received date is a disabled input rather
-                than a LabelledValue because it IS a field — editable when the
-                shipment is Received and backdating is on, disabled otherwise.
-                The info banner sits full-width above the fields. */}
-            <Toolbar>
-              <Stack gap="sm" style={{ width: '100%' }}>
-                <Alert severity="info">
-                  This shipment was created manually; its delivery status will
-                  not update automatically.
+            {/* The header field cluster via HeaderToolbar (Carl 2026-07-27):
+                fields flow into its FormRow (equal shares at a 10rem min,
+                growing to fill and wrapping as a unit); the compact Alert goes
+                to the `alert` prop, rendered as a content-hugging chip pinned to
+                the bottom baseline. Fields take width="full" to fill the share. */}
+            <HeaderToolbar
+              alert={
+                <Alert severity="info" compact>
+                  Created manually; status won't update automatically.
                 </Alert>
-                <FormRow minItemWidth="13rem">
-                  <Select
-                    label={t('label.supplier-name')}
-                    options={SUPPLIERS}
-                    value={supplier()}
-                    onValueChange={setSupplier}
-                  />
-                  <TextField
-                    label={t('label.reference')}
-                    width="full"
-                    value={reference()}
-                    onInput={e => setReference(e.currentTarget.value)}
-                  />
-                  <DateField
-                    label={t('label.received')}
-                    width="full"
-                    format="dd MMM yyyy"
-                    value="2026-05-19"
-                    disabled
-                  />
-                </FormRow>
-              </Stack>
-            </Toolbar>
+              }
+            >
+              <Select
+                label={t('label.supplier-name')}
+                size="small"
+                width="full"
+                options={SUPPLIERS}
+                value={supplier()}
+                onValueChange={setSupplier}
+              />
+              <TextField
+                label={t('label.reference')}
+                size="small"
+                width="full"
+                value={reference()}
+                onInput={e => setReference(e.currentTarget.value)}
+              />
+              <DateField
+                label={t('label.received')}
+                size="small"
+                width="full"
+                format="dd MMM yyyy"
+                value="2026-05-19"
+                disabled
+              />
+            </HeaderToolbar>
             <TabList tabs={TABS} />
           </Header>
+        }
+        contentFooter={
+          // The inbound-shipment status footer (mirrors the real detail view):
+          // the On-hold toggle (confirm before toggling), the lifecycle
+          // StatusIndicator (history on hover), and the status-change action.
+          <ContentFooter>
+            <CheckboxButton
+              checked={onHold()}
+              onChange={() => setHoldConfirm(true)}
+            >
+              {t('label.hold')}
+            </CheckboxButton>
+            <StatusIndicator steps={STATUS_STEPS} current={2} />
+            <ContentFooterActions>
+              <SplitButton
+                icon={<ArrowRightIcon />}
+                value="verified"
+                menuLabel={t('label.status')}
+                options={[
+                  {
+                    value: 'verified',
+                    label: `${t('button.confirm')} Verified`,
+                  },
+                ]}
+                onAction={() => {}}
+              />
+            </ContentFooterActions>
+            {/* Toggling hold confirms first, like the real inbound footer. */}
+            <ConfirmDialog
+              open={holdConfirm()}
+              onClose={() => setHoldConfirm(false)}
+              title={t('heading.are-you-sure')}
+              message={
+                onHold()
+                  ? t('messages.off-hold-confirmation')
+                  : t('messages.on-hold-confirmation')
+              }
+              onConfirm={() => {
+                setOnHold(v => !v);
+                setHoldConfirm(false);
+              }}
+            />
+          </ContentFooter>
         }
       >
         <TabPanel value="details">

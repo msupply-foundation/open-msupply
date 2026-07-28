@@ -226,10 +226,16 @@
 /* Monospace value cells — the `code` cell kind (item code, batch, location).
    A display convention set via meta.mono → data-mono, on the VALUE only: the
    body cell in table view (.td) and the wrapped value span in card view
-   (.card); the header label stays in the sans UI font. */
+   (.card); the header label stays in the sans UI font. Sized as a proportion
+   of the surrounding cell — 92.857% ≈ 13px against the 14px (--text-sm) body
+   — and muted, because Courier renders visually larger at the same px, so
+   codes/batches over-weighted the row (issue #614). Using a percentage rather
+   than a token keeps mono a fixed fraction of whatever text it sits in. */
 .td[data-mono],
 .card [data-mono] {
   font-family: var(--font-mono);
+  font-size: 92.857%;
+  color: var(--text-secondary);
 }
 
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
@@ -433,22 +439,30 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    Comment.module.css). */
 .selectBox {
   margin-inline: auto;
+  /* Square 42px click target over the 18px box: (42 − 18) / 2 = 12px =
+     0.75rem on each axis. Sits within the 48px selection column (3px dead each
+     side) so a click almost anywhere in the column toggles the row (old-app
+     parity); a compact 40px row leaves a negligible 1px block overhang. */
+  --checkbox-hit-inset-inline: 0.75rem;
+  --checkbox-hit-inset-block: 0.75rem;
 }
 
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
    A pinned cell needs a FULLY OPAQUE background so the horizontally-scrolling content never shows
    through the frozen cell (or through the seam between the two leading columns). All get z 1 —
    above the normal scrolling body cells (z auto) on horizontal scroll, but BELOW the header (z 2 /
-   pinned header 3) so the header never disappears under a sticky pinned column. An edge shadow on
-   the inner side signals the freeze. */
+   pinned header 3) so the header never disappears under a sticky pinned column. A 1px seam on the
+   inner edge signals the freeze — on pinned DATA columns only (see #617 below).
+
+   Pinned BODY cells sit on the ROW surface: a pinned data column is data, not
+   chrome, and the leading selection column takes the row surface too (#617 — no
+   grey band beside the checkbox; the standard's example table reads the checkbox
+   as part of its row). The selection / state / hover tints below override the
+   fill per row. The HEADER's select cell is excluded by order — .th[data-pinned]
+   follows and restores the header fill. */
 .td[data-pinned],
 .selectCell[data-pinned] {
   z-index: 1;
-}
-
-/* A pinned DATA column's body cells stay on the body (row) surface — it's data, not part of the
-   leading band. */
-.td[data-pinned] {
   background: var(--bg-white);
 }
 
@@ -462,14 +476,27 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   background: var(--bg-toolbar);
 }
 
-.th[data-pinned='left'],
-.td[data-pinned='left'],
-.selectCell[data-pinned] {
+/* The 1px seam marks where a frozen BLOCK ends, so the frozen columns read as
+   distinct from the scrolling ones. It goes on the block's OUTER edge only
+   (data-frozen-edge — the last left-pinned / first right-pinned column, see
+   DataTable.frozenEdge): a seam on every pinned column would slice the block
+   into separate strips.
+
+   Two exclusions:
+   - :not([data-hidden-*]) on the scroll box — the seam is the AT-REST cue, and
+     hands over to the shadow (below) once content is under the column, so the
+     edge never carries both.
+   - :not(.selectCell) — no line beside the checkbox column, shadow or not
+     (#617). It's always frozen and isn't a column the user pinned, so there's
+     no pinned-vs-not distinction for it to draw. */
+.tableScroll:not([data-hidden-left])
+  [data-frozen-edge='left']:not(.selectCell) {
   box-shadow: inset -1px 0 0 0 var(--color-divider);
 }
 
-.th[data-pinned='right'],
-.td[data-pinned='right'] {
+/* No .selectCell exclusion needed here — the leading column only ever holds
+   the LEFT edge. */
+.tableScroll:not([data-hidden-right]) [data-frozen-edge='right'] {
   box-shadow: inset 1px 0 0 0 var(--color-divider);
 }
 
@@ -481,67 +508,18 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
 }
 
-/* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the frozen
-   leading column reads as one cohesive band with the header above it (matching the header
-   background — as requested), plus a soft drop shadow onto the scrolling content to its
-   inline-END (the "this column is pinned" depth cue, visible as the body scrolls under it). The
-   shadow must fall to the RIGHT, not the left — the scroll container is overflow:auto, so a
-   leftward shadow past the table's edge would be clipped away. More specific than the base pinned
-   rule + placed after it (no-descending-specificity). No z-index change — the header still wins on
-   vertical scroll. */
-.selectCell[data-pinned] {
-  background: var(--bg-toolbar);
-  /* Just the 1px divider seam here; the soft freeze shadow is the ::after
-     strip below. A per-cell drop shadow (the old second layer) blurs at every
-     cell's top/bottom edge, so the column reads as a stack of lumps fading in
-     and out at each row seam instead of one shadow. */
-  box-shadow: inset -1px 0 0 0 var(--color-divider);
-}
-
-/* The freeze depth cue as ONE continuous shadow down the whole frozen column:
-   a full-row-height gradient strip just past the cell's edge. It's uniform
-   vertically, so each row's strip abuts the next into one unbroken shadow — no
-   per-cell blur, no lumps. Physical left/right (not logical): the leading
-   column is pinned to the PHYSICAL-left edge in both directions (see
-   leadingPinnedStyle), so the shadow always falls physically right into the
-   scrolling content — matching the box-shadow it replaces.
-
-   top/bottom:0 spans the padding box, so the strip stops AT the collapsed 1px
-   row divider rather than covering it — the divider sits in the 1px gap
-   between adjacent rows' strips and shows through at its own light grey. (A
-   -1px bleed over the divider would composite grey shadow over grey divider
-   and read too dark; the hard-edged strips keep the shadow continuous either
-   way, so the gap costs no lumps.) */
-.selectCell[data-pinned]::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 100%;
-  width: 0.5rem;
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--gray-main) 35%, transparent),
-    transparent
-  );
-  pointer-events: none;
-}
-
 /* Opaque hover variants for the sticky cells — the translucent row wash
    would let scrolling content show through a pinned cell, so the same 4%
-   wash is mixed INTO each cell's opaque fill instead. Disabled rows are
+   wash is mixed INTO the cell's opaque fill instead. Disabled rows are
    excluded: they stay flat grey under the pointer (their fill rule is
    lower-specificity, so it can't outrank these). Selected/state tints
    still win while hovered — their hover rules match these on specificity
    and sit later in the file. */
-:where(tbody) tr:not([data-row-state='disabled']):hover > .td[data-pinned] {
-  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-white));
-}
-
+:where(tbody) tr:not([data-row-state='disabled']):hover > .td[data-pinned],
 :where(tbody)
   tr:not([data-row-state='disabled']):hover
   > .selectCell[data-pinned] {
-  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
+  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-white));
 }
 
 /* Row backgrounds — the model (ui-standards § tables, confirmed against
@@ -670,6 +648,55 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 15%,
     var(--surface-raised)
   );
+}
+
+/* A frozen block's freeze cue, as ONE continuous shadow down the whole column:
+   a full-row-height gradient strip just past the block's outer edge, uniform
+   vertically, so each row's strip abuts the next into an unbroken band. A real
+   box-shadow per cell can't do this — its blur fades towards each cell's
+   top/bottom edge, so the column reads as a stack of lumps with a faded gap at
+   every row seam (tried, rejected; Carl 2026-07-28). bottom: -1px closes the
+   collapsed row-divider gap between adjacent strips: at this tint the 1px of
+   shadow over the divider is imperceptible, where an unpainted 1px line is not.
+
+   PHYSICAL left/right, not logical: the strip must fall on the side the content
+   actually passes, and the leading column pins to the physical-left edge in
+   both directions (leadingPinnedStyle in DataTable.tsx).
+
+   These rules live down here, after the row tints, purely for the lint's
+   ascending-specificity order — they belong with the pinned rules above. */
+[data-frozen-edge]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  width: 0.5rem;
+  pointer-events: none;
+  /* Revealed only once content is actually hidden past that edge — i.e. when
+     something is passing UNDER the frozen column (data-hidden-left /
+     data-hidden-right, kept in sync by DataTable.syncHiddenEdges). Unscrolled,
+     there is nothing beneath it to cast onto, and the always-on shadow read as
+     a hard band (#617); the standard's example table likewise reveals its
+     frozen-edge shadow only then. Opacity (rather than swapping the rule in)
+     so it eases in with the table's own fade token, which reduced motion
+     zeroes. */
+  opacity: 0;
+  transition: opacity var(--table-bg-fade);
+}
+
+[data-frozen-edge='left']::after {
+  left: 100%;
+  background: linear-gradient(to right, var(--shadow-frozen-col), transparent);
+}
+
+[data-frozen-edge='right']::after {
+  right: 100%;
+  background: linear-gradient(to left, var(--shadow-frozen-col), transparent);
+}
+
+.tableScroll[data-hidden-left] [data-frozen-edge='left']::after,
+.tableScroll[data-hidden-right] [data-frozen-edge='right']::after {
+  opacity: 1;
 }
 
 /* ==========================================================================

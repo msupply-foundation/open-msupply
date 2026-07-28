@@ -1,7 +1,11 @@
 import { For, Show } from 'solid-js';
+import { t } from '../../../intl';
+import { formatNumber } from '../../../intl/formatNumber';
 import styles from './TargetQuantityBreakdown.module.css';
 
 const round = (n: number) => Math.round(n);
+// Displayed values to 2 decimal places (the layout maths below keep round()).
+const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
 
 // One horizontal value bar (stock on hand / suggested order). A zero-value bar
 // collapses to just its start divider — mirrors the app's original ValueBar.
@@ -24,11 +28,11 @@ const ValueBar = (props: {
       <div
         class={styles.valueBar}
         style={{ 'flex-basis': `${flex()}%`, 'flex-grow': 1 }}
-        title={`${props.label}: ${round(props.value)}`}
+        title={`${props.label}: ${fmt(props.value)}`}
       >
         <div class={`${styles.valueFill} ${props.fillClass}`}>
           <Show when={flex() > 5}>
-            <span class={styles.valueNum}>{round(props.value)}</span>
+            <span class={styles.valueNum}>{fmt(props.value)}</span>
           </Show>
         </div>
         <Show when={flex() > 10}>
@@ -71,21 +75,24 @@ export const TargetQuantityBreakdown = (props: {
   const showText = () => targetWidth() > 5;
   const months = () =>
     Array.from({ length: props.targetMonths }, (_, i) => i + 1);
-  const monthValue = (m: number) => round(amc() * m);
+  const monthValue = (m: number) => amc() * m;
   const monthText = (m: number) =>
-    `${monthValue(m)}${showText() ? ` (${m} ${m === 1 ? 'month' : 'months'})` : ''}`;
+    `${fmt(monthValue(m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
   const additional = (m: number) =>
     m === props.targetMonths
-      ? 'Target MOS'
+      ? t('label.max-months-of-stock')
       : m === props.thresholdMonths
-        ? 'Reorder threshold'
+        ? t('label.min-months-of-stock')
         : undefined;
   return (
     <Show
       when={canCalculate()}
       fallback={
         <p class={styles.calcError} role="status">
-          Unable to calculate: No Average Monthly Consumption value
+          {t('error.unable-to-calculate')}:{' '}
+          {amc() <= 0
+            ? t('error.amc-is-zero')
+            : t('error.soh-and-suggested-quantity-are-zero')}
         </p>
       }
     >
@@ -111,14 +118,14 @@ export const TargetQuantityBreakdown = (props: {
           <ValueBar
             value={soh()}
             total={target()}
-            label="Stock on hand"
+            label={t('label.stock-on-hand')}
             fillClass={styles.sohFill}
             startDivider
           />
           <ValueBar
             value={suggested()}
             total={target()}
-            label="Suggested order quantity"
+            label={t('label.suggested-order-quantity')}
             fillClass={styles.suggestedFill}
           />
         </div>

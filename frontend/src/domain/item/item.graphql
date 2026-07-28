@@ -4,10 +4,12 @@
 # search; `id: { notEqualAll }` drops items already in the caller's context
 # (e.g. already on the stocktake) so they aren't offered twice.
 #
-# The per-item "total" is summed CLIENT-side from availableBatches (Σ
-# totalNumberOfPacks * packSize) rather than a server stat — the item stats
-# field triggers an AMC calculation we don't need here, and the infinite-scroll
-# loading strategy means only ~one page of items is ever summed at a time.
+# The per-item stock figure is summed CLIENT-side from availableBatches (Σ
+# availableNumberOfPacks * packSize — AVAILABLE stock, net of reservations, so it
+# matches the line editor's Available line and the old app; totalNumberOfPacks
+# would over-count by the reserved stock) rather than a server stat — the item
+# stats field triggers an AMC calculation we don't need here, and the
+# infinite-scroll loading strategy means only ~one page of items is summed at a time.
 query itemsWithStock(
   $storeId: String!
   $filter: ItemFilterInput
@@ -40,7 +42,7 @@ query itemsWithStock(
             __typename
             nodes {
               id
-              totalNumberOfPacks
+              availableNumberOfPacks
               packSize
             }
           }

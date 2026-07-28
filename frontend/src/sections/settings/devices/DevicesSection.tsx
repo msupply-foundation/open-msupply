@@ -12,6 +12,7 @@ import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
@@ -59,10 +60,6 @@ export const DevicesSection = () => {
     const result = await graphqlFetch(LabelPrinterSettings, {});
     return result.kind === 'success' ? result.data.labelPrinterSettings : null;
   });
-  const stored = () =>
-    storedData.state === 'ready' || storedData.state === 'refreshing'
-      ? storedData.latest
-      : null;
 
   const [form, setForm] = createSignal<LabelPrinterForm>(
     defaultLabelPrinterForm()
@@ -75,10 +72,14 @@ export const DevicesSection = () => {
   }>();
 
   // Seed the form from the stored settings once they arrive, unless the user
-  // has started editing.
+  // has started editing. Gate on 'ready' (not 'refreshing'): our own Save calls
+  // refetch(), and during 'refreshing' stored() still returns the stale
+  // .latest — re-seeding from it would snap just-saved fields back to their old
+  // values (kdd/solid-reactivity-pitfalls). Re-seed only once fresh data lands.
   let touched = false;
   createEffect(() => {
-    const settings = stored();
+    const settings =
+      storedData.state === 'ready' ? storedData.latest : undefined;
     if (settings && !touched)
       setForm({
         address: settings.address,
@@ -164,7 +165,7 @@ export const DevicesSection = () => {
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       {/* Sub-groups are the library's titled field groups (FormSection,
           kdd/form-layout) — h3 under the section trigger's h2. ⚠️ inconsistent
           i18n namespace captured as-is by the spec: `settings.label-printing`,
@@ -303,6 +304,6 @@ export const DevicesSection = () => {
           </div>
         </FormSection>
       </Show>
-    </div>
+    </Stack>
   );
 };
