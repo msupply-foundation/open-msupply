@@ -32,6 +32,12 @@ interface SelectProps {
   helperText?: string;
   disabled?: boolean;
   /**
+   * Marks the field required: an asterisk on the label (TextField's marker, so
+   * a select and a text field read alike) plus `aria-required` on the trigger.
+   * Indication only — the gating stays with the form's own confirm rule.
+   */
+  required?: boolean;
+  /**
    * Control size. 'default' is the form-field size; 'small' is a compact
    * variant for dense contexts like a toolbar or the pagination rows-per-page
    * control. Matches the shared input size scale (see --input-height*).
@@ -115,12 +121,20 @@ export const Select = (props: SelectProps) => {
       )}
     >
       <Show when={!props.hideLabel}>
-        <KSelect.Label class={styles.label}>{props.label}</KSelect.Label>
+        <KSelect.Label class={styles.label}>
+          {props.label}
+          <Show when={props.required}>
+            <span class={styles.required} aria-hidden="true">
+              *
+            </span>
+          </Show>
+        </KSelect.Label>
       </Show>
       <KSelect.Trigger
         class={styles.trigger}
         data-testid={props.testId}
         aria-label={props.hideLabel ? props.label : undefined}
+        aria-required={props.required ? 'true' : undefined}
       >
         <KSelect.Value<SelectOption> class={styles.value}>
           {state => state.selectedOption().label}
