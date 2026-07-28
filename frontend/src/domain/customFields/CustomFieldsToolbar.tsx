@@ -23,6 +23,14 @@ export const CustomFieldsToolbar = (props: {
   recordId: string;
   values: unknown;
   disabled?: boolean;
+  /**
+   * How each field wears its label, matching the header it sits in:
+   * - `inline` (default) — a FieldRow, bold label beside the control, for a
+   *   header still built on the generic `<Toolbar>`.
+   * - `field` — the control's own label above it, for a `<HeaderToolbar>` field
+   *   cluster, whose FormRow lays the fields out as equal shares.
+   */
+  layout?: 'inline' | 'field';
   onSave: (patch: Record<string, unknown>) => void;
 }) => {
   const reader = customFieldDefinitions(props.scope);
@@ -50,14 +58,13 @@ export const CustomFieldsToolbar = (props: {
               onChange={v => edit.setField(def.key, v)}
             />
           );
-          // Match the other toolbar fields: a bold inline label + control
-          // (FieldRow). A boolean is a self-labelling checkbox, so it needs no
-          // FieldRow wrapper.
-          return field.kind === 'boolean' ? (
-            input(false)
-          ) : (
-            <FieldRow label={def.name}>{input(true)}</FieldRow>
-          );
+          // Match the other fields in the same header. A boolean is a
+          // self-labelling checkbox, so it never takes a wrapper; the rest
+          // either sit in a FieldRow (inline label) or carry their own label
+          // above the control (the HeaderToolbar cluster's shape).
+          if (field.kind === 'boolean' || props.layout === 'field')
+            return input(false);
+          return <FieldRow label={def.name}>{input(true)}</FieldRow>;
         }}
       </For>
     </Show>
