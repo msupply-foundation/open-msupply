@@ -67,6 +67,17 @@ export function TableRow<T>(props: {
    */
   leadingPinnedStyle: (index: number) => JSX.CSSProperties;
   /**
+   * Which frozen block's OUTER edge this column sits on, if any — the boundary
+   * the scrolling content passes. Carries the freeze cue (see
+   * DataTable.module.css); columns inside a block carry none.
+   */
+  frozenEdge: (column: TanColumn<T>) => 'left' | 'right' | undefined;
+  /**
+   * Is the leading (select) column itself that left edge? True when no data
+   * column is pinned left, so the leading column IS the whole left block.
+   */
+  leadingIsFrozenEdge: boolean;
+  /**
    * Display-time tab filter: render a cell only when this returns true (see
    * columnInActiveTab).
    */
@@ -99,6 +110,7 @@ export function TableRow<T>(props: {
         <td
           class={styles.selectCell}
           data-pinned="left"
+          data-frozen-edge={props.leadingIsFrozenEdge ? 'left' : undefined}
           style={props.leadingPinnedStyle(0)}
         >
           <BareCheckbox
@@ -122,6 +134,7 @@ export function TableRow<T>(props: {
               data-align={cellAlign(cell)}
               data-mono={cellMono(cell) ? '' : undefined}
               data-pinned={cell.column.getIsPinned() || undefined}
+              data-frozen-edge={props.frozenEdge(cell.column)}
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
               // 1, the cell clamps to that many lines then ellipsises (CSS
               // line-clamp); otherwise the default single-line nowrap applies.
