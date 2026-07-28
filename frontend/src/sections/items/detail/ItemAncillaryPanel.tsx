@@ -153,6 +153,7 @@ export const ItemAncillaryPanel: Component<{
           title={t('heading.are-you-sure')}
           message={t('messages.confirm-delete-ancillary-item')}
           confirmLabel={t('button.delete')}
+          confirmVariant="danger"
           onConfirm={() => void confirmDelete()}
           onClose={() => setPendingDelete(undefined)}
         />

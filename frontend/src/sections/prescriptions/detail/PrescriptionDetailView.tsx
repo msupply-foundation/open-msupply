@@ -662,6 +662,7 @@ const PrescriptionDetailView: Component = () => {
               'messages.confirm-delete-lines',
               selectedIds().length
             )}
+            confirmVariant="danger"
             onConfirm={() => void runDeleteLines()}
           />
 

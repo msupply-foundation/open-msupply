@@ -215,6 +215,7 @@ export const CustomerReturnSidePanel: Component<
         onClose={() => setDeleteConfirm(false)}
         title={t('heading.are-you-sure')}
         message={tPlural('messages.confirm-delete-returns', 1)}
+        confirmVariant="danger"
         onConfirm={() => void runDelete()}
       />
 
