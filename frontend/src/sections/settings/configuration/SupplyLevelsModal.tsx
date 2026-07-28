@@ -11,6 +11,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import {
   PlusCircleIcon,
@@ -176,7 +177,7 @@ export const SupplyLevelsModal = (props: {
           </For>
         </div>
       </Show>
-      <div class={styles.addRow}>
+      <HStack gap="sm">
         <TextField
           label={t('label.add-supply-level')}
           hideLabel
@@ -197,7 +198,7 @@ export const SupplyLevelsModal = (props: {
           disabled={input().trim() === '' || saving()}
           onClick={add}
         />
-      </div>
+      </HStack>
       <Show when={saveFailed()}>
         <Alert severity="error">{t('error.failed-to-save-supply-level')}</Alert>
       </Show>

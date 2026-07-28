@@ -1,10 +1,4 @@
-import {
-  createSignal,
-  For,
-  Show,
-  type Component,
-  type JSX,
-} from 'solid-js';
+import { createSignal, For, Show, type Component, type JSX } from 'solid-js';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -26,7 +20,8 @@ import {
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { EditIcon, InfoIcon } from '../../../ui/icons';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { EditIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
@@ -126,14 +121,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         'font-weight': 'var(--weight-bold)',
       }}
     >
-      <Popover
-        trigger={<InfoIcon />}
-        triggerLabel={label}
-        openOnHover
-        placement="bottom-start"
-      >
-        <p>{info}</p>
-      </Popover>
+      <InfoTooltip text={info} label={label} placement="bottom-start" />
       {label}
     </span>
   );
@@ -173,16 +161,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             {/* Info popover on hover — the user's email (the picked-date
                 reason bubble's pattern); no icon when there is no email. */}
             <Show when={props.node.user?.email}>
-              {email => (
-                <Popover
-                  trigger={<InfoIcon />}
-                  triggerLabel={email()}
-                  openOnHover
-                  placement="top"
-                >
-                  <p>{email()}</p>
-                </Popover>
-              )}
+              {email => <InfoTooltip text={email()} label={email()} />}
             </Show>
           </HStack>
         </FieldRow>

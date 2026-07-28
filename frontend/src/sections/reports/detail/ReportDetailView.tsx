@@ -19,6 +19,7 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
 import {
@@ -348,18 +349,10 @@ const ReportDetailView: Component = () => {
                 }}
               >
                 <span>{t('error.failed-to-generate-report')}</span>
-                <details>
-                  <summary>{t('label.click-to-view')}</summary>
-                  <pre
-                    style={{
-                      margin: 0,
-                      'white-space': 'pre-wrap',
-                      'overflow-wrap': 'anywhere',
-                    }}
-                  >
-                    {errorsJson()}
-                  </pre>
-                </details>
+                <ErrorDetails
+                  detail={errorsJson()}
+                  summaryLabel={t('label.click-to-view')}
+                />
               </div>
             </Alert>
           </div>
