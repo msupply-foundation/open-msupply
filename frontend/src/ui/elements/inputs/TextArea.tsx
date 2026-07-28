@@ -40,6 +40,13 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
    * shows it.
    */
   hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept beside the label rather than in
+   * the field frame so it isn't part of the control's accessible name. Ignored
+   * under `hideLabel` (no visible label to hang it off). As TextField.
+   */
+  labelInfo?: JSX.Element;
 }
 
 /*
