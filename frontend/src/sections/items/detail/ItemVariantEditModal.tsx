@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import {
   createEffect,
   createResource,
@@ -141,7 +142,7 @@ export const ItemVariantEditModal: Component<
       input: buildUpsertInput(
         form(),
         props.itemId,
-        editedVariant()?.id ?? crypto.randomUUID()
+        editedVariant()?.id ?? generateUUID()
       ),
     });
     if (result.kind !== 'success') {

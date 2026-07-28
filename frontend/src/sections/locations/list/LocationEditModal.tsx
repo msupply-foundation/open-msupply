@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
@@ -165,7 +166,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       // Create: client-generated id (rules.md § identity).
       const result = await graphqlFetch(InsertLocation, {
         storeId: props.storeId,
-        input: buildInsertInput(form(), crypto.randomUUID()),
+        input: buildInsertInput(form(), generateUUID()),
       });
       if (result.kind !== 'success') {
         setSaving(null);
