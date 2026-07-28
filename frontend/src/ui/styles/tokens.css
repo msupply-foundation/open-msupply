@@ -113,6 +113,11 @@
   --shadow-4:
     0 12px 24px 0 rgba(96, 97, 112, 0.16), 0 4px 8px 0 rgba(40, 41, 61, 0.3);
   --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
+  /* A frozen table column's shadow onto the content scrolling under it. A COLOUR,
+     not a box-shadow: it's painted as a gradient strip (one continuous shadow
+     down the whole column — a real box-shadow per cell scallops at every row
+     seam). See DataTable.module.css. */
+  --shadow-frozen-col: rgba(96, 97, 112, 0.22);
 
   /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
   --focus-ring: 0 0 0 0.1875rem rgba(62, 123, 250, 0.25); /* action blue (#3e7bfa) */
@@ -368,6 +373,7 @@
   --shadow-4:
     0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
   --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
+  --shadow-frozen-col: rgba(0, 0, 0, 0.55);
 
   /* Stronger focus glows + darker scrim read better on dark */
   --focus-ring: 0 0 0 0.1875rem rgba(91, 141, 239, 0.45); /* action blue (#5b8def, dark) */

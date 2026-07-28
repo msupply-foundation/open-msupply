@@ -479,7 +479,8 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 /* Pinned DATA columns keep a 1px seam on their inner edge. The leading
    SELECTION column is excluded (:not(.selectCell) on the header, and the body
    select cell carries no .td) — the standard's table example shows neither a
-   shadow nor a line beside the checkbox column (#617). */
+   shadow nor a line beside the checkbox column (#617); its freeze cue is the
+   scroll-gated shadow below instead. */
 .th[data-pinned='left']:not(.selectCell),
 .td[data-pinned='left'] {
   box-shadow: inset -1px 0 0 0 var(--color-divider);
@@ -638,6 +639,51 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 15%,
     var(--surface-raised)
   );
+}
+
+/* The leading column's freeze cue, as ONE continuous shadow down the whole
+   column: a full-row-height gradient strip just past the cell's edge, uniform
+   vertically, so each row's strip abuts the next into an unbroken band. A real
+   box-shadow per cell can't do this — its blur fades towards each cell's
+   top/bottom edge, so the column reads as a stack of lumps with a faded gap at
+   every row seam (tried, rejected; Carl 2026-07-28). bottom: -1px closes the
+   collapsed row-divider gap between adjacent strips: at this tint the 1px of
+   shadow over the divider is imperceptible, where an unpainted 1px line is not.
+
+   Physical left/right (not logical): the leading column pins to the
+   PHYSICAL-left edge in both directions (leadingPinnedStyle in DataTable.tsx),
+   so the shadow always falls physically right into the scrolling content.
+
+   :not(:has(+ [data-pinned='left'])) — no strip when a left-pinned DATA column
+   sits next to the checkbox: the frozen block continues there, and a shadow
+   INSIDE it would read as a false edge (that column's own seam marks the real
+   boundary). Whether the cue should instead MOVE to the last cell of the frozen
+   block, as the standard does, is open.
+
+   Both rules live down here, after the row tints, purely for the lint's
+   ascending-specificity order — they belong with the pinned rules above. */
+.selectCell[data-pinned]:not(:has(+ [data-pinned='left']))::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  left: 100%;
+  width: 0.5rem;
+  background: linear-gradient(to right, var(--shadow-frozen-col), transparent);
+  pointer-events: none;
+  /* Revealed only once content is actually scrolled UNDER the column
+     (data-hscrolled, stamped by DataTable's onScroll): at scrollLeft 0 there is
+     nothing beneath it to cast onto, and the always-on shadow read as a hard
+     band (#617). The standard's example table reveals its frozen-edge shadow on
+     scroll the same way. Opacity (not a rule swap) so it eases in with the
+     table's own fade token, which reduced motion zeroes. */
+  opacity: 0;
+  transition: opacity var(--table-bg-fade);
+}
+
+.tableScroll[data-hscrolled]
+  .selectCell[data-pinned]:not(:has(+ [data-pinned='left']))::after {
+  opacity: 1;
 }
 
 /* ==========================================================================
