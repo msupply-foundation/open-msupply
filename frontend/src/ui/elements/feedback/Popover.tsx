@@ -6,6 +6,7 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Popover.module.css';
 
 export type PopoverPlacement =
@@ -27,6 +28,12 @@ export interface PopoverProps {
   triggerProps?: JSX.ButtonHTMLAttributes<HTMLButtonElement>;
   /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
   triggerTestId?: string;
+  /**
+   * Focus destination for the TRIGGER (kdd/focus-targets) — the trigger button
+   * is owned in here, so a caller that must send focus (or a synthetic open) to
+   * it can't reach it with a plain ref.
+   */
+  focusTarget?: FocusTarget;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
@@ -219,7 +226,10 @@ export const Popover = (props: PopoverProps) => {
   return (
     <>
       <button
-        ref={trigger}
+        ref={(el: HTMLButtonElement) => {
+          trigger = el;
+          props.focusTarget?.ref(el);
+        }}
         type="button"
         // Click toggles via the platform for a plain popover; in hover mode the
         // toggle is dropped (see hoverHandlers) so click stays open-only, and
