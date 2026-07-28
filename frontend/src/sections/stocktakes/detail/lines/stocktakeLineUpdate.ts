@@ -1,4 +1,4 @@
-import { graphqlFetch } from '../../../../api/graphql';
+import { graphqlFetch } from '@/api/graphql';
 import {
   BatchStocktakeLines,
   type StocktakeLineFragment,

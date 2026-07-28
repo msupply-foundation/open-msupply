@@ -1,12 +1,13 @@
+import { generateUUID } from '@/uuid';
 import { createSignal } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { t } from '../../../../intl';
-import { localisedDate } from '../../../../intl/formatDateTime';
-import { userDisplayName } from '../../../../auth/authContext';
-import { graphqlFetch } from '../../../../api/graphql';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import { t } from '@/intl';
+import { localisedDate } from '@/intl/formatDateTime';
+import { userDisplayName } from '@/auth/authContext';
+import { graphqlFetch } from '@/api/graphql';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Button } from '@/ui/elements/buttons/Button';
+import { CheckIcon, PlusCircleIcon, XCircleIcon } from '@/ui/icons';
 import { InsertStocktake } from '../createStocktake.generated';
 
 // The initial (opening-balance) stocktake create action — offered only from
@@ -39,7 +40,7 @@ export const CreateInitialStocktakeAction = (props: {
     const result = await graphqlFetch(InsertStocktake, {
       storeId: params.storeId,
       input: {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         isInitialStocktake: true,
         comment: t('stocktake.comment-initial-stocktake-template'),
         // Same client-composed default description as the regular create flow

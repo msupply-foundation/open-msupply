@@ -86,6 +86,18 @@ export default tseslint.config(
       ...sharedRules,
       // Browser app code ships no stray logs; info/warn/error are intentional.
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+      // compat can't flag this: Chrome supports crypto.randomUUID, but only
+      // in secure contexts — it crashes on plain-HTTP LAN origins (#499).
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'crypto',
+          property: 'randomUUID',
+          message:
+            'Secure-context only — crashes on plain-HTTP origins (#499). ' +
+            'Use generateUUID from src/uuid.ts.',
+        },
+      ],
     },
   },
 

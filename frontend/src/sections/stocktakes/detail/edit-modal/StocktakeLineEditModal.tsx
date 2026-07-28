@@ -1,45 +1,46 @@
+import { generateUUID } from '@/uuid';
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
-import { graphqlFetch } from '../../../../api/graphql';
-import { t, tPlural } from '../../../../intl';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { graphqlFetch } from '@/api/graphql';
+import { t, tPlural } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
 import {
   createFocusTarget,
   createFocusTargets,
-} from '../../../../ui/utils/createFocusTarget';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { IconButton } from '../../../../ui/elements/buttons/IconButton';
+} from '@/ui/utils/createFocusTarget';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { IconButton } from '@/ui/elements/buttons/IconButton';
 import {
   CancelButton,
   DialogSaveButton,
   SaveAndNextButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
-import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { NumberField } from '../../../../ui/elements/inputs/NumberField';
-import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
-import { BareCheckbox } from '../../../../ui/elements/inputs/BareCheckbox';
+} from '@/ui/elements/buttons/StandardButtons';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { DateField } from '@/ui/elements/inputs/DateField';
+import { NumberField } from '@/ui/elements/inputs/NumberField';
+import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
+import { BareCheckbox } from '@/ui/elements/inputs/BareCheckbox';
 import {
   DataTable,
   type Column,
   type CardGroup,
-} from '../../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../../../api/createTableConfig';
+} from '@/ui/elements/table/DataTable';
+import { getNumberCell } from '@/ui/elements/table/tableHelpers';
+import { createTableConfig } from '@/api/createTableConfig';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
-} from '../../../../domain/location';
+} from '@/domain/location';
 import {
   ReasonSelect,
   reasonMatchesKind,
-} from '../../../../domain/reasonOptions';
-import { ItemSearch } from '../../../../domain/item';
-import { VvmStatusSelect } from '../../../../domain/vvmStatus';
-import { NameSearch } from '../../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../../domain/campaign';
-import { stocktakePreferences } from '../../../../store/storeContext';
+} from '@/domain/reasonOptions';
+import { ItemSearch } from '@/domain/item';
+import { VvmStatusSelect } from '@/domain/vvmStatus';
+import { NameSearch } from '@/domain/name';
+import { CampaignOrProgramSelect } from '@/domain/campaign';
+import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
 import {
   PlusCircleIcon,
@@ -48,7 +49,7 @@ import {
   MessageSquareIcon,
   TrashIcon,
   CopyIcon,
-} from '../../../../ui/icons';
+} from '@/ui/icons';
 import {
   StockLinesByItem,
   StocktakeLines,
@@ -192,7 +193,7 @@ const buildDraft = async (
     countThisLine: true,
   }));
   const fromStock: DraftLine[] = stockLines.map(sl => ({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     isNew: true,
     stockLineId: sl.id,
     countThisLine: countByDefault,
@@ -564,7 +565,7 @@ const StocktakeLineEditContent = (
     setDraft(
       produce(lines =>
         lines.unshift({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           isNew: true,
           countThisLine: true,
           stockLine: null,
@@ -626,7 +627,7 @@ const StocktakeLineEditContent = (
   const duplicateLine = (line: DraftLine) => {
     const copy: DraftLine = {
       ...unwrap(line),
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       isNew: true,
       snapshotNumberOfPacks: 0,
       countedNumberOfPacks: null,

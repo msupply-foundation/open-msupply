@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { t } from '../../../../intl';
@@ -166,7 +167,7 @@ const Body: Component<InsuranceModalProps> = props => {
           nameOfInsured: draft.nameOfInsured,
         })
       : await runInsertInsurance(props.storeId, {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           nameId: props.patientId,
           insuranceProviderId: draft.insuranceProviderId!,
           policyNumberFamily: draft.policyNumberFamily,

@@ -23,6 +23,8 @@ export interface PatientSearchProps {
   onSelect: (patient: PatientOption | null) => void;
   placeholder?: string;
   hideLabel?: boolean;
+  /** Control size — `small` for a header field cluster's compact row. */
+  size?: 'default' | 'small';
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
@@ -89,6 +91,7 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>
     label={props.label}
     hideLabel={props.hideLabel}
+    size={props.size}
     class={props.class}
     disabled={props.disabled}
     error={props.error}
