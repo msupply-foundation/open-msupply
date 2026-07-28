@@ -23,6 +23,14 @@ import {
   type Column,
 } from '../../../../ui/elements/table/DataTable';
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  useAccordionItemExpanded,
+} from '../../../../ui/elements/accordion/Accordion';
+import styles from './PrescriptionLineEditModal.module.css';
+import {
   getExpiryDateCell,
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
@@ -201,6 +209,28 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   };
 
   const directionsDisabled = () => allocatedUnits() <= 0;
+
+  // The collapsed Batches trigger's allocation summary — each drawn batch
+  // and its issued units (OMS-REG-DIS-03.57). Hidden while expanded: the
+  // grid then shows the same figures per row.
+  const BatchSummary = () => {
+    const expanded = useAccordionItemExpanded();
+    const drawn = () => lines.filter(line => line.numberOfPacks > 0);
+    return (
+      <Show when={!expanded() && drawn().length > 0}>
+        <span class={styles.batchSummary}>
+          {drawn()
+            .map(
+              line =>
+                `${line.batch ?? t('label.none')} · ${formatNumber(
+                  line.numberOfPacks * line.packSize
+                )} ${unitName()}`
+            )
+            .join(', ')}
+        </span>
+      </Show>
+    );
+  };
 
   const saveEnabled = () =>
     canSave({
@@ -484,13 +514,33 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             </Show>
           }
         >
-          <DataTable
-            columns={columns()}
-            rows={[...lines]}
-            rowKey={line => line.id}
-            rowState={line => (line.barred.length > 0 ? 'disabled' : undefined)}
-            loading={gridData.loading}
-          />
+          {/* The batch grid folds behind a Batches disclosure, closed on
+              open (OMS-REG-DIS-03.56) — issuing allocates without it; the
+              user expands it for batch detail or per-batch entry. While
+              closed, the trigger row summarises the drawn batches
+              (OMS-REG-DIS-03.57) so the picked batch — usually one — is
+              visible without expanding. */}
+          <Accordion collapsible>
+            <AccordionItem value="batches">
+              <AccordionTrigger>
+                {t('label.batches')}
+                {/* Real space so the accessible name doesn't concatenate
+                    the label into the summary. */}{' '}
+                <BatchSummary />
+              </AccordionTrigger>
+              <AccordionContent>
+                <DataTable
+                  columns={columns()}
+                  rows={[...lines]}
+                  rowKey={line => line.id}
+                  rowState={line =>
+                    line.barred.length > 0 ? 'disabled' : undefined
+                  }
+                  loading={gridData.loading}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Show>
 
         {/* The shortfall banner (stock-allocation § reporting — nothing
