@@ -4,6 +4,7 @@ import {
   forbiddenError,
   unexpectedError,
 } from './api/graphql';
+import { authUser } from './auth/authContext';
 import { humanisePermission } from './auth/permissionLabels';
 import { t } from './intl';
 import { Dialog } from './ui/elements/feedback/Dialog';
@@ -14,9 +15,14 @@ import { AlertCircleIcon, LockIcon } from './ui/icons';
 // everything else, for the two failure classes the query method routes here.
 // The flow that hit the error stays in its loading phase either way.
 //
-// - Unexpected error: the description, and two recovery actions that are each a
-//   full-page navigation (reload in place, or go to the root/dashboard) — the
-//   app restarts from a clean state, so the modal is not otherwise dismissable.
+// - Unexpected error: the description, and up to two recovery actions that are
+//   each a full-page navigation (reload in place, or go to the root/dashboard) —
+//   the app restarts from a clean state, so the modal is not otherwise
+//   dismissable. The Dashboard action only appears once the user is
+//   authenticated and operational (authUser is set): during startup, on the
+//   initialisation screen, and on the login screen there is no dashboard to
+//   reach, and reloading via Dashboard would only wipe entered credentials
+//   (issue #519.1) — so those phases show Try again alone.
 // - Permission denied (Forbidden): the user is authenticated but lacks the
 //   permission. Nothing is broken, so recovery is NOT a reload — the modal
 //   names the missing permission(s) and its single OK just clears the signal,
@@ -67,12 +73,14 @@ const UnexpectedError: Component = () => (
         <Button variant="secondary" onClick={() => location.reload()}>
           {t('button.try-again')}
         </Button>
-        <Button
-          variant="secondary"
-          onClick={() => (location.href = import.meta.env.BASE_URL)}
-        >
-          {t('button.dashboard')}
-        </Button>
+        <Show when={authUser()}>
+          <Button
+            variant="secondary"
+            onClick={() => (location.href = import.meta.env.BASE_URL)}
+          >
+            {t('button.dashboard')}
+          </Button>
+        </Show>
       </>
     }
   />

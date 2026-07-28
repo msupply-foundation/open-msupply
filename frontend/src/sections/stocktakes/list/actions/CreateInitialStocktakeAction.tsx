@@ -1,13 +1,13 @@
-import { generateUUID } from '../../../../uuid';
+import { generateUUID } from '@/uuid';
 import { createSignal } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { t } from '../../../../intl';
-import { localisedDate } from '../../../../intl/formatDateTime';
-import { userDisplayName } from '../../../../auth/authContext';
-import { graphqlFetch } from '../../../../api/graphql';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import { t } from '@/intl';
+import { localisedDate } from '@/intl/formatDateTime';
+import { userDisplayName } from '@/auth/authContext';
+import { graphqlFetch } from '@/api/graphql';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Button } from '@/ui/elements/buttons/Button';
+import { CheckIcon, PlusCircleIcon, XCircleIcon } from '@/ui/icons';
 import { InsertStocktake } from '../createStocktake.generated';
 
 // The initial (opening-balance) stocktake create action — offered only from

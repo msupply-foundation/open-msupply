@@ -1,4 +1,4 @@
-import type { DebouncedEdit } from '../../../domain/debouncedEdit';
+import type { DebouncedEdit } from '@/domain/debouncedEdit';
 
 // The as-you-type editable text fields on a stocktake — the toolbar's
 // description plus the side panel's counted-by / verified-by / comment. One

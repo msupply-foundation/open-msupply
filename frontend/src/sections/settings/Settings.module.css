@@ -1,20 +1,8 @@
-/* Shared layout for the settings sections (spec/settings/ui-surface.md § S1):
- * rows stack top to bottom inside an open section; small clusters (a form's
- * action buttons, the supply-level value rows) arrange inline. Values from the
- * theme tokens only. */
-
-/* Width cap for the S1 section stack / S2 body: the form reading measure,
- * START-aligned like the reference app's settings column (not centred — this
- * tree's pages have no centring convention; detail views are full width). */
-.measure {
-  max-inline-size: var(--measure-form);
-}
-
-.sectionBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
+/* Section-specific styling for the settings sections
+ * (spec/settings/ui-surface.md § S1): the section-heading icon+label, the S4
+ * supply-level value rows, the scan-result list, and the server-info block.
+ * Generic row/column layout comes from the shared Stack / HStack /
+ * ContentContainer. Values from the theme tokens only. */
 
 /* Section-heading content: leading intent icon + label, spaced apart. Layout
  * only on our own span — the trigger keeps the accordion component's own
@@ -27,40 +15,6 @@
 
 .sectionHeading svg {
   font-size: 1.25em;
-}
-
-/* An inline cluster of action buttons under a form (Test · Save; the sync
- * form's Save) — inline-end aligned, matching the reference app's settings
- * forms. */
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-/* The Test-scanner screen's control cluster — start-aligned command buttons
- * (not a form's save row). */
-.scannerActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-/* A toggle row's revealed editor block (custom theme / logo): editor above
- * its Save action. */
-.editorBlock {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-/* A row pairing a toggle with its info affordance (custom logo). */
-.toggleRow {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
 }
 
 /* Supply-level value rows in the S4 modal: value + in-use tag + remove
@@ -87,14 +41,19 @@
   color: var(--text-secondary);
 }
 
-/* The S4 add-value row: input + add button inline. */
-.addRow {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-
 .scanResultList {
   margin: 0;
   padding-inline-start: var(--space-5);
+}
+
+/* Server-info block (issue #500): the QR beside the FieldRow label:value
+ * details (server URL / site / version / central-server). The only bespoke
+ * class in the block — a horizontal arrangement (QR beside the details column)
+ * for which there is no primitive (Stack is vertical-only). The details column
+ * itself is a plain div: FieldRows block-stack flush, matching the reference. */
+.serverInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }

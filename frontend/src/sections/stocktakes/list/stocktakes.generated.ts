@@ -98,6 +98,22 @@ export const Stocktakes = {
   query: "query stocktakes($storeId: String!, $filter: StocktakeFilterInput, $sort: [StocktakeSortInput!], $page: PaginationInput) {\n  stocktakes(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        stocktakeNumber\n        status\n        description\n        comment\n        createdDatetime\n        stocktakeDate\n        finalisedDatetime\n        isLocked\n      }\n    }\n  }\n}",
 } as TypedDocument<StocktakesResult, StocktakesVariables>;
 
+export type StocktakeCountVariables = {
+  storeId: string;
+};
+
+export type StocktakeCountResult = {
+  stocktakes: ({
+  __typename: "StocktakeConnector";
+} & {
+  totalCount: number;
+});
+};
+
+export const StocktakeCount = {
+  query: "query stocktakeCount($storeId: String!) {\n  stocktakes(storeId: $storeId, page: {first: 1}) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
+} as TypedDocument<StocktakeCountResult, StocktakeCountVariables>;
+
 export type DeleteStocktakesVariables = {
   storeId: string;
   ids?: Array<{

@@ -18,7 +18,7 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Popover } from '../../../ui/elements/feedback/Popover';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
@@ -112,16 +112,7 @@ export const CustomerReturnSidePanel: Component<
             {/* Info popover on hover — the user's email (the picked-date
                 reason bubble's pattern); no icon when there is no email. */}
             <Show when={props.node.user?.email}>
-              {email => (
-                <Popover
-                  trigger={<InfoIcon />}
-                  triggerLabel={email()}
-                  openOnHover
-                  placement="top"
-                >
-                  <p>{email()}</p>
-                </Popover>
-              )}
+              {email => <InfoTooltip text={email()} label={email()} />}
             </Show>
           </span>
         </FieldRow>
@@ -224,6 +215,7 @@ export const CustomerReturnSidePanel: Component<
         onClose={() => setDeleteConfirm(false)}
         title={t('heading.are-you-sure')}
         message={tPlural('messages.confirm-delete-returns', 1)}
+        confirmVariant="danger"
         onConfirm={() => void runDelete()}
       />
 

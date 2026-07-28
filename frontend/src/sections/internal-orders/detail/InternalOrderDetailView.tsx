@@ -14,6 +14,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
@@ -59,16 +61,18 @@ import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
+import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
 import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
-// send, the side panel (S5), the Documents tab, Export/Print (reports S4), the
-// Indicators tab, the ancillary Add/Update actions, and the line editor (S4 —
-// Add item + row-click edit). The master-list picker (S7), use-suggested, and
-// the editor's context charts / forecast-calculation display are a later cut.
+// send, the side panel (S5), the Documents / Indicators / Log tabs,
+// Export/Print (reports S4), the ancillary Add/Update actions, the line editor
+// (S4 — Add item + row-click edit), the master-list picker (S7),
+// use-suggested, and bulk line delete.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -81,6 +85,7 @@ type Line = InternalOrderLineFragment;
 type SortKey =
   | 'code'
   | 'name'
+  | 'dps'
   | 'available'
   | 'amc'
   | 'mos'
@@ -93,6 +98,14 @@ const InternalOrderDetailView: Component = () => {
   const navigate = useNavigate();
   const [itemFilter, setItemFilter] = createSignal('');
   const [hideOverMin, setHideOverMin] = createSignal(false);
+  // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
+  // a non-empty selection swaps the status footer for the bulk-action bar.
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Lines a send's reasons-backstop refusal named (AC-R3): their Reason cells
+  // flag until the next send, or until a line edit refetches the table.
+  const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
+    new Set()
+  );
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
@@ -189,6 +202,23 @@ const InternalOrderDetailView: Component = () => {
       customerNameId: nameId,
     });
   };
+  // Report generation seeds for an indicator program order (AC-PR4): the same
+  // program / period / customer identity the Indicators tab reads, handed to
+  // the Export/Print selector so indicator report templates can locate the
+  // program data behind the order. Undefined on any other order (and until the
+  // store's own name id resolves) — then only the standard seeds are sent.
+  const reportSeedArgs = () => {
+    const node = info();
+    const nameId = ownName.latest;
+    if (!showIndicators() || !node?.program || !node.period || !nameId)
+      return undefined;
+    return {
+      programId: node.program.id,
+      periodId: node.period.id,
+      customerNameId: nameId,
+    };
+  };
+
   const [indicators] = createResource(indicatorVariables, async serialised => {
     const result = await graphqlFetch(
       InternalOrderIndicators,
@@ -291,7 +321,7 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // ONE debounced buffer for the as-you-type reference (comment rides the same
-  // buffer for the side panel / send, out of this cut).
+  // buffer for the side panel).
   const edit = createDebouncedEdit<HeaderEditFields>({
     id: () => info()?.id ?? '',
     initial: () => ({
@@ -350,6 +380,8 @@ const InternalOrderDetailView: Component = () => {
         return line.item.code.toLowerCase();
       case 'name':
         return line.itemName.toLowerCase();
+      case 'dps':
+        return line.item.defaultPackSize;
       case 'available':
         return line.availableStockOnHand;
       case 'amc':
@@ -468,12 +500,13 @@ const InternalOrderDetailView: Component = () => {
               id: 'dosesPerUnit',
             },
             header: () => t('label.doses-per-unit'),
+            ...getNumberCell(),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
       c: { accessor: line => line.item.defaultPackSize, id: 'dps' },
-      sortKey: undefined,
+      sortKey: 'dps',
       header: () => t('label.dps'),
       ...getNumberCell(),
     },
@@ -484,6 +517,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
+      ...getNumberCell(),
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
@@ -494,11 +528,13 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
+      ...getNumberCell(),
     },
     {
       c: { accessor: line => mos(line).toFixed(1), id: 'mos' },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
+      ...getNumberCell(),
     },
     {
       c: {
@@ -507,6 +543,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
+      ...getNumberCell(),
     },
     // Target stock (population) — gated on the forecasting preference; the
     // stored forecast rounded up, zero on a forecast-less line.
@@ -519,6 +556,7 @@ const InternalOrderDetailView: Component = () => {
               id: 'targetStockPopulation',
             },
             header: () => t('label.target-stock-population'),
+            ...getNumberCell(),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -530,6 +568,7 @@ const InternalOrderDetailView: Component = () => {
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
+      ...getNumberCell(),
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
@@ -541,6 +580,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
+      meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
         return (
@@ -591,34 +631,63 @@ const InternalOrderDetailView: Component = () => {
           {
             c: { accessor: l => numWithDoses(l, l.initialStockOnHandUnits), id: 'initialSoh' },
             header: () => t('label.initial-stock-on-hand'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.incomingUnits), id: 'incoming' },
             header: () => t('label.incoming'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.outgoingUnits), id: 'outgoing' },
             header: () => t('label.outgoing'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.lossInUnits), id: 'losses' },
             header: () => t('label.losses'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.additionInUnits), id: 'additions' },
             header: () => t('label.additions'),
+            ...getNumberCell(),
           },
           {
-            c: { accessor: l => Math.round(l.expiringUnits), id: 'shortExpiry' },
+            c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
             header: () => t('label.short-expiry'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => Math.round(l.daysOutOfStock), id: 'daysOutOfStock' },
             header: () => t('label.days-out-of-stock'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
             header: () => t('label.reason'),
+            // A send's reasons backstop flags every offending line's Reason
+            // cell (AC-R3): a red alert beside the (usually empty) reason text.
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'align-items': 'center',
+                    gap: 'var(--space-1)',
+                  }}
+                >
+                  <Show when={reasonFlaggedIds().has(line.id)}>
+                    <AlertTriangleIcon
+                      style={{ color: 'var(--error-main)' }}
+                      aria-label={t('error.reasons-not-provided-program-requisition')}
+                    />
+                  </Show>
+                  {line.reason?.reason ?? ''}
+                </span>
+              );
+            },
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -628,6 +697,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: { accessor: l => Math.round(l.approvedQuantity), id: 'approvedPacks' },
             header: () => t('label.approved-packs'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => l.approvalComment ?? '', id: 'approvalComment' },
@@ -651,7 +721,6 @@ const InternalOrderDetailView: Component = () => {
               open
               title={t('error.order-not-found')}
               message={t('messages.click-to-return-to-internal-orders')}
-              confirmLabel={t('button.ok')}
               onConfirm={() =>
                 navigate(`/${params.storeId}/replenishment/internal-order`, {
                   replace: true,
@@ -699,8 +768,7 @@ const InternalOrderDetailView: Component = () => {
                       master list (S7 picker). Shown always but DISABLED on
                       program orders (their item set is fixed at creation) and
                       on read-only orders, with a reason tooltip (AC-LN1 —
-                      "disable with an explanation", not hide). Use-suggested is
-                      a later cut. */}
+                      "disable with an explanation", not hide). */}
                   <SplitButton
                     icon={<PlusCircleIcon />}
                     testId="add-item-button"
@@ -717,8 +785,21 @@ const InternalOrderDetailView: Component = () => {
                       },
                     ]}
                   />
+                  {/* Use suggested quantities — fills every zero-requested line
+                      with its suggestion (AC-Q1). Available on program orders,
+                      so gated on editability alone (not canAddLines); disabled
+                      on read-only orders (AC-Q2). */}
+                  <UseSuggestedQuantitiesAction
+                    storeId={params.storeId}
+                    orderId={node().id}
+                    disabled={!editable()}
+                    onApplied={() => void refetch()}
+                  />
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
-                  <ExportPrintInternalOrderAction orderId={node().id} />
+                  <ExportPrintInternalOrderAction
+                    orderId={node().id}
+                    seedArgs={reportSeedArgs()}
+                  />
                   {/* More — reopens the side panel; shown only while closed. */}
                   <Show when={!sidePanelOpen()}>
                     <Button
@@ -762,12 +843,54 @@ const InternalOrderDetailView: Component = () => {
               </Header>
             }
             contentFooter={
-              <InternalOrderStatusFooter
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                onSent={onSent}
-              />
+              // Selection action bar while lines are selected (AC-LN15);
+              // otherwise the order's status footer. Matches OMS, which swaps
+              // the whole footer on selection. A program order's checkboxes are
+              // disabled (no delete offered — D32), so nothing selects there
+              // and this bar only ever appears on a general order.
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <InternalOrderStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    editable={editable()}
+                    requiresAuthorisation={requiresAuth()}
+                    onSent={onSent}
+                    onReasonsNotProvided={ids =>
+                      setReasonFlaggedIds(new Set(ids))
+                    }
+                  />
+                }
+              >
+                <ContentFooter>
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  {/* On a read-only order the click explains why it can't
+                      proceed rather than confirming (AC-LN16); the whole-order
+                      delete is refused server-side regardless. onDeleted clears
+                      the selection (unmounting this bar) and refetches. */}
+                  <DeleteLinesAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
+                    canDelete={editable}
+                    onDeleted={() => {
+                      setSelectedIds([]);
+                      void refetch();
+                    }}
+                  />
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<MinusCircleIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
             }
           >
             {/* Details | Documents | Log | (gated) Indicators (spec S3 § tabs). */}
@@ -793,13 +916,44 @@ const InternalOrderDetailView: Component = () => {
                   // A row click opens the line editor on that line (AC-LN11);
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
+                  // Placeholder lines (requested 0) read in the info tone —
+                  // whole-row blue text, de-emphasising them (ui-surface S3 line
+                  // table), matching outbound's placeholder lines.
+                  rowTone={line =>
+                    line.requestedQuantity === 0 ? 'info' : undefined
+                  }
                   emptyMessage={
                     itemFilter().trim()
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
+                  // The empty line table offers the single-item add inline
+                  // (AC-LN1), the same add mode as the header split button —
+                  // withheld when a single item can't be added (read-only or a
+                  // program order, whose item set is fixed).
+                  empty={
+                    canAddLines() ? (
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-item-button"
+                        onClick={() => setEditorLine({ mode: 'add' })}
+                      >
+                        {t('button.add-item')}
+                      </Button>
+                    ) : undefined
+                  }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Row selection for the bulk line delete (AC-LN15). The
+                  // column always shows; on a read-only order the delete is
+                  // refused with an explanation (AC-LN16), and on a program
+                  // order — whose line set is fixed — the checkboxes render
+                  // disabled so the affordance reads as blocked, not missing
+                  // (no delete offered, D32).
+                  enableSelection
+                  selectionDisabled={isProgram()}
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
                 />
               </TabPanel>
               <TabPanel value="documents">
@@ -852,7 +1006,12 @@ const InternalOrderDetailView: Component = () => {
               }
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
-              onCommitted={() => void refetch()}
+              onCommitted={() => {
+                // A line edit may have supplied a missing reason — drop the
+                // send-backstop flags so they don't linger stale (AC-R3).
+                setReasonFlaggedIds(new Set<string>());
+                void refetch();
+              }}
             />
 
             {/* Add from master list (S7): the picker, then an are-you-sure
@@ -871,7 +1030,6 @@ const InternalOrderDetailView: Component = () => {
                 open
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-add-from-master-list')}
-                confirmLabel={t('button.ok')}
                 onConfirm={() => void confirmAddFromMasterList()}
                 onClose={() => setPendingMasterList(undefined)}
               />
@@ -882,7 +1040,6 @@ const InternalOrderDetailView: Component = () => {
                   open
                   title={t('error.something-wrong')}
                   message={message()}
-                  confirmLabel={t('button.ok')}
                   onConfirm={() => setMasterListError(undefined)}
                   onClose={() => setMasterListError(undefined)}
                 />

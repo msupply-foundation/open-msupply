@@ -1,32 +1,32 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
-import { Page } from '../../../ui/layout/Page/Page';
-import { Header } from '../../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
   DataTable,
   type Column,
   type SortState,
-} from '../../../ui/elements/table/DataTable';
+} from '@/ui/elements/table/DataTable';
 import {
   getCommentCell,
   getDateCell,
   getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../../api/createTableConfig';
-import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
-import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
-import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
-import { Stocktakes } from './stocktakes.generated';
+} from '@/ui/elements/table/tableHelpers';
+import { createTableConfig } from '@/api/createTableConfig';
+import { StatusChip } from '@/ui/elements/feedback/StatusChip';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
+import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import { stripEmpty } from '@/typeHelpers';
+import { Stocktakes, StocktakeCount } from './stocktakes.generated';
 import type {
   StocktakesVariables,
   StocktakesResult,
@@ -179,18 +179,16 @@ const StocktakesList: Component = () => {
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
   // fetch (mirrors OMS's useHasStocktake): the main list's totalCount is
   // filter-scoped, so a filter that matches nothing would falsely read as an
-  // empty store and wrongly offer initial creation. One row is enough — we read
-  // the store-wide totalCount with no filter. Keyed on the store only, so it
-  // fetches once per store and never re-runs on filter/sort/page changes. An
-  // initial stocktake is a once-per-store opening balance; when the store has
-  // none the empty state offers "Create initial stocktake", else "New stocktake".
+  // empty store and wrongly offer initial creation. We only need the store-wide
+  // totalCount with no filter, so this uses the count-only `stocktakeCount`
+  // query (no nodes fetched). Keyed on the store only, so it fetches once per
+  // store and never re-runs on filter/sort/page changes. An initial stocktake
+  // is a once-per-store opening balance; when the store has none the empty
+  // state offers "Create initial stocktake", else "New stocktake".
   const [hasStocktakeData] = createResource(
     () => params.storeId,
     async storeId => {
-      const result = await graphqlFetch(Stocktakes, {
-        storeId,
-        page: { first: 1 },
-      });
+      const result = await graphqlFetch(StocktakeCount, { storeId });
       if (result.kind !== 'success') return undefined;
       return result.data.stocktakes.totalCount > 0;
     }
@@ -356,7 +354,7 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={t('error.no-stocktakes')}
+        emptyMessage={`${t('error.no-stocktakes')} ${hasStocktake() ? '' : t('label.click-to-create-an')}`}
         // The empty-state action flips on whether the store has ANY stocktake
         // (mirrors OMS): a store with none is offered the once-per-store INITIAL
         // (opening-balance) create — a plain confirm, no mode controls; a store
@@ -365,7 +363,7 @@ const StocktakesList: Component = () => {
         empty={
           hasStocktake() ? (
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -373,7 +371,7 @@ const StocktakesList: Component = () => {
             </Button>
           ) : (
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               data-testid="nothing-here-create-button"
               onClick={() => setInitialOpen(true)}
             >
@@ -407,10 +405,12 @@ const StocktakesList: Component = () => {
           onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
         }}
       />
-      <CreateStocktakeModal
-        open={createOpen()}
-        onClose={() => setCreateOpen(false)}
-      />
+      {/* Mounted only while open: the modal's resources (locations + the
+          stock-line estimate) run on mount, so gating the mount keeps them from
+          firing on the list screen before the user opens the create flow. */}
+      <Show when={createOpen()}>
+        <CreateStocktakeModal open onClose={() => setCreateOpen(false)} />
+      </Show>
       <CreateInitialStocktakeAction
         open={initialOpen()}
         onClose={() => setInitialOpen(false)}

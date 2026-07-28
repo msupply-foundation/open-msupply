@@ -1,15 +1,15 @@
 import { createResource, Suspense, type Component, type JSX } from 'solid-js';
-import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
-import type { LocaleKey } from '../../../../intl/locales';
-import { dictionaries, locale } from '../../../../intl/intl';
-import { localisedTime } from '../../../../intl/formatDateTime';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import type { LocaleKey } from '@/intl/locales';
+import { dictionaries, locale } from '@/intl/intl';
+import { localisedTime } from '@/intl/formatDateTime';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
 import {
   DataTable,
   type Column,
-} from '../../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
+} from '@/ui/elements/table/DataTable';
+import { getDateCell } from '@/ui/elements/table/tableHelpers';
 import {
   StocktakeLog,
   type StocktakeLogFragment,

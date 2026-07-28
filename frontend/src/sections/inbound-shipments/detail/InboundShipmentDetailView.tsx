@@ -29,7 +29,7 @@ import {
 } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, InfoIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
+import { CloseIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -969,7 +969,7 @@ const InboundShipmentDetailView: Component = () => {
                   empty={
                     isDisabled() ? undefined : (
                       <Button
-                        icon={<InfoIcon />}
+                        variant="ghost"
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
