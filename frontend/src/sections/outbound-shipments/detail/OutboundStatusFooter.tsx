@@ -8,7 +8,7 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { CloseIcon } from '../../../ui/icons';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
-import { allowedStatuses } from '../outboundPreferencesResource';
+import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
 // The shipment status footer (spec S3 § status footer): the Hold toggle
