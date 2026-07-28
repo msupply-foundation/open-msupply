@@ -47,14 +47,16 @@ import {
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
+import { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
 import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
 // mode, general orders only — AC-LN1) or fill one line (edit mode, any status;
 // read-only opens with every control disabled). Panels: the item's statistics,
-// its stock movements (extended gate), the edits, and below them the read-only
-// context charts (target-quantity breakdown + consumption / stock-evolution).
-// The population-forecast calculation display is a later cut.
+// its stock movements (extended gate), the edits, and below them either the
+// read-only context charts (target-quantity breakdown + consumption /
+// stock-evolution) or, where the store forecasts and this line carries a
+// forecast, the population-forecast calculation display (AC-PF7).
 
 const money = (value: number): string =>
   formatNumber(value, {
@@ -643,51 +645,63 @@ const LineEditContent = (
               </InsetPanel>
             </div>
 
-            {/* Below — the read-only context charts (spec S4 § charts): the
-              target-quantity breakdown (client-side from the line's stats)
-              atop the consumption-history + stock-evolution pair. The pair
-              needs a saved line's server series (chartData); absent it — an
+            {/* Below — where the store shows population-based forecasting and
+              this line carries a forecast, the calculation display stands in
+              for the charts (spec S4, AC-PF7); otherwise the read-only context
+              charts: the target-quantity breakdown (client-side from the line's
+              stats) atop the consumption-history + stock-evolution pair. The
+              pair needs a saved line's server series (chartData); absent it — an
               add-mode draft, or an order with no expected-delivery-date — only
-              the breakdown shows. The population-forecast calculation display
-              is a later cut. */}
-            <div class={styles.charts}>
-              <div class={styles.breakdown}>
-                <h3 class={styles.chartHeading}>
-                  {t('heading.target-quantity')}
-                </h3>
-                <TargetQuantityBreakdown
-                  averageMonthlyConsumption={
-                    editorLine().averageMonthlyConsumption
-                  }
-                  availableStockOnHand={editorLine().availableStockOnHand}
-                  suggestedQuantity={editorLine().suggestedQuantity}
-                  thresholdMonths={props.minMonths}
-                  targetMonths={props.maxMonths}
-                />
-              </div>
-              <Show when={hasSeries() && chartData()}>
-                {data => (
-                  <div class={styles.chartPair}>
-                    <div class={styles.chartSection}>
-                      <h3 class={styles.chartHeading}>
-                        {t('heading.consumption-history')}
-                      </h3>
-                      <ConsumptionHistoryChart
-                        data={data().consumptionHistory?.nodes ?? []}
-                      />
-                    </div>
-                    <div class={styles.chartSection}>
-                      <h3 class={styles.chartHeading}>
-                        {t('heading.stock-evolution')}
-                      </h3>
-                      <StockEvolutionChart
-                        data={data().stockEvolution?.nodes ?? []}
-                      />
-                    </div>
+              the breakdown shows. */}
+            <Show
+              when={
+                props.showForecast && editorLine().vaccineCourses.length > 0
+              }
+              fallback={
+                <div class={styles.charts}>
+                  <div class={styles.breakdown}>
+                    <h3 class={styles.chartHeading}>
+                      {t('heading.target-quantity')}
+                    </h3>
+                    <TargetQuantityBreakdown
+                      averageMonthlyConsumption={
+                        editorLine().averageMonthlyConsumption
+                      }
+                      availableStockOnHand={editorLine().availableStockOnHand}
+                      suggestedQuantity={editorLine().suggestedQuantity}
+                      thresholdMonths={props.minMonths}
+                      targetMonths={props.maxMonths}
+                    />
                   </div>
-                )}
-              </Show>
-            </div>
+                  <Show when={hasSeries() && chartData()}>
+                    {data => (
+                      <div class={styles.chartPair}>
+                        <div class={styles.chartSection}>
+                          <h3 class={styles.chartHeading}>
+                            {t('heading.consumption-history')}
+                          </h3>
+                          <ConsumptionHistoryChart
+                            data={data().consumptionHistory?.nodes ?? []}
+                          />
+                        </div>
+                        <div class={styles.chartSection}>
+                          <h3 class={styles.chartHeading}>
+                            {t('heading.stock-evolution')}
+                          </h3>
+                          <StockEvolutionChart
+                            data={data().stockEvolution?.nodes ?? []}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Show>
+                </div>
+              }
+            >
+              <ForecastCalculationDisplay
+                courses={editorLine().vaccineCourses}
+              />
+            </Show>
           </>
         )}
       </Show>
