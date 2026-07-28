@@ -71,7 +71,7 @@ import { createNextItemWalk } from './nextItemWalk';
 import { outboundDetailFilters } from './outboundDetailFilters';
 import type { StatusPreflight } from './actions/StatusChangeAction';
 import { isEditable, canReturnLines } from '../outboundStatus';
-import { outboundPrefs } from '../outboundPreferencesResource';
+import { outboundShipmentPreferences } from '@/store/storeContext';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
 import { OutboundSidePanel } from './OutboundSidePanel';
 import { LogTab } from './LogTab';
@@ -509,9 +509,9 @@ const OutboundDetailView: Component = () => {
   const hasSelectedPlaceholder = () =>
     selectedLines().some(line => line.type === 'UNALLOCATED_STOCK');
 
-  const prefs = () => outboundPrefs()?.prefs;
-  const dosesOn = () => prefs()?.manageVaccinesInDoses ?? false;
-  const vvmOn = () => prefs()?.manageVvmStatusForStock ?? false;
+  const prefs = () => outboundShipmentPreferences();
+  const dosesOn = () => prefs().manageVaccinesInDoses;
+  const vvmOn = () => prefs().manageVvmStatusForStock;
 
   // Build the filter definitions ONCE (a component body runs once at mount).
   // The location chip's render reads `locations` through the accessor, so the
@@ -734,7 +734,7 @@ const OutboundDetailView: Component = () => {
                   storeId={params.storeId}
                   disabled={!editable()}
                   foreignCurrencyAllowed={
-                    outboundPrefs()?.store?.issueInForeignCurrency ?? false
+                    outboundShipmentPreferences().issueInForeignCurrency
                   }
                   onSaved={saved => mutate(() => saved)}
                   edit={edit}
