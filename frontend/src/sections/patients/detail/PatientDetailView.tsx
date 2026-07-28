@@ -500,8 +500,7 @@ const PatientDetailView: Component = () => {
                 open={confirmSaveOpen()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
-                confirmLabel={t('button.save')}
-                cancelLabel={t('button.cancel')}
+                confirmAction="save"
                 onConfirm={() => void doSave()}
                 onClose={() => setConfirmSaveOpen(false)}
               />
@@ -510,7 +509,6 @@ const PatientDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
-                cancelLabel={t('button.cancel')}
                 onConfirm={leaveGuard.confirm}
                 onClose={leaveGuard.cancel}
               />

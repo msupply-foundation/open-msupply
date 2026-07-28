@@ -7,7 +7,7 @@ import {
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
 import { STATUS_LABELS } from '../outboundStatus';
-import { allowedStatuses } from '../outboundPreferencesResource';
+import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundShipmentsVariables } from './outboundShipments.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no

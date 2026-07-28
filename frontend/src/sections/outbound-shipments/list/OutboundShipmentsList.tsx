@@ -376,11 +376,11 @@ const OutboundShipmentsList: Component = () => {
         emptyMessage={t('error.no-outbound-shipments')}
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             onClick={() => setCreateOpen(true)}
           >
-            {t('button.new-shipment')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection

@@ -6,6 +6,7 @@ import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { SaveIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
 import {
@@ -17,16 +18,18 @@ import {
   type SyncFormState,
 } from './syncForm';
 import { SyncSettings, UpdateSyncSettings } from './syncSettings.generated';
-import styles from '../Settings.module.css';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 
 /*
  * Synchronisation settings (spec/settings/ui-surface.md § Synchronisation) —
  * Server Admin only (gated by the page). Saving is not merely storing four
  * fields: the SERVER performs a live authentication round-trip against the
  * target before persisting anything, unless url/site/password all evaluate as
- * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just reports the
- * outcome). Save stays disabled until all four fields are filled (OMS-REG-SET-02.7/.8) and
- * the password always starts blank (OMS-REG-SET-02.12).
+ * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just
+ * reports the outcome). Save stays disabled until all four fields are filled
+ * (OMS-REG-SET-02.7/.8) and the password always starts blank
+ * (OMS-REG-SET-02.12).
  */
 export const SyncSection = () => {
   // Stored settings (never includes the password). Non-suspending read —
@@ -56,9 +59,9 @@ export const SyncSection = () => {
   };
 
   // Seed url/site/interval from the stored settings once they arrive; the
-  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed while the
-  // user hasn't started editing (their in-progress input must never be
-  // overwritten by a late fetch).
+  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed
+  // while the user hasn't started editing (their in-progress input must never
+  // be overwritten by a late fetch).
   let touched = false;
   createEffect(() => {
     const settings = stored();
@@ -110,7 +113,6 @@ export const SyncSection = () => {
 
   return (
     <form
-      class={styles.sectionBody}
       aria-label={t('heading.settings-sync')}
       onSubmit={e => {
         // Enter anywhere in the form saves, same as the Save button
@@ -119,83 +121,80 @@ export const SyncSection = () => {
         void save();
       }}
     >
-      {/* Labelled field rows per the spec's Layout (ui-surface § Layout):
+      <Stack>
+        {/* Labelled field rows per the spec's Layout (ui-surface § Layout):
           bold label inline-start, control inline-end, wrapped control's own
           label hidden. */}
-      <FieldRow label={t('label.settings-url')}>
-        <TextField
-          label={t('label.settings-url')}
-          hideLabel
-          width="long"
-          value={form().url}
-          onInput={e => edit({ url: e.currentTarget.value })}
-          disabled={saving()}
-          data-testid="sync-settings-url"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.settings-username')}>
-        <TextField
-          label={t('label.settings-username')}
-          hideLabel
-          width="long"
-          value={form().username}
-          onInput={e => edit({ username: e.currentTarget.value })}
-          disabled={saving()}
-          data-testid="sync-settings-username"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.settings-password')}>
-        <PasswordField
-          label={t('label.settings-password')}
-          hideLabel
-          width="long"
-          autocomplete="off"
-          value={form().password}
-          onInput={e => edit({ password: e.currentTarget.value })}
-          disabled={saving()}
-          data-testid="sync-settings-password"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.settings-interval')}>
-        <NumberField
-          label={t('label.settings-interval')}
-          hideLabel
-          min={1}
-          value={form().intervalSeconds}
-          onChange={intervalSeconds => edit({ intervalSeconds })}
-          disabled={saving()}
-          data-testid="sync-settings-interval"
-        />
-      </FieldRow>
-      <Show when={saved()}>
-        <Alert severity="success">{t('success.sync-settings')}</Alert>
-      </Show>
-      <Show when={saveError()}>
-        {error => (
-          <Alert severity="error">
-            <div>{error().message}</div>
-            <Show when={error().detail}>
-              {detail => (
-                <details>
-                  <summary>{t('error.more-info')}</summary>
-                  <pre>{detail()}</pre>
-                </details>
-              )}
-            </Show>
-          </Alert>
-        )}
-      </Show>
-      <div class={styles.actions}>
-        <Button
-          type="submit"
-          icon={<SaveIcon />}
-          loading={saving()}
-          disabled={!canSaveSyncSettings(form())}
-          data-testid="sync-settings-save"
-        >
-          {t('button.save')}
-        </Button>
-      </div>
+        <FieldRow label={t('label.settings-url')}>
+          <TextField
+            label={t('label.settings-url')}
+            hideLabel
+            width="long"
+            value={form().url}
+            onInput={e => edit({ url: e.currentTarget.value })}
+            disabled={saving()}
+            data-testid="sync-settings-url"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.settings-username')}>
+          <TextField
+            label={t('label.settings-username')}
+            hideLabel
+            width="long"
+            value={form().username}
+            onInput={e => edit({ username: e.currentTarget.value })}
+            disabled={saving()}
+            data-testid="sync-settings-username"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.settings-password')}>
+          <PasswordField
+            label={t('label.settings-password')}
+            hideLabel
+            width="long"
+            autocomplete="off"
+            value={form().password}
+            onInput={e => edit({ password: e.currentTarget.value })}
+            disabled={saving()}
+            data-testid="sync-settings-password"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.settings-interval')}>
+          <NumberField
+            label={t('label.settings-interval')}
+            hideLabel
+            min={1}
+            value={form().intervalSeconds}
+            onChange={intervalSeconds => edit({ intervalSeconds })}
+            disabled={saving()}
+            data-testid="sync-settings-interval"
+          />
+        </FieldRow>
+        <Show when={saved()}>
+          <Alert severity="success">{t('success.sync-settings')}</Alert>
+        </Show>
+        <Show when={saveError()}>
+          {error => (
+            <Alert severity="error">
+              <div>{error().message}</div>
+              <Show when={error().detail}>
+                {detail => <ErrorDetails detail={detail()} />}
+              </Show>
+            </Alert>
+          )}
+        </Show>
+        <HStack justify="end" gap="md">
+          <Button
+            type="submit"
+            icon={<SaveIcon />}
+            loading={saving()}
+            disabled={!canSaveSyncSettings(form())}
+            data-testid="sync-settings-save"
+          >
+            {t('button.save')}
+          </Button>
+        </HStack>
+      </Stack>
     </form>
   );
 };

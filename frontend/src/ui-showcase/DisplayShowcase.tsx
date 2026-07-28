@@ -5,6 +5,7 @@ import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
 import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
+import { QrCode } from '../ui/elements/display/QrCode';
 import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { NumberField } from '../ui/elements/inputs/NumberField';
@@ -62,6 +63,11 @@ export const displayMetadata: PageMetadata = {
       title: 'Document frame',
       searchTerms: ['iframe', 'report', 'sandbox', 'print'],
     },
+    {
+      id: 'display-qr-code',
+      title: 'QR code',
+      searchTerms: ['qr', 'server', 'url', 'scan', 'pair', 'encode'],
+    },
   ],
 };
 
@@ -74,6 +80,9 @@ export const DisplayShowcase = () => {
     adjustBy() === undefined
       ? undefined
       : String(CURRENT_PACKS - (adjustBy() ?? 0));
+  // QR demo: a live value drives the encoded symbol. A real, reachable URL so
+  // scanning it with a phone lands somewhere useful rather than a dead link.
+  const [qrValue, setQrValue] = createSignal('https://msupply.foundation');
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
@@ -217,6 +226,30 @@ export const DisplayShowcase = () => {
           </Lead>
           <div class={styles.frameHolder}>
             <DocumentFrame title="Stock on hand report" srcdoc={REPORT_HTML} />
+          </div>
+        </DashboardCard>
+
+        <DashboardCard id="display-qr-code" title="QR code — encode a URL">
+          <Lead>
+            A QR symbol rendered as a self-contained <code>&lt;svg&gt;</code>{' '}
+            over a <strong>vendored, dependency-free encoder</strong> — the
+            Solid analogue of the reference app's <code>react-qr-code</code>. It
+            picks the smallest version that fits and scales crisply to any{' '}
+            <code>size</code>. A QR is always used to scan/pair, so the inline
+            50px symbol is <strong>click-to-expand</strong>: clicking it pops
+            the enlarged copy. Edit the value below and watch the symbol
+            re-encode.
+          </Lead>
+          <div style={{ 'max-width': '25rem', 'margin-bottom': '1rem' }}>
+            <TextField
+              label="Encoded value"
+              value={qrValue()}
+              onInput={e => setQrValue(e.currentTarget.value)}
+            />
+          </div>
+          <div class={styles.qrItem}>
+            <span class={styles.qrCaption}>Click to enlarge</span>
+            <QrCode value={qrValue()} title="QR code for the encoded value" />
           </div>
         </DashboardCard>
       </Stack>
