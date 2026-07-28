@@ -3,8 +3,8 @@ import { ItemsWithStock, type ItemsWithStockResult } from './item.generated';
 import type { Page } from '../../ui/utils/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
-// "code - name" and a total (Σ batch packs * packSize) + unit; id feeds the
-// selection and the exclude-already-added logic.
+// "code - name" and available stock (Σ available batch packs * packSize) + unit;
+// id feeds the selection and the exclude-already-added logic.
 export type ItemOption = {
   id: string;
   code: string;
