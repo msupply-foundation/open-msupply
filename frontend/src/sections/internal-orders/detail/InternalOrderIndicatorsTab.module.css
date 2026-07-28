@@ -72,6 +72,15 @@
   white-space: nowrap;
 }
 
+/* Number-typed indicator columns: right-aligned with tabular figures, header
+   included (ui-standards § tables › data-type alignment) — same data-align
+   convention as the shared DataTable. */
+.customerTable th[data-align='right'],
+.customerTable td[data-align='right'] {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
 .nav {
   display: flex;
   justify-content: flex-end;
