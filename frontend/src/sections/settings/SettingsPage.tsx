@@ -1,6 +1,7 @@
 import { Show, type Component } from 'solid-js';
 import { t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
+import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
@@ -66,7 +67,7 @@ const SettingsPage: Component = () => {
         </Header>
       }
     >
-      <div class={styles.measure}>
+      <ContentContainer size="form" align="start">
         <Accordion collapsible>
           <Show when={visible('display-settings')}>
             <AccordionItem value="display-settings">
@@ -134,7 +135,7 @@ const SettingsPage: Component = () => {
             </AccordionItem>
           </Show>
         </Accordion>
-      </div>
+      </ContentContainer>
     </Page>
   );
 };

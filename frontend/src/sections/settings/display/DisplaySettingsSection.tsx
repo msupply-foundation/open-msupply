@@ -7,6 +7,8 @@ import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { LanguageSelector } from '../../../ui/layout/AppShell/LanguageSelector';
 import { SaveIcon } from '../../../ui/icons';
 import { changeLanguage, locale, t } from '../../../intl';
@@ -22,7 +24,6 @@ import {
   UpdateDisplaySettings,
   type UpdateDisplaySettingsVariables,
 } from './displaySettings.generated';
-import styles from '../Settings.module.css';
 
 /*
  * Display settings (spec/settings/ui-surface.md § Display settings).
@@ -79,8 +80,8 @@ const EditorToggleRow = (props: {
   };
 
   return (
-    <div class={styles.editorBlock}>
-      <div class={styles.toggleRow}>
+    <Stack gap="sm">
+      <HStack gap="sm">
         <ToggleSwitch
           label={props.heading}
           checked={enabled()}
@@ -98,7 +99,7 @@ const EditorToggleRow = (props: {
             />
           )}
         </Show>
-      </div>
+      </HStack>
       <Show when={enabled()}>
         <TextArea
           label={props.heading}
@@ -112,7 +113,7 @@ const EditorToggleRow = (props: {
         <Show when={error()}>
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
-        <div class={styles.actions}>
+        <HStack justify="end" gap="md">
           <Button
             icon={<SaveIcon />}
             loading={busy()}
@@ -121,9 +122,9 @@ const EditorToggleRow = (props: {
           >
             {t('button.save')}
           </Button>
-        </div>
+        </HStack>
       </Show>
-    </div>
+    </Stack>
   );
 };
 
@@ -176,7 +177,7 @@ export const DisplaySettingsSection = () => {
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       <FieldRow label={t('button.language')}>
         <LanguageSelector
           language={locale()}
@@ -205,6 +206,6 @@ export const DisplaySettingsSection = () => {
           testId="custom-logo"
         />
       </Show>
-    </div>
+    </Stack>
   );
 };

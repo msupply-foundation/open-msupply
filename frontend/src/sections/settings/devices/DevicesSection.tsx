@@ -36,6 +36,8 @@ import {
   LabelPrinterSettings,
   UpdateLabelPrinterSettings,
 } from './labelPrinter.generated';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import styles from '../Settings.module.css';
 
 /*
@@ -164,7 +166,7 @@ export const DevicesSection = () => {
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       {/* Sub-groups are the library's titled field groups (FormSection,
           kdd/form-layout) — h3 under the section trigger's h2. ⚠️ inconsistent
           i18n namespace captured as-is by the spec: `settings.label-printing`,
@@ -226,7 +228,7 @@ export const DevicesSection = () => {
         <Show when={outcome()}>
           {o => <Alert severity={o().severity}>{o().message}</Alert>}
         </Show>
-        <div class={styles.actions}>
+        <HStack justify="end" gap="md">
           <Button
             variant="secondary"
             icon={<ZapIcon />}
@@ -246,7 +248,7 @@ export const DevicesSection = () => {
           >
             {t('button.save')}
           </Button>
-        </div>
+        </HStack>
       </FormSection>
 
       {/* Barcode scanner — Server Admin only, strictly stricter than the
@@ -278,7 +280,7 @@ export const DevicesSection = () => {
               </ul>
             </Show>
           </FieldRow>
-          <div class={styles.toggleRow}>
+          <HStack gap="sm">
             <ToggleSwitch
               label={t('settings.enable-mock-barcode-scanner')}
               checked={mockScannerEnabled()}
@@ -289,8 +291,8 @@ export const DevicesSection = () => {
               captured as-is by the spec (ui-surface § Devices); the
               correctly-localised pair two rows above is deliberate contrast. */}
             <span>{mockScannerEnabled() ? 'Enabled' : 'Disabled'}</span>
-          </div>
-          <div class={styles.actions}>
+          </HStack>
+          <HStack justify="end" gap="md">
             <Button
               variant="secondary"
               onClick={() =>
@@ -300,9 +302,9 @@ export const DevicesSection = () => {
             >
               {t('label.barcode-scanner-test')}
             </Button>
-          </div>
+          </HStack>
         </FormSection>
       </Show>
-    </div>
+    </Stack>
   );
 };
