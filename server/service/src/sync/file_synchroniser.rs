@@ -9,7 +9,8 @@ use repository::{
     sync_file_reference_row::{
         SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
     },
-    RepositoryError,
+    syncv7::SyncError as SyncErrorV7,
+    RepositoryError, SyncVersion,
 };
 
 use crate::static_files::{StaticFile, StaticFileCategory};
@@ -17,9 +18,11 @@ use crate::sync::api::SyncApiV5;
 use crate::sync::api_v6::SyncApiV6;
 use crate::sync::api_v6::upload_file::UploadOutcome;
 use crate::sync::settings::SYNC_V5_VERSION;
+use crate::sync_v7::api::SyncApiV7;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
 use super::settings::SyncSettings;
+use super::CentralServerConfig;
 use super::{
     api::SyncApiV5CreatingError,
     api_v6::{SyncApiErrorVariantV6, SyncParsedErrorV6},
@@ -51,6 +54,8 @@ pub(crate) enum FileSyncError {
 pub enum DownloadFileError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiErrorV6),
+    #[error(transparent)]
+    SyncApiV7Error(#[from] SyncErrorV7),
     #[error("Database error")]
     DatabaseError(#[from] RepositoryError),
     #[error("File with id {0} does not exist")]
@@ -63,6 +68,10 @@ pub enum DownloadFileError {
 
 pub struct FileSynchroniser {
     sync_api_v6: SyncApiV6,
+    /// `Some` when this site syncs v7 — file bytes then transfer with v7 bearer-token
+    /// auth (validated locally on central, which standalone central requires). `None`
+    /// keeps the v5-credential paths used by v5/v6 sites.
+    sync_api_v7: Option<SyncApiV7>,
     service_provider: Arc<ServiceProvider>,
     static_file_service: Arc<StaticFileService>,
 }
@@ -79,8 +88,20 @@ impl FileSynchroniser {
             SyncApiV5::new_settings(&settings, &service_provider, SYNC_V5_VERSION)?;
         let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings, SYNC_V6_VERSION)?;
 
+        // Read the sync version on every construction (one per driver tick / download
+        // request) so a site transitioning v6 → v7 picks up the right transport without
+        // a restart.
+        let ctx = service_provider.basic_context()?;
+        let sync_version =
+            SyncVersion::get(&ctx.connection, CentralServerConfig::is_central_server())?;
+        let sync_api_v7 = match sync_version {
+            SyncVersion::V7 => Some(SyncApiV7::new(&service_provider, sync_v6_url)?),
+            SyncVersion::V5V6 => None,
+        };
+
         Ok(Self {
             sync_api_v6,
+            sync_api_v7,
             service_provider,
             static_file_service,
         })
@@ -99,10 +120,17 @@ impl FileSynchroniser {
             .find_one_by_id(file_id)?
             .ok_or(Error::FileDoesNotExist(file_id.to_string()))?;
 
-        let download_result = self
-            .sync_api_v6
-            .download_file(&self.static_file_service, &sync_file_ref)
-            .await;
+        let download_result: Result<StaticFile, Error> = match &self.sync_api_v7 {
+            Some(api_v7) => api_v7
+                .download_file(&self.static_file_service, &sync_file_ref)
+                .await
+                .map_err(Error::from),
+            None => self
+                .sync_api_v6
+                .download_file(&self.static_file_service, &sync_file_ref)
+                .await
+                .map_err(Error::from),
+        };
 
         let file_row_update = match &download_result {
             Ok(_) => SyncFileReferenceRow {
@@ -161,9 +189,19 @@ impl FileSynchroniser {
 
         let file_handle = std::fs::File::open(file.path.clone())?;
 
+        // On a v7 site the tus requests carry v7 auth headers; central selects the auth
+        // scheme by the presence of the Authorization header.
+        let v7_auth_headers = self.sync_api_v7.as_ref().map(|api| &api.auth_headers);
+
         let upload_result = self
             .sync_api_v6
-            .upload_file(sync_file_reference, &file.name, file_handle, pause_rx)
+            .upload_file(
+                sync_file_reference,
+                &file.name,
+                file_handle,
+                pause_rx,
+                v7_auth_headers,
+            )
             .await;
 
         let error = match upload_result {

@@ -45,6 +45,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
     <Box
       data-testid={testId}
       onClick={onClick}
+      data-testid={testId}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -121,6 +122,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
         text={t('label.edit')}
         tooltip={t('label.edit-store-properties')}
         onClick={onOpen}
+        testId="footer-store-edit"
       />
       {user ? (
         <>

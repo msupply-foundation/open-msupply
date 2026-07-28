@@ -45,6 +45,7 @@ export const Settings: React.FC = () => {
         expanded={activeSection === 0}
         onChange={toggleSection(0)}
         visible={true}
+        testId="accordion-trigger-display-settings"
       >
         <DisplaySettings />
       </SettingsSection>
@@ -54,6 +55,7 @@ export const Settings: React.FC = () => {
         expanded={activeSection === 1}
         onChange={toggleSection(1)}
         visible={userHasPermission(UserPermission.ServerAdmin)}
+        testId="accordion-trigger-synchronisation"
       >
         <SyncSettings />
       </SettingsSection>
@@ -63,6 +65,7 @@ export const Settings: React.FC = () => {
         expanded={activeSection === 2}
         onChange={toggleSection(2)}
         visible={userHasPermission(UserPermission.ServerAdmin)}
+        testId="accordion-trigger-support"
       >
         <ServerSettings />
       </SettingsSection>
@@ -72,6 +75,7 @@ export const Settings: React.FC = () => {
         expanded={activeSection === 3}
         onChange={toggleSection(3)}
         visible={true}
+        testId="accordion-trigger-devices"
       >
         <LabelPrinterSettings />
         {userHasPermission(UserPermission.ServerAdmin) && (
@@ -86,6 +90,7 @@ export const Settings: React.FC = () => {
           expanded={activeSection === 5}
           onChange={toggleSection(5)}
           visible={userHasPermission(UserPermission.ServerAdmin)}
+          testId="accordion-trigger-configuration"
         >
           <ConfigurationSettings />
         </SettingsSection>

@@ -28,6 +28,7 @@ export const LanguageMenu: React.FC = () => {
     <MenuItem
       key={option.value}
       value={option.value}
+      data-testid={`settings-language-option-${option.value}`}
       sx={isRtlLocale(`${option.value}`) ? { justifyContent: 'flex-end' } : {}}
     >
       {option.label}
@@ -40,6 +41,7 @@ export const LanguageMenu: React.FC = () => {
       options={languageOptions}
       value={currentLanguage}
       renderOption={renderOption}
+      data-testid="settings-language"
     />
   );
 };
