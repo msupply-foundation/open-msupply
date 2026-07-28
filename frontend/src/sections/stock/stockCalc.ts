@@ -12,6 +12,16 @@ export const packsToUnits = (packs: number, packSize: number): number =>
 export const packsToValue = (packs: number, costPricePerPack: number): number =>
   packs * costPricePerPack;
 
+// The dose equivalent shown alongside a vaccine line's unit quantities when
+// the doses preference is on (spec/stock OMS-REG-INV-02.54, OMS-REG-SMV-02.39).
+// Undefined when the gate is off or the item is not a vaccine — the caller then
+// renders the plain unit count with no dose context at all.
+export const doseEquivalent = (
+  units: number,
+  gate: { showDoses: boolean; isVaccine: boolean; doses: number }
+): number | undefined =>
+  gate.showDoses && gate.isVaccine ? units * gate.doses : undefined;
+
 // Total volume = volume per pack × packs on hand (the server derives the stored
 // field the same way — stock_line/update.rs). Computed here so the read-only
 // Total volume field tracks the volume-per-pack the user is editing, instead of
