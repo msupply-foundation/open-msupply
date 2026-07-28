@@ -6,7 +6,7 @@ import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Stack } from '../../../ui/layout/Stack/Stack';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { SaveIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
 import {
@@ -18,16 +18,18 @@ import {
   type SyncFormState,
 } from './syncForm';
 import { SyncSettings, UpdateSyncSettings } from './syncSettings.generated';
-import styles from '../Settings.module.css';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 
 /*
  * Synchronisation settings (spec/settings/ui-surface.md § Synchronisation) —
  * Server Admin only (gated by the page). Saving is not merely storing four
  * fields: the SERVER performs a live authentication round-trip against the
  * target before persisting anything, unless url/site/password all evaluate as
- * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just reports the
- * outcome). Save stays disabled until all four fields are filled (OMS-REG-SET-02.7/.8) and
- * the password always starts blank (OMS-REG-SET-02.12).
+ * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just
+ * reports the outcome). Save stays disabled until all four fields are filled
+ * (OMS-REG-SET-02.7/.8) and the password always starts blank
+ * (OMS-REG-SET-02.12).
  */
 export const SyncSection = () => {
   // Stored settings (never includes the password). Non-suspending read —
@@ -57,9 +59,9 @@ export const SyncSection = () => {
   };
 
   // Seed url/site/interval from the stored settings once they arrive; the
-  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed while the
-  // user hasn't started editing (their in-progress input must never be
-  // overwritten by a late fetch).
+  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed
+  // while the user hasn't started editing (their in-progress input must never
+  // be overwritten by a late fetch).
   let touched = false;
   createEffect(() => {
     const settings = stored();
@@ -176,17 +178,12 @@ export const SyncSection = () => {
             <Alert severity="error">
               <div>{error().message}</div>
               <Show when={error().detail}>
-                {detail => (
-                  <details>
-                    <summary>{t('error.more-info')}</summary>
-                    <pre>{detail()}</pre>
-                  </details>
-                )}
+                {detail => <ErrorDetails detail={detail()} />}
               </Show>
             </Alert>
           )}
         </Show>
-        <div class={styles.actions}>
+        <HStack justify="end" gap="md">
           <Button
             type="submit"
             icon={<SaveIcon />}
@@ -196,7 +193,7 @@ export const SyncSection = () => {
           >
             {t('button.save')}
           </Button>
-        </div>
+        </HStack>
       </Stack>
     </form>
   );

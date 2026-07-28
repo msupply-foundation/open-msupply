@@ -1,0 +1,30 @@
+/* The disclosure: a quiet, small-text expander below an error message. */
+.details {
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.details summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* Optional guidance hint, above the raw detail. */
+.hint {
+  margin-block: var(--space-2) 0;
+  color: var(--text-body);
+}
+
+/* Raw support-facing detail: wraps and scrolls rather than stretching its
+   container. */
+.detail {
+  margin-block-start: var(--space-2);
+  padding: var(--space-2);
+  max-block-size: 10rem;
+  overflow-y: auto;
+  background: var(--bg-white);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -1,10 +1,10 @@
 import { Show, type Component } from 'solid-js';
 import { t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
+import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
-import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
 import { ServerInfo } from './support/ServerInfo';
 import {
   Accordion,

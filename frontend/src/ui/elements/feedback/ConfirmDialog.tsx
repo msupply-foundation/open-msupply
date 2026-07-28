@@ -1,5 +1,6 @@
 import { Match, Show, Switch, type JSX } from 'solid-js';
 import { HelpIcon } from '../../icons';
+import { t } from '../../../intl';
 import { Button } from '../buttons/Button';
 import {
   CancelButton,
@@ -15,19 +16,28 @@ export interface ConfirmDialogProps {
   title?: string;
   message: JSX.Element;
   /**
-   * Which STANDARD button confirms: `'ok'` (default) or `'save'` — the library's
-   * pre-composed OkButton / DialogSaveButton, so a save confirmation is the same
-   * control as a modal footer's Save rather than a look-alike (Carl 2026-07-28).
-   * For a confirm verb the library has no standard button for — Discard, Delete
-   * — pass {@link confirmLabel} instead; it wins over this.
+   * Which STANDARD button confirms: `'ok'` (default) or `'save'` — the
+   * library's pre-composed OkButton / DialogSaveButton, so a save confirmation
+   * is the same control as a modal footer's Save rather than a look-alike (Carl
+   * 2026-07-28). For a confirm verb the library has no standard button for —
+   * Discard, Delete — pass {@link confirmLabel} instead; it wins over this.
    */
   confirmAction?: 'ok' | 'save';
   /**
-   * A bespoke confirm verb (Discard, Delete) for an action that isn't an OK or a
-   * Save. Rendered in the same primary tone as the standard buttons. Omit to get
-   * the standard button named by {@link confirmAction}.
+   * A bespoke confirm verb (Discard, Delete) for an action that isn't an OK or
+   * a Save. Rendered in the same primary tone as the standard buttons. Omit to
+   * get the standard button named by {@link confirmAction}.
    */
   confirmLabel?: string;
+  /**
+   * Tone of the confirm button: `'primary'` (default) or `'danger'` for a
+   * destructive confirm (delete, void). A danger confirm can't BE one of the
+   * standard buttons — their tone is part of their identity — so it renders a
+   * plain {@link Button} carrying the label the standard button would have
+   * supplied, which is what StandardButtons' own docs prescribe for a bespoke
+   * tone. Cancel is always secondary.
+   */
+  confirmVariant?: 'primary' | 'danger';
   /** A bespoke dismiss verb. Omit for the standard, translated Cancel. */
   cancelLabel?: string;
   onConfirm: () => void;
@@ -44,7 +54,9 @@ export interface ConfirmDialogProps {
  * control as a modal footer's Save. The CONFIRM slot is always the dialog's
  * PRIMARY action — including a bespoke verb (Discard, Delete) — while Cancel
  * stays secondary (Carl 2026-07-28; the same "footer actions are the standard
- * icon-less buttons" decision as spec D55).
+ * icon-less buttons" decision as spec D55). So a confirm dialog always carries
+ * one emphasised action — never a pair of equal-weight buttons — `primary` by
+ * default or `danger` for a destructive one (#692).
  *
  * Gated by <Show> on `open` so the <dialog testid="confirmation-modal"> isn't
  * in the DOM at all while closed — a closed-but-mounted confirm coexists with
@@ -101,16 +113,24 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
                 />
               }
             >
-              <Match when={props.confirmLabel}>
-                {label => (
-                  <Button
-                    variant="primary"
-                    data-testid="confirmation-modal-ok"
-                    onClick={confirm}
-                  >
-                    {label()}
-                  </Button>
-                )}
+              {/* A bespoke verb OR a bespoke tone drops to a plain <Button>:
+                  a standard button owns both its label and its tone, so
+                  neither can be overridden on one. When only the TONE is
+                  bespoke the label still comes from the standard vocabulary,
+                  so a danger OK reads identically — just red. */}
+              <Match
+                when={props.confirmLabel || props.confirmVariant === 'danger'}
+              >
+                <Button
+                  variant={props.confirmVariant ?? 'primary'}
+                  data-testid="confirmation-modal-ok"
+                  onClick={confirm}
+                >
+                  {props.confirmLabel ??
+                    (props.confirmAction === 'save'
+                      ? t('button.save')
+                      : t('button.ok'))}
+                </Button>
               </Match>
               <Match when={props.confirmAction === 'save'}>
                 <DialogSaveButton

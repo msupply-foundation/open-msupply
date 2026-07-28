@@ -221,6 +221,7 @@ const HelpDocumentsManagement: Component = () => {
           'messages.confirm-delete-help-documents',
           selectedIds().length
         )}
+        confirmVariant="danger"
         onConfirm={() => void confirmDelete()}
       />
     </Page>
