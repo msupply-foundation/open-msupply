@@ -711,19 +711,24 @@ export function DataTable<T, K extends string, G extends string = never>(
   // shadow once content is under it); columns inside the block carry neither, or
   // the block would read as several separate frozen strips.
   //
-  // Derived from the columns actually RENDERED (visible ∩ table-view), not
-  // TanStack's getIsLastColumn('left') — that counts a pinned-but-hidden column
-  // and would strand the cue on a cell with no DOM.
-  const framedLeafColumns = () =>
-    table
-      .getVisibleLeafColumns()
-      .filter(column => showInTableView(column.columnDef));
-  const lastLeftPinnedId = () =>
-    framedLeafColumns()
-      .filter(column => column.getIsPinned() === 'left')
-      .at(-1)?.id;
-  const firstRightPinnedId = () =>
-    framedLeafColumns().find(column => column.getIsPinned() === 'right')?.id;
+  // Read from the per-side lists, NOT from getVisibleLeafColumns(): the two are
+  // ordered differently, and only the per-side ones match the DOM. Header groups
+  // are built [...left, ...center, ...right] with each pinned block in its
+  // columnPinning array order, while getVisibleLeafColumns() follows
+  // columnOrder. Reordering two pinned columns rewrites columnOrder alone, so
+  // the two disagree and the cue stayed on the column that WAS outermost
+  // (Carl 2026-07-28). Filtered by showInTableView for the same reason we don't
+  // use TanStack's getIsLastColumn('left'): a column that isn't rendered can't
+  // carry the cue.
+  const framedPinned = (side: 'left' | 'right') =>
+    (side === 'left'
+      ? table.getLeftVisibleLeafColumns()
+      : table.getRightVisibleLeafColumns()
+    ).filter(column => showInTableView(column.columnDef));
+  // Outermost = furthest from the scrolling content: the LAST left-pinned
+  // column, the FIRST right-pinned one.
+  const lastLeftPinnedId = () => framedPinned('left').at(-1)?.id;
+  const firstRightPinnedId = () => framedPinned('right')[0]?.id;
 
   const frozenEdge = (column: TanColumn<T>): 'left' | 'right' | undefined => {
     if (column.id === lastLeftPinnedId()) return 'left';
