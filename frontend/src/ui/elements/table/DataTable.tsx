@@ -199,6 +199,16 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   showFullScreen?: boolean;
 
+  /**
+   * Minimum height, in rem, for the table (its `.root`). Without it the table's
+   * `min-block-size` is 0 — correct for a fill-the-page list, but in a flex
+   * column that can be squeezed (a table inside a modal body), a short viewport
+   * collapses the table toward nothing. Set this so the table keeps at least
+   * this height and its scrolling ancestor (the dialog body) scrolls instead of
+   * the table vanishing. Opt-in: unset keeps the min-block-size:0 default.
+   */
+  minBodyRem?: number;
+
   // --- Row selection, owned by the page. ---
   enableSelection?: boolean;
   selectedIds?: string[];
@@ -768,6 +778,11 @@ export function DataTable<T, K extends string, G extends string = never>(
     <div
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
+      style={
+        props.minBodyRem != null
+          ? { 'min-block-size': `${props.minBodyRem}rem` }
+          : undefined
+      }
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
