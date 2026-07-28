@@ -10,7 +10,7 @@ import {
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
-import { isCentralServer } from '../api/serverInfo';
+import { isCentralServer, serverVersion } from '../api/serverInfo';
 import {
   toSyncOverview,
   type SyncError,
@@ -356,6 +356,14 @@ export const InitialisationPage: Component<{
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
+          {/* Spec (App version, AC-VN2): absent until the startup pass has
+              fetched it — pre-initialisation that also needs a server carrying
+              open-msupply#12566. */}
+          <Show when={serverVersion()}>
+            <p class={styles.version}>
+              <strong>{t('label.server-version')}</strong> {serverVersion()}
+            </p>
+          </Show>
           <LanguageSelector
             language={locale()}
             onSelect={v => void changeLanguage(v)}

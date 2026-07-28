@@ -27,3 +27,19 @@
     align-self: stretch;
   }
 }
+
+/* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it
+   fills the height its container gives it and may shrink to nothing), and it's
+   the only flex-growing child of the Dialog body. When the modal is shorter
+   than its fixed content — landscape with the soft keyboard open, where the
+   non-fullscreen .large dialog collapses well below the Available line + Issue
+   row + footer — flex hands the table 0px and scrolls the rest, so the whole
+   table vanishes. A min-block-size floor stops that: the table keeps a usable
+   height and the body's overflow: auto scrolls to it instead. flex: 1 so it
+   still grows to fill the full height in the normal (tall) case. */
+.batchGrid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 16rem;
+}

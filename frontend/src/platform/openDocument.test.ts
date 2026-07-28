@@ -4,6 +4,7 @@ import {
   mimeOf,
   openBlob,
   openDocument,
+  printBlob,
   sanitizeFileName,
   saveBlob,
 } from './openDocument';
@@ -96,6 +97,82 @@ describe('saveBlob (web path)', () => {
     expect(result).toEqual({ ok: true, saved: true });
     expect(anchor.download).toBe('report.xlsx');
     expect(click).toHaveBeenCalledOnce();
+  });
+});
+
+// The hidden print frame, as much of it as printViaHiddenFrame touches.
+type FakeFrame = {
+  style: Record<string, string>;
+  srcdoc?: string;
+  onload?: () => void;
+  remove: () => void;
+  contentWindow: {
+    print: () => void;
+    focus: () => void;
+    addEventListener: (event: string, listener: () => void) => void;
+  } | null;
+};
+
+const stubPrintFrame = (): { frame: FakeFrame; appendChild: () => void } => {
+  const frame: FakeFrame = {
+    style: {},
+    remove: vi.fn(),
+    contentWindow: {
+      print: vi.fn(),
+      focus: vi.fn(),
+      addEventListener: vi.fn(),
+    },
+  };
+  const appendChild = vi.fn();
+  // A browser window without Capacitor: the web fork, no plugin involved.
+  vi.stubGlobal('window', { setTimeout: vi.fn() });
+  vi.stubGlobal('document', {
+    createElement: vi.fn(() => frame),
+    body: { appendChild },
+  });
+  return { frame, appendChild };
+};
+
+describe('printBlob (web path)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('carries the HTML into a hidden frame and prints once it loads', async () => {
+    const { frame, appendChild } = stubPrintFrame();
+
+    const result = await printBlob(
+      new Blob(['<h1>Stocktake</h1>'], { type: 'text/html' }),
+      'stocktake.html'
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(frame.srcdoc).toBe('<h1>Stocktake</h1>');
+    expect(appendChild).toHaveBeenCalledWith(frame);
+    // Printing waits for the load — a frame printed empty prints nothing.
+    expect(frame.contentWindow?.print).not.toHaveBeenCalled();
+
+    frame.onload?.();
+
+    expect(frame.contentWindow?.print).toHaveBeenCalledOnce();
+  });
+
+  it('tears the frame down once printing finishes', async () => {
+    const { frame } = stubPrintFrame();
+    const listeners: Record<string, () => void> = {};
+    frame.contentWindow = {
+      print: vi.fn(),
+      focus: vi.fn(),
+      addEventListener: (event, listener) => {
+        listeners[event] = listener;
+      },
+    };
+
+    await printBlob(new Blob(['<p>x</p>']), 'x.html');
+    frame.onload?.();
+    listeners.afterprint?.();
+
+    expect(frame.remove).toHaveBeenCalledOnce();
   });
 });
 
