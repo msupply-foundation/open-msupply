@@ -1,6 +1,6 @@
-import { t } from '../../../intl';
-import { localisedDate } from '../../../intl';
-import { toCsv } from '../../../domain/reportFiles';
+import { t } from '@/intl';
+import { localisedDate } from '@/intl';
+import { toCsv } from '@/domain/reportFiles';
 import type { StocktakesResult } from './stocktakes.generated';
 
 type StocktakeRow = StocktakesResult['stocktakes']['nodes'][number];

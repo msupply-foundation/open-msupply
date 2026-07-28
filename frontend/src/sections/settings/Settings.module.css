@@ -1,8 +1,8 @@
 /* Section-specific styling for the settings sections
  * (spec/settings/ui-surface.md § S1): the section-heading icon+label, the S4
- * supply-level value rows, and the scan-result list. Generic row/column
- * layout comes from the shared Stack / HStack / ContentContainer. Values from
- * the theme tokens only. */
+ * supply-level value rows, the scan-result list, and the server-info block.
+ * Generic row/column layout comes from the shared Stack / HStack /
+ * ContentContainer. Values from the theme tokens only. */
 
 /* Section-heading content: leading intent icon + label, spaced apart. Layout
  * only on our own span — the trigger keeps the accordion component's own
@@ -44,4 +44,16 @@
 .scanResultList {
   margin: 0;
   padding-inline-start: var(--space-5);
+}
+
+/* Server-info block (issue #500): the QR beside the FieldRow label:value
+ * details (server URL / site / version / central-server). The only bespoke
+ * class in the block — a horizontal arrangement (QR beside the details column)
+ * for which there is no primitive (Stack is vertical-only). The details column
+ * itself is a plain div: FieldRows block-stack flush, matching the reference. */
+.serverInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }

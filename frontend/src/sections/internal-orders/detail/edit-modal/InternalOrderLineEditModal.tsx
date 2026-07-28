@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import {
   createMemo,
   createResource,
@@ -30,6 +31,7 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { RequisitionLineChart } from './lineChart.generated';
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
@@ -46,14 +48,16 @@ import {
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
+import { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
 import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
 // mode, general orders only — AC-LN1) or fill one line (edit mode, any status;
 // read-only opens with every control disabled). Panels: the item's statistics,
-// its stock movements (extended gate), the edits, and below them the read-only
-// context charts (target-quantity breakdown + consumption / stock-evolution).
-// The population-forecast calculation display is a later cut.
+// its stock movements (extended gate), the edits, and below them either the
+// read-only context charts (target-quantity breakdown + consumption /
+// stock-evolution) or, where the store forecasts and this line carries a
+// forecast, the population-forecast calculation display (AC-PF7).
 
 const money = (value: number): string =>
   formatNumber(value, {
@@ -136,6 +140,13 @@ const LineEditContent = (
   // Items stepped through this run, so the walk never offers one twice.
   const covered = new Set<string>();
 
+  // The add-mode item search — where focus lands on an add-mode open and
+  // whenever the editor returns to the empty add state
+  // (ui/utils/createFocusTarget). Unmounted in update mode, which is why the
+  // request is made from the branches below rather than declared as the
+  // Dialog's initialFocus.
+  const itemSearch = createFocusTarget();
+
   let disposed = false;
   onCleanup(() => (disposed = true));
 
@@ -211,7 +222,7 @@ const LineEditContent = (
       itemId,
       props.minMonths,
       props.maxMonths,
-      crypto.randomUUID()
+      generateUUID()
     );
     if (disposed) return;
     setLoading(false);
@@ -219,8 +230,11 @@ const LineEditContent = (
   };
 
   // Back to the empty add state — add mode, no item (AC-LN5: switching items or
-  // returning discards any unsaved draft with nothing created).
+  // returning discards any unsaved draft with nothing created). Focus returns
+  // to the item search, as on an add-mode open (spec S4) — the same landing the
+  // other three line editors give it.
   const backToSearch = () => {
+    itemSearch.focus();
     setMode('add');
     setLine(undefined);
     setRequestedUnits(0);
@@ -232,16 +246,10 @@ const LineEditContent = (
 
   onMount(() => {
     if (props.initialLine) seedLine(editorLineFromLine(props.initialLine));
-    // Add mode opens on the item search, focused (spec S4). Deferred a frame so
-    // the dialog + input have painted.
-    else
-      requestAnimationFrame(() =>
-        document
-          .querySelector<HTMLInputElement>(
-            '[data-testid="internal-order-line-edit-modal"] [data-testid="item-search-input"]'
-          )
-          ?.focus()
-      );
+    // Add mode opens on the item search, focused (spec S4). The handle owns the
+    // timing — it defers a frame, so this lands after the dialog's showModal()
+    // has parked focus on the panel.
+    else itemSearch.focus();
   });
 
   const updateMode = () => mode() === 'update';
@@ -420,6 +428,7 @@ const LineEditContent = (
             label={t('label.item')}
             class={styles.itemField}
             storeId={props.storeId}
+            focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
             value={current()?.itemId}
             selectedItem={
@@ -637,51 +646,63 @@ const LineEditContent = (
               </InsetPanel>
             </div>
 
-            {/* Below — the read-only context charts (spec S4 § charts): the
-              target-quantity breakdown (client-side from the line's stats)
-              atop the consumption-history + stock-evolution pair. The pair
-              needs a saved line's server series (chartData); absent it — an
+            {/* Below — where the store shows population-based forecasting and
+              this line carries a forecast, the calculation display stands in
+              for the charts (spec S4, AC-PF7); otherwise the read-only context
+              charts: the target-quantity breakdown (client-side from the line's
+              stats) atop the consumption-history + stock-evolution pair. The
+              pair needs a saved line's server series (chartData); absent it — an
               add-mode draft, or an order with no expected-delivery-date — only
-              the breakdown shows. The population-forecast calculation display
-              is a later cut. */}
-            <div class={styles.charts}>
-              <div class={styles.breakdown}>
-                <h3 class={styles.chartHeading}>
-                  {t('heading.target-quantity')}
-                </h3>
-                <TargetQuantityBreakdown
-                  averageMonthlyConsumption={
-                    editorLine().averageMonthlyConsumption
-                  }
-                  availableStockOnHand={editorLine().availableStockOnHand}
-                  suggestedQuantity={editorLine().suggestedQuantity}
-                  thresholdMonths={props.minMonths}
-                  targetMonths={props.maxMonths}
-                />
-              </div>
-              <Show when={hasSeries() && chartData()}>
-                {data => (
-                  <div class={styles.chartPair}>
-                    <div class={styles.chartSection}>
-                      <h3 class={styles.chartHeading}>
-                        {t('heading.consumption-history')}
-                      </h3>
-                      <ConsumptionHistoryChart
-                        data={data().consumptionHistory?.nodes ?? []}
-                      />
-                    </div>
-                    <div class={styles.chartSection}>
-                      <h3 class={styles.chartHeading}>
-                        {t('heading.stock-evolution')}
-                      </h3>
-                      <StockEvolutionChart
-                        data={data().stockEvolution?.nodes ?? []}
-                      />
-                    </div>
+              the breakdown shows. */}
+            <Show
+              when={
+                props.showForecast && editorLine().vaccineCourses.length > 0
+              }
+              fallback={
+                <div class={styles.charts}>
+                  <div class={styles.breakdown}>
+                    <h3 class={styles.chartHeading}>
+                      {t('heading.target-quantity')}
+                    </h3>
+                    <TargetQuantityBreakdown
+                      averageMonthlyConsumption={
+                        editorLine().averageMonthlyConsumption
+                      }
+                      availableStockOnHand={editorLine().availableStockOnHand}
+                      suggestedQuantity={editorLine().suggestedQuantity}
+                      thresholdMonths={props.minMonths}
+                      targetMonths={props.maxMonths}
+                    />
                   </div>
-                )}
-              </Show>
-            </div>
+                  <Show when={hasSeries() && chartData()}>
+                    {data => (
+                      <div class={styles.chartPair}>
+                        <div class={styles.chartSection}>
+                          <h3 class={styles.chartHeading}>
+                            {t('heading.consumption-history')}
+                          </h3>
+                          <ConsumptionHistoryChart
+                            data={data().consumptionHistory?.nodes ?? []}
+                          />
+                        </div>
+                        <div class={styles.chartSection}>
+                          <h3 class={styles.chartHeading}>
+                            {t('heading.stock-evolution')}
+                          </h3>
+                          <StockEvolutionChart
+                            data={data().stockEvolution?.nodes ?? []}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Show>
+                </div>
+              }
+            >
+              <ForecastCalculationDisplay
+                courses={editorLine().vaccineCourses}
+              />
+            </Show>
           </>
         )}
       </Show>

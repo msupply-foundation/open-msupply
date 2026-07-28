@@ -12,7 +12,7 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -479,7 +479,9 @@ const PrescriptionDetailView: Component = () => {
                     </Button>
                   </Show>
                 </HeaderButtons>
-                <Toolbar>
+                {/* The header field cluster — never a hand-rolled <Toolbar>
+                    (ui/docs/PAGES.md § header field cluster). */}
+                <HeaderToolbar>
                   <PrescriptionToolbar
                     storeId={params.storeId}
                     node={node()}
@@ -487,7 +489,7 @@ const PrescriptionDetailView: Component = () => {
                     onSave={input => void saveField(input)}
                     onClearLinesAndSave={input => void clearLinesAndSave(input)}
                   />
-                </Toolbar>
+                </HeaderToolbar>
                 <TabList tabs={tabs()} />
               </Header>
             }

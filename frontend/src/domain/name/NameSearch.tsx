@@ -2,6 +2,7 @@ import { type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { HomeIcon, TruckIcon } from '../../ui/icons';
 import { t } from '../../intl';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   namePageFetcher,
   type NameOption,
@@ -34,6 +35,11 @@ export interface NameSearchProps {
   inputTestId?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
+  /**
+   * A `createFocusTarget()` handle bound to the search input — for an owner
+   * that focuses this picker after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
   /**
    * Narrow to store-backed parties only (isStore) — a supplier/customer that is
    * itself another store in the system. Used by the internal-order create
@@ -90,6 +96,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     error={props.error}
     placeholder={props.placeholder}
     inputTestId={props.inputTestId ?? 'name-search-input'}
+    focusTarget={props.focusTarget}
     clearable={props.clearable}
     fetchPage={namePageFetcher(
       props.storeId,

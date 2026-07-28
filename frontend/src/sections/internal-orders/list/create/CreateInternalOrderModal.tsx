@@ -3,6 +3,7 @@ import {
   createMemo,
   createResource,
   createSignal,
+  onMount,
   Show,
   type Component,
   type JSX,
@@ -10,6 +11,7 @@ import {
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
@@ -199,22 +201,33 @@ export const CreateInternalOrderModal: Component<
   // The two path bodies are components so each mount point owns its own
   // instance — the General path renders both as a tab and (no-program store) as
   // the whole body, and a shared JSX node can't mount in two places.
-  const GeneralPath: Component = () => (
-    <Stack gap="md">
-      <FieldRow label={t('label.supplier-name')}>
-        <NameSearch
-          storeId={props.storeId}
-          role="supplier"
-          storeBacked
-          label={t('label.supplier-name')}
-          hideLabel
-          clearable={false}
-          disabled={submitting()}
-          onSelect={supplier => void onGeneralSupplier(supplier)}
-        />
-      </FieldRow>
-    </Stack>
-  );
+  // The supplier picker is the General path's only control, so it takes focus
+  // whenever that path appears (spec/internal-orders S2 — autofocus): on open
+  // for a store with no programs, and on switching to the General tab, whose
+  // panel mounts only while active. Declared here rather than as the Dialog's
+  // initialFocus because the Program tab, not this one, may open first.
+  const supplierSearch = createFocusTarget();
+
+  const GeneralPath: Component = () => {
+    onMount(supplierSearch.focus);
+    return (
+      <Stack gap="md">
+        <FieldRow label={t('label.supplier-name')}>
+          <NameSearch
+            storeId={props.storeId}
+            role="supplier"
+            storeBacked
+            label={t('label.supplier-name')}
+            hideLabel
+            clearable={false}
+            disabled={submitting()}
+            focusTarget={supplierSearch}
+            onSelect={supplier => void onGeneralSupplier(supplier)}
+          />
+        </FieldRow>
+      </Stack>
+    );
+  };
 
   const ProgramPath: Component = () => (
     <Stack gap="md">

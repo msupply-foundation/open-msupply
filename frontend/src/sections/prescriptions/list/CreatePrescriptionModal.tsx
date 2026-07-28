@@ -1,8 +1,10 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
@@ -73,7 +75,7 @@ export const CreatePrescriptionModal: Component<
       {
         storeId: params.storeId,
         input: {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           patientId: chosen.id,
           ...(reference().trim() ? { theirReference: reference().trim() } : {}),
           ...(clinicianId() ? { clinicianId: clinicianId() } : {}),
@@ -100,10 +102,16 @@ export const CreatePrescriptionModal: Component<
     );
   };
 
+  // The patient picker is the dialog's only required field, so it takes
+  // initial focus (spec/prescriptions S2; ui-standards › accessibility ›
+  // keyboard).
+  const patientSearch = createFocusTarget();
+
   return (
     <Dialog
       open={props.open}
       onClose={close}
+      initialFocus={patientSearch}
       title={t('label.create-prescription')}
       testId="create-prescription-modal"
       actionsLead={
@@ -137,6 +145,7 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           storeId={params.storeId}
           selected={patient() ?? undefined}
+          focusTarget={patientSearch}
           onSelect={setPatient}
           onCreatePatient={() => setCreatePatientOpen(true)}
         />

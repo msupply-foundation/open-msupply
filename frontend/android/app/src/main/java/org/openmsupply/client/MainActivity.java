@@ -22,6 +22,7 @@ public class MainActivity extends BridgeActivity {
         // Fork 5) — keep it complete.
         registerPlugin(SaveFilePlugin.class);
         registerPlugin(PrintPlugin.class);
+        registerPlugin(ReadLogPlugin.class);
 
         super.onCreate(savedInstanceState);
 

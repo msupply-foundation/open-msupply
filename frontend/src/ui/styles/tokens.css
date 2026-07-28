@@ -161,6 +161,13 @@
      same in both themes. Pairs with --text-disabled / --bg-disabled above. */
   --disabled-opacity: 0.6;
 
+  /* QR code modules (foreground) on their quiet-zone background. Deliberately
+     theme-INVARIANT — a QR must stay dark-on-light in both themes so scanners
+     read it reliably (it does NOT flip in dark mode), so these live outside the
+     theme contract. Pure black/white for maximum scan contrast. */
+  --qr-foreground: #000;
+  --qr-background: #fff;
+
   /* --- Spacing (4px base → rem) --------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
