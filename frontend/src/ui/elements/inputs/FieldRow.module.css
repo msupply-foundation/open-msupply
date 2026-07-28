@@ -29,6 +29,13 @@
   font-weight: var(--weight-medium);
 }
 
+/* Required marker — the same asterisk the label-above fields put on their
+   label, so an inline row and a stacked field read alike. */
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
 .control {
   min-inline-size: 0;
 }
