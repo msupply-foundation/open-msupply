@@ -136,13 +136,14 @@ export const AsyncCombobox = <T,>(
   // "changing the patient" — typing a new patient's name kept showing the
   // CURRENTLY-selected one as the first, always-clickable option).
   //
-  // The seed is a LABEL-ONLY fallback (callers like ItemSearch fill its
-  // non-label fields — e.g. totalUnits — with placeholder zeros, since the
-  // real values aren't known until the item's own page is fetched). So once
-  // `base()` has fetched a real row for this key, that row must WIN over the
-  // seed rather than being replaced by it — otherwise the stub's placeholder
-  // fields (e.g. "0 Units") permanently shadow the real, freshly-fetched data
-  // for as long as the item stays the controlled selection (#549).
+  // The seed CAN be a label-only fallback: some callers fill its non-label
+  // fields — e.g. availableUnits — with placeholder zeros when the real values
+  // aren't known until the item's own page is fetched (others pass a fully
+  // populated seed — e.g. ItemSearch reseeds the option the user just picked). So
+  // once `base()` has fetched a real row for this key, that row must WIN over the
+  // seed rather than being replaced by it — otherwise a stub's placeholder fields
+  // (e.g. "0 Units") permanently shadow the real, freshly-fetched data for as
+  // long as the item stays the controlled selection (#549).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
