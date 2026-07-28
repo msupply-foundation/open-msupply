@@ -3,19 +3,23 @@ import { isAndroid } from './index';
 import { saveServerLog } from './readServerLog';
 import { t } from '../intl';
 
-// The "Save log" affordance for the initialisation and login screens (issue
-// #519.5). On Android the embedded server's log is the only diagnostic a user
-// can share before they can sign in — the server-log GraphQL API needs an
-// authenticated session and doesn't exist in the pre-init schema, so these
-// screens read the log file natively (src/platform/readServerLog.ts) and hand
-// it to the platform save flow. Renders nothing off Android: there is no
-// on-device server, so nothing to save (matches the current app, which shows
-// the link only on Android).
+// The "Save log" affordance for the initialisation screen (issue #519.5). On
+// Android the embedded server's log is the only diagnostic a user can share
+// before the site is initialised — the server-log GraphQL API needs an
+// authenticated session and doesn't exist in the pre-init schema, so this
+// screen reads the log file natively (src/platform/readServerLog.ts) and hands
+// it to the platform save flow. Only the initialisation screen carries it (as
+// in the current app — NOT the login screen, which is post-initialisation and
+// can reach logs through the authenticated app). Renders nothing off Android:
+// there is no on-device server, so nothing to save.
 //
 // Self-contained (kdd/explicit-composition): owns its busy + notice state so
-// both screens drop in the same one line. The notice is a plain inline line
-// under the link — these screens have no global toast host before auth.
-export const SaveServerLogLink = (props: { class: string }) => {
+// the screen drops it in as one line. The notice is a plain inline line under
+// the link — this screen has no global toast host before auth.
+export const SaveServerLogLink = (props: {
+  class: string;
+  noticeClass?: string;
+}) => {
   const [busy, setBusy] = createSignal(false);
   const [notice, setNotice] = createSignal<{
     severity: 'success' | 'error';
@@ -54,7 +58,11 @@ export const SaveServerLogLink = (props: { class: string }) => {
       </button>
       <Show when={notice()}>
         {n => (
-          <p role="status" data-severity={n().severity}>
+          <p
+            role="status"
+            class={props.noticeClass}
+            data-severity={n().severity}
+          >
             {n().message}
           </p>
         )}
