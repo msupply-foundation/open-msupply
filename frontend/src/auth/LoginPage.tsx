@@ -8,6 +8,7 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
+import { SaveServerLogLink } from '../platform/SaveServerLogLink';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 
 type SubmitState =
@@ -81,6 +82,9 @@ export const LoginPage: Component = () => {
               value={username()}
               error={fieldErrors().username || undefined}
               onInput={e => setUsername(e.currentTarget.value)}
+              // Spec (issue #519.6): lock the fields once login is in flight so
+              // the credentials being verified can't be edited mid-request.
+              disabled={submitting()}
             />
             <PasswordField
               label={t('heading.password')}
@@ -91,6 +95,7 @@ export const LoginPage: Component = () => {
               value={password()}
               error={fieldErrors().password || undefined}
               onInput={e => setPassword(e.currentTarget.value)}
+              disabled={submitting()}
             />
             <Show when={submitError()}>
               <Alert severity="error">{submitError()}</Alert>
@@ -129,6 +134,9 @@ export const LoginPage: Component = () => {
           >
             {t('login.switch-to-old-ui')}
           </a>
+          {/* Android only: save the embedded server's log for support before
+              sign-in (issue #519.5). Renders nothing on the web. */}
+          <SaveServerLogLink class={styles.switchLink} />
         </footer>
       </main>
     </div>
