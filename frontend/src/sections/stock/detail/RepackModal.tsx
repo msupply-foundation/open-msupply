@@ -199,7 +199,8 @@ const RepackContent = (props: {
     void refetch();
     props.onRepacked();
     if (isFull && outcome.data.newStockLineId) {
-      // All packs repacked — offer navigation to the new line (spec AC-R7).
+      // All packs repacked — offer navigation to the new line
+      // (spec OMS-REG-SMV-08.21).
       setFullRepackNewLineId(outcome.data.newStockLineId);
     }
   };
@@ -459,7 +460,8 @@ const RepackContent = (props: {
         )}
       </Show>
 
-      {/* Full repack → offer navigation to the new line (spec AC-R7). */}
+      {/* Full repack → offer navigation to the new line
+          (spec OMS-REG-SMV-08.21). */}
       <ConfirmDialog
         open={!!fullRepackNewLineId()}
         title={t('heading.are-you-sure')}

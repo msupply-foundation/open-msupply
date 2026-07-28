@@ -219,7 +219,8 @@ const StockLineDetailView: Component = () => {
     return l ? l.totalNumberOfPacks * l.packSize : 0;
   };
 
-  // Dose context for vaccine items when manageVaccinesInDoses is on (spec AC-P2)
+  // Dose context for vaccine items when manageVaccinesInDoses is on
+  // (spec OMS-REG-INV-02.54)
   // — the read-only quantity fields (pack qty, available packs, SOH, available
   // stock) append the dose equivalent (units × the item's doses-per-unit) as a
   // muted note beside the value.
@@ -266,7 +267,8 @@ const StockLineDetailView: Component = () => {
     );
   });
 
-  // The partial update: only the fields that changed (spec/stock AC-E1). Clear
+  // The partial update: only the fields that changed
+  // (spec/stock OMS-REG-INV-02.39). Clear
   // via the nullable wrappers; batch / barcode are plain scalars.
   const buildPatch = (l: Line): UpdateStockLineVariables['input'] => {
     const patch: UpdateStockLineVariables['input'] = { id: l.id };
@@ -358,7 +360,8 @@ const StockLineDetailView: Component = () => {
     { label: l.itemName },
   ];
 
-  // The invalid-location warning (spec/stock AC-D4): the item is restricted to a
+  // The invalid-location warning (spec/stock OMS-REG-INV-02.38): the item is
+  // restricted to a
   // location type and the current location is of another type.
   const invalidLocation = (l: Line) =>
     !!l.item.restrictedLocationTypeId &&
@@ -376,7 +379,8 @@ const StockLineDetailView: Component = () => {
           without remounting the view (kdd/solid-reactivity-pitfalls), so the
           Suspense boundary won't fire on the initial load — the Show's own
           fallback shows the first-load spinner, or a not-found state once the
-          fetch has resolved to nothing (a stale/other-store id — AC-E9). */}
+          fetch has resolved to nothing (a stale/other-store id —
+          OMS-REG-INV-02.49). */}
       <Show
         when={line()}
         fallback={
@@ -547,7 +551,7 @@ const StockLineDetailView: Component = () => {
                           </FormRow>
                           <Show when={showVvmField()}>
                             {/* Read-only here — changes go through the VVM history
-                              flow (spec/stock S2 / AC-V2). */}
+                              flow (spec/stock S2 / OMS-REG-INV-06.3). */}
                             <LabelledValue
                               variant="field"
                               label={t('label.vvm-status')}
@@ -754,7 +758,7 @@ const StockLineDetailView: Component = () => {
                   // Close the repack modal before navigating — the detail route
                   // component is reused across :stockLineId changes, so the
                   // open signal would otherwise persist and leave a stale modal
-                  // over the new line (spec AC-R7).
+                  // over the new line (spec OMS-REG-SMV-08.21).
                   setRepackOpen(false);
                   navigate(`/${params.storeId}/inventory/stock/${id}`);
                 }}
@@ -768,7 +772,7 @@ const StockLineDetailView: Component = () => {
                 onSaved={afterQuantityChange}
               />
 
-              {/* Pre-save confirmation (spec/stock AC-D3). */}
+              {/* Pre-save confirmation (spec/stock OMS-REG-INV-02.35). */}
               <ConfirmDialog
                 open={confirmSaveOpen()}
                 title={t('heading.are-you-sure')}

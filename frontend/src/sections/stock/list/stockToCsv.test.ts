@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { stockToCsv } from './stockToCsv';
 import type { StockLineRowFragment } from './stock.generated';
 
-// AC-L6 — the stock list exports a CSV of the list. Covers the CSV builder's
-// column set + the computed units / value columns + the blank-supplier fallback.
-// (The export action's all-pages fetch is exercised in the e2e/ suites.)
+// Anchors: spec/stock/cases/OMS-REG-INV-02.
+//   .8 — the export produces a CSV containing the stock data
+// Covers the CSV builder's column set + the computed units / value columns +
+// the blank-supplier fallback. (The export action's all-pages fetch is
+// exercised in the e2e/ suites.)
 
 const line = {
   id: 'sl1',
@@ -39,7 +41,7 @@ const line = {
   manufacturer: null,
 } as unknown as StockLineRowFragment;
 
-describe('stockToCsv (AC-L6)', () => {
+describe('OMS-REG-INV-02.8 — stockToCsv', () => {
   const csv = stockToCsv([line]);
   const rows = csv.trim().split('\r\n');
 

@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { locationsForItem, type StockLocation } from './stockLocations';
 
 // The location-picker narrowing (spec/stock S2/S3 — the location lookup is
-// restricted to the item's location type when one is set; AC-E4 has the server
-// enforce IncorrectLocationType regardless).
+// restricted to the item's location type when one is set).
+//
+// Anchors: spec/stock/cases/OMS-REG-INV-02.
+//   .43 — a location of the wrong type is rejected for a restricted item;
+//         the picker narrows client-side, the server enforces regardless
 
 const LOCS: StockLocation[] = [
   {
@@ -21,7 +24,7 @@ const LOCS: StockLocation[] = [
   { id: '3', code: 'NO-TYPE', name: 'Untyped', locationType: null },
 ];
 
-describe('locationsForItem', () => {
+describe('OMS-REG-INV-02.43 — locationsForItem', () => {
   it('offers every location, code+name only, when the item is unrestricted', () => {
     const result = locationsForItem(LOCS, null);
     expect(result).toEqual([

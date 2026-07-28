@@ -19,7 +19,8 @@ import { StockLines, type StockLinesVariables } from '../stock.generated';
 import type { StockFilter } from '../listFilters';
 import { stockToCsv } from '../stockToCsv';
 
-// The stock list Export action (spec/stock AC-L6): a split button offering CSV
+// The stock list Export action (spec/stock OMS-REG-INV-02.8): a split button
+// offering CSV
 // or Excel, exporting EVERY stock line matching the current filter (all pages,
 // packs-on-hand only) — not just the visible page. CSV downloads directly;
 // Excel round-trips the CSV through the server's converter then downloads the

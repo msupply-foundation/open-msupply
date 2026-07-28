@@ -32,7 +32,8 @@ export const repackNewPacks = (
   return (packsToRepack * oldPackSize) / newPackSize;
 };
 
-// Whole packs only (spec/stock AC-R3): the converted quantity must be a whole
+// Whole packs only (spec/stock OMS-REG-SMV-08.16): the converted quantity
+// must be a whole
 // number of new packs.
 export const isWholePacks = (newPacks: number | undefined): boolean =>
   newPacks !== undefined && Number.isInteger(newPacks);
@@ -44,7 +45,7 @@ export const signedAdjustment = (
   amount: number
 ): number => (direction === 'ADDITION' ? amount : -amount);
 
-// The adjusted quantity preview (spec/stock AC-A12).
+// The adjusted quantity preview (spec/stock OMS-REG-SMV-02.30).
 export const adjustedQuantity = (
   current: number,
   direction: 'ADDITION' | 'REDUCTION',
@@ -52,7 +53,8 @@ export const adjustedQuantity = (
 ): number => current + signedAdjustment(direction, amount);
 
 // A reduction preview goes below zero when it would drive available packs
-// negative (spec/stock AC-A12 — the below-zero case that disables confirm).
+// negative (spec/stock OMS-REG-SMV-02.32 — the below-zero case that
+// disables confirm).
 export const wouldGoBelowZero = (
   currentAvailable: number,
   direction: 'ADDITION' | 'REDUCTION',
