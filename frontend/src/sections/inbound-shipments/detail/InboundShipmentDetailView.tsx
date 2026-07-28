@@ -65,7 +65,11 @@ import {
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
-import { heldInboundQueryScopes } from '../inboundShipmentScope';
+import {
+  canMutateInboundScope,
+  heldInboundQueryScopes,
+  scopeOf,
+} from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
@@ -271,11 +275,25 @@ const InboundShipmentDetailView: Component = () => {
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
-  // Read-only at Picked, Shipped and Verified (see inboundShipmentStatus).
-  const isDisabled = () => !isEditable(current()?.status ?? '');
-  // The status footer keeps its own, looser gate — an advance has to stay
-  // reachable at Shipped, which the edit gate closes.
-  const statusLocked = () => !canChangeStatus(current()?.status ?? '');
+  // The two standing conditions that refuse EVERY write, a status advance
+  // included — the server checks both before it reads the request. Mirrored so
+  // a control the server would refuse reads as disabled, rather than taking the
+  // edit and discarding it in silence (rules → editability).
+  const writeBlocked = () => {
+    const node = current();
+    if (!node) return true;
+    return (
+      (node.otherParty.store?.isDisabled ?? false) ||
+      !canMutateInboundScope(scopeOf(node.purchaseOrderId))
+    );
+  };
+  // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
+  const isDisabled = () =>
+    writeBlocked() || !isEditable(current()?.status ?? '');
+  // The status footer keeps its own, looser status rule — an advance has to
+  // stay reachable at Shipped, which the edit gate closes.
+  const statusLocked = () =>
+    writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => (current() ? isExternalShipment(current()!) : false);
 
   const refetchAll = () => {

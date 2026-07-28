@@ -16,10 +16,13 @@ fragment InboundInfo on InvoiceNode {
   otherPartyName
   # A non-null `store` marks a supplier that is itself another store in the
   # system (internal) vs an external supplier — the kind-icon signal (spec S1
-  # column 1), matching the NameSearch truck-vs-building convention.
+  # column 1), matching the NameSearch truck-vs-building convention. Its
+  # `isDisabled` is an editability input: the server refuses every edit to a
+  # shipment whose supplier store has been disabled (rules → editability).
   otherParty(storeId: $storeId) {
     store {
       id
+      isDisabled
     }
   }
   status

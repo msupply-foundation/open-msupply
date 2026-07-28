@@ -1,4 +1,4 @@
-import { hasPermission } from '../../store/storeContext';
+import { hasPermission, type UserPermission } from '../../store/storeContext';
 
 // The two inbound-shipment permission scopes (spec/inbound-shipments
 // › contract → permissions). Every read's `type` argument is BOTH a node filter
@@ -29,3 +29,17 @@ export const scopeOf = (
   purchaseOrderId: string | null | undefined
 ): InboundScope =>
   purchaseOrderId != null ? 'INBOUND_SHIPMENT_EXTERNAL' : 'INBOUND_SHIPMENT';
+
+// Whether the user may write to a shipment in this scope. The mutate
+// permissions split the same two disjoint buckets as the query scopes, so the
+// shipment's own scope selects which one applies — holding the plain scope's
+// mutate grants nothing over a PO-linked shipment, and vice versa. Every edit
+// surface is gated on this (rules → editability): without it the server refuses
+// the write, and an enabled control would discard the user's input in silence.
+export const mutatePermissionFor = (scope: InboundScope): UserPermission =>
+  scope === 'INBOUND_SHIPMENT_EXTERNAL'
+    ? 'INBOUND_SHIPMENT_EXTERNAL_MUTATE'
+    : 'INBOUND_SHIPMENT_MUTATE';
+
+export const canMutateInboundScope = (scope: InboundScope): boolean =>
+  hasPermission(mutatePermissionFor(scope));
