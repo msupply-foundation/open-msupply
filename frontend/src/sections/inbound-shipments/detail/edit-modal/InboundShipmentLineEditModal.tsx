@@ -1,11 +1,5 @@
 import { generateUUID } from '../../../../uuid';
-import {
-  createEffect,
-  createSignal,
-  onMount,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createSignal, onMount, Show, type Component } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -36,6 +30,10 @@ import {
   XCircleIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
@@ -332,14 +330,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // advances too. Seeded as each item loads; not reactive.
   const coveredItemIds = new Set<string>();
 
-  // What to focus once the batches are in the DOM (see the focus effect):
-  // - 'itemSelector' → the add-mode top selector (item search, or PO-line
-  //   picker on a PO-linked shipment).
-  // - { row: id }    → that batch's packs-received field, scrolled into view.
-  // Consumed (cleared) by the effect so it fires once per change.
-  const [pendingFocus, setPendingFocus] = createSignal<
-    { row: string } | 'itemSelector' | undefined
-  >();
+  // Each batch row's packs-received field, bound per row and addressed by draft
+  // row id — where a row-click open, an advance, or a new batch lands focus.
+  // The handle waits for the row to attach, so no load gate is needed here.
+  const batchFields = createFocusTargets();
+
+  // The add-mode top selector — the item search, or the PO-line picker on a
+  // PO-linked shipment. ONE handle for both: only one of them is mounted at a
+  // time, and the handle simply lands on whichever attaches
+  // (ui/utils/createFocusTarget).
+  const topSelector = createFocusTarget();
 
   // Card-only: default the view to card at every band (compact already forces
   // card; this extends it to desktop). No showCardToggle on the DataTable, so
@@ -397,7 +397,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // otherwise saving with purchaseOrderLineId undefined).
     setPoLineId(first.purchaseOrderLine?.id ?? undefined);
     // Focus the requested batch, else the first row.
-    setPendingFocus({ row: focusLineId ?? first.id });
+    batchFields.focus(focusLineId ?? first.id);
     setLoadingLines(false);
   };
 
@@ -428,7 +428,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (!option) {
       setItem(null);
       setBatches([]);
-      setPendingFocus('itemSelector');
+      topSelector.focus();
       return;
     }
     const chosen: ChosenItem = {
@@ -445,7 +445,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setItem(chosen);
     setBatches([batch]);
     // Picking an item drops focus straight onto its first batch's packs field.
-    setPendingFocus({ row: batch.id });
+    batchFields.focus(batch.id);
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
@@ -486,7 +486,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     });
     const batch = { ...emptyBatch(), packSize: line.requestedPackSize || 1 };
     setBatches([batch]);
-    setPendingFocus({ row: batch.id });
+    batchFields.focus(batch.id);
   };
 
   // Draft edits are keyed by batch id (like the stocktake editor) so a filter/
@@ -506,7 +506,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const chosen = item();
     const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
     setBatches(produce(d => d.push(batch)));
-    setPendingFocus({ row: batch.id });
+    batchFields.focus(batch.id);
   };
 
   // Pack-size / price edits (AC-H6): moving the pack size off the item default
@@ -555,7 +555,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           d.splice(index + 1, 0, { ...d[index], id: newId, isNew: true });
       })
     );
-    setPendingFocus({ row: newId });
+    batchFields.focus(newId);
   };
   const removeBatch = (id: string) => {
     const index = indexById(id);
@@ -579,47 +579,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       void loadItemById(props.initialItemId, props.initialLineId);
     else {
       setLoadingLines(false);
-      setPendingFocus('itemSelector');
+      topSelector.focus();
     }
-  });
-
-  // Move focus once the target is in the DOM: the add-mode selector, else the
-  // requested batch's packs-received field (scrolled into view). Runs after the
-  // load so the row exists; deferred a frame so the table has painted. This
-  // overrides the Dialog's own initial-focus-to-panel default (which keeps a
-  // combobox from popping open) — an intentional, per-editor affordance. A
-  // disabled packs field (a locked line) can't take focus — we still scroll to
-  // it. Gated on loadingLines so the row exists before we reach for it.
-  createEffect(() => {
-    const target = pendingFocus();
-    if (!target || loadingLines()) return;
-    setPendingFocus(undefined);
-    requestAnimationFrame(() => {
-      const root = document.querySelector('[data-testid="add-item-modal"]');
-      if (!root) return;
-      if (target === 'itemSelector') {
-        // Manual/transfer shipments show the item search; a PO-linked shipment
-        // shows the PO-line picker instead.
-        (
-          root.querySelector<HTMLElement>(
-            '[data-testid="item-search-input"]'
-          ) ??
-          root.querySelector<HTMLElement>(
-            '[data-testid="purchase-order-line-input"]'
-          )
-        )?.focus();
-        return;
-      }
-      const row = root.querySelector<HTMLElement>(
-        `[data-row-key="${target.row}"]`
-      );
-      if (!row) return;
-      row.scrollIntoView({ block: 'nearest' });
-      const packs = row.querySelector<HTMLInputElement>(
-        '[data-testid="cell-numberOfPacks"] input'
-      );
-      if (packs && !packs.disabled) packs.focus();
-    });
   });
 
   const buildBatch = (): BatchInboundShipmentVariables['input'] | null => {
@@ -733,7 +694,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setBatches([]);
     setErrorMessage(undefined);
     // Focus the selector so the next item can be typed / picked.
-    setPendingFocus('itemSelector');
+    topSelector.focus();
   };
 
   // OK & next: save, then — on success only — advance. By mode:
@@ -811,6 +772,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <NumberField
+            ref={batchFields.ref(b.id)}
             label={t('label.pack-quantity')}
             hideLabel
             size="small"
@@ -1328,6 +1290,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <Select
             label={t('label.purchase-order')}
             testId="purchase-order-line-input"
+            focusTarget={topSelector}
             value={poLineId()}
             onValueChange={choosePoLine}
             options={poLines().map(l => ({
@@ -1342,6 +1305,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.item')}
             hideLabel
             storeId={props.storeId}
+            focusTarget={topSelector}
             value={item()?.id}
             selectedItem={item() ?? undefined}
             disabled={mode() === 'update'}

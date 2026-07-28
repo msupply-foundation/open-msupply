@@ -3,13 +3,13 @@ import {
   createEffect,
   createResource,
   createSignal,
-  onMount,
   Show,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { NameSearch } from '../../../domain/name';
@@ -69,20 +69,11 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     navigate(`/${params.storeId}/replenishment/inbound-shipment/${id}`);
   };
 
-  // Focus the supplier search on open so the user can type straight away — the
-  // Dialog otherwise parks initial focus on its panel (which keeps a combobox
-  // from popping open); defer a frame so this focus wins. Manual mode only —
-  // the from-PO flow opens a table picker, not a search field.
-  onMount(() => {
-    if (props.mode !== 'manual') return;
-    requestAnimationFrame(() => {
-      document
-        .querySelector<HTMLElement>(
-          '[data-testid="create-inbound-modal"] [data-testid="name-search-input"]'
-        )
-        ?.focus();
-    });
-  });
+  // The supplier search is this step's only control, so the dialog opens on it
+  // (ui-standards › accessibility › keyboard) — declared on the Dialog, which
+  // owns the timing. Manual mode only: the from-PO flow opens a table picker,
+  // not a search field, and that Dialog declares no initial focus.
+  const supplierSearch = createFocusTarget();
 
   // ── Manual: pick a supplier, optionally link an open internal order, create.
   const [supplier, setSupplier] = createSignal<NameOption | null>(null);
@@ -212,6 +203,7 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         closeButton
         onClose={props.onClose}
         title={t('suppliers')}
+        initialFocus={supplierSearch}
         testId="create-inbound-modal"
       >
         <Show when={errorMessage()}>
@@ -225,6 +217,7 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
             label={t('label.supplier-name')}
             storeId={params.storeId}
             role="supplier"
+            focusTarget={supplierSearch}
             onSelect={onSupplierSelect}
           />
         </Show>

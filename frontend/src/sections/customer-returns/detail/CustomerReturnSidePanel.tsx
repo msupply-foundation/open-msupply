@@ -1,5 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { A, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t, tPlural } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import {
@@ -186,11 +187,11 @@ export const CustomerReturnSidePanel: Component<
                   })}
                 </Show>
               </Text>
-              <A
+              <RecordLink
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
-              </A>
+              </RecordLink>
             </span>
           )}
         </Show>
