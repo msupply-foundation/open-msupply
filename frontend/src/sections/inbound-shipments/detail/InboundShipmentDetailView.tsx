@@ -828,12 +828,15 @@ const InboundShipmentDetailView: Component = () => {
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       (ui/docs/PAGES.md § header field cluster). The kind banner
                       (spec S3: manual shipments don't auto-advance; a
-                      transfer/automatic one is driven by the sending side) goes
-                      in the cluster's `alert` slot, which puts it on its own
-                      line under the fields. */}
+                      transfer/automatic one is driven by the sending side) is
+                      the cluster's `alert`: a COMPACT Alert, which is what the
+                      slot takes — it hugs its content at the end of the field
+                      row on the bottom baseline and drops to its own line when
+                      the row can't hold it. A full-width Alert here would take
+                      an equal share of the row like a field. */}
                   <HeaderToolbar
                     alert={
-                      <Alert severity="info">
+                      <Alert severity="info" compact>
                         {kindOf(node()) === 'manual'
                           ? t('messages.inbound-manual-info')
                           : t('messages.inbound-automatic-info')}
