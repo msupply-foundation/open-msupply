@@ -71,49 +71,53 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * The empty query is gated (spec/patients S4): an unqueried picker does NOT list
  * every site patient — it shows the `messages.type-to-search` hint ("Start
  * typing to search") in place of results and issues no request until text is
- * typed. The same hint is the no-results state for a query with no matches.
+ * typed. Once a search settles with no match the copy switches to
+ * `messages.no-matching-patients` — the fact the user is actually after
+ * (OMS-REG-DIS-01 `.52`, D68).
  *
- * Consumed by other surfaces (prescriptions, next-of-kin). The allow-create /
- * allow-edit inline affordances (spec/patients AC-S6) are added by their
- * consuming verticals when built — see the implementation flags.
+ * Consumed by other surfaces (prescriptions, next-of-kin). The allow-edit
+ * inline affordance (spec/patients S4) is added by its consuming vertical when
+ * built — see the implementation flags.
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
-  <span
-    style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
-  >
-    <AsyncCombobox<PatientOption>
-      label={props.label}
-      hideLabel={props.hideLabel}
-      class={props.class}
-      disabled={props.disabled}
-      error={props.error}
-      placeholder={props.placeholder}
-      inputTestId={props.inputTestId ?? 'patient-search-input'}
-      noResultsMessage={t('messages.type-to-search')}
-      clearable={props.clearable}
-      fetchPage={(search, offset) =>
-        search.trim() === ''
-          ? Promise.resolve({ nodes: [], totalCount: 0 })
-          : patientSearchPageFetcher(props.storeId)(search, offset)
-      }
-      itemToString={patient => patient.name}
-      itemToValue={patient => patient.id}
-      renderItem={renderRow}
-      selected={props.selected}
-      onSelect={props.onSelect}
-    />
-    {/* Create-patient affordance (opt-in) — the consumer opens its own
-        patient-create flow and selects the result (spec/patients S4). */}
-    <Show when={props.onCreatePatient}>
-      <Button
-        variant="secondary"
-        icon={<PlusCircleIcon />}
-        disabled={props.disabled}
-        data-testid="create-patient-button"
-        onClick={() => props.onCreatePatient?.()}
-      >
-        {t('label.create-patient')}
-      </Button>
-    </Show>
-  </span>
+  <AsyncCombobox<PatientOption>
+    label={props.label}
+    hideLabel={props.hideLabel}
+    class={props.class}
+    disabled={props.disabled}
+    error={props.error}
+    placeholder={props.placeholder}
+    inputTestId={props.inputTestId ?? 'patient-search-input'}
+    noResultsMessage={t('messages.no-matching-patients')}
+    emptyQueryMessage={t('messages.type-to-search')}
+    clearable={props.clearable}
+    fetchPage={(search, offset) =>
+      search.trim() === ''
+        ? Promise.resolve({ nodes: [], totalCount: 0 })
+        : patientSearchPageFetcher(props.storeId)(search, offset)
+    }
+    itemToString={patient => patient.name}
+    itemToValue={patient => patient.id}
+    renderItem={renderRow}
+    selected={props.selected}
+    onSelect={props.onSelect}
+    // Create-patient entry (opt-in) at the foot of the result list, offered
+    // once text is typed — so it's there in the no-match state, which is what
+    // it's for (spec/patients S4). It lives in the popup rather than beside the
+    // input because the field is often in a dialog, where a sibling button has
+    // no room: the picker's own min-content already fills the column.
+    listboxFooter={query => (
+      <Show when={props.onCreatePatient && query().trim() !== ''}>
+        <Button
+          variant="secondary"
+          icon={<PlusCircleIcon />}
+          disabled={props.disabled}
+          data-testid="create-patient-button"
+          onClick={() => props.onCreatePatient?.()}
+        >
+          {t('label.create-patient')}
+        </Button>
+      </Show>
+    )}
+  />
 );
