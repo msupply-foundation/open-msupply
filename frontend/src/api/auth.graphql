@@ -56,6 +56,12 @@ fragment UserInfo on UserNode {
   username
   firstName
   lastName
+  # Sender identity for the internal-order send auto-comment (AC-S7,
+  # template.requisition-sent). Nullable on UserNode; the builder falls back to
+  # a dash for a missing email / phone.
+  email
+  jobTitle
+  phoneNumber
   inactivityTimeoutSeconds
   tokenRefreshIntervalSeconds
   defaultStore {
