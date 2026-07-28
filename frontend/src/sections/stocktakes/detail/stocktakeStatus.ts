@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 
 // The stocktake status flow, in order. Shared by the status footer's indicator
 // (renders every stage) and FinaliseAction's change button (lists every stage

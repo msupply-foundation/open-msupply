@@ -1,13 +1,13 @@
 import { type Component } from 'solid-js';
-import { t } from '../../../intl';
-import { localisedDate } from '../../../intl/formatDateTime';
+import { t } from '@/intl';
+import { localisedDate } from '@/intl/formatDateTime';
 import {
   SidePanelSection,
   SidePanelActions,
-} from '../../../ui/layout/SidePanel/SidePanel';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
-import { Text } from '../../../ui/elements/typography/Text';
+} from '@/ui/layout/SidePanel/SidePanel';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { Text } from '@/ui/elements/typography/Text';
 import { DeleteStocktakeAction, CopyStocktakeAction } from './actions';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 import type { StocktakeFieldEdit } from './stocktakeEdit';
