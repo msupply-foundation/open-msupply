@@ -1,4 +1,4 @@
-import { createSignal, For, Show, type Component } from 'solid-js';
+import { For, Show, type Component } from 'solid-js';
 import { A } from '@solidjs/router';
 import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -9,9 +9,8 @@ import {
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
-import { CopyIcon } from '../../../ui/icons';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import { approvalStatusLabel } from '../list/internalOrderStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
@@ -57,19 +56,6 @@ const money = (value: number): string =>
 export const InternalOrderSidePanel: Component<
   InternalOrderSidePanelProps
 > = props => {
-  const [copied, setCopied] = createSignal(false);
-
-  // Copy the whole order as 4-space JSON (AC-CP1) — the detail node already
-  // carries the header, every line, and the linked references. A write failure
-  // is unhandled (contract › copy).
-  const copyToClipboard = () => {
-    void navigator.clipboard
-      .writeText(JSON.stringify(props.node, null, 4))
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-  };
 
   const grandTotal = () =>
     props.node.lines.nodes.reduce(
@@ -217,14 +203,12 @@ export const InternalOrderSidePanel: Component<
             disabled={!props.editable}
             onDeleted={props.onDeleted}
           />
-          <Button
-            variant="secondary"
-            icon={<CopyIcon />}
-            data-testid="copy-to-clipboard-button"
-            onClick={copyToClipboard}
-          >
-            {copied() ? t('message.copy-success') : t('link.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard). No extra fetch: the detail node this panel renders
+              already carries the header, the UNPAGINATED lines connector, and
+              the linked references (contract § copy to clipboard), and the
+              order's JSON is 4-space indented. */}
+          <CopyToClipboardButton load={() => props.node} indent={4} />
         </SidePanelActions>
       </SidePanelSection>
     </>

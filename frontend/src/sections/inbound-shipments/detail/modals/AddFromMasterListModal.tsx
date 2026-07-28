@@ -1,6 +1,7 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { MasterListSelect } from '../../../../domain/masterList';
@@ -48,9 +49,14 @@ const Body: Component<AddFromMasterListModalProps> = props => {
     }
   };
 
+  // The master-list picker is this dialog's only control, so the dialog opens on it
+  // (ui-standards › accessibility › keyboard).
+  const picker = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={picker}
       dismissable={!saving()}
       onClose={props.onClose}
       title={t('label.add-from-master-list')}
@@ -82,6 +88,7 @@ const Body: Component<AddFromMasterListModalProps> = props => {
     >
       <MasterListSelect
         label={t('label.master-list')}
+        focusTarget={picker}
         value={masterListId()}
         onChange={id => setMasterListId(id ?? undefined)}
       />

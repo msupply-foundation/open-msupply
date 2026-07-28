@@ -10,7 +10,7 @@ import {
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
-import { isCentralServer } from '../api/serverInfo';
+import { isCentralServer, serverVersion } from '../api/serverInfo';
 import {
   toSyncOverview,
   type SyncError,
@@ -30,6 +30,7 @@ import {
   SYNC_POLL_INTERVAL_MS,
 } from '../config';
 import { changeLanguage, locale, t } from '../intl';
+import { SaveServerLogLink } from '../platform/SaveServerLogLink';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
 
@@ -37,7 +38,9 @@ export const InitialisationPage: Component<{
   onComplete: () => void;
 }> = props => {
   const [values, setValues] = createSignal({
-    url: '',
+    // Spec (issue #519.2): pre-fill the scheme so the user only types the host —
+    // the central server is always reached over https. Matches the current app.
+    url: 'https://',
     siteName: '',
     password: '',
     batchSize: undefined as number | undefined,
@@ -142,10 +145,38 @@ export const InitialisationPage: Component<{
     });
   });
 
+  // Spec (issue #519.3): validate the URL on the front end so a malformed one
+  // (e.g. no scheme — "mysite.example.com") never reaches initialiseSite. The
+  // server rejects such a URL with an unstructured "Internal error", which would
+  // trip the global unexpected-error modal whose only recovery is a full reload,
+  // wiping everything the user typed. Caught here it is a plain inline field
+  // error and the form (and the other fields) stay put.
+  //
+  // The URL must be the authority form — start with "http://" or "https://" and
+  // carry a host. The scheme:// prefix check is deliberate: `new URL()` alone
+  // accepts scheme-colon-without-slashes for special schemes (`http:dsfadsf`
+  // parses with host "dsfadsf"), which is never a real central-server address.
+  // The bare default "https://" fails the host check, same as an empty field.
+  // Whether the host actually resolves is the server's job — an unreachable but
+  // well-formed address comes back as a structured CONNECTION_ERROR shown inline.
+  const urlError = (raw: string): string => {
+    const value = raw.trim();
+    if (value === '') return t('error.url-required');
+    if (!/^https?:\/\//i.test(value)) return t('error.invalid-url');
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      return t('error.invalid-url');
+    }
+    if (parsed.hostname === '') return t('error.invalid-url');
+    return '';
+  };
+
   const validate = (): boolean => {
     const current = values();
     const errors = {
-      url: current.url.trim() === '' ? t('error.url-required') : '',
+      url: urlError(current.url),
       siteName:
         current.siteName.trim() === '' ? t('error.site-name-required') : '',
       password:
@@ -322,13 +353,31 @@ export const InitialisationPage: Component<{
           </form>
         </div>
         <footer class={styles.panelFooter}>
+          {/* Android only: save the embedded server's log for support before
+              initialisation completes (issue #519.5). Renders nothing on the
+              web. Styled as the footer's secondary text link (like the login
+              screen's old-UI link), centered above the version. */}
+          <SaveServerLogLink
+            class={styles.switchLink}
+            noticeClass={styles.footerNotice}
+          />
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
-          <LanguageSelector
-            language={locale()}
-            onSelect={v => void changeLanguage(v)}
-          />
+          {/* Spec (App version, AC-VN2): absent until the startup pass has
+              fetched it — pre-initialisation that also needs a server carrying
+              open-msupply#12566. */}
+          <Show when={serverVersion()}>
+            <p class={styles.version}>
+              <strong>{t('label.server-version')}</strong> {serverVersion()}
+            </p>
+          </Show>
+          <div class={styles.languageRow}>
+            <LanguageSelector
+              language={locale()}
+              onSelect={v => void changeLanguage(v)}
+            />
+          </div>
         </footer>
       </main>
     </div>

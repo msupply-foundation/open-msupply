@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import {
   createMemo,
   createResource,
@@ -30,6 +31,7 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { RequisitionLineChart } from './lineChart.generated';
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
@@ -136,6 +138,13 @@ const LineEditContent = (
   // Items stepped through this run, so the walk never offers one twice.
   const covered = new Set<string>();
 
+  // The add-mode item search — where focus lands on an add-mode open and
+  // whenever the editor returns to the empty add state
+  // (ui/utils/createFocusTarget). Unmounted in update mode, which is why the
+  // request is made from the branches below rather than declared as the
+  // Dialog's initialFocus.
+  const itemSearch = createFocusTarget();
+
   let disposed = false;
   onCleanup(() => (disposed = true));
 
@@ -211,7 +220,7 @@ const LineEditContent = (
       itemId,
       props.minMonths,
       props.maxMonths,
-      crypto.randomUUID()
+      generateUUID()
     );
     if (disposed) return;
     setLoading(false);
@@ -219,8 +228,11 @@ const LineEditContent = (
   };
 
   // Back to the empty add state — add mode, no item (AC-LN5: switching items or
-  // returning discards any unsaved draft with nothing created).
+  // returning discards any unsaved draft with nothing created). Focus returns
+  // to the item search, as on an add-mode open (spec S4) — the same landing the
+  // other three line editors give it.
   const backToSearch = () => {
+    itemSearch.focus();
     setMode('add');
     setLine(undefined);
     setRequestedUnits(0);
@@ -232,16 +244,10 @@ const LineEditContent = (
 
   onMount(() => {
     if (props.initialLine) seedLine(editorLineFromLine(props.initialLine));
-    // Add mode opens on the item search, focused (spec S4). Deferred a frame so
-    // the dialog + input have painted.
-    else
-      requestAnimationFrame(() =>
-        document
-          .querySelector<HTMLInputElement>(
-            '[data-testid="internal-order-line-edit-modal"] [data-testid="item-search-input"]'
-          )
-          ?.focus()
-      );
+    // Add mode opens on the item search, focused (spec S4). The handle owns the
+    // timing — it defers a frame, so this lands after the dialog's showModal()
+    // has parked focus on the panel.
+    else itemSearch.focus();
   });
 
   const updateMode = () => mode() === 'update';
@@ -420,6 +426,7 @@ const LineEditContent = (
             label={t('label.item')}
             class={styles.itemField}
             storeId={props.storeId}
+            focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
             value={current()?.itemId}
             selectedItem={

@@ -1,3 +1,4 @@
+import { generateUUID } from '../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
 import { t } from '../../intl';
@@ -55,7 +56,7 @@ export const UploadHelpDocumentModal: Component<{
     }
 
     setUploading(true);
-    const id = crypto.randomUUID();
+    const id = generateUUID();
     // returnGraphqlErrors: the central gate ("Not a central server") and the
     // empty-title guard come back as top-level errors, while RecordAlreadyExist
     // (OMS-REG-HLP-01.31) is the typed union branch — surface both in-dialog.

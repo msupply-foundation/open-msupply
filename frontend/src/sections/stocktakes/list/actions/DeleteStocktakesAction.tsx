@@ -1,10 +1,10 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t, tPlural } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { t, tPlural } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { TrashIcon, XCircleIcon } from '@/ui/icons';
 import { DeleteStocktakes } from '../stocktakes.generated';
 
 export interface DeleteStocktakesActionProps {
