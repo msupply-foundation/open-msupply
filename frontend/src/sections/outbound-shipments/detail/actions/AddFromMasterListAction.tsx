@@ -3,6 +3,7 @@ import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
@@ -32,6 +33,10 @@ export const AddFromMasterListAction: Component<
   AddFromMasterListActionProps
 > = props => {
   const [open, setOpen] = createSignal(false);
+  // The master-list picker is this dialog's only control, so the dialog
+  // opens on it (ui-standards › accessibility › keyboard).
+  const picker = createFocusTarget();
+
   const [adding, setAdding] = createSignal(false);
   const [error, setError] = createSignal<string>();
   // The chosen list id (the Combobox selection), committed by the dialog's OK.
@@ -93,6 +98,7 @@ export const AddFromMasterListAction: Component<
       </Button>
       <Dialog
         open={open()}
+        initialFocus={picker}
         dismissable={!adding()}
         onClose={() => setOpen(false)}
         title={t('button.add-from-master-list')}
@@ -132,6 +138,7 @@ export const AddFromMasterListAction: Component<
         >
           <Combobox
             label={t('label.master-list')}
+            focusTarget={picker}
             items={listOptions()}
             loading={lists.loading}
             itemToString={list => list.name}

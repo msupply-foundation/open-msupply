@@ -165,6 +165,16 @@
   margin-block-end: var(--space-2);
 }
 
+/* Action row pinned under the scrolling listbox (e.g. the patient picker's
+   "Create patient" entry): a non-shrinking row separated from the options by a
+   hairline, so it reads as an action on the search rather than another result. */
+.listboxFooter {
+  flex: none;
+  margin-block-start: var(--space-2);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--color-border-value);
+}
+
 .listbox {
   display: flex;
   flex-direction: column;

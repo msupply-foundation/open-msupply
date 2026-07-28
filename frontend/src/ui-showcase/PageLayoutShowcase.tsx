@@ -1,5 +1,6 @@
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
+import { HStack } from '../ui/layout/Stack/HStack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
@@ -35,7 +36,7 @@ const ANATOMY: AnatomyNode[] = [
     children: [
       {
         name: 'Header',
-        note: 'breadcrumb h1 + actions + toolbar/tabs — see Header',
+        note: 'breadcrumb h1 + actions + HeaderToolbar field row + tabs — see Header',
       },
       {
         name: 'ContentContainer',
@@ -96,6 +97,19 @@ export const pageLayoutMetadata: PageMetadata = {
       id: 'page-layout-stack',
       title: 'Stack',
       searchTerms: ['vertical', 'gap', 'rhythm', 'spacing'],
+    },
+    {
+      id: 'page-layout-hstack',
+      title: 'HStack',
+      searchTerms: [
+        'horizontal',
+        'row',
+        'gap',
+        'align',
+        'justify',
+        'wrap',
+        'cluster',
+      ],
     },
     {
       id: 'page-layout-mixing',
@@ -210,10 +224,11 @@ export const PageLayoutShowcase = () => (
               columns. <code>gap</code> is a <em>preset, not a length</em> —{' '}
               <code>sm</code>, <code>md</code> (the default), <code>lg</code> —
               so sibling blocks across the app keep the same few rhythms.
-              Vertical <em>only</em>, by design: horizontal grouping always has
-              a more semantic owner that also encodes its wrap behaviour (
-              <code>FormRow</code>, <code>HeaderButtons</code>,{' '}
-              <code>CardGrid</code>…).
+              Vertical <em>only</em>, by design: horizontal grouping reaches
+              first for a more semantic owner that also encodes its wrap
+              behaviour (<code>FormRow</code>, <code>HeaderButtons</code>,{' '}
+              <code>CardGrid</code>…), and otherwise the generic{' '}
+              <a href="#/showcase/page-layout">HStack</a> below.
             </Lead>
             <Row align="start">
               <Stack gap="sm">
@@ -238,6 +253,103 @@ export const PageLayoutShowcase = () => (
                 <div class={`${styles.stub} ${styles.rhythmStub}`}>block</div>
               </Stack>
             </Row>
+          </DashboardCard>
+
+          <DashboardCard
+            id="page-layout-hstack"
+            title="HStack — horizontal rhythm, the row counterpart to Stack"
+          >
+            <Lead>
+              A horizontal run of siblings with a consistent gap — the generic
+              "value + affordance" row or button cluster that <em>isn't</em> one
+              of the semantic horizontal owners (<code>FormRow</code>,{' '}
+              <code>HeaderButtons</code>, <code>ContentFooterActions</code>,{' '}
+              <code>CardGrid</code> — reach for those first). Like{' '}
+              <code>Stack</code> it's block-level and full-width, and{' '}
+              <code>gap</code> is the same <em>preset, not a length</em> (
+              <code>sm</code>, <code>md</code>, <code>lg</code>). Children
+              centre vertically (<code>align</code>, default <code>center</code>
+              ) and pack at the inline-start (<code>justify</code>, default{' '}
+              <code>start</code>) — being full-width is what gives{' '}
+              <code>justify="end"</code> / <code>"between"</code> room to work.{' '}
+              <code>wrap</code> lets a cluster survive narrow widths.
+            </Lead>
+            <Stack gap="md">
+              {/* gap presets — the shared sm/md/lg rhythm */}
+              <Stack gap="sm">
+                <HStack gap="sm">
+                  <div class={styles.stub}>gap="sm"</div>
+                  <div class={styles.stub}>item</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="md">
+                  <div class={styles.stub}>gap="md" · default</div>
+                  <div class={styles.stub}>item</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="lg">
+                  <div class={styles.stub}>gap="lg"</div>
+                  <div class={styles.stub}>item</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+              </Stack>
+
+              {/* justify — the full-width row distributes the slack, which is
+                  why HStack fills its parent rather than hugging its content */}
+              <Stack gap="sm">
+                <HStack gap="sm" justify="start">
+                  <div class={styles.stub}>justify="start" · default</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" justify="center">
+                  <div class={styles.stub}>justify="center"</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" justify="end">
+                  <div class={styles.stub}>justify="end"</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" justify="between">
+                  <div class={styles.stub}>justify="between"</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+              </Stack>
+
+              {/* align — the cross (vertical) axis, shown against a taller
+                  neighbour; the outer HStack wraps so the three survive narrow */}
+              <HStack gap="lg" wrap>
+                <HStack gap="sm" align="start">
+                  <div class={`${styles.stub} ${styles.tallStub}`}>
+                    align="start"
+                  </div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" align="center">
+                  <div class={`${styles.stub} ${styles.tallStub}`}>
+                    align="center" · default
+                  </div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" align="end">
+                  <div class={`${styles.stub} ${styles.tallStub}`}>
+                    align="end"
+                  </div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+              </HStack>
+
+              {/* wrap — a button cluster that reflows instead of overflowing */}
+              <HStack gap="sm" wrap>
+                <div class={styles.stub}>wrap</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+              </HStack>
+            </Stack>
           </DashboardCard>
 
           <DashboardCard

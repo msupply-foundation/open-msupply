@@ -18,6 +18,14 @@
   max-width: var(--input-max-short);
 }
 
+/* Compact keeps the field at the short cap so a longer label still has room;
+   the trigger box itself narrows to 10rem below (after the base .trigger rules,
+   to satisfy no-descending-specificity), exactly as TextField's compact narrows
+   only its input. The value already ellipsises (see .value) if it overruns. */
+.field[data-width='compact'] {
+  max-width: var(--input-max-short);
+}
+
 .field[data-width='long'] {
   max-width: var(--input-max-long);
 }
@@ -65,6 +73,12 @@
   border-color: var(--color-divider);
   color: var(--text-disabled);
   cursor: not-allowed;
+}
+
+/* Compact width: narrow only the trigger box to 10rem (see the .field cap
+   above). Placed after the base .trigger rules so specificity ascends. */
+.field[data-width='compact'] .trigger {
+  max-width: var(--input-max-compact);
 }
 
 .value {
@@ -183,13 +197,12 @@
 
 /* Small variant: denser height + 13px text, matching the shared input scale
    (36px / --input-font-sm — NOT a bespoke size). Placed after the base rules so
-   specificity ascends. */
-.field[data-size='small'] {
-  --input-padding-x: var(--space-2);
-
-  gap: var(--space-1);
-}
-
+   specificity ascends. ONLY height and font-size change here: the label→control
+   gap (--input-field-gap) and horizontal padding (--input-padding-x) stay on the
+   base .field's shared tokens — the same ones TextField / DateField use at every
+   size — so a small Select lines up with them on BOTH the label→input gap and
+   the text inset (Carl 2026-07-27; previously overrode the gap to --space-1 and
+   the padding to --space-2, so it sat 2px high with the text 4px in). */
 .field[data-size='small'] .trigger {
   height: var(--input-height-sm);
 }

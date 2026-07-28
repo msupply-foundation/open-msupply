@@ -1,5 +1,5 @@
-import { graphqlFetch } from '../../../api/graphql';
-import { t, type LocaleKey } from '../../../intl';
+import { graphqlFetch } from '@/api/graphql';
+import { t, type LocaleKey } from '@/intl';
 import {
   UpdateStocktake,
   type StocktakeInfoFragment,

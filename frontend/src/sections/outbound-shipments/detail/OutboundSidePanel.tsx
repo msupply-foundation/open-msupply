@@ -1,12 +1,11 @@
 import {
   createSignal,
   For,
-  onCleanup,
   Show,
   type Component,
   type JSX,
 } from 'solid-js';
-import { A } from '@solidjs/router';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -14,18 +13,20 @@ import {
   SidePanelActions,
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CheckIcon, CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
+import { EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
@@ -137,49 +138,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     </span>
   );
 
-  // Copy feedback shown in place on the button (controls › action feedback —
-  // never a toast), fading after a moment.
-  const [copyFeedback, setCopyFeedback] = createSignal<'copied' | 'failed'>();
-  const [copying, setCopying] = createSignal(false);
-  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(copiedTimer));
-  const flashCopyFeedback = (kind: 'copied' | 'failed') => {
-    setCopyFeedback(kind);
-    clearTimeout(copiedTimer);
-    copiedTimer = setTimeout(() => setCopyFeedback(undefined), 2500);
-  };
-
-  // Copy the WHOLE shipment — header + every line, unpaginated — as pretty
-  // JSON (spec S3 § record actions; the fullStocktake pattern). The detail's
-  // lines read is server-paged, so this is its own one-shot fetch. A fetch
-  // failure is surfaced by graphqlFetch's global modal; a NodeError (not
-  // expected from a screen showing the record) just doesn't copy.
-  const copyToClipboard = async () => {
-    if (copying()) return;
-    setCopying(true);
-    try {
-      const result = await graphqlFetch(FullOutbound, {
-        storeId: props.storeId,
-        id: props.node.id,
-      });
-      if (result.kind !== 'success') return;
-      if (result.data.invoice.__typename !== 'InvoiceNode') return;
-      try {
-        // The node itself — the old app copies the record, not the query
-        // wrapper ({"invoice": …}).
-        await navigator.clipboard.writeText(
-          JSON.stringify(result.data.invoice, null, 2)
-        );
-      } catch {
-        // Clipboard write refused — e.g. Safari's user-activation window
-        // expired over a slow fetch. Surface in the same in-place slot.
-        flashCopyFeedback('failed');
-        return;
-      }
-      flashCopyFeedback('copied');
-    } finally {
-      setCopying(false);
-    }
+  // The WHOLE shipment — header + every line, unpaginated — for the side
+  // panel's copy action (controls § copy to clipboard; the fullStocktake
+  // pattern). The detail's lines read is server-paged, so this is its own
+  // one-shot fetch. A fetch failure is surfaced by graphqlFetch's global modal;
+  // a NodeError (not expected from a screen showing the record) copies nothing.
+  const loadFullShipment = async () => {
+    const result = await graphqlFetch(FullOutbound, {
+      storeId: props.storeId,
+      id: props.node.id,
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the old app copies the record, not the query wrapper
+    // ({"invoice": …}).
+    return result.data.invoice;
   };
 
   return (
@@ -193,13 +166,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Text variant="body" as="span">
               {props.node.user?.username ?? '—'}
             </Text>
@@ -217,7 +184,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                 </Popover>
               )}
             </Show>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -308,12 +275,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                   vertical isn't built yet, so today this lands on the
                   not-found EntryPage; it goes live once that vertical
                   registers its routes (no change needed here). */}
-              <A
+              <RecordLink
                 href={`/${props.storeId}/distribution/customer-requisition/${req().id}`}
-                style={{ color: 'var(--primary-main)', 'font-weight': 500 }}
+                kind="io"
               >
                 #{req().requisitionNumber}
-              </A>
+              </RecordLink>
             </Text>
           )}
         </Show>
@@ -394,13 +361,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <NumberField
               label={t('label.tax')}
               hideLabel
@@ -424,7 +385,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                 )
               )}
             </Text>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
@@ -500,17 +461,20 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.expected-delivery-date')}>
-          <TextField
+          {/* The shared calendar-date input (ui-standards/inputs § dates &
+              times); clearable — the wire value is nullable. */}
+          <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
-            type="date"
+            // Numeric day-first display/parse (27/07/2026) — matches the
+            // panel's localisedDate renderings (created date etc.).
+            format="dd/MM/yyyy"
+            testId="expected-delivery-date-field"
             disabled={props.disabled}
-            value={props.node.expectedDeliveryDate ?? ''}
-            onInput={e =>
+            value={props.node.expectedDeliveryDate ?? null}
+            onChange={value =>
               props.onSaveField({
-                expectedDeliveryDate: {
-                  value: e.currentTarget.value || null,
-                },
+                expectedDeliveryDate: { value },
               })
             }
           />
@@ -545,24 +509,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             number={() => props.node.invoiceNumber}
             customerName={() => props.node.otherParty.name}
           />
-          {/* Copy to clipboard — the button itself briefly swaps to a "copied"
-              confirmation (matching the stocktakes CopyStocktakeAction);
-              in-place feedback, never a toast. aria-live so the swap is
-              announced by assistive tech (no visually-hidden twin — a hidden
-              duplicate of the label trips strict e2e text locators). */}
-          <Button
-            variant="secondary"
-            aria-live="polite"
-            loading={copying()}
-            icon={copyFeedback() === 'copied' ? <CheckIcon /> : <CopyIcon />}
-            onClick={() => void copyToClipboard()}
-          >
-            {copyFeedback() === 'copied'
-              ? t('message.copy-success')
-              : copyFeedback() === 'failed'
-                ? t('message.copy-failed')
-                : t('button.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullShipment} />
         </SidePanelActions>
       </SidePanelSection>
       {/* The shared change-currency modal with outbound's header update; a

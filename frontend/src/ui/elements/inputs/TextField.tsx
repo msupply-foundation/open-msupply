@@ -46,6 +46,15 @@ export interface TextFieldProps extends Omit<
    */
   startAdornment?: string;
   endAdornment?: string;
+  /**
+   * An *interactive* control at the inline-end inside the field frame — a real
+   * focusable button, unlike the decorative (aria-hidden) `endAdornment`. The
+   * same end icon-button affordance as Combobox's clear button (ui-standards
+   * sanctions a trailing icon-button in a text field). Its presence moves the
+   * border box to the focus-within wrapper, exactly like the adornments. Used
+   * by PasswordField for its show/hide toggle.
+   */
+  endAction?: JSX.Element;
 }
 
 /*
@@ -73,6 +82,7 @@ export const TextField = (props: TextFieldProps) => {
     'labelInfo',
     'startAdornment',
     'endAdornment',
+    'endAction',
     'id',
     'class',
   ]);
@@ -119,7 +129,9 @@ export const TextField = (props: TextFieldProps) => {
       <div
         class={styles.inputWrap}
         data-adorned={
-          local.startAdornment || local.endAdornment ? '' : undefined
+          local.startAdornment || local.endAdornment || local.endAction
+            ? ''
+            : undefined
         }
         data-size={local.size ?? 'default'}
         data-error={local.error ? '' : undefined}
@@ -146,6 +158,9 @@ export const TextField = (props: TextFieldProps) => {
           <span class={styles.adornment} aria-hidden="true">
             {local.endAdornment}
           </span>
+        </Show>
+        <Show when={local.endAction}>
+          <span class={styles.endAction}>{local.endAction}</span>
         </Show>
       </div>
       <Show

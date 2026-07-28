@@ -3,15 +3,18 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
+import { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
+import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
 import { TimeField } from '../ui/elements/inputs/TimeField';
 import {
   DateRangeField,
@@ -25,7 +28,7 @@ import {
   locale,
   setHomeCurrency,
 } from '../intl';
-import { FormPreview, Lead, Note, SectionTOC } from './common';
+import { FormPreview, Intro, Lead, Note, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './InputsShowcase.module.css';
 
@@ -61,13 +64,6 @@ const ValueReadout = (props: { value: number | undefined }) => (
     </code>
   </output>
 );
-
-/** Today as ISO `YYYY-MM-DD`, for the "future dates unselectable" demo. */
-const todayIso = (): string => {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
 
 const Field = (props: {
   caption: string;
@@ -114,19 +110,24 @@ export const inputsMetadata: PageMetadata = {
       searchTerms: ['money', 'price', 'cost', 'amount'],
     },
     {
+      id: 'inputs-date-time',
+      title: 'Date & time',
+      searchTerms: ['calendar', 'picker', 'datetime', 'range'],
+    },
+    {
       id: 'inputs-field-row',
       title: 'Field row',
       searchTerms: ['inline', 'label', 'row'],
     },
     {
-      id: 'inputs-choices',
-      title: 'Choices',
-      searchTerms: ['radio', 'checkbox', 'toggle', 'switch', 'option'],
+      id: 'inputs-radio',
+      title: 'Radio group',
+      searchTerms: ['radio', 'option', 'single choice'],
     },
     {
-      id: 'inputs-date-time',
-      title: 'Date & time',
-      searchTerms: ['calendar', 'picker', 'datetime', 'range'],
+      id: 'inputs-checkbox',
+      title: 'Checkbox',
+      searchTerms: ['checkbox', 'tick', 'boolean'],
     },
   ],
 };
@@ -139,6 +140,10 @@ export const InputsShowcase = () => {
   // Checkbox / ToggleSwitch demos.
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
+  // BareCheckbox demo: interactive boxes for the selectable + error states
+  // (the rest are state displays).
+  const [bareSelected, setBareSelected] = createSignal(false);
+  const [bareError, setBareError] = createSignal(false);
   const [showFinalised, setShowFinalised] = createSignal(false);
   const [onHold, setOnHold] = createSignal(true);
   // Date & time demos (ISO strings / UTC instant in/out).
@@ -173,11 +178,19 @@ export const InputsShowcase = () => {
   const [yenPrice, setYenPrice] = createSignal<number | undefined>(5800);
   const [unitCost, setUnitCost] = createSignal<number | undefined>(1.5025);
   const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
+  const [password, setPassword] = createSignal('sekret-123');
 
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <SectionTOC page={inputsMetadata} />
+        <Intro>
+          To show a read-only value <em>alongside</em> these inputs — a fixed
+          fact that reads as a field but has no input box — use{' '}
+          <code>&lt;LabelledValue&gt;</code> with <code>variant="field"</code>,
+          which matches the input label→control gap so the two line up. See{' '}
+          <a href="#/showcase/display">Display › Labelled value</a>.
+        </Intro>
         <DashboardCard id="inputs-text" title="Text field states">
           <Lead>
             The company-spec text input: a plain HTML <code>&lt;input&gt;</code>{' '}
@@ -230,6 +243,35 @@ export const InputsShowcase = () => {
                 placeholder="Longer free-text field"
                 helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
               />
+            </Field>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard title="Password field">
+          <Lead>
+            A TextField variant — the standard masked{' '}
+            <code>type="password"</code> input plus a show/hide eye toggle
+            seated in the field frame. Click the eye to reveal the value, again
+            to mask it; the toggle is keyboard-focusable.
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Default">
+              <PasswordField
+                label="Site password"
+                value={password()}
+                onInput={e => setPassword(e.currentTarget.value)}
+                helperText="Click the eye to reveal"
+              />
+            </Field>
+            <Field caption="Error">
+              <PasswordField
+                label="Site password"
+                value="wrong"
+                error="Incorrect password"
+              />
+            </Field>
+            <Field caption="Disabled">
+              <PasswordField label="Site password" value="locked" disabled />
             </Field>
           </div>
         </DashboardCard>
@@ -544,149 +586,6 @@ export const InputsShowcase = () => {
         </DashboardCard>
 
         <DashboardCard
-          id="inputs-field-row"
-          title="Field row — inline label + control"
-        >
-          <Lead>
-            A compact form row: a bold label on the inline-start, the control
-            filling the inline-end — the app's dense dialog/panel layout (the
-            create-stocktake filter rows). Hand-rolled layout only; the wrapped
-            control keeps its own look but hides its own label (via{' '}
-            <code>hideLabel</code>) so this row is the single visible label,
-            announced to assistive tech. RTL-safe (logical properties).
-          </Lead>
-          <FormPreview>
-            <FieldRow label="Master list">
-              <TextField label="Master list" hideLabel placeholder="Any" />
-            </FieldRow>
-            <FieldRow label="Location">
-              <TextField label="Location" hideLabel placeholder="Any" />
-            </FieldRow>
-            <FieldRow label="Expiring before">
-              <DateField
-                label="Expiring before"
-                hideLabel
-                value={expiringBefore()}
-                onChange={setExpiringBefore}
-              />
-            </FieldRow>
-          </FormPreview>
-        </DashboardCard>
-
-        <DashboardCard
-          id="inputs-choices"
-          title="Radio group — native <input type=radio>"
-        >
-          <Lead>
-            Single choice among fixed options — the "own the simple" case with{' '}
-            <strong>no</strong> library. A shared <code>name</code> gives the
-            browser single-select grouping, roving arrow-key focus and the
-            radiogroup/radio ARIA for free; we draw the control ourselves (brand
-            rim + dot, the gap between them transparent —{' '}
-            <code>accent-color</code> painted it white in both themes) and lay
-            the label — with an optional muted description — beside it. Options
-            can be individually <code>disabled</code>, and{' '}
-            <code>indentRem</code> lines a sub-group up under a sibling control.
-            This is the create-stocktake type + include-all choice.
-          </Lead>
-          <FormPreview>
-            <RadioGroup
-              label="Stocktake type"
-              value={stocktakeType()}
-              onChange={setStocktakeType}
-              options={[
-                {
-                  value: 'full',
-                  label: 'Full stocktake',
-                  description: 'Counts every item in the store.',
-                },
-                {
-                  value: 'filtered',
-                  label: 'Filtered stocktake',
-                  description: 'Counts items matching the filters.',
-                },
-                {
-                  value: 'blank',
-                  label: 'Blank stocktake',
-                  description: 'Creates an empty stocktake.',
-                },
-              ]}
-            />
-            <div class={styles.radioSubgroup}>
-              <RadioGroup
-                label="Which items"
-                value={includeAll()}
-                onChange={setIncludeAll}
-                indentRem={0.2}
-                options={[
-                  { value: 'soh', label: 'Items with stock on hand' },
-                  // Disabled to show the per-option disabled state (as the modal
-                  // greys "All items").
-                  {
-                    value: 'all',
-                    label: 'All items',
-                    disabled: stocktakeType() === 'blank',
-                  },
-                ]}
-              />
-            </div>
-          </FormPreview>
-        </DashboardCard>
-
-        <DashboardCard title="Checkbox — native <input type=checkbox>">
-          <Lead>
-            A labelled checkbox on the native control — no library. The real
-            input is visually hidden (kept for a11y + as the state owner); a
-            styled box + check glyph read the <code>:checked</code> /{' '}
-            <code>:focus-visible</code> state off it. The label click toggles
-            it; an <code>error</code> shows an icon + message (never colour
-            alone). Label typography matches TextField.
-          </Lead>
-          <FormPreview>
-            <Checkbox
-              label="Count items with zero stock"
-              checked={countZero()}
-              onChange={setCountZero}
-            />
-            <Checkbox
-              label="I have physically counted every line"
-              checked={confirmed()}
-              onChange={setConfirmed}
-              error={
-                confirmed() ? undefined : 'Confirm the count before finalising.'
-              }
-            />
-            <Checkbox label="Disabled option" disabled checked />
-          </FormPreview>
-        </DashboardCard>
-
-        <DashboardCard title="Toggle switch — on/off toggle (role=switch)">
-          <Lead>
-            The native checkbox re-cast as a switch (<code>role="switch"</code>
-            ): a custom track + sliding thumb, the state carried by the thumb
-            position. Space toggles it; the label click toggles it. For a binary
-            on/off setting where a slider reads more naturally than a tick box.
-            The <code>on</code> state is the action blue by default;{' '}
-            <code>variant="caution"</code> makes it brand orange for a setting
-            to be careful with (e.g. putting stock on hold).
-          </Lead>
-          <FormPreview>
-            <ToggleSwitch
-              label="Show finalised stocktakes"
-              checked={showFinalised()}
-              onChange={setShowFinalised}
-            />
-            <ToggleSwitch
-              label="On hold"
-              variant="caution"
-              checked={onHold()}
-              onChange={setOnHold}
-            />
-            <ToggleSwitch label="Disabled switch" disabled checked />
-          </FormPreview>
-        </DashboardCard>
-
-        <DashboardCard
           id="inputs-date-time"
           title="Date & time — headless (corvu)"
         >
@@ -733,7 +632,7 @@ export const InputsShowcase = () => {
             <Field caption="Bounded — future unselectable">
               <DateField
                 label="Manufacture date"
-                max={todayIso()}
+                max={localTodayIso()}
                 value={manufacture()}
                 onChange={setManufacture}
                 helperText={`max = today; later dates greyed out. Stored: ${
@@ -796,6 +695,192 @@ export const InputsShowcase = () => {
               />
             </Field>
           </div>
+        </DashboardCard>
+
+        <DashboardCard
+          id="inputs-field-row"
+          title="Field row — inline label + control"
+        >
+          <Lead>
+            A compact form row: a bold label on the inline-start, the control
+            filling the inline-end — the app's dense dialog/panel layout (the
+            create-stocktake filter rows). Hand-rolled layout only; the wrapped
+            control keeps its own look but hides its own label (via{' '}
+            <code>hideLabel</code>) so this row is the single visible label,
+            announced to assistive tech. RTL-safe (logical properties).
+          </Lead>
+          <FormPreview>
+            <FieldRow label="Master list">
+              <TextField label="Master list" hideLabel placeholder="Any" />
+            </FieldRow>
+            <FieldRow label="Location">
+              <TextField label="Location" hideLabel placeholder="Any" />
+            </FieldRow>
+            <FieldRow label="Expiring before">
+              <DateField
+                label="Expiring before"
+                hideLabel
+                value={expiringBefore()}
+                onChange={setExpiringBefore}
+              />
+            </FieldRow>
+          </FormPreview>
+        </DashboardCard>
+
+        <DashboardCard
+          id="inputs-radio"
+          title="Radio group — native <input type=radio>"
+        >
+          <Lead>
+            Single choice among fixed options — the "own the simple" case with{' '}
+            <strong>no</strong> library. A shared <code>name</code> gives the
+            browser single-select grouping, roving arrow-key focus and the
+            radiogroup/radio ARIA for free; we draw the control ourselves (brand
+            rim + dot, the gap between them transparent —{' '}
+            <code>accent-color</code> painted it white in both themes) and lay
+            the label — with an optional muted description — beside it. Options
+            can be individually <code>disabled</code>, and{' '}
+            <code>indentRem</code> lines a sub-group up under a sibling control.
+            This is the create-stocktake type + include-all choice.
+          </Lead>
+          <FormPreview>
+            <RadioGroup
+              label="Stocktake type"
+              value={stocktakeType()}
+              onChange={setStocktakeType}
+              options={[
+                {
+                  value: 'full',
+                  label: 'Full stocktake',
+                  description: 'Counts every item in the store.',
+                },
+                {
+                  value: 'filtered',
+                  label: 'Filtered stocktake',
+                  description: 'Counts items matching the filters.',
+                },
+                {
+                  value: 'blank',
+                  label: 'Blank stocktake',
+                  description: 'Creates an empty stocktake.',
+                },
+              ]}
+            />
+            <div class={styles.radioSubgroup}>
+              <RadioGroup
+                label="Which items"
+                value={includeAll()}
+                onChange={setIncludeAll}
+                indentRem={0.2}
+                options={[
+                  { value: 'soh', label: 'Items with stock on hand' },
+                  // Disabled to show the per-option disabled state (as the modal
+                  // greys "All items").
+                  {
+                    value: 'all',
+                    label: 'All items',
+                    disabled: stocktakeType() === 'blank',
+                  },
+                ]}
+              />
+            </div>
+          </FormPreview>
+        </DashboardCard>
+
+        <DashboardCard
+          id="inputs-checkbox"
+          title="Checkbox — native <input type=checkbox>"
+        >
+          <Lead>
+            A labelled checkbox on the native control — no library. The real
+            input is visually hidden (kept for a11y + as the state owner); a
+            styled box + check glyph read the <code>:checked</code> /{' '}
+            <code>:focus-visible</code> state off it. The label click toggles
+            it; an <code>error</code> shows an icon + message (never colour
+            alone). Label typography matches TextField.
+          </Lead>
+          <FormPreview>
+            <Checkbox
+              label="Count items with zero stock"
+              checked={countZero()}
+              onChange={setCountZero}
+            />
+            <Checkbox
+              label="I have physically counted every line"
+              checked={confirmed()}
+              onChange={setConfirmed}
+              error={
+                confirmed() ? undefined : 'Confirm the count before finalising.'
+              }
+            />
+            <Checkbox label="Disabled option" disabled checked />
+          </FormPreview>
+        </DashboardCard>
+
+        <DashboardCard title="Bare checkbox — the box, no label">
+          <Lead>
+            The primitive <code>Checkbox</code> wraps: THE box every checkbox in
+            the app renders — one look by construction, the native{' '}
+            <code>&lt;input type=checkbox&gt;</code> as the state owner. It
+            renders <strong>no label</strong>, so it's used bare where something
+            else names it — a table's selection cells, given an{' '}
+            <code>aria-label</code> (the row already identifies it). It adds{' '}
+            <code>indeterminate</code> (the tri-state select-all dash) and an{' '}
+            <code>error</code> look; when you need a visible label, reach for{' '}
+            <code>Checkbox</code> above.
+          </Lead>
+          <div style={{ display: 'flex', 'flex-wrap': 'wrap', gap: '2.5rem' }}>
+            <Field caption="Selectable">
+              <BareCheckbox
+                aria-label="Select row"
+                checked={bareSelected()}
+                onChange={e => setBareSelected(e.currentTarget.checked)}
+              />
+            </Field>
+            <Field caption="Indeterminate">
+              <BareCheckbox aria-label="Select all rows" indeterminate />
+            </Field>
+            <Field caption="Error">
+              <BareCheckbox
+                aria-label="Required selection"
+                error
+                checked={bareError()}
+                onChange={e => setBareError(e.currentTarget.checked)}
+              />
+            </Field>
+            <Field caption="Disabled">
+              <BareCheckbox aria-label="Locked selection" disabled />
+            </Field>
+            <Field caption="Disabled (checked)">
+              <BareCheckbox aria-label="Locked selection" disabled checked />
+            </Field>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard title="Toggle switch — on/off toggle (role=switch)">
+          <Lead>
+            The native checkbox re-cast as a switch (<code>role="switch"</code>
+            ): a custom track + sliding thumb, the state carried by the thumb
+            position. Space toggles it; the label click toggles it. For a binary
+            on/off setting where a slider reads more naturally than a tick box.
+            The <code>on</code> state is the action blue by default;{' '}
+            <code>variant="caution"</code> makes it brand orange for a setting
+            to be careful with (e.g. putting stock on hold).
+          </Lead>
+          <FormPreview>
+            <ToggleSwitch
+              label="Show finalised stocktakes"
+              checked={showFinalised()}
+              onChange={setShowFinalised}
+            />
+            <ToggleSwitch
+              label="On hold"
+              variant="caution"
+              checked={onHold()}
+              onChange={setOnHold}
+            />
+            <ToggleSwitch label="Disabled switch" disabled checked />
+          </FormPreview>
         </DashboardCard>
       </Stack>
     </ContentContainer>

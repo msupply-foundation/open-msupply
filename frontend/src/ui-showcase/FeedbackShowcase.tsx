@@ -8,9 +8,10 @@ import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
 import { Comment } from '../ui/elements/feedback/Comment';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
+import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
-import { Lead, Row, SectionTOC } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './FeedbackShowcase.module.css';
 
@@ -53,6 +54,11 @@ export const feedbackMetadata: PageMetadata = {
       id: 'feedback-popovers',
       title: 'Popovers & tooltips',
       searchTerms: ['popover', 'tooltip', 'comment', 'hint', 'help'],
+    },
+    {
+      id: 'feedback-spinner',
+      title: 'Spinner',
+      searchTerms: ['loading', 'wait', 'progress', 'busy', 'ring'],
     },
   ],
 };
@@ -227,6 +233,35 @@ export const FeedbackShowcase = () => {
             }
             value="1.6"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-spinner"
+          title="Spinner — loading indicator"
+        >
+          <Lead>
+            A spinning-ring loading indicator carrying{' '}
+            <code>role="status"</code> and an accessible label (defaults to
+            "Loading…"), so a screen reader announces the wait. Colour follows{' '}
+            <code>currentColor</code> and the size is a rem prop (
+            <code>sizeRem</code>, default 2).{' '}
+            <code>prefers-reduced-motion</code> slows it rather than stopping —
+            a stopped ring reads as broken.
+          </Lead>
+          <Row>
+            <Spinner sizeRem={1} label="Loading, small" />
+            <Spinner label="Loading" />
+            <Spinner sizeRem={3} label="Loading, large" />
+          </Row>
+          <Note>
+            <code>center</code> fills its container and centres the ring — the
+            full-body wait used as a <code>&lt;Suspense&gt;</code> fallback and
+            in the DataTable's initial load. Following <code>currentColor</code>
+            , it takes the surrounding text colour:
+          </Note>
+          <div style={{ 'block-size': '8rem' }}>
+            <Spinner center label="Loading report" />
+          </div>
         </DashboardCard>
       </Stack>
     </ContentContainer>

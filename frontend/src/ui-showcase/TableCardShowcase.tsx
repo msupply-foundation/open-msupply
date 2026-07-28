@@ -1,6 +1,11 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
+  dateToIsoDate,
+  localDayToUtc,
+  utcToLocalDay,
+} from '../ui/elements/inputs/dateTimeConvert';
+import {
   DataTable,
   type CardGroup,
   type Column,
@@ -11,6 +16,7 @@ import {
   getCellDefinition,
   getNumberCell,
 } from '../ui/elements/table/tableHelpers';
+import { Pagination } from '../ui/elements/table/Pagination';
 import type {
   TableConfig,
   TableConfigKey,
@@ -134,9 +140,10 @@ const COMMENTS: (string | null)[] = [
 ];
 const PACK_SIZES = [1, 10, 20, 30, 50, 100];
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const isoDay = (month: number, day: number, year: number) =>
-  `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`;
+// A stored instant for the given local calendar day, via the shared
+// conversion — so the mock rows display the intended day in any timezone.
+const isoDay = (month: number, day: number, year: number): string =>
+  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry red tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -992,15 +999,15 @@ const BATCH_LOCATIONS = [
   { value: 'B.11', label: 'B.11 · Aisle B · Bay 11' },
 ];
 
-// DateField's value is a plain YYYY-MM-DD, so slice the datetime that
-// monthsFromNow returns (kept relative to today, date-only here).
+// DateField's value is a plain YYYY-MM-DD, so read the instant that
+// monthsFromNow returns back to its local day (kept relative to today).
 const SAMPLE_BATCHES: Batch[] = [
   {
     id: 'b1',
     batch: 'BN2044',
     numberOfPacks: 12,
     packSize: 100,
-    expiryDate: monthsFromNow(14, 12).slice(0, 10),
+    expiryDate: utcToLocalDay(monthsFromNow(14, 12)),
     costPrice: 3.5,
     sellPrice: 4.73,
     location: 'A.01',
@@ -1011,7 +1018,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN3120',
     numberOfPacks: 6,
     packSize: 50,
-    expiryDate: monthsFromNow(2, 8).slice(0, 10),
+    expiryDate: utcToLocalDay(monthsFromNow(2, 8)),
     costPrice: 5.2,
     sellPrice: 7.02,
     location: 'COLD.1',
@@ -1238,6 +1245,26 @@ const CARD_ANATOMY: AnatomyNode[] = [
   },
 ];
 
+// A standalone Pagination demo — the list footer's pager over a synthetic
+// 38-row result. Local signals stand in for the offset/pageSize a real list
+// keeps in URL params; a size change resets to the first page.
+const PaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  const [pageSize, setPageSize] = createSignal(10);
+  return (
+    <Pagination
+      offset={offset()}
+      pageSize={pageSize()}
+      total={38}
+      onOffsetChange={setOffset}
+      onPageSizeChange={size => {
+        setPageSize(size);
+        setOffset(0);
+      }}
+    />
+  );
+};
+
 // Mask the shell's full-screen context for this teaching page so every demo
 // table's full-screen button falls back to DataTable's standalone path — a
 // fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
@@ -1256,6 +1283,11 @@ export const tableCardMetadata: PageMetadata = {
       id: 'table-card-basics',
       title: 'Table basics',
       searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+    },
+    {
+      id: 'table-card-pagination',
+      title: 'Pagination',
+      searchTerms: ['pager', 'page', 'rows per page', 'offset', 'footer'],
     },
     {
       id: 'table-card-model',
@@ -1352,6 +1384,25 @@ export const TableCardShowcase = () => (
             it. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-pagination"
+          title="Table basics · Pagination"
+        >
+          <Lead>
+            The list footer on its own — the same pager the DataTable mounts
+            from its <code>pagination</code> prop (in "A working table" above),
+            shown standalone. One inline-end cluster: a rows-per-page{' '}
+            <code>Select</code> (omit <code>onPageSizeChange</code> to hide it),
+            the quiet range "1–10 of 38", then a fixed-slot pager —{' '}
+            <code>[1] ‹ [k] › [N]</code> — so nothing shifts as you page. The
+            parent owns <code>offset</code>/<code>pageSize</code> (bound for URL
+            params); the component is pure presentation over them and resets to
+            the first page on a size change. Below 480px the selector and number
+            slots collapse to <code>‹ ›</code> + the range.
+          </Lead>
+          <PaginationDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>

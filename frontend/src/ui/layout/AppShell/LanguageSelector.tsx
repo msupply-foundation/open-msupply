@@ -12,6 +12,13 @@ interface LanguageSelectorProps {
    * footer home opens upward; a header host wants `bottom-end`.
    */
   placement?: DropdownMenu.DropdownMenuRootProps['placement'];
+  /**
+   * When set, stamps `data-testid={testId}` on the trigger and
+   * `data-testid={`${testId}-option-<value>`}` on each language item. Used to
+   * disambiguate a specific instance (e.g. the settings Display row) from the
+   * always-present footer selector. Left unset elsewhere.
+   */
+  testId?: string;
 }
 
 // The options come from the intl module's single source of truth
@@ -30,7 +37,11 @@ const labelFor = (value: string) =>
  */
 export const LanguageSelector = (props: LanguageSelectorProps) => (
   <DropdownMenu.Root placement={props.placement ?? 'top-start'} gutter={8}>
-    <DropdownMenu.Trigger class={styles.trigger} title={t('select-language')}>
+    <DropdownMenu.Trigger
+      class={styles.trigger}
+      title={t('select-language')}
+      data-testid={props.testId}
+    >
       <TranslateIcon class={styles.icon} />
       <span class={styles.triggerText}>{labelFor(props.language)}</span>
     </DropdownMenu.Trigger>
@@ -43,6 +54,11 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
               class={styles.item}
               data-current={
                 option.value === props.language ? 'true' : undefined
+              }
+              data-testid={
+                props.testId
+                  ? `${props.testId}-option-${option.value}`
+                  : undefined
               }
               onSelect={() => props.onSelect(option.value)}
             >

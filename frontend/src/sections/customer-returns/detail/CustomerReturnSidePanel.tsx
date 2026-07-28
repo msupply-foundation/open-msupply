@@ -1,5 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { A, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t, tPlural } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import {
@@ -10,6 +11,7 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
   ColourTagPicker,
@@ -17,8 +19,12 @@ import {
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CheckIcon, CopyIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
-import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
+import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
+import { graphqlFetch } from '../../../api/graphql';
+import {
+  CustomerReturnDetail,
+  type CustomerReturnInfoFragment,
+} from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
 import type { ReturnFieldEdit } from './returnEdit';
 
@@ -68,19 +74,21 @@ export const CustomerReturnSidePanel: Component<
       setDeleteError(t('messages.cant-delete-generic'));
   };
 
-  // Copy to clipboard: a readable text snapshot of the record (the current
-  // app's "copy record" affordance).
-  const copy = async () => {
-    const n = props.node;
-    const text = [
-      `${t('customer-returns')} #${n.invoiceNumber}`,
-      `${t('label.name')}: ${n.otherPartyName}`,
-      `${t('label.status')}: ${n.status}`,
-      `${t('label.created')}: ${localisedDate(n.createdDatetime)}`,
-      `${t('label.reference')}: ${n.theirReference ?? ''}`,
-      `${t('label.comment')}: ${n.comment ?? ''}`,
-    ].join('\n');
-    await navigator.clipboard.writeText(text);
+  // The WHOLE return — header, every line, and the linked records — for the
+  // copy action (controls § copy to clipboard). This panel is handed the info
+  // node alone, so copy re-reads the detail query, whose nested `lines`
+  // connector takes no page argument and so carries the complete line set. A
+  // fetch failure routes to the global error modal; a NodeError (not expected
+  // from a screen showing the record) copies nothing.
+  const loadFullReturn = async () => {
+    const result = await graphqlFetch(CustomerReturnDetail, {
+      storeId: params.storeId,
+      id: props.node.id,
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
+    return result.data.invoice;
   };
 
   return (
@@ -179,11 +187,11 @@ export const CustomerReturnSidePanel: Component<
                   })}
                 </Show>
               </Text>
-              <A
+              <RecordLink
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
-              </A>
+              </RecordLink>
             </span>
           )}
         </Show>
@@ -204,13 +212,10 @@ export const CustomerReturnSidePanel: Component<
           >
             {t('button.delete')}
           </Button>
-          <Button
-            variant="secondary"
-            icon={<CopyIcon />}
-            onClick={() => void copy()}
-          >
-            {t('link.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullReturn} />
         </SidePanelActions>
       </SidePanelSection>
 

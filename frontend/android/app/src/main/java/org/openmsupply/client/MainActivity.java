@@ -21,6 +21,8 @@ public class MainActivity extends BridgeActivity {
         // the future client-mode injection list (kdd/capacitor-plugins
         // Fork 5) — keep it complete.
         registerPlugin(SaveFilePlugin.class);
+        registerPlugin(PrintPlugin.class);
+        registerPlugin(ReadLogPlugin.class);
 
         super.onCreate(savedInstanceState);
 

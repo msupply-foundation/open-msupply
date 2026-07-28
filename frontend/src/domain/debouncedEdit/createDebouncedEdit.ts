@@ -1,4 +1,4 @@
-import { createEffect, on, onCleanup } from 'solid-js';
+import { createEffect, on, onCleanup, untrack } from 'solid-js';
 import { createStore, produce, reconcile, type Store } from 'solid-js/store';
 import { createDebounced } from '../../ui/utils/createDebounced';
 
@@ -149,15 +149,30 @@ export const createDebouncedEdit = <T extends object>(
   // diffs the flat record key-by-key (our T has no `id` field to key on, so
   // merge is the correct keyless form) — a plain replace that only notifies the
   // readers of changed keys.
+  //
+  // The same-id guard is load-bearing: `id()` usually derives from the view's
+  // entity resource (`node().id`), so the effect ALSO re-runs whenever a save
+  // splices a fresh node back — same id string, new upstream signal (`on`
+  // re-fires on any source change; it never equality-checks the derived
+  // value). Re-seeding on that splice would overwrite the buffer with the
+  // server echo — wiping in-flight typing, and reverting a buffered value the
+  // echo disagrees with (how the custom-fields clear used to snap back).
+  //
+  // The seeded id is tracked EXPLICITLY, not via `on`'s prevInput with
+  // `defer: true`: a deferred first run returns BEFORE `on` records
+  // prevInput, so when the id is already resolved at mount (the toolbar
+  // case — no ''→id transition to burn the slot) the first splice would
+  // arrive with prevId === undefined and slip past the guard. Seeding at
+  // setup and comparing ourselves guards every splice including the first;
+  // the effect's own first run compares equal and no-ops, so no defer.
+  let seededId = untrack(options.id);
   createEffect(
-    on(
-      options.id,
-      () => {
-        flush();
-        setState(reconcile(options.initial(), { merge: true }));
-      },
-      { defer: true }
-    )
+    on(options.id, id => {
+      if (id === seededId) return; // same entity — a node splice, not a nav
+      seededId = id;
+      flush();
+      setState(reconcile(options.initial(), { merge: true }));
+    })
   );
 
   // Flush (NOT cancel) on dispose: a route change away from the detail view is
