@@ -14,6 +14,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
@@ -60,10 +62,11 @@ import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
 import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
 // send, the side panel (S5), the Documents tab, Export/Print (reports S4), the
@@ -95,6 +98,9 @@ const InternalOrderDetailView: Component = () => {
   const navigate = useNavigate();
   const [itemFilter, setItemFilter] = createSignal('');
   const [hideOverMin, setHideOverMin] = createSignal(false);
+  // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
+  // a non-empty selection swaps the status footer for the bulk-action bar.
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
@@ -775,12 +781,50 @@ const InternalOrderDetailView: Component = () => {
               </Header>
             }
             contentFooter={
-              <InternalOrderStatusFooter
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                onSent={onSent}
-              />
+              // Selection action bar while lines are selected (AC-LN15);
+              // otherwise the order's status footer. Matches OMS, which swaps
+              // the whole footer on selection. A program order's checkboxes are
+              // disabled (no delete offered — D32), so nothing selects there
+              // and this bar only ever appears on a general order.
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <InternalOrderStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    editable={editable()}
+                    onSent={onSent}
+                  />
+                }
+              >
+                <ContentFooter>
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  {/* On a read-only order the click explains why it can't
+                      proceed rather than confirming (AC-LN16); the whole-order
+                      delete is refused server-side regardless. onDeleted clears
+                      the selection (unmounting this bar) and refetches. */}
+                  <DeleteLinesAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
+                    canDelete={editable}
+                    onDeleted={() => {
+                      setSelectedIds([]);
+                      void refetch();
+                    }}
+                  />
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<MinusCircleIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
             }
           >
             {/* Details | Documents | Log | (gated) Indicators (spec S3 § tabs). */}
@@ -834,6 +878,16 @@ const InternalOrderDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Row selection for the bulk line delete (AC-LN15). The
+                  // column always shows; on a read-only order the delete is
+                  // refused with an explanation (AC-LN16), and on a program
+                  // order — whose line set is fixed — the checkboxes render
+                  // disabled so the affordance reads as blocked, not missing
+                  // (no delete offered, D32).
+                  enableSelection
+                  selectionDisabled={isProgram()}
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
                 />
               </TabPanel>
               <TabPanel value="documents">
