@@ -48,6 +48,7 @@ import {
   toUpdateInput,
   type PatientDraft,
 } from './patientEdit';
+import { createCodeTakenProbe } from '../patientCode';
 import { PatientDetailsForm } from './PatientDetailsForm';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -117,7 +118,18 @@ const PatientDetailView: Component = () => {
   // Details-tab validation (AC-C3): required errors stay quiet until the user
   // attempts Save, then surface per field and as the summary. Disarmed on every
   // (re)seed — a fresh patient, or the post-save reseed, starts clean.
-  const validation = createFormValidation(() => patientFieldErrors(edit));
+  // Duplicate-code check (spec/patients § generating a code). Debounced and
+  // store-scoped; skipped while the code is still the one the patient was loaded
+  // with, so a pre-existing collision doesn't block an unrelated edit.
+  const codeTaken = createCodeTakenProbe({
+    storeId: () => params.storeId,
+    code: () => edit.code,
+    savedCode: () => node()?.code ?? '',
+    patientId: () => node()?.id,
+  });
+  const validation = createFormValidation(() =>
+    patientFieldErrors(edit, codeTaken())
+  );
   createEffect(
     on(node, n => {
       if (n && n.id !== seededId()) {
@@ -398,6 +410,7 @@ const PatientDetailView: Component = () => {
                     </Show>
                     <PatientDetailsForm
                       storeId={params.storeId}
+                      patientId={params.patientId}
                       draft={edit}
                       setField={setField}
                       disabled={!canMutate()}

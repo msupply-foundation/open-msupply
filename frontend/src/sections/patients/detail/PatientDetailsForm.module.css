@@ -1,0 +1,16 @@
+/*
+ * The Generate button beside the Code field (spec/patients § generating a code).
+ *
+ * A FormRow aligns its items to the row's START, which for a labelled field is
+ * the label line — so a bare button would sit level with the word "Code" rather
+ * than with the input box. Dropping it by exactly one field-label line (the same
+ * two tokens TextField lays its own label out with, so it holds at any root
+ * font-size) puts it level with the input, and keeps it there when the field
+ * grows an error line underneath — which `align-self: end` would not.
+ */
+.generate {
+  margin-block-start: calc(
+    var(--field-label-font-size) * var(--field-label-line-height) +
+      var(--input-field-gap)
+  );
+}

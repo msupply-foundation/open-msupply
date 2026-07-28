@@ -62,8 +62,24 @@ export const seedDraft = (node: PatientNode): PatientDraft => ({
 // name + last name, each a plain required error (deferred to Save). One list so
 // the create wizard and the edit tab validate identically; feed to
 // createFormValidation and read back per field / as the summary.
-export const patientFieldErrors = (draft: PatientDraft): FieldError[] => [
+//
+// `codeTaken` is the settled answer to "does another patient hold this code?"
+// (spec/patients § generating a code, DIS-02 `.57`) — the caller owns the probe
+// because it is asynchronous and store-scoped. It carries a MESSAGE, so unlike
+// the required rules it surfaces as soon as it trips rather than waiting for a
+// save attempt: the user should learn the code clashes while still on the field.
+// Save stays enabled either way; the block happens on the attempt.
+export const patientFieldErrors = (
+  draft: PatientDraft,
+  codeTaken = false
+): FieldError[] => [
   { id: 'code', label: t('label.code'), failed: draft.code.trim() === '' },
+  {
+    id: 'code',
+    label: t('label.code'),
+    failed: codeTaken,
+    message: t('error.duplicated-code', { code: draft.code.trim() }),
+  },
   {
     id: 'firstName',
     label: t('label.first-name'),

@@ -53,6 +53,7 @@ import {
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
+import { createCodeTakenProbe } from '../patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
@@ -127,9 +128,20 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
   const [fetchOpen, setFetchOpen] = createSignal(false);
 
+  // Duplicate-code check (spec/patients § generating a code). No saved code to
+  // compare against while creating, so every non-empty code is checked.
+  const codeTaken = createCodeTakenProbe({
+    storeId: () => props.storeId,
+    code: () => draft.code,
+    savedCode: () => '',
+    patientId: () => undefined,
+  });
+
   // Details-step validation (AC-C3): required errors stay quiet until the first
   // Save attempt, then surface per field and as the summary below the form.
-  const validation = createFormValidation(() => patientFieldErrors(draft));
+  const validation = createFormValidation(() =>
+    patientFieldErrors(draft, codeTaken())
+  );
 
   // Mint a fresh identifier + reset the flow each time the modal opens (AC-C5).
   createEffect(() => {
@@ -467,6 +479,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               />
               <Combobox<GenderOption>
                 label={t('label.gender')}
+                width="full"
                 items={genderOptions()}
                 itemToString={o => o.label}
                 itemToValue={o => o.value}
@@ -538,6 +551,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             </Show>
             <PatientDetailsForm
               storeId={props.storeId}
+              patientId={patientId()}
               draft={draft}
               setField={setDraftField}
               errorFor={validation.errorFor}

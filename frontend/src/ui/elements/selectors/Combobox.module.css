@@ -13,6 +13,21 @@
   max-width: var(--input-max-long);
 }
 
+/* Width caps, TextField's data-width vocabulary (the `width` prop). The base
+   cap above is `long` — option text is often long — so only the other three
+   need a rule. */
+.field[data-width='compact'] {
+  max-width: var(--input-max-compact);
+}
+
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
+}
+
 .label {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
