@@ -11,14 +11,22 @@ export interface ConfirmDialogProps {
   message: JSX.Element;
   confirmLabel?: string;
   cancelLabel?: string;
+  /**
+   * Tone of the confirm button: `primary` (default) — or `danger` for a
+   * destructive confirm (delete, void). Cancel is always secondary.
+   */
+  confirmVariant?: 'primary' | 'danger';
   onConfirm: () => void;
 }
 
 /*
  * Confirmation preset built on <Dialog> — the standard "Are you sure?"
- * Cancel/OK pattern (secondary-tone buttons, as in the current app's blue
- * dialog actions). The owning component keeps `open` state, renders this, and
- * handles onConfirm. Ported from the RnD prototype's ConfirmDialog.
+ * Cancel/OK pattern: a secondary Cancel beside an emphasised confirm —
+ * `primary` by default, or `danger` (via `confirmVariant`) for a destructive
+ * confirm. A confirm dialog always carries at least one primary/danger action,
+ * so the confirming choice is never a pair of equal-weight buttons. The owning
+ * component keeps `open` state, renders this, and handles onConfirm. Ported
+ * from the RnD prototype's ConfirmDialog.
  *
  * Gated by <Show> on `open` so the <dialog testid="confirmation-modal"> isn't
  * in the DOM at all while closed — a closed-but-mounted confirm coexists with
@@ -45,7 +53,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
             {props.cancelLabel ?? 'Cancel'}
           </Button>
           <Button
-            variant="secondary"
+            variant={props.confirmVariant ?? 'primary'}
             data-testid="confirmation-modal-ok"
             onClick={() => {
               props.onConfirm();
