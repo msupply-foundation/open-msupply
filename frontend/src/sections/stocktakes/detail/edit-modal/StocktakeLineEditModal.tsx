@@ -1,8 +1,12 @@
-import { createEffect, createSignal, onMount, Show, type JSX } from 'solid-js';
+import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
@@ -375,15 +379,15 @@ const StocktakeLineEditContent = (
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
 
-  // What to focus once the next draft finishes loading (see the focus effect):
-  // - { row: lineId } → scroll that batch into view and focus its count (a
-  //   row-click open focuses the clicked batch; an advance/pick focuses the
-  //   first row).
-  // - 'itemSelector'  → the add-mode item search (no item picked).
-  // Consumed (cleared) by the effect so it fires once per load.
-  const [pendingFocus, setPendingFocus] = createSignal<
-    { row: string } | 'itemSelector' | undefined
-  >();
+  // Each batch row's counted-packs field, bound per row and addressed by draft
+  // row id — where a row-click open or an advance lands focus. The handle waits
+  // for the row to attach, so no load gate is needed here.
+  const batchFields = createFocusTargets();
+
+  // The add-mode item search. Named target, so entering the search state just
+  // calls focus() — the handle waits for the control and defers the frame
+  // (ui/utils/createFocusTarget).
+  const itemSearch = createFocusTarget();
 
   // Store-preference display gates (spec/stocktakes › store-preference gates),
   // read reactively. Each gated column is built into the column set only when
@@ -442,7 +446,7 @@ const StocktakeLineEditContent = (
     setDraft(reconcile(seeded, { key: 'id' }));
     // Focus the requested batch, else the first row — the focus effect runs
     // when loadingLines flips false below.
-    setPendingFocus({ row: focusLineId ?? seeded[0]?.id ?? '' });
+    batchFields.focus(focusLineId ?? seeded[0]?.id ?? '');
     setLoadingLines(false);
   };
 
@@ -499,7 +503,7 @@ const StocktakeLineEditContent = (
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setDraft(reconcile([], { key: 'id' }));
-    setPendingFocus('itemSelector');
+    itemSearch.focus();
   };
 
   // Seed on mount: a row open starts on its item (focusing the clicked batch);
@@ -508,39 +512,8 @@ const StocktakeLineEditContent = (
     if (props.initialItemId) void loadItemById(props.initialItemId);
     else {
       setLoadingLines(false);
-      setPendingFocus('itemSelector');
+      itemSearch.focus();
     }
-  });
-
-  // Move focus once the target is in the DOM: the item search in add mode, else
-  // the requested batch row (scrolled into view, its count focused). Runs after
-  // the load so the row exists; deferred a frame so the table has painted. A
-  // disabled count (an uncounted row) can't take focus — we still scroll to it.
-  createEffect(() => {
-    const target = pendingFocus();
-    if (!target || loadingLines()) return;
-    setPendingFocus(undefined);
-    const modal = () =>
-      document.querySelector('[data-testid="add-item-modal"]');
-    requestAnimationFrame(() => {
-      const root = modal();
-      if (!root) return;
-      if (target === 'itemSelector') {
-        root
-          .querySelector<HTMLElement>('[data-testid="item-search-input"]')
-          ?.focus();
-        return;
-      }
-      const row = root.querySelector<HTMLElement>(
-        `[data-row-key="${target.row}"]`
-      );
-      if (!row) return;
-      row.scrollIntoView({ block: 'nearest' });
-      const count = row.querySelector<HTMLInputElement>(
-        '[data-testid="cell-countedNumberOfPacks"] input'
-      );
-      if (count && !count.disabled) count.focus();
-    });
   });
 
   // The rows the table shows: the draft minus soft-deleted lines.
@@ -947,6 +920,7 @@ const StocktakeLineEditContent = (
         const line = info.row.original;
         return (
           <NumberField
+            ref={batchFields.ref(line.id)}
             label={t('label.counted-num-of-packs')}
             hideLabel
             size="small"
@@ -1415,6 +1389,7 @@ const StocktakeLineEditContent = (
             class={styles.addSelect}
             storeId={props.storeId}
             disabled={mode() === 'update'}
+            focusTarget={itemSearch}
             value={currentItem()?.id}
             selectedItem={currentItem()}
             // Pick an item → load it; clear (×) → back to the search state.

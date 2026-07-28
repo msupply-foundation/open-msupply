@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { XCircleIcon } from '../../../ui/icons';
@@ -68,9 +69,14 @@ const Body: Component<{ onClose: () => void }> = props => {
     navigate(`/${params.storeId}/distribution/customer-return/${response.id}`);
   };
 
+  // The customer lookup is this dialog's only control, so the dialog opens on
+  // it (ui-standards › accessibility › keyboard).
+  const customerSearch = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={customerSearch}
       onClose={props.onClose}
       dismissable={!creating()}
       testId="customer-search-modal"
@@ -93,6 +99,7 @@ const Body: Component<{ onClose: () => void }> = props => {
         placeholder={t('placeholder.search-by-name')}
         disabled={creating()}
         inputTestId="customer-search-input"
+        focusTarget={customerSearch}
         clearable={false}
         onSelect={customer => {
           if (customer) void create(customer.id);

@@ -3,6 +3,7 @@ import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
 import { itemPageFetcher, type ItemOption } from './itemResource';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import styles from './ItemSearch.module.css';
 
 const PAGE_SIZE = 30;
@@ -36,6 +37,11 @@ export interface ItemSearchProps {
   /** Read-only: show the selected item but don't allow searching/changing it. */
   disabled?: boolean;
   error?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the search input — for an owner
+   * that focuses this picker after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
 }
@@ -114,6 +120,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       // stamped here (like ConfirmDialog's confirmation-modal), not per call
       // site (e2e/TESTIDS.md).
       inputTestId="item-search-input"
+      focusTarget={props.focusTarget}
       fetchPage={fetchPage}
       value={props.value}
       selected={seed()}

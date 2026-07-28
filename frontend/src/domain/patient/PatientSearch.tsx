@@ -3,6 +3,7 @@ import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
 import { PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   patientSearchPageFetcher,
   type PatientOption,
@@ -29,6 +30,11 @@ export interface PatientSearchProps {
   inputTestId?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
+  /**
+   * A `createFocusTarget()` handle bound to the search input — for an owner
+   * that focuses this picker after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
   class?: string;
   /**
    * When set, a **Create patient** affordance is offered beside the picker
@@ -88,6 +94,7 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     error={props.error}
     placeholder={props.placeholder}
     inputTestId={props.inputTestId ?? 'patient-search-input'}
+    focusTarget={props.focusTarget}
     noResultsMessage={t('messages.no-matching-patients')}
     emptyQueryMessage={t('messages.type-to-search')}
     clearable={props.clearable}
