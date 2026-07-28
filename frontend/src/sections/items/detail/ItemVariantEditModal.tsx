@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import {
   createEffect,
   createResource,
@@ -10,6 +11,7 @@ import {
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { TextField } from '../../../ui/elements/inputs/TextField';
@@ -141,7 +143,7 @@ export const ItemVariantEditModal: Component<
       input: buildUpsertInput(
         form(),
         props.itemId,
-        editedVariant()?.id ?? crypto.randomUUID()
+        editedVariant()?.id ?? generateUUID()
       ),
     });
     if (result.kind !== 'success') {
@@ -173,9 +175,16 @@ export const ItemVariantEditModal: Component<
       ),
     });
 
+  // Name takes initial focus (spec/items S3 § variant details). Declared on the
+  // Dialog: a field-level `autofocus` inside one never fires — the dialog panel
+  // is the first autofocus candidate in tree order and always wins
+  // (kdd/focus-targets).
+  const nameField = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={nameField}
       testId="item-variant-edit-modal"
       title={isEdit() ? t('label.edit-variant') : t('label.add-variant')}
       icon={isEdit() ? undefined : <PlusCircleIcon />}
@@ -219,10 +228,10 @@ export const ItemVariantEditModal: Component<
         <FormColumn>
           <FormSection title={t('title.variant-details')}>
             <TextField
+              ref={nameField.ref}
               data-testid="item-variant-name-input"
               label={t('label.name')}
               required
-              autofocus
               width="full"
               disabled={saving()}
               value={form().name}

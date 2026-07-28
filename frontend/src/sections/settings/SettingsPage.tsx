@@ -5,7 +5,7 @@ import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContai
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
-import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
+import { ServerInfo } from './support/ServerInfo';
 import {
   Accordion,
   AccordionContent,
@@ -57,12 +57,10 @@ const SettingsPage: Component = () => {
         <Header>
           <Breadcrumb crumbs={[{ label: t('settings') }]} />
           <HeaderButtons>
-            <LabelledValue
-              label={t('label.app-version')}
-              data-testid="app-version"
-            >
-              {APP_VERSION}
-            </LabelledValue>
+            {/* Server-info block (issue #500) — the settings-owned mirror of
+                the reference's Admin/ServerInfo, which mounts it in the Settings
+                app-bar region (always visible), not inside a section. */}
+            <ServerInfo />
           </HeaderButtons>
         </Header>
       }

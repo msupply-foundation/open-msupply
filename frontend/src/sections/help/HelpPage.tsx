@@ -1,3 +1,4 @@
+import { generateUUID } from '../../uuid';
 import {
   createResource,
   createSignal,
@@ -76,7 +77,7 @@ const HelpPage: Component = () => {
       {
         storeId: params.storeId,
         input: {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           contactType: reason(),
           replyEmail: email().trim(),
           body: message(),

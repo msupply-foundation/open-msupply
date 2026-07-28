@@ -12,6 +12,7 @@ import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
@@ -36,7 +37,6 @@ import {
   LabelPrinterSettings,
   UpdateLabelPrinterSettings,
 } from './labelPrinter.generated';
-import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import styles from '../Settings.module.css';
 
