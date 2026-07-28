@@ -6,14 +6,16 @@ import {
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
-import { formatNumber } from '../../../intl/formatNumber';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../ui/elements/table/tableHelpers';
 import {
   StockLedger,
   type StockLedgerVariables,
@@ -72,51 +74,58 @@ export const LedgerPanel: Component<{
   });
   const onSort = (key: SortKey, desc: boolean) => setSort([{ key, desc }]);
 
+  // Cell rendering + widths come from the shared presets (docs/CELL_TYPES.md) —
+  // the Date/Time pair, the two signed number columns and the text columns are
+  // all standard types, so nothing here hand-rolls a `cell` except Type, which
+  // genuinely composes two fields.
   const columns = (): Column<Ledger, SortKey>[] => [
     {
       c: { accessor: l => l.datetime, id: 'date' },
       sortKey: 'datetime',
       header: () => t('label.date'),
-      cell: info => localisedDate(info.row.original.datetime),
+      ...getCellDefinition('date'),
     },
     {
       c: { accessor: l => l.datetime, id: 'time' },
       header: () => t('label.time'),
-      meta: { align: 'right' },
-      cell: info => localisedTime(info.row.original.datetime),
+      ...getCellDefinition('time'),
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
       header: () => t('label.name'),
+      ...getCellDefinition('name'),
     },
     {
       c: { accessor: l => l.quantity, id: 'quantity' },
       sortKey: 'quantity',
       header: () => t('label.unit-quantity'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.quantity),
+      ...getCellDefinition('unitQuantity'),
     },
     {
       c: { accessor: l => l.runningBalance, id: 'balance' },
       header: () => t('label.balance'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.runningBalance),
+      ...getCellDefinition('balance'),
     },
     {
       c: { accessor: l => l.invoiceType, id: 'type' },
       sortKey: 'invoiceType',
       header: () => t('label.type'),
+      // Composed from two fields (document type + number), so no preset key
+      // fits — the explicit text helper, per docs/CELL_TYPES.md.
+      ...getTextCell(),
       cell: info =>
         `${typeLabel(info.row.original.invoiceType)} ${info.row.original.invoiceNumber}`,
     },
     {
       c: { accessor: l => l.reason ?? '', id: 'reason' },
       header: () => t('label.reason'),
+      ...getTextCell(),
     },
     {
       c: { accessor: l => l.user?.username ?? '', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
   ];
 
