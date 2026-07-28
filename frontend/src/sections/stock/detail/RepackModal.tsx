@@ -464,8 +464,6 @@ const RepackContent = (props: {
         open={!!fullRepackNewLineId()}
         title={t('heading.are-you-sure')}
         message={t('messages.all-packs-repacked')}
-        confirmLabel={t('button.ok')}
-        cancelLabel={t('button.cancel')}
         onConfirm={() => {
           const id = fullRepackNewLineId();
           if (id) props.onNavigateToLine(id);
