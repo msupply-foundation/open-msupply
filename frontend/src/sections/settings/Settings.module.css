@@ -3,19 +3,6 @@
  * action buttons, the supply-level value rows) arrange inline. Values from the
  * theme tokens only. */
 
-/* Width cap for the S1 section stack / S2 body: the form reading measure,
- * START-aligned like the reference app's settings column (not centred — this
- * tree's pages have no centring convention; detail views are full width). */
-.measure {
-  max-inline-size: var(--measure-form);
-}
-
-.sectionBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
 /* Section-heading content: leading intent icon + label, spaced apart. Layout
  * only on our own span — the trigger keeps the accordion component's own
  * neutral treatment (no consumer override). */
