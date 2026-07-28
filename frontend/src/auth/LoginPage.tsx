@@ -114,6 +114,20 @@ export const LoginPage: Component = () => {
           </form>
         </div>
         <footer class={styles.panelFooter}>
+          {/* Sibling old UI, served at the server root /old-ui/ (dual-frontend
+              transition — one cookie session spans both). A plain anchor for a
+              full document navigation, NOT router navigation: it's a different
+              app. The href is root-relative on purpose — /old-ui/ is a sibling
+              of this app's BASE_URL mount, never nested under it (e.g. the /spec
+              demo track still points at the root /old-ui/). Centered above the
+              version, matching the initialisation screen's Save-log link. */}
+          <a
+            class={styles.switchLink}
+            href="/old-ui/"
+            data-testid="login-switch-to-old-ui"
+          >
+            {t('login.switch-to-old-ui')}
+          </a>
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
@@ -124,23 +138,12 @@ export const LoginPage: Component = () => {
               <strong>{t('label.server-version')}</strong> {serverVersion()}
             </p>
           </Show>
-          <LanguageSelector
-            language={locale()}
-            onSelect={v => void changeLanguage(v)}
-          />
-          {/* Sibling old UI, served at the server root /old-ui/ (dual-frontend
-              transition — one cookie session spans both). A plain anchor for a
-              full document navigation, NOT router navigation: it's a different
-              app. The href is root-relative on purpose — /old-ui/ is a sibling
-              of this app's BASE_URL mount, never nested under it (e.g. the /spec
-              demo track still points at the root /old-ui/). */}
-          <a
-            class={styles.switchLink}
-            href="/old-ui/"
-            data-testid="login-switch-to-old-ui"
-          >
-            {t('login.switch-to-old-ui')}
-          </a>
+          <div class={styles.languageRow}>
+            <LanguageSelector
+              language={locale()}
+              onSelect={v => void changeLanguage(v)}
+            />
+          </div>
         </footer>
       </main>
     </div>

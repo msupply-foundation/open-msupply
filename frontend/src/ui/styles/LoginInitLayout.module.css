@@ -105,6 +105,15 @@
   color: var(--text-secondary); /* not the original's opacity 0.4 — see top */
 }
 
+/* The language selector sits at the bottom-right of the footer on both the
+   login and initialisation screens (issue #519 — consistent placement). The
+   selector component owns its own look; this wrapper only positions it, with
+   the same trailing inset as the version line so their right edges align. */
+.languageRow {
+  align-self: flex-end;
+  padding-inline-end: var(--space-4);
+}
+
 /* Unobtrusive text link in the footer (the sibling old-UI link on login, the
    Save-log link on initialisation). Secondary tone so it never competes with
    the primary button; underlined so it reads as a link without relying on

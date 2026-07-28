@@ -353,6 +353,14 @@ export const InitialisationPage: Component<{
           </form>
         </div>
         <footer class={styles.panelFooter}>
+          {/* Android only: save the embedded server's log for support before
+              initialisation completes (issue #519.5). Renders nothing on the
+              web. Styled as the footer's secondary text link (like the login
+              screen's old-UI link), centered above the version. */}
+          <SaveServerLogLink
+            class={styles.switchLink}
+            noticeClass={styles.footerNotice}
+          />
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
@@ -364,18 +372,12 @@ export const InitialisationPage: Component<{
               <strong>{t('label.server-version')}</strong> {serverVersion()}
             </p>
           </Show>
-          {/* Android only: save the embedded server's log for support before
-              initialisation completes (issue #519.5). Renders nothing on the
-              web. Styled as the footer's secondary text link (like the login
-              screen's old-UI link), centered in the column. */}
-          <SaveServerLogLink
-            class={styles.switchLink}
-            noticeClass={styles.footerNotice}
-          />
-          <LanguageSelector
-            language={locale()}
-            onSelect={v => void changeLanguage(v)}
-          />
+          <div class={styles.languageRow}>
+            <LanguageSelector
+              language={locale()}
+              onSelect={v => void changeLanguage(v)}
+            />
+          </div>
         </footer>
       </main>
     </div>
