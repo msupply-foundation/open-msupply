@@ -211,11 +211,17 @@ export const InternalOrderToolbar: Component<
             </FieldRow>
             <Show when={props.showDestination}>
               <FieldRow label={t('label.destination-customer')}>
+                {/* Store-backed customers only, the chosen supplier excluded
+                    (spec S3 § toolbar). The picker's filtering is load-bearing:
+                    a lone destination update is NOT re-validated server-side
+                    (D42), so this is the only guard on the stored value. */}
                 <NameSearch
                   storeId={props.storeId}
                   role="customer"
                   label={t('label.destination-customer')}
                   hideLabel
+                  storeBacked
+                  excludeId={props.node.otherPartyId}
                   selected={destinationSeed()}
                   disabled={!props.editable}
                   onSelect={customer =>
