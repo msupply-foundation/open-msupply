@@ -20,6 +20,7 @@ import {
   type ColumnOrderState,
   type ColumnPinningState,
   type ColumnSizingState,
+  type HeaderContext,
   type RowSelectionState,
   type SortingState,
   type Updater,
@@ -373,8 +374,18 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table view) and only when the page wired onSort + has sortable columns.
   const sortableColumns = () =>
     props.columns.filter(c => c.sortKey !== undefined);
-  const columnLabel = (c: Column<T, K, G>): string =>
-    typeof c.header === 'string' ? c.header : (c.sortKey ?? '');
+  // A column's header text, for a sort-option label. Our `header` is always a
+  // FUNCTION (columnTypes.ts narrows it that way so the text re-resolves on a
+  // locale change), so it must be CALLED — the old `typeof header === 'string'`
+  // test never matched and every option fell back to the raw sortKey
+  // ("itemCode", "costPricePerPack"). Same treatment as HeaderCell (flexRender),
+  // CardView.columnHeaderText and ColumnSettings.label; none of our headers read
+  // the context argument, so an empty one is safe. The sortKey stays the last
+  // resort for a column with no header at all.
+  const columnLabel = (c: Column<T, K, G>): JSX.Element =>
+    typeof c.header === 'function'
+      ? c.header({} as HeaderContext<T, unknown>)
+      : (c.header ?? c.sortKey ?? '');
   const activeSortColumn = (): Column<T, K, G> | undefined =>
     props.sort
       ? sortableColumns().find(c => c.sortKey === props.sort!.key)

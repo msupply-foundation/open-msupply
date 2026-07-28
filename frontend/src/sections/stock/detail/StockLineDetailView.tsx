@@ -49,6 +49,7 @@ import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
+import { totalVolume } from '../stockCalc';
 import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
@@ -194,9 +195,17 @@ const StockLineDetailView: Component = () => {
     () => params.storeId,
     fetchStockLocations
   );
+  // Non-suspending read: the line and the locations resolve independently, so
+  // once the line has arrived a still-pending `.latest` read here would suspend
+  // this view's boundary and tear the rendered form down again — and the same
+  // read runs after an adjust/repack refetch, with a modal potentially open
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `loading`
+  // below still gives LocationSelect its spinner.
   const locations = () =>
     locationsForItem(
-      allLocations.latest ?? [],
+      allLocations.state === 'ready' || allLocations.state === 'refreshing'
+        ? (allLocations.latest ?? [])
+        : [],
       line()?.item.restrictedLocationTypeId
     );
 
@@ -612,11 +621,20 @@ const StockLineDetailView: Component = () => {
                               value={edit.volumePerPack}
                               onChange={v => setEdit('volumePerPack', v ?? 0)}
                             />
+                            {/* Derived from the DRAFT volume per pack, not the
+                              saved figure, so it tracks what's being edited
+                              (the server derives its stored value the same
+                              way). */}
                             <LabelledValue
                               variant="field"
                               label={t('label.total-volume')}
                             >
-                              {formatNumber(l().totalVolume)}
+                              {formatNumber(
+                                totalVolume(
+                                  edit.volumePerPack,
+                                  l().totalNumberOfPacks
+                                )
+                              )}
                             </LabelledValue>
                           </FormRow>
                         </FormSection>
@@ -755,8 +773,7 @@ const StockLineDetailView: Component = () => {
                 open={confirmSaveOpen()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-stock')}
-                confirmLabel={t('button.save')}
-                cancelLabel={t('button.cancel')}
+                confirmAction="save"
                 onConfirm={() => void doSave()}
                 onClose={() => setConfirmSaveOpen(false)}
               />
@@ -766,7 +783,6 @@ const StockLineDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
-                cancelLabel={t('button.cancel')}
                 onConfirm={leave}
                 onClose={() => setDiscardOpen(false)}
               />

@@ -47,6 +47,8 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Marks the field required — passed through to the Combobox's label. */
+  required?: boolean;
   /** Hint text shown below the input (below the error, when both). Passed
    * through to the Combobox. */
   helperText?: string;
@@ -202,6 +204,7 @@ export const AsyncCombobox = <T,>(
       class={props.class}
       disabled={props.disabled}
       error={props.error}
+      required={props.required}
       helperText={props.helperText}
       clearable={props.clearable}
       size={props.size}
