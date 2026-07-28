@@ -81,6 +81,12 @@ interface ComboboxProps<T> {
    */
   errorTestId?: string;
   /**
+   * Marks the field required: an asterisk on the label (TextField's marker, so
+   * a lookup and a text field read alike) plus `aria-required` on the input.
+   * Indication only — the gating stays with the form's own confirm rule.
+   */
+  required?: boolean;
+  /**
    * `data-testid` for the text `<input>` itself (locale-stable test hook,
    * e2e/TESTIDS.md) — the input is internal to the Kobalte composition, so it
    * can't take a pass-through attribute.
@@ -379,7 +385,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           the label the surrounding layout (a FieldRow) already shows (a hidden
           twin trips strict text-locator matches in the shared e2e suites). */}
       <Show when={!props.hideLabel}>
-        <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+        <KCombobox.Label class={styles.label}>
+          {props.label}
+          <Show when={props.required}>
+            <span class={styles.required} aria-hidden="true">
+              *
+            </span>
+          </Show>
+        </KCombobox.Label>
       </Show>
       <KCombobox.Control
         class={styles.control}
@@ -399,6 +412,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           data-testid={props.inputTestId}
           aria-label={props.hideLabel ? props.label : undefined}
           aria-invalid={props.error ? 'true' : undefined}
+          aria-required={props.required ? 'true' : undefined}
         />
         <Show when={(props.clearable ?? true) && selected() !== null}>
           <button

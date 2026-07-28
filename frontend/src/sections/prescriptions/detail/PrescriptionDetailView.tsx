@@ -592,7 +592,7 @@ const PrescriptionDetailView: Component = () => {
                 empty={
                   <Show when={!disabled()}>
                     <Button
-                      icon={<PlusCircleIcon />}
+                      variant="ghost"
                       data-testid="nothing-here-create-button"
                       onClick={() => setEditState({})}
                     >
@@ -662,6 +662,7 @@ const PrescriptionDetailView: Component = () => {
               'messages.confirm-delete-lines',
               selectedIds().length
             )}
+            confirmVariant="danger"
             onConfirm={() => void runDeleteLines()}
           />
 
