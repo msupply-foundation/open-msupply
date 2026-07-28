@@ -974,7 +974,7 @@ const OutboundDetailView: Component = () => {
                   empty={
                     editable() ? (
                       <Button
-                        icon={<PlusCircleIcon />}
+                        variant="ghost"
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >

@@ -354,7 +354,7 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={t('error.no-stocktakes')}
+        emptyMessage={`${t('error.no-stocktakes')} ${hasStocktake() ? '' : t('label.click-to-create-an')}`}
         // The empty-state action flips on whether the store has ANY stocktake
         // (mirrors OMS): a store with none is offered the once-per-store INITIAL
         // (opening-balance) create — a plain confirm, no mode controls; a store
@@ -363,7 +363,7 @@ const StocktakesList: Component = () => {
         empty={
           hasStocktake() ? (
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -371,7 +371,7 @@ const StocktakesList: Component = () => {
             </Button>
           ) : (
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               data-testid="nothing-here-create-button"
               onClick={() => setInitialOpen(true)}
             >

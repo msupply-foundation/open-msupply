@@ -359,11 +359,11 @@ const StockList: Component = () => {
 
   const emptyCreate = (): JSX.Element => (
     <Button
-      icon={<PlusCircleIcon />}
+      variant="ghost"
       data-testid="nothing-here-create-button"
       onClick={() => setCreateOpen(true)}
     >
-      {t('button.new-stock')}
+      {t('button.add-new-stock')}
     </Button>
   );
 
