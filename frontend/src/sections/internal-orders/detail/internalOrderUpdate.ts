@@ -1,8 +1,9 @@
 import { graphqlFetch } from '../../../api/graphql';
-import { t, type LocaleKey } from '../../../intl';
+import { t, tPlural, type LocaleKey } from '../../../intl';
 import {
   UpdateInternalOrder,
   RefreshAncillaryItems,
+  UseSuggestedQuantities,
   type InternalOrderInfoFragment,
   type UpdateInternalOrderVariables,
   type RefreshAncillaryItemsVariables,
@@ -70,15 +71,27 @@ export type SendResult =
   | { kind: 'failed' };
 
 // The typed send refusals the client maps to copy (contract parity). The
-// emergency cap carries its own count; the others are fixed strings.
-const mapSendError = (typename: string, description: string): string => {
-  switch (typename) {
+// emergency cap (AC-EM1) names the maximum it enforced, interpolated as the
+// pluralised count; the others are fixed strings.
+const mapSendError = (error: {
+  __typename: string;
+  description: string;
+  maxItemsInEmergencyOrder?: number;
+}): string => {
+  switch (error.__typename) {
     case 'RequisitionReasonsNotProvided':
       return t('error.reasons-not-provided-program-requisition');
     case 'CannotEditRequisition':
       return t('error.cannot-edit-requisition');
+    case 'OrderingTooManyItems':
+      // Pluralised key (`_one` / `_other`) — tPlural, not t; it interpolates
+      // the count into the copy that names the cap (AC-EM1).
+      return tPlural(
+        'error.ordering-too-many-items',
+        error.maxItemsInEmergencyOrder ?? 0
+      );
     default:
-      return description;
+      return error.description;
   }
 };
 
@@ -99,7 +112,7 @@ export const sendInternalOrder = async (
     return { kind: 'saved', node: response };
   return {
     kind: 'error',
-    message: mapSendError(response.error.__typename, response.error.description),
+    message: mapSendError(response.error),
   };
 };
 
@@ -196,4 +209,32 @@ export const addInternalOrderFromMasterList = async (
   const response = result.data.addFromMasterList;
   if (response.__typename === 'RequisitionLineConnector') return { kind: 'done' };
   return { kind: 'error', message: response.error.description };
+};
+
+// --- Use suggested quantities (spec S3 § page actions, AC-Q1/Q2) -------------
+
+// The fill-blanks tool: every zero-requested line takes its suggested quantity,
+// in one call, on the whole order. Available on program orders too; Draft-only
+// (the button is disabled off Draft, and the server rejects it — CannotEdit —
+// otherwise). The caller refetches the line table on success; a typed rejection
+// (the only one reachable via a race is CannotEditRequisition) is returned for
+// display.
+export const useSuggestedQuantities = async (
+  storeId: string,
+  requisitionId: string
+): Promise<RefreshResult> => {
+  const result = await graphqlFetch(UseSuggestedQuantities, {
+    storeId,
+    requisitionId,
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.useSuggestedQuantity;
+  if (response.__typename === 'RequisitionLineConnector') return { kind: 'done' };
+  return {
+    kind: 'error',
+    message:
+      response.error.__typename === 'CannotEditRequisition'
+        ? t('error.cannot-edit-requisition')
+        : response.error.description,
+  };
 };

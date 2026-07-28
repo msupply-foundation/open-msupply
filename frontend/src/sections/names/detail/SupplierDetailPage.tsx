@@ -1,6 +1,6 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createResource, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -25,7 +25,14 @@ import { PurchaseOrdersTab } from './PurchaseOrdersTab';
 const SupplierDetailPage: Component = () => {
   const params = useParams<{ storeId: string; nameId: string }>();
   const navigate = useNavigate();
-  const [tab, setTab] = createSignal('details');
+  // Tab state lives in the URL (`?tab=custom-fields`), so a reload or a shared
+  // link restores the tab — matching the current app and the patient/item
+  // detail views ([conventions › urls](../../../../spec/ui-standards/conventions.md)).
+  // The default (Details) carries no param, keeping the base URL clean.
+  const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
+  const tab = () => searchParams.tab ?? 'details';
+  const setTab = (value: string) =>
+    setSearchParams({ tab: value === 'details' ? undefined : value });
 
   const [data] = createResource(
     () => params.nameId,

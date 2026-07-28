@@ -46,7 +46,10 @@
   flex: 1 1 0;
   flex-direction: column;
   min-width: 0;
-  min-height: 3.6rem;
+  /* A FIXED height (not min-height) so a sliver-width cell whose label wraps
+     is clipped by overflow, never growing the row (the original caps it too);
+     the tooltip carries the full text. */
+  height: 3.6rem;
   overflow: hidden;
   padding-inline-end: 0.4rem;
   text-align: end;

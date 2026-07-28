@@ -184,6 +184,11 @@ mutation updateInternalOrder(
       error {
         __typename
         description
+        # The emergency cap carries the maximum it enforced, so the send path
+        # can name it in the rejection copy (AC-EM1); other errors ignore it.
+        ... on OrderingTooManyItems {
+          maxItemsInEmergencyOrder
+        }
       }
     }
   }
@@ -203,6 +208,28 @@ mutation refreshAncillaryItems(
       __typename
     }
     ... on RefreshAncillaryItemsError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Use-suggested (spec S3 § page actions → S6, AC-Q1): fills every zero-requested
+# line with its suggested quantity in one call. The full line set comes back on
+# success, but the client refetches the table regardless — so only the outcome
+# __typename (and a typed error's description) is read here.
+mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {
+  useSuggestedQuantity(
+    storeId: $storeId
+    input: { requestRequisitionId: $requisitionId }
+  ) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+    }
+    ... on UseSuggestedQuantityError {
       error {
         __typename
         description
