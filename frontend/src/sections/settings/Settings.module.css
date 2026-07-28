@@ -98,3 +98,26 @@
   margin: 0;
   padding-inline-start: var(--space-5);
 }
+
+/* Support § server-info block (issue #500): the QR beside a stack of the
+ * server URL / site / version / central-server details. Wraps when narrow. */
+.serverInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.serverInfoDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Central-server label: leading icon + text, matching the app-footer cue. */
+.centralServer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+}
