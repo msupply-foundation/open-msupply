@@ -5,7 +5,6 @@ import {
   Show,
   type Component,
 } from 'solid-js';
-import { A } from '@solidjs/router';
 import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { homeCurrency } from '../../../intl/currency';
@@ -40,7 +39,7 @@ import {
   saveInboundServiceCharges,
 } from './modals/inboundServiceCharges';
 import { poLabel, ioLabel } from '../linkedOrder';
-import linkStyles from '../linkedOrder.module.css';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 
 export interface InboundShipmentSidePanelProps {
   storeId: string;
@@ -220,26 +219,24 @@ export const InboundShipmentSidePanel: Component<
           <Show when={props.node.purchaseOrder}>
             {po => (
               <FieldRow label={t('label.purchase-order')}>
-                <A
+                <RecordLink
                   href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
-                  class={linkStyles.link}
-                  data-kind="po"
+                  kind="po"
                 >
                   {poLabel(po().number)}
-                </A>
+                </RecordLink>
               </FieldRow>
             )}
           </Show>
           <Show when={props.node.requisition}>
             {req => (
               <FieldRow label={t('internal-order')}>
-                <A
+                <RecordLink
                   href={`/${props.storeId}/replenishment/internal-order/${req().id}`}
-                  class={linkStyles.link}
-                  data-kind="io"
+                  kind="io"
                 >
                   {ioLabel(req().requisitionNumber)}
-                </A>
+                </RecordLink>
               </FieldRow>
             )}
           </Show>

@@ -6,7 +6,7 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { A } from '@solidjs/router';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -304,12 +304,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                   vertical isn't built yet, so today this lands on the
                   not-found EntryPage; it goes live once that vertical
                   registers its routes (no change needed here). */}
-              <A
+              <RecordLink
                 href={`/${props.storeId}/distribution/customer-requisition/${req().id}`}
-                style={{ color: 'var(--primary-main)', 'font-weight': 500 }}
+                kind="io"
               >
                 #{req().requisitionNumber}
-              </A>
+              </RecordLink>
             </Text>
           )}
         </Show>
