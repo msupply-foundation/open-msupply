@@ -5,6 +5,8 @@ import {
   For,
   Match,
   on,
+  onCleanup,
+  onMount,
   Show,
   Switch,
 } from 'solid-js';
@@ -24,6 +26,7 @@ import {
   type VisibilityState,
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
+import { hiddenEdges } from './scrollEdges';
 import {
   toColumnDef,
   type CardGroup,
@@ -60,7 +63,7 @@ import { ContentFooterActions } from '../../layout/ContentFooter/ContentFooterAc
 import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
-import { t } from '../../../intl';
+import { isRtl, t } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
@@ -580,15 +583,83 @@ export function DataTable<T, K extends string, G extends string = never>(
   // needs the table's own fixed overlay.
   const overlay = () => fullScreen() && !shellFullScreen;
 
-  // Has the scroll box been scrolled sideways at all? Stamped on it as
-  // data-hscrolled, which is what reveals the frozen leading column's shadow —
-  // there's nothing under that column until content has slid beneath it (#617,
-  // see DataTable.module.css). Deliberately NOT "the table overflows": an
-  // overflowing but unscrolled table has clear air beside the checkbox.
-  // Magnitude, because RTL scrolls to NEGATIVE scrollLeft. Setting the same
-  // boolean is a no-op in Solid, so the listener costs one comparison per
-  // scroll event and re-renders nothing until the state actually flips.
-  const [hScrolled, setHScrolled] = createSignal(false);
+  // Is content hidden past the scroll box's left / right edge? Stamped on the
+  // box as data-hidden-left / data-hidden-right, which is what reveals each
+  // frozen block's shadow: a frozen column only casts one while content is
+  // actually passing UNDER it (#617 — the always-on version read as a hard
+  // band; see DataTable.module.css). Deliberately not "the table overflows":
+  // an unscrolled table has clear air beside its leading column even though it
+  // overflows to the right.
+  //
+  // Both edges are PHYSICAL (the leading column pins physical-left in either
+  // direction), which takes reconciling the two scrollLeft conventions —
+  // hiddenEdges owns that arithmetic and is unit-tested in scrollEdges.test.ts.
+  //
+  // Setting the same boolean is a no-op in Solid, so a scroll costs two
+  // comparisons and re-renders nothing until an edge state actually flips.
+  const [hiddenLeft, setHiddenLeft] = createSignal(false);
+  const [hiddenRight, setHiddenRight] = createSignal(false);
+  let scrollBox: HTMLDivElement | undefined;
+
+  const syncHiddenEdges = () => {
+    if (!scrollBox) return;
+    const { left, right } = hiddenEdges(scrollBox, isRtl());
+    setHiddenLeft(left);
+    setHiddenRight(right);
+  };
+
+  // Scrolling isn't the only thing that moves these edges — hiding a column,
+  // dragging a resize handle, changing density or page size, or resizing the
+  // window all change scrollWidth/clientWidth with no scroll event. Observing
+  // the box AND the table covers both (the box for viewport-driven changes, the
+  // table for content-driven ones).
+  onMount(() => {
+    if (!scrollBox) return;
+    const observer = new ResizeObserver(syncHiddenEdges);
+    observer.observe(scrollBox);
+    const table = scrollBox.querySelector('table');
+    if (table) observer.observe(table);
+    syncHiddenEdges();
+    onCleanup(() => observer.disconnect());
+  });
+
+  // A locale flip swaps the scrollLeft convention under us with nothing
+  // scrolling or resizing, so re-read the edges when direction changes.
+  createEffect(() => {
+    isRtl();
+    syncHiddenEdges();
+  });
+
+  // Which cells sit on a frozen BLOCK's outer edge — the boundary the scrolling
+  // content actually passes: the LAST left-pinned column and the FIRST
+  // right-pinned one. That edge carries the freeze cue (a 1px seam at rest, the
+  // shadow once content is under it); columns inside the block carry neither, or
+  // the block would read as several separate frozen strips.
+  //
+  // Derived from the columns actually RENDERED (visible ∩ table-view), not
+  // TanStack's getIsLastColumn('left') — that counts a pinned-but-hidden column
+  // and would strand the cue on a cell with no DOM.
+  const framedLeafColumns = () =>
+    table
+      .getVisibleLeafColumns()
+      .filter(column => showInTableView(column.columnDef));
+  const lastLeftPinnedId = () =>
+    framedLeafColumns()
+      .filter(column => column.getIsPinned() === 'left')
+      .at(-1)?.id;
+  const firstRightPinnedId = () =>
+    framedLeafColumns().find(column => column.getIsPinned() === 'right')?.id;
+
+  const frozenEdge = (column: TanColumn<T>): 'left' | 'right' | undefined => {
+    if (column.id === lastLeftPinnedId()) return 'left';
+    if (column.id === firstRightPinnedId()) return 'right';
+    return undefined;
+  };
+
+  // With no data column pinned left, the leading selection column IS the left
+  // block, so the cue falls on it (the CSS withholds only its 1px seam — #617
+  // wants no line beside the checkbox, shadow or not).
+  const leadingIsFrozenEdge = () => lastLeftPinnedId() === undefined;
 
   // Per-facet applicability for the Settings popover's resets (issue #572): each
   // reset is enabled only when that facet actually differs from the default,
@@ -792,12 +863,12 @@ export function DataTable<T, K extends string, G extends string = never>(
       <div class={styles.tableArea}>
         <div
           class={styles.tableScroll}
+          ref={scrollBox}
           data-view={viewMode()}
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
-          data-hscrolled={hScrolled() ? '' : undefined}
-          onScroll={event =>
-            setHScrolled(Math.abs(event.currentTarget.scrollLeft) > 0)
-          }
+          data-hidden-left={hiddenLeft() ? '' : undefined}
+          data-hidden-right={hiddenRight() ? '' : undefined}
+          onScroll={syncHiddenEdges}
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
               table (each card is a full-width <tr>), so columns/scroll/selection
@@ -815,6 +886,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                         <th
                           class={`${styles.th} ${styles.selectCell}`}
                           data-pinned="left"
+                          data-frozen-edge={
+                            leadingIsFrozenEdge() ? 'left' : undefined
+                          }
                           style={leadingPinnedStyle(0)}
                         >
                           {/* Partial selection (some rows on this page, not
@@ -855,6 +929,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             <HeaderCell
                               header={header}
                               pinnedStyle={pinnedStyle}
+                              frozenEdge={frozenEdge}
                             />
                           </Show>
                         )}
@@ -890,6 +965,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                           rowTone={props.rowTone}
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}
+                          frozenEdge={frozenEdge}
+                          leadingIsFrozenEdge={leadingIsFrozenEdge()}
                           cellVisible={cell =>
                             showInTableView(cell.column.columnDef)
                           }

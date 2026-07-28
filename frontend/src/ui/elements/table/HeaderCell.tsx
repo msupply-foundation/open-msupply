@@ -16,6 +16,12 @@ export function HeaderCell<T>(props: {
    * undefined.
    */
   pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
+  /**
+   * Which frozen block's OUTER edge this column sits on, if any — the boundary
+   * the scrolling content passes. Carries the freeze cue (see
+   * DataTable.module.css); columns inside a block carry none.
+   */
+  frozenEdge: (column: TanColumn<T>) => 'left' | 'right' | undefined;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
@@ -51,6 +57,7 @@ export function HeaderCell<T>(props: {
       class={styles.th}
       data-align={align()}
       data-pinned={column().getIsPinned() || undefined}
+      data-frozen-edge={props.frozenEdge(column())}
       // Whole-cell sort target (spec .sortable): the toggle handler sits on the
       // th, not the label span; the resize handle stops click propagation.
       data-sortable={canSort() || undefined}
