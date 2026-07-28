@@ -29,8 +29,11 @@ impl PackageJsonAsset {
 
     fn version() -> String {
         // strip out the -rc1 or -test detail from the version
-        let re = regex::Regex::new(r"\-.*").unwrap();
-        re.replace(&Self::raw_version(), "").to_string()
+        let mut version = Self::raw_version();
+        if let Some(idx) = version.find('-') {
+            version.truncate(idx);
+        }
+        version
     }
 }
 
