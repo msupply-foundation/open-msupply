@@ -210,6 +210,28 @@ export const RefreshAncillaryItems = {
   query: "mutation refreshAncillaryItems($storeId: String!, $input: RefreshAncillaryItemsInput!) {\n  refreshAncillaryItems(storeId: $storeId, input: $input) {\n    __typename\n    ... on RefreshAncillaryItemsSuccess {\n      __typename\n    }\n    ... on RefreshAncillaryItemsError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<RefreshAncillaryItemsResult, RefreshAncillaryItemsVariables>;
 
+export type UseSuggestedQuantitiesVariables = {
+  storeId: string;
+  requisitionId: string;
+};
+
+export type UseSuggestedQuantitiesResult = {
+  useSuggestedQuantity: ({
+  __typename: "RequisitionLineConnector";
+}) | ({
+  __typename: "UseSuggestedQuantityError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const UseSuggestedQuantities = {
+  query: "mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {\n  useSuggestedQuantity(\n    storeId: $storeId\n    input: {requestRequisitionId: $requisitionId}\n  ) {\n    __typename\n    ... on RequisitionLineConnector {\n      __typename\n    }\n    ... on UseSuggestedQuantityError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<UseSuggestedQuantitiesResult, UseSuggestedQuantitiesVariables>;
+
 export type InternalOrderLogVariables = {
   storeId: string;
   recordId: string;

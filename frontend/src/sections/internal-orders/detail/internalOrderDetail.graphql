@@ -211,6 +211,28 @@ mutation refreshAncillaryItems(
   }
 }
 
+# Use-suggested (spec S3 § page actions → S6, AC-Q1): fills every zero-requested
+# line with its suggested quantity in one call. The full line set comes back on
+# success, but the client refetches the table regardless — so only the outcome
+# __typename (and a typed error's description) is read here.
+mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {
+  useSuggestedQuantity(
+    storeId: $storeId
+    input: { requestRequisitionId: $requisitionId }
+  ) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+    }
+    ... on UseSuggestedQuantityError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 # The order's activity trail (Log tab, spec S3 § Log tab) — keyed by recordId,
 # sorted client-side (oldest first, AC-AL1).
 query internalOrderLog($storeId: String!, $recordId: String!) {
