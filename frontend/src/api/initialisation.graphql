@@ -14,10 +14,12 @@ query isCentralServer {
 
 # The server's own version, displayed on the pre-session screens
 # (spec/startup/contract.md § App version). Unauthenticated on both schemas —
-# but only on servers carrying open-msupply#12566; kept off the isCentralServer
-# document so its absence on older servers can't fail the role read.
-query apiVersion {
-  apiVersion
+# but the field only exists on servers carrying open-msupply#12566 (apiVersion
+# is deliberately not reused: reserved for API versioning); kept off the
+# isCentralServer document so its absence on older servers can't fail the
+# role read.
+query serverVersion {
+  serverVersion
 }
 
 mutation initialiseSite($input: SyncSettingsInput!) {

@@ -50,6 +50,7 @@ const EXPECTED: Record<SyncErrorVariant, string> = {
   DATABASE_ERROR: 'error.internal-error',
   SYNC_RECORD_SERIALIZE_ERROR: 'error.internal-error',
   RECORD_NOT_FOUND: 'error.internal-error',
+  SYNC_FILE_NOT_FOUND: 'error.internal-error',
   TOKEN_NOT_FOUND: 'error.internal-error',
   FAILED_TO_GET_HARDWARE_ID: 'error.internal-error',
   MISSING_AUTH_HEADER: 'error.internal-error',
