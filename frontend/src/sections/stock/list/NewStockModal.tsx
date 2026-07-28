@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { graphqlFetch } from '../../../api/graphql';
@@ -226,7 +227,7 @@ const NewStockContent = (props: {
     setSaving(true);
     setError(undefined);
     const input: InsertStockLineVariables['input'] = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       itemId: it.id,
       numberOfPacks: draft.numberOfPacks ?? 0,
       packSize: draft.packSize ?? 0,

@@ -14,12 +14,12 @@ import {
   SUPPLY_LEVEL_KEY,
   type NamePropertyInput,
 } from './propertySets';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { SupplyLevelsModal } from './SupplyLevelsModal';
 import {
   ConfigureNameProperties,
   NameProperties,
 } from './nameProperties.generated';
-import styles from '../Settings.module.css';
 
 /*
  * Configuration (spec/settings/ui-surface.md § Configuration) — shown only to
@@ -93,7 +93,7 @@ export const ConfigurationSection = () => {
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       <FieldRow label={t('label.initialise-store-properties-gaps')}>
         <Button
           variant="secondary"
@@ -146,6 +146,6 @@ export const ConfigurationSection = () => {
         onClose={() => setSupplyOpen(false)}
         onSaved={() => void refetch()}
       />
-    </div>
+    </Stack>
   );
 };

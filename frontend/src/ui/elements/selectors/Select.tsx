@@ -3,6 +3,7 @@ import * as KSelect from '@kobalte/core/select';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import { CheckIcon, ChevronDownIcon } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Select.module.css';
 
 export interface SelectOption {
@@ -55,6 +56,12 @@ interface SelectProps {
   class?: string;
   /** `data-testid` for the trigger button (locale-stable test hook, e2e/TESTIDS.md). */
   testId?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the trigger button — for an owner
+   * that focuses this select after an action. The trigger is internal to the
+   * Kobalte composition, so a plain `ref` can't reach it.
+   */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -131,6 +138,10 @@ export const Select = (props: SelectProps) => {
         </KSelect.Label>
       </Show>
       <KSelect.Trigger
+        // Always a real callback: Kobalte forwards `ref` into its own
+        // polymorphic element props, where a bare `undefined` is not the same
+        // as an absent ref.
+        ref={(el: HTMLButtonElement) => props.focusTarget?.ref(el)}
         class={styles.trigger}
         data-testid={props.testId}
         aria-label={props.hideLabel ? props.label : undefined}

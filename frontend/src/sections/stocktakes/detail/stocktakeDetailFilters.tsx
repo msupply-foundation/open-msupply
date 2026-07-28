@@ -1,9 +1,9 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 import {
   constructFilters,
   type Filter,
-} from '../../../ui/elements/selectors/FilterBar';
-import { LocationSelect, type Location } from '../../../domain/location';
+} from '@/ui/elements/selectors/FilterBar';
+import { LocationSelect, type Location } from '@/domain/location';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
