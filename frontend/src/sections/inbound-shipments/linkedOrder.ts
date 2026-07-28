@@ -1,8 +1,9 @@
 // The linked-order link shown in the list (spec S1 column 4) and the detail
 // side panel's Related documents (spec S3): a purchase order links as `PO-<n>`
 // (secondary tone), an internal order (requisition) as `IO-<n>` (primary
-// tone), toned by kind — the look lives in linkedOrder.module.css, keyed off
-// `data-kind`. Numbers are zero-padded to at least three digits (e.g. PO-011,
+// tone), toned by kind — the look lives in the shared RecordLink component
+// (ui/elements/typography/RecordLink), keyed off `data-kind`. Numbers are
+// zero-padded to at least three digits (e.g. PO-011,
 // IO-095). Undefined when linked to neither.
 type LinkedOrderSource = {
   purchaseOrder?: { id: string; number: number } | null;

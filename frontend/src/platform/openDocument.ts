@@ -16,6 +16,10 @@ import { t } from '../intl';
 // - saveBlob(blob, fileName): keep a file the app already holds. Web: a plain
 //   browser download. Android: the OS save-location picker (SAF, via our own
 //   SaveFile shell plugin) — the user picks Downloads/Drive/SD card.
+// - printBlob(blob, fileName): print an HTML document the app already holds.
+//   Web: a hidden iframe and the system print dialog. Android: the WebView has
+//   no window.print, so the HTML goes to the OS print service (PrintManager,
+//   via our own Print shell plugin).
 //
 // All per spec/android/behaviours.md § Files out of the app. Never throws —
 // the same discriminated result shape as domain/syncFiles.
@@ -179,6 +183,82 @@ export const saveBlob = async (
       mimeType: mimeOf(blob.type || null),
     });
     return { ok: true, saved };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+};
+
+// The web print path: a hidden iframe carrying the HTML via srcdoc, print()
+// called once it loads, and the iframe torn down after printing (afterprint,
+// with a generous timeout fallback for browsers that never fire it). The frame
+// lives on document.body, outside the Solid tree, so it survives the caller's
+// dialog closing behind the print dialog.
+const printViaHiddenFrame = (html: string): void => {
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.srcdoc = html;
+
+  let cleanedUp = false;
+  const cleanup = (): void => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    iframe.remove();
+  };
+
+  iframe.onload = () => {
+    const frameWindow = iframe.contentWindow;
+    if (!frameWindow) {
+      cleanup();
+      return;
+    }
+    frameWindow.addEventListener('afterprint', cleanup);
+    // Fallback: some browsers never fire afterprint (or the user dismisses the
+    // dialog without it). Tear the frame down after a generous delay regardless.
+    window.setTimeout(cleanup, 60_000);
+    frameWindow.focus();
+    frameWindow.print();
+  };
+
+  document.body.appendChild(iframe);
+};
+
+// Our own custom Capacitor plugin (android/.../PrintPlugin.java, registered in
+// MainActivity), the print counterpart to SaveFilePlugin: hands HTML to
+// Android's PrintManager. The server can't render PDFs on a tablet — it drives
+// headless Chrome, and there is no Chrome executable to launch — so printing on
+// Android MUST go through the OS rather than a generated PDF (spec/reports
+// § Printing and exporting).
+type PrintPlugin = {
+  printHtml(options: { html: string; jobName: string }): Promise<void>;
+};
+let printPlugin: PrintPlugin | undefined;
+
+export const printBlob = async (
+  blob: Blob,
+  fileName: string
+): Promise<OpenDocumentResult> => {
+  try {
+    const html = await blob.text();
+    if (!isAndroid()) {
+      // Resolves as soon as the dialog is handed over: what the user does with
+      // it (print, save as PDF, cancel) is between them and the browser.
+      printViaHiddenFrame(html);
+      return { ok: true };
+    }
+    if (!printPlugin) {
+      const { registerPlugin } = await import('@capacitor/core');
+      printPlugin = registerPlugin<PrintPlugin>('Print');
+    }
+    await printPlugin.printHtml({
+      html,
+      jobName: sanitizeFileName(fileName),
+    });
+    return { ok: true };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }

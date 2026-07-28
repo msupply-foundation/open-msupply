@@ -4,6 +4,7 @@ import {
   createPaginatedSearch,
   type Page,
 } from '../../utils/createPaginatedSearch';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 
 export interface AsyncComboboxProps<T> {
   label: string;
@@ -51,15 +52,37 @@ export interface AsyncComboboxProps<T> {
   helperText?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
+  /** Control size, forwarded to the Combobox — `small` for a header field
+   * cluster's compact row (see ui/layout/Header/HeaderToolbar). */
+  size?: 'default' | 'small';
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
   /**
-   * Status text shown when the settled option list is empty — a domain hint
-   * (e.g. the patient picker's "Start typing to search"). Passed through to the
-   * Combobox; defaults there to "No matching items".
+   * A `createFocusTarget()` handle bound to the text input — for an owner that
+   * focuses this picker after an action. Passed through to the Combobox.
+   */
+  focusTarget?: FocusTarget;
+  /**
+   * Status text shown when a settled search matched nothing — a domain
+   * message (e.g. the patient picker's "No matching patients"). Passed through
+   * to the Combobox; defaults there to "No matching items".
    */
   noResultsMessage?: string;
+  /**
+   * Status text shown while nothing has been typed — the type-to-search
+   * prompt of a picker whose `fetchPage` returns nothing for the empty query.
+   * Passed through to the Combobox, where it defaults to `noResultsMessage`.
+   */
+  emptyQueryMessage?: string;
+  /**
+   * An action row pinned under the options (e.g. the patient picker's "Create
+   * patient" entry). Handed the typed text as an ACCESSOR, not a value —
+   * server-mode callers usually show theirs only once a search has been made,
+   * and gating inside the slot (a `<Show>`) keeps the row itself stable
+   * instead of rebuilding it on every keystroke.
+   */
+  listboxFooter?: (query: () => string) => JSX.Element;
 }
 
 /*
@@ -136,13 +159,14 @@ export const AsyncCombobox = <T,>(
   // "changing the patient" — typing a new patient's name kept showing the
   // CURRENTLY-selected one as the first, always-clickable option).
   //
-  // The seed is a LABEL-ONLY fallback (callers like ItemSearch fill its
-  // non-label fields — e.g. totalUnits — with placeholder zeros, since the
-  // real values aren't known until the item's own page is fetched). So once
-  // `base()` has fetched a real row for this key, that row must WIN over the
-  // seed rather than being replaced by it — otherwise the stub's placeholder
-  // fields (e.g. "0 Units") permanently shadow the real, freshly-fetched data
-  // for as long as the item stays the controlled selection (#549).
+  // The seed CAN be a label-only fallback: some callers fill its non-label
+  // fields — e.g. availableUnits — with placeholder zeros when the real values
+  // aren't known until the item's own page is fetched (others pass a fully
+  // populated seed — e.g. ItemSearch reseeds the option the user just picked). So
+  // once `base()` has fetched a real row for this key, that row must WIN over the
+  // seed rather than being replaced by it — otherwise a stub's placeholder fields
+  // (e.g. "0 Units") permanently shadow the real, freshly-fetched data for as
+  // long as the item stays the controlled selection (#549).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
@@ -180,9 +204,13 @@ export const AsyncCombobox = <T,>(
       error={props.error}
       helperText={props.helperText}
       clearable={props.clearable}
+      size={props.size}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
+      focusTarget={props.focusTarget}
       noResultsMessage={props.noResultsMessage}
+      emptyQueryMessage={props.emptyQueryMessage}
+      listboxFooter={props.listboxFooter?.(query)}
       items={items()}
       loading={loading()}
       loadingMore={search.loadingMore()}

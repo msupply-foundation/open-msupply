@@ -13,11 +13,11 @@ export interface StackProps extends JSX.HTMLAttributes<HTMLDivElement> {
 /*
  * Stack — a vertical run of sibling blocks with a consistent gap (a detail
  * form's identity header / alert / form columns; a modal's lookup-row pair).
- * VERTICAL ONLY, by design: horizontal grouping always has a more semantic
+ * VERTICAL ONLY, by design: horizontal grouping usually has a more semantic
  * owner that also encodes its wrap behaviour — FormRow, Columns, FormColumns,
- * HeaderButtons, ContentFooterActions, CardGrid — so reach for those. If a
- * genuinely generic horizontal need recurs, revisit (direction prop vs HStack)
- * rather than pre-building it. Pure layout, hand-rolled CSS + tokens.
+ * HeaderButtons, ContentFooterActions, CardGrid — so reach for those first;
+ * the generic horizontal counterpart, when none of those fit, is HStack (a
+ * sibling in this folder). Pure layout, hand-rolled CSS + tokens.
  */
 export const Stack = (props: StackProps) => {
   const [local, rest] = splitProps(props, ['gap', 'class', 'children']);

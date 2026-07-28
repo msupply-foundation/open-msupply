@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { t } from '../../../intl';
 import type {
   UpsertItemVariantResult,
@@ -57,21 +58,21 @@ export const emptyForm = (): DraftItemVariant => ({
   vvmType: '',
   packaging: [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: t('label.primary'),
       packagingLevel: 1,
       packSize: undefined,
       volumePerUnit: undefined,
     },
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: t('label.secondary'),
       packagingLevel: 2,
       packSize: undefined,
       volumePerUnit: undefined,
     },
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: t('label.tertiary'),
       packagingLevel: 3,
       packSize: undefined,

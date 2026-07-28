@@ -1,3 +1,4 @@
+import { generateUUID } from '../uuid';
 import { createSignal, Show, type Component, type JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../intl';
@@ -215,7 +216,7 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
 });
 
 const emptyBatch = (packSize: number): DraftBatch => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   isNew: true,
   deleted: false,
   batch: '',
@@ -358,7 +359,7 @@ const Body: Component<LineEditModalProps> = props => {
   const addBatch = () =>
     setBatches(produce(d => d.push(emptyBatch(packSizeSeed()))));
   const duplicateBatch = (id: string) => {
-    const newId = crypto.randomUUID();
+    const newId = generateUUID();
     setBatches(
       produce(d => {
         const index = d.findIndex(b => b.id === id);

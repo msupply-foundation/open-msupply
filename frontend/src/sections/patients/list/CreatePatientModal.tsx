@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import {
   createEffect,
   createMemo,
@@ -134,7 +135,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   createEffect(() => {
     if (props.open) {
       setStep(1);
-      setPatientId(crypto.randomUUID());
+      setPatientId(generateUUID());
       setSearch(emptySearch());
       setDraft(emptyDraft());
       setLocalMatches([]);

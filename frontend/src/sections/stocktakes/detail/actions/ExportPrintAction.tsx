@@ -1,8 +1,8 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { PrinterIcon } from '../../../../ui/icons';
-import { SelectReportModal, type ReportSort } from '../../../../domain/reports';
+import { t } from '@/intl';
+import { Button } from '@/ui/elements/buttons/Button';
+import { PrinterIcon } from '@/ui/icons';
+import { SelectReportModal, type ReportSort } from '@/domain/reports';
 
 // The stocktake detail-view Export/Print action (spec/stocktakes S3 →
 // spec/reports S4): the header trigger button, plus the shared "Select a form"

@@ -32,7 +32,21 @@ if [ -z "${JAVA_HOME:-}" ] && ! java -version >/dev/null 2>&1; then
   done
 fi
 
+# gradle finds the Android SDK via ANDROID_HOME (or a gitignored
+# android/local.properties sdk.dir), erroring "SDK location not found" if
+# neither is set. Export the same default path the standard macOS install uses.
+export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+if [ ! -d "$ANDROID_HOME" ]; then
+  echo "Android SDK not found at ANDROID_HOME=$ANDROID_HOME." >&2
+  echo "Install it (Android Studio → SDK Manager) or set ANDROID_HOME to your SDK path." >&2
+  exit 1
+fi
+
 pnpm build
+# cap sync writes capacitor.config.json / capacitor.plugins.json here but does
+# not create the dir; ensure it exists (empty on a fresh checkout — all of
+# assets/ is gitignored bar a tracked .gitkeep).
+mkdir -p android/app/src/main/assets
 pnpm exec cap sync android
 (cd android && ./gradlew assembleDebug)
 echo "APK: android/app/build/outputs/apk/debug/app-debug.apk"
