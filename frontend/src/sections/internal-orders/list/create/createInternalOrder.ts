@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
 import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
@@ -33,7 +34,7 @@ export const createGeneralOrder = async (
   const result = await graphqlFetch(InsertInternalOrder, {
     storeId,
     input: {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       otherPartyId: supplierId,
       minMonthsOfStock: GENERAL_MIN_MONTHS_OF_STOCK,
       maxMonthsOfStock: GENERAL_MAX_MONTHS_OF_STOCK,
@@ -68,7 +69,7 @@ export const createProgramOrder = async (
     {
       storeId,
       input: {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         otherPartyId: supplierId,
         programOrderTypeId,
         periodId,

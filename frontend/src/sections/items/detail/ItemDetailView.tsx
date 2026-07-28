@@ -137,7 +137,6 @@ const ItemDetailView: Component = () => {
               open
               title={t('error.item-not-found')}
               message={t('messages.click-to-return-to-item-list')}
-              confirmLabel={t('button.ok')}
               onConfirm={backToList}
               onClose={backToList}
             />

@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import type {
   GenerateCustomerReturnLinesResult,
   UpdateCustomerReturnLinesVariables,
@@ -99,7 +100,7 @@ export const toLineInputs = (drafts: DraftReturnLine[]): ReturnLineInput[] =>
 // A blank draft row for "Add batch" (per-item mode) — quantity zero (won't
 // persist unless filled in), pack size 1 (the minimum valid).
 export const blankDraft = (item: GeneratedLine['item']): DraftReturnLine => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   existing: false,
   batch: null,
   expiryDate: null,

@@ -1,4 +1,4 @@
-import { type JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import styles from './FieldRow.module.css';
 
 export interface FieldRowProps {
@@ -16,6 +16,12 @@ export interface FieldRowProps {
    * lone row with no siblings to align to (e.g. a card header field).
    */
   labelWidth?: 'fixed' | 'auto';
+  /**
+   * Marks the field required — the asterisk goes on THIS row's label, since the
+   * wrapped control hides its own (see the note below). Indication only: the
+   * gating stays with the form's own confirm rule.
+   */
+  required?: boolean;
   class?: string;
 }
 
@@ -35,7 +41,14 @@ export const FieldRow = (props: FieldRowProps): JSX.Element => (
     class={props.class ? `${styles.row} ${props.class}` : styles.row}
     data-label-width={props.labelWidth ?? 'fixed'}
   >
-    <span class={styles.label}>{props.label}</span>
+    <span class={styles.label}>
+      {props.label}
+      <Show when={props.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </span>
     <div class={styles.control}>{props.children}</div>
   </div>
 );

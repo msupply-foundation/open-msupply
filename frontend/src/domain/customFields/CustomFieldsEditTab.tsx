@@ -145,7 +145,6 @@ export const CustomFieldsEditTab = (props: {
           title={t('heading.are-you-sure')}
           message={t('messages.discard-changes')}
           confirmLabel={t('button.discard')}
-          cancelLabel={t('button.cancel')}
           onConfirm={leaveGuard.confirm}
           onClose={leaveGuard.cancel}
         />

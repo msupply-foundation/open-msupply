@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type JSX } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
@@ -40,7 +41,7 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
       {
         storeId: params.storeId,
         // The id is client-generated so the create can navigate (AC-C1).
-        input: { id: crypto.randomUUID(), otherPartyId: customer.id },
+        input: { id: generateUUID(), otherPartyId: customer.id },
       },
       { returnGraphqlErrors: true }
     );

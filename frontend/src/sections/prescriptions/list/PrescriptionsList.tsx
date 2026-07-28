@@ -335,7 +335,7 @@ const PrescriptionsList: Component = () => {
         emptyMessage={t('error.no-prescriptions')}
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             onClick={() => setCreateOpen(true)}
           >

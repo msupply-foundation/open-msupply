@@ -23,6 +23,7 @@ import { stocktakesRoutes } from './sections/stocktakes';
 import { customersRoutes, suppliersRoutes } from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
+import { supplierReturnsRoutes } from './sections/supplier-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
@@ -58,6 +59,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'replenishment/suppliers': suppliersRoutes,
   'inventory/locations': locationsRoutes,
   'distribution/customer-return': customerReturnsRoutes,
+  'replenishment/supplier-return': supplierReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'replenishment/internal-order': internalOrdersRoutes,
@@ -164,14 +166,14 @@ export const App: Component = () => {
                     {dest => (
                       <Route
                         path={`/${dest.path}`}
-                        component={() => <EntryPage labelKey={dest.labelKey} />}
+                        component={() => <EntryPage dest={dest} />}
                       />
                     )}
                   </For>
-                  <Route
-                    path="*"
-                    component={() => <EntryPage labelKey="heading.not-found" />}
-                  />
+                  {/* Catch-all inside the shell: an unknown in-store path is
+                      the not-found page (no destination), which keeps the app
+                      bar — and so the menu — reachable. */}
+                  <Route path="*" component={() => <EntryPage />} />
                 </Route>
               </Route>
               <Route

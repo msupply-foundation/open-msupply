@@ -5,6 +5,8 @@ import {
   For,
   Match,
   on,
+  onCleanup,
+  onMount,
   Show,
   Switch,
 } from 'solid-js';
@@ -18,12 +20,14 @@ import {
   type ColumnOrderState,
   type ColumnPinningState,
   type ColumnSizingState,
+  type HeaderContext,
   type RowSelectionState,
   type SortingState,
   type Updater,
   type VisibilityState,
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
+import { hiddenEdges } from './scrollEdges';
 import {
   toColumnDef,
   type CardGroup,
@@ -60,7 +64,7 @@ import { ContentFooterActions } from '../../layout/ContentFooter/ContentFooterAc
 import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
-import { t } from '../../../intl';
+import { isRtl, t } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
@@ -196,10 +200,28 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   showFullScreen?: boolean;
 
+  /**
+   * Minimum height, in rem, for the table (its `.root`). Without it the table's
+   * `min-block-size` is 0 — correct for a fill-the-page list, but in a flex
+   * column that can be squeezed (a table inside a modal body), a short viewport
+   * collapses the table toward nothing. Set this so the table keeps at least
+   * this height and its scrolling ancestor (the dialog body) scrolls instead of
+   * the table vanishing. Opt-in: unset keeps the min-block-size:0 default.
+   */
+  minBodyRem?: number;
+
   // --- Row selection, owned by the page. ---
   enableSelection?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  /**
+   * Render the selection column but with every checkbox DISABLED (the
+   * select-all and every row). The column stays visible so the affordance
+   * reads as present-but-blocked rather than absent — used where selection is
+   * structurally unavailable (e.g. a program internal order whose line set is
+   * fixed), not merely empty. No row can be toggled while set.
+   */
+  selectionDisabled?: boolean;
   /**
    * The page's bulk actions for the selection action bar (gated buttons —
    * Delete, Duplicate, …). While rows are selected, the table's footer swaps
@@ -360,8 +382,18 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table view) and only when the page wired onSort + has sortable columns.
   const sortableColumns = () =>
     props.columns.filter(c => c.sortKey !== undefined);
-  const columnLabel = (c: Column<T, K, G>): string =>
-    typeof c.header === 'string' ? c.header : (c.sortKey ?? '');
+  // A column's header text, for a sort-option label. Our `header` is always a
+  // FUNCTION (columnTypes.ts narrows it that way so the text re-resolves on a
+  // locale change), so it must be CALLED — the old `typeof header === 'string'`
+  // test never matched and every option fell back to the raw sortKey
+  // ("itemCode", "costPricePerPack"). Same treatment as HeaderCell (flexRender),
+  // CardView.columnHeaderText and ColumnSettings.label; none of our headers read
+  // the context argument, so an empty one is safe. The sortKey stays the last
+  // resort for a column with no header at all.
+  const columnLabel = (c: Column<T, K, G>): JSX.Element =>
+    typeof c.header === 'function'
+      ? c.header({} as HeaderContext<T, unknown>)
+      : (c.header ?? c.sortKey ?? '');
   const activeSortColumn = (): Column<T, K, G> | undefined =>
     props.sort
       ? sortableColumns().find(c => c.sortKey === props.sort!.key)
@@ -546,24 +578,81 @@ export function DataTable<T, K extends string, G extends string = never>(
   // (.td[data-pinned] vs .th[data-pinned]), so the SAME style is safe on a
   // header or a body cell without an inline z-index overriding the CSS layer.
   //
-  // The edge offset is TanStack's own getStart('left') / getAfter('right') —
-  // the summed widths of the pinned columns before (left) / after (right) THIS
-  // one, on that side. Both index the column by its id (not object identity),
-  // so a cell-context column resolves correctly against the table's column list
-  // — the earlier indexOf(column) matched by reference and missed, summing the
-  // column's own width so a single right-pinned column floated one column-width
-  // off the edge. Left offsets add leadingWidth() for the (also-pinned) leading
-  // select/expander columns.
+  // The rendered sticky offset of each pinned column, keyed by column id: how
+  // far its frozen edge sits from the box's inline-start (left-pinned) or
+  // inline-end (right-pinned). Measured off the header row — see pinnedStyle
+  // for why TanStack's own numbers can't be used.
+  const [pinnedOffsets, setPinnedOffsets] = createSignal<
+    Record<string, number>
+  >({});
+  let scrollBox: HTMLDivElement | undefined;
+
+  // Walk the header row from each end, accumulating RENDERED widths for as long
+  // as the cells are pinned to that side (a frozen block is always a prefix or
+  // suffix of the row). The leading select cell is the first cell measured, so
+  // left offsets include it without a special case.
+  const measurePinnedOffsets = () => {
+    const headerRow = scrollBox?.querySelector('thead tr');
+    if (!headerRow) return; // card view / pre-mount: keep the last measurement
+    const cells = [...headerRow.children] as HTMLElement[];
+    const next: Record<string, number> = {};
+
+    let fromStart = 0;
+    for (const cell of cells) {
+      if (cell.dataset.pinned !== 'left') break;
+      if (cell.dataset.columnId) next[cell.dataset.columnId] = fromStart;
+      fromStart += cell.getBoundingClientRect().width;
+    }
+
+    let fromEnd = 0;
+    for (const cell of [...cells].reverse()) {
+      if (cell.dataset.pinned !== 'right') break;
+      if (cell.dataset.columnId) next[cell.dataset.columnId] = fromEnd;
+      fromEnd += cell.getBoundingClientRect().width;
+    }
+
+    // Only publish real changes: re-rendering identical offsets would churn
+    // every pinned cell's style on each resize tick.
+    setPinnedOffsets(current => {
+      const keys = Object.keys(next);
+      const same =
+        keys.length === Object.keys(current).length &&
+        keys.every(id => current[id] === next[id]);
+      return same ? current : next;
+    });
+  };
+
+  // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
+  // TanStack can offer — getStart('left') / getAfter('right') — sum the
+  // CONFIGURED sizes, and under our auto table layout a column's `size` is only
+  // a min-width FLOOR: columns flex past it to fill the table. Summing floors
+  // puts a second pinned column short of where the first one actually ends, so
+  // it slides over its neighbour as you scroll and only freezes once it reaches
+  // the too-small offset (a 64px-configured column rendering 90px overlapped by
+  // 26px). Only columns that flex are affected, which is why it looked
+  // intermittent. Pre-existing; reported by Carl 2026-07-28.
+  //
+  // Those getters remain the FALLBACK for the first paint, before there's a
+  // header row to measure — the effect below corrects it in the same frame.
+  // Both index by column id (not object identity), so a cell-context column
+  // resolves against the table's column list; the earlier indexOf(column)
+  // matched by reference and missed, summing the column's own width so a single
+  // right-pinned column floated one column-width off the edge. The left
+  // fallback adds leadingWidth() for the (also-pinned) leading select column;
+  // measured left offsets already include it, since the select cell is the
+  // first cell measured.
   const pinnedStyle = (column: TanColumn<T>): JSX.CSSProperties | undefined => {
     const side = column.getIsPinned();
     if (!side) return undefined;
+    const measured = pinnedOffsets()[column.id];
     if (side === 'left') {
-      return {
-        position: 'sticky',
-        left: `${leadingWidth() + column.getStart('left')}px`,
-      };
+      const left = measured ?? leadingWidth() + column.getStart('left');
+      return { position: 'sticky', left: `${left}px` };
     }
-    return { position: 'sticky', right: `${column.getAfter('right')}px` };
+    return {
+      position: 'sticky',
+      right: `${measured ?? column.getAfter('right')}px`,
+    };
   };
 
   // The leading selection column is pinned-left too (offset 0) so it stays
@@ -579,6 +668,107 @@ export function DataTable<T, K extends string, G extends string = never>(
   // visible below it. Only the standalone fallback (no shell, e.g. showcase)
   // needs the table's own fixed overlay.
   const overlay = () => fullScreen() && !shellFullScreen;
+
+  // Is content hidden past the scroll box's left / right edge? Stamped on the
+  // box as data-hidden-left / data-hidden-right, which is what reveals each
+  // frozen block's shadow: a frozen column only casts one while content is
+  // actually passing UNDER it (#617 — the always-on version read as a hard
+  // band; see DataTable.module.css). Deliberately not "the table overflows":
+  // an unscrolled table has clear air beside its leading column even though it
+  // overflows to the right.
+  //
+  // Both edges are PHYSICAL (the leading column pins physical-left in either
+  // direction), which takes reconciling the two scrollLeft conventions —
+  // hiddenEdges owns that arithmetic and is unit-tested in scrollEdges.test.ts.
+  //
+  // Setting the same boolean is a no-op in Solid, so a scroll costs two
+  // comparisons and re-renders nothing until an edge state actually flips.
+  const [hiddenLeft, setHiddenLeft] = createSignal(false);
+  const [hiddenRight, setHiddenRight] = createSignal(false);
+
+  const syncHiddenEdges = () => {
+    if (!scrollBox) return;
+    const { left, right } = hiddenEdges(scrollBox, isRtl());
+    setHiddenLeft(left);
+    setHiddenRight(right);
+  };
+
+  // Both the hidden edges and the pinned offsets are layout facts, so they're
+  // re-read together whenever layout could have moved.
+  const remeasure = () => {
+    syncHiddenEdges();
+    measurePinnedOffsets();
+  };
+
+  // Scrolling isn't the only thing that moves these — hiding a column, dragging
+  // a resize handle, changing density or page size, or resizing the window all
+  // change widths with no scroll event. Observing the box AND the table covers
+  // both (the box for viewport-driven changes, the table for content-driven
+  // ones). Publishing only real changes (see measurePinnedOffsets) keeps this
+  // from feeding itself: the styles it writes are offsets, which move nothing.
+  onMount(() => {
+    if (!scrollBox) return;
+    const observer = new ResizeObserver(remeasure);
+    observer.observe(scrollBox);
+    const table = scrollBox.querySelector('table');
+    if (table) observer.observe(table);
+    remeasure();
+    onCleanup(() => observer.disconnect());
+  });
+
+  // Column state can redistribute widths WITHOUT resizing the table (it's
+  // width: 100% of the box), which the observer above would never see — so
+  // re-measure on the state that reshuffles columns. A locale flip is in here
+  // too: it swaps the scrollLeft convention with nothing scrolling or resizing.
+  // Solid runs effects after the DOM is patched, and getBoundingClientRect
+  // forces the pending layout, so this reads post-change widths.
+  createEffect(() => {
+    const state = table.getState();
+    void state.columnPinning;
+    void state.columnVisibility;
+    void state.columnOrder;
+    void state.columnSizing;
+    void viewMode();
+    void viewDensity();
+    void isRtl();
+    remeasure();
+  });
+
+  // Which cells sit on a frozen BLOCK's outer edge — the boundary the scrolling
+  // content actually passes: the LAST left-pinned column and the FIRST
+  // right-pinned one. That edge carries the freeze cue (a 1px seam at rest, the
+  // shadow once content is under it); columns inside the block carry neither, or
+  // the block would read as several separate frozen strips.
+  //
+  // Read from the per-side lists, NOT from getVisibleLeafColumns(): the two are
+  // ordered differently, and only the per-side ones match the DOM. Header groups
+  // are built [...left, ...center, ...right] with each pinned block in its
+  // columnPinning array order, while getVisibleLeafColumns() follows
+  // columnOrder. Reordering two pinned columns rewrites columnOrder alone, so
+  // the two disagree and the cue stayed on the column that WAS outermost
+  // (Carl 2026-07-28). Filtered by showInTableView for the same reason we don't
+  // use TanStack's getIsLastColumn('left'): a column that isn't rendered can't
+  // carry the cue.
+  const framedPinned = (side: 'left' | 'right') =>
+    (side === 'left'
+      ? table.getLeftVisibleLeafColumns()
+      : table.getRightVisibleLeafColumns()
+    ).filter(column => showInTableView(column.columnDef));
+  // Outermost = furthest from the scrolling content: the LAST left-pinned
+  // column, the FIRST right-pinned one.
+  const lastLeftPinnedId = () => framedPinned('left').at(-1)?.id;
+  const firstRightPinnedId = () => framedPinned('right')[0]?.id;
+
+  const frozenEdge = (column: TanColumn<T>): 'left' | 'right' | undefined => {
+    if (column.id === lastLeftPinnedId()) return 'left';
+    if (column.id === firstRightPinnedId()) return 'right';
+    return undefined;
+  };
+
+  // With no data column pinned left, the leading selection column IS the left
+  // block, so the cue falls on it (the CSS withholds only its 1px seam — #617
+  // wants no line beside the checkbox, shadow or not).
+  const leadingIsFrozenEdge = () => lastLeftPinnedId() === undefined;
 
   // Per-facet applicability for the Settings popover's resets (issue #572): each
   // reset is enabled only when that facet actually differs from the default,
@@ -607,6 +797,11 @@ export function DataTable<T, K extends string, G extends string = never>(
     <div
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
+      style={
+        props.minBodyRem != null
+          ? { 'min-block-size': `${props.minBodyRem}rem` }
+          : undefined
+      }
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
@@ -782,8 +977,12 @@ export function DataTable<T, K extends string, G extends string = never>(
       <div class={styles.tableArea}>
         <div
           class={styles.tableScroll}
+          ref={scrollBox}
           data-view={viewMode()}
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
+          data-hidden-left={hiddenLeft() ? '' : undefined}
+          data-hidden-right={hiddenRight() ? '' : undefined}
+          onScroll={syncHiddenEdges}
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
               table (each card is a full-width <tr>), so columns/scroll/selection
@@ -801,6 +1000,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                         <th
                           class={`${styles.th} ${styles.selectCell}`}
                           data-pinned="left"
+                          data-frozen-edge={
+                            leadingIsFrozenEdge() ? 'left' : undefined
+                          }
                           style={leadingPinnedStyle(0)}
                         >
                           {/* Partial selection (some rows on this page, not
@@ -816,6 +1018,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
+                            disabled={props.selectionDisabled}
                             checked={table.getIsAllRowsSelected()}
                             indeterminate={table.getIsSomeRowsSelected()}
                             onChange={e => {
@@ -841,6 +1044,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             <HeaderCell
                               header={header}
                               pinnedStyle={pinnedStyle}
+                              frozenEdge={frozenEdge}
                             />
                           </Show>
                         )}
@@ -862,6 +1066,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       table={table}
                       cardGroups={props.cardGroups}
                       enableSelection={props.enableSelection ?? false}
+                      selectionDisabled={props.selectionDisabled ?? false}
                       onRowClick={props.onRowClick}
                     />
                   </Match>
@@ -871,11 +1076,14 @@ export function DataTable<T, K extends string, G extends string = never>(
                         <TableRow
                           row={row}
                           enableSelection={props.enableSelection ?? false}
+                          selectionDisabled={props.selectionDisabled ?? false}
                           onRowClick={props.onRowClick}
                           rowState={props.rowState}
                           rowTone={props.rowTone}
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}
+                          frozenEdge={frozenEdge}
+                          leadingIsFrozenEdge={leadingIsFrozenEdge()}
                           cellVisible={cell =>
                             showInTableView(cell.column.columnDef)
                           }

@@ -33,6 +33,42 @@ export const userDisplayName = (): string => {
   return fullName || u.username;
 };
 
+// The id of the currently authenticated user — the user's identity, which is
+// an AUTH property (the me/login response), not a store-context one. Reactive
+// and module-level so global caches keyed by user (the user layer of table
+// config, kdd/table-state) can depend on it without a component, and available
+// as soon as login lands — before any store is entered. Undefined when no user
+// is loaded (logged out / between sessions).
+export const currentUserId = (): string | undefined => user()?.userId;
+
+// Spec (The re-login requirement outlives a reload, D69): the re-login
+// requirement is a property of the tab's session, not of the current page's
+// in-memory state — the browser may still hold a valid session cookie, so a
+// reloaded me check can succeed and would otherwise silently re-admit the user,
+// letting a reload bypass the re-login just demanded. We mirror the requirement
+// into sessionStorage (per-tab, cleared when the tab closes) so it survives a
+// reload; checkAuth re-arms the signal from it after startup re-establishes the
+// user. Cross-tab sharing is deliberately NOT done here (deferred — issue #646).
+// Access is guarded: sessionStorage is absent in the node test environment and
+// can throw (private-mode / disabled storage), and its loss only weakens the
+// reload guard — never break auth over it.
+const RELOGIN_STORAGE_KEY = 'oms.reLoginRequired';
+const persistReLoginRequired = (required: boolean): void => {
+  try {
+    if (required) sessionStorage.setItem(RELOGIN_STORAGE_KEY, '1');
+    else sessionStorage.removeItem(RELOGIN_STORAGE_KEY);
+  } catch {
+    // No sessionStorage (or access denied): reload-persistence is best-effort.
+  }
+};
+const reLoginRequiredWasPersisted = (): boolean => {
+  try {
+    return sessionStorage.getItem(RELOGIN_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 // The store code for a store id, from the logged-in user's store list — the
 // list StoreGuardLayout itself resolves stores from, so any routed storeId is
 // present. Used by the shared list-export filenames
@@ -53,6 +89,7 @@ const [unauthenticated, setUnauthenticated] = createSignal(false);
 export { unauthenticated };
 export const reportUnauthenticated = (): void => {
   setUnauthenticated(true);
+  persistReLoginRequired(true);
 };
 export const clearUnauthenticated = (): void => {
   setUnauthenticated(false);
@@ -79,6 +116,12 @@ export const checkAuth = async (): Promise<boolean> => {
   const result = await graphqlFetch(Me, {});
   if (result.kind === 'success') {
     setUser(result.data.me);
+    // Spec (The re-login requirement outlives a reload, D69): a reload re-runs
+    // this check and, on a still-valid session cookie, succeeds — which would
+    // silently re-admit a user who owed a re-login. Re-arm the requirement from
+    // its persisted mirror so the modal returns instead of being bypassed. Only
+    // a successful login (or explicit logout) clears the mirror.
+    if (reLoginRequiredWasPersisted()) setUnauthenticated(true);
     return true;
   }
   return result.kind === 'unauthenticated';
@@ -111,6 +154,8 @@ export const login = async (
   setUser(auth.user);
   clearUnauthenticated();
   setInactivityExpired(false);
+  // A successful re-login discharges the persisted requirement (D69).
+  persistReLoginRequired(false);
   return { kind: 'success' };
 };
 
@@ -121,6 +166,8 @@ export const logout = async (): Promise<void> => {
   await graphqlFetch(Logout, {});
   clearUnauthenticated();
   setInactivityExpired(false);
+  // An explicit logout ends the session — nothing is owed on the next load (D69).
+  persistReLoginRequired(false);
   refetchStoreContext(undefined);
   setUser(undefined);
 };
@@ -153,6 +200,8 @@ export const startActivityTracking = (): (() => void) => {
       currentUser.inactivityTimeoutSeconds * 1000
     ) {
       setInactivityExpired(true);
+      // Persist so a reload doesn't bypass the inactivity re-login (D69).
+      persistReLoginRequired(true);
       return;
     }
     if (msSinceLastGqlCall() > currentUser.tokenRefreshIntervalSeconds * 1000) {

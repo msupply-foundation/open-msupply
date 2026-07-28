@@ -163,7 +163,15 @@ export const InternalOrderIndicatorsTab: Component<{
                       <tr>
                         <th>{t('label.name')}</th>
                         <For each={entry().cells}>
-                          {cell => <th>{cell.label}</th>}
+                          {cell => (
+                            <th
+                              data-align={
+                                cell.type === 'NUMBER' ? 'right' : undefined
+                              }
+                            >
+                              {cell.label}
+                            </th>
+                          )}
                         </For>
                         <th>{t('label.date')}</th>
                       </tr>
@@ -175,7 +183,15 @@ export const InternalOrderIndicatorsTab: Component<{
                             <td>{row.name}</td>
                             <For each={entry().cells}>
                               {cell => (
-                                <td>{row.values[cell.columnId] ?? ''}</td>
+                                <td
+                                  data-align={
+                                    cell.type === 'NUMBER'
+                                      ? 'right'
+                                      : undefined
+                                  }
+                                >
+                                  {row.values[cell.columnId] ?? ''}
+                                </td>
                               )}
                             </For>
                             <td>
