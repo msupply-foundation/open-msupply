@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
@@ -74,7 +75,7 @@ export const CreatePrescriptionModal: Component<
       {
         storeId: params.storeId,
         input: {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           patientId: chosen.id,
           ...(reference().trim() ? { theirReference: reference().trim() } : {}),
           ...(clinicianId() ? { clinicianId: clinicianId() } : {}),

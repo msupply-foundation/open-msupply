@@ -9,7 +9,7 @@
   text-align: center;
 }
 
-/* The sprout illustration. Sized via font-size (the icon is 1em); ~120px at
+/* The illustration. Sized via font-size (the icon is 1em); ~120px at
    the base root font-size, matching the current app. Stroked in currentColor,
    so it takes the same quiet grey as the "Nothing here" heading below. */
 .graphic {
@@ -26,8 +26,18 @@
   color: var(--gray-light);
 }
 
-/* The body line under the heading; the CTA (children) follows it. */
+/* Message + CTA on ONE line (matching the current app): the body line, then the
+   optional call-to-action button inline after it — wrapping together, centred. */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  max-inline-size: 30rem;
+}
+
+/* The body line. Quiet grey (--gray-main = the current app's gray.main,
+   #8f90a6), not the darker --text-secondary which read almost black. */
 .message {
-  margin: 0;
-  color: var(--text-secondary);
+  color: var(--gray-main);
 }

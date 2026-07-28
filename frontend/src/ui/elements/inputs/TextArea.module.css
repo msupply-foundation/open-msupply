@@ -37,6 +37,12 @@
   color: var(--field-label-color);
 }
 
+/* Small fields drop the label to 13px too — as TextField.module.css, so a
+   small TextArea's label lines up with the small inputs beside it. */
+.field[data-size='small'] .label {
+  font-size: var(--input-font-sm);
+}
+
 /* Visually hidden but present for assistive tech (used with a FieldRow's visible label). */
 .labelHidden {
   position: absolute;
@@ -57,7 +63,15 @@
 
 .textarea {
   width: 100%;
-  padding: var(--space-2) var(--input-padding-x);
+  /* Block padding is DERIVED from the matching input-height token rather than a
+     spacing step, so a one-row TextArea is exactly as tall as a TextField of the
+     same size and an N-row one is N lines on that same rhythm. `1lh` is one line
+     box, so this is "the height token, less one line, halved, less the border".
+     Without it the box is `rows × line-height + a spacing step`, which lands
+     near the token but not on it — a rows=1 small box came out 37.5px against
+     the 36px input, and that 1.5px shows up as a ragged edge when a multi-line
+     field sits in a header field cluster beside single-line ones. */
+  padding: calc((var(--input-height) - 1lh) / 2 - 1px) var(--input-padding-x);
   border: 1px solid var(--input-border);
   border-radius: var(--input-radius);
   background: var(--bg-white);
@@ -70,6 +84,13 @@
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease;
+}
+
+/* Small: the 13px scale, and the block padding re-derived from the SMALL height
+   token so a one-row box matches a small TextField (36px, not 37.5px). */
+.textarea[data-size='small'] {
+  font-size: var(--input-font-sm);
+  padding-block: calc((var(--input-height-sm) - 1lh) / 2 - 1px);
 }
 
 .textarea::placeholder {
@@ -124,7 +145,10 @@
 
 /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
 @media (pointer: coarse) {
-  .textarea {
+  /* Both size variants take the touch font — the iOS zoom threshold is
+     absolute and ignores our size variant (as TextField.module.css). */
+  .textarea,
+  .textarea[data-size='small'] {
     font-size: var(--input-font-touch);
   }
 }

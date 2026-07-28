@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
@@ -112,7 +113,7 @@ export const AncillaryItemEditModal: Component<
       input: buildUpsertInput(
         form(),
         props.principalItemId,
-        editedRow()?.id ?? crypto.randomUUID()
+        editedRow()?.id ?? generateUUID()
       ),
     });
     if (result.kind !== 'success') {

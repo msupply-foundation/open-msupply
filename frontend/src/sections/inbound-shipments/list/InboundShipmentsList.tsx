@@ -1,6 +1,6 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { A, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -58,7 +58,7 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
-import linkStyles from '../linkedOrder.module.css';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -278,7 +278,7 @@ const InboundShipmentsList: Component = () => {
       // Linked order (spec S1 column 4) — when linked, a link to the order
       // prefixed by kind: PO-<number> for a purchase order, IO-<number> for
       // an internal order; blank otherwise. Toned by kind via the shared
-      // linkedOrder.module.css.
+      // RecordLink.
       c: {
         accessor: row => linkedOrderOf(params.storeId, row)?.label ?? '',
         id: 'linkedOrder',
@@ -290,14 +290,13 @@ const InboundShipmentsList: Component = () => {
           <Show when={linked}>
             {l => (
               // Stop the link's clicks opening the row (it navigates itself).
-              <A
+              <RecordLink
                 href={l().href}
-                onClick={e => e.stopPropagation()}
-                class={linkStyles.link}
-                data-kind={l().kind}
+                onClick={(e: MouseEvent) => e.stopPropagation()}
+                kind={l().kind}
               >
                 {l().label}
-              </A>
+              </RecordLink>
             )}
           </Show>
         );
@@ -410,11 +409,11 @@ const InboundShipmentsList: Component = () => {
         emptyMessage={t('error.no-inbound-shipments')}
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             onClick={() => setCreateMode('manual')}
           >
-            {t('button.new-shipment')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection

@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -175,7 +176,7 @@ const Body = (props: BodyProps): JSX.Element => {
     setSaving(true);
     setMessage(undefined);
     const result = await createReturnFromShipment(props.storeId, {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       customerId: props.customerId,
       outboundShipmentId: props.outboundShipmentId,
       theirReference: reference(),
@@ -312,6 +313,7 @@ const Body = (props: BodyProps): JSX.Element => {
             rowKey={line => line.id}
             loading={loadingLines()}
             showFullScreen={false}
+            minBodyRem={20}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}
             emptyMessage={t('error.no-customer-return-items')}
@@ -323,6 +325,7 @@ const Body = (props: BodyProps): JSX.Element => {
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}
+          minBodyRem={20}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
           emptyMessage={t('error.no-customer-return-items')}

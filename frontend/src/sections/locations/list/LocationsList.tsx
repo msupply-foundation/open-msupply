@@ -265,11 +265,11 @@ const LocationsList: Component = () => {
         // The empty state offers New location (ui-surface S1 § layout).
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             onClick={() => setEditor({ mode: 'create' })}
           >
-            {t('label.new-location')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection

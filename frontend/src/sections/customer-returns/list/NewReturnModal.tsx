@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
@@ -42,7 +43,7 @@ const Body: Component<{ onClose: () => void }> = props => {
     const result = await graphqlFetch(InsertCustomerReturn, {
       storeId: params.storeId,
       input: {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         customerId,
         customerReturnLines: [],
       },

@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
@@ -83,11 +84,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
 
     const result = await graphqlFetch(UpsertBundledItem, {
       storeId: props.storeId,
-      input: buildUpsertInput(
-        form(),
-        props.principalVariantId,
-        crypto.randomUUID()
-      ),
+      input: buildUpsertInput(form(), props.principalVariantId, generateUUID()),
     });
     if (result.kind !== 'success') {
       // Transport/unexpected/forbidden → the global modal already surfaced

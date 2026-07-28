@@ -31,39 +31,8 @@
   text-align: center;
 }
 
-/* "More information" disclosure inside the error banner. */
-.moreInfo {
-  margin-block-start: var(--space-2);
-  font-size: var(--text-sm);
-}
-
-.moreInfo summary {
-  cursor: pointer;
-  color: var(--text-secondary);
-}
-
-/* The kind's guidance hint sits above the raw detail (spec § Layout). */
-.hint {
-  margin-block: var(--space-2) 0;
-  color: var(--text-body);
-}
-
-/* Raw support-facing detail: wraps and scrolls rather than stretching the
-   dialog. */
-.errorDetail {
-  margin-block-start: var(--space-2);
-  padding: var(--space-2);
-  max-block-size: 10rem;
-  overflow-y: auto;
-  background: var(--bg-white);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 /* "Special syncs" disclosure below the phase list — the run's backfill
-   descriptions, using the same expandable pattern as .moreInfo. */
+   descriptions, using the same expandable pattern as the ui ErrorDetails. */
 .specialSyncs {
   align-self: stretch;
   margin-block-start: var(--space-2);

@@ -228,6 +228,7 @@ export function CardView<T, G extends string>(props: {
   table: Table<T>;
   cardGroups?: CardGroup<T, G>[];
   enableSelection: boolean;
+  selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
@@ -276,6 +277,7 @@ export function CardView<T, G extends string>(props: {
                       class={styles.cardSelect}
                       aria-label={t('table.select-row')}
                       data-testid="select-row-checkbox"
+                      disabled={props.selectionDisabled}
                       checked={row.getIsSelected()}
                       onChange={row.getToggleSelectedHandler()}
                       onClick={event => event.stopPropagation()}

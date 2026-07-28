@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import {
   createEffect,
   createResource,
@@ -124,7 +125,7 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     setErrorMessage(undefined);
     const result = await graphqlFetch(InsertInboundShipment, {
       storeId: params.storeId,
-      input: { id: crypto.randomUUID(), otherPartyId, requisitionId },
+      input: { id: generateUUID(), otherPartyId, requisitionId },
     });
     setCreating(false);
     if (result.kind !== 'success') return; // global modal already showed it
@@ -170,7 +171,7 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     const result = await graphqlFetch(InsertInboundShipmentExternal, {
       storeId: params.storeId,
       input: {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         otherPartyId: po.supplier.id,
         purchaseOrderId: po.id,
         insertLinesFromPurchaseOrder: addLines,

@@ -58,7 +58,7 @@ import {
   type AllocationPreferences,
   type IssueWarning,
 } from '../../../../domain/allocation';
-import { outboundPrefs } from '../../outboundPreferencesResource';
+import { outboundShipmentPreferences } from '@/store/storeContext';
 import { issueWarningMessages } from './allocationWarnings';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
@@ -222,7 +222,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [dirty, setDirty] = createSignal(false);
 
   const tableConfig = createTableConfig({ tableId: 'outbound-line-edit' });
-  const prefs = () => outboundPrefs()?.prefs;
+  const prefs = () => outboundShipmentPreferences();
 
   // Seed one item's draft (server-computed: existing lines + available
   // batches + placeholder). The ONE seed path — sequential imperative fetch,
@@ -327,8 +327,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // the doses default is a separate parity gap, not touched here.
     const sizes = distinctPackSizes();
     const onlySize = sizes.length === 1 ? sizes[0] : undefined;
-    const vaccineInDoses =
-      !!prefs()?.manageVaccinesInDoses && !!item()?.isVaccine;
+    const vaccineInDoses = prefs().manageVaccinesInDoses && !!item()?.isVaccine;
     if (!vaccineInDoses && onlySize)
       switchLensTo({ kind: 'packs', size: onlySize });
   };
@@ -359,10 +358,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // AC-AL2/AL8), fed outbound's resolved preferences — the module owns no
   // preference fetch.
   const allocationPrefs = (): AllocationPreferences => ({
-    expiredStockPreventIssue: prefs()?.expiredStockPreventIssue ?? false,
-    expiredStockIssueThreshold: prefs()?.expiredStockIssueThreshold ?? 0,
-    manageVvmStatusForStock: prefs()?.manageVvmStatusForStock ?? false,
-    sortByVvmStatusThenExpiry: prefs()?.sortByVvmStatusThenExpiry ?? false,
+    expiredStockPreventIssue: prefs().expiredStockPreventIssue,
+    expiredStockIssueThreshold: prefs().expiredStockIssueThreshold,
+    manageVvmStatusForStock: prefs().manageVvmStatusForStock,
+    sortByVvmStatusThenExpiry: prefs().sortByVvmStatusThenExpiry,
   });
   // TWO bar rules (rules.md § barred batches): the pref-gated ISSUE bar
   // (manual entry disabled, row dimmed — AC-AL8/AL9) vs the stricter,
@@ -684,7 +683,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: () => t('label.expiry'),
       ...getExpiryDateCell(),
     },
-    ...(prefs()?.manageVvmStatusForStock
+    ...(prefs().manageVvmStatusForStock
       ? [
           {
             c: {
@@ -708,7 +707,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       header: () => t('label.location'),
     },
-    ...(prefs()?.allowTrackingOfStockByDonor
+    ...(prefs().allowTrackingOfStockByDonor
       ? [
           {
             c: {
@@ -736,7 +735,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: () => t('label.pack-size'),
       ...getNumberCell(),
     },
-    ...(prefs()?.manageVaccinesInDoses
+    ...(prefs().manageVaccinesInDoses
       ? [
           {
             c: { key: 'dosesPerUnit' },
@@ -956,7 +955,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               { value: 'units', label: unitName() },
               // The doses lens (AC-AL7): vaccine items under the
               // manage-vaccines-in-doses preference only.
-              ...(prefs()?.manageVaccinesInDoses && item()?.isVaccine
+              ...(prefs().manageVaccinesInDoses && item()?.isVaccine
                 ? [{ value: 'doses', label: t('label.doses') }]
                 : []),
               ...distinctPackSizes().map(size => ({

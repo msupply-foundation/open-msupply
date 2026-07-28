@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { graphqlFetch } from '../../../api/graphql';
@@ -164,18 +165,30 @@ const NewStockContent = (props: {
     () => props.storeId,
     fetchStockLocations
   );
-  // Locations + variants read the fetched item detail, which lingers (as
-  // `.latest`) after the item is cleared — so gate both on there still being a
-  // chosen item, else a cleared search would keep the old item's variants /
-  // location narrowing.
+  // Read the item detail WITHOUT ever suspending. It first fetches on an
+  // INTERACTION (picking an item) while this dialog is already open, and
+  // `.latest` alone STILL suspends on that first pending read — which collapses
+  // the ancestor <Suspense> and detaches the open <dialog>, losing the top
+  // layer (no backdrop, modal re-rendered in normal flow). Gate on `.state`
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). The value
+  // also lingers after the item is cleared, so every read stays gated on there
+  // still being a chosen item — else a cleared search would keep the old item's
+  // variants / location narrowing.
+  const detail = () =>
+    item() &&
+    (itemDetail.state === 'ready' || itemDetail.state === 'refreshing')
+      ? itemDetail.latest
+      : undefined;
+
   const locations = () =>
     locationsForItem(
-      allLocations.latest ?? [],
-      item() ? itemDetail.latest?.restrictedLocationTypeId : null
+      allLocations.state === 'ready' || allLocations.state === 'refreshing'
+        ? (allLocations.latest ?? [])
+        : [],
+      detail()?.restrictedLocationTypeId
     );
 
-  const variants = (): ItemVariant[] =>
-    item() ? (itemDetail.latest?.variants ?? []) : [];
+  const variants = (): ItemVariant[] => detail()?.variants ?? [];
 
   // Choosing a variant fills the variant id, manufacturer, and volume per pack
   // (from its packaging).
@@ -219,7 +232,7 @@ const NewStockContent = (props: {
     setSaving(true);
     setError(undefined);
     const input: InsertStockLineVariables['input'] = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       itemId: it.id,
       numberOfPacks: draft.numberOfPacks ?? 0,
       packSize: draft.packSize ?? 0,
@@ -293,6 +306,7 @@ const NewStockContent = (props: {
           <Stack gap="sm">
             <ItemSearch
               label={t('label.item')}
+              required
               storeId={props.storeId}
               focusTarget={itemSearch}
               value={item()?.id}
@@ -330,6 +344,7 @@ const NewStockContent = (props: {
                       count can't go negative from the input (spec AC-N2). */}
                     <NumberField
                       label={t('label.pack-qty')}
+                      required
                       width="full"
                       decimalLimit={2}
                       value={draft.numberOfPacks}
@@ -337,6 +352,7 @@ const NewStockContent = (props: {
                     />
                     <NumberField
                       label={t('label.pack-size')}
+                      required
                       width="full"
                       min={1}
                       decimalLimit={2}
@@ -422,9 +438,14 @@ const NewStockContent = (props: {
                       onChange={v => setDraft('sellPricePerPack', v)}
                     />
                   </FormRow>
+                  {/* Required iff active positive reasons are configured (spec
+                    AC-N4) — the same condition that gates OK, marked on the
+                    field so a disabled OK is explained rather than mysterious
+                    (#601). */}
                   <ReasonSelect
                     kind="positive"
                     label={t('label.reason')}
+                    required={positiveReasonsRequired()}
                     value={draft.reasonOption?.id}
                     placeholder={t('label.select-reason')}
                     onChange={r =>

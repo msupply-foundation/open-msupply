@@ -1,5 +1,6 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import { MemoryRouter, Route } from '@solidjs/router';
 import { t } from '../intl';
 import {
   DataTable,
@@ -56,7 +57,7 @@ import {
   supplierIsStore,
 } from '../sections/inbound-shipments/detail/inboundShipmentStatus';
 import { linkedOrderOf } from '../sections/inbound-shipments/linkedOrder';
-import linkStyles from '../sections/inbound-shipments/linkedOrder.module.css';
+import { RecordLink } from '../ui/elements/typography/RecordLink';
 
 // The List-page demo: the SAME assembly as the real InboundShipmentsList — a
 // Page frame with a header (breadcrumb + New shipment), and the shared
@@ -250,7 +251,7 @@ const DEFAULT_CONFIG: LayeredConfig = {
   },
 };
 
-export const TableShowcase = () => {
+const TableShowcaseDemo = () => {
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'invoiceNumber',
     desc: true,
@@ -438,8 +439,9 @@ export const TableShowcase = () => {
     },
     {
       // Linked order — PO-<n> (secondary colour) or IO-<n> (primary colour),
-      // blank otherwise. A plain anchor here (the standalone showcase has no
-      // router); the real page uses the router's <A>.
+      // blank otherwise. The shared RecordLink (a router <A>), same as the real
+      // page; the component's tour is wrapped in a MemoryRouter below so <A>
+      // has a router context in the standalone showcase.
       c: {
         accessor: row => linkedOrderOf('demo', row)?.label ?? '',
         id: 'linkedOrder',
@@ -450,17 +452,16 @@ export const TableShowcase = () => {
         return (
           <Show when={linked}>
             {l => (
-              <a
+              <RecordLink
                 href={l().href}
-                onClick={e => {
+                onClick={(e: MouseEvent) => {
                   e.stopPropagation();
                   e.preventDefault();
                 }}
-                class={linkStyles.link}
-                data-kind={l().kind}
+                kind={l().kind}
               >
                 {l().label}
-              </a>
+              </RecordLink>
             )}
           </Show>
         );
@@ -650,3 +651,15 @@ export const TableShowcase = () => {
     </Page>
   );
 };
+
+/*
+ * The standalone showcase has no app router, but the linked-order cell renders
+ * a RecordLink (a router <A>), which needs a router context to render. Wrap the
+ * demo in a MemoryRouter — the links resolve and are clickable but navigate
+ * nowhere. Same pattern as StatisticsShowcase.
+ */
+export const TableShowcase = () => (
+  <MemoryRouter>
+    <Route path="*" component={TableShowcaseDemo} />
+  </MemoryRouter>
+);

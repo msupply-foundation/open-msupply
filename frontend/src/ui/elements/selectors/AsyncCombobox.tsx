@@ -9,9 +9,9 @@ import type { FocusTarget } from '../../utils/createFocusTarget';
 export interface AsyncComboboxProps<T> {
   label: string;
   /**
-   * Fetch one page of options: server-filtered by `search`, at `offset` into the
-   * full result set. Returns the page (rows + grand total) or undefined on a
-   * failed fetch. The caller owns the query; this component owns the
+   * Fetch one page of options: server-filtered by `search`, at `offset` into
+   * the full result set. Returns the page (rows + grand total) or undefined on
+   * a failed fetch. The caller owns the query; this component owns the
    * fetch/accumulate/paging loop and the widget.
    */
   fetchPage: (search: string, offset: number) => Promise<Page<T> | undefined>;
@@ -47,11 +47,16 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Marks the field required — passed through to the Combobox's label. */
+  required?: boolean;
   /** Hint text shown below the input (below the error, when both). Passed
    * through to the Combobox. */
   helperText?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
+  /** Control size, forwarded to the Combobox — `small` for a header field
+   * cluster's compact row (see ui/layout/Header/HeaderToolbar). */
+  size?: 'default' | 'small';
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -83,11 +88,11 @@ export interface AsyncComboboxProps<T> {
 }
 
 /*
- * A server-side-filtered, infinite-scroll combobox: the shared Combobox wired to
- * the paginated-search loop (createPaginatedSearch). Typing refetches from the
- * backend (the caller's `fetchPage`), scrolling near the bottom loads the next
- * page, and a controlled selection (`value`/`selected`) shows even before its
- * page loads.
+ * A server-side-filtered, infinite-scroll combobox: the shared Combobox wired
+ * to the paginated-search loop (createPaginatedSearch). Typing refetches from
+ * the backend (the caller's `fetchPage`), scrolling near the bottom loads the
+ * next page, and a controlled selection (`value`/`selected`) shows even before
+ * its page loads.
  *
  * This is the generic engine the domain search selectors are built on
  * (ItemSearch, NameSearch, …): each supplies a `fetchPage` (its query) + row
@@ -96,10 +101,10 @@ export interface AsyncComboboxProps<T> {
  * async twin.
  *
  * Deferred first fetch: the page waits for the first open (`ensure` via
- * onOpenChange), so a select that mounts with a detail view but is never opened
- * never fetches. A pre-set `selected` still shows its label immediately — it's
- * seeded into the list, and with no fetch on mount there are no options to blank
- * it out.
+ * onOpenChange), so a select that mounts with a detail view but is never
+ * opened never fetches. A pre-set `selected` still shows its label immediately
+ * — it's seeded into the list, and with no fetch on mount there are no options
+ * to blank it out.
  *
  * Stale-options window: between a keystroke and its (debounced) refetch
  * landing, the held rows answer the PREVIOUS query. They're shown
@@ -111,7 +116,8 @@ export const AsyncCombobox = <T,>(
   props: AsyncComboboxProps<T>
 ): JSX.Element => {
   // Created ONCE so accumulated pages + debounce keep a stable owner. Deferred
-  // (`eager: false`): the first page waits for the first open (see onOpenChange).
+  // (`eager: false`): the first page waits for the first open (see
+  // onOpenChange).
   const search = createPaginatedSearch<T>({
     fetchPage: (value, offset) => props.fetchPage(value, offset),
     eager: false,
@@ -159,11 +165,12 @@ export const AsyncCombobox = <T,>(
   // The seed CAN be a label-only fallback: some callers fill its non-label
   // fields — e.g. availableUnits — with placeholder zeros when the real values
   // aren't known until the item's own page is fetched (others pass a fully
-  // populated seed — e.g. ItemSearch reseeds the option the user just picked). So
-  // once `base()` has fetched a real row for this key, that row must WIN over the
-  // seed rather than being replaced by it — otherwise a stub's placeholder fields
-  // (e.g. "0 Units") permanently shadow the real, freshly-fetched data for as
-  // long as the item stays the controlled selection (#549).
+  // populated seed — e.g. ItemSearch reseeds the option the user just picked).
+  // So once `base()` has fetched a real row for this key, that row must WIN
+  // over the seed rather than being replaced by it — otherwise a stub's
+  // placeholder fields (e.g. "0 Units") permanently shadow the real,
+  // freshly-fetched data for as long as the item stays the controlled selection
+  // (#549).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
@@ -199,8 +206,10 @@ export const AsyncCombobox = <T,>(
       class={props.class}
       disabled={props.disabled}
       error={props.error}
+      required={props.required}
       helperText={props.helperText}
       clearable={props.clearable}
+      size={props.size}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
