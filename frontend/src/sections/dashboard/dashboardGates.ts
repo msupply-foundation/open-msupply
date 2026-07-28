@@ -11,7 +11,7 @@
 // every item with amc > 0, and that degenerate value must never be displayed
 // (OMS-REG-DB-01.52).
 
-import type { StoreContextResult } from '../../api/storeContext.generated';
+import type { StoreContextResult } from '@/store/storeContext.generated';
 import type { ItemCountsVariables } from './dashboardCounts.generated';
 
 type Preferences = StoreContextResult['preferences'];
