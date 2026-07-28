@@ -14,6 +14,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
@@ -60,16 +62,17 @@ import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
 import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
-// send, the side panel (S5), the Documents tab, Export/Print (reports S4), the
-// Indicators tab, the ancillary Add/Update actions, and the line editor (S4 —
-// Add item + row-click edit). The master-list picker (S7), use-suggested, and
-// the editor's context charts / forecast-calculation display are a later cut.
+// send, the side panel (S5), the Documents / Indicators / Log tabs,
+// Export/Print (reports S4), the ancillary Add/Update actions, the line editor
+// (S4 — Add item + row-click edit), the master-list picker (S7),
+// use-suggested, and bulk line delete.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -95,6 +98,14 @@ const InternalOrderDetailView: Component = () => {
   const navigate = useNavigate();
   const [itemFilter, setItemFilter] = createSignal('');
   const [hideOverMin, setHideOverMin] = createSignal(false);
+  // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
+  // a non-empty selection swaps the status footer for the bulk-action bar.
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Lines a send's reasons-backstop refusal named (AC-R3): their Reason cells
+  // flag until the next send, or until a line edit refetches the table.
+  const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
+    new Set()
+  );
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
@@ -191,6 +202,23 @@ const InternalOrderDetailView: Component = () => {
       customerNameId: nameId,
     });
   };
+  // Report generation seeds for an indicator program order (AC-PR4): the same
+  // program / period / customer identity the Indicators tab reads, handed to
+  // the Export/Print selector so indicator report templates can locate the
+  // program data behind the order. Undefined on any other order (and until the
+  // store's own name id resolves) — then only the standard seeds are sent.
+  const reportSeedArgs = () => {
+    const node = info();
+    const nameId = ownName.latest;
+    if (!showIndicators() || !node?.program || !node.period || !nameId)
+      return undefined;
+    return {
+      programId: node.program.id,
+      periodId: node.period.id,
+      customerNameId: nameId,
+    };
+  };
+
   const [indicators] = createResource(indicatorVariables, async serialised => {
     const result = await graphqlFetch(
       InternalOrderIndicators,
@@ -293,7 +321,7 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // ONE debounced buffer for the as-you-type reference (comment rides the same
-  // buffer for the side panel / send, out of this cut).
+  // buffer for the side panel).
   const edit = createDebouncedEdit<HeaderEditFields>({
     id: () => info()?.id ?? '',
     initial: () => ({
@@ -623,6 +651,28 @@ const InternalOrderDetailView: Component = () => {
           {
             c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
             header: () => t('label.reason'),
+            // A send's reasons backstop flags every offending line's Reason
+            // cell (AC-R3): a red alert beside the (usually empty) reason text.
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'align-items': 'center',
+                    gap: 'var(--space-1)',
+                  }}
+                >
+                  <Show when={reasonFlaggedIds().has(line.id)}>
+                    <AlertTriangleIcon
+                      style={{ color: 'var(--error-main)' }}
+                      aria-label={t('error.reasons-not-provided-program-requisition')}
+                    />
+                  </Show>
+                  {line.reason?.reason ?? ''}
+                </span>
+              );
+            },
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -730,7 +780,10 @@ const InternalOrderDetailView: Component = () => {
                     onApplied={() => void refetch()}
                   />
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
-                  <ExportPrintInternalOrderAction orderId={node().id} />
+                  <ExportPrintInternalOrderAction
+                    orderId={node().id}
+                    seedArgs={reportSeedArgs()}
+                  />
                   {/* More — reopens the side panel; shown only while closed. */}
                   <Show when={!sidePanelOpen()}>
                     <Button
@@ -774,12 +827,54 @@ const InternalOrderDetailView: Component = () => {
               </Header>
             }
             contentFooter={
-              <InternalOrderStatusFooter
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                onSent={onSent}
-              />
+              // Selection action bar while lines are selected (AC-LN15);
+              // otherwise the order's status footer. Matches OMS, which swaps
+              // the whole footer on selection. A program order's checkboxes are
+              // disabled (no delete offered — D32), so nothing selects there
+              // and this bar only ever appears on a general order.
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <InternalOrderStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    editable={editable()}
+                    requiresAuthorisation={requiresAuth()}
+                    onSent={onSent}
+                    onReasonsNotProvided={ids =>
+                      setReasonFlaggedIds(new Set(ids))
+                    }
+                  />
+                }
+              >
+                <ContentFooter>
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  {/* On a read-only order the click explains why it can't
+                      proceed rather than confirming (AC-LN16); the whole-order
+                      delete is refused server-side regardless. onDeleted clears
+                      the selection (unmounting this bar) and refetches. */}
+                  <DeleteLinesAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
+                    canDelete={editable}
+                    onDeleted={() => {
+                      setSelectedIds([]);
+                      void refetch();
+                    }}
+                  />
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<MinusCircleIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
             }
           >
             {/* Details | Documents | Log | (gated) Indicators (spec S3 § tabs). */}
@@ -833,6 +928,16 @@ const InternalOrderDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Row selection for the bulk line delete (AC-LN15). The
+                  // column always shows; on a read-only order the delete is
+                  // refused with an explanation (AC-LN16), and on a program
+                  // order — whose line set is fixed — the checkboxes render
+                  // disabled so the affordance reads as blocked, not missing
+                  // (no delete offered, D32).
+                  enableSelection
+                  selectionDisabled={isProgram()}
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
                 />
               </TabPanel>
               <TabPanel value="documents">
@@ -885,7 +990,12 @@ const InternalOrderDetailView: Component = () => {
               }
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
-              onCommitted={() => void refetch()}
+              onCommitted={() => {
+                // A line edit may have supplied a missing reason — drop the
+                // send-backstop flags so they don't linger stale (AC-R3).
+                setReasonFlaggedIds(new Set<string>());
+                void refetch();
+              }}
             />
 
             {/* Add from master list (S7): the picker, then an are-you-sure

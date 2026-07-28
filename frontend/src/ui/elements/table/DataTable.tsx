@@ -215,6 +215,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   /**
+   * Render the selection column but with every checkbox DISABLED (the
+   * select-all and every row). The column stays visible so the affordance
+   * reads as present-but-blocked rather than absent — used where selection is
+   * structurally unavailable (e.g. a program internal order whose line set is
+   * fixed), not merely empty. No row can be toggled while set.
+   */
+  selectionDisabled?: boolean;
+  /**
    * The page's bulk actions for the selection action bar (gated buttons —
    * Delete, Duplicate, …). While rows are selected, the table's footer swaps
    * from the pager to "N selected" + these + Clear (ui-standards § tables →
@@ -1010,6 +1018,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
+                            disabled={props.selectionDisabled}
                             checked={table.getIsAllRowsSelected()}
                             indeterminate={table.getIsSomeRowsSelected()}
                             onChange={e => {
@@ -1057,6 +1066,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       table={table}
                       cardGroups={props.cardGroups}
                       enableSelection={props.enableSelection ?? false}
+                      selectionDisabled={props.selectionDisabled ?? false}
                       onRowClick={props.onRowClick}
                     />
                   </Match>
@@ -1066,6 +1076,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         <TableRow
                           row={row}
                           enableSelection={props.enableSelection ?? false}
+                          selectionDisabled={props.selectionDisabled ?? false}
                           onRowClick={props.onRowClick}
                           rowState={props.rowState}
                           rowTone={props.rowTone}
