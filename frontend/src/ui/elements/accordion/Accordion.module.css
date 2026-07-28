@@ -6,6 +6,10 @@
  * ui/layout/SidePanel/SidePanel.module.css).
  */
 
+.root {
+  /* Base hook — the card variant scopes off it via data-variant. */
+}
+
 .item + .item {
   border-block-start: 1px solid var(--color-divider);
 }
@@ -124,4 +128,33 @@
   .content[data-closed] {
     animation: none;
   }
+}
+
+/* Card variant: each item is a filled rounded panel (the current app's
+   AccordionPanelSection look) — a disclosure that reads as its own region
+   inside a form or dialog body. Panels separate by gap, not hairline, and
+   trade the flat variant's inline-flush alignment for their own inset.
+   (Last in the file: these compound selectors outrank every base selector
+   for the same elements, and stylelint's no-descending-specificity wants
+   the base forms first.) */
+.root[data-variant='card'] .item {
+  background: var(--bg-menu);
+  border-radius: var(--radius-lg);
+}
+
+.root[data-variant='card'] .item + .item {
+  border-block-start: 0;
+  margin-block-start: var(--space-3);
+}
+
+.root[data-variant='card'] .trigger {
+  padding-inline: var(--space-4);
+}
+
+.root[data-variant='card'] .trigger:focus-visible {
+  border-radius: var(--radius-lg);
+}
+
+.root[data-variant='card'] .contentInner {
+  padding-inline: var(--space-4);
 }

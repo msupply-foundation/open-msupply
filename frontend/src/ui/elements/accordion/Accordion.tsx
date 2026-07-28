@@ -14,6 +14,13 @@ export interface AccordionProps {
   multiple?: boolean;
   /** In single-open mode, allow closing the open item by clicking its trigger again. */
   collapsible?: boolean;
+  /**
+   * `card` renders each item as a filled rounded panel (the current app's
+   * AccordionPanelSection look) instead of the flat, divider-separated
+   * default — for a disclosure that must read as its own region inside a
+   * form or dialog body.
+   */
+  variant?: 'card';
   class?: string;
   children: JSX.Element;
 }
@@ -46,7 +53,8 @@ export const Accordion = (props: AccordionProps) => (
     onChange={props.onValueChange}
     multiple={props.multiple}
     collapsible={props.collapsible}
-    class={props.class}
+    class={props.class ? `${styles.root} ${props.class}` : styles.root}
+    data-variant={props.variant}
   >
     {props.children}
   </KAccordion.Root>

@@ -38,7 +38,7 @@ export const DeletePrescriptionsAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => setOpen(true)}

@@ -265,10 +265,11 @@ export const PrescriptionSidePanel: Component<
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           {/* Delete — hidden once no longer deletable (permanently dead
-              affordances are hidden, D39). */}
+              affordances are hidden, D39); danger tone (Delete buttons are
+              danger app-wide, Carl 2026-07-24). */}
           <Show when={canDeletePrescription(status())}>
             <Button
-              variant="secondary"
+              variant="danger"
               icon={<TrashIcon />}
               data-testid="delete-prescription-button"
               loading={deleting()}
@@ -278,10 +279,11 @@ export const PrescriptionSidePanel: Component<
             </Button>
           </Show>
           {/* Cancel — VERIFIED only; the permission gate withholds with its
-              explanation through the affordance (AC-X4). */}
+              explanation through the affordance (AC-X4). Danger tone: voiding
+              a verified prescription is destructive. */}
           <Show when={canCancelPrescription(status())}>
             <Button
-              variant="secondary"
+              variant="danger"
               icon={<MinusCircleIcon />}
               data-testid="cancel-prescription-button"
               title={
