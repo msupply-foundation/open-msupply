@@ -1,9 +1,8 @@
 import { createSignal, Match, onMount, Show, Switch, type JSX } from 'solid-js';
-import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
+import { createStore, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
@@ -13,35 +12,29 @@ import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
-import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
+import { GenerateSupplierReturnLines } from '../supplierReturnDetail.generated';
 import styles from './ReturnItemsModal.module.css';
 import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
-  blankDraft,
   existingLinesBeingRemoved,
   reasonStepLines,
   seedDrafts,
   toLineInputs,
-  validateStep1,
   type DraftReturnLine,
 } from './returnLineLogic';
 import { quantityColumns, reasonColumns } from './returnLineColumns';
 
-// S4 — the return-items modal (spec/customer-returns/ui-surface.md S4): the
-// single surface for entering what comes back, per item on an existing return.
-// A two-step wizard — Select quantity → Select reason — over a draft store;
-// one save upserts the item's whole batch set (rules § line rules, AC-E1–E4).
+// S4 — the return-items modal (spec/supplier-returns/ui-surface.md S4): the
+// single surface for entering what goes back, per item on an existing return. A
+// two-step wizard — Select quantity → Select reason — over a draft store; one
+// save upserts the item's whole batch set (rules § line rules; REPL-06 .31/.32,
+// SRN-001 .2/.7).
 //
-// The from-shipment flow (outboundShipmentLineIds) has no entry point until
-// the outbound-shipments section exists — this modal covers the per-item
-// add/edit flows the detail screen owns.
+// A supplier-return line is always an EXISTING stock line, so there is no
+// Add-batch action (ui-surface S4) — the draft rows are exactly the item's
+// available stock lines, plus any this return already holds. The from-shipment
+// creation flow is a separate host (ReturnFromShipmentModal).
 
 export type ReturnItemsMode = 'add' | 'update';
 
@@ -50,7 +43,7 @@ type Step = 'quantity' | 'reason';
 export type ReturnItem = { id: string; code: string; name: string };
 
 // What a successful save hands back: the whole return with its refreshed line
-// set (updateCustomerReturnLines returns the full invoice — the view replaces
+// set (updateSupplierReturnLines returns the full invoice — the view replaces
 // its node wholesale, no refetch).
 export type ReturnLinesSaved = Extract<
   SaveReturnLinesResult,
@@ -69,27 +62,27 @@ export interface ReturnItemsModalProps {
   excludeItemIds: () => string[];
   /**
    * UPDATE mode: the item AFTER this one in the current on-screen order —
-   * drives "OK & next". undefined = last item (OK only).
+   * drives "Save & next". undefined = last item (Save only).
    */
   nextItem: (currentItemId: string) => ReturnItem | undefined;
   /** Resolve an item's descriptor from the current rows (update mode). */
   itemById: (id: string) => ReturnItem | undefined;
   /** A save landed — the view replaces its node with the returned one. */
   onSaved: (node: ReturnLinesSaved) => void;
-  /** Existing line ids on the return, per item (seeds the drafts). */
+  /** Existing line ids on the return (seeds the drafts' `existing` flag). */
   existingLineIds: () => ReadonlySet<string>;
-  /** "Return from" — the customer the goods come back from (read-only). */
-  returnFromName: string;
+  /** "Return to" — the supplier the goods go back to (read-only). */
+  returnToName: string;
   /**
-   * The shared return edit buffer — the modal's Customer-reference field
+   * The shared return edit buffer — the modal's Supplier-reference field
    * reads/writes theirReference through the same debounced save path as the
    * detail toolbar (one buffer across the whole entity).
    */
   edit: ReturnFieldEdit;
 }
 
-// Mount-while-open wrapper (the reference modal shape): the content mounts
-// fresh per open; within one open it advances items itself.
+// Mount-while-open wrapper (the reference modal shape): the content mounts fresh
+// per open; within one open it advances items itself.
 export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
   <Show
     when={props.open && (props.mode === 'add' ? 'add' : props.initialItemId)}
@@ -107,7 +100,7 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         itemById={props.itemById}
         onSaved={props.onSaved}
         existingLineIds={props.existingLineIds}
-        returnFromName={props.returnFromName}
+        returnToName={props.returnToName}
         edit={props.edit}
       />
     )}
@@ -126,58 +119,43 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   const [message, setMessage] = createSignal<
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
-  // Edit mode's confirm-to-remove path (AC-E2): proceeding at zero quantity
-  // warns once; the next OK applies the removal.
+  // Edit mode's confirm-to-remove path (REPL-06 .32): proceeding at zero
+  // quantity warns once; the next Save applies the removal.
   const [zeroConfirmed, setZeroConfirmed] = createSignal(false);
   const [currentItem, setCurrentItem] = createSignal<ReturnItem>();
 
   const noItemYet = () => props.mode === 'add' && currentItem() === undefined;
 
   const tableConfig = createTableConfig({
-    tableId: 'customer-return-line-edit',
+    tableId: 'supplier-return-line-edit',
   });
 
-  // Seed the draft for one item: the return's existing lines for it (via
-  // generateCustomerReturnLines' existingLinesInput — contract § draft-line
-  // generation), or one blank row when it has none yet.
+  // Seed the draft for one item: the item's available stock lines plus any the
+  // return already holds (via generateSupplierReturnLines' itemId + returnId —
+  // contract § draft-line generation). No blank fallback — supplier-return lines
+  // are existing stock lines only.
   const seedItem = async (item: ReturnItem) => {
     setCurrentItem(item);
     setStep('quantity');
     setMessage(undefined);
     setZeroConfirmed(false);
     setLoadingLines(true);
-    const result = await graphqlFetch(GenerateCustomerReturnLines, {
+    const result = await graphqlFetch(GenerateSupplierReturnLines, {
       storeId: props.storeId,
-      input: {
-        outboundShipmentLineIds: [],
-        existingLinesInput: { returnId: props.returnId, itemId: item.id },
-      },
+      input: { stockLineIds: [], itemId: item.id, returnId: props.returnId },
     });
-    // The response union's only member is the connector, so any failure here
-    // is the global unexpected-error modal's (spec: Unexpected API Errors) —
-    // stay in the loading phase behind it rather than seeding a blank row.
+    // The response union's only member is the connector, so any failure here is
+    // the global unexpected-error modal's — stay in the loading phase behind it.
     if (result.kind !== 'success') return;
     const seeded = seedDrafts(
-      result.data.generateCustomerReturnLines.nodes,
+      result.data.generateSupplierReturnLines.nodes,
       props.existingLineIds()
     );
-    setDraft(
-      reconcile(
-        seeded.length > 0
-          ? seeded
-          : [blankDraft({ id: item.id, code: item.code, unitName: null })],
-        { key: 'id' }
-      )
-    );
+    setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
   };
 
-  // The item lookup — live only in add mode, where it is the editor's starting
-  // control (ui/utils/createFocusTarget).
-  const itemSearch = createFocusTarget();
-
   onMount(() => {
-    if (props.mode === 'add') itemSearch.focus();
     if (props.mode === 'update' && props.initialItemId) {
       const item = props.itemById(props.initialItemId);
       if (!item) return props.onClose();
@@ -186,7 +164,6 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   });
 
   const backToSearch = () => {
-    itemSearch.focus();
     setCurrentItem(undefined);
     setStep('quantity');
     setMessage(undefined);
@@ -207,34 +184,14 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setZeroConfirmed(false);
   };
 
-  const addBatch = () => {
-    const item = currentItem();
-    if (!item) return;
-    setDraft(
-      produce(lines =>
-        lines.unshift(
-          blankDraft({ id: item.id, code: item.code, unitName: null })
-        )
-      )
-    );
-  };
-
-  // Step-1 gating (ui-surface S4; AC-E2/E3's UI half):
-  // - a returned line's pack size below one blocks;
-  // - nothing to return AND nothing to delete → create-mode block;
+  // Step-1 gating (ui-surface S4; the zero-quantity notices — REPL-06 .29/.32):
+  // - nothing to return AND nothing to delete → create/add-mode block;
   // - any EXISTING line zeroed → the save DELETES it, so warn-then-confirm —
   //   including the mixed case (other lines still carry quantity), where the
   //   zeroed line never reaches the reason step and would otherwise be removed
-  //   silently (AC-E2).
+  //   silently (REPL-06 .32).
   const gateStep1 = (): boolean => {
     const drafts = draft.slice();
-    if (validateStep1(drafts) === 'invalid-pack-size') {
-      setMessage({
-        severity: 'error',
-        text: t('messages.alert-invalid-pack-size'),
-      });
-      return false;
-    }
     const returning = reasonStepLines(drafts).length > 0;
     const removing = existingLinesBeingRemoved(drafts).length > 0;
     if (!returning && !removing) {
@@ -260,7 +217,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     // Nothing with quantity (the confirmed zero-delete path) → save directly;
     // otherwise on to reasons.
     if (reasonStepLines(draft.slice()).length === 0) {
-      void onOk();
+      void onSave();
       return;
     }
     setStep('reason');
@@ -271,8 +228,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setSaving(true);
     setMessage(undefined);
     const result = await saveReturnLines(props.storeId, {
-      customerReturnId: props.returnId,
-      customerReturnLines: toLineInputs(draft.map(line => unwrap(line))),
+      supplierReturnId: props.returnId,
+      supplierReturnLines: toLineInputs(draft.map(line => unwrap(line))),
     });
     setSaving(false);
     if (result.kind === 'failed') return false; // global modal showed it
@@ -286,14 +243,14 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     return true;
   };
 
-  const onOk = async () => {
+  const onSave = async () => {
     if (await save()) props.onClose();
   };
 
-  // OK & next: save, then advance without closing — update mode steps to the
-  // next item; add mode returns to the search (the saved item drops out via
-  // the live excludeItemIds).
-  const onOkNext = async () => {
+  // Save & next: save, then advance without closing — update mode steps to the
+  // next item; add mode returns to the search (the saved item drops out via the
+  // live excludeItemIds).
+  const onSaveNext = async () => {
     if (!(await save())) return;
     if (props.mode === 'add') {
       backToSearch();
@@ -310,9 +267,6 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     return props.mode === 'add' || (current && props.nextItem(current.id));
   };
 
-  // Step-1 (quantity) and step-2 (reason) grids come from the shared column
-  // builders in returnLineColumns.tsx — the same definitions back the
-  // from-shipment create modal — wired to this modal's per-line `update`.
   const reasonRows = () => reasonStepLines(draft.slice());
 
   return (
@@ -329,13 +283,14 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         </Show>
       }
       actions={
+        // D55 — dialog footers are icon-less verbs: Cancel / Back / Next step /
+        // Save / Save & next (never OK / OK & next).
         <>
           <Show
             when={step() === 'reason'}
             fallback={
               <Button
                 variant="secondary"
-                icon={<XCircleIcon />}
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
               >
@@ -345,7 +300,6 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           >
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
               data-testid="dialog-button-cancel"
               onClick={() => {
                 setStep('quantity');
@@ -359,7 +313,6 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Switch>
               <Match when={step() === 'quantity'}>
                 <Button
-                  icon={<ArrowRightIcon />}
                   loading={saving()}
                   data-testid="dialog-button-ok"
                   onClick={onNextStep}
@@ -369,53 +322,44 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               </Match>
               <Match when={step() === 'reason'}>
                 <Button
-                  icon={<CheckIcon />}
                   loading={saving()}
                   data-testid="dialog-button-ok"
-                  onClick={() => void onOk()}
+                  onClick={() => void onSave()}
                 >
-                  {t('button.ok')}
+                  {t('button.save')}
                 </Button>
               </Match>
             </Switch>
-            {/* OK & next is actionable only on the reason step with a next
-                item to advance to; anywhere else the action is permanently
-                dead in-context (the quantity step can't save-and-advance, the
-                last item has nowhere to advance to), so it's HIDDEN, not
-                disabled — the blocked-affordances ladder (D39). */}
+            {/* Save & next is actionable only on the reason step with a next
+                item to advance to; anywhere else the action is permanently dead
+                in-context, so it's HIDDEN, not disabled — the blocked-
+                affordances ladder (D39). */}
             <Show when={step() === 'reason' && hasNext()}>
               <Button
-                icon={<ArrowRightIcon />}
                 loading={saving()}
                 data-testid="dialog-button-next-and-ok"
-                onClick={() => void onOkNext()}
+                onClick={() => void onSaveNext()}
               >
-                {t('button.ok-and-next')}
+                {t('button.save-and-next')}
               </Button>
             </Show>
           </Show>
         </>
       }
     >
-      {/* Item row under the plain "Return items" title (the current app's
-          layout, and the outbound line editor's pattern): the labelled
-          catalogue lookup — live in add mode, locked to the row's item in
-          update mode. */}
+      {/* Item row under the "Return items" title: the labelled catalogue lookup
+          — live in add mode (ALL available items, not narrowed to the supplier —
+          SRN-001 .1), locked to the row's item in update mode. */}
       <ItemSearch
         label={t('label.item')}
         storeId={props.storeId}
-        focusTarget={itemSearch}
         excludeItemIds={props.excludeItemIds()}
         value={currentItem()?.id}
         selectedItem={currentItem()}
         disabled={props.mode !== 'add'}
         onSelect={item =>
           item
-            ? void seedItem({
-                id: item.id,
-                code: item.code,
-                name: item.name,
-              })
+            ? void seedItem({ id: item.id, code: item.code, name: item.name })
             : backToSearch()
         }
         placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -428,8 +372,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           </p>
         }
       >
-        {/* The wizard's step indicator — the shared determinate progress list
-            (the sync stepper), which the two-step flow maps onto directly:
+        {/* The wizard's step indicator — the shared determinate progress list:
             reaching the reason step completes "Select quantity" and starts
             "Select reason" (ui-surface S4 § layout). */}
         <ProgressList
@@ -447,18 +390,16 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             },
           ]}
         />
-        {/* Under the stepper (the current app's ReturnSteps row): who the
-            goods come back from (read-only) and the return's customer
-            reference — edited through the shared debounced buffer, the same
-            save path as the detail toolbar. One field per row below the
-            compact breakpoint (where the modal is full-screen) — module CSS. */}
+        {/* Context row: who the goods go back to (read-only) and the return's
+            supplier reference — edited through the shared debounced buffer, the
+            same save path as the detail toolbar. */}
         <div class={styles.contextRow}>
-          <FieldRow label={t('label.return-from')}>
-            <Text variant="body">{props.returnFromName}</Text>
+          <FieldRow label={t('label.return-to')}>
+            <Text variant="body">{props.returnToName}</Text>
           </FieldRow>
-          <FieldRow label={t('label.customer-ref')}>
+          <FieldRow label={t('label.supplier-reference')}>
             <TextField
-              label={t('label.customer-ref')}
+              label={t('label.supplier-reference')}
               hideLabel
               size="small"
               value={props.edit.state.theirReference}
@@ -469,26 +410,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             />
           </FieldRow>
         </div>
-        {/* Add batch on its own row, inline-end aligned (the current app's
-            AddBatchButton row): present on both steps, actionable only while
-            entering quantities in per-item mode. Default (primary) tone —
-            brand icon, dark label. */}
-        <div
-          style={{
-            display: 'flex',
-            'justify-content': 'flex-end',
-            'margin-block-end': 'var(--space-2)',
-          }}
-        >
-          <Button
-            icon={<PlusCircleIcon />}
-            data-testid="add-batch-button"
-            disabled={step() !== 'quantity'}
-            onClick={addBatch}
-          >
-            {t('label.add-batch')}
-          </Button>
-        </div>
+        {/* No Add-batch action — supplier-return lines are existing stock lines,
+            not invented batches (ui-surface S4). */}
         <Show
           when={step() === 'reason'}
           fallback={
@@ -501,7 +424,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               minBodyRem={20}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
-              emptyMessage={t('error.no-customer-return-items')}
+              emptyMessage={t('error.no-supplier-return-items')}
             />
           }
         >
@@ -513,7 +436,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             minBodyRem={20}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}
-            emptyMessage={t('error.no-customer-return-items')}
+            emptyMessage={t('error.no-supplier-return-items')}
           />
         </Show>
       </Show>

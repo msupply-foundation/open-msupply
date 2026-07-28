@@ -12,6 +12,7 @@ import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
@@ -164,7 +165,7 @@ export const DevicesSection = () => {
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       {/* Sub-groups are the library's titled field groups (FormSection,
           kdd/form-layout) — h3 under the section trigger's h2. ⚠️ inconsistent
           i18n namespace captured as-is by the spec: `settings.label-printing`,
@@ -303,6 +304,6 @@ export const DevicesSection = () => {
           </div>
         </FormSection>
       </Show>
-    </div>
+    </Stack>
   );
 };
