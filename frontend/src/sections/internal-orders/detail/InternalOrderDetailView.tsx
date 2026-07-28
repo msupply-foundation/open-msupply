@@ -59,6 +59,7 @@ import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
+import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
 import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
@@ -699,8 +700,7 @@ const InternalOrderDetailView: Component = () => {
                       master list (S7 picker). Shown always but DISABLED on
                       program orders (their item set is fixed at creation) and
                       on read-only orders, with a reason tooltip (AC-LN1 —
-                      "disable with an explanation", not hide). Use-suggested is
-                      a later cut. */}
+                      "disable with an explanation", not hide). */}
                   <SplitButton
                     icon={<PlusCircleIcon />}
                     testId="add-item-button"
@@ -716,6 +716,16 @@ const InternalOrderDetailView: Component = () => {
                         label: t('button.add-from-master-list'),
                       },
                     ]}
+                  />
+                  {/* Use suggested quantities — fills every zero-requested line
+                      with its suggestion (AC-Q1). Available on program orders,
+                      so gated on editability alone (not canAddLines); disabled
+                      on read-only orders (AC-Q2). */}
+                  <UseSuggestedQuantitiesAction
+                    storeId={params.storeId}
+                    orderId={node().id}
+                    disabled={!editable()}
+                    onApplied={() => void refetch()}
                   />
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
                   <ExportPrintInternalOrderAction orderId={node().id} />
