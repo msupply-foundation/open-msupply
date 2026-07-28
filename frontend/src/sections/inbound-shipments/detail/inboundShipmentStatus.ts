@@ -93,6 +93,25 @@ export const statusColour = (status: string): string => {
 export const statusLabel = (status: string): string =>
   STATUS_LABELS[status as InboundStatus] ?? status;
 
+// The statuses whose header fields, lines and custom fields take edits.
+// Picked belongs to the transfer processor, which owns the shipment until it
+// hands off at Shipped (processors/transfer/invoice/update_inbound_invoice.rs);
+// Shipped means the goods have left the sender; Verified is terminal.
+//
+// This is the client's own rule — editability is not a field the server hands
+// us, so it is stated here whatever the server happens to accept.
+const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
+
+export const isEditable = (status: string): boolean =>
+  EDITABLE.includes(status as InboundStatus);
+
+// Whether the status footer offers an advance — a SEPARATE, deliberately looser
+// gate than `isEditable`. An advance travels through updateInboundShipment, so
+// reusing the edit gate would strand a Shipped shipment with no route to
+// Delivered. Only Verified, the terminal status, closes it.
+export const canChangeStatus = (status: string): boolean =>
+  status !== 'VERIFIED';
+
 // The statuses the user may advance to from here: forward-only, and only the
 // four the UpdateInboundShipmentStatusInput enum accepts (PICKED is set by the
 // transfer processor, never by a client). The split button offers these; the

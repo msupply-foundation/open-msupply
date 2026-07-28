@@ -71,6 +71,7 @@ import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
+import { canChangeStatus, isEditable } from './inboundShipmentStatus';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
@@ -270,7 +271,11 @@ const InboundShipmentDetailView: Component = () => {
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
-  const isDisabled = () => current()?.status === 'VERIFIED';
+  // Read-only at Picked, Shipped and Verified (see inboundShipmentStatus).
+  const isDisabled = () => !isEditable(current()?.status ?? '');
+  // The status footer keeps its own, looser gate — an advance has to stay
+  // reachable at Shipped, which the edit gate closes.
+  const statusLocked = () => !canChangeStatus(current()?.status ?? '');
   const isExternal = () => (current() ? isExternalShipment(current()!) : false);
 
   const refetchAll = () => {
@@ -812,8 +817,8 @@ const InboundShipmentDetailView: Component = () => {
                       onSaveField={saveField}
                     />
                     {/* PROMINENT custom fields for the scope — stay in the
-                        toolbar even when the shipment is read-only (Verified),
-                        just disabled (spec/ui-standards/custom-fields). */}
+                        toolbar even when the shipment is read-only, just
+                        disabled (spec/ui-standards/custom-fields). */}
                     <CustomFieldsToolbar
                       scope="inbound_shipment"
                       recordId={node().id}
@@ -832,7 +837,7 @@ const InboundShipmentDetailView: Component = () => {
                     <InboundShipmentStatusFooter
                       storeId={params.storeId}
                       node={node()}
-                      disabled={isDisabled()}
+                      disabled={statusLocked()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
                     />
@@ -980,8 +985,8 @@ const InboundShipmentDetailView: Component = () => {
               </TabPanel>
               <TabPanel value="custom-fields">
                 {/* Custom fields for the inbound_shipment scope — disabled once
-                    the shipment is read-only (Verified); prominent fields live
-                    in the toolbar, so the tab shows the rest. */}
+                    the shipment is read-only; prominent fields live in the
+                    toolbar, so the tab shows the rest. */}
                 <CustomFieldsEditTab
                   scope="inbound_shipment"
                   promoteToToolbar
