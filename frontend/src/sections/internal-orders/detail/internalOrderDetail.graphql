@@ -189,6 +189,15 @@ mutation updateInternalOrder(
         ... on OrderingTooManyItems {
           maxItemsInEmergencyOrder
         }
+        # The reasons backstop names every offending line, so the send path can
+        # flag their Reason cells in the table (AC-R3).
+        ... on RequisitionReasonsNotProvided {
+          errors {
+            requisitionLine {
+              id
+            }
+          }
+        }
       }
     }
   }

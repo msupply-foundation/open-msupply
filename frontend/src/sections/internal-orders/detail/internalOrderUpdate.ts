@@ -67,7 +67,13 @@ export const saveInternalOrderFields = async (
 
 export type SendResult =
   | { kind: 'saved'; node: InternalOrderInfoFragment }
-  | { kind: 'error'; message: string }
+  | {
+      kind: 'error';
+      message: string;
+      // The lines named by a RequisitionReasonsNotProvided refusal, so the
+      // detail can flag their Reason cells (AC-R3); empty for any other error.
+      reasonLineIds: string[];
+    }
   | { kind: 'failed' };
 
 // The typed send refusals the client maps to copy (contract parity). The
@@ -110,9 +116,15 @@ export const sendInternalOrder = async (
   const response = result.data.updateRequestRequisition;
   if (response.__typename === 'RequisitionNode')
     return { kind: 'saved', node: response };
+  const error = response.error;
+  const reasonLineIds =
+    error.__typename === 'RequisitionReasonsNotProvided'
+      ? error.errors.map(e => e.requisitionLine.id)
+      : [];
   return {
     kind: 'error',
-    message: mapSendError(response.error),
+    message: mapSendError(error),
+    reasonLineIds,
   };
 };
 

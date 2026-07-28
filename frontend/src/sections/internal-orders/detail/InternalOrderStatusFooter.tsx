@@ -66,6 +66,12 @@ export interface InternalOrderStatusFooterProps {
   requiresAuthorisation: boolean;
   /** A send succeeded — merge the returned node over the current one. */
   onSent: (node: InternalOrderInfoFragment) => void;
+  /**
+   * The lines a reasons-backstop refusal named (AC-R3), so the detail can flag
+   * their Reason cells; called with [] on any other outcome to clear stale
+   * flags.
+   */
+  onReasonsNotProvided: (lineIds: string[]) => void;
 }
 
 export const InternalOrderStatusFooter: Component<
@@ -117,11 +123,15 @@ export const InternalOrderStatusFooter: Component<
       comment
     );
     if (result.kind === 'saved') {
+      props.onReasonsNotProvided([]);
       props.onSent(result.node);
       setOpen(false);
       return;
     }
     if (result.kind === 'error') {
+      // Flag the offending Reason cells (AC-R3); [] for a non-reasons error
+      // clears any stale flags from an earlier attempt.
+      props.onReasonsNotProvided(result.reasonLineIds);
       setErrorMessage(result.message);
       setPhase('error');
       return;

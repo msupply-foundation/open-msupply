@@ -101,6 +101,11 @@ const InternalOrderDetailView: Component = () => {
   // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar.
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Lines a send's reasons-backstop refusal named (AC-R3): their Reason cells
+  // flag until the next send, or until a line edit refetches the table.
+  const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
+    new Set()
+  );
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
@@ -629,6 +634,28 @@ const InternalOrderDetailView: Component = () => {
           {
             c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
             header: () => t('label.reason'),
+            // A send's reasons backstop flags every offending line's Reason
+            // cell (AC-R3): a red alert beside the (usually empty) reason text.
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'align-items': 'center',
+                    gap: 'var(--space-1)',
+                  }}
+                >
+                  <Show when={reasonFlaggedIds().has(line.id)}>
+                    <AlertTriangleIcon
+                      style={{ color: 'var(--error-main)' }}
+                      aria-label={t('error.reasons-not-provided-program-requisition')}
+                    />
+                  </Show>
+                  {line.reason?.reason ?? ''}
+                </span>
+              );
+            },
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -795,6 +822,9 @@ const InternalOrderDetailView: Component = () => {
                     editable={editable()}
                     requiresAuthorisation={requiresAuth()}
                     onSent={onSent}
+                    onReasonsNotProvided={ids =>
+                      setReasonFlaggedIds(new Set(ids))
+                    }
                   />
                 }
               >
@@ -941,7 +971,12 @@ const InternalOrderDetailView: Component = () => {
               }
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
-              onCommitted={() => void refetch()}
+              onCommitted={() => {
+                // A line edit may have supplied a missing reason — drop the
+                // send-backstop flags so they don't linger stale (AC-R3).
+                setReasonFlaggedIds(new Set<string>());
+                void refetch();
+              }}
             />
 
             {/* Add from master list (S7): the picker, then an are-you-sure
