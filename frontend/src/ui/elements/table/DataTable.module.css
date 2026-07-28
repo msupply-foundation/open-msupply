@@ -474,9 +474,12 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   background: var(--bg-toolbar);
 }
 
-.th[data-pinned='left'],
-.td[data-pinned='left'],
-.selectCell[data-pinned] {
+/* Pinned DATA columns keep a 1px seam on their inner edge. The leading
+   SELECTION column is excluded (:not(.selectCell) on the header, and the body
+   select cell carries no .td) — the standard's table example shows neither a
+   shadow nor a line beside the checkbox column (#617). */
+.th[data-pinned='left']:not(.selectCell),
+.td[data-pinned='left'] {
   box-shadow: inset -1px 0 0 0 var(--color-divider);
 }
 
@@ -495,12 +498,11 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 
 /* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the
    frozen leading column reads as one cohesive band with the header above it
-   (matching the header background — as requested). NO shadow beside the column
-   (dropped at Carl's ask, 2026-07-28): the opaque band plus the 1px divider
-   seam from the shared pinned-left rule above carry the freeze on their own.
-   More specific than the base pinned rule + placed after it
-   (no-descending-specificity). No z-index change — the header still wins on
-   vertical scroll. */
+   (matching the header background — as requested). Its inline-END edge is bare
+   — no drop shadow, no divider seam (#617; the standard's table example shows
+   neither, and the seam rule above skips it). The opaque band is what keeps
+   the scrolling content from showing through. No z-index change — the header
+   still wins on vertical scroll. */
 .selectCell[data-pinned] {
   background: var(--bg-toolbar);
 }
