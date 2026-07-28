@@ -592,7 +592,7 @@ const PrescriptionDetailView: Component = () => {
                 empty={
                   <Show when={!disabled()}>
                     <Button
-                      icon={<PlusCircleIcon />}
+                      variant="ghost"
                       data-testid="nothing-here-create-button"
                       onClick={() => setEditState({})}
                     >
