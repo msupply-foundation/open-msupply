@@ -77,7 +77,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('re-login requirement persists across a reload (D69, AC-AU9)', () => {
+describe('re-login requirement persists across a reload (D69, OMS-REG-LGN-01.16/.17)', () => {
   it('an unexpected logout persists the requirement so a reload re-arms it', async () => {
     // Tab 1: signed in, then a call comes back unauthenticated.
     const auth = await freshModule();
