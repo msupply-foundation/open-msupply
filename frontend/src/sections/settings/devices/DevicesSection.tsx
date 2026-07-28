@@ -59,10 +59,6 @@ export const DevicesSection = () => {
     const result = await graphqlFetch(LabelPrinterSettings, {});
     return result.kind === 'success' ? result.data.labelPrinterSettings : null;
   });
-  const stored = () =>
-    storedData.state === 'ready' || storedData.state === 'refreshing'
-      ? storedData.latest
-      : null;
 
   const [form, setForm] = createSignal<LabelPrinterForm>(
     defaultLabelPrinterForm()
@@ -75,10 +71,14 @@ export const DevicesSection = () => {
   }>();
 
   // Seed the form from the stored settings once they arrive, unless the user
-  // has started editing.
+  // has started editing. Gate on 'ready' (not 'refreshing'): our own Save calls
+  // refetch(), and during 'refreshing' stored() still returns the stale
+  // .latest — re-seeding from it would snap just-saved fields back to their old
+  // values (kdd/solid-reactivity-pitfalls). Re-seed only once fresh data lands.
   let touched = false;
   createEffect(() => {
-    const settings = stored();
+    const settings =
+      storedData.state === 'ready' ? storedData.latest : undefined;
     if (settings && !touched)
       setForm({
         address: settings.address,

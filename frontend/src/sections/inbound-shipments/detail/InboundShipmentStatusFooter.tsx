@@ -26,10 +26,16 @@ import {
 export interface InboundShipmentStatusFooterProps {
   storeId: string;
   node: InboundInfoFragment;
-  /** True once Verified — no status change (and Hold is disabled). */
+  /**
+   * True once Verified — no status change (and Hold is disabled). Gated on
+   * `canChangeStatus`, NOT the shipment's edit gate: a Shipped shipment is
+   * read-only for edits but must still advance to Delivered.
+   */
   disabled: boolean;
   onSetHold: (hold: boolean) => void;
-  /** A status advance committed — the view merges the returned node in place. */
+  /**
+   * A status advance committed — the view merges the returned node in place.
+   */
   onAdvanced: (node: InboundInfoFragment) => void;
 }
 

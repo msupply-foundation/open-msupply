@@ -16,10 +16,13 @@ fragment InboundInfo on InvoiceNode {
   otherPartyName
   # A non-null `store` marks a supplier that is itself another store in the
   # system (internal) vs an external supplier — the kind-icon signal (spec S1
-  # column 1), matching the NameSearch truck-vs-building convention.
+  # column 1), matching the NameSearch truck-vs-building convention. Its
+  # `isDisabled` is an editability input: the server refuses every edit to a
+  # shipment whose supplier store has been disabled (rules → editability).
   otherParty(storeId: $storeId) {
     store {
       id
+      isDisabled
     }
   }
   status
@@ -30,6 +33,7 @@ fragment InboundInfo on InvoiceNode {
   transportReference
   colour
   createdDatetime
+  pickedDatetime
   shippedDatetime
   deliveredDatetime
   receivedDatetime
@@ -199,6 +203,40 @@ query inboundShipment(
     __typename
     ... on InvoiceNode {
       ...InboundInfo
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The side panel's "Copy to clipboard" (contract § copy to clipboard): the
+# WHOLE shipment — header + every line, stock-in and service alike — in one
+# fetch, written to the clipboard as indented JSON. The detail's own lines read
+# is server-paged and drops SERVICE rows, so this reads the invoice.lines
+# connector directly (it takes no page/filter/sort arguments and so returns the
+# whole line set). Reuses the InboundInfo / InboundLine fragments so the copied
+# JSON mirrors the app's own shape. `type` is the same permission-scope selector
+# the detail read passes; NodeError is promoted to the global error modal by the
+# caller.
+query fullInboundShipment(
+  $storeId: String!
+  $id: String!
+  $type: InvoiceTypeInput
+) {
+  invoice(storeId: $storeId, id: $id, type: $type) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+      lines {
+        totalCount
+        nodes {
+          ...InboundLine
+        }
+      }
     }
     ... on NodeError {
       error {
