@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { kindOf, statusDatetime, statusFlow } from './inboundShipmentStatus';
+import {
+  canChangeStatus,
+  isEditable,
+  kindOf,
+  statusDatetime,
+  statusFlow,
+} from './inboundShipmentStatus';
 
 // The inbound-shipment status track's per-step dates
 // (spec/inbound-shipments/rules.md § status lifecycle, § transfers;
@@ -15,6 +21,48 @@ const datetimes = (over: Partial<Datetimes> = {}): Datetimes => ({
   receivedDatetime: null,
   verifiedDatetime: null,
   ...over,
+});
+
+describe('isEditable', () => {
+  it('takes edits only at New, Delivered and Received', () => {
+    expect(isEditable('NEW')).toBe(true);
+    expect(isEditable('DELIVERED')).toBe(true);
+    expect(isEditable('RECEIVED')).toBe(true);
+  });
+
+  // Picked is the transfer processor's window and Verified is terminal — both
+  // also rejected by the server's own check_invoice_is_editable.
+  it('is read-only at Picked and Verified', () => {
+    expect(isEditable('PICKED')).toBe(false);
+    expect(isEditable('VERIFIED')).toBe(false);
+  });
+
+  // The server accepts edits here; we do not (rules.md § Editability).
+  it('is read-only at Shipped, where the server is looser', () => {
+    expect(isEditable('SHIPPED')).toBe(false);
+  });
+
+  it('treats an unknown status as read-only', () => {
+    expect(isEditable('')).toBe(false);
+    expect(isEditable('CANCELLED')).toBe(false);
+  });
+});
+
+describe('canChangeStatus', () => {
+  // The gate that keeps the Shipped edit lock from stranding a shipment: the
+  // advance to Delivered has to remain reachable.
+  it('still offers an advance at Shipped, where edits are locked', () => {
+    expect(isEditable('SHIPPED')).toBe(false);
+    expect(canChangeStatus('SHIPPED')).toBe(true);
+  });
+
+  it('closes only at Verified', () => {
+    expect(canChangeStatus('NEW')).toBe(true);
+    expect(canChangeStatus('PICKED')).toBe(true);
+    expect(canChangeStatus('DELIVERED')).toBe(true);
+    expect(canChangeStatus('RECEIVED')).toBe(true);
+    expect(canChangeStatus('VERIFIED')).toBe(false);
+  });
 });
 
 describe('statusDatetime (REPL-03.23 — a date per reached step)', () => {
