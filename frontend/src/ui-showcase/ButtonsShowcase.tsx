@@ -13,6 +13,7 @@ import {
   DialogSaveButton,
   SaveAndNextButton,
 } from '../ui/elements/buttons/StandardButtons';
+import { CopyToClipboardButton } from '../ui/elements/buttons/CopyToClipboardButton';
 import {
   PlusCircleIcon,
   DownloadIcon,
@@ -46,6 +47,11 @@ export const buttonsMetadata: PageMetadata = {
       id: 'buttons-standard',
       title: 'Standard buttons',
       searchTerms: ['ok', 'save', 'cancel', 'preset', 'pre-composed'],
+    },
+    {
+      id: 'buttons-copy',
+      title: 'Copy to clipboard',
+      searchTerms: ['copy', 'clipboard', 'json', 'record action'],
     },
     {
       id: 'buttons-variants',
@@ -130,6 +136,42 @@ export const ButtonsShowcase = () => {
                 </>
               )}
             </Show>
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="buttons-copy"
+          title="Copy to clipboard — the record action"
+        >
+          <Lead>
+            The one implementation of ui-standards › controls § copy to
+            clipboard, used by every detail side panel that offers the action.
+            You pass <code>load</code> — a supplier of the{' '}
+            <strong>whole record</strong> (a node the screen already holds, or
+            its own unpaginated fetch where the row table is server-paged) — and
+            the button owns the rest: indented JSON, the clipboard write, and the
+            outcome reported <strong>in place</strong> (the label and icon swap
+            to <em>Copied</em> or <em>Copy failed</em> for a moment, announced
+            via <code>aria-live</code>) — never a toast. Copy is a{' '}
+            <strong>read</strong>, so it takes no status or permission gate.
+          </Lead>
+          <Row>
+            <CopyToClipboardButton
+              load={() => ({
+                invoiceNumber: 12,
+                status: 'NEW',
+                lines: [{ itemName: 'Amoxicillin 500mg', numberOfPacks: 4 }],
+              })}
+            />
+            {/* A supplier that refuses, to show the failure report in place. */}
+            <CopyToClipboardButton
+              load={() => Promise.reject(new Error('demo failure'))}
+            />
+          </Row>
+          <Note>
+            The second button's supplier throws — the copy reports{' '}
+            <em>Copy failed</em> in the same slot rather than silently doing
+            nothing.
           </Note>
         </DashboardCard>
 
