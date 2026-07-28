@@ -493,50 +493,16 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
 }
 
-/* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the frozen
-   leading column reads as one cohesive band with the header above it (matching the header
-   background — as requested), plus a soft drop shadow onto the scrolling content to its
-   inline-END (the "this column is pinned" depth cue, visible as the body scrolls under it). The
-   shadow must fall to the RIGHT, not the left — the scroll container is overflow:auto, so a
-   leftward shadow past the table's edge would be clipped away. More specific than the base pinned
-   rule + placed after it (no-descending-specificity). No z-index change — the header still wins on
+/* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the
+   frozen leading column reads as one cohesive band with the header above it
+   (matching the header background — as requested). NO shadow beside the column
+   (dropped at Carl's ask, 2026-07-28): the opaque band plus the 1px divider
+   seam from the shared pinned-left rule above carry the freeze on their own.
+   More specific than the base pinned rule + placed after it
+   (no-descending-specificity). No z-index change — the header still wins on
    vertical scroll. */
 .selectCell[data-pinned] {
   background: var(--bg-toolbar);
-  /* Just the 1px divider seam here; the soft freeze shadow is the ::after
-     strip below. A per-cell drop shadow (the old second layer) blurs at every
-     cell's top/bottom edge, so the column reads as a stack of lumps fading in
-     and out at each row seam instead of one shadow. */
-  box-shadow: inset -1px 0 0 0 var(--color-divider);
-}
-
-/* The freeze depth cue as ONE continuous shadow down the whole frozen column:
-   a full-row-height gradient strip just past the cell's edge. It's uniform
-   vertically, so each row's strip abuts the next into one unbroken shadow — no
-   per-cell blur, no lumps. Physical left/right (not logical): the leading
-   column is pinned to the PHYSICAL-left edge in both directions (see
-   leadingPinnedStyle), so the shadow always falls physically right into the
-   scrolling content — matching the box-shadow it replaces.
-
-   top/bottom:0 spans the padding box, so the strip stops AT the collapsed 1px
-   row divider rather than covering it — the divider sits in the 1px gap
-   between adjacent rows' strips and shows through at its own light grey. (A
-   -1px bleed over the divider would composite grey shadow over grey divider
-   and read too dark; the hard-edged strips keep the shadow continuous either
-   way, so the gap costs no lumps.) */
-.selectCell[data-pinned]::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 100%;
-  width: 0.5rem;
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--gray-main) 35%, transparent),
-    transparent
-  );
-  pointer-events: none;
 }
 
 /* Opaque hover variants for the sticky cells — the translucent row wash
