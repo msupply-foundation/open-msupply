@@ -201,12 +201,12 @@ Side panel content is plain semantic markup: field rows are a `<dl>` of `dt`/`dd
 
 ## Header field cluster
 
-A detail page's **header fields** — a document's editable + read-only meta (supplier, references, dates, status, settings toggles) — go in a **`<HeaderToolbar>`**, the standard for this row; never hand-roll a `<Toolbar>` with your own FormRow/flex. `HeaderToolbar` enforces the field-row layout so every detail header reads the same. (The generic `<Toolbar>` stays for non-field toolbar content, e.g. a list `<FilterBar>`.)
+A detail page's **header fields** — a document's editable + read-only meta (supplier, references, dates, status, settings toggles) — go in a **`<HeaderToolbar>`**, the standard for this row; never hand-roll a `<Toolbar>` with your own grid/flex. `HeaderToolbar` enforces the [header standard](https://msupply-foundation.github.io/ux-testing/header-standard.html)'s field grid so every detail header reads the same. (The generic `<Toolbar>` stays for non-field toolbar content, e.g. a list `<FilterBar>`.)
 
 ```tsx
 <HeaderToolbar
   alert={
-    <Alert severity="info" compact>
+    <Alert severity="info">
       Created manually; status won't update automatically.
     </Alert>
   }
@@ -220,9 +220,12 @@ A detail page's **header fields** — a document's editable + read-only meta (su
 </HeaderToolbar>
 ```
 
-- **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and **`width="full"`** so it fills its share.
-- **The three field kinds:** an editable input; a conditionally-locked **disabled** input (a field editable only in some document states); and a never-editable fact as a read-only **`<LabelledValue>`** (`variant="field"`, `size="small"`).
-- The optional **`alert`** prop takes a compact **`<Alert>`** — a content-hugging chip pinned to the bottom baseline, so it rides the row when there's room and drops to its own line when not, while the field labels line up along the top. A non-Alert trailing chip (e.g. a `<ToggleSwitch>`) opts into the same bottom-hug with an inline `flex: 0 1 auto; align-self: flex-end`.
+- **Fields** are cells of a CSS **grid**. By default each takes one track at `minFieldWidth` (15rem) and they pack from the inline start — so a header with two or three fields keeps them field-sized instead of stretching each to half or a third of the strip; tracks only grow once there are enough fields to fill the row. Give each the **`small`** size and **`width="full"`** so it fills its track. Cells are top-aligned, so every field label lands on one line.
+- **`columns`** picks the standard's other per-screen templates when the default is wrong: `'equal'` (every field shares the full width), `'content'` (each only as wide as its data), or any `grid-template-columns` string (e.g. `'2fr 1fr'` when one field needs the width and the rest don't).
+- A grid rather than a wrapping flex row for one reason: the columns still **line up across rows** once the cluster wraps.
+- **The three field kinds:** an editable input; a conditionally-locked **disabled** input (a field editable only in some document states); and a never-editable fact as a read-only **`<LabelledValue>`** (`variant="field"`, `size="small"`), which takes the control's footprint inside the cluster so its bare value drops to the inputs' text line instead of riding up on their labels.
+- The optional **`alert`** prop takes the record's standing-context **`<Alert>`** and gives it the line **below** the fields (pass a fragment for several). It never shares the field row: flexbox would then decide from the message's _length_ whether the chip wrapped or the grid gave up columns — and it always picks the latter, so a wordy message folds four fields into 2×2 and the worst layout varies by locale.
+- A **standing explanation** for a field (why it's disabled) belongs on its label as an `<InfoTooltip>` via the input's `labelInfo` slot, not as `helperText` — a two- or three-line helper paragraph drags the whole strip taller than the fields it explains. Keep `helperText` for text that must always be read.
 - Live demo: `#/showcase/header` (two field mixes).
 
 ## The host (until routing lands)
