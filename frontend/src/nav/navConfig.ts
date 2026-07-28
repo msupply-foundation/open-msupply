@@ -176,3 +176,16 @@ export const navDestinations: NavItem[] = navConfig.flatMap(item => [
   item,
   ...(item.children ?? []),
 ]);
+
+// The trail from the top-level section down to a destination, root first — the
+// breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,
+// Stocktakes]). A top-level destination is its own single-crumb trail; an
+// unknown path has none.
+export const navTrail = (path: string): NavItem[] => {
+  for (const section of navConfig) {
+    if (section.path === path) return [section];
+    const child = section.children?.find(entry => entry.path === path);
+    if (child) return [section, child];
+  }
+  return [];
+};

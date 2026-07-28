@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createSignal, onMount, Show, type Component } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../../../../intl';
@@ -187,7 +188,7 @@ const StatusDot = (props: { colour: string }) => (
 );
 
 const emptyBatch = (): DraftBatch => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   isNew: true,
   deleted: false,
   numberOfPacks: 0,
@@ -546,7 +547,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       })
     );
   const duplicateBatch = (id: string) => {
-    const newId = crypto.randomUUID();
+    const newId = generateUUID();
     setBatches(
       produce(d => {
         const index = d.findIndex(b => b.id === id);

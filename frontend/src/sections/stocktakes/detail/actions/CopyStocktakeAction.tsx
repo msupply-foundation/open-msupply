@@ -1,6 +1,6 @@
 import { type Component } from 'solid-js';
-import { graphqlFetch } from '../../../../api/graphql';
-import { CopyToClipboardButton } from '../../../../ui/elements/buttons/CopyToClipboardButton';
+import { graphqlFetch } from '@/api/graphql';
+import { CopyToClipboardButton } from '@/ui/elements/buttons/CopyToClipboardButton';
 import { FullStocktake } from '../lines/stocktakeDetail.generated';
 
 export interface CopyStocktakeActionProps {

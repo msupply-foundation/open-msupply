@@ -1,3 +1,4 @@
+import { generateUUID } from '../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
@@ -151,7 +152,7 @@ const ServiceChargesContent = (
     setDraft(
       produce(charges =>
         charges.push({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           isNew: true,
           deleted: false,
           itemId: item.id,
