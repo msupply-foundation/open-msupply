@@ -23,6 +23,12 @@
   max-width: 100%;
 }
 
+/* Label + its labelInfo affordance on one line (mirrors TextField.labelRow). */
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
 .label {
   /* Shared field-label token — see --field-label-* in tokens.css. */
   font-size: var(--field-label-font-size);

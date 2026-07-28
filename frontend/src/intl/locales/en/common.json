@@ -2596,6 +2596,7 @@
   "messages.device": "Device:",
   "messages.discard-changes": "You have unsaved changes. Are you sure you want to discard them?",
   "messages.do-not-use-variant": "Don't use a variant as a template",
+  "messages.dob-estimated-from-age": "Estimated from the age entered — the date of birth is set to 1 January of that year. Enter an exact date of birth to replace it.",
   "messages.download-first-warning": "Please export your current translations first to ensure you don't lose them.",
   "messages.duplicate-lines-skipped_one": "1 line was skipped because its item is no longer in the catalogue.",
   "messages.duplicate-lines-skipped_other": "{{count}} lines were skipped because their items are no longer in the catalogue.",

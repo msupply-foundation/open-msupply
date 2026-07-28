@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ageFromDob,
+  dobFromAge,
   draftEquals,
   emptyDraft,
   isDraftValid,
@@ -45,6 +46,37 @@ describe('ageFromDob (AC-M3 — age derived from date of birth)', () => {
     vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
     expect(ageFromDob('2030-01-01')).toBeUndefined();
   });
+});
+
+describe('dobFromAge (an age entered in place of a date of birth)', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('back-fills the start of the birth year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
+    expect(dobFromAge(43)).toBe('1983-01-01');
+  });
+
+  it('treats a newborn as the start of the current year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
+    expect(dobFromAge(0)).toBe('2026-01-01');
+  });
+
+  // The form drives both directions off the single dateOfBirth field, so a
+  // typed age must survive the trip back out as the SAME number — otherwise the
+  // field fights the typist. Checked across the whole offered range, at both
+  // ends of the year (Jan 1 is the tightest case: no slack from days elapsed).
+  it.each(['2026-01-01T00:00:00Z', '2026-12-31T23:00:00Z'])(
+    'round-trips every age 0–150 at %s',
+    now => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(now));
+      for (let age = 0; age <= 150; age++) {
+        expect(ageFromDob(dobFromAge(age))).toBe(age);
+      }
+    }
+  );
 });
 
 describe('isDraftValid (AC-C3 — built-in form requires code + names)', () => {
