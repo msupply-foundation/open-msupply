@@ -44,6 +44,13 @@ export interface SelectReportModalProps {
   dataId: string;
   /** The host table's current sort, passed through to generation. */
   sort?: ReportSort;
+  /**
+   * Host-seeded generation arguments, merged into every generation beneath the
+   * report form's own values (a form arg wins on key collision). Lets a record
+   * screen seed context its templates need but no form collects — e.g. an
+   * indicator internal order's program / period / customer identity (AC-PR4).
+   */
+  seedArgs?: Record<string, unknown>;
   onClose: () => void;
 }
 
@@ -129,7 +136,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
       reportId: report.id,
       dataId: props.dataId,
       format,
-      args: { ...timezoneArgument(), ...args },
+      args: { ...timezoneArgument(), ...props.seedArgs, ...args },
       sort: props.sort,
     });
     await deliver(result, format);

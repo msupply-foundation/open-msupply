@@ -9,9 +9,12 @@ import { SelectReportModal } from '../../../../domain/reports';
 // the reports vertical), bound to the INTERNAL_ORDER context and this order's
 // id. Printing is a read, offered on every status — no editability gate
 // (AC-PR1). The line table's display sort never reaches generation, so no sort
-// is passed (contract › printing).
+// is passed (contract › printing). On an indicator program order the host
+// seeds the program / period / customer identity so indicator report templates
+// can locate the program data (AC-PR4); undefined on any other order.
 export const ExportPrintInternalOrderAction: Component<{
   orderId: string;
+  seedArgs?: Record<string, unknown>;
 }> = props => {
   const [open, setOpen] = createSignal(false);
   return (
@@ -28,6 +31,7 @@ export const ExportPrintInternalOrderAction: Component<{
         <SelectReportModal
           context="INTERNAL_ORDER"
           dataId={props.orderId}
+          seedArgs={props.seedArgs}
           onClose={() => setOpen(false)}
         />
       </Show>
