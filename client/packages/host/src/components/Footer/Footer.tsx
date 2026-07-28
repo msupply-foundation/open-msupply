@@ -43,6 +43,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
   const isExtraSmallScreen = useIsExtraSmallScreen();
   return (
     <Box
+      data-testid={testId}
       onClick={onClick}
       data-testid={testId}
       sx={{
@@ -113,6 +114,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
           icon={<HomeIcon sx={iconStyles} />}
           text={store?.name}
           tooltip={t('store-details', { ...store })}
+          testId="store-selector-trigger"
         />
       </StoreSelector>
       <PaddedCell
