@@ -78707,7 +78707,7 @@
   },
   {
    "cursor": 2137,
-   "record_id": "e2e_procurement_store_name",
+   "record_id": "e2e_feature_store_name",
    "received_datetime": "2026-07-08T22:09:59.722998",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78718,8 +78718,8 @@
    "data": {
     "address1": null,
     "address2": null,
-    "charge_code": "PROC",
-    "code": "PROC",
+    "charge_code": "FEAT",
+    "code": "FEAT",
     "comment": null,
     "country": null,
     "created_datetime": null,
@@ -78734,7 +78734,7 @@
     "gender": null,
     "hsh_code": null,
     "hsh_name": null,
-    "id": "e2e_procurement_store_name",
+    "id": "e2e_feature_store_name",
     "is_customer": true,
     "is_deceased": false,
     "is_donor": false,
@@ -78742,7 +78742,7 @@
     "is_supplier": true,
     "last_name": null,
     "margin": 0.0,
-    "name": "Procurement Test Store",
+    "name": "Feature Test Store",
     "national_health_number": null,
     "next_of_kin_id": null,
     "next_of_kin_name": null,
@@ -78763,7 +78763,7 @@
   },
   {
    "cursor": 2138,
-   "record_id": "e2e_procurement_store",
+   "record_id": "e2e_feature_store",
    "received_datetime": "2026-07-08T22:09:59.94637",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78772,11 +78772,11 @@
    "table_name": "store",
    "action": "Upsert",
    "data": {
-    "code": "PROC",
+    "code": "FEAT",
     "created_date": "2018-05-08",
-    "id": "e2e_procurement_store",
+    "id": "e2e_feature_store",
     "is_disabled": false,
-    "name_id": "e2e_procurement_store_name",
+    "name_id": "e2e_feature_store_name",
     "site_id": 900,
     "store_mode": "Store"
    },
@@ -78791,7 +78791,7 @@
   },
   {
    "cursor": 2139,
-   "record_id": "e2e_usj_admin_procurement",
+   "record_id": "e2e_usj_admin_feature",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78800,9 +78800,9 @@
    "table_name": "user_store_join",
    "action": "Upsert",
    "data": {
-    "id": "e2e_usj_admin_procurement",
+    "id": "e2e_usj_admin_feature",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "is_default": false
    },
    "sync_version": "V7",
@@ -78816,7 +78816,7 @@
   },
   {
    "cursor": 2140,
-   "record_id": "e2e_perm_admin_proc_ServerAdmin",
+   "record_id": "e2e_perm_admin_feat_ServerAdmin",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78825,9 +78825,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_ServerAdmin",
+    "id": "e2e_perm_admin_feat_ServerAdmin",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "ServerAdmin",
     "context_id": null
    },
@@ -78842,7 +78842,7 @@
   },
   {
    "cursor": 2141,
-   "record_id": "e2e_perm_admin_proc_StoreAccess",
+   "record_id": "e2e_perm_admin_feat_StoreAccess",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78851,9 +78851,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_StoreAccess",
+    "id": "e2e_perm_admin_feat_StoreAccess",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "StoreAccess",
     "context_id": null
    },
@@ -78868,7 +78868,7 @@
   },
   {
    "cursor": 2142,
-   "record_id": "e2e_perm_admin_proc_LocationMutate",
+   "record_id": "e2e_perm_admin_feat_LocationMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78877,9 +78877,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_LocationMutate",
+    "id": "e2e_perm_admin_feat_LocationMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "LocationMutate",
     "context_id": null
    },
@@ -78894,7 +78894,7 @@
   },
   {
    "cursor": 2143,
-   "record_id": "e2e_perm_admin_proc_SensorMutate",
+   "record_id": "e2e_perm_admin_feat_SensorMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78903,9 +78903,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_SensorMutate",
+    "id": "e2e_perm_admin_feat_SensorMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "SensorMutate",
     "context_id": null
    },
@@ -78920,7 +78920,7 @@
   },
   {
    "cursor": 2144,
-   "record_id": "e2e_perm_admin_proc_SensorQuery",
+   "record_id": "e2e_perm_admin_feat_SensorQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78929,9 +78929,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_SensorQuery",
+    "id": "e2e_perm_admin_feat_SensorQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "SensorQuery",
     "context_id": null
    },
@@ -78946,7 +78946,7 @@
   },
   {
    "cursor": 2145,
-   "record_id": "e2e_perm_admin_proc_TemperatureBreachQuery",
+   "record_id": "e2e_perm_admin_feat_TemperatureBreachQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78955,9 +78955,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_TemperatureBreachQuery",
+    "id": "e2e_perm_admin_feat_TemperatureBreachQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "TemperatureBreachQuery",
     "context_id": null
    },
@@ -78972,7 +78972,7 @@
   },
   {
    "cursor": 2146,
-   "record_id": "e2e_perm_admin_proc_TemperatureLogQuery",
+   "record_id": "e2e_perm_admin_feat_TemperatureLogQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -78981,9 +78981,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_TemperatureLogQuery",
+    "id": "e2e_perm_admin_feat_TemperatureLogQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "TemperatureLogQuery",
     "context_id": null
    },
@@ -78998,7 +78998,7 @@
   },
   {
    "cursor": 2147,
-   "record_id": "e2e_perm_admin_proc_StockLineQuery",
+   "record_id": "e2e_perm_admin_feat_StockLineQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79007,9 +79007,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_StockLineQuery",
+    "id": "e2e_perm_admin_feat_StockLineQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "StockLineQuery",
     "context_id": null
    },
@@ -79024,7 +79024,7 @@
   },
   {
    "cursor": 2148,
-   "record_id": "e2e_perm_admin_proc_StockLineMutate",
+   "record_id": "e2e_perm_admin_feat_StockLineMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79033,9 +79033,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_StockLineMutate",
+    "id": "e2e_perm_admin_feat_StockLineMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "StockLineMutate",
     "context_id": null
    },
@@ -79050,7 +79050,7 @@
   },
   {
    "cursor": 2149,
-   "record_id": "e2e_perm_admin_proc_CreateRepack",
+   "record_id": "e2e_perm_admin_feat_CreateRepack",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79059,9 +79059,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_CreateRepack",
+    "id": "e2e_perm_admin_feat_CreateRepack",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "CreateRepack",
     "context_id": null
    },
@@ -79076,7 +79076,7 @@
   },
   {
    "cursor": 2150,
-   "record_id": "e2e_perm_admin_proc_StocktakeQuery",
+   "record_id": "e2e_perm_admin_feat_StocktakeQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79085,9 +79085,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_StocktakeQuery",
+    "id": "e2e_perm_admin_feat_StocktakeQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "StocktakeQuery",
     "context_id": null
    },
@@ -79102,7 +79102,7 @@
   },
   {
    "cursor": 2151,
-   "record_id": "e2e_perm_admin_proc_StocktakeMutate",
+   "record_id": "e2e_perm_admin_feat_StocktakeMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79111,9 +79111,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_StocktakeMutate",
+    "id": "e2e_perm_admin_feat_StocktakeMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "StocktakeMutate",
     "context_id": null
    },
@@ -79128,7 +79128,7 @@
   },
   {
    "cursor": 2152,
-   "record_id": "e2e_perm_admin_proc_InventoryAdjustmentMutate",
+   "record_id": "e2e_perm_admin_feat_InventoryAdjustmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79137,9 +79137,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InventoryAdjustmentMutate",
+    "id": "e2e_perm_admin_feat_InventoryAdjustmentMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InventoryAdjustmentMutate",
     "context_id": null
    },
@@ -79154,7 +79154,7 @@
   },
   {
    "cursor": 2153,
-   "record_id": "e2e_perm_admin_proc_RequisitionQuery",
+   "record_id": "e2e_perm_admin_feat_RequisitionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79163,9 +79163,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_RequisitionQuery",
+    "id": "e2e_perm_admin_feat_RequisitionQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "RequisitionQuery",
     "context_id": null
    },
@@ -79180,7 +79180,7 @@
   },
   {
    "cursor": 2154,
-   "record_id": "e2e_perm_admin_proc_RequisitionMutate",
+   "record_id": "e2e_perm_admin_feat_RequisitionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79189,9 +79189,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_RequisitionMutate",
+    "id": "e2e_perm_admin_feat_RequisitionMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "RequisitionMutate",
     "context_id": null
    },
@@ -79206,7 +79206,7 @@
   },
   {
    "cursor": 2155,
-   "record_id": "e2e_perm_admin_proc_RequisitionSend",
+   "record_id": "e2e_perm_admin_feat_RequisitionSend",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79215,9 +79215,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_RequisitionSend",
+    "id": "e2e_perm_admin_feat_RequisitionSend",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "RequisitionSend",
     "context_id": null
    },
@@ -79232,7 +79232,7 @@
   },
   {
    "cursor": 2156,
-   "record_id": "e2e_perm_admin_proc_RequisitionCreateOutboundShipment",
+   "record_id": "e2e_perm_admin_feat_RequisitionCreateOutboundShipment",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79241,9 +79241,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_RequisitionCreateOutboundShipment",
+    "id": "e2e_perm_admin_feat_RequisitionCreateOutboundShipment",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "RequisitionCreateOutboundShipment",
     "context_id": null
    },
@@ -79258,7 +79258,7 @@
   },
   {
    "cursor": 2157,
-   "record_id": "e2e_perm_admin_proc_RnrFormQuery",
+   "record_id": "e2e_perm_admin_feat_RnrFormQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79267,9 +79267,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_RnrFormQuery",
+    "id": "e2e_perm_admin_feat_RnrFormQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "RnrFormQuery",
     "context_id": null
    },
@@ -79284,7 +79284,7 @@
   },
   {
    "cursor": 2158,
-   "record_id": "e2e_perm_admin_proc_RnrFormMutate",
+   "record_id": "e2e_perm_admin_feat_RnrFormMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79293,9 +79293,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_RnrFormMutate",
+    "id": "e2e_perm_admin_feat_RnrFormMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "RnrFormMutate",
     "context_id": null
    },
@@ -79310,7 +79310,7 @@
   },
   {
    "cursor": 2159,
-   "record_id": "e2e_perm_admin_proc_OutboundShipmentQuery",
+   "record_id": "e2e_perm_admin_feat_OutboundShipmentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79319,9 +79319,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_OutboundShipmentQuery",
+    "id": "e2e_perm_admin_feat_OutboundShipmentQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "OutboundShipmentQuery",
     "context_id": null
    },
@@ -79336,7 +79336,7 @@
   },
   {
    "cursor": 2160,
-   "record_id": "e2e_perm_admin_proc_OutboundShipmentMutate",
+   "record_id": "e2e_perm_admin_feat_OutboundShipmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79345,9 +79345,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_OutboundShipmentMutate",
+    "id": "e2e_perm_admin_feat_OutboundShipmentMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "OutboundShipmentMutate",
     "context_id": null
    },
@@ -79362,7 +79362,7 @@
   },
   {
    "cursor": 2161,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentQuery",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79371,9 +79371,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentQuery",
+    "id": "e2e_perm_admin_feat_InboundShipmentQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentQuery",
     "context_id": null
    },
@@ -79388,7 +79388,7 @@
   },
   {
    "cursor": 2162,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentMutate",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79397,9 +79397,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentMutate",
+    "id": "e2e_perm_admin_feat_InboundShipmentMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentMutate",
     "context_id": null
    },
@@ -79414,7 +79414,7 @@
   },
   {
    "cursor": 2163,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentVerify",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentVerify",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79423,9 +79423,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentVerify",
+    "id": "e2e_perm_admin_feat_InboundShipmentVerify",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentVerify",
     "context_id": null
    },
@@ -79440,7 +79440,7 @@
   },
   {
    "cursor": 2164,
-   "record_id": "e2e_perm_admin_proc_SupplierReturnQuery",
+   "record_id": "e2e_perm_admin_feat_SupplierReturnQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79449,9 +79449,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_SupplierReturnQuery",
+    "id": "e2e_perm_admin_feat_SupplierReturnQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "SupplierReturnQuery",
     "context_id": null
    },
@@ -79466,7 +79466,7 @@
   },
   {
    "cursor": 2165,
-   "record_id": "e2e_perm_admin_proc_SupplierReturnMutate",
+   "record_id": "e2e_perm_admin_feat_SupplierReturnMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79475,9 +79475,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_SupplierReturnMutate",
+    "id": "e2e_perm_admin_feat_SupplierReturnMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "SupplierReturnMutate",
     "context_id": null
    },
@@ -79492,7 +79492,7 @@
   },
   {
    "cursor": 2166,
-   "record_id": "e2e_perm_admin_proc_CustomerReturnQuery",
+   "record_id": "e2e_perm_admin_feat_CustomerReturnQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79501,9 +79501,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_CustomerReturnQuery",
+    "id": "e2e_perm_admin_feat_CustomerReturnQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "CustomerReturnQuery",
     "context_id": null
    },
@@ -79518,7 +79518,7 @@
   },
   {
    "cursor": 2167,
-   "record_id": "e2e_perm_admin_proc_CustomerReturnMutate",
+   "record_id": "e2e_perm_admin_feat_CustomerReturnMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79527,9 +79527,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_CustomerReturnMutate",
+    "id": "e2e_perm_admin_feat_CustomerReturnMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "CustomerReturnMutate",
     "context_id": null
    },
@@ -79544,7 +79544,7 @@
   },
   {
    "cursor": 2168,
-   "record_id": "e2e_perm_admin_proc_PrescriptionQuery",
+   "record_id": "e2e_perm_admin_feat_PrescriptionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79553,9 +79553,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PrescriptionQuery",
+    "id": "e2e_perm_admin_feat_PrescriptionQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PrescriptionQuery",
     "context_id": null
    },
@@ -79570,7 +79570,7 @@
   },
   {
    "cursor": 2169,
-   "record_id": "e2e_perm_admin_proc_PrescriptionMutate",
+   "record_id": "e2e_perm_admin_feat_PrescriptionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79579,9 +79579,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PrescriptionMutate",
+    "id": "e2e_perm_admin_feat_PrescriptionMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PrescriptionMutate",
     "context_id": null
    },
@@ -79596,7 +79596,7 @@
   },
   {
    "cursor": 2170,
-   "record_id": "e2e_perm_admin_proc_CancelFinalisedInvoices",
+   "record_id": "e2e_perm_admin_feat_CancelFinalisedInvoices",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79605,9 +79605,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_CancelFinalisedInvoices",
+    "id": "e2e_perm_admin_feat_CancelFinalisedInvoices",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "CancelFinalisedInvoices",
     "context_id": null
    },
@@ -79622,7 +79622,7 @@
   },
   {
    "cursor": 2171,
-   "record_id": "e2e_perm_admin_proc_PurchaseOrderQuery",
+   "record_id": "e2e_perm_admin_feat_PurchaseOrderQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79631,9 +79631,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PurchaseOrderQuery",
+    "id": "e2e_perm_admin_feat_PurchaseOrderQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PurchaseOrderQuery",
     "context_id": null
    },
@@ -79648,7 +79648,7 @@
   },
   {
    "cursor": 2172,
-   "record_id": "e2e_perm_admin_proc_PurchaseOrderMutate",
+   "record_id": "e2e_perm_admin_feat_PurchaseOrderMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79657,9 +79657,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PurchaseOrderMutate",
+    "id": "e2e_perm_admin_feat_PurchaseOrderMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PurchaseOrderMutate",
     "context_id": null
    },
@@ -79674,7 +79674,7 @@
   },
   {
    "cursor": 2173,
-   "record_id": "e2e_perm_admin_proc_PurchaseOrderAuthorise",
+   "record_id": "e2e_perm_admin_feat_PurchaseOrderAuthorise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79683,9 +79683,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PurchaseOrderAuthorise",
+    "id": "e2e_perm_admin_feat_PurchaseOrderAuthorise",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PurchaseOrderAuthorise",
     "context_id": null
    },
@@ -79700,7 +79700,7 @@
   },
   {
    "cursor": 2174,
-   "record_id": "e2e_perm_admin_proc_PurchaseOrderFinalise",
+   "record_id": "e2e_perm_admin_feat_PurchaseOrderFinalise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79709,9 +79709,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PurchaseOrderFinalise",
+    "id": "e2e_perm_admin_feat_PurchaseOrderFinalise",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PurchaseOrderFinalise",
     "context_id": null
    },
@@ -79726,7 +79726,7 @@
   },
   {
    "cursor": 2175,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentExternalQuery",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentExternalQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79735,9 +79735,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentExternalQuery",
+    "id": "e2e_perm_admin_feat_InboundShipmentExternalQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentExternalQuery",
     "context_id": null
    },
@@ -79752,7 +79752,7 @@
   },
   {
    "cursor": 2176,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentExternalMutate",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentExternalMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79761,9 +79761,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentExternalMutate",
+    "id": "e2e_perm_admin_feat_InboundShipmentExternalMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentExternalMutate",
     "context_id": null
    },
@@ -79778,7 +79778,7 @@
   },
   {
    "cursor": 2177,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentExternalVerify",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentExternalVerify",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79787,9 +79787,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentExternalVerify",
+    "id": "e2e_perm_admin_feat_InboundShipmentExternalVerify",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentExternalVerify",
     "context_id": null
    },
@@ -79804,7 +79804,7 @@
   },
   {
    "cursor": 2178,
-   "record_id": "e2e_perm_admin_proc_InboundShipmentExternalAuthorise",
+   "record_id": "e2e_perm_admin_feat_InboundShipmentExternalAuthorise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79813,9 +79813,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_InboundShipmentExternalAuthorise",
+    "id": "e2e_perm_admin_feat_InboundShipmentExternalAuthorise",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "InboundShipmentExternalAuthorise",
     "context_id": null
    },
@@ -79830,7 +79830,7 @@
   },
   {
    "cursor": 2179,
-   "record_id": "e2e_perm_admin_proc_Report",
+   "record_id": "e2e_perm_admin_feat_Report",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79839,9 +79839,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_Report",
+    "id": "e2e_perm_admin_feat_Report",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "Report",
     "context_id": null
    },
@@ -79856,7 +79856,7 @@
   },
   {
    "cursor": 2180,
-   "record_id": "e2e_perm_admin_proc_LogQuery",
+   "record_id": "e2e_perm_admin_feat_LogQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79865,9 +79865,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_LogQuery",
+    "id": "e2e_perm_admin_feat_LogQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "LogQuery",
     "context_id": null
    },
@@ -79882,7 +79882,7 @@
   },
   {
    "cursor": 2181,
-   "record_id": "e2e_perm_admin_proc_ItemMutate",
+   "record_id": "e2e_perm_admin_feat_ItemMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79891,9 +79891,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_ItemMutate",
+    "id": "e2e_perm_admin_feat_ItemMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "ItemMutate",
     "context_id": null
    },
@@ -79908,7 +79908,7 @@
   },
   {
    "cursor": 2182,
-   "record_id": "e2e_perm_admin_proc_ItemNamesCodesAndUnitsMutate",
+   "record_id": "e2e_perm_admin_feat_ItemNamesCodesAndUnitsMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79917,9 +79917,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_ItemNamesCodesAndUnitsMutate",
+    "id": "e2e_perm_admin_feat_ItemNamesCodesAndUnitsMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "ItemNamesCodesAndUnitsMutate",
     "context_id": null
    },
@@ -79934,7 +79934,7 @@
   },
   {
    "cursor": 2183,
-   "record_id": "e2e_perm_admin_proc_PatientQuery",
+   "record_id": "e2e_perm_admin_feat_PatientQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79943,9 +79943,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PatientQuery",
+    "id": "e2e_perm_admin_feat_PatientQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PatientQuery",
     "context_id": null
    },
@@ -79960,7 +79960,7 @@
   },
   {
    "cursor": 2184,
-   "record_id": "e2e_perm_admin_proc_PatientMutate",
+   "record_id": "e2e_perm_admin_feat_PatientMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79969,9 +79969,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_PatientMutate",
+    "id": "e2e_perm_admin_feat_PatientMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "PatientMutate",
     "context_id": null
    },
@@ -79986,7 +79986,7 @@
   },
   {
    "cursor": 2185,
-   "record_id": "e2e_perm_admin_proc_DocumentQuery",
+   "record_id": "e2e_perm_admin_feat_DocumentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -79995,9 +79995,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_DocumentQuery",
+    "id": "e2e_perm_admin_feat_DocumentQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "DocumentQuery",
     "context_id": null
    },
@@ -80012,7 +80012,7 @@
   },
   {
    "cursor": 2186,
-   "record_id": "e2e_perm_admin_proc_DocumentMutate",
+   "record_id": "e2e_perm_admin_feat_DocumentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80021,9 +80021,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_DocumentMutate",
+    "id": "e2e_perm_admin_feat_DocumentMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "DocumentMutate",
     "context_id": null
    },
@@ -80038,7 +80038,7 @@
   },
   {
    "cursor": 2187,
-   "record_id": "e2e_perm_admin_proc_ColdChainApi",
+   "record_id": "e2e_perm_admin_feat_ColdChainApi",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80047,9 +80047,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_ColdChainApi",
+    "id": "e2e_perm_admin_feat_ColdChainApi",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "ColdChainApi",
     "context_id": null
    },
@@ -80064,7 +80064,7 @@
   },
   {
    "cursor": 2188,
-   "record_id": "e2e_perm_admin_proc_AssetQuery",
+   "record_id": "e2e_perm_admin_feat_AssetQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80073,9 +80073,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_AssetQuery",
+    "id": "e2e_perm_admin_feat_AssetQuery",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "AssetQuery",
     "context_id": null
    },
@@ -80090,7 +80090,7 @@
   },
   {
    "cursor": 2189,
-   "record_id": "e2e_perm_admin_proc_AssetMutate",
+   "record_id": "e2e_perm_admin_feat_AssetMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80099,9 +80099,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_AssetMutate",
+    "id": "e2e_perm_admin_feat_AssetMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "AssetMutate",
     "context_id": null
    },
@@ -80116,7 +80116,7 @@
   },
   {
    "cursor": 2190,
-   "record_id": "e2e_perm_admin_proc_AssetMutateViaDataMatrix",
+   "record_id": "e2e_perm_admin_feat_AssetMutateViaDataMatrix",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80125,9 +80125,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_AssetMutateViaDataMatrix",
+    "id": "e2e_perm_admin_feat_AssetMutateViaDataMatrix",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "AssetMutateViaDataMatrix",
     "context_id": null
    },
@@ -80142,7 +80142,7 @@
   },
   {
    "cursor": 2191,
-   "record_id": "e2e_perm_admin_proc_AssetCatalogueItemMutate",
+   "record_id": "e2e_perm_admin_feat_AssetCatalogueItemMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80151,9 +80151,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_AssetCatalogueItemMutate",
+    "id": "e2e_perm_admin_feat_AssetCatalogueItemMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "AssetCatalogueItemMutate",
     "context_id": null
    },
@@ -80168,7 +80168,7 @@
   },
   {
    "cursor": 2192,
-   "record_id": "e2e_perm_admin_proc_AssetStatusMutate",
+   "record_id": "e2e_perm_admin_feat_AssetStatusMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80177,9 +80177,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_AssetStatusMutate",
+    "id": "e2e_perm_admin_feat_AssetStatusMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "AssetStatusMutate",
     "context_id": null
    },
@@ -80194,7 +80194,7 @@
   },
   {
    "cursor": 2193,
-   "record_id": "e2e_perm_admin_proc_NamePropertiesMutate",
+   "record_id": "e2e_perm_admin_feat_NamePropertiesMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80203,9 +80203,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_NamePropertiesMutate",
+    "id": "e2e_perm_admin_feat_NamePropertiesMutate",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "NamePropertiesMutate",
     "context_id": null
    },
@@ -80220,7 +80220,7 @@
   },
   {
    "cursor": 2194,
-   "record_id": "e2e_perm_admin_proc_EditCentralData",
+   "record_id": "e2e_perm_admin_feat_EditCentralData",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80229,9 +80229,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_EditCentralData",
+    "id": "e2e_perm_admin_feat_EditCentralData",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "EditCentralData",
     "context_id": null
    },
@@ -80246,7 +80246,7 @@
   },
   {
    "cursor": 2195,
-   "record_id": "e2e_perm_admin_proc_ViewAndEditVvmStatus",
+   "record_id": "e2e_perm_admin_feat_ViewAndEditVvmStatus",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80255,9 +80255,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_ViewAndEditVvmStatus",
+    "id": "e2e_perm_admin_feat_ViewAndEditVvmStatus",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "ViewAndEditVvmStatus",
     "context_id": null
    },
@@ -80272,7 +80272,7 @@
   },
   {
    "cursor": 2196,
-   "record_id": "e2e_perm_admin_proc_MutateClinician",
+   "record_id": "e2e_perm_admin_feat_MutateClinician",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
    "integration_datetime": null,
@@ -80281,9 +80281,9 @@
    "table_name": "user_permission",
    "action": "Upsert",
    "data": {
-    "id": "e2e_perm_admin_proc_MutateClinician",
+    "id": "e2e_perm_admin_feat_MutateClinician",
     "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "store_id": "e2e_procurement_store",
+    "store_id": "e2e_feature_store",
     "permission": "MutateClinician",
     "context_id": null
    },
@@ -80298,8 +80298,48 @@
   },
   {
    "cursor": 2197,
-   "record_id": "e2e_pref_proc_use_procurement_functionality",
-   "received_datetime": "2026-07-09T00:00:00",
+   "record_id": "e2e_feature_store",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "store_preference",
+   "action": "Upsert",
+   "data": {
+    "edit_prescribed_quantity_on_prescription": false,
+    "extra_fields_in_requisition": false,
+    "id": "e2e_feature_store",
+    "issue_in_foreign_currency": true,
+    "keep_requisition_lines_with_zero_requested_quantity_on_finalised": false,
+    "manually_link_internal_order_to_inbound_shipment": true,
+    "monthly_consumption_look_back_period": 3.0,
+    "months_items_expire": 3.0,
+    "months_lead_time": 0.0,
+    "months_overstock": 6.0,
+    "months_understock": 3.0,
+    "om_program_module": true,
+    "pack_to_one": false,
+    "request_requisition_requires_authorisation": true,
+    "response_requisition_requires_authorisation": true,
+    "stocktake_frequency": 1.0,
+    "type": "StorePreferences",
+    "use_consumption_and_stock_from_customers_for_internal_orders": false,
+    "vaccine_module": true
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2198,
+   "record_id": "e2e_pref_feat_use_procurement_functionality",
+   "received_datetime": "2026-07-08T22:09:59.991185",
    "integration_started_datetime": null,
    "integration_datetime": null,
    "integration_error": null,
@@ -80307,15 +80347,215 @@
    "table_name": "preference",
    "action": "Upsert",
    "data": {
-    "id": "e2e_pref_proc_use_procurement_functionality",
+    "id": "e2e_pref_feat_use_procurement_functionality",
     "key": "use_procurement_functionality",
     "value": "true",
-    "store_id": "e2e_procurement_store"
+    "store_id": "e2e_feature_store"
    },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
-   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2199,
+   "record_id": "e2e_pref_feat_first_threshold_for_expiring_items",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_first_threshold_for_expiring_items",
+    "key": "first_threshold_for_expiring_items",
+    "value": "100",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2200,
+   "record_id": "e2e_pref_feat_second_threshold_for_expiring_items",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_second_threshold_for_expiring_items",
+    "key": "second_threshold_for_expiring_items",
+    "value": "200",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2201,
+   "record_id": "e2e_pref_feat_number_of_months_threshold_to_show_low_stock_alerts_for_products",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_number_of_months_threshold_to_show_low_stock_alerts_for_products",
+    "key": "number_of_months_threshold_to_show_low_stock_alerts_for_products",
+    "value": "3.0",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2202,
+   "record_id": "e2e_pref_feat_number_of_months_threshold_to_show_over_stock_alerts_for_products",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_number_of_months_threshold_to_show_over_stock_alerts_for_products",
+    "key": "number_of_months_threshold_to_show_over_stock_alerts_for_products",
+    "value": "6.0",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2203,
+   "record_id": "e2e_pref_feat_number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products",
+    "key": "number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products",
+    "value": "3",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2204,
+   "record_id": "e2e_pref_feat_manage_vaccines_in_doses",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_manage_vaccines_in_doses",
+    "key": "manage_vaccines_in_doses",
+    "value": "true",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2205,
+   "record_id": "e2e_pref_feat_manage_vvm_status_for_stock",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_manage_vvm_status_for_stock",
+    "key": "manage_vvm_status_for_stock",
+    "value": "true",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2206,
+   "record_id": "e2e_pref_feat_can_create_internal_order_from_a_requisition",
+   "received_datetime": "2026-07-08T22:09:59.991185",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_feat_can_create_internal_order_from_a_requisition",
+    "key": "can_create_internal_order_from_a_requisition",
+    "value": "true",
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
    "transfer_store_id": null,
    "patient_id": null,
    "reference_id": null,
