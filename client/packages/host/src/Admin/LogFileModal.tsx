@@ -131,6 +131,7 @@ export const LogFileModal = ({
           <DropdownMenu
             label={logToRender ? logToRender : t('label.server-log')}
             selectSx={{ width: 400 }}
+            testId="server-log-file"
           >
             {logToRender && (
               <DropdownMenuItem
