@@ -69,10 +69,10 @@ import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
-// send, the side panel (S5), the Documents tab, Export/Print (reports S4), the
-// Indicators tab, the ancillary Add/Update actions, and the line editor (S4 —
-// Add item + row-click edit). The master-list picker (S7), use-suggested, and
-// the editor's context charts / forecast-calculation display are a later cut.
+// send, the side panel (S5), the Documents / Indicators / Log tabs,
+// Export/Print (reports S4), the ancillary Add/Update actions, the line editor
+// (S4 — Add item + row-click edit), the master-list picker (S7),
+// use-suggested, and bulk line delete.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -321,7 +321,7 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // ONE debounced buffer for the as-you-type reference (comment rides the same
-  // buffer for the side panel / send, out of this cut).
+  // buffer for the side panel).
   const edit = createDebouncedEdit<HeaderEditFields>({
     id: () => info()?.id ?? '',
     initial: () => ({

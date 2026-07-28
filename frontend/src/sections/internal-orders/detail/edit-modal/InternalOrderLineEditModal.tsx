@@ -406,7 +406,9 @@ const LineEditContent = (
       dismissable={!saving()}
       size="large"
       testId="internal-order-line-edit-modal"
+      // Untitled per spec S4 — the title stays as the accessible name only.
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
       actionsLead={
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}

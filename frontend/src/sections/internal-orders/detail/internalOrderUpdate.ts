@@ -29,8 +29,10 @@ import { AddInternalOrderFromMasterList } from './edit-modal/masterList.generate
 //   permission-denied modal (we don't set returnGraphqlErrors, so that default
 //   holds).
 //
-// Line mutations (add / edit / delete) are the line-editor slice (S4), out of
-// this cut — the detail line table is read-only here.
+// Line mutations (add / edit) live with the line editor (S4,
+// edit-modal/internalOrderLineEdit.ts) and bulk delete with its action
+// (actions/DeleteLinesAction.tsx) — this module owns the header, lifecycle,
+// ancillary, master-list, and use-suggested updates.
 
 type UpdateInput = UpdateInternalOrderVariables['input'];
 
