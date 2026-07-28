@@ -1,5 +1,6 @@
 import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   reasonOptionsResource,
   type ReasonOption,
@@ -75,6 +76,11 @@ export interface ReasonSelectProps {
   /** `data-testid` for the error message — forwarded to the Combobox. */
   errorTestId?: string;
   placeholder?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the picker's input — for an owner
+   * that focuses it after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -98,6 +104,7 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     required={props.required}
     errorTestId={props.errorTestId}
     placeholder={props.placeholder}
+    focusTarget={props.focusTarget}
     onChange={r => props.onChange(r)}
   />
 );

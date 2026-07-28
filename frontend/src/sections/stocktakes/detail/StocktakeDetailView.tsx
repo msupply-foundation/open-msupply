@@ -9,39 +9,39 @@ import {
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
-import { Page } from '../../../ui/layout/Page/Page';
-import { Header } from '../../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import {
   Tabs,
   TabList,
   TabPanel,
   type TabDef,
-} from '../../../ui/elements/tabs/Tabs';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { Spinner } from '../../../ui/elements/feedback/Spinner';
+} from '@/ui/elements/tabs/Tabs';
+import { Button } from '@/ui/elements/buttons/Button';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
 import {
   SidebarIcon,
   MinusCircleIcon,
   PlusCircleIcon,
-} from '../../../ui/icons';
+} from '@/ui/icons';
 import {
   DataTable,
   type Column,
   type SortState,
-} from '../../../ui/elements/table/DataTable';
+} from '@/ui/elements/table/DataTable';
 import {
   getCommentCell,
   getDateCell,
   getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../../api/createTableConfig';
+} from '@/ui/elements/table/tableHelpers';
+import { createTableConfig } from '@/api/createTableConfig';
 import {
   StocktakeDetail,
   StocktakeLines,
@@ -58,7 +58,7 @@ import {
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
-import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { StocktakeLogPanel } from './log/StocktakeLogPanel';
 import {
   DeleteLinesAction,
@@ -69,15 +69,15 @@ import {
 import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
-import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import {
   fetchLocationsWithVolume,
   type LocationWithVolume,
-} from '../../../domain/location';
+} from '@/domain/location';
 import type { StocktakeEditFields } from './stocktakeEdit';
-import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
-import { stocktakePreferences } from '../../../store/storeContext';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import { stripEmpty } from '@/typeHelpers';
+import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
 

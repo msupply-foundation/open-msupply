@@ -8,6 +8,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../ui/elements/feedback/Popover';
 import { LanguageSelector } from '../../../ui/layout/AppShell/LanguageSelector';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { InfoIcon, SaveIcon } from '../../../ui/icons';
 import { changeLanguage, locale, t } from '../../../intl';
 import {
@@ -176,7 +177,7 @@ export const DisplaySettingsSection = () => {
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       <FieldRow label={t('button.language')}>
         <LanguageSelector
           language={locale()}
@@ -205,6 +206,6 @@ export const DisplaySettingsSection = () => {
           testId="custom-logo"
         />
       </Show>
-    </div>
+    </Stack>
   );
 };
