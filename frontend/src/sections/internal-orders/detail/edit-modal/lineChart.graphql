@@ -1,0 +1,46 @@
+# The line editor's context charts (spec/internal-orders S4 § charts,
+# contract › editing lines). Display-only, keyed by a SAVED line id — an
+# unsaved add-mode draft has no charts until its first save. Option inputs are
+# omitted so the server defaults apply (3 consumption points; 30 historic / 20
+# projected stock points). An order with no expected-delivery-date (or a line
+# with no snapshot moment) returns both series null — the editor then shows the
+# target-quantity breakdown alone (that breakdown is derived client-side from
+# the line's stored statistics, so it needs no read).
+#
+# The node shapes match the ConsumptionHistoryPoint / StockEvolutionPoint the
+# chart components take, so their nodes pass straight through.
+query requisitionLineChart($storeId: String!, $lineId: String!) {
+  requisitionLineChart(
+    storeId: $storeId
+    requestRequisitionLineId: $lineId
+  ) {
+    __typename
+    ... on ItemChartNode {
+      consumptionHistory {
+        nodes {
+          date
+          consumption
+          averageMonthlyConsumption
+          isHistoric
+          isCurrent
+        }
+      }
+      stockEvolution {
+        nodes {
+          date
+          stockOnHand
+          minimumStockOnHand
+          maximumStockOnHand
+          isHistoric
+          isProjected
+        }
+      }
+    }
+    ... on RequisitionLineChartError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

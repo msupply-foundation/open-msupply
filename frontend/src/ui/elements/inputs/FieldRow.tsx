@@ -9,6 +9,13 @@ export interface FieldRowProps {
   label: JSX.Element;
   /** The control (a Combobox, TextField, etc.), taking the inline-end space. */
   children: JSX.Element;
+  /**
+   * Label column width. `fixed` (default) reserves a 6rem minimum so labels
+   * line up across stacked sibling rows in a form. `auto` reserves nothing — the
+   * label takes its natural width and the control sits right after it — for a
+   * lone row with no siblings to align to (e.g. a card header field).
+   */
+  labelWidth?: 'fixed' | 'auto';
   class?: string;
 }
 
@@ -24,7 +31,10 @@ export interface FieldRowProps {
  * aria-label) for a11y.
  */
 export const FieldRow = (props: FieldRowProps): JSX.Element => (
-  <div class={props.class ? `${styles.row} ${props.class}` : styles.row}>
+  <div
+    class={props.class ? `${styles.row} ${props.class}` : styles.row}
+    data-label-width={props.labelWidth ?? 'fixed'}
+  >
     <span class={styles.label}>{props.label}</span>
     <div class={styles.control}>{props.children}</div>
   </div>

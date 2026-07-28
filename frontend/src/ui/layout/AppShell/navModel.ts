@@ -35,6 +35,8 @@ export interface NavLeaf {
   id: string;
   labelKey: LocaleKey;
   to: string;
+  /** Central-server-only destination (see navConfig NavItem.central). */
+  central?: boolean;
 }
 
 // A small status marker on a nav entry (the sync indicator). A count rides a
@@ -55,6 +57,8 @@ export interface NavItem {
   labelKey: LocaleKey;
   to: string;
   icon: Component<IconProps>;
+  /** Central-server-only destination (see navConfig NavItem.central). */
+  central?: boolean;
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];
 }
@@ -87,10 +91,12 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
   labelKey: item.labelKey,
   to: item.path,
   icon: SECTION_ICONS[item.path] ?? FileIcon,
+  central: item.central,
   children: item.children?.map(child => ({
     id: child.path,
     labelKey: child.labelKey,
     to: child.path,
+    central: child.central,
   })),
 });
 
@@ -124,7 +130,14 @@ export const lowerNav: NavItem[] = lower;
 export const navLeaves: NavLeaf[] = items.flatMap(item =>
   item.children
     ? item.children
-    : [{ id: item.id, labelKey: item.labelKey, to: item.to }]
+    : [
+        {
+          id: item.id,
+          labelKey: item.labelKey,
+          to: item.to,
+          central: item.central,
+        },
+      ]
 );
 
 export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>

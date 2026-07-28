@@ -6,9 +6,21 @@
  */
 .row {
   display: grid;
-  grid-template-columns: minmax(6rem, auto) minmax(0, 1fr);
+  /* The control column is guaranteed a working minimum (8rem — a full date
+     fits; capped at 60% so a very narrow row can't overflow): a long (or
+     translated) label takes its natural width only while that guarantee
+     holds, then WRAPS instead of squeezing the control's value out of view
+     (e.g. the side panel's date fields). */
+  grid-template-columns: minmax(6rem, max-content) minmax(min(8rem, 60%), 1fr);
   align-items: center;
   gap: var(--space-2) var(--space-3);
+}
+
+/* labelWidth="auto": reserve nothing for the label — it takes its natural width
+   and the control sits right after it (a lone row with no siblings to align
+   to, e.g. a card header field). */
+.row[data-label-width='auto'] {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 .label {

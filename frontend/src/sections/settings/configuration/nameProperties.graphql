@@ -21,10 +21,10 @@ query nameProperties {
 }
 
 # The whole input array is upserted in one transaction — a key collision rolls
-# back the entire call (AC-CN3). ConfigureNamePropertiesResponse is a
+# back the entire call (contract.md § Configuration). ConfigureNamePropertiesResponse is a
 # single-member union (Success); a permission rejection is a plain GraphQL
 # error, which graphqlFetch routes to the global permission-denied surface
-# before any nested field is read (AC-CN4, D51).
+# before any nested field is read (OMS-REG-SET-05.25, D51).
 mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
   centralServer {
     general {
@@ -39,7 +39,7 @@ mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
 }
 
 # The supply-level "in use" set: every store's recorded properties JSON, parsed
-# client-side for the supply_level key (AC-CN6). The consumed query is named in
+# client-side for the supply_level key (OMS-REG-SET-05.27). The consumed query is named in
 # contract § Configuration (source-traced from the reference client; its
 # ⚠️ VERIFY — not yet confirmed against a running server — still stands there).
 query storeProperties($storeId: String!) {

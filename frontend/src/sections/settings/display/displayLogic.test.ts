@@ -7,10 +7,10 @@ import {
   themeSaveInput,
 } from './displayLogic';
 
-// AC-DS2 — Custom theme requires valid JSON: invalid JSON refuses the save
+// OMS-REG-SET-01.13 — Custom theme requires valid JSON: invalid JSON refuses the save
 // with a parse-error message; nothing is sent to the server (the caller only
 // builds an input once parsing succeeds).
-describe('AC-DS2 — custom theme requires valid JSON', () => {
+describe('custom theme requires valid JSON (SET-01.13)', () => {
   it('accepts parseable JSON', () => {
     expect(parseThemeJson('{"palette": {"mode": "dark"}}')).toEqual({
       ok: true,
@@ -30,9 +30,9 @@ describe('AC-DS2 — custom theme requires valid JSON', () => {
   });
 });
 
-// AC-DS5 — Custom logo has no content validation: the save input is built
-// from arbitrary text with no format check (contrast AC-DS2).
-describe('AC-DS5 — custom logo has no content validation', () => {
+// OMS-REG-SET-01.18 — Custom logo has no content validation: the save input is built
+// from arbitrary text with no format check (contrast OMS-REG-SET-01.13).
+describe('custom logo has no content validation (SET-01.18)', () => {
   it('builds a save input from arbitrary, non-SVG text', () => {
     expect(logoSaveInput('definitely not svg')).toEqual({
       customLogo: 'definitely not svg',
@@ -40,10 +40,10 @@ describe('AC-DS5 — custom logo has no content validation', () => {
   });
 });
 
-// AC-DS4 / AC-DS6 — turning a row off clears immediately: the clear inputs
+// OMS-REG-SET-01.17 — turning a row off clears immediately: the clear inputs
 // carry the emptied field (and only that field), matching the one-field-per-
 // call contract.
-describe('AC-DS4/AC-DS6 — clear inputs empty exactly one field', () => {
+describe('clear inputs empty exactly one field (SET-01.17)', () => {
   it('clears the theme without touching the logo', () => {
     expect(themeClearInput()).toEqual({ customTheme: '' });
   });

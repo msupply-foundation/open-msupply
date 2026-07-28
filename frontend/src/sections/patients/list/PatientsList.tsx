@@ -163,30 +163,34 @@ const PatientsList: Component = () => {
     {
       c: { key: 'code' },
       sortKey: 'code',
-      header: t('label.patient-id'),
-      meta: { card: { region: 'primary' } },
+      header: () => t('label.patient-id'),
+      meta: { headerPosition: 'primary' },
     },
-    { c: { key: 'code2' }, sortKey: 'code2', header: t('label.patient-nuic') },
+    {
+      c: { key: 'code2' },
+      sortKey: 'code2',
+      header: () => t('label.patient-nuic'),
+    },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'firstName' },
       sortKey: 'firstName',
-      header: t('label.first-name'),
+      header: () => t('label.first-name'),
     },
     {
       c: { key: 'lastName' },
       sortKey: 'lastName',
-      header: t('label.last-name'),
+      header: () => t('label.last-name'),
     },
     {
       c: { key: 'gender' },
       sortKey: 'gender',
-      header: t('label.gender'),
+      header: () => t('label.gender'),
       cell: info => {
         const g = info.getValue<PatientRow['gender']>();
         return g ? genderLabel(g) : '';
@@ -195,12 +199,12 @@ const PatientsList: Component = () => {
     {
       c: { key: 'dateOfBirth' },
       sortKey: 'dateOfBirth',
-      header: t('label.date-of-birth'),
+      header: () => t('label.date-of-birth'),
       ...getDateCell(),
     },
     {
       c: { key: 'nextOfKinName' },
-      header: t('label.next-of-kin'),
+      header: () => t('label.next-of-kin'),
     },
     ...(patientPreferences().programModule
       ? [
@@ -209,14 +213,14 @@ const PatientsList: Component = () => {
               accessor: (row: PatientRow) => enrolmentLabels(row),
               id: 'programEnrolments',
             },
-            header: t('label.program-enrolments'),
+            header: () => t('label.program-enrolments'),
             ...getChipListCell<PatientRow>(),
           } satisfies Column<PatientRow, SortKey>,
         ]
       : []),
     {
       c: { key: 'isDeceased' },
-      header: t('label.deceased'),
+      header: () => t('label.deceased'),
       ...getFlagCell(t('label.deceased')),
     },
     // Configured custom-field columns — not sortable; value chosen by kind

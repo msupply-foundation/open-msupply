@@ -1,17 +1,17 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
+import { t } from '@/intl';
+import { Button } from '@/ui/elements/buttons/Button';
+import { SplitButton } from '@/ui/elements/buttons/SplitButton';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import {
   ArrowRightIcon,
   InfoIcon,
   CheckIcon,
   SearchIcon,
   XCircleIcon,
-} from '../../../../ui/icons';
+} from '@/ui/icons';
 import { STATUS_FLOW, STATUS_LABELS, statusIndex } from '../stocktakeStatus';
 import { finaliseStocktake } from '../stocktakeUpdate';
 import type { StocktakeInfoFragment } from '../lines/stocktakeDetail.generated';
@@ -144,7 +144,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
           description={
             <Switch
               fallback={t('messages.confirm-status-as', {
-                status: 'status.finalised',
+                status: t('status.finalised'),
               })}
             >
               <Match when={phase() === 'success'}>{t('messages.saved')}</Match>

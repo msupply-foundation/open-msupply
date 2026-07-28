@@ -8,9 +8,11 @@ import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
 import { Comment } from '../ui/elements/feedback/Comment';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
+import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
-import { Lead, Row } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './FeedbackShowcase.module.css';
 
 /* Chip colours come from the --status-* contract tokens (with dark
@@ -24,11 +26,49 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
   { label: 'Verified', colour: 'var(--status-verified)' },
 ];
 
+export const feedbackMetadata: PageMetadata = {
+  id: 'feedback',
+  title: 'Feedback',
+  searchTerms: ['status', 'message', 'notification'],
+  items: [
+    {
+      id: 'feedback-chips-badges',
+      title: 'Chips & badges',
+      searchTerms: ['status chip', 'badge', 'count', 'pill'],
+    },
+    {
+      id: 'feedback-alerts',
+      title: 'Alerts',
+      searchTerms: [
+        'error',
+        'warning',
+        'info',
+        'success',
+        'banner',
+        'compact',
+        'inline',
+        'chip',
+      ],
+    },
+    {
+      id: 'feedback-popovers',
+      title: 'Popovers & tooltips',
+      searchTerms: ['popover', 'tooltip', 'comment', 'hint', 'help'],
+    },
+    {
+      id: 'feedback-spinner',
+      title: 'Spinner',
+      searchTerms: ['loading', 'wait', 'progress', 'busy', 'ring'],
+    },
+  ],
+};
+
 export const FeedbackShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Status chips">
+        <SectionTOC page={feedbackMetadata} />
+        <DashboardCard id="feedback-chips-badges" title="Status chips">
           <Lead>
             Hand-rolled, pure CSS — a chip has no interaction or a11y contract
             to buy. One <code>colour</code> prop (always a{' '}
@@ -59,7 +99,10 @@ export const FeedbackShowcase = () => {
           </Row>
         </DashboardCard>
 
-        <DashboardCard title="Alerts — error / warning / info / success / neutral">
+        <DashboardCard
+          id="feedback-alerts"
+          title="Alerts — error / warning / info / success / neutral"
+        >
           <Lead>
             Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current app's
             MUI Alert look (pale tinted panel, 10px radius, severity icon)
@@ -84,9 +127,44 @@ export const FeedbackShowcase = () => {
               notice, glyph overridden by intent.
             </Alert>
           </Stack>
+
+          <Lead>
+            <strong>Compact footprint.</strong> The <code>compact</code> prop is
+            the ui-standards <code>fb-banner--compact</code>: the same alert
+            (severity, tint, icon) shrunk to an inline chip that tucks into a
+            page-header meta strip — persistent, low-urgency context (read-only
+            / auto-created record, locked document) that shouldn't cost a
+            content row. It's a single line while it fits and wraps once it hits
+            the container rather than overflowing. Same colour language, smaller
+            footprint; never shrink an error the user must fix.
+          </Lead>
+          <Stack gap="sm" class={styles.hugStart}>
+            <Alert severity="info">
+              This shipment is updated automatically; its status follows the
+              sending side.
+            </Alert>
+            <Alert severity="info" compact>
+              This shipment is updated automatically; its status follows the
+              sending side.
+            </Alert>
+          </Stack>
+          <Row gap="sm">
+            <Alert severity="warning" compact>
+              Auto-created — status won't update
+            </Alert>
+            <Alert severity="neutral" compact icon={CheckCircleIcon}>
+              Read-only
+            </Alert>
+            <Alert severity="success" compact>
+              Verified
+            </Alert>
+          </Row>
         </DashboardCard>
 
-        <DashboardCard title="Popover — content bubble on click/focus">
+        <DashboardCard
+          id="feedback-popovers"
+          title="Popover — content bubble on click/focus"
+        >
           <Lead>
             Native Popover API (<code>popover="auto"</code>), no library — top
             layer (no portal, no clipping), light dismiss, Escape and{' '}
@@ -140,9 +218,9 @@ export const FeedbackShowcase = () => {
         <DashboardCard title="InfoTooltip — help text behind an icon">
           <Lead>
             The help-text sibling of <code>Comment</code>: a quiet{' '}
-            <code>InfoOutlineIcon</code> that reveals a short gloss on hover /
-            focus / tap. Pass it to an input's <code>labelInfo</code> slot to
-            explain a field (below), or drop it inline beside any term.
+            <code>InfoIcon</code> that reveals a short gloss on hover / focus /
+            tap. Pass it to an input's <code>labelInfo</code> slot to explain a
+            field (below), or drop it inline beside any term.
           </Lead>
           <div class={styles.popoverRow}>
             <span>Standalone: </span>
@@ -155,6 +233,35 @@ export const FeedbackShowcase = () => {
             }
             value="1.6"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-spinner"
+          title="Spinner — loading indicator"
+        >
+          <Lead>
+            A spinning-ring loading indicator carrying{' '}
+            <code>role="status"</code> and an accessible label (defaults to
+            "Loading…"), so a screen reader announces the wait. Colour follows{' '}
+            <code>currentColor</code> and the size is a rem prop (
+            <code>sizeRem</code>, default 2).{' '}
+            <code>prefers-reduced-motion</code> slows it rather than stopping —
+            a stopped ring reads as broken.
+          </Lead>
+          <Row>
+            <Spinner sizeRem={1} label="Loading, small" />
+            <Spinner label="Loading" />
+            <Spinner sizeRem={3} label="Loading, large" />
+          </Row>
+          <Note>
+            <code>center</code> fills its container and centres the ring — the
+            full-body wait used as a <code>&lt;Suspense&gt;</code> fallback and
+            in the DataTable's initial load. Following <code>currentColor</code>
+            , it takes the surrounding text colour:
+          </Note>
+          <div style={{ 'block-size': '8rem' }}>
+            <Spinner center label="Loading report" />
+          </div>
         </DashboardCard>
       </Stack>
     </ContentContainer>

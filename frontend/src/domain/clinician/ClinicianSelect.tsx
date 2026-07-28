@@ -14,6 +14,8 @@ export interface ClinicianSelectProps {
   /** Field label (required for a11y). */
   label: string;
   hideLabel?: boolean;
+  /** Control size — `small` for a header field cluster's compact row. */
+  size?: 'default' | 'small';
   disabled?: boolean;
   error?: string;
   placeholder?: string;
@@ -32,6 +34,7 @@ export const ClinicianSelect = (props: ClinicianSelectProps): JSX.Element => (
   <Combobox<Clinician>
     label={props.label}
     hideLabel={props.hideLabel}
+    size={props.size}
     items={cliniciansResource.noSuspense()}
     loading={cliniciansResource.loading()}
     itemToString={clinicianName}

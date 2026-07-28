@@ -1,5 +1,6 @@
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
+import { HStack } from '../ui/layout/Stack/HStack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
@@ -18,8 +19,10 @@ import {
   Lead,
   PageFrame,
   Row,
+  SectionTOC,
   type AnatomyNode,
 } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './PageLayoutShowcase.module.css';
 
 /* The general page vocabulary, rendered as the figure under the intro — the
@@ -33,7 +36,7 @@ const ANATOMY: AnatomyNode[] = [
     children: [
       {
         name: 'Header',
-        note: 'breadcrumb h1 + actions + toolbar/tabs — see Header',
+        note: 'breadcrumb h1 + actions + HeaderToolbar field row + tabs — see Header',
       },
       {
         name: 'ContentContainer',
@@ -75,9 +78,51 @@ const ANATOMY: AnatomyNode[] = [
  * deliberately, as a live demo of the measure being a per-group content
  * choice (blocks don't own a width; the container arranging them does).
  */
+export const pageLayoutMetadata: PageMetadata = {
+  id: 'page-layout',
+  title: 'Page layout',
+  searchTerms: ['layout', 'structure', 'regions'],
+  items: [
+    {
+      id: 'page-layout-content-container',
+      title: 'ContentContainer',
+      searchTerms: ['measure', 'width', 'max width', 'centre'],
+    },
+    {
+      id: 'page-layout-page',
+      title: 'Page',
+      searchTerms: ['regions', 'header', 'body', 'slots'],
+    },
+    {
+      id: 'page-layout-stack',
+      title: 'Stack',
+      searchTerms: ['vertical', 'gap', 'rhythm', 'spacing'],
+    },
+    {
+      id: 'page-layout-hstack',
+      title: 'HStack',
+      searchTerms: [
+        'horizontal',
+        'row',
+        'gap',
+        'align',
+        'justify',
+        'wrap',
+        'cluster',
+      ],
+    },
+    {
+      id: 'page-layout-mixing',
+      title: 'Mixing measures',
+      searchTerms: ['nesting', 'breakout'],
+    },
+  ],
+};
+
 export const PageLayoutShowcase = () => (
   <ContentContainer size="wide" align="start">
     <Stack gap="lg">
+      <SectionTOC page={pageLayoutMetadata} />
       <Intro>
         How a page composes, from the outside in: the <code>Page</code> frame
         owns the geometry — it pins the header and footer, docks the side panel,
@@ -92,7 +137,10 @@ export const PageLayoutShowcase = () => (
 
       <AnatomyTree nodes={ANATOMY} />
 
-      <DashboardCard title="ContentContainer — the content measure">
+      <DashboardCard
+        id="page-layout-content-container"
+        title="ContentContainer — the content measure"
+      >
         <Lead>
           A reading column that caps how wide its content grows, so a form or
           block of prose stays readable on a wide monitor instead of sprawling
@@ -122,7 +170,10 @@ export const PageLayoutShowcase = () => (
 
       <ContentContainer size="form" align="start">
         <Stack gap="lg">
-          <DashboardCard title="Page — the regions in miniature">
+          <DashboardCard
+            id="page-layout-page"
+            title="Page — the regions in miniature"
+          >
             <Lead>
               The frame's three pinned regions around the scrolling body: a
               composed <a href="#/showcase/header">Header</a> on top, the body
@@ -163,17 +214,21 @@ export const PageLayoutShowcase = () => (
             </PageFrame>
           </DashboardCard>
 
-          <DashboardCard title="Stack — vertical rhythm between sibling blocks">
+          <DashboardCard
+            id="page-layout-stack"
+            title="Stack — vertical rhythm between sibling blocks"
+          >
             <Lead>
               A vertical run of sibling blocks with a consistent gap — the space
               between a detail form's identity header, an alert, and its
               columns. <code>gap</code> is a <em>preset, not a length</em> —{' '}
               <code>sm</code>, <code>md</code> (the default), <code>lg</code> —
               so sibling blocks across the app keep the same few rhythms.
-              Vertical <em>only</em>, by design: horizontal grouping always has
-              a more semantic owner that also encodes its wrap behaviour (
-              <code>FormRow</code>, <code>HeaderButtons</code>,{' '}
-              <code>CardGrid</code>…).
+              Vertical <em>only</em>, by design: horizontal grouping reaches
+              first for a more semantic owner that also encodes its wrap
+              behaviour (<code>FormRow</code>, <code>HeaderButtons</code>,{' '}
+              <code>CardGrid</code>…), and otherwise the generic{' '}
+              <a href="#/showcase/page-layout">HStack</a> below.
             </Lead>
             <Row align="start">
               <Stack gap="sm">
@@ -200,7 +255,107 @@ export const PageLayoutShowcase = () => (
             </Row>
           </DashboardCard>
 
-          <DashboardCard title="Mixing measures — nesting and breakout">
+          <DashboardCard
+            id="page-layout-hstack"
+            title="HStack — horizontal rhythm, the row counterpart to Stack"
+          >
+            <Lead>
+              A horizontal run of siblings with a consistent gap — the generic
+              "value + affordance" row or button cluster that <em>isn't</em> one
+              of the semantic horizontal owners (<code>FormRow</code>,{' '}
+              <code>HeaderButtons</code>, <code>ContentFooterActions</code>,{' '}
+              <code>CardGrid</code> — reach for those first). Like{' '}
+              <code>Stack</code> it's block-level and full-width, and{' '}
+              <code>gap</code> is the same <em>preset, not a length</em> (
+              <code>sm</code>, <code>md</code>, <code>lg</code>). Children
+              centre vertically (<code>align</code>, default <code>center</code>
+              ) and pack at the inline-start (<code>justify</code>, default{' '}
+              <code>start</code>) — being full-width is what gives{' '}
+              <code>justify="end"</code> / <code>"between"</code> room to work.{' '}
+              <code>wrap</code> lets a cluster survive narrow widths.
+            </Lead>
+            <Stack gap="md">
+              {/* gap presets — the shared sm/md/lg rhythm */}
+              <Stack gap="sm">
+                <HStack gap="sm">
+                  <div class={styles.stub}>gap="sm"</div>
+                  <div class={styles.stub}>item</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="md">
+                  <div class={styles.stub}>gap="md" · default</div>
+                  <div class={styles.stub}>item</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="lg">
+                  <div class={styles.stub}>gap="lg"</div>
+                  <div class={styles.stub}>item</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+              </Stack>
+
+              {/* justify — the full-width row distributes the slack, which is
+                  why HStack fills its parent rather than hugging its content */}
+              <Stack gap="sm">
+                <HStack gap="sm" justify="start">
+                  <div class={styles.stub}>justify="start" · default</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" justify="center">
+                  <div class={styles.stub}>justify="center"</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" justify="end">
+                  <div class={styles.stub}>justify="end"</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" justify="between">
+                  <div class={styles.stub}>justify="between"</div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+              </Stack>
+
+              {/* align — the cross (vertical) axis, shown against a taller
+                  neighbour; the outer HStack wraps so the three survive narrow */}
+              <HStack gap="lg" wrap>
+                <HStack gap="sm" align="start">
+                  <div class={`${styles.stub} ${styles.tallStub}`}>
+                    align="start"
+                  </div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" align="center">
+                  <div class={`${styles.stub} ${styles.tallStub}`}>
+                    align="center" · default
+                  </div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+                <HStack gap="sm" align="end">
+                  <div class={`${styles.stub} ${styles.tallStub}`}>
+                    align="end"
+                  </div>
+                  <div class={styles.stub}>item</div>
+                </HStack>
+              </HStack>
+
+              {/* wrap — a button cluster that reflows instead of overflowing */}
+              <HStack gap="sm" wrap>
+                <div class={styles.stub}>wrap</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+                <div class={styles.stub}>button</div>
+              </HStack>
+            </Stack>
+          </DashboardCard>
+
+          <DashboardCard
+            id="page-layout-mixing"
+            title="Mixing measures — nesting and breakout"
+          >
             <Lead>
               The measure wraps content <em>groups</em>, not the page: a page
               holds as many containers as its content needs. Nest a narrower

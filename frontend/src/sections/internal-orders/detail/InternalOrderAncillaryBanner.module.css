@@ -1,0 +1,46 @@
+/* The ancillary-items banner claims its own full-width row beneath the toolbar
+   block (the shared Toolbar is a wrapping flex row), like the toolbar's own
+   layout and notices. */
+.banner {
+  flex-basis: 100%;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.message {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The plan popover — one section per bucket, each a stack of item rows. */
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-inline-size: 24rem;
+}
+
+.planTitle {
+  font-weight: var(--weight-bold);
+}
+
+.planRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}

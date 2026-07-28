@@ -10,9 +10,13 @@ export interface ProgramNameSelectProps {
   /** Field label (required for a11y). */
   label: string;
   hideLabel?: boolean;
+  /** Control size — `small` for a header field cluster's compact row. */
+  size?: 'default' | 'small';
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the input — forwarded to the Combobox. */
+  testId?: string;
 }
 
 /*
@@ -28,6 +32,7 @@ export const ProgramNameSelect = (
   <Combobox<ProgramListItem>
     label={props.label}
     hideLabel={props.hideLabel}
+    size={props.size}
     items={programsResource.noSuspense()}
     loading={programsResource.loading()}
     itemToString={program => program.name}
@@ -36,6 +41,7 @@ export const ProgramNameSelect = (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    inputTestId={props.testId}
     onChange={program => props.onChange(program?.id ?? null)}
   />
 );

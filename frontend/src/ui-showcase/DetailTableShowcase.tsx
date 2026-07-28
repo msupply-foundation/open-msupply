@@ -2,15 +2,15 @@ import { createMemo, createSignal, Show } from 'solid-js';
 import { t } from '../intl';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
+import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
-  getCurrencyCell,
-  getDateCell,
-  getExpiryDateCell,
-  getNumberCell,
-} from '../ui/elements/table/tableHelpers';
+  dateToIsoDate,
+  localDayToUtc,
+} from '../ui/elements/inputs/dateTimeConvert';
 import {
   resolveTableConfig,
   type Band,
@@ -24,17 +24,24 @@ import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
 import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
-import { Stack } from '../ui/layout/Stack/Stack';
-import { FormRow } from '../ui/layout/Form/FormRow';
 import {
   SidePanelSection,
   SidePanelActions,
 } from '../ui/layout/SidePanel/SidePanel';
+import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
+import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
+import { LineEditModal, type EditItem } from './LineEditModal';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import {
+  StatusIndicator,
+  type StatusStep,
+} from '../ui/elements/feedback/StatusIndicator';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
@@ -42,6 +49,7 @@ import { Select } from '../ui/elements/selectors/Select';
 import { ColourTagPicker } from '../ui/elements/selectors/ColourTag';
 import { DateField } from '../ui/elements/inputs/DateField';
 import {
+  ArrowRightIcon,
   CopyIcon,
   PlusCircleIcon,
   PrinterIcon,
@@ -72,6 +80,28 @@ type SortKey =
   | 'expiryDate'
   | 'packSize'
   | 'locationName';
+
+// Card-view grouping for the list card: the item NAME is the card title
+// (headerPosition 'primary') and the pack quantity its badge; Code / Batch /
+// Expiry / Unit form the always-shown default group (no cardGroup), and every
+// remaining column drops into one collapsed "More details" disclosure so a
+// list card stays scannable. Only one body group is declared — the rest is the
+// default group. No labelKey → the disclosure header falls back to "More
+// details".
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
+
+// The status footer's lifecycle steps — the MANUAL inbound flow
+// (New → Delivered → Received → Verified). Reached stages carry the datetime
+// they were hit, for the StatusIndicator's history popover.
+const STATUS_STEPS: StatusStep[] = [
+  { label: 'New', date: '2026-05-15' },
+  { label: 'Delivered', date: '2026-05-18' },
+  { label: 'Received', date: '2026-05-19' },
+  { label: 'Verified' },
+];
 
 // Mirrors isPlaceholderLine in the real vertical (detail/inboundShipmentUpdate)
 // — a stock-in line with nothing received and nothing shipped. Reproduced here
@@ -115,9 +145,10 @@ const SUPPLIERS = [
   { value: 'carepoint', label: 'CarePoint Distribution' },
 ];
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const isoDay = (month: number, day: number, year: number) =>
-  `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`;
+// A stored instant for the given local calendar day, via the shared
+// conversion — so the mock rows display the intended day in any timezone.
+const isoDay = (month: number, day: number, year: number): string =>
+  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry error tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -236,6 +267,10 @@ const sortValue = (l: Line, key: SortKey): string | number => {
 // Manufacturer, Note and Pack sell price (inbound-shipment-detail defaults).
 const DEFAULT_CONFIG: LayeredConfig = {
   base: {
+    // Pin the spec's ⭐ default density. Left unset, the DataTable falls back to
+    // the nav-overlay responsive default (spacious below 1024px), which trips
+    // in a narrower/embedded browser; the demo should open at comfortable.
+    viewDensity: 'comfortable',
     columnVisibility: {
       manufactureDate: false,
       manufacturer: false,
@@ -276,10 +311,27 @@ export const DetailTableShowcase = () => {
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
+  // The line the Line Edit modal is open on (a row click), or null when closed.
+  // The real page opens the batch editor here; the showcase mirrors it.
+  const [editItem, setEditItem] = createSignal<EditItem | null>(null);
+  const [editorOpen, setEditorOpen] = createSignal(false);
+  // Open the line editor on a row (UPDATE) or from "Add item" (ADD — null item,
+  // active selector).
+  const openEditor = (item: EditItem | null) => {
+    setEditItem(item);
+    setEditorOpen(true);
+  };
+
   // The side panel (opened from the header's More button, closed from its own
   // header — the Page frame owns the panel chrome; the page owns only this
   // boolean).
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+
+  // The status footer's On-hold toggle. Toggling confirms first (like the real
+  // inbound footer), so the CheckboxButton opens a ConfirmDialog rather than
+  // flipping directly.
+  const [onHold, setOnHold] = createSignal(false);
+  const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   // Editable header fields (Supplier name, Their reference) + the side panel's
   // editable Colour / Comment. Live local state; a real vertical would flush
@@ -342,11 +394,12 @@ export const DetailTableShowcase = () => {
     setOffset(0);
   };
 
-  const columns = (): Column<Line, SortKey>[] => [
+  const columns = (): Column<Line, SortKey, GroupKey>[] => [
     {
       c: { accessor: line => line.itemCode, id: 'itemCode' },
       sortKey: 'itemCode',
-      header: t('label.code'),
+      header: () => t('label.code'),
+      ...getCellDefinition<Line>('itemCode'),
       cell: info => {
         const line = info.row.original;
         return (
@@ -363,40 +416,52 @@ export const DetailTableShowcase = () => {
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
+      header: () => t('label.name'),
+      ...getCellDefinition<Line>('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('label.batch'),
+      header: () => t('label.batch'),
+      ...getCellDefinition<Line>('batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('label.expiry'),
-      ...getExpiryDateCell(),
+      header: () => t('label.expiry'),
+      ...getCellDefinition<Line>('expiryDate'),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationName',
-      header: t('label.location'),
+      header: () => t('label.location'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('location'),
     },
     {
       c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
-      header: t('label.unit'),
+      header: () => t('label.unit'),
+      ...getCellDefinition<Line>('unitName'),
     },
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: t('label.pack-size'),
-      ...getNumberCell(),
+      header: () => t('label.pack-size'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
-      ...getNumberCell(),
-      meta: { align: 'right', card: { region: 'badge' } },
+      header: () => t('label.pack-quantity'),
+      // Badge cells drop their label by default; keep it so the card's chip
+      // reads "Num. of packs: 12", not a bare number.
+      ...getCellDefinition<Line>('numberOfPacks', {
+        headerPosition: 'badge',
+        showLabel: true,
+      }),
     },
     {
       // Difference — shipped minus received; blank when nothing shipped.
@@ -407,57 +472,68 @@ export const DetailTableShowcase = () => {
             : '',
         id: 'difference',
       },
-      header: t('label.difference'),
-      ...getNumberCell(),
+      header: () => t('label.difference'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('difference'),
     },
     {
       c: {
         accessor: line => line.packSize * line.numberOfPacks,
         id: 'unitQuantity',
       },
-      header: t('label.unit-quantity'),
-      ...getNumberCell(),
+      header: () => t('label.unit-quantity'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('unitQuantity'),
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
-      ...getCurrencyCell(),
+      header: () => t('label.pack-cost-price'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('costPricePerPack'),
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
-      ...getCurrencyCell(),
+      header: () => t('label.pack-sell-price'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('sellPricePerPack'),
     },
     {
       c: {
         accessor: line => (isPlaceholderLine(line) ? null : line.totalAfterTax),
         id: 'total',
       },
-      header: t('label.total'),
-      ...getCurrencyCell(),
+      header: () => t('label.total'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('total'),
     },
     {
       c: {
         accessor: line => line.manufacturer?.name ?? '',
         id: 'manufacturer',
       },
-      header: t('label.manufacturer'),
+      header: () => t('label.manufacturer'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('manufacturer'),
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
-      ...getDateCell(),
+      header: () => t('label.manufacture-date'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('manufactureDate'),
     },
     {
       c: {
         accessor: line => line.campaign?.name ?? line.program?.name ?? '',
         id: 'campaignProgram',
       },
-      header: t('label.campaign'),
+      header: () => t('label.campaign'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'note' },
-      header: t('label.note'),
+      header: () => t('label.note'),
+      cardGroup: 'more',
+      ...getCellDefinition<Line>('note'),
     },
   ];
 
@@ -547,7 +623,10 @@ export const DetailTableShowcase = () => {
                     label: t('label.add-from-master-list'),
                   },
                 ]}
-                onAction={() => {}}
+                // Both options open the editor in ADD mode (no master-list
+                // flow in the showcase) — an active item search, empty until an
+                // item is picked.
+                onAction={() => openEditor(null)}
               />
               <Button variant="secondary" icon={<PrinterIcon />}>
                 {t('button.export-or-print')}
@@ -564,56 +643,110 @@ export const DetailTableShowcase = () => {
                 </Button>
               </Show>
             </HeaderButtons>
-            {/* The header field cluster. Fixing the real toolbar's cramped
-                inline-label FieldRows: standard label-ABOVE inputs, laid out in
-                a FormRow that shares the width and stacks to one column on
-                narrow screens. The Received date is a disabled input rather
-                than a LabelledValue because it IS a field — editable when the
-                shipment is Received and backdating is on, disabled otherwise.
-                The info banner sits full-width above the fields. */}
-            <Toolbar>
-              <Stack gap="sm" style={{ width: '100%' }}>
-                <Alert severity="info">
-                  This shipment was created manually; its delivery status will
-                  not update automatically.
+            {/* The header field cluster via HeaderToolbar (Carl 2026-07-27):
+                fields flow into its FormRow (equal shares at a 10rem min,
+                growing to fill and wrapping as a unit); the compact Alert goes
+                to the `alert` prop, rendered as a content-hugging chip pinned to
+                the bottom baseline. Fields take width="full" to fill the share. */}
+            <HeaderToolbar
+              alert={
+                <Alert severity="info" compact>
+                  Created manually; status won't update automatically.
                 </Alert>
-                <FormRow minItemWidth="13rem">
-                  <Select
-                    label={t('label.supplier-name')}
-                    options={SUPPLIERS}
-                    value={supplier()}
-                    onValueChange={setSupplier}
-                  />
-                  <TextField
-                    label={t('label.reference')}
-                    width="full"
-                    value={reference()}
-                    onInput={e => setReference(e.currentTarget.value)}
-                  />
-                  <DateField
-                    label={t('label.received')}
-                    width="full"
-                    format="dd MMM yyyy"
-                    value="2026-05-19"
-                    disabled
-                  />
-                </FormRow>
-              </Stack>
-            </Toolbar>
+              }
+            >
+              <Select
+                label={t('label.supplier-name')}
+                size="small"
+                width="full"
+                options={SUPPLIERS}
+                value={supplier()}
+                onValueChange={setSupplier}
+              />
+              <TextField
+                label={t('label.reference')}
+                size="small"
+                width="full"
+                value={reference()}
+                onInput={e => setReference(e.currentTarget.value)}
+              />
+              <DateField
+                label={t('label.received')}
+                size="small"
+                width="full"
+                format="dd MMM yyyy"
+                value="2026-05-19"
+                disabled
+              />
+            </HeaderToolbar>
             <TabList tabs={TABS} />
           </Header>
+        }
+        contentFooter={
+          // The inbound-shipment status footer (mirrors the real detail view):
+          // the On-hold toggle (confirm before toggling), the lifecycle
+          // StatusIndicator (history on hover), and the status-change action.
+          <ContentFooter>
+            <CheckboxButton
+              checked={onHold()}
+              onChange={() => setHoldConfirm(true)}
+            >
+              {t('label.hold')}
+            </CheckboxButton>
+            <StatusIndicator steps={STATUS_STEPS} current={2} />
+            <ContentFooterActions>
+              <SplitButton
+                icon={<ArrowRightIcon />}
+                value="verified"
+                menuLabel={t('label.status')}
+                options={[
+                  {
+                    value: 'verified',
+                    label: `${t('button.confirm')} Verified`,
+                  },
+                ]}
+                onAction={() => {}}
+              />
+            </ContentFooterActions>
+            {/* Toggling hold confirms first, like the real inbound footer. */}
+            <ConfirmDialog
+              open={holdConfirm()}
+              onClose={() => setHoldConfirm(false)}
+              title={t('heading.are-you-sure')}
+              message={
+                onHold()
+                  ? t('messages.off-hold-confirmation')
+                  : t('messages.on-hold-confirmation')
+              }
+              onConfirm={() => {
+                setOnHold(v => !v);
+                setHoldConfirm(false);
+              }}
+            />
+          </ContentFooter>
         }
       >
         <TabPanel value="details">
           <DataTable
             columns={columns()}
+            cardGroups={CARD_GROUPS}
             rows={rows()}
             rowKey={line => line.id}
             sort={sort()}
             onSort={onSort}
-            // The real page opens the line-edit modal on row click; a no-op
-            // here so the click-to-open row affordance still shows.
-            onRowClick={() => {}}
+            // Offer the card ⇄ table toggle above the compact band (below 600px
+            // the list is card-only). Card view surfaces the Sort control.
+            showCardToggle
+            // The real page opens the line-edit modal on row click; the
+            // showcase opens the Line Edit modal on the clicked line's item.
+            onRowClick={line =>
+              openEditor({
+                id: line.itemId,
+                code: line.itemCode,
+                name: line.itemName,
+                unitName: line.item?.unitName ?? null,
+              })
+            }
             // A failed-bulk-op line reads in the error tone; an untouched
             // placeholder in the info tone. Error wins when both hold.
             rowTone={line =>
@@ -648,6 +781,15 @@ export const DetailTableShowcase = () => {
                 setOffset(0);
               },
             }}
+          />
+          <LineEditModal
+            open={editorOpen()}
+            item={editItem()}
+            // The clicked item's batches — grouped by item CODE (the showcase's
+            // itemId is unique per row; the code repeats), so opening a row
+            // shows all that item's batch cards.
+            lines={DATA.filter(l => l.itemCode === editItem()?.code)}
+            onClose={() => setEditorOpen(false)}
           />
         </TabPanel>
         <TabPanel value="documents">

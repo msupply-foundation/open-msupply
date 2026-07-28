@@ -1,36 +1,16 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 import {
   FilterSelect,
+  FilterDateRange,
   constructFilters,
   type Filter,
-} from '../../../ui/elements/selectors/FilterBar';
-import { DateRangeField } from '../../../ui/elements/inputs/DateRangeField';
-import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+} from '@/ui/elements/selectors/FilterBar';
 import type { StocktakesVariables } from './stocktakes.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no
 // remapping — this is the generated variables' filter shape). It flows straight
 // through the FilterBar; there is no parallel value model and no mapper.
 export type StocktakeFilter = NonNullable<StocktakesVariables['filter']>;
-
-// A picked calendar day widened to an inclusive instant in the viewer's local
-// zone — start-of-day for the lower bound, end-of-day for the upper — because
-// the `createdDatetime` field is a `DateTime`, not a plain calendar date, so a
-// bare `YYYY-MM-DD` is not a valid value for it (mirrors the reports
-// DateRange widening in json-forms/schema.ts `toDatetimeFilter`). `stocktakeDate`
-// needs none of this: it is a `NaiveDate`, so the picked dates pass through as-is.
-const dayStart = (iso: string) => new Date(`${iso}T00:00:00`).toISOString();
-const dayEnd = (iso: string) => new Date(`${iso}T23:59:59.999`).toISOString();
-
-// The inverse read-back for the Created chip: recover the LOCAL calendar day
-// the user picked from the stored UTC instant. A naive `.slice(0, 10)` reads the
-// UTC day, which is off by one for any device behind/ahead of UTC once the
-// widened start-of-day instant crosses the date line (e.g. NZ, UTC+12: local
-// 2026-07-15T00:00 is stored as 2026-07-14T12:00Z, and slicing gives the wrong
-// 14th). utcToLocalParts converts back with the same device-tz getters the
-// widening used, so pick → store → display round-trips to the same day.
-const localDay = (utc: string | null | undefined) =>
-  utcToLocalParts(utc)?.date ?? null;
 
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the stocktakes list. The list
@@ -88,35 +68,17 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
       />
     ),
   },
-  // Created — a `DatetimeFilterInput` over the `DateTime` field: a picked day is
-  // widened to an inclusive instant (day-start … day-end) in the viewer's local
-  // zone, because a bare calendar date is not a valid DateTime. Same
-  // empty/one-sided handling as above. The value the field shows is recovered
-  // from the stored UTC instant back to the LOCAL day (localDay, not a bare
-  // slice — see its note) so pick → store → display round-trips to the same day.
+  // Created — DateTime field; FilterDateRange (type="dateTime") owns the
+  // local ⇄ UTC conversion (#456). (`stocktakeDate` is a `NaiveDate`.)
   createdDatetime: {
     label: () => t('label.created'),
     render: props => (
-      <DateRangeField
+      <FilterDateRange
+        type="dateTime"
         label={t('label.created')}
-        hideLabel
-        size="small"
         testId={props.testId}
-        value={{
-          start: localDay(props.filter().createdDatetime?.afterOrEqualTo),
-          end: localDay(props.filter().createdDatetime?.beforeOrEqualTo),
-        }}
-        onChange={({ start, end }) =>
-          props.setPartialFilter({
-            createdDatetime:
-              start || end
-                ? {
-                    ...(start ? { afterOrEqualTo: dayStart(start) } : {}),
-                    ...(end ? { beforeOrEqualTo: dayEnd(end) } : {}),
-                  }
-                : null,
-          })
-        }
+        value={props.filter().createdDatetime}
+        onChange={value => props.setPartialFilter({ createdDatetime: value })}
       />
     ),
   },

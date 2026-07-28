@@ -139,7 +139,7 @@ export const NamesList: Component<NamesListProps> = props => {
     {
       c: { key: 'code' },
       sortKey: 'code',
-      header: t('name.column.code'),
+      header: () => t('name.column.code'),
       // The code carries a store indicator when the name is itself a store
       // (AC-N8). Icon-only marker — accessible name via aria-label.
       cell: info => {
@@ -159,12 +159,12 @@ export const NamesList: Component<NamesListProps> = props => {
           </span>
         );
       },
-      meta: { card: { region: 'primary' } },
+      meta: { headerPosition: 'primary' },
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
-      header: t('name.column.name'),
+      header: () => t('name.column.name'),
       meta: { wrapLines: 2 },
     },
     // Configured custom-field columns — not sortable; value chosen by kind

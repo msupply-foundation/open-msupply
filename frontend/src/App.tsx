@@ -26,6 +26,7 @@ import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { internalOrdersRoutes } from './sections/internal-orders';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
@@ -33,12 +34,14 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
-import { helpRoutes } from './sections/help';
+import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
+import { StaleBundleModal } from './StaleBundleModal';
+import { startStaleBundleWatch } from './staleBundle';
 import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
@@ -57,6 +60,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'distribution/customer-return': customerReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
+  'replenishment/internal-order': internalOrdersRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
@@ -66,6 +70,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
+  'manage/help-documents': helpDocumentsRoutes,
 };
 
 export const App: Component = () => {
@@ -99,7 +104,11 @@ export const App: Component = () => {
   onMount(() => {
     void runStartup();
     const stopTracking = startActivityTracking();
-    onCleanup(stopTracking);
+    const stopStaleBundleWatch = startStaleBundleWatch();
+    onCleanup(() => {
+      stopTracking();
+      stopStaleBundleWatch();
+    });
   });
 
   // The single owner of document direction/lang, driven by the real i18n locale
@@ -155,14 +164,14 @@ export const App: Component = () => {
                     {dest => (
                       <Route
                         path={`/${dest.path}`}
-                        component={() => <EntryPage labelKey={dest.labelKey} />}
+                        component={() => <EntryPage dest={dest} />}
                       />
                     )}
                   </For>
-                  <Route
-                    path="*"
-                    component={() => <EntryPage labelKey="heading.not-found" />}
-                  />
+                  {/* Catch-all inside the shell: an unknown in-store path is
+                      the not-found page (no destination), which keeps the app
+                      bar — and so the menu — reachable. */}
+                  <Route path="*" component={() => <EntryPage />} />
                 </Route>
               </Route>
               <Route
@@ -176,6 +185,7 @@ export const App: Component = () => {
       </Switch>
       {/* On top of everything, including other modals. */}
       <UnexpectedErrorModal />
+      <StaleBundleModal />
     </>
   );
 };

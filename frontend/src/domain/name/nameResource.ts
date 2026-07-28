@@ -1,6 +1,13 @@
 import { graphqlFetch } from '../../api/graphql';
 import type { Page } from '../../ui/utils/createPaginatedSearch';
-import { SearchNames, type SearchNamesResult } from './name.generated';
+import {
+  SearchNames,
+  type SearchNamesResult,
+  type SearchNamesVariables,
+} from './name.generated';
+
+// The generated filter shape, used verbatim (kdd/type-safety: no remapping).
+type NameFilter = NonNullable<SearchNamesVariables['filter']>;
 
 // One name option: the fields the search selector shows/needs. The row shows
 // "code name" plus an "(On hold)" suffix for a supplier on hold (not
@@ -28,10 +35,30 @@ type NameNode = Extract<
 // separate entity), so one picker covers every party lookup.
 export type NameRole = 'customer' | 'supplier' | 'donor' | 'manufacturer';
 
-const roleFilter = (role: NameRole) => {
+/**
+ * Facility/store only — the party kinds a record can actually be created for.
+ * The same client-applied restriction the customer & supplier lists send
+ * (spec/names contract › which names qualify).
+ *
+ * ⚠️ Wire trap — it is load-bearing on the customer picker, not defensive.
+ * `names` excludes patients in its base query, but `codeOrName` is an
+ * OR-filter applied *before* that exclusion, so a patient whose NAME matches
+ * the search escapes it (confirmed live: `isCustomer` + `codeOrName ~ "Maia"`
+ * → 39 rows, every one a patient; the same search with this restriction → 0).
+ * Patients carry a per-store `isCustomer` join, so without this they are
+ * offered as customers and then rejected on create — the server's other-party
+ * lookup excludes patients and reports the misleading
+ * `OtherPartyDoesNotExist`. This restriction is applied after `codeOrName`, so
+ * it is ANDed and keeps them out.
+ */
+const FACILITY_OR_STORE: NameFilter = {
+  type: { equalAny: ['FACILITY', 'STORE'] },
+};
+
+export const roleFilter = (role: NameRole): NameFilter => {
   switch (role) {
     case 'customer':
-      return { isCustomer: true };
+      return { isCustomer: true, ...FACILITY_OR_STORE };
     case 'supplier':
       return { isSupplier: true };
     case 'donor':
@@ -83,7 +110,7 @@ export const fetchNameById = async (
 };
 
 export const namePageFetcher =
-  (storeId: string, role: NameRole, pageSize: number) =>
+  (storeId: string, role: NameRole, pageSize: number, storeBacked = false) =>
   async (
     search: string,
     offset: number
@@ -93,6 +120,12 @@ export const namePageFetcher =
       filter: {
         ...roleFilter(role),
         isVisible: true,
+        // A store-backed narrowing (isStore) — a supplier that is itself another
+        // store in the system. The internal-order create picker needs it: the
+        // create resolver rejects a non-store supplier, so offering only
+        // store-backed ones keeps that rejection unreachable from the UI
+        // (spec/internal-orders AC-C3).
+        ...(storeBacked ? { isStore: true } : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
       },
       // Sort by name ascending — stable across pages so infinite scroll doesn't

@@ -10,7 +10,8 @@ export interface CheckboxProps {
   /** Reports the new checked state. */
   onChange?: (checked: boolean) => void;
   disabled?: boolean;
-  /** Error message — presence switches the box to the error state + shows it. */
+  /** Error message — presence switches the box to the error state + shows it.
+   */
   error?: string;
   id?: string;
   class?: string;

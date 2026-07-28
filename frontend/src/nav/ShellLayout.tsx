@@ -1,4 +1,11 @@
-import { createSignal, lazy, onCleanup, onMount, Show } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  lazy,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
@@ -7,10 +14,11 @@ import {
   findLeafByPath,
   lowerNav,
   upperNav,
+  type NavItem,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
-import { isDispensary } from '../store/storeContext';
+import { hasPermission, isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
@@ -55,15 +63,29 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const onNavigate = (leaf: NavLeaf) =>
     navigate(`/${params.storeId}/${leaf.to}`);
 
-  // Dispensary-mode gate (spec/patients AC-G1): the Dispensary nav group is
-  // shown only in dispensary mode. Filter it out of the upper list otherwise;
-  // the route guard (patients section) blocks direct-URL entry to match. The
-  // lower cluster is unaffected, so it is passed through unchanged (AppShell
-  // takes the app's default lower only when `upper` is not overridden).
-  const menuUpper = () =>
-    isDispensary()
-      ? upperNav
-      : upperNav.filter(item => item.id !== 'dispensary');
+  // Nav visibility gates — reactive, because they read runtime signals the
+  // static nav model can't. Two concerns, one pass:
+  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only in
+  //    dispensary mode; the patients route guard blocks direct-URL entry to match.
+  //  • Central-only destinations (spec/help S2): a `central`-flagged entry
+  //    (Manage › Help documents) shows only on a central server to a server
+  //    admin; the help section's route guard blocks direct-URL entry to match.
+  // Memoised so the gated arrays — and the section objects rebuilt when a child
+  // is dropped — keep stable references; otherwise MenuBar's <For> would remount
+  // nav sections on every shell re-render (kdd/solid-reactivity-pitfalls).
+  const centralAdmin = () => isCentralServer() && hasPermission('SERVER_ADMIN');
+  const visible = (n: { central?: boolean }) => !n.central || centralAdmin();
+  const gateNav = (items: NavItem[]): NavItem[] =>
+    items
+      .filter(item => item.id !== 'dispensary' || isDispensary())
+      .filter(visible)
+      .map(item =>
+        item.children?.some(child => child.central) && !centralAdmin()
+          ? { ...item, children: item.children.filter(visible) }
+          : item
+      );
+  const menuUpper = createMemo(() => gateNav(upperNav));
+  const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
@@ -94,7 +116,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     <>
       <AppShell
         upper={menuUpper()}
-        lower={lowerNav}
+        lower={menuLower()}
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}

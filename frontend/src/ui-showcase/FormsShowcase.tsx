@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
@@ -11,6 +11,11 @@ import { FormColumns } from '../ui/layout/Form/FormColumns';
 import { FormColumn } from '../ui/layout/Form/FormColumn';
 import { FormSection } from '../ui/layout/Form/FormSection';
 import { FormRow } from '../ui/layout/Form/FormRow';
+import { FormErrorSummary } from '../ui/layout/Form/FormErrorSummary';
+import {
+  createFormValidation,
+  type FieldError,
+} from '../ui/layout/Form/formValidation';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
@@ -61,6 +66,102 @@ const CAMPAIGNS = [
  * (label-above-value, no input chrome). Resize the panel to watch the two
  * columns collapse to one, then the two-up FormRows stack.
  */
+/*
+ * The Validation tab: a focused form wired to createFormValidation +
+ * FormErrorSummary. The form author writes an explicit `errors` list computed
+ * from the draft (no field registry — kdd/explicit-composition); the helper
+ * decides WHEN each shows. Required fields stay quiet until Save is attempted
+ * (armed); the sell-vs-cost rule carries a message, so it surfaces the moment
+ * it trips. Each input reads its own message via `errorFor(id)`, and the
+ * summary lists the SAME visible() errors — so the two never disagree and the
+ * summary shrinks field-by-field as each is fixed.
+ */
+const ValidationDemo = () => {
+  const [batch, setBatch] = createSignal('');
+  const [expiry, setExpiry] = createSignal<string | null>(null);
+  const [cost, setCost] = createSignal<number | undefined>(1.0);
+  const [sell, setSell] = createSignal<number | undefined>(1.5);
+  const [saved, setSaved] = createSignal(false);
+
+  const errors = (): FieldError[] => [
+    { id: 'v-batch', label: 'Batch number', failed: batch().trim() === '' },
+    { id: 'v-expiry', label: 'Expiry date', failed: expiry() === null },
+    {
+      id: 'v-sell',
+      label: 'Sell price',
+      failed: (sell() ?? 0) < (cost() ?? 0),
+      message: 'Sell price must be at least the cost price',
+    },
+  ];
+  const validation = createFormValidation(errors);
+
+  const onSave = () => {
+    validation.arm();
+    setSaved(validation.valid());
+  };
+
+  return (
+    <ContentContainer size="form">
+      <Stack>
+        <IdentityHeader
+          title="Edit batch"
+          subtitle="A focused form wired to createFormValidation"
+        />
+        <Alert severity="info">
+          Press <strong>Save</strong> to arm the form — the required-field
+          errors reveal then. The Sell-price rule carries a message, so it
+          surfaces the moment it trips: set Sell below Cost to see it appear
+          without arming.
+        </Alert>
+        <FormSection title="Batch & pricing">
+          <TextField
+            label="Batch number"
+            required
+            width="full"
+            value={batch()}
+            error={validation.errorFor('v-batch')}
+            onInput={e => setBatch(e.currentTarget.value)}
+          />
+          <DateField
+            label="Expiry date"
+            required
+            width="full"
+            format="dd/MM/yyyy"
+            value={expiry()}
+            error={validation.errorFor('v-expiry')}
+            onChange={setExpiry}
+          />
+          <FormRow>
+            <CurrencyField
+              label="Cost price"
+              currency="USD"
+              value={cost()}
+              onChange={setCost}
+            />
+            <CurrencyField
+              label="Sell price"
+              currency="USD"
+              value={sell()}
+              error={validation.errorFor('v-sell')}
+              onChange={setSell}
+            />
+          </FormRow>
+        </FormSection>
+
+        <FormErrorSummary errors={validation.visible()} />
+
+        <Show when={saved() && validation.valid()}>
+          <Alert severity="success">Saved — no outstanding errors.</Alert>
+        </Show>
+
+        <div style={{ display: 'flex', 'justify-content': 'flex-end' }}>
+          <SaveButton onClick={onSave} />
+        </div>
+      </Stack>
+    </ContentContainer>
+  );
+};
+
 export const FormsShowcase = () => {
   const [tab, setTab] = createSignal('details');
 
@@ -98,6 +199,7 @@ export const FormsShowcase = () => {
             <TabList
               tabs={[
                 { value: 'details', label: 'Details' },
+                { value: 'validation', label: 'Validation' },
                 { value: 'log', label: 'Log' },
                 { value: 'ledger', label: 'Ledger' },
               ]}
@@ -259,10 +361,25 @@ export const FormsShowcase = () => {
               </FormColumns>
               <Alert severity="info">
                 See the anatomy of this page on the{' '}
-                <a href="#/showcase/form-layout">"Form layout" page</a>.
+                <a href="#/showcase/form-layout">"Form layout" page</a>. Form
+                validation and the error summary are demonstrated on the{' '}
+                <a
+                  href="#/showcase/forms"
+                  onClick={e => {
+                    e.preventDefault();
+                    setTab('validation');
+                  }}
+                >
+                  Validation tab
+                </a>
+                .
               </Alert>
             </Stack>
           </ContentContainer>
+        </TabPanel>
+
+        <TabPanel value="validation">
+          <ValidationDemo />
         </TabPanel>
 
         <TabPanel value="log">

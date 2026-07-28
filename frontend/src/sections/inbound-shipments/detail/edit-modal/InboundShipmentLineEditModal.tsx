@@ -1,10 +1,5 @@
-import {
-  createEffect,
-  createSignal,
-  onMount,
-  Show,
-  type Component,
-} from 'solid-js';
+import { generateUUID } from '../../../../uuid';
+import { createSignal, onMount, Show, type Component } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -16,12 +11,12 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
+import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import {
   DataTable,
   type Column,
-  type TabAndCardGroup,
-  ALL_TABS,
+  type CardGroup,
 } from '../../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -35,6 +30,10 @@ import {
   XCircleIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
@@ -189,7 +188,7 @@ const StatusDot = (props: { colour: string }) => (
 );
 
 const emptyBatch = (): DraftBatch => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   isNew: true,
   deleted: false,
   numberOfPacks: 0,
@@ -248,16 +247,32 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   sellOverridden: true,
 });
 
-// The tabs / card-groups for the grouped table (matching the stocktake editor).
-// Batch is the ALL_TABS anchor (shows in every tab), not its own group.
+// The card body groups (matching the stocktake editor). This modal is card-only
+// (no table view — see the createTableConfig default below): batch is the
+// always-shown primary panel; pricing and other are collapsed disclosures.
+// Batch is the card HEADER identity (meta.headerPosition), so it isn't itself a
+// body group.
 type GroupKey = 'batch' | 'pricing' | 'other';
-const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
-  { key: 'batch', labelKey: 'label.batch', icon: () => <StockIcon /> },
-  { key: 'pricing', labelKey: 'label.pricing', icon: () => <InfoIcon /> },
+const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
+  {
+    key: 'batch',
+    labelKey: 'label.batch',
+    icon: () => <StockIcon />,
+    panel: true,
+  },
+  {
+    key: 'pricing',
+    labelKey: 'label.pricing',
+    icon: () => <InfoIcon />,
+    panel: true,
+    disclosure: 'closed',
+  },
   {
     key: 'other',
     labelKey: 'heading.other',
     icon: () => <MessageSquareIcon />,
+    panel: true,
+    disclosure: 'closed',
   },
 ];
 
@@ -315,16 +330,24 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // advances too. Seeded as each item loads; not reactive.
   const coveredItemIds = new Set<string>();
 
-  // What to focus once the batches are in the DOM (see the focus effect):
-  // - 'itemSelector' → the add-mode top selector (item search, or PO-line
-  //   picker on a PO-linked shipment).
-  // - { row: id }    → that batch's packs-received field, scrolled into view.
-  // Consumed (cleared) by the effect so it fires once per change.
-  const [pendingFocus, setPendingFocus] = createSignal<
-    { row: string } | 'itemSelector' | undefined
-  >();
+  // Each batch row's packs-received field, bound per row and addressed by draft
+  // row id — where a row-click open, an advance, or a new batch lands focus.
+  // The handle waits for the row to attach, so no load gate is needed here.
+  const batchFields = createFocusTargets();
 
-  const tableConfig = createTableConfig({ tableId: 'inbound-line-edit' });
+  // The add-mode top selector — the item search, or the PO-line picker on a
+  // PO-linked shipment. ONE handle for both: only one of them is mounted at a
+  // time, and the handle simply lands on whichever attaches
+  // (ui/utils/createFocusTarget).
+  const topSelector = createFocusTarget();
+
+  // Card-only: default the view to card at every band (compact already forces
+  // card; this extends it to desktop). No showCardToggle on the DataTable, so
+  // there's no way to a table view — the batch grid is always cards.
+  const tableConfig = createTableConfig({
+    tableId: 'inbound-line-edit',
+    defaultConfig: { base: { viewMode: 'card' } },
+  });
 
   // Load one item's existing lines and seed the batch draft — a plain
   // SEQUENTIAL fetch, NOT a createResource (issue #428: draft state is built
@@ -367,8 +390,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: first.item?.defaultPackSize ?? 1,
       defaultSellPricePerPack: 0,
     });
+    // A PO-linked shipment's existing lines already cite the order line they
+    // fill — inherit it so "Add batch" (another batch for this same item)
+    // carries the link automatically, instead of requiring a re-pick that
+    // update mode's locked selector doesn't even offer (new batches were
+    // otherwise saving with purchaseOrderLineId undefined).
+    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
     // Focus the requested batch, else the first row.
-    setPendingFocus({ row: focusLineId ?? first.id });
+    batchFields.focus(focusLineId ?? first.id);
     setLoadingLines(false);
   };
 
@@ -399,7 +428,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (!option) {
       setItem(null);
       setBatches([]);
-      setPendingFocus('itemSelector');
+      topSelector.focus();
       return;
     }
     const chosen: ChosenItem = {
@@ -416,7 +445,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setItem(chosen);
     setBatches([batch]);
     // Picking an item drops focus straight onto its first batch's packs field.
-    setPendingFocus({ row: batch.id });
+    batchFields.focus(batch.id);
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
@@ -457,7 +486,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     });
     const batch = { ...emptyBatch(), packSize: line.requestedPackSize || 1 };
     setBatches([batch]);
-    setPendingFocus({ row: batch.id });
+    batchFields.focus(batch.id);
   };
 
   // Draft edits are keyed by batch id (like the stocktake editor) so a filter/
@@ -477,7 +506,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const chosen = item();
     const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
     setBatches(produce(d => d.push(batch)));
-    setPendingFocus({ row: batch.id });
+    batchFields.focus(batch.id);
   };
 
   // Pack-size / price edits (AC-H6): moving the pack size off the item default
@@ -518,7 +547,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       })
     );
   const duplicateBatch = (id: string) => {
-    const newId = crypto.randomUUID();
+    const newId = generateUUID();
     setBatches(
       produce(d => {
         const index = d.findIndex(b => b.id === id);
@@ -526,7 +555,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           d.splice(index + 1, 0, { ...d[index], id: newId, isNew: true });
       })
     );
-    setPendingFocus({ row: newId });
+    batchFields.focus(newId);
   };
   const removeBatch = (id: string) => {
     const index = indexById(id);
@@ -550,47 +579,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       void loadItemById(props.initialItemId, props.initialLineId);
     else {
       setLoadingLines(false);
-      setPendingFocus('itemSelector');
+      topSelector.focus();
     }
-  });
-
-  // Move focus once the target is in the DOM: the add-mode selector, else the
-  // requested batch's packs-received field (scrolled into view). Runs after the
-  // load so the row exists; deferred a frame so the table has painted. This
-  // overrides the Dialog's own initial-focus-to-panel default (which keeps a
-  // combobox from popping open) — an intentional, per-editor affordance. A
-  // disabled packs field (a locked line) can't take focus — we still scroll to
-  // it. Gated on loadingLines so the row exists before we reach for it.
-  createEffect(() => {
-    const target = pendingFocus();
-    if (!target || loadingLines()) return;
-    setPendingFocus(undefined);
-    requestAnimationFrame(() => {
-      const root = document.querySelector('[data-testid="add-item-modal"]');
-      if (!root) return;
-      if (target === 'itemSelector') {
-        // Manual/transfer shipments show the item search; a PO-linked shipment
-        // shows the PO-line picker instead.
-        (
-          root.querySelector<HTMLElement>(
-            '[data-testid="item-search-input"]'
-          ) ??
-          root.querySelector<HTMLElement>(
-            '[data-testid="purchase-order-line-input"]'
-          )
-        )?.focus();
-        return;
-      }
-      const row = root.querySelector<HTMLElement>(
-        `[data-row-key="${target.row}"]`
-      );
-      if (!row) return;
-      row.scrollIntoView({ block: 'nearest' });
-      const packs = row.querySelector<HTMLInputElement>(
-        '[data-testid="cell-numberOfPacks"] input'
-      );
-      if (packs && !packs.disabled) packs.focus();
-    });
   });
 
   const buildBatch = (): BatchInboundShipmentVariables['input'] | null => {
@@ -704,7 +694,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setBatches([]);
     setErrorMessage(undefined);
     // Focus the selector so the next item can be typed / picked.
-    setPendingFocus('itemSelector');
+    topSelector.focus();
   };
 
   // OK & next: save, then — on success only — advance. By mode:
@@ -748,9 +738,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { card: { region: 'primary', showLabel: true } },
+      header: () => t('label.batch'),
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity): keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const b = info.row.original;
         return (
@@ -758,6 +754,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.batch')}
             hideLabel
             size="small"
+            // Narrow: a batch code is short, and it's the card's inline header
+            // field (the FieldRow control cell is otherwise full-width).
+            width="compact"
             value={b.batch}
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
@@ -766,13 +765,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'numberOfPacks' },
-      header: t('label.pack-quantity'),
-      tabsAndCardGroups: ['batch'],
+      header: () => t('label.pack-quantity'),
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
         return (
           <NumberField
+            ref={batchFields.ref(b.id)}
             label={t('label.pack-quantity')}
             hideLabel
             size="small"
@@ -789,8 +789,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
-      tabsAndCardGroups: ['batch'],
+      header: () => t('label.pack-size'),
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -819,8 +819,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'shippedNumberOfPacks' },
-            header: t('label.shipped-number-of-packs'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.shipped-number-of-packs'),
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
               const b = info.row.original;
@@ -839,8 +839,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
           {
             c: { id: 'shippedPackSize' },
-            header: t('label.shipped-pack-size'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.shipped-pack-size'),
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
               const b = info.row.original;
@@ -862,10 +862,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Units received (computed) — packs received × pack size (spec S4).
     {
       c: { id: 'unitsReceived' },
-      header: t('label.units-received', {
-        unit: item()?.unitName ?? t('label.units'),
-      }),
-      tabsAndCardGroups: ['batch'],
+      header: () =>
+        t('label.units-received', {
+          unit: item()?.unitName ?? t('label.units'),
+        }),
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -898,8 +899,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'authStatus' },
-            header: t('label.auth-status'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.auth-status'),
+            cardGroup: 'batch',
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
@@ -953,8 +954,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'dosesPerUnit' },
-            header: t('label.doses-per-unit'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.doses-per-unit'),
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: () => (
               <NumberField
@@ -970,8 +971,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       : []),
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry'),
-      tabsAndCardGroups: ['batch'],
+      header: () => t('label.expiry'),
+      cardGroup: 'batch',
       cell: info => {
         const b = info.row.original;
         return (
@@ -990,8 +991,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'vvmStatus' },
-            header: t('label.vvm-status'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.vvm-status'),
+            cardGroup: 'batch',
             cell: info => {
               const b = info.row.original;
               return (
@@ -1010,8 +1011,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       : []),
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
-      tabsAndCardGroups: ['pricing'],
+      header: () => t('label.pack-cost-price'),
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1029,8 +1030,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
-      tabsAndCardGroups: ['pricing'],
+      header: () => t('label.pack-sell-price'),
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1048,8 +1049,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Line total (computed) — packs received × pack cost price (spec S4).
     {
       c: { id: 'lineTotal' },
-      header: t('label.line-total'),
-      tabsAndCardGroups: ['pricing'],
+      header: () => t('label.line-total'),
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1066,8 +1067,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { id: 'location' },
-      header: t('label.location'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.location'),
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1084,8 +1085,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.manufacture-date'),
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1093,7 +1094,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.manufacture-date')}
             hideLabel
             value={b.manufactureDate}
-            max={new Date().toISOString().slice(0, 10)}
+            max={localTodayIso()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );
@@ -1104,8 +1105,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? [
           {
             c: { id: 'donor' },
-            header: t('label.donor'),
-            tabsAndCardGroups: ['other'],
+            header: () => t('label.donor'),
+            cardGroup: 'other',
             cell: info => {
               const b = info.row.original;
               return (
@@ -1140,8 +1141,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Manufacturer (Other tab, spec S4) — a name lookup, manufacturer role.
     {
       c: { id: 'manufacturer' },
-      header: t('label.manufacturer'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.manufacturer'),
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1176,8 +1177,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // other (the select routes the choice to the right wire field).
     {
       c: { id: 'campaignOrProgram' },
-      header: t('label.campaign'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.campaign'),
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1199,8 +1200,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Volume per pack (Other tab, spec S4).
     {
       c: { id: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.volume-per-pack'),
+      cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
@@ -1219,8 +1220,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'note' },
-      header: t('label.note'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.note'),
+      cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
@@ -1236,9 +1237,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { id: 'actions' },
-      header: t('label.actions'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { card: { region: 'badge' }, align: 'right' },
+      header: () => t('label.actions'),
+      // Structural row-actions column — not user-configurable, so keep it out
+      // of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1284,6 +1290,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <Select
             label={t('label.purchase-order')}
             testId="purchase-order-line-input"
+            focusTarget={topSelector}
             value={poLineId()}
             onValueChange={choosePoLine}
             options={poLines().map(l => ({
@@ -1298,6 +1305,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.item')}
             hideLabel
             storeId={props.storeId}
+            focusTarget={topSelector}
             value={item()?.id}
             selectedItem={item() ?? undefined}
             disabled={mode() === 'update'}
@@ -1381,7 +1389,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               columns={columns()}
               rows={rows()}
               rowKey={b => b.id}
-              tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+              cardGroups={CARD_GROUPS}
               showFullScreen={false}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}

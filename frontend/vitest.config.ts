@@ -10,6 +10,10 @@ export default defineConfig({
   define: {
     APP_VERSION: JSON.stringify('0.0.0-test'),
   },
+  // "@/x" → src/x — mirrors vite.config.ts / tsconfig.app.json "paths".
+  resolve: {
+    alias: { '@': new URL('./src', import.meta.url).pathname },
+  },
   test: {
     include: ['src/**/*.test.ts'],
     environment: 'node',

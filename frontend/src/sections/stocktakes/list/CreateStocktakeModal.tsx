@@ -1,3 +1,4 @@
+import { generateUUID } from '@/uuid';
 import {
   createMemo,
   createResource,
@@ -7,31 +8,31 @@ import {
   Switch,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../ui/elements/feedback/Alert';
-import { InsetPanel } from '../../../ui/layout/InsetPanel/InsetPanel';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { graphqlFetch } from '@/api/graphql';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
+import { Button } from '@/ui/elements/buttons/Button';
+import { RadioGroup } from '@/ui/elements/inputs/RadioGroup';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import {
   masterListsResource,
   MasterListSelect,
-} from '../../../domain/masterList';
+} from '@/domain/masterList';
 import {
   fetchLocations,
   LocationSelect,
   type Location,
-} from '../../../domain/location';
-import { VvmStatusSelect } from '../../../domain/vvmStatus';
-import { stocktakePreferences } from '../../../store/storeContext';
-import { PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
-import { t, tPlural } from '../../../intl';
-import { localisedDate } from '../../../intl/formatDateTime';
-import { userDisplayName } from '../../../auth/authContext';
-import { shallowEqual } from '../../../typeHelpers';
-import { dayBefore } from '../../../intl/dateArithmetic';
+} from '@/domain/location';
+import { VvmStatusSelect } from '@/domain/vvmStatus';
+import { stocktakePreferences } from '@/store/storeContext';
+import { PlusCircleIcon, XCircleIcon } from '@/ui/icons';
+import { t, tPlural } from '@/intl';
+import { localisedDate } from '@/intl/formatDateTime';
+import { userDisplayName } from '@/auth/authContext';
+import { shallowEqual } from '@/typeHelpers';
+import { dayBefore } from '@/intl/dateArithmetic';
 import {
   InsertStocktake,
   type InsertStocktakeVariables,
@@ -239,7 +240,7 @@ export const CreateStocktakeModal = (props: {
     // name and today's date, both in the active locale. Editable in place
     // afterward; nothing re-derives it.
     const base = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       comment: generatedComment(),
       description: t('stocktake.description-template', {
         username: userDisplayName(),
@@ -373,6 +374,15 @@ export const CreateStocktakeModal = (props: {
         </>
       }
     >
+      {/* Blind stocktake (spec/stocktakes › store-preference gates): an
+          informational banner shown regardless of mode — there is no control
+          here to turn the preference on or off per-stocktake, it only informs. */}
+      <Show when={stocktakePreferences().blindStocktake}>
+        <Alert severity="info" testId="blind-stocktake-notice">
+          {t('message.blind-stocktake-enabled')}
+        </Alert>
+      </Show>
+
       {/* The three type radios, tight together at the top. */}
       <RadioGroup
         value={form().type}

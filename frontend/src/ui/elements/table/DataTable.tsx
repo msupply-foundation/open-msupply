@@ -1,9 +1,12 @@
 import {
   createEffect,
+  createMemo,
   createSignal,
   For,
   Match,
   on,
+  onCleanup,
+  onMount,
   Show,
   Switch,
 } from 'solid-js';
@@ -23,13 +26,12 @@ import {
   type VisibilityState,
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
+import { hiddenEdges } from './scrollEdges';
 import {
-  membershipInTab,
   toColumnDef,
+  type CardGroup,
   type Column,
-  type Membership,
   type SortState,
-  type TabAndCardGroup,
 } from './columnTypes';
 import { HeaderCell } from './HeaderCell';
 import { TableRow } from './TableRow';
@@ -41,11 +43,12 @@ import {
   type ViewMode,
 } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { useIsNavOverlay, useIsCompact } from '../../utils/createMediaQuery';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
+  CardViewIcon,
   CloseIcon,
-  ColumnsIcon,
+  Columns3CogIcon,
   MaximiseIcon,
   MinimiseIcon,
   SettingsIcon,
@@ -60,22 +63,22 @@ import { ContentFooterActions } from '../../layout/ContentFooter/ContentFooterAc
 import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
-import { t } from '../../../intl';
+import { isRtl, t } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
-// (Column/ColumnIdentity/toColumnDef/TabAndCardGroup/ALL_TABS/SortState + the
-// ColumnMeta augmentation) lives in columnTypes.ts, re-exported here so
-// consumers keep importing from './DataTable'. The three render paths
-// (HeaderCell / TableRow / CardView) are their own files. What remains in THIS
-// file is the stateful table controller.
+// (Column/ColumnIdentity/toColumnDef/CardGroup/SortState + the ColumnMeta
+// augmentation) lives in columnTypes.ts, re-exported here so consumers keep
+// importing from './DataTable'. The three render paths (HeaderCell / TableRow /
+// CardView) are their own files. What remains in THIS file is the stateful
+// table controller.
 export type {
+  CardGroup,
   Column,
   ColumnIdentity,
   SortState,
-  TabAndCardGroup,
 } from './columnTypes';
-export { ALL_TABS, toColumnDef } from './columnTypes';
+export { toColumnDef } from './columnTypes';
 
 // Generic, server-driven data table shared across list pages
 // (kdd/explicit-composition treats the data table as its sanctioned
@@ -118,17 +121,20 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   filters?: JSX.Element;
 
-  // --- Card groups (optional; kdd/edit-line-card-table). Each shows as a TAB
-  // in table view. --- When `tabsAndCardGroups` is set the table shows a tab
-  // strip and only the active card group's columns. "Active card group's
-  // columns" = columns whose `tabsAndCardGroups` includes the active card group
-  // OR the ALL_TABS sentinel. This is a SECONDARY visibility filter baked in
-  // here — it filters props.columns before they reach the table, deliberately
-  // separate from the config's columnVisibility so it never touches the user's
-  // persisted column layout. The TABLE owns the active card group entirely (an
-  // internal signal, defaulting to the first): the caller just declares
-  // `tabsAndCardGroups`. No active-card-group state leaks to the page.
-  tabsAndCardGroups?: TabAndCardGroup<G>[];
+  // --- Card groups (optional). How the CARD body is organised: each column's
+  // `cardGroup` names a group, and this list declares each group's presentation
+  // — icon, panel, disclosure (see CardGroup + CardView). Card-view only; table
+  // view ignores it (a page wanting tabbed column subsets renders a table per
+  // tab itself). Ungrouped columns form the default group. Omit for a plain
+  // (single flat group) card.
+  cardGroups?: CardGroup<T, G>[];
+  /**
+   * Offer the card ⇄ table view toggle in the toolbar (above the compact
+   * breakpoint only — below it the table is always card, so no toggle). The
+   * chosen view persists via `viewMode` config. Default false: a table with no
+   * meaningful card layout stays table-only. Needs `setConfig` to persist.
+   */
+  showCardToggle?: boolean;
 
   /** Current sort, or undefined when unsorted. */
   sort?: SortState<K>;
@@ -276,7 +282,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // the current sorting() to read the concrete next state. TanStack has already
   // computed the next direction, so we pass its desc straight through rather
   // than re-deriving the asc/desc cycle.
-  const sorting = (): SortingState =>
+  //
+  // Memoized: every state field handed to createSolidTable is read via a
+  // `get` in its config, and TanStack recomputes internal state off a
+  // field's IDENTITY, not deep equality. A plain function here would build a
+  // fresh array/object on EVERY read regardless of whether the underlying
+  // props changed, which can sustain a self-triggering re-render loop with no
+  // real dependency change behind it (this shape of bug caused a genuine
+  // slow-load regression in the stocktake detail view — see the `columns`
+  // memo below, the same fix applied to every state getter in this file).
+  const sorting = createMemo<SortingState>(() =>
     props.sort
       ? [
           {
@@ -284,7 +299,8 @@ export function DataTable<T, K extends string, G extends string = never>(
             desc: props.sort.desc,
           },
         ]
-      : [];
+      : []
+  );
   const onSortingChange = (updater: Updater<SortingState>) => {
     const sort = functionalUpdate(updater, sorting())[0];
     if (!sort) return;
@@ -295,8 +311,9 @@ export function DataTable<T, K extends string, G extends string = never>(
   // --- Selection ⇄ the page's selectedIds (controlled, like sort/config) ---
   // rowSelection is derived from props.selectedIds; a change is resolved
   // against it and reported back.
-  const rowSelection = (): RowSelectionState =>
-    Object.fromEntries((props.selectedIds ?? []).map(id => [id, true]));
+  const rowSelection = createMemo<RowSelectionState>(() =>
+    Object.fromEntries((props.selectedIds ?? []).map(id => [id, true]))
+  );
   const onRowSelectionChange = (u: Updater<RowSelectionState>) => {
     const next = functionalUpdate(u, rowSelection());
     const ids = Object.keys(next).filter(id => next[id]);
@@ -319,16 +336,47 @@ export function DataTable<T, K extends string, G extends string = never>(
   // sort/selection above) and hands the concrete value to setConfig — so the
   // page receives a value, not an updater. Inlined per field (no generic
   // helper) — four small, click-through handlers.
-  const columnOrder = (): ColumnOrderState => props.config?.columnOrder ?? [];
-  const columnPinning = (): ColumnPinningState =>
-    props.config?.columnPinning ?? {};
-  const columnVisibility = (): VisibilityState =>
-    props.config?.columnVisibility ?? {};
+  const columnOrder = createMemo<ColumnOrderState>(
+    () => props.config?.columnOrder ?? []
+  );
+  const columnPinning = createMemo<ColumnPinningState>(
+    () => props.config?.columnPinning ?? {}
+  );
+  const columnVisibility = createMemo<VisibilityState>(
+    () => props.config?.columnVisibility ?? {}
+  );
 
   // View mode is a config field but NOT a TanStack state (no on*Change) — read
-  // it directly. Defaults to 'table' when unset; the compact band's config
-  // default typically flips it to 'card'.
-  const viewMode = (): ViewMode => props.config?.viewMode ?? 'table';
+  // it directly. Below the compact breakpoint the table is ALWAYS card (the
+  // toggle is suppressed there); above it, the persisted `viewMode` wins,
+  // defaulting to 'table'. A page opts a table into card-by-default by seeding
+  // its base-band `viewMode: 'card'` config.
+  const isCompact = useIsCompact();
+  const viewMode = (): ViewMode =>
+    isCompact() ? 'card' : (props.config?.viewMode ?? 'table');
+
+  // --- Sort control (card view). With no clickable column headers, sorting
+  // moves to a toolbar popover. Its options are the sortable columns (those
+  // declaring a sortKey); picking one sorts ascending, re-picking the active one
+  // flips direction — the SAME onSort a header click calls, so the page's sort
+  // state model is untouched. Shown only in card view (headers handle it in
+  // table view) and only when the page wired onSort + has sortable columns.
+  const sortableColumns = () =>
+    props.columns.filter(c => c.sortKey !== undefined);
+  const columnLabel = (c: Column<T, K, G>): string =>
+    typeof c.header === 'string' ? c.header : (c.sortKey ?? '');
+  const activeSortColumn = (): Column<T, K, G> | undefined =>
+    props.sort
+      ? sortableColumns().find(c => c.sortKey === props.sort!.key)
+      : undefined;
+  const chooseSort = (key: K) => {
+    if (props.sort?.key === key) props.onSort?.(key, !props.sort.desc);
+    else props.onSort?.(key, false);
+  };
+  const showSortControl = () =>
+    viewMode() === 'card' &&
+    props.onSort !== undefined &&
+    sortableColumns().length > 0;
 
   // Row density (ui-standards § tables → row heights) — a view-level config
   // field like viewMode, chosen in the Settings popover and stamped as
@@ -366,64 +414,46 @@ export function DataTable<T, K extends string, G extends string = never>(
   // come through setConfig directly and persist immediately.
   const [transientSizing, setTransientSizing] =
     createSignal<ColumnSizingState | null>(null);
-  const configSizingPx = (): ColumnSizingState => {
+  const configSizingPx = createMemo<ColumnSizingState>(() => {
     const rem = props.config?.columnSizing ?? {};
     return Object.fromEntries(
       Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
     );
-  };
+  });
   const pxToRemSizing = (px: ColumnSizingState): ColumnSizingState =>
     Object.fromEntries(Object.entries(px).map(([id, p]) => [id, pxToRem(p)]));
   const columnSizing = (): ColumnSizingState =>
     transientSizing() ?? configSizingPx();
 
-  // --- Card groups: the SECONDARY visibility filter
-  // (kdd/edit-line-card-table). Each card --- group is a TAB in table view. The
-  // table OWNS the active card group (an internal signal). `activeTab()`
-  // resolves to the selected card group when it's still one of the declared
-  // ones, else falls back to the first (covers the initial render + a
-  // card-group list that changed). Undefined when the table has no card groups.
-  const [selectedTab, setSelectedTab] = createSignal<G>();
-  const activeTab = (): G | undefined => {
-    const cardGroups = props.tabsAndCardGroups;
-    if (!cardGroups || cardGroups.length === 0) return undefined;
-    const selected = selectedTab();
-    return selected && cardGroups.some(g => g.key === selected)
-      ? selected
-      : cardGroups[0].key;
-  };
-  // Card-group membership is a DISPLAY-TIME filter, NOT a column filter:
-  // TanStack always holds the FULL column set, so
-  // config/column-settings/order/visibility operate on every column
-  // consistently (hiding a shared column is unambiguously global — see
-  // kdd/table-state). We instead skip rendering the header/body cells of
-  // columns not in the active card group, in the table-view render below.
-  // `columnInActiveTab` is the predicate: a column shows in the active card
-  // group (tab) when its `tabsAndCardGroups` includes it OR the ALL_TABS
-  // sentinel; when the table has no card groups every column shows.
-  const columnInActiveTab = (
-    col: { tabsAndCardGroups?: Membership } | undefined
-  ): boolean => {
-    const cardGroup = activeTab();
-    if (!props.tabsAndCardGroups || cardGroup === undefined) return true;
-    return membershipInTab(col?.tabsAndCardGroups, cardGroup);
-  };
+  // Table view shows a column unless it's declared card-only (meta.hideOnTable).
+  // TanStack keeps the FULL column set (config/order/sizing stay whole); we just
+  // skip rendering a card-only column's header/body/footer cells here, and the
+  // Columns popover drops card-only columns in table view (see ColumnSettings).
+  // A card-only column with a footer must not force a <tfoot>, so hasFooter
+  // gates on this too. (Card grouping is card-view only — see props.cardGroups /
+  // CardView — so table view no longer filters by group.)
+  const showInTableView = (columnDef: {
+    meta?: { hideOnTable?: boolean };
+  }): boolean => !columnDef.meta?.hideOnTable;
 
-  // Does any active-tab column declare a `footer`? Drives whether the footer
+  // Does any table-view column declare a `footer`? Drives whether the footer
   // band renders at all — a table with no summed columns has no <tfoot>.
   const hasFooter = (): boolean =>
-    props.columns.some(
-      col => col.footer !== undefined && columnInActiveTab(col)
-    );
+    props.columns.some(col => col.footer !== undefined && showInTableView(col));
+  // Memoized: TanStack treats a new `columns` identity as a config change and
+  // updates its internal state accordingly, which (via the getter below) can
+  // re-trigger whatever reactive scope reads `props.columns` — a loop with no
+  // real change behind it if `.map()` reran on every read regardless of
+  // whether `props.columns` itself changed. Memoizing on `props.columns`
+  // breaks that: the mapped array is only rebuilt when the caller's columns
+  // actually change.
+  const columnDefs = createMemo(() => props.columns.map(toColumnDef));
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
     },
     get columns() {
-      // Our Column carries a typed identity union + extension fields; map each
-      // to the raw TanStack ColumnDef (identity → accessorKey/accessorFn/id,
-      // always an explicit id).
-      return props.columns.map(toColumnDef);
+      return columnDefs();
     },
     state: {
       get sorting() {
@@ -519,24 +549,81 @@ export function DataTable<T, K extends string, G extends string = never>(
   // (.td[data-pinned] vs .th[data-pinned]), so the SAME style is safe on a
   // header or a body cell without an inline z-index overriding the CSS layer.
   //
-  // The edge offset is TanStack's own getStart('left') / getAfter('right') —
-  // the summed widths of the pinned columns before (left) / after (right) THIS
-  // one, on that side. Both index the column by its id (not object identity),
-  // so a cell-context column resolves correctly against the table's column list
-  // — the earlier indexOf(column) matched by reference and missed, summing the
-  // column's own width so a single right-pinned column floated one column-width
-  // off the edge. Left offsets add leadingWidth() for the (also-pinned) leading
-  // select/expander columns.
+  // The rendered sticky offset of each pinned column, keyed by column id: how
+  // far its frozen edge sits from the box's inline-start (left-pinned) or
+  // inline-end (right-pinned). Measured off the header row — see pinnedStyle
+  // for why TanStack's own numbers can't be used.
+  const [pinnedOffsets, setPinnedOffsets] = createSignal<
+    Record<string, number>
+  >({});
+  let scrollBox: HTMLDivElement | undefined;
+
+  // Walk the header row from each end, accumulating RENDERED widths for as long
+  // as the cells are pinned to that side (a frozen block is always a prefix or
+  // suffix of the row). The leading select cell is the first cell measured, so
+  // left offsets include it without a special case.
+  const measurePinnedOffsets = () => {
+    const headerRow = scrollBox?.querySelector('thead tr');
+    if (!headerRow) return; // card view / pre-mount: keep the last measurement
+    const cells = [...headerRow.children] as HTMLElement[];
+    const next: Record<string, number> = {};
+
+    let fromStart = 0;
+    for (const cell of cells) {
+      if (cell.dataset.pinned !== 'left') break;
+      if (cell.dataset.columnId) next[cell.dataset.columnId] = fromStart;
+      fromStart += cell.getBoundingClientRect().width;
+    }
+
+    let fromEnd = 0;
+    for (const cell of [...cells].reverse()) {
+      if (cell.dataset.pinned !== 'right') break;
+      if (cell.dataset.columnId) next[cell.dataset.columnId] = fromEnd;
+      fromEnd += cell.getBoundingClientRect().width;
+    }
+
+    // Only publish real changes: re-rendering identical offsets would churn
+    // every pinned cell's style on each resize tick.
+    setPinnedOffsets(current => {
+      const keys = Object.keys(next);
+      const same =
+        keys.length === Object.keys(current).length &&
+        keys.every(id => current[id] === next[id]);
+      return same ? current : next;
+    });
+  };
+
+  // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
+  // TanStack can offer — getStart('left') / getAfter('right') — sum the
+  // CONFIGURED sizes, and under our auto table layout a column's `size` is only
+  // a min-width FLOOR: columns flex past it to fill the table. Summing floors
+  // puts a second pinned column short of where the first one actually ends, so
+  // it slides over its neighbour as you scroll and only freezes once it reaches
+  // the too-small offset (a 64px-configured column rendering 90px overlapped by
+  // 26px). Only columns that flex are affected, which is why it looked
+  // intermittent. Pre-existing; reported by Carl 2026-07-28.
+  //
+  // Those getters remain the FALLBACK for the first paint, before there's a
+  // header row to measure — the effect below corrects it in the same frame.
+  // Both index by column id (not object identity), so a cell-context column
+  // resolves against the table's column list; the earlier indexOf(column)
+  // matched by reference and missed, summing the column's own width so a single
+  // right-pinned column floated one column-width off the edge. The left
+  // fallback adds leadingWidth() for the (also-pinned) leading select column;
+  // measured left offsets already include it, since the select cell is the
+  // first cell measured.
   const pinnedStyle = (column: TanColumn<T>): JSX.CSSProperties | undefined => {
     const side = column.getIsPinned();
     if (!side) return undefined;
+    const measured = pinnedOffsets()[column.id];
     if (side === 'left') {
-      return {
-        position: 'sticky',
-        left: `${leadingWidth() + column.getStart('left')}px`,
-      };
+      const left = measured ?? leadingWidth() + column.getStart('left');
+      return { position: 'sticky', left: `${left}px` };
     }
-    return { position: 'sticky', right: `${column.getAfter('right')}px` };
+    return {
+      position: 'sticky',
+      right: `${measured ?? column.getAfter('right')}px`,
+    };
   };
 
   // The leading selection column is pinned-left too (offset 0) so it stays
@@ -553,8 +640,135 @@ export function DataTable<T, K extends string, G extends string = never>(
   // needs the table's own fixed overlay.
   const overlay = () => fullScreen() && !shellFullScreen;
 
+  // Is content hidden past the scroll box's left / right edge? Stamped on the
+  // box as data-hidden-left / data-hidden-right, which is what reveals each
+  // frozen block's shadow: a frozen column only casts one while content is
+  // actually passing UNDER it (#617 — the always-on version read as a hard
+  // band; see DataTable.module.css). Deliberately not "the table overflows":
+  // an unscrolled table has clear air beside its leading column even though it
+  // overflows to the right.
+  //
+  // Both edges are PHYSICAL (the leading column pins physical-left in either
+  // direction), which takes reconciling the two scrollLeft conventions —
+  // hiddenEdges owns that arithmetic and is unit-tested in scrollEdges.test.ts.
+  //
+  // Setting the same boolean is a no-op in Solid, so a scroll costs two
+  // comparisons and re-renders nothing until an edge state actually flips.
+  const [hiddenLeft, setHiddenLeft] = createSignal(false);
+  const [hiddenRight, setHiddenRight] = createSignal(false);
+
+  const syncHiddenEdges = () => {
+    if (!scrollBox) return;
+    const { left, right } = hiddenEdges(scrollBox, isRtl());
+    setHiddenLeft(left);
+    setHiddenRight(right);
+  };
+
+  // Both the hidden edges and the pinned offsets are layout facts, so they're
+  // re-read together whenever layout could have moved.
+  const remeasure = () => {
+    syncHiddenEdges();
+    measurePinnedOffsets();
+  };
+
+  // Scrolling isn't the only thing that moves these — hiding a column, dragging
+  // a resize handle, changing density or page size, or resizing the window all
+  // change widths with no scroll event. Observing the box AND the table covers
+  // both (the box for viewport-driven changes, the table for content-driven
+  // ones). Publishing only real changes (see measurePinnedOffsets) keeps this
+  // from feeding itself: the styles it writes are offsets, which move nothing.
+  onMount(() => {
+    if (!scrollBox) return;
+    const observer = new ResizeObserver(remeasure);
+    observer.observe(scrollBox);
+    const table = scrollBox.querySelector('table');
+    if (table) observer.observe(table);
+    remeasure();
+    onCleanup(() => observer.disconnect());
+  });
+
+  // Column state can redistribute widths WITHOUT resizing the table (it's
+  // width: 100% of the box), which the observer above would never see — so
+  // re-measure on the state that reshuffles columns. A locale flip is in here
+  // too: it swaps the scrollLeft convention with nothing scrolling or resizing.
+  // Solid runs effects after the DOM is patched, and getBoundingClientRect
+  // forces the pending layout, so this reads post-change widths.
+  createEffect(() => {
+    const state = table.getState();
+    void state.columnPinning;
+    void state.columnVisibility;
+    void state.columnOrder;
+    void state.columnSizing;
+    void viewMode();
+    void viewDensity();
+    void isRtl();
+    remeasure();
+  });
+
+  // Which cells sit on a frozen BLOCK's outer edge — the boundary the scrolling
+  // content actually passes: the LAST left-pinned column and the FIRST
+  // right-pinned one. That edge carries the freeze cue (a 1px seam at rest, the
+  // shadow once content is under it); columns inside the block carry neither, or
+  // the block would read as several separate frozen strips.
+  //
+  // Read from the per-side lists, NOT from getVisibleLeafColumns(): the two are
+  // ordered differently, and only the per-side ones match the DOM. Header groups
+  // are built [...left, ...center, ...right] with each pinned block in its
+  // columnPinning array order, while getVisibleLeafColumns() follows
+  // columnOrder. Reordering two pinned columns rewrites columnOrder alone, so
+  // the two disagree and the cue stayed on the column that WAS outermost
+  // (Carl 2026-07-28). Filtered by showInTableView for the same reason we don't
+  // use TanStack's getIsLastColumn('left'): a column that isn't rendered can't
+  // carry the cue.
+  const framedPinned = (side: 'left' | 'right') =>
+    (side === 'left'
+      ? table.getLeftVisibleLeafColumns()
+      : table.getRightVisibleLeafColumns()
+    ).filter(column => showInTableView(column.columnDef));
+  // Outermost = furthest from the scrolling content: the LAST left-pinned
+  // column, the FIRST right-pinned one.
+  const lastLeftPinnedId = () => framedPinned('left').at(-1)?.id;
+  const firstRightPinnedId = () => framedPinned('right')[0]?.id;
+
+  const frozenEdge = (column: TanColumn<T>): 'left' | 'right' | undefined => {
+    if (column.id === lastLeftPinnedId()) return 'left';
+    if (column.id === firstRightPinnedId()) return 'right';
+    return undefined;
+  };
+
+  // With no data column pinned left, the leading selection column IS the left
+  // block, so the cue falls on it (the CSS withholds only its 1px seam — #617
+  // wants no line beside the checkbox, shadow or not).
+  const leadingIsFrozenEdge = () => lastLeftPinnedId() === undefined;
+
+  // Per-facet applicability for the Settings popover's resets (issue #572): each
+  // reset is enabled only when that facet actually differs from the default,
+  // derived from the resolved config (reactive) so it needs no extra per-page
+  // plumbing. "Show all columns" keys on any column being hidden, not a user
+  // override, so it's offered whenever there's something to reveal.
+  const columnOrderChanged = () => {
+    const order = props.config?.columnOrder;
+    if (!order || order.length === 0) return false;
+    const def = columnDefs().map(d => d.id);
+    return order.length !== def.length || order.some((id, i) => id !== def[i]);
+  };
+  const anyColumnHidden = () =>
+    Object.values(props.config?.columnVisibility ?? {}).some(v => v === false);
+  const anyColumnSized = () =>
+    Object.keys(props.config?.columnSizing ?? {}).length > 0;
+  const anyColumnPinned = () => {
+    const pinning = props.config?.columnPinning;
+    return (pinning?.left?.length ?? 0) + (pinning?.right?.length ?? 0) > 0;
+  };
+
   return (
-    <div class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}>
+    // data-datatable: a stable, un-hashed styling hook so a fill-body page can
+    // full-bleed the table from its own CSS module (Page.module.css) — a
+    // descendant selector can't name this .root class across CSS Modules.
+    <div
+      class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
+      data-datatable
+    >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
           inline-end. Outside the scroll region, so it never scrolls with the
@@ -567,43 +781,9 @@ export function DataTable<T, K extends string, G extends string = never>(
         <Show when={props.filters}>
           <div class={styles.toolbarFilters}>{props.filters}</div>
         </Show>
-        {/* Card-group tabs (inline-start, after any filters). Only in table view — card view
-            shows the card groups as rows. A lightweight role=tablist (buttons): swapping the
-            active card group is a secondary column filter on ONE table, not a panel swap, so
-            no Kobalte Tabs. */}
-        <Show when={props.tabsAndCardGroups && viewMode() === 'table'}>
-          <div
-            class={styles.groupTabs}
-            role="tablist"
-            aria-label={t('table.card-groups')}
-          >
-            <For each={props.tabsAndCardGroups}>
-              {cardGroup => (
-                <button
-                  type="button"
-                  role="tab"
-                  class={styles.groupTab}
-                  // tab-<key> per e2e/TESTIDS.md — the group key is the
-                  // locale-stable value (the label is translated).
-                  data-testid={`tab-${cardGroup.key}`}
-                  data-active={cardGroup.key === activeTab() ? '' : undefined}
-                  aria-selected={cardGroup.key === activeTab()}
-                  onClick={() => setSelectedTab(() => cardGroup.key)}
-                >
-                  <Show when={cardGroup.icon}>
-                    {icon => (
-                      <span class={styles.groupTabIcon}>{icon()()}</span>
-                    )}
-                  </Show>
-                  {/* icon()() — Show's accessor yields the factory (cardGroup.icon); the 2nd call renders it. */}
-                  {t(cardGroup.labelKey)}
-                </button>
-              )}
-            </For>
-          </div>
-        </Show>
-        {/* The control cluster — the toolbar's icon controls, held at the
-            inline-end by its own auto margin. */}
+        {/* The control cluster — the toolbar's controls, held at the inline-end
+            by its own auto margin. Wraps to its own line under the filters at
+            narrow widths (.toolbar is flex-wrap). */}
         <div class={styles.toolbarControls}>
           {/* Loading indicator — a small inline spinner just to the LEFT of the
               icon controls while a fetch runs AND rows are already showing (a
@@ -616,10 +796,83 @@ export function DataTable<T, K extends string, G extends string = never>(
               <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
             </span>
           </Show>
-          {/* NO manual table/card view switch here (the spec's toolbar is
-              exactly three controls: Columns, Settings, full-screen). viewMode
-              still works — the compact band's config default flips to card view
-              — and the switch button returns with the card-view pass (Phase 3). */}
+          {/* Sort control — card view only (no clickable headers there): a
+              labelled popover showing the active sort field + direction, listing
+              the sortable columns. Calls the same onSort as a header click. */}
+          <Show when={showSortControl()}>
+            <Popover
+              placement="bottom-end"
+              triggerClass={styles.sortTrigger}
+              triggerTestId="table-sort"
+              triggerLabel={t('table.sort')}
+              closeOnClickInside
+              class={styles.controlPopover}
+              trigger={
+                <>
+                  <span class={styles.sortTriggerLabel}>
+                    {activeSortColumn()
+                      ? columnLabel(activeSortColumn()!)
+                      : t('table.sort')}
+                  </span>
+                  {/* Same direction glyph as the table header's sort indicator
+                      (↓ desc / ↑ asc, .sortIndicator), pushed to the pill's
+                      trailing edge (justify-content) regardless of label width. */}
+                  <Show when={props.sort}>
+                    <span class={styles.sortIndicator} aria-hidden="true">
+                      {props.sort!.desc ? '↓' : '↑'}
+                    </span>
+                  </Show>
+                </>
+              }
+            >
+              <div class={styles.sortMenu}>
+                <For each={sortableColumns()}>
+                  {col => (
+                    <button
+                      type="button"
+                      class={styles.sortMenuItem}
+                      data-testid={`table-sort-${col.sortKey}`}
+                      data-active={
+                        props.sort?.key === col.sortKey ? '' : undefined
+                      }
+                      onClick={() => chooseSort(col.sortKey!)}
+                    >
+                      <span>{columnLabel(col)}</span>
+                      <Show when={props.sort?.key === col.sortKey}>
+                        <span class={styles.sortIndicator} aria-hidden="true">
+                          {props.sort!.desc ? '↓' : '↑'}
+                        </span>
+                      </Show>
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Popover>
+          </Show>
+          {/* View toggle — a single Card-view control matching the other icon
+              controls (no border): grey when in table view, blue when card view
+              is active; clicking flips between the two. Above the compact
+              breakpoint only (below it the table is always card, so it's
+              hidden). Opt-in per table (showCardToggle) and needs setConfig to
+              persist the choice. */}
+          <Show when={props.showCardToggle && !isCompact() && props.setConfig}>
+            <button
+              type="button"
+              class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
+              data-testid="table-view-toggle"
+              aria-pressed={viewMode() === 'card'}
+              aria-label={t('table.view-cards')}
+              title={t('table.view-cards')}
+              onClick={() =>
+                props.setConfig?.(
+                  'viewMode',
+                  viewMode() === 'card' ? 'table' : 'card'
+                )
+              }
+            >
+              <CardViewIcon />
+            </button>
+          </Show>
           {/* Columns — the per-column panel (show / move / pin;
               ui-standards § tables → column management: one predictable place,
               headers stay clean). Only when the page wired config controls
@@ -627,15 +880,16 @@ export function DataTable<T, K extends string, G extends string = never>(
           <Show when={props.setConfig}>
             <Popover
               placement="bottom-end"
-              trigger={<ColumnsIcon />}
-              triggerLabel={t('table.columns')}
+              trigger={<Columns3CogIcon />}
+              triggerLabel={t('table.edit-columns')}
+              triggerProps={{ title: t('table.edit-columns') }}
               triggerClass={styles.controlButton}
               class={styles.controlPopover}
             >
               <ColumnSettings
                 table={table}
                 setConfig={props.setConfig}
-                tabsAndCardGroups={props.tabsAndCardGroups}
+                viewMode={viewMode()}
               />
             </Popover>
           </Show>
@@ -647,15 +901,21 @@ export function DataTable<T, K extends string, G extends string = never>(
               placement="bottom-end"
               trigger={<SettingsIcon />}
               triggerLabel={t('table.settings')}
+              triggerProps={{ title: t('table.settings') }}
               triggerClass={styles.controlButton}
               class={styles.controlPopover}
             >
               <TableSettings
+                table={table}
                 config={props.config}
                 density={viewDensity()}
                 setConfig={props.setConfig}
                 onReset={resetConfig}
                 resetDisabled={props.configIsDefault}
+                orderChanged={columnOrderChanged()}
+                anyColumnHidden={anyColumnHidden()}
+                anyColumnSized={anyColumnSized()}
+                anyColumnPinned={anyColumnPinned()}
                 onSaveGlobalDefault={props.onSaveGlobalDefault}
               />
             </Popover>
@@ -669,7 +929,7 @@ export function DataTable<T, K extends string, G extends string = never>(
               class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
               aria-label={t('table.toggle-full-screen')}
               data-testid="table-fullscreen"
-              title={t('label.full-screen')}
+              title={t('table.toggle-full-screen')}
               onClick={() => setFullScreen(!fullScreen())}
             >
               {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
@@ -677,26 +937,18 @@ export function DataTable<T, K extends string, G extends string = never>(
           </Show>
         </div>
       </div>
-      {/* Refreshing bar — a thin indeterminate progress bar pinned above the
-          scroll area while a fetch runs AND rows are already showing (a refetch
-          on filter/sort/page — keepPreviousData keeps the old rows in place). It
-          signals "updating" without blanking the table or remounting it (issue
-          #160/#196). The initial load (no rows yet) uses the centred spinner
-          below instead, so the two never show together. */}
-      <Show when={props.loading && table.getRowModel().rows.length > 0}>
-        <div
-          class={styles.refreshingBar}
-          role="status"
-          aria-label={t('loading')}
-        />
-      </Show>
       {/* tableArea fills the remaining height between the toolbar and the
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
       <div class={styles.tableArea}>
         <div
           class={styles.tableScroll}
+          ref={scrollBox}
+          data-view={viewMode()}
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
+          data-hidden-left={hiddenLeft() ? '' : undefined}
+          data-hidden-right={hiddenRight() ? '' : undefined}
+          onScroll={syncHiddenEdges}
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
               table (each card is a full-width <tr>), so columns/scroll/selection
@@ -714,35 +966,50 @@ export function DataTable<T, K extends string, G extends string = never>(
                         <th
                           class={`${styles.th} ${styles.selectCell}`}
                           data-pinned="left"
+                          data-frozen-edge={
+                            leadingIsFrozenEdge() ? 'left' : undefined
+                          }
                           style={leadingPinnedStyle(0)}
                         >
                           {/* Partial selection (some rows on this page, not
                               all) shows the indeterminate dash (ui-standards
-                              § tables → row selection). */}
+                              § tables → row selection). From indeterminate the
+                              next click clears (→ select none), not select-all:
+                              any active selection (indeterminate OR all) toggles
+                              off; only an empty selection selects all. NOT
+                              TanStack's default handler, which keys off the
+                              native box's post-click checked value and so goes
+                              indeterminate → all. */}
                           <BareCheckbox
                             class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
                             checked={table.getIsAllRowsSelected()}
                             indeterminate={table.getIsSomeRowsSelected()}
-                            onChange={table.getToggleAllRowsSelectedHandler()}
+                            onChange={e => {
+                              const anySelected =
+                                table.getIsAllRowsSelected() ||
+                                table.getIsSomeRowsSelected();
+                              table.toggleAllRowsSelected(!anySelected);
+                              // The native click already flipped the DOM box to
+                              // checked; toggling OFF from indeterminate leaves
+                              // the controlled `checked` value false→false, so
+                              // Solid's binding never re-runs to undo it. Sync
+                              // the box to the state we just set.
+                              e.currentTarget.checked = !anySelected;
+                            }}
                           />
                         </th>
                       </Show>
-                      {/* Display-time tab filter: render only the active tab's header cells
-                          (TanStack still holds every column — see columnInActiveTab). */}
+                      {/* Skip a card-only column's header cell (meta.hideOnTable);
+                          TanStack still holds every column — see showInTableView. */}
                       <For each={headerGroup.headers}>
                         {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )}
-                          >
+                          <Show when={showInTableView(header.column.columnDef)}>
                             <HeaderCell
                               header={header}
                               pinnedStyle={pinnedStyle}
+                              frozenEdge={frozenEdge}
                             />
                           </Show>
                         )}
@@ -762,7 +1029,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                   <Match when={viewMode() === 'card'}>
                     <CardView
                       table={table}
-                      tabsAndCardGroups={props.tabsAndCardGroups}
+                      cardGroups={props.cardGroups}
                       enableSelection={props.enableSelection ?? false}
                       onRowClick={props.onRowClick}
                     />
@@ -778,12 +1045,10 @@ export function DataTable<T, K extends string, G extends string = never>(
                           rowTone={props.rowTone}
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}
+                          frozenEdge={frozenEdge}
+                          leadingIsFrozenEdge={leadingIsFrozenEdge()}
                           cellVisible={cell =>
-                            columnInActiveTab(
-                              cell.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )
+                            showInTableView(cell.column.columnDef)
                           }
                         />
                       )}
@@ -817,13 +1082,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       </Show>
                       <For each={footerGroup.headers}>
                         {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
-                              }
-                            )}
-                          >
+                          <Show when={showInTableView(header.column.columnDef)}>
                             <td
                               class={styles.tf}
                               data-align={header.column.columnDef.meta?.align}

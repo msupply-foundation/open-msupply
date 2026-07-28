@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
@@ -70,9 +71,15 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       open
       dismissable={false}
       onClose={() => {}}
+      testId="re-login-modal"
       title={t('heading.login-again')}
       actions={
-        <Button type="submit" form={formId} disabled={submitting()}>
+        <Button
+          type="submit"
+          form={formId}
+          data-testid="re-login-button"
+          disabled={submitting()}
+        >
           {submitting() ? t('button.logging-in') : t('button.login')}
         </Button>
       }
@@ -82,6 +89,7 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
           label={t('heading.username')}
           width="full"
           name="username"
+          data-testid="re-login-username-input"
           autocomplete="username"
           value={values().username}
           error={fieldErrors().username || undefined}
@@ -90,11 +98,11 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
             setValues(previous => ({ ...previous, username }));
           }}
         />
-        <TextField
+        <PasswordField
           label={t('heading.password')}
           width="full"
-          type="password"
           name="password"
+          data-testid="re-login-password-input"
           autocomplete="current-password"
           value={values().password}
           error={fieldErrors().password || undefined}

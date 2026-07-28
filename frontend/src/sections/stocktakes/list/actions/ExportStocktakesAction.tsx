@@ -1,20 +1,20 @@
 import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
 import {
   SplitButton,
   type SplitButtonOption,
-} from '../../../../ui/elements/buttons/SplitButton';
-import { DownloadIcon } from '../../../../ui/icons';
+} from '@/ui/elements/buttons/SplitButton';
+import { DownloadIcon } from '@/ui/icons';
 import {
   csvToExcel,
-  downloadBlob,
   fetchReportFile,
   listExportCsvFilename,
   listExportExcelFilename,
-} from '../../../../domain/reportFiles';
-import { storeCodeOf } from '../../../../auth/authContext';
-import { stripEmpty } from '../../../../typeHelpers';
+} from '@/domain/reportFiles';
+import { saveBlob } from '@/platform/openDocument';
+import { storeCodeOf } from '@/auth/authContext';
+import { stripEmpty } from '@/typeHelpers';
 import { Stocktakes } from '../stocktakes.generated';
 import type { StocktakesVariables } from '../stocktakes.generated';
 import type { StocktakeFilter } from '../listFilters';
@@ -79,9 +79,9 @@ export const ExportStocktakesAction: Component<
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') downloadBlob(file.blob, file.filename);
+        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
       } else {
-        downloadBlob(
+        void saveBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
           listExportCsvFilename(storeCode, listName, new Date())
         );
