@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createSignal,
   onCleanup,
@@ -39,6 +38,10 @@ import {
   type DraftStockOutLinesResult,
 } from './outboundLineEdit.generated';
 import { ItemSearch } from '../../../../domain/item';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import { toSaveLineInputs } from './saveLineInputs';
 import {
   availableUnits as sumAvailableUnits,
@@ -190,12 +193,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // row), so the parent's next-item walk never offers one twice — across page
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
-  // What to focus once the next draft finishes loading (see the focus
-  // effect): a batch row's packs input (row-click open / walk advance), or
-  // the add-mode item search. Consumed (cleared) by the effect.
-  const [pendingFocus, setPendingFocus] = createSignal<
-    { row: string | undefined } | 'itemSelector' | undefined
-  >();
+  // Each batch row's packs-issued field, bound per row and addressed by draft
+  // row id — where a row-click open or an advance lands focus. The handle waits
+  // for the row to attach, so no load gate is needed here.
+  const batchFields = createFocusTargets();
+
+  // The two named focus destinations — the add-mode item search and the Issue
+  // field. Entering either state just calls focus(); the handle waits for the
+  // control and defers the frame (ui/utils/createFocusTarget).
+  const itemSearch = createFocusTarget();
+  const issueField = createFocusTarget();
+
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
   const [issueValue, setIssueValue] = createSignal<number | undefined>();
@@ -278,15 +286,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       0
     );
     setIssueValue(seededIssuedUnits + placeholder);
-    // Land ready to type: in update mode the clicked batch's packs input
-    // (draft rows from existing lines keep the invoice-line id) or the first
-    // row on an advance; after an add-mode pick, the Issue field (the
-    // undefined row falls back to it).
-    setPendingFocus(
-      mode() === 'update'
-        ? { row: focusLineId ?? sorted[0]?.id }
-        : { row: undefined }
-    );
+    // Land ready to type. Update mode: the clicked batch's packs input (draft
+    // rows from existing lines keep the invoice-line id), or the first row on
+    // an advance. A clicked PLACEHOLDER has no batch row of its own, and an
+    // add-mode pick has no clicked row at all — both land on the Issue field
+    // (AC-V6).
+    const rowId =
+      mode() === 'update' ? (focusLineId ?? sorted[0]?.id) : undefined;
+    if (rowId) batchFields.focus(rowId);
+    else issueField.focus();
     setLoadingLines(false);
 
     // Auto-allocate on open (AC-A5): a NEW shipment's *pure* placeholder — an
@@ -338,50 +346,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setDirty(false);
     setZeroConfirm(false);
     setLoadingLines(false);
-    setPendingFocus('itemSelector');
+    itemSearch.focus();
   };
 
   onMount(() => {
     if (props.initialItem)
       void seedItem(props.initialItem, props.initialLineId);
-    else setPendingFocus('itemSelector');
-  });
-
-  // Move focus once the target is in the DOM: the item search in add mode,
-  // else the requested batch row (scrolled into view, its packs input
-  // focused); a clicked PLACEHOLDER row has no batch row — fall back to the
-  // Issue field (AC-V6). Runs after the load so the row exists; deferred a
-  // frame so the table has painted.
-  createEffect(() => {
-    const target = pendingFocus();
-    if (!target || loadingLines()) return;
-    setPendingFocus(undefined);
-    requestAnimationFrame(() => {
-      const root = document.querySelector('[data-testid="add-item-modal"]');
-      if (!root) return;
-      if (target === 'itemSelector') {
-        root
-          .querySelector<HTMLElement>('[data-testid="item-search-input"]')
-          ?.focus();
-        return;
-      }
-      const row = target.row
-        ? root.querySelector<HTMLElement>(`[data-row-key="${target.row}"]`)
-        : null;
-      if (!row) {
-        root
-          .querySelector<HTMLInputElement>(
-            '[data-testid="issue-quantity-input"]'
-          )
-          ?.focus();
-        return;
-      }
-      row.scrollIntoView({ block: 'nearest' });
-      const packs = row.querySelector<HTMLInputElement>(
-        '[data-testid="cell-numberOfPacks"] input'
-      );
-      if (packs && !packs.disabled) packs.focus();
-    });
+    else itemSearch.focus();
   });
 
   // The shared barred-batch policy (spec/stock-allocation § barred batches,
@@ -793,6 +764,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <NumberField
+            ref={batchFields.ref(line.id)}
             label={t('label.issued')}
             hideLabel
             size="small"
@@ -936,6 +908,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         label={t('label.item')}
         storeId={props.storeId}
         disabled={updateMode() || saving()}
+        focusTarget={itemSearch}
         value={item()?.id}
         selectedItem={item()}
         placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -971,6 +944,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             label={t('label.issue')}
             min={0}
             data-testid="issue-quantity-input"
+            ref={issueField.ref}
             value={issueValue()}
             disabled={saving()}
             onChange={onIssueChange}
