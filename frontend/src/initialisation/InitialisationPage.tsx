@@ -23,6 +23,7 @@ import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
 import { MSupplyGuyLogo } from '../ui/icons';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
@@ -286,18 +287,14 @@ export const InitialisationPage: Component<{
             <Show when={syncError()}>
               {err => {
                 const errorSummary = () => syncErrorSummary(err().variant);
+                const hintText = () => {
+                  const h = errorSummary().hint;
+                  return h ? t(h) : undefined;
+                };
                 return (
                   <Alert severity="error">
                     <div>{t(errorSummary().summary)}</div>
-                    <details class={pageStyles.moreInfo}>
-                      <summary>{t('error.more-info')}</summary>
-                      <Show when={errorSummary().hint}>
-                        {hint => <p class={pageStyles.hint}>{t(hint())}</p>}
-                      </Show>
-                      <pre class={pageStyles.errorDetail}>
-                        {err().fullError}
-                      </pre>
-                    </details>
+                    <ErrorDetails detail={err().fullError} hint={hintText()} />
                   </Alert>
                 );
               }}
