@@ -1,0 +1,7 @@
+/* The Batches trigger's collapsed-state allocation summary — muted and
+   regular-weight so the bold section label stays the row's anchor. */
+.batchSummary {
+  margin-inline-start: var(--space-2);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+}
