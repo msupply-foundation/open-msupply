@@ -110,8 +110,45 @@ describe('patientFieldErrors (AC-C3 — required-field rules feed validation)', 
     expect(ids({ ...fullDraft(), firstName: '   ' })).toEqual(['firstName']);
   });
 
-  it('carries no per-field message — each defaults to the generic required text', () => {
-    expect(patientFieldErrors(emptyDraft()).every(e => !e.message)).toBe(true);
+  it('the required rules carry no per-field message — each defaults to the generic required text', () => {
+    const required = patientFieldErrors(emptyDraft()).filter(e => e.failed);
+    expect(required.every(e => !e.message)).toBe(true);
+  });
+});
+
+// spec/patients § generating a code — DIS-02 `.57`.
+describe('patientFieldErrors (DIS-02 .57 — duplicate code blocks the save)', () => {
+  const codeErrors = (draft: PatientDraft, codeTaken: boolean) =>
+    patientFieldErrors(draft, codeTaken).filter(
+      e => e.id === 'code' && e.failed
+    );
+
+  it('flags nothing extra when the code is not taken', () => {
+    expect(codeErrors(fullDraft(), false)).toEqual([]);
+  });
+
+  // No dictionary is loaded under test, so t() answers with the key — asserting
+  // the key is what pins the message to the right locale entry.
+  it('flags the code with the duplicated-code message when it is taken', () => {
+    const errors = codeErrors({ ...fullDraft(), code: 'GEN0007' }, true);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toBe('error.duplicated-code');
+  });
+
+  // The message means the rule is NOT deferred (formValidation defers only
+  // message-less rules), so the clash shows while the user is still on the field
+  // rather than waiting for a save attempt.
+  it('surfaces immediately rather than on submit', () => {
+    const errors = codeErrors(fullDraft(), true);
+    expect(errors[0]?.showOnSubmit).toBeUndefined();
+    expect(errors[0]?.message).toBeDefined();
+  });
+
+  // Both code rules share the id so the field renders one message; the required
+  // rule is listed first, so an empty code reads as required, not duplicated.
+  it('reports an empty code as required, not duplicated', () => {
+    const errors = codeErrors(emptyDraft(), true);
+    expect(errors[0]?.message).toBeUndefined();
   });
 });
 

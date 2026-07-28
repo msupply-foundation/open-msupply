@@ -187,6 +187,16 @@ const isDispensary = (): boolean => {
   return store?.storeMode === 'DISPENSARY';
 };
 
+// The NAME of the store the user has currently entered — the prefix source for a
+// generated patient code (spec/patients § generating a code). Read off the
+// me/login response's store list, the same place `isDispensary` reads storeMode,
+// so it costs no query. Empty string while the store is unresolved; the one
+// caller treats that as "cannot generate yet".
+const currentStoreName = (): string => {
+  const storeId = currentStoreId();
+  return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -213,6 +223,7 @@ export {
   storeContext,
   refetch as refetchStoreContext,
   currentStoreId,
+  currentStoreName,
   currentUserId,
   stocktakePreferences,
   stockPreferences,
