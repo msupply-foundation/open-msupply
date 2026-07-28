@@ -14,6 +14,9 @@ import {
   triggerMockScan,
   type ScanResult,
 } from './scanner';
+import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import styles from '../Settings.module.css';
 
 /*
@@ -47,73 +50,75 @@ const TestScannerPage: Component = () => {
         </Header>
       }
     >
-      <div class={`${styles.measure} ${styles.sectionBody}`}>
-        <Show when={noScanner()}>
-          <Alert severity="warning">
-            {t('messages.no-barcode-scanner-available')}
-          </Alert>
-        </Show>
-
-        <FormSection title={t('heading.scanner-controls')}>
-          <div class={styles.scannerActions}>
-            <Button
-              variant="secondary"
-              disabled={noScanner()}
-              onClick={() => setListening(v => !v)}
-              data-testid="scanner-start-listening"
-            >
-              {listening()
-                ? t('button.stop-listening')
-                : t('button.start-listening')}
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={noScanner()}
-              onClick={scanOnce}
-              data-testid="scanner-scan-once"
-            >
-              {t('button.scan-once')}
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={results().length === 0}
-              onClick={() => setResults([])}
-              data-testid="scanner-clear-results"
-            >
-              {t('button.clear-results')}
-            </Button>
-          </div>
-        </FormSection>
-
-        <FormSection title={t('heading.scanner-status')}>
-          <p data-testid="scanner-listening-state">
-            <strong>{t('label.listening')}:</strong>{' '}
-            {listening() && scannerConnected()
-              ? t('label.active')
-              : t('label.inactive')}
-          </p>
-        </FormSection>
-
-        <FormSection title={t('heading.scan-results')}>
-          <Show
-            when={results().length > 0}
-            fallback={<p>{t('messages.no-scans-yet')}</p>}
-          >
-            <ul class={styles.scanResultList} data-testid="scan-results">
-              <For each={results()}>
-                {result => (
-                  <li>
-                    <code>{result.barcode}</code>{' '}
-                    <span class={styles.inUseTag}>
-                      {t('label.time')}: {localisedTime(result.scannedAt)}
-                    </span>
-                  </li>
-                )}
-              </For>
-            </ul>
+      <ContentContainer size="form" align="start">
+        <Stack>
+          <Show when={noScanner()}>
+            <Alert severity="warning">
+              {t('messages.no-barcode-scanner-available')}
+            </Alert>
           </Show>
-        </FormSection>
-      </div>
+
+          <FormSection title={t('heading.scanner-controls')}>
+            <HStack wrap gap="md">
+              <Button
+                variant="secondary"
+                disabled={noScanner()}
+                onClick={() => setListening(v => !v)}
+                data-testid="scanner-start-listening"
+              >
+                {listening()
+                  ? t('button.stop-listening')
+                  : t('button.start-listening')}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={noScanner()}
+                onClick={scanOnce}
+                data-testid="scanner-scan-once"
+              >
+                {t('button.scan-once')}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={results().length === 0}
+                onClick={() => setResults([])}
+                data-testid="scanner-clear-results"
+              >
+                {t('button.clear-results')}
+              </Button>
+            </HStack>
+          </FormSection>
+
+          <FormSection title={t('heading.scanner-status')}>
+            <p data-testid="scanner-listening-state">
+              <strong>{t('label.listening')}:</strong>{' '}
+              {listening() && scannerConnected()
+                ? t('label.active')
+                : t('label.inactive')}
+            </p>
+          </FormSection>
+
+          <FormSection title={t('heading.scan-results')}>
+            <Show
+              when={results().length > 0}
+              fallback={<p>{t('messages.no-scans-yet')}</p>}
+            >
+              <ul class={styles.scanResultList} data-testid="scan-results">
+                <For each={results()}>
+                  {result => (
+                    <li>
+                      <code>{result.barcode}</code>{' '}
+                      <span class={styles.inUseTag}>
+                        {t('label.time')}: {localisedTime(result.scannedAt)}
+                      </span>
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </Show>
+          </FormSection>
+        </Stack>
+      </ContentContainer>
     </Page>
   );
 };
