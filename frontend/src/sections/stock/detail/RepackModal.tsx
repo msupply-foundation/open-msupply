@@ -196,30 +196,30 @@ const RepackContent = (props: {
   const columns = (): Column<RepackNode, never>[] => [
     {
       c: { accessor: r => r.datetime, id: 'date' },
-      header: t('label.date'),
+      header: () => t('label.date'),
       cell: info => localisedDate(info.row.original.datetime),
     },
     {
       c: { accessor: r => r.datetime, id: 'time' },
-      header: t('label.time'),
+      header: () => t('label.time'),
       meta: { align: 'right' },
       cell: info => localisedTime(info.row.original.datetime),
     },
     {
       c: { accessor: r => r.to.packSize, id: 'packSize' },
-      header: t('label.pack-size'),
+      header: () => t('label.pack-size'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.to.packSize),
     },
     {
       c: { accessor: r => r.to.numberOfPacks, id: 'numberOfPacks' },
-      header: t('label.number-of-packs'),
+      header: () => t('label.number-of-packs'),
       meta: { align: 'right' },
       cell: info => formatNumber(info.row.original.to.numberOfPacks),
     },
     {
       c: { accessor: r => r.to.location?.code ?? '', id: 'location' },
-      header: t('label.location'),
+      header: () => t('label.location'),
       cell: info => info.row.original.to.location?.code ?? '—',
     },
   ];

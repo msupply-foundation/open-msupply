@@ -1,5 +1,6 @@
 import { createSignal, Show } from 'solid-js';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
+import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Button } from '../ui/elements/buttons/Button';
 import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
@@ -9,9 +10,10 @@ import {
   OkButton,
   CancelButton,
   SaveButton,
-  OkAndNextButton,
+  DialogSaveButton,
   SaveAndNextButton,
 } from '../ui/elements/buttons/StandardButtons';
+import { CopyToClipboardButton } from '../ui/elements/buttons/CopyToClipboardButton';
 import {
   PlusCircleIcon,
   DownloadIcon,
@@ -21,7 +23,8 @@ import {
   SettingsIcon,
   MaximiseIcon,
 } from '../ui/icons';
-import { Lead, Note, Row } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './ButtonsShowcase.module.css';
 
 const EXPORT_OPTIONS = [
@@ -35,6 +38,49 @@ const STATUS_OPTIONS = [
   { value: 'shipped', label: 'Confirm Shipped' },
 ];
 
+export const buttonsMetadata: PageMetadata = {
+  id: 'buttons',
+  title: 'Buttons',
+  searchTerms: ['action', 'click', 'cta'],
+  items: [
+    {
+      id: 'buttons-standard',
+      title: 'Standard buttons',
+      searchTerms: ['ok', 'save', 'cancel', 'preset', 'pre-composed'],
+    },
+    {
+      id: 'buttons-copy',
+      title: 'Copy to clipboard',
+      searchTerms: ['copy', 'clipboard', 'json', 'record action'],
+    },
+    {
+      id: 'buttons-variants',
+      title: 'Variants',
+      searchTerms: ['primary', 'secondary', 'ghost', 'danger', 'tone'],
+    },
+    {
+      id: 'buttons-sizes-states',
+      title: 'Sizes, states & collapsing',
+      searchTerms: ['size', 'small', 'disabled', 'loading', 'collapsible'],
+    },
+    {
+      id: 'buttons-icon',
+      title: 'Icon button',
+      searchTerms: ['icon', 'glyph', 'icon-only'],
+    },
+    {
+      id: 'buttons-split',
+      title: 'Split buttons',
+      searchTerms: ['split', 'menu', 'dropdown', 'caret'],
+    },
+    {
+      id: 'buttons-checkbox',
+      title: 'Checkbox button',
+      searchTerms: ['checkbox', 'toggle', 'pill'],
+    },
+  ],
+};
+
 export const ButtonsShowcase = () => {
   const [lastExport, setLastExport] = createSignal<string | null>(null);
   const [pendingStatus, setPendingStatus] = createSignal('allocated');
@@ -45,14 +91,19 @@ export const ButtonsShowcase = () => {
   const [lastStandard, setLastStandard] = createSignal<string | null>(null);
 
   return (
-    <CardGrid minColumnWidth="32rem" maxColumnWidth="40rem">
-        <DashboardCard title="Standard buttons — pre-composed for common actions">
+    <Stack gap="lg">
+      <SectionTOC page={buttonsMetadata} />
+      <CardGrid minColumnWidth="32rem" maxColumnWidth="40rem">
+        <DashboardCard
+          id="buttons-standard"
+          title="Standard buttons — pre-composed for common actions"
+        >
           <Lead>
             The handful of actions that recur in nearly every dialog and form,
             wrapped once so you don't re-decide the tone or label each time:{' '}
             <code>&lt;OkButton&gt;</code>, <code>&lt;CancelButton&gt;</code>,{' '}
             <code>&lt;SaveButton&gt;</code>,{' '}
-            <code>&lt;OkAndNextButton&gt;</code>, and{' '}
+            <code>&lt;DialogSaveButton&gt;</code>, and{' '}
             <code>&lt;SaveAndNextButton&gt;</code>. Each fixes its own{' '}
             <strong>variant + label</strong> (labels come from the shared intl
             catalog, so they translate); everything else a <code>Button</code>{' '}
@@ -61,13 +112,17 @@ export const ButtonsShowcase = () => {
             these first; drop to the raw variants below only when you need a
             different label or tone. <code>Save</code> carries the icon and{' '}
             <strong>collapses to icon-only on phones</strong> — resize below
-            768px to see it.
+            768px to see it; <code>DialogSaveButton</code>/
+            <code>SaveAndNextButton</code> are the icon-less dialog-footer forms
+            (ui-standards › controls § dialogs).
           </Lead>
           <Row>
             <OkButton onClick={() => setLastStandard('OK')} />
             <CancelButton onClick={() => setLastStandard('Cancel')} />
             <SaveButton onClick={() => setLastStandard('Save')} />
-            <OkAndNextButton onClick={() => setLastStandard('OK & next')} />
+            <DialogSaveButton
+              onClick={() => setLastStandard('Save (dialog footer)')}
+            />
             <SaveAndNextButton onClick={() => setLastStandard('Save & next')} />
           </Row>
           <Note>
@@ -84,7 +139,43 @@ export const ButtonsShowcase = () => {
           </Note>
         </DashboardCard>
 
-        <DashboardCard title="Primary — the main action">
+        <DashboardCard
+          id="buttons-copy"
+          title="Copy to clipboard — the record action"
+        >
+          <Lead>
+            The one implementation of ui-standards › controls § copy to
+            clipboard, used by every detail side panel that offers the action.
+            You pass <code>load</code> — a supplier of the{' '}
+            <strong>whole record</strong> (a node the screen already holds, or
+            its own unpaginated fetch where the row table is server-paged) — and
+            the button owns the rest: indented JSON, the clipboard write, and the
+            outcome reported <strong>in place</strong> (the label and icon swap
+            to <em>Copied</em> or <em>Copy failed</em> for a moment, announced
+            via <code>aria-live</code>) — never a toast. Copy is a{' '}
+            <strong>read</strong>, so it takes no status or permission gate.
+          </Lead>
+          <Row>
+            <CopyToClipboardButton
+              load={() => ({
+                invoiceNumber: 12,
+                status: 'NEW',
+                lines: [{ itemName: 'Amoxicillin 500mg', numberOfPacks: 4 }],
+              })}
+            />
+            {/* A supplier that refuses, to show the failure report in place. */}
+            <CopyToClipboardButton
+              load={() => Promise.reject(new Error('demo failure'))}
+            />
+          </Row>
+          <Note>
+            The second button's supplier throws — the copy reports{' '}
+            <em>Copy failed</em> in the same slot rather than silently doing
+            nothing.
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard id="buttons-variants" title="Primary — the main action">
           <Lead>
             The default action button (<code>variant="primary"</code>): plain{' '}
             <code>&lt;button&gt;</code> + CSS, no component library. Flat, a{' '}
@@ -175,7 +266,7 @@ export const ButtonsShowcase = () => {
           </Row>
         </DashboardCard>
 
-        <DashboardCard title="Sizes">
+        <DashboardCard id="buttons-sizes-states" title="Sizes">
           <Lead>
             Two sizes (ui-standards #btn-sizes): <code>medium</code> (default,
             36px) for page and toolbar actions, <code>size="small"</code> (28px)
@@ -231,7 +322,10 @@ export const ButtonsShowcase = () => {
           </Row>
         </DashboardCard>
 
-        <DashboardCard title="Icon button — the icon IS the button">
+        <DashboardCard
+          id="buttons-icon"
+          title="Icon button — the icon IS the button"
+        >
           <Lead>
             A compact icon-only control (<code>&lt;IconButton&gt;</code>) for
             table toolbar controls, table row actions and panel actions — where
@@ -273,7 +367,7 @@ export const ButtonsShowcase = () => {
           </Row>
         </DashboardCard>
 
-        <DashboardCard title="Split button">
+        <DashboardCard id="buttons-split" title="Split button">
           <Lead>
             A primary action glued to a dropdown caret — no "split button"
             primitive exists, so we compose a plain <code>&lt;button&gt;</code>
@@ -361,7 +455,10 @@ export const ButtonsShowcase = () => {
           </Note>
         </DashboardCard>
 
-        <DashboardCard title="Checkbox button — a pill that IS a checkbox">
+        <DashboardCard
+          id="buttons-checkbox"
+          title="Checkbox button — a pill that IS a checkbox"
+        >
           <Lead>
             A <code>&lt;label&gt;</code> pill wrapping a visually-hidden{' '}
             <strong>
@@ -382,6 +479,7 @@ export const ButtonsShowcase = () => {
           </Row>
           <Note>The shipment is {onHold() ? 'on hold' : 'not on hold'}.</Note>
         </DashboardCard>
-    </CardGrid>
+      </CardGrid>
+    </Stack>
   );
 };

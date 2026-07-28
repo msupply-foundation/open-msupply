@@ -234,7 +234,7 @@ export const CreateStocktakeModal = (props: {
       expiryDate,
       includeAllItems,
     } = form();
-    // Seed a default description on every create mode (spec AC-C9): the server
+    // Seed a default description on every create mode (OMS-REG-INV-03.9): the server
     // fabricates no default, so the client composes one — the user's display
     // name and today's date, both in the active locale. Editable in place
     // afterward; nothing re-derives it.
@@ -373,6 +373,15 @@ export const CreateStocktakeModal = (props: {
         </>
       }
     >
+      {/* Blind stocktake (spec/stocktakes › store-preference gates): an
+          informational banner shown regardless of mode — there is no control
+          here to turn the preference on or off per-stocktake, it only informs. */}
+      <Show when={stocktakePreferences().blindStocktake}>
+        <Alert severity="info" testId="blind-stocktake-notice">
+          {t('message.blind-stocktake-enabled')}
+        </Alert>
+      </Show>
+
       {/* The three type radios, tight together at the top. */}
       <RadioGroup
         value={form().type}

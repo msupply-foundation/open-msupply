@@ -16,16 +16,19 @@
   position: relative;
 }
 
-/* Width caps, TextField's data-width vocabulary (FieldShell `width`). */
+/* Width caps, TextField's data-width vocabulary (FieldShell `width`). The
+   compact cap narrows only the control box; it lives after the base .control
+   rules below (to satisfy no-descending-specificity). */
 .field[data-width='full'] {
   max-width: 100%;
 }
 
 .label {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  line-height: 1; /* ui-standards .field-label — tight, sits close to the input */
-  color: var(--text-body);
+  /* Shared field-label token — see --field-label-* in tokens.css. */
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
 }
 
 .labelHidden {
@@ -80,9 +83,16 @@
 }
 
 .control[data-disabled] {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
+}
+
+/* Compact width: narrow only the control box to 10rem (the field keeps its
+   short cap). Placed after the base .control rules so specificity ascends —
+   for a dense row like a page-header toolbar. */
+.field[data-width='compact'] .control {
+  max-width: var(--input-max-compact);
 }
 
 /* The date portion: a bare button filling the free space, calendar icon at the
@@ -244,7 +254,7 @@
 }
 
 .control[data-disabled] .timeSeg {
-  color: var(--gray-main);
+  color: var(--text-disabled);
 }
 
 /* Small size (ui-standards Size Variations): the inner text and the label drop
@@ -260,6 +270,26 @@
 .control[data-size='small'] .dateInput,
 .control[data-size='small'] .timeSegs {
   font-size: var(--input-font-sm);
+}
+
+/* Touch: match the shared input touch heights (standard 48 / small 44, both
+   WCAG 2.5.5 AAA) and bump the typed text to 16px for BOTH sizes — the date
+   input is a real <input>, so iOS Safari zooms on focus under 16px. This block
+   is the reason the date fields now reach the touch target at all. */
+@media (pointer: coarse) {
+  .control {
+    min-block-size: var(--input-height-touch);
+  }
+
+  .control[data-size='small'] {
+    min-block-size: var(--input-height-sm-touch);
+  }
+
+  .dateTrigger,
+  .dateInput,
+  .timeSegs {
+    font-size: var(--input-font-touch);
+  }
 }
 
 .helper {

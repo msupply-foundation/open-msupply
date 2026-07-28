@@ -1,4 +1,4 @@
-import { t } from '../../intl';
+import { t, type LocaleKey } from '../../intl';
 
 // The outbound-shipment status lifecycle (spec/outbound-shipments rules.md §
 // status lifecycle): NEW → ALLOCATED → PICKED → SHIPPED for the sending store,
@@ -48,11 +48,13 @@ export const STATUS_LABELS: Record<OutboundStatus | 'CANCELLED', string> = {
   },
 };
 
-// The label KEY per status — for $t()-nesting messages (e.g.
-// messages.confirm-status-as: "Confirm status as $t({{status}})?"), which
-// resolve $t({{status}}) against the dictionary and so need the KEY, not the
-// already-resolved string. Kept in lock-step with STATUS_LABELS above.
-export const STATUS_LABEL_KEYS: Record<OutboundStatus | 'CANCELLED', string> = {
+// The label KEY per status — callers t()-resolve this themselves before
+// interpolating into messages.confirm-status-as. Kept in lock-step with
+// STATUS_LABELS above.
+export const STATUS_LABEL_KEYS: Record<
+  OutboundStatus | 'CANCELLED',
+  LocaleKey
+> = {
   NEW: 'label.new',
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -95,3 +97,12 @@ export const isEditable = (status: string): boolean =>
 
 // A shipment is deletable exactly while it is editable (rules.md § deletion).
 export const isDeletable = isEditable;
+
+// The customer-return entry point (spec/outbound-shipments acceptance AC-V3):
+// "Return selected lines" opens the customer-return flow only from SHIPPED,
+// DELIVERED or VERIFIED — the shipment has left the store, so its issued lines
+// can come back. At any other status (RECEIVED included, per the UI matrix) the
+// button instead shows the explanatory notice. The button is always visible;
+// this only decides open-flow vs notice.
+export const canReturnLines = (status: string): boolean =>
+  status === 'SHIPPED' || status === 'DELIVERED' || status === 'VERIFIED';

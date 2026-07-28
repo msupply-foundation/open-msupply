@@ -39,6 +39,9 @@ fragment InboundRow on InvoiceNode {
   pricing {
     totalAfterTax
   }
+  # Custom-field VALUES (JSON object), scope-filtered — backs the configured
+  # custom-field columns on the list.
+  customFields
 }
 
 query inboundShipments(

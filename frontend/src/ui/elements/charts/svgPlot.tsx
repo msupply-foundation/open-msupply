@@ -1,5 +1,11 @@
 import { createMemo, createSignal, For, Show, type JSX } from 'solid-js';
+import { formatNumber } from '../../../intl/formatNumber';
 import styles from './plotChart.module.css';
+
+// Axis tick labels: grouped, ≤ 2 dp — never the raw float (niceTicks' step
+// arithmetic can yield 0.6000000000000001).
+const axisLabel = (value: number): string =>
+  formatNumber(value, { maximumFractionDigits: 2 });
 
 /** Scales handed to a plot's mark-drawing children. */
 export type PlotScales = {
@@ -86,6 +92,15 @@ export const SvgPlot = (props: {
   const indices = createMemo(() =>
     Array.from({ length: props.count }, (_, i) => i)
   );
+  // X-axis labels are thinned to ~8 evenly-spaced ticks (plus the last), so a
+  // 50-point series doesn't render an unreadable wall of overlapping dates
+  // (Recharts thins for free; our hand-rolled axis must do it explicitly).
+  const labelIndices = createMemo(() => {
+    const step = Math.max(1, Math.ceil(props.count / 8));
+    return indices().filter(
+      i => i % step === 0 || i === props.count - 1
+    );
+  });
   const [active, setActive] = createSignal<number>();
 
   return (
@@ -115,14 +130,14 @@ export const SvgPlot = (props: {
                 text-anchor="end"
                 dominant-baseline="middle"
               >
-                {tick}
+                {axisLabel(tick)}
               </text>
             </>
           )}
         </For>
 
-        {/* x labels */}
-        <For each={indices()}>
+        {/* x labels (thinned to ~8 so they don't overlap) */}
+        <For each={labelIndices()}>
           {i => (
             <text
               class={styles.axisLabel}

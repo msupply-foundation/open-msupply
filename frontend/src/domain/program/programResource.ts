@@ -10,6 +10,7 @@ import {
   type SchedulesWithPeriodsResult,
 } from './program.generated';
 import { createStoreScopedResource } from '../../api/storeScopedResource';
+import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
 import { currentStoreId } from '../../store/storeContext';
 
 // One program-enrolment registry node — a pickable program. The picker
@@ -29,6 +30,20 @@ export const programRegistriesResource =
       ? result.data.documentRegistries.nodes
       : undefined;
   });
+
+// The store's visible programs as an app-wide store-scoped cache (the store's
+// own program list, name-sorted) — the prescription program picker's options
+// (spec/prescriptions § patient, clinician, program, diagnosis). Distinct from
+// the enrolment-document registries above: a prescription's programId is a
+// ProgramNode.id, NOT a registry contextId. Lazy, deduped, refetched on store
+// change (createStoreScopedResource); read via .noSuspense().
+export const programsResource = createStoreScopedResource<ProgramListItem>(
+  currentStoreId,
+  async storeId => {
+    const result = await graphqlFetch(Programs, { storeId });
+    return result.kind === 'success' ? result.data.programs.nodes : undefined;
+  }
+);
 
 // One pickable program for the report argument program picker (AC-R12) —
 // exactly the node the Programs operation selects (kdd/type-safety).
@@ -53,15 +68,6 @@ export type PeriodItem = Extract<
   { __typename: 'PeriodConnector' }
 >['nodes'][number];
 
-// `yyyy-mm-dd` of today in the viewer's local calendar — the periods query's
-// "already begun" bound is the user's own today, not UTC's.
-const localToday = (): string => {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${now.getFullYear()}-${month}-${day}`;
-};
-
 // Periods that have already begun, optionally narrowed to a program — plain
 // never-throwing fetch, read when an argument form opens (AC-R16).
 export const fetchPeriods = async (
@@ -71,7 +77,7 @@ export const fetchPeriods = async (
   const result = await graphqlFetch(Periods, {
     storeId,
     programId: programId ?? null,
-    today: localToday(),
+    today: localTodayIso(),
   });
   return result.kind === 'success' ? result.data.periods.nodes : [];
 };

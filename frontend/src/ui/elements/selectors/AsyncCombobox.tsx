@@ -46,11 +46,34 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Hint text shown below the input (below the error, when both). Passed
+   * through to the Combobox. */
+  helperText?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
+  /**
+   * Status text shown when a settled search matched nothing — a domain
+   * message (e.g. the patient picker's "No matching patients"). Passed through
+   * to the Combobox; defaults there to "No matching items".
+   */
+  noResultsMessage?: string;
+  /**
+   * Status text shown while nothing has been typed — the type-to-search
+   * prompt of a picker whose `fetchPage` returns nothing for the empty query.
+   * Passed through to the Combobox, where it defaults to `noResultsMessage`.
+   */
+  emptyQueryMessage?: string;
+  /**
+   * An action row pinned under the options (e.g. the patient picker's "Create
+   * patient" entry). Handed the typed text as an ACCESSOR, not a value —
+   * server-mode callers usually show theirs only once a search has been made,
+   * and gating inside the slot (a `<Show>`) keeps the row itself stable
+   * instead of rebuilding it on every keystroke.
+   */
+  listboxFooter?: (query: () => string) => JSX.Element;
 }
 
 /*
@@ -112,22 +135,42 @@ export const AsyncCombobox = <T,>(
 
   // The caller's selected node leads the list (deduped) so a controlled value
   // resolves even before its page is fetched. We seed it when it either matches
-  // the typed query OR IS the controlled selection: the latter guarantees a
+  // the typed query OR IS the controlled `value` prop: the latter guarantees a
   // controlled selection's label never blanks — e.g. when the parent advances
   // the value externally ("OK & next" steps to a new item) while the input
   // still holds the previous item's text as a stale, non-matching query. We
   // still drop an unmatched seed that ISN'T the current value, so a free-text
   // search doesn't sort a stale seed above real matches or mask "no matches".
+  //
+  // isControlledValue MUST check props.value (not the derived value() getter):
+  // when a caller only passes `selected` (no separate `value` id — e.g.
+  // PatientSearch), value() is DEFINED as itemToValue(selected), so comparing
+  // against it is a tautology — the seed would pin to the top of every search
+  // regardless of what's typed, masking real matches (found via prescriptions'
+  // "changing the patient" — typing a new patient's name kept showing the
+  // CURRENTLY-selected one as the first, always-clickable option).
+  //
+  // The seed CAN be a label-only fallback: some callers fill its non-label
+  // fields — e.g. availableUnits — with placeholder zeros when the real values
+  // aren't known until the item's own page is fetched (others pass a fully
+  // populated seed — e.g. ItemSearch reseeds the option the user just picked). So
+  // once `base()` has fetched a real row for this key, that row must WIN over the
+  // seed rather than being replaced by it — otherwise a stub's placeholder fields
+  // (e.g. "0 Units") permanently shadow the real, freshly-fetched data for as
+  // long as the item stays the controlled selection (#549).
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return base();
     const key = props.itemToValue(seed);
+    const rest = base().filter(i => props.itemToValue(i) !== key);
+    const real = base().find(i => props.itemToValue(i) === key);
+    if (real) return [real, ...rest];
     const needle = query().toLocaleLowerCase();
     const seedMatches =
       !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
-    const isControlledValue = value() === key;
+    const isControlledValue = props.value !== undefined && props.value === key;
     if (!seedMatches && !isControlledValue) return base();
-    return [seed, ...base().filter(i => props.itemToValue(i) !== key)];
+    return [seed, ...rest];
   };
 
   const value = () =>
@@ -150,9 +193,13 @@ export const AsyncCombobox = <T,>(
       class={props.class}
       disabled={props.disabled}
       error={props.error}
+      helperText={props.helperText}
       clearable={props.clearable}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
+      noResultsMessage={props.noResultsMessage}
+      emptyQueryMessage={props.emptyQueryMessage}
+      listboxFooter={props.listboxFooter?.(query)}
       items={items()}
       loading={loading()}
       loadingMore={search.loadingMore()}
@@ -161,7 +208,26 @@ export const AsyncCombobox = <T,>(
       itemToValue={props.itemToValue}
       itemDisabled={props.itemDisabled}
       renderItem={props.renderItem}
+      // Kobalte fires onInputChange whenever the combobox's controlled
+      // selection changes — not only when the user types. Its resetInputValue
+      // effect resyncs the input text to match a NEW selected/value prop
+      // (e.g. the stocktake line-edit modal opening on a row sets ItemSearch's
+      // value/selectedItem to that row's item), and that resync itself goes
+      // through onInputChange. Left unguarded, this fires a genuine
+      // itemsWithStock search for the row's own label on every row-click open
+      // — nobody typed anything. Guard: a next value that exactly matches the
+      // CURRENTLY selected item's label is that resync, not a keystroke —
+      // skip it. A real edit (even retyping the same text one keystroke at a
+      // time) still goes through query(), which the resync bypasses entirely
+      // (Kobalte sets the whole string in one call), so this can't mask a
+      // genuine search for text that happens to equal the selected label.
       onInputChange={next => {
+        const selected = props.selected;
+        const isSelectedLabelEcho =
+          selected !== undefined &&
+          next === props.itemToString(selected) &&
+          next !== query();
+        if (isSelectedLabelEcho) return;
         setQuery(next);
         search.setSearch(next);
       }}

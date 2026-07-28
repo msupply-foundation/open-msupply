@@ -18,6 +18,10 @@ query storeContext($storeId: String!) {
     stocktakeFrequency
     monthlyConsumptionLookBackPeriod
     monthsLeadTime
+    # Prescription gate (spec/prescriptions › store-preference gates): the
+    # prescribed-quantity field/column. A legacy store preference, not a
+    # PreferencesNode field.
+    editPrescribedQuantityOnPrescription
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
@@ -27,9 +31,17 @@ query storeContext($storeId: String!) {
   # the whole stock vertical (list/detail/new-stock/adjust).
   preferences(storeId: $storeId) {
     syncRecordsDisplayThreshold
+    # Patient gender picker (spec/patients § configuration gates › gender
+    # options): the configured subset of GenderTypeNode every gender picker
+    # (create/edit form, list gender filter) offers.
+    genderOptions
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor
+    # Blind stocktake (spec/stocktakes › store-preference gates): hides
+    # Snapshot/Difference while counting and Reason for the stocktake's whole
+    # life, in the detail line table, line editor, and create modal.
+    blindStocktake
     # spec/stock: the VVM status FIELD (S2/S3) shows when this OR
     # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
     # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.

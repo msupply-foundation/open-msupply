@@ -123,6 +123,15 @@ export const PlusCircleIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Display / brightness (the settings Display-settings section heading) */
+/* Hugeicons: Sun01Icon */
+export const SunIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C14.7614 7 17 9.23858 17 12Z" />
+    <path d="M12 2V3.5M12 20.5V22M19.0708 19.0713L18.0101 18.0106M5.98926 5.98926L4.9286 4.9286M22 12H20.5M3.5 12H2M19.0713 4.92871L18.0106 5.98937M5.98975 18.011L4.92909 19.0716" />
+  </Stroke>
+);
+
 /* Export / download — arrow pointing down into the tray */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (
@@ -238,6 +247,23 @@ export const CopyIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Filter funnel (the filter bar's Add-filter pill). Not a Hugeicons glyph:
+   this is the ui-standards site's own funnel path (feather "filter"),
+   copied so the pill matches the spec exactly. */
+export const FilterIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+  </Stroke>
+);
+
+/* Indeterminate dash (BareCheckbox's tri-state glyph) */
+/* Hugeicons: MinusSignIcon */
+export const MinusIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 12L4 12" />
+  </Stroke>
+);
+
 /* Clear / remove */
 /* Hugeicons: MinusSignCircleIcon */
 export const MinusCircleIcon = (props: IconProps) => (
@@ -271,18 +297,6 @@ export const AlertCircleIcon = (props: IconProps) => (
 export const InfoIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <circle cx="12" cy="12" r="10" />
-    <path d="M12 16V12" />
-    <path d="M12.125 8.25H12M12.25 8.25C12.25 8.11193 12.1381 8 12 8C11.8619 8 11.75 8.11193 11.75 8.25C11.75 8.38807 11.8619 8.5 12 8.5C12.1381 8.5 12.25 8.38807 12.25 8.25Z" />
-  </Stroke>
-);
-
-/* Info marker, square sibling — the dashboard's stat tooltip marker
-   (the current app's InfoOutlineIcon); square distinguishes it from InfoIcon
-   now that both ride the same single-weight Hugeicons stroke style. */
-/* Hugeicons: InformationSquareIcon */
-export const InfoOutlineIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28249 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28249 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12Z" />
     <path d="M12 16V12" />
     <path d="M12.125 8.25H12M12.25 8.25C12.25 8.11193 12.1381 8 12 8C11.8619 8 11.75 8.11193 11.75 8.25C11.75 8.38807 11.8619 8.5 12 8.5C12.1381 8.5 12.25 8.38807 12.25 8.25Z" />
   </Stroke>
@@ -448,11 +462,14 @@ export const SlidersIcon = (props: IconProps) => (
 );
 
 /* Settings */
-/* Hugeicons: Configuration01Icon */
+/* Hugeicons: Settings01Icon */
 export const SettingsIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M2.25607 15.6322C2.29003 15.309 2.52424 15.0485 2.99267 14.5276L4.02374 13.3749C4.27577 13.0558 4.45462 12.5 4.45462 11.9998C4.45462 11.5 4.27571 10.944 4.02371 10.625L2.99267 9.47231C2.52424 8.95137 2.29002 8.6909 2.25607 8.36768C2.22211 8.04446 2.39707 7.74083 2.74698 7.13358L3.24056 6.27698C3.61386 5.62915 3.8005 5.30523 4.11808 5.17607C4.43566 5.0469 4.79482 5.14883 5.51316 5.35267L6.73339 5.69637C7.192 5.80212 7.67315 5.74213 8.0919 5.52698L8.42878 5.33261C8.78786 5.10262 9.06406 4.76352 9.21694 4.36493L9.5509 3.36754C9.77047 2.70753 9.88026 2.37752 10.1416 2.18876C10.403 2 10.7502 2 11.4445 2H12.5593C13.2537 2 13.6009 2 13.8622 2.18876C14.1236 2.37752 14.2334 2.70753 14.453 3.36754L14.7869 4.36493C14.9398 4.76352 15.216 5.10262 15.5751 5.33261L15.912 5.52698C16.3307 5.74213 16.8119 5.80212 17.2705 5.69637L18.4907 5.35267C19.209 5.14883 19.5682 5.0469 19.8858 5.17607C20.2034 5.30523 20.39 5.62915 20.7633 6.27698L21.2569 7.13358C21.6068 7.74083 21.7817 8.04446 21.7478 8.36768C21.7138 8.6909 21.4796 8.95137 21.0112 9.47231L19.9801 10.625C19.7282 10.944 19.5492 11.5 19.5492 11.9998C19.5492 12.5 19.7281 13.0558 19.9801 13.3749L21.0112 14.5276C21.4796 15.0485 21.7138 15.309 21.7478 15.6322C21.7817 15.9555 21.6068 16.2591 21.2569 16.8663L20.7633 17.7229C20.39 18.3707 20.2034 18.6947 19.8858 18.8238C19.5682 18.953 19.209 18.8511 18.4907 18.6472L17.2705 18.3035C16.8118 18.1977 16.3306 18.2578 15.9118 18.473L15.575 18.6674C15.2159 18.8974 14.9398 19.2364 14.787 19.635L14.453 20.6325C14.2334 21.2925 14.1236 21.6225 13.8622 21.8112C13.6009 22 13.2537 22 12.5593 22H11.4445C10.7502 22 10.403 22 10.1416 21.8112C9.88026 21.6225 9.77047 21.2925 9.5509 20.6325" />
-    <path d="M2.73696 18.7798C3.81696 17.6998 7.48896 14.0638 7.84896 13.6438C8.22953 13.1998 7.92096 12.5998 8.10456 10.7398C8.1934 9.8398 8.38699 9.16555 8.94096 8.6638C9.60096 8.0398 10.141 8.0398 12.001 7.99781C13.621 8.0398 13.813 7.8598 13.981 8.27981C14.101 8.57981 13.741 8.7598 13.309 9.23981C12.349 10.1998 11.785 10.6798 11.731 10.9798C11.341 12.2998 12.877 13.0798 13.717 12.2398C14.0346 11.9221 15.505 10.4398 15.649 10.3198C15.757 10.2238 16.0155 10.2284 16.141 10.3798C16.249 10.4859 16.261 10.4998 16.249 10.9798C16.2379 11.4241 16.2428 12.062 16.2442 12.7198C16.2459 13.5721 16.201 14.5198 15.841 14.9998C15.121 16.0798 13.921 16.1398 12.841 16.1878C11.821 16.2478 10.981 16.1398 10.717 16.3318C10.501 16.4398 9.36096 17.6398 7.98096 19.0198L5.52096 21.4798C3.48096 23.0998 1.23696 20.5798 2.73696 18.7798Z" />
+    <path
+      d="M21.3175 7.14139L20.8239 6.28479C20.4506 5.63696 20.264 5.31305 19.9464 5.18388C19.6288 5.05472 19.2696 5.15664 18.5513 5.36048L17.3311 5.70418C16.8725 5.80994 16.3913 5.74994 15.9726 5.53479L15.6357 5.34042C15.2766 5.11043 15.0004 4.77133 14.8475 4.37274L14.5136 3.37536C14.294 2.71534 14.1842 2.38533 13.9228 2.19657C13.6615 2.00781 13.3143 2.00781 12.6199 2.00781H11.5051C10.8108 2.00781 10.4636 2.00781 10.2022 2.19657C9.94085 2.38533 9.83106 2.71534 9.61149 3.37536L9.27753 4.37274C9.12465 4.77133 8.84845 5.11043 8.48937 5.34042L8.15249 5.53479C7.73374 5.74994 7.25259 5.80994 6.79398 5.70418L5.57375 5.36048C4.85541 5.15664 4.49625 5.05472 4.17867 5.18388C3.86109 5.31305 3.67445 5.63696 3.30115 6.28479L2.80757 7.14139C2.45766 7.74864 2.2827 8.05227 2.31666 8.37549C2.35061 8.69871 2.58483 8.95918 3.05326 9.48012L4.0843 10.6328C4.3363 10.9518 4.51521 11.5078 4.51521 12.0077C4.51521 12.5078 4.33636 13.0636 4.08433 13.3827L3.05326 14.5354C2.58483 15.0564 2.35062 15.3168 2.31666 15.6401C2.2827 15.9633 2.45766 16.2669 2.80757 16.8741L3.30114 17.7307C3.67443 18.3785 3.86109 18.7025 4.17867 18.8316C4.49625 18.9608 4.85542 18.8589 5.57377 18.655L6.79394 18.3113C7.25263 18.2055 7.73387 18.2656 8.15267 18.4808L8.4895 18.6752C8.84851 18.9052 9.12464 19.2442 9.2775 19.6428L9.61149 20.6403C9.83106 21.3003 9.94085 21.6303 10.2022 21.8191C10.4636 22.0078 10.8108 22.0078 11.5051 22.0078H12.6199C13.3143 22.0078 13.6615 22.0078 13.9228 21.8191C14.1842 21.6303 14.294 21.3003 14.5136 20.6403L14.8476 19.6428C15.0004 19.2442 15.2765 18.9052 15.6356 18.6752L15.9724 18.4808C16.3912 18.2656 16.8724 18.2055 17.3311 18.3113L18.5513 18.655C19.2696 18.8589 19.6288 18.9608 19.9464 18.8316C20.264 18.7025 20.4506 18.3785 20.8239 17.7307L21.3175 16.8741C21.6674 16.2669 21.8423 15.9633 21.8084 15.6401C21.7744 15.3168 21.5402 15.0564 21.0718 14.5354L20.0407 13.3827C19.7887 13.0636 19.6098 12.5078 19.6098 12.0077C19.6098 11.5078 19.7888 10.9518 20.0407 10.6328L21.0718 9.48012C21.5402 8.95918 21.7744 8.69871 21.8084 8.37549C21.8423 8.05227 21.6674 7.74864 21.3175 7.14139Z"
+      stroke-linecap="round"
+    ></path>
+    <path d="M15.5195 12C15.5195 13.933 13.9525 15.5 12.0195 15.5C10.0865 15.5 8.51953 13.933 8.51953 12C8.51953 10.067 10.0865 8.5 12.0195 8.5C13.9525 8.5 15.5195 10.067 15.5195 12Z"></path>
   </Stroke>
 );
 
@@ -600,6 +617,134 @@ export const MinimiseIcon = (props: IconProps) => (
   </Stroke>
 );
 
+// Columns — the column-management control (a framed set of vertical columns;
+// ui-standards § tables → column management). TableViewIcon minus its row
+// line, so the two read as siblings but stay distinguishable.
+export const ColumnsIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
+    <path d="M15.5 21.5L15.5 2.5" />
+    <path d="M8.5 21.4998L8.5 2.49976" />
+  </Stroke>
+);
+
+/* Columns with a settings cog — the table's "edit columns" control (issue
+   #572), distinct from the plain Columns3 glyph so it doesn't read as the
+   card/grid view switch. */
+/* Hugeicons: ColumnsThreeCog */
+export const Columns3CogIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20 17.5C20 18.8807 18.8807 20 17.5 20M20 17.5C20 16.1193 18.8807 15 17.5 15M20 17.5H21.5M17.5 20C16.1193 20 15 18.8807 15 17.5M17.5 20V21.5M15 17.5C15 16.1193 16.1193 15 17.5 15M15 17.5H13.5M17.5 15V13.5M19.2678 15.7322L20.3284 14.6716M15.7322 19.2678L14.6716 20.3284M19.2678 19.2678L20.3284 20.3284M15.7322 15.7322L14.6716 14.6716" />
+    <path d="M20.4993 10.5C20.4912 6.91543 20.3921 5.02814 19.182 3.81802C17.864 2.5 15.7426 2.5 11.5 2.5C7.25736 2.5 5.13604 2.5 3.81802 3.81802C2.5 5.13604 2.5 7.25736 2.5 11.5C2.5 15.7426 2.5 17.864 3.81802 19.182C5.02814 20.3921 6.91543 20.4912 10.5 20.4993" />
+    <path d="M8.5 3V20" />
+    <path d="M14.5 3V10.5" />
+  </Stroke>
+);
+
+/* Two horizontal transfer arrows — the table settings' "reset column order". */
+/* Hugeicons: ArrowDataTransferHorizontal */
+export const TransferHorizontalIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M19 9H6.65856C5.65277 9 5.14987 9 5.02472 8.69134C4.89957 8.38268 5.25517 8.01942 5.96637 7.29289L8.21091 5" />
+    <path d="M5 15H17.3414C18.3472 15 18.8501 15 18.9753 15.3087C19.1004 15.6173 18.7448 15.9806 18.0336 16.7071L15.7891 19" />
+  </Stroke>
+);
+
+/* Single circular reload arrow — the table settings' "reset column sizes". */
+/* Hugeicons: Refresh01 */
+export const ReloadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20.4879 15C19.2524 18.4956 15.9187 21 12 21C7.02943 21 3 16.9706 3 12C3 7.02943 7.02943 3 12 3C15.7292 3 18.9286 5.26806 20.2941 8.5" />
+    <path d="M15 9H18C19.4142 9 20.1213 9 20.5607 8.56066C21 8.12132 21 7.41421 21 6V3" />
+  </Stroke>
+);
+
+/* Double circular refresh arrows — the table settings' "reset table to
+   defaults" (its button renders it red). */
+/* Hugeicons: Refresh03 */
+export const RefreshIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M20.9451 13C20.9814 12.6717 21 12.338 21 12C21 7.02944 16.9706 3 12 3C9.17273 3 6.64996 4.30367 5 6.34267M3.05493 11C3.01863 11.3283 3 11.662 3 12C3 16.9706 7.02944 21 12 21C14.8273 21 17.35 19.6963 19 17.6573" />
+    <path d="M8 7H7C5.58579 7 4.87868 7 4.43934 6.56066C4 6.12132 4 5.41421 4 4V3" />
+    <path d="M16 17H17C18.4142 17 19.1213 17 19.5607 17.4393C20 17.8787 20 18.5858 20 20V21" />
+  </Stroke>
+);
+
+/* Push-pin — the table settings' "reset pinned columns". */
+/* Hugeicons: Pin */
+export const PinIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3 21L8 16" />
+    <path d="M13.2585 18.8714C9.51516 18.0215 5.97844 14.4848 5.12853 10.7415C4.99399 10.1489 4.92672 9.85266 5.12161 9.37197C5.3165 8.89129 5.55457 8.74255 6.03071 8.44509C7.10705 7.77265 8.27254 7.55888 9.48209 7.66586C11.1793 7.81598 12.0279 7.89104 12.4512 7.67048C12.8746 7.44991 13.1622 6.93417 13.7376 5.90269L14.4664 4.59604C14.9465 3.73528 15.1866 3.3049 15.7513 3.10202C16.316 2.89913 16.6558 3.02199 17.3355 3.26771C18.9249 3.84236 20.1576 5.07505 20.7323 6.66449C20.978 7.34417 21.1009 7.68401 20.898 8.2487C20.6951 8.8134 20.2647 9.05346 19.4039 9.53358L18.0672 10.2792C17.0376 10.8534 16.5229 11.1406 16.3024 11.568C16.0819 11.9955 16.162 12.8256 16.3221 14.4859C16.4399 15.7068 16.2369 16.88 15.5555 17.9697C15.2577 18.4458 15.1088 18.6839 14.6283 18.8786C14.1477 19.0733 13.8513 19.006 13.2585 18.8714Z" />
+  </Stroke>
+);
+
+/* Three horizontal lines — the table settings' "toggle density". */
+/* Hugeicons: Menu01 */
+export const MenuLinesIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M4 5L20 5" />
+    <path d="M4 12L20 12" />
+    <path d="M4 19L20 19" />
+  </Stroke>
+);
+
+// Column-visibility toggle in the Columns panel (ui-standards § tables → column
+// management): shown = eye, hidden = eye with a slash. The <input> stays the
+// accessible control (visually hidden); these are decorative. Paths are the
+// spec's own eye / eye-off SVGs.
+export const EyeIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21.544 11.045C21.848 11.4713 22 11.6845 22 12C22 12.3155 21.848 12.5287 21.544 12.955C20.1779 14.8706 16.6892 19 12 19C7.31078 19 3.8221 14.8706 2.45604 12.955C2.15201 12.5287 2 12.3155 2 12C2 11.6845 2.15201 11.4713 2.45604 11.045C3.8221 9.12944 7.31078 5 12 5C16.6892 5 20.1779 9.12944 21.544 11.045Z" />
+    <path d="M15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12Z" />
+  </Stroke>
+);
+
+export const EyeOffIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M6.43385 6.51953C4.22009 7.89049 2.93281 9.86457 2.31858 11.0339C2.10621 11.4382 2.00003 11.6403 2 12.0082C1.99997 12.3761 2.10584 12.5777 2.3176 12.981C3.32862 14.9066 6.16702 19.0195 11.9669 19.0195C14.2454 19.0195 16.0669 18.3848 17.5 17.4972" />
+    <path d="M9.87868 9.87868C9.33579 10.4216 9 11.1716 9 12C9 13.6569 10.3431 15 12 15C12.8284 15 13.5784 14.6642 14.1213 14.1213" />
+    <path d="M2 2L22 22" />
+    <path d="M10 5.14847C10.5934 5.05255 11.224 5 11.8936 5C17.7747 5 20.6528 9.05385 21.6779 10.9517C21.8927 11.3492 22 11.548 22 11.9106C22 12.2733 21.8921 12.4727 21.6765 12.8717C21.3678 13.4428 20.8916 14.2085 20.2167 15" />
+  </Stroke>
+);
+
+// Pin-a-column-to-the-edge toggles in the Columns panel (ui-standards § tables):
+// a small card with a solid bar docked to the left / right edge. Physical
+// left/right (TanStack pinning is physical, not logical), so no RTL flip. The
+// spec's own pin SVGs; the docked bar is a filled rect, the frame stroked.
+export const PinLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 16 16" stroke-width="1.3" {...props}>
+    <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
+    <path d="M6 3.5v9" />
+    <rect
+      x="2.7"
+      y="4.2"
+      width="2.6"
+      height="7.6"
+      rx="0.7"
+      fill="currentColor"
+      stroke="none"
+    />
+  </Stroke>
+);
+
+export const PinRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 16 16" stroke-width="1.3" {...props}>
+    <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
+    <path d="M10 3.5v9" />
+    <rect
+      x="10.7"
+      y="4.2"
+      width="2.6"
+      height="7.6"
+      rx="0.7"
+      fill="currentColor"
+      stroke="none"
+    />
+  </Stroke>
+);
+
 // Table/rows view — the "switch to table" control (a framed grid of rows/cols).
 /* Hugeicons: LayoutTable01Icon */
 export const TableViewIcon = (props: IconProps) => (
@@ -623,30 +768,15 @@ export const CardViewIcon = (props: IconProps) => (
 );
 
 /*
- * "Nothing here" sprout — the empty-state illustration (a two-leaf seedling),
- * ported verbatim (viewBox + path) from the current app's NothingHereIcon.
- * Like MSupplyGuyLogo it keeps a FIXED fill rather than `currentColor`: the
- * pale-blue --gray-pale token (which has its own dark-theme override), so the
- * graphic reads as a quiet illustration independent of the surrounding text
- * colour. Sized by font-size (1em) like every other icon — EmptyState sets a
- * large font-size on it.
+ * "Nothing here" - the empty-state icon for the DataTable. A file outline with a diagonal slash
+ * Hugeicons: FileNotFoundIcon
  */
 export const NothingHereIcon = (props: IconProps) => (
-  <svg
-    viewBox="0 0 104 96"
-    width="1em"
-    height="1em"
-    fill="none"
-    aria-hidden="true"
-    {...props}
-  >
-    <path
-      fill-rule="evenodd"
-      clip-rule="evenodd"
-      d="M34.4174 37.7111C40.3579 45.3308 42.0497 54.9396 42.4677 61.2494C44.0425 57.8387 45.4821 54.9054 46.7487 52.4333C41.9488 42.2372 38.7723 37.4931 38.7723 37.4931L38.7417 37.4445C38.1219 36.4697 28.0158 21.9871 17.4953 16.0539C17.4953 16.0539 31.0103 20.9421 41.1074 37.7796C41.1074 37.7796 55.2224 8.85582 5 7C5 7 5.52972 37.7075 34.4174 37.7111ZM83.1818 19.3283C70.016 26.7536 56.372 44.8762 55.5961 46.0978L55.559 46.1564C55.559 46.1564 48.1418 57.3271 43.5 69.4998C40.5118 77.3358 38.2273 87.1588 38.2273 93.9998H51.9091C51.9091 93.9998 49.2811 85.8464 50 76.9998C50.8415 66.6432 55.4571 54.8313 62.0063 46.43C98.1556 46.4261 98.8182 7.99976 98.8182 7.99976C35.9717 10.3218 51.5768 44.8429 51.5768 44.8429C64.211 23.7729 83.1818 19.3283 83.1818 19.3283Z"
-      fill="var(--gray-pale)"
-    />
-  </svg>
+  <Stroke {...props} viewBox="0 0 24 24">
+    <path d="M2 2L22 22"></path>
+    <path d="M19.8478 14.9369C20 14.5694 20 14.1606 20 13.3431V10C20 6.22876 20 4.34315 18.8284 3.17157C17.6569 2 15.7712 2 12 2C9.33333 2 7.60948 2 6.41421 2.41421M4.41421 4.41421C4 5.60948 4 7.33333 4 10L4 14.5442C4 17.7892 4 19.4117 4.88607 20.5107C5.06508 20.7327 5.26731 20.9349 5.48933 21.1139C6.58831 22 8.21082 22 11.4558 22C12.1614 22 12.5141 22 12.8372 21.886C12.9044 21.8623 12.9702 21.835 13.0345 21.8043C13.3436 21.6564 13.593 21.407 14.0919 20.9081L17.5 17.5"></path>
+    <path d="M13 21.5L13 20.7487C13 17.9203 13 16.5061 13.8787 15.6274C14.1785 15.3276 14.5406 15.1301 15 15"></path>
+  </Stroke>
 );
 
 /*

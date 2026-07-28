@@ -2,7 +2,7 @@ import { t } from '../../../intl';
 import {
   FilterSelect,
   FilterTextInput,
-  FilterDate,
+  FilterDateRange,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
@@ -83,38 +83,19 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
-  // Expiry — a from/to date range (two native date inputs in one chip). A range
-  // is present as { afterOrEqualTo?, beforeOrEqualTo? }; clearing both → null so
-  // stripEmpty drops the empty chip.
+  // Expiry — a `Date` scalar; FilterDateRange (type="date") passes the plain
+  // ISO dates through, no conversion (#456).
   expiryDate: {
     label: () => t('label.expiry-date'),
-    render: props => {
-      const range = () => props.filter().expiryDate ?? {};
-      const setBound = (
-        bound: 'afterOrEqualTo' | 'beforeOrEqualTo',
-        value: string
-      ) => {
-        const next = { ...range(), [bound]: value || undefined };
-        const empty = !next.afterOrEqualTo && !next.beforeOrEqualTo;
-        props.setPartialFilter({ expiryDate: empty ? null : next });
-      };
-      return (
-        <>
-          <FilterDate
-            label={t('label.from')}
-            testId={`${props.testId}-from`}
-            value={range().afterOrEqualTo ?? ''}
-            onInput={value => setBound('afterOrEqualTo', value)}
-          />
-          <FilterDate
-            label={t('label.to')}
-            testId={`${props.testId}-to`}
-            value={range().beforeOrEqualTo ?? ''}
-            onInput={value => setBound('beforeOrEqualTo', value)}
-          />
-        </>
-      );
-    },
+    render: props => (
+      <FilterDateRange
+        type="date"
+        label={t('label.expiry-date')}
+        testId={props.testId}
+        value={props.filter().expiryDate}
+        onChange={value => props.setPartialFilter({ expiryDate: value })}
+      />
+    ),
   },
   // VVM status — single-select of active VVM statuses. Offered only when
   // manageVvmStatusForStock is on (gated in filterFields below).
@@ -165,27 +146,14 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
 // The filters offered, gated reactively (spec/stock S1 › filters):
 //  - VVM status only when manageVvmStatusForStock is on.
 //  - Master list only when the store has any master lists.
-//  - While grouped-by-item, only item-level filters (Search, Master list) —
-//    the stock-line-only filters (Location, Expiry, VVM) are not offered and are
-//    cleared on switching (handled by the list).
 // ALL_FILTERS is a stable module const (labels are accessors), so filtering it
 // keeps each Filter's identity — FilterBar's <For> reuses chips, no remount.
-export const filterFields = (grouped: boolean): Filter<StockFilter>[] => {
+export const filterFields = (): Filter<StockFilter>[] => {
   const prefs = stockPreferences();
   const hasMasterLists = masterListsResource.noSuspense().length > 0;
-  const itemLevelKeys = new Set(['search', 'masterList']);
   return ALL_FILTERS.filter(f => {
-    if (grouped && !itemLevelKeys.has(f.key)) return false;
     if (f.key === 'vvmStatusId') return prefs.manageVvmStatusForStock;
     if (f.key === 'masterList') return hasMasterLists;
     return true;
   });
 };
-
-// The stock-line-only filter keys cleared when switching to the grouped view
-// (spec/stock S1 › grouped-by-item). Search + Master list survive.
-export const STOCK_LINE_ONLY_FILTER_KEYS: (keyof StockFilter)[] = [
-  'location',
-  'expiryDate',
-  'vvmStatusId',
-];

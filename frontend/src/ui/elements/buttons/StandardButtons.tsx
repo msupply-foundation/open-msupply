@@ -56,10 +56,15 @@ export const SaveButton = (props: StandardButtonProps) => {
   );
 };
 
-/** Primary confirm that also advances to the next step in a multi-step flow. */
-export const OkAndNextButton = (props: StandardButtonProps) => (
+/**
+ * Primary confirm for a dialog footer that saves — icon-less, like OkButton
+ * (ui-standards › controls § dialogs, D55): a footer is read in a fixed
+ * position as a verb, not a toolbar, so it earns no icon the way SaveButton's
+ * toolbar placement does.
+ */
+export const DialogSaveButton = (props: StandardButtonProps) => (
   <Button variant="primary" {...props}>
-    {t('button.ok-and-next')}
+    {t('button.save')}
   </Button>
 );
 

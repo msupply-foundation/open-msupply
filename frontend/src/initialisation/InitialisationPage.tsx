@@ -10,7 +10,7 @@ import {
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
-import { isCentralServer } from '../api/serverInfo';
+import { isCentralServer, serverVersion } from '../api/serverInfo';
 import {
   toSyncOverview,
   type SyncError,
@@ -19,6 +19,7 @@ import {
 import { syncErrorSummary } from '../sections/sync-modal/syncErrors';
 import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
@@ -249,10 +250,9 @@ export const InitialisationPage: Component<{
               error={fieldErrors().siteName || undefined}
               disabled={locked()}
             />
-            <TextField
+            <PasswordField
               label={t('label.settings-password')}
               width="full"
-              type="password"
               value={values().password}
               onInput={e => {
                 const password = e.currentTarget.value;
@@ -325,6 +325,14 @@ export const InitialisationPage: Component<{
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
+          {/* Spec (App version, AC-VN2): absent until the startup pass has
+              fetched it — pre-initialisation that also needs a server carrying
+              open-msupply#12566. */}
+          <Show when={serverVersion()}>
+            <p class={styles.version}>
+              <strong>{t('label.server-version')}</strong> {serverVersion()}
+            </p>
+          </Show>
           <LanguageSelector
             language={locale()}
             onSelect={v => void changeLanguage(v)}

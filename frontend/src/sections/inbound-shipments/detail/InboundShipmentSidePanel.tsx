@@ -18,22 +18,32 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
-import { CopyIcon, EditIcon } from '../../../ui/icons';
+import { EditIcon } from '../../../ui/icons';
 import {
+  FullInboundShipment,
   InboundServiceLines,
   type InboundInfoFragment,
 } from './inboundShipmentDetail.generated';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
-import { runInboundBatch } from './inboundShipmentUpdate';
+import {
+  runInboundBatch,
+  updateInboundShipment,
+} from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { scopeOf } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
-import { ServiceLineModal } from './modals/ServiceLineModal';
-import { CurrencyModal } from './modals/CurrencyModal';
-import { poLabel, ioLabel, PO_COLOUR, IO_COLOUR } from '../linkedOrder';
+import { CurrencyModal, ServiceChargesModal } from '../../../domain/invoice';
+import {
+  fetchInboundServiceCharges,
+  saveInboundServiceCharges,
+} from './modals/inboundServiceCharges';
+import { poLabel, ioLabel } from '../linkedOrder';
+import linkStyles from '../linkedOrder.module.css';
 
 export interface InboundShipmentSidePanelProps {
   storeId: string;
@@ -75,7 +85,6 @@ export const InboundShipmentSidePanel: Component<
   const [donorOpen, setDonorOpen] = createSignal(false);
   const [serviceOpen, setServiceOpen] = createSignal(false);
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
-  const [copied, setCopied] = createSignal(false);
 
   // The itemised service lines feeding the Charges → Service charges block.
   // Re-read when the service-line modal saves or the service tax rate changes
@@ -120,13 +129,24 @@ export const InboundShipmentSidePanel: Component<
     !supplierIsStore(props.node) &&
     !props.disabled;
 
-  const copyToClipboard = () => {
-    void navigator.clipboard
-      .writeText(`#${props.node.invoiceNumber} — ${props.node.otherPartyName}`)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+  // The WHOLE shipment — header + every line, stock-in and service alike,
+  // unpaginated — for the copy action (rules § copy to clipboard, case .34).
+  // The detail's own lines read is server-paged and excludes SERVICE rows, so
+  // this is its own one-shot fetch through the FullInboundShipment query;
+  // `type` is the shipment's own permission scope, taken from its
+  // purchaseOrderId rather than re-probing the held scopes. A fetch failure
+  // routes to the global error modal; a NodeError (not expected from a screen
+  // showing the record) copies nothing.
+  const loadFullShipment = async () => {
+    const result = await graphqlFetch(FullInboundShipment, {
+      storeId: props.storeId,
+      id: props.node.id,
+      type: scopeOf(props.node.purchaseOrderId),
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
+    return result.data.invoice;
   };
 
   const pricing = () => props.node.pricing;
@@ -190,6 +210,7 @@ export const InboundShipmentSidePanel: Component<
             label={t('label.comment')}
             hideLabel
             width="full"
+            data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
             onInput={e => props.edit.setField('comment', e.currentTarget.value)}
@@ -214,7 +235,8 @@ export const InboundShipmentSidePanel: Component<
               <FieldRow label={t('label.purchase-order')}>
                 <A
                   href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
-                  style={{ color: PO_COLOUR, 'font-weight': 500 }}
+                  class={linkStyles.link}
+                  data-kind="po"
                 >
                   {poLabel(po().number)}
                 </A>
@@ -226,7 +248,8 @@ export const InboundShipmentSidePanel: Component<
               <FieldRow label={t('internal-order')}>
                 <A
                   href={`/${props.storeId}/replenishment/internal-order/${req().id}`}
-                  style={{ color: IO_COLOUR, 'font-weight': 500 }}
+                  class={linkStyles.link}
+                  data-kind="io"
                 >
                   {ioLabel(req().requisitionNumber)}
                 </A>
@@ -423,16 +446,10 @@ export const InboundShipmentSidePanel: Component<
             number={() => props.node.invoiceNumber}
             supplierName={() => props.node.otherPartyName}
           />
-          <Button
-            variant="secondary"
-            icon={<CopyIcon />}
-            data-testid="copy-to-clipboard-button"
-            onClick={copyToClipboard}
-          >
-            {copied()
-              ? t('message.copy-success')
-              : t('button.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullShipment} />
         </SidePanelActions>
       </SidePanelSection>
 
@@ -443,21 +460,45 @@ export const InboundShipmentSidePanel: Component<
         node={props.node}
         onSaved={props.onSaved}
       />
-      <ServiceLineModal
+      {/* The shared service-charges editor (spec S6) with inbound's wire
+          twins (plain vs external batch); a committed batch re-reads the
+          charges block. */}
+      <ServiceChargesModal
         open={serviceOpen()}
         onClose={() => setServiceOpen(false)}
         storeId={props.storeId}
-        invoiceId={props.node.id}
-        isExternal={props.isExternal}
         disabled={props.disabled}
-        onSaved={refreshService}
+        fetchCharges={() =>
+          fetchInboundServiceCharges(props.storeId, props.node.id)
+        }
+        save={async batch => {
+          const result = await saveInboundServiceCharges(
+            props.storeId,
+            props.isExternal,
+            props.node.id,
+            batch
+          );
+          if (result.ok) refreshService();
+          return result;
+        }}
       />
+      {/* The shared change-currency modal with inbound's header update; a
+          saved node replaces the entity in place. */}
       <CurrencyModal
         open={currencyOpen()}
         onClose={() => setCurrencyOpen(false)}
-        storeId={props.storeId}
-        node={props.node}
-        onSaved={props.onSaved}
+        initialCurrencyId={props.node.currency?.id}
+        initialRate={props.node.currencyRate}
+        save={async input => {
+          const result = await updateInboundShipment(
+            props.storeId,
+            props.isExternal,
+            { id: props.node.id, ...input }
+          );
+          if (result.kind !== 'saved') return result;
+          props.onSaved(result.node);
+          return { kind: 'saved' };
+        }}
       />
     </>
   );

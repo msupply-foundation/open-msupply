@@ -52,24 +52,28 @@ export const LinkInternalOrderModal: Component<
   const columns = (): Column<LinkInternalOrderRowFragment, never>[] => [
     {
       c: { key: 'requisitionNumber' },
-      header: t('label.number'),
+      header: () => t('label.number'),
       ...getNumberCell(),
     },
     {
       c: { key: 'createdDatetime' },
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { accessor: row => row.user?.username ?? '', id: 'enteredBy' },
-      header: t('label.entered-by'),
+      header: () => t('label.entered-by'),
     },
     {
       c: { accessor: row => row.program?.name ?? '', id: 'program' },
-      header: t('label.program'),
+      header: () => t('label.program'),
     },
-    { c: { key: 'theirReference' }, header: t('label.reference') },
-    { c: { key: 'comment' }, header: t('label.comment'), ...getCommentCell() },
+    { c: { key: 'theirReference' }, header: () => t('label.reference') },
+    {
+      c: { key: 'comment' },
+      header: () => t('label.comment'),
+      ...getCommentCell(),
+    },
   ];
 
   return (

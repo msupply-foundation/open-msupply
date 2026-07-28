@@ -3,25 +3,14 @@
 // the server's rules for the UI's previews / pre-validation; the server remains
 // the guard for every MUST.
 
+import { localDayToUtc } from '../../ui/elements/inputs/dateTimeConvert';
+
 // Units = packs × pack size; value = packs × cost price (spec/stock rules — a
 // quantity in units is packs × pack size, never a stored field).
 export const packsToUnits = (packs: number, packSize: number): number =>
   packs * packSize;
 export const packsToValue = (packs: number, costPricePerPack: number): number =>
   packs * costPricePerPack;
-
-// The distinct-or-"multiple" reduction for the grouped-by-item view (spec/stock
-// AC-L5): the single value when every batch agrees, else the multiple marker.
-export const singleOrMultipleValue = (
-  values: string[],
-  multipleLabel: string,
-  emptyLabel: string
-): string => {
-  const distinct = new Set(values.filter(v => v !== ''));
-  if (distinct.size === 0) return emptyLabel;
-  if (distinct.size === 1) return [...distinct][0];
-  return multipleLabel;
-};
 
 // Repack (spec/stock rules › repack): the new line's pack count = packs × old
 // pack size ÷ new pack size. Undefined when the new pack size is not positive.
@@ -63,25 +52,6 @@ export const wouldGoBelowZero = (
   direction === 'REDUCTION' &&
   adjustedQuantity(currentAvailable, direction, amount) < 0;
 
-// The device-LOCAL calendar date as ISO YYYY-MM-DD — the user's wall-clock day,
-// NOT UTC. Used for "today" comparisons and date-input bounds so a store whose
-// local date differs from UTC doesn't misclassify its own today as backdated.
-// (Impure — reads the clock; not unit-tested. Kept here beside its callers.)
-export const localTodayIso = (): string => {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-};
-
-// The local calendar date `days` before today, ISO YYYY-MM-DD — the lower bound
-// of the backdating window (spec/stock S4 max-days).
-export const localIsoDaysAgo = (days: number): string => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-};
-
 // The backdated instant for an adjustment (spec/stock S4): choosing today (or no
 // date) means "not backdated" (undefined); otherwise a reduction is stamped at
 // the day's end, an addition at its start.
@@ -91,6 +61,7 @@ export const backdatedDatetime = (
   direction: 'ADDITION' | 'REDUCTION'
 ): string | undefined => {
   if (!date || date === today) return undefined;
-  const time = direction === 'REDUCTION' ? 'T23:59:59.000Z' : 'T00:00:00.000Z';
-  return `${date}${time}`;
+  // Local day → UTC via the shared conversion (#456): reduction at the day's
+  // end, addition at its start (the input is DateTime<Utc>, so `Z` is right).
+  return localDayToUtc(date, { endOfDay: direction === 'REDUCTION' });
 };

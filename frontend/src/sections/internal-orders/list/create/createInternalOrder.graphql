@@ -1,0 +1,105 @@
+# The create modal (spec/internal-orders S2 / § Creation). Two create
+# mutations — general and program — plus the two reads that feed the modal and
+# its warning gate. An internal order is a REQUEST requisition.
+
+# Program-path data AND the program-tab gate (AC-P1): the store's supplier
+# programs, each with its suppliers, order types, and the periods already
+# windowed (five historic + five future) and pruned of exhausted ones
+# server-side. Non-empty → the modal offers the Program tab; empty → general
+# only. Fetched when the modal opens (a spinner shows while it loads).
+query internalOrderProgramSettings($storeId: String!) {
+  supplierProgramRequisitionSettings(storeId: $storeId) {
+    programId
+    programName
+    tagName
+    suppliers {
+      id
+      name
+      isOnHold
+    }
+    orderTypes {
+      id
+      name
+      isEmergency
+      availablePeriods {
+        id
+        name
+      }
+    }
+  }
+}
+
+# The recent-stocktake warning read (AC-C5): the store's FINALISED stocktakes
+# dated on or after (today − maxAge days). The client counts the DISTINCT
+# itemIds across their lines and warns when that count is below minItems. Only
+# itemId is needed. Finalised-only and the inclusive lower bound are the
+# server's; a finalised stocktake with a null date falls outside the bound.
+query recentStocktakeItems($storeId: String!, $onOrAfter: NaiveDate) {
+  stocktakes(
+    storeId: $storeId
+    filter: {
+      stocktakeDate: { afterOrEqualTo: $onOrAfter }
+      status: { equalTo: FINALISED }
+    }
+  ) {
+    ... on StocktakeConnector {
+      __typename
+      nodes {
+        id
+        lines {
+          nodes {
+            itemId
+          }
+        }
+      }
+    }
+  }
+}
+
+# General create (AC-C2): the modal sends only id + otherPartyId and hard-codes
+# the default thresholds (reorder 0, target 1); the resolver defaults the
+# expected delivery date to +2 weeks and creates no lines. On success the new
+# order's id is used to navigate to its detail screen; the typed supplier errors
+# are unreachable from the store-backed-supplier picker (contract wire trap).
+mutation insertInternalOrder(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertRequestRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Program create (AC-P3): the modal sends id + otherPartyId + programOrderTypeId
+# + periodId; the resolver reads the thresholds and emergency flag from the
+# order type and pre-fills one line per master-list item (statistics snapshotted
+# as of the period end), seeding indicator values for a non-emergency type. A
+# typed rejection (MaxOrdersReachedForPeriod / SupplierNotValid) — or any other
+# failure — keeps the dialog open with the error (AC-P5); navigation happens only
+# on the RequisitionNode branch.
+mutation insertProgramInternalOrder(
+  $storeId: String!
+  $input: InsertProgramRequestRequisitionInput!
+) {
+  insertProgramRequestRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertProgramRequestRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

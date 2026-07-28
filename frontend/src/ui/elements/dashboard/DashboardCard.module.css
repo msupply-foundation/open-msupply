@@ -9,6 +9,12 @@
   block-size: 100%;
 }
 
+/* Anchor targets (a card with an `id`, e.g. a TOC destination): keep the
+   heading off the viewport top edge when scrolled to. */
+.card[id] {
+  scroll-margin-block-start: var(--space-6);
+}
+
 .title {
   display: flex;
   align-items: center;

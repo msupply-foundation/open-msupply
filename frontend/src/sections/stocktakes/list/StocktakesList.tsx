@@ -7,7 +7,6 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -245,24 +244,24 @@ const StocktakesList: Component = () => {
       sortKey: 'stocktakeNumber',
       // Language-neutral '#' for the number column (universal symbol; no t()
       // needed).
-      header: '#',
+      header: () => '#',
       // getNumberCell merges extra meta — card:'primary' makes the number the
       // card's title (top-left); right-aligned in table view.
-      ...getNumberCell({ card: { region: 'primary' } }),
+      ...getNumberCell({ headerPosition: 'primary' }),
     },
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => <StatusChip {...statusMeta(info.row.original)} />,
       // Card view: the status chip is the top-right badge.
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'description' },
       // Not sortable — matches OMS's list (Description has no sort control) and
       // the spec column table.
-      header: t('label.description'),
+      header: () => t('label.description'),
       // Card view: the description flows in the secondary area. Wraps to 2
       // lines.
       meta: { wrapLines: 2 },
@@ -270,13 +269,13 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
       // Not sortable — matches OMS's list column set.
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
   ];
@@ -304,13 +303,6 @@ const StocktakesList: Component = () => {
               filter={() => query().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -347,6 +339,15 @@ const StocktakesList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering), never the page header; state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+          />
+        }
         // `data.loading` (a non-suspending read) drives the table's loading
         // treatment: a centred spinner on first load (no rows yet), a thin
         // refreshing bar on filter/sort/page refetches (rows kept) — so a slow

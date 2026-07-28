@@ -1,7 +1,9 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
+import { serverVersion } from '../api/serverInfo';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
@@ -81,10 +83,9 @@ export const LoginPage: Component = () => {
               error={fieldErrors().username || undefined}
               onInput={e => setUsername(e.currentTarget.value)}
             />
-            <TextField
+            <PasswordField
               label={t('heading.password')}
               width="full"
-              type="password"
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
@@ -112,10 +113,30 @@ export const LoginPage: Component = () => {
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
+          {/* Spec (App version, AC-VN2): absent until the startup pass has
+              fetched it — never a placeholder. */}
+          <Show when={serverVersion()}>
+            <p class={styles.version}>
+              <strong>{t('label.server-version')}</strong> {serverVersion()}
+            </p>
+          </Show>
           <LanguageSelector
             language={locale()}
             onSelect={v => void changeLanguage(v)}
           />
+          {/* Sibling old UI, served at the server root /old-ui/ (dual-frontend
+              transition — one cookie session spans both). A plain anchor for a
+              full document navigation, NOT router navigation: it's a different
+              app. The href is root-relative on purpose — /old-ui/ is a sibling
+              of this app's BASE_URL mount, never nested under it (e.g. the /spec
+              demo track still points at the root /old-ui/). */}
+          <a
+            class={styles.switchLink}
+            href="/old-ui/"
+            data-testid="login-switch-to-old-ui"
+          >
+            {t('login.switch-to-old-ui')}
+          </a>
         </footer>
       </main>
     </div>

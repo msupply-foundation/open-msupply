@@ -14,7 +14,7 @@ export type LocationFilter = NonNullable<LocationsListVariables['filter']>;
 
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the locations list
- * (spec/locations S1 § filters, AC-L3): Name and Code as text-contains, On
+ * (spec/locations S1 § filters, OMS-REG-INV-01.14): Name and Code as text-contains, On
  * hold as a checkbox — checked narrows to on-hold locations, unchecked applies
  * no filter (no "not on hold" filter exists). The map is keyed by EVERY key of
  * the generated LocationFilterInput: a key maps to a definition to expose it,
@@ -84,7 +84,7 @@ const FILTERS: Filter<LocationFilter>[] = constructFilters<LocationFilter>({
   // Asset-module scoping — programmatic, not a user-facing list filter.
   assignedToAsset: null,
   // Identity / relational filters — programmatic. The list is store-scoped by
-  // the query's own storeId argument (AC-L1), not a user-facing filter.
+  // the query's own storeId argument (OMS-REG-INV-01.36), not a user-facing filter.
   storeId: null,
   id: null,
   locationTypeId: null,

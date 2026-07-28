@@ -38,50 +38,142 @@
   background: var(--bg-white);
 }
 
-/* The details-panel slot. When CLOSED the panel stays MOUNTED but collapses to
-   zero inline size with its paint clipped — the panel keeps its natural width
-   inside the clip, so its content keeps real layout boxes (form state survives
-   open/close with no remount, and the shared e2e suites can assert on panel
-   content before opening it — the behaviour the current app exhibits). */
+/* The details-panel slot. The panel stays MOUNTED whether open or closed — it
+   parks off-frame rather than unmounting — so form state survives open/close
+   with no remount and the shared e2e suites can assert on panel content before
+   opening it. Width is 20rem, matching SidePanel's own `.panel`. Two modes,
+   split at the navOverlay breakpoint (mirroring the nav drawer, on the opposite
+   edge — spec ui-standards/layout.md → page regions, D27). */
 .panelSlot {
+  position: relative; /* stack the drop shadow over the body, incl. the table's sticky header (z 3) */
+  z-index: 4;
   display: flex;
   min-block-size: 0;
+  inline-size: 20rem;
 }
 
-.panelSlot[data-closed] {
-  inline-size: 0;
-  overflow: hidden;
-}
-
-/* Inside the clipped slot the panel must KEEP its natural width (not shrink
-   with the 0-width container) so its content keeps real layout boxes. */
-.panelSlot[data-closed] > * {
+.panelSlot > * {
   flex: 0 0 auto;
   max-inline-size: none;
 }
 
-/* Phone widths: the OPEN panel becomes a full-screen overlay over the page
-   region instead of a docked column that would squeeze the body to a sliver
-   (spec ui-standards/layout.md → page regions, D27). The closed state keeps
-   the docked clip rules above (zero-width, natural-width content inside), so
-   the no-remount contract is untouched. 599 = the compact breakpoint in
-   breakpoints.ts minus 1 (CSS can't read JS tokens — same constant as
-   index.css). Page.tsx pairs this with `inert` on the covered main column
-   and Esc-to-close. */
-@media (max-width: 599px) {
+/* Drop shadow rides the panel, only while open — a parked panel would cast a
+   stray shadow along the page's inline-end edge. No slot overflow clip, so the
+   leftward shadow paints over the body; the page's own overflow:hidden clips
+   the off-frame panel instead. */
+.panelSlot:not([data-closed]) > * {
+  box-shadow: var(--shadow-4);
+}
+
+/* Parked when closed — out of the tab order + a11y tree once slid away; the
+   delay keeps it there through the slide-out (both modes). */
+.panelSlot[data-closed] {
+  visibility: hidden;
+}
+
+.panelSlot:not([data-closed]) {
+  visibility: visible;
+}
+
+/* The scrim exists only in overlay mode (below). */
+.scrim {
+  display: none;
+}
+
+/* Docked (>= navOverlay): a column in the page's flex row. The slot's WIDTH
+   animates, so the panel and the body move TOGETHER — the panel slides in from
+   the inline-end AS the body makes room, never leaving a gap. Cheap here: the
+   detail table overflows (horizontal scroll), so the body's scroll viewport
+   just narrows rather than the columns relaying out. `ease-out` starts fast, so
+   it reads as immediate — the old `ease` slow-start is what felt like lag. */
+@media (min-width: 1024px) {
+  .panelSlot {
+    transition:
+      inline-size 200ms ease-out,
+      visibility 0s;
+  }
+
+  .panelSlot[data-closed] {
+    inline-size: 0;
+    transition:
+      inline-size 200ms ease-out,
+      visibility 0s 200ms;
+  }
+}
+
+/* Overlay (< navOverlay): the panel leaves the flow and slides OVER the page on
+   a GPU transform behind a scrim — no body reflow, no push, so nothing to keep
+   in sync (D27). Page.tsx pairs this with `inert` on the covered main column +
+   Esc-to-close; a scrim tap closes it too. 1023 = the navOverlay breakpoint in
+   breakpoints.ts minus 1 (CSS can't read the JS token). */
+@media (max-width: 1023px) {
   .page {
     position: relative;
   }
 
   .panelSlot {
     position: absolute;
-    inset: 0;
-    z-index: 10;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: 40;
+    max-inline-size: 85vw;
   }
 
-  .panelSlot:not([data-closed]) > * {
+  .panelSlot > * {
+    transition: transform 200ms ease-out;
+    will-change: transform;
+  }
+
+  .panelSlot[data-closed] {
+    transition: visibility 0s 200ms;
+  }
+
+  .panelSlot[data-closed] > * {
+    transform: translateX(100%);
+  }
+
+  :dir(rtl) .panelSlot[data-closed] > * {
+    transform: translateX(-100%);
+  }
+
+  .scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 39;
+    background: var(--overlay-scrim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease-out;
+  }
+
+  .scrim[data-open='true'] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Really narrow (< compact): the drawer takes the whole page region, like a
+   modal — a 20rem panel would leave only a sliver of content behind it. 599 =
+   the compact breakpoint minus 1. */
+@media (max-width: 599px) {
+  .panelSlot {
+    inset-inline-start: 0;
+    inline-size: auto;
+    max-inline-size: none;
+  }
+
+  .panelSlot > * {
     inline-size: 100%;
     border-inline-start: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panelSlot,
+  .panelSlot > *,
+  .scrim {
+    transition: none;
   }
 }
 
@@ -93,6 +185,19 @@
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+}
+
+/* A DataTable that FILLS the region (the single self-scrolling child) drops its
+   own card frame — a full-bleed table reads better than a rounded card hugging
+   the region edges. Scoped to the table root's data hook so ONLY the filling
+   table loses its frame, not another fill-body child (a documents list, an
+   EmptyState). Cross-module: .bodyFill and the table's .root are hashed in
+   separate CSS Modules, so this reaches the table via its unhashed
+   data-datatable attribute rather than a class. Tables in modals /
+   DashboardCards sit outside .bodyFill and keep their frame. */
+.bodyFill [data-datatable] {
+  border: none;
+  border-radius: 0;
 }
 
 /* Tabbed fill-body page: <Tabs> renders as display:contents, so the active tab

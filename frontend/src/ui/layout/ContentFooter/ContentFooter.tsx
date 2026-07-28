@@ -13,6 +13,9 @@ export interface ContentFooterProps {
   /** `data-testid` for the bar (locale-stable test hook, e2e/TESTIDS.md —
    *  e.g. `actions-footer` when composed as the selection action bar). */
   testId?: string;
+  /** Extra class(es) composed onto the bar — a host adjusts the BAND (e.g.
+   *  the DataTable's tighter in-frame padding), never the slotting. */
+  class?: string;
 }
 
 /*
@@ -29,7 +32,10 @@ export interface ContentFooterProps {
  * contextual content is the page's job (see kdd/page-composition).
  */
 export const ContentFooter = (props: ContentFooterProps) => (
-  <div class={styles.footer} data-testid={props.testId}>
+  <div
+    class={`${styles.footer} ${props.class ?? ''}`}
+    data-testid={props.testId}
+  >
     {props.children}
   </div>
 );

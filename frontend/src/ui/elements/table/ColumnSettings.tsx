@@ -1,283 +1,232 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { Table } from '@tanstack/solid-table';
+import type { HeaderContext, Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
-import { ChevronDownIcon, SaveIcon } from '../../icons';
-import { pxToRem } from '../../utils/rem';
-import type { TableConfig, TableConfigKey } from './tableConfig';
-import { ALL_TABS, type TabAndCardGroup } from './DataTable';
+import {
+  ChevronDownIcon,
+  EyeIcon,
+  EyeOffIcon,
+  PinLeftIcon,
+  PinRightIcon,
+} from '../../icons';
+import type { TableConfig, TableConfigKey, ViewMode } from './tableConfig';
 import styles from './ColumnSettings.module.css';
 
-// The column-settings panel: a table with a row per column, each exposing
-// visibility, order (up/down), pin, and width (in rem). It's a thin renderer
-// over TanStack's own per-column getters/handlers (kdd/table-state — the brains
-// are TanStack's; we only draw the UI): getIsVisible/getCanHide,
-// getCanPin/getIsPinned/pin, getSize/getCanResize. The three resets call
-// table.reset*, which reverts to the resolved lower config layers.
+// The Columns panel (ui-standards § tables → column management, the advanced
+// example's #mrt-cols-pop): Show all / Hide all, a Show | Move | Pin header,
+// then a row per column — an eye / eye-off visibility toggle + name (the
+// clickable label), with Move up/down and Pin left/right control groups
+// trailing (column WIDTH is set by dragging the header edge, not here). It's a
+// thin renderer over TanStack's own per-column getters/handlers (kdd/table-state
+// — the brains are TanStack's; we only draw the UI): getIsVisible/getCanHide,
+// getCanPin/getIsPinned/pin. Table-wide actions (density, Reset table to
+// default, save-as-global-default) live in the separate Settings popover — see
+// TableSettings.
 //
 // Writes go through setConfig (the same controlled path DataTable uses), so
-// persistence + layering + the px↔rem boundary still apply. Sizes are
-// shown/stored in REM (config truth); TanStack works in px, so we convert at
-// this boundary too.
+// persistence + layering still apply.
 export function ColumnSettings<T>(props: {
   table: Table<T>;
-  config?: TableConfig;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /**
-   * The table's tabs/groups (when grouped) — used to badge each row with the
-   * group(s) a
-   *  column belongs to, so it's clear hiding/reordering is GLOBAL across tabs. */
-  tabsAndCardGroups?: TabAndCardGroup<string>[];
-  /**
-   * Promote the current layout to the shared install-wide default. Present ONLY
-   * when the host has decided the current user may do so (central server +
-   * EDIT_CENTRAL_DATA — the gate is the host's, kept out of this generic
-   * component); absent → the action isn't offered. Resolves true on success,
-   * false on failure, which this panel reflects inline.
+   * The table's current view. The panel lists only the columns that view
+   * actually shows — card-only columns (meta.hideOnTable) are dropped in table
+   * view, table-only columns (meta.hideOnCard) in card view — so the popover
+   * mirrors what's on screen (Carl 2026-07-24).
    */
-  onSaveGlobalDefault?: () => Promise<boolean>;
+  viewMode: ViewMode;
 }): JSX.Element {
-  // Inline status for the save-as-global-default action (this app surfaces
-  // feedback inline via Alert-style notices rather than a global toast). Reset
-  // to idle when the panel is re-opened is unnecessary — the popover unmounts
-  // its contents on close.
-  const [saveStatus, setSaveStatus] = createSignal<
-    'idle' | 'saving' | 'saved' | 'error'
-  >('idle');
-  const saveGlobalDefault = async () => {
-    setSaveStatus('saving');
-    const ok = await props.onSaveGlobalDefault?.();
-    setSaveStatus(ok ? 'saved' : 'error');
-  };
-  // The tabs/groups a column id belongs to, for its settings-row icon badges.
-  // An ALL_TABS column (batch, actions) belongs to EVERY tab → show all icons;
-  // an array names specific groups → show those; absent → none.
-  const columnGroups = (id: string): TabAndCardGroup<string>[] => {
-    const groups = props.tabsAndCardGroups;
-    if (!groups) return [];
-    const membership = (
-      props.table.getColumn(id)?.columnDef as {
-        tabsAndCardGroups?: string[] | typeof ALL_TABS;
-      }
-    )?.tabsAndCardGroups;
-    if (membership === ALL_TABS) return groups;
-    if (!Array.isArray(membership)) return [];
-    return groups.filter(g => membership.includes(g.key));
-  };
-  // Leaf columns in their current effective display order (columnOrder if set,
-  // else def order). Reordering swaps a column with its neighbour in this id
-  // list.
-  const orderedIds = () => props.table.getAllLeafColumns().map(c => c.id);
+  // Leaf column ids in effective display order (columnOrder if set, else def
+  // order). Card-only / table-only columns are excluded for the current view
+  // (see the viewMode prop) so the panel matches what's on screen.
+  const listedIds = () =>
+    props.table
+      .getAllLeafColumns()
+      // Structural columns opt out of the popover entirely (stay in the view,
+      // not user-configurable).
+      .filter(c => !c.columnDef.meta?.hideFromColumnSettings)
+      .filter(c =>
+        props.viewMode === 'card'
+          ? !c.columnDef.meta?.hideOnCard
+          : !c.columnDef.meta?.hideOnTable
+      )
+      .map(c => c.id);
 
+  // Reorder by swapping two LISTED neighbours — but splice within the FULL
+  // column order, so columns hidden in this view keep their slots (columnOrder
+  // is one global list across both views and every tab).
   const move = (id: string, delta: -1 | 1) => {
-    const ids = orderedIds();
-    const from = ids.indexOf(id);
+    const listed = listedIds();
+    const from = listed.indexOf(id);
     const to = from + delta;
-    if (from < 0 || to < 0 || to >= ids.length) return;
-    const next = [...ids];
-    [next[from], next[to]] = [next[to], next[from]];
+    if (from < 0 || to < 0 || to >= listed.length) return;
+    const full = props.table.getAllLeafColumns().map(c => c.id);
+    const i = full.indexOf(id);
+    const j = full.indexOf(listed[to]);
+    if (i < 0 || j < 0) return;
+    const next = [...full];
+    [next[i], next[j]] = [next[j], next[i]];
     props.setConfig?.('columnOrder', next);
   };
 
-  // Header text for the row label. TanStack headers can be a string or a
-  // function/JSX; we only render the string case here (our columns use string
-  // headers) and fall back to the column id otherwise, so the panel always has
-  // a readable label.
-  const label = (id: string) => {
-    const header = props.table.getColumn(id)?.columnDef.header;
-    return typeof header === 'string' ? header : id;
+  // Show all / Hide all, scoped to the LISTED (current-view) columns — never
+  // TanStack's toggleAllColumnsVisible, which would flip columns hidden in this
+  // view too (e.g. "Hide all" in table view nuking card-only columns in card
+  // view, with no table-view row left to restore them). Only columns that CAN
+  // hide are touched; the write goes through setConfig like every other change.
+  const setAllListedVisible = (visible: boolean) => {
+    const next = { ...props.table.getState().columnVisibility };
+    for (const id of listedIds()) {
+      if (props.table.getColumn(id)?.getCanHide()) next[id] = visible;
+    }
+    props.setConfig?.('columnVisibility', next);
   };
 
-  // Current stored width in rem for a column, or undefined when unset (default
-  // width).
-  const widthRem = (id: string): number | undefined =>
-    props.config?.columnSizing?.[id];
-
-  const setWidthRem = (id: string, rem: number | undefined) => {
-    const current = { ...(props.config?.columnSizing ?? {}) };
-    if (rem == null) delete current[id];
-    else current[id] = rem;
-    props.setConfig?.('columnSizing', current);
+  // Header text for the row label. Our columns' `header` is always a function
+  // (kdd/… — columnTypes.ts narrows it to function-only so header text reacts
+  // to locale changes), called the same way HeaderCell.tsx calls it via
+  // flexRender — none of our headers read the context argument, so an empty
+  // one is safe here. Falls back to the column id if a column has no header.
+  const label = (id: string): JSX.Element => {
+    const header = props.table.getColumn(id)?.columnDef.header;
+    if (typeof header !== 'function') return id;
+    return header({} as HeaderContext<T, unknown>);
   };
 
   return (
     <div class={styles.panel}>
-      {/* Reset actions — each reverts one facet to the resolved config/default via TanStack. */}
+      {/* Bulk actions — Show all / Hide all scope to the columns this view lists
+          (see setAllListedVisible; only hideable columns are touched, so
+          structural columns are safe); Reset order and Unpin all clear the
+          whole-table order / pinning overrides (issue #572 — matching the
+          current app's columns menu). Each write goes through setConfig. */}
       <div class={styles.actions}>
         <button
           type="button"
           class={styles.action}
-          onClick={() => props.table.resetColumnVisibility()}
+          data-testid="table-show-all-columns"
+          onClick={() => setAllListedVisible(true)}
         >
-          {t('table.reset-visibility')}
+          {t('table.show-all')}
         </button>
         <button
           type="button"
           class={styles.action}
-          onClick={() => props.table.resetColumnOrder()}
+          data-testid="table-hide-all-columns"
+          onClick={() => setAllListedVisible(false)}
+        >
+          {t('table.hide-all')}
+        </button>
+        <button
+          type="button"
+          class={styles.action}
+          data-testid="table-reset-order"
+          onClick={() => props.setConfig?.('columnOrder', undefined)}
         >
           {t('table.reset-order')}
         </button>
-        <button
-          type="button"
-          class={styles.action}
-          onClick={() => props.table.resetColumnSizing()}
-        >
-          {t('table.reset-size')}
-        </button>
-      </div>
-
-      {/* Save-as-global-default — only for central-server admins (the host gates
-          the callback's presence). Divider above sets it apart from the per-user
-          reset actions: this writes the INSTALL-WIDE default, not local state.
-          Feedback is inline (saving / saved / error) — no global toast. */}
-      <Show when={props.onSaveGlobalDefault}>
-        <div class={styles.saveDefault}>
+        <Show when={props.table.getAllLeafColumns().some(c => c.getCanPin())}>
           <button
             type="button"
-            class={styles.saveButton}
-            disabled={saveStatus() === 'saving'}
-            data-testid="table-save-global-default"
-            onClick={saveGlobalDefault}
+            class={styles.action}
+            data-testid="table-unpin-all"
+            onClick={() => props.setConfig?.('columnPinning', undefined)}
           >
-            <SaveIcon class={styles.saveIcon} />
-            {t('table.save-global-default')}
+            {t('table.unpin-all')}
           </button>
-          <Show when={saveStatus() !== 'idle'}>
-            <span
-              class={styles.saveStatus}
-              data-status={saveStatus()}
-              role="status"
-            >
-              {saveStatus() === 'saving' &&
-                t('table.save-global-default.saving')}
-              {saveStatus() === 'saved' && t('table.save-global-default.saved')}
-              {saveStatus() === 'error' && t('table.save-global-default.error')}
-            </span>
-          </Show>
-        </div>
-      </Show>
+        </Show>
+      </div>
 
-      <table class={styles.table}>
-        <tbody>
-          <For each={orderedIds()}>
-            {(id, index) => {
-              const column = () => props.table.getColumn(id)!;
-              return (
-                <tr class={styles.row}>
-                  {/* Order: up/down chevrons (no drag). Disabled at the ends. */}
-                  <td class={styles.orderCell}>
+      {/* Muted column header labelling the row controls. */}
+      <div class={styles.head} aria-hidden="true">
+        <span class={styles.headShow}>{t('table.show')}</span>
+        <span class={styles.headActions}>
+          <span class={styles.headMove}>{t('table.move')}</span>
+          <span class={styles.headPin}>{t('table.pin')}</span>
+        </span>
+      </div>
+
+      <For each={listedIds()}>
+        {(id, index) => {
+          const column = () => props.table.getColumn(id)!;
+          return (
+            <div class={styles.row}>
+              {/* Visibility — an eye / eye-off toggle. The checkbox is the
+                  accessible control (visually hidden); clicking anywhere on the
+                  label toggles it. Disabled when the column can't hide. */}
+              <label class={styles.colLabel}>
+                <input
+                  type="checkbox"
+                  class={styles.visInput}
+                  checked={column().getIsVisible()}
+                  disabled={!column().getCanHide()}
+                  aria-label={t('table.column-visible')}
+                  onChange={column().getToggleVisibilityHandler()}
+                />
+                <span class={styles.eye}>
+                  <EyeIcon class={styles.eyeShow} />
+                  <EyeOffIcon class={styles.eyeHide} />
+                </span>
+                <span class={styles.colName}>{label(id)}</span>
+              </label>
+
+              {/* Trailing controls: Move up/down (no drag), then Pin L/R. */}
+              <span class={styles.colActions}>
+                <span class={styles.moveGroup}>
+                  <button
+                    type="button"
+                    class={styles.moveBtn}
+                    aria-label={t('table.move-up')}
+                    disabled={index() === 0}
+                    onClick={() => move(id, -1)}
+                  >
+                    <ChevronDownIcon class={styles.chevronUp} />
+                  </button>
+                  <button
+                    type="button"
+                    class={styles.moveBtn}
+                    aria-label={t('table.move-down')}
+                    disabled={index() === listedIds().length - 1}
+                    onClick={() => move(id, 1)}
+                  >
+                    <ChevronDownIcon />
+                  </button>
+                </span>
+
+                {/* Pin left / right — only when the column can be pinned. */}
+                <Show when={column().getCanPin()}>
+                  <span class={styles.pinGroup}>
                     <button
                       type="button"
-                      class={styles.iconButton}
-                      aria-label={t('table.move-up')}
-                      disabled={index() === 0}
-                      onClick={() => move(id, -1)}
+                      class={`${styles.pinBtn} ${column().getIsPinned() === 'left' ? styles.pinActive : ''}`}
+                      aria-label={t('table.pin-left')}
+                      onClick={() =>
+                        column().pin(
+                          column().getIsPinned() === 'left' ? false : 'left'
+                        )
+                      }
                     >
-                      <ChevronDownIcon class={styles.chevronUp} />
+                      <PinLeftIcon />
                     </button>
                     <button
                       type="button"
-                      class={styles.iconButton}
-                      aria-label={t('table.move-down')}
-                      disabled={index() === orderedIds().length - 1}
-                      onClick={() => move(id, 1)}
+                      class={`${styles.pinBtn} ${column().getIsPinned() === 'right' ? styles.pinActive : ''}`}
+                      aria-label={t('table.pin-right')}
+                      onClick={() =>
+                        column().pin(
+                          column().getIsPinned() === 'right' ? false : 'right'
+                        )
+                      }
                     >
-                      <ChevronDownIcon />
+                      <PinRightIcon />
                     </button>
-                  </td>
-
-                  {/* Visibility toggle — bound to TanStack; disabled when the column can't hide. */}
-                  <td class={styles.visibilityCell}>
-                    <input
-                      type="checkbox"
-                      checked={column().getIsVisible()}
-                      disabled={!column().getCanHide()}
-                      aria-label={t('table.column-visible')}
-                      onChange={column().getToggleVisibilityHandler()}
-                    />
-                  </td>
-
-                  <td class={styles.labelCell}>
-                    {label(id)}
-                    {/* Group badge(s): just the ICON of each group this column belongs to (the
-                        group's label reads on its tab) — a compact hint that visibility/order
-                        changes here are GLOBAL across tabs. `title` gives the text on hover. */}
-                    <For each={columnGroups(id)}>
-                      {group => (
-                        <Show when={group.icon}>
-                          {icon => (
-                            <span
-                              class={styles.groupBadgeIcon}
-                              title={t(group.labelKey)}
-                            >
-                              {icon()()}
-                            </span>
-                          )}
-                        </Show>
-                      )}
-                    </For>
-                  </td>
-
-                  {/* Pin left / right — only when the column can be pinned. Active state shown. */}
-                  <td class={styles.pinCell}>
-                    <Show when={column().getCanPin()}>
-                      <button
-                        type="button"
-                        class={`${styles.pinButton} ${column().getIsPinned() === 'left' ? styles.pinActive : ''}`}
-                        aria-label={t('table.pin-left')}
-                        onClick={() =>
-                          column().pin(
-                            column().getIsPinned() === 'left' ? false : 'left'
-                          )
-                        }
-                      >
-                        {t('table.pin-left-short')}
-                      </button>
-                      <button
-                        type="button"
-                        class={`${styles.pinButton} ${column().getIsPinned() === 'right' ? styles.pinActive : ''}`}
-                        aria-label={t('table.pin-right')}
-                        onClick={() =>
-                          column().pin(
-                            column().getIsPinned() === 'right' ? false : 'right'
-                          )
-                        }
-                      >
-                        {t('table.pin-right-short')}
-                      </button>
-                    </Show>
-                  </td>
-
-                  {/* Width in rem — shown only when a size is set; blank clears to default.
-                      Placeholder shows the current effective width (getSize px → rem) so the
-                      user sees what "default" is without it counting as an override. */}
-                  <td class={styles.sizeCell}>
-                    <Show when={column().getCanResize()}>
-                      <input
-                        type="number"
-                        class={styles.sizeInput}
-                        min="1"
-                        step="0.5"
-                        aria-label={t('table.column-width')}
-                        value={widthRem(id) ?? ''}
-                        placeholder={String(pxToRem(column().getSize()))}
-                        onChange={event => {
-                          const raw = event.currentTarget.value.trim();
-                          if (raw === '') return setWidthRem(id, undefined);
-                          const rem = Number.parseFloat(raw);
-                          setWidthRem(id, Number.isNaN(rem) ? undefined : rem);
-                        }}
-                      />
-                      <span class={styles.remUnit}>{t('table.rem')}</span>
-                    </Show>
-                  </td>
-                </tr>
-              );
-            }}
-          </For>
-        </tbody>
-      </table>
+                  </span>
+                </Show>
+              </span>
+            </div>
+          );
+        }}
+      </For>
     </div>
   );
 }

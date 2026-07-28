@@ -20,7 +20,11 @@ import {
 //   passes 'negative' too (reduce-to-zero is always a reduction).
 // - 'return' — a customer-return line's optional "why it came back"
 //   (spec/customer-returns/rules.md § line rules): the active return reasons.
-export type ReasonKind = 'positive' | 'negative' | 'return';
+// - 'requisition' — a requisition line's variance reason, required when a
+//   requested quantity departs from the suggestion on a customer-statistics
+//   program order (spec/internal-orders/rules.md § editing lines, AC-R1/R2):
+//   the active requisition-line-variance reasons.
+export type ReasonKind = 'positive' | 'negative' | 'return' | 'requisition';
 
 const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
   positive: new Set(['POSITIVE_INVENTORY_ADJUSTMENT']),
@@ -30,6 +34,7 @@ const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
     'CLOSED_VIAL_WASTAGE',
   ]),
   return: new Set(['RETURN_REASON']),
+  requisition: new Set(['REQUISITION_LINE_VARIANCE']),
 };
 
 /**

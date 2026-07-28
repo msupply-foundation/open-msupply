@@ -33,7 +33,7 @@ export const userDisplayName = (): string => {
   return fullName || u.username;
 };
 
-// Spec (The re-login requirement outlives a reload, D46): the re-login
+// Spec (The re-login requirement outlives a reload, D69): the re-login
 // requirement is a property of the tab's session, not of the current page's
 // in-memory state — the browser may still hold a valid session cookie, so a
 // reloaded me check can succeed and would otherwise silently re-admit the user,
@@ -60,6 +60,20 @@ const reLoginRequiredWasPersisted = (): boolean => {
     return false;
   }
 };
+
+// The store code for a store id, from the logged-in user's store list — the
+// list StoreGuardLayout itself resolves stores from, so any routed storeId is
+// present. Used by the shared list-export filenames
+// (spec/ui-standards/list-views.md § regions); the id fallback only guards a
+// mid-logout race. Reactive (reads authUser).
+export const storeCodeOf = (storeId: string): string =>
+  user()?.stores.nodes.find(s => s.id === storeId)?.code ?? storeId;
+
+// The store NAME for a store id, same source and fallback discipline as
+// storeCodeOf. Used where a human-facing store label is printed (the
+// prescription dispensing labels — spec/prescriptions § label printing).
+export const storeNameOf = (storeId: string): string =>
+  user()?.stores.nodes.find(s => s.id === storeId)?.name ?? storeId;
 
 // Spec (Unexpected logout): set when any GraphQL call returns unauthenticated —
 // reported by graphqlFetch. Cleared by a successful login.
@@ -94,7 +108,7 @@ export const checkAuth = async (): Promise<boolean> => {
   const result = await graphqlFetch(Me, {});
   if (result.kind === 'success') {
     setUser(result.data.me);
-    // Spec (The re-login requirement outlives a reload, D46): a reload re-runs
+    // Spec (The re-login requirement outlives a reload, D69): a reload re-runs
     // this check and, on a still-valid session cookie, succeeds — which would
     // silently re-admit a user who owed a re-login. Re-arm the requirement from
     // its persisted mirror so the modal returns instead of being bypassed. Only
@@ -132,7 +146,7 @@ export const login = async (
   setUser(auth.user);
   clearUnauthenticated();
   setInactivityExpired(false);
-  // A successful re-login discharges the persisted requirement (D46).
+  // A successful re-login discharges the persisted requirement (D69).
   persistReLoginRequired(false);
   return { kind: 'success' };
 };
@@ -144,7 +158,7 @@ export const logout = async (): Promise<void> => {
   await graphqlFetch(Logout, {});
   clearUnauthenticated();
   setInactivityExpired(false);
-  // An explicit logout ends the session — nothing is owed on the next load (D46).
+  // An explicit logout ends the session — nothing is owed on the next load (D69).
   persistReLoginRequired(false);
   refetchStoreContext(undefined);
   setUser(undefined);
@@ -178,7 +192,7 @@ export const startActivityTracking = (): (() => void) => {
       currentUser.inactivityTimeoutSeconds * 1000
     ) {
       setInactivityExpired(true);
-      // Persist so a reload doesn't bypass the inactivity re-login (D46).
+      // Persist so a reload doesn't bypass the inactivity re-login (D69).
       persistReLoginRequired(true);
       return;
     }
