@@ -7,9 +7,10 @@ import { FILES_URL } from '../../config';
 // their happy path.
 
 // Parse the download filename from a content-disposition header. The file
-// service sends `content-disposition: inline; filename="<date>_<time>_<name>.<ext>"`.
-// Handles both the plain `filename="..."` and RFC 5987 `filename*=UTF-8''...`
-// forms; returns undefined when neither is present or parsable.
+// service sends `content-disposition: inline;
+// filename="<date>_<time>_<name>.<ext>"`. Handles both the plain
+// `filename="..."` and RFC 5987 `filename*=UTF-8''...` forms; returns undefined
+// when neither is present or parsable.
 const filenameFromDisposition = (
   disposition: string | null
 ): string | undefined => {
@@ -49,43 +50,4 @@ export const fetchReportFile = async (
   } catch {
     return { kind: 'error' };
   }
-};
-
-// Open the system print dialog for a finished HTML document (spec/reports
-// "Printing and exporting", desktop browser path): a hidden iframe carrying the
-// HTML via srcdoc, print() called once it loads, and the iframe torn down after
-// printing (afterprint, with a generous timeout fallback for browsers that
-// never fire it).
-export const printHtml = (html: string): void => {
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  iframe.srcdoc = html;
-
-  let cleanedUp = false;
-  const cleanup = (): void => {
-    if (cleanedUp) return;
-    cleanedUp = true;
-    iframe.remove();
-  };
-
-  iframe.onload = () => {
-    const frameWindow = iframe.contentWindow;
-    if (!frameWindow) {
-      cleanup();
-      return;
-    }
-    frameWindow.addEventListener('afterprint', cleanup);
-    // Fallback: some browsers never fire afterprint (or the user dismisses the
-    // dialog without it). Tear the frame down after a generous delay regardless.
-    window.setTimeout(cleanup, 60_000);
-    frameWindow.focus();
-    frameWindow.print();
-  };
-
-  document.body.appendChild(iframe);
 };

@@ -35,9 +35,8 @@ import type { ReportResult, ReportVariables } from '../api/reports.generated';
 // domain/reports (shared with the S4 record-screen selector); dataId is
 // omitted — S2's standalone reports render against the store, not a record.
 import { generateReport, reportLabel } from '../../../domain/reports';
-import { fetchReportFile, printHtml } from '../../../domain/reportFiles';
-import { isAndroid } from '../../../platform';
-import { openBlob, saveBlob } from '../../../platform/openDocument';
+import { fetchReportFile } from '../../../domain/reportFiles';
+import { printBlob, saveBlob } from '../../../platform/openDocument';
 import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
 import { timezoneArgument } from '../../../domain/json-forms/schema';
 import styles from './ReportDetailView.module.css';
@@ -212,9 +211,9 @@ const ReportDetailView: Component = () => {
     if (reportArgs() === undefined) navigate(`/${params.storeId}/reports`);
   };
 
-  // Generate the same report in a file format and fetch the result; null with
+  // Generate the same report as a workbook and fetch the result; null with
   // the error already surfaced on failure.
-  const generateFile = async (format: 'EXCEL' | 'PDF') => {
+  const generateFile = async (format: 'EXCEL') => {
     const r = report();
     if (!r) return null;
     setActionError(undefined);
@@ -235,19 +234,11 @@ const ReportDetailView: Component = () => {
     return file;
   };
 
-  // Print — a VIEW intent: on the web, fetch the current HTML file and open
-  // the system print dialog (spec/reports "Printing and exporting"). The
-  // Android WebView has no window.print — hand a PDF to the OS viewer instead,
-  // where printing (and save-as) lives on a tablet (spec/android § Files out
-  // of the app).
+  // Print — fetch the HTML document already on screen and print it
+  // (spec/reports "Printing and exporting"). printBlob owns the platform
+  // difference: the system print dialog on the web, the OS print service on
+  // Android.
   const onPrint = async () => {
-    if (isAndroid()) {
-      const file = await generateFile('PDF');
-      if (!file) return;
-      const delivered = await openBlob(file.blob, file.filename);
-      if (!delivered.ok) setActionError('messages.cannot-open-file');
-      return;
-    }
     const r = result();
     if (r?.kind !== 'fileId') return;
     setActionError(undefined);
@@ -256,7 +247,8 @@ const ReportDetailView: Component = () => {
       setActionError('error.failed-to-generate-report');
       return;
     }
-    printHtml(await file.blob.text());
+    const printed = await printBlob(file.blob, file.filename);
+    if (!printed.ok) setActionError('messages.error-printing-report');
   };
 
   // Export — a KEEP intent: the same report as an Excel workbook, delivered
