@@ -451,16 +451,18 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    A pinned cell needs a FULLY OPAQUE background so the horizontally-scrolling content never shows
    through the frozen cell (or through the seam between the two leading columns). All get z 1 —
    above the normal scrolling body cells (z auto) on horizontal scroll, but BELOW the header (z 2 /
-   pinned header 3) so the header never disappears under a sticky pinned column. An edge shadow on
-   the inner side signals the freeze. */
+   pinned header 3) so the header never disappears under a sticky pinned column. A 1px seam on the
+   inner edge signals the freeze — on pinned DATA columns only (see #617 below).
+
+   Pinned BODY cells sit on the ROW surface: a pinned data column is data, not
+   chrome, and the leading selection column takes the row surface too (#617 — no
+   grey band beside the checkbox; the standard's example table reads the checkbox
+   as part of its row). The selection / state / hover tints below override the
+   fill per row. The HEADER's select cell is excluded by order — .th[data-pinned]
+   follows and restores the header fill. */
 .td[data-pinned],
 .selectCell[data-pinned] {
   z-index: 1;
-}
-
-/* A pinned DATA column's body cells stay on the body (row) surface — it's data, not part of the
-   leading band. */
-.td[data-pinned] {
   background: var(--bg-white);
 }
 
@@ -496,32 +498,18 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
 }
 
-/* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the
-   frozen leading column reads as one cohesive band with the header above it
-   (matching the header background — as requested). Its inline-END edge is bare
-   — no drop shadow, no divider seam (#617; the standard's table example shows
-   neither, and the seam rule above skips it). The opaque band is what keeps
-   the scrolling content from showing through. No z-index change — the header
-   still wins on vertical scroll. */
-.selectCell[data-pinned] {
-  background: var(--bg-toolbar);
-}
-
 /* Opaque hover variants for the sticky cells — the translucent row wash
    would let scrolling content show through a pinned cell, so the same 4%
-   wash is mixed INTO each cell's opaque fill instead. Disabled rows are
+   wash is mixed INTO the cell's opaque fill instead. Disabled rows are
    excluded: they stay flat grey under the pointer (their fill rule is
    lower-specificity, so it can't outrank these). Selected/state tints
    still win while hovered — their hover rules match these on specificity
    and sit later in the file. */
-:where(tbody) tr:not([data-row-state='disabled']):hover > .td[data-pinned] {
-  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-white));
-}
-
+:where(tbody) tr:not([data-row-state='disabled']):hover > .td[data-pinned],
 :where(tbody)
   tr:not([data-row-state='disabled']):hover
   > .selectCell[data-pinned] {
-  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
+  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-white));
 }
 
 /* Row backgrounds — the model (ui-standards § tables, confirmed against
