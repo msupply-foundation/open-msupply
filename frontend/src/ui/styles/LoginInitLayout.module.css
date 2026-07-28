@@ -77,8 +77,15 @@
 
 .logo {
   inline-size: 100%;
+  /* Cap at the current app's 285×180 desktop logo box; the form is the same
+     width, so 100% already lands here, but the cap keeps it from ever growing
+     past it. */
+  max-inline-size: 17.8125rem;
   block-size: auto;
   aspect-ratio: 19 / 12; /* the original's 285×180 logo box */
+  /* Stay centered over the form when shrunk below full width (short viewports),
+     rather than aligning to the column's inline-start. */
+  align-self: center;
 }
 
 .buttonRow {
@@ -162,6 +169,18 @@
 
 .footerNotice[data-severity='error'] {
   color: var(--error-main);
+}
+
+/* Short viewports (landscape tablets/phones): the constraint is vertical — the
+   full-size logo pushes the footer off-screen. Shrink it so the whole form +
+   footer fit without scrolling. Matches the current app, which drops its login
+   logo from 285×180 to 155×90 on small screens; 9.6875rem keeps the 19:12 box
+   (155×90). Keyed on height, not width, because a landscape tablet is wide but
+   short — a width breakpoint would miss it. */
+@media (max-height: 50rem) {
+  .logo {
+    inline-size: 9.6875rem;
+  }
 }
 
 /* Compact (phone): the hero doesn't render; the form panel is the page.
