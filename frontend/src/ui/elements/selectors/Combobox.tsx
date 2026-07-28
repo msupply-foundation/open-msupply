@@ -15,6 +15,7 @@ import {
   SearchIcon,
 } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './Combobox.module.css';
 
@@ -85,6 +86,13 @@ interface ComboboxProps<T> {
    * can't take a pass-through attribute.
    */
   inputTestId?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the text `<input>`, so an owner can
+   * focus this picker after an action (dialog open, "Save & next", clearing
+   * back to the search). The input is internal to the Kobalte composition, so
+   * a plain `ref` can't reach it — this is the supported way in.
+   */
+  focusTarget?: FocusTarget;
   /**
    * Replace the option list with a "Loading…" row (and suppress "no matches").
    * Pass it only when there's nothing sensible to show: a server-mode caller
@@ -381,7 +389,12 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           <SearchIcon />
         </span>
         <KCombobox.Input
-          ref={inputEl}
+          // Both the local ref (the clear button restores focus here) and the
+          // caller's focus handle bind to the same input.
+          ref={(el: HTMLInputElement) => {
+            inputEl = el;
+            props.focusTarget?.ref(el);
+          }}
           class={styles.input}
           data-testid={props.inputTestId}
           aria-label={props.hideLabel ? props.label : undefined}

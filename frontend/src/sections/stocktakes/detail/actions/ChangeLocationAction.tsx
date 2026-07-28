@@ -1,6 +1,7 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -100,9 +101,14 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
     setPhase('error');
   };
 
+  // The location picker is the confirm phase's only control, so the dialog
+  // opens on it (ui-standards › accessibility › keyboard).
+  const locationPicker = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={locationPicker}
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MapPinIcon />}
@@ -117,6 +123,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 <LocationVolumeSelect
                   label={t('label.location')}
                   hideLabel
+                  focusTarget={locationPicker}
                   locations={props.locations}
                   value={locationId() ?? undefined}
                   requiredVolume={props.requiredVolume?.()}
