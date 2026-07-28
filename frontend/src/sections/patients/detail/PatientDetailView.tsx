@@ -11,7 +11,7 @@ import {
 import { createStore } from 'solid-js/store';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { t, localisedDate } from '../../../intl';
+import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -39,7 +39,6 @@ import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
-  ageFromDob,
   draftEquals,
   emptyDraft,
   isDraftValid,
@@ -298,9 +297,9 @@ const PatientDetailView: Component = () => {
 
   const dobDisplay = (n: NonNullable<ReturnType<typeof node>>) => {
     if (!n.dateOfBirth) return '—';
-    const age = ageFromDob(n.dateOfBirth);
     const date = localisedDate(n.dateOfBirth);
-    return age === undefined ? date : `${date} (${t('label.age')}: ${age})`;
+    const age = getDisplayAge(n.dateOfBirth);
+    return age ? `${date} (${t('label.age')}: ${age})` : date;
   };
 
   return (
