@@ -8,9 +8,12 @@ import {
 import { DownloadIcon } from '../../../../ui/icons';
 import {
   csvToExcel,
-  downloadBlob,
   fetchReportFile,
+  listExportCsvFilename,
+  listExportExcelFilename,
 } from '../../../../domain/reportFiles';
+import { saveBlob } from '../../../../platform/openDocument';
+import { storeCodeOf } from '../../../../auth/authContext';
 import { stripEmpty } from '../../../../typeHelpers';
 import { Stocktakes } from '../stocktakes.generated';
 import type { StocktakesVariables } from '../stocktakes.generated';
@@ -63,20 +66,24 @@ export const ExportStocktakesAction: Component<
     try {
       const csv = await buildCsv();
       if (!csv) return; // nothing to export
-      const filename = t('filename.stocktakes');
+      // Filenames per the shared list-export rule
+      // (ui-standards/list-views § regions).
+      const storeCode = storeCodeOf(props.storeId);
+      const listName = t('filename.stocktakes');
       if (format === 'excel') {
         const generated = await csvToExcel({
           storeId: props.storeId,
           csvData: csv,
-          filename,
+          filename: listExportExcelFilename(storeCode, listName),
+          sheetName: storeCode,
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') downloadBlob(file.blob, file.filename);
+        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
       } else {
-        downloadBlob(
+        void saveBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          `${filename}.csv`
+          listExportCsvFilename(storeCode, listName, new Date())
         );
       }
     } finally {

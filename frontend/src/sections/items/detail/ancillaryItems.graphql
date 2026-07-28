@@ -1,0 +1,24 @@
+# The item's ancillary-supply links (spec/items S2 › Ancillary items tab,
+# rules.md § ancillary supplies). Its own query (kdd/state-management),
+# independent of the itemDetail read, so the tab can refetch after a save/
+# delete without reloading the whole page — mirrors the Ledger tab's
+# itemLedger.graphql pattern.
+query itemAncillaryItems($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ancillaryItems {
+          id
+          itemQuantity
+          ancillaryQuantity
+          ancillaryItem {
+            id
+            code
+            name
+          }
+        }
+      }
+    }
+  }
+}

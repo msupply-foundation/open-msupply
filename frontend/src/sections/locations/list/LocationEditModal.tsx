@@ -55,7 +55,7 @@ export interface LocationEditModalProps {
   editor: EditorState;
   /**
    * The list's current rows, in display order — OK-&-next in edit mode
-   * advances to the row after the current one (AC-C5); disabled on the last.
+   * advances to the row after the current one (OMS-REG-INV-01.5); disabled on the last.
    */
   rows: () => LocationRow[];
   onClose: () => void;
@@ -79,8 +79,16 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
   // mutation is in flight (ui-standards/controls.md § dialogs, D22).
   const [saving, setSaving] = createSignal<'ok' | 'next' | null>(null);
   // The inline save-rejection banner (duplicate code, wrong store, …) — the
-  // dialog stays open with entries intact (AC-C4/AC-E2/AC-E3, D21/D22).
+  // dialog stays open with entries intact (OMS-REG-INV-01.25/OMS-REG-INV-01.27/OMS-REG-INV-01.28, D21/D22).
   const [rejection, setRejection] = createSignal<SaveRejection>();
+
+  // The Name input — Name is the modal's autofocused field (ui-surface S2).
+  // First open uses the input's native `autofocus`, but that fires only on the
+  // element's initial mount; OK-&-next reseeds the SAME mounted input (an
+  // interaction never remounts the form — kdd/solid-reactivity-pitfalls § no
+  // remounts), so autofocus can't re-fire. Keep the ref to refocus Name after
+  // each advance, matching first-open behaviour.
+  let nameInput: HTMLInputElement | undefined;
 
   // The location-type picker's options (consumed `locationTypes` read —
   // contract.md § contract surface). Fetched once per store; read WITHOUT
@@ -106,7 +114,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
     return state.mode === 'edit' ? state.location : undefined;
   };
 
-  // Volume used is server-derived and read-only everywhere (AC-V1): shown from
+  // Volume used is server-derived and read-only everywhere (OMS-REG-INV-01.30): shown from
   // the clicked row in edit mode, 0 on a fresh create — never an input value
   // that could be sent.
   const volumeUsed = () => editedLocation()?.volumeUsed ?? 0;
@@ -128,7 +136,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
   };
 
   const save = async (advance: boolean) => {
-    if (saving() || !isFormValid(form())) return; // re-entry guard + AC-C3
+    if (saving() || !isFormValid(form())) return; // re-entry guard + OMS-REG-INV-01.24
     setSaving(advance ? 'next' : 'ok');
     setRejection(undefined);
     // Snapshot the advance target BEFORE the list refetches under us.
@@ -138,7 +146,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
     let failed: SaveRejection | undefined;
     if (location) {
       // Edit: the FULL current field set every save — an omitted
-      // locationTypeId would silently clear the type (AC-E4, contract.md
+      // locationTypeId would silently clear the type (OMS-REG-INV-01.29, contract.md
       // ⚠️ wire trap).
       const result = await graphqlFetch(UpdateLocation, {
         storeId: props.storeId,
@@ -182,7 +190,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       props.onClose();
       return;
     }
-    // OK & next (AC-C5): advance without returning to the list — edit moves to
+    // OK & next (OMS-REG-INV-01.5): advance without returning to the list — edit moves to
     // the next list location, create resets to a fresh blank form.
     if (next) {
       setCurrent({ mode: 'edit', location: next });
@@ -191,6 +199,13 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       setCurrent({ mode: 'create' });
       setForm(EMPTY_FORM);
     }
+    // Refocus Name (ui-surface S2): clicking OK-&-next disabled that button
+    // mid-save, dropping focus to <body>, and the reseed above doesn't remount
+    // the input so native autofocus won't re-fire. Deferred a frame — the same
+    // focus-after-state-change idiom as the reference modals (Stocktake /
+    // CreateInboundShipment) — so the input is re-enabled (saving() cleared)
+    // before we move focus to it.
+    requestAnimationFrame(() => nameInput?.focus());
   };
 
   return (
@@ -253,6 +268,8 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       {/* Body, top to bottom, per ui-surface S2 § layout. Each field stands
           alone, so it uses the control's built-in label (ui-standards). */}
       <TextField
+        ref={nameInput}
+        data-testid="location-name-input"
         label={t('label.name')}
         required
         autofocus
@@ -261,6 +278,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
         onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
       />
       <TextField
+        data-testid="location-code-input"
         label={t('label.code')}
         required
         disabled={saving() !== null}
@@ -289,6 +307,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       <div class={styles.volumeRow}>
         {/* label.volume carries the m³ unit ("Volume (m³)"). */}
         <NumberField
+          data-testid="location-volume-input"
           label={t('label.volume')}
           decimalLimit={10}
           disabled={saving() !== null}
@@ -296,7 +315,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
           onChange={volume => setForm({ ...form(), volume })}
         />
         {/* Server-derived, rendered disabled/read-only — no input carries it
-            (AC-V1). */}
+            (OMS-REG-INV-01.30). */}
         <NumberField
           label={t('label.volume-used')}
           decimalLimit={10}

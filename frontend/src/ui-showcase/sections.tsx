@@ -6,29 +6,42 @@ import {
   FileIcon,
   type IconProps,
 } from '../ui/icons';
-import { TypographyShowcase } from './TypographyShowcase';
+import { TypographyShowcase, typographyMetadata } from './TypographyShowcase';
 import { IconsShowcase } from './IconsShowcase';
-import { ButtonsShowcase } from './ButtonsShowcase';
-import { InputsShowcase } from './InputsShowcase';
-import { SelectorsShowcase } from './SelectorsShowcase';
-import { FeedbackShowcase } from './FeedbackShowcase';
-import { DialogShowcase } from './DialogShowcase';
-import { DisplayShowcase } from './DisplayShowcase';
-import { DocumentUploadShowcase } from './DocumentUploadShowcase';
-import { SyncShowcase } from './SyncShowcase';
+import { ButtonsShowcase, buttonsMetadata } from './ButtonsShowcase';
+import { InputsShowcase, inputsMetadata } from './InputsShowcase';
+import { SelectorsShowcase, selectorsMetadata } from './SelectorsShowcase';
+import { FeedbackShowcase, feedbackMetadata } from './FeedbackShowcase';
+import { ProgressShowcase, progressMetadata } from './ProgressShowcase';
+import { DialogShowcase, dialogMetadata } from './DialogShowcase';
+import { DisplayShowcase, displayMetadata } from './DisplayShowcase';
+import {
+  DocumentUploadShowcase,
+  documentUploadMetadata,
+} from './DocumentUploadShowcase';
 import { TableShowcase } from './TableShowcase';
-import { HeaderShowcase } from './HeaderShowcase';
-import { TabBarShowcase } from './TabBarShowcase';
-import { AccordionShowcase } from './AccordionShowcase';
-import { ContentFooterShowcase } from './ContentFooterShowcase';
-import { SidePanelShowcase } from './SidePanelShowcase';
-import { StatisticsShowcase } from './StatisticsShowcase';
-import { InsetPanelShowcase } from './InsetPanelShowcase';
-import { CardGridShowcase } from './CardGridShowcase';
-import { ChartsShowcase } from './ChartsShowcase';
-import { PageLayoutShowcase } from './PageLayoutShowcase';
-import { FormLayoutShowcase } from './FormLayoutShowcase';
+import { DetailTableShowcase } from './DetailTableShowcase';
+import { HeaderShowcase, headerMetadata } from './HeaderShowcase';
+import { TabBarShowcase, tabBarMetadata } from './TabBarShowcase';
+import { AccordionShowcase, accordionMetadata } from './AccordionShowcase';
+import {
+  ContentFooterShowcase,
+  contentFooterMetadata,
+} from './ContentFooterShowcase';
+import { SidePanelShowcase, sidePanelMetadata } from './SidePanelShowcase';
+import { StatisticsShowcase, statisticsMetadata } from './StatisticsShowcase';
+import { InsetPanelShowcase, insetPanelMetadata } from './InsetPanelShowcase';
+import { CardGridShowcase, cardGridMetadata } from './CardGridShowcase';
+import {
+  DetailViewsShowcase,
+  detailViewsMetadata,
+} from './DetailViewsShowcase';
+import { ChartsShowcase, chartsMetadata } from './ChartsShowcase';
+import { PageLayoutShowcase, pageLayoutMetadata } from './PageLayoutShowcase';
+import { FormLayoutShowcase, formLayoutMetadata } from './FormLayoutShowcase';
+import { TableCardShowcase, tableCardMetadata } from './TableCardShowcase';
 import { FormsShowcase } from './FormsShowcase';
+import { buildSearchIndex, type PageMetadata } from './metadata';
 
 export type SectionCategory = 'components' | 'layout' | 'pages';
 
@@ -36,6 +49,13 @@ export type SectionDef = {
   id: string;
   label: string;
   component: Component;
+  /**
+   * The page's Table-of-Contents + search metadata. Present on the standard
+   * section pages (Components + Layout); absent on the full-page `fill` demos
+   * and the Icons reference. The page renders its own TOC from this; the
+   * registry aggregates every section's metadata into `searchIndex` below.
+   */
+  metadata?: PageMetadata;
   /** Which menu-bar group the section lists under. */
   category?: SectionCategory;
   /**
@@ -71,7 +91,7 @@ export const categories: {
 }[] = [
   { id: 'components', label: 'Components', icon: SlidersIcon },
   { id: 'layout', label: 'Layout Elements', icon: CopyIcon },
-  { id: 'pages', label: 'Pages', icon: FileIcon },
+  { id: 'pages', label: 'Page Examples', icon: FileIcon },
 ];
 
 /*
@@ -85,120 +105,157 @@ export const sections: SectionDef[] = [
     id: 'typography',
     label: 'Typography',
     component: TypographyShowcase,
+    metadata: typographyMetadata,
     category: 'components',
   },
   {
     id: 'buttons',
     label: 'Buttons',
     component: ButtonsShowcase,
+    metadata: buttonsMetadata,
     category: 'components',
   },
   {
     id: 'inputs',
     label: 'Inputs',
     component: InputsShowcase,
+    metadata: inputsMetadata,
     category: 'components',
   },
   {
     id: 'selectors',
     label: 'Selectors',
     component: SelectorsShowcase,
+    metadata: selectorsMetadata,
     category: 'components',
   },
   {
     id: 'tab-bar',
     label: 'Tab bar',
     component: TabBarShowcase,
+    metadata: tabBarMetadata,
     category: 'components',
   },
   {
     id: 'accordion',
     label: 'Accordion',
     component: AccordionShowcase,
+    metadata: accordionMetadata,
     category: 'components',
   },
   {
     id: 'feedback',
     label: 'Feedback',
     component: FeedbackShowcase,
+    metadata: feedbackMetadata,
+    category: 'components',
+  },
+  {
+    id: 'progress',
+    label: 'Progress',
+    component: ProgressShowcase,
+    metadata: progressMetadata,
     category: 'components',
   },
   {
     id: 'statistics',
     label: 'Statistics',
     component: StatisticsShowcase,
+    metadata: statisticsMetadata,
     category: 'components',
   },
   {
     id: 'charts',
     label: 'Charts',
     component: ChartsShowcase,
+    metadata: chartsMetadata,
     category: 'components',
   },
   {
     id: 'display',
     label: 'Display',
     component: DisplayShowcase,
+    metadata: displayMetadata,
     category: 'components',
   },
   {
     id: 'document-upload',
     label: 'Document upload',
     component: DocumentUploadShowcase,
-    category: 'components',
-  },
-  {
-    id: 'sync',
-    label: 'Sync',
-    component: SyncShowcase,
+    metadata: documentUploadMetadata,
     category: 'components',
   },
   {
     id: 'header',
     label: 'Header',
     component: HeaderShowcase,
+    metadata: headerMetadata,
     category: 'layout',
   },
   {
     id: 'content-footer',
     label: 'Content footer',
     component: ContentFooterShowcase,
+    metadata: contentFooterMetadata,
     category: 'layout',
   },
   {
     id: 'side-panel',
     label: 'Side panel',
     component: SidePanelShowcase,
+    metadata: sidePanelMetadata,
     category: 'layout',
   },
   {
     id: 'inset-panel',
     label: 'Inset panel',
     component: InsetPanelShowcase,
+    metadata: insetPanelMetadata,
     category: 'layout',
   },
   {
     id: 'dialog',
     label: 'Dialog / Modal',
     component: DialogShowcase,
+    metadata: dialogMetadata,
     category: 'layout',
   },
   {
     id: 'card-grid',
     label: 'Card grid',
     component: CardGridShowcase,
+    metadata: cardGridMetadata,
+    category: 'layout',
+  },
+  {
+    id: 'detail-views',
+    label: 'Detail views',
+    component: DetailViewsShowcase,
+    metadata: detailViewsMetadata,
     category: 'layout',
   },
   {
     id: 'page-layout',
     label: 'Page layout',
     component: PageLayoutShowcase,
+    metadata: pageLayoutMetadata,
     category: 'layout',
   },
   {
     id: 'form-layout',
     label: 'Form layout',
     component: FormLayoutShowcase,
+    metadata: formLayoutMetadata,
+    category: 'layout',
+  },
+  // The card/table model walkthrough — the interactive companion to
+  // docs/CARD_TABLE_MODEL.md, bridging into the Pages group it cross-links to
+  // (List page / Detail table page are its assembled results).
+  {
+    id: 'table-card',
+    label: 'Table & Card',
+    component: TableCardShowcase,
+    metadata: tableCardMetadata,
     category: 'layout',
   },
   // The Pages group: full-page `fill` demos of the elements assembled into a
@@ -213,8 +270,15 @@ export const sections: SectionDef[] = [
     fill: true,
   },
   {
+    id: 'detail-table',
+    label: 'Detail table page',
+    component: DetailTableShowcase,
+    category: 'pages',
+    fill: true,
+  },
+  {
     id: 'forms',
-    label: 'Detail form',
+    label: 'Detail form page',
     component: FormsShowcase,
     category: 'pages',
     fill: true,
@@ -229,3 +293,18 @@ export const sections: SectionDef[] = [
     icon: CardViewIcon,
   },
 ];
+
+/*
+ * The flattened search index — every standard page's metadata (the full-page
+ * `fill` demos and the Icons reference carry none) folded into one searchable
+ * SearchEntry[]: a page entry plus one per item, each with a precomputed
+ * haystack. Built once here from the registry, so a new section flows in
+ * automatically. Unused until the showcase Search lands — the per-page TOCs
+ * already read the same metadata directly (see SectionTOC). The array is the
+ * shape a search input would scan; see metadata.ts for how to query it.
+ */
+export const searchIndex = buildSearchIndex(
+  sections
+    .map(section => section.metadata)
+    .filter((metadata): metadata is PageMetadata => metadata !== undefined)
+);

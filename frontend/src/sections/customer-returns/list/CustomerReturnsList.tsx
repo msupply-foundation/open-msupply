@@ -41,6 +41,13 @@ import {
 } from './customerReturns.generated';
 import { CustomerReturnPreferences } from '../preferences.generated';
 import { createFilters, type ReturnsFilter } from './listFilters';
+import {
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 import { NewReturnModal } from './NewReturnModal';
 import { DeleteReturnsAction } from './actions/DeleteReturnsAction';
 import { ExportCustomerReturnsAction } from './actions/ExportCustomerReturnsAction';
@@ -65,6 +72,8 @@ type SortKey = NonNullable<CustomerReturnsVariables['sort']>[number]['key'];
 
 type ReturnsListState = {
   filter: ReturnsFilter;
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  cf?: CustomFieldFilterState;
   sort?: CustomerReturnsVariables['sort'];
   offset: number;
   first: number;
@@ -114,6 +123,16 @@ const CustomerReturnsList: Component = () => {
     },
   });
 
+  // Custom-field definitions for the customer_return scope — shared scope-keyed
+  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('customer_return');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+  const onCustomFieldChange = (cf: CustomFieldFilterState) => {
+    setQuery({ ...query(), cf, offset: 0 });
+    setSelectedIds([]);
+  };
+
   // GraphQL variables from URL state. The type pin lives HERE (not in the URL
   // filter) so the list can never escape the vertical
   // (spec/customer-returns/contract.md § list & lookups).
@@ -122,6 +141,8 @@ const CustomerReturnsList: Component = () => {
     filter: {
       ...stripEmpty(query().filter),
       type: { equalTo: 'CUSTOMER_RETURN' },
+      // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -204,6 +225,13 @@ const CustomerReturnsList: Component = () => {
     void refetch();
   };
 
+  // Id + status for the bulk delete's client-side pre-check (the outbound
+  // list's shape).
+  const selectedRows = () =>
+    rows()
+      .filter(row => selectedIds().includes(row.id))
+      .map(row => ({ id: row.id, status: row.status }));
+
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/distribution/customer-return/${row.id}`);
 
@@ -228,8 +256,8 @@ const CustomerReturnsList: Component = () => {
     {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
-      meta: { card: { region: 'primary' }, wrapLines: 2 },
+      header: () => t('label.name'),
+      meta: { headerPosition: 'primary', wrapLines: 2 },
       cell: info => {
         const row = info.row.original;
         return (
@@ -260,36 +288,41 @@ const CustomerReturnsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => (
         <StatusChip {...statusMeta(info.getValue<ReturnRow['status']>())} />
       ),
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: t('label.number'),
+      header: () => t('label.number'),
       ...getNumberCell(),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
-      header: t('label.reference'),
+      header: () => t('label.reference'),
       meta: { wrapLines: 2 },
     },
+    // Configured custom-field columns — not sortable; value chosen by kind.
+    ...customFieldColumns<ReturnRow, SortKey>(
+      cfDefs(),
+      row => row.customFields
+    ),
   ];
 
   const crumbs = () => [
@@ -323,6 +356,11 @@ const CustomerReturnsList: Component = () => {
               filters={filters}
               filter={query().filter}
               onChange={onFilterChange}
+              extra={{
+                filters: cfFilters(),
+                filter: query().cf ?? {},
+                onChange: onCustomFieldChange,
+              }}
             />
           </Toolbar>
         </Header>
@@ -339,7 +377,7 @@ const CustomerReturnsList: Component = () => {
             </strong>
             <DeleteReturnsAction
               storeId={params.storeId}
-              selectedIds={selectedIds}
+              selectedRows={selectedRows}
               onDeleted={onDeleted}
             />
             <ContentFooterActions>
@@ -363,9 +401,9 @@ const CustomerReturnsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // De-emphasise rows the store can no longer edit (VERIFIED; transfer
-        // rows still in the sender's hands) — ui-surface S1.
-        rowDimmed={isReturnDisabled}
+        // Rows the store can no longer edit (VERIFIED; transfer rows still
+        // in the sender's hands) take the disabled state — ui-surface S1.
+        rowState={row => (isReturnDisabled(row) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-customer-returns')}
         empty={
           <Button

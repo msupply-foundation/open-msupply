@@ -12,8 +12,10 @@ import {
   FormPreview,
   Intro,
   Lead,
+  SectionTOC,
   type AnatomyNode,
 } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './FormLayoutShowcase.module.css';
 
 /* The family's nesting order, rendered as the figure under the intro — one
@@ -80,9 +82,38 @@ const ANATOMY: AnatomyNode[] = [
  * Detail form demo (#/showcase/forms); this page is where each layer is
  * explained. Keep the ANATOMY tree in step with that page's actual assembly.
  */
+export const formLayoutMetadata: PageMetadata = {
+  id: 'form-layout',
+  title: 'Form layout',
+  searchTerms: ['form', 'record', 'fields'],
+  items: [
+    {
+      id: 'form-layout-identity-header',
+      title: 'IdentityHeader',
+      searchTerms: ['identity', 'record', 'title'],
+    },
+    {
+      id: 'form-layout-columns',
+      title: 'FormColumns',
+      searchTerms: ['column', 'two column', 'stacks'],
+    },
+    {
+      id: 'form-layout-section',
+      title: 'FormSection',
+      searchTerms: ['section', 'group', 'titled', 'fieldset'],
+    },
+    {
+      id: 'form-layout-row',
+      title: 'FormRow',
+      searchTerms: ['row', 'two up', 'inline', 'pair'],
+    },
+  ],
+};
+
 export const FormLayoutShowcase = () => (
   <ContentContainer size="form" align="start">
     <Stack gap="lg">
+      <SectionTOC page={formLayoutMetadata} />
       <Intro>
         The form-layout family is a set of pure-layout elements that arrange a
         record form: each owns one arrangement job and never styles the controls
@@ -96,7 +127,10 @@ export const FormLayoutShowcase = () => (
 
       <AnatomyTree nodes={ANATOMY} />
 
-      <DashboardCard title="IdentityHeader — the record identity">
+      <DashboardCard
+        id="form-layout-identity-header"
+        title="IdentityHeader — the record identity"
+      >
         <Lead>
           The record-identity header atop a sectioned edit form: the record's{' '}
           <em>name</em> as the region heading (rank fixed at <code>h2</code>,
@@ -112,7 +146,10 @@ export const FormLayoutShowcase = () => (
         />
       </DashboardCard>
 
-      <DashboardCard title="FormColumns + FormColumn — the section stacks">
+      <DashboardCard
+        id="form-layout-columns"
+        title="FormColumns + FormColumn — the section stacks"
+      >
         <Lead>
           <code>FormColumns</code> is the row of column stacks;{' '}
           <code>FormColumn</code> is one vertical stack of sections inside it.
@@ -144,7 +181,10 @@ export const FormLayoutShowcase = () => (
         </FormColumns>
       </DashboardCard>
 
-      <DashboardCard title="FormSection — the titled group">
+      <DashboardCard
+        id="form-layout-section"
+        title="FormSection — the titled group"
+      >
         <Lead>
           A titled group of fields: a neutral bold heading with a hairline rule,
           then a vertical stack of its children. Fields sit directly inside the
@@ -168,7 +208,10 @@ export const FormLayoutShowcase = () => (
         </FormPreview>
       </DashboardCard>
 
-      <DashboardCard title="FormRow — the opt-in two-up row">
+      <DashboardCard
+        id="form-layout-row"
+        title="FormRow — the opt-in two-up row"
+      >
         <Lead>
           Puts two (or more) fields side by side on one line, each taking an
           equal share — the row a section reaches for on the specific pairs that

@@ -1,4 +1,4 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { A, useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
@@ -7,9 +7,6 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import {
@@ -27,12 +24,7 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import {
-  CloseIcon,
-  HomeIcon,
-  PlusCircleIcon,
-  TruckIcon,
-} from '../../../ui/icons';
+import { HomeIcon, PlusCircleIcon, TruckIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
@@ -59,6 +51,14 @@ import {
 } from '../detail/inboundShipmentStatus';
 import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
+import {
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
+import linkStyles from '../linkedOrder.module.css';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -74,6 +74,8 @@ type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
   filter: InboundListFilter;
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  cf?: CustomFieldFilterState;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;
   first: number;
@@ -128,6 +130,12 @@ const InboundShipmentsList: Component = () => {
   // for one they don't hold (spec/inbound-shipments › contract → permissions).
   // The Type filter narrows this scope + adds a requisitionId filter — both
   // resolved from the client-only `kind` by inboundQueryInputs.
+  // Custom-field definitions for the inbound_shipment scope — shared scope-keyed
+  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('inbound_shipment');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+
   const variables = () => {
     const { filter, type } = inboundQueryInputs(
       query().filter,
@@ -135,7 +143,11 @@ const InboundShipmentsList: Component = () => {
     );
     return {
       storeId: params.storeId,
-      filter,
+      filter: {
+        ...filter,
+        // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+        dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+      },
       sort: query().sort,
       page: { first: query().first, offset: query().offset },
       type,
@@ -179,6 +191,10 @@ const InboundShipmentsList: Component = () => {
     setQuery({ ...query(), filter, offset: 0 });
     setSelectedIds([]);
   };
+  const onCustomFieldChange = (cf: CustomFieldFilterState) => {
+    setQuery({ ...query(), cf, offset: 0 });
+    setSelectedIds([]);
+  };
   const onDeleted = () => {
     setSelectedIds([]);
     void refetch();
@@ -208,8 +224,8 @@ const InboundShipmentsList: Component = () => {
       // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
-      meta: { card: { region: 'primary' } },
+      header: () => t('label.name'),
+      meta: { headerPosition: 'primary' },
       cell: info => {
         const row = info.row.original;
         return (
@@ -240,7 +256,7 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => {
         const status = info.getValue<Row['status']>();
         return (
@@ -250,23 +266,24 @@ const InboundShipmentsList: Component = () => {
           />
         );
       },
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: '#',
+      header: () => '#',
       ...getNumberCell(),
     },
     {
       // Linked order (spec S1 column 4) — when linked, a link to the order
-      // prefixed by kind: PO-<number> for a purchase order (SECONDARY colour),
-      // IO-<number> for an internal order (PRIMARY colour); blank otherwise.
+      // prefixed by kind: PO-<number> for a purchase order, IO-<number> for
+      // an internal order; blank otherwise. Toned by kind via the shared
+      // linkedOrder.module.css.
       c: {
         accessor: row => linkedOrderOf(params.storeId, row)?.label ?? '',
         id: 'linkedOrder',
       },
-      header: t('label.linked-order'),
+      header: () => t('label.linked-order'),
       cell: info => {
         const linked = linkedOrderOf(params.storeId, info.row.original);
         return (
@@ -276,7 +293,8 @@ const InboundShipmentsList: Component = () => {
               <A
                 href={l().href}
                 onClick={e => e.stopPropagation()}
-                style={{ color: l().colour, 'font-weight': 500 }}
+                class={linkStyles.link}
+                data-kind={l().kind}
               >
                 {l().label}
               </A>
@@ -288,30 +306,32 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
-      header: t('label.delivered'),
+      header: () => t('label.delivered'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
-      header: t('label.reference'),
+      header: () => t('label.reference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
-      header: t('label.total'),
+      header: () => t('label.total'),
       ...getCurrencyCell(),
     },
+    // Configured custom-field columns — not sortable; value chosen by kind.
+    ...customFieldColumns<Row, SortKey>(cfDefs(), row => row.customFields),
   ];
 
   const crumbs = () => [
@@ -362,21 +382,49 @@ const InboundShipmentsList: Component = () => {
               filter={() => query().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-            />
-          </Toolbar>
         </Header>
       }
-      contentFooter={
-        <Show when={selectedIds().length > 0}>
-          <ContentFooter testId="actions-footer">
-            <strong data-testid="selected-rows-count">
-              {selectedIds().length} {t('label.selected')}
-            </strong>
+    >
+      <DataTable
+        columns={columns()}
+        rows={rows()}
+        rowKey={r => r.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering); state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
+        loading={data.loading}
+        sort={currentSort()}
+        onSort={onSort}
+        onRowClick={openRow}
+        emptyMessage={t('error.no-inbound-shipments')}
+        empty={
+          <Button
+            icon={<PlusCircleIcon />}
+            data-testid="nothing-here-create-button"
+            onClick={() => setCreateMode('manual')}
+          >
+            {t('button.new-shipment')}
+          </Button>
+        }
+        enableSelection
+        selectedIds={selectedIds()}
+        onSelectionChange={setSelectedIds}
+        // The bulk actions for the table's selection footer (the table adds
+        // the count + Clear around them, and swaps its pager for the bar
+        // while rows are selected).
+        selectionActions={
+          <>
             {/* Delete — enabled only while every selected row is New (spec S1) */}
             <span
               title={
@@ -412,42 +460,11 @@ const InboundShipmentsList: Component = () => {
                 disabled={!singleSelectedId()}
               />
             </span>
-            <ContentFooterActions>
-              <Button
-                variant="secondary"
-                icon={<CloseIcon />}
-                onClick={() => setSelectedIds([])}
-              >
-                {t('label.clear-selection')}
-              </Button>
-            </ContentFooterActions>
-          </ContentFooter>
-        </Show>
-      }
-    >
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={r => r.id}
-        loading={data.loading}
-        sort={currentSort()}
-        onSort={onSort}
-        onRowClick={openRow}
-        emptyMessage={t('error.no-inbound-shipments')}
-        empty={
-          <Button
-            icon={<PlusCircleIcon />}
-            data-testid="nothing-here-create-button"
-            onClick={() => setCreateMode('manual')}
-          >
-            {t('button.new-shipment')}
-          </Button>
+          </>
         }
-        enableSelection
-        selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
         onSaveGlobalDefault={
           tableConfig.canSaveGlobalDefault()
             ? tableConfig.saveGlobalTableConfig

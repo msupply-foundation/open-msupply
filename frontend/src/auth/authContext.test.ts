@@ -21,7 +21,15 @@ const user: UserInfoFragment = {
   tokenRefreshIntervalSeconds: 60,
   defaultStore: { id: 's1' },
   stores: {
-    nodes: [{ id: 's1', code: 'S1', name: 'Store 1', homeCurrencyCode: 'USD' }],
+    nodes: [
+      {
+        id: 's1',
+        code: 'S1',
+        name: 'Store 1',
+        storeMode: 'STORE',
+        homeCurrencyCode: 'USD',
+      },
+    ],
   },
 };
 
@@ -69,7 +77,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('re-login requirement persists across a reload (D46, AC-AU9)', () => {
+describe('re-login requirement persists across a reload (D69, AC-AU9)', () => {
   it('an unexpected logout persists the requirement so a reload re-arms it', async () => {
     // Tab 1: signed in, then a call comes back unauthenticated.
     const auth = await freshModule();

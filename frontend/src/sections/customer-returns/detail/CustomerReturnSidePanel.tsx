@@ -10,14 +10,20 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { CheckIcon, CopyIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
-import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
+import { Popover } from '../../../ui/elements/feedback/Popover';
+import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
+import { graphqlFetch } from '../../../api/graphql';
+import {
+  CustomerReturnDetail,
+  type CustomerReturnInfoFragment,
+} from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
 import type { ReturnFieldEdit } from './returnEdit';
 
@@ -67,19 +73,21 @@ export const CustomerReturnSidePanel: Component<
       setDeleteError(t('messages.cant-delete-generic'));
   };
 
-  // Copy to clipboard: a readable text snapshot of the record (the current
-  // app's "copy record" affordance).
-  const copy = async () => {
-    const n = props.node;
-    const text = [
-      `${t('customer-returns')} #${n.invoiceNumber}`,
-      `${t('label.name')}: ${n.otherPartyName}`,
-      `${t('label.status')}: ${n.status}`,
-      `${t('label.created')}: ${localisedDate(n.createdDatetime)}`,
-      `${t('label.reference')}: ${n.theirReference ?? ''}`,
-      `${t('label.comment')}: ${n.comment ?? ''}`,
-    ].join('\n');
-    await navigator.clipboard.writeText(text);
+  // The WHOLE return — header, every line, and the linked records — for the
+  // copy action (controls § copy to clipboard). This panel is handed the info
+  // node alone, so copy re-reads the detail query, whose nested `lines`
+  // connector takes no page argument and so carries the complete line set. A
+  // fetch failure routes to the global error modal; a NodeError (not expected
+  // from a screen showing the record) copies nothing.
+  const loadFullReturn = async () => {
+    const result = await graphqlFetch(CustomerReturnDetail, {
+      storeId: params.storeId,
+      id: props.node.id,
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
+    return result.data.invoice;
   };
 
   return (
@@ -90,7 +98,31 @@ export const CustomerReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <Text variant="body" as="span">
+              {props.node.user?.username ?? '—'}
+            </Text>
+            {/* Info popover on hover — the user's email (the picked-date
+                reason bubble's pattern); no icon when there is no email. */}
+            <Show when={props.node.user?.email}>
+              {email => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={email()}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>{email()}</p>
+                </Popover>
+              )}
+            </Show>
+          </span>
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show
@@ -133,33 +165,45 @@ export const CustomerReturnSidePanel: Component<
           }
         >
           {shipment => (
-            <Text variant="body">
+            // The current app's arrangement: the dated, attributed description
+            // inline-start, the #N link pinned inline-end.
+            <span
+              style={{
+                display: 'flex',
+                'align-items': 'center',
+                'justify-content': 'space-between',
+                gap: 'var(--space-3)',
+              }}
+            >
+              <Text variant="body">
+                {t('messages.outbound-shipment-created-on', {
+                  date: localisedDate(shipment().createdDatetime),
+                })}
+                <Show when={shipment().user?.username}>
+                  {' '}
+                  {t('messages.by-user', {
+                    username: shipment().user?.username ?? '',
+                  })}
+                </Show>
+              </Text>
               <A
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
-              </A>{' '}
-              {t('messages.outbound-shipment-created-on', {
-                date: localisedDate(shipment().createdDatetime),
-              })}
-              <Show when={shipment().user?.username}>
-                {' '}
-                {t('messages.by-user', {
-                  username: shipment().user?.username ?? '',
-                })}
-              </Show>
-            </Text>
+              </A>
+            </span>
           )}
         </Show>
       </SidePanelSection>
 
       {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
-          return) and Copy to clipboard — the shared SidePanelActions layout and
-          secondary-button tone, matching the stocktake detail. */}
+          return, danger tone — Delete buttons are danger app-wide, Carl
+          2026-07-24) and Copy to clipboard (secondary) — the shared
+          SidePanelActions layout, matching the stocktake detail. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           <Button
-            variant="secondary"
+            variant="danger"
             icon={<TrashIcon />}
             data-testid="delete-return-button"
             disabled={!canDelete()}
@@ -167,13 +211,10 @@ export const CustomerReturnSidePanel: Component<
           >
             {t('button.delete')}
           </Button>
-          <Button
-            variant="secondary"
-            icon={<CopyIcon />}
-            onClick={() => void copy()}
-          >
-            {t('link.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullReturn} />
         </SidePanelActions>
       </SidePanelSection>
 

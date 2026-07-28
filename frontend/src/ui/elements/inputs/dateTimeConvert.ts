@@ -55,6 +55,100 @@ export const localPartsToUtc = (
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 };
 
+/**
+ * A local calendar day `YYYY-MM-DD` → its first instant (or inclusive last,
+ * 23:59:59.999, with `{ endOfDay: true }`) as a UTC ISO instant, in the device
+ * timezone (#456; ui-standards/list-views.md § Filters). The zoneless string
+ * parses as local, so `toISOString()` gives the right instant — appending `Z`
+ * to a bare day would read it in UTC, a day off for any device off UTC.
+ */
+export const localDayToUtc = (
+  isoDate: string,
+  opts?: { endOfDay?: boolean }
+): string =>
+  new Date(
+    `${isoDate}T${opts?.endOfDay ? '23:59:59.999' : '00:00:00'}`
+  ).toISOString();
+
+/**
+ * The inverse read-back: a stored UTC instant → the LOCAL calendar day it fell
+ * on (device tz), so pick → store → display round-trips to the same day.
+ * Never `.slice(0, 10)`: that reads the UTC day, off by one once the widened
+ * instant crosses the date line. Empty/invalid → null.
+ */
+export const utcToLocalDay = (utc: string | null | undefined): string | null =>
+  utcToLocalParts(utc)?.date ?? null;
+
+/** The day-range slice of a GraphQL `DatetimeFilterInput` — inclusive UTC bounds. */
+export interface UtcDayBounds {
+  afterOrEqualTo?: string | null;
+  beforeOrEqualTo?: string | null;
+}
+
+/**
+ * A picked local-day range → inclusive wire bounds (from = day start, to = day
+ * end), either side optional; both empty → null (the "added but empty" marker).
+ */
+export const utcBoundsFromLocalDays = (
+  start: string | null,
+  end: string | null
+): UtcDayBounds | null =>
+  start || end
+    ? {
+        ...(start ? { afterOrEqualTo: localDayToUtc(start) } : {}),
+        ...(end
+          ? { beforeOrEqualTo: localDayToUtc(end, { endOfDay: true }) }
+          : {}),
+      }
+    : null;
+
+/**
+ * A `Date` → an RFC3339 instant keeping the device's local offset (e.g.
+ * `…09:30:15+13:00`) instead of `Z`, at SECONDS precision (no milliseconds) —
+ * byte-for-byte the current app's `Formatter.localIsoString`. Same instant as
+ * `localDayToUtc`, but the wire string shows the local calendar day on its
+ * face. Use for a wire field whose input preserves the offset AND whose server
+ * records the wire-local date — the inbound received-date write (input
+ * `DateTime<FixedOffset>`; its `INVOICE_DATE_BACKDATED` log formats in the wire
+ * offset, so a `Z` value logs the day before off UTC — server-verified).
+ * Elsewhere (filters, `DateTime<Utc>` inputs) only the instant matters, so use
+ * `localDayToUtc`.
+ */
+export const dateToOffsetIso = (d: Date): string => {
+  const offsetMinutes = -d.getTimezoneOffset(); // minutes east of UTC
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const abs = Math.abs(offsetMinutes);
+  return (
+    `${dateToIsoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+    `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
+  );
+};
+
+/**
+ * The user's LOCAL calendar day right now, ISO `YYYY-MM-DD` (device tz) — the
+ * "today" day-comparisons and date-input bounds measure against, so a store
+ * off UTC never misclassifies its own today. Impure (reads the clock).
+ */
+export const localTodayIso = (): string => dateToIsoDate(new Date());
+
+/** The LOCAL calendar day `days` before today, ISO `YYYY-MM-DD` (device tz). */
+export const localIsoDaysAgo = (days: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return dateToIsoDate(d);
+};
+
+/** A new `Date` `days` after `d` (negative goes back); device-local. */
+export const addDays = (d: Date, days: number): Date => {
+  const next = new Date(d);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+/** The most recent Monday on or before `d` (ISO week start), as a new Date. */
+export const startOfWeek = (d: Date): Date =>
+  addDays(d, -((d.getDay() + 6) % 7)); // getDay(): 0 Sun … 6 Sat
+
 /** Default display/parse format for the date fields (medium, day-first). */
 export const DEFAULT_DATE_FORMAT = 'dd MMM yyyy';
 

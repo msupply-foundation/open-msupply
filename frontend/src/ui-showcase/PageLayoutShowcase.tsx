@@ -18,8 +18,10 @@ import {
   Lead,
   PageFrame,
   Row,
+  SectionTOC,
   type AnatomyNode,
 } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './PageLayoutShowcase.module.css';
 
 /* The general page vocabulary, rendered as the figure under the intro — the
@@ -33,7 +35,7 @@ const ANATOMY: AnatomyNode[] = [
     children: [
       {
         name: 'Header',
-        note: 'breadcrumb h1 + actions + toolbar/tabs — see Header',
+        note: 'breadcrumb h1 + actions + HeaderToolbar field row + tabs — see Header',
       },
       {
         name: 'ContentContainer',
@@ -75,9 +77,38 @@ const ANATOMY: AnatomyNode[] = [
  * deliberately, as a live demo of the measure being a per-group content
  * choice (blocks don't own a width; the container arranging them does).
  */
+export const pageLayoutMetadata: PageMetadata = {
+  id: 'page-layout',
+  title: 'Page layout',
+  searchTerms: ['layout', 'structure', 'regions'],
+  items: [
+    {
+      id: 'page-layout-content-container',
+      title: 'ContentContainer',
+      searchTerms: ['measure', 'width', 'max width', 'centre'],
+    },
+    {
+      id: 'page-layout-page',
+      title: 'Page',
+      searchTerms: ['regions', 'header', 'body', 'slots'],
+    },
+    {
+      id: 'page-layout-stack',
+      title: 'Stack',
+      searchTerms: ['vertical', 'gap', 'rhythm', 'spacing'],
+    },
+    {
+      id: 'page-layout-mixing',
+      title: 'Mixing measures',
+      searchTerms: ['nesting', 'breakout'],
+    },
+  ],
+};
+
 export const PageLayoutShowcase = () => (
   <ContentContainer size="wide" align="start">
     <Stack gap="lg">
+      <SectionTOC page={pageLayoutMetadata} />
       <Intro>
         How a page composes, from the outside in: the <code>Page</code> frame
         owns the geometry — it pins the header and footer, docks the side panel,
@@ -92,7 +123,10 @@ export const PageLayoutShowcase = () => (
 
       <AnatomyTree nodes={ANATOMY} />
 
-      <DashboardCard title="ContentContainer — the content measure">
+      <DashboardCard
+        id="page-layout-content-container"
+        title="ContentContainer — the content measure"
+      >
         <Lead>
           A reading column that caps how wide its content grows, so a form or
           block of prose stays readable on a wide monitor instead of sprawling
@@ -122,7 +156,10 @@ export const PageLayoutShowcase = () => (
 
       <ContentContainer size="form" align="start">
         <Stack gap="lg">
-          <DashboardCard title="Page — the regions in miniature">
+          <DashboardCard
+            id="page-layout-page"
+            title="Page — the regions in miniature"
+          >
             <Lead>
               The frame's three pinned regions around the scrolling body: a
               composed <a href="#/showcase/header">Header</a> on top, the body
@@ -163,7 +200,10 @@ export const PageLayoutShowcase = () => (
             </PageFrame>
           </DashboardCard>
 
-          <DashboardCard title="Stack — vertical rhythm between sibling blocks">
+          <DashboardCard
+            id="page-layout-stack"
+            title="Stack — vertical rhythm between sibling blocks"
+          >
             <Lead>
               A vertical run of sibling blocks with a consistent gap — the space
               between a detail form's identity header, an alert, and its
@@ -200,7 +240,10 @@ export const PageLayoutShowcase = () => (
             </Row>
           </DashboardCard>
 
-          <DashboardCard title="Mixing measures — nesting and breakout">
+          <DashboardCard
+            id="page-layout-mixing"
+            title="Mixing measures — nesting and breakout"
+          >
             <Lead>
               The measure wraps content <em>groups</em>, not the page: a page
               holds as many containers as its content needs. Nest a narrower

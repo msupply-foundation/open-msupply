@@ -16,7 +16,10 @@ import { CancelButton } from '../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
+  FilterCheckbox,
+  FilterDateRange,
   FilterMultiSelect,
+  FilterNumberInput,
   FilterSelect,
   FilterTextInput,
   type Filter,
@@ -25,7 +28,8 @@ import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
-import { Lead, Row } from './common';
+import { Lead, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './SelectorsShowcase.module.css';
 
 /**
@@ -95,21 +99,28 @@ const itemFilter = (item: DemoItem, input: string) => {
 /*
  * A demo filter object, shaped like a list page's GraphQL filter (the
  * FilterBar is generic over it — see kdd/page-composition). A key PRESENT
- * (even as null/'') means its chip is shown; absent means it isn't. Three
- * free-text columns + the status enum, the current app's outbound-shipment
- * FilterMenu set.
+ * (even as null/'') means its chip is shown; absent means it isn't. One of
+ * EVERY chip editor type: text, number, single-select, multi-select, date
+ * range and boolean — the full OMS filter-type parity set.
  */
 interface InvoiceFilter {
   otherPartyName?: string | null;
-  invoiceNumber?: string | null;
+  invoiceNumber?: number | null;
   theirReference?: string | null;
   status?: string | null;
+  statuses?: string[] | null;
+  createdDatetime?: {
+    afterOrEqualTo?: string | null;
+    beforeOrEqualTo?: string | null;
+  } | null;
+  onHold?: boolean | null;
 }
 
-/* 
+/*
  * Built once as a stable const — labels are accessors, so FilterBar's <For>
- * reuses
-   chip rows instead of remounting them (kdd/state-management: no remounts). */
+ * reuses chip rows instead of remounting them (kdd/state-management: no
+ * remounts). Every render passes props.testId through — the FilterBar's
+ * add-a-filter focus hand-off finds the new chip's editor by that id. */
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
@@ -118,6 +129,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
       <FilterTextInput
         label="Name"
         placeholder="Search by name"
+        testId={props.testId}
         value={props.filter().otherPartyName ?? ''}
         onInput={value =>
           props.setPartialFilter({ otherPartyName: value || null })
@@ -129,11 +141,13 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     key: 'invoiceNumber',
     label: () => 'Invoice number',
     render: props => (
-      <FilterTextInput
+      <FilterNumberInput
         label="Invoice number"
-        value={props.filter().invoiceNumber ?? ''}
-        onInput={value =>
-          props.setPartialFilter({ invoiceNumber: value || null })
+        placeholder="Invoice number"
+        testId={props.testId}
+        value={props.filter().invoiceNumber ?? undefined}
+        onChange={value =>
+          props.setPartialFilter({ invoiceNumber: value ?? null })
         }
       />
     ),
@@ -144,6 +158,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterTextInput
         label="Reference"
+        testId={props.testId}
         value={props.filter().theirReference ?? ''}
         onInput={value =>
           props.setPartialFilter({ theirReference: value || null })
@@ -157,6 +172,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterSelect
         label="Status"
+        testId={props.testId}
         value={props.filter().status ?? ''}
         options={[
           { value: '', label: 'Any' },
@@ -166,7 +182,84 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
       />
     ),
   },
+  {
+    key: 'statuses',
+    label: () => 'Statuses',
+    render: props => (
+      <FilterMultiSelect
+        label="Statuses"
+        placeholder="Any"
+        testId={props.testId}
+        options={INVOICE_STATUSES.map(s => ({
+          value: s.value,
+          label: s.label,
+        }))}
+        values={props.filter().statuses ?? []}
+        onChange={values =>
+          props.setPartialFilter({ statuses: values.length ? values : null })
+        }
+      />
+    ),
+  },
+  {
+    key: 'createdDatetime',
+    label: () => 'Created',
+    render: props => (
+      <FilterDateRange
+        type="dateTime"
+        label="Created"
+        testId={props.testId}
+        value={props.filter().createdDatetime}
+        onChange={value => props.setPartialFilter({ createdDatetime: value })}
+      />
+    ),
+  },
+  {
+    key: 'onHold',
+    label: () => 'On hold',
+    render: props => (
+      <FilterCheckbox
+        label="On hold"
+        testId={props.testId}
+        checked={props.filter().onHold ?? false}
+        onChange={checked => props.setPartialFilter({ onHold: checked })}
+      />
+    ),
+  },
 ];
+
+export const selectorsMetadata: PageMetadata = {
+  id: 'selectors',
+  title: 'Selectors',
+  searchTerms: ['dropdown', 'picker', 'choose'],
+  items: [
+    {
+      id: 'selectors-select',
+      title: 'Drop-down',
+      searchTerms: ['select', 'status', 'enum'],
+    },
+    {
+      id: 'selectors-autocomplete',
+      title: 'Autocomplete / combobox',
+      searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
+    },
+    {
+      id: 'selectors-in-dialog',
+      title: 'In a dialog',
+      searchTerms: ['modal', 'portal'],
+    },
+    {
+      id: 'selectors-filter-bar',
+      title: 'Filter bar',
+      searchTerms: ['filter', 'chip', 'query', 'multi-select', 'enum'],
+    },
+    {
+      id: 'selectors-colour-tag',
+      title: 'Colour tag',
+      searchTerms: ['color', 'swatch', 'dot', 'tag'],
+    },
+  ],
+};
 
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
@@ -176,7 +269,6 @@ export const SelectorsShowcase = () => {
   const [asyncPicked, setAsyncPicked] = createSignal<DemoItem | null>(
     ITEMS[ITEMS.length - 1]
   );
-  const [statusFilter, setStatusFilter] = createSignal<string[]>([]);
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
   // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
   // behind it).
@@ -184,8 +276,13 @@ export const SelectorsShowcase = () => {
   const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null);
   const [dialogStatus, setDialogStatus] = createSignal('new');
   // Seeded non-empty to show chips restoring from an existing filter (a key
-  // being present is what shows its chip — here status starts on 'new').
-  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
+  // being present is what shows its chip): a single-select `status` and a
+  // multi-select `statuses` both start present, so the bar shows both the
+  // FilterSelect and FilterMultiSelect controls in their chip habitat on load.
+  const [filters, setFilters] = createSignal<InvoiceFilter>({
+    status: 'new',
+    statuses: ['allocated', 'picked'],
+  });
   // Colour-tag demo: starts untagged so the empty dashed ring shows first.
   const [tagColour, setTagColour] = createSignal<string | null>(null);
   const tagName = () => {
@@ -200,7 +297,16 @@ export const SelectorsShowcase = () => {
   const filterQuery = () => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters())) {
-      if (value != null && value !== '') params.set(key, String(value));
+      if (value == null || value === '' || value === false) continue;
+      if (Array.isArray(value)) {
+        if (value.length) params.set(key, value.join(','));
+      } else if (typeof value === 'object') {
+        // The date range: {start, end} → "start..end" (either side open).
+        const { start, end } = value;
+        if (start || end) params.set(key, `${start ?? ''}..${end ?? ''}`);
+      } else {
+        params.set(key, String(value));
+      }
     }
     const query = params.toString();
     return query ? `?${query}` : '';
@@ -209,7 +315,11 @@ export const SelectorsShowcase = () => {
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
-        <DashboardCard title="Styled drop-down — Kobalte Select">
+        <SectionTOC page={selectorsMetadata} />
+        <DashboardCard
+          id="selectors-select"
+          title="Styled drop-down — Kobalte Select"
+        >
           <Lead>
             Pick one from a fixed list, but the options carry a status colour a
             native <code>&lt;option&gt;</code> can't render. Kobalte Select buys
@@ -229,7 +339,10 @@ export const SelectorsShowcase = () => {
           />
         </DashboardCard>
 
-        <DashboardCard title="Autocomplete / combobox — Kobalte Combobox">
+        <DashboardCard
+          id="selectors-autocomplete"
+          title="Autocomplete / combobox — Kobalte Combobox"
+        >
           <Lead>
             The flagged hard widget: type to filter a large item list and pick
             one. Filters on <strong>code or name</strong>, renders a two-line
@@ -324,7 +437,10 @@ export const SelectorsShowcase = () => {
           />
         </DashboardCard>
 
-        <DashboardCard title="Selectors in a dialog — portal-into-dialog">
+        <DashboardCard
+          id="selectors-in-dialog"
+          title="Selectors in a dialog — portal-into-dialog"
+        >
           <Lead>
             The case that needs care: a{' '}
             <strong>Combobox / Select opened inside a modal dialog</strong>. A
@@ -392,7 +508,10 @@ export const SelectorsShowcase = () => {
           </Dialog>
         </DashboardCard>
 
-        <DashboardCard title="Filter bar — Kobalte DropdownMenu">
+        <DashboardCard
+          id="selectors-filter-bar"
+          title="Filter bar — Kobalte DropdownMenu"
+        >
           <Lead>
             The app's FilterMenu pattern: a <strong>Filters</strong> dropdown
             lists the addable fields; picking one adds an inline editor chip
@@ -414,35 +533,10 @@ export const SelectorsShowcase = () => {
           </p>
         </DashboardCard>
 
-        <DashboardCard title="Filter bar — multi-select enum filter">
-          <Lead>
-            <code>FilterMultiSelect</code>: the TESTIDS contract's multi-select
-            enum filter (each option stamps{' '}
-            <code>filter-option-&lt;VALUE&gt;</code>) — a status filter that
-            maps straight onto a wire <code>equalAny</code>. The trigger
-            summarises the selection, or shows the placeholder while empty.
-          </Lead>
-          <FilterMultiSelect
-            label="Status"
-            placeholder="Any"
-            values={statusFilter()}
-            options={INVOICE_STATUSES.map(status => ({
-              value: status.value,
-              label: status.label,
-            }))}
-            onChange={setStatusFilter}
-          />
-          <p class={styles.filterReadout}>
-            Wire filter:{' '}
-            <code>
-              {statusFilter().length
-                ? `status: { equalAny: [${statusFilter().join(', ')}] }`
-                : '(no status filter)'}
-            </code>
-          </p>
-        </DashboardCard>
-
-        <DashboardCard title="Colour tag — dot + swatch picker">
+        <DashboardCard
+          id="selectors-colour-tag"
+          title="Colour tag — dot + swatch picker"
+        >
           <Lead>
             User-set colour on a record for visual grouping only. The{' '}
             <code>ColourTagDot</code> is read-only and hides the dot for

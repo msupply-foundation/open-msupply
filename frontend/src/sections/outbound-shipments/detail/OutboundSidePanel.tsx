@@ -1,7 +1,6 @@
 import {
   createSignal,
   For,
-  onCleanup,
   Show,
   type Component,
   type JSX,
@@ -15,20 +14,30 @@ import {
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
-import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+} from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CheckIcon, CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
+import { EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
 import { PickedDateField } from './PickedDateField';
-import { isDeletable, statusLabel } from '../outboundStatus';
-import type { OutboundNode } from './outboundUpdate';
+import { CurrencyModal } from '../../../domain/invoice';
+import { isDeletable } from '../outboundStatus';
+import { changeShipmentCurrency, type OutboundNode } from './outboundUpdate';
+import { graphqlFetch } from '../../../api/graphql';
+import {
+  FullOutbound,
+  type OutboundLineFragment,
+} from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
@@ -38,19 +47,35 @@ import type { OutboundFieldEdit } from './outboundEdit';
 
 export interface OutboundSidePanelProps {
   node: OutboundNode;
+  /**
+   * The shipment's service lines (the view's dedicated read — the entity
+   * query no longer carries lines), for the Service-charges block's rows.
+   */
+  serviceLines: OutboundLineFragment[];
   /** For the backdating control's stocktake-conflict check (AC-B4). */
   storeId: string;
   disabled: boolean;
+  /**
+   * The _issue in foreign currency_ store preference — with the customer not
+   * being a store, the ONLY gates on the change-currency control (spec S3 §
+   * side panel: not gated by shipment status).
+   */
+  foreignCurrencyAllowed: boolean;
+  /** The currency modal saved — replace the entity in place. */
+  onSaved: (node: OutboundNode) => void;
   /** The shared edit buffer (comment + transport reference live here). */
   edit: OutboundFieldEdit;
-  /** Field saves that aren't buffered text (colour, expected date, method). */
+  /** Field saves that aren't buffered text (colour, expected date, method).
+   * Resolves once the entity reflects the save (or the save failed) — the
+   * picked-date control awaits it to hand its optimistic value over without
+   * a flicker. */
   onSaveField: (patch: {
     colour?: string;
     tax?: { percentage: number | null };
     expectedDeliveryDate?: { value: string | null };
     shippingMethodId?: { value: string | null };
     backdatedDatetime?: string | null;
-  }) => void;
+  }) => Promise<void>;
   /** Open the service-charges editor (S5). */
   onEditServiceCharges: () => void;
 }
@@ -64,8 +89,17 @@ const money = (value: number | null | undefined): string =>
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
   const requisition = () => props.node.requisition;
-  const serviceLines = () =>
-    props.node.lines.nodes.filter(line => line.type === 'SERVICE');
+  const serviceLines = () => props.serviceLines;
+  // Change-currency is offered only when the store allows foreign currency
+  // and the customer isn't itself a store — and, like every header edit,
+  // only while the shipment is editable: the server rejects all header
+  // updates from SHIPPED (the old app leaves this control clickable but the
+  // edit silently does nothing — D65).
+  const [currencyOpen, setCurrencyOpen] = createSignal(false);
+  const canChangeCurrency = () =>
+    props.foreignCurrencyAllowed &&
+    props.node.otherParty.store == null &&
+    !props.disabled;
 
   // Tax display derivations (rules.md § pricing): the amount is total − sub
   // total floored at zero; the service group shows the EFFECTIVE rate (tax
@@ -103,26 +137,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     </span>
   );
 
-  // Copy confirmation shown inline beside the button (controls › action
-  // feedback — never a toast), fading after a moment.
-  const [copied, setCopied] = createSignal(false);
-  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(copiedTimer));
-
-  const copyToClipboard = () => {
-    const node = props.node;
-    const text = [
-      `${t('label.outbound-shipment')} #${node.invoiceNumber}`,
-      `${t('label.customer-name')}: ${node.otherParty.name}`,
-      `${t('label.status')}: ${statusLabel(node.status)}`,
-      `${t('label.created')}: ${localisedDate(node.createdDatetime)}`,
-      `${t('heading.grand-total')}: ${money(pricing().totalAfterTax)}`,
-    ].join('\n');
-    void navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      clearTimeout(copiedTimer);
-      copiedTimer = setTimeout(() => setCopied(false), 2500);
+  // The WHOLE shipment — header + every line, unpaginated — for the side
+  // panel's copy action (controls § copy to clipboard; the fullStocktake
+  // pattern). The detail's lines read is server-paged, so this is its own
+  // one-shot fetch. A fetch failure is surfaced by graphqlFetch's global modal;
+  // a NodeError (not expected from a screen showing the record) copies nothing.
+  const loadFullShipment = async () => {
+    const result = await graphqlFetch(FullOutbound, {
+      storeId: props.storeId,
+      id: props.node.id,
     });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the old app copies the record, not the query wrapper
+    // ({"invoice": …}).
+    return result.data.invoice;
   };
 
   return (
@@ -136,7 +165,31 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <span
+            style={{
+              display: 'inline-flex',
+              'align-items': 'center',
+              gap: 'var(--space-2)',
+            }}
+          >
+            <Text variant="body" as="span">
+              {props.node.user?.username ?? '—'}
+            </Text>
+            {/* Info popover on hover — the user's email (the picked-date
+                reason bubble's pattern); no icon when there is no email. */}
+            <Show when={props.node.user?.email}>
+              {email => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={email()}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>{email()}</p>
+                </Popover>
+              )}
+            </Show>
+          </span>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -157,11 +210,19 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.color')}>
-          <ColourTagPicker
-            colour={props.node.colour ?? null}
-            variant="field"
-            onSelect={colour => props.onSaveField({ colour })}
-          />
+          {/* Read-only once the shipment is (the panel-wide gate — "all
+              inputs share the editability gate", spec S3): the dot replaces
+              the picker, per the component's own read-only form. */}
+          <Show
+            when={!props.disabled}
+            fallback={<ColourTagDot colour={props.node.colour ?? null} />}
+          >
+            <ColourTagPicker
+              colour={props.node.colour ?? null}
+              variant="field"
+              onSelect={colour => props.onSaveField({ colour })}
+            />
+          </Show>
         </FieldRow>
         <FieldRow label={t('label.comment')}>
           <TextField
@@ -354,11 +415,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
         {/* Foreign currency — always shown (rules.md § pricing): code · rate
             (a zero rate displays as 1) · total (dash until a real foreign
-            currency is set). The change-currency control is deferred with the
-            FC preference — the dev store has it off, so it isn't built/
-            verifiable yet (ui-surface § side panel notes this gap). */}
+            currency is set). The change-currency control (currency + rate in
+            one edit, ported from the inbound CurrencyModal) is gated by the
+            issue-in-foreign-currency preference and the customer not being a
+            store — by those gates ONLY, not by shipment status (spec S3 §
+            side panel). */}
         <FieldRow label={t('heading.foreign-currency')}>
-          <span />
+          <IconButton
+            bordered
+            size="small"
+            icon={<EditIcon />}
+            label={t('label.currency')}
+            data-testid="change-currency-button"
+            disabled={!canChangeCurrency()}
+            onClick={() => setCurrencyOpen(true)}
+          />
         </FieldRow>
         <FieldRow label={t('label.code')}>
           <Text variant="body">{props.node.currency?.code ?? ''}</Text>
@@ -401,17 +472,20 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.expected-delivery-date')}>
-          <TextField
+          {/* The shared calendar-date input (ui-standards/inputs § dates &
+              times); clearable — the wire value is nullable. */}
+          <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
-            type="date"
+            // Numeric day-first display/parse (27/07/2026) — matches the
+            // panel's localisedDate renderings (created date etc.).
+            format="dd/MM/yyyy"
+            testId="expected-delivery-date-field"
             disabled={props.disabled}
-            value={props.node.expectedDeliveryDate ?? ''}
-            onInput={e =>
+            value={props.node.expectedDeliveryDate ?? null}
+            onChange={value =>
               props.onSaveField({
-                expectedDeliveryDate: {
-                  value: e.currentTarget.value || null,
-                },
+                expectedDeliveryDate: { value },
               })
             }
           />
@@ -446,23 +520,29 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             number={() => props.node.invoiceNumber}
             customerName={() => props.node.otherParty.name}
           />
-          {/* Copy to clipboard — the button itself briefly swaps to a "copied"
-              confirmation (matching the stocktakes CopyStocktakeAction);
-              in-place feedback, never a toast. aria-live so the swap is
-              announced by assistive tech (no visually-hidden twin — a hidden
-              duplicate of the label trips strict e2e text locators). */}
-          <Button
-            variant="secondary"
-            aria-live="polite"
-            icon={copied() ? <CheckIcon /> : <CopyIcon />}
-            onClick={copyToClipboard}
-          >
-            {copied()
-              ? t('message.copy-success')
-              : t('button.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullShipment} />
         </SidePanelActions>
       </SidePanelSection>
+      {/* The shared change-currency modal with outbound's header update; a
+          saved node replaces the entity in place. */}
+      <CurrencyModal
+        open={currencyOpen()}
+        onClose={() => setCurrencyOpen(false)}
+        initialCurrencyId={props.node.currency?.id}
+        initialRate={props.node.currencyRate}
+        save={async input => {
+          const result = await changeShipmentCurrency(props.storeId, {
+            id: props.node.id,
+            ...input,
+          });
+          if (result.kind !== 'saved') return result;
+          props.onSaved(result.node);
+          return { kind: 'saved' };
+        }}
+      />
     </>
   );
 };

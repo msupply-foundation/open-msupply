@@ -6,12 +6,9 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DownloadIcon, PrinterIcon, XCircleIcon } from '../../ui/icons';
-import {
-  fetchReportFile,
-  downloadBlob,
-  printHtml,
-  type GenerateResult,
-} from '../reportFiles';
+import { fetchReportFile, type GenerateResult } from '../reportFiles';
+import { isAndroid } from '../../platform';
+import { printBlob, saveBlob } from '../../platform/openDocument';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
 import { timezoneArgument } from '../json-forms/schema';
 import { listReportsByContext, type Report } from './reportsResource';
@@ -29,11 +26,12 @@ import { reportLabel } from './reportLabel';
 // surfaces name the trigger, this vertical owns the dialog").
 //
 // Flow: list the context's reports → the user picks one and a format (Export to
-// Excel / Print / Download PDF, all disabled until a report is selected) → if
-// the report declares an argument schema, S3 (ArgumentsModal) collects filters
-// first → generate → fetch the file handle → print (HTML, hidden-iframe
-// window.print, desktop) or download (Excel/PDF). Errors show INLINE in the
-// dialog body (spec/reports S5 — never a toast).
+// Excel / Print / Download PDF, all disabled until a report is selected;
+// Download PDF is not offered on Android) → if the report declares an argument
+// schema, S3 (ArgumentsModal) collects filters first → generate → fetch the
+// file handle → print (HTML, hidden-iframe window.print, desktop) or download
+// (Excel/PDF). Errors show INLINE in the dialog body (spec/reports S5 — never
+// a toast).
 //
 // The trigger button lives with the host vertical; this component is the dialog
 // body + its own phase state, mounted only while open (like the action modals,
@@ -76,6 +74,10 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // banner (spec/reports S5). A dataError from generation likewise surfaces
   // inline; a `failed` result means the global modal already showed the fault,
   // so we just drop back to idle.
+  // The format carries the user's INTENT (HTML = print, Excel and PDF = keep)
+  // and delivery forks on it; each arm's platform difference belongs to the
+  // capability wrapper, not here. Await the delivery: a failure keeps the
+  // dialog up with the inline error rather than closing as if it worked.
   const deliver = async (
     result: GenerateResult,
     format: PrintFormat
@@ -93,10 +95,16 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
       setPhase('error');
       return;
     }
-    if (format === 'HTML') {
-      printHtml(await file.blob.text());
-    } else {
-      downloadBlob(file.blob, file.filename);
+    // Print: system print dialog on the web, the OS print service on Android.
+    // Export/download: the user picks the destination (browser download on
+    // web, the OS save picker on Android).
+    const delivered =
+      format === 'HTML'
+        ? await printBlob(file.blob, file.filename)
+        : await saveBlob(file.blob, file.filename);
+    if (!delivered.ok) {
+      setPhase('error');
+      return;
     }
     props.onClose();
   };
@@ -173,14 +181,20 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             >
               {t('button.print')}
             </Button>
-            <Button
-              variant="secondary"
-              icon={<DownloadIcon />}
-              disabled={disabled()}
-              onClick={() => onFormat('PDF')}
-            >
-              {t('button.download-pdf')}
-            </Button>
+            {/* Download PDF is not offered on Android (spec/reports S4): the
+                server renders PDFs by driving headless Chrome, and a tablet
+                server has no Chrome executable to launch, so the format can
+                only ever fail there. */}
+            <Show when={!isAndroid()}>
+              <Button
+                variant="secondary"
+                icon={<DownloadIcon />}
+                disabled={disabled()}
+                onClick={() => onFormat('PDF')}
+              >
+                {t('button.download-pdf')}
+              </Button>
+            </Show>
           </>
         }
       >

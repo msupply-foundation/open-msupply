@@ -8,16 +8,19 @@ import {
 import { DownloadIcon } from '../../../../ui/icons';
 import {
   csvToExcel,
-  downloadBlob,
   fetchReportFile,
+  listExportCsvFilename,
+  listExportExcelFilename,
 } from '../../../../domain/reportFiles';
+import { saveBlob } from '../../../../platform/openDocument';
 import { stripEmpty } from '../../../../typeHelpers';
+import { storeCodeOf } from '../../../../auth/authContext';
 import { LocationsList } from '../locations.generated';
 import type { LocationsListVariables } from '../locations.generated';
 import type { LocationFilter } from '../listFilters';
 import { locationsToCsv } from '../locationsToCsv';
 
-// The locations list Export action (spec/locations S1, AC-L5): a split button
+// The locations list Export action (spec/locations S1, OMS-REG-INV-01.11): a split button
 // offering CSV or Excel, exporting EVERY location matching the current filter
 // — all pages, not just the visible one (list-views § regions, D12). CSV
 // downloads directly; Excel round-trips the CSV through the server's
@@ -45,7 +48,7 @@ export const ExportLocationsAction: Component<
 
   // Fetch every matching location (no page cap) and build the CSV. Returns
   // null when there's nothing to export. Sorted like the list's default (name
-  // ascending — AC-L2) so the file reads like the screen.
+  // ascending — OMS-REG-INV-01.17) so the file reads like the screen.
   const buildCsv = async (): Promise<string | null> => {
     const variables: LocationsListVariables = {
       storeId: props.storeId,
@@ -64,20 +67,24 @@ export const ExportLocationsAction: Component<
     try {
       const csv = await buildCsv();
       if (!csv) return; // nothing to export
-      const filename = t('filename.locations');
+      // Filenames per the shared list-export rule (OMS-REG-INV-01.11 →
+      // ui-standards/list-views § regions).
+      const storeCode = storeCodeOf(props.storeId);
+      const listName = t('filename.locations');
       if (format === 'excel') {
         const generated = await csvToExcel({
           storeId: props.storeId,
           csvData: csv,
-          filename,
+          filename: listExportExcelFilename(storeCode, listName),
+          sheetName: storeCode,
         });
         if (generated.kind !== 'fileId') return; // error already surfaced
         const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') downloadBlob(file.blob, file.filename);
+        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
       } else {
-        downloadBlob(
+        void saveBlob(
           new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          `${filename}.csv`
+          listExportCsvFilename(storeCode, listName, new Date())
         );
       }
     } finally {

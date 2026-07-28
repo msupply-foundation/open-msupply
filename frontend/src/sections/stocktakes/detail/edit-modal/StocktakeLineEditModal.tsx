@@ -6,14 +6,20 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
+import { BareCheckbox } from '../../../../ui/elements/inputs/BareCheckbox';
 import {
   DataTable,
   type Column,
-  type TabAndCardGroup,
-  ALL_TABS,
+  type CardGroup,
 } from '../../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -36,11 +42,8 @@ import {
   StockIcon,
   InfoIcon,
   MessageSquareIcon,
-  XCircleIcon,
   TrashIcon,
   CopyIcon,
-  CheckIcon,
-  ArrowRightIcon,
 } from '../../../../ui/icons';
 import {
   StockLinesByItem,
@@ -226,24 +229,31 @@ const buildDraft = async (
   return [...fromExisting, ...fromStock];
 };
 
-// The tabs / card-groups for the grouped table (unchanged). Batch is an ALL_TABS
-// anchor (shows in every tab), not its own group.
+// The card body groups. This modal is card-only (no table view — see the
+// createTableConfig default below): batch is the always-shown primary panel;
+// pricing and other are collapsed disclosures. Batch is the card HEADER
+// identity (meta.headerPosition), so it isn't itself a body group.
 type GroupKey = 'batch' | 'pricing' | 'other';
-const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
+const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
     labelKey: 'label.batch',
     icon: () => <StockIcon />,
+    panel: true,
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing',
     icon: () => <InfoIcon />,
+    panel: true,
+    disclosure: 'closed',
   },
   {
     key: 'other',
     labelKey: 'heading.other',
     icon: () => <MessageSquareIcon />,
+    panel: true,
+    disclosure: 'closed',
   },
 ];
 
@@ -381,32 +391,48 @@ const StocktakeLineEditContent = (
   // vaccine item's rows (isVaccine off → blank).
   const prefs = () => stocktakePreferences();
 
+  // Blind stocktake (spec/stocktakes › store-preference gates): the editor is
+  // only ever open on a NEW stocktake (the detail view blocks the row-click
+  // that opens it once finalised/locked), so Snapshot hides unconditionally
+  // on the preference, with no separate status check. Reason hides the same
+  // way, for the same reason no reason is ever required under this preference.
+  const hideSnapshotStock = () => prefs().blindStocktake;
+  const hideReason = () => prefs().blindStocktake;
+
   // No item picked yet → the search state (Cancel-only footer, prompt in place
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
 
-  const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
+  // Card-only: default the view to card at every band (compact already forces
+  // card; this extends it to desktop). No showCardToggle on the DataTable, so
+  // there's no way to a table view — the batch grid is always cards.
+  const tableConfig = createTableConfig({
+    tableId: 'stocktake-line-edit',
+    defaultConfig: { base: { viewMode: 'card' } },
+  });
 
   // Seed the draft for one item. Replaces the store (reconcile by id) so no rows
   // from the previous item linger, and resets per-item UI. countByDefault:
   // opt-in (unchecked) when the item already has stocktake lines, all-counted
   // for a brand-new item. Records the item in the covered set for the walk.
   // `focusLineId` is the batch to focus once loaded (a row-click open focuses
-  // the clicked line); omitted → focus the first row.
+  // the clicked line); omitted → focus the first row. `knownExisting` lets a
+  // caller that already fetched this item's existing lines (loadItemById, to
+  // resolve the item descriptor) pass them straight through instead of this
+  // function re-fetching the identical stocktakeLines query a moment later.
   const seedItem = async (
     item: StocktakeLineEditItem,
-    focusLineId?: string
+    focusLineId?: string,
+    knownExisting?: StocktakeLineFragment[]
   ) => {
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setLoadingLines(true);
-    const existing = await fetchExistingLines(
-      props.storeId,
-      props.stocktakeId,
-      item.id
-    );
+    const existing =
+      knownExisting ??
+      (await fetchExistingLines(props.storeId, props.stocktakeId, item.id));
     const seeded = await buildDraft(
       props.storeId,
       item,
@@ -434,7 +460,9 @@ const StocktakeLineEditContent = (
 
   // Row-open path: resolve the item descriptor from its existing lines (the
   // fetch we need for the draft anyway), then seed. If the item has no lines
-  // (vanished), close.
+  // (vanished), close. Passes `existing` straight through to seedItem (its
+  // `knownExisting`) rather than letting it re-run the identical
+  // stocktakeLines query it would otherwise fetch for itself.
   const loadItemById = async (id: string) => {
     setLoadingLines(true);
     const existing = await fetchExistingLines(
@@ -457,7 +485,8 @@ const StocktakeLineEditContent = (
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
-      props.initialLineId
+      props.initialLineId,
+      existing
     );
   };
 
@@ -771,18 +800,25 @@ const StocktakeLineEditContent = (
   };
 
   // ---- Columns: one set, split across groups; batch is the anchor. ----
-  // (Unchanged from the original — each cell edits the draft store via update().)
+  // (Unchanged from the original — each cell edits the draft store via
+  // update().)
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       c: { id: 'countThisLine' },
-      header: t('label.count-this-line'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { align: 'center' },
+      header: () => t('label.count-this-line'),
+      // Card view: the count toggle rides in the header BADGE slot
+      // (inline-end), captioned by the badge's FieldRow (showLabel) — so the
+      // control itself is the bare box with an aria-label, no doubled caption.
+      // Structural — keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
-          <input
-            type="checkbox"
+          <BareCheckbox
             aria-label={t('label.count-this-line')}
             checked={line.countThisLine}
             onChange={e =>
@@ -794,9 +830,15 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'batch' },
-      header: t('label.batch'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { card: { region: 'primary', showLabel: true } },
+      header: () => t('label.batch'),
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity): keep it out of the Columns popover.
+      meta: {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
@@ -804,6 +846,9 @@ const StocktakeLineEditContent = (
             label={t('label.batch')}
             hideLabel
             size="small"
+            // Narrow: a batch code is short, and it's the card's inline header
+            // field (the FieldRow control cell is otherwise full-width).
+            width="compact"
             disabled={!line.countThisLine}
             value={line.batch ?? ''}
             onInput={e =>
@@ -815,88 +860,88 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry-date'),
-      tabsAndCardGroups: ['batch'],
+      header: () => t('label.expiry-date'),
+      cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <DateField
             label={t('label.expiry-date')}
             hideLabel
             size="small"
-            type="date"
             disabled={!line.countThisLine}
-            value={line.expiryDate ?? ''}
-            onInput={e =>
-              update(line.id, 'expiryDate', e.currentTarget.value || null)
-            }
+            value={line.expiryDate}
+            onChange={v => update(line.id, 'expiryDate', v)}
           />
         );
       },
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('label.manufacture-date'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.manufacture-date'),
+      cardGroup: 'batch',
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <DateField
             label={t('label.manufacture-date')}
             hideLabel
             size="small"
-            type="date"
             disabled={!line.countThisLine}
-            value={line.manufactureDate ?? ''}
-            onInput={e =>
-              update(line.id, 'manufactureDate', e.currentTarget.value || null)
-            }
+            value={line.manufactureDate}
+            onChange={v => update(line.id, 'manufactureDate', v)}
           />
         );
       },
     },
-    {
-      c: { key: 'snapshotNumberOfPacks' },
-      header: t('label.snapshot-num-of-packs'),
-      tabsAndCardGroups: ['batch'],
-      ...getNumberCell(),
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'flex-direction': 'column',
-              'align-items': 'flex-end',
-            }}
-          >
-            <span>{line.snapshotNumberOfPacks ?? '—'}</span>
-            <Show
-              when={
-                lineErrors().get(line.id) ===
-                'SnapshotCountCurrentCountMismatchLine'
-              }
-            >
-              <span
-                data-testid="stocktake-line-error"
-                style={{
-                  color: 'var(--error-main)',
-                  'font-size': 'var(--text-xs)',
-                  'white-space': 'normal',
-                  'text-align': 'end',
-                }}
-              >
-                {t('error.snapshot-total-mismatch')}
-              </span>
-            </Show>
-          </span>
-        );
-      },
-    },
+    // Snapshot — omitted entirely under blind stocktake (see hideSnapshotStock
+    // above; the editor is only ever open on a NEW stocktake).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: { key: 'snapshotNumberOfPacks' },
+            header: () => t('label.snapshot-num-of-packs'),
+            cardGroup: 'batch',
+            ...getNumberCell(),
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    'flex-direction': 'column',
+                    'align-items': 'flex-end',
+                  }}
+                >
+                  <span>{line.snapshotNumberOfPacks ?? '—'}</span>
+                  <Show
+                    when={
+                      lineErrors().get(line.id) ===
+                      'SnapshotCountCurrentCountMismatchLine'
+                    }
+                  >
+                    <span
+                      data-testid="stocktake-line-error"
+                      style={{
+                        color: 'var(--error-main)',
+                        'font-size': 'var(--text-xs)',
+                        'white-space': 'normal',
+                        'text-align': 'end',
+                      }}
+                    >
+                      {t('error.snapshot-total-mismatch')}
+                    </span>
+                  </Show>
+                </span>
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]),
     {
       c: { key: 'countedNumberOfPacks' },
-      header: t('label.counted-num-of-packs'),
-      tabsAndCardGroups: ['batch'],
+      header: () => t('label.counted-num-of-packs'),
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -927,8 +972,8 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'packSize' },
-      header: t('label.pack-size'),
-      tabsAndCardGroups: ['batch'],
+      header: () => t('label.pack-size'),
+      cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -947,14 +992,47 @@ const StocktakeLineEditContent = (
         );
       },
     },
+    // Location (Batch tab, D57) — moved off Other so the field the user is
+    // most likely to set while actively counting sits on the tab that's
+    // already open, rather than requiring a tab switch.
+    {
+      c: { key: 'location' },
+      header: () => t('label.location'),
+      cardGroup: 'batch',
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <LocationVolumeSelect
+            label={t('label.location')}
+            hideLabel
+            locations={props.locations}
+            loading={props.locationsLoading}
+            disabled={!line.countThisLine}
+            value={line.location?.id}
+            requiredVolume={
+              (line.volumePerPack ?? 0) *
+              (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks ?? 0)
+            }
+            placeholder={t('label.none')}
+            onChange={l =>
+              update(
+                line.id,
+                'location',
+                l ? { id: l.id, code: l.code, name: l.name } : null
+              )
+            }
+          />
+        );
+      },
+    },
     // VVM status (Batch tab) — gated by manageVvmStatusForStock, vaccine rows
     // only. A VvmStatusSelect editing the draft's vvmStatus node.
     ...(prefs().manageVvmStatusForStock
       ? [
           {
             c: { id: 'vvmStatus' },
-            header: t('label.vvm-status'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.vvm-status'),
+            cardGroup: 'batch',
             cell: info => {
               const line = info.row.original;
               // Non-vaccine rows leave the cell blank (the display is vaccine-
@@ -989,8 +1067,8 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'dosesCounted' },
-            header: t('label.doses-counted'),
-            tabsAndCardGroups: ['batch'],
+            header: () => t('label.doses-counted'),
+            cardGroup: 'batch',
             ...getNumberCell(),
             cell: info => {
               const doses = dosesCounted(info.row.original);
@@ -1001,8 +1079,8 @@ const StocktakeLineEditContent = (
       : []),
     {
       c: { key: 'sellPricePerPack' },
-      header: t('label.pack-sell-price'),
-      tabsAndCardGroups: ['pricing'],
+      header: () => t('label.pack-sell-price'),
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -1022,8 +1100,8 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('label.pack-cost-price'),
-      tabsAndCardGroups: ['pricing'],
+      header: () => t('label.pack-cost-price'),
+      cardGroup: 'pricing',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -1043,8 +1121,8 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'volumePerPack' },
-      header: t('label.volume-per-pack'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.volume-per-pack'),
+      cardGroup: 'other',
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
@@ -1064,36 +1142,6 @@ const StocktakeLineEditContent = (
         );
       },
     },
-    {
-      c: { key: 'location' },
-      header: t('label.location'),
-      tabsAndCardGroups: ['other'],
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <LocationVolumeSelect
-            label={t('label.location')}
-            hideLabel
-            locations={props.locations}
-            loading={props.locationsLoading}
-            disabled={!line.countThisLine}
-            value={line.location?.id}
-            requiredVolume={
-              (line.volumePerPack ?? 0) *
-              (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks ?? 0)
-            }
-            placeholder={t('label.none')}
-            onChange={l =>
-              update(
-                line.id,
-                'location',
-                l ? { id: l.id, code: l.code, name: l.name } : null
-              )
-            }
-          />
-        );
-      },
-    },
     // Donor (Other tab) — gated by allowTrackingOfStockByDonor. An async donor
     // picker (NameSearch role="donor") over the draft's donorId/donorName. The
     // line stores only id+name, so `selected` is a minimal NameOption (like
@@ -1102,8 +1150,8 @@ const StocktakeLineEditContent = (
       ? [
           {
             c: { id: 'donor' },
-            header: t('label.donor'),
-            tabsAndCardGroups: ['other'],
+            header: () => t('label.donor'),
+            cardGroup: 'other',
             cell: info => {
               const line = info.row.original;
               return (
@@ -1144,8 +1192,8 @@ const StocktakeLineEditContent = (
     // clears the other. buildBatch sends campaignId/programId accordingly.
     {
       c: { id: 'campaignOrProgram' },
-      header: t('label.campaign'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.campaign'),
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1172,8 +1220,8 @@ const StocktakeLineEditContent = (
     // saved via manufacturerId in buildBatch.
     {
       c: { id: 'manufacturer' },
-      header: t('label.manufacturer'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.manufacturer'),
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1208,51 +1256,57 @@ const StocktakeLineEditContent = (
         );
       },
     },
-    {
-      c: { id: 'inventoryAdjustmentReasonInput' },
-      header: t('label.reason'),
-      tabsAndCardGroups: ['batch'],
-      cell: info => {
-        const line = info.row.original;
-        const error = () => {
-          const err = lineErrors().get(line.id);
-          if (err === 'AdjustmentReasonNotProvided')
-            return t('error.provide-reason');
-          if (err === 'AdjustmentReasonNotValid')
-            return t('error.provide-valid-reason');
-          return undefined;
-        };
-        // Offer only reasons valid for the line's adjustment direction; a zero
-        // variance (or uncounted) line has no direction, so the picker is
-        // disabled — a zero adjustment never takes a reason (rules.md §reason
-        // rules). setCounted clears a now-mismatched reason when the count
-        // changes direction, so the disabled default 'positive' is never read.
-        const direction = () => adjustmentDirection(line);
-        return (
-          <ReasonSelect
-            kind={direction() ?? 'positive'}
-            label={t('label.reason')}
-            hideLabel
-            disabled={!line.countThisLine || direction() === null}
-            value={line.reasonOption?.id}
-            error={error()}
-            errorTestId="stocktake-line-error"
-            placeholder={t('label.select-reason')}
-            onChange={r =>
-              update(
-                line.id,
-                'reasonOption',
-                r ? { id: r.id, type: r.type, reason: r.reason } : null
-              )
-            }
-          />
-        );
-      },
-    },
+    // Reason — omitted entirely under blind stocktake, since no reason is
+    // ever required (see hideReason above).
+    ...(hideReason()
+      ? []
+      : [
+          {
+            c: { id: 'inventoryAdjustmentReasonInput' },
+            header: () => t('label.reason'),
+            cardGroup: 'batch',
+            cell: info => {
+              const line = info.row.original;
+              const error = () => {
+                const err = lineErrors().get(line.id);
+                if (err === 'AdjustmentReasonNotProvided')
+                  return t('error.provide-reason');
+                if (err === 'AdjustmentReasonNotValid')
+                  return t('error.provide-valid-reason');
+                return undefined;
+              };
+              // Offer only reasons valid for the line's adjustment direction; a zero
+              // variance (or uncounted) line has no direction, so the picker is
+              // disabled — a zero adjustment never takes a reason (rules.md §reason
+              // rules). setCounted clears a now-mismatched reason when the count
+              // changes direction, so the disabled default 'positive' is never read.
+              const direction = () => adjustmentDirection(line);
+              return (
+                <ReasonSelect
+                  kind={direction() ?? 'positive'}
+                  label={t('label.reason')}
+                  hideLabel
+                  disabled={!line.countThisLine || direction() === null}
+                  value={line.reasonOption?.id}
+                  error={error()}
+                  errorTestId="stocktake-line-error"
+                  placeholder={t('label.select-reason')}
+                  onChange={r =>
+                    update(
+                      line.id,
+                      'reasonOption',
+                      r ? { id: r.id, type: r.type, reason: r.reason } : null
+                    )
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]),
     {
       c: { key: 'note' },
-      header: t('label.note'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.note'),
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1271,8 +1325,8 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'comment' },
-      header: t('label.stocktake-comment'),
-      tabsAndCardGroups: ['other'],
+      header: () => t('label.stocktake-comment'),
+      cardGroup: 'other',
       cell: info => {
         const line = info.row.original;
         return (
@@ -1291,9 +1345,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { id: 'actions' },
-      header: t('label.actions'),
-      tabsAndCardGroups: ALL_TABS,
-      meta: { card: { region: 'badge' }, align: 'right' },
+      header: () => t('label.actions'),
+      // Structural row-actions column — not user-configurable, so keep it out
+      // of the Columns popover.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1386,37 +1445,27 @@ const StocktakeLineEditContent = (
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           {/* Before an item is picked: nothing to save, so only Cancel shows.
-              Once an item is chosen, OK / OK & next appear. */}
+              Once an item is chosen, Save / Save & next appear. */}
           <Show when={!noItemYet()}>
-            <Button
-              icon={<CheckIcon />}
+            <DialogSaveButton
               loading={busy()}
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
-            >
-              {t('button.ok')}
-            </Button>
-            {/* OK & next: ALWAYS shown once an item is loaded (both modes). In
-                update mode it advances to the next item, or — when the walk is
-                exhausted — saves and drops into add mode. In add mode it saves
-                and returns to the search to add another. */}
-            <Button
-              icon={<ArrowRightIcon />}
+            />
+            {/* Save & next: ALWAYS shown once an item is loaded (both modes).
+                In update mode it advances to the next item, or — when the
+                walk is exhausted — saves and drops into add mode. In add mode
+                it saves and returns to the search to add another. */}
+            <SaveAndNextButton
               loading={busy()}
               data-testid="dialog-button-next-and-ok"
               onClick={() => void onOkNext()}
-            >
-              {t('button.ok-and-next')}
-            </Button>
+            />
           </Show>
         </>
       }
@@ -1436,7 +1485,7 @@ const StocktakeLineEditContent = (
           rows={rows()}
           rowKey={line => line.id}
           loading={loadingLines()}
-          tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+          cardGroups={CARD_GROUPS}
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}

@@ -51,7 +51,7 @@
    the customer field once the shipment is read-only / requisition-sourced —
    reads as read-only rather than as an editable white field. */
 .control:has(.input:disabled) {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
 }
 
 .searchIcon {
@@ -82,6 +82,13 @@
   color: var(--gray-main);
 }
 
+/* Grey the typed text too, matching the other disabled inputs (Kobalte leaves
+   the input's own colour otherwise). Placed after the base .input rules so
+   specificity ascends (no-descending-specificity). */
+.input:disabled {
+  color: var(--text-disabled);
+}
+
 .clear,
 .toggle {
   display: inline-flex;
@@ -107,7 +114,7 @@
 /* Disabled field: the clear button stays visible but dimmed and inert (the
    field is read-only, so its value can't be cleared). */
 .clear:disabled {
-  opacity: 0.4;
+  opacity: var(--disabled-opacity);
   cursor: default;
 }
 
@@ -158,6 +165,16 @@
   margin-block-end: var(--space-2);
 }
 
+/* Action row pinned under the scrolling listbox (e.g. the patient picker's
+   "Create patient" entry): a non-shrinking row separated from the options by a
+   hairline, so it reads as an action on the search rather than another result. */
+.listboxFooter {
+  flex: none;
+  margin-block-start: var(--space-2);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--color-border-value);
+}
+
 .listbox {
   display: flex;
   flex-direction: column;
@@ -197,7 +214,7 @@
    as Select's .item[data-disabled]. Visible for context, not selectable; no
    pointer affordance. */
 .item[data-disabled] {
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: default;
 }
 
@@ -231,9 +248,26 @@
   flex-shrink: 0;
 }
 
+/* Small variant: denser frame + 13px label/input, matching the shared input
+   size scale (--input-height-sm / --input-font-sm). */
+.field[data-size='small'] .control {
+  height: var(--input-height-sm);
+}
+
+.field[data-size='small'] .label,
+.field[data-size='small'] .input {
+  font-size: var(--input-font-sm);
+}
+
 @media (pointer: coarse) {
+  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input;
+     .item rows keep the generic --touch-target tap floor. */
   .control {
-    min-height: var(--touch-target);
+    min-height: var(--input-height-touch);
+  }
+
+  .field[data-size='small'] .control {
+    min-height: var(--input-height-sm-touch);
   }
 
   /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */

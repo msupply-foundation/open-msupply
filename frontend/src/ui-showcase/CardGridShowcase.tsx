@@ -3,7 +3,8 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
-import { Lead } from './common';
+import { Lead, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
 import styles from './CardGridShowcase.module.css';
 
 // Generic placeholder "cards" — plain coloured blocks so it's the grid's own
@@ -23,10 +24,32 @@ const Block = (props: { n: number }) => (
  * add/drop and the blocks wrap. (Its first real consumer, the dashboard, is
  * demoed under Statistics laying out DashboardCards.)
  */
+export const cardGridMetadata: PageMetadata = {
+  id: 'card-grid',
+  title: 'Card grid',
+  searchTerms: ['grid', 'layout', 'responsive'],
+  items: [
+    {
+      id: 'card-grid-default',
+      title: 'Default columns',
+      searchTerms: ['intrinsic', 'twenty rem', 'responsive'],
+    },
+    {
+      id: 'card-grid-narrow',
+      title: 'Narrower columns',
+      searchTerms: ['min column width', 'dense', 'small'],
+    },
+  ],
+};
+
 export const CardGridShowcase = () => (
   <ContentContainer size="form">
     <Stack gap="lg">
-      <DashboardCard title="CardGrid — responsive intrinsic grid (default 20rem columns)">
+      <SectionTOC page={cardGridMetadata} />
+      <DashboardCard
+        id="card-grid-default"
+        title="CardGrid — responsive intrinsic grid (default 20rem columns)"
+      >
         <Lead>
           <code>repeat(auto-fit, minmax(min(minColumnWidth, 100%), 1fr))</code>{' '}
           — fits as many equal columns of at least <code>minColumnWidth</code>{' '}
@@ -40,7 +63,10 @@ export const CardGridShowcase = () => (
         </CardGrid>
       </DashboardCard>
 
-      <DashboardCard title="CardGrid — narrower columns via minColumnWidth">
+      <DashboardCard
+        id="card-grid-narrow"
+        title="CardGrid — narrower columns via minColumnWidth"
+      >
         <Lead>
           The one knob is <code>minColumnWidth</code> (any CSS length). Here
           it's <code>10rem</code>, so more, narrower columns pack in before the

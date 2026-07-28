@@ -7,6 +7,7 @@ import {
   type Row as TanRow,
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
+import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
 // The alignment convention carried on a column's meta (set by the cell
@@ -23,6 +24,19 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   return lines && lines > 1 ? lines : undefined;
 };
 
+// The monospace convention: code-like value cells render in --font-mono (set by
+// the `code` cell kind). Value cells only — the header label stays sans.
+const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.mono ?? false;
+
+// A column's real growth cap in px (delivered as max-width), or undefined.
+// TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
+// columnDef, so only a value below that sentinel counts as an actual cap.
+const cellMaxWidthPx = <T,>(cell: TanCell<T, unknown>): number | undefined => {
+  const max = cell.column.columnDef.maxSize;
+  return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
+};
+
 // A body row: its cells, clickable when onRowClick is set. Extracted from
 // DataTable.tsx (table-view row rendering).
 export function TableRow<T>(props: {
@@ -30,10 +44,11 @@ export function TableRow<T>(props: {
   enableSelection: boolean;
   onRowClick?: (row: T) => void;
   /**
-   * De-emphasise this row (read-only records — e.g. SHIPPED+ shipments,
-   * ui-standards list-views): stamps data-dimmed, styled in CSS.
+   * Semantic row state (ui-standards § tables row states) — 'verified' /
+   * 'warning' / 'disabled', derived by the page from the record's own facts
+   * (see DataTable's prop doc). Stamps data-row-state, styled in CSS.
    */
-  rowDimmed?: (row: T) => boolean;
+  rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
    * (placeholder / uncounted lines), 'error' for a line the server refused
@@ -64,9 +79,9 @@ export function TableRow<T>(props: {
       // address a specific row in the DOM (e.g. scroll it into view).
       data-row-key={props.row.id}
       class={props.onRowClick ? styles.rowClickable : undefined}
-      data-dimmed={
-        !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)
-          ? ''
+      data-row-state={
+        !props.row.getIsGrouped()
+          ? props.rowState?.(props.row.original)
           : undefined
       }
       data-tone={
@@ -86,8 +101,8 @@ export function TableRow<T>(props: {
           data-pinned="left"
           style={props.leadingPinnedStyle(0)}
         >
-          <input
-            type="checkbox"
+          <BareCheckbox
+            class={styles.selectBox}
             aria-label={t('table.select-row')}
             data-testid="select-row-checkbox"
             checked={props.row.getIsSelected()}
@@ -105,15 +120,22 @@ export function TableRow<T>(props: {
               // scoped by row (row.getByTestId('cell-batch')).
               data-testid={`cell-${cell.column.id}`}
               data-align={cellAlign(cell)}
+              data-mono={cellMono(cell) ? '' : undefined}
               data-pinned={cell.column.getIsPinned() || undefined}
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
               // 1, the cell clamps to that many lines then ellipsises (CSS
               // line-clamp); otherwise the default single-line nowrap applies.
-              // min-width keeps the column-width floor. A pinned column
-              // additionally gets sticky position + its edge offset.
+              // min-width keeps the column-width floor (getSize()); maxSize is
+              // the growth cap, applied as max-width (docs/CELL_TYPES.md).
+              // TanStack merges its default maxSize (MAX_SAFE_INTEGER) into
+              // every columnDef, so only a value below that sentinel is a real
+              // cap. A pinned column additionally gets sticky position + offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
+                ...(cellMaxWidthPx(cell) !== undefined
+                  ? { 'max-width': `${cellMaxWidthPx(cell)}px` }
+                  : {}),
                 ...(cellWrapLines(cell)
                   ? { '--wrap-lines': String(cellWrapLines(cell)) }
                   : {}),

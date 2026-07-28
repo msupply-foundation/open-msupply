@@ -24,7 +24,7 @@ import { DateRangeField } from '../../ui/elements/inputs/DateRangeField';
 import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
 import { fetchLocations, type Location } from '../location/locationResource';
-import { ProgramSelect } from '../program/ProgramSelect';
+import { ProgramDocumentSelect } from '../program/ProgramDocumentSelect';
 import {
   ProgramListSelect,
   type ProgramListPick,
@@ -46,8 +46,13 @@ import {
 } from '../reasonOptions/reasonOptionsResource';
 import { ScheduleFormFields } from './ScheduleFormFields';
 import { storeContext, currentStoreId } from '../../store/storeContext';
+import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
 import {
   cleanArguments,
+  dateArgumentDay,
+  dateArgumentValue,
+  dateFieldBounds,
+  dateFieldViolation,
   dayStartInstant,
   parseArgumentSchema,
   periodSearchWrites,
@@ -363,6 +368,24 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       ? t('error.field-required')
       : undefined;
 
+  // A date field's bound violation (AC-R18), as its inline message. Unlike the
+  // required nag this shows immediately — it marks an actively wrong typed
+  // entry (the picker can't produce one) — and it gates OK (see submit).
+  const dateError = (
+    field: Extract<ParsedField, { kind: 'date' }>
+  ): string | undefined => {
+    switch (dateFieldViolation(field, values, localTodayIso())) {
+      case 'future':
+        return t('error.date_disableFuture');
+      case 'min':
+        return t('error.date_minDate');
+      case 'max':
+        return t('error.date_maxDate');
+      default:
+        return undefined;
+    }
+  };
+
   // OK: block while a rendered required field is empty (AC-R7 — the inline
   // error appears at the field), then emit the cleaned values: empties
   // stripped (absent ≠ "" server-side), numbers as numbers (AC-R8). unwrap()
@@ -377,7 +400,14 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
         : field.kind === 'scheduleForm' &&
           field.requiredKeys.some(key => isEmpty(key))
     );
-    if (missing) {
+    // A date outside its bounds also blocks (AC-R18) — only typed entry can
+    // produce one, and its message is already showing at the field.
+    const outOfBounds = fields().some(
+      field =>
+        field.kind === 'date' &&
+        dateFieldViolation(field, values, localTodayIso()) !== undefined
+    );
+    if (missing || outOfBounds) {
       setAttempted(true);
       return;
     }
@@ -445,25 +475,46 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match
                 when={
-                  field.kind === 'date' && !field.dateTime ? field : undefined
+                  field.kind === 'date' && (!field.dateTime || field.dateOnly)
+                    ? field
+                    : undefined
                 }
                 keyed
               >
+                {/* Calendar-day entry: plain `format: 'date'` fields, and
+                    date-time fields whose element asks for date-only entry
+                    (AC-R18) — those still store an instant (the picked day
+                    widened, dateArgumentValue), so a bare date never reaches
+                    the data query's DateTime variables. Bounds resolve live
+                    from the sibling values (min/max scope refs + no-future). */}
                 {dateField => (
                   <DateField
                     label={dateField.label}
                     width="full"
-                    value={textValue(dateField.key)}
+                    value={dateArgumentDay(values[dateField.key])}
+                    min={
+                      dateFieldBounds(dateField, values, localTodayIso()).min
+                    }
+                    max={
+                      dateFieldBounds(dateField, values, localTodayIso()).max
+                    }
                     disabled={dateField.readOnly}
                     required={dateField.required}
-                    error={requiredError(dateField)}
-                    onChange={value => setValues(dateField.key, value ?? '')}
+                    error={requiredError(dateField) ?? dateError(dateField)}
+                    onChange={value =>
+                      setValues(
+                        dateField.key,
+                        value ? dateArgumentValue(dateField, value) : ''
+                      )
+                    }
                   />
                 )}
               </Match>
               <Match
                 when={
-                  field.kind === 'date' && field.dateTime ? field : undefined
+                  field.kind === 'date' && field.dateTime && !field.dateOnly
+                    ? field
+                    : undefined
                 }
                 keyed
               >
@@ -479,7 +530,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     value={textValue(dateTimeField.key) || null}
                     disabled={dateTimeField.readOnly}
                     required={dateTimeField.required}
-                    error={requiredError(dateTimeField)}
+                    error={
+                      requiredError(dateTimeField) ?? dateError(dateTimeField)
+                    }
                     onChange={value =>
                       setValues(dateTimeField.key, value ?? '')
                     }
@@ -549,10 +602,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match when={field.kind === 'program' ? field : undefined} keyed>
                 {programField => (
-                  <ProgramSelect
+                  <ProgramDocumentSelect
                     label={programField.label}
                     value={selectValue(programField.key)}
-                    onChange={contextId =>
+                    onChange={(contextId: string | null) =>
                       setValues(programField.key, contextId ?? undefined)
                     }
                     error={requiredError(programField)}

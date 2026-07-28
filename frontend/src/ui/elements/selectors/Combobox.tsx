@@ -1,4 +1,5 @@
 import {
+  children,
   createEffect,
   createMemo,
   createSignal,
@@ -92,6 +93,23 @@ interface ComboboxProps<T> {
    * blanked mid-keystroke.
    */
   loading?: boolean;
+  /**
+   * The status text shown when a settled search matched nothing (server mode's
+   * "no matches" state). Defaults to "No matching items"; a caller overrides it
+   * for a domain-specific message — e.g. the patient picker's "No matching
+   * patients".
+   */
+  noResultsMessage?: string;
+  /**
+   * The status text shown when the list is empty and NOTHING has been typed —
+   * the type-to-search prompt of a picker that doesn't list its whole set
+   * unqueried (e.g. the patient picker's "Start typing to search"). Defaults to
+   * `noResultsMessage`, so a caller with one message for both states keeps its
+   * current behaviour. Split them wherever a search can settle with no match:
+   * telling someone who has typed a name to start typing withholds the only
+   * fact that matters — the record isn't there (patients D68).
+   */
+  emptyQueryMessage?: string;
   disabled?: boolean;
   /**
    * Whether a committed selection can be cleared (the clear button). Default
@@ -141,6 +159,14 @@ interface ComboboxProps<T> {
    */
   listboxHeader?: JSX.Element;
   /**
+   * Content pinned at the BOTTOM of the open listbox popup, under the
+   * options — an action on the search rather than a result (e.g. the patient
+   * picker's "Create patient" entry). Like `listboxHeader` it lives inside the
+   * popup's own content, so interacting with it doesn't dismiss the popup.
+   * Omit for a plain combobox.
+   */
+  listboxFooter?: JSX.Element;
+  /**
    * By default the popup matches the trigger's width (Kobalte `sameWidth`). Pass
    * `false` to let it size to its content instead — never narrower than the
    * trigger, capped so it stays readable and never runs past the viewport — for
@@ -148,6 +174,12 @@ interface ComboboxProps<T> {
    * narrow field.
    */
   matchTriggerWidth?: boolean;
+  /**
+   * Control size. 'default' is the form-field size; 'small' is the compact
+   * variant for dense contexts (e.g. cards). Matches the shared input size
+   * scale (see --input-height*).
+   */
+  size?: 'default' | 'small';
   class?: string;
 }
 
@@ -187,29 +219,32 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // input, rather than the input keeping the stale item). When the key isn't in
   // `items` (a server-fed selection from outside the current result page), fall
   // back to `selectedItem` if the caller supplied it. Guarded by
-  // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
+  // `on([value, items], ...)` so it only reacts to those two, not the user's
+  // own pick — tracking `items` too (not just `value`) matters for a
+  // non-suspending resource: a picker that mounts with `value` already set
+  // (e.g. a detail screen loaded with a clinician already attached) resolves
+  // against an empty `items` on the first run, and without `items` in the
+  // dependency list the lookup would never re-run once the resource's fetch
+  // actually lands — leaving the field permanently blank.
   //
   // Async/server pickers whose current selection may not be in the loaded page
   // keep it visible by seeding it into `items` themselves (see AsyncCombobox) —
   // the resolution here is a plain lookup against whatever `items` holds.
   createEffect(
-    on(
-      () => props.value,
-      value => {
-        const inItems =
-          value === undefined
-            ? null
-            : (props.items.find(item => keyOf(item) === value) ?? null);
-        const fallback =
-          value !== undefined &&
-          props.selectedItem &&
-          keyOf(props.selectedItem) === value
-            ? props.selectedItem
-            : null;
-        const match = inItems ?? fallback;
-        if (match !== selected()) setSelected(() => match);
-      }
-    )
+    on([() => props.value, () => props.items], ([value, items]) => {
+      const inItems =
+        value === undefined
+          ? null
+          : (items.find(item => keyOf(item) === value) ?? null);
+      const fallback =
+        value !== undefined &&
+        props.selectedItem &&
+        keyOf(props.selectedItem) === value
+          ? props.selectedItem
+          : null;
+      const match = inItems ?? fallback;
+      if (match !== selected()) setSelected(() => match);
+    })
   );
   // Inside a Dialog, mount the listbox into the dialog element (top layer +
   // non-inert); outside one this is undefined and Kobalte's default <body>
@@ -241,6 +276,17 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       ? props.items.length === 0
       : props.items.every(item => !matches(item, filterText()))
   );
+
+  // The empty-list copy splits in two (see emptyQueryMessage): nothing typed
+  // is a prompt, a settled search with no rows is an answer. Callers that pass
+  // one message get one — emptyQueryMessage falls back to noResultsMessage.
+  const emptyMessage = () =>
+    (filterText().trim() === ''
+      ? (props.emptyQueryMessage ?? props.noResultsMessage)
+      : props.noResultsMessage) ?? 'No matching items';
+
+  // Resolved once per change and read twice below (test + render).
+  const footer = children(() => props.listboxFooter);
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
@@ -284,6 +330,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-size={props.size ?? 'default'}
       options={options()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
@@ -405,7 +452,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <div class={styles.status}>Loading…</div>
           </Show>
           <Show when={!props.loading && noMatches()}>
-            <div class={styles.status}>No matching items</div>
+            <div class={styles.status}>{emptyMessage()}</div>
           </Show>
           {/* The listbox owns the scroll; in server mode onScroll fetches the
               next page near the bottom (see onListboxScroll). */}
@@ -417,6 +464,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
               while the next page is in flight. */}
           <Show when={props.loadingMore}>
             <div class={styles.status}>Loading…</div>
+          </Show>
+          {/* Action row under the options (e.g. "Create patient"). Last, so it
+              never displaces a result the user is reaching for. Resolved
+              through `children()`: an element prop read twice — once to test,
+              once to render — is otherwise built twice
+              (kdd/solid-reactivity-pitfalls §3). */}
+          <Show when={footer()}>
+            <div class={styles.listboxFooter}>{footer()}</div>
           </Show>
         </KCombobox.Content>
       </KCombobox.Portal>

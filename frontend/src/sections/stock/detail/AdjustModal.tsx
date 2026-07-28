@@ -18,9 +18,11 @@ import {
   adjustedQuantity,
   wouldGoBelowZero,
   backdatedDatetime as computeBackdatedDatetime,
+} from '../stockCalc';
+import {
   localTodayIso,
   localIsoDaysAgo,
-} from '../stockCalc';
+} from '../../../ui/elements/inputs/dateTimeConvert';
 import {
   HistoricalStockLines,
   type StockLineDetailFragment,

@@ -20,19 +20,28 @@ import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
+import { customersRoutes, suppliersRoutes } from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { internalOrdersRoutes } from './sections/internal-orders';
+import { itemsRoutes } from './sections/items';
+import { patientsRoutes } from './sections/patients';
+import { cliniciansRoutes } from './sections/clinicians';
+import { prescriptionsRoutes } from './sections/prescriptions';
+import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
-import { helpRoutes } from './sections/help';
+import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
+import { StaleBundleModal } from './StaleBundleModal';
+import { startStaleBundleWatch } from './staleBundle';
 import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
@@ -45,14 +54,23 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 const sectionRoutes: Record<string, () => JSX.Element> = {
   dashboard: dashboardRoutes,
   'inventory/stocktakes': stocktakesRoutes,
+  'distribution/customers': customersRoutes,
+  'replenishment/suppliers': suppliersRoutes,
   'inventory/locations': locationsRoutes,
   'distribution/customer-return': customerReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
+  'replenishment/internal-order': internalOrdersRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'catalogue/items': itemsRoutes,
+  'catalogue/master-lists': masterListsRoutes,
+  'dispensary/patients': patientsRoutes,
+  'dispensary/clinicians': cliniciansRoutes,
+  'dispensary/prescription': prescriptionsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
+  'manage/help-documents': helpDocumentsRoutes,
 };
 
 export const App: Component = () => {
@@ -86,7 +104,11 @@ export const App: Component = () => {
   onMount(() => {
     void runStartup();
     const stopTracking = startActivityTracking();
-    onCleanup(stopTracking);
+    const stopStaleBundleWatch = startStaleBundleWatch();
+    onCleanup(() => {
+      stopTracking();
+      stopStaleBundleWatch();
+    });
   });
 
   // The single owner of document direction/lang, driven by the real i18n locale
@@ -163,6 +185,7 @@ export const App: Component = () => {
       </Switch>
       {/* On top of everything, including other modals. */}
       <UnexpectedErrorModal />
+      <StaleBundleModal />
     </>
   );
 };

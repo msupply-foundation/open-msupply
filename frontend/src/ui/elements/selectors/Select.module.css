@@ -10,7 +10,28 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
+}
+
+/* Max-width caps, mirroring TextField's `width` prop (default short). `full`
+   lets the dropdown fill its container — e.g. a detail row's value column. */
+.field[data-width='short'] {
   max-width: var(--input-max-short);
+}
+
+/* Compact keeps the field at the short cap so a longer label still has room;
+   the trigger box itself narrows to 10rem below (after the base .trigger rules,
+   to satisfy no-descending-specificity), exactly as TextField's compact narrows
+   only its input. The value already ellipsises (see .value) if it overruns. */
+.field[data-width='compact'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
 }
 
 .label {
@@ -48,10 +69,16 @@
 }
 
 .trigger[data-disabled] {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: not-allowed;
+}
+
+/* Compact width: narrow only the trigger box to 10rem (see the .field cap
+   above). Placed after the base .trigger rules so specificity ascends. */
+.field[data-width='compact'] .trigger {
+  max-width: var(--input-max-compact);
 }
 
 .value {
@@ -116,7 +143,7 @@
 }
 
 .item[data-disabled] {
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: default;
 }
 
@@ -153,27 +180,38 @@
 }
 
 @media (pointer: coarse) {
-  .trigger,
+  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input.
+     Dropdown .item rows keep the generic --touch-target tap floor. */
+  .trigger {
+    min-height: var(--input-height-touch);
+  }
+
+  .field[data-size='small'] .trigger {
+    min-height: var(--input-height-sm-touch);
+  }
+
   .item {
     min-height: var(--touch-target);
   }
 }
 
-/* Compact variant (size="sm"): redefine the size tokens the trigger/label/icon already
-   read, so the whole control scales down from one place. Placed after the base rules so
-   specificity ascends. */
-.field[data-size='sm'] {
-  --input-height: 1.75rem;
-  --input-padding-x: var(--space-2);
-
-  gap: var(--space-1);
+/* Small variant: denser height + 13px text, matching the shared input scale
+   (36px / --input-font-sm — NOT a bespoke size). Placed after the base rules so
+   specificity ascends. ONLY height and font-size change here: the label→control
+   gap (--input-field-gap) and horizontal padding (--input-padding-x) stay on the
+   base .field's shared tokens — the same ones TextField / DateField use at every
+   size — so a small Select lines up with them on BOTH the label→input gap and
+   the text inset (Carl 2026-07-27; previously overrode the gap to --space-1 and
+   the padding to --space-2, so it sat 2px high with the text 4px in). */
+.field[data-size='small'] .trigger {
+  height: var(--input-height-sm);
 }
 
-.field[data-size='sm'] .label,
-.field[data-size='sm'] .trigger {
-  font-size: var(--text-xs);
+.field[data-size='small'] .label,
+.field[data-size='small'] .trigger {
+  font-size: var(--input-font-sm);
 }
 
-.field[data-size='sm'] .triggerIcon {
+.field[data-size='small'] .triggerIcon {
   font-size: 1rem;
 }

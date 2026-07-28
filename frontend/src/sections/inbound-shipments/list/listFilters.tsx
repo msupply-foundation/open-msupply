@@ -4,7 +4,7 @@ import {
   FilterSelect,
   FilterTextInput,
   FilterNumberInput,
-  FilterDate,
+  FilterDateRange,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
@@ -88,14 +88,6 @@ const KIND_OPTIONS: readonly { value: OriginKind | ''; label: string }[] = [
   { value: 'fromInternalOrder', label: t('label.from-internal-order') },
   { value: 'fromPurchaseOrder', label: t('label.from-purchase-order') },
 ];
-
-// A native date (yyyy-mm-dd) → the day's inclusive datetime bounds, so a
-// DatetimeFilterInput can express a "between" range from date-only inputs.
-const startOfDay = (d: string) => `${d}T00:00:00.000Z`;
-const endOfDay = (d: string) => `${d}T23:59:59.999Z`;
-// A stored bound (full ISO datetime) → the yyyy-mm-dd the date input shows.
-const toDateInput = (iso: string | null | undefined) =>
-  iso ? iso.slice(0, 10) : '';
 
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the inbound-shipments list
@@ -218,73 +210,32 @@ const FILTERS: Filter<InboundListFilter>[] =
         />
       ),
     },
-    // Created date — a between range built from two native date inputs.
+    // Created / Delivered — DateTime fields; FilterDateRange (type="dateTime")
+    // owns the local ⇄ UTC conversion (#456).
     createdDatetime: {
       label: () => t('label.created'),
       render: props => (
-        <span style={{ display: 'inline-flex', gap: 'var(--space-2)' }}>
-          <FilterDate
-            label={t('label.from')}
-            testId={props.testId}
-            value={toDateInput(props.filter().createdDatetime?.afterOrEqualTo)}
-            onInput={value =>
-              props.setPartialFilter({
-                createdDatetime: {
-                  ...props.filter().createdDatetime,
-                  afterOrEqualTo: value ? startOfDay(value) : undefined,
-                },
-              })
-            }
-          />
-          <FilterDate
-            label={t('label.to')}
-            value={toDateInput(props.filter().createdDatetime?.beforeOrEqualTo)}
-            onInput={value =>
-              props.setPartialFilter({
-                createdDatetime: {
-                  ...props.filter().createdDatetime,
-                  beforeOrEqualTo: value ? endOfDay(value) : undefined,
-                },
-              })
-            }
-          />
-        </span>
+        <FilterDateRange
+          type="dateTime"
+          label={t('label.created')}
+          testId={props.testId}
+          value={props.filter().createdDatetime}
+          onChange={value => props.setPartialFilter({ createdDatetime: value })}
+        />
       ),
     },
     deliveredDatetime: {
       label: () => t('label.delivered'),
       render: props => (
-        <span style={{ display: 'inline-flex', gap: 'var(--space-2)' }}>
-          <FilterDate
-            label={t('label.from')}
-            testId={props.testId}
-            value={toDateInput(
-              props.filter().deliveredDatetime?.afterOrEqualTo
-            )}
-            onInput={value =>
-              props.setPartialFilter({
-                deliveredDatetime: {
-                  ...props.filter().deliveredDatetime,
-                  afterOrEqualTo: value ? startOfDay(value) : undefined,
-                },
-              })
-            }
-          />
-          <FilterDate
-            label={t('label.to')}
-            value={toDateInput(
-              props.filter().deliveredDatetime?.beforeOrEqualTo
-            )}
-            onInput={value =>
-              props.setPartialFilter({
-                deliveredDatetime: {
-                  ...props.filter().deliveredDatetime,
-                  beforeOrEqualTo: value ? endOfDay(value) : undefined,
-                },
-              })
-            }
-          />
-        </span>
+        <FilterDateRange
+          type="dateTime"
+          label={t('label.delivered')}
+          testId={props.testId}
+          value={props.filter().deliveredDatetime}
+          onChange={value =>
+            props.setPartialFilter({ deliveredDatetime: value })
+          }
+        />
       ),
     },
 

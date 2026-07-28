@@ -3,15 +3,15 @@ import { ItemsWithStock, type ItemsWithStockResult } from './item.generated';
 import type { Page } from '../../ui/utils/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
-// "code - name" and a total (Σ batch packs * packSize) + unit; id feeds the
-// selection and the exclude-already-added logic.
+// "code - name" and available stock (Σ available batch packs * packSize) + unit;
+// id feeds the selection and the exclude-already-added logic.
 export type ItemOption = {
   id: string;
   code: string;
   name: string;
   unitName: string | null;
-  /** Total units in store = Σ availableBatches (totalNumberOfPacks * packSize). */
-  totalUnits: number;
+  /** Available units in store = Σ availableBatches (availableNumberOfPacks * packSize). */
+  availableUnits: number;
   /** Whether the item is a vaccine — gates the doses / VVM display downstream. */
   isVaccine: boolean;
   /** The item's configured doses-per-unit — the doses-display multiplier. */
@@ -30,11 +30,12 @@ type ItemNode = Extract<
   { __typename: 'ItemConnector' }
 >['nodes'][number];
 
-// Σ over the item's available batches of packs * packSize — the "total" shown
-// in the option row (summed client-side; see item.graphql for why not a stat).
-const totalUnitsOf = (node: ItemNode): number =>
+// Σ over the item's available batches of availableNumberOfPacks * packSize — the
+// AVAILABLE-stock figure shown in the option row (summed client-side; see
+// item.graphql for why not a stat, and why available rather than total).
+const availableUnitsOf = (node: ItemNode): number =>
   node.availableBatches.nodes.reduce(
-    (sum, batch) => sum + batch.totalNumberOfPacks * batch.packSize,
+    (sum, batch) => sum + batch.availableNumberOfPacks * batch.packSize,
     0
   );
 
@@ -74,7 +75,7 @@ export const fetchItemById = async (
     code: node.code,
     name: node.name,
     unitName: node.unitName,
-    totalUnits: totalUnitsOf(node),
+    availableUnits: availableUnitsOf(node),
     isVaccine: node.isVaccine,
     doses: node.doses,
     defaultPackSize: node.defaultPackSize,
@@ -113,7 +114,7 @@ export const itemPageFetcher =
         code: node.code,
         name: node.name,
         unitName: node.unitName,
-        totalUnits: totalUnitsOf(node),
+        availableUnits: availableUnitsOf(node),
         isVaccine: node.isVaccine,
         doses: node.doses,
         defaultPackSize: node.defaultPackSize,

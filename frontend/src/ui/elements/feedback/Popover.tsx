@@ -1,4 +1,11 @@
-import { createUniqueId, onCleanup, onMount, type JSX } from 'solid-js';
+import {
+  createSignal,
+  createUniqueId,
+  onCleanup,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
 import styles from './Popover.module.css';
 
 export type PopoverPlacement =
@@ -70,6 +77,15 @@ export const Popover = (props: PopoverProps) => {
   let trigger!: HTMLButtonElement;
   let panel!: HTMLDivElement;
   const panelId = createUniqueId();
+  // Panel content mounts lazily, on first open, not with the rest of the page
+  // — a Popover that's never opened (most of them, most page-loads) never
+  // constructs its children at all. Once true it STAYS true: closing again
+  // does not unmount (that would just move the construction cost from "every
+  // page load" to "every open", the same class of waste). `beforetoggle`
+  // fires synchronously before the panel becomes visible, so the first open's
+  // <Show> flip lands before `place()`'s queued microtask reads the panel's
+  // box (see the beforetoggle listener below).
+  const [everOpened, setEverOpened] = createSignal(false);
 
   const place = () => {
     // No box yet = the engine hasn't finished displaying the popover (the
@@ -150,6 +166,7 @@ export const Popover = (props: PopoverProps) => {
       const open = (event as ToggleEvent).newState === 'open';
       trigger.setAttribute('aria-expanded', String(open));
       if (open) {
+        setEverOpened(true);
         queueMicrotask(place);
         window.addEventListener('scroll', replace, {
           capture: true,
@@ -238,9 +255,24 @@ export const Popover = (props: PopoverProps) => {
         onMouseEnter={props.openOnHover ? show : undefined}
         onMouseLeave={props.openOnHover ? scheduleHide : undefined}
       >
-        {typeof props.children === 'function'
-          ? props.children(() => panel.hidePopover())
-          : props.children}
+        {/* Lazy mount: content is never constructed until the first open (see
+            everOpened above) — a Popover the user never opens costs nothing
+            beyond its trigger button. */}
+        <Show when={everOpened()}>
+          {(() => {
+            // Read props.children ONCE into a local: it's a getter compiled
+            // from the caller's JSX, so a second read (e.g. testing its type,
+            // then rendering it) re-evaluates that JSX and constructs the
+            // child a second time (solidjs/solid docs — the `children`
+            // helper exists for exactly this; not used here because it
+            // auto-invokes only NILADIC function children, and ours takes
+            // `close`).
+            const resolved = props.children;
+            return typeof resolved === 'function'
+              ? resolved(() => panel.hidePopover())
+              : resolved;
+          })()}
+        </Show>
       </div>
     </>
   );

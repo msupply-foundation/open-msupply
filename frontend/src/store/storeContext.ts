@@ -4,6 +4,7 @@ import {
   StoreContext,
   type StoreContextResult,
 } from '../api/storeContext.generated';
+import { authUser } from '../auth/authContext';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
 // Callers invoke refetchStoreContext directly — on store entry, and from
@@ -69,6 +70,7 @@ const stocktakePreferences = () => {
     manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
     manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
     allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    blindStocktake: prefs?.blindStocktake ?? false,
   };
 };
 
@@ -124,6 +126,67 @@ const inboundShipmentPreferences = () => {
   };
 };
 
+// The patient vertical's configuration gates (spec/patients § configuration
+// gates). `omProgramModule` (StorePreferenceNode) gates the program-related
+// surfaces — the list's Program-enrolments column/filter and the detail's
+// Programs/Encounters/Vaccinations tabs; `genderOptions` (PreferencesNode) is
+// the configured subset of genders every gender picker offers. Both default to
+// the safe OFF/empty while the context is unresolved so a gated surface never
+// flashes in before its preference is known (the same rule as the other
+// *Preferences accessors). Reactive — a post-sync refetch re-gates in place.
+// The WHOLE-surface dispensary gate (AC-G1) is `isDispensary` below.
+const patientPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    programModule: store?.omProgramModule ?? false,
+    genderOptions: prefs?.genderOptions ?? [],
+  };
+};
+
+// The prescriptions display/affordance gates (spec/prescriptions §
+// store-preference gates): the allocation-shaping trio (doses / VVM /
+// expired-issue) + the ordering variant, the list's status-options set, and
+// the legacy store preference gating the prescribed-quantity field/column.
+// Same safe defaults while unresolved as the other *Preferences accessors —
+// OFF for gated columns/fields, but `invoiceStatusOptions` empty means
+// UNRESTRICTED (every status offered until the real value resolves — the
+// permissive default, DIVERGENCES D7's precedent via AC-PR2). Reactive — a
+// post-sync refetch re-gates in place.
+const prescriptionPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    sortByVvmStatusThenExpiry: prefs?.sortByVvmStatusThenExpiry ?? false,
+    expiredStockPreventIssue: prefs?.expiredStockPreventIssue ?? false,
+    expiredStockIssueThreshold: prefs?.expiredStockIssueThreshold ?? 0,
+    invoiceStatusOptions: prefs?.invoiceStatusOptions ?? [],
+    // Unset/unresolved → SHOWN (the permissive default, matching the reference
+    // app's `?? true`): the prescribed-quantity field is a data-capture
+    // affordance the user expects; an explicit `false` hides it
+    // (spec/prescriptions § store-preference gates).
+    editPrescribedQuantity: store?.editPrescribedQuantityOnPrescription ?? true,
+  };
+};
+
+// The entered store's dispensary gate (spec/patients § configuration gates ›
+// AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
+// group (ShellLayout) and its routes (the patients section's route guard). The
+// store's mode rides the me/login response's store list
+// (UserStoreNode.storeMode), so it is known before any store is entered; the
+// entered store is the one `currentStoreId` names. Every gated surface renders
+// under StoreGuardLayout, which withholds its children until the context has
+// loaded, so callers read a settled value. Safe default OFF (not dispensary)
+// while the store is unresolved, so the patient surface never shows for a
+// non-dispensary store. Reactive — reads authUser + currentStoreId.
+const isDispensary = (): boolean => {
+  const storeId = currentStoreId();
+  const store = authUser()?.stores.nodes.find(s => s.id === storeId);
+  return store?.storeMode === 'DISPENSARY';
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -154,6 +217,9 @@ export {
   stocktakePreferences,
   stockPreferences,
   inboundShipmentPreferences,
+  patientPreferences,
+  prescriptionPreferences,
+  isDispensary,
   hasPermission,
 };
 export type { UserPermission };

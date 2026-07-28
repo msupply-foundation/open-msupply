@@ -13,6 +13,15 @@ import type { LayeredConfig } from './ui/elements/table/tableConfig';
 type AppData = {
   previousStoreIdByUserId?: Record<string, string>;
   tableConfigByUserId?: Record<string, Record<string, LayeredConfig>>;
+  // Label printer "print via USB" (spec/settings rules § Devices — label
+  // printer): a DEVICE-local preference, deliberately not keyed by user and
+  // never sent to the server (OMS-REG-SET-05.22) — it describes how this
+  // machine reaches the printer, not a user's or the store's choice.
+  labelPrinterUseUsb?: boolean;
+  // Mock barcode scanner toggle (spec/settings rules § Devices — barcode
+  // scanner): remembered on this device, never sent to the server — a
+  // testing aid tied to the machine, like the USB preference above.
+  mockBarcodeScannerEnabled?: boolean;
 };
 
 const APP_DATA_KEY = 'open-mSupply-app-data';
@@ -72,6 +81,32 @@ export const setUserTableConfig = (
       ...data,
       tableConfigByUserId: { ...data.tableConfigByUserId, [userId]: forUser },
     })
+  );
+};
+
+// Device-local label-printer USB preference (spec/settings OMS-REG-SET-05.22):
+// read and written only here; never part of LabelPrinterSettingsInput.
+export const getLabelPrinterUseUsb = (): boolean =>
+  readAppData().labelPrinterUseUsb ?? false;
+
+export const setLabelPrinterUseUsb = (useUsb: boolean): void => {
+  const data = readAppData();
+  localStorage.setItem(
+    APP_DATA_KEY,
+    JSON.stringify({ ...data, labelPrinterUseUsb: useUsb })
+  );
+};
+
+// Device-local mock-scanner toggle (spec/settings rules § Devices — barcode
+// scanner): read and written only here; never on the wire.
+export const getMockBarcodeScannerEnabled = (): boolean =>
+  readAppData().mockBarcodeScannerEnabled ?? false;
+
+export const setMockBarcodeScannerEnabled = (enabled: boolean): void => {
+  const data = readAppData();
+  localStorage.setItem(
+    APP_DATA_KEY,
+    JSON.stringify({ ...data, mockBarcodeScannerEnabled: enabled })
   );
 };
 

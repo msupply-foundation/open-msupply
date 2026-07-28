@@ -1,10 +1,24 @@
-import { createSignal, lazy, onCleanup, onMount, Show } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  lazy,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
-import { findLeafByPath, type NavLeaf } from '../ui/layout/AppShell/navModel';
+import {
+  findLeafByPath,
+  lowerNav,
+  upperNav,
+  type NavItem,
+  type NavLeaf,
+} from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
+import { hasPermission, isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
@@ -49,6 +63,30 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const onNavigate = (leaf: NavLeaf) =>
     navigate(`/${params.storeId}/${leaf.to}`);
 
+  // Nav visibility gates — reactive, because they read runtime signals the
+  // static nav model can't. Two concerns, one pass:
+  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only in
+  //    dispensary mode; the patients route guard blocks direct-URL entry to match.
+  //  • Central-only destinations (spec/help S2): a `central`-flagged entry
+  //    (Manage › Help documents) shows only on a central server to a server
+  //    admin; the help section's route guard blocks direct-URL entry to match.
+  // Memoised so the gated arrays — and the section objects rebuilt when a child
+  // is dropped — keep stable references; otherwise MenuBar's <For> would remount
+  // nav sections on every shell re-render (kdd/solid-reactivity-pitfalls).
+  const centralAdmin = () => isCentralServer() && hasPermission('SERVER_ADMIN');
+  const visible = (n: { central?: boolean }) => !n.central || centralAdmin();
+  const gateNav = (items: NavItem[]): NavItem[] =>
+    items
+      .filter(item => item.id !== 'dispensary' || isDispensary())
+      .filter(visible)
+      .map(item =>
+        item.children?.some(child => child.central) && !centralAdmin()
+          ? { ...item, children: item.children.filter(visible) }
+          : item
+      );
+  const menuUpper = createMemo(() => gateNav(upperNav));
+  const menuLower = createMemo(() => gateNav(lowerNav));
+
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
   // the one named by the URL. Activating the store selector routes to the
@@ -77,6 +115,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   return (
     <>
       <AppShell
+        upper={menuUpper()}
+        lower={menuLower()}
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}

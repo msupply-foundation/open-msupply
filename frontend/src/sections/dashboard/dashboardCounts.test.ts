@@ -8,8 +8,8 @@ import {
   StockCounts,
 } from './dashboardCounts.generated';
 
-// The dashboard's whole wire surface (spec/dashboard/contract.md). Criteria
-// cited from spec/dashboard/acceptance.md.
+// The dashboard's whole wire surface (spec/dashboard/contract.md).
+// Behaviours cited from spec/dashboard/cases/.
 
 const DOCUMENTS = {
   InboundShipmentCounts,
@@ -21,9 +21,9 @@ const DOCUMENTS = {
 };
 
 describe('dashboard wire surface', () => {
-  // AC-D1 — read-only and store-scoped: the vertical issues only count
-  // queries (no mutations), every one carrying the required storeId.
-  it('AC-D1: every operation is a query and requires storeId', () => {
+  // OMS-REG-DB-01.21/.24 — read-only and store-scoped: the vertical issues only
+  // count queries (no mutations), every one carrying the required storeId.
+  it('OMS-REG-DB-01.21/.24: every operation is a query and requires storeId', () => {
     for (const doc of Object.values(DOCUMENTS)) {
       expect(doc.query.trimStart().startsWith('query ')).toBe(true);
       expect(doc.query).toContain('$storeId: String!');
@@ -39,18 +39,18 @@ describe('dashboard wire surface', () => {
     }
   });
 
-  // contract.md § deprecated combined query — new work must use the three
-  // split invoice-count queries, never invoiceCounts.
+  // contract.md § deprecated combined query — new work must use the three split
+  // invoice-count queries, never invoiceCounts.
   it('never uses the deprecated invoiceCounts query', () => {
     for (const doc of Object.values(DOCUMENTS)) {
       expect(doc.query).not.toMatch(/\binvoiceCounts\s*\(/);
     }
   });
 
-  // contract.md § stock levels — the threshold arguments are declared so the
-  // app can always send them explicitly (AC-S8); stockCounts declares
-  // daysTillExpired for the same reason.
-  it('AC-S8: declares the explicit threshold arguments', () => {
+  // contract.md § stock levels — the threshold arguments are declared so the app
+  // can always send them explicitly (OMS-REG-DB-01.54); stockCounts declares
+  // daysTillExpired for the same reason (OMS-REG-DB-01.46).
+  it('OMS-REG-DB-01.54/.46: declares the explicit threshold arguments', () => {
     expect(ItemCounts.query).toContain('$lowStockThreshold: Float');
     expect(ItemCounts.query).toContain('$highStockThreshold: Float');
     expect(StockCounts.query).toContain('$daysTillExpired: Int');

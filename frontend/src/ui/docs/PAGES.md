@@ -10,6 +10,7 @@ How to build a page in `src/pages/`. Copy the closest recipe and go: [`pages/Hom
 - Pages own **no CSS**. No `.module.css` in `src/pages/` (`npm run check` fails the build if you add one). If a page seems to need CSS, a library component or token is missing — raise it.
 - **One `<AppShell>` per host**, not per page. The shell owns the menu + orange footer; pages swap inside it.
 - The page's **`<h1>` is the breadcrumb leaf** — never render another `h1`.
+- A **detail page's header fields** (supplier, references, dates, status, settings toggles) go in a **`<HeaderToolbar>`**, never a hand-rolled `<Toolbar>` — it enforces the field-row layout so every detail header reads the same (see [Header field cluster](#header-field-cluster)).
 - Run **`npm run check`** when done.
 
 ## Anatomy
@@ -145,6 +146,8 @@ Table cell conventions (data attributes on your own markup): `data-numeric` (end
         <HeaderButtons>
           <Button icon={<PlusCircleIcon />}>Add item</Button>
         </HeaderButtons>
+        {/* the header field cluster — see "Header field cluster" below */}
+        <HeaderToolbar>{/* fields… */}</HeaderToolbar>
         <TabList
           tabs={[
             { value: 'details', label: 'Details' },
@@ -195,6 +198,32 @@ Table cell conventions (data attributes on your own markup): `data-numeric` (end
 ```
 
 Side panel content is plain semantic markup: field rows are a `<dl>` of `dt`/`dd` pairs, free text is a `<p>` — the panel's own CSS styles both.
+
+## Header field cluster
+
+A detail page's **header fields** — a document's editable + read-only meta (supplier, references, dates, status, settings toggles) — go in a **`<HeaderToolbar>`**, the standard for this row; never hand-roll a `<Toolbar>` with your own FormRow/flex. `HeaderToolbar` enforces the field-row layout so every detail header reads the same. (The generic `<Toolbar>` stays for non-field toolbar content, e.g. a list `<FilterBar>`.)
+
+```tsx
+<HeaderToolbar
+  alert={
+    <Alert severity="info" compact>
+      Created manually; status won't update automatically.
+    </Alert>
+  }
+>
+  <Select label="Supplier name" size="small" width="full" … />
+  <TextField label="Reference" size="small" width="full" … />
+  <DateField label="Received" size="small" width="full" disabled … />
+  <LabelledValue label="Status" variant="field" size="small">
+    <StatusChip label="Received" colour="var(--status-received)" />
+  </LabelledValue>
+</HeaderToolbar>
+```
+
+- **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and **`width="full"`** so it fills its share.
+- **The three field kinds:** an editable input; a conditionally-locked **disabled** input (a field editable only in some document states); and a never-editable fact as a read-only **`<LabelledValue>`** (`variant="field"`, `size="small"`).
+- The optional **`alert`** prop takes a compact **`<Alert>`** — a content-hugging chip pinned to the bottom baseline, so it rides the row when there's room and drops to its own line when not, while the field labels line up along the top. A non-Alert trailing chip (e.g. a `<ToggleSwitch>`) opts into the same bottom-hug with an inline `flex: 0 1 auto; align-self: flex-end`.
+- Live demo: `#/showcase/header` (two field mixes).
 
 ## The host (until routing lands)
 

@@ -7,7 +7,9 @@
  * totals" — several controls, not one): children flow inline-start with a
  * consistent gap and wrap intrinsically, so a search box + a filter bar +
  * a labelled field line up on a shared baseline instead of stacking ragged.
- * A single child (the list's FilterBar) is unaffected.
+ * A single child (the list's FilterBar) is unaffected. The header field-cluster
+ * layout (FormRow + a trailing compact Alert) is NOT here — it lives in
+ * HeaderToolbar, which composes this generic row.
  */
 
 .toolbar {
