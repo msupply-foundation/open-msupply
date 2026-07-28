@@ -65,12 +65,17 @@ import {
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
-import { heldInboundQueryScopes } from '../inboundShipmentScope';
+import {
+  canMutateInboundScope,
+  heldInboundQueryScopes,
+  scopeOf,
+} from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
+import { canChangeStatus, isEditable } from './inboundShipmentStatus';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
@@ -270,7 +275,25 @@ const InboundShipmentDetailView: Component = () => {
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
-  const isDisabled = () => current()?.status === 'VERIFIED';
+  // The two standing conditions that refuse EVERY write, a status advance
+  // included — the server checks both before it reads the request. Mirrored so
+  // a control the server would refuse reads as disabled, rather than taking the
+  // edit and discarding it in silence (rules → editability).
+  const writeBlocked = () => {
+    const node = current();
+    if (!node) return true;
+    return (
+      (node.otherParty.store?.isDisabled ?? false) ||
+      !canMutateInboundScope(scopeOf(node.purchaseOrderId))
+    );
+  };
+  // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
+  const isDisabled = () =>
+    writeBlocked() || !isEditable(current()?.status ?? '');
+  // The status footer keeps its own, looser status rule — an advance has to
+  // stay reachable at Shipped, which the edit gate closes.
+  const statusLocked = () =>
+    writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => (current() ? isExternalShipment(current()!) : false);
 
   const refetchAll = () => {
@@ -812,8 +835,8 @@ const InboundShipmentDetailView: Component = () => {
                       onSaveField={saveField}
                     />
                     {/* PROMINENT custom fields for the scope — stay in the
-                        toolbar even when the shipment is read-only (Verified),
-                        just disabled (spec/ui-standards/custom-fields). */}
+                        toolbar even when the shipment is read-only, just
+                        disabled (spec/ui-standards/custom-fields). */}
                     <CustomFieldsToolbar
                       scope="inbound_shipment"
                       recordId={node().id}
@@ -832,7 +855,7 @@ const InboundShipmentDetailView: Component = () => {
                     <InboundShipmentStatusFooter
                       storeId={params.storeId}
                       node={node()}
-                      disabled={isDisabled()}
+                      disabled={statusLocked()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
                     />
@@ -980,8 +1003,8 @@ const InboundShipmentDetailView: Component = () => {
               </TabPanel>
               <TabPanel value="custom-fields">
                 {/* Custom fields for the inbound_shipment scope — disabled once
-                    the shipment is read-only (Verified); prominent fields live
-                    in the toolbar, so the tab shows the rest. */}
+                    the shipment is read-only; prominent fields live in the
+                    toolbar, so the tab shows the rest. */}
                 <CustomFieldsEditTab
                   scope="inbound_shipment"
                   promoteToToolbar
