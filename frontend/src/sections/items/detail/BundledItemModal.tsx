@@ -9,6 +9,7 @@ import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { CheckIcon, XCircleIcon } from '../../../ui/icons';
 import { ItemSearch } from '../../../domain/item/ItemSearch';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ItemVariants } from './itemVariants.generated';
 import { UpsertBundledItem } from './itemVariantMutations.generated';
 import {
@@ -30,9 +31,14 @@ export interface BundledItemModalProps {
   storeId: string;
   /** The variant this bundle is created FROM (the principal). */
   principalVariantId: string;
-  /** The principal's own item — excluded from the item picker (no self-bundling). */
+  /**
+   * The principal's own item — excluded from the item picker (no
+   * self-bundling).
+   */
   principalItemId: string;
-  /** This principal's existing bundledItemVariants' ids (duplicate-pair guard). */
+  /**
+   * This principal's existing bundledItemVariants' ids (duplicate-pair guard).
+   */
   existingBundledVariantIds: string[];
   onClose: () => void;
   /** A save landed — the panel re-queries so the card reflects it. */
@@ -43,6 +49,9 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
   const [form, setForm] = createSignal<DraftBundledItem>(EMPTY_FORM);
   const [saving, setSaving] = createSignal(false);
   const [failed, setFailed] = createSignal(false);
+  // Create-only, so the modal always opens with nothing picked and the flow
+  // starts by typing an item (ui-surface S4).
+  const itemSearch = createFocusTarget();
 
   // The chosen item's variants (step 2, shown once an item is picked) — the
   // same itemVariants query the panel itself uses, parametrised by whichever
@@ -102,6 +111,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
     <Dialog
       open
       testId="bundled-item-modal"
+      initialFocus={itemSearch}
       title={t('title.bundle-with')}
       dismissable={!saving()}
       onClose={props.onClose}
@@ -141,6 +151,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       <ItemSearch
         label={t('label.item_one')}
         storeId={props.storeId}
+        focusTarget={itemSearch}
         excludeItemIds={[props.principalItemId]}
         value={form().itemId || undefined}
         disabled={saving()}

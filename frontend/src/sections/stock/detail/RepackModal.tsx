@@ -8,7 +8,6 @@ import {
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -16,6 +15,8 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { LocationSelect } from '../../../domain/location';
 import { SelectReportModal } from '../../../domain/reports';
 import {
@@ -113,18 +114,28 @@ const RepackContent = (props: {
     () => props.storeId,
     fetchStockLocations
   );
+  // Both resources first fetch when this modal OPENS, so neither may suspend:
+  // `.latest` alone still suspends on a first pending read, which collapses the
+  // detail view's <Suspense> and detaches the just-opened <dialog> — it loses
+  // the top layer, so the backdrop vanishes and the modal lands in normal flow
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Gate on
+  // `.state`; `.loading` still drives the spinners.
   const locations = () =>
     locationsForItem(
-      allLocations.latest ?? [],
+      allLocations.state === 'ready' || allLocations.state === 'refreshing'
+        ? (allLocations.latest ?? [])
+        : [],
       props.line.item.restrictedLocationTypeId
     );
 
   // Newest-first by the repack's verified time (spec/stock rules › repack
   // history).
   const repacks = (): RepackNode[] =>
-    [...(repacksData.latest?.nodes ?? [])].sort((a, b) =>
-      a.datetime < b.datetime ? 1 : -1
-    );
+    repacksData.state === 'ready' || repacksData.state === 'refreshing'
+      ? [...(repacksData.latest?.nodes ?? [])].sort((a, b) =>
+          a.datetime < b.datetime ? 1 : -1
+        )
+      : [];
 
   const available = () => props.line.availableNumberOfPacks;
 
@@ -193,34 +204,38 @@ const RepackContent = (props: {
     }
   };
 
+  // Cell rendering + widths from the shared presets (docs/CELL_TYPES.md): each
+  // row is the `to` side of one repack, so every column is a standard type and
+  // none needs a hand-written `cell`. An unlocated repack renders BLANK, not a
+  // dash — a dash reads as data (tableHelpers, Carl 2026-07-23).
   const columns = (): Column<RepackNode, never>[] => [
     {
       c: { accessor: r => r.datetime, id: 'date' },
       header: () => t('label.date'),
-      cell: info => localisedDate(info.row.original.datetime),
+      ...getCellDefinition('date'),
     },
     {
       c: { accessor: r => r.datetime, id: 'time' },
       header: () => t('label.time'),
-      meta: { align: 'right' },
-      cell: info => localisedTime(info.row.original.datetime),
+      ...getCellDefinition('time'),
     },
     {
       c: { accessor: r => r.to.packSize, id: 'packSize' },
       header: () => t('label.pack-size'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.to.packSize),
+      ...getCellDefinition('packSize'),
     },
     {
       c: { accessor: r => r.to.numberOfPacks, id: 'numberOfPacks' },
       header: () => t('label.number-of-packs'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.to.numberOfPacks),
+      // "Number of packs" is a wider header than the shared numberOfPacks key
+      // (which is sized for "Pack quantity").
+      ...getCellDefinition('numberOfPacks'),
+      size: remToPx(8),
     },
     {
       c: { accessor: r => r.to.location?.code ?? '', id: 'location' },
       header: () => t('label.location'),
-      cell: info => info.row.original.to.location?.code ?? '—',
+      ...getCellDefinition('location'),
     },
   ];
 
@@ -449,8 +464,6 @@ const RepackContent = (props: {
         open={!!fullRepackNewLineId()}
         title={t('heading.are-you-sure')}
         message={t('messages.all-packs-repacked')}
-        confirmLabel={t('button.ok')}
-        cancelLabel={t('button.cancel')}
         onConfirm={() => {
           const id = fullRepackNewLineId();
           if (id) props.onNavigateToLine(id);

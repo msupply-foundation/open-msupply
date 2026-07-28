@@ -498,6 +498,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               rowKey={line => line.id}
               loading={loadingLines()}
               showFullScreen={false}
+              minBodyRem={20}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
               emptyMessage={t('error.no-customer-return-items')}
@@ -509,6 +510,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}
+            minBodyRem={20}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}
             emptyMessage={t('error.no-customer-return-items')}

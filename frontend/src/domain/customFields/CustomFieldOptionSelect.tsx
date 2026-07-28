@@ -5,12 +5,12 @@ import {
   type OrderedOption,
 } from './parse';
 
-// The editable OPTION control (spec/ui-standards/custom-fields › option fields):
-// a searchable picker over the field's options, hierarchical — a parent's
-// children nest beneath it, indented by depth. The stored/emitted value is the
-// option's id, never its name. A domain wrapper over the generic `Combobox`
-// (like LocationVolumeSelect / ShippingMethodSelect) so the option hierarchy
-// never leaks into the ui library.
+// The editable OPTION control (spec/ui-standards/custom-fields › option
+// fields): a searchable picker over the field's options, hierarchical — a
+// parent's children nest beneath it, indented by depth. The stored/emitted
+// value is the option's id, never its name. A domain wrapper over the generic
+// `Combobox` (like LocationVolumeSelect / ShippingMethodSelect) so the option
+// hierarchy never leaks into the ui library.
 export const CustomFieldOptionSelect = (props: {
   def: CustomFieldDef;
   /** Selected option id ('' when none). */
@@ -19,6 +19,12 @@ export const CustomFieldOptionSelect = (props: {
   disabled?: boolean;
   /** Hide the picker's own label (default false — label shown above). */
   hideLabel?: boolean;
+  /**
+   * Control size, as the other custom-field controls — `small` in a header
+   * field cluster, where a default-height picker would stand 4px taller than
+   * the small inputs beside it.
+   */
+  size?: 'default' | 'small';
   testId?: string;
 }) => {
   const items = (): OrderedOption[] =>
@@ -28,6 +34,7 @@ export const CustomFieldOptionSelect = (props: {
     <Combobox<OrderedOption>
       label={props.def.name}
       hideLabel={props.hideLabel}
+      size={props.size}
       items={items()}
       itemToString={o => o.option.name}
       itemToValue={o => o.option.id}

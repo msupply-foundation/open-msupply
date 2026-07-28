@@ -111,6 +111,7 @@ export const CustomFieldInput = (props: {
             value={props.value == null ? '' : String(props.value)}
             disabled={props.disabled}
             hideLabel={props.hideLabel}
+            size={props.size}
             testId={testId()}
             onChange={id => props.onChange(id || null)}
           />

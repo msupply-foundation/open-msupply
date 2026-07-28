@@ -38,6 +38,7 @@ export const stocktakeDetailFilters = (
           label={t('label.location')}
           hideLabel
           locations={locations()}
+          focusTarget={props.focusTarget}
           value={props.filter().locationId?.equalTo ?? undefined}
           placeholder={t('label.location')}
           // Pick a location → filter by its id (server locationId.equalTo);

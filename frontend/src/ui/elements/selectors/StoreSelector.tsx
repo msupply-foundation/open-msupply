@@ -153,6 +153,7 @@ export const StoreSelector = (props: {
                     aria-selected={store.id === selectedId()}
                     data-active={store.id === selectedId() ? '' : undefined}
                     data-store-id={store.id}
+                    data-testid={`store-select-option-${store.code}`}
                     onClick={() => setSelected(store.id)}
                     onDblClick={() => props.onConfirm(store.id)}
                   >
@@ -185,6 +186,7 @@ export const StoreSelector = (props: {
           icon={<ArrowRightIcon />}
           iconPosition="end"
           disabled={!selectedId()}
+          data-testid="store-selector-continue"
           onClick={() => selectedId() && props.onConfirm(selectedId()!)}
         >
           {t('button.continue')}

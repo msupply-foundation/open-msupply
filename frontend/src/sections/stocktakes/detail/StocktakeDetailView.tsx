@@ -946,7 +946,7 @@ const StocktakeDetailView: Component = () => {
                   empty={
                     isDisabled(node()) ? undefined : (
                       <Button
-                        icon={<PlusCircleIcon />}
+                        variant="ghost"
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >

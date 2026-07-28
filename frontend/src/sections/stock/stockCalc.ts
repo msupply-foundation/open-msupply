@@ -12,6 +12,15 @@ export const packsToUnits = (packs: number, packSize: number): number =>
 export const packsToValue = (packs: number, costPricePerPack: number): number =>
   packs * costPricePerPack;
 
+// Total volume = volume per pack × packs on hand (the server derives the stored
+// field the same way — stock_line/update.rs). Computed here so the read-only
+// Total volume field tracks the volume-per-pack the user is editing, instead of
+// sitting on the last-saved figure (#601).
+export const totalVolume = (
+  volumePerPack: number,
+  totalNumberOfPacks: number
+): number => volumePerPack * totalNumberOfPacks;
+
 // Repack (spec/stock rules › repack): the new line's pack count = packs × old
 // pack size ÷ new pack size. Undefined when the new pack size is not positive.
 export const repackNewPacks = (
