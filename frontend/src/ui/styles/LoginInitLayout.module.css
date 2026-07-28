@@ -77,8 +77,15 @@
 
 .logo {
   inline-size: 100%;
+  /* Cap at the current app's 285×180 desktop logo box; the form is the same
+     width, so 100% already lands here, but the cap keeps it from ever growing
+     past it. */
+  max-inline-size: 17.8125rem;
   block-size: auto;
   aspect-ratio: 19 / 12; /* the original's 285×180 logo box */
+  /* Stay centered over the form when shrunk below full width (short viewports),
+     rather than aligning to the column's inline-start. */
+  align-self: center;
 }
 
 .buttonRow {
@@ -105,14 +112,75 @@
   color: var(--text-secondary); /* not the original's opacity 0.4 — see top */
 }
 
-/* Unobtrusive text link to the sibling old UI (see LoginPage). Secondary tone
-   so it never competes with the login button; underlined so it reads as a link
-   without relying on colour alone. */
+/* The language selector sits at the bottom-right of the footer on both the
+   login and initialisation screens (issue #519 — consistent placement). The
+   selector component owns its own look; this wrapper only positions it, with
+   the same trailing inset as the version line so their right edges align. */
+.languageRow {
+  align-self: flex-end;
+  padding-inline-end: var(--space-4);
+}
+
+/* Unobtrusive text link in the footer (the sibling old-UI link on login, the
+   Save-log link on initialisation). Secondary tone so it never competes with
+   the primary button; underlined so it reads as a link without relying on
+   colour alone. Button chrome is reset so a <button> using it matches an <a>. */
 .switchLink {
   align-self: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
   font-size: var(--text-sm);
   color: var(--text-secondary);
   text-decoration: underline;
+  cursor: pointer;
+}
+
+.switchLink:hover,
+.switchLink:focus-visible {
+  color: var(--primary-main);
+}
+
+.switchLink:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 0.125rem;
+}
+
+.switchLink[disabled] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Save-log success/error notice under the link (issue #519.5). Centered under
+   the footer column; severity carries via the text colour token. */
+.footerNotice {
+  align-self: center;
+  margin: 0;
+  max-inline-size: 22rem;
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.footerNotice[data-severity='success'] {
+  color: var(--success-main);
+}
+
+.footerNotice[data-severity='error'] {
+  color: var(--error-main);
+}
+
+/* Short viewports (landscape tablets/phones): the constraint is vertical — the
+   full-size logo pushes the footer off-screen. Shrink it so the whole form +
+   footer fit without scrolling. Matches the current app, which drops its login
+   logo from 285×180 to 155×90 on small screens; 9.6875rem keeps the 19:12 box
+   (155×90). Keyed on height, not width, because a landscape tablet is wide but
+   short — a width breakpoint would miss it. */
+@media (max-height: 50rem) {
+  .logo {
+    inline-size: 9.6875rem;
+  }
 }
 
 /* Compact (phone): the hero doesn't render; the form panel is the page.

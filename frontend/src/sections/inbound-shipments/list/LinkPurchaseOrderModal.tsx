@@ -52,15 +52,19 @@ export const LinkPurchaseOrderModal: Component<
   const columns = (): Column<LinkPurchaseOrderRowFragment, never>[] => [
     {
       c: { accessor: row => row.supplier?.name ?? '', id: 'supplier' },
-      header: t('label.supplier'),
+      header: () => t('label.supplier'),
     },
     {
       c: { key: 'number' },
-      header: t('label.purchase-order-number'),
+      header: () => t('label.purchase-order-number'),
       ...getNumberCell(),
     },
-    { c: { key: 'reference' }, header: t('label.reference') },
-    { c: { key: 'comment' }, header: t('label.comment'), ...getCommentCell() },
+    { c: { key: 'reference' }, header: () => t('label.reference') },
+    {
+      c: { key: 'comment' },
+      header: () => t('label.comment'),
+      ...getCommentCell(),
+    },
   ];
 
   return (

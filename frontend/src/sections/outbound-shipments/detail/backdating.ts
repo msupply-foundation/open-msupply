@@ -3,6 +3,12 @@
 // branching + date math are testable in isolation (the component resolves the
 // returned message KEYS via t() and owns the stocktake-conflict query).
 
+import {
+  addDays,
+  dateToIsoDate,
+  localDayToUtc,
+} from '../../../ui/elements/inputs/dateTimeConvert';
+
 export type BackdatingReasonKey =
   | 'messages.received-date-backdating-not-enabled'
   | 'messages.picked-date-not-new';
@@ -35,23 +41,21 @@ export const backdatingGate = (opts: {
   return { enabled };
 };
 
-// Local YYYY-MM-DD (the store clock's day) — slicing an ISO string would use
-// UTC and can shift the day.
-export const toDateInput = (value: Date): string => {
-  const month = `${value.getMonth() + 1}`.padStart(2, '0');
-  const day = `${value.getDate()}`.padStart(2, '0');
-  return `${value.getFullYear()}-${month}-${day}`;
-};
-
-// AC-B1: the picker window is [now − maxDays, now] — a future date or one
-// beyond the maximum can't be chosen.
+// AC-B1: the picker window is [now − (maxDays − 1), now] — a future date or
+// one beyond the maximum can't be chosen. A maximum of zero (or unset) means
+// NO lower bound — unlimited backdating, the old app's semantics (a deployed
+// pref of {shipmentsEnabled: true, maxDays: 0} must not collapse the window
+// to "today only"). The +1 on the lower bound is the old app's deliberate
+// buffer: the server's UTC boundary check would reject the exact
+// now−maxDays day for stores ahead of UTC. Bounds are LOCAL days (the store
+// clock's) via the shared conversion.
 export const backdateBounds = (
   now: Date,
   maxDays: number
-): { min: string; max: string } => {
-  const earliest = new Date(now);
-  earliest.setDate(earliest.getDate() - maxDays);
-  return { min: toDateInput(earliest), max: toDateInput(now) };
+): { min?: string; max: string } => {
+  const max = dateToIsoDate(now);
+  if (maxDays <= 0) return { max };
+  return { min: dateToIsoDate(addDays(now, -(maxDays - 1))), max };
 };
 
 // AC-B1 rejection on the SAVE path: the native min/max only constrain the
@@ -59,18 +63,18 @@ export const backdateBounds = (
 // day is re-checked against the window before anything saves. YYYY-MM-DD
 // compares lexicographically, so plain string comparison is exact.
 export const withinBackdateBounds = (
-  bounds: { min: string; max: string },
+  bounds: { min?: string; max: string },
   day: string
-): boolean => day >= bounds.min && day <= bounds.max;
+): boolean => (bounds.min == null || day >= bounds.min) && day <= bounds.max;
 
-// A chosen day → an ISO datetime on that day at `now`'s time (recorded "as of"
-// that day; the picker bounds it to the window above).
-export const backdatedDatetimeFor = (now: Date, day: string): string => {
-  const [year, month, date] = day.split('-').map(Number);
-  const when = new Date(now);
-  when.setFullYear(year!, month! - 1, date!);
-  return when.toISOString();
-};
+// A chosen day → the instant to record the shipment "as of" (matching the
+// current app): today keeps the actual current moment; a backdated day is
+// stamped at its LOCAL end-of-day via the shared conversion (#456), so the
+// entry sorts after same-day activity. Input is a `DateTime<Utc>`.
+export const backdatedDatetimeFor = (now: Date, day: string): string =>
+  day === dateToIsoDate(now)
+    ? now.toISOString()
+    : localDayToUtc(day, { endOfDay: true });
 
 export type BackdateWarningKey =
   | 'messages.confirm-backdate-picked-date'

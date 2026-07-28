@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { A } from '@solidjs/router';
-import { InfoOutlineIcon } from '../../icons';
+import { InfoIcon } from '../../icons';
 import { StatusChip } from '../feedback/StatusChip';
 import styles from './Statistic.module.css';
 
@@ -47,7 +47,7 @@ export const Statistic = (props: StatisticProps) => (
         {props.label}
         <Show when={props.info}>
           <span class={styles.info} title={props.info} aria-hidden="true">
-            <InfoOutlineIcon />
+            <InfoIcon />
           </span>
         </Show>
       </span>

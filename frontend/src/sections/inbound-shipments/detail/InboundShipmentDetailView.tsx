@@ -65,12 +65,17 @@ import {
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
-import { heldInboundQueryScopes } from '../inboundShipmentScope';
+import {
+  canMutateInboundScope,
+  heldInboundQueryScopes,
+  scopeOf,
+} from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
+import { canChangeStatus, isEditable } from './inboundShipmentStatus';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
@@ -270,7 +275,25 @@ const InboundShipmentDetailView: Component = () => {
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
-  const isDisabled = () => current()?.status === 'VERIFIED';
+  // The two standing conditions that refuse EVERY write, a status advance
+  // included — the server checks both before it reads the request. Mirrored so
+  // a control the server would refuse reads as disabled, rather than taking the
+  // edit and discarding it in silence (rules → editability).
+  const writeBlocked = () => {
+    const node = current();
+    if (!node) return true;
+    return (
+      (node.otherParty.store?.isDisabled ?? false) ||
+      !canMutateInboundScope(scopeOf(node.purchaseOrderId))
+    );
+  };
+  // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
+  const isDisabled = () =>
+    writeBlocked() || !isEditable(current()?.status ?? '');
+  // The status footer keeps its own, looser status rule — an advance has to
+  // stay reachable at Shipped, which the edit gate closes.
+  const statusLocked = () =>
+    writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => (current() ? isExternalShipment(current()!) : false);
 
   const refetchAll = () => {
@@ -502,7 +525,7 @@ const InboundShipmentDetailView: Component = () => {
       {
         c: { accessor: line => line.itemCode, id: 'itemCode' },
         sortKey: 'itemCode',
-        header: t('label.code'),
+        header: () => t('label.code'),
         // A line that arrived via another store's transfer (linkedInvoiceId
         // set) can't be independently deleted; flag its code in the error tone
         // so the provenance is visible (spec AC-E9 / M9). Inline token colour
@@ -525,8 +548,8 @@ const InboundShipmentDetailView: Component = () => {
       {
         c: { key: 'itemName' },
         sortKey: 'itemName',
-        header: t('label.name'),
-        meta: { card: { region: 'primary' }, wrapLines: 2 },
+        header: () => t('label.name'),
+        meta: { headerPosition: 'primary', wrapLines: 2 },
       },
       // PO line number — PO-linked shipments only.
       ...(isExternalShipment(node)
@@ -536,16 +559,16 @@ const InboundShipmentDetailView: Component = () => {
                 accessor: line => line.purchaseOrderLine?.lineNumber ?? '',
                 id: 'poLine',
               },
-              header: t('label.po-line-number'),
+              header: () => t('label.po-line-number'),
               ...getNumberCell(),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      { c: { key: 'batch' }, sortKey: 'batch', header: t('label.batch') },
+      { c: { key: 'batch' }, sortKey: 'batch', header: () => t('label.batch') },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
-        header: t('label.expiry'),
+        header: () => t('label.expiry'),
         ...getDateCell(),
       },
       // VVM status — gated by the store preference; shown for vaccine items
@@ -560,24 +583,24 @@ const InboundShipmentDetailView: Component = () => {
                     : '',
                 id: 'vvmStatus',
               },
-              header: t('label.vvm-status'),
+              header: () => t('label.vvm-status'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { accessor: line => line.location?.code ?? '', id: 'location' },
         sortKey: 'locationName',
-        header: t('label.location'),
+        header: () => t('label.location'),
       },
       // Unit name (spec S1 line-table col 9 / L3).
       {
         c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
-        header: t('label.unit'),
+        header: () => t('label.unit'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
-        header: t('label.pack-size'),
+        header: () => t('label.pack-size'),
         ...getNumberCell(),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
@@ -592,16 +615,16 @@ const InboundShipmentDetailView: Component = () => {
                 },
                 id: 'dosesPerUnit',
               },
-              header: t('label.doses-per-unit'),
+              header: () => t('label.doses-per-unit'),
               ...getNumberCell(),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
-        header: t('label.pack-quantity'),
+        header: () => t('label.pack-quantity'),
         ...getNumberCell(),
-        meta: { align: 'right', card: { region: 'badge' } },
+        meta: { align: 'right', headerPosition: 'badge' },
       },
       // Difference (H6) — supplier-shipped packs minus received packs; blank
       // when nothing was recorded as shipped.
@@ -613,7 +636,7 @@ const InboundShipmentDetailView: Component = () => {
               : '',
           id: 'difference',
         },
-        header: t('label.difference'),
+        header: () => t('label.difference'),
         ...getNumberCell(),
       },
       // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
@@ -624,7 +647,7 @@ const InboundShipmentDetailView: Component = () => {
                 accessor: line => line.packSize * line.numberOfPacks,
                 id: 'unitQuantity',
               },
-              header: t('label.unit-quantity'),
+              header: () => t('label.unit-quantity'),
               ...getNumberCell(),
             } satisfies Column<Line, SortKey>,
           ]
@@ -643,7 +666,7 @@ const InboundShipmentDetailView: Component = () => {
                 },
                 id: 'doses',
               },
-              header: t('label.doses'),
+              header: () => t('label.doses'),
               ...getNumberCell(),
             } satisfies Column<Line, SortKey>,
           ]
@@ -669,7 +692,7 @@ const InboundShipmentDetailView: Component = () => {
                 },
                 id: 'authStatus',
               },
-              header: t('label.auth-status'),
+              header: () => t('label.auth-status'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -678,12 +701,12 @@ const InboundShipmentDetailView: Component = () => {
         ? [
             {
               c: { key: 'costPricePerPack' },
-              header: t('label.pack-cost-price'),
+              header: () => t('label.pack-cost-price'),
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
             {
               c: { key: 'sellPricePerPack' },
-              header: t('label.pack-sell-price'),
+              header: () => t('label.pack-sell-price'),
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
             {
@@ -695,7 +718,7 @@ const InboundShipmentDetailView: Component = () => {
                   isPlaceholderLine(line) ? null : line.totalAfterTax,
                 id: 'total',
               },
-              header: t('label.total'),
+              header: () => t('label.total'),
               ...getCurrencyCell(),
             } satisfies Column<Line, SortKey>,
           ]
@@ -705,7 +728,7 @@ const InboundShipmentDetailView: Component = () => {
         ? [
             {
               c: { accessor: line => line.donor?.name ?? '', id: 'donor' },
-              header: t('label.donor'),
+              header: () => t('label.donor'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -714,11 +737,11 @@ const InboundShipmentDetailView: Component = () => {
           accessor: line => line.manufacturer?.name ?? '',
           id: 'manufacturer',
         },
-        header: t('label.manufacturer'),
+        header: () => t('label.manufacturer'),
       },
       {
         c: { key: 'manufactureDate' },
-        header: t('label.manufacture-date'),
+        header: () => t('label.manufacture-date'),
         ...getDateCell(),
       },
       // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
@@ -731,11 +754,11 @@ const InboundShipmentDetailView: Component = () => {
                   line.campaign?.name ?? line.program?.name ?? '',
                 id: 'campaignProgram',
               },
-              header: t('label.campaign'),
+              header: () => t('label.campaign'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      { c: { key: 'note' }, header: t('label.note') },
+      { c: { key: 'note' }, header: () => t('label.note') },
     ];
   };
 
@@ -794,6 +817,7 @@ const InboundShipmentDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        data-testid="open-detail-panel-button"
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -811,8 +835,8 @@ const InboundShipmentDetailView: Component = () => {
                       onSaveField={saveField}
                     />
                     {/* PROMINENT custom fields for the scope — stay in the
-                        toolbar even when the shipment is read-only (Verified),
-                        just disabled (spec/ui-standards/custom-fields). */}
+                        toolbar even when the shipment is read-only, just
+                        disabled (spec/ui-standards/custom-fields). */}
                     <CustomFieldsToolbar
                       scope="inbound_shipment"
                       recordId={node().id}
@@ -831,7 +855,7 @@ const InboundShipmentDetailView: Component = () => {
                     <InboundShipmentStatusFooter
                       storeId={params.storeId}
                       node={node()}
-                      disabled={isDisabled()}
+                      disabled={statusLocked()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
                     />
@@ -979,8 +1003,8 @@ const InboundShipmentDetailView: Component = () => {
               </TabPanel>
               <TabPanel value="custom-fields">
                 {/* Custom fields for the inbound_shipment scope — disabled once
-                    the shipment is read-only (Verified); prominent fields live
-                    in the toolbar, so the tab shows the rest. */}
+                    the shipment is read-only; prominent fields live in the
+                    toolbar, so the tab shows the rest. */}
                 <CustomFieldsEditTab
                   scope="inbound_shipment"
                   promoteToToolbar

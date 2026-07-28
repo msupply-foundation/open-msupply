@@ -1,3 +1,4 @@
+import { generateUUID } from '../../uuid';
 import {
   createResource,
   createSignal,
@@ -32,9 +33,10 @@ import {
 } from './helpLogic';
 
 // S1 — the Help page (spec/help). Universal (identical for every signed-in user
-// on any store/server, AC-V1): four blocks in order — user guide (external
-// link), keyboard shortcuts (static text), help documents (one external link
-// per showable document, hidden when none), and the contact form. Read-only
+// on any store/server, OMS-REG-HLP-01.15): four blocks in order — user guide
+// (external link), keyboard shortcuts (static text), help documents (one
+// external link per showable document, hidden when none), and the contact
+// form. Read-only
 // except the contact-form submit. File links + document view are same-origin
 // `/sync_files/...` routes (session-cookie auth; served by the backend that
 // bundles this app).
@@ -52,7 +54,7 @@ const HelpPage: Component = () => {
   });
   const documents = () => showableDocuments(docsData.latest ?? []);
 
-  // Contact form (AC-CF1–CF5).
+  // Contact form (OMS-REG-HLP-01.2-.9, .23-.27).
   const [reason, setReason] = createSignal<ContactType>('FEEDBACK');
   const [email, setEmail] = createSignal('');
   const [message, setMessage] = createSignal('');
@@ -75,7 +77,7 @@ const HelpPage: Component = () => {
       {
         storeId: params.storeId,
         input: {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           contactType: reason(),
           replyEmail: email().trim(),
           body: message(),
@@ -85,13 +87,14 @@ const HelpPage: Component = () => {
     );
     setSending(false);
     if (result.kind === 'success') {
-      // AC-CF4: confirm + reset to AC-CF1 defaults (Send disabled again).
+      // OMS-REG-HLP-01.8/.9/.25/.26: confirm + reset to the .2-.7 defaults
+      // (Send disabled again).
       setOutcome({ severity: 'success', text: t('messages.message-sent') });
       setReason('FEEDBACK');
       setEmail('');
       setMessage('');
     } else {
-      // AC-CF5: failure in the form's own surface, draft preserved (D21/D22).
+      // OMS-REG-HLP-01.27: failure in the form's own surface, draft preserved (D21/D22).
       setOutcome({ severity: 'error', text: t('messages.message-not-sent') });
     }
   };
@@ -125,7 +128,7 @@ const HelpPage: Component = () => {
             <Text>{t('message.keyboard-shortcuts')}</Text>
           </FormSection>
 
-          {/* Block 3 — help documents; whole block absent when none showable (AC-V3). */}
+          {/* Block 3 — help documents; whole block absent when none showable (OMS-REG-HLP-01.18/.19). */}
           <Show when={documents().length > 0}>
             <FormSection title={t('heading.help-documents')}>
               <For each={documents()}>

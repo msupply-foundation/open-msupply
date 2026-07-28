@@ -12,7 +12,7 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -314,29 +314,29 @@ const PrescriptionDetailView: Component = () => {
     const cols: Column<Line, never>[] = [
       {
         c: { accessor: line => line.note ?? '', id: 'directions' },
-        header: t('label.comment'),
+        header: () => t('label.comment'),
         ...getCommentCell(),
       },
-      { c: { key: 'itemCode' }, header: t('label.code') },
+      { c: { key: 'itemCode' }, header: () => t('label.code') },
       {
         c: { key: 'itemName' },
-        header: t('label.name'),
-        meta: { card: { region: 'primary' } },
+        header: () => t('label.name'),
+        meta: { headerPosition: 'primary' },
       },
-      { c: { key: 'batch' }, header: t('label.batch') },
+      { c: { key: 'batch' }, header: () => t('label.batch') },
       {
         c: { key: 'expiryDate' },
-        header: t('label.expiry-date'),
+        header: () => t('label.expiry-date'),
         ...getExpiryDateCell(),
       },
-      { c: { key: 'locationName' }, header: t('label.location') },
+      { c: { key: 'locationName' }, header: () => t('label.location') },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
-        header: t('label.unit-name'),
+        header: () => t('label.unit-name'),
       },
       {
         c: { key: 'packSize' },
-        header: t('label.pack-size'),
+        header: () => t('label.pack-size'),
         ...getNumberCell(),
       },
     ];
@@ -346,7 +346,7 @@ const PrescriptionDetailView: Component = () => {
           accessor: line => (line.item.isVaccine ? line.item.doses : ''),
           id: 'dosesPerUnit',
         },
-        header: t('label.doses-per-unit'),
+        header: () => t('label.doses-per-unit'),
         ...getNumberCell(),
       });
     cols.push({
@@ -354,7 +354,7 @@ const PrescriptionDetailView: Component = () => {
         accessor: line => line.numberOfPacks * line.packSize,
         id: 'unitQuantity',
       },
-      header: t('label.unit-quantity'),
+      header: () => t('label.unit-quantity'),
       ...getNumberCell(),
     });
     if (prefs().manageVaccinesInDoses)
@@ -366,7 +366,7 @@ const PrescriptionDetailView: Component = () => {
               : '',
           id: 'doses',
         },
-        header: t('label.doses'),
+        header: () => t('label.doses'),
         ...getNumberCell(),
       });
     if (prefs().editPrescribedQuantity)
@@ -375,13 +375,13 @@ const PrescriptionDetailView: Component = () => {
           accessor: line => line.prescribedQuantity ?? '',
           id: 'prescribedQuantity',
         },
-        header: t('label.prescribed-quantity'),
+        header: () => t('label.prescribed-quantity'),
         ...getNumberCell(),
       });
     cols.push(
       {
         c: { key: 'numberOfPacks' },
-        header: t('label.pack-quantity'),
+        header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
       {
@@ -389,12 +389,12 @@ const PrescriptionDetailView: Component = () => {
           accessor: line => line.sellPricePerPack / (line.packSize || 1),
           id: 'unitPrice',
         },
-        header: t('label.unit-price'),
+        header: () => t('label.unit-price'),
         ...getCurrencyCell(),
       },
       {
         c: { key: 'totalAfterTax' },
-        header: t('label.line-total'),
+        header: () => t('label.line-total'),
         ...getCurrencyCell(),
       },
       {
@@ -402,7 +402,7 @@ const PrescriptionDetailView: Component = () => {
           accessor: line => line.costPricePerPack * line.numberOfPacks,
           id: 'costPrice',
         },
-        header: t('label.purchase-cost-price'),
+        header: () => t('label.purchase-cost-price'),
         ...getCurrencyCell(),
       }
     );
@@ -479,7 +479,9 @@ const PrescriptionDetailView: Component = () => {
                     </Button>
                   </Show>
                 </HeaderButtons>
-                <Toolbar>
+                {/* The header field cluster — never a hand-rolled <Toolbar>
+                    (ui/docs/PAGES.md § header field cluster). */}
+                <HeaderToolbar>
                   <PrescriptionToolbar
                     storeId={params.storeId}
                     node={node()}
@@ -487,7 +489,7 @@ const PrescriptionDetailView: Component = () => {
                     onSave={input => void saveField(input)}
                     onClearLinesAndSave={input => void clearLinesAndSave(input)}
                   />
-                </Toolbar>
+                </HeaderToolbar>
                 <TabList tabs={tabs()} />
               </Header>
             }

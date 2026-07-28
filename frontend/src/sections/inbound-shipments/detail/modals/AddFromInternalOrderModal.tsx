@@ -60,12 +60,12 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
   const columns = (): Column<InternalOrderLineRowFragment, never>[] => [
     {
       c: { accessor: row => row.item.code, id: 'code' },
-      header: t('label.code'),
+      header: () => t('label.code'),
     },
-    { c: { key: 'itemName' }, header: t('label.name') },
+    { c: { key: 'itemName' }, header: () => t('label.name') },
     {
       c: { key: 'requestedQuantity' },
-      header: t('label.requested-quantity'),
+      header: () => t('label.requested-quantity'),
       ...getNumberCell(),
     },
   ];

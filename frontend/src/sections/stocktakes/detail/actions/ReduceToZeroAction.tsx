@@ -1,16 +1,17 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
-import { t, tPlural } from '../../../../intl';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { t, tPlural } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { createFocusTarget } from '@/ui/utils/createFocusTarget';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import {
   CheckIcon,
   MinusCircleIcon,
   SearchIcon,
   XCircleIcon,
-} from '../../../../ui/icons';
-import { ReasonSelect } from '../../../../domain/reasonOptions';
+} from '@/ui/icons';
+import { ReasonSelect } from '@/domain/reasonOptions';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,
@@ -21,6 +22,11 @@ export interface ReduceToZeroActionProps {
   storeId: string;
   selectedIds: () => string[];
   disabled: boolean;
+  /**
+   * Blind stocktake (spec/stocktakes › store-preference gates): no reason is
+   * ever required under this preference, so the picker is omitted here too.
+   */
+  hideReason: boolean;
   /** Apply what committed in place (no refetch). */
   onCommit: (commit: LineEditCommit) => void;
   /**
@@ -95,9 +101,15 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
     setPhase('error');
   };
 
+  // The reason picker is the confirm phase's only control, so the dialog opens
+  // on it — unless the store preference hides it, leaving nothing to focus
+  // (ui-standards › accessibility › keyboard).
+  const reasonPicker = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={props.hideReason ? undefined : reasonPicker}
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MinusCircleIcon />}
@@ -108,15 +120,18 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <p>{t('messages.confirm-reduce-lines-to-zero')}</p>
-              <FieldRow label={t('label.reason')}>
-                <ReasonSelect
-                  kind="negative"
-                  label={t('label.reason')}
-                  hideLabel
-                  value={reasonId() ?? undefined}
-                  onChange={r => setReasonId(r?.id ?? null)}
-                />
-              </FieldRow>
+              <Show when={!props.hideReason}>
+                <FieldRow label={t('label.reason')}>
+                  <ReasonSelect
+                    kind="negative"
+                    label={t('label.reason')}
+                    hideLabel
+                    focusTarget={reasonPicker}
+                    value={reasonId() ?? undefined}
+                    onChange={r => setReasonId(r?.id ?? null)}
+                  />
+                </FieldRow>
+              </Show>
             </>
           }
         >

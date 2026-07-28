@@ -22,6 +22,7 @@ const line = (over: Partial<DraftLine> & { id: string }): DraftLine => ({
   location: null,
   vvmStatus: null,
   barred: [],
+  autoBarred: [],
   ...over,
 });
 

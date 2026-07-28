@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -66,7 +67,7 @@ const VvmStatusEntryContent = (props: {
           comment: comment() || null,
         })
       : await runInsertVvmStatusLog(props.storeId, {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           statusId: statusId() as string,
           stockLineId: props.stockLineId,
           comment: comment() || null,

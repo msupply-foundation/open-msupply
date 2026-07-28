@@ -21,6 +21,12 @@ import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../ui/elements/accordion/Accordion';
 import type { LocaleKey } from '../../../intl';
 import { DownloadIcon, PrinterIcon, SlidersIcon } from '../../../ui/icons';
 import { Report as ReportDocument } from '../api/reports.generated';
@@ -29,13 +35,11 @@ import type { ReportResult, ReportVariables } from '../api/reports.generated';
 // domain/reports (shared with the S4 record-screen selector); dataId is
 // omitted — S2's standalone reports render against the store, not a record.
 import { generateReport, reportLabel } from '../../../domain/reports';
-import {
-  downloadBlob,
-  fetchReportFile,
-  printHtml,
-} from '../../../domain/reportFiles';
+import { fetchReportFile } from '../../../domain/reportFiles';
+import { printBlob, saveBlob } from '../../../platform/openDocument';
 import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
 import { timezoneArgument } from '../../../domain/json-forms/schema';
+import styles from './ReportDetailView.module.css';
 
 // S2 — the single-report detail (spec/reports S2, AC-U1–U3, AC-R1, AC-G1/G4).
 // Fetches the report (name + argument schema), then generates its HTML and
@@ -90,6 +94,18 @@ const ReportDetailView: Component = () => {
     const r = report();
     return r ? reportLabel(r) : '';
   };
+  // The per-report explanation, keyed by report code in the message catalog
+  // (AC-U9). Only some codes have copy — t() echoes the key back when no
+  // catalog holds it, so a key-echo reads as "no disclosure" (the
+  // translateServerError probe).
+  const howToRead = (): string | undefined => {
+    const code = report()?.code;
+    if (!code) return undefined;
+    const key = `messages.how-to-read-${code}` as LocaleKey;
+    const copy = t(key);
+    return copy === key ? undefined : copy;
+  };
+
   // The report node when it declares an argument schema (drives whether the
   // arguments modal + Filters button exist).
   const schemaReport = (): ReportNode | undefined =>
@@ -195,9 +211,33 @@ const ReportDetailView: Component = () => {
     if (reportArgs() === undefined) navigate(`/${params.storeId}/reports`);
   };
 
-  // Print (desktop path): fetch the current HTML file and open the system print
-  // dialog (spec/reports "Printing and exporting"). Only meaningful once a
-  // document exists.
+  // Generate the same report as a workbook and fetch the result; null with
+  // the error already surfaced on failure.
+  const generateFile = async (format: 'EXCEL') => {
+    const r = report();
+    if (!r) return null;
+    setActionError(undefined);
+    const gen = await generateReport({
+      reportId: r.id,
+      format,
+      args: reportArgs() ?? timezoneArgument(),
+    });
+    if (gen.kind !== 'fileId') {
+      setActionError('error.failed-to-generate-report');
+      return null;
+    }
+    const file = await fetchReportFile(gen.fileId);
+    if (file.kind !== 'success') {
+      setActionError('error.failed-to-generate-report');
+      return null;
+    }
+    return file;
+  };
+
+  // Print — fetch the HTML document already on screen and print it
+  // (spec/reports "Printing and exporting"). printBlob owns the platform
+  // difference: the system print dialog on the web, the OS print service on
+  // Android.
   const onPrint = async () => {
     const r = result();
     if (r?.kind !== 'fileId') return;
@@ -207,29 +247,17 @@ const ReportDetailView: Component = () => {
       setActionError('error.failed-to-generate-report');
       return;
     }
-    printHtml(await file.blob.text());
+    const printed = await printBlob(file.blob, file.filename);
+    if (!printed.ok) setActionError('messages.error-printing-report');
   };
 
-  // Export: generate the same report as an Excel workbook and download it.
+  // Export — a KEEP intent: the same report as an Excel workbook, delivered
+  // as a download (web) / the OS save picker (Android).
   const onExport = async () => {
-    const r = report();
-    if (!r) return;
-    setActionError(undefined);
-    const gen = await generateReport({
-      reportId: r.id,
-      format: 'EXCEL',
-      args: reportArgs() ?? timezoneArgument(),
-    });
-    if (gen.kind !== 'fileId') {
-      setActionError('error.failed-to-generate-report');
-      return;
-    }
-    const file = await fetchReportFile(gen.fileId);
-    if (file.kind !== 'success') {
-      setActionError('error.failed-to-generate-report');
-      return;
-    }
-    downloadBlob(file.blob, file.filename);
+    const file = await generateFile('EXCEL');
+    if (!file) return;
+    const delivered = await saveBlob(file.blob, file.filename);
+    if (!delivered.ok) setActionError('messages.cannot-save-file');
   };
 
   // Crumbs are an accessor so t() + the report name re-resolve on locale change
@@ -272,6 +300,27 @@ const ReportDetailView: Component = () => {
         </Header>
       }
     >
+      <Show when={howToRead()}>
+        {copy => (
+          <div
+            style={{
+              padding: '0 var(--space-5)',
+              'max-inline-size': '50rem',
+            }}
+          >
+            <Accordion collapsible>
+              <AccordionItem value="how-to-read">
+                <AccordionTrigger class={styles.howToReadTrigger}>
+                  {t('messages.how-to-read-report')}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <span style={{ 'white-space': 'pre-line' }}>{copy()}</span>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
+      </Show>
       <Show when={actionError()}>
         {key => (
           <div style={{ padding: 'var(--space-5) var(--space-5) 0' }}>

@@ -6,9 +6,10 @@ import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Popover } from '../../../ui/elements/feedback/Popover';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LanguageSelector } from '../../../ui/layout/AppShell/LanguageSelector';
-import { InfoOutlineIcon, SaveIcon } from '../../../ui/icons';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { SaveIcon } from '../../../ui/icons';
 import { changeLanguage, locale, t } from '../../../intl';
 import {
   logoClearInput,
@@ -27,11 +28,11 @@ import styles from '../Settings.module.css';
 /*
  * Display settings (spec/settings/ui-surface.md § Display settings).
  *  - Language: the shared chrome language selector, reused — switching is
- *    immediate, no save step (AC-DS1; the switch itself is owned by i18n).
+ *    immediate, no save step (OMS-REG-SET-01.15; the switch itself is owned by i18n).
  *  - Custom theme / Custom logo (Server Admin only): the asymmetric
- *    on-requires-Save / off-is-immediate pattern (AC-DS3–DS6); the theme save
- *    gates on a shallow JSON parse (AC-DS2), the logo has no validation at
- *    all (AC-DS5).
+ *    on-requires-Save / off-is-immediate pattern (OMS-REG-SET-01.16–01.18); the theme save
+ *    gates on a shallow JSON parse (OMS-REG-SET-01.13), the logo has no validation at
+ *    all (OMS-REG-SET-01.18).
  */
 
 // One editor row (theme or logo) — same shell, different validation/effects.
@@ -63,7 +64,7 @@ const EditorToggleRow = (props: {
       setOverride(true);
       return;
     }
-    // Toggling OFF clears immediately — no Save step (AC-DS4, AC-DS6).
+    // Toggling OFF clears immediately — no Save step (OMS-REG-SET-01.17).
     setOverride(false);
     void (async () => {
       setBusy(true);
@@ -89,13 +90,13 @@ const EditorToggleRow = (props: {
           testId={`${props.testId}-toggle`}
         />
         <Show when={props.info}>
-          <Popover
-            trigger={<InfoOutlineIcon />}
-            triggerLabel={props.heading}
-            placement="bottom-start"
-          >
-            <p>{props.info}</p>
-          </Popover>
+          {info => (
+            <InfoTooltip
+              text={info()}
+              triggerTestId={`${props.testId}-info`}
+              placement="bottom-start"
+            />
+          )}
         </Show>
       </div>
       <Show when={enabled()}>
@@ -153,8 +154,8 @@ export const DisplaySettingsSection = () => {
     return undefined;
   };
 
-  // Theme: refuse invalid JSON client-side with the parse error (AC-DS2);
-  // a successful save applies the theme by reloading the whole app (AC-DS3).
+  // Theme: refuse invalid JSON client-side with the parse error (OMS-REG-SET-01.13);
+  // a successful save applies the theme by reloading the whole app (OMS-REG-SET-01.16).
   const saveTheme = async (text: string): Promise<string | undefined> => {
     const parsed = parseThemeJson(text);
     if (!parsed.ok) return `${t('error.something-wrong')} ${parsed.message}`;
@@ -163,23 +164,24 @@ export const DisplaySettingsSection = () => {
     return error;
   };
 
-  // Clearing does not itself reload the app (AC-DS4).
+  // Clearing does not itself reload the app (OMS-REG-SET-01.17).
   const clearTheme = async () => {
     await update(themeClearInput());
   };
 
-  // Logo: no content validation at all (AC-DS5); no reload either way.
+  // Logo: no content validation at all (OMS-REG-SET-01.18); no reload either way.
   const saveLogo = (text: string) => update(logoSaveInput(text));
   const clearLogo = async () => {
     await update(logoClearInput());
   };
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       <FieldRow label={t('button.language')}>
         <LanguageSelector
           language={locale()}
           onSelect={v => void changeLanguage(v)}
+          testId="settings-language"
         />
       </FieldRow>
       <Show when={hasPermission('SERVER_ADMIN')}>
@@ -203,6 +205,6 @@ export const DisplaySettingsSection = () => {
           testId="custom-logo"
         />
       </Show>
-    </div>
+    </Stack>
   );
 };

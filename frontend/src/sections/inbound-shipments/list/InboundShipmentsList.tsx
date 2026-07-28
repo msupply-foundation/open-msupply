@@ -1,6 +1,6 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { A, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -58,7 +58,7 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
-import linkStyles from '../linkedOrder.module.css';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -224,8 +224,8 @@ const InboundShipmentsList: Component = () => {
       // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('label.name'),
-      meta: { card: { region: 'primary' } },
+      header: () => t('label.name'),
+      meta: { headerPosition: 'primary' },
       cell: info => {
         const row = info.row.original;
         return (
@@ -256,7 +256,7 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('label.status'),
+      header: () => t('label.status'),
       cell: info => {
         const status = info.getValue<Row['status']>();
         return (
@@ -266,38 +266,37 @@ const InboundShipmentsList: Component = () => {
           />
         );
       },
-      meta: { card: { region: 'badge' } },
+      meta: { headerPosition: 'badge' },
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: '#',
+      header: () => '#',
       ...getNumberCell(),
     },
     {
       // Linked order (spec S1 column 4) — when linked, a link to the order
       // prefixed by kind: PO-<number> for a purchase order, IO-<number> for
       // an internal order; blank otherwise. Toned by kind via the shared
-      // linkedOrder.module.css.
+      // RecordLink.
       c: {
         accessor: row => linkedOrderOf(params.storeId, row)?.label ?? '',
         id: 'linkedOrder',
       },
-      header: t('label.linked-order'),
+      header: () => t('label.linked-order'),
       cell: info => {
         const linked = linkedOrderOf(params.storeId, info.row.original);
         return (
           <Show when={linked}>
             {l => (
               // Stop the link's clicks opening the row (it navigates itself).
-              <A
+              <RecordLink
                 href={l().href}
-                onClick={e => e.stopPropagation()}
-                class={linkStyles.link}
-                data-kind={l().kind}
+                onClick={(e: MouseEvent) => e.stopPropagation()}
+                kind={l().kind}
               >
                 {l().label}
-              </A>
+              </RecordLink>
             )}
           </Show>
         );
@@ -306,28 +305,28 @@ const InboundShipmentsList: Component = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('label.created'),
+      header: () => t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
-      header: t('label.delivered'),
+      header: () => t('label.delivered'),
       ...getDateCell(),
     },
     {
       c: { key: 'comment' },
-      header: t('label.comment'),
+      header: () => t('label.comment'),
       ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
-      header: t('label.reference'),
+      header: () => t('label.reference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
-      header: t('label.total'),
+      header: () => t('label.total'),
       ...getCurrencyCell(),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.

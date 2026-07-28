@@ -1,8 +1,10 @@
+import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
@@ -82,13 +84,14 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
   // dialog stays open with entries intact (OMS-REG-INV-01.25/OMS-REG-INV-01.27/OMS-REG-INV-01.28, D21/D22).
   const [rejection, setRejection] = createSignal<SaveRejection>();
 
-  // The Name input — Name is the modal's autofocused field (ui-surface S2).
-  // First open uses the input's native `autofocus`, but that fires only on the
-  // element's initial mount; OK-&-next reseeds the SAME mounted input (an
-  // interaction never remounts the form — kdd/solid-reactivity-pitfalls § no
-  // remounts), so autofocus can't re-fire. Keep the ref to refocus Name after
-  // each advance, matching first-open behaviour.
-  let nameInput: HTMLInputElement | undefined;
+  // Name is the modal's initial-focus field (ui-surface S2) AND where focus
+  // returns after each OK-&-next advance. One handle covers both: the Dialog
+  // declares it as `initialFocus` for the open, and the advance calls focus()
+  // directly. Native `autofocus` can serve neither — inside a Dialog the panel
+  // wins it, and it fires only on the element's initial mount, while OK-&-next
+  // reseeds the SAME mounted input (an interaction never remounts the form —
+  // kdd/solid-reactivity-pitfalls § no remounts).
+  const nameField = createFocusTarget();
 
   // The location-type picker's options (consumed `locationTypes` read —
   // contract.md § contract surface). Fetched once per store; read WITHOUT
@@ -165,7 +168,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       // Create: client-generated id (rules.md § identity).
       const result = await graphqlFetch(InsertLocation, {
         storeId: props.storeId,
-        input: buildInsertInput(form(), crypto.randomUUID()),
+        input: buildInsertInput(form(), generateUUID()),
       });
       if (result.kind !== 'success') {
         setSaving(null);
@@ -200,17 +203,15 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       setForm(EMPTY_FORM);
     }
     // Refocus Name (ui-surface S2): clicking OK-&-next disabled that button
-    // mid-save, dropping focus to <body>, and the reseed above doesn't remount
-    // the input so native autofocus won't re-fire. Deferred a frame — the same
-    // focus-after-state-change idiom as the reference modals (Stocktake /
-    // CreateInboundShipment) — so the input is re-enabled (saving() cleared)
-    // before we move focus to it.
-    requestAnimationFrame(() => nameInput?.focus());
+    // mid-save, dropping focus to <body>. The handle defers a frame, so the
+    // input is re-enabled (saving() cleared) before focus moves to it.
+    nameField.focus();
   };
 
   return (
     <Dialog
       open
+      initialFocus={nameField}
       testId="location-edit-modal"
       title={isEdit() ? t('label.edit-location') : t('label.create-location')}
       icon={isEdit() ? undefined : <PlusCircleIcon />}
@@ -268,15 +269,16 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       {/* Body, top to bottom, per ui-surface S2 § layout. Each field stands
           alone, so it uses the control's built-in label (ui-standards). */}
       <TextField
-        ref={nameInput}
+        ref={nameField.ref}
+        data-testid="location-name-input"
         label={t('label.name')}
         required
-        autofocus
         disabled={saving() !== null}
         value={form().name}
         onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
       />
       <TextField
+        data-testid="location-code-input"
         label={t('label.code')}
         required
         disabled={saving() !== null}
@@ -305,6 +307,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       <div class={styles.volumeRow}>
         {/* label.volume carries the m³ unit ("Volume (m³)"). */}
         <NumberField
+          data-testid="location-volume-input"
           label={t('label.volume')}
           decimalLimit={10}
           disabled={saving() !== null}

@@ -20,7 +20,8 @@
    case). */
 .actions {
   display: flex;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
   padding: var(--space-1) var(--space-2) var(--space-2);
   border-block-end: 1px solid var(--color-divider);
   margin-block-end: var(--space-1);
@@ -227,7 +228,7 @@
 }
 
 .moveBtn:disabled {
-  opacity: 0.3;
+  opacity: var(--disabled-opacity);
   cursor: default;
 }
 
@@ -249,18 +250,4 @@
 /* The single chevron icon does double duty: pointing down as-is, flipped for "up". */
 .chevronUp {
   transform: rotate(180deg);
-}
-
-/* Group badge — the icon(s) of the tab/group(s) a column belongs to, inline
-   after the name, so it's clear hiding/reordering here is GLOBAL across tabs.
-   Text on hover via title. */
-.groupBadgeIcon {
-  display: inline-flex;
-  align-items: center;
-  color: var(--primary-main);
-}
-
-.groupBadgeIcon svg {
-  inline-size: 0.875rem;
-  block-size: 0.875rem;
 }

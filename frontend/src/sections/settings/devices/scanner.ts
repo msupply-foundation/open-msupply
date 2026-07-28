@@ -1,18 +1,19 @@
 // Barcode-scanner device state (spec/settings/rules.md § Devices — barcode
 // scanner). Entirely local-device: no GraphQL or REST surface exists for this
 // section (contract § Devices — barcode scanner), and nothing scanned is ever
-// recorded server-side (AC-BS2, AC-BS3).
+// recorded server-side (rules § Devices — barcode scanner).
 //
 // This web/desktop build has no hardware scanning plugin (the mobile plugin /
 // Electron native API live with the android/electron hosts — which screens
 // consume a scan is owned by spec/android, not here). So the only scanner this
 // diagnostic surface can ever see is the MOCK one: enabling the mock simulates
 // a connected scanner for testing without real hardware, and MUST NOT be
-// relied on for normal store operation (AC-BS3). The toggle is remembered on
+// relied on for normal store operation (rules § Devices — barcode scanner). The toggle is remembered on
 // this device (rules § Devices — barcode scanner), persisted via appData like
 // the label printer's USB preference; a module-level signal carries it across
 // the Settings ↔ Test-scanner navigation.
 
+import { generateUUID } from '../../../uuid';
 import { createSignal } from 'solid-js';
 import {
   getMockBarcodeScannerEnabled,
@@ -55,13 +56,13 @@ export type ScanResult = {
 };
 
 // One simulated scan — a canned GS1-style barcode, generated locally with no
-// server round-trip (AC-BS2). Content varies per scan so the results list
+// server round-trip (rules § Devices — barcode scanner). Content varies per scan so the results list
 // visibly accumulates distinct entries.
 let mockScanCounter = 0;
 export const triggerMockScan = (): ScanResult => {
   mockScanCounter += 1;
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     barcode: `(01)0935560700${String(mockScanCounter % 100).padStart(2, '0')}(17)260731(10)MOCK${mockScanCounter}`,
     scannedAt: new Date(),
   };

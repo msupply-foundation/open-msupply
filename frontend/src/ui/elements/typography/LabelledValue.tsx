@@ -6,16 +6,22 @@ export interface LabelledValueProps extends JSX.HTMLAttributes<HTMLDivElement> {
   /** The field name, shown above the value. */
   label: JSX.Element;
   /**
-   * How the label reads:
-   *  - `card` (default) — small, muted label above the value: the read-only
-   *    field in a card / detail panel / utility row (ui-standards § tables card
-   *    layout, "labels muted above values").
-   *  - `field` — the label matches an editable input's label exactly (size,
-   *    weight, colour, label→value spacing), so a read-only value sits flush
-   *    beside editable fields in a form. Read-only-vs-editable then reads from
-   *    the ABSENCE of an input box, not a muted label (see kdd/form-layout).
+   * The label itself is identical in both variants (the shared --field-label-*
+   * token, matching every input's label). `variant` only tunes the label→value
+   * GAP:
+   *  - `card` (default) — the tight card / detail-panel / utility-row gap.
+   *  - `field` — the input's label→control gap, so a read-only value sits flush
+   *    beside editable fields in a form. Read-only-vs-editable reads from the
+   *    ABSENCE of an input box, not the label (see kdd/form-layout).
    */
   variant?: 'card' | 'field';
+  /**
+   * Type scale, matching the input components' `size`: `default` (14px label /
+   * body value) or `small` (13px, `--input-font-sm`), so a read-only value
+   * lines up with the small inputs it sits among — e.g. in a page-header
+   * toolbar row (see the Detail-table showcase).
+   */
+  size?: 'default' | 'small';
   /**
    * The value, shown below the label in body text. Pass any node (text, a
    * chip, etc.).
@@ -41,12 +47,14 @@ export const LabelledValue = (props: LabelledValueProps) => {
     'label',
     'children',
     'variant',
+    'size',
     'class',
   ]);
   return (
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-variant={local.variant ?? 'card'}
+      data-size={local.size ?? 'default'}
       {...rest}
     >
       <span class={styles.label}>{local.label}</span>

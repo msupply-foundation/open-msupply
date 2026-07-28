@@ -2,8 +2,13 @@
 import { render } from 'solid-js/web';
 import './index.css';
 import { App } from './App';
+import { registerAndroidBackButton } from './platform/backButton';
 
 const root = document.getElementById('root')!;
+
+// Android shell only (no-op elsewhere): hardware back navigates history
+// instead of closing the app.
+void registerAndroidBackButton();
 
 /*
  * Dev-only component showcase: opening the app at #/showcase(/<section>)

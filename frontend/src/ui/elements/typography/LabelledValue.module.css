@@ -1,13 +1,12 @@
 /*
- * LabelledValue — a stacked label-above-value field. Owns its label/value
- * typography (the value's body type via Text, the colours here — Text never
- * carries colour), keyed off `data-variant`:
- *  - card (default): a small, muted label above the value (card / detail panel
- *    / utility row).
- *  - field: the label matches an editable input's label exactly (TextField
- *    .label — --text-sm, medium, --text-body, line-height 1) with the same
- *    label→control gap token (--input-field-gap), so a read-only value sits
- *    flush beside editable fields in a form (kdd/form-layout).
+ * LabelledValue — a stacked label-above-value field. The LABEL uses the shared
+ * --field-label-* token, byte-for-byte identical to the input components' label
+ * (Carl 2026-07-26), so a read-only value and an editable input read the same.
+ * The value's body type comes from Text (colours set here — Text never carries
+ * colour). `data-variant` now only tunes the label→value GAP:
+ *  - card (default): the tight card / detail-panel / utility-row gap.
+ *  - field: the input's label→control gap (--input-field-gap), so a read-only
+ *    value sits flush beside editable fields in a form (kdd/form-layout).
  * min-inline-size lets a row of these wrap intrinsically without any field
  * collapsing to nothing.
  */
@@ -22,22 +21,29 @@
   gap: var(--input-field-gap);
 }
 
+/* The label is the SHARED field-label token — byte-for-byte the same as the
+   input components' `.label` (TextField/TextArea/DateField), so a read-only
+   labelled value and an editable input read identically side by side (Carl
+   2026-07-26). See --field-label-* in tokens.css. Both variants use it; they
+   now differ ONLY in the label→value gap (above). */
 .label {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  line-height: var(--line-tight);
-  color: var(--text-secondary);
-}
-
-/* Matches the input label (TextField .label) exactly — size, line-height and
-   colour — so a read-only field reads as a field, just without a control box. */
-.field[data-variant='field'] .label {
-  font-size: var(--text-sm);
-  line-height: 1;
-  color: var(--text-body);
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
 }
 
 .value {
   color: var(--text-body);
   overflow-wrap: anywhere;
+}
+
+/* Small size — 13px label AND value (--input-font-sm), mirroring the input
+   components' `size="small"` (TextField/DateField), so a read-only value reads
+   the same as the small inputs it sits beside in a dense row like the header
+   toolbar. Two-class + attribute selector (0,3,0) outweighs Text's own body
+   variant class, so the value font-size override lands. */
+.field[data-size='small'] .label,
+.field[data-size='small'] .value {
+  font-size: var(--input-font-sm);
 }

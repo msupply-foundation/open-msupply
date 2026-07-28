@@ -11,9 +11,9 @@ import {
   supplyLevelsInUse,
 } from './propertySets';
 
-// AC-CN1 — the button reads Initialise until the set exists, Re-initialise
+// OMS-REG-SET-05.15/.16 — the button reads Initialise until the set exists, Re-initialise
 // after: "configured" means any existing property key belongs to the set.
-describe('AC-CN1 — configured checks flip Initialise to Re-initialise', () => {
+describe('configured checks flip Initialise to Re-initialise (SET-05.15/.16)', () => {
   it('reports GAPS unconfigured with no properties', () => {
     expect(gapsConfigured([])).toBe(false);
   });
@@ -42,10 +42,10 @@ describe('AC-CN1 — configured checks flip Initialise to Re-initialise', () => 
   });
 });
 
-// AC-CN2 — re-initialise is the same action: the fixed input sets are
+// OMS-REG-SET-05.16 — re-initialise is the same action: the fixed input sets are
 // deterministic, so a repeat sends the identical upsert (idempotence itself
 // is server-enforced; C2's real-backend leg covers it).
-describe('AC-CN2 — the fixed sets are deterministic', () => {
+describe('the fixed sets are deterministic (SET-05.16)', () => {
   it('produces the same GAPS set on every call', () => {
     expect(gapsProperties('en')).toEqual(gapsProperties('en'));
   });
@@ -66,8 +66,8 @@ describe('AC-CN2 — the fixed sets are deterministic', () => {
   });
 });
 
-// AC-CN6 — in-use values and duplicate prevention.
-describe('AC-CN6 — in-use supply levels and duplicate prevention', () => {
+// OMS-REG-SET-05.27 — in-use values and duplicate prevention.
+describe('in-use supply levels and duplicate prevention (SET-05.27)', () => {
   it('collects the supply-level values recorded against stores, trimmed and deduplicated', () => {
     expect(
       supplyLevelsInUse([

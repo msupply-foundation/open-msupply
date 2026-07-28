@@ -60,29 +60,29 @@ const CliniciansList: Component = () => {
   // (OMS-FUN-DIS-004.13); a missing optional attribute shows an empty cell
   // (OMS-FUN-DIS-004.14). Accessors so headers re-translate on locale switch.
   const columns = (): Column<ClinicianRow, SortKey>[] => [
-    { c: { key: 'code' }, sortKey: 'code', header: t('label.code') },
+    { c: { key: 'code' }, sortKey: 'code', header: () => t('label.code') },
     {
       c: { key: 'firstName' },
       sortKey: 'firstName',
-      header: t('label.first-name'),
+      header: () => t('label.first-name'),
     },
     {
       c: { key: 'lastName' },
       sortKey: 'lastName',
-      header: t('label.last-name'),
+      header: () => t('label.last-name'),
     },
     {
       c: { key: 'initials' },
       sortKey: 'initials',
-      header: t('label.initials'),
+      header: () => t('label.initials'),
     },
-    { c: { key: 'mobile' }, header: t('label.mobile') },
+    { c: { key: 'mobile' }, header: () => t('label.mobile') },
     {
       c: {
         accessor: row => (row.gender ? t(genderLabelKey(row.gender)) : ''),
         id: 'gender',
       },
-      header: t('label.gender'),
+      header: () => t('label.gender'),
     },
   ];
 

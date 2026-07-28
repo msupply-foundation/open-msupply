@@ -1,15 +1,15 @@
 import { createResource, Suspense, type Component, type JSX } from 'solid-js';
-import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
-import type { LocaleKey } from '../../../../intl/locales';
-import { dictionaries, locale } from '../../../../intl/intl';
-import { localisedTime } from '../../../../intl/formatDateTime';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import type { LocaleKey } from '@/intl/locales';
+import { dictionaries, locale } from '@/intl/intl';
+import { localisedTime } from '@/intl/formatDateTime';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
 import {
   DataTable,
   type Column,
-} from '../../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
+} from '@/ui/elements/table/DataTable';
+import { getDateCell } from '@/ui/elements/table/tableHelpers';
 import {
   StocktakeLog,
   type StocktakeLogFragment,
@@ -156,25 +156,25 @@ export const StocktakeLogPanel: Component<{
   const columns = (): Column<Log, never>[] => [
     {
       c: { key: 'datetime' },
-      header: t('label.date'),
+      header: () => t('label.date'),
       ...getDateCell(),
     },
     {
       c: { accessor: log => localisedTime(log.datetime), id: 'time' },
-      header: t('label.time'),
+      header: () => t('label.time'),
       meta: { align: 'right' },
     },
     {
       c: { accessor: log => log.user?.username ?? '', id: 'user' },
-      header: t('label.user'),
+      header: () => t('label.user'),
     },
     {
       c: { accessor: log => eventLabel(log.type), id: 'event' },
-      header: t('label.event'),
+      header: () => t('label.event'),
     },
     {
       c: { id: 'details' },
-      header: t('label.details'),
+      header: () => t('label.details'),
       cell: info => changeDetails(info.row.original.from, info.row.original.to),
     },
   ];

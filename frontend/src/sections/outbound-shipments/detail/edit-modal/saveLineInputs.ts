@@ -1,0 +1,30 @@
+// The item-set save's line inputs (AC-I6/I8): the full draft set, zeros
+// included — the save replaces the item's lines (zero packs removes one).
+// The set-save OVERWRITES receivedNumberOfPacks and reasonOptionId on every
+// updated line (contract § issuing lines wire trap) — the stored values are
+// echoed back so a save never clears what the destination reported.
+import type {
+  DraftStockOutLinesResult,
+  SaveOutboundItemLinesVariables,
+} from './outboundLineEdit.generated';
+
+type DraftLine =
+  DraftStockOutLinesResult['draftStockOutLines']['draftLines'][number];
+
+export const toSaveLineInputs = (
+  lines: readonly Pick<
+    DraftLine,
+    | 'id'
+    | 'numberOfPacks'
+    | 'stockLineId'
+    | 'receivedNumberOfPacks'
+    | 'reasonOption'
+  >[]
+): SaveOutboundItemLinesVariables['input']['lines'] =>
+  lines.map(line => ({
+    id: line.id,
+    numberOfPacks: line.numberOfPacks,
+    stockLineId: line.stockLineId,
+    receivedNumberOfPacks: line.receivedNumberOfPacks,
+    reasonOptionId: line.reasonOption?.id ?? null,
+  }));

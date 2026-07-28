@@ -24,6 +24,19 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   return lines && lines > 1 ? lines : undefined;
 };
 
+// The monospace convention: code-like value cells render in --font-mono (set by
+// the `code` cell kind). Value cells only — the header label stays sans.
+const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.mono ?? false;
+
+// A column's real growth cap in px (delivered as max-width), or undefined.
+// TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
+// columnDef, so only a value below that sentinel counts as an actual cap.
+const cellMaxWidthPx = <T,>(cell: TanCell<T, unknown>): number | undefined => {
+  const max = cell.column.columnDef.maxSize;
+  return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
+};
+
 // A body row: its cells, clickable when onRowClick is set. Extracted from
 // DataTable.tsx (table-view row rendering).
 export function TableRow<T>(props: {
@@ -53,6 +66,17 @@ export function TableRow<T>(props: {
    * pinned left).
    */
   leadingPinnedStyle: (index: number) => JSX.CSSProperties;
+  /**
+   * Which frozen block's OUTER edge this column sits on, if any — the boundary
+   * the scrolling content passes. Carries the freeze cue (see
+   * DataTable.module.css); columns inside a block carry none.
+   */
+  frozenEdge: (column: TanColumn<T>) => 'left' | 'right' | undefined;
+  /**
+   * Is the leading (select) column itself that left edge? True when no data
+   * column is pinned left, so the leading column IS the whole left block.
+   */
+  leadingIsFrozenEdge: boolean;
   /**
    * Display-time tab filter: render a cell only when this returns true (see
    * columnInActiveTab).
@@ -86,6 +110,7 @@ export function TableRow<T>(props: {
         <td
           class={styles.selectCell}
           data-pinned="left"
+          data-frozen-edge={props.leadingIsFrozenEdge ? 'left' : undefined}
           style={props.leadingPinnedStyle(0)}
         >
           <BareCheckbox
@@ -107,15 +132,23 @@ export function TableRow<T>(props: {
               // scoped by row (row.getByTestId('cell-batch')).
               data-testid={`cell-${cell.column.id}`}
               data-align={cellAlign(cell)}
+              data-mono={cellMono(cell) ? '' : undefined}
               data-pinned={cell.column.getIsPinned() || undefined}
+              data-frozen-edge={props.frozenEdge(cell.column)}
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
               // 1, the cell clamps to that many lines then ellipsises (CSS
               // line-clamp); otherwise the default single-line nowrap applies.
-              // min-width keeps the column-width floor. A pinned column
-              // additionally gets sticky position + its edge offset.
+              // min-width keeps the column-width floor (getSize()); maxSize is
+              // the growth cap, applied as max-width (docs/CELL_TYPES.md).
+              // TanStack merges its default maxSize (MAX_SAFE_INTEGER) into
+              // every columnDef, so only a value below that sentinel is a real
+              // cap. A pinned column additionally gets sticky position + offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
+                ...(cellMaxWidthPx(cell) !== undefined
+                  ? { 'max-width': `${cellMaxWidthPx(cell)}px` }
+                  : {}),
                 ...(cellWrapLines(cell)
                   ? { '--wrap-lines': String(cellWrapLines(cell)) }
                   : {}),

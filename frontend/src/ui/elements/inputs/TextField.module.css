@@ -40,10 +40,12 @@
 }
 
 .label {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  line-height: 1; /* ui-standards .field-label — tight, sits close to the input */
-  color: var(--text-body);
+  /* Shared field-label token — identical to LabelledValue's label (Carl
+     2026-07-26). See --field-label-* in tokens.css. */
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
 }
 
 /* Small fields drop the label to 13px too (ui-standards field-label--small). */
@@ -100,9 +102,9 @@
 
 /* Disabled — grey fill, muted border, not interactive */
 .input:disabled {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
-  color: var(--gray-main);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
@@ -157,7 +159,7 @@
 }
 
 .inputWrap[data-adorned]:has(.input:disabled) {
-  background: var(--bg-input);
+  background: var(--bg-disabled);
   border-color: var(--color-divider);
 }
 
@@ -204,6 +206,17 @@
   font-size: var(--input-font-sm);
 }
 
+/* Interactive inline-end control (e.g. PasswordField's show/hide toggle) — a
+   focusable button inside the field frame, so it keeps full height and, unlike
+   the decorative .adornment, stays interactive. The button it wraps carries its
+   own styling; this slot just seats it against the field's end edge. */
+.endAction {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  flex-shrink: 0;
+}
+
 .helper {
   margin: 0;
   font-size: var(--text-xs);
@@ -228,14 +241,21 @@
 }
 
 @media (pointer: coarse) {
+  /* Standard grows to --input-height-touch, small to --input-height-sm-touch
+     (both clear WCAG 2.5.5 AAA), keeping the 4px size step on touch. */
   .input,
   .inputWrap[data-adorned] {
-    min-height: var(--touch-target);
+    min-height: var(--input-height-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus).
-     Default size only; the small variant stays dense (ui-standards). */
-  .input:not([data-size='small']) {
+  .input[data-size='small'],
+  .inputWrap[data-adorned][data-size='small'] {
+    min-height: var(--input-height-sm-touch);
+  }
+
+  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). BOTH
+     sizes: the iOS zoom threshold is absolute and ignores our size variant. */
+  .input {
     font-size: var(--input-font-touch);
   }
 

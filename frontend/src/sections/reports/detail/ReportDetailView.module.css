@@ -1,0 +1,11 @@
+/* The how-to-read disclosure (AC-U9) renders as a compact inline affordance
+   in action blue, shrunk to its own text — the captured client's look — rather
+   than the accordion's default full-width heading row. */
+.howToReadTrigger {
+  inline-size: auto;
+  color: var(--secondary-main);
+}
+
+.howToReadTrigger svg {
+  color: var(--secondary-main);
+}

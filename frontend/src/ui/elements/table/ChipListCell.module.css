@@ -1,12 +1,15 @@
-/* ChipListCell — one outlined pill per value, on a single non-wrapping line.
-   Overflowing chips clip at the cell edge; the container's title carries the
-   full list (ui-standards § tables — truncation, not row reflow). */
+/* ChipListCell — one outlined pill per value. The chips WRAP onto further lines
+   when the column is too narrow to hold them on one row (the container's title
+   still carries the full list). Wrapping — rather than clipping on one line —
+   is also what keeps a chip-list column resizable: a wrapping flex box's
+   intrinsic width collapses toward its widest single chip (like wrapping text
+   to its longest word), so the column is driven by its `size` / resize handle,
+   not pinned at the one-line chip width. */
 .list {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: var(--space-1);
   min-width: 0;
-  overflow: hidden;
 }
 
 .chip {

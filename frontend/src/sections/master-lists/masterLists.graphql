@@ -1,7 +1,7 @@
 # Master lists — the S1 list population AND the S2 detail-header lookup
 # (spec/master-lists). storeId is auth/context only; store scoping is the client
 # sending existsForStoreId (the list does; the detail-header lookup omits it, so
-# a non-joined list stays reachable by id — AC-L6). Inactive lists never return
+# a non-joined list stays reachable by id — OMS-REG-CAT-07.23). Inactive lists never return
 # (the repository forces isActive). `sort` honours only the LAST entry — send a
 # single-element list (contract wire trap).
 query masterLists(

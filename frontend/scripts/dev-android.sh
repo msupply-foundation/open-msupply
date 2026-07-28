@@ -45,14 +45,28 @@ fi
 # android/app/src/main/jniLibs/arm64-v8a/ yourself (gitignored; a fetch
 # script is a planned follow-up) — whatever sits there gets bundled.
 
-ADB="${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb"
+# Resolve the SDK once and EXPORT it: gradle reads ANDROID_HOME (or a
+# gitignored android/local.properties sdk.dir) to find the SDK, and errors with
+# "SDK location not found" if neither is set — even though adb below only needs
+# the path locally. Exporting the same value the script already defaults to
+# covers gradle too, with no machine-specific file to create.
+export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+if [ ! -d "$ANDROID_HOME" ]; then
+  echo "Android SDK not found at ANDROID_HOME=$ANDROID_HOME." >&2
+  echo "Install it (Android Studio → SDK Manager) or set ANDROID_HOME to your SDK path." >&2
+  exit 1
+fi
+ADB="$ANDROID_HOME/platform-tools/adb"
 DEVICES="$($ADB devices | awk 'NR>1 && $2=="device" {print $1}')"
 if [ -z "$DEVICES" ]; then
   echo "No connected device/emulator. Start one first (e.g. emulator -avd <name>)." >&2
   exit 1
 fi
-# explicit serial wins; otherwise prefer a physical device over an emulator
-DEVICE="${1:-$(echo "$DEVICES" | grep -v '^emulator-' | head -1)}"
+# explicit serial wins; otherwise prefer a physical device over an emulator.
+# `|| true`: with only emulators connected, grep -v matches nothing and exits
+# 1, which under `set -e` would abort the script before the emulator fallback
+# on the next line ever runs.
+DEVICE="${1:-$(echo "$DEVICES" | grep -v '^emulator-' | head -1 || true)}"
 DEVICE="${DEVICE:-$(echo "$DEVICES" | head -1)}"
 if [ "$(echo "$DEVICES" | wc -l)" -gt 1 ]; then
   echo "Multiple devices connected:" && echo "$DEVICES" | sed 's/^/  /'
@@ -108,6 +122,10 @@ $ADB -s "$DEVICE" reverse tcp:3005 tcp:3005
 $ADB -s "$DEVICE" reverse tcp:8002 tcp:8000 || true
 $ADB -s "$DEVICE" forward tcp:18000 tcp:8000
 
+# cap sync WRITES capacitor.config.json / capacitor.plugins.json into this dir
+# but does not create it — and it's empty on a fresh checkout (everything under
+# assets/ is gitignored except a tracked .gitkeep), so ensure it exists first.
+mkdir -p android/app/src/main/assets
 # DEV_ANDROID=1 makes capacitor.config.ts set server.url to the dev server;
 # ANDROID_SERIAL scopes gradle's install to the selected device only
 DEV_ANDROID=1 pnpm exec cap sync android

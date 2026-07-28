@@ -2,9 +2,11 @@ import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { SaveIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
 import {
@@ -23,9 +25,9 @@ import styles from '../Settings.module.css';
  * Server Admin only (gated by the page). Saving is not merely storing four
  * fields: the SERVER performs a live authentication round-trip against the
  * target before persisting anything, unless url/site/password all evaluate as
- * unchanged (AC-SY3–SY5 — server-enforced; this form just reports the
- * outcome). Save stays disabled until all four fields are filled (AC-SY1) and
- * the password always starts blank (AC-SY2).
+ * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just reports the
+ * outcome). Save stays disabled until all four fields are filled (OMS-REG-SET-02.7/.8) and
+ * the password always starts blank (OMS-REG-SET-02.12).
  */
 export const SyncSection = () => {
   // Stored settings (never includes the password). Non-suspending read —
@@ -55,7 +57,7 @@ export const SyncSection = () => {
   };
 
   // Seed url/site/interval from the stored settings once they arrive; the
-  // password field deliberately stays blank (AC-SY2). Only seed while the
+  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed while the
   // user hasn't started editing (their in-progress input must never be
   // overwritten by a late fetch).
   let touched = false;
@@ -76,7 +78,7 @@ export const SyncSection = () => {
     setOutcome(undefined);
     // `background` keeps a plain network failure out of the global
     // unexpected-error modal: this form owns its failure surface (the
-    // previous settings remain in effect either way — AC-SY3's fallback).
+    // previous settings remain in effect either way — OMS-REG-SET-02.9's fallback).
     const result = await graphqlFetch(
       UpdateSyncSettings,
       { input: buildSyncInput(form()) },
@@ -86,14 +88,14 @@ export const SyncSection = () => {
       const payload = result.data.updateSyncSettings;
       if (payload.__typename === 'SyncSettingsNode') {
         // Persisted — confirm, re-read the stored settings, and blank the
-        // password again (AC-SY2, AC-SY4).
+        // password again (OMS-REG-SET-02.12, OMS-REG-SET-02.13).
         setOutcome('success');
         touched = false;
         setForm({ ...form(), password: '' });
         await refetch();
       } else {
         // The server's live check failed — a reason-specific message from
-        // the returned variant; nothing was stored (AC-SY3).
+        // the returned variant; nothing was stored (OMS-REG-SET-02.9).
         setOutcome({
           message: t(syncSaveErrorKey(payload)),
           detail: payload.fullError,
@@ -109,7 +111,6 @@ export const SyncSection = () => {
 
   return (
     <form
-      class={styles.sectionBody}
       aria-label={t('heading.settings-sync')}
       onSubmit={e => {
         // Enter anywhere in the form saves, same as the Save button
@@ -118,87 +119,85 @@ export const SyncSection = () => {
         void save();
       }}
     >
-      {/* Labelled field rows per the spec's Layout (ui-surface § Layout):
+      <Stack>
+        {/* Labelled field rows per the spec's Layout (ui-surface § Layout):
           bold label inline-start, control inline-end, wrapped control's own
           label hidden. */}
-      <FieldRow label={t('label.settings-url')}>
-        <TextField
-          label={t('label.settings-url')}
-          hideLabel
-          width="long"
-          value={form().url}
-          onInput={e => edit({ url: e.currentTarget.value })}
-          disabled={saving()}
-          data-testid="sync-settings-url"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.settings-username')}>
-        <TextField
-          label={t('label.settings-username')}
-          hideLabel
-          width="long"
-          value={form().username}
-          onInput={e => edit({ username: e.currentTarget.value })}
-          disabled={saving()}
-          data-testid="sync-settings-username"
-        />
-      </FieldRow>
-      {/* Plain masked input — the shared library has no visibility-toggle
-          affordance yet (registry gap, flagged in BUILD_REPORT.md); matches
-          the app's other password fields (login, initialisation). */}
-      <FieldRow label={t('label.settings-password')}>
-        <TextField
-          label={t('label.settings-password')}
-          hideLabel
-          width="long"
-          type="password"
-          autocomplete="off"
-          value={form().password}
-          onInput={e => edit({ password: e.currentTarget.value })}
-          disabled={saving()}
-          data-testid="sync-settings-password"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.settings-interval')}>
-        <NumberField
-          label={t('label.settings-interval')}
-          hideLabel
-          min={1}
-          value={form().intervalSeconds}
-          onChange={intervalSeconds => edit({ intervalSeconds })}
-          disabled={saving()}
-          data-testid="sync-settings-interval"
-        />
-      </FieldRow>
-      <Show when={saved()}>
-        <Alert severity="success">{t('success.sync-settings')}</Alert>
-      </Show>
-      <Show when={saveError()}>
-        {error => (
-          <Alert severity="error">
-            <div>{error().message}</div>
-            <Show when={error().detail}>
-              {detail => (
-                <details>
-                  <summary>{t('error.more-info')}</summary>
-                  <pre>{detail()}</pre>
-                </details>
-              )}
-            </Show>
-          </Alert>
-        )}
-      </Show>
-      <div class={styles.actions}>
-        <Button
-          type="submit"
-          icon={<SaveIcon />}
-          loading={saving()}
-          disabled={!canSaveSyncSettings(form())}
-          data-testid="sync-settings-save"
-        >
-          {t('button.save')}
-        </Button>
-      </div>
+        <FieldRow label={t('label.settings-url')}>
+          <TextField
+            label={t('label.settings-url')}
+            hideLabel
+            width="long"
+            value={form().url}
+            onInput={e => edit({ url: e.currentTarget.value })}
+            disabled={saving()}
+            data-testid="sync-settings-url"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.settings-username')}>
+          <TextField
+            label={t('label.settings-username')}
+            hideLabel
+            width="long"
+            value={form().username}
+            onInput={e => edit({ username: e.currentTarget.value })}
+            disabled={saving()}
+            data-testid="sync-settings-username"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.settings-password')}>
+          <PasswordField
+            label={t('label.settings-password')}
+            hideLabel
+            width="long"
+            autocomplete="off"
+            value={form().password}
+            onInput={e => edit({ password: e.currentTarget.value })}
+            disabled={saving()}
+            data-testid="sync-settings-password"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.settings-interval')}>
+          <NumberField
+            label={t('label.settings-interval')}
+            hideLabel
+            min={1}
+            value={form().intervalSeconds}
+            onChange={intervalSeconds => edit({ intervalSeconds })}
+            disabled={saving()}
+            data-testid="sync-settings-interval"
+          />
+        </FieldRow>
+        <Show when={saved()}>
+          <Alert severity="success">{t('success.sync-settings')}</Alert>
+        </Show>
+        <Show when={saveError()}>
+          {error => (
+            <Alert severity="error">
+              <div>{error().message}</div>
+              <Show when={error().detail}>
+                {detail => (
+                  <details>
+                    <summary>{t('error.more-info')}</summary>
+                    <pre>{detail()}</pre>
+                  </details>
+                )}
+              </Show>
+            </Alert>
+          )}
+        </Show>
+        <div class={styles.actions}>
+          <Button
+            type="submit"
+            icon={<SaveIcon />}
+            loading={saving()}
+            disabled={!canSaveSyncSettings(form())}
+            data-testid="sync-settings-save"
+          >
+            {t('button.save')}
+          </Button>
+        </div>
+      </Stack>
     </form>
   );
 };
