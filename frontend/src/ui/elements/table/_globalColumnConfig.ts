@@ -21,6 +21,7 @@
  *      • `maxSize` = an OPTIONAL hard growth cap (rare — most columns
  *        omit it so they stay freely draggable; keep it only for
  *        genuinely fixed things like the comment icon or short codes).
+ *        A per-key `maxSize: null` drops the kind's cap for that one key.
  *      All values are REM (converted to px for TanStack, which sizes in
  *      px). For a one-off tweak in one table, override size/maxSize
  *      inline on that column def instead of changing the shared value.
@@ -39,6 +40,7 @@ export type CellKind =
   | 'percentage'
   | 'currency'
   | 'date'
+  | 'time'
   | 'expiry'
   | 'comment'
   | 'chipList';
@@ -60,6 +62,8 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
     percentage: { size: 4.5 },
     currency: { size: 7.5 },
     date: { size: 8.125 },
+    // A clock ("3:45 pm") is shorter than a date, and right-aligned.
+    time: { size: 6 },
     expiry: { size: 8.125 },
     comment: { size: 5, maxSize: 8 }, // fixed — an icon, never grows
     chipList: { size: 12 },
@@ -73,12 +77,20 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
 // invoiceNumber is narrower than a generic number. size/maxSize in rem; omitted
 // → the kind default. NOTE: the header-aware sizes below are first-cut
 // estimates — tune them here against the rendered table.
-export type CellSpec = { kind: CellKind; size?: number; maxSize?: number };
+// `maxSize` omitted inherits the kind's cap; `null` says "explicitly UNCAPPED"
+// and beats it — for a key whose HEADER outgrows the kind's value-shaped cap
+// (a capped column can't be dragged wider than the cap).
+export type CellSpec = {
+  kind: CellKind;
+  size?: number;
+  maxSize?: number | null;
+};
 export const CELL_DEF = {
   // Text — the flex-fill "sink" columns.
   itemName: { kind: 'text' },
   name: { kind: 'text' },
   otherPartyName: { kind: 'text' },
+  supplierName: { kind: 'text' },
   description: { kind: 'text' },
   prescriber: { kind: 'text' },
   manufacturer: { kind: 'text' },
@@ -90,6 +102,7 @@ export const CELL_DEF = {
   theirReference: { kind: 'shortText' },
   note: { kind: 'shortText' },
   initials: { kind: 'shortText' },
+  user: { kind: 'shortText' }, // acting user's username (log / ledger tables)
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },
   gender: { kind: 'shortText' },
@@ -98,12 +111,19 @@ export const CELL_DEF = {
   mobile: { kind: 'shortText' },
   unit: { kind: 'shortText' },
   unitName: { kind: 'shortText', size: 2 },
+  // A VVM status description ("Stage 1") — short text until the Status chip
+  // preset exists (see docs/CELL_TYPES.md § Status).
+  vvmStatus: { kind: 'shortText' },
   // Code / identifier.
   code: { kind: 'code' },
   itemCode: { kind: 'code' },
   code2: { kind: 'code' },
   batch: { kind: 'code' },
   location: { kind: 'code', size: 6.5 }, // header "Location"
+  // Header "Location code" is the binding constraint here, not the value — it
+  // needs more room than a bare "Location", and the kind's 7rem growth cap
+  // would stop a user widening it to fit on one line (#601). Own size, NO cap.
+  locationCode: { kind: 'code', size: 8.5, maxSize: null }, // measured: 127px
   // Number — size widened where the header label is the binding constraint.
   packSize: { kind: 'number', size: 5 }, // "Pack size"
   numberOfPacks: { kind: 'number', size: 4.5 }, // "Pack quantity"
@@ -119,6 +139,7 @@ export const CELL_DEF = {
   remaining: { kind: 'number' },
   difference: { kind: 'number', size: 7 }, // "Difference"
   unitQuantity: { kind: 'number', size: 5 }, // "Unit quantity"
+  balance: { kind: 'number', size: 6 }, // header "Balance" (ledger tables)
   // A short id — only ever a few digits, so tighter than a generic number.
   invoiceNumber: { kind: 'number', size: 3.5 },
   // Percentage.
@@ -140,6 +161,8 @@ export const CELL_DEF = {
   date: { kind: 'date' },
   startDatetime: { kind: 'date' },
   enrolmentDatetime: { kind: 'date' },
+  // Time of day — the sibling of a Date column over the same instant.
+  time: { kind: 'time' },
   // Expiry (date + near-expiry error tone).
   expiryDate: { kind: 'expiry' },
   // Comment (icon + popover).

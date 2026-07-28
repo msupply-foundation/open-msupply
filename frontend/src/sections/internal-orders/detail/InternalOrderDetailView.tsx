@@ -655,7 +655,6 @@ const InternalOrderDetailView: Component = () => {
               open
               title={t('error.order-not-found')}
               message={t('messages.click-to-return-to-internal-orders')}
-              confirmLabel={t('button.ok')}
               onConfirm={() =>
                 navigate(`/${params.storeId}/replenishment/internal-order`, {
                   replace: true,
@@ -905,7 +904,6 @@ const InternalOrderDetailView: Component = () => {
                 open
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-add-from-master-list')}
-                confirmLabel={t('button.ok')}
                 onConfirm={() => void confirmAddFromMasterList()}
                 onClose={() => setPendingMasterList(undefined)}
               />
@@ -916,7 +914,6 @@ const InternalOrderDetailView: Component = () => {
                   open
                   title={t('error.something-wrong')}
                   message={message()}
-                  confirmLabel={t('button.ok')}
                   onConfirm={() => setMasterListError(undefined)}
                   onClose={() => setMasterListError(undefined)}
                 />
