@@ -1,7 +1,6 @@
 import {
   createSignal,
   For,
-  onCleanup,
   Show,
   type Component,
   type JSX,
@@ -20,14 +19,14 @@ import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CheckIcon, CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
+import { EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
@@ -139,49 +138,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     </span>
   );
 
-  // Copy feedback shown in place on the button (controls › action feedback —
-  // never a toast), fading after a moment.
-  const [copyFeedback, setCopyFeedback] = createSignal<'copied' | 'failed'>();
-  const [copying, setCopying] = createSignal(false);
-  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(copiedTimer));
-  const flashCopyFeedback = (kind: 'copied' | 'failed') => {
-    setCopyFeedback(kind);
-    clearTimeout(copiedTimer);
-    copiedTimer = setTimeout(() => setCopyFeedback(undefined), 2500);
-  };
-
-  // Copy the WHOLE shipment — header + every line, unpaginated — as pretty
-  // JSON (spec S3 § record actions; the fullStocktake pattern). The detail's
-  // lines read is server-paged, so this is its own one-shot fetch. A fetch
-  // failure is surfaced by graphqlFetch's global modal; a NodeError (not
-  // expected from a screen showing the record) just doesn't copy.
-  const copyToClipboard = async () => {
-    if (copying()) return;
-    setCopying(true);
-    try {
-      const result = await graphqlFetch(FullOutbound, {
-        storeId: props.storeId,
-        id: props.node.id,
-      });
-      if (result.kind !== 'success') return;
-      if (result.data.invoice.__typename !== 'InvoiceNode') return;
-      try {
-        // The node itself — the old app copies the record, not the query
-        // wrapper ({"invoice": …}).
-        await navigator.clipboard.writeText(
-          JSON.stringify(result.data.invoice, null, 2)
-        );
-      } catch {
-        // Clipboard write refused — e.g. Safari's user-activation window
-        // expired over a slow fetch. Surface in the same in-place slot.
-        flashCopyFeedback('failed');
-        return;
-      }
-      flashCopyFeedback('copied');
-    } finally {
-      setCopying(false);
-    }
+  // The WHOLE shipment — header + every line, unpaginated — for the side
+  // panel's copy action (controls § copy to clipboard; the fullStocktake
+  // pattern). The detail's lines read is server-paged, so this is its own
+  // one-shot fetch. A fetch failure is surfaced by graphqlFetch's global modal;
+  // a NodeError (not expected from a screen showing the record) copies nothing.
+  const loadFullShipment = async () => {
+    const result = await graphqlFetch(FullOutbound, {
+      storeId: props.storeId,
+      id: props.node.id,
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the old app copies the record, not the query wrapper
+    // ({"invoice": …}).
+    return result.data.invoice;
   };
 
   return (
@@ -538,24 +509,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             number={() => props.node.invoiceNumber}
             customerName={() => props.node.otherParty.name}
           />
-          {/* Copy to clipboard — the button itself briefly swaps to a "copied"
-              confirmation (matching the stocktakes CopyStocktakeAction);
-              in-place feedback, never a toast. aria-live so the swap is
-              announced by assistive tech (no visually-hidden twin — a hidden
-              duplicate of the label trips strict e2e text locators). */}
-          <Button
-            variant="secondary"
-            aria-live="polite"
-            loading={copying()}
-            icon={copyFeedback() === 'copied' ? <CheckIcon /> : <CopyIcon />}
-            onClick={() => void copyToClipboard()}
-          >
-            {copyFeedback() === 'copied'
-              ? t('message.copy-success')
-              : copyFeedback() === 'failed'
-                ? t('message.copy-failed')
-                : t('button.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullShipment} />
         </SidePanelActions>
       </SidePanelSection>
       {/* The shared change-currency modal with outbound's header update; a

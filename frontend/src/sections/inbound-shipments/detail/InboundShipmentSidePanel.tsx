@@ -17,9 +17,11 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
-import { CopyIcon, EditIcon } from '../../../ui/icons';
+import { EditIcon } from '../../../ui/icons';
 import {
+  FullInboundShipment,
   InboundServiceLines,
   type InboundInfoFragment,
 } from './inboundShipmentDetail.generated';
@@ -30,6 +32,7 @@ import {
   updateInboundShipment,
 } from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { scopeOf } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
@@ -81,7 +84,6 @@ export const InboundShipmentSidePanel: Component<
   const [donorOpen, setDonorOpen] = createSignal(false);
   const [serviceOpen, setServiceOpen] = createSignal(false);
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
-  const [copied, setCopied] = createSignal(false);
 
   // The itemised service lines feeding the Charges → Service charges block.
   // Re-read when the service-line modal saves or the service tax rate changes
@@ -126,13 +128,24 @@ export const InboundShipmentSidePanel: Component<
     !supplierIsStore(props.node) &&
     !props.disabled;
 
-  const copyToClipboard = () => {
-    void navigator.clipboard
-      .writeText(`#${props.node.invoiceNumber} — ${props.node.otherPartyName}`)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+  // The WHOLE shipment — header + every line, stock-in and service alike,
+  // unpaginated — for the copy action (rules § copy to clipboard, case .34).
+  // The detail's own lines read is server-paged and excludes SERVICE rows, so
+  // this is its own one-shot fetch through the FullInboundShipment query;
+  // `type` is the shipment's own permission scope, taken from its
+  // purchaseOrderId rather than re-probing the held scopes. A fetch failure
+  // routes to the global error modal; a NodeError (not expected from a screen
+  // showing the record) copies nothing.
+  const loadFullShipment = async () => {
+    const result = await graphqlFetch(FullInboundShipment, {
+      storeId: props.storeId,
+      id: props.node.id,
+      type: scopeOf(props.node.purchaseOrderId),
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
+    return result.data.invoice;
   };
 
   const pricing = () => props.node.pricing;
@@ -430,16 +443,10 @@ export const InboundShipmentSidePanel: Component<
             number={() => props.node.invoiceNumber}
             supplierName={() => props.node.otherPartyName}
           />
-          <Button
-            variant="secondary"
-            icon={<CopyIcon />}
-            data-testid="copy-to-clipboard-button"
-            onClick={copyToClipboard}
-          >
-            {copied()
-              ? t('message.copy-success')
-              : t('button.copy-to-clipboard')}
-          </Button>
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullShipment} />
         </SidePanelActions>
       </SidePanelSection>
 
