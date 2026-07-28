@@ -13,6 +13,7 @@ import {
   XCircleIcon,
 } from '../../../ui/icons';
 import { ItemSearch } from '../../../domain/item/ItemSearch';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import {
   UpsertAncillaryItem,
   type UpsertAncillaryItemResult,
@@ -62,6 +63,10 @@ export const AncillaryItemEditModal: Component<
   AncillaryItemEditModalProps
 > = props => {
   const isEdit = () => props.editor.mode === 'edit';
+  // Adding starts by typing an item, so the lookup takes the caret on open and
+  // again on each Save & Next reset — a run of links goes in from the keyboard
+  // (ui-surface S5). Editing keeps the dialog default: its lookup is locked.
+  const itemSearch = createFocusTarget();
   const editedRow = (): AncillaryRow | undefined =>
     props.editor.mode === 'edit' ? props.editor.row : undefined;
 
@@ -134,12 +139,14 @@ export const AncillaryItemEditModal: Component<
     // Save & Next (add mode only, ui-surface S5): reset to a fresh blank
     // form for another link, without returning to the list.
     setForm(EMPTY_FORM);
+    itemSearch.focus();
   };
 
   return (
     <Dialog
       open
       testId="ancillary-item-edit-modal"
+      initialFocus={isEdit() ? undefined : itemSearch}
       title={t('title.ancillary-supply')}
       icon={isEdit() ? undefined : <PlusCircleIcon />}
       dismissable={saving() === null}
@@ -198,6 +205,7 @@ export const AncillaryItemEditModal: Component<
       <ItemSearch
         label={t('label.ancillary-item')}
         storeId={props.storeId}
+        focusTarget={itemSearch}
         excludeItemIds={excludeItemIds()}
         value={form().ancillaryItemId ?? undefined}
         selectedItem={selectedItem()}
