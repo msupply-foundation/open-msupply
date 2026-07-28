@@ -82,6 +82,7 @@ type Line = InternalOrderLineFragment;
 type SortKey =
   | 'code'
   | 'name'
+  | 'dps'
   | 'available'
   | 'amc'
   | 'mos'
@@ -351,6 +352,8 @@ const InternalOrderDetailView: Component = () => {
         return line.item.code.toLowerCase();
       case 'name':
         return line.itemName.toLowerCase();
+      case 'dps':
+        return line.item.defaultPackSize;
       case 'available':
         return line.availableStockOnHand;
       case 'amc':
@@ -474,7 +477,7 @@ const InternalOrderDetailView: Component = () => {
       : []),
     {
       c: { accessor: line => line.item.defaultPackSize, id: 'dps' },
-      sortKey: undefined,
+      sortKey: 'dps',
       header: () => t('label.dps'),
       ...getNumberCell(),
     },
@@ -610,7 +613,7 @@ const InternalOrderDetailView: Component = () => {
             header: () => t('label.additions'),
           },
           {
-            c: { accessor: l => Math.round(l.expiringUnits), id: 'shortExpiry' },
+            c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
             header: () => t('label.short-expiry'),
           },
           {
