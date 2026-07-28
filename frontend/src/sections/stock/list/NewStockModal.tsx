@@ -212,7 +212,8 @@ const NewStockContent = (props: {
   const packsValid = () =>
     draft.numberOfPacks != null && draft.numberOfPacks >= 0;
 
-  // OK is available once item + pack size + pack quantity are set (spec AC-N5),
+  // OK is available once item + pack size + pack quantity are set
+  // (spec OMS-REG-SMV-02.37),
   // pack size >= 1 (pre-validation), and — when positive reasons are configured
   // — a reason is chosen.
   const canConfirm = () =>
@@ -334,7 +335,8 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.stock-levels')}>
                   <FormRow>
                     {/* NumberField's default min is 0 (no negatives), so the pack
-                      count can't go negative from the input (spec AC-N2). */}
+                      count can't go negative from the input
+                          (spec OMS-REG-SMV-02.34). */}
                     <NumberField
                       label={t('label.pack-qty')}
                       required
@@ -388,7 +390,8 @@ const NewStockContent = (props: {
                       onChange={v => setDraft('manufactureDate', v)}
                     />
                   </FormRow>
-                  {/* VVM status editable when the gate is on (spec AC-P1: the field
+                  {/* VVM status editable when the gate is on
+                      (spec OMS-REG-INV-06.11: the field
                     shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
                   <Show
                     when={
@@ -432,7 +435,8 @@ const NewStockContent = (props: {
                     />
                   </FormRow>
                   {/* Required iff active positive reasons are configured (spec
-                    AC-N4) — the same condition that gates OK, marked on the
+                    OMS-REG-SMV-02.36) — the same condition that gates OK,
+                    marked on the
                     field so a disabled OK is explained rather than mysterious
                     (#601). */}
                   <ReasonSelect
@@ -514,7 +518,8 @@ const NewStockContent = (props: {
                     }}
                   />
                   <FormRow>
-                    {/* Donor field gated by allowTrackingOfStockByDonor (spec AC-P3). */}
+                    {/* Donor field gated by allowTrackingOfStockByDonor
+                        (spec OMS-REG-SMV-02.40). */}
                     <Show when={prefs().allowTrackingOfStockByDonor}>
                       <NameSearch
                         label={t('label.donor')}

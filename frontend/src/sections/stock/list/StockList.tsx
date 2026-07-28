@@ -137,7 +137,8 @@ const StockList: Component = () => {
     navigate(`/${params.storeId}/inventory/stock/${id}`);
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
-  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the items
+  // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
+  // mirrors the items
   // list's dose display (no bespoke styling).
   const unitsText = (
     units: number,

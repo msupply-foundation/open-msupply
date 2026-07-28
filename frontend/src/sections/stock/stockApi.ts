@@ -33,7 +33,8 @@ import {
 //    with the identifier in `extensions.details` — caught via
 //    returnGraphqlErrors and read from `rejectionDetail`.
 // Both map through `stockErrorMessage` to the initiating surface's banner; no
-// stock action outcome is ever a toast (spec AC-B1, controls › action feedback).
+// stock action outcome is ever a toast (spec OMS-REG-SMV-02.43/.44,
+// controls › action feedback).
 
 // A mutation outcome the caller renders: ok (proceed / close), error (show the
 // message in the modal, keep it open + input preserved), or undefined =
