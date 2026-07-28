@@ -5,7 +5,8 @@ set -euo pipefail
 # Docker Hub Tag Cleanup
 #
 # Deletes non-release Docker Hub tags older than a configurable number of days.
-# Release tags (e.g. v2.19.1-sqlite-amd64) are always kept.
+# Release tags (e.g. v2.19.1-sqlite-amd64) are always kept, as are the floating
+# latest* tags (latest, latest-develop, latest-rc, plus -sqlite/-postgres variants).
 #
 # Runnable locally or in CI. Credentials via environment variables.
 #
@@ -151,8 +152,9 @@ while [[ "$PAGE_URL" != "null" && -n "$PAGE_URL" ]]; do
         TAG_NAME=$(echo "$tag_json" | jq -r '.name')
         LAST_UPDATED=$(echo "$tag_json" | jq -r '.last_updated')
 
-        # Protect special tags
-        if [[ "$TAG_NAME" == "latest" ]]; then
+        # Protect floating tags: latest, latest-develop, latest-rc,
+        # each optionally suffixed with -sqlite or -postgres
+        if [[ "$TAG_NAME" =~ ^latest(-develop|-rc)?(-sqlite|-postgres)?$ ]]; then
             echo "KEEP (protected):  $TAG_NAME"
             KEPT_COUNT=$((KEPT_COUNT + 1))
             continue
