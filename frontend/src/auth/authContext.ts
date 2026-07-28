@@ -33,6 +33,14 @@ export const userDisplayName = (): string => {
   return fullName || u.username;
 };
 
+// The id of the currently authenticated user — the user's identity, which is
+// an AUTH property (the me/login response), not a store-context one. Reactive
+// and module-level so global caches keyed by user (the user layer of table
+// config, kdd/table-state) can depend on it without a component, and available
+// as soon as login lands — before any store is entered. Undefined when no user
+// is loaded (logged out / between sessions).
+export const currentUserId = (): string | undefined => user()?.userId;
+
 // Spec (The re-login requirement outlives a reload, D69): the re-login
 // requirement is a property of the tab's session, not of the current page's
 // in-memory state — the browser may still hold a valid session cookie, so a

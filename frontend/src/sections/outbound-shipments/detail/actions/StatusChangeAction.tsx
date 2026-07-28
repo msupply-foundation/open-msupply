@@ -25,7 +25,7 @@ import {
   isEditable,
   type SettableStatus,
 } from '../../outboundStatus';
-import { allowedStatuses } from '../../outboundPreferencesResource';
+import { allowedStatuses } from '../../outboundStatusOptions';
 import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 
 // The status-change split button + its dialogs (spec S3 § status footer,

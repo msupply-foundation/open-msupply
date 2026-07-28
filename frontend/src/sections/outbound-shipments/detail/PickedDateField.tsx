@@ -11,7 +11,7 @@ import {
   OutboundLines,
   OutboundStocktakeConflict,
 } from './outboundDetail.generated';
-import { outboundPrefs } from '../outboundPreferencesResource';
+import { outboundShipmentPreferences } from '@/store/storeContext';
 import type { OutboundNode } from './outboundUpdate';
 import {
   backdateBounds,
@@ -63,11 +63,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // renders from it.
   let confirmInFlight = false;
 
-  const backdating = () => outboundPrefs()?.prefs?.backdating;
+  const backdating = () => outboundShipmentPreferences().backdating;
   const gate = () =>
     backdatingGate({
       status: props.node.status,
-      shipmentsEnabled: backdating()?.shipmentsEnabled ?? false,
+      shipmentsEnabled: backdating().shipmentsEnabled,
       panelDisabled: props.disabled,
     });
   const enabled = () => gate().enabled;
