@@ -184,6 +184,11 @@ mutation updateInternalOrder(
       error {
         __typename
         description
+        # The emergency cap carries the maximum it enforced, so the send path
+        # can name it in the rejection copy (AC-EM1); other errors ignore it.
+        ... on OrderingTooManyItems {
+          maxItemsInEmergencyOrder
+        }
       }
     }
   }
