@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createSignal } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../../intl';
@@ -39,7 +40,7 @@ export const CreateInitialStocktakeAction = (props: {
     const result = await graphqlFetch(InsertStocktake, {
       storeId: params.storeId,
       input: {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         isInitialStocktake: true,
         comment: t('stocktake.comment-initial-stocktake-template'),
         // Same client-composed default description as the regular create flow

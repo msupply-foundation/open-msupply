@@ -39,7 +39,8 @@
     "@solidjs/router": "^0.15.3",
     "@tanstack/solid-table": "^8.21.3",
     "date-fns": "^4.4.0",
-    "solid-js": "^1.9.13"
+    "solid-js": "^1.9.13",
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@capacitor/android": "^8.4.1",

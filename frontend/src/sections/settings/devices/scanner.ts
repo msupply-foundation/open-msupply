@@ -13,6 +13,7 @@
 // the label printer's USB preference; a module-level signal carries it across
 // the Settings ↔ Test-scanner navigation.
 
+import { generateUUID } from '../../../uuid';
 import { createSignal } from 'solid-js';
 import {
   getMockBarcodeScannerEnabled,
@@ -61,7 +62,7 @@ let mockScanCounter = 0;
 export const triggerMockScan = (): ScanResult => {
   mockScanCounter += 1;
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     barcode: `(01)0935560700${String(mockScanCounter % 100).padStart(2, '0')}(17)260731(10)MOCK${mockScanCounter}`,
     scannedAt: new Date(),
   };

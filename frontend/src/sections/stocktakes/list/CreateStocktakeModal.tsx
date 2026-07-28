@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../uuid';
 import {
   createMemo,
   createResource,
@@ -239,7 +240,7 @@ export const CreateStocktakeModal = (props: {
     // name and today's date, both in the active locale. Editable in place
     // afterward; nothing re-derives it.
     const base = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       comment: generatedComment(),
       description: t('stocktake.description-template', {
         username: userDisplayName(),

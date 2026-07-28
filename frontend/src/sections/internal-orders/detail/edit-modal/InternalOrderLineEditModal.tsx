@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import {
   createMemo,
   createResource,
@@ -211,7 +212,7 @@ const LineEditContent = (
       itemId,
       props.minMonths,
       props.maxMonths,
-      crypto.randomUUID()
+      generateUUID()
     );
     if (disposed) return;
     setLoading(false);

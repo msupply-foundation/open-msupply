@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createEffect, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -188,7 +189,7 @@ const buildDraft = async (
     countThisLine: true,
   }));
   const fromStock: DraftLine[] = stockLines.map(sl => ({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     isNew: true,
     stockLineId: sl.id,
     countThisLine: countByDefault,
@@ -591,7 +592,7 @@ const StocktakeLineEditContent = (
     setDraft(
       produce(lines =>
         lines.unshift({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           isNew: true,
           countThisLine: true,
           stockLine: null,
@@ -653,7 +654,7 @@ const StocktakeLineEditContent = (
   const duplicateLine = (line: DraftLine) => {
     const copy: DraftLine = {
       ...unwrap(line),
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       isNew: true,
       snapshotNumberOfPacks: 0,
       countedNumberOfPacks: null,
