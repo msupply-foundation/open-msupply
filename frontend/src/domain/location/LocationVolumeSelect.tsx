@@ -1,5 +1,6 @@
 import { createMemo, createSignal, type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import { Tabs, TabList, type TabDef } from '../../ui/elements/tabs/Tabs';
 import { t } from '../../intl';
 import { round } from '../../intl/formatNumber';
@@ -29,6 +30,11 @@ export interface LocationVolumeSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the picker's input — for an owner
+   * that focuses it after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
   /**
    * The volume being placed (volumePerPack × packs). The "Available" filter
    * keeps only locations with room for it (and not on hold). Omit where no
@@ -120,6 +126,7 @@ export const LocationVolumeSelect = (
       disabled={props.disabled}
       error={props.error}
       placeholder={props.placeholder}
+      focusTarget={props.focusTarget}
       onChange={l => props.onChange(l)}
       // Let the popup grow past a narrow line-editor cell so a location's
       // code + name (and % used) stay readable rather than truncating to the

@@ -1,6 +1,7 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -100,9 +101,15 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
     setPhase('error');
   };
 
+  // The reason picker is the confirm phase's only control, so the dialog opens
+  // on it — unless the store preference hides it, leaving nothing to focus
+  // (ui-standards › accessibility › keyboard).
+  const reasonPicker = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={props.hideReason ? undefined : reasonPicker}
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MinusCircleIcon />}
@@ -119,6 +126,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                     kind="negative"
                     label={t('label.reason')}
                     hideLabel
+                    focusTarget={reasonPicker}
                     value={reasonId() ?? undefined}
                     onChange={r => setReasonId(r?.id ?? null)}
                   />
