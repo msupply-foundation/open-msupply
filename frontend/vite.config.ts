@@ -46,6 +46,11 @@ const appVersion = (): string => {
 
 export default defineConfig(({ mode }) => ({
   plugins: [solid()],
+  // "@/x" → src/x. Keep in sync with tsconfig.app.json "paths" and
+  // vitest.config.ts (the showcase config inherits it via mergeConfig).
+  resolve: {
+    alias: { '@': new URL('./src', import.meta.url).pathname },
+  },
   // Lets the same build be mounted at a non-root path (the component
   // showcase's /showcase/ track, deploy/build-and-deploy.sh) — Vite rewrites
   // every asset reference to match and exposes it at runtime as

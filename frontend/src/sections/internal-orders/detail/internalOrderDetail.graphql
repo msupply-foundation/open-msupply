@@ -36,7 +36,13 @@ fragment InternalOrderLine on RequisitionLineNode {
   expiringUnits
   daysOutOfStock
   pricePerUnit
+  # Population forecast (captured at line creation under
+  # displayPopulationBasedForecasting; null on a forecast-less line). The totals
+  # back the Target stock (population) surfaces; vaccineCourses is the per-course
+  # breakdown JSON the line editor parses for its calculation display (AC-PF7).
   forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
   optionId
   reason {
     reason

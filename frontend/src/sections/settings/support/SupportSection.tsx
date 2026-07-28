@@ -4,8 +4,8 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { DownloadIcon, FileIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { ServerLogModal } from './ServerLogModal';
-import styles from '../Settings.module.css';
 
 /*
  * Support (spec/settings/ui-surface.md § Support) — Server Admin only (gated
@@ -22,7 +22,7 @@ export const SupportSection = () => {
   const [logOpen, setLogOpen] = createSignal(false);
 
   return (
-    <div class={styles.sectionBody}>
+    <Stack>
       <FieldRow label={t('label.server-log')}>
         <Button
           variant="secondary"
@@ -49,6 +49,6 @@ export const SupportSection = () => {
         </Button>
       </FieldRow>
       <ServerLogModal open={logOpen()} onClose={() => setLogOpen(false)} />
-    </div>
+    </Stack>
   );
 };
