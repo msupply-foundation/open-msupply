@@ -42,7 +42,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
