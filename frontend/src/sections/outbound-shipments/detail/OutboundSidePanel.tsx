@@ -5,7 +5,7 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { A } from '@solidjs/router';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -13,6 +13,7 @@ import {
   SidePanelActions,
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -165,13 +166,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Text variant="body" as="span">
               {props.node.user?.username ?? '—'}
             </Text>
@@ -189,7 +184,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                 </Popover>
               )}
             </Show>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -280,12 +275,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                   vertical isn't built yet, so today this lands on the
                   not-found EntryPage; it goes live once that vertical
                   registers its routes (no change needed here). */}
-              <A
+              <RecordLink
                 href={`/${props.storeId}/distribution/customer-requisition/${req().id}`}
-                style={{ color: 'var(--primary-main)', 'font-weight': 500 }}
+                kind="io"
               >
                 #{req().requisitionNumber}
-              </A>
+              </RecordLink>
             </Text>
           )}
         </Show>
@@ -366,13 +361,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <NumberField
               label={t('label.tax')}
               hideLabel
@@ -396,7 +385,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                 )
               )}
             </Text>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
