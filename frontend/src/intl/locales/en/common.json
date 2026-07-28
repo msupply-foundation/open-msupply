@@ -1037,6 +1037,8 @@
   "label.barcode-scanner-status": "Scanner status",
   "label.barcode-scanner-test": "Test scanner",
   "label.batch": "Batch",
+  "label.batch-count_one": "{{count}} batch",
+  "label.batch-count_other": "{{count}} batches",
   "label.batches": "Batches",
   "label.batches-expiring-between-days": "Batches expiring in between 30 days and 90 days",
   "label.batches-expiring-in-days": "Batches expiring in {{firstThreshold}} days to {{secondThreshold}} days",

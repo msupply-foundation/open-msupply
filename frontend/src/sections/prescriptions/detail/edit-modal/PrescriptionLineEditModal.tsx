@@ -6,7 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -37,7 +37,7 @@ import {
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
-import { formatNumber } from '../../../../intl';
+import { formatNumber, round } from '../../../../intl';
 import {
   allocateUnits,
   buildSaveInput,
@@ -210,24 +210,36 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   const directionsDisabled = () => allocatedUnits() <= 0;
 
-  // The collapsed Batches trigger's allocation summary — each drawn batch
-  // and its issued units (OMS-REG-DIS-03.57). Hidden while expanded: the
-  // grid then shows the same figures per row.
+  // The collapsed Batches trigger's allocation summary (OMS-REG-DIS-03.57):
+  // each drawn batch and its quantity, the unit named once at the end —
+  // `RS-A · 1,014, RS-B · 6 Tab` — folding to a count + total beyond three
+  // batches. Quantities display-rounded (allocation math carries float
+  // noise). Hidden while expanded: the grid then shows the figures per row.
   const BatchSummary = () => {
     const expanded = useAccordionItemExpanded();
     const drawn = () => lines.filter(line => line.numberOfPacks > 0);
+    const summary = () => {
+      const batches = drawn();
+      if (batches.length > 3)
+        return `${tPlural('label.batch-count', batches.length)} · ${round(
+          batches.reduce(
+            (sum, line) => sum + line.numberOfPacks * line.packSize,
+            0
+          ),
+          2
+        )} ${unitName()}`;
+      const entries = batches.map(
+        line =>
+          `${line.batch ?? t('label.none')} · ${round(
+            line.numberOfPacks * line.packSize,
+            2
+          )}`
+      );
+      return `${entries.join(', ')} ${unitName()}`;
+    };
     return (
       <Show when={!expanded() && drawn().length > 0}>
-        <span class={styles.batchSummary}>
-          {drawn()
-            .map(
-              line =>
-                `${line.batch ?? t('label.none')} · ${formatNumber(
-                  line.numberOfPacks * line.packSize
-                )} ${unitName()}`
-            )
-            .join(', ')}
-        </span>
+        <span class={styles.batchSummary}>{summary()}</span>
       </Show>
     );
   };
@@ -520,7 +532,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
-          <Accordion collapsible>
+          <Accordion collapsible variant="card">
             <AccordionItem value="batches">
               <AccordionTrigger>
                 {t('label.batches')}
