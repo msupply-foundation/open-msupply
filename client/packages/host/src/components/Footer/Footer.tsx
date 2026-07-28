@@ -29,6 +29,7 @@ interface PaddedCellProps {
   icon: ReactNode;
   tooltip?: string;
   onClick?: () => void;
+  testId?: string;
 }
 
 const PaddedCell: FC<PaddedCellProps> = ({
@@ -37,10 +38,12 @@ const PaddedCell: FC<PaddedCellProps> = ({
   icon,
   tooltip,
   onClick,
+  testId,
 }) => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   return (
     <Box
+      data-testid={testId}
       onClick={onClick}
       sx={{
         display: 'flex',
@@ -110,6 +113,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
           icon={<HomeIcon sx={iconStyles} />}
           text={store?.name}
           tooltip={t('store-details', { ...store })}
+          testId="store-selector-trigger"
         />
       </StoreSelector>
       <PaddedCell
