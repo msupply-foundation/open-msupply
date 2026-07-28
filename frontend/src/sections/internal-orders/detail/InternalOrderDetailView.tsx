@@ -59,6 +59,7 @@ import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
+import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
 import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
@@ -81,6 +82,7 @@ type Line = InternalOrderLineFragment;
 type SortKey =
   | 'code'
   | 'name'
+  | 'dps'
   | 'available'
   | 'amc'
   | 'mos'
@@ -350,6 +352,8 @@ const InternalOrderDetailView: Component = () => {
         return line.item.code.toLowerCase();
       case 'name':
         return line.itemName.toLowerCase();
+      case 'dps':
+        return line.item.defaultPackSize;
       case 'available':
         return line.availableStockOnHand;
       case 'amc':
@@ -473,7 +477,7 @@ const InternalOrderDetailView: Component = () => {
       : []),
     {
       c: { accessor: line => line.item.defaultPackSize, id: 'dps' },
-      sortKey: undefined,
+      sortKey: 'dps',
       header: () => t('label.dps'),
       ...getNumberCell(),
     },
@@ -609,7 +613,7 @@ const InternalOrderDetailView: Component = () => {
             header: () => t('label.additions'),
           },
           {
-            c: { accessor: l => Math.round(l.expiringUnits), id: 'shortExpiry' },
+            c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
             header: () => t('label.short-expiry'),
           },
           {
@@ -699,8 +703,7 @@ const InternalOrderDetailView: Component = () => {
                       master list (S7 picker). Shown always but DISABLED on
                       program orders (their item set is fixed at creation) and
                       on read-only orders, with a reason tooltip (AC-LN1 —
-                      "disable with an explanation", not hide). Use-suggested is
-                      a later cut. */}
+                      "disable with an explanation", not hide). */}
                   <SplitButton
                     icon={<PlusCircleIcon />}
                     testId="add-item-button"
@@ -716,6 +719,16 @@ const InternalOrderDetailView: Component = () => {
                         label: t('button.add-from-master-list'),
                       },
                     ]}
+                  />
+                  {/* Use suggested quantities — fills every zero-requested line
+                      with its suggestion (AC-Q1). Available on program orders,
+                      so gated on editability alone (not canAddLines); disabled
+                      on read-only orders (AC-Q2). */}
+                  <UseSuggestedQuantitiesAction
+                    storeId={params.storeId}
+                    orderId={node().id}
+                    disabled={!editable()}
+                    onApplied={() => void refetch()}
                   />
                   {/* Export/Print — a read, offered on every status (AC-PR1). */}
                   <ExportPrintInternalOrderAction orderId={node().id} />
@@ -793,10 +806,31 @@ const InternalOrderDetailView: Component = () => {
                   // A row click opens the line editor on that line (AC-LN11);
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
+                  // Placeholder lines (requested 0) read in the info tone —
+                  // whole-row blue text, de-emphasising them (ui-surface S3 line
+                  // table), matching outbound's placeholder lines.
+                  rowTone={line =>
+                    line.requestedQuantity === 0 ? 'info' : undefined
+                  }
                   emptyMessage={
                     itemFilter().trim()
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
+                  }
+                  // The empty line table offers the single-item add inline
+                  // (AC-LN1), the same add mode as the header split button —
+                  // withheld when a single item can't be added (read-only or a
+                  // program order, whose item set is fixed).
+                  empty={
+                    canAddLines() ? (
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-item-button"
+                        onClick={() => setEditorLine({ mode: 'add' })}
+                      >
+                        {t('button.add-item')}
+                      </Button>
+                    ) : undefined
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}

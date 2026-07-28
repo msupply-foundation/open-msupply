@@ -78,12 +78,18 @@ export const TargetQuantityBreakdown = (props: {
   const monthValue = (m: number) => amc() * m;
   const monthText = (m: number) =>
     `${fmt(monthValue(m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
+  // The threshold / target markers only show when the axis is wide enough for
+  // text (showText); in a sliver axis — stock far above target — they'd wrap
+  // one char per line and blow up the row height (matching the original, which
+  // gates the additional label on showText too).
   const additional = (m: number) =>
-    m === props.targetMonths
-      ? t('label.max-months-of-stock')
-      : m === props.thresholdMonths
-        ? t('label.min-months-of-stock')
-        : undefined;
+    !showText()
+      ? undefined
+      : m === props.targetMonths
+        ? t('label.max-months-of-stock')
+        : m === props.thresholdMonths
+          ? t('label.min-months-of-stock')
+          : undefined;
   return (
     <Show
       when={canCalculate()}
