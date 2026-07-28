@@ -21,7 +21,6 @@
 
 .root[data-disabled] {
   cursor: default;
-  opacity: var(--disabled-opacity);
 }
 
 /* Placement of the control in the label row: nudged to the first label
@@ -35,6 +34,15 @@
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   line-height: 1.3;
+}
+
+/* The box fades itself now (BareCheckbox's --disabled-opacity, so the fade also
+   covers bare/unlabelled use); fade the label text to match, so the composed
+   disabled field renders exactly as before — box + text each at
+   --disabled-opacity — without fading the box twice. (After .label so its
+   specificity ascends — stylelint no-descending-specificity.) */
+.root[data-disabled] .label {
+  opacity: var(--disabled-opacity);
 }
 
 .error {

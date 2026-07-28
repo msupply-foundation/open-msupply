@@ -12,13 +12,13 @@ import { ButtonsShowcase, buttonsMetadata } from './ButtonsShowcase';
 import { InputsShowcase, inputsMetadata } from './InputsShowcase';
 import { SelectorsShowcase, selectorsMetadata } from './SelectorsShowcase';
 import { FeedbackShowcase, feedbackMetadata } from './FeedbackShowcase';
+import { ProgressShowcase, progressMetadata } from './ProgressShowcase';
 import { DialogShowcase, dialogMetadata } from './DialogShowcase';
 import { DisplayShowcase, displayMetadata } from './DisplayShowcase';
 import {
   DocumentUploadShowcase,
   documentUploadMetadata,
 } from './DocumentUploadShowcase';
-import { SyncShowcase, syncMetadata } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { DetailTableShowcase } from './DetailTableShowcase';
 import { HeaderShowcase, headerMetadata } from './HeaderShowcase';
@@ -151,6 +151,13 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
+    id: 'progress',
+    label: 'Progress',
+    component: ProgressShowcase,
+    metadata: progressMetadata,
+    category: 'components',
+  },
+  {
     id: 'statistics',
     label: 'Statistics',
     component: StatisticsShowcase,
@@ -176,13 +183,6 @@ export const sections: SectionDef[] = [
     label: 'Document upload',
     component: DocumentUploadShowcase,
     metadata: documentUploadMetadata,
-    category: 'components',
-  },
-  {
-    id: 'sync',
-    label: 'Sync',
-    component: SyncShowcase,
-    metadata: syncMetadata,
     category: 'components',
   },
   {
