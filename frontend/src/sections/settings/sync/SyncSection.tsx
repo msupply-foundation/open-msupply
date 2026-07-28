@@ -6,6 +6,7 @@ import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { SaveIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
 import {
@@ -58,9 +59,9 @@ export const SyncSection = () => {
   };
 
   // Seed url/site/interval from the stored settings once they arrive; the
-  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed while the
-  // user hasn't started editing (their in-progress input must never be
-  // overwritten by a late fetch).
+  // password field deliberately stays blank (OMS-REG-SET-02.12). Only seed
+  // while the user hasn't started editing (their in-progress input must never
+  // be overwritten by a late fetch).
   let touched = false;
   createEffect(() => {
     const settings = stored();
@@ -177,12 +178,7 @@ export const SyncSection = () => {
             <Alert severity="error">
               <div>{error().message}</div>
               <Show when={error().detail}>
-                {detail => (
-                  <details>
-                    <summary>{t('error.more-info')}</summary>
-                    <pre>{detail()}</pre>
-                  </details>
-                )}
+                {detail => <ErrorDetails detail={detail()} />}
               </Show>
             </Alert>
           )}
