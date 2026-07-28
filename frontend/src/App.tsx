@@ -164,14 +164,14 @@ export const App: Component = () => {
                     {dest => (
                       <Route
                         path={`/${dest.path}`}
-                        component={() => <EntryPage labelKey={dest.labelKey} />}
+                        component={() => <EntryPage dest={dest} />}
                       />
                     )}
                   </For>
-                  <Route
-                    path="*"
-                    component={() => <EntryPage labelKey="heading.not-found" />}
-                  />
+                  {/* Catch-all inside the shell: an unknown in-store path is
+                      the not-found page (no destination), which keeps the app
+                      bar — and so the menu — reachable. */}
+                  <Route path="*" component={() => <EntryPage />} />
                 </Route>
               </Route>
               <Route
