@@ -793,6 +793,7 @@ const InternalOrderDetailView: Component = () => {
                     storeId={params.storeId}
                     node={node()}
                     editable={editable()}
+                    requiresAuthorisation={requiresAuth()}
                     onSent={onSent}
                   />
                 }
