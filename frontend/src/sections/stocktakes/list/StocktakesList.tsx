@@ -1,31 +1,31 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
-import { Page } from '../../../ui/layout/Page/Page';
-import { Header } from '../../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
   DataTable,
   type Column,
   type SortState,
-} from '../../../ui/elements/table/DataTable';
+} from '@/ui/elements/table/DataTable';
 import {
   getCommentCell,
   getDateCell,
   getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../../api/createTableConfig';
-import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
-import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
-import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
+} from '@/ui/elements/table/tableHelpers';
+import { createTableConfig } from '@/api/createTableConfig';
+import { StatusChip } from '@/ui/elements/feedback/StatusChip';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
+import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import { stripEmpty } from '@/typeHelpers';
 import { Stocktakes } from './stocktakes.generated';
 import type {
   StocktakesVariables,

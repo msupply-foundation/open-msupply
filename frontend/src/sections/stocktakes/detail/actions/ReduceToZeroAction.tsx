@@ -1,17 +1,17 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
-import { t, tPlural } from '../../../../intl';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { t, tPlural } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { createFocusTarget } from '@/ui/utils/createFocusTarget';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import {
   CheckIcon,
   MinusCircleIcon,
   SearchIcon,
   XCircleIcon,
-} from '../../../../ui/icons';
-import { ReasonSelect } from '../../../../domain/reasonOptions';
+} from '@/ui/icons';
+import { ReasonSelect } from '@/domain/reasonOptions';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,
