@@ -14,6 +14,14 @@ export interface FieldShellProps {
    */
   width?: 'compact' | 'short' | 'full';
   required?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. TextField's slot of the same name,
+   * with the same reasoning: kept beside the label rather than in the field
+   * frame so it isn't part of the control's accessible name. Ignored under
+   * `hideLabel`.
+   */
+  labelInfo?: JSX.Element;
   /** Error message — presence switches the field to the error state. */
   error?: string;
   /** Shown below the field when there's no error. */
@@ -44,19 +52,34 @@ export const FieldShell = (props: FieldShellProps) => {
     invalid: props.error ? true : undefined,
   });
 
+  // The <label for> itself (text + required asterisk). A local component so it
+  // renders fresh in either branch (bare, or beside labelInfo) — reusing one
+  // JSX node across both would try to mount it in two places.
+  const Label = () => (
+    <label
+      class={props.hideLabel ? styles.labelHidden : styles.label}
+      for={props.controlId}
+    >
+      {props.label}
+      <Show when={props.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </label>
+  );
+
   return (
     <div class={styles.field} data-width={props.width}>
-      <label
-        class={props.hideLabel ? styles.labelHidden : styles.label}
-        for={props.controlId}
-      >
-        {props.label}
-        <Show when={props.required}>
-          <span class={styles.required} aria-hidden="true">
-            *
-          </span>
-        </Show>
-      </label>
+      <Show when={props.labelInfo && !props.hideLabel} fallback={<Label />}>
+        {/* labelInfo sits OUTSIDE the <label for>, as a sibling: nested in the
+            label its accessible name would leak into the control's (the
+            name-from-label computation concatenates descendant controls). */}
+        <span class={styles.labelRow}>
+          <Label />
+          {props.labelInfo}
+        </span>
+      </Show>
       {control}
       <Show
         when={props.error}

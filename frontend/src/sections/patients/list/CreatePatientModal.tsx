@@ -226,6 +226,13 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     }
   };
 
+  // What a match row DOES: a local match opens that patient, a central-only one
+  // opens the fetch modal. Bound to the whole row as well as its trailing icon —
+  // the step's own instruction (messages.patients-create) tells the user to
+  // "click an existing patient below", so the row itself has to be the target.
+  const openMatch = (row: MatchRow) =>
+    row.kind === 'central' ? openFetch(row) : openExisting(row.id);
+
   // Advance to the details step, seeding the plain form from the entered search
   // details (spec/patients step ③).
   const advanceToDetails = () => {
@@ -295,19 +302,26 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     {
       c: { id: 'action' },
       header: () => '',
+      // The trailing icon does what the row does — it is here to distinguish a
+      // central-only candidate (download → retrieve) from a local match (home →
+      // open). Its click must not ALSO bubble to the row handler.
       cell: info => {
         const row = info.row.original;
+        const open = (event: MouseEvent) => {
+          event.stopPropagation();
+          openMatch(row);
+        };
         return row.kind === 'central' ? (
           <IconButton
             icon={<DownloadIcon />}
-            label={t('button.ok')}
-            onClick={() => openFetch(row)}
+            label={t('messages.click-to-fetch')}
+            onClick={open}
           />
         ) : (
           <IconButton
             icon={<HomeIcon />}
             label={t('label.details')}
-            onClick={() => openExisting(row.id)}
+            onClick={open}
           />
         );
       },
@@ -511,6 +525,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   columns={resultColumns()}
                   rows={matches()}
                   rowKey={row => `${row.kind}:${row.id}`}
+                  onRowClick={openMatch}
                   emptyMessage={t('messages.no-matching-patients')}
                 />
               </Show>
@@ -526,6 +541,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               draft={draft}
               setField={setDraftField}
               errorFor={validation.errorFor}
+              creating
             />
             <FormErrorSummary
               errors={validation.visible()}

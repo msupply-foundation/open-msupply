@@ -1,4 +1,10 @@
-import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  on,
+  type JSX,
+} from 'solid-js';
 import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
@@ -39,6 +45,8 @@ export interface DateFieldProps {
   size?: 'default' | 'small';
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
+  /** Inline affordance after the label text — an InfoTooltip (see FieldShell). */
+  labelInfo?: JSX.Element;
   id?: string;
   /** `data-testid` for the typed-entry text input (locale-stable test hook, e2e/TESTIDS.md). */
   testId?: string;
@@ -108,6 +116,7 @@ export const DateField = (props: DateFieldProps) => {
       label={props.label}
       width={props.width}
       hideLabel={props.hideLabel}
+      labelInfo={props.labelInfo}
       required={props.required}
       error={props.error}
       helperText={props.helperText}

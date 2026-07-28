@@ -133,3 +133,18 @@ export const ageFromDob = (dob: string | null): number | undefined => {
   if (ms < 0) return undefined;
   return Math.floor(ms / (365 * 24 * 60 * 60 * 1000));
 };
+
+/**
+ * The inverse: an age entered IN PLACE of a date of birth back-fills the START
+ * OF THAT YEAR (spec/patients rules › age) — i.e. the birth year is exact and
+ * the day within it is not, which is what makes the resulting date "estimated".
+ * The estimated-ness is a property of the value, not a stored flag: the plain
+ * path has nowhere to put one (the wire input carries no such field) and the
+ * spec keeps it out of the saved record.
+ *
+ * Round-trips through ageFromDob for every realistic age: a Jan-1 birth date
+ * puts the accumulated leap days well inside the current year's slack, so
+ * floor(days / 365) lands back on the age the user typed.
+ */
+export const dobFromAge = (age: number): string =>
+  `${new Date().getFullYear() - age}-01-01`;
