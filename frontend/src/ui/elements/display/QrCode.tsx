@@ -10,7 +10,7 @@ interface QrCodeProps {
   size?: number | string;
   /** Side length of the enlarged copy popped on click. Default 256. */
   expandedSize?: number | string;
-  /** Error correction level. Default Medium (react-qr-code's default). */
+  /** Error correction level. Default Low (react-qr-code's default). */
   ecc?: QrEcc;
   /** Light modules per side of the quiet-zone border. Default 0, per react-qr-code. */
   margin?: number;
@@ -18,6 +18,10 @@ interface QrCodeProps {
   title?: string;
   /** Accessible name for the click-to-expand trigger. Default t('messages.click-to-expand'). */
   expandLabel?: string;
+  /** `data-testid` for the inline trigger (e2e/TESTIDS.md). */
+  triggerTestId?: string;
+  /** `data-testid` for the enlarged copy shown after click (e2e/TESTIDS.md). */
+  expandedTestId?: string;
 }
 
 const cssLength = (v: number | string) =>
@@ -33,13 +37,15 @@ const cssLength = (v: number | string) =>
  *
  * Each symbol is a self-contained SVG: dark modules drawn as one `<path>` of
  * rects over a full-size light background, scaling crisply to any size and
- * taking colours from `--qr-fg`/`--qr-bg`. Encoding is memoised on `value`/
+ * taking colours from the theme-invariant `--qr-foreground`/`--qr-background`
+ * tokens (a QR stays dark-on-light in both themes for scannability). Encoding
+ * is memoised on `value`/
  * `ecc` and computed once, then shared by the inline trigger and the enlarged
  * copy. See qr/qrEncoder.ts for why we vendor the encoder over a dependency.
  */
 export const QrCode = (props: QrCodeProps) => {
   const merged = mergeProps(
-    { size: 50, ecc: QrEcc.Medium, margin: 0, expandedSize: 256 },
+    { size: 50, ecc: QrEcc.Low, margin: 0, expandedSize: 256 },
     props
   );
 
@@ -62,7 +68,7 @@ export const QrCode = (props: QrCodeProps) => {
 
   // A presentational symbol at a given rendered side length. `label` names it
   // (role="img"); omit for a decorative graphic (aria-hidden).
-  const symbol = (size: number | string, label?: string) => (
+  const symbol = (size: number | string, label?: string, testId?: string) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width={cssLength(size)}
@@ -72,6 +78,7 @@ export const QrCode = (props: QrCodeProps) => {
       role={label ? 'img' : undefined}
       aria-hidden={label ? undefined : true}
       aria-label={label}
+      data-testid={testId}
     >
       <Show when={label}>
         <title>{label}</title>
@@ -79,9 +86,9 @@ export const QrCode = (props: QrCodeProps) => {
       <rect
         width={dimension()}
         height={dimension()}
-        fill="var(--qr-bg, #fff)"
+        fill="var(--qr-background)"
       />
-      <path d={path()} fill="var(--qr-fg, #000)" />
+      <path d={path()} fill="var(--qr-foreground)" />
     </svg>
   );
 
@@ -89,9 +96,10 @@ export const QrCode = (props: QrCodeProps) => {
     <Popover
       trigger={symbol(merged.size)}
       triggerLabel={merged.expandLabel ?? t('messages.click-to-expand')}
+      triggerTestId={props.triggerTestId}
       placement="bottom"
     >
-      {symbol(merged.expandedSize, props.title)}
+      {symbol(merged.expandedSize, props.title, props.expandedTestId)}
     </Popover>
   );
 };
