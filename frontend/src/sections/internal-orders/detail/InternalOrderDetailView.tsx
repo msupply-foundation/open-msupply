@@ -808,6 +808,21 @@ const InternalOrderDetailView: Component = () => {
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
+                  // The empty line table offers the single-item add inline
+                  // (AC-LN1), the same add mode as the header split button —
+                  // withheld when a single item can't be added (read-only or a
+                  // program order, whose item set is fixed).
+                  empty={
+                    canAddLines() ? (
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-item-button"
+                        onClick={() => setEditorLine({ mode: 'add' })}
+                      >
+                        {t('button.add-item')}
+                      </Button>
+                    ) : undefined
+                  }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
                 />
