@@ -1,3 +1,4 @@
+import { canConfirmNewStock, packSizeValid } from './newStockEntry';
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
@@ -208,19 +209,19 @@ const NewStockContent = (props: {
   const positiveReasonsRequired = () => reasonsOfKind('positive').length > 0;
 
   const chosenItem = () => item();
-  const packSizeValid = () => (draft.packSize ?? 0) >= 1;
-  const packsValid = () =>
-    draft.numberOfPacks != null && draft.numberOfPacks >= 0;
 
   // OK is available once item + pack size + pack quantity are set
-  // (spec OMS-REG-SMV-02.37),
-  // pack size >= 1 (pre-validation), and — when positive reasons are configured
-  // — a reason is chosen.
+  // (spec OMS-REG-SMV-02.37), pack size >= 1 (pre-validation), and — when
+  // positive reasons are configured — a reason is chosen. The conditions
+  // themselves are pure, in newStockEntry.ts.
   const canConfirm = () =>
-    !!chosenItem() &&
-    packSizeValid() &&
-    packsValid() &&
-    (!positiveReasonsRequired() || !!draft.reasonOption);
+    canConfirmNewStock({
+      hasItem: !!chosenItem(),
+      packSize: draft.packSize,
+      numberOfPacks: draft.numberOfPacks,
+      positiveReasonsRequired: positiveReasonsRequired(),
+      hasReason: !!draft.reasonOption,
+    });
 
   const onOk = async () => {
     const it = chosenItem();
@@ -353,7 +354,7 @@ const NewStockContent = (props: {
                       decimalLimit={2}
                       value={draft.packSize}
                       error={
-                        draft.packSize != null && !packSizeValid()
+                        draft.packSize != null && !packSizeValid(draft.packSize)
                           ? t('error.pack-size-min')
                           : undefined
                       }

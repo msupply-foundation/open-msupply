@@ -58,8 +58,13 @@ import {
   type StockLineDetailFragment,
   type StockLineByIdResult,
   type StockLineVvmLogFragment,
-  type UpdateStockLineVariables,
 } from './stockLine.generated';
+import {
+  buildPatch,
+  invalidLocation,
+  seedEdit,
+  type Edit,
+} from './stockEdit';
 import { LedgerPanel } from './LedgerPanel';
 import { VvmHistoryPanel } from './VvmHistoryPanel';
 import { AdjustModal } from './AdjustModal';
@@ -80,52 +85,6 @@ import { VvmStatusEntryModal } from './VvmStatusEntryModal';
 // (the byId query selects vvmStatusLogs). A superset of StockLineDetailFragment,
 // so it passes straight to the adjust/repack/VVM modals that take the fragment.
 type Line = StockLineByIdResult['stockLines']['nodes'][number];
-
-// The locally-buffered editable attributes. Read-only quantities are read from
-// the fetched line directly, never buffered.
-interface Edit {
-  costPricePerPack: number;
-  sellPricePerPack: number;
-  batch: string;
-  barcode: string;
-  manufactureDate: string | null;
-  expiryDate: string | null;
-  onHold: boolean;
-  location: { id: string; code: string; name: string } | null;
-  volumePerPack: number;
-  manufacturer: { id: string; name: string } | null;
-  donorId: string | null;
-  donorName: string | null;
-  // Campaign and program are one mutually-exclusive field (the campaign-or-
-  // program lookup) — never both set at once.
-  campaignId: string | null;
-  programId: string | null;
-}
-
-const seedEdit = (line: StockLineDetailFragment): Edit => ({
-  costPricePerPack: line.costPricePerPack,
-  sellPricePerPack: line.sellPricePerPack,
-  batch: line.batch ?? '',
-  barcode: line.barcode ?? '',
-  manufactureDate: line.manufactureDate ?? null,
-  expiryDate: line.expiryDate ?? null,
-  onHold: line.onHold,
-  location: line.location
-    ? {
-        id: line.location.id,
-        code: line.location.code,
-        name: line.location.name,
-      }
-    : null,
-  volumePerPack: line.volumePerPack,
-  manufacturer: line.manufacturer
-    ? { id: line.manufacturer.id, name: line.manufacturer.name }
-    : null,
-  donorId: line.donor?.id ?? null,
-  donorName: line.donor?.name ?? null,
-  campaignId: line.campaign?.id ?? null,
-  programId: line.program?.id ?? null,
-});
 
 const StockLineDetailView: Component = () => {
   const params = useParams<{ storeId: string; stockLineId: string }>();
@@ -267,51 +226,12 @@ const StockLineDetailView: Component = () => {
     );
   });
 
-  // The partial update: only the fields that changed
-  // (spec/stock OMS-REG-INV-02.39). Clear
-  // via the nullable wrappers; batch / barcode are plain scalars.
-  const buildPatch = (l: Line): UpdateStockLineVariables['input'] => {
-    const patch: UpdateStockLineVariables['input'] = { id: l.id };
-    if (edit.costPricePerPack !== l.costPricePerPack)
-      patch.costPricePerPack = edit.costPricePerPack;
-    if (edit.sellPricePerPack !== l.sellPricePerPack)
-      patch.sellPricePerPack = edit.sellPricePerPack;
-    if (edit.batch !== (l.batch ?? '')) patch.batch = edit.batch;
-    if (edit.barcode !== (l.barcode ?? '')) patch.barcode = edit.barcode;
-    if (edit.manufactureDate !== (l.manufactureDate ?? null))
-      patch.manufactureDate = { value: edit.manufactureDate };
-    if (edit.expiryDate !== (l.expiryDate ?? null))
-      patch.expiryDate = { value: edit.expiryDate };
-    if (edit.onHold !== l.onHold) patch.onHold = edit.onHold;
-    if ((edit.location?.id ?? null) !== (l.location?.id ?? null))
-      patch.location = { value: edit.location?.id ?? null };
-    if (edit.volumePerPack !== l.volumePerPack)
-      patch.volumePerPack = edit.volumePerPack;
-    if ((edit.manufacturer?.id ?? null) !== (l.manufacturer?.id ?? null)) {
-      patch.manufacturerId = { value: edit.manufacturer?.id ?? null };
-      // Changing the manufacturer clears the item variant (spec/stock S2).
-      patch.itemVariantId = { value: null };
-    }
-    if ((edit.donorId ?? null) !== (l.donor?.id ?? null))
-      patch.donorId = { value: edit.donorId };
-    if (
-      edit.campaignId !== (l.campaign?.id ?? null) ||
-      edit.programId !== (l.program?.id ?? null)
-    ) {
-      // One mutually-exclusive choice over two wire fields: always send both
-      // wrappers so choosing one side clears the other.
-      patch.campaignId = { value: edit.campaignId };
-      patch.programId = { value: edit.programId };
-    }
-    return patch;
-  };
-
   const doSave = async () => {
     const l = line();
     if (!l) return;
     setSaving(true);
     setSaveError(undefined);
-    const outcome = await runUpdateStockLine(params.storeId, buildPatch(l));
+    const outcome = await runUpdateStockLine(params.storeId, buildPatch(edit, l));
     setSaving(false);
     if (!outcome) return;
     if (outcome.kind === 'error') {
@@ -359,14 +279,6 @@ const StockLineDetailView: Component = () => {
     { label: t('stock'), onClick: onCancelOrClose },
     { label: l.itemName },
   ];
-
-  // The invalid-location warning (spec/stock OMS-REG-INV-02.38): the item is
-  // restricted to a
-  // location type and the current location is of another type.
-  const invalidLocation = (l: Line) =>
-    !!l.item.restrictedLocationTypeId &&
-    !!l.location &&
-    l.location.locationType?.id !== l.item.restrictedLocationTypeId;
 
   const supplierText = (l: Line) =>
     l.supplierName && l.supplierName.length > 0

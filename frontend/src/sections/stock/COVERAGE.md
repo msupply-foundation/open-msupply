@@ -9,7 +9,7 @@ Tiers:
 - **ui** — a static surface/gating/state assertion, verified against the running implementation (contract C4) — a11y tree + presence; scriptable in `e2e/`.
 - **exempt** — out of scope, with the reason stated (C1 requires these be named, never silently dropped).
 
-Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.test.ts`, `list/stockToCsv.test.ts` (34 tests).
+Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.test.ts`, `detail/stockEdit.test.ts`, `list/newStockEntry.test.ts`, `list/stockToCsv.test.ts` (68 tests).
 
 ## OMS-REG-INV-02 — View Stock and Stock Line Details
 
@@ -43,7 +43,7 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.13` batch details shown                       | ui             | detail form                                                                                                                |
 | `.32` quantities read-only                      | ui             | quantities rendered as disabled inputs                                                                                     |
 | `.33` attributes editable                       | ui             | detail form field set                                                                                                      |
-| `.38` invalid-location warning                  | ui             | `invalidLocation` banner                                                                                                   |
+| `.38` invalid-location warning                  | **unit** + ui  | `detail/stockEdit.test.ts` (`invalidLocation`); the banner is the surface                                                  |
 | `.34` Save disabled until dirty                 | ui             | dirty-state gate on the Save button                                                                                        |
 | `.35` pre-save confirmation + busy              | ui             | `ConfirmDialog` → `doSave`; async Save button                                                                              |
 | `.15` a saved edit persists                     | e2e            | `updateStockLine`                                                                                                          |
@@ -51,14 +51,16 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.36` failed save keeps edits, inline, no toast | ui + e2e       | inline failure notice; `stockApi` never toasts                                                                             |
 | `.14` cancel closes without saving              | ui             | Cancel/Close footer button                                                                                                 |
 | `.37` discard prompt when dirty                 | ui             | discard `ConfirmDialog`                                                                                                    |
-| `.39` partial update                            | **unit** + e2e | `buildPatch` (only-changed) — logic in the view; e2e confirms the server                                                   |
-| `.40` clearing optional fields                  | e2e            | nullable update wrappers in `buildPatch`                                                                                   |
+| `.39` partial update                            | **unit** + e2e | `detail/stockEdit.test.ts` (`buildPatch` sends only changed fields); e2e confirms the server                               |
+| `.40` clearing optional fields                  | **unit** + e2e | `detail/stockEdit.test.ts` (nullable wrappers; a cleared field distinguished from an untouched one)                        |
+| `.17` On Hold on records the batch as held      | **unit** + e2e | `detail/stockEdit.test.ts` (`onHold` sent only when toggled); server persists                                              |
+| `.18` On Hold off records it as no longer held  | **unit** + e2e | as `.17` — the same patch field, the other direction                                                                       |
 | `.41` future manufacture date rejected          | ui + e2e       | `DateField max=today` pre-block; server `CannotSetManufactureDateInFuture`                                                 |
 | `.42` unknown location rejected                 | e2e            | server `LocationDoesNotExist`                                                                                              |
 | `.43` wrong location type rejected              | **unit** + e2e | `stockLocations.test.ts` (picker narrowing); server `IncorrectLocationType`                                                |
 | `.44` donor / manufacturer validity             | e2e            | server-enforced; `NameSearch` role filter                                                                                  |
-| `.45` barcode links the GTIN                    | e2e            | plain `barcode` scalar in `buildPatch`                                                                                     |
-| `.46` emptied barcode unlinks                   | e2e            | `""` unlinks                                                                                                               |
+| `.45` barcode links the GTIN                    | **unit** + e2e | `detail/stockEdit.test.ts` (plain scalar sent); the GTIN association is server-side                                        |
+| `.46` emptied barcode unlinks                   | **unit** + e2e | `detail/stockEdit.test.ts` (`""` sent, not a null wrapper)                                                                 |
 | `.47` location change recorded                  | e2e            | server side-effect (location movement)                                                                                     |
 | `.48` edits audited with a diff                 | e2e            | `activityLogs` (`ActivityLogPanel`)                                                                                        |
 | `.49` store isolation                           | **unit** + e2e | `stockApi.test.ts` (`StockDoesNotBelongToStore` → message); server-enforced                                                |
@@ -66,7 +68,7 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.51` newest-first default                      | ui             | `LedgerPanel` default `datetime` desc                                                                                      |
 | `.52` ledger columns sortable                   | ui             | `LedgerPanel` sort                                                                                                         |
 | `.53` ledger read-only                          | ui             | no edit affordance on the panel                                                                                            |
-| `.54` dose context                              | ui             | dose suffix on the list (`unitsText`) and the detail quantity fields (`qtyValue`)                                          |
+| `.54` dose context                              | **unit** + ui  | `stockCalc.test.ts` (`doseEquivalent` — the gate and the arithmetic); the suffix is the surface                            |
 | `.55` donor field gate                          | ui             | donor field `<Show>` on `allowTrackingOfStockByDonor`                                                                      |
 
 ## OMS-REG-SMV-02 — Ledger Updates via Inventory Adjustment
@@ -103,15 +105,15 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.7` new line quantity matches entry           | e2e            | `insertStockLine`                                                                              |
 | `.8` ledger entry for the new line             | e2e            | `ledger`                                                                                       |
 | `.33` introduced by a finalised addition       | e2e            | server document                                                                                |
-| `.34` pack bounds                              | ui + e2e       | pre-validation (`packSize >= 1`, packs ≥ 0); server `LineInsertError`                          |
+| `.34` pack bounds                              | **unit** + e2e | `list/newStockEntry.test.ts` (`packSizeValid`, `packsValid`); server `LineInsertError`         |
 | `.35` duplicate identity rejected              | **unit** + e2e | `stockApi.test.ts` (`StockLineAlreadyExists` → message)                                        |
-| `.36` positive reason required if configured   | **unit** + e2e | `stockApi.test.ts` (new-stock override → message)                                              |
-| `.37` confirm gating                           | ui             | `canConfirm` (item + packSize + packQty)                                                       |
+| `.36` positive reason required if configured   | **unit** + e2e | `list/newStockEntry.test.ts` (the gate), `stockApi.test.ts` (the rejection → message)          |
+| `.37` confirm gating                           | **unit** + ui  | `list/newStockEntry.test.ts` (`canConfirmNewStock`)                                            |
 | `.38` navigates to the new line                | ui             | navigate to `/inventory/stock/:id`                                                             |
 | `.13` one entry per movement                   | e2e            | `ledger` across every movement source                                                          |
 | `.14` signed unit quantities                   | e2e            | `ledger`                                                                                       |
 | `.15` running balance walks                    | e2e            | `ledger`                                                                                       |
-| `.39` dose context on the adjust tiles         | ui             | dose context in the stat tiles (`AdjustModal`)                                                 |
+| `.39` dose context on the adjust tiles         | **unit** + ui  | `stockCalc.test.ts` (`doseEquivalent`); the tiles are the surface                              |
 | `.40` donor field in new stock                 | ui             | donor field `<Show>` (`NewStockModal`)                                                         |
 | `.41` backdate control gate                    | ui             | date control `<Show>` on `backdating.inventoryAdjustmentsEnabled`                              |
 | `.42` adjustment permission                    | ui + e2e       | Adjust suppressed without `INVENTORY_ADJUSTMENT_MUTATE`; server enforces                       |
@@ -165,12 +167,12 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 
 ## Summary
 
-| Tier                                       | Behaviours             |
-| ------------------------------------------ | ---------------------- |
-| unit (colocated vitest, alone or with e2e) | 21                     |
-| e2e (server-enforced outcome)              | 90                     |
-| ui (surface / gating / state)              | 55                     |
-| exempt                                     | 1 (`OMS-REG-INV-02.9`) |
+| Tier                                                | Behaviours             |
+| --------------------------------------------------- | ---------------------- |
+| unit (colocated vitest, alone or with another tier) | 33                     |
+| e2e (server-enforced outcome)                       | 94                     |
+| ui (surface / gating / state)                       | 47                     |
+| exempt                                              | 1 (`OMS-REG-INV-02.9`) |
 
 Counts overlap — a behaviour verified at two tiers is listed under both. Total distinct behaviours: **134**.
 

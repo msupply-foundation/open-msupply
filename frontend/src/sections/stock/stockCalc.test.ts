@@ -9,6 +9,7 @@ import {
   adjustedQuantity,
   wouldGoBelowZero,
   backdatedDatetime,
+  doseEquivalent,
 } from './stockCalc';
 
 // Unit tests for the pure stock calculations behind the screens. Behavioural
@@ -25,6 +26,10 @@ import {
 //   .31 — confirm stays disabled while the amount is zero
 //   .32 — confirm stays disabled while the preview would go below zero
 //   .29 — an accepted backdated adjustment is stamped at the backdated moment
+//   .39 — the adjust tiles present the dose equivalent for a vaccine line
+// Anchors: spec/stock/cases/OMS-REG-INV-02.
+//   .54 — vaccine quantities also present the dose equivalent; off, or for a
+//         non-vaccine item, they do not
 
 describe('stock units & value (spec/stock S1 columns)', () => {
   it('units = packs × pack size, value = packs × cost', () => {
@@ -93,5 +98,32 @@ describe('OMS-REG-SMV-02.29 — backdated instant', () => {
     expect(backdatedDatetime('2020-01-01', today, 'ADDITION')).toBe(
       new Date(2020, 0, 1).toISOString()
     );
+  });
+});
+
+describe('OMS-REG-INV-02.54 / SMV-02.39 — dose context', () => {
+  const gate = (over = {}) => ({
+    showDoses: true,
+    isVaccine: true,
+    doses: 10,
+    ...over,
+  });
+
+  it('is the unit count × doses per unit for a vaccine when the gate is on', () => {
+    expect(doseEquivalent(5, gate())).toBe(50);
+  });
+
+  it('is absent when the preference is off', () => {
+    expect(doseEquivalent(5, gate({ showDoses: false }))).toBeUndefined();
+  });
+
+  it('is absent for a non-vaccine item even with the preference on', () => {
+    expect(doseEquivalent(5, gate({ isVaccine: false }))).toBeUndefined();
+  });
+
+  it('is zero, not absent, for a vaccine with no doses configured', () => {
+    // The gate is on and the item is a vaccine, so dose context still shows —
+    // it just reads zero. Absent would hide the field entirely.
+    expect(doseEquivalent(5, gate({ doses: 0 }))).toBe(0);
   });
 });
