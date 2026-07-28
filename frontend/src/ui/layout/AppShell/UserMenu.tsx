@@ -15,7 +15,7 @@ interface UserMenuProps {
  * Bottom-bar signed-in-user cell + menu (spec chrome › user menu / logout).
  * Shows the current username; opens a menu whose one action is logout. Same
  * headless Kobalte DropdownMenu as LanguageSelector — it handles focus return
- * to the trigger on dismissal (AC-CH6 / D6). Opens upward out of the footer.
+ * to the trigger on dismissal (OMS-REG-FTR-01.17 / D6). Opens upward out of the footer.
  */
 export const UserMenu = (props: UserMenuProps) => (
   <DropdownMenu.Root placement="top-start" gutter={8}>
