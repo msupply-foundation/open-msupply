@@ -1,5 +1,7 @@
 import { For } from 'solid-js';
+import { MemoryRouter, Route } from '@solidjs/router';
 import { Text, type TextVariant } from '../ui/elements/typography/Text';
+import { RecordLink } from '../ui/elements/typography/RecordLink';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
@@ -88,6 +90,11 @@ export const typographyMetadata: PageMetadata = {
       id: 'typography-headings',
       title: 'Headings & rank',
       searchTerms: ['h1', 'h2', 'semantic'],
+    },
+    {
+      id: 'typography-record-link',
+      title: 'RecordLink',
+      searchTerms: ['link', 'related', 'record', 'kind', 'tone', 'po', 'io'],
     },
   ],
 };
@@ -261,6 +268,57 @@ export const TypographyShowcase = () => (
             <span class={styles.meta}>renders &lt;h3&gt;</span>
           </div>
         </div>
+      </DashboardCard>
+
+      <DashboardCard
+        id="typography-record-link"
+        title="RecordLink — a kind-toned link to a related record"
+      >
+        <Lead>
+          A link to another record in the system (a purchase order, internal
+          order, requisition, shipment…). It is a router <code>&lt;A&gt;</code>;
+          what it adds is a <code>kind</code> → tone mapping — so a reader
+          learns "blue = purchase order, orange = internal order" app-wide — a
+          consistent medium weight, and the guarantee that colour is a{' '}
+          <em>redundant</em> cue (the kind sits in the label text:{' '}
+          <code>PO-</code>, <code>IO-</code>, <code>#</code>). Omit{' '}
+          <code>kind</code> for a neutral reference.
+        </Lead>
+        {/* MemoryRouter: the router's <A> needs a router context to render;
+            here it resolves and is clickable but navigates nowhere (the
+            standalone showcase has no app router) — same as the Statistics
+            page's linked stats. */}
+        <MemoryRouter>
+          <Route
+            path="*"
+            component={() => (
+              <div class={styles.headingStack}>
+                <div class={styles.headingRow}>
+                  <RecordLink href="/demo" kind="po">
+                    PO-011
+                  </RecordLink>
+                  <span class={styles.meta}>
+                    kind="po" · purchase order · secondary (blue)
+                  </span>
+                </div>
+                <div class={styles.headingRow}>
+                  <RecordLink href="/demo" kind="io">
+                    IO-095
+                  </RecordLink>
+                  <span class={styles.meta}>
+                    kind="io" · internal order / requisition · primary (orange)
+                  </span>
+                </div>
+                <div class={styles.headingRow}>
+                  <RecordLink href="/demo">#1234</RecordLink>
+                  <span class={styles.meta}>
+                    no kind · neutral reference (e.g. a linked shipment)
+                  </span>
+                </div>
+              </div>
+            )}
+          />
+        </MemoryRouter>
       </DashboardCard>
     </Stack>
   </ContentContainer>
