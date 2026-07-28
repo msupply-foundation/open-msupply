@@ -3,6 +3,7 @@ import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
@@ -171,7 +172,12 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setLoadingLines(false);
   };
 
+  // The item lookup — live only in add mode, where it is the editor's starting
+  // control (ui/utils/createFocusTarget).
+  const itemSearch = createFocusTarget();
+
   onMount(() => {
+    if (props.mode === 'add') itemSearch.focus();
     if (props.mode === 'update' && props.initialItemId) {
       const item = props.itemById(props.initialItemId);
       if (!item) return props.onClose();
@@ -180,6 +186,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   });
 
   const backToSearch = () => {
+    itemSearch.focus();
     setCurrentItem(undefined);
     setStep('quantity');
     setMessage(undefined);
@@ -397,6 +404,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       <ItemSearch
         label={t('label.item')}
         storeId={props.storeId}
+        focusTarget={itemSearch}
         excludeItemIds={props.excludeItemIds()}
         value={currentItem()?.id}
         selectedItem={currentItem()}

@@ -1,5 +1,6 @@
 import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
+import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import { type Location } from './locationResource';
 
 export interface LocationSelectProps {
@@ -27,6 +28,11 @@ export interface LocationSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the picker's input — for an owner
+   * that focuses it after an action (e.g. a dialog opening on it).
+   */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -56,6 +62,7 @@ export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    focusTarget={props.focusTarget}
     onChange={l => props.onChange(l)}
     // Let the popup grow past a narrow field so a location's code + name stays
     // readable rather than truncating to the field width.

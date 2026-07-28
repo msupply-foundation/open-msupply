@@ -11,6 +11,7 @@ import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Dialog.module.css';
 
 export interface DialogProps {
@@ -111,6 +112,19 @@ export interface DialogProps {
    * DataTable) fills the tall space.
    */
   size?: 'auto' | 'large';
+  /**
+   * Where focus lands when the dialog opens, overriding the default (the
+   * dialog panel — see the note on `.body` below). Pass a
+   * `createFocusTarget()` handle that a control inside the dialog is bound to.
+   *
+   * Reserve it for a dialog that exists to capture ONE thing and opens with
+   * that control ready — a create dialog whose only starting control is its
+   * picker, a line editor opening on its item search (ui-standards ›
+   * accessibility › keyboard). A dialog with a form to read, or several
+   * fields, keeps the panel default: the first Tab reaches the first control
+   * and no autocomplete pops its listbox open unprompted.
+   */
+  initialFocus?: FocusTarget;
   /** `data-testid` for the <dialog> element (locale-stable test hook,
    * e2e/TESTIDS.md). */
   testId?: string;
@@ -149,12 +163,17 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
   createEffect(() => local.setTitleIsString(typeof title() === 'string'));
 
   return (
-    // Initial focus lands HERE, not on the first field (ui-standards ›
-    // accessibility › keyboard): showModal() focuses the first autofocus-
-    // bearing element, and without this the first field takes it — which pops
-    // an autocomplete's listbox open unprompted (Combobox opens on focus by
-    // design). tabindex=-1 makes the panel programmatically focusable; the
-    // first Tab reaches the first control.
+    // Initial focus lands HERE by default, not on the first field
+    // (ui-standards › accessibility › keyboard): showModal() focuses the first
+    // autofocus-bearing element, and without this the first field takes it —
+    // which pops an autocomplete's listbox open unprompted (Combobox opens on
+    // focus by design). tabindex=-1 makes the panel programmatically
+    // focusable; the first Tab reaches the first control.
+    //
+    // This panel wins over any `autofocus` a caller puts on a field: it is the
+    // first autofocus candidate in tree order. A dialog that genuinely should
+    // open on a control declares `initialFocus` (see the effect above) —
+    // `autofocus` on a field inside a Dialog does nothing.
     <div class={styles.body} tabindex="-1" autofocus>
       <Show when={c.closeButton && c.dismissable !== false}>
         <button
@@ -267,8 +286,16 @@ export const Dialog = (props: DialogProps) => {
   const [titleIsString, setTitleIsString] = createSignal(false);
 
   createEffect(() => {
-    if (props.open && !dialog.open) dialog.showModal();
-    else if (!props.open && dialog.open) dialog.close();
+    if (props.open && !dialog.open) {
+      dialog.showModal();
+      // showModal() has just parked focus on the panel (see .body below). A
+      // dialog that declares an initial-focus control overrides that here —
+      // ONE place that knows when the dialog opened, instead of every modal
+      // hand-rolling an onMount + requestAnimationFrame of its own. The handle
+      // defers a frame and waits for its control to attach, so this is
+      // correct even when the target renders behind a <Show> or a pending load.
+      props.initialFocus?.focus();
+    } else if (!props.open && dialog.open) dialog.close();
   });
 
   // Solid removes the node on unmount, but close() while still connected also

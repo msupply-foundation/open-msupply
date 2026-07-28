@@ -9,6 +9,7 @@ import { createStore, reconcile } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -89,6 +90,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   const [itemId, setItemId] = createSignal(props.initialItemId);
   const isEdit = props.initialItemId != null;
+  // Add mode opens on the item lookup — the editor's starting control. In edit
+  // mode the lookup is locked to the row's item and the dialog keeps the panel
+  // default (ui-standards › accessibility › keyboard).
+  const itemSearch = createFocusTarget();
 
   const [lines, setLines] = createStore<DraftLine[]>([]);
   const [itemInfo, setItemInfo] = createSignal<ItemInfo>();
@@ -349,6 +354,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     <Dialog
       open
       size="large"
+      initialFocus={isEdit ? undefined : itemSearch}
       onClose={props.onClose}
       testId="add-item-modal"
       title={isEdit ? t('heading.edit-line') : t('heading.add-item')}
@@ -395,6 +401,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           label={t('label.item')}
           hideLabel
           storeId={props.storeId}
+          focusTarget={itemSearch}
           value={itemId()}
           // Prefer the full item once the grid fetch lands; until then fall
           // back to the row's own label so a re-opened line shows its item

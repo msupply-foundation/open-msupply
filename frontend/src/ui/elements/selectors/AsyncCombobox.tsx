@@ -4,6 +4,7 @@ import {
   createPaginatedSearch,
   type Page,
 } from '../../utils/createPaginatedSearch';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 
 export interface AsyncComboboxProps<T> {
   label: string;
@@ -54,6 +55,11 @@ export interface AsyncComboboxProps<T> {
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
+  /**
+   * A `createFocusTarget()` handle bound to the text input — for an owner that
+   * focuses this picker after an action. Passed through to the Combobox.
+   */
+  focusTarget?: FocusTarget;
   /**
    * Status text shown when a settled search matched nothing — a domain
    * message (e.g. the patient picker's "No matching patients"). Passed through
@@ -197,6 +203,7 @@ export const AsyncCombobox = <T,>(
       clearable={props.clearable}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
+      focusTarget={props.focusTarget}
       noResultsMessage={props.noResultsMessage}
       emptyQueryMessage={props.emptyQueryMessage}
       listboxFooter={props.listboxFooter?.(query)}
