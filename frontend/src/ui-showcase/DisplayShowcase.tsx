@@ -6,10 +6,12 @@ import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
 import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
 import { QrCode } from '../ui/elements/display/QrCode';
+import { LabelledValue } from '../ui/elements/typography/LabelledValue';
+import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { ReportsIcon, StockIcon, TruckIcon, PrinterIcon } from '../ui/icons';
-import { Lead, Note, SectionTOC } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './DisplayShowcase.module.css';
 
@@ -41,6 +43,11 @@ export const displayMetadata: PageMetadata = {
   title: 'Display',
   searchTerms: ['tile', 'card', 'output'],
   items: [
+    {
+      id: 'display-labelled-value',
+      title: 'Labelled value',
+      searchTerms: ['label', 'read-only', 'field', 'detail', 'key value'],
+    },
     {
       id: 'display-stat-comparison',
       title: 'Stat comparison tile',
@@ -80,6 +87,52 @@ export const DisplayShowcase = () => {
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <SectionTOC page={displayMetadata} />
+        <DashboardCard
+          id="display-labelled-value"
+          title="Labelled value — read-only label-above-value"
+        >
+          <Lead>
+            A read-only label-above-value pair — the field unit in cards, in
+            detail and side panels, and (as <code>variant="field"</code>) a
+            read-only fact sitting flush among editable inputs in a form.
+            Stacked (label on top), so a row of them <strong>wraps</strong>{' '}
+            intrinsically rather than forcing a fixed grid. The value is any
+            node — text, a number, or a status chip.
+          </Lead>
+          <Row align="start">
+            <LabelledValue label="Store">General store</LabelledValue>
+            <LabelledValue label="Created">12/03/2026</LabelledValue>
+            <LabelledValue label="Status">
+              <StatusChip label="Finalised" colour="var(--status-finalised)" />
+            </LabelledValue>
+          </Row>
+          <Note>
+            <code>variant="field"</code> matches an input's label→control gap,
+            so a read-only fact lines up beside editable fields — read-only
+            reads from the <em>absent input box</em>, not the label:
+          </Note>
+          <Row align="start">
+            <LabelledValue variant="field" label="Pack size">
+              50
+            </LabelledValue>
+            <TextField label="Batch" value="B2487-594" />
+            <LabelledValue variant="field" label="Available packs">
+              530
+            </LabelledValue>
+          </Row>
+          <Note>
+            <code>size="small"</code> drops to the small-input scale — for a
+            value riding a page-header toolbar row beside small controls:
+          </Note>
+          <Row align="start" gap="sm">
+            <LabelledValue size="small" label="On hand">
+              1,240
+            </LabelledValue>
+            <LabelledValue size="small" label="Expires">
+              06/2027
+            </LabelledValue>
+          </Row>
+        </DashboardCard>
         <DashboardCard
           id="display-stat-comparison"
           title="Stat comparison tile — current → adjusted preview"
