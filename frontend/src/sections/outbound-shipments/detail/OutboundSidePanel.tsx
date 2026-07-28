@@ -14,6 +14,7 @@ import {
   SidePanelActions,
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -194,13 +195,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Text variant="body" as="span">
               {props.node.user?.username ?? '—'}
             </Text>
@@ -218,7 +213,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                 </Popover>
               )}
             </Show>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -395,13 +390,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <NumberField
               label={t('label.tax')}
               hideLabel
@@ -425,7 +414,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
                 )
               )}
             </Text>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
