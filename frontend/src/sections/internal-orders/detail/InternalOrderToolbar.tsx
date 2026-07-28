@@ -15,9 +15,8 @@ import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import styles from './InternalOrderToolbar.module.css';
 
-// The buffered as-you-type header fields (reference + side-panel comment share
-// one buffer; the side panel is out of this cut, so only theirReference is read
-// here — comment stays in the buffer for the send/other surfaces).
+// The buffered as-you-type header fields — reference + comment share one
+// buffer; this toolbar reads theirReference, the side panel reads comment.
 export type HeaderEditFields = { theirReference: string; comment: string };
 
 export interface InternalOrderToolbarProps {
@@ -39,10 +38,13 @@ export interface InternalOrderToolbarProps {
   /** MOS threshold / target changes (each already confirmed here). */
   onChangeThreshold: (months: number) => void;
   onChangeTarget: (months: number) => void;
-  /** Hide-stock-over-minimum switch (a client-side line filter in this cut). */
+  /**
+   * Hide-stock-over-minimum switch — a client-side line filter (see the
+   * detail view's interim note on the missing server-paginated line query).
+   */
   hideOverMin: boolean;
   onHideOverMinChange: (value: boolean) => void;
-  /** Item filter (a client-side line filter in this cut). */
+  /** Item filter — a client-side line filter, same interim as hideOverMin. */
   itemFilter: string;
   onItemFilterChange: (value: string) => void;
 }
@@ -181,11 +183,15 @@ export const InternalOrderToolbar: Component<
         <FormColumn>
           <Stack gap="sm">
             <FieldRow label={t('label.supplier-name')}>
+              {/* Internal (store-backed) suppliers only, matching the create
+                  picker — a supplier change is re-validated by the same checks
+                  that govern creation (rules › header fields). */}
               <NameSearch
                 storeId={props.storeId}
                 role="supplier"
                 label={t('label.supplier-name')}
                 hideLabel
+                storeBacked
                 selected={supplierSeed()}
                 disabled={fieldsLocked()}
                 error={props.supplierError}
