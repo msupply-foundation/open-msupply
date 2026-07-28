@@ -33,6 +33,14 @@
   inline-size: 100%;
 }
 
+/* The other-measure dose caption beneath a statistics value (AC-LN20) —
+   muted, right-aligned like the value above it. */
+.statCaption {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
 /* The middle-panel Suggested row (spec S4): tinted like the edits inset panel —
    the requested block it is read against. The negative inline margin lets the
    tint extend slightly past both sides, while the matching inline padding keeps

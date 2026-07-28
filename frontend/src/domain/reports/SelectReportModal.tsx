@@ -13,7 +13,7 @@ import { printBlob, saveBlob } from '../../platform/openDocument';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
 import { timezoneArgument } from '../json-forms/schema';
 import { listReportsByContext, type Report } from './reportsResource';
-import type { ReportContext } from './reportsResource';
+import type { ReportContext, ReportsExtraFilter } from './reportsResource';
 import {
   generateReport,
   type PrintFormat,
@@ -40,6 +40,12 @@ import { reportLabel } from './reportLabel';
 
 export interface SelectReportModalProps {
   context: ReportContext;
+  /**
+   * The host vertical's extra narrowing of the listed reports — e.g. internal
+   * orders excludes sub-contexted (program R&R) forms
+   * (spec/internal-orders contract › printing).
+   */
+  extraFilter?: ReportsExtraFilter;
   /** The record the reports render against (e.g. the stocktake id). */
   dataId: string;
   /** The host table's current sort, passed through to generation. */
@@ -65,7 +71,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // (kdd/solid-reactivity-pitfalls).
   const [reports] = createResource(
     () => props.context,
-    context => listReportsByContext(context)
+    context => listReportsByContext(context, props.extraFilter)
   );
   const options = () => reports.latest ?? [];
 

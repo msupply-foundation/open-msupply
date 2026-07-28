@@ -47,6 +47,11 @@ export interface NameSearchProps {
    * the role).
    */
   storeBacked?: boolean;
+  /**
+   * Withhold one party by id — the internal-order destination-customer picker
+   * excludes the chosen supplier (spec/internal-orders › header fields).
+   */
+  excludeId?: string;
   class?: string;
 }
 
@@ -102,7 +107,8 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
       props.storeId,
       props.role ?? 'supplier',
       PAGE_SIZE,
-      props.storeBacked
+      props.storeBacked,
+      props.excludeId
     )}
     // The selected value's input text is just the name; the dropdown row still
     // shows code + name. Server mode disables the client filter, so this isn't
