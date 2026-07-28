@@ -58,6 +58,9 @@ export function HeaderCell<T>(props: {
       data-align={align()}
       data-pinned={column().getIsPinned() || undefined}
       data-frozen-edge={props.frozenEdge(column())}
+      // Keys this cell's RENDERED width back to its column when the sticky
+      // offsets are measured (DataTable.measurePinnedOffsets).
+      data-column-id={column().id}
       // Whole-cell sort target (spec .sortable): the toggle handler sits on the
       // th, not the label span; the resize handle stops click propagation.
       data-sortable={canSort() || undefined}

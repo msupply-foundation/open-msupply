@@ -549,24 +549,81 @@ export function DataTable<T, K extends string, G extends string = never>(
   // (.td[data-pinned] vs .th[data-pinned]), so the SAME style is safe on a
   // header or a body cell without an inline z-index overriding the CSS layer.
   //
-  // The edge offset is TanStack's own getStart('left') / getAfter('right') —
-  // the summed widths of the pinned columns before (left) / after (right) THIS
-  // one, on that side. Both index the column by its id (not object identity),
-  // so a cell-context column resolves correctly against the table's column list
-  // — the earlier indexOf(column) matched by reference and missed, summing the
-  // column's own width so a single right-pinned column floated one column-width
-  // off the edge. Left offsets add leadingWidth() for the (also-pinned) leading
-  // select/expander columns.
+  // The rendered sticky offset of each pinned column, keyed by column id: how
+  // far its frozen edge sits from the box's inline-start (left-pinned) or
+  // inline-end (right-pinned). Measured off the header row — see pinnedStyle
+  // for why TanStack's own numbers can't be used.
+  const [pinnedOffsets, setPinnedOffsets] = createSignal<
+    Record<string, number>
+  >({});
+  let scrollBox: HTMLDivElement | undefined;
+
+  // Walk the header row from each end, accumulating RENDERED widths for as long
+  // as the cells are pinned to that side (a frozen block is always a prefix or
+  // suffix of the row). The leading select cell is the first cell measured, so
+  // left offsets include it without a special case.
+  const measurePinnedOffsets = () => {
+    const headerRow = scrollBox?.querySelector('thead tr');
+    if (!headerRow) return; // card view / pre-mount: keep the last measurement
+    const cells = [...headerRow.children] as HTMLElement[];
+    const next: Record<string, number> = {};
+
+    let fromStart = 0;
+    for (const cell of cells) {
+      if (cell.dataset.pinned !== 'left') break;
+      if (cell.dataset.columnId) next[cell.dataset.columnId] = fromStart;
+      fromStart += cell.getBoundingClientRect().width;
+    }
+
+    let fromEnd = 0;
+    for (const cell of [...cells].reverse()) {
+      if (cell.dataset.pinned !== 'right') break;
+      if (cell.dataset.columnId) next[cell.dataset.columnId] = fromEnd;
+      fromEnd += cell.getBoundingClientRect().width;
+    }
+
+    // Only publish real changes: re-rendering identical offsets would churn
+    // every pinned cell's style on each resize tick.
+    setPinnedOffsets(current => {
+      const keys = Object.keys(next);
+      const same =
+        keys.length === Object.keys(current).length &&
+        keys.every(id => current[id] === next[id]);
+      return same ? current : next;
+    });
+  };
+
+  // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
+  // TanStack can offer — getStart('left') / getAfter('right') — sum the
+  // CONFIGURED sizes, and under our auto table layout a column's `size` is only
+  // a min-width FLOOR: columns flex past it to fill the table. Summing floors
+  // puts a second pinned column short of where the first one actually ends, so
+  // it slides over its neighbour as you scroll and only freezes once it reaches
+  // the too-small offset (a 64px-configured column rendering 90px overlapped by
+  // 26px). Only columns that flex are affected, which is why it looked
+  // intermittent. Pre-existing; reported by Carl 2026-07-28.
+  //
+  // Those getters remain the FALLBACK for the first paint, before there's a
+  // header row to measure — the effect below corrects it in the same frame.
+  // Both index by column id (not object identity), so a cell-context column
+  // resolves against the table's column list; the earlier indexOf(column)
+  // matched by reference and missed, summing the column's own width so a single
+  // right-pinned column floated one column-width off the edge. The left
+  // fallback adds leadingWidth() for the (also-pinned) leading select column;
+  // measured left offsets already include it, since the select cell is the
+  // first cell measured.
   const pinnedStyle = (column: TanColumn<T>): JSX.CSSProperties | undefined => {
     const side = column.getIsPinned();
     if (!side) return undefined;
+    const measured = pinnedOffsets()[column.id];
     if (side === 'left') {
-      return {
-        position: 'sticky',
-        left: `${leadingWidth() + column.getStart('left')}px`,
-      };
+      const left = measured ?? leadingWidth() + column.getStart('left');
+      return { position: 'sticky', left: `${left}px` };
     }
-    return { position: 'sticky', right: `${column.getAfter('right')}px` };
+    return {
+      position: 'sticky',
+      right: `${measured ?? column.getAfter('right')}px`,
+    };
   };
 
   // The leading selection column is pinned-left too (offset 0) so it stays
@@ -599,7 +656,6 @@ export function DataTable<T, K extends string, G extends string = never>(
   // comparisons and re-renders nothing until an edge state actually flips.
   const [hiddenLeft, setHiddenLeft] = createSignal(false);
   const [hiddenRight, setHiddenRight] = createSignal(false);
-  let scrollBox: HTMLDivElement | undefined;
 
   const syncHiddenEdges = () => {
     if (!scrollBox) return;
@@ -608,26 +664,45 @@ export function DataTable<T, K extends string, G extends string = never>(
     setHiddenRight(right);
   };
 
-  // Scrolling isn't the only thing that moves these edges — hiding a column,
-  // dragging a resize handle, changing density or page size, or resizing the
-  // window all change scrollWidth/clientWidth with no scroll event. Observing
-  // the box AND the table covers both (the box for viewport-driven changes, the
-  // table for content-driven ones).
+  // Both the hidden edges and the pinned offsets are layout facts, so they're
+  // re-read together whenever layout could have moved.
+  const remeasure = () => {
+    syncHiddenEdges();
+    measurePinnedOffsets();
+  };
+
+  // Scrolling isn't the only thing that moves these — hiding a column, dragging
+  // a resize handle, changing density or page size, or resizing the window all
+  // change widths with no scroll event. Observing the box AND the table covers
+  // both (the box for viewport-driven changes, the table for content-driven
+  // ones). Publishing only real changes (see measurePinnedOffsets) keeps this
+  // from feeding itself: the styles it writes are offsets, which move nothing.
   onMount(() => {
     if (!scrollBox) return;
-    const observer = new ResizeObserver(syncHiddenEdges);
+    const observer = new ResizeObserver(remeasure);
     observer.observe(scrollBox);
     const table = scrollBox.querySelector('table');
     if (table) observer.observe(table);
-    syncHiddenEdges();
+    remeasure();
     onCleanup(() => observer.disconnect());
   });
 
-  // A locale flip swaps the scrollLeft convention under us with nothing
-  // scrolling or resizing, so re-read the edges when direction changes.
+  // Column state can redistribute widths WITHOUT resizing the table (it's
+  // width: 100% of the box), which the observer above would never see — so
+  // re-measure on the state that reshuffles columns. A locale flip is in here
+  // too: it swaps the scrollLeft convention with nothing scrolling or resizing.
+  // Solid runs effects after the DOM is patched, and getBoundingClientRect
+  // forces the pending layout, so this reads post-change widths.
   createEffect(() => {
-    isRtl();
-    syncHiddenEdges();
+    const state = table.getState();
+    void state.columnPinning;
+    void state.columnVisibility;
+    void state.columnOrder;
+    void state.columnSizing;
+    void viewMode();
+    void viewDensity();
+    void isRtl();
+    remeasure();
   });
 
   // Which cells sit on a frozen BLOCK's outer edge — the boundary the scrolling
