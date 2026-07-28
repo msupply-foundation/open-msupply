@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
+import { createFocusTarget } from '../../ui/utils/createFocusTarget';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
@@ -47,6 +48,10 @@ export interface SelectReportModalProps {
 }
 
 export const SelectReportModal: Component<SelectReportModalProps> = props => {
+  // The form picker is this dialog's only control, so the dialog opens on
+  // it (ui-standards › accessibility › keyboard).
+  const picker = createFocusTarget();
+
   // The context's reports, fetched once when the dialog opens (the component is
   // mounted only while open). Read non-suspending via `.latest` so the dialog
   // shows its own spinner rather than tripping an outer Suspense boundary
@@ -149,6 +154,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     <>
       <Dialog
         open
+        initialFocus={picker}
         // Blocking while generating — no scrim/Escape exit mid-flight.
         dismissable={!busy()}
         onClose={props.onClose}
@@ -206,6 +212,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             <Combobox
               label={t('title.select-a-form')}
               hideLabel
+              focusTarget={picker}
               items={options()}
               itemToString={reportLabel}
               itemToValue={report => report.id}
