@@ -14,7 +14,8 @@ use crate::{
     invoice::{
         common::{
             calculate_foreign_currency_total, calculate_total_after_tax,
-            generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+            generate_batches_total_number_of_packs_update, get_lines_for_invoice,
+            InvoiceLineHasNoStockLine,
         },
         invoice_date_utils::handle_new_backdated_datetime,
         stock_effect::{stock_effects, StockEffect},
@@ -23,7 +24,10 @@ use crate::{
     NullableUpdate,
 };
 
-use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
+use super::{
+    backdated_datetime_change, UpdateOutboundShipment, UpdateOutboundShipmentError,
+    UpdateOutboundShipmentStatus,
+};
 
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
@@ -58,10 +62,12 @@ pub(crate) fn generate(
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
     let store_preferences = get_store_preferences(connection, store_id)?;
+    let new_backdated_datetime =
+        backdated_datetime_change(input_backdated_datetime, &existing_invoice);
     let new_status = UpdateOutboundShipmentStatus::full_status_option(&input_status);
     let should_update_batches_total_number_of_packs = match &new_status {
         // Backdating removes every line below, so there's nothing left to issue stock for
-        Some(_) if input_backdated_datetime.is_some() => false,
+        Some(_) if new_backdated_datetime.is_some() => false,
         Some(to) => {
             stock_effects(&InvoiceType::OutboundShipment, &existing_invoice.status, to)
                 == StockEffect::ReduceStock
@@ -92,7 +98,7 @@ pub(crate) fn generate(
     }
 
     // Already validated in validate
-    if let Some(backdated_datetime) = input_backdated_datetime {
+    if let Some(backdated_datetime) = new_backdated_datetime {
         handle_new_backdated_datetime(
             &mut update_invoice,
             backdated_datetime.naive_utc(),
@@ -151,12 +157,10 @@ pub(crate) fn generate(
     // line service, which releases the stock they had reserved (lines_to_trim only ever
     // holds lines that reserve nothing - unallocated and zero quantity lines). That set
     // is a subset of every line, so it's cleared to avoid deleting a line twice.
-    let backdated_lines_to_delete = if input_backdated_datetime.is_some() {
+    let backdated_lines_to_delete = if new_backdated_datetime.is_some() {
         update_lines = None;
         lines_to_trim = None;
-        let all_lines = InvoiceLineRepository::new(connection).query_by_filter(
-            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(existing_invoice.id.clone())),
-        )?;
+        let all_lines = get_lines_for_invoice(connection, &existing_invoice.id)?;
         match all_lines.is_empty() {
             true => None,
             false => Some(all_lines.into_iter().map(|l| l.invoice_line_row).collect()),

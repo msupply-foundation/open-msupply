@@ -1,7 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
-    LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
+    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    InvoiceStatus, LocationMovementRowRepository, RepositoryError, StockLineRowRepository,
+    TransactionError,
 };
 
 pub mod generate;
@@ -75,6 +76,17 @@ pub enum UpdateOutboundShipmentError {
 }
 
 type OutError = UpdateOutboundShipmentError;
+
+/// The patch's backdated datetime, but only when it differs from the one the invoice
+/// already carries. Backdating is destructive - every line goes - so it must trigger on
+/// a *change*, not on the field's mere presence: a client that sends a full patch,
+/// echoing the datetime already stored, must not lose its lines.
+pub(crate) fn backdated_datetime_change(
+    input: Option<DateTime<Utc>>,
+    invoice: &InvoiceRow,
+) -> Option<DateTime<Utc>> {
+    input.filter(|datetime| Some(datetime.naive_utc()) != invoice.backdated_datetime)
+}
 
 pub fn update_outbound_shipment(
     ctx: &ServiceContext,
@@ -226,7 +238,8 @@ mod test {
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
         InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
-        NameStoreJoinRow, StockLineRow, StockLineRowRepository,
+        NameStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow,
+        StockLineRowRepository, StorageConnection,
     };
 
     use crate::{
@@ -241,6 +254,21 @@ mod test {
     use super::UpdateOutboundShipmentError;
 
     type ServiceError = UpdateOutboundShipmentError;
+
+    /// Turn the backdating preference on for shipments. `max_days` bounds how far back
+    /// the window reaches; zero leaves the past unbounded.
+    fn enable_backdating(connection: &StorageConnection, max_days: u32) {
+        PreferenceRowRepository::new(connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: format!(
+                    r#"{{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":{max_days}}}"#
+                ),
+                store_id: None,
+            })
+            .unwrap();
+    }
 
     #[actix_rt::test]
     async fn update_outbound_shipment_errors() {
@@ -865,16 +893,7 @@ mod test {
         )
         .await;
 
-        // Enable backdating preference
-        use repository::{PreferenceRow, PreferenceRowRepository};
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "backdating_global".to_string(),
-                key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
-                store_id: None,
-            })
-            .unwrap();
+        enable_backdating(&connection, 30);
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -952,16 +971,7 @@ mod test {
         )
         .await;
 
-        // Enable backdating preference
-        use repository::{PreferenceRow, PreferenceRowRepository};
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "backdating_global".to_string(),
-                key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
-                store_id: None,
-            })
-            .unwrap();
+        enable_backdating(&connection, 0);
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -1063,18 +1073,7 @@ mod test {
         )
         .await;
 
-        // Enable backdating preference
-        use repository::{PreferenceRow, PreferenceRowRepository};
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "backdating_global".to_string(),
-                key: "backdating".to_string(),
-                value:
-                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":30}"#
-                        .to_string(),
-                store_id: None,
-            })
-            .unwrap();
+        enable_backdating(&connection, 30);
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -1120,6 +1119,224 @@ mod test {
                 available_number_of_packs: 10.0,
                 ..stock_line()
             }
+        );
+    }
+
+    // A line carrying a VVM status log: the log references the invoice line by a foreign
+    // key, so removing the line has to take its log with it.
+    #[actix_rt::test]
+    async fn update_outbound_shipment_backdate_removes_a_lines_vvm_status_log() {
+        use chrono::{Duration, Utc};
+        use repository::{
+            mock::mock_vvm_status_a,
+            vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
+        };
+
+        fn new_outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "backdate_vvm_outbound".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "backdate_vvm_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                available_number_of_packs: 8.0,
+                total_number_of_packs: 10.0,
+                pack_size: 1.0,
+                item_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "backdate_vvm_invoice_line".to_string(),
+                invoice_id: new_outbound().id,
+                stock_line_id: Some(stock_line().id),
+                number_of_packs: 2.0,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }
+        }
+
+        fn vvm_status_log() -> VVMStatusLogRow {
+            VVMStatusLogRow {
+                id: "backdate_vvm_status_log".to_string(),
+                status_id: mock_vvm_status_a().id,
+                created_datetime: Utc::now().naive_utc(),
+                stock_line_id: stock_line().id,
+                comment: None,
+                created_by: "".to_string(),
+                invoice_line_id: Some(invoice_line().id),
+                store_id: mock_store_a().id,
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_backdate_removes_a_lines_vvm_status_log",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![new_outbound()],
+                stock_lines: vec![stock_line()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let vvm_log_repo = VVMStatusLogRowRepository::new(&connection);
+        vvm_log_repo.upsert_one(&vvm_status_log()).unwrap();
+        enable_backdating(&connection, 30);
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let result = service.update_outbound_shipment(
+            &context,
+            UpdateOutboundShipment {
+                id: new_outbound().id,
+                backdated_datetime: Some(Utc::now() - Duration::days(2)),
+                ..Default::default()
+            },
+        );
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        // The line, and the log that pointed at it, are both gone - and the reservation
+        // is still released
+        assert_eq!(
+            InvoiceLineRowRepository::new(&connection)
+                .find_one_by_id(&invoice_line().id)
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            vvm_log_repo.find_one_by_id(&vvm_status_log().id).unwrap(),
+            None
+        );
+        assert_eq!(
+            StockLineRowRepository::new(&connection)
+                .find_one_by_id(&stock_line().id)
+                .unwrap()
+                .unwrap(),
+            StockLineRow {
+                available_number_of_packs: 10.0,
+                ..stock_line()
+            }
+        );
+    }
+
+    // Backdating triggers on a *change* to the datetime, not on its presence: a client
+    // echoing the datetime the invoice already carries keeps its lines.
+    #[actix_rt::test]
+    async fn update_outbound_shipment_echoed_backdated_datetime_keeps_lines() {
+        use chrono::{Duration, Timelike, Utc};
+
+        // Sub-second precision doesn't survive a round trip through every backend, and
+        // the point of the test is an exact match against what's stored
+        let already_backdated = (Utc::now() - Duration::days(2))
+            .naive_utc()
+            .with_nanosecond(0)
+            .unwrap();
+
+        fn outbound(backdated_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+            InvoiceRow {
+                id: "echoed_backdate_outbound".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                backdated_datetime: Some(backdated_datetime),
+                ..Default::default()
+            }
+        }
+
+        fn stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "echoed_backdate_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                available_number_of_packs: 8.0,
+                total_number_of_packs: 10.0,
+                pack_size: 1.0,
+                item_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "echoed_backdate_invoice_line".to_string(),
+                invoice_id: "echoed_backdate_outbound".to_string(),
+                stock_line_id: Some(stock_line().id),
+                number_of_packs: 2.0,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_echoed_backdated_datetime_keeps_lines",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound(already_backdated)],
+                stock_lines: vec![stock_line()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        enable_backdating(&connection, 30);
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // A full patch that carries the stored datetime unchanged, alongside a real edit
+        let result = service.update_outbound_shipment(
+            &context,
+            UpdateOutboundShipment {
+                id: outbound(already_backdated).id,
+                comment: Some("unrelated edit".to_string()),
+                backdated_datetime: Some(already_backdated.and_utc()),
+                ..Default::default()
+            },
+        );
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        let updated = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&outbound(already_backdated).id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated.comment, Some("unrelated edit".to_string()));
+        assert_eq!(updated.backdated_datetime, Some(already_backdated));
+
+        // The line survived, and its reservation was neither released nor doubled
+        assert_eq!(
+            InvoiceLineRowRepository::new(&connection)
+                .find_one_by_id(&invoice_line().id)
+                .unwrap(),
+            Some(invoice_line())
+        );
+        assert_eq!(
+            StockLineRowRepository::new(&connection)
+                .find_one_by_id(&stock_line().id)
+                .unwrap()
+                .unwrap(),
+            stock_line()
         );
     }
 
@@ -1177,17 +1394,7 @@ mod test {
         )
         .await;
 
-        use repository::{PreferenceRow, PreferenceRowRepository};
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "backdating_global".to_string(),
-                key: "backdating".to_string(),
-                value:
-                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":30}"#
-                        .to_string(),
-                store_id: None,
-            })
-            .unwrap();
+        enable_backdating(&connection, 30);
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -1256,17 +1463,7 @@ mod test {
         )
         .await;
 
-        use repository::{PreferenceRow, PreferenceRowRepository};
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "backdating_global".to_string(),
-                key: "backdating".to_string(),
-                value:
-                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":30}"#
-                        .to_string(),
-                store_id: None,
-            })
-            .unwrap();
+        enable_backdating(&connection, 30);
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
