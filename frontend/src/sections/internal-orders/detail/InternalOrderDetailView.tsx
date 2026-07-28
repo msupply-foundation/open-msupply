@@ -500,6 +500,7 @@ const InternalOrderDetailView: Component = () => {
               id: 'dosesPerUnit',
             },
             header: () => t('label.doses-per-unit'),
+            ...getNumberCell(),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -516,6 +517,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
+      ...getNumberCell(),
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
@@ -526,11 +528,13 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
+      ...getNumberCell(),
     },
     {
       c: { accessor: line => mos(line).toFixed(1), id: 'mos' },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
+      ...getNumberCell(),
     },
     {
       c: {
@@ -539,6 +543,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
+      ...getNumberCell(),
     },
     // Target stock (population) — gated on the forecasting preference; the
     // stored forecast rounded up, zero on a forecast-less line.
@@ -551,6 +556,7 @@ const InternalOrderDetailView: Component = () => {
               id: 'targetStockPopulation',
             },
             header: () => t('label.target-stock-population'),
+            ...getNumberCell(),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -562,6 +568,7 @@ const InternalOrderDetailView: Component = () => {
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
+      ...getNumberCell(),
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
@@ -573,6 +580,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
+      meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
         return (
@@ -623,30 +631,37 @@ const InternalOrderDetailView: Component = () => {
           {
             c: { accessor: l => numWithDoses(l, l.initialStockOnHandUnits), id: 'initialSoh' },
             header: () => t('label.initial-stock-on-hand'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.incomingUnits), id: 'incoming' },
             header: () => t('label.incoming'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.outgoingUnits), id: 'outgoing' },
             header: () => t('label.outgoing'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.lossInUnits), id: 'losses' },
             header: () => t('label.losses'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.additionInUnits), id: 'additions' },
             header: () => t('label.additions'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
             header: () => t('label.short-expiry'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => Math.round(l.daysOutOfStock), id: 'daysOutOfStock' },
             header: () => t('label.days-out-of-stock'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
@@ -682,6 +697,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: { accessor: l => Math.round(l.approvedQuantity), id: 'approvedPacks' },
             header: () => t('label.approved-packs'),
+            ...getNumberCell(),
           },
           {
             c: { accessor: l => l.approvalComment ?? '', id: 'approvalComment' },
