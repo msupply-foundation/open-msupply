@@ -6,9 +6,9 @@ import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Popover } from '../../../ui/elements/feedback/Popover';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LanguageSelector } from '../../../ui/layout/AppShell/LanguageSelector';
-import { InfoIcon, SaveIcon } from '../../../ui/icons';
+import { SaveIcon } from '../../../ui/icons';
 import { changeLanguage, locale, t } from '../../../intl';
 import {
   logoClearInput,
@@ -89,14 +89,14 @@ const EditorToggleRow = (props: {
           testId={`${props.testId}-toggle`}
         />
         <Show when={props.info}>
-          <Popover
-            trigger={<InfoIcon />}
-            triggerLabel={props.heading}
-            triggerTestId={`${props.testId}-info`}
-            placement="bottom-start"
-          >
-            <p>{props.info}</p>
-          </Popover>
+          {info => (
+            <InfoTooltip
+              text={info()}
+              label={props.heading}
+              triggerTestId={`${props.testId}-info`}
+              placement="bottom-start"
+            />
+          )}
         </Show>
       </div>
       <Show when={enabled()}>
