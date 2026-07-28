@@ -580,6 +580,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // needs the table's own fixed overlay.
   const overlay = () => fullScreen() && !shellFullScreen;
 
+  // Has the scroll box been scrolled sideways at all? Stamped on it as
+  // data-hscrolled, which is what reveals the frozen leading column's shadow —
+  // there's nothing under that column until content has slid beneath it (#617,
+  // see DataTable.module.css). Deliberately NOT "the table overflows": an
+  // overflowing but unscrolled table has clear air beside the checkbox.
+  // Magnitude, because RTL scrolls to NEGATIVE scrollLeft. Setting the same
+  // boolean is a no-op in Solid, so the listener costs one comparison per
+  // scroll event and re-renders nothing until the state actually flips.
+  const [hScrolled, setHScrolled] = createSignal(false);
+
   // Per-facet applicability for the Settings popover's resets (issue #572): each
   // reset is enabled only when that facet actually differs from the default,
   // derived from the resolved config (reactive) so it needs no extra per-page
@@ -784,6 +794,10 @@ export function DataTable<T, K extends string, G extends string = never>(
           class={styles.tableScroll}
           data-view={viewMode()}
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
+          data-hscrolled={hScrolled() ? '' : undefined}
+          onScroll={event =>
+            setHScrolled(Math.abs(event.currentTarget.scrollLeft) > 0)
+          }
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
               table (each card is a full-width <tr>), so columns/scroll/selection
