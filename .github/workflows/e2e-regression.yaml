@@ -9,15 +9,19 @@ name: E2E regression (hermetic)
 # current app and the rewrite, so this workflow checks that repo out and runs
 # its suites against the front end built here.
 #
-# NON-BLOCKING while the suite builds trust: not in branch protection yet.
-# Flake policy before gating: one retry max, quarantine-or-fix same day.
+# NIGHTLY, not per-PR: the full stack build (Rust server + FE + Playwright)
+# is too slow to gate every PR on, so the whole suite runs once a night on
+# the shared self-hosted runner. Trigger it by hand any time with
+# workflow_dispatch. With no PR to go red on, a failed night is surfaced as
+# a GitHub issue (last step). Flake policy: one retry max (--retries=1
+# below), quarantine-or-fix same day.
 
 on:
-  pull_request:
-    paths:
-      - "client/**"
-      - "server/**"
-      - ".github/workflows/e2e-regression.yaml"
+  # 16:00 UTC ≈ 04:00–05:00 NZ — overnight, and clear of the frontend
+  # repo's nightly on the same runner pool (14:00 UTC, 90-minute cap).
+  # cron is always UTC.
+  schedule:
+    - cron: "0 16 * * *"
   workflow_dispatch:
 
 env:
@@ -26,14 +30,21 @@ env:
   FE_SUITES_REF: main
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
   e2e:
     name: Deterministic e2e (reference datafile)
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 45
+    # 90, not 45: the nightly runs every suite and often hits the shared
+    # cargo cache cold overnight, so the Rust server build can eat 15–30
+    # min before any test runs. Overnight there's no PR waiting, so the
+    # headroom is free; a genuinely hung run still gets killed here.
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write # open/update the nightly failure tracking issue
     env:
       # Share the backend-tests sqlite target dir — the default (sqlite)
       # feature build here reuses that cache.
@@ -105,14 +116,15 @@ jobs:
         env:
           FE_SUITES_DIR: ${{ github.workspace }}/.fe-suites
           # Provenance stamped into the Playwright report (the suites'
-          # e2e/playwright.config.ts `metadata`). The PR head SHA — not
-          # github.sha, which is the ephemeral merge commit — so the report
-          # names a commit that stays resolvable. Falls back to plain ref/sha
-          # for workflow_dispatch runs.
-          E2E_META_PR: ${{ github.event.pull_request.number }}
-          E2E_META_BRANCH: ${{ github.head_ref || github.ref_name }}
-          E2E_META_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: cd client && yarn e2e:local stocktake-regression distribution-regression
+          # e2e/playwright.config.ts `metadata`). Scheduled runs execute on
+          # the default branch, so plain ref/sha is the right provenance.
+          E2E_META_BRANCH: ${{ github.ref_name }}
+          E2E_META_SHA: ${{ github.sha }}
+        # No suite filter: every spec under the suites repo's e2e/specs/
+        # runs, so new suites are picked up as they land. --retries=1
+        # implements the flake policy above — a pass-on-retry is reported
+        # as flaky rather than hidden.
+        run: cd client && yarn e2e:local --retries=1
 
       - name: Upload Playwright report (html + results.json)
         uses: actions/upload-artifact@v4
@@ -133,3 +145,36 @@ jobs:
             .fe-suites/e2e/stack-logs
           if-no-files-found: ignore
           retention-days: 7
+
+      # No PR to go red on nightly — surface a failure as a GitHub issue.
+      # One persistent issue: reopen + comment if it already exists, so
+      # consecutive bad nights don't spawn duplicates. Mirrors the frontend
+      # repo's nightly (which classifies vs a baseline; here every suite is
+      # expected green against this app, so raw failure is the signal).
+      - name: Open/update failure tracking issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const marker = '<!-- e2e-nightly-failure -->';
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = `${marker}\n\n**Nightly deterministic e2e failed.** [View run](${runUrl}) — the Playwright report is attached to the run as the \`e2e-playwright-report\` artifact.`;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const existing = issues.find(i => !i.pull_request && (i.body || '').includes(marker));
+            if (existing) {
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, body, state: 'open' });
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: existing.number,
+                body: `Still failing on [this run](${runUrl}).`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner, repo,
+                title: 'Nightly e2e failure',
+                body,
+                labels: ['e2e-nightly'],
+              });
+            }
