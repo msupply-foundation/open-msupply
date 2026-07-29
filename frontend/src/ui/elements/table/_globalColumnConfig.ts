@@ -85,6 +85,10 @@ export type CellSpec = {
   size?: number;
   maxSize?: number | null;
 };
+// The standard width (rem) for a short record-number column — a few digits,
+// shared by every "record #" column so they line up and never drift.
+const RECORD_NUMBER_WIDTH = 3.5;
+
 export const CELL_DEF = {
   // Text — the flex-fill "sink" columns.
   itemName: { kind: 'text' },
@@ -140,8 +144,11 @@ export const CELL_DEF = {
   difference: { kind: 'number', size: 7 }, // "Difference"
   unitQuantity: { kind: 'number', size: 5 }, // "Unit quantity"
   balance: { kind: 'number', size: 6 }, // header "Balance" (ledger tables)
-  // A short id — only ever a few digits, so tighter than a generic number.
-  invoiceNumber: { kind: 'number', size: 3.5 },
+  // Short record numbers (invoice #, stocktake #) — a few digits, tighter than
+  // a generic number; one shared width (RECORD_NUMBER_WIDTH) so they never
+  // drift apart.
+  invoiceNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
+  stocktakeNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   // Percentage.
   taxPercentage: { kind: 'percentage' },
   // Currency — "Pack sell price" / "Pack cost price" headers need the room.

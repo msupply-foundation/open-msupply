@@ -7,7 +7,8 @@ import { userDisplayName } from '@/auth/authContext';
 import { graphqlFetch } from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Button } from '@/ui/elements/buttons/Button';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '@/ui/icons';
 import { InsertStocktake } from '../createStocktake.generated';
 
 // The initial (opening-balance) stocktake create action — offered only from
@@ -74,21 +75,13 @@ export const CreateInitialStocktakeAction = (props: {
       description={t('messages.confirm-create-initial-stocktake')}
       actions={
         <>
+          <CancelButton disabled={creating()} onClick={props.onClose} />
           <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            disabled={creating()}
-            onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
+            variant="primary"
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('button.ok')}
+            {t('button.create')}
           </Button>
         </>
       }

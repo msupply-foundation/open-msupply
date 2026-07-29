@@ -49,6 +49,12 @@
   outline-offset: 2px;
 }
 
+/* Exhausted — every filter is already added, so there is nothing to pick. */
+.trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .triggerIcon {
   font-size: 0.875rem;
   flex-shrink: 0;

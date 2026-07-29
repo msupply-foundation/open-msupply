@@ -4,7 +4,7 @@ import {
   summariseOutcomes,
   type DeleteOutcome,
 } from './deleteLocations';
-import type { GraphqlResult } from '../../../api/graphql';
+import type { GraphqlResult } from '@/api/graphql';
 import type { DeleteLocationResult } from './locations.generated';
 
 // AC-citing tests for the delete flow's logic (spec/locations/acceptance.md

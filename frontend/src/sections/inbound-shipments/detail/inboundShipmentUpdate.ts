@@ -17,9 +17,9 @@ import {
 // Update/batch helpers for the inbound-shipment detail view. Every mutation is
 // TWINNED (plain vs `...External`): the external variant is required whenever
 // the shipment has a purchaseOrderId (contract → creation wire trap — the type
-// check gates every twinned mutation on every call). `isExternal` is derived
-// once from the shipment and threaded through, so the view never picks the
-// wrong twin.
+// check gates every twinned mutation on every call). `isExternal` comes from
+// the route's scope param (inboundShipmentScope) and is threaded through every
+// edit surface, so the twin is chosen once per screen and never re-derived.
 //
 // The server rejects an action two ways (contract → typed vs non-typed
 // rejections): a TYPED member inside the response union (read
@@ -33,10 +33,6 @@ import {
 // those; only Forbidden shifts to the caller under returnGraphqlErrors — a
 // mutation the user can't perform then reads as an inline rejection, acceptable
 // for these edit surfaces).
-
-export const isExternalShipment = (info: {
-  purchaseOrderId?: string | null;
-}): boolean => info.purchaseOrderId != null;
 
 // A placeholder line — a stock-in line with zero packs received and nothing
 // reported shipped: a line added but not yet received. It carries no received

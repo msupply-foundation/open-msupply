@@ -7,6 +7,7 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CheckIcon, CopyIcon, XCircleIcon } from '../../../../ui/icons';
 import { DuplicateInboundShipment } from '../../list/createInboundShipment.generated';
+import { inboundShipmentHref } from '../../inboundShipmentScope';
 
 export interface DuplicateInboundShipmentActionProps {
   invoiceId: string;
@@ -64,10 +65,14 @@ const Body = (props: {
   const [skipped, setSkipped] = createSignal(0);
   const [newId, setNewId] = createSignal<string>();
 
+  // The copy is always a plain New draft — no purchase-order link carries over
+  // (rules → duplicating a shipment) — so it opens in the plain scope whatever
+  // the source's was.
   const goToCopy = () => {
     const id = newId();
     props.onClose();
-    if (id) navigate(`/${params.storeId}/replenishment/inbound-shipment/${id}`);
+    if (id)
+      navigate(inboundShipmentHref(params.storeId, id, 'INBOUND_SHIPMENT'));
   };
 
   const run = async () => {

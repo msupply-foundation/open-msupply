@@ -26,6 +26,17 @@ fragment StocktakeInfo on StocktakeNode {
   user {
     username
   }
+  # Files attached to this stocktake — the detail view's Documents tab (S3 § tabs).
+  # The list is read here on the info fragment; upload/delete go through the REST
+  # sync-file store (domain/syncFiles, tableName "stocktake") and re-read the node.
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
+  }
 }
 
 # ONE fragment, both directions (kdd/state-management): the same StocktakeLine fragment is the
