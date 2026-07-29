@@ -18,12 +18,12 @@ import {
   dateToIsoDate,
   startOfWeek,
   utcBoundsFromLocalDays,
-} from '../../ui/elements/inputs/dateTimeConvert';
-import type { InboundListFilter } from '../inbound-shipments/list/listFilters';
-import type { InternalOrderFilter } from '../internal-orders/list/listFilters';
-import type { OutboundFilter } from '../outbound-shipments/list/listFilters';
-import type { StockFilter } from '../stock/list/listFilters';
-import type { ItemsListFilter } from '../items/list/itemFilter';
+} from '@/ui/elements/inputs/dateTimeConvert';
+import type { InboundListFilter } from '@/sections/inbound-shipments/list/listFilters';
+import type { InternalOrderFilter } from '@/sections/internal-orders/list/listFilters';
+import type { OutboundFilter } from '@/sections/outbound-shipments/list/listFilters';
+import type { StockFilter } from '@/sections/stock/list/listFilters';
+import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
 // "Expiring soon" / the soon link's window, in days — the app's client constant
 // (rules.md § thresholds; the server default of 7 is a fallback the app never
