@@ -1,6 +1,6 @@
 import { createEffect, createMemo, type JSX } from 'solid-js';
 import { t } from '../../intl';
-import type { SlotId } from '../../plugin-sdk/types';
+import type { DashboardSlotId } from '../../plugin-sdk/types';
 import { recordPluginDiagnostic } from '../../plugins/diagnostics';
 import { suppressedPieces } from '../../plugins/registry';
 import { contributionId, visibleContributions } from '../../plugins/PluginSlot';
@@ -36,7 +36,7 @@ import { panelBuiltIns, statBuiltIns, widgetBuiltIns } from './regionBuiltIns';
  * flagged when it deferred this).
  */
 
-const builtInsFor = (slot: SlotId, container: string | undefined) => {
+const builtInsFor = (slot: DashboardSlotId, container: string | undefined) => {
   const gates = dashboardGates();
   if (slot === 'dashboard.widget') return widgetBuiltIns();
   if (container === undefined) return [];
@@ -46,7 +46,7 @@ const builtInsFor = (slot: SlotId, container: string | undefined) => {
 };
 
 export const PluginRegion = (props: {
-  slot: SlotId;
+  slot: DashboardSlotId;
   /** The widget or panel whose region this is; omitted for the card grid. */
   container?: string;
 }): JSX.Element => {

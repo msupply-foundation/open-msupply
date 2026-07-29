@@ -191,7 +191,56 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'internalOrderLine.column',
     ]);
+  });
+
+  it('accepts a column contribution rendering declaratively, with no Component', () => {
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'internalOrderLine.column',
+          id: 'total',
+          header: 'label.total',
+          value: row => row.initialStockOnHandUnits + row.incomingUnits,
+        },
+      ],
+    });
+    expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+  });
+
+  it('refuses a column contribution with neither a Component nor a value', () => {
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'internalOrderLine.column',
+          id: 'total',
+          header: 'label.total',
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'neither a Component nor a value'
+    );
+  });
+
+  it('refuses a dashboard contribution rendering declaratively — that slot has no value form', () => {
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'dashboard.stat',
+          id: 'stat',
+          panel: 'replenishment.inbound',
+          value: () => 1,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'no Component function'
+    );
   });
 
   it('refuses an empty contribution id', () => {
