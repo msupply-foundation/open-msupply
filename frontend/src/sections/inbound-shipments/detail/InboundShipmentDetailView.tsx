@@ -93,6 +93,10 @@ import {
   ChangeCampaignProgramAction,
   ExportPrintAction,
 } from './actions';
+// "Return selected lines" → the supplier-return from-shipment create flow. The
+// entry point is owned here (inbound detail); the flow is the returns vertical's
+// (mirrors outbound-shipments → customer-returns).
+import { ReturnFromInboundAction } from '../../supplier-returns/detail/edit-modal/ReturnFromInboundAction';
 
 // The inbound-shipment detail view (spec S3). Mirrors the stocktake detail
 // reference: TWO resources — `info` (header/footer/side-panel, a single node,
@@ -933,6 +937,25 @@ const InboundShipmentDetailView: Component = () => {
                         onError={stampErrors}
                       />
                     </Show>
+                    {/* Return selected lines → supplier-return create flow
+                        (spec/supplier-returns § from an originating inbound
+                        shipment). Shown at every status; a non-returnable
+                        status explains rather than acts. */}
+                    <ReturnFromInboundAction
+                      storeId={params.storeId}
+                      shipmentId={node().id}
+                      shipmentInvoiceNumber={node().invoiceNumber}
+                      supplierId={node().otherPartyId}
+                      supplierName={node().otherPartyName}
+                      status={node().status}
+                      stockLineIds={() =>
+                        rows()
+                          .filter(line => selectedIds().includes(line.id))
+                          .map(line => line.stockLine?.id)
+                          .filter((id): id is string => !!id)
+                      }
+                      onDone={() => setSelectedIds([])}
+                    />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
