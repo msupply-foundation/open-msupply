@@ -28,7 +28,7 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        settings::SyncSettings, sync_status::logger::SyncLogger,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     sync_v7::{
@@ -364,7 +364,9 @@ async fn initialise_from_central(
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
 
-    let (_, sync_driver) = SynchroniserDriver::init();
+    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
+    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
+    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
     sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");

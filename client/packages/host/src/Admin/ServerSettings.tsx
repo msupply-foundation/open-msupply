@@ -83,7 +83,9 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            {isLogShown && <LogFileModal onClose={hideLog} isOpen={isLogShown} />}
+            {isLogShown && (
+              <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            )}
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
@@ -106,9 +108,7 @@ export const ServerSettings = () => {
                 startIcon={<DownloadIcon />}
                 onClick={async () => {
                   setIsDownloading(true);
-                  if (
-                    databaseSettings?.databaseType === DatabaseType.SqLite
-                  ) {
+                  if (databaseSettings?.databaseType === DatabaseType.SqLite) {
                     const vacuum = await fetch(
                       `${Environment.API_HOST}/support/vacuum`,
                       {
@@ -136,8 +136,12 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            {isLogShown && <LogFileModal onClose={hideLog} isOpen={isLogShown} />}
-            <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
+            {isLogShown && (
+              <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            )}
+            <BaseButton onClick={showLog} data-testid="server-log-view">
+              {t('button.view')}
+            </BaseButton>
           </>
         }
       />
@@ -148,6 +152,7 @@ export const ServerSettings = () => {
             <span>
               <BaseButton
                 startIcon={<DownloadIcon />}
+                data-testid="download-database"
                 onClick={() => {
                   window.location.href = `${Environment.API_HOST}/support/database`;
                 }}

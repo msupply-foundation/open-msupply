@@ -6,6 +6,8 @@ import { useTranslation } from '@common/intl';
 
 export type PasswordTextInputProps = StandardTextFieldProps & {
   fixedHeight?: boolean;
+  /** Deterministic e2e hook on the show/hide-password toggle button. */
+  visibilityToggleTestId?: string;
 };
 
 export const PasswordTextInput = React.forwardRef<
@@ -14,7 +16,7 @@ export const PasswordTextInput = React.forwardRef<
 >((props, ref) => {
   // if the helper text is a space then the height of the component doesn't change
   // when the helper text is shown / removed
-  const { fixedHeight, ...rest } = props;
+  const { fixedHeight, visibilityToggleTestId, ...rest } = props;
   const defaultWarning = fixedHeight ? ' ' : '';
   const [showPassword, setShowPassword] = useState(false);
   const [warning, setWarning] = useState(defaultWarning);
@@ -23,6 +25,7 @@ export const PasswordTextInput = React.forwardRef<
     <IconButton
       aria-label="toggle password visibility"
       disabled={props.disabled}
+      data-testid={visibilityToggleTestId}
       title={t('label.toggle-password-visibility')}
       onClick={() => {
         setShowPassword(!showPassword);

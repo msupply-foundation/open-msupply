@@ -28,5 +28,9 @@ export const LedgerTable = ({ stockLine }: LedgerTableProps) => {
     noDataElement: <NothingHere body={t('messages.no-ledger')} />,
   });
 
-  return <MaterialTable table={table} />;
+  return (
+    <div data-testid="ledger-table">
+      <MaterialTable table={table} />
+    </div>
+  );
 };

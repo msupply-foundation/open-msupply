@@ -1,7 +1,7 @@
 use super::*;
 use base64::{prelude::BASE64_STANDARD, Engine};
 use repository::SyncFileReferenceRow;
-use reqwest::StatusCode;
+use reqwest::{header::HeaderMap, StatusCode};
 use util::https_client;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
@@ -37,18 +37,27 @@ impl SyncApiV6 {
     ///
     /// `file_handle` must be openable; we read the file in chunks bounded by `CHUNK_SIZE`, so the
     /// peak memory footprint is one chunk regardless of how big the file is.
+    ///
+    /// `v7_auth_headers`: when `Some` (site runs sync v7) every tus request carries the standard
+    /// v7 auth headers and `sync_v5_settings` is left out of `Upload-Metadata` — central selects
+    /// the auth scheme by the presence of the `Authorization` header. When `None` (v5/v6 site)
+    /// auth is embedded in `Upload-Metadata` as before.
     pub async fn upload_file(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
         file_name: &str,
         mut file_handle: File,
         pause_rx: watch::Receiver<bool>,
+        v7_auth_headers: Option<&HeaderMap>,
     ) -> Result<UploadOutcome, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
             url,
             sync_v6_version: _,
         } = self;
+
+        // Attach v7 auth headers when provided; no-op for v5/v6 auth.
+        let auth_headers = v7_auth_headers.cloned().unwrap_or_default();
 
         let total_bytes = sync_file_reference_row.total_bytes as u64;
         let file_id = &sync_file_reference_row.id;
@@ -66,7 +75,7 @@ impl SyncApiV6 {
         };
 
         let metadata = build_upload_metadata(
-            sync_v5_settings,
+            v7_auth_headers.is_none().then_some(sync_v5_settings),
             file_id,
             file_name,
             &sync_file_reference_row.table_name,
@@ -79,6 +88,7 @@ impl SyncApiV6 {
         // 1. Create the upload (or no-op if it already exists from a prior attempt).
         let post = client
             .post(create_url.clone())
+            .headers(auth_headers.clone())
             .header("Tus-Resumable", TUS_VERSION)
             .header("Upload-Length", total_bytes.to_string())
             .header("Upload-Metadata", &metadata)
@@ -107,6 +117,7 @@ impl SyncApiV6 {
         let head_route = "files/{file_id} (HEAD)";
         let head = client
             .head(upload_url.clone())
+            .headers(auth_headers.clone())
             .header("Tus-Resumable", TUS_VERSION)
             .header("Upload-Metadata", &metadata)
             .send()
@@ -144,6 +155,7 @@ impl SyncApiV6 {
 
             let patch = client
                 .patch(upload_url.clone())
+                .headers(auth_headers.clone())
                 .header("Tus-Resumable", TUS_VERSION)
                 .header("Upload-Offset", offset.to_string())
                 .header("Content-Type", "application/offset+octet-stream")
@@ -193,21 +205,29 @@ impl SyncApiV6 {
 }
 
 /// Build a tus Upload-Metadata header value. Format: `key1 base64,key2 base64,...`
+/// `sync_v5_settings` is only embedded for v5/v6-authenticated uploads; v7 uploads
+/// carry auth in request headers instead.
 fn build_upload_metadata(
-    sync_v5_settings: &SyncApiSettings,
+    sync_v5_settings: Option<&SyncApiSettings>,
     file_id: &str,
     file_name: &str,
     table_name: &str,
     record_id: &str,
 ) -> Result<String, anyhow::Error> {
-    let auth_json = serde_json::to_string(sync_v5_settings)?;
-    let pairs = [
-        ("sync_v5_settings", auth_json.as_str()),
+    let auth_json = match sync_v5_settings {
+        Some(settings) => Some(serde_json::to_string(settings)?),
+        None => None,
+    };
+    let mut pairs = vec![];
+    if let Some(auth_json) = &auth_json {
+        pairs.push(("sync_v5_settings", auth_json.as_str()));
+    }
+    pairs.extend([
         ("file_id", file_id),
         ("file_name", file_name),
         ("table_name", table_name),
         ("record_id", record_id),
-    ];
+    ]);
     Ok(pairs
         .iter()
         .map(|(k, v)| format!("{} {}", k, BASE64_STANDARD.encode(v)))

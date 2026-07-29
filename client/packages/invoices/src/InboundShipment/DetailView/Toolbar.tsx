@@ -94,6 +94,7 @@ export const Toolbar = () => {
                       debouncedSave();
                     }}
                     onBlur={saveDraft}
+                    inputProps={{ 'data-testid': 'supplier-reference-field' }}
                     maxRows={2}
                     minRows={1}
                     slotProps={{

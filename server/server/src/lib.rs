@@ -51,6 +51,7 @@ use service::{
     subscription::{SubscriptionTrigger, SubscriptionWorker},
     session_store::SessionStore,
     sync::{
+        file_sync_driver::FileSyncDriver,
         sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
@@ -146,8 +147,9 @@ pub async fn start_server(
             }
         },
     ));
-    // let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
-    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
+    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
+    // Cloning as the trigger is also used to start file sync once the site is initialised
+    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone());
 
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, site_is_initialised_callback) =
@@ -256,12 +258,16 @@ pub async fn start_server(
     // Bind trigger to change schema when site is initialised
     {
         let graphql_schema = graphql_schema.clone();
+        let file_sync_trigger = file_sync_trigger.clone();
         site_is_initialised_callback.on_trigger(async move {
             info!("Changing graphql schema to operational mode");
             graphql_schema
                 .clone()
                 .set_operational_status(OperationalStatus::Operational)
                 .await;
+            // Wake the FileSyncDriver out of its waiting-for-initialisation state so file
+            // sync starts without needing a server restart after initialisation.
+            file_sync_trigger.start();
         });
     }
 
@@ -311,6 +317,7 @@ pub async fn start_server(
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
+    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
@@ -563,6 +570,7 @@ pub async fn start_server(
         },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
+        _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
         result = changelog_partitions_task => unreachable!("Changelog partition top-up terminated ({:?})", result),

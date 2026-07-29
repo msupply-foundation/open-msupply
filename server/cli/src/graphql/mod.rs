@@ -91,10 +91,12 @@ impl Api {
     pub async fn upload_file(&self, path: PathBuf) -> Result<UploadedFile, Error> {
         let url = self.url.join("upload").unwrap();
 
-        let auth_cooke_value = format!(r#"auth={{"token": "{}"}}"#, self.token);
+        // Bearer auth, same as gql requests — the pre-refactor `auth={"token"}` cookie is
+        // no longer accepted, and the CLI can't know the `session_{port}` cookie name
+        // (the server names it after its own port, which differs behind port mapping).
         let built_request = reqwest::Client::new()
             .post(url.clone())
-            .header("Cookie", auth_cooke_value);
+            .header("Authorization", format!("Bearer {}", self.token));
 
         // Add file to request
         let mut file_handle =

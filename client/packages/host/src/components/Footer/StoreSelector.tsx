@@ -80,6 +80,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
         navigate(rootNavigationPath);
       }}
       key={s.id}
+      testId={`store-select-option-${s.code}`}
       sx={buttonStyle}
     />
   ));
@@ -119,7 +120,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                 ) : (
                   <FlatButton
                     label={t('control.search.no-results-label')}
-                    onClick={() => { }}
+                    onClick={() => {}}
                     disabled={true}
                     key="no-results"
                     sx={buttonStyle}
