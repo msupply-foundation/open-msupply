@@ -60,19 +60,54 @@ export const truncateToTwoDecimals = (
   return { text, truncated };
 };
 
+// Every digit of a value, for the hover reading behind a truncated cell —
+// locale-formatted (so the decimal separator is the reader's) but never
+// rounded.
+const fullPrecision = (value: number): string =>
+  formatNumber(value, { maximumFractionDigits: 20 });
+
+/** What a truncating numeric cell renders: its text, and the hover reading. */
+export type StatCell = {
+  /** The cell's text — at most two decimals, "…" when precision was dropped. */
+  text: string;
+  /**
+   * The full-precision reading for the cell's hover title, or undefined when
+   * `text` already shows every digit (nothing to reveal).
+   */
+  title?: string;
+};
+
 // A unit figure formatted for a list cell (stock-on-hand, AMC): the
-// numeric-cell rule — at most two decimals, a trailing "…" when precision drops
-// (ui-surface S1 § numeric cells, ui-surface.md:47) — so AMC renders 0.33, not
-// a rounded 0. The doses equivalent is appended (suffix "ds") when the
-// manage-vaccines-in-doses preference is on AND the row is a vaccine
-// (OMS-REG-CAT-04.35). Pure (structural row) so the formatting is unit-tested
-// without the column/table stack.
+// numeric-cell rule — at most two decimals, a trailing "…" when precision
+// drops AND the full-precision value in the cell's hover text (ui-surface S1 §
+// numeric cells, ui-surface.md:47) — so AMC renders 0.33, not a rounded 0, and
+// 666.67… still reveals 666.6666666667. The doses equivalent is appended
+// (suffix "ds") when the manage-vaccines-in-doses preference is on AND the row
+// is a vaccine (OMS-REG-CAT-04.35); the hover then carries both sides at full
+// precision. Pure (structural row) so the formatting is unit-tested without
+// the column/table stack.
 export const unitsWithDoses = (
   units: number,
   row: { isVaccine: boolean; doses: number },
   showDoses: boolean
-): string => {
-  const base = truncateToTwoDecimals(units).text;
-  if (!showDoses || !row.isVaccine) return base;
-  return `${base} (${truncateToTwoDecimals(dosesEquivalent(units, row.doses)).text} ${t('label.doses-short')})`;
+): StatCell => {
+  const base = truncateToTwoDecimals(units);
+  if (!showDoses || !row.isVaccine)
+    return {
+      text: base.text,
+      title: base.truncated ? fullPrecision(units) : undefined,
+    };
+
+  const doses = dosesEquivalent(units, row.doses);
+  const dosesCell = truncateToTwoDecimals(doses);
+  const suffix = t('label.doses-short');
+  return {
+    text: `${base.text} (${dosesCell.text} ${suffix})`,
+    // Either side losing precision earns the hover, and it shows BOTH in full
+    // so the reading matches the cell it explains.
+    title:
+      base.truncated || dosesCell.truncated
+        ? `${fullPrecision(units)} (${fullPrecision(doses)} ${suffix})`
+        : undefined,
+  };
 };

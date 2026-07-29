@@ -244,7 +244,7 @@ const Demo = () => (
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Statistic — value, label, link (+ alert / info)">
+        <DashboardCard title="Statistic — value, label, optional link (+ alert / info)">
           <Lead>
             Hand-rolled over a semantic router <code>&lt;A&gt;</code>, so the
             link role and accessible name (value + label) come for free — no
@@ -255,6 +255,13 @@ const Demo = () => (
             marker — the meaning is carried by the chip's text and the marker,{' '}
             <em>never by colour alone</em> (accessibility § colour
             independence).
+          </Lead>
+          <Lead>
+            <code>href</code> is <em>optional</em>. A metric with no drill-down
+            omits it and renders as plain text (the last row below): hover it
+            and the label doesn't underline, and it takes no tab stop. Never
+            point a stat at the page it already sits on — that ships an element
+            announced as a link that leads nowhere.
           </Lead>
           <div class={styles.statList}>
             <Statistic label="Not delivered" value="15" href="/demo" />
@@ -276,6 +283,9 @@ const Demo = () => (
               value="128"
               href="/demo"
             />
+            {/* No href — the no-drill-down form (e.g. the item detail's
+                average-monthly-consumption stat). */}
+            <Statistic label="Months of stock (no drill-down)" value="4.75" />
           </div>
         </DashboardCard>
 

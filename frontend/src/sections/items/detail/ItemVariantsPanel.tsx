@@ -4,7 +4,6 @@ import { t } from '../../../intl';
 import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { PlusCircleIcon } from '../../../ui/icons';
 import { ItemVariants } from './itemVariants.generated';
 import { ItemVariantCard } from './ItemVariantCard';
 import {
@@ -37,7 +36,15 @@ export const ItemVariantsPanel: Component<{
     }
   );
 
-  const rows = (): ItemVariantRow[] => data.latest ?? [];
+  // Read WITHOUT suspending: this panel mounts when its TAB is opened, so its
+  // FIRST read is pending under the already-open detail screen's <Suspense> —
+  // a suspending read there tears down and remounts the whole screen. `.latest`
+  // alone is not enough (it suspends on the first pending read), so gate on
+  // `.state` (kdd/solid-reactivity-pitfalls § no remounts on interaction).
+  const rows = (): ItemVariantRow[] =>
+    data.state === 'ready' || data.state === 'refreshing'
+      ? (data.latest ?? [])
+      : [];
 
   const onChanged = () => void refetch();
   const onSaved = () => {
@@ -50,9 +57,11 @@ export const ItemVariantsPanel: Component<{
       <Show
         when={rows().length > 0}
         fallback={
+          // A ghost, icon-less CTA — the app's empty-state create affordance
+          // (the ancillary tab and the stocktakes list read the same).
           <EmptyState message={t('messages.no-item-variants')}>
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               onClick={() => props.onEditorChange({ mode: 'create' })}
             >
               {t('label.add-variant')}
