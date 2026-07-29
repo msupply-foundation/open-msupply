@@ -1,4 +1,4 @@
-import { storeContext } from '../../store/storeContext';
+import { storeContext } from '@/store/storeContext';
 import {
   computeDashboardGates,
   computeDashboardSlots,
