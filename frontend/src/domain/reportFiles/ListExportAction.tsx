@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../intl';
 import {
   SplitButton,
@@ -9,6 +9,7 @@ import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
 import { AlertCircleIcon, CheckIcon, DownloadIcon } from '../../ui/icons';
+import { createFlash } from '../../ui/utils/createFlash';
 import { saveBlob } from '../../platform/openDocument';
 import { storeCodeOf } from '../../auth/authContext';
 import { csvToExcel } from './csvToExcel';
@@ -46,8 +47,6 @@ import {
  * up.
  */
 
-const FEEDBACK_MS = 2000;
-
 export interface ListExportActionProps {
   storeId: string;
   /**
@@ -67,19 +66,13 @@ type Feedback = 'done' | 'failed';
 
 export const ListExportAction: Component<ListExportActionProps> = props => {
   const [busy, setBusy] = createSignal(false);
-  const [feedback, setFeedback] = createSignal<Feedback>();
+  const feedback = createFlash<Feedback>();
   // The failure detail behind the dialog: undefined = closed. Held separately
   // from `feedback` so the flash can revert on its timer while the dialog
   // stays open until the user closes it.
   const [errorDetail, setErrorDetail] = createSignal<string>();
 
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(timer));
-  const flash = (kind: Feedback) => {
-    setFeedback(kind);
-    clearTimeout(timer);
-    timer = setTimeout(() => setFeedback(undefined), FEEDBACK_MS);
-  };
+  const flash = feedback.show;
   const fail = (detail: string) => {
     flash('failed');
     setErrorDetail(detail);
@@ -138,16 +131,16 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
   };
 
   const mainLabel = () =>
-    feedback() === 'done'
+    feedback.value() === 'done'
       ? t('message.export-success')
-      : feedback() === 'failed'
+      : feedback.value() === 'failed'
         ? t('message.export-failed')
         : undefined;
 
   const icon = () =>
-    feedback() === 'done' ? (
+    feedback.value() === 'done' ? (
       <CheckIcon />
-    ) : feedback() === 'failed' ? (
+    ) : feedback.value() === 'failed' ? (
       <AlertCircleIcon />
     ) : (
       <DownloadIcon />
