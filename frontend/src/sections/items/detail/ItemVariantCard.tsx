@@ -251,6 +251,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           title={t('heading.are-you-sure')}
           message={t('messages.confirm-delete-item-variant')}
           confirmLabel={t('button.delete')}
+          confirmVariant="danger"
           onConfirm={() => void confirmDeleteVariant()}
           onClose={() => setPendingDelete(false)}
         />
@@ -262,6 +263,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           title={t('heading.are-you-sure')}
           message={t('messages.confirm-delete-bundled-item')}
           confirmLabel={t('button.delete')}
+          confirmVariant="danger"
           onConfirm={() => void confirmDeleteBundle()}
           onClose={() => setPendingBundleDeleteId(undefined)}
         />

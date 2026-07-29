@@ -407,7 +407,7 @@ const CustomerReturnsList: Component = () => {
         emptyMessage={t('error.no-customer-returns')}
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             onClick={onNewReturn}
           >

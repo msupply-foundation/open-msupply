@@ -1,5 +1,5 @@
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { formatNumber, round } from '../../../../intl/formatNumber';
 import {
   InternalOrderItemStats,
@@ -168,7 +168,7 @@ export const modeWord = (
   count = 2
 ): string => {
   if (mode === 'packs') return t('label.packs');
-  if (mode === 'doses') return t('label.doses-plural', { count });
+  if (mode === 'doses') return tPlural('label.doses-plural', count);
   return unitName ?? t('label.unit');
 };
 

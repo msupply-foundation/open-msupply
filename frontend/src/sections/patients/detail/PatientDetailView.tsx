@@ -11,11 +11,11 @@ import {
 import { createStore } from 'solid-js/store';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { t, localisedDate } from '../../../intl';
+import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
@@ -39,7 +39,6 @@ import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
-  ageFromDob,
   draftEquals,
   emptyDraft,
   isDraftValid,
@@ -260,10 +259,10 @@ const PatientDetailView: Component = () => {
     { label: displayName() },
   ];
 
-  // Custom-fields merge write (spec/patients AC-CF1–CF3). Sends only the changed
-  // keys; a cleared field is sent as `null` (never '', which would persist a
-  // literal empty value — AC-CF2). Returns true on success so the edit tab
-  // clears its dirty state.
+  // Custom-fields merge write (spec/patients AC-CF1–CF3). Sends only the
+  // changed keys; a cleared field is sent as `null` (never '', which would
+  // persist a literal empty value — AC-CF2). Returns true on success so the
+  // edit tab clears its dirty state.
   const saveCustomFields = async (
     patch: Record<string, unknown>
   ): Promise<boolean> => {
@@ -298,9 +297,9 @@ const PatientDetailView: Component = () => {
 
   const dobDisplay = (n: NonNullable<ReturnType<typeof node>>) => {
     if (!n.dateOfBirth) return '—';
-    const age = ageFromDob(n.dateOfBirth);
     const date = localisedDate(n.dateOfBirth);
-    return age === undefined ? date : `${date} (${t('label.age')}: ${age})`;
+    const age = getDisplayAge(n.dateOfBirth);
+    return age ? `${date} (${t('label.age')}: ${age})` : date;
   };
 
   return (
@@ -331,30 +330,44 @@ const PatientDetailView: Component = () => {
                   </Show>
                   {/* Summary (spec/patients S3): Patient ID · Gender · DOB
                       (with derived age) live in the app-bar toolbar row above
-                      the tabs — the inbound-shipment header-fields pattern —
-                      not in the tab body. */}
-                  <Toolbar>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '2rem',
-                        'flex-wrap': 'wrap',
-                      }}
+                      the tabs — the header field cluster, never a hand-rolled
+                      <Toolbar> (ui/docs/PAGES.md § header field cluster) — not
+                      in the tab body. Every one is a never-editable fact, so
+                      the whole cluster is read-only LabelledValues at the
+                      inputs' `field` gap and small type scale, which is what
+                      lets them line up with an editable field if one is ever
+                      added beside them. The default column template, so the
+                      three take a field-width track each and pack from the
+                      inline start — not a third of the strip apiece (which
+                      strands them far apart), and not content-width (which packs
+                      them so tightly that an empty Patient ID leaves the labels
+                      and values hard to pair up). */}
+                  <HeaderToolbar columns="content">
+                    <LabelledValue
+                      label={t('label.patient-id')}
+                      variant="field"
+                      size="small"
                     >
-                      <LabelledValue label={t('label.patient-id')}>
-                        {n().code}
-                      </LabelledValue>
-                      <LabelledValue label={t('label.gender')}>
-                        {(() => {
-                          const g = n().gender;
-                          return g ? genderLabel(g) : '—';
-                        })()}
-                      </LabelledValue>
-                      <LabelledValue label={t('label.date-of-birth')}>
-                        {dobDisplay(n())}
-                      </LabelledValue>
-                    </div>
-                  </Toolbar>
+                      {n().code}
+                    </LabelledValue>
+                    <LabelledValue
+                      label={t('label.gender')}
+                      variant="field"
+                      size="small"
+                    >
+                      {(() => {
+                        const g = n().gender;
+                        return g ? genderLabel(g) : '—';
+                      })()}
+                    </LabelledValue>
+                    <LabelledValue
+                      label={t('label.date-of-birth')}
+                      variant="field"
+                      size="small"
+                    >
+                      {dobDisplay(n())}
+                    </LabelledValue>
+                  </HeaderToolbar>
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -486,8 +499,7 @@ const PatientDetailView: Component = () => {
                 open={confirmSaveOpen()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
-                confirmLabel={t('button.save')}
-                cancelLabel={t('button.cancel')}
+                confirmAction="save"
                 onConfirm={() => void doSave()}
                 onClose={() => setConfirmSaveOpen(false)}
               />
@@ -496,7 +508,6 @@ const PatientDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
-                cancelLabel={t('button.cancel')}
                 onConfirm={leaveGuard.confirm}
                 onClose={leaveGuard.cancel}
               />

@@ -56,6 +56,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
             'messages.confirm-delete-invoice-lines',
             props.selectedLines().length
           )}
+          confirmVariant="danger"
           onConfirm={() => void run()}
         />
       </Show>

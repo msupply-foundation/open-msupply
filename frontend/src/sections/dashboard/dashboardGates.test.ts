@@ -4,7 +4,7 @@ import {
   computeDashboardSlots,
   itemCountsThresholds,
 } from './dashboardGates';
-import type { StoreContextResult } from '../../api/storeContext.generated';
+import type { StoreContextResult } from '@/store/storeContext.generated';
 
 // The dashboard display gates and label slots (spec/dashboard/rules.md §
 // display gates / § thresholds). Behaviours cited from

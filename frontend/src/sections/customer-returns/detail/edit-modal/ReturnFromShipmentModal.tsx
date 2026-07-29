@@ -313,6 +313,7 @@ const Body = (props: BodyProps): JSX.Element => {
             rowKey={line => line.id}
             loading={loadingLines()}
             showFullScreen={false}
+            minBodyRem={20}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}
             emptyMessage={t('error.no-customer-return-items')}
@@ -324,6 +325,7 @@ const Body = (props: BodyProps): JSX.Element => {
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}
+          minBodyRem={20}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
           emptyMessage={t('error.no-customer-return-items')}

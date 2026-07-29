@@ -311,6 +311,7 @@ export const PrescriptionSidePanel: Component<
         message={t('messages.confirm-delete-prescription', {
           number: `${props.node.invoiceNumber}`,
         })}
+        confirmVariant="danger"
         onConfirm={() => void runDelete()}
       />
       <ConfirmDialog
@@ -318,6 +319,7 @@ export const PrescriptionSidePanel: Component<
         onClose={() => setCancelConfirm(false)}
         title={t('heading.are-you-sure')}
         message={t('messages.confirm-cancel-prescription')}
+        confirmVariant="danger"
         onConfirm={props.onCancel}
       />
     </>

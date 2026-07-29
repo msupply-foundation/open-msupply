@@ -78,6 +78,7 @@ export const dialogMetadata: PageMetadata = {
 
 export const DialogShowcase = () => {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
+  const [dangerOpen, setDangerOpen] = createSignal(false);
   const [outcome, setOutcome] = createSignal('');
   const [dialogOpen, setDialogOpen] = createSignal(false);
   const [workbenchOpen, setWorkbenchOpen] = createSignal(false);
@@ -105,9 +106,14 @@ export const DialogShowcase = () => {
             prototype bought Radix for exactly this contract, and the "hard to
             drive from React" objection doesn't exist in Solid. Scrim click and
             Escape both cancel. Watch focus return to the Save button on close.
+            The confirm is <code>primary</code> by default; a destructive
+            confirm passes <code>confirmVariant="danger"</code> — try Delete.
           </Lead>
           <Row>
             <SaveButton onClick={() => setConfirmOpen(true)} />
+            <Button variant="secondary" onClick={() => setDangerOpen(true)}>
+              Delete…
+            </Button>
             <span class={styles.outcome} role="status">
               {outcome()}
             </span>
@@ -122,6 +128,20 @@ export const DialogShowcase = () => {
             }}
             message="Save changes to this shipment? This is the standard Cancel/OK preset — ConfirmDialog is a thin composition over Dialog."
             onConfirm={() => setOutcome('Saved ✓')}
+          />
+          <ConfirmDialog
+            open={dangerOpen()}
+            onClose={() => {
+              setDangerOpen(false);
+              setOutcome(o =>
+                o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o
+              );
+            }}
+            title="Delete shipment?"
+            message="This permanently deletes the shipment and its lines — a destructive confirm, so the OK button is danger-toned."
+            confirmLabel="Delete"
+            confirmVariant="danger"
+            onConfirm={() => setOutcome('Deleted ✓')}
           />
         </DashboardCard>
 

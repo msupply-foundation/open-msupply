@@ -6,7 +6,7 @@ import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { PlusCircleIcon, TrashIcon } from '../../../ui/icons';
+import { TrashIcon } from '../../../ui/icons';
 import { ItemAncillaryItems } from './ancillaryItems.generated';
 import { DeleteAncillaryItem } from './ancillaryItemMutations.generated';
 import { formatRatio } from './ancillaryItemEdit';
@@ -109,7 +109,7 @@ export const ItemAncillaryPanel: Component<{
           <EmptyState message={t('messages.no-ancillary-items')}>
             <Show when={props.isCentral}>
               <Button
-                icon={<PlusCircleIcon />}
+                variant="ghost"
                 onClick={() => props.onEditorChange({ mode: 'create' })}
               >
                 {t('label.add-ancillary-item')}
@@ -153,6 +153,7 @@ export const ItemAncillaryPanel: Component<{
           title={t('heading.are-you-sure')}
           message={t('messages.confirm-delete-ancillary-item')}
           confirmLabel={t('button.delete')}
+          confirmVariant="danger"
           onConfirm={() => void confirmDelete()}
           onClose={() => setPendingDelete(undefined)}
         />

@@ -20,6 +20,13 @@
   color: var(--text-body);
 }
 
+/* Required marker — the same asterisk TextField puts on its label, so a lookup
+   and a text field in one form read identically. */
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
 .control {
   display: flex;
   align-items: center;

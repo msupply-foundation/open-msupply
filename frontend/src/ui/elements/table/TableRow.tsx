@@ -42,6 +42,8 @@ const cellMaxWidthPx = <T,>(cell: TanCell<T, unknown>): number | undefined => {
 export function TableRow<T>(props: {
   row: TanRow<T>;
   enableSelection: boolean;
+  /** Render the row's selection checkbox disabled (see DataTable's prop). */
+  selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
   /**
    * Semantic row state (ui-standards § tables row states) — 'verified' /
@@ -117,6 +119,7 @@ export function TableRow<T>(props: {
             class={styles.selectBox}
             aria-label={t('table.select-row')}
             data-testid="select-row-checkbox"
+            disabled={props.selectionDisabled}
             checked={props.row.getIsSelected()}
             onChange={props.row.getToggleSelectedHandler()}
             onClick={event => event.stopPropagation()}

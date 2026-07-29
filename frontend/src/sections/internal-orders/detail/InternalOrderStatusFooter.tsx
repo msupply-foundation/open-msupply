@@ -1,6 +1,7 @@
 import { createSignal, Show, Switch, Match, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
+import { authUser, userDisplayName } from '../../../auth/authContext';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -25,18 +26,52 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 // domain refusals (the reasons backstop, the emergency cap, cannot-edit) come
 // back typed and surface inline in the dialog (contract › lifecycle). A missing
 // RequisitionSend permission routes to the global permission-denied modal
-// (graphqlFetch default). Auth-comment stamping (AC-S7) is deferred — the
-// client's user fragment carries no job title / email / phone to build it, and
-// the server neither writes nor requires it (contract › lifecycle).
+// (graphqlFetch default). Where the store requires supplier authorisation and
+// the order carries no comment, the send stamps a generated approval note
+// identifying the sender (AC-S7, buildSendAutoComment) on the same save; the
+// server neither writes nor requires it (contract › lifecycle).
 type Phase = 'confirm' | 'empty' | 'sending' | 'error';
+
+// AC-S7: the send auto-comment. When the store requires supplier authorisation
+// and the order has no comment yet, build the approval note from the sending
+// user's identity (name, job title, email, phone — the latter two dashed when
+// unknown, matching the reference). Returns undefined when nothing should be
+// stamped — authorisation off, or the order already carries a comment (kept) —
+// so the send omits `comment` and leaves any existing one untouched.
+const buildSendAutoComment = (
+  requiresAuthorisation: boolean,
+  existingComment: string | null | undefined
+): string | undefined => {
+  if (!requiresAuthorisation) return undefined;
+  if (existingComment && existingComment.trim()) return undefined;
+  const u = authUser();
+  const job = u?.jobTitle ? ` (${u.jobTitle})` : '';
+  return t('template.requisition-sent', {
+    name: userDisplayName(),
+    job,
+    email: u?.email ?? '-',
+    phone: u?.phoneNumber ?? '-',
+  });
+};
 
 export interface InternalOrderStatusFooterProps {
   storeId: string;
   node: InternalOrderInfoFragment;
   /** The standing editability gate (Draft + supplier store enabled). */
   editable: boolean;
+  /**
+   * The store requires supplier authorisation of internal orders — gates the
+   * send auto-comment stamping (AC-S7).
+   */
+  requiresAuthorisation: boolean;
   /** A send succeeded — merge the returned node over the current one. */
   onSent: (node: InternalOrderInfoFragment) => void;
+  /**
+   * The lines a reasons-backstop refusal named (AC-R3), so the detail can flag
+   * their Reason cells; called with [] on any other outcome to clear stale
+   * flags.
+   */
+  onReasonsNotProvided: (lineIds: string[]) => void;
 }
 
 export const InternalOrderStatusFooter: Component<
@@ -78,13 +113,25 @@ export const InternalOrderStatusFooter: Component<
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('sending');
-    const result = await sendInternalOrder(props.storeId, props.node.id);
+    const comment = buildSendAutoComment(
+      props.requiresAuthorisation,
+      props.node.comment
+    );
+    const result = await sendInternalOrder(
+      props.storeId,
+      props.node.id,
+      comment
+    );
     if (result.kind === 'saved') {
+      props.onReasonsNotProvided([]);
       props.onSent(result.node);
       setOpen(false);
       return;
     }
     if (result.kind === 'error') {
+      // Flag the offending Reason cells (AC-R3); [] for a non-reasons error
+      // clears any stale flags from an earlier attempt.
+      props.onReasonsNotProvided(result.reasonLineIds);
       setErrorMessage(result.message);
       setPhase('error');
       return;
