@@ -171,7 +171,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Text>
         </FieldRow>
         <FieldRow label={t('label.picked-date')}>
-          {/* Backdating control (rules.md § backdating, OMS-REG-DIST-04.23..B4): editable
+          {/* Backdating control (rules.md § backdating, OMS-REG-DIST-04.23..27): editable
               while NEW with the backdating preference on, otherwise disabled
               with the reason (pref off / past NEW). */}
           <PickedDateField

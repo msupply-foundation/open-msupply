@@ -1,5 +1,5 @@
 // The "Save & next" next-item walk (rules.md § Save & next and the next-item
-// walk; OMS-REG-DIST-03.32/V8), extracted from the view so the paging logic is testable
+// walk; OMS-REG-DIST-03.32/.33), extracted from the view so the paging logic is testable
 // and race-free:
 //
 // - Pages are always read from the walk's OWN direct fetches (never the

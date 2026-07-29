@@ -17,7 +17,7 @@ export interface DuplicateShipmentActionProps {
   customerName: () => string;
 }
 
-// "Make a copy" (rules.md § duplication, OMS-REG-DIST-02.28/X2): any shipment — SHIPPED
+// "Make a copy" (rules.md § duplication, OMS-REG-DIST-02.28/.29): any shipment — SHIPPED
 // included — copies into a fresh NEW one whose stock lines became placeholders.
 // Offered for a single selection (list footer) and as a record action (detail
 // side panel). Confirm → duplicate → navigate to the copy. A typed rejection

@@ -1,4 +1,4 @@
-// The item-set save's line inputs (OMS-REG-DIST-03.20/I8): the full draft set, zeros
+// The item-set save's line inputs (OMS-REG-DIST-03.20/.21/.22): the full draft set, zeros
 // included — the save replaces the item's lines (zero packs removes one).
 // The set-save OVERWRITES receivedNumberOfPacks and reasonOptionId on every
 // updated line (contract § issuing lines wire trap) — the stored values are

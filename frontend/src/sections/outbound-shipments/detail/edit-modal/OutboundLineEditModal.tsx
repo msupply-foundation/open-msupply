@@ -67,12 +67,12 @@ import { issueWarningMessages } from './allocationWarnings';
 // available/in-store packs + the item's existing lines pre-filled); entry in
 // the Issue field auto-distributes FEFO client-side (AC-AL1's manual-entry
 // face), per-batch packs are directly editable bounded 0…available (OMS-REG-DIST-03.19),
-// and quantity beyond available becomes the placeholder while NEW (OMS-REG-DIST-03.23/P3).
+// and quantity beyond available becomes the placeholder while NEW (OMS-REG-DIST-03.23/.9).
 // Save is the item-set save (saveOutboundShipmentItemLines, OMS-REG-DIST-03.20): lines +
 // placeholder in one call; every rejection is a non-typed GraphQL error
 // (contract wire trap) surfaced in the footer.
 //
-// Two modes (spec S4, OMS-REG-DIST-03.31..V8): 'update' (opened from a row — the picker
+// Two modes (spec S4, OMS-REG-DIST-03.31..33): 'update' (opened from a row — the picker
 // locks, the clicked batch is scrolled into view + focused, and "OK & next"
 // walks the parent's sorted/paginated line list via the parent-owned
 // nextItem) and 'add' ("Add item", or fallen into when the walk runs out —
