@@ -98,7 +98,9 @@ export const LoginPage: Component = () => {
               disabled={submitting()}
             />
             <Show when={submitError()}>
-              <Alert severity="error">{submitError()}</Alert>
+              <Alert severity="error" testId="login-error">
+                {submitError()}
+              </Alert>
             </Show>
             <div class={styles.buttonRow}>
               <Button
@@ -128,7 +130,7 @@ export const LoginPage: Component = () => {
           >
             {t('login.switch-to-old-ui')}
           </a>
-          <p class={styles.version}>
+          <p class={styles.version} data-testid="login-version">
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
           {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has

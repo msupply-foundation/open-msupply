@@ -131,6 +131,7 @@ export const StoreSelector = (props: {
         value={query()}
         placeholder={t('placeholder.search-by-name-or-code')}
         onInput={e => setQuery(e.currentTarget.value)}
+        data-testid="store-selector-search"
       />
 
       <div class={styles.listPanel}>

@@ -19,7 +19,11 @@ interface UserMenuProps {
  */
 export const UserMenu = (props: UserMenuProps) => (
   <DropdownMenu.Root placement="top-start" gutter={8}>
-    <DropdownMenu.Trigger class={styles.trigger} title={props.username}>
+    <DropdownMenu.Trigger
+      class={styles.trigger}
+      title={props.username}
+      data-testid="user-menu-trigger"
+    >
       <UserIcon class={styles.icon} />
       <span class={styles.triggerText}>{props.username}</span>
     </DropdownMenu.Trigger>
@@ -29,6 +33,7 @@ export const UserMenu = (props: UserMenuProps) => (
         <DropdownMenu.Item
           class={styles.item}
           onSelect={() => props.onLogout()}
+          data-testid="logout-button"
         >
           {t('logout')}
         </DropdownMenu.Item>
