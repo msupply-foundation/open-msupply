@@ -45,7 +45,6 @@ const PaddedCell: FC<PaddedCellProps> = ({
     <Box
       data-testid={testId}
       onClick={onClick}
-      data-testid={testId}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -102,6 +101,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
 
   return (
     <Box
+      data-testid="app-footer"
       gap={isExtraSmallScreen ? 0 : 2}
       display="flex"
       alignItems="center"
@@ -132,6 +132,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
               icon={<UserIcon sx={iconStyles} />}
               text={user.name}
               tooltip={getLocalisedFullName(user.firstName, user.lastName)}
+              testId="user-menu-trigger"
             />
           </UserDetails>
         </>
@@ -142,6 +143,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
           icon={<TranslateIcon sx={iconStyles} />}
           text={currentLanguageName}
           tooltip={t('select-language', { ...store })}
+          testId="language-selector"
         />
       </LanguageSelector>
       {isExtraSmallScreen && <Divider />}
