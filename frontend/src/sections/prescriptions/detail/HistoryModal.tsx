@@ -80,7 +80,6 @@ export const HistoryModal: Component<HistoryModalProps> = props => {
         loading={data.loading}
         showFullScreen={false}
         emptyMessage={t('error.no-results')}
-        showFullScreen={false}
       />
     </Dialog>
   );
