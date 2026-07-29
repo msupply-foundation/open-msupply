@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { searchForWorkspaceRoot, type Plugin } from 'vite';
 
@@ -99,6 +99,29 @@ export const parsePluginDirs = (
 export const isOutsideRoot = (root: string, dir: string): boolean => {
   const inside = relative(root, dir);
   return inside === '' ? false : inside.startsWith('..') || isAbsolute(inside);
+};
+
+/**
+ * What the dev server must be allowed to SERVE for an out-of-tree plugin: its
+ * own project root — the nearest ancestor holding a `.git` — not just the
+ * plugin directory.
+ *
+ * A plugin's module graph is not confined to its package: civ-plugins keeps the
+ * wire contract its two halves share in a sibling `shared/` (imported by
+ * relative path from both, and mounted separately by its own test harness), so
+ * allowing only `frontend/latest` makes the plugin's first real import 403 with
+ * "outside of Vite serving allow list". Falls back to the directory itself when
+ * there is no repo above it.
+ */
+export const pluginProjectRoot = (dir: string, fs: DevPluginFs): string => {
+  for (let current = dir; ;) {
+    // A file in a worktree/submodule, a directory otherwise — `exists` covers
+    // both.
+    if (fs.exists(join(current, '.git'))) return current;
+    const parent = dirname(current);
+    if (parent === current) return dir;
+    current = parent;
+  }
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -234,7 +257,16 @@ export const devPluginsPlugin = (): Plugin => {
       return {
         // Providing `allow` replaces Vite's default, so the workspace root has
         // to be restated — searchForWorkspaceRoot is the same call Vite makes.
-        server: { fs: { allow: [searchForWorkspaceRoot(root), ...outOfTree] } },
+        // Each plugin joins as its own PROJECT root, so its imports of sibling
+        // modules in the same checkout resolve (see pluginProjectRoot).
+        server: {
+          fs: {
+            allow: [
+              searchForWorkspaceRoot(root),
+              ...outOfTree.map(dir => pluginProjectRoot(dir, nodeFs)),
+            ],
+          },
+        },
       };
     },
 
