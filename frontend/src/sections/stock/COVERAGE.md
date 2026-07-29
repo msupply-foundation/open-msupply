@@ -41,7 +41,7 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.11` pack quantity shown                       | ui             | detail form                                                                                                                |
 | `.12` cost price shown                          | ui             | detail form                                                                                                                |
 | `.13` batch details shown                       | ui             | detail form                                                                                                                |
-| `.32` quantities read-only                      | ui             | quantities rendered as disabled inputs                                                                                     |
+| `.32` quantities read-only                      | ui             | quantities render as read-only labelled values (no input chrome) — verified on the running app 2026-07-29                  |
 | `.33` attributes editable                       | ui             | detail form field set                                                                                                      |
 | `.38` invalid-location warning                  | **unit** + ui  | `detail/stockEdit.test.ts` (`invalidLocation`); the banner is the surface                                                  |
 | `.34` Save disabled until dirty                 | ui             | dirty-state gate on the Save button                                                                                        |
