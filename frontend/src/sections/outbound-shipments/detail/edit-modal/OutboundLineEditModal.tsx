@@ -360,16 +360,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     );
     setIssueValue(seededIssuedUnits + placeholder);
     // The variant-info popover's data — only when some batch actually carries
-    // a variant (most items have none; no read for them). Same sequential
-    // imperative style as the draft fetch above.
+    // a variant (most items have none; no read for them). Fire-and-forget,
+    // unlike the draft fetch above: nothing below depends on it, so the focus
+    // landing and the auto-allocation never wait on this second round-trip.
+    // The item guard drops a response that lands after a switch away.
     setVariants([]);
     if (sorted.some(line => line.itemVariantId)) {
-      const variantsResult = await graphqlFetch(ItemVariants, {
+      void graphqlFetch(ItemVariants, {
         storeId: props.storeId,
         itemId: picked.id,
+      }).then(variantsResult => {
+        if (variantsResult.kind === 'success' && item()?.id === picked.id)
+          setVariants(variantsResult.data.items.nodes[0]?.variants ?? []);
       });
-      if (variantsResult.kind === 'success')
-        setVariants(variantsResult.data.items.nodes[0]?.variants ?? []);
     }
     // Land ready to type. Update mode: the clicked batch's packs input (draft
     // rows from existing lines keep the invoice-line id), or the first row on
@@ -429,6 +432,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setErrorMessage(undefined);
     setDirty(false);
     setZeroConfirm(false);
+    setVvmConfirm(false);
     setLoadingLines(false);
     itemSearch.focus();
   };
