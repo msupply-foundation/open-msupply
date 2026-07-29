@@ -21,6 +21,7 @@ import {
   utcBoundsFromLocalDays,
 } from '../../ui/elements/inputs/dateTimeConvert';
 import type { InboundListFilter } from '../inbound-shipments/list/listFilters';
+import type { InternalOrderFilter } from '../internal-orders/list/listFilters';
 import type { OutboundFilter } from '../outbound-shipments/list/listFilters';
 import type { StockFilter } from '../stock/list/listFilters';
 import type { ItemsListFilter } from '../items/list/itemFilter';
@@ -112,9 +113,15 @@ export const inboundNotDeliveredHref = (
     ...inboundKind(external),
   } satisfies InboundListFilter);
 
-// Internal-order list: registered placeholder (vertical not built yet).
 export const internalOrderListHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/internal-order');
+
+// Draft = request requisitions still in Draft (rules.md § internal orders;
+// OMS-REG-DB-01.40) — the internal-order list's single-select status filter.
+export const internalOrderDraftHref = (storeId: string): string =>
+  listHref(storeId, 'replenishment/internal-order', {
+    status: { equalTo: 'DRAFT' },
+  } satisfies InternalOrderFilter);
 
 // ── Distribution ─────────────────────────────────────────────────────────────
 
