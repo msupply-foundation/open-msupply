@@ -1,4 +1,4 @@
-import { createResource, createSignal, lazy, Show } from 'solid-js';
+import { createResource, createSignal, lazy, Show, Suspense } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import {
@@ -27,16 +27,7 @@ import {
   RequisitionCounts,
   StockCounts,
 } from './dashboardCounts.generated';
-import type {
-  InboundShipmentCountsResult,
-  InboundShipmentExternalCountsResult,
-  ItemCountsResult,
-  ItemCountsVariables,
-  OutboundShipmentCountsResult,
-  RequisitionCountsResult,
-  StockCountsResult,
-  StockCountsVariables,
-} from './dashboardCounts.generated';
+import type { StockCountsVariables } from './dashboardCounts.generated';
 import { dashboardGates, dashboardSlots } from './dashboardPreferences';
 import { itemCountsThresholds } from './dashboardGates';
 import { countPanelState, type CountValue } from './panelState';
@@ -68,11 +59,17 @@ import {
 // The create shortcuts hand off to the owning verticals' flows (rules.md §
 // create shortcuts): both modals are self-contained (they navigate to the
 // created record themselves) and lazy, so the dashboard bundle doesn't carry
-// them until a shortcut is used.
+// them until a shortcut is used. Each gets its OWN <Suspense> where it mounts
+// (below) — a lazy component's first read suspends the nearest boundary, which
+// here is the router's fallback-less one, detaching the whole open dashboard
+// while the chunk loads (kdd/solid-reactivity-pitfalls § no remounts on
+// interaction).
 const CreateInboundShipmentModal = lazy(() =>
-  import('@/sections/inbound-shipments/list/CreateInboundShipmentModal').then(m => ({
-    default: m.CreateInboundShipmentModal,
-  }))
+  import('@/sections/inbound-shipments/list/CreateInboundShipmentModal').then(
+    m => ({
+      default: m.CreateInboundShipmentModal,
+    })
+  )
 );
 const CustomerSearchModal = lazy(() =>
   import('@/sections/outbound-shipments/list/CustomerSearchModal').then(m => ({
@@ -80,14 +77,18 @@ const CustomerSearchModal = lazy(() =>
   }))
 );
 const CreateInternalOrderModal = lazy(() =>
-  import('@/sections/internal-orders/list/create/CreateInternalOrderModal').then(m => ({
-    default: m.CreateInternalOrderModal,
-  }))
+  import('@/sections/internal-orders/list/create/CreateInternalOrderModal').then(
+    m => ({
+      default: m.CreateInternalOrderModal,
+    })
+  )
 );
 const StocktakeWarningDialog = lazy(() =>
-  import('@/sections/internal-orders/list/create/StocktakeWarningDialog').then(m => ({
-    default: m.StocktakeWarningDialog,
-  }))
+  import('@/sections/internal-orders/list/create/StocktakeWarningDialog').then(
+    m => ({
+      default: m.StocktakeWarningDialog,
+    })
+  )
 );
 
 // One count family = one resource owning one panel's loading / error state
@@ -132,7 +133,12 @@ const createCountResource = <TResult, TVariables>(
   const value = (): CountValue<TResult> | undefined =>
     resource.state === 'ready' || resource.state === 'refreshing'
       ? resource.latest
-      : undefined;
+      : // A throw the fetcher didn't turn into an outcome (graphqlFetch never
+        // throws, so this needs something unexpected) still has to read as a
+        // failed panel, not a panel stuck on "Loading…" (ui-surface § S2).
+        resource.state === 'errored'
+        ? { kind: 'error' }
+        : undefined;
   return {
     state: () => {
       const display = countPanelState(value());
@@ -160,12 +166,10 @@ const createCountResource = <TResult, TVariables>(
 // (`DASHBOARD_IDS` in `regions.ts`, the single source of truth for the ids).
 // The dashboard OWNS the plugin-region merge / suppression semantics in
 // `regions.ts` (published-id tree + `mergeRegion`, unit-tested against an empty
-// contribution set — OMS-REG-DB-01.58 + OMS-REG-DB-02.2–.8). The RENDER
-// integration of those semantics
-// (mounting contributions, honouring suppression at render) belongs with the
-// plugins vertical that supplies contributions — greenfield today — so the page
-// stays explicit composition: built-ins render directly, gated only by their
-// preference gates. See BUILD_REPORT § plugin-region for the deferral.
+// contribution set — OMS-REG-DB-01.58 + OMS-REG-DB-02.2–.8). MOUNTING
+// contributions at those regions belongs with the plugins vertical that supplies
+// them (ui-surface § S3 › built-ins first), so this page stays explicit
+// composition: built-ins render directly, gated only by their preference gates.
 const DashboardPage: Component = () => {
   // storeId is guaranteed by StoreGuardLayout; counts re-key on it, so a store
   // switch re-fetches every panel (ui-surface § cross-cutting).
@@ -182,40 +186,28 @@ const DashboardPage: Component = () => {
   // ── count resources (one per panel family) ────────────────────────────────
   const storeVars = () => JSON.stringify({ storeId: params.storeId });
 
-  const inbound = createCountResource<
-    InboundShipmentCountsResult,
-    { storeId: string }
-  >(InboundShipmentCounts, storeVars);
+  // Each document carries its own result + variables types, so both come from
+  // the argument — no type arguments to restate (kdd/type-safety).
+  const inbound = createCountResource(InboundShipmentCounts, storeVars);
   // Fetched only while the procurement gate shows the panel
   // (OMS-REG-DB-02.10's principle: a hidden piece costs nothing).
-  const inboundExternal = createCountResource<
-    InboundShipmentExternalCountsResult,
-    { storeId: string }
-  >(InboundShipmentExternalCounts, () =>
-    gates()?.externalInboundPanel ? storeVars() : undefined
+  const inboundExternal = createCountResource(
+    InboundShipmentExternalCounts,
+    () => (gates()?.externalInboundPanel ? storeVars() : undefined)
   );
-  const requisitions = createCountResource<
-    RequisitionCountsResult,
-    { storeId: string }
-  >(RequisitionCounts, storeVars);
-  const outbound = createCountResource<
-    OutboundShipmentCountsResult,
-    { storeId: string }
-  >(OutboundShipmentCounts, storeVars);
-  const stock = createCountResource<StockCountsResult, StockCountsVariables>(
-    StockCounts,
-    () =>
-      JSON.stringify({
-        storeId: params.storeId,
-        daysTillExpired: DAYS_TILL_EXPIRED,
-      } satisfies StockCountsVariables)
+  const requisitions = createCountResource(RequisitionCounts, storeVars);
+  const outbound = createCountResource(OutboundShipmentCounts, storeVars);
+  const stock = createCountResource(StockCounts, () =>
+    JSON.stringify({
+      storeId: params.storeId,
+      daysTillExpired: DAYS_TILL_EXPIRED,
+    } satisfies StockCountsVariables)
   );
   // The thresholds are always sent explicitly from the store understock /
   // overstock preferences (contract.md § stock levels); the fetch waits for the
   // store context so the explicit values are never skipped.
-  const items = createCountResource<ItemCountsResult, ItemCountsVariables>(
-    ItemCounts,
-    () => itemCountsThresholds(params.storeId, slots())
+  const items = createCountResource(ItemCounts, () =>
+    itemCountsThresholds(params.storeId, slots())
   );
 
   // ── create shortcuts (OMS-REG-DB-01.56) ───────────────────────────────────
@@ -288,7 +280,6 @@ const DashboardPage: Component = () => {
           testId="dashboard-widget-replenishment"
           footer={
             <Button
-              variant="secondary"
               icon={<PlusCircleIcon />}
               onClick={newInboundShipment}
               data-testid="dashboard-create-replenishment"
@@ -396,7 +387,6 @@ const DashboardPage: Component = () => {
           testId="dashboard-widget-distribution"
           footer={
             <Button
-              variant="secondary"
               icon={<PlusCircleIcon />}
               onClick={newOutboundShipment}
               data-testid="dashboard-create-distribution"
@@ -462,7 +452,6 @@ const DashboardPage: Component = () => {
           testId="dashboard-widget-inventory"
           footer={
             <Button
-              variant="secondary"
               icon={<PlusCircleIcon />}
               loading={orderMoreChecking()}
               onClick={() => void orderMore()}
@@ -645,46 +634,57 @@ const DashboardPage: Component = () => {
         </DashboardCard>
       </CardGrid>
 
-      {/* The owning verticals' create flows, mounted lazily on first use. */}
+      {/* The owning verticals' create flows, mounted lazily on first use. The
+          <Show> gates the mount, so each modal takes a bare `open`; the
+          <Suspense> keeps the chunk's load off the router's boundary (see the
+          lazy imports above). */}
       <Show when={inboundCreateOpen()}>
-        <CreateInboundShipmentModal
-          open={inboundCreateOpen()}
-          mode="manual"
-          onClose={() => setInboundCreateOpen(false)}
-        />
+        <Suspense>
+          <CreateInboundShipmentModal
+            open
+            mode="manual"
+            onClose={() => setInboundCreateOpen(false)}
+          />
+        </Suspense>
       </Show>
       <Show when={outboundCreateOpen()}>
-        <CustomerSearchModal
-          open={outboundCreateOpen()}
-          onClose={() => setOutboundCreateOpen(false)}
-        />
+        <Suspense>
+          <CustomerSearchModal
+            open
+            onClose={() => setOutboundCreateOpen(false)}
+          />
+        </Suspense>
       </Show>
       <Show when={stocktakeGateOpen()}>
-        <StocktakeWarningDialog
-          open={stocktakeGateOpen()}
-          minItems={warnStocktake()?.minItems ?? 0}
-          maxAge={warnStocktake()?.maxAge ?? 0}
-          onCancel={() => setStocktakeGateOpen(false)}
-          onContinue={() => {
-            setStocktakeGateOpen(false);
-            setInternalOrderCreateOpen(true);
-          }}
-          onGoToStocktakes={() => {
-            setStocktakeGateOpen(false);
-            navigate(`/${params.storeId}/inventory/stocktakes`);
-          }}
-        />
+        <Suspense>
+          <StocktakeWarningDialog
+            open
+            minItems={warnStocktake()?.minItems ?? 0}
+            maxAge={warnStocktake()?.maxAge ?? 0}
+            onCancel={() => setStocktakeGateOpen(false)}
+            onContinue={() => {
+              setStocktakeGateOpen(false);
+              setInternalOrderCreateOpen(true);
+            }}
+            onGoToStocktakes={() => {
+              setStocktakeGateOpen(false);
+              navigate(`/${params.storeId}/inventory/stocktakes`);
+            }}
+          />
+        </Suspense>
       </Show>
       <Show when={internalOrderCreateOpen()}>
-        <CreateInternalOrderModal
-          storeId={params.storeId}
-          open={internalOrderCreateOpen()}
-          onClose={() => setInternalOrderCreateOpen(false)}
-          onCreated={id => {
-            setInternalOrderCreateOpen(false);
-            navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
-          }}
-        />
+        <Suspense>
+          <CreateInternalOrderModal
+            storeId={params.storeId}
+            open
+            onClose={() => setInternalOrderCreateOpen(false)}
+            onCreated={id => {
+              setInternalOrderCreateOpen(false);
+              navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
+            }}
+          />
+        </Suspense>
       </Show>
     </Page>
   );

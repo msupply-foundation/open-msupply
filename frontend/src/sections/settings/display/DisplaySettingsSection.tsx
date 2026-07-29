@@ -47,20 +47,27 @@ const EditorToggleRow = (props: {
   onClear: () => Promise<void>;
   testId: string;
 }) => {
-  // The toggle follows the server state until the user touches it.
+  // Toggle and editor text each follow the server value until the user
+  // overrides them — the same `override ?? server` idiom for both, so no effect
+  // syncs a signal (kdd/solid-reactivity-pitfalls) and an in-progress edit is
+  // never clobbered when the shared resource re-fetches.
   const [override, setOverride] = createSignal<boolean>();
-  const [text, setText] = createSignal('');
+  const [draft, setDraft] = createSignal<string>();
   const [error, setError] = createSignal<string>();
   const [busy, setBusy] = createSignal(false);
 
   const enabled = () => override() ?? Boolean(props.saved);
+  // props.saved arrives asynchronously via the DisplaySettings resource, so a
+  // saved theme/logo shows pre-filled the moment it resolves, no toggle needed
+  // (OMS-REG-SET-01.16/.18).
+  const text = () => draft() ?? props.saved ?? '';
 
   const toggle = (checked: boolean) => {
     setError(undefined);
     if (checked) {
       // Toggling ON reveals the editor pre-filled with what's in effect —
       // saving is a separate, explicit step (rules § Display settings).
-      setText(props.saved || props.emptySeed);
+      setDraft(props.saved || props.emptySeed);
       setOverride(true);
       return;
     }
@@ -106,7 +113,7 @@ const EditorToggleRow = (props: {
           hideLabel
           rows={8}
           value={text()}
-          onInput={e => setText(e.currentTarget.value)}
+          onInput={e => setDraft(e.currentTarget.value)}
           disabled={busy()}
           data-testid={`${props.testId}-editor`}
         />

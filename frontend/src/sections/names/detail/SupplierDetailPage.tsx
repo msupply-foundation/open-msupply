@@ -7,6 +7,7 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { NameById } from '../names.generated';
 import { suppliersListPath } from '../list/namesListLogic';
@@ -47,6 +48,8 @@ const SupplierDetailPage: Component = () => {
   );
   const name = () => data.latest;
 
+  const backToList = () => navigate(suppliersListPath(params.storeId));
+
   // Tab order mirrors the current app: Details · Custom fields · Purchase orders
   // · Contacts (Contacts last) — spec/names ui-surface S4, AC-N21/FL5.
   const tabDefs = () => [
@@ -58,11 +61,16 @@ const SupplierDetailPage: Component = () => {
 
   const crumbs = () => [
     { label: t('nav.replenishment') },
+    { label: t('nav.replenishment.suppliers'), onClick: backToList },
+    // The leaf is the page <h1>, so it states which of the three states the
+    // page is in — never "Loading…" for a record that will never arrive.
     {
-      label: t('nav.replenishment.suppliers'),
-      onClick: () => navigate(suppliersListPath(params.storeId)),
+      label:
+        name()?.name ??
+        (data.loading
+          ? t('name.detail.loading')
+          : t('error.supplier-not-found')),
     },
-    { label: name()?.name ?? t('name.detail.loading') },
   ];
 
   return (
@@ -81,7 +89,24 @@ const SupplierDetailPage: Component = () => {
           </Header>
         }
       >
-        <Show when={name()} fallback={<Spinner center />}>
+        <Show
+          when={name()}
+          fallback={
+            // Spinner while the read is in flight; once it has settled with no
+            // record, say so and offer the way back rather than spinning
+            // forever (detail-views › states). The app-bar chrome (breadcrumb,
+            // tabs) stays either way — this Show is inside the Page body.
+            <Show when={!data.loading} fallback={<Spinner center />}>
+              <ConfirmDialog
+                open
+                title={t('error.supplier-not-found')}
+                message={t('messages.click-to-return-to-suppliers')}
+                onConfirm={backToList}
+                onClose={backToList}
+              />
+            </Show>
+          }
+        >
           {n => (
             <>
               <TabPanel value="details">

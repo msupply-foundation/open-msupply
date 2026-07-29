@@ -6,15 +6,14 @@ import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb, type Crumb } from '../../../ui/layout/Header/Breadcrumb';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../../ui/elements/table/Pagination';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { HomeIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -140,32 +139,30 @@ export const NamesList: Component<NamesListProps> = props => {
       c: { key: 'code' },
       sortKey: 'code',
       header: () => t('name.column.code'),
+      // The code cell type's width preset (headerPosition:'primary' makes it
+      // the card's title); its `cell` is overridden below, so the preset is
+      // spread FIRST — the documented override order (docs/CELL_TYPES.md).
+      ...getCellDefinition('code', { headerPosition: 'primary' }),
       // The code carries a store indicator when the name is itself a store
       // (AC-N8). Icon-only marker — accessible name via aria-label.
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: '0.375rem',
-            }}
-          >
+          <HStack gap="sm">
             {row.code}
             <Show when={isStoreName(row)}>
               <HomeIcon aria-label={t('name.store-indicator')} />
             </Show>
-          </span>
+          </HStack>
         );
       },
-      meta: { headerPosition: 'primary' },
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
       header: () => t('name.column.name'),
-      meta: { wrapLines: 2 },
+      // The text sink column's width preset, keeping the 2-line wrap.
+      ...getCellDefinition('name', { wrapLines: 2 }),
     },
     // Configured custom-field columns — not sortable; value chosen by kind
     // (option → resolved name, number/date → localised) (AC-N18).
@@ -176,49 +173,34 @@ export const NamesList: Component<NamesListProps> = props => {
     <Page
       fillBody
       header={
+        // Breadcrumb only: no page actions (read-only vertical, AC-N16) and no
+        // toolbar — the filter bar belongs to the table (below).
         <Header>
           <Breadcrumb crumbs={props.crumbs()} />
-          {/* No page actions — read-only vertical (AC-N16). */}
-          <Toolbar>
-            {/* One filter menu: name/code search + the role's configured
-                custom-field filters (AC-N13/N19), the latter as the bar's
-                second group so they share the one menu + chip row. */}
-            <FilterBar
-              filters={searchFilters()}
-              filter={query().filter}
-              onChange={onSearchChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
-      }
-      contentFooter={
-        // A list has no persistent footer beyond pagination; there is no
-        // selection/bulk bar (read-only, AC-N16).
-        <ContentFooter>
-          <Pagination
-            offset={query().offset}
-            pageSize={query().first}
-            total={totalCount()}
-            // Page-size options 10/20/50/100, default 20 (AC-N12). Pagination's
-            // own default omits 10, so pass the full set.
-            pageSizes={[...PAGE_SIZE_OPTIONS]}
-            onOffsetChange={offset => setQuery({ ...query(), offset })}
-            onPageSizeChange={first =>
-              setQuery({ ...query(), first, offset: 0 })
-            }
-          />
-        </ContentFooter>
       }
     >
       <DataTable
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // Filters live in the table's OWN toolbar, never the page header
+        // (ui-standards § tables → filtering, binding); the state stays
+        // URL-backed here. One filter menu: name/code search + the role's
+        // configured custom-field filters (AC-N13/N19), the latter as the bar's
+        // second group so they share the one menu + chip row.
+        filters={
+          <FilterBar
+            filters={searchFilters()}
+            filter={query().filter}
+            onChange={onSearchChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
@@ -226,6 +208,26 @@ export const NamesList: Component<NamesListProps> = props => {
         emptyMessage={t('name.empty')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+        // the install-wide default; everyone else gets no action.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
+        // Pagination renders in the table's own footer bar (kdd/table-state),
+        // not a page footer band; there is no selection/bulk bar at all
+        // (read-only, AC-N16). Page-size options 10/20/50/100, default 20
+        // (AC-N12) — Pagination's own default omits 10, so pass the full set.
+        pagination={{
+          offset: query().offset,
+          pageSize: query().first,
+          total: totalCount(),
+          pageSizes: [...PAGE_SIZE_OPTIONS],
+          onOffsetChange: offset => setQuery({ ...query(), offset }),
+          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        }}
       />
     </Page>
   );

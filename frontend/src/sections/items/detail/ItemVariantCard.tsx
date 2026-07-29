@@ -1,12 +1,14 @@
 import { createSignal, For, Show, type Component } from 'solid-js';
-import { A } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { DetailCard } from '../../../ui/layout/Detail/DetailCard';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
+import { Text } from '../../../ui/elements/typography/Text';
 import { Table } from '../../../ui/elements/table/Table';
+import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
@@ -121,7 +123,9 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           </Show>
         </FormRow>
 
-        <FormSection title={t('title.packaging')}>
+        {/* headingLevel h3 on all three: the card's own title is the h2, so
+            these are its SUB-groups — size never dictates rank (WCAG 2.2). */}
+        <FormSection title={t('title.packaging')} headingLevel="h3">
           <Table label={t('title.packaging')}>
             <thead>
               <tr>
@@ -146,10 +150,15 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           </Table>
         </FormSection>
 
-        <FormSection title={t('title.bundle-with')}>
+        <FormSection title={t('title.bundle-with')} headingLevel="h3">
           <Show
             when={props.variant.bundledItemVariants.length > 0}
-            fallback={<p>{t('messages.no-bundled-items')}</p>}
+            fallback={
+              <EmptyState
+                graphic={false}
+                message={t('messages.no-bundled-items')}
+              />
+            }
           >
             <Table label={t('title.bundle-with')}>
               <thead>
@@ -197,15 +206,22 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           >
             {t('label.add-bundled-item')}
           </Button>
+          {/* Why Add is disabled (ui-surface S2, AC-B4) — the caption the
+              reference app shows beside the withheld action. */}
           <Show when={isBundledOnOthers()}>
-            <p>{t('messages.cannot-bundle')}</p>
+            <Text variant="bodySmall">{t('messages.cannot-bundle')}</Text>
           </Show>
         </FormSection>
 
-        <FormSection title={t('title.bundled-on')}>
+        <FormSection title={t('title.bundled-on')} headingLevel="h3">
           <Show
             when={props.variant.bundlesWith.length > 0}
-            fallback={<p>{t('messages.no-bundled-items')}</p>}
+            fallback={
+              <EmptyState
+                graphic={false}
+                message={t('messages.no-bundled-items')}
+              />
+            }
           >
             <Table label={t('title.bundled-on')}>
               <thead>
@@ -224,11 +240,16 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                         <Show when={bundle.principalItemVariant}>
                           {principal => (
                             <>
-                              <A
+                              {/* A link to a RELATED RECORD, so the shared
+                                  RecordLink — not a hand-rolled <A> (a bespoke
+                                  look-alike, C3). No `kind`: item is not one of
+                                  the brand-toned kinds, so this is the neutral
+                                  reference. */}
+                              <RecordLink
                                 href={`/${props.storeId}/catalogue/items/${principal().itemId}?tab=variants`}
                               >
                                 {principal().itemName}
-                              </A>
+                              </RecordLink>
                               {' - '}
                               {principal().name}
                             </>

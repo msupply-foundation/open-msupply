@@ -1,4 +1,11 @@
-import { createMemo, createSignal, For, Show, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  createUniqueId,
+  For,
+  Show,
+  type JSX,
+} from 'solid-js';
 import { formatNumber } from '../../../intl/formatNumber';
 import styles from './plotChart.module.css';
 
@@ -102,6 +109,7 @@ export const SvgPlot = (props: {
     );
   });
   const [active, setActive] = createSignal<number>();
+  const clipId = createUniqueId();
 
   return (
     <div class={styles.plotWrap}>
@@ -150,8 +158,19 @@ export const SvgPlot = (props: {
           )}
         </For>
 
-        {/* the marks (bars / lines) */}
-        {props.children(scales())}
+        {/* the marks (bars / lines), clipped to the plot area so a mark whose
+            value overshoots the domain can never draw outside the chart */}
+        <defs>
+          <clipPath id={clipId}>
+            <rect
+              x={PAD.left}
+              y={0}
+              width={right() - PAD.left}
+              height={bottom() + 2}
+            />
+          </clipPath>
+        </defs>
+        <g clip-path={`url(#${clipId})`}>{props.children(scales())}</g>
 
         {/* hover cursor */}
         <Show when={active() !== undefined}>

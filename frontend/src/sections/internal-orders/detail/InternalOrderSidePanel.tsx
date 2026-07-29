@@ -12,6 +12,10 @@ import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
+import {
+  inboundShipmentHref,
+  scopeOf,
+} from '@/sections/inbound-shipments/inboundShipmentScope';
 import { approvalStatusLabel } from '../list/internalOrderStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import { type HeaderEditFields } from './InternalOrderToolbar';
@@ -37,7 +41,9 @@ export interface InternalOrderSidePanelProps {
   showPricing: boolean;
   /** create-internal-order-from-a-requisition preference → the source row. */
   showSourceLink: boolean;
-  /** The shared header edit buffer (comment rides it, as theirReference does). */
+  /**
+   * The shared header edit buffer (comment rides it, as theirReference does).
+   */
   edit: DebouncedEdit<HeaderEditFields>;
   /** Colour save (the buffered comment saves through the buffer itself). */
   onSaveField: (patch: Record<string, unknown>) => void;
@@ -56,7 +62,6 @@ const money = (value: number): string =>
 export const InternalOrderSidePanel: Component<
   InternalOrderSidePanelProps
 > = props => {
-
   const grandTotal = () =>
     props.node.lines.nodes.reduce(
       (sum, line) => sum + (line.pricePerUnit ?? 0) * line.requestedQuantity,
@@ -149,7 +154,11 @@ export const InternalOrderSidePanel: Component<
             {shipment => (
               <FieldRow label={t('label.shipment')}>
                 <A
-                  href={`/${props.storeId}/replenishment/inbound-shipment/${shipment.id}`}
+                  href={inboundShipmentHref(
+                    props.storeId,
+                    shipment.id,
+                    scopeOf(shipment.purchaseOrderId)
+                  )}
                   class={styles.link}
                   title={shipmentTooltip(
                     shipment.createdDatetime,

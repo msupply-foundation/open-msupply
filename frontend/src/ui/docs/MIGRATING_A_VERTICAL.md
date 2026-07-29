@@ -6,11 +6,13 @@ Companion to [`ADDING_A_COMPONENT.md`](./ADDING_A_COMPONENT.md). That doc is for
 
 Correct = every UI role is filled by its **registered library component**, composed the way the **reference vertical** (`src/sections/stocktakes/`) and the **showcase** demonstrate — no bespoke look-alikes, no literal colours/sizes, no hand-rolled layout. The bar is conformance requirement **C3** in [`spec/IMPLEMENTING.md`](../../../spec/IMPLEMENTING.md#the-requirements).
 
-## Two references, not one
+## More than one reference
 
 - **The rules** say what is required — the docs in the table below.
 - **The showcase** (`#/showcase`) shows it _working_ — the live, correct composition. Diff the vertical's markup against the matching showcase page. When a screen and its showcase page disagree, the screen is wrong. Pay special attention to the **Header and its toolbar** (`#/showcase/header`) and the **Page / Layout walkthroughs** (`#/showcase/page-layout`) — headers are the most-commonly hand-rolled region.
 - **The reference vertical** (`src/sections/stocktakes/`) is those same patterns assembled in real code — copy its shape rather than re-deriving one.
+- **The sibling verticals** are the reference for every role stocktakes doesn't have. It is silent on a free-text search, a date range, custom fields, a stats band — and that silence is where bespoke compositions survive an audit. For each role in scope, grep `src/sections/` and `src/domain/` for the same role: where two or more verticals agree, that is the house pattern, and a third differing is a finding even when the rules are quiet. Their comments often record _why_ (e.g. `src/sections/names/list/listFilters.tsx` explains that the ⛔ search-field role is substituted by a `FilterBar` text filter).
+- **The reference app** (`../open-msupply`) for a vertical captured by reverse-spec — authoritative for _which_ filters/columns/actions exist, how they group, and which option values are offered; never for composition (it is React + MUI).
 
 ## The reach-for order
 

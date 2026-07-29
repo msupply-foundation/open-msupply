@@ -1,5 +1,6 @@
 import { createResource, Suspense, type Component, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
+import { createTableConfig } from '../../api/createTableConfig';
 import { t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
 import { dictionaries, locale } from '../../intl/intl';
@@ -120,6 +121,18 @@ export const ActivityLogPanel: Component<{
   storeId: string;
   recordId: string;
 }> = props => {
+  // Column config (order/sizing/pinning/visibility/density), resolved default →
+  // global → user (kdd/table-state). It is also what puts the Columns and
+  // Settings controls in the table's toolbar at all — DataTable renders both
+  // only when `setConfig` is wired — so a panel without it silently loses them
+  // on every vertical's Log tab.
+  //
+  // ONE id shared by every consumer, not a `tableId` prop per vertical: the log
+  // columns are identical everywhere, and OMS keys this same table on one id
+  // ('activity-log-list'). So a reader who hides Details hides it on every Log
+  // tab — one layout to configure rather than four that drift.
+  const tableConfig = createTableConfig({ tableId: 'activity-log' });
+
   // Keyed on serialised variables (stable string) so identical content doesn't
   // refetch (kdd/solid-reactivity-pitfalls). Sorted by id descending = most
   // recent first (activity-log ids are monotonic; OMS orders the same way).
@@ -172,6 +185,16 @@ export const ActivityLogPanel: Component<{
         rows={rows()}
         rowKey={log => log.id}
         emptyMessage={t('messages.no-log-entries')}
+        config={tableConfig.config()}
+        setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout
+        // to the install-wide default; everyone else gets no action.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
       />
     </Suspense>
   );

@@ -6,7 +6,7 @@ import {
   Suspense,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -61,15 +61,14 @@ import {
 } from './inboundShipmentDetail.generated';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import {
-  isExternalShipment,
   isPlaceholderLine,
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
 import {
   canMutateInboundScope,
-  heldInboundQueryScopes,
-  scopeOf,
+  isExternalScope,
+  scopeFromParam,
 } from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
@@ -128,6 +127,15 @@ const InboundShipmentDetailView: Component = () => {
   const navigate = useNavigate();
   const { query, setQuery } =
     useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  // The shipment's permission scope, carried by the route (inboundShipmentHref)
+  // because the id alone can't reveal it. It selects `type` on the read below,
+  // gates the mutate permission, and picks the plain-vs-`...External` mutation
+  // twins — the whole screen's scope, known before the node arrives. The node
+  // that comes back can only agree with it: the server filters on exactly this
+  // (purchaseOrderId IS NULL / IS NOT NULL), so a mismatched URL yields no node
+  // at all rather than a screen crossed between the two scopes.
+  const [searchParams] = useSearchParams<{ type?: string }>();
+  const scope = () => scopeFromParam(searchParams.type);
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Details-panel open state: responsive default (open on very wide viewports —
@@ -171,37 +179,23 @@ const InboundShipmentDetailView: Component = () => {
   });
 
   // Header/side-panel/footer node. `type` is the permission scope selector and
-  // must match the shipment's own scope, which the id alone doesn't reveal
-  // (contract → permissions), so we probe the query scopes the user holds:
-  // INBOUND_SHIPMENT (manual/transfer) then INBOUND_SHIPMENT_EXTERNAL
-  // (PO-linked). The wrong scope returns RecordNotFound (its purchaseOrderId
-  // filter excludes the row), so we advance to the next scope; the last scope
-  // promotes a genuine RecordNotFound to the global unexpected-error modal.
+  // must match the shipment's own scope — which the URL carries, put there by
+  // whatever surfaced this shipment (see inboundShipmentHref). ONE request: a
+  // RecordNotFound here is a real missing record, promoted to the global
+  // unexpected-error modal, and never the wrong-scope kind.
   const [data, { mutate, refetch: refetchInfo }] = createResource(
-    () => ({ storeId: params.storeId, id: params.invoiceId }),
-    async ({ storeId, id }) => {
-      const scopes = heldInboundQueryScopes();
-      for (let i = 0; i < scopes.length; i++) {
-        const isLast = i === scopes.length - 1;
-        const result = await graphqlFetch(
-          InboundShipment,
-          { storeId, id, type: scopes[i] },
-          isLast
-            ? {
-                mapSuccessToError: d =>
-                  d.invoice.__typename === 'NodeError'
-                    ? d.invoice.error.description
-                    : undefined,
-              }
-            : undefined
-        );
-        if (
-          result.kind === 'success' &&
-          result.data.invoice.__typename === 'InvoiceNode'
-        )
-          return result.data.invoice;
-      }
-      return undefined;
+    () => ({ storeId: params.storeId, id: params.invoiceId, type: scope() }),
+    async variables => {
+      const result = await graphqlFetch(InboundShipment, variables, {
+        mapSuccessToError: d =>
+          d.invoice.__typename === 'NodeError'
+            ? d.invoice.error.description
+            : undefined,
+      });
+      return result.kind === 'success' &&
+        result.data.invoice.__typename === 'InvoiceNode'
+        ? result.data.invoice
+        : undefined;
     }
   );
   // Header/side-panel/footer node — read NON-SUSPENDING (kdd/solid-reactivity-
@@ -271,13 +265,42 @@ const InboundShipmentDetailView: Component = () => {
 
   // Volume-aware: inbound places received stock at a location, so the picker
   // shows each location's % used and offers the All / Empty / Available filter
-  // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
-  // read, so figures are fresh on each visit — see fetchLocationsWithVolume.
-  const [locationsData] = createResource(
-    params.storeId,
+  // (same picker as stocktakes). A plain (non-cached) read, so the figures are
+  // fresh whenever it runs — see fetchLocationsWithVolume.
+  //
+  // Fetched ON DEMAND, then held for the visit (kdd/state-management → data
+  // needed only sometimes). Unlike the stocktake detail — whose toolbar
+  // location FILTER reads this list, so it must be there on arrival — inbound's
+  // only consumers are the bulk change-location modal and the line editor, so
+  // nothing is fetched until one of the two gestures that reach them: ticking a
+  // line's checkbox (which is what raises the bulk action bar) or clicking a
+  // line (which opens the editor). The shipment's first paint pays for no
+  // locations+stock query it may never need.
+  //
+  // The latch never lowers, so that is ONE fetch per visit rather than one per
+  // interaction — a dropped gate would discard the list every time the
+  // selection cleared. Freshness comes from refetching where it actually
+  // changes: volumeUsed is server-computed and moves as stock lands, so
+  // onLinesChanged re-reads it, exactly as the stocktake detail does after
+  // every line save.
+  const locationsNeeded = createMemo(
+    prev => prev || editState() != null || selectedIds().length > 0,
+    false
+  );
+  const [locationsData, { refetch: refetchLocations }] = createResource(
+    () => (locationsNeeded() ? params.storeId : undefined),
     fetchLocationsWithVolume
   );
-  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
+  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
+  // pitfalls → No remounts on interaction). This resource now FIRST fetches
+  // during an interaction, under the already-open screen's Suspense boundary,
+  // so `.latest` alone would suspend on that first pending read and detach the
+  // very <dialog> that triggered it. The picker renders empty while it's in
+  // flight.
+  const locations = (): LocationWithVolume[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   const current = () => info();
   // The two standing conditions that refuse EVERY write, a status advance
@@ -289,7 +312,7 @@ const InboundShipmentDetailView: Component = () => {
     if (!node) return true;
     return (
       (node.otherParty.store?.isDisabled ?? false) ||
-      !canMutateInboundScope(scopeOf(node.purchaseOrderId))
+      !canMutateInboundScope(scope())
     );
   };
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
@@ -299,7 +322,7 @@ const InboundShipmentDetailView: Component = () => {
   // stay reachable at Shipped, which the edit gate closes.
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
-  const isExternal = () => (current() ? isExternalShipment(current()!) : false);
+  const isExternal = () => isExternalScope(scope());
 
   const refetchAll = () => {
     void refetchInfo();
@@ -357,6 +380,11 @@ const InboundShipmentDetailView: Component = () => {
     setSelectedIds([]);
     setLineErrors(new Map());
     refetchAll();
+    // A line save or bulk action can place stock at a location (or move it), so
+    // the pickers' % used / fullness filter must re-read — the stocktake
+    // detail's refetchAfterSave, in the shape this view already has. A no-op
+    // until something has armed the latch above.
+    void refetchLocations();
   };
   const stampErrors = (errors: InboundLineErrors) =>
     setLineErrors(new Map(errors));
@@ -524,8 +552,8 @@ const InboundShipmentDetailView: Component = () => {
     else openAdd();
   };
 
-  const columns = (node: InboundInfoFragment): Column<Line, SortKey>[] => {
-    const isManual = !isExternalShipment(node);
+  const columns = (): Column<Line, SortKey>[] => {
+    const isManual = !isExternal();
     return [
       {
         c: { accessor: line => line.itemCode, id: 'itemCode' },
@@ -557,7 +585,7 @@ const InboundShipmentDetailView: Component = () => {
         meta: { headerPosition: 'primary', wrapLines: 2 },
       },
       // PO line number — PO-linked shipments only.
-      ...(isExternalShipment(node)
+      ...(isExternal()
         ? [
             {
               c: {
@@ -785,8 +813,9 @@ const InboundShipmentDetailView: Component = () => {
                 <InboundShipmentSidePanel
                   storeId={params.storeId}
                   node={node()}
+                  open={sidePanelOpen()}
                   disabled={isDisabled()}
-                  isExternal={isExternal()}
+                  scope={scope()}
                   edit={edit}
                   donorTracking={prefs().allowTrackingOfStockByDonor}
                   foreignCurrencyAllowed={prefs().issueInForeignCurrency}
@@ -881,6 +910,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={statusLocked()}
+                      isExternal={isExternal()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
                     />
@@ -912,6 +942,7 @@ const InboundShipmentDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled()}
                       locations={locations()}
+                      locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
@@ -974,7 +1005,7 @@ const InboundShipmentDetailView: Component = () => {
             >
               <TabPanel value="details">
                 <DataTable
-                  columns={columns(node())}
+                  columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
                   loading={linesData.loading}

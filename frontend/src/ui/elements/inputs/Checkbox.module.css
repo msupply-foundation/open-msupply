@@ -40,7 +40,9 @@
 .label {
   color: var(--text-body);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
+  /* The shared field-label weight — a choice control's label-beside text reads
+     the same as a label-above field's (Carl 2026-07-30). */
+  font-weight: var(--field-label-font-weight);
   line-height: 1.3;
 }
 

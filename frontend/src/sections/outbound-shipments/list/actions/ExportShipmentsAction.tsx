@@ -1,33 +1,18 @@
-import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from '../../../../ui/elements/buttons/SplitButton';
-import { DownloadIcon } from '../../../../ui/icons';
-import {
-  csvToExcel,
-  fetchReportFile,
-  listExportCsvFilename,
-  listExportExcelFilename,
-} from '../../../../domain/reportFiles';
-import { saveBlob } from '../../../../platform/openDocument';
-import { storeCodeOf } from '../../../../auth/authContext';
+import { type Component } from 'solid-js';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { ListExportAction } from '@/domain/reportFiles/ListExportAction';
 import {
   OutboundShipments,
   type OutboundShipmentsVariables,
 } from '../outboundShipments.generated';
 import { shipmentsToCsv } from '../shipmentsToCsv';
 
-// The outbound-shipments list Export action (spec/outbound-shipments S1): a
-// split button offering CSV or Excel, exporting EVERY shipment matching the
-// current filter (all pages, newest first). CSV downloads directly; Excel
-// round-trips the CSV through the server's csvToExcel converter, then downloads
-// the workbook — reusing the cross-vertical generated-file path
-// (domain/reportFiles). A self-contained action (kdd/action-modal) owning its
-// own fetch + busy state, mirroring the reference ExportStocktakesAction;
-// failures fall through the global error modal (the helpers never throw).
+// The outbound-shipments list Export action (spec/outbound-shipments S1): the
+// shared CSV/Excel split button, fed this vertical's query. Exports EVERY
+// shipment matching the current filter (all pages, newest first). Delivery, the
+// busy state and the outcome report live in ListExportAction — this file owns
+// only the query.
 
 export interface ExportShipmentsActionProps {
   storeId: string;
@@ -46,13 +31,6 @@ const EXPORT_PAGE_SIZE = 10000;
 export const ExportShipmentsAction: Component<
   ExportShipmentsActionProps
 > = props => {
-  const [busy, setBusy] = createSignal(false);
-
-  const options: SplitButtonOption[] = [
-    { value: 'csv', label: t('button.export-csv') },
-    { value: 'excel', label: t('button.export-excel') },
-  ];
-
   // Fetch every matching shipment (bounded by EXPORT_PAGE_SIZE above), newest
   // first, and build the CSV. Returns null when there's nothing to export.
   const buildCsv = async (): Promise<string | null> => {
@@ -72,44 +50,11 @@ export const ExportShipmentsAction: Component<
     return nodes.length ? shipmentsToCsv(nodes) : null;
   };
 
-  const run = async (format: string): Promise<void> => {
-    if (busy()) return;
-    setBusy(true);
-    try {
-      const csv = await buildCsv();
-      if (!csv) return; // nothing to export
-      // Filenames per the shared list-export rule
-      // (ui-standards/list-views § regions).
-      const storeCode = storeCodeOf(props.storeId);
-      const listName = t('filename.outbounds');
-      if (format === 'excel') {
-        const generated = await csvToExcel({
-          storeId: props.storeId,
-          csvData: csv,
-          filename: listExportExcelFilename(storeCode, listName),
-          sheetName: storeCode,
-        });
-        if (generated.kind !== 'fileId') return; // error already surfaced
-        const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
-      } else {
-        void saveBlob(
-          new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          listExportCsvFilename(storeCode, listName, new Date())
-        );
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <SplitButton
-      icon={<DownloadIcon />}
-      options={options}
-      testId="export-csv"
-      menuLabel={t('button.export')}
-      onAction={format => void run(format)}
+    <ListExportAction
+      storeId={props.storeId}
+      buildCsv={buildCsv}
+      listName={t('filename.outbounds')}
     />
   );
 };

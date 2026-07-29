@@ -24,6 +24,10 @@ import {
   SupplierReturnDetail,
   type SupplierReturnInfoFragment,
 } from './supplierReturnDetail.generated';
+import {
+  inboundShipmentHref,
+  scopeOf,
+} from '@/sections/inbound-shipments/inboundShipmentScope';
 import { deleteReturn } from './returnUpdate';
 import type { ReturnFieldEdit } from './returnEdit';
 
@@ -177,7 +181,11 @@ export const SupplierReturnSidePanel: Component<
                 </Show>
               </Text>
               <A
-                href={`/${params.storeId}/replenishment/inbound-shipment/${shipment().id}`}
+                href={inboundShipmentHref(
+                  params.storeId,
+                  shipment().id,
+                  scopeOf(shipment().purchaseOrderId)
+                )}
               >
                 #{shipment().invoiceNumber}
               </A>

@@ -97,6 +97,27 @@
   font-size: 1.125rem;
 }
 
+/* Loading spinner — replaces the main half's icon while the action is in
+   flight. Same ring as <Button>'s (currentColor, so it reads on filled and
+   outlined alike), sized to the icon so the button doesn't reflow. */
+.spinner {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  border: 2px solid color-mix(in srgb, currentcolor 30%, transparent);
+  border-block-start-color: currentcolor;
+  border-radius: 50%;
+  animation: split-button-spin 700ms linear infinite;
+}
+
+@keyframes split-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Halves handle their own focus visually via the group ring above. */
 .main:focus-visible,
 .caret:focus-visible {
@@ -208,5 +229,9 @@
   .main,
   .caret {
     transition: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
   }
 }

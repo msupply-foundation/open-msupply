@@ -266,7 +266,7 @@
      with no dark override. (Small inputs still notch the size down via
      --input-font-sm — a size variant, not a per-component divergence.) */
   --field-label-font-size: var(--text-sm); /* 14px */
-  --field-label-font-weight: var(--weight-medium); /* 500 */
+  --field-label-font-weight: var(--weight-semibold); /* 600 (Carl 2026-07-30) */
   --field-label-line-height: 1;
   --field-label-color: var(--text-body);
   --input-padding-x: 0.75rem; /* 12px horizontal */

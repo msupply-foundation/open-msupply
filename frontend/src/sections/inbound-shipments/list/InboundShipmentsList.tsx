@@ -49,7 +49,11 @@ import {
   statusLabel,
   supplierIsStore,
 } from '../detail/inboundShipmentStatus';
-import { heldInboundQueryScopes } from '../inboundShipmentScope';
+import {
+  heldInboundQueryScopes,
+  inboundShipmentHref,
+  scopeOf,
+} from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
 import {
   customFieldDefinitions,
@@ -130,8 +134,9 @@ const InboundShipmentsList: Component = () => {
   // for one they don't hold (spec/inbound-shipments › contract → permissions).
   // The Type filter narrows this scope + adds a requisitionId filter — both
   // resolved from the client-only `kind` by inboundQueryInputs.
-  // Custom-field definitions for the inbound_shipment scope — shared scope-keyed
-  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  // Custom-field definitions for the inbound_shipment scope — shared
+  // scope-keyed cache, read non-suspending. Empty ⇒ no custom-field
+  // columns/filters.
   const cfReader = customFieldDefinitions('inbound_shipment');
   const cfDefs = () => cfReader.noSuspense();
   const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
@@ -145,7 +150,8 @@ const InboundShipmentsList: Component = () => {
       storeId: params.storeId,
       filter: {
         ...filter,
-        // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+        // Custom-field filters become the dynamicFilter AST (undefined =
+        // no-op).
         dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
       },
       sort: query().sort,
@@ -200,10 +206,13 @@ const InboundShipmentsList: Component = () => {
     void refetch();
   };
 
-  // A PO-linked shipment opens on the external-detail behaviour; both share one
-  // detail route here (the view resolves plain vs external itself).
+  // Both scopes share one detail route; the row's purchaseOrderId names which
+  // scope this shipment is in, and the link carries it so the detail's single
+  // read can name the right `type` (see inboundShipmentHref).
   const openRow = (row: Row) =>
-    navigate(`/${params.storeId}/replenishment/inbound-shipment/${row.id}`);
+    navigate(
+      inboundShipmentHref(params.storeId, row.id, scopeOf(row.purchaseOrderId))
+    );
 
   // Inline supplier colour-tag edit (spec S1 column 1: the swatch is editable
   // inline). Submits the colour via the twin-aware update and refetches.

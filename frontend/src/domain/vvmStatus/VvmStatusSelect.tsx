@@ -20,6 +20,8 @@ export interface VvmStatusSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** Control size — 'small' for dense contexts (a batch-grid cell). */
+  size?: 'default' | 'small';
 }
 
 /*
@@ -43,6 +45,7 @@ export const VvmStatusSelect = (props: VvmStatusSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    size={props.size}
     onChange={s => props.onChange(s)}
   />
 );
