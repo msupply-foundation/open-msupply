@@ -6,19 +6,19 @@ import {
   isForbidden,
   reportPermissionDenied,
   type TypedDocument,
-} from '../../api/graphql';
-import { formatNumber, t, tPlural } from '../../intl';
-import { hasPermission, storeContext } from '../../store/storeContext';
-import { Page } from '../../ui/layout/Page/Page';
-import { Header } from '../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
-import { CardGrid } from '../../ui/layout/CardGrid/CardGrid';
-import { DashboardCard } from '../../ui/elements/dashboard/DashboardCard';
-import { StatsPanel } from '../../ui/elements/dashboard/StatsPanel';
-import type { StatsPanelState } from '../../ui/elements/dashboard/StatsPanel';
-import { Statistic } from '../../ui/elements/dashboard/Statistic';
-import { Button } from '../../ui/elements/buttons/Button';
-import { PlusCircleIcon, StockIcon } from '../../ui/icons';
+} from '@/api/graphql';
+import { formatNumber, t, tPlural } from '@/intl';
+import { hasPermission, storeContext } from '@/store/storeContext';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
+import { DashboardCard } from '@/ui/elements/dashboard/DashboardCard';
+import { StatsPanel } from '@/ui/elements/dashboard/StatsPanel';
+import type { StatsPanelState } from '@/ui/elements/dashboard/StatsPanel';
+import { Statistic } from '@/ui/elements/dashboard/Statistic';
+import { Button } from '@/ui/elements/buttons/Button';
+import { PlusCircleIcon, StockIcon } from '@/ui/icons';
 import {
   InboundShipmentCounts,
   InboundShipmentExternalCounts,
@@ -70,22 +70,22 @@ import {
 // created record themselves) and lazy, so the dashboard bundle doesn't carry
 // them until a shortcut is used.
 const CreateInboundShipmentModal = lazy(() =>
-  import('../inbound-shipments/list/CreateInboundShipmentModal').then(m => ({
+  import('@/sections/inbound-shipments/list/CreateInboundShipmentModal').then(m => ({
     default: m.CreateInboundShipmentModal,
   }))
 );
 const CustomerSearchModal = lazy(() =>
-  import('../outbound-shipments/list/CustomerSearchModal').then(m => ({
+  import('@/sections/outbound-shipments/list/CustomerSearchModal').then(m => ({
     default: m.CustomerSearchModal,
   }))
 );
 const CreateInternalOrderModal = lazy(() =>
-  import('../internal-orders/list/create/CreateInternalOrderModal').then(m => ({
+  import('@/sections/internal-orders/list/create/CreateInternalOrderModal').then(m => ({
     default: m.CreateInternalOrderModal,
   }))
 );
 const StocktakeWarningDialog = lazy(() =>
-  import('../internal-orders/list/create/StocktakeWarningDialog').then(m => ({
+  import('@/sections/internal-orders/list/create/StocktakeWarningDialog').then(m => ({
     default: m.StocktakeWarningDialog,
   }))
 );
@@ -260,7 +260,7 @@ const DashboardPage: Component = () => {
     }
     setOrderMoreChecking(true);
     const { recentStocktakeIsInsufficient } =
-      await import('../internal-orders/list/create/createInternalOrder');
+      await import('@/sections/internal-orders/list/create/createInternalOrder');
     const insufficient = await recentStocktakeIsInsufficient(
       params.storeId,
       warn.maxAge,
