@@ -5,6 +5,7 @@ import {
   expiringBetweenThresholdsHref,
   expiringNextThreeMonthsHref,
   expiringSoonHref,
+  inboundListHref,
   inboundNotDeliveredHref,
   inboundThisWeekHref,
   inboundTodayHref,
@@ -64,6 +65,36 @@ describe('replenishment links', () => {
   it('OMS-REG-DB-01.55: inbound not-delivered filters status to New/Shipped', () => {
     expect(filterOf(inboundNotDeliveredHref('s1'))).toEqual({
       status: { equalAny: ['NEW', 'SHIPPED'] },
+    });
+  });
+
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.36 — the external panel's links carry the
+  // inbound list's origin filter: kind=fromPurchaseOrder is exactly the
+  // PO-linked set the external counts use (contract § navigation
+  // correspondence). Internal links stay kind-less — "internal" (manual ∪
+  // from-internal-order) has no single selectable kind value (recorded
+  // fallback), which the kind-free assertions above pin.
+  it('OMS-REG-DB-01.55: external inbound stats add kind=fromPurchaseOrder', () => {
+    expect(filterOf(inboundTodayHref('s1', wednesday, true))).toEqual({
+      createdDatetime: {
+        afterOrEqualTo: new Date(2026, 6, 22).toISOString(),
+        beforeOrEqualTo: new Date(2026, 6, 22, 23, 59, 59, 999).toISOString(),
+      },
+      kind: 'fromPurchaseOrder',
+    });
+    expect(filterOf(inboundThisWeekHref('s1', wednesday, true))).toMatchObject({
+      kind: 'fromPurchaseOrder',
+    });
+    expect(filterOf(inboundNotDeliveredHref('s1', true))).toEqual({
+      status: { equalAny: ['NEW', 'SHIPPED'] },
+      kind: 'fromPurchaseOrder',
+    });
+  });
+
+  it('OMS-REG-DB-01.55: external panel title link is scoped to the external kind; internal is bare', () => {
+    expect(inboundListHref('s1')).toBe('/s1/replenishment/inbound-shipment');
+    expect(filterOf(inboundListHref('s1', true))).toEqual({
+      kind: 'fromPurchaseOrder',
     });
   });
 

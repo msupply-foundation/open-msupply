@@ -300,7 +300,7 @@ const DashboardPage: Component = () => {
           <Show when={gates()?.externalInboundPanel}>
             <StatsPanel
               title={t('dashboard.inbound-shipment-external')}
-              titleHref={inboundListHref(params.storeId)}
+              titleHref={inboundListHref(params.storeId, true)}
               icon={<StockIcon />}
               state={inboundExternal.state()}
               testId="dashboard-panel-replenishment.inbound-external"
@@ -313,7 +313,7 @@ const DashboardPage: Component = () => {
                   inboundExternal.data()?.inboundShipmentExternalCounts.created
                     .today
                 )}
-                href={inboundTodayHref(params.storeId, today)}
+                href={inboundTodayHref(params.storeId, today, true)}
               />
               {/* id: replenishment.inbound-external.this-week */}
               <Statistic
@@ -323,7 +323,7 @@ const DashboardPage: Component = () => {
                   inboundExternal.data()?.inboundShipmentExternalCounts.created
                     .thisWeek
                 )}
-                href={inboundThisWeekHref(params.storeId, today)}
+                href={inboundThisWeekHref(params.storeId, today, true)}
               />
               {/* id: replenishment.inbound-external.not-delivered */}
               <Statistic
@@ -333,7 +333,7 @@ const DashboardPage: Component = () => {
                   inboundExternal.data()?.inboundShipmentExternalCounts
                     .notDelivered
                 )}
-                href={inboundNotDeliveredHref(params.storeId)}
+                href={inboundNotDeliveredHref(params.storeId, true)}
               />
             </StatsPanel>
           </Show>

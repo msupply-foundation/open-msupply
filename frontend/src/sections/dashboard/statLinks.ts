@@ -20,7 +20,7 @@ import {
   startOfWeek,
   utcBoundsFromLocalDays,
 } from '../../ui/elements/inputs/dateTimeConvert';
-import type { InboundFilter } from '../inbound-shipments/list/listFilters';
+import type { InboundListFilter } from '../inbound-shipments/list/listFilters';
 import type { OutboundFilter } from '../outbound-shipments/list/listFilters';
 import type { StockFilter } from '../stock/list/listFilters';
 import type { ItemsListFilter } from '../items/list/itemFilter';
@@ -61,36 +61,56 @@ const listHref = (storeId: string, path: string, filter?: object): string => {
 };
 
 // ── Replenishment ────────────────────────────────────────────────────────────
-// The inbound list's internal/external kind is a permission-scope variable, not
-// part of its URL filter contract, so the kind dimension is not yet expressible
-// in a link (flagged in the build report); the window/status filters below are
-// what the list contracts for today.
+// Internal vs external: the inbound list's URL contract carries the origin as
+// its client-only `kind` filter. `fromPurchaseOrder` is exactly the external
+// (PO-linked) count's set, so the external panel's links carry it. "Internal"
+// (manual ∪ fromInternalOrder) has no single selectable value in that contract,
+// so the internal panel's links carry window/status only — recorded fallback
+// (contract.md § navigation correspondence; build report).
+const inboundKind = (external: boolean) =>
+  external ? { kind: 'fromPurchaseOrder' as const } : {};
 
-export const inboundListHref = (storeId: string): string =>
-  listHref(storeId, 'replenishment/inbound-shipment');
+export const inboundListHref = (storeId: string, external = false): string =>
+  listHref(storeId, 'replenishment/inbound-shipment', {
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
 // The date windows are explicit from–to ranges matching the count window
 // (contract.md § navigation correspondence): today spans start of day to end of
 // day; this week spans Monday to end of Sunday.
-export const inboundTodayHref = (storeId: string, today: Date): string =>
+export const inboundTodayHref = (
+  storeId: string,
+  today: Date,
+  external = false
+): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
     createdDatetime: dayRange('dateTime', today, today),
-  } satisfies InboundFilter);
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
-export const inboundThisWeekHref = (storeId: string, today: Date): string =>
+export const inboundThisWeekHref = (
+  storeId: string,
+  today: Date,
+  external = false
+): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
     createdDatetime: dayRange(
       'dateTime',
       startOfWeek(today),
       addDays(startOfWeek(today), 6)
     ),
-  } satisfies InboundFilter);
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
 // Not delivered = New/Shipped (rules.md § inbound shipments; OMS-REG-DB-01.35).
-export const inboundNotDeliveredHref = (storeId: string): string =>
+export const inboundNotDeliveredHref = (
+  storeId: string,
+  external = false
+): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
     status: { equalAny: ['NEW', 'SHIPPED'] },
-  } satisfies InboundFilter);
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
 // Internal-order list: registered placeholder (vertical not built yet).
 export const internalOrderListHref = (storeId: string): string =>
