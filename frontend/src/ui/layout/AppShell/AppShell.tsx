@@ -206,6 +206,7 @@ export const AppShell = (props: AppShellProps) => {
             <Show when={!fullScreen()}>
               <footer
                 class={styles.footer}
+                data-testid="app-footer"
                 data-central={props.isCentralServer ? '' : undefined}
               >
                 <FooterCell
@@ -220,6 +221,7 @@ export const AppShell = (props: AppShellProps) => {
                 <LanguageSelector
                   language={locale()}
                   onSelect={v => void changeLanguage(v)}
+                  testId="language-selector"
                 />
                 {/* Central-server cell: only on a central server (its divider
                     goes with it, so nothing dangles on a remote site). */}

@@ -1,0 +1,10 @@
+/* Snapshot cell stacks a per-line "recount this line" error message beneath
+   the count when the snapshot and current count disagree (a
+   SnapshotCountCurrentCountMismatchLine error). Tokens only. */
+.lineError {
+  display: block;
+  color: var(--error-main);
+  font-size: var(--text-xs);
+  white-space: normal;
+  text-align: end;
+}
