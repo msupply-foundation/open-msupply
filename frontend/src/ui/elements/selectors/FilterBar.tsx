@@ -693,6 +693,8 @@ export const FilterCombobox = <T,>(props: {
   onChange: (item: T | null) => void;
   label: string;
   placeholder?: string;
+  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
   /** Focus handle for the just-added chip (FilterBar's render supplies it). */
   focusTarget?: FocusTarget;
 }) => (
@@ -710,6 +712,7 @@ export const FilterCombobox = <T,>(props: {
     itemToValue={props.itemToValue}
     value={props.value}
     placeholder={props.placeholder}
+    inputTestId={props.testId}
     focusTarget={props.focusTarget}
     onChange={props.onChange}
   />

@@ -402,6 +402,7 @@ const FILTER_FIELDS: Filter<DemoFilter>[] = [
         items={ITEMS}
         itemToString={i => `${i.code} — ${i.name}`}
         itemToValue={i => i.code}
+        testId={props.testId}
         focusTarget={props.focusTarget}
         value={props.filter().item ?? undefined}
         onChange={i => props.setPartialFilter({ item: i?.code ?? null })}
