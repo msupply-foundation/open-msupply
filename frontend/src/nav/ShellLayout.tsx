@@ -10,6 +10,8 @@ import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import { t } from '../intl';
 import {
   findLeafByPath,
   lowerNav,
@@ -17,7 +19,7 @@ import {
   type NavItem,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
-import { authUser, logout } from '../auth/authContext';
+import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { hasPermission, isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
@@ -97,6 +99,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const storeName = () => activeStore()?.name ?? '';
   const username = () => authUser()?.username ?? '';
 
+  // Spec OMS-REG-FTR-01.9/.10: Logout is gated by a confirmation modal, and
+  // confirming ends the session — clearing the user swaps the whole shell for
+  // the login screen (App's <Show when={authUser()}>), so nothing here
+  // navigates.
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = createSignal(false);
+
   // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
   // opens the modal; the shared sync watch (substrate) runs for the whole
   // signed-in session — it also drives the post-sync refresh (spec/sync-modal
@@ -125,7 +133,9 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         storeName={storeName()}
         onStoreClick={() => navigate(resolveStorePath)}
         username={username()}
-        onLogout={() => void logout()}
+        displayName={userDisplayName()}
+        email={authUser()?.email}
+        onLogout={() => setLogoutConfirmOpen(true)}
         isCentralServer={isCentralServer()}
       >
         {props.children}
@@ -133,6 +143,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
       <Show when={syncEverOpened()}>
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
       </Show>
+      <ConfirmDialog
+        open={logoutConfirmOpen()}
+        onClose={() => setLogoutConfirmOpen(false)}
+        title={t('heading.logout-confirm')}
+        message={t('messages.logout-confirm')}
+        onConfirm={() => void logout()}
+      />
     </>
   );
 };
