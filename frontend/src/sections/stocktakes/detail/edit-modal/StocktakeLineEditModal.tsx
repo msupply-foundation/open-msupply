@@ -1,5 +1,5 @@
 import { generateUUID } from '@/uuid';
-import { createSignal, onMount, Show, type JSX } from 'solid-js';
+import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
 import { t, tPlural } from '@/intl';
@@ -9,6 +9,7 @@ import {
   createFocusTargets,
 } from '@/ui/utils/createFocusTarget';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@/ui/elements/buttons/StandardButtons';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
+import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { BareCheckbox } from '@/ui/elements/inputs/BareCheckbox';
@@ -32,10 +34,7 @@ import {
   LocationVolumeSelect,
   type LocationWithVolume,
 } from '@/domain/location';
-import {
-  ReasonSelect,
-  reasonMatchesKind,
-} from '@/domain/reasonOptions';
+import { ReasonSelect, reasonMatchesKind } from '@/domain/reasonOptions';
 import { ItemSearch } from '@/domain/item';
 import { VvmStatusSelect } from '@/domain/vvmStatus';
 import { NameSearch } from '@/domain/name';
@@ -776,7 +775,7 @@ const StocktakeLineEditContent = (
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   // (Unchanged from the original — each cell edits the draft store via
   // update().)
-  const columns = (): Column<DraftLine, never, GroupKey>[] => [
+  const columns = createMemo((): Column<DraftLine, never, GroupKey>[] => [
     {
       c: { id: 'countThisLine' },
       header: () => t('label.count-this-line'),
@@ -861,6 +860,7 @@ const StocktakeLineEditContent = (
             label={t('label.manufacture-date')}
             hideLabel
             size="small"
+            max={localTodayIso()}
             disabled={!line.countThisLine}
             value={line.manufactureDate}
             onChange={v => update(line.id, 'manufactureDate', v)}
@@ -881,33 +881,21 @@ const StocktakeLineEditContent = (
             cell: info => {
               const line = info.row.original;
               return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    'flex-direction': 'column',
-                    'align-items': 'flex-end',
-                  }}
-                >
-                  <span>{line.snapshotNumberOfPacks ?? '—'}</span>
-                  <Show
-                    when={
-                      lineErrors().get(line.id) ===
-                      'SnapshotCountCurrentCountMismatchLine'
-                    }
-                  >
-                    <span
-                      data-testid="stocktake-line-error"
-                      style={{
-                        color: 'var(--error-main)',
-                        'font-size': 'var(--text-xs)',
-                        'white-space': 'normal',
-                        'text-align': 'end',
-                      }}
-                    >
-                      {t('error.snapshot-total-mismatch')}
-                    </span>
-                  </Show>
-                </span>
+                <NumberField
+                  label={t('label.snapshot-num-of-packs')}
+                  hideLabel
+                  size="small"
+                  decimalLimit={2}
+                  disabled
+                  value={line.snapshotNumberOfPacks ?? undefined}
+                  error={
+                    lineErrors().get(line.id) ===
+                    'SnapshotCountCurrentCountMismatchLine'
+                      ? t('error.snapshot-total-mismatch')
+                      : undefined
+                  }
+                  errorTestId="stocktake-line-error"
+                />
               );
             },
           } satisfies Column<DraftLine, never, GroupKey>,
@@ -1047,7 +1035,16 @@ const StocktakeLineEditContent = (
             ...getNumberCell(),
             cell: info => {
               const doses = dosesCounted(info.row.original);
-              return <span>{doses ?? ''}</span>;
+              return (
+                <NumberField
+                  label={t('label.doses-counted')}
+                  hideLabel
+                  size="small"
+                  decimalLimit={2}
+                  disabled
+                  value={doses ?? undefined}
+                />
+              );
             },
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
@@ -1351,7 +1348,7 @@ const StocktakeLineEditContent = (
         );
       },
     },
-  ];
+  ]);
 
   const footerError = () => errorMessage();
 
@@ -1451,9 +1448,10 @@ const StocktakeLineEditContent = (
       <Show
         when={!noItemYet()}
         fallback={
-          <div class={styles.selectPrompt}>
-            {t('messages.select-item-to-count')}
-          </div>
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-count')}
+          />
         }
       >
         <DataTable

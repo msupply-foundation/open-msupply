@@ -38,3 +38,6 @@ e2e/playwright-report
 
 # Local git worktrees (multi-worktree dev flow)
 /.worktrees/
+
+# Per-developer Claude Code notes
+CLAUDE.local.md

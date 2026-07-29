@@ -103,6 +103,14 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
+  /* Default growth cap for a single-line body cell (issue #432): a column
+     auto-sizes to its content up to this, then the cell ellipsises instead of
+     growing unbounded and pushing its neighbours off-screen. It's only a
+     ceiling on CONTENT-driven growth — an explicit width (a resize drag, which
+     sets the min-width floor) or a per-column `maxSize` both override it, so
+     columns stay freely draggable wider and a column that opts into a tighter
+     cap (Code, Comment) still wins. */
+  --table-cell-max-grow: 36rem;
 }
 
 /* Column-header row stays pinned to the top of the scroll container while the
@@ -220,6 +228,14 @@
   color: var(--text-body);
   line-height: var(--table-line-height);
   white-space: nowrap;
+  /* Single-line cells clip with an ellipsis rather than spilling into their
+     neighbours — the counterpart to nowrap. max-width caps content-driven
+     growth (issue #432); the inline min-width (getSize, incl. a resize drag)
+     and any per-column max-width (maxSize) override it. Wrapping columns
+     (.td[data-wrap]) opt back out below. */
+  max-width: var(--table-cell-max-grow);
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background-color var(--table-bg-fade);
 }
 

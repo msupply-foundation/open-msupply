@@ -43,6 +43,15 @@ export interface NumberFieldProps extends Omit<
    * blur/Enter after canonicalising. Parents MUST handle `undefined`.
    */
   onChange?: (value: number | undefined) => void;
+  /**
+   * Fired after a commit whose typed number the constraints changed —
+   * rounded to `decimalLimit` (pasted over-precision) or clamped to
+   * `min`/`max` — with what was entered and what was applied. Consumers that
+   * must REPORT an adjusted entry rather than silently bound it (e.g. the
+   * allocation editors' AC-AL13 banner) hook this; arrow-stepping and
+   * programmatic value changes never fire it.
+   */
+  onClamped?: (entered: number, applied: number) => void;
   /** Lower bound. Default 0 — or -MAX_SAFE_API_INTEGER with `allowNegative`. */
   min?: number;
   /** Upper bound. Default MAX_SAFE_API_INTEGER. */
@@ -111,6 +120,7 @@ export const NumberField = (props: NumberFieldProps) => {
   const [local, rest] = splitProps(props, [
     'value',
     'onChange',
+    'onClamped',
     'min',
     'max',
     'allowNegative',
@@ -143,6 +153,17 @@ export const NumberField = (props: NumberFieldProps) => {
   const commit = (value: number | undefined) => {
     lastCommitted = { value };
     if (value !== local.value) local.onChange?.(value);
+  };
+
+  // After the commit (so onChange's state lands first), report an entry the
+  // constraints adjusted. Repeat keystrokes past a bound re-fire — the entered
+  // figure changes ("900" → "9000") even while the committed value holds.
+  const reportClamped = (result: {
+    value: number | undefined;
+    adjustedFrom?: number;
+  }) => {
+    if (result.adjustedFrom != null && result.value != null)
+      local.onClamped?.(result.adjustedFrom, result.value);
   };
 
   onMount(() => {
@@ -219,7 +240,10 @@ export const NumberField = (props: NumberFieldProps) => {
       );
       el.setSelectionRange(pos, pos);
     }
-    if (result.commit) commit(result.commit.value);
+    if (result.commit) {
+      commit(result.commit.value);
+      reportClamped(result.commit);
+    }
   };
 
   const finalize = () => {
@@ -227,6 +251,7 @@ export const NumberField = (props: NumberFieldProps) => {
     const result = finalizeText(text(), constraints(), locale());
     setText(result.text);
     commit(result.value);
+    reportClamped(result);
   };
 
   const handleKeyDown = (
