@@ -131,7 +131,7 @@ export const LoginPage: Component = () => {
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
-          {/* Spec (App version, AC-VN2): absent until the startup pass has
+          {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has
               fetched it — never a placeholder. */}
           <Show when={serverVersion()}>
             <p class={styles.version}>

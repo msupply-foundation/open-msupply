@@ -21,7 +21,7 @@ export type StoreOption = {
  * decides where it lives (in the app it fills the store-selection Dialog) and
  * what confirming does. Selection is select-then-Continue (double-click a row
  * confirms directly; arrow keys move the highlighted row and Enter anywhere in
- * the panel confirms it — spec startup S3 › keyboard, AC-SL9); the effective
+ * the panel confirms it — spec startup S3 › keyboard, OMS-REG-LGN-02.15–.18); the effective
  * selection falls back to default → last-used
  * → first visible so Continue is always actionable.
  *
@@ -153,6 +153,7 @@ export const StoreSelector = (props: {
                     aria-selected={store.id === selectedId()}
                     data-active={store.id === selectedId() ? '' : undefined}
                     data-store-id={store.id}
+                    data-testid={`store-select-option-${store.code}`}
                     onClick={() => setSelected(store.id)}
                     onDblClick={() => props.onConfirm(store.id)}
                   >
@@ -185,6 +186,7 @@ export const StoreSelector = (props: {
           icon={<ArrowRightIcon />}
           iconPosition="end"
           disabled={!selectedId()}
+          data-testid="store-selector-continue"
           onClick={() => selectedId() && props.onConfirm(selectedId()!)}
         >
           {t('button.continue')}

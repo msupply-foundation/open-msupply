@@ -14,12 +14,12 @@ import {
   SUPPLY_LEVEL_KEY,
   type NamePropertyInput,
 } from './propertySets';
-import { Stack } from '../../../ui/layout/Stack/Stack';
 import { SupplyLevelsModal } from './SupplyLevelsModal';
 import {
   ConfigureNameProperties,
   NameProperties,
 } from './nameProperties.generated';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 
 /*
  * Configuration (spec/settings/ui-surface.md § Configuration) — shown only to

@@ -1,6 +1,7 @@
 import { createUniqueId } from 'solid-js';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import { t } from '../../../intl';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
@@ -41,6 +42,12 @@ export interface DateRangeFieldProps {
   id?: string;
   /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
   testId?: string;
+  /**
+   * Focus destination (kdd/focus-targets) — the field's focusable is the
+   * popover trigger, inside the Popover composition, so a plain ref can't
+   * reach it.
+   */
+  focusTarget?: FocusTarget;
 }
 
 const EMPTY: IsoDateRange = { start: null, end: null };
@@ -86,6 +93,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
             placement="bottom-start"
             triggerClass={styles.dateTrigger}
             triggerTestId={props.testId}
+            focusTarget={props.focusTarget}
             triggerProps={{
               id: id(),
               'aria-describedby': describedBy,

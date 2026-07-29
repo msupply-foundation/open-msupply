@@ -7,8 +7,6 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
-import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
-import { Stack } from '../../../ui/layout/Stack/Stack';
 import { localisedTime } from '../../../intl/formatDateTime';
 import {
   availableScanners,
@@ -16,6 +14,9 @@ import {
   triggerMockScan,
   type ScanResult,
 } from './scanner';
+import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import styles from '../Settings.module.css';
 
 /*
@@ -58,7 +59,7 @@ const TestScannerPage: Component = () => {
           </Show>
 
           <FormSection title={t('heading.scanner-controls')}>
-            <div class={styles.scannerActions}>
+            <HStack wrap gap="md">
               <Button
                 variant="secondary"
                 disabled={noScanner()}
@@ -85,7 +86,7 @@ const TestScannerPage: Component = () => {
               >
                 {t('button.clear-results')}
               </Button>
-            </div>
+            </HStack>
           </FormSection>
 
           <FormSection title={t('heading.scanner-status')}>

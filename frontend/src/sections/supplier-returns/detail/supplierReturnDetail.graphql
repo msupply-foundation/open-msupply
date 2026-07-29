@@ -1,0 +1,242 @@
+# A single supplier return with its lines, for the detail view
+# (spec/supplier-returns S3). The return-level fields feed the toolbar (supplier /
+# reference / prominent custom fields), the status footer (status / hold / the
+# step datetimes), and the side panel (entered-by / colour / comment / transport
+# reference / related documents). The SAME fragment is what updateSupplierReturn
+# returns, so a header save reflects in place with no refetch (kdd/state-management).
+#
+# originalShipment vs linkedShipment are two DIFFERENT links
+# (spec/supplier-returns/contract.md § manual vs from-shipment):
+# originalShipment = the inbound shipment a from-shipment return was raised
+# against (the side panel's related document, permanent); linkedShipment = the
+# transfer counterpart (the destination store's customer return) once one exists.
+fragment SupplierReturnInfo on InvoiceNode {
+  id
+  invoiceNumber
+  status
+  onHold
+  colour
+  comment
+  theirReference
+  transportReference
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  receivedDatetime
+  verifiedDatetime
+  otherPartyId
+  otherPartyName
+  user {
+    username
+    email
+  }
+  linkedShipment {
+    id
+  }
+  originalShipment {
+    id
+    invoiceNumber
+    createdDatetime
+    purchaseOrderId
+    user {
+      username
+    }
+  }
+  # Custom-field VALUES (JSON object), scope-filtered — backs the Custom fields
+  # tab + prominent toolbar fields.
+  customFields
+}
+
+# ONE fragment, both directions: the detail row AND what updateSupplierReturnLines
+# returns, so a line save replaces the node's lines with no remapping and no
+# refetch. Line-display fields per spec/supplier-returns/ui-surface.md S3 — the
+# table is cost-valued (costPricePerPack), unlike a customer return's zero-value
+# stock-in. Every line references an existing stock line (never an invented
+# batch — rules § line rules).
+fragment SupplierReturnLine on InvoiceLineNode {
+  id
+  itemName
+  itemCode
+  item {
+    id
+    code
+    unitName
+  }
+  batch
+  expiryDate
+  packSize
+  numberOfPacks
+  costPricePerPack
+  note
+  reasonOption {
+    id
+    type
+    reason
+  }
+  stockLine {
+    id
+  }
+}
+
+query supplierReturnDetail($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...SupplierReturnInfo
+      lines {
+        totalCount
+        nodes {
+          ...SupplierReturnLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Return-level edits: header fields (reference / transport reference / comment /
+# colour), the hold toggle, the status advance (PICKED / SHIPPED — the wire can
+# express no other target; forward-only is structural,
+# spec/supplier-returns/contract.md § status lifecycle), and custom fields.
+# UpdateSupplierReturnResponse is a single-member union (InvoiceNode) — there is
+# no typed error branch; EVERY rejection (no lines / on hold / not editable /
+# reverse) is a NON-typed GraphQL error the caller opts into via
+# returnGraphqlErrors and maps by extensions.details. Changing the supplier is a
+# SEPARATE mutation (updateSupplierReturnOtherParty, below) — there is no
+# otherPartyId here. Success returns the SupplierReturnInfo fragment, merged over
+# the node with no refetch.
+mutation updateSupplierReturn(
+  $storeId: String!
+  $input: UpdateSupplierReturnInput!
+) {
+  updateSupplierReturn(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...SupplierReturnInfo
+    }
+  }
+}
+
+# The one line-save call (spec/supplier-returns/rules.md § line rules): the item's
+# WHOLE batch set each save — quantity > 0 upserts, an existing line at zero
+# deletes, a new line at zero is dropped server-side. The response union has NO
+# error member (contract wire trap) — every rejection arrives as a top-level
+# GraphQL error (returnGraphqlErrors + extensions.details), a per-line reason
+# fault as `Internal error` with details = LineReturnReasonUpdateError { … }.
+# Success returns the whole invoice with its lines; the view replaces the node
+# wholesale.
+mutation updateSupplierReturnLines(
+  $storeId: String!
+  $input: UpdateSupplierReturnLinesInput!
+) {
+  updateSupplierReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      ...SupplierReturnInfo
+      lines {
+        totalCount
+        nodes {
+          ...SupplierReturnLine
+        }
+      }
+    }
+  }
+}
+
+# Changing the supplier (spec/supplier-returns/rules.md § header rules): NOT an
+# in-place patch — the service delete-and-recreates the return under a NEW id
+# carrying the same lines, so the response node's id differs and the UI navigates
+# to it (contract § changing the supplier). Typed members: OtherPartyNotVisible,
+# OtherPartyNotASupplier, InvoiceIsNotEditable, RecordNotFound — surfaced inline
+# on the supplier choice; OtherPartyDoesNotExist is non-typed.
+mutation updateSupplierReturnOtherParty(
+  $storeId: String!
+  $input: UpdateSupplierReturnOtherPartyInput!
+) {
+  updateSupplierReturnOtherParty(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...SupplierReturnInfo
+    }
+    ... on UpdateSupplierReturnOtherPartyError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Draft lines for the return-items modal (spec/supplier-returns/contract.md §
+# draft-line generation): stockLineIds builds NEW drafts for those stock lines
+# (the from-shipment / add-stock path); itemId builds candidates for ALL available
+# stock lines of that item (the add-item path); returnId folds in the return's
+# EXISTING lines so the modal shows current quantities. Each node carries the
+# stock line's batch/expiry/packSize (read-only) and availableNumberOfPacks (the
+# return cap). Response is a single-member union — no error member.
+query generateSupplierReturnLines(
+  $storeId: String!
+  $input: GenerateSupplierReturnLinesInput!
+) {
+  generateSupplierReturnLines(storeId: $storeId, input: $input) {
+    ... on SupplierReturnLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        stockLineId
+        batch
+        expiryDate
+        packSize
+        numberOfPacksToReturn
+        availableNumberOfPacks
+        onHold
+        itemCode
+        itemName
+        item {
+          id
+          code
+          unitName
+        }
+        reasonId
+        reasonOption {
+          id
+          type
+          reason
+        }
+        note
+      }
+    }
+  }
+}
+
+# The Log tab (spec/supplier-returns/cases OMS-REG-REPL-06.46): the return's
+# activity history — creation, status changes — keyed by recordId. Sorted
+# client-side by datetime (no server sort dependency).
+query supplierReturnLog($storeId: String!, $recordId: String!) {
+  activityLogs(
+    storeId: $storeId
+    filter: { recordId: { equalTo: $recordId } }
+    page: { first: 1000 }
+  ) {
+    ... on ActivityLogConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        type
+        datetime
+        to
+        from
+        user {
+          username
+        }
+      }
+    }
+  }
+}

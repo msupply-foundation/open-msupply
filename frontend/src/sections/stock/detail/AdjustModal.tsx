@@ -10,7 +10,7 @@ import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { StatComparisonTile } from '../../../ui/elements/display/StatComparisonTile';
-import { ReasonSelect } from '../../../domain/reasonOptions';
+import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
 import { stockPreferences } from '../../../store/storeContext';
 import { runCreateInventoryAdjustment } from '../stockApi';
@@ -111,13 +111,26 @@ const AdjustContent = (props: {
     }
   );
 
+  // Read the historical line WITHOUT ever suspending. This resource first
+  // fetches on an INTERACTION (picking a past date) while the dialog is already
+  // open — and `.latest` alone still suspends on that first pending read, which
+  // collapses the detail view's <Suspense> boundary and detaches the open
+  // <dialog>: it loses the top layer, so the backdrop vanishes and the modal
+  // re-renders in normal flow further down the page (#469 / #601). Gating on
+  // `.state` never suspends (kdd/solid-reactivity-pitfalls › No remounts on
+  // interaction); `historical.loading` is still free to drive a spinner.
+  const historicalLine = () =>
+    historical.state === 'ready' || historical.state === 'refreshing'
+      ? historical.latest
+      : undefined;
+
   // Current quantities: the historical values when backdated (once loaded),
   // otherwise the line's live quantities.
   const currentAvail = () =>
-    (isBackdated() ? historical.latest?.availableNumberOfPacks : undefined) ??
+    (isBackdated() ? historicalLine()?.availableNumberOfPacks : undefined) ??
     props.line.availableNumberOfPacks;
   const currentTotal = () =>
-    (isBackdated() ? historical.latest?.totalNumberOfPacks : undefined) ??
+    (isBackdated() ? historicalLine()?.totalNumberOfPacks : undefined) ??
     props.line.totalNumberOfPacks;
 
   const adjustedAvail = () =>
@@ -142,6 +155,15 @@ const AdjustContent = (props: {
     hasAmount() ? doseNote(value) : undefined;
 
   const canConfirm = () => hasAmount() && !belowZero() && !saving();
+
+  // The reason is required exactly when active reasons exist for the current
+  // direction (spec/stock rules › adjustment reasons). Marked on the field so
+  // the requirement is visible up front; the server still owns the rejection
+  // (ui-standards › validation — don't pre-validate an action), which lands in
+  // the banner beside the actions.
+  const reasonRequired = () =>
+    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative').length >
+    0;
 
   const onOk = async () => {
     if (!canConfirm()) return;
@@ -261,7 +283,7 @@ const AdjustContent = (props: {
         </div>
 
         {/* Adjust packs: direction · by · amount. */}
-        <FieldRow label={t('label.adjust-packs')}>
+        <FieldRow label={t('label.adjust-packs')} required>
           <div
             style={{
               display: 'flex',
@@ -271,6 +293,7 @@ const AdjustContent = (props: {
           >
             <Select
               label={t('label.adjust-packs')}
+              hideLabel
               testId="adjust-direction"
               value={direction()}
               options={directionOptions}
@@ -295,7 +318,7 @@ const AdjustContent = (props: {
         </FieldRow>
 
         {/* Reason: filtered to the direction; disabled while amount is zero. */}
-        <FieldRow label={t('label.reason')}>
+        <FieldRow label={t('label.reason')} required={reasonRequired()}>
           <ReasonSelect
             kind={direction() === 'ADDITION' ? 'positive' : 'negative'}
             label={t('label.reason')}

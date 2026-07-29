@@ -14,7 +14,10 @@ const PAGE_SIZE = 30;
 export interface NameSearchProps {
   label: string;
   storeId: string;
-  /** Which role to offer — supplier (default), customer, donor, or manufacturer. */
+  /**
+   * Which role to offer — supplier (default), customer, donor, or
+   * manufacturer.
+   */
   role?: NameRole;
   /**
    * The currently-selected name (the controlled value). The object — not a bare
@@ -28,6 +31,8 @@ export interface NameSearchProps {
   onSelect: (name: NameOption | null) => void;
   placeholder?: string;
   hideLabel?: boolean;
+  /** Control size — `small` for a header field cluster's compact row. */
+  size?: 'default' | 'small';
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
@@ -47,6 +52,11 @@ export interface NameSearchProps {
    * the role).
    */
   storeBacked?: boolean;
+  /**
+   * Withhold one party by id — the internal-order destination-customer picker
+   * excludes the chosen supplier (spec/internal-orders › header fields).
+   */
+  excludeId?: string;
   class?: string;
 }
 
@@ -91,6 +101,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
   <AsyncCombobox<NameOption>
     label={props.label}
     hideLabel={props.hideLabel}
+    size={props.size}
     class={props.class}
     disabled={props.disabled}
     error={props.error}
@@ -102,7 +113,8 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
       props.storeId,
       props.role ?? 'supplier',
       PAGE_SIZE,
-      props.storeBacked
+      props.storeBacked,
+      props.excludeId
     )}
     // The selected value's input text is just the name; the dropdown row still
     // shows code + name. Server mode disables the client filter, so this isn't

@@ -75,7 +75,9 @@ export const CustomerDetailModal: Component<Props> = props => {
           variant="primary"
           icon={<CheckIcon />}
           onClick={props.onClose}
-          data-testid="customer-detail-ok"
+          // The shared dialog-OK id (the current app's DialogButton emits the
+          // same), so the cross-FE suite locates OK by one id.
+          data-testid="dialog-button-ok"
         >
           {t('common.ok')}
         </Button>
