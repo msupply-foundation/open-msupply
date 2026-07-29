@@ -35,6 +35,7 @@ export type DraftStockOutLinesResult = {
   unusable: boolean;
   priority: number;
 } | null;
+  itemVariantId: string | null;
   receivedNumberOfPacks: number | null;
   reasonOption: {
   id: string;
@@ -56,8 +57,35 @@ export type DraftStockOutLinesResult = {
 };
 
 export const DraftStockOutLines = {
-  query: "query draftStockOutLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    placeholderQuantity\n    draftLines {\n      id\n      numberOfPacks\n      stockLineId\n      batch\n      expiryDate\n      packSize\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      dosesPerUnit\n      volumePerPack\n      location {\n        id\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n      receivedNumberOfPacks\n      reasonOption {\n        id\n      }\n      campaign {\n        name\n      }\n      program {\n        name\n      }\n      donor(storeId: $storeId) {\n        name\n      }\n      manufacturer(storeId: $storeId) {\n        name\n      }\n    }\n  }\n}",
+  query: "query draftStockOutLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    placeholderQuantity\n    draftLines {\n      id\n      numberOfPacks\n      stockLineId\n      batch\n      expiryDate\n      packSize\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      dosesPerUnit\n      volumePerPack\n      location {\n        id\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n      itemVariantId\n      receivedNumberOfPacks\n      reasonOption {\n        id\n      }\n      campaign {\n        name\n      }\n      program {\n        name\n      }\n      donor(storeId: $storeId) {\n        name\n      }\n      manufacturer(storeId: $storeId) {\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<DraftStockOutLinesResult, DraftStockOutLinesVariables>;
+
+export type ItemVariantsVariables = {
+  storeId: string;
+  itemId: string;
+};
+
+export type ItemVariantsResult = {
+  items: ({
+  __typename: "ItemConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  variants: Array<{
+  id: string;
+  name: string;
+  vvmType: string | null;
+  manufacturer: {
+  name: string;
+} | null;
+}>;
+}>;
+});
+};
+
+export const ItemVariants = {
+  query: "query itemVariants($storeId: String!, $itemId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}, isActive: true}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        variants {\n          id\n          name\n          vvmType\n          manufacturer(storeId: $storeId) {\n            name\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<ItemVariantsResult, ItemVariantsVariables>;
 
 export type SaveOutboundItemLinesVariables = {
   storeId: string;
