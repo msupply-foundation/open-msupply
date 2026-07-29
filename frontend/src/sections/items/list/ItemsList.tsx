@@ -6,16 +6,12 @@ import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  FilterBar,
-  FilterTextInput,
-} from '../../../ui/elements/selectors/FilterBar';
+import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { Items, type ItemsVariables } from './items.generated';
@@ -23,7 +19,13 @@ import { ItemPreferences } from '../itemPreferences.generated';
 import { ItemMasterLists } from './itemMasterLists.generated';
 import { buildItemFilter, type ItemsListFilter } from './itemFilter';
 import { buildItemsFilters } from './listFilters';
-import { fixedColumns, type ItemRow, type SortKey } from './itemColumns';
+import {
+  CARD_GROUPS,
+  fixedColumns,
+  type GroupKey,
+  type ItemRow,
+  type SortKey,
+} from './itemColumns';
 import {
   customFieldDefinitions,
   customFieldColumns,
@@ -43,7 +45,8 @@ const DEFAULT_PAGE_SIZE = 20;
 
 type ItemsListState = {
   filter: ItemsListFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /** Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time. */
   cf?: CustomFieldFilterState;
   sort?: ItemsVariables['sort'];
   offset: number;
@@ -52,8 +55,15 @@ type ItemsListState = {
 
 // Default sort: name ascending (spec/items S1 › Columns). Only Code/Name are
 // sortable; the wire honours only the last sort entry, so send a single one.
+//
+// `codeOrName: null` SEEDS the search chip: FilterBar shows a chip iff its key
+// is present on the filter, and null is its "added but empty" marker — so the
+// code-or-name search is there on arrival with no menu step, which is how
+// ui-surface's "always-present" search is met using only sanctioned components
+// (see listFilters.tsx). buildItemFilter ignores a null, so the seed never
+// perturbs the query.
 const DEFAULT_STATE: ItemsListState = {
-  filter: {},
+  filter: { codeOrName: null },
   sort: [{ key: 'name', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -98,8 +108,17 @@ const ItemsList: Component = () => {
       return result.data.items;
     }
   );
-  const rows = (): ItemRow[] => data.latest?.nodes ?? [];
-  const totalCount = () => data.latest?.totalCount ?? 0;
+  // Read WITHOUT suspending, gated on `.state`: `.latest` alone suspends on the
+  // first pending read, which on this screen's initial load would collapse the
+  // list into the router's fallback-less boundary (a blank page) instead of
+  // letting the DataTable mount and show its own loading treatment
+  // (kdd/solid-reactivity-pitfalls; issues #160/#196).
+  const page = () =>
+    data.state === 'ready' || data.state === 'refreshing'
+      ? data.latest
+      : undefined;
+  const rows = (): ItemRow[] => page()?.nodes ?? [];
+  const totalCount = () => page()?.totalCount ?? 0;
 
   // Preferences gate the doses display + the at-risk filter (spec/items).
   const [prefsData] = createResource(
@@ -110,10 +129,15 @@ const ItemsList: Component = () => {
       return result.data.preferences;
     }
   );
-  const showDoses = () => prefsData.latest?.manageVaccinesInDoses ?? false;
+  // Same non-suspending `.state` gate as the list read above.
+  const prefs = () =>
+    prefsData.state === 'ready' || prefsData.state === 'refreshing'
+      ? prefsData.latest
+      : undefined;
+  const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   // At-risk filter offered only when the recent-consumption window is set.
   const showAtRisk = () =>
-    (prefsData.latest
+    (prefs()
       ?.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts ??
       0) > 0;
 
@@ -127,12 +151,25 @@ const ItemsList: Component = () => {
       return result.data.masterLists.nodes;
     }
   );
-  const masterListOptions = () => masterListsData.latest ?? [];
+  const masterListOptions = () =>
+    masterListsData.state === 'ready' || masterListsData.state === 'refreshing'
+      ? (masterListsData.latest ?? [])
+      : [];
 
-  const columns = (): Column<ItemRow, SortKey>[] => [
+  // createMemo, NOT a plain function: TanStack memoizes on this array's
+  // REFERENCE, so a fresh one per read invalidates four layers of its internal
+  // memo chain (kdd/solid-reactivity-pitfalls §14). Re-derives when the doses
+  // preference, the custom-field definitions or the language change.
+  const columns = createMemo((): Column<ItemRow, SortKey, GroupKey>[] => [
     ...fixedColumns(showDoses),
-    ...customFieldColumns<ItemRow, SortKey>(cfDefs(), row => row.customFields),
-  ];
+    // Every configured custom field goes behind the card's "Custom fields"
+    // disclosure; in table view the cardGroup is ignored.
+    ...customFieldColumns<ItemRow, SortKey, GroupKey>(
+      cfDefs(),
+      row => row.customFields,
+      'customFields'
+    ),
+  ]);
 
   const filters = createMemo(() =>
     buildItemsFilters(masterListOptions, showAtRisk)
@@ -158,28 +195,10 @@ const ItemsList: Component = () => {
       header={
         <Header>
           <Breadcrumb crumbs={[{ label: t('items') }]} />
-          <Toolbar>
-            {/* Always-present code-or-name search (spec/items S1 › Filters). */}
-            <FilterTextInput
-              label={t('label.code-or-name')}
-              placeholder={t('placeholder.enter-an-item-code-or-name')}
-              testId="items-search"
-              value={query().filter.codeOrName ?? ''}
-              onInput={value =>
-                onFilterChange({ ...query().filter, codeOrName: value || null })
-              }
-            />
-            <FilterBar
-              filters={filters()}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
+          {/* No page actions and no header fields — the catalogue is read-only
+              (ui-surface S1 › Layout), and the filters belong to the table's own
+              toolbar (below), never the app bar. So the breadcrumb is the whole
+              header. */}
         </Header>
       }
     >
@@ -187,6 +206,32 @@ const ItemsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
+        // ONE column list, two renderings (docs/CARD_TABLE_MODEL.md): each
+        // column declares its card slot in itemColumns.tsx. Below 600px the
+        // table is ALWAYS the card view, and 17 columns (7 fixed + a
+        // deployment's custom fields) render flat without these groups. The
+        // toggle offers the same card above that band.
+        cardGroups={CARD_GROUPS}
+        showCardToggle
+        // Filters render in the TABLE's toolbar, never the page header
+        // (ui-standards § tables → toolbar — binding for every table, list
+        // or detail, and it overrides where a vertical spec puts them).
+        // State stays page-owned and URL-backed. EVERY filter is a chip on
+        // this one bar — including the code-or-name search, seeded present by
+        // DEFAULT_STATE (see listFilters.tsx); there is no separate search
+        // field beside it.
+        filters={
+          <FilterBar
+            filters={filters()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
@@ -196,6 +241,15 @@ const ItemsList: Component = () => {
         emptyMessage={t('error.no-items-to-display')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+        // the install-wide default; everyone else gets no action. The gate is
+        // reactive, so the shared DataTable stays agnostic about permissions.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         pagination={{
           offset: query().offset,
           pageSize: query().first,

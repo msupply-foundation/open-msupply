@@ -142,6 +142,14 @@ export const advanceReturnStatus = async (
     { returnGraphqlErrors: true }
   );
   if (result.kind === 'graphqlError') {
+    // A server-rejected write (e.g. missing mutate permission) surfaces through
+    // the global permission-denied modal, not inline in the confirm dialog
+    // (rules § permission gates — D38); returnGraphqlErrors suppressed the
+    // default routing, so route it here.
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'failed' };
+    }
     const key = matchDetails(result.errors);
     return { kind: 'error', message: key ? t(key) : result.message };
   }
@@ -170,8 +178,17 @@ export const saveReturnLines = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
+  if (result.kind === 'graphqlError') {
+    // returnGraphqlErrors is on (to surface the non-typed line faults), which
+    // suppresses the default Forbidden→modal routing — so route it here, like
+    // delete/create below (rules § permission gates: a server-rejected write
+    // surfaces through the global modal, never inline — D38).
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'failed' };
+    }
     return { kind: 'error', message: result.message };
+  }
   if (result.kind !== 'success') return { kind: 'failed' };
   return { kind: 'saved', node: result.data.updateSupplierReturnLines };
 };

@@ -51,5 +51,7 @@ export {
   type CustomFieldFilterValue,
 } from './filter';
 
-// Display
-export { customFieldDisplayString } from './display';
+// Display — EMPTY_FIELD_VALUE is the app-wide empty marker for a read-only
+// FIELD (spec D67: beside a label, blank reads as a rendering fault), so it is
+// shared with the read-only detail forms, not just the custom-field surfaces.
+export { customFieldDisplayString, EMPTY_FIELD_VALUE } from './display';

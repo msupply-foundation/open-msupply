@@ -1,5 +1,5 @@
 // The "Save & next" next-item walk (rules.md § Save & next and the next-item
-// walk; AC-V7/V8), extracted from the view so the paging logic is testable
+// walk; OMS-REG-DIST-03.32/.33), extracted from the view so the paging logic is testable
 // and race-free:
 //
 // - Pages are always read from the walk's OWN direct fetches (never the
@@ -10,7 +10,7 @@
 // - The walk stops dead once `aborted()` reports the editor closed — a
 //   cancel mid-walk must not keep paging the table underneath the user.
 // - `advancePage` is the caller's "the visible table moves" hook (setQuery +
-//   selection clear, AC-V9).
+//   selection clear, OMS-REG-DIST-03.34).
 //
 // The total count comes from each direct fetch (not a reactive accessor), so
 // the loop bound is as fresh as the page it scans.

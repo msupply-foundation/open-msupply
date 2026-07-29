@@ -77,6 +77,15 @@ query storeContext($storeId: String!) {
     numberOfMonthsThresholdToShowOverStockAlertsForProducts
     firstThresholdForExpiringItems
     secondThresholdForExpiringItems
+    # Internal-orders create gate (spec/internal-orders AC-C1/C5), read by the
+    # dashboard's Order-more shortcut so it runs the same recent-stocktake
+    # warning as the list's New-order button (which fetches it in its own
+    # list context).
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
   }
   me {
     ... on UserNode {

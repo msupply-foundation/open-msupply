@@ -5,9 +5,11 @@ import {
   expiringBetweenThresholdsHref,
   expiringNextThreeMonthsHref,
   expiringSoonHref,
+  inboundListHref,
   inboundNotDeliveredHref,
   inboundThisWeekHref,
   inboundTodayHref,
+  internalOrderDraftHref,
   internalOrderListHref,
   customerRequisitionListHref,
   itemCatalogueHref,
@@ -67,9 +69,43 @@ describe('replenishment links', () => {
     });
   });
 
-  // OMS-REG-DB-01.57 — the internal-order list is not built: its links land
-  // on the registered placeholder, unfiltered.
-  it('OMS-REG-DB-01.57: internal-order link is the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.36 — the external panel's links carry the
+  // inbound list's origin filter: kind=fromPurchaseOrder is exactly the
+  // PO-linked set the external counts use (contract § navigation
+  // correspondence). Internal links stay kind-less — "internal" (manual ∪
+  // from-internal-order) has no single selectable kind value (recorded
+  // fallback), which the kind-free assertions above pin.
+  it('OMS-REG-DB-01.55: external inbound stats add kind=fromPurchaseOrder', () => {
+    expect(filterOf(inboundTodayHref('s1', wednesday, true))).toEqual({
+      createdDatetime: {
+        afterOrEqualTo: new Date(2026, 6, 22).toISOString(),
+        beforeOrEqualTo: new Date(2026, 6, 22, 23, 59, 59, 999).toISOString(),
+      },
+      kind: 'fromPurchaseOrder',
+    });
+    expect(filterOf(inboundThisWeekHref('s1', wednesday, true))).toMatchObject({
+      kind: 'fromPurchaseOrder',
+    });
+    expect(filterOf(inboundNotDeliveredHref('s1', true))).toEqual({
+      status: { equalAny: ['NEW', 'SHIPPED'] },
+      kind: 'fromPurchaseOrder',
+    });
+  });
+
+  it('OMS-REG-DB-01.55: external panel title link is scoped to the external kind; internal is bare', () => {
+    expect(inboundListHref('s1')).toBe('/s1/replenishment/inbound-shipment');
+    expect(filterOf(inboundListHref('s1', true))).toEqual({
+      kind: 'fromPurchaseOrder',
+    });
+  });
+
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.40 — draft: the internal-order list's
+  // single-select status filter restates the count (request requisitions in
+  // Draft); the panel title stays the unfiltered list.
+  it('OMS-REG-DB-01.55/.40: internal-order draft filters status to Draft; title is bare', () => {
+    expect(filterOf(internalOrderDraftHref('s1'))).toEqual({
+      status: { equalTo: 'DRAFT' },
+    });
     expect(internalOrderListHref('s1')).toBe(
       '/s1/replenishment/internal-order'
     );
@@ -100,14 +136,15 @@ describe('inventory links', () => {
     });
   });
 
-  // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: the same 30-day window
-  // the count uses.
-  it('OMS-REG-DB-01.55: expiring soon spans today … today + 30 days', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: exactly the count's
+  // window, (today, today + 30d] — today's expiries are the expired
+  // stat's (D71).
+  it('OMS-REG-DB-01.55: expiring soon spans tomorrow … today + 30 days', () => {
     expect(DAYS_TILL_EXPIRED).toBe(30);
     expect(filterOf(expiringSoonHref('s1', wednesday))).toEqual({
       expiryDate: {
-        afterOrEqualTo: '2026-07-22',
-        beforeOrEqualTo: '2026-08-21',
+        afterOrEqualTo: '2026-07-23', // tomorrow — today itself is "expired"
+        beforeOrEqualTo: '2026-08-21', // +30d
       },
     });
   });
