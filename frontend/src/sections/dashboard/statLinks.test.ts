@@ -138,7 +138,7 @@ describe('inventory links', () => {
 
   // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: exactly the count's
   // window, (today, today + 30d] — today's expiries are the expired
-  // stat's (D74).
+  // stat's (D71).
   it('OMS-REG-DB-01.55: expiring soon spans tomorrow … today + 30 days', () => {
     expect(DAYS_TILL_EXPIRED).toBe(30);
     expect(filterOf(expiringSoonHref('s1', wednesday))).toEqual({
