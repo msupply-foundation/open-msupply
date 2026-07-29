@@ -6,10 +6,7 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { RadioGroup } from '../../../../ui/elements/inputs/RadioGroup';
 import { NameSearch, type NameOption } from '../../../../domain/name';
 import { XCircleIcon } from '../../../../ui/icons';
-import {
-  isExternalShipment,
-  updateInboundShipment,
-} from '../inboundShipmentUpdate';
+import { updateInboundShipment } from '../inboundShipmentUpdate';
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
 export interface DefaultDonorModalProps {
@@ -17,6 +14,8 @@ export interface DefaultDonorModalProps {
   onClose: () => void;
   storeId: string;
   node: InboundInfoFragment;
+  /** Which update twin to write through — the scope the route carries. */
+  isExternal: boolean;
   onSaved: (node: InboundInfoFragment) => void;
 }
 
@@ -58,7 +57,7 @@ const Body: Component<DefaultDonorModalProps> = props => {
     setErrorMessage(undefined);
     const result = await updateInboundShipment(
       props.storeId,
-      isExternalShipment(props.node),
+      props.isExternal,
       {
         id: props.node.id,
         defaultDonor: {
