@@ -24,7 +24,7 @@ export interface AllocateLinesActionProps {
   onCommitted: () => void;
 }
 
-// "Allocate placeholder lines" (spec S3 § bulk line actions, AC-AL1–AL5 + AC-A4):
+// "Allocate placeholder lines" (spec S3 § bulk line actions, AC-AL1–AL5 + OMS-REG-DIST-03.8):
 // auto-allocation per selected placeholder — FEFO server-side. Outcomes are
 // classified per line exactly as the current app does (fully allocated /
 // partial / failed, with the skip reasons that applied) and reported as

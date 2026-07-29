@@ -9,7 +9,7 @@ import {
   type OutboundActivityLogsResult,
 } from './outboundDetail.generated';
 
-// The Log tab (spec S3 § tabs, AC-S7): the shipment's activity history —
+// The Log tab (spec S3 § tabs, OMS-REG-DIST-02.30): the shipment's activity history —
 // status changes, who, when. Read-only; fetched when the tab first mounts
 // (inactive tab panels are unmounted).
 
