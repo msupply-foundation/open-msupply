@@ -9,6 +9,7 @@ import {
   inboundNotDeliveredHref,
   inboundThisWeekHref,
   inboundTodayHref,
+  internalOrderDraftHref,
   internalOrderListHref,
   customerRequisitionListHref,
   itemCatalogueHref,
@@ -98,9 +99,13 @@ describe('replenishment links', () => {
     });
   });
 
-  // OMS-REG-DB-01.57 — the internal-order list is not built: its links land
-  // on the registered placeholder, unfiltered.
-  it('OMS-REG-DB-01.57: internal-order link is the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.40 — draft: the internal-order list's
+  // single-select status filter restates the count (request requisitions in
+  // Draft); the panel title stays the unfiltered list.
+  it('OMS-REG-DB-01.55/.40: internal-order draft filters status to Draft; title is bare', () => {
+    expect(filterOf(internalOrderDraftHref('s1'))).toEqual({
+      status: { equalTo: 'DRAFT' },
+    });
     expect(internalOrderListHref('s1')).toBe(
       '/s1/replenishment/internal-order'
     );
