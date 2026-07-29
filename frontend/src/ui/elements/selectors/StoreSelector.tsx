@@ -186,6 +186,7 @@ export const StoreSelector = (props: {
           iconPosition="end"
           disabled={!selectedId()}
           onClick={() => selectedId() && props.onConfirm(selectedId()!)}
+          data-testid="store-selector-continue"
         >
           {t('button.continue')}
         </Button>
