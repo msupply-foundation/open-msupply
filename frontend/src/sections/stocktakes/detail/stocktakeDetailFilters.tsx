@@ -59,6 +59,7 @@ export const stocktakeDetailFilters = (
           items={locations()}
           itemToString={l => `${l.code} — ${l.name}`}
           itemToValue={l => l.id}
+          testId={props.testId}
           focusTarget={props.focusTarget}
           value={props.filter().locationId?.equalTo ?? undefined}
           placeholder={t('label.location')}

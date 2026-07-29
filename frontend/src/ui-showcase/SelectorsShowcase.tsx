@@ -214,6 +214,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
         items={ITEMS}
         itemToString={i => `${i.code} — ${i.name}`}
         itemToValue={i => i.code}
+        testId={props.testId}
         focusTarget={props.focusTarget}
         value={props.filter().item ?? undefined}
         onChange={i => props.setPartialFilter({ item: i?.code ?? null })}
