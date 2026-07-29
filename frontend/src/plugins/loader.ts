@@ -33,7 +33,14 @@ export interface PluginMetadataEntry {
   hash: string;
 }
 
-export interface LoadPluginsDeps {
+/** What registering ONE already-evaluated module needs. */
+export interface RegisterModuleDeps {
+  registerTranslations: typeof registerPluginTranslations;
+  register: (plugin: LoadedPlugin) => void;
+  recordDiagnostic: (diagnostic: PluginDiagnostic) => void;
+}
+
+export interface LoadPluginsDeps extends RegisterModuleDeps {
   /**
    * Discovery. Resolves to `undefined` when it failed — the app then runs
    * plugin-less rather than not running.
@@ -41,31 +48,29 @@ export interface LoadPluginsDeps {
   fetchMetadata: () => Promise<readonly PluginMetadataEntry[] | undefined>;
   /** Evaluate a bundle at a URL (the real one is a dynamic `import()`). */
   importBundle: (url: string) => Promise<unknown>;
-  registerTranslations: typeof registerPluginTranslations;
-  register: (plugin: LoadedPlugin) => void;
-  recordDiagnostic: (diagnostic: PluginDiagnostic) => void;
 }
 
-const describe = (error: unknown): string =>
+export const describeError = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-const loadOne = async (
-  entry: PluginMetadataEntry,
-  deps: LoadPluginsDeps
-): Promise<void> => {
-  const { code } = entry;
-  let imported: unknown;
-  try {
-    imported = await deps.importBundle(pluginBundleUrl(entry.path, entry.hash));
-  } catch (error) {
-    deps.recordDiagnostic({
-      level: 'error',
-      pluginCode: code,
-      message: `bundle failed to load: ${describe(error)}`,
-    });
-    return;
-  }
-
+/**
+ * Validate an evaluated module namespace and register it under `code`:
+ * everything after the import, and the ONLY path into the registry.
+ *
+ * Exported because the dev-only author loop (src/plugins/devPlugins.ts) imports
+ * plugin sources itself and must come through exactly this gate — a plugin
+ * loaded from source is validated, version-checked, and namespaced identically
+ * to an installed bundle, so the dev loop cannot make an invalid plugin appear
+ * to work.
+ *
+ * Returns whether the plugin was registered; every refusal is recorded, so a
+ * caller needs the boolean only to report success.
+ */
+export const acceptPluginModule = (
+  code: string,
+  imported: unknown,
+  deps: RegisterModuleDeps
+): boolean => {
   const verdict = validateLoadedModule(code, imported);
   if (verdict.kind === 'refused') {
     deps.recordDiagnostic({
@@ -73,7 +78,7 @@ const loadOne = async (
       pluginCode: code,
       message: `not loaded — ${verdict.message}`,
     });
-    return;
+    return false;
   }
   for (const warning of verdict.warnings) {
     deps.recordDiagnostic({
@@ -92,9 +97,9 @@ const loadOne = async (
     deps.recordDiagnostic({
       level: 'error',
       pluginCode: code,
-      message: `not loaded — translations could not be registered: ${describe(error)}`,
+      message: `not loaded — translations could not be registered: ${describeError(error)}`,
     });
-    return;
+    return false;
   }
 
   try {
@@ -103,9 +108,30 @@ const loadOne = async (
     deps.recordDiagnostic({
       level: 'error',
       pluginCode: code,
-      message: `not loaded — registration failed: ${describe(error)}`,
+      message: `not loaded — registration failed: ${describeError(error)}`,
     });
+    return false;
   }
+  return true;
+};
+
+const loadOne = async (
+  entry: PluginMetadataEntry,
+  deps: LoadPluginsDeps
+): Promise<void> => {
+  const { code } = entry;
+  let imported: unknown;
+  try {
+    imported = await deps.importBundle(pluginBundleUrl(entry.path, entry.hash));
+  } catch (error) {
+    deps.recordDiagnostic({
+      level: 'error',
+      pluginCode: code,
+      message: `bundle failed to load: ${describeError(error)}`,
+    });
+    return;
+  }
+  acceptPluginModule(code, imported, deps);
 };
 
 /**
@@ -120,7 +146,7 @@ export const loadPlugins = async (deps: LoadPluginsDeps): Promise<void> => {
     metadata = undefined;
     deps.recordDiagnostic({
       level: 'error',
-      message: `plugin discovery threw: ${describe(error)}`,
+      message: `plugin discovery threw: ${describeError(error)}`,
     });
   }
   if (!metadata) {
@@ -180,6 +206,21 @@ export const ensurePluginsLoaded = (): Promise<void> => {
       diagnostics: pluginDiagnostics,
     };
     await loadPlugins(appDeps);
+    /*
+     * The author dev loop, AFTER the installed set: a dev plugin whose code
+     * collides with an installed one replaces it (that is the point of the
+     * override), and the registry's own replace-by-code makes the ordering the
+     * whole mechanism.
+     *
+     * The dynamic import sits inside a statically-false branch in production
+     * (import.meta.env.DEV → false), so devPlugins.ts and the generated
+     * virtual module are dead-code-eliminated — no dev-loop bytes ship, the
+     * same pattern the showcase uses in src/index.tsx.
+     */
+    if (import.meta.env.DEV) {
+      const { loadDevPluginsForApp } = await import('./devPlugins');
+      await loadDevPluginsForApp();
+    }
   })();
   return started;
 };

@@ -1,0 +1,266 @@
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { isAbsolute, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { searchForWorkspaceRoot, type Plugin } from 'vite';
+
+/*
+ * The author dev loop, source mode (kdd/plugin-loading § dev override).
+ *
+ * A plugin under development is imported FROM SOURCE into the host's own Vite
+ * module graph, rather than as a built bundle fetched from the server: one
+ * Solid runtime, the live in-tree SDK (through the `@openmsupply/plugin-sdk`
+ * alias), and HMR on the plugin's own files. No import map, no CORS, no
+ * rebuild between edits.
+ *
+ * The graph entry point is the virtual module `virtual:oms-dev-plugins`, whose
+ * generated source is a code → lazy-import map:
+ *
+ *   export const devPlugins = {
+ *     "hello_world": () => import("/abs/path/examples/hello_world/plugin.tsx"),
+ *   };
+ *
+ * Dynamic imports (not static), so a plugin that fails to evaluate is that
+ * plugin's failure — the loader still registers its siblings (AC-PLUG-L3).
+ *
+ * Discovery is exactly `scripts/build-plugins.mjs`'s: every `examples/*` plus
+ * every directory named by OMS_PLUGIN_DIRS, each identified by a package.json
+ * declaring `omSupplyPlugin.target === 'frontend'`, with the entry module the
+ * first of ENTRY_CANDIDATES that exists. Same rule for both, so what `pnpm dev`
+ * loads from source is what `pnpm build:plugins` packs.
+ *
+ * The discovery/codegen half is pure and injected-fs, so it is unit-testable
+ * (devPlugins.test.ts); only `devPluginsPlugin` touches the disk.
+ */
+
+/** The specifier the app imports (src/plugins/devPluginSources.ts). */
+export const DEV_PLUGINS_MODULE_ID = 'virtual:oms-dev-plugins';
+// Leading NUL marks it resolved and off-limits to other plugins (Rollup
+// convention).
+const RESOLVED_ID = `\0${DEV_PLUGINS_MODULE_ID}`;
+
+/**
+ * Where a plugin's entry module may live, in preference order — the same list
+ * `scripts/build-plugins.mjs` uses. `plugin.tsx` at the root is the examples'
+ * shape; `src/plugin.tsx` is the out-of-tree one (civ-plugins).
+ */
+export const ENTRY_CANDIDATES: readonly string[] = [
+  'plugin.tsx',
+  'plugin.ts',
+  'src/plugin.tsx',
+  'src/plugin.ts',
+];
+
+/** The disk reads discovery needs — faked in tests. */
+export interface DevPluginFs {
+  /** Subdirectory names of `dir`; empty when `dir` does not exist. */
+  readDirectories: (dir: string) => readonly string[];
+  /** Parsed JSON, or undefined when the file does not exist / is unreadable. */
+  readJson: (file: string) => unknown;
+  exists: (file: string) => boolean;
+}
+
+/** One plugin the dev server will serve from source. */
+export interface DevPluginEntry {
+  /** The plugin code (its package name) — the host's registration identity. */
+  code: string;
+  /** Absolute path of the plugin directory. */
+  dir: string;
+  /** Absolute path of the entry module. */
+  entry: string;
+}
+
+export interface DevPluginDiscovery {
+  plugins: readonly DevPluginEntry[];
+  /** Author-facing complaints about explicitly requested directories. */
+  problems: readonly string[];
+}
+
+/**
+ * Split an OMS_PLUGIN_DIRS value into absolute directories. Colon- or
+ * comma-separated (as `scripts/build-plugins.mjs` accepts), each entry either
+ * absolute or relative to the repo root.
+ */
+export const parsePluginDirs = (
+  value: string | undefined,
+  root: string
+): readonly string[] => {
+  const seen = new Set<string>();
+  for (const raw of (value ?? '').split(/[,:]/)) {
+    const trimmed = raw.trim();
+    if (trimmed) seen.add(resolve(root, trimmed));
+  }
+  return [...seen];
+};
+
+/**
+ * Whether `dir` sits outside the repo — i.e. whether the dev server has to be
+ * told to serve files from it (`server.fs.allow`).
+ */
+export const isOutsideRoot = (root: string, dir: string): boolean => {
+  const inside = relative(root, dir);
+  return inside === '' ? false : inside.startsWith('..') || isAbsolute(inside);
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const readPlugin = (
+  dir: string,
+  fs: DevPluginFs
+): DevPluginEntry | { problem: string } => {
+  const manifest = fs.readJson(join(dir, 'package.json'));
+  if (!isRecord(manifest)) {
+    return { problem: `${dir}: no readable package.json` };
+  }
+  const declaration = manifest['omSupplyPlugin'];
+  if (!isRecord(declaration) || declaration['target'] !== 'frontend') {
+    return {
+      problem: `${dir}: package.json has no omSupplyPlugin.target "frontend"`,
+    };
+  }
+  const code = manifest['name'];
+  if (typeof code !== 'string' || code.length === 0) {
+    return { problem: `${dir}: package.json has no name (the plugin code)` };
+  }
+  const entry = ENTRY_CANDIDATES.find(candidate =>
+    fs.exists(join(dir, candidate))
+  );
+  if (!entry) {
+    return {
+      problem: `${dir}: no plugin entry (looked for ${ENTRY_CANDIDATES.join(', ')})`,
+    };
+  }
+  return { code, dir, entry: join(dir, entry) };
+};
+
+/**
+ * Enumerate the plugins to serve from source: every `examples/*` that is a
+ * frontend plugin, then every directory named by OMS_PLUGIN_DIRS.
+ *
+ * An `examples/*` subdirectory that is not a plugin is skipped silently (the
+ * directory is ours, not a request); a directory the author explicitly named
+ * and that cannot be used is reported, because silently loading nothing is the
+ * failure mode that wastes an afternoon.
+ *
+ * Later entries win on a code collision, so naming a directory overrides an
+ * example of the same code.
+ */
+export const discoverDevPlugins = (
+  root: string,
+  pluginDirs: string | undefined,
+  fs: DevPluginFs
+): DevPluginDiscovery => {
+  const problems: string[] = [];
+  const found = new Map<string, DevPluginEntry>();
+
+  const examplesDir = join(root, 'examples');
+  for (const name of fs.readDirectories(examplesDir)) {
+    const result = readPlugin(join(examplesDir, name), fs);
+    if ('problem' in result) continue;
+    found.set(result.code, result);
+  }
+
+  for (const dir of parsePluginDirs(pluginDirs, root)) {
+    const result = readPlugin(dir, fs);
+    if ('problem' in result) problems.push(result.problem);
+    else found.set(result.code, result);
+  }
+
+  return { plugins: [...found.values()], problems };
+};
+
+/** The generated source of `virtual:oms-dev-plugins`. */
+export const renderDevPluginsModule = (
+  plugins: readonly DevPluginEntry[]
+): string =>
+  [
+    `// Generated by vite/devPlugins.ts — dev only, never in a build.`,
+    `export const devPlugins = {`,
+    ...plugins.map(
+      // Absolute paths: Vite resolves them itself (rewriting out-of-root ones
+      // to /@fs/…, which is why those directories join server.fs.allow below).
+      p =>
+        `  ${JSON.stringify(p.code)}: () => import(${JSON.stringify(p.entry)}),`
+    ),
+    `};`,
+    '',
+  ].join('\n');
+
+const nodeFs: DevPluginFs = {
+  readDirectories: dir =>
+    existsSync(dir)
+      ? readdirSync(dir, { withFileTypes: true })
+          .filter(entry => entry.isDirectory())
+          .map(entry => entry.name)
+      : [],
+  readJson: file => {
+    if (!existsSync(file)) return undefined;
+    try {
+      return JSON.parse(readFileSync(file, 'utf8'));
+    } catch {
+      return undefined;
+    }
+  },
+  exists: existsSync,
+};
+
+/**
+ * The dev-only source-mode plugin. Serves `virtual:oms-dev-plugins` and opens
+ * `server.fs.allow` for out-of-tree plugin directories.
+ *
+ * NOT `apply: 'serve'`: Rollup resolves a dynamic import while building the
+ * module graph, BEFORE the `import.meta.env.DEV` branch that contains it is
+ * treeshaken away, so the specifier must still resolve in a production build.
+ * It resolves there to an empty map — dead code with no importer, so no chunk
+ * is emitted (verified by the dist grep in the PR gates).
+ */
+export const devPluginsPlugin = (): Plugin => {
+  // This file lives in <repo>/vite/, and it is only ever used by this repo's
+  // own vite.config.ts.
+  const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+  let serving = false;
+
+  return {
+    name: 'oms:dev-plugins',
+
+    config(_config, env) {
+      serving = env.command === 'serve';
+      if (!serving) return undefined;
+      const outOfTree = parsePluginDirs(
+        process.env.OMS_PLUGIN_DIRS,
+        root
+      ).filter(dir => isOutsideRoot(root, dir));
+      if (outOfTree.length === 0) return undefined;
+      return {
+        // Providing `allow` replaces Vite's default, so the workspace root has
+        // to be restated — searchForWorkspaceRoot is the same call Vite makes.
+        server: { fs: { allow: [searchForWorkspaceRoot(root), ...outOfTree] } },
+      };
+    },
+
+    resolveId(id) {
+      return id === DEV_PLUGINS_MODULE_ID ? RESOLVED_ID : undefined;
+    },
+
+    load(id) {
+      if (id !== RESOLVED_ID) return undefined;
+      if (!serving) return renderDevPluginsModule([]);
+      const { plugins, problems } = discoverDevPlugins(
+        root,
+        process.env.OMS_PLUGIN_DIRS,
+        nodeFs
+      );
+      for (const problem of problems) {
+        this.warn(`[dev-plugins] ${problem}`);
+      }
+      if (plugins.length > 0) {
+        this.info(
+          `[dev-plugins] serving from source: ${plugins
+            .map(p => `${p.code} (${relative(root, p.entry)})`)
+            .join(', ')}`
+        );
+      }
+      return renderDevPluginsModule(plugins);
+    },
+  };
+};
