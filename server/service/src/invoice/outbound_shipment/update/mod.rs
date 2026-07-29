@@ -251,9 +251,44 @@ mod test {
         NullableUpdate,
     };
 
-    use super::UpdateOutboundShipmentError;
+    use super::{backdated_datetime_change, UpdateOutboundShipmentError};
 
     type ServiceError = UpdateOutboundShipmentError;
+
+    #[test]
+    fn backdated_datetime_change_gates_on_change_not_presence() {
+        use chrono::{Duration, TimeZone, Utc};
+
+        let stored = Utc.with_ymd_and_hms(2026, 7, 26, 22, 59, 59).unwrap();
+        let backdated_invoice = InvoiceRow {
+            backdated_datetime: Some(stored.naive_utc()),
+            ..Default::default()
+        };
+        let never_backdated = InvoiceRow::default();
+
+        // Absent from the patch: never a change
+        assert_eq!(backdated_datetime_change(None, &never_backdated), None);
+        assert_eq!(backdated_datetime_change(None, &backdated_invoice), None);
+
+        // First backdate: a change
+        assert_eq!(
+            backdated_datetime_change(Some(stored), &never_backdated),
+            Some(stored)
+        );
+
+        // Echo of the stored value: not a change
+        assert_eq!(
+            backdated_datetime_change(Some(stored), &backdated_invoice),
+            None
+        );
+
+        // A different value: a change
+        let other = stored - Duration::days(1);
+        assert_eq!(
+            backdated_datetime_change(Some(other), &backdated_invoice),
+            Some(other)
+        );
+    }
 
     /// Turn the backdating preference on for shipments. `max_days` bounds how far back
     /// the window reaches; zero leaves the past unbounded.
@@ -1337,6 +1372,89 @@ mod test {
                 .unwrap()
                 .unwrap(),
             stock_line()
+        );
+    }
+
+    // The other half of gating on change: an echoed datetime on an invoice that has
+    // moved past New is a no-op, not a CantBackDate rejection - a full-patch client must
+    // still be able to edit an allocated shipment it once backdated.
+    #[actix_rt::test]
+    async fn update_outbound_shipment_echoed_backdated_datetime_accepted_past_new() {
+        use chrono::{Duration, Timelike, Utc};
+
+        let already_backdated = (Utc::now() - Duration::days(2))
+            .naive_utc()
+            .with_nanosecond(0)
+            .unwrap();
+
+        fn outbound(backdated_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+            InvoiceRow {
+                id: "echoed_backdate_allocated_outbound".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Allocated,
+                allocated_datetime: Some(backdated_datetime),
+                backdated_datetime: Some(backdated_datetime),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_echoed_backdated_datetime_accepted_past_new",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound(already_backdated)],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        enable_backdating(&connection, 30);
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let result = service.update_outbound_shipment(
+            &context,
+            UpdateOutboundShipment {
+                id: outbound(already_backdated).id,
+                comment: Some("edit on an allocated shipment".to_string()),
+                backdated_datetime: Some(already_backdated.and_utc()),
+                ..Default::default()
+            },
+        );
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        let updated = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&outbound(already_backdated).id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            updated.comment,
+            Some("edit on an allocated shipment".to_string())
+        );
+        assert_eq!(updated.backdated_datetime, Some(already_backdated));
+
+        // A *changed* datetime on the same invoice is still rejected - only New backdates
+        let result = service.update_outbound_shipment(
+            &context,
+            UpdateOutboundShipment {
+                id: outbound(already_backdated).id,
+                backdated_datetime: Some(
+                    (Utc::now() - Duration::days(1)).with_nanosecond(0).unwrap(),
+                ),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result,
+            Err(ServiceError::CantBackDate(
+                "Can only backdate new outbound shipments".to_string()
+            ))
         );
     }
 
