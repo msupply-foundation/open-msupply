@@ -20,6 +20,7 @@ import {
   DateRangeField,
   type IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
+import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { SaveButton } from '../ui/elements/buttons/StandardButtons';
 import { Select } from '../ui/elements/selectors/Select';
 import {
@@ -93,6 +94,11 @@ export const inputsMetadata: PageMetadata = {
       id: 'inputs-text',
       title: 'Text fields',
       searchTerms: ['string', 'textfield', 'states', 'size'],
+    },
+    {
+      id: 'inputs-label-info',
+      title: 'Label help tooltip',
+      searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
     },
     {
       id: 'inputs-multiline',
@@ -245,6 +251,57 @@ export const InputsShowcase = () => {
               />
             </Field>
           </div>
+        </DashboardCard>
+
+        <DashboardCard
+          id="inputs-label-info"
+          title="Help tooltip on the label — labelInfo"
+        >
+          <Lead>
+            Any field can hang an{' '}
+            <a href="#/showcase/feedback">
+              <code>&lt;InfoTooltip&gt;</code>
+            </a>{' '}
+            off its label through the <code>labelInfo</code> slot: a quiet ⓘ
+            that opens a short gloss on hover, focus, or tap. It's the place for
+            a <em>standing</em> explanation — why a field is disabled, what a
+            number means — that would cost a permanent two- or three-line{' '}
+            <code>helperText</code> paragraph under the control. Keep{' '}
+            <code>helperText</code> for text that must always be read.
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Text field">
+              <TextField
+                label="Currency rate"
+                value="1.6"
+                labelInfo={
+                  <InfoTooltip text="The number of local (home) currency units per one PO currency unit — a rate of 1.6 means 1 USD = 1.6 NZD." />
+                }
+              />
+            </Field>
+            <Field caption="Date field — explaining a disabled state">
+              <DateField
+                label="Received"
+                value="2026-05-19"
+                disabled
+                labelInfo={
+                  <InfoTooltip text="The received date can only be changed once the shipment is received, and only within the store's backdating window." />
+                }
+              />
+            </Field>
+          </div>
+          <Note>
+            <strong>Every labelled input and selector takes it</strong> — the
+            text inputs and their wrappers, the multi-line field, all four
+            date/time fields, Checkbox, ToggleSwitch, RadioGroup, and the{' '}
+            <a href="#/showcase/selectors">selectors</a> — so the affordance
+            reads the same wherever it appears. The icon always renders{' '}
+            <em>outside</em> the label element, so it never becomes part of the
+            control's accessible name (and on the self-labelling controls, a
+            click on the icon doesn't toggle them). It's ignored under{' '}
+            <code>hideLabel</code>, where there's no visible label to hang it
+            off.
+          </Note>
         </DashboardCard>
 
         <DashboardCard title="Password field">
