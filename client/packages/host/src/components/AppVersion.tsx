@@ -31,7 +31,9 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
             <Typography fontWeight={700}>{t('label.app-version')}</Typography>
           </Grid>
           <Grid>
-            <Typography whiteSpace="nowrap">{appVersion}</Typography>
+            <Typography whiteSpace="nowrap" data-testid="app-version">
+              {appVersion}
+            </Typography>
           </Grid>
         </Grid>
         {isCentralServer && (
