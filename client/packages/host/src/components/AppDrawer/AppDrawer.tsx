@@ -195,6 +195,7 @@ export const AppDrawer: React.FC = () => {
     >
       <ToolbarIconContainer>
         <IconButton
+          testId="drawer-toggle"
           label={
             drawer.isOpen
               ? t('button.close-the-menu')
