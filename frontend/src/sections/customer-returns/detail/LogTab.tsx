@@ -9,7 +9,7 @@ import {
   type CustomerReturnLogResult,
 } from './customerReturnDetail.generated';
 
-// The Log tab (spec/customer-returns/ui-surface.md S3 § tabs; AC-G1): the
+// The Log tab (spec/customer-returns/ui-surface.md S3 § tabs; OMS-REG-DIST-07.36): the
 // return's activity history — creation, status changes, who and when — read
 // from the shared activity log keyed by this record's id, newest first.
 

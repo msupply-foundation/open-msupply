@@ -8,7 +8,7 @@ type ReturnRow = Extract<
   { __typename: 'InvoiceConnector' }
 >['nodes'][number];
 
-// The customer-returns list → CSV (spec/customer-returns S1 Export, AC-L4).
+// The customer-returns list → CSV (spec/customer-returns S1 Export, OMS-REG-DIST-07.35).
 // Columns match the list's visible fields; status uses the same catalog labels
 // as the list's chip. Feeds either a direct .csv download or the server's
 // csvToExcel conversion (domain/reportFiles) — mirroring the reference

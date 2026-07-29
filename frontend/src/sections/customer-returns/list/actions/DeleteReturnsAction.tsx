@@ -19,9 +19,9 @@ export interface DeleteReturnsActionProps {
   onDeleted: () => void;
 }
 
-// The returns-list bulk delete (spec/customer-returns FL7, AC-D1/D2) — the
+// The returns-list bulk delete (spec/customer-returns cases OMS-REG-DIST-07.30/.31) — the
 // outbound DeleteShipmentsAction shape: the whole batch is refused when ANY
-// selected return is not deletable (only NEW is — AC-D2) — a UI pre-check with
+// selected return is not deletable (only NEW is — OMS-REG-DIST-07.31) — a UI pre-check with
 // a blocking notice instead of the confirmation, no server call; per-row
 // enforcement remains server-side. There is NO batch mutation for customer
 // returns, so a confirmed batch runs one deleteCustomerReturn per id; the
@@ -43,7 +43,7 @@ export const DeleteReturnsAction: Component<
   const onClick = () => {
     // Pre-check: every selected return must be deletable (NEW only) or the
     // whole batch is refused with an explanatory notice in place of the
-    // confirmation (the current app's client-side gate; AC-D2's UI half).
+    // confirmation (the current app's client-side gate; OMS-REG-DIST-07.31's UI half).
     if (props.selectedRows().some(row => row.status !== 'NEW')) {
       setBlockedOpen(true);
       return;
