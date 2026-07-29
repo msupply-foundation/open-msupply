@@ -7,10 +7,9 @@
 // filter input (kdd/type-safety: type-only imports of the target lists' own
 // filter types, so a drift in their contract stops compiling here).
 //
-// Lists that don't exist yet (internal orders, customer requisitions, the item
-// catalogue) get their registered placeholder, unfiltered — they begin
-// filtering once the list ships (contract.md § navigation correspondence,
-// OMS-REG-DB-01.57).
+// Lists that don't exist yet (customer requisitions) get their registered
+// placeholder, unfiltered — they begin filtering once the list ships
+// (contract.md § navigation correspondence, OMS-REG-DB-01.57).
 //
 // Pure: `today` is injected so the window maths is unit-testable.
 
@@ -62,12 +61,12 @@ const listHref = (storeId: string, path: string, filter?: object): string => {
 };
 
 // ── Replenishment ────────────────────────────────────────────────────────────
-// Internal vs external: the inbound list's URL contract carries the origin as
-// its client-only `kind` filter. `fromPurchaseOrder` is exactly the external
-// (PO-linked) count's set, so the external panel's links carry it. "Internal"
-// (manual ∪ fromInternalOrder) has no single selectable value in that contract,
-// so the internal panel's links carry window/status only — recorded fallback
-// (contract.md § navigation correspondence; build report).
+// Internal vs external: the inbound list's URL contract carries the origin
+// as its client-only `kind` filter. `fromPurchaseOrder` is exactly the
+// external (PO-linked) count's set, so the external panel's links carry it.
+// "Internal" (manual ∪ fromInternalOrder) has no single selectable value in
+// that contract, so the internal panel's links carry window/status only —
+// recorded fallback (contract.md § navigation correspondence; build report).
 const inboundKind = (external: boolean) =>
   external ? { kind: 'fromPurchaseOrder' as const } : {};
 
@@ -149,9 +148,9 @@ export const expiredHref = (storeId: string, today: Date): string =>
     expiryDate: dayRange('date', null, today),
   } satisfies StockFilter);
 
-// Expiring soon: tomorrow … today + 30d — exactly the count's window (the count
-// subtracts expired, so today's expiries belong to the expired stat). Diverges
-// from the current app's today … today + 1 calendar month link (D74).
+// Expiring soon: tomorrow … today + 30d — exactly the count's window (the
+// count subtracts expired, so today's expiries belong to the expired stat).
+// Diverges from the current app's today … +1 calendar month link (D74).
 export const expiringSoonHref = (storeId: string, today: Date): string =>
   listHref(storeId, 'inventory/stock', {
     expiryDate: dayRange(
