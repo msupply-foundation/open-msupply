@@ -22,6 +22,10 @@ import {
   SentPurchaseOrders,
 } from './createInboundShipment.generated';
 import { SupplierInternalOrders } from '../detail/inboundShipmentLookups.generated';
+import {
+  inboundShipmentHref,
+  type InboundScope,
+} from '../inboundShipmentScope';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
 
@@ -34,15 +38,16 @@ import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
 //    LinkInternalOrderModal opens (link one, or Next to skip). A supplier with
 //    no linkable orders — or a store without the preference — creates
 //    immediately, no extra step.
-//  - 'fromPurchaseOrder': the rich LinkPurchaseOrderModal (offered only when the
-//    store's procurement preference is on). Linking a PO is mandatory; the
-//    supplier comes from the chosen order. Creates via the ...External twin
-//    (contract → creation wire trap: purchaseOrderId REQUIRES the external
-//    mutation).
+// - 'fromPurchaseOrder': the rich LinkPurchaseOrderModal (offered only when
+// the store's procurement preference is on). Linking a PO is mandatory; the
+// supplier comes from the chosen order. Creates via the ...External twin
+// (contract → creation wire trap: purchaseOrderId REQUIRES the external
+// mutation).
 //
 // The two pickers are contextful tables, NOT single-field dropdowns — see the
 // modal components. This orchestrator owns the data resources + the create
-// mutations; the pickers are presentational and call back with the chosen id(s).
+// mutations; the pickers are presentational and call back with the chosen
+// id(s).
 
 export interface CreateInboundShipmentModalProps {
   open: boolean;
@@ -64,9 +69,12 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
   const [creating, setCreating] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
-  const goToShipment = (id: string) => {
+  // The created shipment's scope is settled by which mutation created it — the
+  // `...External` twin is the PO-linked one — so the link into the detail says
+  // so outright (see inboundShipmentHref).
+  const goToShipment = (id: string, scope: InboundScope) => {
     props.onClose();
-    navigate(`/${params.storeId}/replenishment/inbound-shipment/${id}`);
+    navigate(inboundShipmentHref(params.storeId, id, scope));
   };
 
   // The supplier search is this step's only control, so the dialog opens on it
@@ -130,7 +138,8 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     setCreating(false);
     if (result.kind !== 'success') return; // global modal already showed it
     const response = result.data.insertInboundShipment;
-    if (response.__typename === 'InvoiceNode') return goToShipment(response.id);
+    if (response.__typename === 'InvoiceNode')
+      return goToShipment(response.id, 'INBOUND_SHIPMENT');
     if (response.__typename === 'InsertInboundShipmentError')
       setErrorMessage(response.error.description);
   };
@@ -180,7 +189,8 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
     setCreating(false);
     if (result.kind !== 'success') return;
     const response = result.data.insertInboundShipmentExternal;
-    if (response.__typename === 'InvoiceNode') return goToShipment(response.id);
+    if (response.__typename === 'InvoiceNode')
+      return goToShipment(response.id, 'INBOUND_SHIPMENT_EXTERNAL');
     if (response.__typename === 'InsertInboundShipmentError')
       setErrorMessage(response.error.description);
   };
