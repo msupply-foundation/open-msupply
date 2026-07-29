@@ -38,6 +38,7 @@ query draftStockOutLines(
         unusable
         priority
       }
+      itemVariantId
       receivedNumberOfPacks
       reasonOption {
         id
@@ -53,6 +54,32 @@ query draftStockOutLines(
       }
       manufacturer(storeId: $storeId) {
         name
+      }
+    }
+  }
+}
+
+# The item's variants, for the batch column's variant-info popover (spec S4
+# § batch grid): a batch row carrying an itemVariantId reveals the item's
+# variant list with its own marked. Fetched by seedItem only when some draft
+# line carries a variant id — most items have none and skip this read.
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        variants {
+          id
+          name
+          vvmType
+          manufacturer(storeId: $storeId) {
+            name
+          }
+        }
       }
     }
   }

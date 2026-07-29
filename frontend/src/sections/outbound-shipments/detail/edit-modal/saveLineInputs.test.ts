@@ -15,6 +15,7 @@ const line = (
   stockLineId: 's1',
   receivedNumberOfPacks: null,
   reasonOption: null,
+  vvmStatus: null,
   ...over,
 });
 
@@ -31,8 +32,23 @@ describe('toSaveLineInputs', () => {
         stockLineId: 's1',
         receivedNumberOfPacks: 3,
         reasonOptionId: 'r1',
+        vvmStatusId: null,
       },
     ]);
+  });
+
+  it('echoes the batch\'s stored VVM status — an omitted id STRIPS it (contract wire trap)', () => {
+    const [input] = toSaveLineInputs([
+      line({
+        vvmStatus: { id: 'v1', description: 'Stage 1', unusable: false, priority: 1 },
+      }),
+    ]);
+    expect(input?.vvmStatusId).toBe('v1');
+  });
+
+  it('a status-less line sends null, not a fabricated id', () => {
+    const [input] = toSaveLineInputs([line()]);
+    expect(input?.vvmStatusId).toBeNull();
   });
 
   it('a blank received count stays blank — never faked from issued packs', () => {

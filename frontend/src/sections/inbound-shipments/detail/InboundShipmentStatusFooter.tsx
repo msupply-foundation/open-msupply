@@ -10,10 +10,7 @@ import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ArrowRightIcon, CloseIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
-import {
-  isExternalShipment,
-  updateInboundShipment,
-} from './inboundShipmentUpdate';
+import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
   kindOf,
   reachableStatuses,
@@ -32,6 +29,8 @@ export interface InboundShipmentStatusFooterProps {
    * read-only for edits but must still advance to Delivered.
    */
   disabled: boolean;
+  /** Which update twin the advance writes through — the route's scope. */
+  isExternal: boolean;
   onSetHold: (hold: boolean) => void;
   /**
    * A status advance committed — the view merges the returned node in place.
@@ -67,7 +66,7 @@ export const InboundShipmentStatusFooter: Component<
     setErrorMessage(undefined);
     const result = await updateInboundShipment(
       props.storeId,
-      isExternalShipment(props.node),
+      props.isExternal,
       {
         id: props.node.id,
         status: status as NonNullable<

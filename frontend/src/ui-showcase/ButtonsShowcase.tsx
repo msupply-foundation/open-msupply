@@ -74,6 +74,18 @@ export const buttonsMetadata: PageMetadata = {
       searchTerms: ['split', 'menu', 'dropdown', 'caret'],
     },
     {
+      id: 'buttons-split-feedback',
+      title: 'Split button — busy & outcome',
+      searchTerms: [
+        'loading',
+        'spinner',
+        'busy',
+        'success',
+        'failed',
+        'action feedback',
+      ],
+    },
+    {
       id: 'buttons-checkbox',
       title: 'Checkbox button',
       searchTerms: ['checkbox', 'toggle', 'pill'],
@@ -89,6 +101,20 @@ export const ButtonsShowcase = () => {
   );
   const [onHold, setOnHold] = createSignal(false);
   const [lastStandard, setLastStandard] = createSignal<string | null>(null);
+
+  // Demo of the busy → outcome cycle: CSV "succeeds", Excel "fails", each
+  // after a beat so the spinner is visible.
+  const [demoBusy, setDemoBusy] = createSignal(false);
+  const [demoOutcome, setDemoOutcome] = createSignal<'done' | 'failed'>();
+  const runDemoExport = (format: string) => {
+    if (demoBusy()) return;
+    setDemoBusy(true);
+    setTimeout(() => {
+      setDemoBusy(false);
+      setDemoOutcome(format === 'excel' ? 'failed' : 'done');
+      setTimeout(() => setDemoOutcome(undefined), 2000);
+    }, 1200);
+  };
 
   return (
     <Stack gap="lg">
@@ -149,10 +175,10 @@ export const ButtonsShowcase = () => {
             You pass <code>load</code> — a supplier of the{' '}
             <strong>whole record</strong> (a node the screen already holds, or
             its own unpaginated fetch where the row table is server-paged) — and
-            the button owns the rest: indented JSON, the clipboard write, and the
-            outcome reported <strong>in place</strong> (the label and icon swap
-            to <em>Copied</em> or <em>Copy failed</em> for a moment, announced
-            via <code>aria-live</code>) — never a toast. Copy is a{' '}
+            the button owns the rest: indented JSON, the clipboard write, and
+            the outcome reported <strong>in place</strong> (the label and icon
+            swap to <em>Copied</em> or <em>Copy failed</em> for a moment,
+            announced via <code>aria-live</code>) — never a toast. Copy is a{' '}
             <strong>read</strong>, so it takes no status or permission gate.
           </Lead>
           <Row>
@@ -451,6 +477,72 @@ export const ButtonsShowcase = () => {
                   Confirmed <strong>{value().toUpperCase()}</strong>.
                 </>
               )}
+            </Show>
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="buttons-split-feedback"
+          title="Split button — busy & outcome (loading / mainLabel)"
+        >
+          <Lead>
+            An async split action reports IN PLACE, never as a toast (
+            <code>spec/ui-standards/controls.md</code> § action feedback).{' '}
+            <code>loading</code> swaps the main half's icon for a spinner and
+            makes <em>both</em> halves inert, so the action can't re-fire from
+            either; <code>mainLabel</code> then briefly overrides the main
+            half's label with the outcome — the menu entries keep their own
+            labels throughout. The main half is <code>aria-live="polite"</code>,
+            so the swap is announced. Try both: CSV succeeds, Excel fails.{' '}
+            <code>domain/reportFiles/ListExportAction</code> is the real
+            consumer — it pairs the failure flash with a dialog carrying the
+            message, so a failed export is diagnosable rather than a dead click.
+          </Lead>
+          <Row>
+            <SplitButton
+              icon={
+                demoOutcome() === 'done' ? (
+                  <SaveIcon />
+                ) : demoOutcome() === 'failed' ? (
+                  <TrashIcon />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              options={EXPORT_OPTIONS}
+              menuLabel="Export options"
+              loading={demoBusy()}
+              mainLabel={
+                demoOutcome() === 'done'
+                  ? 'Exported'
+                  : demoOutcome() === 'failed'
+                    ? 'Export failed'
+                    : undefined
+              }
+              onAction={runDemoExport}
+            />
+            <SplitButton
+              variant="secondary"
+              icon={<DownloadIcon />}
+              options={EXPORT_OPTIONS}
+              menuLabel="Export options"
+              loading={demoBusy()}
+              mainLabel={
+                demoOutcome() === 'done'
+                  ? 'Exported'
+                  : demoOutcome() === 'failed'
+                    ? 'Export failed'
+                    : undefined
+              }
+              onAction={runDemoExport}
+            />
+          </Row>
+          <Note>
+            <Show
+              when={demoBusy()}
+              fallback="Click the main half (succeeds) or pick Excel from the caret (fails)."
+            >
+              Working… both halves are inert until it settles.
             </Show>
           </Note>
         </DashboardCard>

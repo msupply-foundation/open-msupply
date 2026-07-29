@@ -161,6 +161,7 @@ export const SyncModal: Component<{
       titleHidden
       closeButton
       widthRem={36}
+      testId="sync-modal"
     >
       <div class={styles.content}>
         {/* Status band: the precedence status line above the phase list. */}

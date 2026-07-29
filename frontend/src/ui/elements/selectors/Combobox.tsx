@@ -209,6 +209,12 @@ interface ComboboxProps<T> {
    */
   size?: 'default' | 'small';
   class?: string;
+  /**
+   * De-box the control (no border / background) for embedding in a filter chip
+   * / pill (FilterBar's FilterCombobox), so it reads on the tinted pill like the
+   * other chip editors rather than as a nested input box.
+   */
+  borderless?: boolean;
 }
 
 /*
@@ -375,6 +381,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-width={props.width}
       data-size={props.size ?? 'default'}
+      data-borderless={props.borderless ? '' : undefined}
       options={options()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}

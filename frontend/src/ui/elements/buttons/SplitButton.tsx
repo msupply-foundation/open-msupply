@@ -1,4 +1,4 @@
-import { createSignal, For, Show, type JSX } from 'solid-js';
+import { children, createSignal, For, Show, type JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import { ChevronDownIcon } from '../../icons';
 import { createRipple } from '../../utils/createRipple';
@@ -55,6 +55,21 @@ interface SplitButtonProps {
   /** Accessible name for the caret trigger (it has no visible text). */
   menuLabel?: string;
   /**
+   * Busy state: swaps the main button's icon for a spinner and makes the WHOLE
+   * control inert (both halves disabled, `aria-busy` on the main button), so an
+   * in-flight action can't re-fire from either half. The `<Button>` `loading`
+   * contract, applied to the pair.
+   */
+  loading?: boolean;
+  /**
+   * Overrides the main button's visible label WITHOUT touching the menu (whose
+   * entries keep their own labels, so the selection stays readable). For the
+   * in-place outcome report — the main button briefly reads "Exported" /
+   * "Export failed", then reverts (ui-standards/controls.md § action feedback,
+   * never a toast). Paired with an `icon` swap by the caller.
+   */
+  mainLabel?: string;
+  /**
    * Disable the whole control — both the main action and the caret menu. Prefer
    * this (with `disabledTitle`) over hiding the button when the action is
    * temporarily unavailable ("disable with an explanation" — ui-surface
@@ -101,25 +116,52 @@ export const SplitButton = (props: SplitButtonProps) => {
   };
 
   const variant = () => props.variant ?? 'primary';
+  // Busy is inertness on top of any caller-set disabled — one accessor so both
+  // halves and the ripples agree.
+  const inert = () => props.disabled === true || props.loading === true;
+  // JSX-element props are lazy getters, and `icon` is read twice below (the
+  // <Show> test + the insertion) — raw reads would create the passed element
+  // twice per evaluation. Resolve once, as <Button> does
+  // (kdd/solid-reactivity-pitfalls §3).
+  const icon = children(() => props.icon);
 
   return (
     <div class={styles.split} data-variant={variant()}>
+      {/* aria-live so a label swap is announced — the outcome flash, and the
+          selection change on a menu pick. Always present: a live region has to
+          exist BEFORE the text changes for the change to be announced. */}
       <button
         type="button"
         class={styles.main}
         data-variant={variant()}
         data-testid={props.testId ? `${props.testId}-main` : undefined}
-        disabled={props.disabled}
+        disabled={inert()}
+        aria-busy={props.loading || undefined}
+        aria-live="polite"
         title={props.disabled ? props.disabledTitle : undefined}
         onClick={() => {
-          if (!props.disabled) props.onAction?.(selectedValue());
+          if (!inert()) props.onAction?.(selectedValue());
         }}
-        onPointerDown={props.disabled ? undefined : mainRipple.onPointerDown}
+        onPointerDown={event => {
+          // Guarded INSIDE the handler: event props aren't reactive, so a
+          // handler chosen at JSX time would go stale when `loading` flips.
+          if (!inert()) mainRipple.onPointerDown(event);
+        }}
       >
-        <Show when={props.icon}>
-          <span class={styles.icon}>{props.icon}</span>
+        {/* Spinner replaces the icon while loading (the <Button> contract). */}
+        <Show
+          when={props.loading}
+          fallback={
+            <Show when={icon()}>
+              <span class={styles.icon}>{icon()}</span>
+            </Show>
+          }
+        >
+          <span class={styles.spinner} aria-hidden="true" />
         </Show>
-        <span class={styles.label}>{selectedOption()?.label}</span>
+        <span class={styles.label}>
+          {props.mainLabel ?? selectedOption()?.label}
+        </span>
         <Ripple ripples={mainRipple.ripples()} onDone={mainRipple.dismiss} />
       </button>
 
@@ -129,9 +171,11 @@ export const SplitButton = (props: SplitButtonProps) => {
           data-variant={variant()}
           data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
           aria-label={props.menuLabel ?? 'More options'}
-          disabled={props.disabled}
+          disabled={inert()}
           title={props.disabled ? props.disabledTitle : undefined}
-          onPointerDown={props.disabled ? undefined : caretRipple.onPointerDown}
+          onPointerDown={event => {
+            if (!inert()) caretRipple.onPointerDown(event);
+          }}
         >
           <ChevronDownIcon class={styles.caretIcon} />
           <Ripple
