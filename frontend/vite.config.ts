@@ -102,6 +102,37 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
         },
+        // The remaining root-level REST paths the backend registers — the
+        // same set the deploy nginx configs proxy (deploy/README.md; read
+        // them off App::new()'s .configure(config_*) in
+        // server/server/src/lib.rs). Carried here too so the dev and
+        // deployed proxies stay in step and a missing path never surfaces
+        // as the SPA fallback answering an API call with index.html.
+        // Staged report/plugin upload (POST /upload → {file_id}).
+        '/upload': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
+        // Plugin JS bundles served out of the datafile.
+        '/frontend_plugins': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
+        // Berlinger fridge-tag / Q-tag sensor log import (cold chain).
+        '/fridge-tag': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
+        // Cold Chain mobile-app API.
+        '/coldchain': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
+        // Support tools.
+        '/support': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
       },
     },
   };
