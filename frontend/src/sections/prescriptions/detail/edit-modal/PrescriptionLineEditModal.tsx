@@ -2,14 +2,17 @@ import {
   createMemo,
   createResource,
   createSignal,
+  For,
   Show,
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
+import { createDebounced } from '../../../../ui/utils/createDebounced';
+import { FormRow } from '../../../../ui/layout/Form/FormRow';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -23,22 +26,37 @@ import {
   type Column,
 } from '../../../../ui/elements/table/DataTable';
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  useAccordionItemExpanded,
+} from '../../../../ui/elements/accordion/Accordion';
+import styles from './PrescriptionLineEditModal.module.css';
+import {
   getExpiryDateCell,
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
-import { formatNumber } from '../../../../intl';
+import { formatNumber, round } from '../../../../intl';
 import {
   allocateUnits,
   buildSaveInput,
   canSave,
   clampPacks,
+  draftAvailableUnits,
   draftIssuedUnits,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
+import {
+  issueWarningMessages,
+  manualEntryMessages,
+  round9,
+  type PrescriptionWarningMessage,
+} from './allocationWarnings';
 import { expandAbbreviations } from './directions';
 import {
   Abbreviations,
@@ -81,6 +99,40 @@ export const PrescriptionLineEditModal: Component<
   <Body {...props} />
 );
 
+// Resolve the pure warning descriptors (./allocationWarnings) to banner
+// strings and per-category testids — mirroring the outbound editor's mapping
+// of the same shared vocabulary.
+const warningText = (message: PrescriptionWarningMessage): string => {
+  switch (message.key) {
+    case 'messages.allocated-lines-skipped-line-reasons':
+      return t(message.key, {
+        reasons: message.reasons.map(reason => t(reason)).join(', '),
+      });
+    case 'messages.over-allocated-line':
+      return t(message.key, {
+        quantity: formatNumber(message.quantity),
+        issueQuantity: formatNumber(message.issueQuantity),
+      });
+    case 'messages.partial-pack-warning-units':
+    case 'messages.partial-pack-warning-doses':
+      return t(message.key, {
+        nearestAbove: formatNumber(message.nearestAbove),
+      });
+  }
+};
+
+const warningTestId = (message: PrescriptionWarningMessage): string => {
+  switch (message.key) {
+    case 'messages.allocated-lines-skipped-line-reasons':
+      return 'prescription-skipped-stock-warning';
+    case 'messages.over-allocated-line':
+      return 'prescription-adjusted-entry-warning';
+    case 'messages.partial-pack-warning-units':
+    case 'messages.partial-pack-warning-doses':
+      return 'prescription-partial-pack-warning';
+  }
+};
+
 type ItemInfo = NonNullable<
   PrescriptionEditLinesResult['items']['nodes']
 >[number];
@@ -90,14 +142,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   const [itemId, setItemId] = createSignal(props.initialItemId);
   const isEdit = props.initialItemId != null;
-  // The two named focus destinations, the same rule the outbound editor
-  // follows: nothing picked → the item lookup; an item loaded → Issue, the
-  // quantity the user came to type. Add mode opens on the lookup; in edit mode
-  // it is locked to the row's item, so the open lands on Issue instead
-  // (ui-surface S4, overriding ui-standards › accessibility › keyboard's
-  // "a dialog focuses itself, not its first field").
+  // Add mode opens on the item lookup — the editor's starting control. In edit
+  // mode the lookup is locked to the row's item and the dialog keeps the panel
+  // default (ui-standards › accessibility › keyboard) — unless the prescribed-
+  // quantity preference is on, which makes that field the first entry point.
   const itemSearch = createFocusTarget();
-  const issueField = createFocusTarget();
+  // The prescribed-quantity field (.61): focused once an item is chosen (add
+  // mode) and on opening an existing line, when the preference shows it.
+  const prescribedQuantityFocus = createFocusTarget();
+  // Issue Quantity (.62): the focus if prescribed quantity is disabled
+  const issueQuantityFocus = createFocusTarget();
 
   const [lines, setLines] = createStore<DraftLine[]>([]);
   const [itemInfo, setItemInfo] = createSignal<ItemInfo>();
@@ -106,6 +160,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [abbrevEntry, setAbbrevEntry] = createSignal('');
   const [issueUnits, setIssueUnits] = createSignal<number>();
   const [shortfall, setShortfall] = createSignal(0);
+  // The other distribution/manual-entry reports (stock-allocation §
+  // reporting): barred stock skipped (.59), the split-pack warning (.58), an
+  // adjusted manual entry (.19). Each entry renders as its own banner.
+  const [warnings, setWarnings] = createSignal<PrescriptionWarningMessage[]>(
+    []
+  );
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
@@ -126,21 +186,31 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     const draft = result.data.draftStockOutLines;
     const item = result.data.items.nodes[0];
     setItemInfo(item);
-    setLines(
-      reconcile(seedDraftLines(draft.draftLines, prefs(), new Date()), {
-        key: 'id',
-      })
-    );
+    const seeded = seedDraftLines(draft.draftLines, prefs(), new Date());
+    setLines(reconcile(seeded, { key: 'id' }));
     setPrescribedQuantity(draft.prescribedQuantity ?? undefined);
     setNote(draft.note ?? '');
-    setIssueUnits(undefined);
+    // Re-opening a dispensed line shows its saved state: the issue field
+    // seeds to the existing allocation's total (the lens is units on open).
+    // A fresh item has nothing allocated, so it stays empty (.32).
+    const existingUnits = draftIssuedUnits(seeded);
+    setIssueUnits(existingUnits > 0 ? round9(existingUnits) : undefined);
     setShortfall(0);
+    setWarnings([]);
     setDirty(false);
     // Land ready to type: with the item's grid in hand, Issue is the next
     // field. Armed here rather than gated on a load flag — Issue is inert
     // while the fetch is in flight, and the handle's frame runs after this
     // promise settles and Solid has re-rendered the enabled field.
-    issueField.focus();
+    
+    if (prefs().editPrescribedQuantity) {
+      prescribedQuantityFocus.focus();
+    } else {
+      issueQuantityFocus.focus();
+    }
+    // A distribution still pending from the previous item must not land on
+    // this one's freshly-seeded grid.
+    allocate.cancel();
     return result.data;
   });
 
@@ -158,22 +228,22 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     (itemInfo()?.isVaccine ?? false) && prefs().manageVaccinesInDoses;
 
   const allocatedUnits = () => draftIssuedUnits(lines);
-  const availableUnits = () =>
-    lines.reduce(
-      (sum, line) =>
-        line.barred.length > 0
-          ? sum
-          : sum + line.availablePacks * line.packSize,
-      0
-    );
+  const availableUnits = () => draftAvailableUnits(lines);
 
-  // Typing an issue quantity distributes FEFO with partial packs (AC-A1);
-  // the doses lens converts before distributing (AC-AL7).
-  const allocate = (value: number | undefined) => {
-    setIssueUnits(value);
-    if (value == null) return;
+  // Distribute FEFO with partial packs (AC-A1); the doses lens converts
+  // before distributing (AC-AL7). Runs DEBOUNCED behind both quantity fields
+  // (the current app's AutoAllocate fields — their #2727/#3532: distributing
+  // per keystroke rewrites the entry under the user's fingers). Once the
+  // entry settles, the issue field snaps to what was ACTUALLY allocated — a
+  // request stock can't cover reads as the allocated 10, not the typed 20
+  // (.62); the shortfall banner carries the full request.
+  const runAllocation = (value: number) => {
     const requestedUnits = dosesMode() ? value / dosesPerUnit() : value;
-    const { packsById, shortfallUnits } = allocateUnits(lines, requestedUnits);
+    const {
+      packsById,
+      shortfallUnits,
+      warnings: derived,
+    } = allocateUnits(lines, requestedUnits);
     setLines(
       reconcile(
         lines.map(line => ({
@@ -184,21 +254,68 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       )
     );
     setShortfall(shortfallUnits);
+    setWarnings(
+      issueWarningMessages(derived, {
+        doses: dosesMode(),
+        dosesPerUnit: dosesPerUnit(),
+      })
+    );
+    const allocated = draftIssuedUnits(lines);
+    setIssueUnits(round9(dosesMode() ? allocated * dosesPerUnit() : allocated));
     setDirty(true);
+  };
+  const allocate = createDebounced(runAllocation, 500);
+
+  // The issue field: echo the entry immediately, distribute when it settles.
+  const onIssueChange = (value: number | undefined) => {
+    setIssueUnits(value);
+    if (value != null) allocate(value);
+    else allocate.cancel();
+  };
+
+  // The prescribed quantity drives allocation of the same quantity, capped
+  // by the distribution (.62); the prescribed value itself keeps the full
+  // request — it's the demand record (AC-Q1–Q3), not the issue figure.
+  const onPrescribedChange = (value: number | undefined) => {
+    setPrescribedQuantity(value);
+    setDirty(true);
+    if (value != null) allocate(value);
+    else allocate.cancel();
   };
 
   // A manual per-row entry, clamped 0…available (AC-I5 — the client is the
-  // only negative guard, and auto-pick raises the stakes).
+  // only negative guard, and auto-pick raises the stakes). Its reports
+  // REPLACE the distribution's (AC-AL13): the split-pack warning when the
+  // entry leaves a fractional pack (.58) — and, via onRowClamped below, the
+  // applied quantity when the entry was adjusted (.19).
   const setRowPacks = (id: string, value: number | undefined) => {
     const index = lines.findIndex(line => line.id === id);
     if (index < 0) return;
-    setLines(
-      index,
-      'numberOfPacks',
-      clampPacks(value, lines[index].availablePacks)
-    );
+    const applied = clampPacks(value, lines[index].availablePacks);
+    setLines(index, 'numberOfPacks', applied);
     setShortfall(0);
+    setWarnings(manualEntryMessages(applied, lines[index].packSize));
     setDirty(true);
+  };
+
+  // The row field bounds entry to 0…available itself; when it adjusted what
+  // was typed it reports the entered/applied pair here (after its onChange,
+  // so this overrides the plain manual-entry reports above — and it fires
+  // even when the applied value didn't change, e.g. typing past a row already
+  // at its availability).
+  const onRowClamped = (
+    line: DraftLine,
+    enteredUnits: number,
+    appliedUnits: number
+  ) => {
+    setShortfall(0);
+    setWarnings(
+      manualEntryMessages(
+        appliedUnits / line.packSize,
+        line.packSize,
+        enteredUnits
+      )
+    );
   };
 
   const applyAbbreviation = () => {
@@ -211,6 +328,40 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   const directionsDisabled = () => allocatedUnits() <= 0;
 
+  // The collapsed Batches trigger's allocation summary (OMS-REG-DIS-03.57):
+  // each drawn batch and its quantity, the unit named once at the end —
+  // `RS-A · 1,014, RS-B · 6` — folding to a count + total beyond three
+  // batches. Quantities display-rounded (allocation math carries float
+  // noise). Hidden while expanded: the grid then shows the figures per row.
+  const BatchSummary = () => {
+    const expanded = useAccordionItemExpanded();
+    const drawn = () => lines.filter(line => line.numberOfPacks > 0);
+    const summary = () => {
+      const batches = drawn();
+      if (batches.length > 3)
+        return `${tPlural('label.batch-count', batches.length)} · ${round(
+          batches.reduce(
+            (sum, line) => sum + line.numberOfPacks * line.packSize,
+            0
+          ),
+          2
+        )} ${unitName()}`;
+      const entries = batches.map(
+        line =>
+          `${line.batch ?? t('label.no-batch')} : ${round(
+            line.numberOfPacks * line.packSize,
+            2
+          )}`
+      );
+      return `${entries.join(', ')}`;
+    };
+    return (
+      <Show when={!expanded() && drawn().length > 0}>
+        <span class={styles.batchSummary}>{summary()}</span>
+      </Show>
+    );
+  };
+
   const saveEnabled = () =>
     canSave({
       itemChosen: itemId() != null,
@@ -222,6 +373,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const save = async (): Promise<boolean> => {
     const id = itemId();
     if (!id || saving()) return false;
+    // A distribution still settling behind the debounce must land before the
+    // draft is read — save what the user asked for, not the previous state.
+    allocate.flush();
     setSaving(true);
     setSaveError(undefined);
     // Every set-save rejection is non-typed (contract wire trap) — opt into
@@ -259,6 +413,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // OK & next (add mode): the same save, then a fresh item for rapid entry.
   const onOkNext = async () => {
     if (!(await save())) return;
+    allocate.cancel();
     setItemId(undefined);
     setItemInfo(undefined);
     setLines(reconcile([]));
@@ -266,6 +421,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     setNote('');
     setIssueUnits(undefined);
     setShortfall(0);
+    setWarnings([]);
     setDirty(false);
     // Back to the empty picker, so the caret goes back with it and the next
     // item is typed straight in.
@@ -345,6 +501,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   units == null ? undefined : units / line.packSize
                 )
               }
+              onClamped={(entered, applied) =>
+                onRowClamped(line, entered, applied)
+              }
             />
           );
         },
@@ -366,7 +525,13 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     <Dialog
       open
       size="large"
-      initialFocus={isEdit ? undefined : itemSearch}
+      initialFocus={
+        isEdit
+          ? prefs().editPrescribedQuantity
+            ? prescribedQuantityFocus
+            : undefined
+          : itemSearch
+      }
       onClose={props.onClose}
       testId="add-item-modal"
       title={isEdit ? t('heading.edit-line') : t('heading.add-item')}
@@ -425,38 +590,50 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           })()}
           excludeItemIds={props.existingItemIds}
           disabled={isEdit}
-          onSelect={item => item && setItemId(item.id)}
+          onSelect={item => {
+            if (!item) return;
+            setItemId(item.id);
+            // The prescribed quantity is the first entry point once the item
+            // is chosen (.61); the handle lands when the field mounts.
+            if (prefs().editPrescribedQuantity) prescribedQuantityFocus.focus();
+          }}
         />
       </FieldRow>
 
       <Show when={itemId()}>
-        <Text variant="body">
-          {t('label.available')}:{' '}
-          {formatNumber(
-            dosesMode() ? availableUnits() * dosesPerUnit() : availableUnits()
-          )}{' '}
-          {dosesMode() ? t('label.doses') : unitName()}
-        </Text>
-
-        <FieldRow label={t('label.issue')}>
+        {/* The quantity fields ride one wrapping row (the header field-
+            cluster pattern — equal shares, wrapping intrinsically when the
+            row can't hold them): prescribed quantity — when the preference
+            shows it — PRECEDES the issue field (.61). */}
+        <FormRow class={styles.quantityRow}>
+          <Show when={prefs().editPrescribedQuantity}>
+            <NumberField
+              label={t('label.prescribed-quantity')}
+              class={styles.quantityField}
+              data-testid="prescribed-quantity-field"
+              ref={prescribedQuantityFocus.ref}
+              value={prescribedQuantity()}
+              min={0}
+              decimalLimit={0}
+              onChange={onPrescribedChange}
+            />
+          </Show>
           <NumberField
             label={t('label.issue')}
-            hideLabel
+            class={styles.quantityField}
             data-testid="issue-field"
-            ref={issueField.ref}
+            ref={issueQuantityFocus.ref}
             value={issueUnits()}
             min={0}
             decimalLimit={0}
             disabled={gridData.loading}
-            onChange={allocate}
+            endAdornment={showDosesLens() ? undefined : unitName()}
+            onChange={onIssueChange}
           />
-          <Show
-            when={showDosesLens()}
-            fallback={<Text variant="body">{unitName()}</Text>}
-          >
+          <Show when={showDosesLens()}>
             <Select
-              label={t('label.pack-size')}
-              hideLabel
+              label={t('label.unit')}
+              class={styles.quantityField}
               value={lens()}
               options={[
                 { value: 'units', label: t('label.units') },
@@ -467,28 +644,53 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               }
             />
           </Show>
-        </FieldRow>
+        </FormRow>
 
-        <Show when={prefs().editPrescribedQuantity}>
-          <FieldRow label={t('label.prescribed-quantity')}>
-            <NumberField
-              label={t('label.prescribed-quantity')}
-              hideLabel
-              data-testid="prescribed-quantity-field"
-              value={prescribedQuantity()}
-              min={0}
-              decimalLimit={0}
-              onChange={value => {
-                setPrescribedQuantity(value);
-                setDirty(true);
-                // Entering the prescribed quantity also drives allocation of
-                // the same quantity (ui-surface S4).
-                if (value != null && value > 0) allocate(value);
-              }}
-            />
-          </FieldRow>
+        {/* The warning banners sit between the quantity fields and the batch
+            list (ui-surface S4 § layout). The shortfall banner (stock-
+            allocation § reporting — nothing narrows silently; the
+            prescription has no placeholder) carries the current app's own
+            copy: "There is a total of X units available. Unable to allocate
+            all Y units."… */}
+        <Show when={shortfall() > 0}>
+          <Alert severity="warning" testId="prescription-shortfall-warning">
+            {t(
+              dosesMode()
+                ? 'warning.cannot-create-placeholder-doses'
+                : 'warning.cannot-create-placeholder-units',
+              {
+                allocatedQuantity: formatNumber(
+                  round9(
+                    dosesMode()
+                      ? allocatedUnits() * dosesPerUnit()
+                      : allocatedUnits()
+                  )
+                ),
+                requestedQuantity: formatNumber(
+                  round9(
+                    dosesMode()
+                      ? (allocatedUnits() + shortfall()) * dosesPerUnit()
+                      : allocatedUnits() + shortfall()
+                  )
+                ),
+              }
+            )}
+          </Alert>
         </Show>
 
+        {/* …and the remaining reported categories, stacked one banner each:
+            barred stock skipped — expired / unusable VVM; held stock is
+            hidden, not reported (.59/.60) — the split-pack warning (.58),
+            an adjusted manual entry (.19). */}
+        <Show when={warnings().length > 0}>
+          <div class={styles.warningStack}>
+            <For each={warnings()}>{message => (
+              <Alert severity="warning" testId={warningTestId(message)}>
+                {warningText(message)}
+              </Alert>
+            )}</For>
+          </div>
+        </Show>
         <Show
           when={lines.length > 0}
           fallback={
@@ -497,24 +699,51 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             </Show>
           }
         >
-          <DataTable
-            columns={columns()}
-            rows={[...lines]}
-            rowKey={line => line.id}
-            rowState={line => (line.barred.length > 0 ? 'disabled' : undefined)}
-            loading={gridData.loading}
-          />
-        </Show>
-
-        {/* The shortfall banner (stock-allocation § reporting — nothing
-            narrows silently; the prescription has no placeholder). */}
-        <Show when={shortfall() > 0}>
-          <Alert severity="warning" testId="prescription-shortfall-warning">
-            {t('messages.prescription-shortfall', {
-              allocated: formatNumber(allocatedUnits()),
-              requested: formatNumber(allocatedUnits() + shortfall()),
-            })}
-          </Alert>
+          {/* The batch grid folds behind a Batches disclosure, closed on
+              open (OMS-REG-DIS-03.56) — issuing allocates without it; the
+              user expands it for batch detail or per-batch entry. While
+              closed, the trigger row summarises the drawn batches
+              (OMS-REG-DIS-03.57) so the picked batch — usually one — is
+              visible without expanding. */}
+          <Accordion collapsible variant="card">
+            <AccordionItem value="batches">
+              <AccordionTrigger
+                // The available total rides the trigger's end (rather than
+                // its own line above the fields) — always visible, no
+                // vertical cost.
+                end={
+                  <>
+                    {t('label.available')}:{' '}
+                    {formatNumber(
+                      round9(
+                        dosesMode()
+                          ? availableUnits() * dosesPerUnit()
+                          : availableUnits()
+                      )
+                    )}{' '}
+                    {dosesMode() ? t('label.doses') : unitName()}
+                  </>
+                }
+              >
+                {t('label.batches')}
+                {/* Real space so the accessible name doesn't concatenate
+                    the label into the summary. */}{' '}
+                <BatchSummary />
+              </AccordionTrigger>
+              <AccordionContent>
+                <DataTable
+                  columns={columns()}
+                  rows={[...lines]}
+                  rowKey={line => line.id}
+                  rowState={line =>
+                    line.barred.length > 0 ? 'disabled' : undefined
+                  }
+                  loading={gridData.loading}
+                  showFullScreen={false}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Show>
 
         {/* Directions (AC-R1–R3): unavailable until something is allocated. */}
