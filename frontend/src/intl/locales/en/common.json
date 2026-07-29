@@ -2236,6 +2236,8 @@
   "message.create-blank-stocktake": "This will create a blank stocktake",
   "message.database-not-local": "Database is running on a server, so can't be downloaded here",
   "message.destination-not-built": "This screen isn't available yet.",
+  "message.export-failed": "Export failed",
+  "message.export-success": "Exported",
   "message.failed-to-create-requisition": "Failed to create requisition!",
   "message.filter-not-supported": "This filter isn't supported yet",
   "message.keyboard-shortcuts": "Press 'Command' (Mac) or 'Control' (Windows) + 'k' to see a list of keyboard shortcuts which are available on any page. You can use the actions directly from the pop up window too.",
