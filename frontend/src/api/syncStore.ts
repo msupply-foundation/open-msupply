@@ -42,7 +42,7 @@ let reconnectTimer: number | undefined;
 let reconnectDelay = RECONNECT_BASE_MS;
 let wasSyncing = false;
 
-// Spec (sync-modal › After a run completes; AC-R1): when a run observed while
+// Spec (sync-modal › After a run completes; SYNC-03.31): when a run observed while
 // the app is open completes, re-read the session user (store list), the
 // entered store's preferences + permissions, the shared caches, and custom
 // translations — by direct call (kdd/explicit-composition), no re-login.
