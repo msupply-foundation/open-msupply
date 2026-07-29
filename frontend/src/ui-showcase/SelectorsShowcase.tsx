@@ -18,6 +18,7 @@ import { PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterCheckbox,
+  FilterCombobox,
   FilterDateRange,
   FilterMultiSelect,
   FilterNumberInput,
@@ -101,13 +102,14 @@ const itemFilter = (item: DemoItem, input: string) => {
  * A demo filter object, shaped like a list page's GraphQL filter (the
  * FilterBar is generic over it — see kdd/page-composition). A key PRESENT
  * (even as null/'') means its chip is shown; absent means it isn't. One of
- * EVERY chip editor type: text, number, single-select, multi-select, date
- * range and boolean — the full OMS filter-type parity set.
+ * EVERY chip editor type: text, number, single-select, searchable combobox,
+ * multi-select, date range and boolean — the full OMS filter-type parity set.
  */
 interface InvoiceFilter {
   otherPartyName?: string | null;
   invoiceNumber?: number | null;
   theirReference?: string | null;
+  item?: string | null;
   status?: string | null;
   statuses?: string[] | null;
   createdDatetime?: {
@@ -199,6 +201,22 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
         onChange={values =>
           props.setPartialFilter({ statuses: values.length ? values : null })
         }
+      />
+    ),
+  },
+  {
+    key: 'item',
+    label: () => 'Item',
+    render: props => (
+      <FilterCombobox
+        label="Item"
+        placeholder="Item"
+        items={ITEMS}
+        itemToString={i => `${i.code} — ${i.name}`}
+        itemToValue={i => i.code}
+        focusTarget={props.focusTarget}
+        value={props.filter().item ?? undefined}
+        onChange={i => props.setPartialFilter({ item: i?.code ?? null })}
       />
     ),
   },

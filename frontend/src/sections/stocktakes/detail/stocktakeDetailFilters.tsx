@@ -1,10 +1,11 @@
 import { t } from '@/intl';
 import {
+  FilterCombobox,
   FilterTextInput,
   constructFilters,
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
-import { LocationSelect, type Location } from '@/domain/location';
+import { type Location } from '@/domain/location';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
@@ -53,10 +54,11 @@ export const stocktakeDetailFilters = (
     locationId: {
       label: () => t('label.location'),
       render: props => (
-        <LocationSelect
+        <FilterCombobox
           label={t('label.location')}
-          hideLabel
-          locations={locations()}
+          items={locations()}
+          itemToString={l => `${l.code} — ${l.name}`}
+          itemToValue={l => l.id}
           focusTarget={props.focusTarget}
           value={props.filter().locationId?.equalTo ?? undefined}
           placeholder={t('label.location')}
