@@ -98,7 +98,7 @@ export const isEditable = (status: string): boolean =>
 // A shipment is deletable exactly while it is editable (rules.md § deletion).
 export const isDeletable = isEditable;
 
-// The customer-return entry point (spec/outbound-shipments acceptance AC-V3):
+// The customer-return entry point (spec/outbound-shipments acceptance OMS-REG-DIST-04.21):
 // "Return selected lines" opens the customer-return flow only from SHIPPED,
 // DELIVERED or VERIFIED — the shipment has left the store, so its issued lines
 // can come back. At any other status (RECEIVED included, per the UI matrix) the
