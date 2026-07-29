@@ -54,6 +54,7 @@ import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { StocktakeLogPanel } from './log/StocktakeLogPanel';
+import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
@@ -217,20 +218,29 @@ const StocktakeDetailView: Component = () => {
   type EditState = { itemId?: string; lineId?: string } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
 
-  // The content region's two tabs (OMS parity): Details (the line table) and
-  // Log (the stocktake's activity log). Local UI state — not URL-backed; a
-  // reload lands on Details. The Log tab self-queries its own activity log.
+  // The content region's three tabs (OMS parity): Details (the line table),
+  // Documents (files attached to the stocktake) and Log (the stocktake's
+  // activity log). Local UI state — not URL-backed; a reload lands on Details.
+  // The Documents tab reads the node's `documents` list; the Log tab
+  // self-queries its own activity log.
   const [activeTab, setActiveTab] = createSignal('details');
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
     { value: 'log', label: t('label.log') },
   ];
 
   // Fetch the stocktake INFO (header/footer/side-panel fields — NOT the lines).
   // A NodeError (e.g. bad id) is promoted to the global unexpected-error modal
   // via mapSuccessToError. Stocktake-LEVEL saves write back with `mutate` (no
-  // refetch), so `info` is an accessor over data().
-  const [data, { mutate }] = createResource(
+  // refetch), but the Documents tab's upload/delete calls `refetchInfo` to
+  // re-read the node's documents list — so `info` reads `.latest`
+  // NON-suspending (kdd/solid-reactivity-pitfalls): a bare `data()` read would
+  // re-suspend the <Suspense> below on every documents refetch and remount the
+  // whole open detail view. `.latest` still suspends until the FIRST load
+  // resolves, so the initial spinner is unchanged; a later refetch keeps the
+  // previous node on screen while the fresh one lands.
+  const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async variables => {
       const result = await graphqlFetch(StocktakeDetail, variables, {
@@ -245,7 +255,7 @@ const StocktakeDetailView: Component = () => {
         : undefined;
     }
   );
-  const info = (): StocktakeInfoFragment | undefined => data();
+  const info = (): StocktakeInfoFragment | undefined => data.latest;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query. Keyed on
   // the SERIALISED variables (a stable string) like the stocktakes LIST, so
@@ -768,12 +778,14 @@ const StocktakeDetailView: Component = () => {
   ]);
 
   return (
-    // Local Suspense boundary: the FIRST read of data() (info()) suspends until
-    // the info fetch lands. Catching it here keeps first-load from tripping the
-    // section fallback and remounting the view (kdd/solid-reactivity-pitfalls).
-    // Every later stocktake-level save is a mutate(), which never suspends, so
-    // this fallback shows only on the initial info fetch. The lines resource is
-    // read non-suspending (.latest), so a lines refetch never trips it.
+    // Local Suspense boundary: the FIRST read of info() (data.latest) suspends
+    // until the info fetch lands. Catching it here keeps first-load from
+    // tripping the section fallback and remounting the view
+    // (kdd/solid-reactivity-pitfalls). Later reads are non-suspending — a
+    // stocktake-level save is a mutate() (never suspends) and a Documents-tab
+    // refetch reads through `.latest` (previous node stays on screen) — so this
+    // fallback shows only on the initial info fetch. The lines resource is
+    // likewise read non-suspending (.latest), so a lines refetch never trips it.
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy — a
           keyed Show would tear down + rebuild on every stocktake-level save
@@ -987,6 +999,18 @@ const StocktakeDetailView: Component = () => {
                     onPageSizeChange: first =>
                       setQuery({ ...query(), first, offset: 0 }),
                   }}
+                />
+              </TabPanel>
+              {/* Documents tab: files attached to this stocktake (OMS parity).
+              Reads the node's `documents` list; upload/delete go through the
+              REST sync-file store and re-read the node (refetchInfo) so the
+              list reflects. Available on any status — documents sit outside the
+              stocktake lifecycle gate. */}
+              <TabPanel value="documents">
+                <StocktakeDocumentsTab
+                  storeId={params.storeId}
+                  node={node()}
+                  onChanged={() => void refetchInfo()}
                 />
               </TabPanel>
               {/* Log tab: the stocktake's activity log — its own query (OMS
