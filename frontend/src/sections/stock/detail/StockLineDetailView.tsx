@@ -342,7 +342,7 @@ const StockLineDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<XCircleIcon />}
-                        data-testid="cancel-button"
+                        data-testid={isDirty() ? 'dialog-button-cancel' : 'dialog-button-close'}
                         onClick={onCancelOrClose}
                       >
                         {isDirty() ? t('button.cancel') : t('button.close')}
@@ -400,12 +400,14 @@ const StockLineDetailView: Component = () => {
                             <LabelledValue
                               variant="field"
                               label={t('label.pack-qty')}
+                              data-testid="field-pack-quantity"
                             >
                               {qtyValue(l().totalNumberOfPacks, sohUnits())}
                             </LabelledValue>
                             <LabelledValue
                               variant="field"
                               label={t('label.available-packs')}
+                              data-testid="field-available-packs"
                             >
                               {qtyValue(
                                 l().availableNumberOfPacks,
@@ -417,12 +419,14 @@ const StockLineDetailView: Component = () => {
                             <LabelledValue
                               variant="field"
                               label={t('label.available-stock')}
+                              data-testid="field-available-stock"
                             >
                               {qtyValue(availUnits(), availUnits())}
                             </LabelledValue>
                             <LabelledValue
                               variant="field"
                               label={t('label.soh')}
+                              data-testid="field-soh"
                             >
                               {qtyValue(sohUnits(), sohUnits())}
                             </LabelledValue>
@@ -432,6 +436,7 @@ const StockLineDetailView: Component = () => {
                         <FormSection title={t('heading.batches-and-dates')}>
                           <TextField
                             label={t('label.batch')}
+                            data-testid="field-batch"
                             width="full"
                             value={edit.batch}
                             onInput={e =>
@@ -440,6 +445,7 @@ const StockLineDetailView: Component = () => {
                           />
                           <TextField
                             label={t('label.barcode')}
+                            data-testid="field-barcode"
                             width="full"
                             value={edit.barcode}
                             onInput={e =>
@@ -449,12 +455,14 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <DateField
                               label={t('label.expiry-date')}
+                              testId="field-expiry-date"
                               width="full"
                               value={edit.expiryDate}
                               onChange={v => setEdit('expiryDate', v)}
                             />
                             <DateField
                               label={t('label.manufacture-date')}
+                              testId="field-manufacture-date"
                               width="full"
                               max={localTodayIso()}
                               value={edit.manufactureDate}
@@ -467,6 +475,7 @@ const StockLineDetailView: Component = () => {
                             <LabelledValue
                               variant="field"
                               label={t('label.vvm-status')}
+                              data-testid="field-vvm-status"
                             >
                               {l().vvmStatus?.description ?? '—'}
                             </LabelledValue>
@@ -477,6 +486,7 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <CurrencyField
                               label={t('label.cost-price')}
+                              data-testid="field-cost-price"
                               width="full"
                               value={edit.costPricePerPack}
                               onChange={v =>
@@ -485,6 +495,7 @@ const StockLineDetailView: Component = () => {
                             />
                             <CurrencyField
                               label={t('label.sell-price')}
+                              data-testid="field-sell-price"
                               width="full"
                               value={edit.sellPricePerPack}
                               onChange={v =>
@@ -499,6 +510,7 @@ const StockLineDetailView: Component = () => {
                         <FormSection title={t('heading.storage-and-pack')}>
                           <LocationSelect
                             label={t('label.location')}
+                            inputTestId="field-location"
                             locations={locations()}
                             loading={allLocations.loading}
                             value={edit.location?.id}
@@ -520,11 +532,13 @@ const StockLineDetailView: Component = () => {
                             <LabelledValue
                               variant="field"
                               label={t('label.pack-size')}
+                              data-testid="field-pack-size"
                             >
                               {formatNumber(l().packSize)}
                             </LabelledValue>
                             <Checkbox
                               label={t('label.on-hold')}
+                              testId="field-on-hold"
                               checked={edit.onHold}
                               onChange={v => setEdit('onHold', v)}
                             />
@@ -532,6 +546,7 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <NumberField
                               label={t('label.volume-per-pack')}
+                              data-testid="field-volume-per-pack"
                               width="full"
                               decimalLimit={10}
                               value={edit.volumePerPack}
@@ -544,6 +559,7 @@ const StockLineDetailView: Component = () => {
                             <LabelledValue
                               variant="field"
                               label={t('label.total-volume')}
+                              data-testid="field-total-volume"
                             >
                               {formatNumber(
                                 totalVolume(
@@ -558,6 +574,7 @@ const StockLineDetailView: Component = () => {
                         <FormSection title={t('heading.supply-chain')}>
                           <NameSearch
                             label={t('label.manufacturer')}
+                            inputTestId="field-manufacturer"
                             storeId={params.storeId}
                             role="manufacturer"
                             selected={
@@ -591,6 +608,7 @@ const StockLineDetailView: Component = () => {
                             <Show when={prefs().allowTrackingOfStockByDonor}>
                               <NameSearch
                                 label={t('label.donor')}
+                                inputTestId="field-donor"
                                 storeId={params.storeId}
                                 role="donor"
                                 selected={
@@ -615,6 +633,7 @@ const StockLineDetailView: Component = () => {
                             </Show>
                             <CampaignOrProgramSelect
                               label={t('label.campaign')}
+                              inputTestId="field-campaign-or-program"
                               storeId={params.storeId}
                               itemId={l().itemId}
                               campaignId={edit.campaignId ?? undefined}

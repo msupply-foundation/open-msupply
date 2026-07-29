@@ -33,6 +33,8 @@ export interface LocationSelectProps {
    * that focuses it after an action (e.g. a dialog opening on it).
    */
   focusTarget?: FocusTarget;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
 }
 
 /*
@@ -63,6 +65,7 @@ export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
     error={props.error}
     placeholder={props.placeholder}
     focusTarget={props.focusTarget}
+    inputTestId={props.inputTestId}
     onChange={l => props.onChange(l)}
     // Let the popup grow past a narrow field so a location's code + name stays
     // readable rather than truncating to the field width.
