@@ -57,9 +57,9 @@ import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 // standard list screen over the invoices query pinned to CUSTOMER_RETURN.
 // Columns Name (+ colour swatch) / Status / Number / Created date / Comment /
 // Reference; filters name + status; default sort created date, newest first
-// (AC-L1/L2); bulk Delete on selection (AC-D1). "New return" opens the customer
+// (OMS-REG-DIST-07.32/.33); bulk Delete on selection (.30). "New return" opens the customer
 // selection (S2) — gated by the disable-manual-returns preference, which is a
-// UI-only affordance gate (AC-C3).
+// UI-only affordance gate (OMS-REG-DIST-07.14).
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -79,7 +79,7 @@ type ReturnsListState = {
   first: number;
 };
 
-// Default sort: created date, newest first (AC-L2; matches the running app).
+// Default sort: created date, newest first (OMS-REG-DIST-07.33; matches the running app).
 const DEFAULT_STATE: ReturnsListState = {
   filter: {},
   sort: [{ key: 'createdDatetime', desc: true }],
@@ -109,7 +109,7 @@ const CustomerReturnsList: Component = () => {
   const { query, setQuery } = useUrlQueryState<ReturnsListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
-  // The disable-manual-returns notice (AC-C3): shown instead of the customer
+  // The disable-manual-returns notice (OMS-REG-DIST-07.14): shown instead of the customer
   // selection when the store preference is on.
   const [disabledNoticeOpen, setDisabledNoticeOpen] = createSignal(false);
 
@@ -168,7 +168,7 @@ const CustomerReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
-  // The store preferences this list keys off (AC-C3): fetched once per store.
+  // The store preferences this list keys off (OMS-REG-DIST-07.14): fetched once per store.
   // `.latest` + undefined-tolerant read — while unresolved, treat manual
   // returns as ENABLED (the common case; flashing the notice would be the
   // wrong direction).
@@ -344,7 +344,7 @@ const CustomerReturnsList: Component = () => {
             >
               {t('button.new-return')}
             </Button>
-            {/* Export CSV / Excel (ui-surface S1, AC-L4): every return matching
+            {/* Export CSV / Excel (ui-surface S1, OMS-REG-DIST-07.35): every return matching
                 the active filter, across all pages. */}
             <ExportCustomerReturnsAction
               storeId={params.storeId}
@@ -434,7 +434,7 @@ const CustomerReturnsList: Component = () => {
         open={createOpen()}
         onClose={() => setCreateOpen(false)}
       />
-      {/* The manual-returns-disabled notice (AC-C3): an info-only dialog in
+      {/* The manual-returns-disabled notice (OMS-REG-DIST-07.14): an info-only dialog in
           place of the create flow while the store preference is on. */}
       <Dialog
         open={disabledNoticeOpen()}

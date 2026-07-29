@@ -104,7 +104,7 @@ export const quantityColumns = (
   },
   {
     // Quantity returned: min 0; capped at packs issued where known — a
-    // UI-only cap (rules § creation; AC-E5).
+    // UI-only cap (rules § creation; OMS-REG-DIST-07.23).
     c: { key: 'numberOfPacksReturned' },
     header: () => t('label.quantity-returned'),
     ...getNumberCell(),
@@ -153,7 +153,7 @@ export const quantityColumns = (
 
 // ---- Step 2: the reason grid — only lines with quantity (ui-surface S4 §
 // step 2). Reason optional; options are the active RETURN reasons (rules §
-// line rules, AC-E4). ----
+// line rules, OMS-REG-DIST-07.22). ----
 export const reasonColumns = (
   update: UpdateLine
 ): Column<DraftReturnLine, never>[] => [

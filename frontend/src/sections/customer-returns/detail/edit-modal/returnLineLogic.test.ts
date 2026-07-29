@@ -11,9 +11,10 @@ import {
 } from './returnLineLogic';
 
 // Draft/upsert semantics for the return-items modal
-// (spec/customer-returns/rules.md § line rules; acceptance.md AC-* cited per
-// test). These mirror the SERVER's upsert-by-quantity semantics client-side —
-// the wire assertions live with AC-E1's real-backend leg.
+// (spec/customer-returns/rules.md § line rules; cases/OMS-REG-DIST-07
+// behaviour IDs cited per test). These mirror the SERVER's upsert-by-quantity
+// semantics client-side —
+// the wire assertions live with OMS-REG-DIST-07.19's real-backend leg.
 
 const draft = (over: Partial<DraftReturnLine> = {}): DraftReturnLine => ({
   id: 'l1',
@@ -33,7 +34,7 @@ const draft = (over: Partial<DraftReturnLine> = {}): DraftReturnLine => ({
   ...over,
 });
 
-describe('toLineInputs — the upsert batch set (AC-E1)', () => {
+describe('toLineInputs — the upsert batch set (OMS-REG-DIST-07.19)', () => {
   it('sends quantity > 0 lines, keeps zeroed EXISTING lines (deletes), drops zeroed NEW lines', () => {
     const inputs = toLineInputs([
       draft({ id: 'keep', numberOfPacksReturned: 2 }),
@@ -77,7 +78,7 @@ describe('validateStep1 — the quantity-step gates', () => {
     expect(validateStep1([draft(), draft({ id: 'l2' })])).toBe('no-quantity');
   });
 
-  // AC-E3's UI half — pack size ≥ 1 for RETURNED lines only; a zeroed line's
+  // OMS-REG-DIST-07.21's UI half — pack size ≥ 1 for RETURNED lines only; a zeroed line's
   // pack size never blocks (it won't persist).
   it('rejects a returned line with pack size below one', () => {
     expect(
@@ -92,7 +93,7 @@ describe('validateStep1 — the quantity-step gates', () => {
   });
 });
 
-describe('existingLinesBeingRemoved — the destructive-save warning (AC-E2)', () => {
+describe('existingLinesBeingRemoved — the destructive-save warning (OMS-REG-DIST-07.20)', () => {
   it('is empty when nothing to return is all NEW (a create-mode block, not a delete)', () => {
     expect(existingLinesBeingRemoved([draft(), draft({ id: 'l2' })])).toEqual(
       []
@@ -119,7 +120,7 @@ describe('existingLinesBeingRemoved — the destructive-save warning (AC-E2)', (
   });
 });
 
-describe('clampQuantity — the UI-only returned ≤ issued cap (AC-E5)', () => {
+describe('clampQuantity — the UI-only returned ≤ issued cap (OMS-REG-DIST-07.23)', () => {
   it('caps at packs issued when known, floors at zero, uncapped otherwise', () => {
     expect(clampQuantity(7, 5)).toBe(5);
     expect(clampQuantity(3, 5)).toBe(3);

@@ -17,7 +17,7 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 // hover) · spacer · Close · the status-advance split button. Shown only when
 // nothing is selected — the selection action bar replaces it.
 //
-// Hold is a soft pause on status change only (rules § header; AC-S5): the
+// Hold is a soft pause on status change only (rules § header; OMS-REG-DIST-07.7): the
 // toggle stays available while the return is editable, confirms before
 // flipping, and the messages flip with direction.
 
@@ -26,7 +26,7 @@ export interface CustomerReturnStatusFooterProps {
   node: CustomerReturnInfoFragment;
   /** The standing editability gate (rules § editability). */
   disabled: boolean;
-  /** ≥1 line (gates the advance — AC-S4). */
+  /** ≥1 line (gates the advance — OMS-REG-DIST-07.27). */
   hasLines: boolean;
   /** The invoice-status-options preference (empty = no restriction). */
   statusOptions: readonly string[];
@@ -87,7 +87,7 @@ export const CustomerReturnStatusFooter: Component<
         />
       </ContentFooterActions>
 
-      {/* Hold confirm: message flips with direction (AC-S5's reversible pause;
+      {/* Hold confirm: message flips with direction (OMS-REG-DIST-07.7's reversible pause;
           the copy is the current app's on/off-hold confirmations). */}
       <ConfirmDialog
         open={holdConfirm()}

@@ -20,7 +20,7 @@ import {
 } from '../customerReturns.generated';
 import { customerReturnsToCsv } from '../customerReturnsToCsv';
 
-// The customer-returns list Export action (spec/customer-returns S1, AC-L4): a
+// The customer-returns list Export action (spec/customer-returns S1, OMS-REG-DIST-07.35): a
 // split button offering CSV or Excel, exporting EVERY return matching the
 // current filter (all pages, newest first). CSV downloads directly; Excel
 // round-trips the CSV through the server's csvToExcel converter, then downloads

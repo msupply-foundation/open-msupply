@@ -37,7 +37,7 @@ import { quantityColumns, reasonColumns } from './returnLineColumns';
 // S4 — the return-items modal (spec/customer-returns/ui-surface.md S4): the
 // single surface for entering what comes back, per item on an existing return.
 // A two-step wizard — Select quantity → Select reason — over a draft store;
-// one save upserts the item's whole batch set (rules § line rules, AC-E1–E4).
+// one save upserts the item's whole batch set (rules § line rules, OMS-REG-DIST-07.19–.22).
 //
 // The from-shipment flow (outboundShipmentLineIds) has no entry point until
 // the outbound-shipments section exists — this modal covers the per-item
@@ -126,7 +126,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   const [message, setMessage] = createSignal<
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
-  // Edit mode's confirm-to-remove path (AC-E2): proceeding at zero quantity
+  // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.20): proceeding at zero quantity
   // warns once; the next OK applies the removal.
   const [zeroConfirmed, setZeroConfirmed] = createSignal(false);
   const [currentItem, setCurrentItem] = createSignal<ReturnItem>();
@@ -219,13 +219,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     );
   };
 
-  // Step-1 gating (ui-surface S4; AC-E2/E3's UI half):
+  // Step-1 gating (ui-surface S4; OMS-REG-DIST-07.20/.21's UI half):
   // - a returned line's pack size below one blocks;
   // - nothing to return AND nothing to delete → create-mode block;
   // - any EXISTING line zeroed → the save DELETES it, so warn-then-confirm —
   //   including the mixed case (other lines still carry quantity), where the
   //   zeroed line never reaches the reason step and would otherwise be removed
-  //   silently (AC-E2).
+  //   silently (OMS-REG-DIST-07.20).
   const gateStep1 = (): boolean => {
     const drafts = draft.slice();
     if (validateStep1(drafts) === 'invalid-pack-size') {

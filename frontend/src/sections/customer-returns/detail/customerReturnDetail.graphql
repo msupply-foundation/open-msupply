@@ -184,7 +184,7 @@ query generateCustomerReturnLines(
   }
 }
 
-# The Log tab (spec/customer-returns/acceptance.md AC-G1): the return's activity
+# The Log tab (spec/customer-returns/cases OMS-REG-DIST-07.36): the return's activity
 # history — creation, status changes, deletion — keyed by recordId. Sorted
 # client-side by datetime (no server sort dependency).
 query customerReturnLog($storeId: String!, $recordId: String!) {

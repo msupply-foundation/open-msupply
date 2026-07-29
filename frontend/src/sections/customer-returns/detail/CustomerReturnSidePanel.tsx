@@ -32,7 +32,7 @@ import type { ReturnFieldEdit } from './returnEdit';
 // Additional info (edited-by / colour / comment) and Related documents (the
 // originating outbound shipment, when there is one) are collapsible info
 // sections (open by default); the record actions — Delete (offered only while
-// NEW — rules § deletion, AC-D3) and Copy to clipboard — are pinned at the
+// NEW — rules § deletion) and Copy to clipboard — are pinned at the
 // panel's end, below them.
 
 export interface CustomerReturnSidePanelProps {
@@ -52,8 +52,8 @@ export const CustomerReturnSidePanel: Component<
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string>();
 
-  // Delete is offered only while NEW (AC-D3 — the UI's conservative gate; the
-  // server's own rule is "until VERIFIED", asserted separately by AC-D1/D2),
+  // Delete is offered only while NEW (rules § deletion — the UI's conservative gate; the
+  // server's own rule is "until VERIFIED", asserted separately by OMS-REG-DIST-07.30/.31),
   // and never on a read-only return — a transfer return at NEW is still in the
   // sender's hands (isReturnDisabled), so it must share the standing gate every
   // other affordance respects rather than keying off status alone.

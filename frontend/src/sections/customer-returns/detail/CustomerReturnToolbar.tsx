@@ -15,7 +15,7 @@ import styles from './CustomerReturnToolbar.module.css';
 // The customer is changeable only while the return is editable AND manual
 // (a transfer return's customer is the sending store); a change re-runs the
 // customer checks and its typed rejections surface inline on the lookup
-// (AC-C2 / AC-E6).
+// (OMS-REG-DIST-07.13/.24).
 
 export interface CustomerReturnToolbarProps {
   storeId: string;
@@ -82,7 +82,7 @@ export const CustomerReturnToolbar: Component<
       </Stack>
       {/* The kind banner (rules § manual vs transfer): manual returns don't
           track delivery automatically; a transfer return explains why editing
-          waits until it is received (AC-T1). */}
+          waits until it is received (OMS-REG-DIST-07.37). */}
       <Show
         when={kind() === 'transfer'}
         fallback={
