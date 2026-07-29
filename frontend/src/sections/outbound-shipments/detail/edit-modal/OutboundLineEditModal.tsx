@@ -66,13 +66,13 @@ import { issueWarningMessages } from './allocationWarnings';
 // server-computed draft (draftStockOutLines: one row per batch with
 // available/in-store packs + the item's existing lines pre-filled); entry in
 // the Issue field auto-distributes FEFO client-side (AC-AL1's manual-entry
-// face), per-batch packs are directly editable bounded 0…available (AC-I5),
-// and quantity beyond available becomes the placeholder while NEW (AC-P1/P3).
-// Save is the item-set save (saveOutboundShipmentItemLines, AC-I6): lines +
+// face), per-batch packs are directly editable bounded 0…available (OMS-REG-DIST-03.19),
+// and quantity beyond available becomes the placeholder while NEW (OMS-REG-DIST-03.23/.9).
+// Save is the item-set save (saveOutboundShipmentItemLines, OMS-REG-DIST-03.20): lines +
 // placeholder in one call; every rejection is a non-typed GraphQL error
 // (contract wire trap) surfaced in the footer.
 //
-// Two modes (spec S4, AC-V6..V8): 'update' (opened from a row — the picker
+// Two modes (spec S4, OMS-REG-DIST-03.31..33): 'update' (opened from a row — the picker
 // locks, the clicked batch is scrolled into view + focused, and "OK & next"
 // walks the parent's sorted/paginated line list via the parent-owned
 // nextItem) and 'add' ("Add item", or fallen into when the walk runs out —
@@ -119,7 +119,7 @@ interface OutboundLineEditModalProps {
   initialItem?: LineEditItem;
   /**
    * The clicked LINE id for a row-click open — the editor scrolls its batch
-   * into view and focuses its packs input (AC-V6; draft rows built from
+   * into view and focuses its packs input (OMS-REG-DIST-03.31; draft rows built from
    * existing lines keep the invoice-line id). Omitted for "Add item"; a
    * clicked placeholder row has no batch row, so the Issue field is focused.
    */
@@ -228,7 +228,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // batches + placeholder). The ONE seed path — sequential imperative fetch,
   // not a resource (issue #428's "do things sequential"): on mount (update
   // mode), on item pick (add mode), and on an "OK & next" advance.
-  // `focusLineId` is the clicked batch to scroll/focus once loaded (AC-V6);
+  // `focusLineId` is the clicked batch to scroll/focus once loaded (OMS-REG-DIST-03.31);
   // omitted → the first batch row (an advance), undefined row → Issue field.
   const seedItem = async (picked: LineEditItem, focusLineId?: string) => {
     setItem(picked);
@@ -290,14 +290,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // rows from existing lines keep the invoice-line id), or the first row on
     // an advance. A clicked PLACEHOLDER has no batch row of its own, and an
     // add-mode pick has no clicked row at all — both land on the Issue field
-    // (AC-V6).
+    // (OMS-REG-DIST-03.31).
     const rowId =
       mode() === 'update' ? (focusLineId ?? sorted[0]?.id) : undefined;
     if (rowId) batchFields.focus(rowId);
     else issueField.focus();
     setLoadingLines(false);
 
-    // Auto-allocate on open (AC-A5): a NEW shipment's *pure* placeholder — an
+    // Auto-allocate on open (OMS-REG-DIST-03.26): a NEW shipment's *pure* placeholder — an
     // item carrying a requested quantity with nothing yet allocated — is
     // distributed against available stock the moment the editor opens, the
     // same FEFO run the Issue field performs (seeded with the requested
@@ -501,7 +501,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     distribute(units ?? 0);
   };
 
-  // Direct per-batch edit (AC-I5/AC-AL6): whole packs — a fractional entry
+  // Direct per-batch edit (OMS-REG-DIST-03.19/AC-AL6): whole packs — a fractional entry
   // rounds UP, an entry beyond availability clamps DOWN to the whole-pack
   // floor (rules.md § whole-pack arithmetic). An adjusted entry is reported
   // (AC-AL13), and any earlier distribution banners are REPLACED — they
@@ -528,7 +528,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setZeroConfirm(false);
   };
 
-  // The received count (AC-I8): the packs the destination reported for this
+  // The received count (OMS-REG-DIST-03.21): the packs the destination reported for this
   // batch row — blank (null) until recorded, clearable back to blank. The
   // Difference column derives from it in place; nothing re-distributes.
   const setReceived = (id: string, value: number | null) => {
@@ -553,7 +553,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           // The full set, zeros included — the item-set save replaces the
           // item's lines (zero packs removes an existing line), and the
           // explicit placeholder quantity creates/updates/deletes the
-          // placeholder to match (AC-I6). Received counts and variance
+          // placeholder to match (OMS-REG-DIST-03.20). Received counts and variance
           // reasons are echoed through (see ./saveLineInputs).
           lines: toSaveLineInputs(draft),
           placeholderQuantity: placeholderUnits(),
@@ -589,7 +589,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       });
     });
 
-  // OK & next (spec S4, AC-V7): save, then continue rapid entry — never a
+  // OK & next (spec S4, OMS-REG-DIST-03.32): save, then continue rapid entry — never a
   // dead end (matching the stocktake / inbound editors, so never disabled):
   // - UPDATE mode: ask the parent for the next item in its sorted/paginated
   //   order (the covered set guards repeats) and seed it in place; when the
@@ -755,7 +755,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...getNumberCell(),
     },
     {
-      // Packs issued from this batch (AC-I5), bounded 0…available.
+      // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available.
       c: { key: 'numberOfPacks' },
       header: () => t('label.issued'),
       meta: { align: 'right' },
@@ -792,7 +792,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         );
       },
     },
-    // Received count + derived difference (AC-I8) — non-store customers only
+    // Received count + derived difference (OMS-REG-DIST-03.21) — non-store customers only
     // (a transfer's counts mirror back from the receiving side). Blank until
     // the destination's count is recorded; disabled on the same rows the
     // Packs-issued cell is.
@@ -902,7 +902,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           in update mode. `selectedItem` labels the current value when it isn't
           in the search's own paginated results (a row-click open / walk
           advance). Clearing (×) returns to the empty search state — like an
-          add-mode item switch, unsaved edits are discarded (AC-V8). */}
+          add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
       <ItemSearch
         label={t('label.item')}
         storeId={props.storeId}
