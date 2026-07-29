@@ -12,6 +12,14 @@
   min-width: 0;
 }
 
+/* The label + its labelInfo affordance on one line (only rendered when there
+   IS a labelInfo — as TextField.module.css). The icon aligns to the box, not
+   the middle of a wrapped label. */
+.labelRow {
+  display: flex;
+  align-items: flex-start;
+}
+
 .root {
   display: flex;
   align-items: flex-start;

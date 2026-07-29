@@ -222,8 +222,10 @@ A detail page's **header fields** — a document's editable + read-only meta (su
 
 - **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and **`width="full"`** so it fills its share.
 - **The three field kinds:** an editable input; a conditionally-locked **disabled** input (a field editable only in some document states); and a never-editable fact as a read-only **`<LabelledValue>`** (`variant="field"`, `size="small"`).
-- The optional **`alert`** prop takes a compact **`<Alert>`** — a content-hugging chip pinned to the bottom baseline, so it rides the row when there's room and drops to its own line when not, while the field labels line up along the top. A non-Alert trailing chip (e.g. a `<ToggleSwitch>`) opts into the same bottom-hug with an inline `flex: 0 1 auto; align-self: flex-end`.
-- Live demo: `#/showcase/header` (two field mixes).
+- The optional **`alert`** prop takes a compact **`<Alert>`** — a content-hugging chip pinned to the bottom baseline, so it rides the row when there's room and drops to its own line when not, while the field labels line up along the top. It must be `compact`: a full-width Alert takes an equal share of the row like a field. A non-Alert trailing chip (e.g. a `<ToggleSwitch>`) opts into the same bottom-hug with an inline `flex: 0 1 auto; align-self: flex-end`.
+- A **standing explanation** for a field (why it's disabled) belongs on its label as an `<InfoTooltip>` via the input's `labelInfo` slot — carried by every labelled input and selector, so the affordance is the same whatever the field is — not as `helperText`, which as a two- or three-line paragraph drags the whole strip taller than the field it explains. Keep `helperText` for text that must always be read.
+- A field's own **`error`** (the `DateField`'s, say) stays inside the field, never a sibling Alert: the message extends its own field downward and leaves the rest of the row where it was.
+- Live demo: `#/showcase/header` (three field mixes).
 
 ## The host (until routing lands)
 

@@ -90,10 +90,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   const [itemId, setItemId] = createSignal(props.initialItemId);
   const isEdit = props.initialItemId != null;
-  // Add mode opens on the item lookup — the editor's starting control. In edit
-  // mode the lookup is locked to the row's item and the dialog keeps the panel
-  // default (ui-standards › accessibility › keyboard).
+  // The two named focus destinations, the same rule the outbound editor
+  // follows: nothing picked → the item lookup; an item loaded → Issue, the
+  // quantity the user came to type. Add mode opens on the lookup; in edit mode
+  // it is locked to the row's item, so the open lands on Issue instead
+  // (ui-surface S4, overriding ui-standards › accessibility › keyboard's
+  // "a dialog focuses itself, not its first field").
   const itemSearch = createFocusTarget();
+  const issueField = createFocusTarget();
 
   const [lines, setLines] = createStore<DraftLine[]>([]);
   const [itemInfo, setItemInfo] = createSignal<ItemInfo>();
@@ -132,6 +136,11 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     setIssueUnits(undefined);
     setShortfall(0);
     setDirty(false);
+    // Land ready to type: with the item's grid in hand, Issue is the next
+    // field. Armed here rather than gated on a load flag — Issue is inert
+    // while the fetch is in flight, and the handle's frame runs after this
+    // promise settles and Solid has re-rendered the enabled field.
+    issueField.focus();
     return result.data;
   });
 
@@ -258,6 +267,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     setIssueUnits(undefined);
     setShortfall(0);
     setDirty(false);
+    // Back to the empty picker, so the caret goes back with it and the next
+    // item is typed straight in.
+    itemSearch.focus();
   };
 
   const columns = createMemo((): Column<DraftLine, never>[] => {
@@ -431,6 +443,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             label={t('label.issue')}
             hideLabel
             data-testid="issue-field"
+            ref={issueField.ref}
             value={issueUnits()}
             min={0}
             decimalLimit={0}

@@ -165,6 +165,13 @@ interface ComboboxProps<T> {
    */
   hideLabel?: boolean;
   /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept outside the label element so it
+   * isn't part of the control's accessible name. Ignored under `hideLabel`.
+   * As TextField.
+   */
+  labelInfo?: JSX.Element;
+  /**
    * Content pinned at the TOP of the open listbox popup, above the options — a
    * sticky in-dropdown header for controls that scope the list (e.g. the
    * location picker's fullness filter). Interacting with it keeps the popup open
@@ -341,6 +348,21 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       props.onReachEnd?.();
   };
 
+  // The label element itself (text + required asterisk). A local component so
+  // it renders fresh in either branch (bare, or beside labelInfo) — reusing
+  // one JSX node across both would try to mount it in two places. As
+  // TextField.
+  const Label = () => (
+    <KCombobox.Label class={styles.label}>
+      {props.label}
+      <Show when={props.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </KCombobox.Label>
+  );
+
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
@@ -385,14 +407,15 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           the label the surrounding layout (a FieldRow) already shows (a hidden
           twin trips strict text-locator matches in the shared e2e suites). */}
       <Show when={!props.hideLabel}>
-        <KCombobox.Label class={styles.label}>
-          {props.label}
-          <Show when={props.required}>
-            <span class={styles.required} aria-hidden="true">
-              *
-            </span>
-          </Show>
-        </KCombobox.Label>
+        <Show when={props.labelInfo} fallback={<Label />}>
+          {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in
+              it its accessible name would leak into the input's (the
+              name-from-label computation concatenates descendant controls). */}
+          <span class={styles.labelRow}>
+            <Label />
+            {props.labelInfo}
+          </span>
+        </Show>
       </Show>
       <KCombobox.Control
         class={styles.control}

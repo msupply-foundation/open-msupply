@@ -19,6 +19,7 @@ import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '../../../domain/item';
 import { LocationSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
@@ -119,12 +120,16 @@ const NewStockContent = (props: {
   const [draft, setDraft] = createStore<Draft>({ ...EMPTY_DRAFT });
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
+  // Item-first: the modal always opens with nothing picked, so the flow starts
+  // by typing (spec S3).
+  const itemSearch = createFocusTarget();
 
   const prefs = () => stockPreferences();
   const today = localTodayIso();
 
-  // The chosen item's defaults + variants (spec S3: seed pack size + sell price;
-  // offer variants). Keyed on the item id; undefined until an item is picked.
+  // The chosen item's defaults + variants (spec S3: seed pack size + sell
+  // price; offer variants). Keyed on the item id; undefined until an item is
+  // picked.
   const [itemDetail] = createResource(
     () => item()?.id,
     async itemId => {
@@ -265,6 +270,7 @@ const NewStockContent = (props: {
       dismissable={!saving()}
       size="large"
       testId="new-stock-modal"
+      initialFocus={itemSearch}
       title={t('heading.stock-line-details')}
       actionsLead={
         <Show when={error()}>
@@ -302,6 +308,7 @@ const NewStockContent = (props: {
               label={t('label.item')}
               required
               storeId={props.storeId}
+              focusTarget={itemSearch}
               value={item()?.id}
               selectedItem={item()}
               onSelect={picked => {

@@ -1,4 +1,10 @@
-import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  on,
+  type JSX,
+} from 'solid-js';
 import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
@@ -34,13 +40,22 @@ export interface DateFieldProps {
   format?: string;
   helperText?: string;
   error?: string;
+  /**
+   * An affordance rendered inline after the label text (an InfoTooltip) — for a
+   * standing explanation, e.g. why the field is disabled, that would drag a
+   * dense row taller as `helperText`. See FieldShell.
+   */
+  labelInfo?: JSX.Element;
   required?: boolean;
   disabled?: boolean;
   size?: 'default' | 'small';
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
   id?: string;
-  /** `data-testid` for the typed-entry text input (locale-stable test hook, e2e/TESTIDS.md). */
+  /**
+   * `data-testid` for the typed-entry text input (locale-stable test hook,
+   * e2e/TESTIDS.md).
+   */
   testId?: string;
 }
 
@@ -51,9 +66,9 @@ export interface DateFieldProps {
  * in every browser. Both display and typed parsing follow the `format` prop.
  *
  * Value IS the wire value: a plain ISO `YYYY-MM-DD` (schema `Date`, no
- * timezone) passes straight through. Typed text is parsed on blur/Enter (invalid
- * input reverts to the last value); picking from the calendar sets it too;
- * clearing emits null. `min`/`max` make out-of-range days unselectable.
+ * timezone) passes straight through. Typed text is parsed on blur/Enter
+ * (invalid input reverts to the last value); picking from the calendar sets it
+ * too; clearing emits null. `min`/`max` make out-of-range days unselectable.
  */
 export const DateField = (props: DateFieldProps) => {
   const autoId = createUniqueId();
@@ -111,6 +126,7 @@ export const DateField = (props: DateFieldProps) => {
       required={props.required}
       error={props.error}
       helperText={props.helperText}
+      labelInfo={props.labelInfo}
       controlId={id()}
     >
       {({ describedBy, invalid }) => (
