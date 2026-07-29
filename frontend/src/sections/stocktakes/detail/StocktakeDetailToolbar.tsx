@@ -49,7 +49,7 @@ export const StocktakeDetailToolbar: Component<
     >
       <TextField
         label={t('heading.description')}
-        width="full"
+        width="long"
         data-testid="description-field"
         value={props.edit.state.description}
         disabled={props.disabled}
