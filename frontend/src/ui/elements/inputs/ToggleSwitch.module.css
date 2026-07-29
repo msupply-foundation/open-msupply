@@ -5,6 +5,14 @@
  * focus outline + the thumb's shadow offsets, already px in the token).
  */
 
+/* The label + its labelInfo affordance on one line. Only rendered when there
+   IS a labelInfo, and it then BECOMES the root (as TextField.module.css) —
+   inline-flex so the toggle keeps hugging its content either way. */
+.labelRow {
+  display: inline-flex;
+  align-items: center;
+}
+
 .root {
   display: inline-flex;
   align-items: center;
