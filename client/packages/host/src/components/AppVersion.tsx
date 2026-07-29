@@ -11,9 +11,11 @@ const appVersion = require('../../../../../package.json').version; // eslint-dis
 interface AppVersionProps {
   SiteInfo?: React.ReactNode;
   style?: CSSProperties;
+  /** data-testid for the version line (e.g. 'login-version' on the login page) */
+  testId?: string;
 }
 
-export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
+export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style, testId }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
@@ -31,7 +33,9 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
             <Typography fontWeight={700}>{t('label.app-version')}</Typography>
           </Grid>
           <Grid>
-            <Typography whiteSpace="nowrap">{appVersion}</Typography>
+            <Typography whiteSpace="nowrap" data-testid={testId}>
+              {appVersion}
+            </Typography>
           </Grid>
         </Grid>
         {isCentralServer && (
