@@ -48,8 +48,21 @@ export default defineConfig(({ mode }) => ({
   plugins: [solid()],
   // "@/x" → src/x. Keep in sync with tsconfig.app.json "paths" and
   // vitest.config.ts (the showcase config inherits it via mergeConfig).
+  //
+  // "@openmsupply/plugin-sdk" is the ONLY module a frontend plugin may import
+  // besides solid-js (spec/plugins/sdk-contract.md). Aliasing it here is what
+  // makes a dev-linked in-repo plugin compile against the host's live SDK with
+  // no build step; the standalone plugin build (vite.plugin.config.ts) leaves
+  // it EXTERNAL instead, so a deployable bundle resolves it through the host's
+  // import map at runtime. Mirrored in tsconfig.plugins.json "paths".
   resolve: {
-    alias: { '@': new URL('./src', import.meta.url).pathname },
+    alias: {
+      '@': new URL('./src', import.meta.url).pathname,
+      '@openmsupply/plugin-sdk': new URL(
+        './src/plugins/sdk/index.ts',
+        import.meta.url
+      ).pathname,
+    },
   },
   // Lets the same build be mounted at a non-root path (the component
   // showcase's /showcase/ track, deploy/build-and-deploy.sh) — Vite rewrites
@@ -61,6 +74,15 @@ export default defineConfig(({ mode }) => ({
       mode === 'production' ? String(Date.now()) : 'dev'
     ),
     APP_VERSION: JSON.stringify(appVersion()),
+    // The in-repo plugins to dev-link into the host module graph:
+    // `DEV_PLUGINS=civ pnpm dev` loads plugins/civ/src/plugin.tsx directly,
+    // with one solid-js, the real SDK, and HMR — no build, no import map
+    // (src/plugins/loader.ts). Always '' in a production build, so the dev-link
+    // branch and every plugin source behind it are eliminated
+    // (scripts/check-plugin-bundle.mjs proves it per build).
+    DEV_PLUGINS: JSON.stringify(
+      mode === 'production' ? '' : process.env.DEV_PLUGINS || ''
+    ),
   },
   server: {
     port: Number(process.env.DEV_SERVER_PORT) || 3005,
@@ -86,6 +108,14 @@ export default defineConfig(({ mode }) => ({
       },
       // Dispensing-label printing (prescriptions) — a REST endpoint.
       '/print': {
+        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Installed frontend plugin bundles, served by the server at
+      // /frontend_plugins/{code}/{entry}?v={hash} — proxied so the PRODUCTION
+      // load path (discover → fetch → evaluate) can be exercised against a real
+      // server in dev, not only the dev-link path.
+      '/frontend_plugins': {
         target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
