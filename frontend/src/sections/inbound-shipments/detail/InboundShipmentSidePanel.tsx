@@ -1,4 +1,5 @@
 import {
+  createMemo,
   createResource,
   createSignal,
   For,
@@ -47,6 +48,14 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 export interface InboundShipmentSidePanelProps {
   storeId: string;
   node: InboundInfoFragment;
+  /**
+   * Whether the details panel is actually SHOWING. The Page frame keeps panel
+   * content mounted and merely parks it off-frame while closed (so panel state
+   * survives open/close — kdd/state-management → no remounts), which means a
+   * resource created here would otherwise fetch on every detail load even for a
+   * panel nobody opened. The service-charge lines arm their fetch on this.
+   */
+  open: boolean;
   /** True once Verified (global edit lock). */
   disabled: boolean;
   /**
@@ -96,20 +105,42 @@ export const InboundShipmentSidePanel: Component<
   // The itemised service lines feeding the Charges → Service charges block.
   // Re-read when the service-line modal saves or the service tax rate changes
   // (bump the version); pricing totals come from the node via onRefetch.
+  //
+  // Fetched on the FIRST open of the panel, then held (kdd/state-management →
+  // data needed only sometimes). The Page frame keeps this content mounted and
+  // merely parks it off-frame while closed, so without the latch every detail
+  // load would pay for a query nobody looked at. The latch never lowers:
+  // closing the panel is not a refresh gesture, and every edit that can change
+  // these lines already bumps the version below, so a re-read on reopen would
+  // buy nothing. `undefined` disables the fetch; `0` is a legitimate version.
   const [serviceVersion, setServiceVersion] = createSignal(0);
-  const [serviceLines] = createResource(serviceVersion, async () => {
-    const result = await graphqlFetch(InboundServiceLines, {
-      storeId: props.storeId,
-      filter: {
-        invoiceId: { equalTo: props.node.id },
-        type: { equalTo: 'SERVICE' },
-      },
-    });
-    return result.kind === 'success' &&
-      result.data.invoiceLines.__typename === 'InvoiceLineConnector'
-      ? result.data.invoiceLines.nodes
+  const everOpened = createMemo(prev => prev || props.open, false);
+  const [serviceLines] = createResource(
+    () => (everOpened() ? serviceVersion() : undefined),
+    async () => {
+      const result = await graphqlFetch(InboundServiceLines, {
+        storeId: props.storeId,
+        filter: {
+          invoiceId: { equalTo: props.node.id },
+          type: { equalTo: 'SERVICE' },
+        },
+      });
+      return result.kind === 'success' &&
+        result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+        ? result.data.invoiceLines.nodes
+        : [];
+    }
+  );
+  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
+  // pitfalls → No remounts on interaction). This refetches WHILE the screen
+  // stays open (a committed charges batch, and the tax cascade below fired from
+  // a focused field), and first-fetches on the interaction that opens the panel
+  // — a direct `serviceLines()` read would suspend the detail view's boundary
+  // each time, unmounting the panel's own focused tax input.
+  const serviceLineRows = () =>
+    serviceLines.state === 'ready' || serviceLines.state === 'refreshing'
+      ? (serviceLines.latest ?? [])
       : [];
-  });
   const refreshService = () => {
     setServiceVersion(v => v + 1);
     props.onRefetch();
@@ -119,7 +150,7 @@ export const InboundShipmentSidePanel: Component<
   // per-line tax cascade — the update input's TaxInput wrapper), mirroring the
   // stock-tax cascade on the invoice.
   const setServiceTax = (percentage: number) => {
-    const lines = serviceLines() ?? [];
+    const lines = serviceLineRows();
     if (lines.length === 0) return;
     void runInboundBatch(props.storeId, isExternal(), {
       updateInboundShipmentServiceLines: lines.map(line => ({
@@ -323,7 +354,7 @@ export const InboundShipmentSidePanel: Component<
             {t('label.edit')}
           </Button>
         </FieldRow>
-        <For each={serviceLines() ?? []}>
+        <For each={serviceLineRows()}>
           {line => (
             <FieldRow label={line.itemName}>
               <span>{money(line.totalBeforeTax)}</span>
