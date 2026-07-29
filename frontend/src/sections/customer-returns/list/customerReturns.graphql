@@ -81,7 +81,7 @@ mutation updateCustomerReturnColour(
   }
 }
 
-# Bulk delete (spec/customer-returns/cases OMS-REG-DIST-07.30/.31). There is no batch
+# Bulk delete (spec/customer-returns/cases OMS-REG-DIST-07.40/.41). There is no batch
 # mutation for customer returns — the list's bulk action runs one delete per
 # selected id. Every rejection (not editable, wrong store, …) is NON-typed: the
 # three declared error members are dead schema

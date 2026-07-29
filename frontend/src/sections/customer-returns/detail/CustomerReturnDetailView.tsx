@@ -56,7 +56,7 @@ import { ExportPrintAction } from './actions/ExportPrintAction';
 // read-only line table grouped by item (row click → the return-items modal),
 // the Additional-info side panel, and the status footer (hold / lifecycle /
 // close / advance). Every edit affordance shares the one editability gate
-// (rules § editability; OMS-REG-DIST-07.25): a VERIFIED return — or a transfer return still
+// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return still
 // in the sender's hands — is read-only.
 
 type Line = CustomerReturnLineFragment;
@@ -159,7 +159,7 @@ const CustomerReturnDetailView: Component = () => {
   };
 
   // A customer change re-runs the customer checks; its typed rejections show
-  // inline on the lookup (OMS-REG-DIST-07.13/.24).
+  // inline on the lookup (OMS-REG-DIST-07.17 / .24).
   const changeCustomer = async (customerId: string) => {
     setCustomerError(undefined);
     const result = await saveField({ otherPartyId: customerId });
