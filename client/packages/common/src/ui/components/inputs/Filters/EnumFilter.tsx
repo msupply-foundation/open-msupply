@@ -22,6 +22,8 @@ export const EnumFilter: FC<{
   filterDefinition: EnumFilterDefinition;
 }> = ({ filterDefinition }) => {
   const { urlParameter, options, name, isMultiSelect } = filterDefinition;
+  // The e2e test-id stem, which may be overridden away from urlParameter.
+  const testIdStem = filterDefinition.testId ?? urlParameter;
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const rawValue = urlQuery[urlParameter] as string | undefined;
@@ -47,7 +49,7 @@ export const EnumFilter: FC<{
 
     return (
       <Select
-        data-testid={`filter-input-${urlParameter}`}
+        data-testid={`filter-input-${testIdStem}`}
         options={optionsWithTestIds}
         label={name}
         value={selectedValues}
@@ -91,7 +93,7 @@ export const EnumFilter: FC<{
 
   return (
     <Select
-      data-testid={`filter-input-${urlParameter}`}
+      data-testid={`filter-input-${testIdStem}`}
       options={optionsWithTestIds}
       placeholder={name}
       sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
