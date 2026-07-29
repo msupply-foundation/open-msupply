@@ -119,6 +119,7 @@ export const StoreSelector = (props: {
       onKeyDown={handleKeyDown}
       onBeforeInput={handleBeforeInput}
     >
+      <h1 class={styles.title}>{t('heading.select-store')}</h1>
       <p class={styles.instructions}>
         {t('messages.select-store-instructions')}
       </p>
