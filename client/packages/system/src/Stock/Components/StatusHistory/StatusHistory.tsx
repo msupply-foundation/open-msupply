@@ -63,6 +63,7 @@ export const StatusHistory = ({
         }}
       >
         <ButtonWithIcon
+          data-testid="new-vvm-status-button"
           label={t('button.new-status-entry')}
           Icon={<PlusCircleIcon />}
           onClick={handleAddClick}

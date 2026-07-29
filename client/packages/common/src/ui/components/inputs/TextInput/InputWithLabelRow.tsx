@@ -9,6 +9,11 @@ export interface InputWithLabelRowProps {
   labelWidth?: string | null;
   labelRight?: boolean;
   sx?: SxProps<Theme>;
+  /**
+   * Stamps data-testid on the row container so e2e can locate a field without
+   * depending on its translated label. The control itself is the input inside.
+   */
+  testId?: string;
 }
 
 export const InputWithLabelRow = ({
@@ -18,11 +23,13 @@ export const InputWithLabelRow = ({
   labelWidth = '120px',
   labelRight = false,
   sx,
+  testId,
 }: InputWithLabelRowProps) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
   return (
     <Box
+      data-testid={testId}
       sx={{
         display: 'flex',
         alignItems: 'center',
