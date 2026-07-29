@@ -68,6 +68,14 @@ export interface AppShellProps {
    * The signed-in user's name, shown in the bottom bar (spec: signed-in user).
    */
   username: string;
+  /**
+   * The signed-in user's full display name, heading the user popup
+   * (OMS-REG-FTR-01.2).
+   */
+  displayName: string;
+  /** The signed-in user's email address, shown in the user popup
+   *  (OMS-REG-FTR-01.4). Absent when the user record records none. */
+  email?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
@@ -216,7 +224,12 @@ export const AppShell = (props: AppShellProps) => {
                   testId="store-selector-trigger"
                 />
                 <span class={styles.footerSpacer} aria-hidden="true" />
-                <UserMenu username={props.username} onLogout={props.onLogout} />
+                <UserMenu
+                  username={props.username}
+                  displayName={props.displayName}
+                  email={props.email}
+                  onLogout={props.onLogout}
+                />
                 <span class={styles.footerDivider} aria-hidden="true" />
                 <LanguageSelector
                   language={locale()}
