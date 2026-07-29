@@ -7,10 +7,9 @@
 // filter input (kdd/type-safety: type-only imports of the target lists' own
 // filter types, so a drift in their contract stops compiling here).
 //
-// Lists that don't exist yet (internal orders, customer requisitions, the item
-// catalogue) get their registered placeholder, unfiltered — they begin
-// filtering once the list ships (contract.md § navigation correspondence,
-// OMS-REG-DB-01.57).
+// Lists that don't exist yet (customer requisitions) get their registered
+// placeholder, unfiltered — they begin filtering once the list ships
+// (contract.md § navigation correspondence, OMS-REG-DB-01.57).
 //
 // Pure: `today` is injected so the window maths is unit-testable.
 
@@ -19,11 +18,12 @@ import {
   dateToIsoDate,
   startOfWeek,
   utcBoundsFromLocalDays,
-} from '../../ui/elements/inputs/dateTimeConvert';
-import type { InboundFilter } from '../inbound-shipments/list/listFilters';
-import type { OutboundFilter } from '../outbound-shipments/list/listFilters';
-import type { StockFilter } from '../stock/list/listFilters';
-import type { ItemsListFilter } from '../items/list/itemFilter';
+} from '@/ui/elements/inputs/dateTimeConvert';
+import type { InboundListFilter } from '@/sections/inbound-shipments/list/listFilters';
+import type { InternalOrderFilter } from '@/sections/internal-orders/list/listFilters';
+import type { OutboundFilter } from '@/sections/outbound-shipments/list/listFilters';
+import type { StockFilter } from '@/sections/stock/list/listFilters';
+import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
 // "Expiring soon" / the soon link's window, in days — the app's client constant
 // (rules.md § thresholds; the server default of 7 is a fallback the app never
@@ -61,40 +61,66 @@ const listHref = (storeId: string, path: string, filter?: object): string => {
 };
 
 // ── Replenishment ────────────────────────────────────────────────────────────
-// The inbound list's internal/external kind is a permission-scope variable, not
-// part of its URL filter contract, so the kind dimension is not yet expressible
-// in a link (flagged in the build report); the window/status filters below are
-// what the list contracts for today.
+// Internal vs external: the inbound list's URL contract carries the origin
+// as its client-only `kind` filter. `fromPurchaseOrder` is exactly the
+// external (PO-linked) count's set, so the external panel's links carry it.
+// "Internal" (manual ∪ fromInternalOrder) has no single selectable value in
+// that contract, so the internal panel's links carry window/status only —
+// recorded fallback (contract.md § navigation correspondence; build report).
+const inboundKind = (external: boolean) =>
+  external ? { kind: 'fromPurchaseOrder' as const } : {};
 
-export const inboundListHref = (storeId: string): string =>
-  listHref(storeId, 'replenishment/inbound-shipment');
+export const inboundListHref = (storeId: string, external = false): string =>
+  listHref(storeId, 'replenishment/inbound-shipment', {
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
 // The date windows are explicit from–to ranges matching the count window
 // (contract.md § navigation correspondence): today spans start of day to end of
 // day; this week spans Monday to end of Sunday.
-export const inboundTodayHref = (storeId: string, today: Date): string =>
+export const inboundTodayHref = (
+  storeId: string,
+  today: Date,
+  external = false
+): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
     createdDatetime: dayRange('dateTime', today, today),
-  } satisfies InboundFilter);
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
-export const inboundThisWeekHref = (storeId: string, today: Date): string =>
+export const inboundThisWeekHref = (
+  storeId: string,
+  today: Date,
+  external = false
+): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
     createdDatetime: dayRange(
       'dateTime',
       startOfWeek(today),
       addDays(startOfWeek(today), 6)
     ),
-  } satisfies InboundFilter);
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
 // Not delivered = New/Shipped (rules.md § inbound shipments; OMS-REG-DB-01.35).
-export const inboundNotDeliveredHref = (storeId: string): string =>
+export const inboundNotDeliveredHref = (
+  storeId: string,
+  external = false
+): string =>
   listHref(storeId, 'replenishment/inbound-shipment', {
     status: { equalAny: ['NEW', 'SHIPPED'] },
-  } satisfies InboundFilter);
+    ...inboundKind(external),
+  } satisfies InboundListFilter);
 
-// Internal-order list: registered placeholder (vertical not built yet).
 export const internalOrderListHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/internal-order');
+
+// Draft = request requisitions still in Draft (rules.md § internal orders;
+// OMS-REG-DB-01.40) — the internal-order list's single-select status filter.
+export const internalOrderDraftHref = (storeId: string): string =>
+  listHref(storeId, 'replenishment/internal-order', {
+    status: { equalTo: 'DRAFT' },
+  } satisfies InternalOrderFilter);
 
 // ── Distribution ─────────────────────────────────────────────────────────────
 
@@ -122,11 +148,16 @@ export const expiredHref = (storeId: string, today: Date): string =>
     expiryDate: dayRange('date', null, today),
   } satisfies StockFilter);
 
-// Expiring soon: today … today + 30d (contract.md § navigation correspondence —
-// the captured link window for the soon stat).
+// Expiring soon: tomorrow … today + 30d — exactly the count's window (the
+// count subtracts expired, so today's expiries belong to the expired stat).
+// Diverges from the current app's today … +1 calendar month link (D71).
 export const expiringSoonHref = (storeId: string, today: Date): string =>
   listHref(storeId, 'inventory/stock', {
-    expiryDate: dayRange('date', today, addDays(today, DAYS_TILL_EXPIRED)),
+    expiryDate: dayRange(
+      'date',
+      addDays(today, 1),
+      addDays(today, DAYS_TILL_EXPIRED)
+    ),
   } satisfies StockFilter);
 
 // Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th day excluded).
