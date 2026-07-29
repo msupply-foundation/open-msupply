@@ -106,6 +106,76 @@ The preset asserts the result is conformant: exactly one JS file named
 of those fails the build rather than producing a bundle the transport would
 quietly break.
 
+## The dev loop
+
+Two dev-only ways to run a plugin the server has not got installed. Both are
+`pnpm dev` only — they are dead-code-eliminated from a production build — and
+both go through the **same** validation the installed path uses (brand, code
+match, API-version gate), so nothing here can make a plugin the server would
+refuse look like it works. Watch the console: every dev plugin logs a
+`[plugins] <code>: …` line saying where it came from.
+
+### 1. From source — `OMS_PLUGIN_DIRS` (the authoring loop)
+
+```sh
+OMS_PLUGIN_DIRS=../civ-plugins/frontend/latest pnpm dev
+```
+
+Colon- or comma-separated, each entry absolute or relative to the repo root. Your
+plugin's **source** is imported into the app's own module graph, so you get one
+Solid runtime, the live in-tree SDK (no rebuild after an SDK edit), and **HMR on
+your own files**. Every `examples/*` plugin is loaded this way too, always.
+
+- The entry module is the first of `plugin.tsx`, `plugin.ts`, `src/plugin.tsx`,
+  `src/plugin.ts` that exists in the directory — the same rule
+  `pnpm build:plugins` uses.
+- A directory is a plugin because its `package.json` says
+  `"omSupplyPlugin": { "target": "frontend" }`; `name` is the code the host
+  registers it as, exactly as at install time.
+- No build step, no import map, no server round trip. Discovery is not involved
+  either, so this works with the backend down.
+- Restart `pnpm dev` after changing `OMS_PLUGIN_DIRS`, adding a plugin
+  directory, or renaming an entry file — the set is enumerated once. Editing a
+  plugin's own files does not need a restart.
+- A directory that cannot be used (no `package.json`, not a frontend plugin, no
+  entry) is named in the Vite log rather than silently skipped.
+
+### 2. From a built bundle — `?devPlugin=`
+
+```sh
+# in your plugin's checkout
+yarn build-plugin && npx vite preview --outDir dist --port 4173 --cors
+```
+
+then open the app with
+
+```text
+http://localhost:3005/?devPlugin=civ_plugins@http://localhost:4173/civ_plugins.js
+```
+
+The **built** bundle is imported cross-origin from wherever you serve your
+`dist/` (your server must send CORS headers). This is the production load path in
+every respect except discovery, so it is what to check a bundle with before
+installing it. Repeatable and comma-separated:
+`?devPlugin=a@http://…/a.js,b@http://…/b.js`.
+
+### Overriding an installed plugin
+
+Dev plugins load **after** the installed ones, and a dev plugin whose code
+matches an installed one **replaces** it — that is the point. The diagnostic says
+so ("dev override loaded from … — REPLACES the plugin already registered under
+this code"), so you can always tell which copy you are looking at.
+
+### Never bundle your own `solid-js`
+
+Keep `solid-js` (and `@openmsupply/plugin-sdk`) a **devDependency**, pinned to
+the host's version, and never import them any way but bare. The build preset
+externalises them and the host's import map supplies its own live instances; a
+second Solid copy inside your bundle does not error — it silently breaks
+reactivity and context, which is the failure class this whole mechanism exists to
+delete. `pnpm build:plugins` fails the build if your bundle imports anything the
+host does not provide, so keep it green.
+
 ## Versioning
 
 `manifest.pluginApiVersion` is the SDK API you built against. The host refuses a

@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import solid from 'vite-plugin-solid';
+import { devPluginsPlugin } from './vite/devPlugins.ts';
 import { sharedModulesPlugin } from './vite/sharedModules.ts';
 
 /*
@@ -65,7 +66,11 @@ const backendProxy = () => {
 };
 
 export default defineConfig(({ mode }) => ({
-  plugins: [solid(), sharedModulesPlugin()],
+  // devPluginsPlugin is the author dev loop (vite/devPlugins.ts): it only
+  // enumerates plugin sources when SERVING — in a build it resolves its virtual
+  // module to an empty map, which is dead code the DEV branch in
+  // src/plugins/loader.ts treeshakes away, so build output is unaffected.
+  plugins: [solid(), sharedModulesPlugin(), devPluginsPlugin()],
   // "@/x" → src/x. Keep in sync with tsconfig.app.json "paths" and
   // vitest.config.ts (the showcase config inherits it via mergeConfig).
   // "@openmsupply/plugin-sdk" resolves the SDK from source so in-tree code
