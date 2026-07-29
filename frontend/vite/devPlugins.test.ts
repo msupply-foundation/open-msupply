@@ -3,6 +3,7 @@ import {
   discoverDevPlugins,
   isOutsideRoot,
   parsePluginDirs,
+  pluginProjectRoot,
   renderDevPluginsModule,
   type DevPluginFs,
 } from './devPlugins.ts';
@@ -69,6 +70,42 @@ describe('isOutsideRoot', () => {
   it('is true for a sibling or unrelated directory (needs fs.allow)', () => {
     expect(isOutsideRoot(ROOT, '/civ-plugins/frontend/latest')).toBe(true);
     expect(isOutsideRoot(ROOT, '/elsewhere')).toBe(true);
+  });
+});
+
+describe('pluginProjectRoot', () => {
+  // What a real out-of-tree plugin looks like: the package is nested inside its
+  // own repo, and imports a sibling module from the checkout root
+  // (civ-plugins' `shared/` wire contract).
+  const checkout = {
+    '/civ-plugins/.git': '',
+    '/civ-plugins/shared/constants.ts': '',
+    '/civ-plugins/frontend/latest/package.json': plugin('civ_plugins'),
+    '/civ-plugins/frontend/latest/src/plugin.ts': '',
+  };
+
+  it('is the plugin checkout, not the plugin package — its own imports must resolve', () => {
+    expect(
+      pluginProjectRoot('/civ-plugins/frontend/latest', fakeFs(checkout))
+    ).toBe('/civ-plugins');
+  });
+
+  it('is the plugin directory itself when it is the repo root', () => {
+    expect(
+      pluginProjectRoot(
+        '/solo',
+        fakeFs({ '/solo/.git': '', '/solo/package.json': plugin('solo') })
+      )
+    ).toBe('/solo');
+  });
+
+  it('falls back to the directory when no repo encloses it', () => {
+    expect(
+      pluginProjectRoot(
+        '/tmp/unpacked/plugin',
+        fakeFs({ '/tmp/unpacked/plugin/package.json': plugin('loose') })
+      )
+    ).toBe('/tmp/unpacked/plugin');
   });
 });
 
