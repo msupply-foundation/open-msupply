@@ -9,13 +9,27 @@ export default defineConfig({
   // which a transform-time define would silence.
   define: {
     APP_VERSION: JSON.stringify('0.0.0-test'),
+    // Mirrors vite.config.ts: '' is the production/no-dev-link value, which is
+    // what a test importing src/plugins/loader.ts should see.
+    DEV_PLUGINS: JSON.stringify(''),
   },
   // "@/x" → src/x — mirrors vite.config.ts / tsconfig.app.json "paths".
+  // "@openmsupply/plugin-sdk" mirrors vite.config.ts / tsconfig.plugins.json,
+  // so an in-repo plugin's own unit tests resolve the SDK the same way its
+  // build does.
   resolve: {
-    alias: { '@': new URL('./src', import.meta.url).pathname },
+    alias: {
+      '@': new URL('./src', import.meta.url).pathname,
+      '@openmsupply/plugin-sdk': new URL(
+        './src/plugins/sdk/index.ts',
+        import.meta.url
+      ).pathname,
+    },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    // The in-repo country plugins are covered too — co-locating them buys
+    // nothing if CI doesn't run their tests.
+    include: ['src/**/*.test.ts', 'plugins/*/src/**/*.test.ts'],
     environment: 'node',
   },
 });

@@ -58,7 +58,8 @@ const sharedRules = {
 export default tseslint.config(
   {
     ignores: [
-      'dist/**',
+      // Anywhere, not just the root: plugins/<code>/dist holds built bundles.
+      '**/dist/**',
       'dist-ssr/**',
       'node_modules/**',
       '**/*.generated.ts',
@@ -101,6 +102,57 @@ export default tseslint.config(
     },
   },
 
+  /*
+   * The in-repo country plugins (plugins/<code>/src). Same rules as app source —
+   * they are Solid components in the host's runtime, so the reactivity and
+   * browser-compat rules apply identically — plus the import boundary
+   * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
+   * and solid-js. tsconfig.plugins.json and vite.plugin.config.ts already make a
+   * reach into host source unresolvable; this makes the failure say why.
+   */
+  {
+    files: ['plugins/*/src/**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      solid,
+      compat.configs['flat/recommended'],
+    ],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
+    },
+    rules: {
+      ...sharedRules,
+      'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+      /*
+       * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
+       * vite.plugin.config.ts both omit it), but a RELATIVE reach —
+       * `../../../src/intl` — resolves fine at both type-check and build time.
+       * Only lint closes that, so these patterns are load-bearing rather than
+       * belt-and-braces: without them a plugin could silently bundle a frozen
+       * copy of host code, which is the exact failure the old client had.
+       */
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              // `@/…`; any path reaching into src/; and any escape above the
+              // plugin's own tree (plugins/<dir>/src/x sits 3 levels down, so
+              // four-or-more `../` can only mean leaving the plugin).
+              group: ['@/*', '**/src/*', '../../../../*'],
+              message:
+                'A plugin may import only @openmsupply/plugin-sdk and solid-js ' +
+                '(spec/plugins/sdk-contract.md § imports). Missing something? ' +
+                'That is a gap to add to the SDK.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Build config + node scripts.
   {
     files: ['*.config.{ts,js}', 'scripts/**/*.mjs'],
@@ -115,7 +167,12 @@ export default tseslint.config(
   // Comment line-length cap (all linted files). Warn + auto-fix; see options
   // above.
   {
-    files: ['src/**/*.{ts,tsx}', '*.config.{ts,js}', 'scripts/**/*.mjs'],
+    files: [
+      'src/**/*.{ts,tsx}',
+      'plugins/*/src/**/*.{ts,tsx}',
+      '*.config.{ts,js}',
+      'scripts/**/*.mjs',
+    ],
     plugins: { 'comment-length': commentLength },
     rules: {
       'comment-length/limit-single-line-comments': [

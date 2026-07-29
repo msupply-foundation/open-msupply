@@ -1,0 +1,29 @@
+{
+  /*
+   * The in-repo country plugins, type-checked by `tsc -b` alongside the app —
+   * the point of co-locating them (spec/plugins/sdk-contract.md's conformance
+   * checklist becomes a build error rather than a review note).
+   *
+   * Two deliberate differences from tsconfig.app.json:
+   *
+   * · NO "@/*" path. A plugin must not import host application source; dropping
+   *   the alias makes `@/ui/...` unresolvable at type-check time, matching what
+   *   vite.plugin.config.ts does at build time.
+   * · "@openmsupply/plugin-sdk" resolves to the host's SDK module — the same
+   *   alias vite.config.ts declares for the dev link. Keep the three in sync
+   *   (here, vite.config.ts, vite.plugin.config.ts's `external` list).
+   */
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.plugins.tsbuildinfo",
+    "paths": {
+      "@openmsupply/plugin-sdk": ["./src/plugins/sdk/index.ts"]
+    }
+  },
+  /*
+   * The host's ambient declarations (APP_VERSION, LANG_VERSION, DEV_PLUGINS,
+   * globalThis.__oms__) come with the SDK's transitive imports into src/, so this
+   * project needs them even though it owns none of src/.
+   */
+  "include": ["plugins/*/src", "src/globals.d.ts", "src/intl/globals.d.ts"]
+}

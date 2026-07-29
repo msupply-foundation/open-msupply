@@ -10,6 +10,7 @@ import {
   storeContext,
 } from './storeContext';
 import { StoreSelectionScreen } from './StoreSelectionScreen';
+import { loadPlugins } from '../plugins/loader';
 import { setHomeCurrency, t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
@@ -69,6 +70,11 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     if (params.storeId !== store.id)
       navigate(`/${store.id}`, { replace: true });
     if (!contextLoaded(store.id)) void refetchStoreContext(store.id);
+    // Frontend plugins, once per session (spec/plugins/rules.md § lifecycle):
+    // after store entry, since a contribution's visibility gates read store
+    // preferences and its data is store-scoped. Deliberately NOT awaited — see
+    // the boot-order note on loadPlugins.
+    void loadPlugins();
   });
 
   // Pin previous and default to the top of the picker.
