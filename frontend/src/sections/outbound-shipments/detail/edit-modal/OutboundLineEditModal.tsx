@@ -1069,7 +1069,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* The header row (spec S4, D74): Item picker · Available · Issue +
+      {/* The header row (spec S4, D76): Item picker · Available · Issue +
           Allocate-in · placeholder notice on ONE wrapping flex row — each
           piece drops to its own row as space runs out (see the module CSS). */}
       <div class={styles.headerRow}>
