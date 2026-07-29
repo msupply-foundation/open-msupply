@@ -340,6 +340,7 @@ const NewStockContent = (props: {
                           (spec OMS-REG-SMV-02.34). */}
                     <NumberField
                       label={t('label.pack-qty')}
+                      data-testid="field-pack-quantity"
                       required
                       width="full"
                       decimalLimit={2}
@@ -348,6 +349,7 @@ const NewStockContent = (props: {
                     />
                     <NumberField
                       label={t('label.pack-size')}
+                      data-testid="field-pack-size"
                       required
                       width="full"
                       min={1}
@@ -366,12 +368,14 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.batches-and-dates')}>
                   <TextField
                     label={t('label.batch')}
+                    data-testid="field-batch"
                     width="full"
                     value={draft.batch}
                     onInput={e => setDraft('batch', e.currentTarget.value)}
                   />
                   <TextField
                     label={t('label.barcode')}
+                    data-testid="field-barcode"
                     width="full"
                     value={draft.barcode}
                     onInput={e => setDraft('barcode', e.currentTarget.value)}
@@ -379,12 +383,14 @@ const NewStockContent = (props: {
                   <FormRow>
                     <DateField
                       label={t('label.expiry-date')}
+                      testId="field-expiry-date"
                       width="full"
                       value={draft.expiryDate}
                       onChange={v => setDraft('expiryDate', v)}
                     />
                     <DateField
                       label={t('label.manufacture-date')}
+                      testId="field-manufacture-date"
                       width="full"
                       max={today}
                       value={draft.manufactureDate}
@@ -402,6 +408,7 @@ const NewStockContent = (props: {
                   >
                     <VvmStatusSelect
                       label={t('label.vvm-status')}
+                      inputTestId="field-vvm-status"
                       value={draft.vvmStatus?.id}
                       placeholder={t('label.none')}
                       onChange={s =>
@@ -424,12 +431,14 @@ const NewStockContent = (props: {
                   <FormRow>
                     <CurrencyField
                       label={t('label.cost-price')}
+                      data-testid="field-cost-price"
                       width="full"
                       value={draft.costPricePerPack}
                       onChange={v => setDraft('costPricePerPack', v)}
                     />
                     <CurrencyField
                       label={t('label.sell-price')}
+                      data-testid="field-sell-price"
                       width="full"
                       value={draft.sellPricePerPack}
                       onChange={v => setDraft('sellPricePerPack', v)}
@@ -443,6 +452,7 @@ const NewStockContent = (props: {
                   <ReasonSelect
                     kind="positive"
                     label={t('label.reason')}
+                    inputTestId="field-reason"
                     required={positiveReasonsRequired()}
                     value={draft.reasonOption?.id}
                     placeholder={t('label.select-reason')}
@@ -460,6 +470,7 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.storage-and-pack')}>
                   <LocationSelect
                     label={t('label.location')}
+                    inputTestId="field-location"
                     locations={locations()}
                     loading={allLocations.loading}
                     value={draft.location?.id}
@@ -474,11 +485,13 @@ const NewStockContent = (props: {
                   <FormRow>
                     <Checkbox
                       label={t('label.on-hold')}
+                      testId="field-on-hold"
                       checked={draft.onHold}
                       onChange={v => setDraft('onHold', v)}
                     />
                     <NumberField
                       label={t('label.volume-per-pack')}
+                      data-testid="field-volume-per-pack"
                       width="full"
                       decimalLimit={10}
                       value={draft.volumePerPack}
@@ -490,6 +503,7 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.supply-chain')}>
                   <NameSearch
                     label={t('label.manufacturer')}
+                    inputTestId="field-manufacturer"
                     storeId={props.storeId}
                     role="manufacturer"
                     selected={
@@ -524,6 +538,7 @@ const NewStockContent = (props: {
                     <Show when={prefs().allowTrackingOfStockByDonor}>
                       <NameSearch
                         label={t('label.donor')}
+                        inputTestId="field-donor"
                         storeId={props.storeId}
                         role="donor"
                         selected={
@@ -548,6 +563,7 @@ const NewStockContent = (props: {
                     </Show>
                     <CampaignOrProgramSelect
                       label={t('label.campaign')}
+                      inputTestId="field-campaign-or-program"
                       storeId={props.storeId}
                       itemId={chosenItem()?.id ?? ''}
                       campaignId={draft.campaignId ?? undefined}
