@@ -1,20 +1,20 @@
 import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
 import {
   SplitButton,
   type SplitButtonOption,
-} from '../../../../ui/elements/buttons/SplitButton';
-import { DownloadIcon } from '../../../../ui/icons';
+} from '@/ui/elements/buttons/SplitButton';
+import { DownloadIcon } from '@/ui/icons';
 import {
   csvToExcel,
   fetchReportFile,
   listExportCsvFilename,
   listExportExcelFilename,
-} from '../../../../domain/reportFiles';
-import { saveBlob } from '../../../../platform/openDocument';
-import { stripEmpty } from '../../../../typeHelpers';
-import { storeCodeOf } from '../../../../auth/authContext';
+} from '@/domain/reportFiles';
+import { saveBlob } from '@/platform/openDocument';
+import { stripEmpty } from '@/typeHelpers';
+import { storeCodeOf } from '@/auth/authContext';
 import { LocationsList } from '../locations.generated';
 import type { LocationsListVariables } from '../locations.generated';
 import type { LocationFilter } from '../listFilters';

@@ -1,17 +1,12 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { SplitButton } from '@/ui/elements/buttons/SplitButton';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ArrowRightIcon,
-  InfoIcon,
-  CheckIcon,
-  SearchIcon,
-  XCircleIcon,
-} from '@/ui/icons';
+import { ArrowRightIcon, InfoIcon } from '@/ui/icons';
 import { STATUS_FLOW, STATUS_LABELS, statusIndex } from '../stocktakeStatus';
 import { finaliseStocktake } from '../stocktakeUpdate';
 import type { StocktakeInfoFragment } from '../lines/stocktakeDetail.generated';
@@ -162,18 +157,13 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                 // Finalise.
                 <>
                   <Show when={phase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
+                    <CancelButton
                       data-testid="dialog-button-cancel"
                       onClick={close}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    />
                   </Show>
                   <Button
                     variant="primary"
-                    icon={<ArrowRightIcon />}
                     loading={phase() === 'working'}
                     data-testid="confirmation-modal-ok"
                     onClick={() => void run()}
@@ -188,7 +178,6 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
               <Match when={phase() === 'success'}>
                 <Button
                   variant="secondary"
-                  icon={<CheckIcon />}
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >
@@ -196,17 +185,12 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                 </Button>
               </Match>
               <Match when={phase() === 'error'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
                 <Button
                   variant="primary"
-                  icon={<SearchIcon />}
                   onClick={() => {
                     props.onShowErrors();
                     close();
@@ -231,11 +215,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
           title={t('heading.nothing-counted-yet')}
           description={t('messages.no-lines')}
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={() => setNoLinesOpen(false)}
-            >
+            <Button variant="secondary" onClick={() => setNoLinesOpen(false)}>
               {t('button.ok')}
             </Button>
           }

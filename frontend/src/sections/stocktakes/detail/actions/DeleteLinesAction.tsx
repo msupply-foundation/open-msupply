@@ -3,12 +3,8 @@ import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
-import {
-  CheckIcon,
-  SearchIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '@/ui/icons';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,
@@ -52,7 +48,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         disabled={props.disabled}
         data-testid="delete-lines-button"
@@ -119,18 +115,13 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             // Delete.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 loading={phase() === 'working'}
                 data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
@@ -143,7 +134,6 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
           <Match when={phase() === 'success'}>
             <Button
               variant="secondary"
-              icon={<CheckIcon />}
               data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
@@ -151,17 +141,12 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
             <Button
               variant="primary"
-              icon={<SearchIcon />}
               onClick={() => {
                 props.onShowErrors();
                 props.onClose();

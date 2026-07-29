@@ -66,6 +66,7 @@ const TopLeaf = (props: {
       type="button"
       class={styles.navButton}
       data-selected={props.selected ? 'true' : undefined}
+      data-testid={`nav-${props.item.id}`}
       title={t(props.item.labelKey)}
       onClick={props.onSelect}
     >
@@ -223,7 +224,12 @@ const NavLists = (props: {
   syncBadge?: NavBadge;
   syncIconDimmed?: boolean;
 }) => (
-  <>
+  // One scroll region spanning BOTH groups (not per-section) so the two lists
+  // never scroll independently and overlap (#421). The lower group is pushed to
+  // the block-end (margin-block-start:auto in .lower) so on a tall screen it
+  // rests at the bottom as before; only when the combined lists overflow does
+  // everything scroll together.
+  <div class={styles.scroll}>
     <NavGroup
       items={props.upper}
       selectedId={props.selectedId}
@@ -240,7 +246,7 @@ const NavLists = (props: {
         syncIconDimmed={props.syncIconDimmed}
       />
     </Show>
-  </>
+  </div>
 );
 
 /*
@@ -265,12 +271,15 @@ export const MenuBar = (props: MenuBarProps) => {
         <nav
           class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
+          data-testid="drawer"
+          aria-expanded={!props.nav.railCollapsed()}
           aria-label={t('label.menu')}
         >
           <div class={styles.logoArea}>
             <button
               type="button"
               class={styles.logoButton}
+              data-testid="drawer-toggle"
               onClick={props.nav.toggleRail}
               aria-label={
                 props.nav.railCollapsed()

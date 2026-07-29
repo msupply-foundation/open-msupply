@@ -21,19 +21,19 @@ export const UserMenu = (props: UserMenuProps) => (
   <DropdownMenu.Root placement="top-start" gutter={8}>
     <DropdownMenu.Trigger
       class={styles.trigger}
-      title={props.username}
       data-testid="user-menu-trigger"
+      title={props.username}
     >
       <UserIcon class={styles.icon} />
       <span class={styles.triggerText}>{props.username}</span>
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
-      <DropdownMenu.Content class={styles.content}>
+      <DropdownMenu.Content class={styles.content} data-testid="user-popup">
         <div class={styles.heading}>{props.username}</div>
         <DropdownMenu.Item
           class={styles.item}
-          onSelect={() => props.onLogout()}
           data-testid="logout-button"
+          onSelect={() => props.onLogout()}
         >
           {t('logout')}
         </DropdownMenu.Item>

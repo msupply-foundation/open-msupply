@@ -6,19 +6,19 @@ import {
   isForbidden,
   reportPermissionDenied,
   type TypedDocument,
-} from '../../api/graphql';
-import { formatNumber, t, tPlural } from '../../intl';
-import { hasPermission } from '../../store/storeContext';
-import { Page } from '../../ui/layout/Page/Page';
-import { Header } from '../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
-import { CardGrid } from '../../ui/layout/CardGrid/CardGrid';
-import { DashboardCard } from '../../ui/elements/dashboard/DashboardCard';
-import { StatsPanel } from '../../ui/elements/dashboard/StatsPanel';
-import type { StatsPanelState } from '../../ui/elements/dashboard/StatsPanel';
-import { Statistic } from '../../ui/elements/dashboard/Statistic';
-import { Button } from '../../ui/elements/buttons/Button';
-import { PlusCircleIcon, StockIcon } from '../../ui/icons';
+} from '@/api/graphql';
+import { formatNumber, t, tPlural } from '@/intl';
+import { hasPermission, storeContext } from '@/store/storeContext';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
+import { DashboardCard } from '@/ui/elements/dashboard/DashboardCard';
+import { StatsPanel } from '@/ui/elements/dashboard/StatsPanel';
+import type { StatsPanelState } from '@/ui/elements/dashboard/StatsPanel';
+import { Statistic } from '@/ui/elements/dashboard/Statistic';
+import { Button } from '@/ui/elements/buttons/Button';
+import { PlusCircleIcon, StockIcon } from '@/ui/icons';
 import {
   InboundShipmentCounts,
   InboundShipmentExternalCounts,
@@ -51,6 +51,7 @@ import {
   inboundNotDeliveredHref,
   inboundThisWeekHref,
   inboundTodayHref,
+  internalOrderDraftHref,
   internalOrderListHref,
   itemCatalogueHref,
   itemsAtRiskHref,
@@ -69,13 +70,23 @@ import {
 // created record themselves) and lazy, so the dashboard bundle doesn't carry
 // them until a shortcut is used.
 const CreateInboundShipmentModal = lazy(() =>
-  import('../inbound-shipments/list/CreateInboundShipmentModal').then(m => ({
+  import('@/sections/inbound-shipments/list/CreateInboundShipmentModal').then(m => ({
     default: m.CreateInboundShipmentModal,
   }))
 );
 const CustomerSearchModal = lazy(() =>
-  import('../outbound-shipments/list/CustomerSearchModal').then(m => ({
+  import('@/sections/outbound-shipments/list/CustomerSearchModal').then(m => ({
     default: m.CustomerSearchModal,
+  }))
+);
+const CreateInternalOrderModal = lazy(() =>
+  import('@/sections/internal-orders/list/create/CreateInternalOrderModal').then(m => ({
+    default: m.CreateInternalOrderModal,
+  }))
+);
+const StocktakeWarningDialog = lazy(() =>
+  import('@/sections/internal-orders/list/create/StocktakeWarningDialog').then(m => ({
+    default: m.StocktakeWarningDialog,
   }))
 );
 
@@ -225,15 +236,39 @@ const DashboardPage: Component = () => {
     }
     setOutboundCreateOpen(true);
   };
-  // The internal-order create flow is the requisitions vertical's, which isn't
-  // built yet — the shortcut degrades to its registered placeholder (the
-  // OMS-REG-DB-01.57 rule for unbuilt targets), still permission-gated.
-  const orderMore = () => {
+  // Order more hands off to the internal-orders vertical's create flow —
+  // including its recent-stocktake warning gate (spec/internal-orders
+  // AC-C1/C5), so the dashboard entry behaves exactly like the list's
+  // New-order button. The warn preference rides the guard-3 store context;
+  // the insufficiency check (and its module) load only on click.
+  const [internalOrderCreateOpen, setInternalOrderCreateOpen] =
+    createSignal(false);
+  const [stocktakeGateOpen, setStocktakeGateOpen] = createSignal(false);
+  const [orderMoreChecking, setOrderMoreChecking] = createSignal(false);
+  const warnStocktake = () =>
+    storeContext()?.preferences.warnWhenMissingRecentStocktake;
+
+  const orderMore = async () => {
     if (!hasPermission('REQUISITION_MUTATE')) {
       reportPermissionDenied(['RequisitionMutate']);
       return;
     }
-    navigate(internalOrderListHref(params.storeId));
+    const warn = warnStocktake();
+    if (!warn?.enabled) {
+      setInternalOrderCreateOpen(true);
+      return;
+    }
+    setOrderMoreChecking(true);
+    const { recentStocktakeIsInsufficient } =
+      await import('@/sections/internal-orders/list/create/createInternalOrder');
+    const insufficient = await recentStocktakeIsInsufficient(
+      params.storeId,
+      warn.maxAge,
+      warn.minItems
+    );
+    setOrderMoreChecking(false);
+    if (insufficient) setStocktakeGateOpen(true);
+    else setInternalOrderCreateOpen(true);
   };
 
   const num = (n: number | undefined) => formatNumber(n ?? 0);
@@ -300,7 +335,7 @@ const DashboardPage: Component = () => {
           <Show when={gates()?.externalInboundPanel}>
             <StatsPanel
               title={t('dashboard.inbound-shipment-external')}
-              titleHref={inboundListHref(params.storeId)}
+              titleHref={inboundListHref(params.storeId, true)}
               icon={<StockIcon />}
               state={inboundExternal.state()}
               testId="dashboard-panel-replenishment.inbound-external"
@@ -313,7 +348,7 @@ const DashboardPage: Component = () => {
                   inboundExternal.data()?.inboundShipmentExternalCounts.created
                     .today
                 )}
-                href={inboundTodayHref(params.storeId, today)}
+                href={inboundTodayHref(params.storeId, today, true)}
               />
               {/* id: replenishment.inbound-external.this-week */}
               <Statistic
@@ -323,7 +358,7 @@ const DashboardPage: Component = () => {
                   inboundExternal.data()?.inboundShipmentExternalCounts.created
                     .thisWeek
                 )}
-                href={inboundThisWeekHref(params.storeId, today)}
+                href={inboundThisWeekHref(params.storeId, today, true)}
               />
               {/* id: replenishment.inbound-external.not-delivered */}
               <Statistic
@@ -333,7 +368,7 @@ const DashboardPage: Component = () => {
                   inboundExternal.data()?.inboundShipmentExternalCounts
                     .notDelivered
                 )}
-                href={inboundNotDeliveredHref(params.storeId)}
+                href={inboundNotDeliveredHref(params.storeId, true)}
               />
             </StatsPanel>
           </Show>
@@ -350,7 +385,7 @@ const DashboardPage: Component = () => {
               testId="dashboard-stat-replenishment.internal-order.draft"
               label={t('label.draft')}
               value={num(requisitions.data()?.requisitionCounts.request.draft)}
-              href={internalOrderListHref(params.storeId)}
+              href={internalOrderDraftHref(params.storeId)}
             />
           </StatsPanel>
         </DashboardCard>
@@ -429,7 +464,8 @@ const DashboardPage: Component = () => {
             <Button
               variant="secondary"
               icon={<PlusCircleIcon />}
-              onClick={orderMore}
+              loading={orderMoreChecking()}
+              onClick={() => void orderMore()}
               data-testid="dashboard-create-inventory"
             >
               {t('button.order-more')}
@@ -621,6 +657,33 @@ const DashboardPage: Component = () => {
         <CustomerSearchModal
           open={outboundCreateOpen()}
           onClose={() => setOutboundCreateOpen(false)}
+        />
+      </Show>
+      <Show when={stocktakeGateOpen()}>
+        <StocktakeWarningDialog
+          open={stocktakeGateOpen()}
+          minItems={warnStocktake()?.minItems ?? 0}
+          maxAge={warnStocktake()?.maxAge ?? 0}
+          onCancel={() => setStocktakeGateOpen(false)}
+          onContinue={() => {
+            setStocktakeGateOpen(false);
+            setInternalOrderCreateOpen(true);
+          }}
+          onGoToStocktakes={() => {
+            setStocktakeGateOpen(false);
+            navigate(`/${params.storeId}/inventory/stocktakes`);
+          }}
+        />
+      </Show>
+      <Show when={internalOrderCreateOpen()}>
+        <CreateInternalOrderModal
+          storeId={params.storeId}
+          open={internalOrderCreateOpen()}
+          onClose={() => setInternalOrderCreateOpen(false)}
+          onCreated={id => {
+            setInternalOrderCreateOpen(false);
+            navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
+          }}
         />
       </Show>
     </Page>
