@@ -1,5 +1,5 @@
 // Pure backdating gate, bounds, and warning logic (spec/outbound-shipments
-// rules.md § backdating; OMS-REG-DIST-04.23/B2/B4). Extracted from PickedDateField so the
+// rules.md § backdating; OMS-REG-DIST-04.23/.24/.27). Extracted from PickedDateField so the
 // branching + date math are testable in isolation (the component resolves the
 // returned message KEYS via t() and owns the stocktake-conflict query).
 
@@ -80,7 +80,7 @@ export type BackdateWarningKey =
   | 'messages.confirm-backdate-picked-date'
   | 'messages.stocktake-after-backdate-warning';
 
-// OMS-REG-DIST-04.24/B4: which warnings the confirmation shows — the line-removal warning
+// OMS-REG-DIST-04.24/.27: which warnings the confirmation shows — the line-removal warning
 // when the shipment has lines, and the stocktake-conflict warning when a
 // stocktake was counted on/after the chosen day (both when both apply). An
 // empty result means there is nothing to warn about, so the backdate applies

@@ -118,7 +118,7 @@ describe('backdatedDatetimeFor', () => {
   });
 });
 
-describe('backdateWarnings (OMS-REG-DIST-04.24/B4)', () => {
+describe('backdateWarnings (OMS-REG-DIST-04.24/.27)', () => {
   it('warns about line removal when the shipment has lines', () => {
     expect(
       backdateWarnings({ hasLines: true, stocktakeConflict: false })

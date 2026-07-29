@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlFetch } from '../../../api/graphql';
 import { changeShipmentCurrency, changeShipmentStatus } from './outboundUpdate';
 
-// The status/currency wire mappings (contract § header fields, OMS-REG-DIST-02.10/H2,
+// The status/currency wire mappings (contract § header fields, OMS-REG-DIST-02.10/.27,
 // ui-surface § Foreign currency): what goes ON the wire (the one-save
 // release-and-advance input) and how each typed verdict comes back off it.
 // graphqlFetch is mocked at the module seam — these functions ARE the

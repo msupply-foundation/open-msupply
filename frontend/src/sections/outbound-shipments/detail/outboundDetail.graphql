@@ -253,7 +253,7 @@ mutation updateOutboundShipmentName(
   }
 }
 
-# Delete the shipment from its detail (OMS-REG-DIST-01.7/D2).
+# Delete the shipment from its detail (OMS-REG-DIST-01.7/.8).
 mutation deleteOutboundShipment($storeId: String!, $id: String!) {
   deleteOutboundShipment(storeId: $storeId, id: $id) {
     __typename

@@ -12,7 +12,7 @@ import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
 // The shipment status footer (spec S3 § status footer): the Hold toggle
-// (confirmation both ways — OMS-REG-DIST-02.10/H2), the lifecycle indicator over the FULL
+// (confirmation both ways — OMS-REG-DIST-02.10/.27), the lifecycle indicator over the FULL
 // status sequence (transfer statuses included, limited by the invoice-status-
 // options preference — OMS-REG-DIST-04.22), Close (back to the list), and the
 // status-change split button (its own action component). Replaced by the

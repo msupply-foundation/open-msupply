@@ -81,7 +81,7 @@ mutation deleteOutboundShipments($storeId: String!, $ids: [String!]) {
   }
 }
 
-# Duplicate a shipment (OMS-REG-DIST-02.28/X2): any shipment (incl. SHIPPED) copies into a
+# Duplicate a shipment (OMS-REG-DIST-02.28/.29): any shipment (incl. SHIPPED) copies into a
 # fresh NEW one whose stock lines became placeholders; inactive-catalogue items
 # are skipped and counted.
 mutation duplicateOutboundShipment($storeId: String!, $id: String!) {

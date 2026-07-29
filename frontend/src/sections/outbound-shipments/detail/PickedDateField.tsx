@@ -22,7 +22,7 @@ import {
 } from './backdating';
 
 // The picked-date backdating control (spec/outbound-shipments rules.md §
-// backdating; S3 side panel — OMS-REG-DIST-04.23..B4). Enabled only while NEW with the
+// backdating; S3 side panel — OMS-REG-DIST-04.23..27). Enabled only while NEW with the
 // backdating preference on; otherwise DISABLED WITH THE REASON (pref off /
 // past NEW). Picking an earlier day confirms first — the line-removal warning
 // (OMS-REG-DIST-04.24) and, when a stocktake was counted on or after that day, the
@@ -131,7 +131,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     setPending({ backdatedDatetime, warningKeys });
   };
 
-  // The confirmation body: the applicable warnings (OMS-REG-DIST-04.24/B4), each resolved
+  // The confirmation body: the applicable warnings (OMS-REG-DIST-04.24/.27), each resolved
   // with the chosen date (spec S6 § confirmation dialog). Each warning sits on
   // its own block (both ported sentences end in "Are you sure…?", so joined
   // into one line they read as a run-on); <br/> not <p> — the Dialog already
