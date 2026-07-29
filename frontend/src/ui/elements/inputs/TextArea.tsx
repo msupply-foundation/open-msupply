@@ -40,6 +40,13 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
    * shows it.
    */
   hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept beside the label rather than in
+   * the field frame so it isn't part of the control's accessible name. Ignored
+   * under `hideLabel` (no visible label to hang it off). As TextField.
+   */
+  labelInfo?: JSX.Element;
 }
 
 /*
@@ -66,6 +73,7 @@ export const TextArea = (props: TextAreaProps) => {
     'width',
     'size',
     'hideLabel',
+    'labelInfo',
     'id',
     'class',
   ]);
@@ -73,23 +81,38 @@ export const TextArea = (props: TextAreaProps) => {
   const textareaId = () => local.id ?? autoId;
   const messageId = () => `${textareaId()}-message`;
 
+  // The <label for> itself (text + required asterisk). A local component so it
+  // renders fresh in either branch (bare, or beside labelInfo) — reusing one
+  // JSX node across both would try to mount it in two places. As TextField.
+  const Label = () => (
+    <label
+      class={local.hideLabel ? styles.labelHidden : styles.label}
+      for={textareaId()}
+    >
+      {local.label}
+      <Show when={local.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </label>
+  );
+
   return (
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'full'}
       data-size={local.size ?? 'default'}
     >
-      <label
-        class={local.hideLabel ? styles.labelHidden : styles.label}
-        for={textareaId()}
-      >
-        {local.label}
-        <Show when={local.required}>
-          <span class={styles.required} aria-hidden="true">
-            *
-          </span>
-        </Show>
-      </label>
+      <Show when={local.labelInfo && !local.hideLabel} fallback={<Label />}>
+        {/* labelInfo sits OUTSIDE the <label for>, as a sibling: nested in the
+            label its accessible name would leak into the control's (the
+            name-from-label computation concatenates descendant controls). */}
+        <span class={styles.labelRow}>
+          <Label />
+          {local.labelInfo}
+        </span>
+      </Show>
       <textarea
         id={textareaId()}
         class={styles.textarea}

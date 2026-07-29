@@ -1,4 +1,10 @@
-import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  on,
+  type JSX,
+} from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
@@ -44,6 +50,12 @@ export interface DateTimeFieldProps {
   size?: 'default' | 'small';
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field (see FieldShell). Ignored under
+   * `hideLabel`.
+   */
+  labelInfo?: JSX.Element;
   id?: string;
   /** `data-testid` stamped on the DATE input — the field's first focusable and
    *  the part a test types into (e2e/TESTIDS.md). */
@@ -124,6 +136,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
       required={props.required}
       error={props.error}
       helperText={props.helperText}
+      labelInfo={props.labelInfo}
       controlId={dateId()}
     >
       {({ describedBy, invalid }) => (
