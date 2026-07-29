@@ -9,7 +9,7 @@ import {
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { getPlural, t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -950,7 +950,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { id: 'unitsIssued' },
-      header: () => t('label.units-issued', { unit: unitName() }),
+      // "Vials issued" — the unit pluralised as a category (old-app parity).
+      header: () => t('label.units-issued', { unit: getPlural(unitName(), 2) }),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
@@ -1103,8 +1104,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </div>
         <Show when={item()}>
           <span class={styles.available}>
+            {/* Unit name pluralised to the count (old-app parity — English
+                only; getPlural passes other languages through). */}
             {t('label.available')}: {formatNumber(availableUnits())}{' '}
-            {unitName()}
+            {getPlural(unitName(), availableUnits())}
           </span>
           {/* Issue + Allocate-in wrap as a unit. Both controls at the default
               height — NumberField's "small" (2.25rem) and Select's "sm"
@@ -1123,7 +1126,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               label={t('label.units')}
               value={allocateInValue()}
               options={[
-                { value: 'units', label: unitName() },
+                // The unit option reads as a category — always plural
+                // ("Vials"), the old app's getPlural(unit, 2).
+                { value: 'units', label: getPlural(unitName(), 2) },
                 // The doses lens (AC-AL7): vaccine items under the
                 // manage-vaccines-in-doses preference only.
                 ...(prefs().manageVaccinesInDoses && item()?.isVaccine
