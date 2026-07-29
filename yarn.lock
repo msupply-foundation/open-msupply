@@ -1879,6 +1879,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@capacitor/share@npm:^8.0.0":
+  version: 8.0.1
+  resolution: "@capacitor/share@npm:8.0.1"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/a615b85c79bbd3bfeb5e2ee2ac119e7ba8b8184ebcaad3b019467103e4ffc24130e1c1af42910498342fb495e0e297edf72169fa801963e34883d8bd4a42e514
+  languageName: node
+  linkType: hard
+
 "@capacitor/synapse@npm:^1.0.4":
   version: 1.0.4
   resolution: "@capacitor/synapse@npm:1.0.4"
@@ -5655,6 +5664,7 @@ __metadata:
     "@capacitor/keyboard": "npm:^8.0.0"
     "@capacitor/preferences": "npm:^8.0.0"
     "@capacitor/screen-orientation": "npm:^8.0.0"
+    "@capacitor/share": "npm:^8.0.0"
     "@chromatic-com/storybook": "npm:^1.6.1"
     "@graphql-codegen/cli": "npm:^5.0.0"
     "@graphql-codegen/near-operation-file-preset": "npm:^3.0.0"

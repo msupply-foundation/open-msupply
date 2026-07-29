@@ -198,6 +198,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
       // a stale narrow value when the window grows back. See issue #12172.
       width={!isExtraSmallScreen ? width : 340}
       open={open}
+      data-testid="sync-modal"
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
       }}

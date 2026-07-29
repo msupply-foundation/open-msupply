@@ -125,6 +125,7 @@ export const MobileNavBar = () => {
               color="inherit"
               aria-label="open drawer"
               edge="start"
+              data-testid="mobile-nav-toggle"
               onClick={drawer.toggle}
               sx={{ mr: 1, color: 'black' }}
             >
