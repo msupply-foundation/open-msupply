@@ -34,8 +34,15 @@ export type NumberFieldConstraints = {
 };
 
 export type ProcessedInput =
-  | { accepted: false }
-  | { accepted: true; text: string; commit?: { value: number | undefined } };
+  { accepted: false } | { accepted: true; text: string; commit?: CommitResult };
+
+/**
+ * A committed value plus, when the round/clamp CHANGED what the text parsed
+ * to, the number the user actually entered — how the component detects an
+ * adjusted entry (its `onClamped`). Absent whenever the entry committed
+ * as typed.
+ */
+export type CommitResult = { value: number | undefined; adjustedFrom?: number };
 
 // Matches Latin + Arabic-Indic digits — the two digit systems our locales
 // produce (LOCALE_META numberLocale; parseNumber converts the latter).
@@ -97,6 +104,12 @@ const commitValue = (parsed: number, o: NumberFieldConstraints): number => {
   return v === 0 ? 0 : v;
 };
 
+// The commit payload: carries the entered number only when the constraints
+// adjusted it (`entered` compared against the final committed value — for the
+// repair path that's the pre-repair parse, so a stripped sign counts too).
+const commitResult = (entered: number, value: number): CommitResult =>
+  entered === value ? { value } : { value, adjustedFrom: entered };
+
 /** The blurred display: locale-formatted with grouping and decimal padding. */
 export const displayString = (
   value: number | undefined,
@@ -151,7 +164,11 @@ export const processInput = (
     if (isIncompleteText(text, symbols)) return { accepted: true, text };
     const parsed = parseNumber(text, symbols.decimal);
     if (Number.isNaN(parsed)) return { accepted: true, text };
-    return { accepted: true, text, commit: { value: commitValue(parsed, o) } };
+    return {
+      accepted: true,
+      text,
+      commit: commitResult(parsed, commitValue(parsed, o)),
+    };
   }
 
   // Gate failed — usually a paste ("$1,234.567", "-5" where negatives are
@@ -166,7 +183,7 @@ export const processInput = (
   return {
     accepted: true,
     text: repaired,
-    commit: { value: commitValue(value, o) },
+    commit: commitResult(parsed, commitValue(value, o)),
   };
 };
 
@@ -178,12 +195,16 @@ export const finalizeText = (
   text: string,
   o: NumberFieldConstraints,
   locale: SupportedLocale
-): { value: number | undefined; text: string } => {
+): { value: number | undefined; text: string; adjustedFrom?: number } => {
   const symbols = getNumberSymbols(locale);
   const parsed = parseNumber(normalize(text, symbols), symbols.decimal);
   if (Number.isNaN(parsed)) return { value: undefined, text: '' };
   const value = commitValue(parsed, o);
-  return { value, text: displayString(value, o, locale) };
+  return {
+    value,
+    text: displayString(value, o, locale),
+    ...(parsed === value ? {} : { adjustedFrom: parsed }),
+  };
 };
 
 /** Arrow-key stepping: from the current value (or 0/min when empty). */
