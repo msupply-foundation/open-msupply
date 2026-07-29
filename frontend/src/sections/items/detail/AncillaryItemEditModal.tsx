@@ -12,6 +12,7 @@ import {
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Text } from '../../../ui/elements/typography/Text';
 import { HStack } from '../../../ui/layout/Stack/HStack';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { ItemSearch } from '../../../domain/item/ItemSearch';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
@@ -207,34 +208,44 @@ export const AncillaryItemEditModal: Component<
         }
       />
       {/* Ratio — two number inputs either side of a literal ":" (ui-surface
-          S5). gap="sm" (--space-2) and the default centre alignment are exactly
-          what this row had before, so the rhythm is unchanged — only the
-          hand-rolled flex is gone. */}
-      <HStack gap="sm">
-        <NumberField
-          label={t('label.ratio')}
-          min={0}
-          decimalLimit={4}
-          disabled={saving() !== null}
-          value={form().itemQuantity}
-          onChange={itemQuantity =>
-            setForm({ ...form(), itemQuantity: itemQuantity ?? 0 })
-          }
-        />
-        <Text>:</Text>
-        <NumberField
-          label={t('label.ratio')}
-          hideLabel
-          min={0}
-          decimalLimit={4}
-          disabled={saving() !== null}
-          helperText={t('description.ancillary-ratio')}
-          value={form().ancillaryQuantity}
-          onChange={ancillaryQuantity =>
-            setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
-          }
-        />
-      </HStack>
+          S5), with the explanation on its OWN line beneath them. It is NOT the
+          second field's `helperText`: helper text belongs to one field, so it
+          made that field taller than its sibling and knocked the two inputs out
+          of alignment. As a row of its own it describes the pair, which is what
+          it actually explains. */}
+      <Stack gap="sm">
+        {/* align="end", not the default centre: the first field carries a
+            visible label and the second hides its own, so the two blocks are
+            different heights and centring them leaves the second input riding
+            higher. With no helper text under either, both end at their input's
+            bottom edge — so aligning on that edge lines the inputs and the ":"
+            up exactly. */}
+        <HStack gap="sm" align="end">
+          <NumberField
+            label={t('label.ratio')}
+            min={0}
+            decimalLimit={4}
+            disabled={saving() !== null}
+            value={form().itemQuantity}
+            onChange={itemQuantity =>
+              setForm({ ...form(), itemQuantity: itemQuantity ?? 0 })
+            }
+          />
+          <Text>:</Text>
+          <NumberField
+            label={t('label.ratio')}
+            hideLabel
+            min={0}
+            decimalLimit={4}
+            disabled={saving() !== null}
+            value={form().ancillaryQuantity}
+            onChange={ancillaryQuantity =>
+              setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
+            }
+          />
+        </HStack>
+        <Text variant="bodySmall">{t('description.ancillary-ratio')}</Text>
+      </Stack>
     </Dialog>
   );
 };

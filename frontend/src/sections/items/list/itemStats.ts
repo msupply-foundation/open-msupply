@@ -8,9 +8,11 @@ import { t } from '../../../intl';
 
 const EMPTY_CELL = '—';
 
-// Months of stock: the wire value is null when AMC is 0 (the figure is
-// undefined, not zero/∞). The list renders that absence as a dash — NEVER 0
-// (OMS-REG-CAT-04.34). A real value is locale-formatted to two decimals.
+// Months of stock for the DETAIL STATS BAND: a fixed two decimals (AC-S2), so
+// the figure reads the same width every time in a band of headline numbers. The
+// wire value is null when AMC is 0 (the figure is undefined, not zero/∞) and
+// that absence renders as a dash — NEVER 0 (OMS-REG-CAT-04.34).
+// The list CELL is a different rule — see monthsOfStockCell below.
 export const formatMonthsOfStock = (
   monthsOfStockOnHand: number | null | undefined
 ): string =>
@@ -109,5 +111,23 @@ export const unitsWithDoses = (
       base.truncated || dosesCell.truncated
         ? `${fullPrecision(units)} (${fullPrecision(doses)} ${suffix})`
         : undefined,
+  };
+};
+
+// Months of stock as a LIST CELL: the numeric-cell rule its neighbours follow —
+// at most two decimals, a trailing "…" when precision drops, the full value in
+// the hover (ui-surface S1 § numeric cells). NOT the stats band's fixed two
+// decimals: the band shows one headline figure where an even width reads well,
+// while a column of figures alongside stock-on-hand and AMC must flag dropped
+// precision the same way they do (the reference list renders all three through
+// one number cell). null (zero AMC) is the dash, never 0 (OMS-REG-CAT-04.34).
+export const monthsOfStockCell = (
+  monthsOfStockOnHand: number | null | undefined
+): StatCell => {
+  if (monthsOfStockOnHand == null) return { text: EMPTY_CELL };
+  const cell = truncateToTwoDecimals(monthsOfStockOnHand);
+  return {
+    text: cell.text,
+    title: cell.truncated ? fullPrecision(monthsOfStockOnHand) : undefined,
   };
 };

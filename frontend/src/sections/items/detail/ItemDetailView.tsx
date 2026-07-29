@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { createTableConfig } from '../../../api/createTableConfig';
 import { isCentralServer } from '../../../api/serverInfo';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -123,6 +124,13 @@ const ItemDetailView: Component = () => {
 
   const stockHref = () =>
     `/${params.storeId}/inventory/stock?itemId=${params.itemId}`;
+
+  // Column config for the Master lists tab's table — also what puts the Columns
+  // + Settings controls in its toolbar (DataTable renders both only when
+  // `setConfig` is wired), so a table without it silently loses them.
+  const masterListsConfig = createTableConfig({
+    tableId: 'item-master-lists',
+  });
 
   // Not sortable: these rows ride along with the item record (no query of their
   // own), and the shared table sorts server-side only (ui-standards § tables →
@@ -281,7 +289,13 @@ const ItemDetailView: Component = () => {
               }
             >
               <TabPanel value="general">
-                <ContentContainer size="form">
+                {/* `padded`: this page is fillBody (so the Ledger / Master
+                    lists / Ancillary tables fill the region and own their
+                    scroll), which strips the Page body's edge padding — the
+                    exact mixed table+form detail view ContentContainer's
+                    padded mode exists for. Without it the form sits flush
+                    against the tab strip. */}
+                <ContentContainer size="form" padded>
                   {/* Two-column groups (spec S2 › General) of read-only
                       labelled values (no input chrome — spec D67). Column 1
                       then column 2 preserves the spec's group order when the
@@ -439,7 +453,8 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="store">
-                <ContentContainer size="form">
+                {/* Padded for the same reason as the General tab above. */}
+                <ContentContainer size="form" padded>
                   <FormColumns>
                     <FormColumn>
                       <FormSection title={t('title.pricing')}>
@@ -484,6 +499,14 @@ const ItemDetailView: Component = () => {
                   rows={i().masterLists ?? []}
                   rowKey={row => row.id}
                   emptyMessage={t('error.no-master-list')}
+                  config={masterListsConfig.config()}
+                  setConfig={masterListsConfig.setConfig}
+                  configIsDefault={masterListsConfig.isConfigDefault()}
+                  onSaveGlobalDefault={
+                    masterListsConfig.canSaveGlobalDefault()
+                      ? masterListsConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                 />
               </TabPanel>
 

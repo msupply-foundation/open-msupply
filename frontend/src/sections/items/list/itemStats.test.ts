@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   dosesEquivalent,
   formatMonthsOfStock,
+  monthsOfStockCell,
   shouldShowDoses,
   truncateToTwoDecimals,
   unitsWithDoses,
@@ -17,6 +18,20 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
     expect(formatMonthsOfStock(2.5)).toBe('2.50');
     // zero is a real months-of-stock value (stock but... ) — only null blanks
     expect(formatMonthsOfStock(0)).toBe('0.00');
+  });
+
+  // The list CELL takes the numeric-cell rule, NOT the band's fixed 2dp: at most
+  // two decimals, "…" + hover when precision drops. Same dash at zero AMC.
+  it('the MOS list cell follows the numeric-cell rule, not the band 2dp', () => {
+    expect(monthsOfStockCell(null)).toEqual({ text: '—' });
+    // 2.5 reads "2.5" here where the band reads "2.50" — no padding zero
+    expect(monthsOfStockCell(2.5)).toEqual({ text: '2.5', title: undefined });
+    expect(monthsOfStockCell(3.3333)).toEqual({
+      text: '3.33…',
+      title: '3.3333',
+    });
+    // zero is a value, not an absence — only null dashes
+    expect(monthsOfStockCell(0).text).toBe('0');
   });
 
   // OMS-REG-CAT-04.35 — doses shown only for vaccine items AND only under the
