@@ -12,7 +12,8 @@
     "@capacitor/filesystem": "^8.0.0",
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/preferences": "^8.0.0",
-    "@capacitor/screen-orientation": "^8.0.0"
+    "@capacitor/screen-orientation": "^8.0.0",
+    "@capacitor/share": "^8.0.0"
   },
   "scripts": {
     "build:server": "./build_remote_server_libs.sh",
