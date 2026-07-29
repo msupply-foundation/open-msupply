@@ -4,13 +4,9 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
-import {
-  CheckIcon,
-  MinusCircleIcon,
-  SearchIcon,
-  XCircleIcon,
-} from '@/ui/icons';
+import { MinusCircleIcon } from '@/ui/icons';
 import { ReasonSelect } from '@/domain/reasonOptions';
 import {
   runBatchStocktakeLines,
@@ -59,7 +55,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<MinusCircleIcon />}
         disabled={props.disabled}
         data-testid="reduce-lines-to-zero-button"
@@ -152,18 +148,13 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             // Apply.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="primary"
-                icon={<CheckIcon />}
+                variant="danger"
                 loading={phase() === 'working'}
                 data-testid="dialog-button-ok"
                 onClick={() => void run()}
@@ -176,7 +167,6 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
           <Match when={phase() === 'success'}>
             <Button
               variant="secondary"
-              icon={<CheckIcon />}
               data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
@@ -184,17 +174,12 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
             <Button
               variant="primary"
-              icon={<SearchIcon />}
               onClick={() => {
                 props.onShowErrors();
                 props.onClose();
