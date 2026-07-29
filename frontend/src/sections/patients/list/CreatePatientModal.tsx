@@ -467,6 +467,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 label={t('label.first-name')}
                 width="full"
                 required
+                data-testid="input-firstName"
                 value={search.firstName}
                 onInput={e => setSearch('firstName', e.currentTarget.value)}
               />
@@ -474,6 +475,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 label={t('label.last-name')}
                 width="full"
                 required
+                data-testid="input-lastName"
                 value={search.lastName}
                 onInput={e => setSearch('lastName', e.currentTarget.value)}
               />
@@ -529,7 +531,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 </Alert>
               </Show>
               <Show when={centralUnreachable()}>
-                <Alert severity="warning">
+                <Alert severity="warning" testId="central-search-error">
                   {t('messages.failed-to-reach-central')}{' '}
                   <Button
                     variant="secondary"
