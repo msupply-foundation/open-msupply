@@ -537,8 +537,11 @@ const OutboundDetailView: Component = () => {
     // off the entity's pricing stats — never a sum over the loaded rows, which
     // would silently become a page total under server pagination (OMS-REG-DIST-03.28).
     const pricing = node()?.pricing;
+    // Price footer = stockTotalBeforeTax (contract § detail line table): it
+    // sums the Total column (pack sell price × packs, before tax) — the
+    // after-tax figure belongs to the side panel's stock-charges Total.
     const totals = {
-      price: pricing?.stockTotalAfterTax ?? 0,
+      price: pricing?.stockTotalBeforeTax ?? 0,
       volume: pricing?.totalVolume ?? 0,
     };
     return [
@@ -657,12 +660,28 @@ const OutboundDetailView: Component = () => {
           ]
         : []),
       {
-        c: { key: 'sellPricePerPack' },
+        // Per UNIT — pack price ÷ pack size (spec § line table col 15);
+        // placeholders have no price until stock is allocated.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack / line.packSize,
+          id: 'unitSellPrice',
+        },
         header: () => t('label.unit-sell-price'),
         ...getCurrencyCell(),
       },
       {
-        c: { key: 'totalAfterTax' },
+        // Pack sell price × packs, BEFORE tax (spec § line table col 16) —
+        // not the line's totalAfterTax.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack * line.numberOfPacks,
+          id: 'total',
+        },
         header: () => t('label.total'),
         footer: () => formatCurrencyCell(totals.price),
         ...getCurrencyCell(),
