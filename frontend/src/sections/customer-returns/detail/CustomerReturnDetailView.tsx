@@ -386,7 +386,7 @@ const CustomerReturnDetailView: Component = () => {
                     empty={
                       disabled() ? undefined : (
                         <Button
-                          icon={<PlusCircleIcon />}
+                          variant="ghost"
                           data-testid="nothing-here-create-button"
                           onClick={openAdd}
                         >

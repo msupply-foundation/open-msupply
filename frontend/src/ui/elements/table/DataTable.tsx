@@ -20,6 +20,7 @@ import {
   type ColumnOrderState,
   type ColumnPinningState,
   type ColumnSizingState,
+  type HeaderContext,
   type RowSelectionState,
   type SortingState,
   type Updater,
@@ -199,10 +200,28 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   showFullScreen?: boolean;
 
+  /**
+   * Minimum height, in rem, for the table (its `.root`). Without it the table's
+   * `min-block-size` is 0 — correct for a fill-the-page list, but in a flex
+   * column that can be squeezed (a table inside a modal body), a short viewport
+   * collapses the table toward nothing. Set this so the table keeps at least
+   * this height and its scrolling ancestor (the dialog body) scrolls instead of
+   * the table vanishing. Opt-in: unset keeps the min-block-size:0 default.
+   */
+  minBodyRem?: number;
+
   // --- Row selection, owned by the page. ---
   enableSelection?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  /**
+   * Render the selection column but with every checkbox DISABLED (the
+   * select-all and every row). The column stays visible so the affordance
+   * reads as present-but-blocked rather than absent — used where selection is
+   * structurally unavailable (e.g. a program internal order whose line set is
+   * fixed), not merely empty. No row can be toggled while set.
+   */
+  selectionDisabled?: boolean;
   /**
    * The page's bulk actions for the selection action bar (gated buttons —
    * Delete, Duplicate, …). While rows are selected, the table's footer swaps
@@ -363,8 +382,18 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table view) and only when the page wired onSort + has sortable columns.
   const sortableColumns = () =>
     props.columns.filter(c => c.sortKey !== undefined);
-  const columnLabel = (c: Column<T, K, G>): string =>
-    typeof c.header === 'string' ? c.header : (c.sortKey ?? '');
+  // A column's header text, for a sort-option label. Our `header` is always a
+  // FUNCTION (columnTypes.ts narrows it that way so the text re-resolves on a
+  // locale change), so it must be CALLED — the old `typeof header === 'string'`
+  // test never matched and every option fell back to the raw sortKey
+  // ("itemCode", "costPricePerPack"). Same treatment as HeaderCell (flexRender),
+  // CardView.columnHeaderText and ColumnSettings.label; none of our headers read
+  // the context argument, so an empty one is safe. The sortKey stays the last
+  // resort for a column with no header at all.
+  const columnLabel = (c: Column<T, K, G>): JSX.Element =>
+    typeof c.header === 'function'
+      ? c.header({} as HeaderContext<T, unknown>)
+      : (c.header ?? c.sortKey ?? '');
   const activeSortColumn = (): Column<T, K, G> | undefined =>
     props.sort
       ? sortableColumns().find(c => c.sortKey === props.sort!.key)
@@ -768,6 +797,11 @@ export function DataTable<T, K extends string, G extends string = never>(
     <div
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
+      style={
+        props.minBodyRem != null
+          ? { 'min-block-size': `${props.minBodyRem}rem` }
+          : undefined
+      }
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
@@ -984,6 +1018,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             class={styles.selectBox}
                             aria-label={t('table.select-all')}
                             data-testid="select-all-rows-checkbox"
+                            disabled={props.selectionDisabled}
                             checked={table.getIsAllRowsSelected()}
                             indeterminate={table.getIsSomeRowsSelected()}
                             onChange={e => {
@@ -1031,6 +1066,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       table={table}
                       cardGroups={props.cardGroups}
                       enableSelection={props.enableSelection ?? false}
+                      selectionDisabled={props.selectionDisabled ?? false}
                       onRowClick={props.onRowClick}
                     />
                   </Match>
@@ -1040,6 +1076,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         <TableRow
                           row={row}
                           enableSelection={props.enableSelection ?? false}
+                          selectionDisabled={props.selectionDisabled ?? false}
                           onRowClick={props.onRowClick}
                           rowState={props.rowState}
                           rowTone={props.rowTone}

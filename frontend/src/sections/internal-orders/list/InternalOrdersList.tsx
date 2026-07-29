@@ -439,12 +439,12 @@ const InternalOrdersList: Component = () => {
         // Empty state offers create (AC-N2).
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             disabled={context.loading || checking()}
             onClick={() => void startCreate()}
           >
-            {t('label.new-internal-order')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection

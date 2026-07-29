@@ -6,7 +6,11 @@
 export { SelectReportModal } from './SelectReportModal';
 export type { SelectReportModalProps } from './SelectReportModal';
 export { listReportsByContext } from './reportsResource';
-export type { Report, ReportContext } from './reportsResource';
+export type {
+  Report,
+  ReportContext,
+  ReportsExtraFilter,
+} from './reportsResource';
 export { generateReport } from './generateReport';
 export type {
   GenerateReportParams,

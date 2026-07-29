@@ -110,6 +110,37 @@ export const AddInternalOrderLine = {
   query: "mutation addInternalOrderLine($storeId: String!, $input: BatchRequestRequisitionInput!) {\n  batchRequestRequisition(storeId: $storeId, input: $input) {\n    insertRequestRequisitionLines {\n      id\n      response {\n        __typename\n      }\n    }\n    updateRequestRequisitionLines {\n      id\n      response {\n        __typename\n        ... on RequisitionLineNode {\n          id\n        }\n        ... on UpdateRequestRequisitionLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<AddInternalOrderLineResult, AddInternalOrderLineVariables>;
 
+export type DeleteInternalOrderLinesVariables = {
+  storeId: string;
+  ids: Array<{
+    id: string;
+  }>;
+};
+
+export type DeleteInternalOrderLinesResult = {
+  batchRequestRequisition: {
+  deleteRequestRequisitionLines: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteRequestRequisitionLineError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+}> | null;
+};
+};
+
+export const DeleteInternalOrderLines = {
+  query: "mutation deleteInternalOrderLines($storeId: String!, $ids: [DeleteRequestRequisitionLineInput!]!) {\n  batchRequestRequisition(\n    storeId: $storeId\n    input: {deleteRequestRequisitionLines: $ids}\n  ) {\n    deleteRequestRequisitionLines {\n      id\n      response {\n        ... on DeleteResponse {\n          __typename\n          id\n        }\n        ... on DeleteRequestRequisitionLineError {\n          __typename\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteInternalOrderLinesResult, DeleteInternalOrderLinesVariables>;
+
 export type UpdateInternalOrderLineVariables = {
   storeId: string;
   input: {

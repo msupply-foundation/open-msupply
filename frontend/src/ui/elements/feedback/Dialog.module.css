@@ -2,7 +2,7 @@
  * Native <dialog> — the top layer handles stacking (no z-index) and the UA
  * centres dialog:modal in the viewport (fixed + inset 0 + margin auto), so
  * the CSS here is only the look. Padding lives on .body, NOT the dialog:
- * scrim-click detection relies on "pointerdown targeting the <dialog> element
+ * scrim-click detection relies on "an event targeting the <dialog> element
  * itself means the ::backdrop was hit".
  */
 

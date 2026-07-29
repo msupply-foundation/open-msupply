@@ -13,7 +13,7 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
@@ -27,8 +27,9 @@ import {
   SplitButton,
   type SplitButtonOption,
 } from '../../../ui/elements/buttons/SplitButton';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, InfoIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
+import { CloseIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -75,7 +76,7 @@ import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
-import { canChangeStatus, isEditable } from './inboundShipmentStatus';
+import { canChangeStatus, isEditable, kindOf } from './inboundShipmentStatus';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
@@ -491,9 +492,9 @@ const InboundShipmentDetailView: Component = () => {
     // (H4). An INCOMING transfer has linkedShipment (arrives pre-populated, no
     // order-line pull); a manual link has a requisition but no linkedShipment.
     // Offered only when the store enables manual IO linking (a preference
-    // gate → offer-shaping, omitted otherwise). When offered, disable-with-reason for
-    // the per-shipment state (M5): needs a manually linked internal order and an
-    // editable shipment.
+    // gate → offer-shaping, omitted otherwise). When offered,
+    // disable-with-reason for the per-shipment state (M5): needs a manually
+    // linked internal order and an editable shipment.
     if (prefs().manuallyLinkInternalOrderToInboundShipment) {
       const ioReason = !node
         ? undefined
@@ -824,7 +825,21 @@ const InboundShipmentDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
+                  {/* The header field cluster — never a hand-rolled <Toolbar>
+                      (ui/docs/PAGES.md § header field cluster). The kind banner
+                      (spec S3: manual shipments don't auto-advance; a
+                      transfer/automatic one is driven by the sending side) goes
+                      in the cluster's `alert` slot, which puts it on its own
+                      line under the fields. */}
+                  <HeaderToolbar
+                    alert={
+                      <Alert severity="info">
+                        {kindOf(node()) === 'manual'
+                          ? t('messages.inbound-manual-info')
+                          : t('messages.inbound-automatic-info')}
+                      </Alert>
+                    }
+                  >
                     <InboundShipmentDetailToolbar
                       storeId={params.storeId}
                       node={node()}
@@ -836,15 +851,18 @@ const InboundShipmentDetailView: Component = () => {
                     />
                     {/* PROMINENT custom fields for the scope — stay in the
                         toolbar even when the shipment is read-only, just
-                        disabled (spec/ui-standards/custom-fields). */}
+                        disabled (spec/ui-standards/custom-fields). They wear
+                        their own labels like the fields above (the cluster's
+                        `field` layout). */}
                     <CustomFieldsToolbar
                       scope="inbound_shipment"
                       recordId={node().id}
                       values={node().customFields}
                       disabled={isDisabled()}
+                      layout="field"
                       onSave={patch => void saveField({ customFields: patch })}
                     />
-                  </Toolbar>
+                  </HeaderToolbar>
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -951,7 +969,7 @@ const InboundShipmentDetailView: Component = () => {
                   empty={
                     isDisabled() ? undefined : (
                       <Button
-                        icon={<InfoIcon />}
+                        variant="ghost"
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >

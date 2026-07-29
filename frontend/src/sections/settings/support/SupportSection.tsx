@@ -4,8 +4,8 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { DownloadIcon, FileIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
-import { Stack } from '../../../ui/layout/Stack/Stack';
 import { ServerLogModal } from './ServerLogModal';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 
 /*
  * Support (spec/settings/ui-surface.md § Support) — Server Admin only (gated

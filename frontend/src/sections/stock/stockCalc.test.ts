@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   packsToUnits,
   packsToValue,
+  totalVolume,
   repackNewPacks,
   isWholePacks,
   signedAdjustment,
@@ -19,6 +20,15 @@ describe('stock units & value (spec/stock S1 columns)', () => {
   it('units = packs × pack size, value = packs × cost', () => {
     expect(packsToUnits(12, 100)).toBe(1200);
     expect(packsToValue(12, 2.5)).toBe(30);
+  });
+});
+
+describe('total volume (spec/stock S2 — computed, not stored)', () => {
+  it('total volume = volume per pack × packs on hand', () => {
+    expect(totalVolume(0.25, 12)).toBe(3);
+    // A cleared volume-per-pack zeroes the total rather than keeping the
+    // last-saved figure (#601).
+    expect(totalVolume(0, 12)).toBe(0);
   });
 });
 

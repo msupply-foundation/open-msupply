@@ -8,7 +8,6 @@ import {
 import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { PlusCircleIcon } from '../../../../ui/icons';
 import type { InsurancePolicyFragment } from './insurance.generated';
 
 type Policy = InsurancePolicyFragment;
@@ -82,7 +81,7 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
       empty={
         props.disabled ? undefined : (
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="add-insurance-button"
             onClick={props.onAdd}
           >

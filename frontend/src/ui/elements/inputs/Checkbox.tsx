@@ -1,6 +1,7 @@
 import { createUniqueId, Show } from 'solid-js';
 import { AlertTriangleIcon } from '../../icons';
 import { BareCheckbox } from './BareCheckbox';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Checkbox.module.css';
 
 export interface CheckboxProps {
@@ -17,6 +18,9 @@ export interface CheckboxProps {
   class?: string;
   /** Test id on the native input (cross-FE test-id contract). */
   testId?: string;
+  /** Focus destination (kdd/focus-targets) — lands on the native input, which
+   *  the drawn box only decorates. */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -45,6 +49,7 @@ export const Checkbox = (props: CheckboxProps) => {
           disabled={props.disabled}
           error={!!props.error}
           data-testid={props.testId}
+          ref={(el: HTMLInputElement) => props.focusTarget?.ref(el)}
           aria-invalid={props.error ? 'true' : undefined}
           aria-describedby={props.error ? messageId() : undefined}
           onChange={event => props.onChange?.(event.currentTarget.checked)}

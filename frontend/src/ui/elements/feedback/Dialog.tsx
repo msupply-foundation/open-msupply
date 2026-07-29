@@ -251,6 +251,10 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
  */
 export const Dialog = (props: DialogProps) => {
   let dialog!: HTMLDialogElement;
+  // Whether the in-flight pointer gesture has hit ONLY the ::backdrop so far —
+  // the scrim-dismiss decision, made at `click`. Plain `let`, not a signal:
+  // nothing renders from it (see the handlers at the bottom of the element).
+  let scrimGesture = false;
   const titleId = createUniqueId();
   const descriptionId = createUniqueId();
   // Popups (Select / Combobox) opened inside this dialog must MOUNT INTO it,
@@ -351,14 +355,39 @@ export const Dialog = (props: DialogProps) => {
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
-      // A pointerdown whose target is the <dialog> itself hit the ::backdrop:
-      // the inner .body covers the dialog box completely (the dialog has zero
-      // padding for exactly this reason), so content clicks can't match.
-      onPointerDown={event =>
-        event.target === dialog &&
-        props.dismissable !== false &&
-        props.onClose()
-      }
+      // Scrim-click dismiss. An event whose target is the <dialog> itself hit
+      // the ::backdrop: the inner .body covers the dialog box completely (the
+      // dialog has zero padding for exactly this reason), so content clicks
+      // can't match.
+      //
+      // The dismiss must land on `click`, and NOT on pointerdown/pointerup —
+      // both of those close the dialog mid-gesture, and on touch that
+      // click-throughs onto the page behind. A tap dispatches
+      // pointerdown/pointerup, then touchend, and only then the compatibility
+      // mousedown/mouseup/click — which are hit-tested AFRESH at that moment.
+      // Close before they fire and the ::backdrop is gone, so the tap is
+      // re-targeted to whatever is now under the finger: a row's onRowClick
+      // (i.e. a navigation) instead of a dismiss. Mouse input hides this — the
+      // UA fires `click` at the nearest common ancestor of the mousedown and
+      // mouseup targets, which is <body> once the dialog has closed, so no row
+      // ever sees it. Verified across tap / drag-out / drag-in on both inputs.
+      //
+      // All three events are then required to have hit the backdrop, matching
+      // the platform's own light-dismiss rule: a gesture that starts or ends on
+      // dialog CONTENT is not a scrim click, so selecting text and releasing
+      // over the scrim doesn't dismiss.
+      onPointerDown={event => {
+        scrimGesture = event.target === dialog;
+      }}
+      onPointerUp={event => {
+        scrimGesture = scrimGesture && event.target === dialog;
+      }}
+      onClick={event => {
+        const fromScrim = scrimGesture;
+        scrimGesture = false;
+        if (fromScrim && event.target === dialog && props.dismissable !== false)
+          props.onClose();
+      }}
     >
       <PortalMountContext.Provider value={dialogEl}>
         <DialogContent

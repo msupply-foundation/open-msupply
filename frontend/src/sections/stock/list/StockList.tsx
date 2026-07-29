@@ -99,10 +99,11 @@ const StockList: Component = () => {
     page: { first: query().first, offset: query().offset },
   });
 
-  // Global resource-style fetch (kdd/state-management): the serialised variables
-  // are the resource source (a stable string — kdd/solid-reactivity-pitfalls),
-  // and `.latest` reads never suspend, so a filter/sort/page refetch keeps the
-  // table mounted and shows the loading treatment rather than remounting.
+  // Global resource-style fetch (kdd/state-management): the serialised
+  // variables are the resource source (a stable string —
+  // kdd/solid-reactivity-pitfalls), and `.latest` reads never suspend, so a
+  // filter/sort/page refetch keeps the table mounted and shows the loading
+  // treatment rather than remounting.
   const [data] = createResource(
     () => JSON.stringify(variables()),
     async serialised => {
@@ -200,7 +201,6 @@ const StockList: Component = () => {
         id: 'masterLists',
       },
       header: () => t('label.master-lists'),
-      enableSorting: false,
       ...getCellDefinition('masterLists'),
     },
     {
@@ -235,8 +235,11 @@ const StockList: Component = () => {
               id: 'vvmStatus',
             },
             header: () => t('label.vvm-status'),
-            enableSorting: false,
             cardGroup: 'more',
+            // No status-chip preset exists yet (docs/CELL_TYPES.md § Status);
+            // until one does this is short text, so it at least carries a
+            // width rather than falling back to TanStack's default.
+            ...getCellDefinition<Row>('vvmStatus'),
           } satisfies Column<Row, SortKey, GroupKey>,
         ]
       : []),
@@ -246,7 +249,9 @@ const StockList: Component = () => {
       sortKey: 'locationCode',
       header: () => t('label.location-code'),
       cardGroup: 'more',
-      ...getCellDefinition('location'),
+      // 'locationCode', not 'location': this column's header is the longer
+      // "Location code", which needs its own width and no growth cap (#601).
+      ...getCellDefinition('locationCode'),
     },
     {
       // Location name — card: More details.
@@ -255,7 +260,6 @@ const StockList: Component = () => {
         id: 'locationName',
       },
       header: () => t('label.location-name'),
-      enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('locationName'),
     },
@@ -263,7 +267,6 @@ const StockList: Component = () => {
       // Unit — card: always shown.
       c: { accessor: r => r.item.unitName ?? '', id: 'unit' },
       header: () => t('label.unit'),
-      enableSorting: false,
       ...getCellDefinition('unit'),
     },
     {
@@ -272,7 +275,6 @@ const StockList: Component = () => {
       sortKey: 'packSize',
       header: () => t('label.pack-size'),
       ...getCellDefinition('packSize'),
-      cell: info => formatNumber(info.getValue<number>()),
     },
     {
       // Pack qty — card: More details.
@@ -281,13 +283,11 @@ const StockList: Component = () => {
       header: () => t('label.pack-qty'),
       cardGroup: 'more',
       ...getCellDefinition('numberOfPacks'),
-      cell: info => formatNumber(info.getValue<number>()),
     },
     {
       // SOH — card: More details.
       c: { accessor: r => lineUnits(r), id: 'soh' },
       header: () => t('label.soh'),
-      enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('units'),
       cell: info =>
@@ -301,7 +301,6 @@ const StockList: Component = () => {
       // Available stock — card: always shown.
       c: { accessor: r => lineAvailUnits(r), id: 'availableStock' },
       header: () => t('label.available-stock'),
-      enableSorting: false,
       ...getCellDefinition('units'),
       cell: info =>
         unitsText(
@@ -330,7 +329,6 @@ const StockList: Component = () => {
       // Total — card: More details.
       c: { accessor: r => lineValue(r), id: 'total' },
       header: () => t('label.total'),
-      enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('total'),
     },
@@ -338,7 +336,6 @@ const StockList: Component = () => {
       // Manufacturer — card: More details.
       c: { accessor: r => r.manufacturer?.name ?? '', id: 'manufacturer' },
       header: () => t('label.manufacturer'),
-      enableSorting: false,
       cardGroup: 'more',
       ...getCellDefinition('manufacturer'),
     },
@@ -348,6 +345,7 @@ const StockList: Component = () => {
       sortKey: 'supplierName',
       header: () => t('label.supplier'),
       cardGroup: 'more',
+      ...getCellDefinition('supplierName'),
       cell: info => {
         const supplier = info.getValue<string>();
         return supplier && supplier.length > 0
@@ -361,11 +359,11 @@ const StockList: Component = () => {
 
   const emptyCreate = (): JSX.Element => (
     <Button
-      icon={<PlusCircleIcon />}
+      variant="ghost"
       data-testid="nothing-here-create-button"
       onClick={() => setCreateOpen(true)}
     >
-      {t('button.new-stock')}
+      {t('button.add-new-stock')}
     </Button>
   );
 

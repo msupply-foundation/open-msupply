@@ -284,11 +284,11 @@ const PatientsList: Component = () => {
         empty={
           <Show when={canMutate()}>
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('button.new-patient')}
+              {t('button.create-a-new-one')}
             </Button>
           </Show>
         }

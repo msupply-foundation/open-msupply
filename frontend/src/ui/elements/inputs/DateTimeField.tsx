@@ -3,6 +3,7 @@ import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
@@ -44,6 +45,12 @@ export interface DateTimeFieldProps {
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
   id?: string;
+  /** `data-testid` stamped on the DATE input — the field's first focusable and
+   *  the part a test types into (e2e/TESTIDS.md). */
+  testId?: string;
+  /** Focus destination (kdd/focus-targets) — lands on the date input, where
+   *  entry starts. */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -128,8 +135,10 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
         >
           <input
             id={dateId()}
+            ref={(el: HTMLInputElement) => props.focusTarget?.ref(el)}
             type="text"
             class={styles.dateInput}
+            data-testid={props.testId}
             value={dateText()}
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}

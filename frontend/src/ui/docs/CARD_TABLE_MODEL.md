@@ -41,7 +41,7 @@ Set on each column literal in your `columns()` array. Anything not about the car
 | Field                           | Type                   | Default       | Effect                                                                                                                                                                         |
 | ------------------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `c`                             | identity union         | —             | The column's identity (`{ key }` / `{ id }` / `{ accessor, id }`). Two columns must have **distinct** resolved ids. See [columnTypes.ts](../elements/table/columnTypes.ts).    |
-| `header`                        | `string`               | —             | Table header text **and** the card field label (only a string header yields a label; a JSX header yields none).                                                                |
+| `header`                        | `() => JSX.Element`    | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.            |
 | `sortKey`                       | `K`                    | —             | Makes the column sortable. In card view it feeds the Sort control — read from **every** column regardless of view, so a table-only column can still supply a card sort option. |
 | `cardGroup`                     | `G`                    | default group | Which body group this column joins in card view (typed; a typo is a compile error). Omit → the default ungrouped group. Ignored for header cells.                              |
 | `meta.headerPosition`           | `'primary' \| 'badge'` | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                      |
@@ -84,7 +84,7 @@ One entry per body group in `cardGroups`.
 
 ## Label behaviour
 
-The card label text is the column's string `header`. Whether and how it renders:
+The card label text is the column's `header`, called (it is a function so the text re-resolves on a locale change). Whether and how it renders:
 
 - **Body cell, labelled** (the default) → [`LabelledValue`](../elements/typography/LabelledValue.tsx): label **above** the value, in the field grid.
 - **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"`: label **beside** the control, on the identity row.
