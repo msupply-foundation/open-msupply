@@ -48,7 +48,7 @@ export interface OutboundSidePanelProps {
    * query no longer carries lines), for the Service-charges block's rows.
    */
   serviceLines: OutboundLineFragment[];
-  /** For the backdating control's stocktake-conflict check (AC-B4). */
+  /** For the backdating control's stocktake-conflict check (OMS-REG-DIST-04.27). */
   storeId: string;
   disabled: boolean;
   /**
@@ -171,7 +171,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Text>
         </FieldRow>
         <FieldRow label={t('label.picked-date')}>
-          {/* Backdating control (rules.md § backdating, AC-B1..B4): editable
+          {/* Backdating control (rules.md § backdating, OMS-REG-DIST-04.23..B4): editable
               while NEW with the backdating preference on, otherwise disabled
               with the reason (pref off / past NEW). */}
           <PickedDateField
@@ -325,7 +325,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         </FieldRow>
 
         {/* Items sell price: info bubble; sub total / editable stored
-            shipment tax (AC-T3 — the save cascades to every stock line
+            shipment tax (OMS-REG-DIST-02.24 — the save cascades to every stock line
             server-side; disabled while read-only or while the stock total is
             zero) / total. */}
         <FieldRow

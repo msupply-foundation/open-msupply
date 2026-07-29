@@ -14,7 +14,7 @@ import { InsertOutboundShipment } from './outboundShipments.generated';
 // S2 — customer selection (spec/outbound-shipments ui-surface § S2): a modal
 // over the list titled "Customers", holding a single customer lookup. Choosing
 // a customer creates the shipment immediately and navigates to its detail
-// (FL2); on-hold customers are listed but not selectable (AC-C3, enforced by
+// (FL2); on-hold customers are listed but not selectable (OMS-REG-DIST-02.16, enforced by
 // the lookup). Failure surfaces as an inline notice in the modal, which stays
 // open with the lookup preserved (controls › dialogs, D20).
 export const CustomerSearchModal = (props: {
@@ -40,7 +40,7 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
       InsertOutboundShipment,
       {
         storeId: params.storeId,
-        // The id is client-generated so the create can navigate (AC-C1).
+        // The id is client-generated so the create can navigate (OMS-REG-DIST-02.1).
         input: { id: generateUUID(), otherPartyId: customer.id },
       },
       { returnGraphqlErrors: true }
@@ -53,7 +53,7 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
     if (result.kind !== 'success') return;
     const response = result.data.insertOutboundShipment;
     if (response.__typename !== 'InvoiceNode') {
-      // A typed rejection (party not a customer / not visible — AC-C2): the
+      // A typed rejection (party not a customer / not visible — OMS-REG-DIST-02.15): the
       // picker only offers valid customers, so this is a race; show it.
       const description =
         response.__typename === 'InsertOutboundShipmentError'

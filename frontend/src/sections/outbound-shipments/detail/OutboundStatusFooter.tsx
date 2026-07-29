@@ -12,17 +12,17 @@ import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
 // The shipment status footer (spec S3 § status footer): the Hold toggle
-// (confirmation both ways — AC-H1/H2), the lifecycle indicator over the FULL
+// (confirmation both ways — OMS-REG-DIST-02.10/H2), the lifecycle indicator over the FULL
 // status sequence (transfer statuses included, limited by the invoice-status-
-// options preference — AC-PR1), Close (back to the list), and the
+// options preference — OMS-REG-DIST-04.22), Close (back to the list), and the
 // status-change split button (its own action component). Replaced by the
-// bulk-action bar while lines are selected (AC-V2).
+// bulk-action bar while lines are selected (OMS-REG-DIST-04.20).
 
 export interface OutboundStatusFooterProps {
   storeId: string;
   node: OutboundNode;
   /**
-   * Whole-shipment pre-flight probe (AC-S5/AC-S6), run when the status button
+   * Whole-shipment pre-flight probe (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16), run when the status button
    * is invoked — the current lines page can't answer for the whole shipment
    * (rules.md § server-paginated line table). Undefined = the probe failed
    * (already routed to the global error modal); the action aborts.
@@ -64,7 +64,7 @@ export const OutboundStatusFooter: Component<
       date: stamps[status],
     }));
   };
-  // AC-PR1: a current status the preference EXCLUDES displays as the nearest
+  // OMS-REG-DIST-04.22: a current status the preference EXCLUDES displays as the nearest
   // included EARLIER status — the LAST allowed entry at or before the current
   // one (allowedStatuses() is already in ascending flow order). A plain loop
   // rather than Array#findLastIndex: eslint-plugin-solid doesn't recognise it
