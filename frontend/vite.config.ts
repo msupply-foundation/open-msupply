@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import solid from 'vite-plugin-solid';
+import { sharedModulesPlugin } from './vite/sharedModules.ts';
 
 /*
  * Dev server proxies GraphQL + custom translations to the mSupply backend
@@ -44,12 +45,42 @@ const appVersion = (): string => {
   return version;
 };
 
+// GraphQL + REST endpoints proxied to the mSupply backend in dev; `preview`
+// gets the same map so the plugin production path (import map + installed
+// bundles under /frontend_plugins) can be exercised against a running server.
+const backendProxy = () => {
+  const target = process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000';
+  return {
+    '/graphql': { target, ws: true, changeOrigin: true },
+    '/custom-translations': { target, changeOrigin: true },
+    '/files': { target, changeOrigin: true },
+    // Sync-file store (upload/download/delete of record documents, e.g. an
+    // inbound shipment's attachments) — a REST endpoint, not GraphQL.
+    '/sync_files': { target, changeOrigin: true },
+    // Dispensing-label printing (prescriptions) — a REST endpoint.
+    '/print': { target, changeOrigin: true },
+    // Installed frontend-plugin bundles (spec/plugins/contract.md).
+    '/frontend_plugins': { target, changeOrigin: true },
+  };
+};
+
 export default defineConfig(({ mode }) => ({
-  plugins: [solid()],
+  plugins: [solid(), sharedModulesPlugin()],
   // "@/x" → src/x. Keep in sync with tsconfig.app.json "paths" and
   // vitest.config.ts (the showcase config inherits it via mergeConfig).
+  // "@openmsupply/plugin-sdk" resolves the SDK from source so in-tree code
+  // and source-loaded dev plugins share the app's live instance.
   resolve: {
-    alias: { '@': new URL('./src', import.meta.url).pathname },
+    alias: {
+      '@': new URL('./src', import.meta.url).pathname,
+      '@openmsupply/plugin-sdk': new URL(
+        './src/plugin-sdk/index.ts',
+        import.meta.url
+      ).pathname,
+    },
+    // One Solid runtime, always — a duplicated copy breaks reactivity
+    // silently (kdd/plugin-loading).
+    dedupe: ['solid-js'],
   },
   // Lets the same build be mounted at a non-root path (the component
   // showcase's /showcase/ track, deploy/build-and-deploy.sh) — Vite rewrites
@@ -64,31 +95,9 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: Number(process.env.DEV_SERVER_PORT) || 3005,
-    proxy: {
-      '/graphql': {
-        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
-        ws: true,
-        changeOrigin: true,
-      },
-      '/custom-translations': {
-        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/files': {
-        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // Sync-file store (upload/download/delete of record documents, e.g. an
-      // inbound shipment's attachments) — a REST endpoint, not GraphQL.
-      '/sync_files': {
-        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      // Dispensing-label printing (prescriptions) — a REST endpoint.
-      '/print': {
-        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
-        changeOrigin: true,
-      },
-    },
+    proxy: backendProxy(),
+  },
+  preview: {
+    proxy: backendProxy(),
   },
 }));
