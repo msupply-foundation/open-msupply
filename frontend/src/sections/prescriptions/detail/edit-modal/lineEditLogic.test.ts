@@ -45,12 +45,26 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
     expect(seeded.map(l => l.id)).toEqual(['early', 'late', 'none']);
   });
 
-  it('marks on-hold rows barred (they stay visible, disabled)', () => {
+  it('hides on-hold rows outright — batch or location (.60, the prescriptions delta)', () => {
     const seeded = seedDraftLines(
-      [line({ id: 'held', stockLineOnHold: true })],
+      [
+        line({ id: 'held', stockLineOnHold: true }),
+        line({ id: 'held-location', location: { code: 'HL', onHold: true } }),
+        line({ id: 'open' }),
+      ],
       OPEN_PREFS
     );
-    expect(seeded[0].barred).toContain('on-hold');
+    expect(seeded.map(l => l.id)).toEqual(['open']);
+  });
+
+  it('keeps a held row already carrying an allocation, manually editable (AC-AL14)', () => {
+    const seeded = seedDraftLines(
+      [line({ id: 'held', stockLineOnHold: true, numberOfPacks: 2 })],
+      OPEN_PREFS
+    );
+    expect(seeded.map(l => l.id)).toEqual(['held']);
+    expect(seeded[0].barred).toEqual([]); // row stays enabled
+    expect(seeded[0].autoBarred).toContain('on-hold'); // never auto-filled
   });
 });
 
@@ -81,14 +95,73 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     expect(shortfallUnits).toBe(5);
   });
 
-  it('never allocates from a barred batch', () => {
+  it('never allocates from an auto-barred batch (expired — prefs off, AC-AL10)', () => {
     const lines = seedDraftLines(
-      [line({ id: 'held', stockLineOnHold: true, availablePacks: 50 })],
-      OPEN_PREFS
+      [line({ id: 'expired', expiryDate: '2020-01-01', availablePacks: 50 })],
+      OPEN_PREFS,
+      new Date('2026-01-01')
     );
     const { packsById, shortfallUnits } = allocateUnits(lines, 5);
-    expect(packsById.get('held')).toBe(0);
+    expect(packsById.get('expired')).toBe(0);
     expect(shortfallUnits).toBe(5);
+  });
+
+  it('reports a split pack with the nearest whole-pack quantity above (AC-AL12 — .58)', () => {
+    const lines = seedDraftLines(
+      [line({ id: 'a', packSize: 10, availablePacks: 10 })],
+      OPEN_PREFS
+    );
+    const { warnings } = allocateUnits(lines, 25); // 2.5 packs
+    expect(warnings).toContainEqual({
+      kind: 'partial-packs',
+      nearestAboveUnits: 30,
+    });
+  });
+
+  it('raises no split-pack warning when the allocation lands on whole packs', () => {
+    const lines = seedDraftLines(
+      [line({ id: 'a', packSize: 10, availablePacks: 10 })],
+      OPEN_PREFS
+    );
+    const { warnings } = allocateUnits(lines, 20);
+    expect(warnings).toEqual([]);
+  });
+
+  it('reports barred stock passed over, without re-reporting the shortfall (AC-AL2 — .59)', () => {
+    const lines = seedDraftLines(
+      [
+        line({ id: 'expired', expiryDate: '2020-01-01', availablePacks: 50 }),
+        line({ id: 'open', availablePacks: 2 }),
+      ],
+      OPEN_PREFS,
+      new Date('2026-01-01')
+    );
+    const { warnings, shortfallUnits } = allocateUnits(lines, 5);
+    expect(shortfallUnits).toBe(3);
+    expect(warnings).toEqual([
+      { kind: 'skipped-barred', reasons: ['expired'] },
+    ]);
+  });
+
+  it('never reports an on-hold pass-over — held stock is hidden (.60), and the AC-AL14 exception row skips silently', () => {
+    const lines = seedDraftLines(
+      [
+        // The exception row: held, carrying an allocation, stock remaining —
+        // in the grid but never auto-filled and never reported.
+        line({
+          id: 'held',
+          stockLineOnHold: true,
+          numberOfPacks: 1,
+          availablePacks: 50,
+        }),
+        line({ id: 'open', availablePacks: 2 }),
+      ],
+      OPEN_PREFS
+    );
+    const { warnings, shortfallUnits, packsById } = allocateUnits(lines, 5);
+    expect(packsById.get('held')).toBe(0);
+    expect(shortfallUnits).toBe(3);
+    expect(warnings).toEqual([]);
   });
 });
 

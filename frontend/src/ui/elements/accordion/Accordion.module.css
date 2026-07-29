@@ -6,6 +6,10 @@
  * ui/layout/SidePanel/SidePanel.module.css).
  */
 
+.root {
+  /* Base hook — the card variant scopes off it via data-variant. */
+}
+
 .item + .item {
   border-block-start: 1px solid var(--color-divider);
 }
@@ -47,6 +51,21 @@
   outline: 2px solid var(--primary-main);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+/* The trigger's label span absorbs the free width so the end-meta (when
+   present) and chevron pin to the trigger's end. */
+.label {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Muted end-of-trigger metadata (AccordionTrigger's `end` slot) — regular
+   weight so the bold trigger label stays the row's anchor. */
+.endMeta {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
 }
 
 .chevron {
@@ -124,4 +143,33 @@
   .content[data-closed] {
     animation: none;
   }
+}
+
+/* Card variant: each item is a filled rounded panel (the current app's
+   AccordionPanelSection look) — a disclosure that reads as its own region
+   inside a form or dialog body. Panels separate by gap, not hairline, and
+   trade the flat variant's inline-flush alignment for their own inset.
+   (Last in the file: these compound selectors outrank every base selector
+   for the same elements, and stylelint's no-descending-specificity wants
+   the base forms first.) */
+.root[data-variant='card'] .item {
+  background: var(--bg-menu);
+  border-radius: var(--radius-lg);
+}
+
+.root[data-variant='card'] .item + .item {
+  border-block-start: 0;
+  margin-block-start: var(--space-3);
+}
+
+.root[data-variant='card'] .trigger {
+  padding-inline: var(--space-4);
+}
+
+.root[data-variant='card'] .trigger:focus-visible {
+  border-radius: var(--radius-lg);
+}
+
+.root[data-variant='card'] .contentInner {
+  padding-inline: var(--space-4);
 }

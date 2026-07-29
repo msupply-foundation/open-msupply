@@ -8,6 +8,7 @@ import {
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { Text } from '@/ui/elements/typography/Text';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { DeleteStocktakeAction, CopyStocktakeAction } from './actions';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 import type { StocktakeFieldEdit } from './stocktakeEdit';
@@ -48,49 +49,55 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
       {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
         the same inline-start as the editable inputs below them (no mixed <dl>/FieldRow widths).
         Read-only rows render a plain value; editable ones a buffered field. */}
-      <FieldRow label={t('label.entered-by')}>
-        <Text variant="body">{props.node.user?.username ?? '—'}</Text>
-      </FieldRow>
-      <FieldRow label={t('label.created')}>
-        <Text variant="body">{localisedDate(props.node.createdDatetime)}</Text>
-      </FieldRow>
+      <Stack gap="md">
+        <FieldRow label={t('label.entered-by')}>
+          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+        </FieldRow>
+        <FieldRow label={t('label.created')}>
+          <Text variant="body">
+            {localisedDate(props.node.createdDatetime)}
+          </Text>
+        </FieldRow>
 
-      <FieldRow label={t('label.counted-by')}>
-        <TextField
-          label={t('label.counted-by')}
-          hideLabel
-          width="full"
-          value={props.edit.state.countedBy}
-          disabled={props.disabled}
-          onInput={e => props.edit.setField('countedBy', e.currentTarget.value)}
-          onBlur={() => props.edit.flush()}
-        />
-      </FieldRow>
-      <FieldRow label={t('label.verified-by')}>
-        <TextField
-          label={t('label.verified-by')}
-          hideLabel
-          width="full"
-          value={props.edit.state.verifiedBy}
-          disabled={props.disabled}
-          onInput={e =>
-            props.edit.setField('verifiedBy', e.currentTarget.value)
-          }
-          onBlur={() => props.edit.flush()}
-        />
-      </FieldRow>
-      <FieldRow label={t('heading.comment')}>
-        <TextField
-          label={t('heading.comment')}
-          hideLabel
-          width="full"
-          data-testid="comment-field"
-          value={props.edit.state.comment}
-          disabled={props.disabled}
-          onInput={e => props.edit.setField('comment', e.currentTarget.value)}
-          onBlur={() => props.edit.flush()}
-        />
-      </FieldRow>
+        <FieldRow label={t('label.counted-by')}>
+          <TextField
+            label={t('label.counted-by')}
+            hideLabel
+            width="full"
+            value={props.edit.state.countedBy}
+            disabled={props.disabled}
+            onInput={e =>
+              props.edit.setField('countedBy', e.currentTarget.value)
+            }
+            onBlur={() => props.edit.flush()}
+          />
+        </FieldRow>
+        <FieldRow label={t('label.verified-by')}>
+          <TextField
+            label={t('label.verified-by')}
+            hideLabel
+            width="full"
+            value={props.edit.state.verifiedBy}
+            disabled={props.disabled}
+            onInput={e =>
+              props.edit.setField('verifiedBy', e.currentTarget.value)
+            }
+            onBlur={() => props.edit.flush()}
+          />
+        </FieldRow>
+        <FieldRow label={t('heading.comment')}>
+          <TextField
+            label={t('heading.comment')}
+            hideLabel
+            width="full"
+            data-testid="comment-field"
+            value={props.edit.state.comment}
+            disabled={props.disabled}
+            onInput={e => props.edit.setField('comment', e.currentTarget.value)}
+            onBlur={() => props.edit.flush()}
+          />
+        </FieldRow>
+      </Stack>
     </SidePanelSection>
 
     {/* Record-level actions (spec/stocktakes/ui-surface.md §S3): Delete — gated
