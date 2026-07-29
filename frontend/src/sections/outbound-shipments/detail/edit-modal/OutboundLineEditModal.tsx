@@ -38,6 +38,7 @@ import {
   type DraftStockOutLinesResult,
 } from './outboundLineEdit.generated';
 import { ItemSearch } from '../../../../domain/item';
+import { VvmStatusSelect, type VvmStatus } from '@/domain/vvmStatus';
 import {
   createFocusTarget,
   createFocusTargets,
@@ -215,6 +216,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
   // Zero-allocation saves need a second confirmation (spec S4 § save).
   const [zeroConfirm, setZeroConfirm] = createSignal(false);
+  // So does a zero-packs line whose VVM status changed — the set-save deletes
+  // zero-pack lines, silently dropping that status change (spec S4 § save).
+  const [vvmConfirm, setVvmConfirm] = createSignal(false);
   // Warnings raised by the last distribution (spec S4 § warnings).
   const [warnings, setWarnings] = createSignal<string[]>([]);
   // Dirty gate: OK is disabled until something changed (matches the e2e
@@ -243,6 +247,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setAllocateIn({ kind: 'units' });
     setDirty(false);
     setZeroConfirm(false);
+    setVvmConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
       storeId: props.storeId,
       itemId: picked.id,
@@ -264,6 +269,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     );
     seededPacksById = new Map(
       sorted.map(line => [line.id, line.numberOfPacks])
+    );
+    seededVvmIdById = new Map(
+      sorted.map(line => [line.id, line.vvmStatus?.id ?? null])
     );
     nonAllocatableIds = new Set(
       sorted.filter(line => !rowHasAllocatableStock(line)).map(line => line.id)
@@ -373,6 +381,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // (non-reactive) snapshots set by seedItem, so zeroing a held row mid-edit
   // doesn't lock it and rows don't reorder underneath the user.
   let seededPacksById = new Map<string, number>();
+  // Each row's VVM status AS SEEDED — the save guard warns when a zero-packs
+  // row's status differs from this (its change won't survive the set-save).
+  let seededVvmIdById = new Map<string, string | null>();
   let nonAllocatableIds = new Set<string>();
   const isBarred = (line: DraftLine): boolean =>
     barReasons(
@@ -484,10 +495,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       )
     );
     setDirty(true);
-    // The allocation just changed — any earlier zero-allocation confirmation
-    // no longer applies (spec S4 § save; it must be re-earned against the
-    // current quantity, e.g. after raising it back above zero).
+    // The allocation just changed — any earlier zero-allocation / unsaved-VVM
+    // confirmation no longer applies (spec S4 § save; it must be re-earned
+    // against the current quantity, e.g. after raising it back above zero).
     setZeroConfirm(false);
+    setVvmConfirm(false);
   };
 
   // NumberField hands us a committed number (already numeric-only and clamped
@@ -524,8 +536,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     );
     setDirty(true);
     // As in distribute() — a direct per-batch edit also invalidates a stale
-    // zero-allocation confirmation.
+    // zero-allocation / unsaved-VVM confirmation.
     setZeroConfirm(false);
+    setVvmConfirm(false);
   };
 
   // The received count (OMS-REG-DIST-03.21): the packs the destination reported for this
@@ -536,6 +549,24 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (index < 0) return;
     setDraft(index, 'receivedNumberOfPacks', value);
     setDirty(true);
+  };
+
+  // VVM status per batch (spec S4 § batch grid): the save writes the picked
+  // status onto the BATCH itself — the stock line, with a status-log entry —
+  // not just this shipment line (contract § issuing lines). An UNUSABLE pick
+  // zeroes the row's issued packs (unusable stock is never issued —
+  // stock-allocation § barred batches); the live bar then disables the row,
+  // as in the old app.
+  const setVvmStatus = (id: string, status: VvmStatus | null) => {
+    const index = draft.findIndex(line => line.id === id);
+    if (index < 0) return;
+    setDraft(index, 'vvmStatus', status);
+    if (status?.unusable) setDraft(index, 'numberOfPacks', 0);
+    setDirty(true);
+    // As in distribute()/setPacks() — the confirmations are re-earned against
+    // the changed draft.
+    setZeroConfirm(false);
+    setVvmConfirm(false);
   };
 
   const save = async (): Promise<boolean> => {
@@ -573,9 +604,28 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     return true;
   };
 
-  // Zero allocated quantity requires a second confirmation (spec S4 § save).
+  // Save guards (spec S4 § save), in the old app's precedence: a zero-packs
+  // line whose VVM status changed warns FIRST — the set-save deletes
+  // zero-pack lines, so that status change is silently dropped (a second OK
+  // proceeds without it). The zero-allocation confirmation applies only when
+  // no such VVM change is pending.
+  const vvmChangeOnZeroPacksLine = () =>
+    draft.some(
+      line =>
+        line.numberOfPacks === 0 &&
+        (line.vvmStatus?.id ?? null) !== (seededVvmIdById.get(line.id) ?? null)
+    );
   const confirmThen = (proceed: () => void) => {
-    if (issuedUnits() === 0 && placeholderUnits() === 0 && !zeroConfirm()) {
+    if (vvmChangeOnZeroPacksLine()) {
+      if (!vvmConfirm()) {
+        setVvmConfirm(true);
+        return;
+      }
+    } else if (
+      issuedUnits() === 0 &&
+      placeholderUnits() === 0 &&
+      !zeroConfirm()
+    ) {
       setZeroConfirm(true);
       return;
     }
@@ -684,17 +734,31 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...getExpiryDateCell(),
     },
     // Vaccine items only, under either VVM preference (spec § S4 batch grid;
-    // only vaccine stock carries a VVM status) — same gate as the
-    // prescriptions editor's VVM column.
+    // only vaccine stock carries a VVM status). An EDITABLE status picker —
+    // unlike the prescriptions editor's read-only text — disabled on the same
+    // rows as the Packs-issued cell; the value lives in the draft store, read
+    // in the cell render (an accessor-computed cell freezes on in-place store
+    // edits — see the canAllocate note above).
     ...(item()?.isVaccine &&
     (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry)
       ? [
           {
-            c: {
-              accessor: (line: DraftLine) => line.vvmStatus?.description ?? '',
-              id: 'vvmStatus',
-            },
+            c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
+            size: 170,
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  size="small"
+                  disabled={rowDisabled(line)}
+                  value={line.vvmStatus?.id}
+                  onChange={status => setVvmStatus(line.id, status)}
+                />
+              );
+            },
           } as Column<DraftLine, never>,
         ]
       : []),
@@ -1046,6 +1110,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         {/* Zero-allocation second confirmation (spec S4 § save). */}
         <Show when={zeroConfirm()}>
           <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
+        </Show>
+
+        {/* A zero-packs line's VVM change won't survive the save — its own
+            distinct confirmation, taking precedence (spec S4 § save). */}
+        <Show when={vvmConfirm()}>
+          <Alert severity="warning">
+            {t('messages.unsaved-outbound-vvm-status')}
+          </Alert>
         </Show>
       </Show>
     </Dialog>
