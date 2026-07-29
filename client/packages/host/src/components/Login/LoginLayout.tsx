@@ -132,7 +132,7 @@ export const LoginLayout = ({
           <Box display="flex" flexGrow={1} sx={{ alignItems: 'center' }}>
             {loginForm}
           </Box>
-          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} testId="login-version" />
           <LanguageButton />
         </Box>
         <Box
