@@ -1,31 +1,42 @@
-/* The issue row: Issue quantity + Allocate-in lens, with the placeholder
-   notice filling the rest (spec S4). Stacks one control per row below the
-   compact breakpoint (599px = breakpoints.compact − 1, the same cutoff where
-   the hosting size="large" Dialog goes full-screen). */
-.issueRow {
+/* The editor's header: Item picker · Available line · Issue quantity +
+   Allocate-in lens · placeholder notice, on ONE wrapping row (spec S4, D74) —
+   each piece drops to its own row as space runs out, bottoming out at the
+   fully stacked layout on narrow screens. Bottom-aligned so the Available
+   text and the labelled fields share a baseline. */
+.headerRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: end;
-  gap: var(--space-4);
+  gap: var(--space-3) var(--space-4);
   margin-block-end: var(--space-3);
 }
 
-/* The "placeholder added" info notice sits to the right of the Issue /
-   Allocate-in fields, filling the rest of that row (spec S4). No align-self
-   override: the row bottom-aligns (align-items: end), so the notice's bottom
-   sits on the same line as the inputs'. */
-.placeholderNotice {
-  flex: 1;
+/* The item picker claims the lion's share (it holds "code - name" labels);
+   its wrap-forcing basis puts it alone on a row once the line gets tight. */
+.itemField {
+  flex: 1 1 26rem;
+  min-inline-size: 0;
 }
 
-@media (max-width: 599px) {
-  .issueRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
+/* Plain text beside the fields: nudge off the row's bottom edge so it reads
+   centred against the ~2.5rem input boxes. */
+.available {
+  white-space: nowrap;
+  padding-block-end: 0.55rem;
+}
 
-  .placeholderNotice {
-    align-self: stretch;
-  }
+/* Issue + Allocate-in wrap as a unit — a lens without its quantity (or vice
+   versa) on a lonely row reads as a separate control. */
+.issueGroup {
+  display: flex;
+  align-items: end;
+  gap: var(--space-4);
+}
+
+/* The "placeholder added" info notice fills what's left of the row, wrapping
+   to its own full row when the header is tight. */
+.placeholderNotice {
+  flex: 1 1 20rem;
 }
 
 /* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it
