@@ -4,7 +4,8 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { MapPinIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { MapPinIcon } from '../../../../ui/icons';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
@@ -99,19 +100,17 @@ const Body = (
         <Switch
           fallback={
             <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
+              <CancelButton
+                data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
               <Button
+                variant="primary"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.apply')}
               </Button>
             </>
           }

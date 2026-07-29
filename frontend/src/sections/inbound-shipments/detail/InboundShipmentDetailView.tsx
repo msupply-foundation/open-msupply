@@ -36,10 +36,12 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCurrencyCell,
-  getDateCell,
+  getCellDefinition,
   getNumberCell,
+  getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
+import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -117,6 +119,27 @@ type DetailUrlState = {
   offset: number;
   first: number;
 };
+// The columns spec S3's line table marks "hidden by default (narrow)" — keyed by
+// column ID (not accessor key). The compact band starts from this whole set; the
+// base band hides the four a desktop still keeps out of the way.
+const NARROW_HIDDEN: Record<string, boolean> = {
+  comment: false,
+  vvmStatus: false,
+  location: false,
+  unitName: false,
+  dosesPerUnit: false,
+  difference: false,
+  unitQuantity: false,
+  doses: false,
+  costPricePerPack: false,
+  sellPricePerPack: false,
+  total: false,
+  donor: false,
+  manufacturer: false,
+  manufactureDate: false,
+  campaignProgram: false,
+};
+
 const DEFAULT_URL_STATE: DetailUrlState = {
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
@@ -159,11 +182,19 @@ const InboundShipmentDetailView: Component = () => {
   const tableConfig = createTableConfig({
     tableId: 'inbound-shipment-detail',
     defaultConfig: {
+      // Code is pinned inline-start (spec S3 line table col 2) so the row stays
+      // identifiable as the wide column set scrolls.
+      compact: {
+        viewMode: 'card',
+        columnPinning: { left: ['itemCode'] },
+        columnVisibility: NARROW_HIDDEN,
+      },
       base: {
+        columnPinning: { left: ['itemCode'] },
         columnVisibility: {
           manufactureDate: false,
           manufacturer: false,
-          note: false,
+          comment: false,
           sellPricePerPack: false,
         },
       },
@@ -527,24 +558,29 @@ const InboundShipmentDetailView: Component = () => {
   const columns = (node: InboundInfoFragment): Column<Line, SortKey>[] => {
     const isManual = !isExternalShipment(node);
     return [
+      // Comment first, hidden by default (spec S3 line table col 1) — the
+      // line's note, in the shared comment cell (icon + popover). Explicit
+      // `id: 'comment'`, NOT the `note` accessor key: the id is what the
+      // column-visibility defaults and `cell-<columnId>` testids speak, and
+      // this column is "Comment" everywhere else (the list's own comment
+      // column, and the getCellDefinition preset key).
+      {
+        c: { accessor: line => line.note, id: 'comment' },
+        header: () => t('label.comment'),
+        ...getCellDefinition('comment'),
+      },
       {
         c: { accessor: line => line.itemCode, id: 'itemCode' },
         sortKey: 'itemCode',
         header: () => t('label.code'),
+        ...getCellDefinition('itemCode'),
         // A line that arrived via another store's transfer (linkedInvoiceId
         // set) can't be independently deleted; flag its code in the error tone
-        // so the provenance is visible (spec AC-E9 / M9). Inline token colour
-        // matches the linked-order cell's inline-style precedent in this table.
+        // so the provenance is visible (spec AC-E9 / M9).
         cell: info => {
           const line = info.row.original;
           return (
-            <span
-              style={
-                line.linkedInvoiceId
-                  ? { color: 'var(--error-main)' }
-                  : undefined
-              }
-            >
+            <span class={line.linkedInvoiceId ? styles.errorCode : undefined}>
               {line.itemCode}
             </span>
           );
@@ -554,7 +590,10 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'itemName' },
         sortKey: 'itemName',
         header: () => t('label.name'),
-        meta: { headerPosition: 'primary', wrapLines: 2 },
+        ...getCellDefinition('itemName', {
+          headerPosition: 'primary',
+          wrapLines: 2,
+        }),
       },
       // PO line number — PO-linked shipments only.
       ...(isExternalShipment(node)
@@ -565,16 +604,23 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'poLine',
               },
               header: () => t('label.po-line-number'),
+              // No CELL_DEF key; "PO line number" is the binding constraint.
               ...getNumberCell(),
+              size: remToPx(8),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      { c: { key: 'batch' }, sortKey: 'batch', header: () => t('label.batch') },
+      {
+        c: { key: 'batch' },
+        sortKey: 'batch',
+        header: () => t('label.batch'),
+        ...getCellDefinition('batch'),
+      },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry'),
-        ...getDateCell(),
+        ...getCellDefinition('expiryDate'),
       },
       // VVM status — gated by the store preference; shown for vaccine items
       // only, blank otherwise (VVM applies to vaccines, spec AC-PG1 / M1).
@@ -589,6 +635,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: () => t('label.vvm-status'),
+              ...getCellDefinition('vvmStatus'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -596,17 +643,19 @@ const InboundShipmentDetailView: Component = () => {
         c: { accessor: line => line.location?.code ?? '', id: 'location' },
         sortKey: 'locationName',
         header: () => t('label.location'),
+        ...getCellDefinition('location'),
       },
       // Unit name (spec S1 line-table col 9 / L3).
       {
         c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
         header: () => t('label.unit'),
+        ...getCellDefinition('unitName'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: () => t('label.pack-size'),
-        ...getNumberCell(),
+        ...getCellDefinition('packSize'),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
       // doses, blank for a non-vaccine item.
@@ -621,15 +670,14 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'dosesPerUnit',
               },
               header: () => t('label.doses-per-unit'),
-              ...getNumberCell(),
+              ...getCellDefinition('dosesPerUnit'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
         header: () => t('label.pack-quantity'),
-        ...getNumberCell(),
-        meta: { align: 'right', headerPosition: 'badge' },
+        ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
       // Difference (H6) — supplier-shipped packs minus received packs; blank
       // when nothing was recorded as shipped.
@@ -642,7 +690,7 @@ const InboundShipmentDetailView: Component = () => {
           id: 'difference',
         },
         header: () => t('label.difference'),
-        ...getNumberCell(),
+        ...getCellDefinition('difference'),
       },
       // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
       ...(isManual
@@ -653,7 +701,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'unitQuantity',
               },
               header: () => t('label.unit-quantity'),
-              ...getNumberCell(),
+              ...getCellDefinition('unitQuantity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -672,7 +720,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'doses',
               },
               header: () => t('label.doses'),
-              ...getNumberCell(),
+              ...getCellDefinition('doses'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -698,6 +746,10 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'authStatus',
               },
               header: () => t('label.auth-status'),
+              // Pending/Passed/Rejected as text; no CELL_DEF key, and "Auth
+              // status" is the binding constraint.
+              ...getTextCell(),
+              size: remToPx(7),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -707,12 +759,12 @@ const InboundShipmentDetailView: Component = () => {
             {
               c: { key: 'costPricePerPack' },
               header: () => t('label.pack-cost-price'),
-              ...getCurrencyCell(),
+              ...getCellDefinition('costPricePerPack'),
             } satisfies Column<Line, SortKey>,
             {
               c: { key: 'sellPricePerPack' },
               header: () => t('label.pack-sell-price'),
-              ...getCurrencyCell(),
+              ...getCellDefinition('sellPricePerPack'),
             } satisfies Column<Line, SortKey>,
             {
               c: {
@@ -724,7 +776,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'total',
               },
               header: () => t('label.total'),
-              ...getCurrencyCell(),
+              ...getCellDefinition('total'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -734,6 +786,7 @@ const InboundShipmentDetailView: Component = () => {
             {
               c: { accessor: line => line.donor?.name ?? '', id: 'donor' },
               header: () => t('label.donor'),
+              ...getCellDefinition('name'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -743,11 +796,12 @@ const InboundShipmentDetailView: Component = () => {
           id: 'manufacturer',
         },
         header: () => t('label.manufacturer'),
+        ...getCellDefinition('manufacturer'),
       },
       {
         c: { key: 'manufactureDate' },
         header: () => t('label.manufacture-date'),
-        ...getDateCell(),
+        ...getCellDefinition('manufactureDate'),
       },
       // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
       // only; a line carries a campaign OR a program (mutually exclusive).
@@ -760,10 +814,10 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'campaignProgram',
               },
               header: () => t('label.campaign'),
+              ...getCellDefinition('name'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      { c: { key: 'note' }, header: () => t('label.note') },
     ];
   };
 
@@ -886,8 +940,8 @@ const InboundShipmentDetailView: Component = () => {
                     />
                   }
                 >
-                  <ContentFooter>
-                    <strong>
+                  <ContentFooter testId="actions-footer">
+                    <strong data-testid="selected-rows-count">
                       {selectedIds().length} {t('label.selected')}
                     </strong>
                     <DeleteLinesAction
@@ -993,10 +1047,15 @@ const InboundShipmentDetailView: Component = () => {
                   }
                   emptyMessage={t('error.no-inbound-items')}
                   empty={
+                    // The empty state's create affordance takes the shared
+                    // nothing-here id — NOT `add-item-button`, which is the
+                    // Add-item split button's prefix (it generates
+                    // add-item-button-main / -dropdown, so re-stamping it here
+                    // collided with them).
                     isDisabled() ? undefined : (
                       <Button
                         variant="ghost"
-                        data-testid="add-item-button"
+                        data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
                         {t('button.add-item')}
