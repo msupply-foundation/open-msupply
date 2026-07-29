@@ -13,13 +13,11 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { RadioGroup } from '@/ui/elements/inputs/RadioGroup';
-import { TextField } from '@/ui/elements/inputs/TextField';
+import { DateField } from '@/ui/elements/inputs/DateField';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
-import {
-  masterListsResource,
-  MasterListSelect,
-} from '@/domain/masterList';
+import { masterListsResource, MasterListSelect } from '@/domain/masterList';
 import {
   fetchLocations,
   LocationSelect,
@@ -27,7 +25,7 @@ import {
 } from '@/domain/location';
 import { VvmStatusSelect } from '@/domain/vvmStatus';
 import { stocktakePreferences } from '@/store/storeContext';
-import { PlusCircleIcon, XCircleIcon } from '@/ui/icons';
+import { PlusCircleIcon } from '@/ui/icons';
 import { t, tPlural } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
 import { userDisplayName } from '@/auth/authContext';
@@ -354,22 +352,15 @@ export const CreateStocktakeModal = (props: {
           {/* Cancel disappears while creating (blocking). A failed create goes to the global
               error modal, so there's no in-dialog error state that would bring it back. */}
           <Show when={!creating()}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              data-testid="dialog-button-cancel"
-              onClick={close}
-            >
-              {t('button.cancel')}
-            </Button>
+            <CancelButton data-testid="dialog-button-cancel" onClick={close} />
           </Show>
           <Button
-            icon={<PlusCircleIcon />}
+            variant="primary"
             data-testid="dialog-button-ok"
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('button.ok')}
+            {t('button.create')}
           </Button>
         </>
       }
@@ -467,15 +458,12 @@ export const CreateStocktakeModal = (props: {
               </FieldRow>
             </Show>
             <FieldRow label={t('label.items-expiring-before')}>
-              <TextField
+              <DateField
                 label={t('label.items-expiring-before')}
                 hideLabel
-                type="date"
                 disabled={creating()}
-                value={form().expiryDate}
-                onInput={e =>
-                  setForm({ ...form(), expiryDate: e.currentTarget.value })
-                }
+                value={form().expiryDate || null}
+                onChange={v => setForm({ ...form(), expiryDate: v ?? '' })}
               />
             </FieldRow>
           </InsetPanel>

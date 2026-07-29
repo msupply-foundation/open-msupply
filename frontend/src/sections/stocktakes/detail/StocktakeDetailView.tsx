@@ -11,34 +11,27 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
+import { formatNumber } from '@/intl/formatNumber';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
-import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import {
-  Tabs,
-  TabList,
-  TabPanel,
-  type TabDef,
-} from '@/ui/elements/tabs/Tabs';
+import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import {
-  SidebarIcon,
-  MinusCircleIcon,
-  PlusCircleIcon,
-} from '@/ui/icons';
+import { SidebarIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
   getCommentCell,
   getDateCell,
+  getExpiryDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -57,6 +50,7 @@ import {
 } from './edit-modal/StocktakeLineEditModal';
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
+import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { StocktakeLogPanel } from './log/StocktakeLogPanel';
@@ -80,6 +74,7 @@ import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
+import styles from './StocktakeDetailView.module.css';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -115,6 +110,14 @@ type StocktakeInfoNode = Extract<
 // sort on (manufacture date, unit, doses, difference, donor, manufacturer,
 // campaign, comment — see spec contract § backend gaps) simply omit `sortKey`.
 type SortKey = NonNullable<StocktakeLinesVariables['sort']>[number]['key'];
+
+// Card view (below 600px): the item name is the card title (headerPosition
+// 'primary') and the counted-packs its badge; every other column drops into
+// one collapsed "More details" disclosure (ui-standards → CARD_TABLE_MODEL).
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
 
 // A finalised or on-hold (locked) stocktake can't have its content edited (OMS
 // isStocktakeDisabled).
@@ -556,13 +559,14 @@ const StocktakeDetailView: Component = () => {
   // behind it (this caused a genuine slow-load bug; root-caused via targeted
   // logging that confirmed every actual dependency stayed unchanged across
   // dozens of re-fires per second).
-  const columns = createMemo((): Column<Line, SortKey>[] => [
+  const columns = createMemo((): Column<Line, SortKey, GroupKey>[] => [
     {
       // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
       // path); the server sort key is `itemCode`.
       c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'itemCode',
       header: () => t('label.code'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'itemName' },
@@ -575,18 +579,21 @@ const StocktakeDetailView: Component = () => {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: () => t('label.batch'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
       header: () => t('label.expiry-date'),
-      ...getDateCell(),
+      cardGroup: 'more',
+      ...getExpiryDateCell(),
     },
     {
       c: { key: 'manufactureDate' },
       // Unsortable — StocktakeLineSortFieldInput has no manufactureDate key
       // (backend gap; spec/stocktakes contract § backend gaps).
       header: () => t('label.manufacture-date'),
+      cardGroup: 'more',
       ...getDateCell(),
     },
     {
@@ -595,18 +602,21 @@ const StocktakeDetailView: Component = () => {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationCode',
       header: () => t('label.location'),
+      cardGroup: 'more',
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
       // backend gap). Matches OMS's columns.tsx itemUnit, placed after Location.
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
       header: () => t('label.unit-name'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'packSize' },
       // Unsortable in OMS's columns.tsx (no enableSorting) even though the
       // server has a packSize key — matched here.
       header: () => t('label.pack-size'),
+      cardGroup: 'more',
       ...getNumberCell(),
     },
     // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
@@ -619,8 +629,9 @@ const StocktakeDetailView: Component = () => {
               id: 'dosesPerUnit',
             },
             header: () => t('label.doses-per-unit'),
+            cardGroup: 'more',
             ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
     // Snapshot — omitted entirely while counting under blind stocktake (reappears
@@ -632,43 +643,31 @@ const StocktakeDetailView: Component = () => {
             c: { key: 'snapshotNumberOfPacks' },
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
+            cardGroup: 'more',
             ...getNumberCell(),
-            // Snapshot cell also carries the line's error inline beneath the count (a
-            // snapshot/current-count mismatch is a "recount this line" message about
-            // the snapshot). Styled inline from the design tokens (a section owns no
-            // stylesheet).
+            // Snapshot cell also carries the line's error beneath the count (a
+            // snapshot/current-count mismatch is a "recount this line" message
+            // about the snapshot); the count itself formats like every other
+            // number column.
             cell: info => {
               const value = info.getValue<number | null | undefined>();
               return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    'flex-direction': 'column',
-                    'align-items': 'flex-end',
-                  }}
-                >
-                  <span>{value ?? ''}</span>
+                <>
+                  {formatNumber(value, { maximumFractionDigits: 2 })}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
                       'SnapshotCountCurrentCountMismatchLine'
                     }
                   >
-                    <span
-                      style={{
-                        color: 'var(--error-main)',
-                        'font-size': 'var(--text-xs)',
-                        'white-space': 'normal',
-                        'text-align': 'end',
-                      }}
-                    >
+                    <span class={styles.lineError}>
                       {t('error.snapshot-total-mismatch')}
                     </span>
                   </Show>
-                </span>
+                </>
               );
             },
-          } satisfies Column<Line, SortKey>,
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     {
       c: { key: 'countedNumberOfPacks' },
@@ -687,8 +686,9 @@ const StocktakeDetailView: Component = () => {
               id: 'dosesCounted',
             },
             header: () => t('label.doses-counted'),
+            cardGroup: 'more',
             ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
     // Difference = counted − snapshot; blank until the line is counted. Derived
@@ -703,8 +703,9 @@ const StocktakeDetailView: Component = () => {
               id: 'difference',
             },
             header: () => t('label.difference'),
+            cardGroup: 'more',
             ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
     // Campaign · Comment. No price columns — Sell/Cost price live only in the
@@ -723,7 +724,8 @@ const StocktakeDetailView: Component = () => {
             },
             sortKey: 'reasonOption',
             header: () => t('label.reason'),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
     // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
@@ -733,7 +735,8 @@ const StocktakeDetailView: Component = () => {
           {
             c: { accessor: line => line.donorName ?? '', id: 'donor' },
             header: () => t('label.donor'),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
     {
@@ -744,6 +747,7 @@ const StocktakeDetailView: Component = () => {
         id: 'manufacturer',
       },
       header: () => t('label.manufacturer'),
+      cardGroup: 'more',
     },
     {
       // Campaign name (ungated) — campaign.name on the line. Unsortable (no
@@ -751,12 +755,14 @@ const StocktakeDetailView: Component = () => {
       // after Manufacturer, before Comment.
       c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
       header: () => t('label.campaign-only'),
+      cardGroup: 'more',
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
+      cardGroup: 'more',
       ...getCommentCell(),
     },
   ]);
@@ -828,16 +834,11 @@ const StocktakeDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
-                    <StocktakeDetailToolbar
-                      node={node()}
-                      disabled={isDisabled(node())}
-                      edit={edit}
-                      filter={filter()}
-                      onFilterChange={onFilterChange}
-                      locations={locations()}
-                    />
-                  </Toolbar>
+                  <StocktakeDetailToolbar
+                    node={node()}
+                    disabled={isDisabled(node())}
+                    edit={edit}
+                  />
                   {/* Last child of the Header → the tab strip claims its bottom
                   edge (Header.module.css / Tabs). Details + Log. */}
                   <TabList tabs={tabs()} />
@@ -926,8 +927,18 @@ const StocktakeDetailView: Component = () => {
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
+                  cardGroups={CARD_GROUPS}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <StocktakeLineFilters
+                      filter={filter()}
+                      onFilterChange={onFilterChange}
+                      locations={locations()}
+                    />
+                  }
                   // Non-suspending loading read — a between-page/filter/sort
                   // refetch keeps rows + shows the refreshing bar; a post-save
                   // refetch is silent (tableLoading gates it out). Initial load

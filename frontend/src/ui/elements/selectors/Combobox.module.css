@@ -308,3 +308,29 @@
     min-height: var(--touch-target);
   }
 }
+
+/* Borderless — for a filter chip / pill (FilterBar's FilterCombobox): drop the
+   control's box AND its fixed / touch height so it sits at the chip's own
+   height like the other chip editors. Placed last so it wins over the size +
+   touch rules above at equal specificity. */
+.field[data-borderless] .control {
+  border: none;
+  background: transparent;
+  height: auto;
+  min-height: 0;
+}
+
+/* Shrink-to-fit like the other chip editors (FilterBar's own .input): a blurred
+   chip is only as wide as its value; focusing re-opens comfortable typing room.
+   field-sizing is Chromium 123+ (past our enforced floor). */
+.field[data-borderless] .input {
+  flex: 0 1 auto;
+  field-sizing: content;
+  min-inline-size: 2.5rem;
+  max-inline-size: 16rem;
+  transition: min-inline-size 0.15s ease;
+}
+
+.field[data-borderless] .input:focus {
+  min-inline-size: 10rem;
+}
