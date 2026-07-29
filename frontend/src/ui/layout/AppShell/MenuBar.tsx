@@ -223,7 +223,12 @@ const NavLists = (props: {
   syncBadge?: NavBadge;
   syncIconDimmed?: boolean;
 }) => (
-  <>
+  // One scroll region spanning BOTH groups (not per-section) so the two lists
+  // never scroll independently and overlap (#421). The lower group is pushed to
+  // the block-end (margin-block-start:auto in .lower) so on a tall screen it
+  // rests at the bottom as before; only when the combined lists overflow does
+  // everything scroll together.
+  <div class={styles.scroll}>
     <NavGroup
       items={props.upper}
       selectedId={props.selectedId}
@@ -240,7 +245,7 @@ const NavLists = (props: {
         syncIconDimmed={props.syncIconDimmed}
       />
     </Show>
-  </>
+  </div>
 );
 
 /*

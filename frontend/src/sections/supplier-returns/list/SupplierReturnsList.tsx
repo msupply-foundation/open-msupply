@@ -322,7 +322,7 @@ const SupplierReturnsList: Component = () => {
 
   const crumbs = () => [
     { label: t('replenishment') },
-    { label: t('supplier-returns') },
+    { label: t('supplier-return') },
   ];
 
   return (
