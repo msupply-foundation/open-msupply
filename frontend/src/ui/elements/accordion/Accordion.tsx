@@ -1,4 +1,10 @@
-import { createContext, useContext, type Accessor, type JSX } from 'solid-js';
+import {
+  createContext,
+  Show,
+  useContext,
+  type Accessor,
+  type JSX,
+} from 'solid-js';
 import * as KAccordion from '@kobalte/core/accordion';
 import { useCollapsibleContext } from '@kobalte/core/collapsible';
 import { ChevronDownIcon } from '../../icons';
@@ -92,6 +98,14 @@ export const AccordionItem = (props: AccordionItemProps) => (
 export interface AccordionTriggerProps {
   /** Heading level wrapping the trigger, for document-outline correctness. Default 'h3'. */
   as?: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  /**
+   * Muted metadata pinned to the trigger's end, beside the chevron — a
+   * figure that must stay visible whether the section is open or closed
+   * (e.g. an available-stock total). Part of the trigger's accessible name;
+   * for collapsed-only content inside `children`, see
+   * `useAccordionItemExpanded`.
+   */
+  end?: JSX.Element;
   class?: string;
   children: JSX.Element;
 }
@@ -110,7 +124,10 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         }
         data-testid={testId}
       >
-        <span>{props.children}</span>
+        <span class={styles.label}>{props.children}</span>
+        <Show when={props.end}>
+          <span class={styles.endMeta}>{props.end}</span>
+        </Show>
         <ChevronDownIcon class={styles.chevron} aria-hidden="true" />
       </KAccordion.Trigger>
     </KAccordion.Header>

@@ -169,7 +169,7 @@ export const AccordionShowcase = () => {
           </Lead>
           <Accordion collapsible variant="card" defaultValue={[]}>
             <AccordionItem value="batches-demo">
-              <AccordionTrigger as="h2">
+              <AccordionTrigger as="h2" end="Available: 42,961 Tab">
                 <PreviewTriggerLabel
                   label="Batches"
                   preview="RS-A-030453 · 1,014 Tab"
