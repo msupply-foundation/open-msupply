@@ -12,7 +12,6 @@ import {
   type CellKind,
   type CellSpec,
 } from './_globalColumnConfig';
-import { formatCurrency, formatCurrencyCell } from './currencyCell';
 import { remToPx } from '../../utils/rem';
 import { differenceInMonths } from 'date-fns';
 import styles from './tableHelpers.module.css';
@@ -185,28 +184,30 @@ export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
   cell: info => <Comment comment={info.getValue<string | null>()} />,
 });
 
-// Money: symbol + two decimals, right-aligned, with the beyond-2-dp
-// precision markers ("< $0.01" / trailing "..."). The formatting rules live
-// JSX-free in currencyCell.ts (node-testable); re-exported here so pages keep
-// their single table-helper import. Grouped parent → SUM of the leaves,
-// formatted the same way.
-export { formatCurrencyCell };
-
-// Hover reveals what the 2-dp display rounds away (spec/ui-standards/tables.md
-// § data-type alignment).
-const currencyCellContent = (value: number | null | undefined) =>
-  value == null ? (
-    ''
-  ) : (
-    <span title={formatCurrency(value, 10)}>{formatCurrencyCell(value)}</span>
-  );
+// Money: symbol + always two decimals (spec/ui-standards/conventions.md),
+// right-aligned, locale-formatted. Grouped parent → SUM of the leaves,
+// formatted the same way. The currency code is fixed at USD — the current
+// app's default store home currency — until store currency preferences are
+// plumbed through; narrowSymbol keeps the symbol a bare "$" in the
+// Latin-script locales (the current app's pattern) — ar has no CLDR narrow
+// form and falls back to "US$".
+export const formatCurrencyCell = (value: number | null | undefined): string =>
+  value == null
+    ? ''
+    : formatNumber(value, {
+        style: 'currency',
+        currency: 'USD',
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
 export const getCurrencyCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   aggregationFn: 'sum',
-  cell: info => currencyCellContent(info.getValue<number | null | undefined>()),
+  cell: info => formatCurrencyCell(info.getValue<number | null | undefined>()),
   aggregatedCell: info =>
-    currencyCellContent(info.getValue<number | null | undefined>()),
+    formatCurrencyCell(info.getValue<number | null | undefined>()),
 });
 
 // =================================================================================
