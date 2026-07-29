@@ -38,6 +38,14 @@ const SUPPLIERS = [
   { value: 'carepoint', label: 'CarePoint Distribution' },
 ];
 
+// Prominent custom field promoted into the inbound header cluster — the
+// Category options the error variant's fourth field offers.
+const CATEGORIES = [
+  { value: 'routine', label: 'Routine' },
+  { value: 'emergency', label: 'Emergency' },
+  { value: 'donation', label: 'Donation' },
+];
+
 // Internal-order variant: the locked supplier store + months-of-stock options
 // for the reorder-threshold / target selects.
 const STORE_OPTIONS = [{ value: 'android', label: 'Android Store' }];
@@ -72,6 +80,18 @@ export const headerMetadata: PageMetadata = {
       searchTerms: ['toolbar', 'fields', 'filters', 'alert', 'form row'],
     },
     {
+      id: 'header-toolbar-error',
+      title: 'Toolbar fields · error',
+      searchTerms: [
+        'error',
+        'invalid',
+        'validation',
+        'date',
+        'rejected',
+        'inbound',
+      ],
+    },
+    {
       id: 'header-toolbar-settings',
       title: 'Toolbar fields · toggle',
       searchTerms: [
@@ -95,6 +115,22 @@ export const HeaderShowcase = () => {
   // Interactive fields for the Toolbar field-cluster demo below.
   const [supplier, setSupplier] = createSignal('acme');
   const [reference, setReference] = createSignal('DEL-2231');
+  // The error variant's own copies, so editing it doesn't move the demo above.
+  // `received` starts on a date the (pretend) server refused, which is why the
+  // field below opens showing its rejection.
+  const [errorSupplier, setErrorSupplier] = createSignal('acme');
+  const [errorReference, setErrorReference] = createSignal('DEL-2231');
+  const [received, setReceived] = createSignal<string | null>('2025-11-02');
+  const [category, setCategory] = createSignal('routine');
+  // Stands in for the server's verdict on a backdated received date (the real
+  // header surfaces the rejection the same way): anything before 2026 is
+  // outside the store's backdating window.
+  const receivedError = () => {
+    const value = received();
+    return value && value < '2026-01-01'
+      ? 'This date is too far in the past'
+      : undefined;
+  };
   // Interactive fields for the second Toolbar demo (internal-order variant).
   const [reorderMos, setReorderMos] = createSignal('1');
   const [targetMos, setTargetMos] = createSignal('1');
@@ -206,6 +242,79 @@ export const HeaderShowcase = () => {
                     colour="var(--status-received)"
                   />
                 </LabelledValue>
+              </HeaderToolbar>
+            </Header>
+            <PageBody />
+          </PageFrame>
+        </DashboardCard>
+
+        <DashboardCard
+          id="header-toolbar-error"
+          title="Toolbar fields — a field carrying an error"
+        >
+          <Lead>
+            The inbound shipment's real header, field for field (Supplier name,
+            Reference, Received, and a promoted <em>Category</em> custom field),
+            with the Received date <strong>editable</strong> and reporting a
+            rejected save. The message is the <code>&lt;DateField&gt;</code>'s
+            own <code>error</code> — inside the field, not a sibling Alert — so
+            the cluster's row stays a row of fields: the error text extends its
+            own field downward and leaves the other three, and the compact
+            Alert, exactly where they were. Pick a date in 2026 to clear it,
+            2025 or earlier to bring it back.
+          </Lead>
+          <PageFrame>
+            <Header>
+              <Breadcrumb
+                icon={<TruckIcon />}
+                crumbs={[{ label: 'Inbound Shipments' }, { label: '34' }]}
+              />
+              <HeaderButtons>
+                <Button icon={<PlusCircleIcon />}>Add item</Button>
+                <Button variant="secondary" icon={<PrinterIcon />}>
+                  Export/Print
+                </Button>
+              </HeaderButtons>
+              <HeaderToolbar
+                alert={
+                  <Alert severity="info" compact>
+                    This shipment was created manually; its delivery status will
+                    not update automatically.
+                  </Alert>
+                }
+              >
+                <Select
+                  label="Supplier name"
+                  size="small"
+                  width="full"
+                  options={SUPPLIERS}
+                  value={errorSupplier()}
+                  onValueChange={setErrorSupplier}
+                />
+                <TextField
+                  label="Reference"
+                  size="small"
+                  width="full"
+                  value={errorReference()}
+                  onInput={e => setErrorReference(e.currentTarget.value)}
+                />
+                <DateField
+                  label="Received"
+                  size="small"
+                  width="full"
+                  format="dd MMM yyyy"
+                  value={received()}
+                  error={receivedError()}
+                  onChange={setReceived}
+                />
+                <Select
+                  label="Category"
+                  size="small"
+                  width="full"
+                  options={CATEGORIES}
+                  value={category()}
+                  onValueChange={setCategory}
+                />
               </HeaderToolbar>
             </Header>
             <PageBody />

@@ -11,6 +11,7 @@ import {
 } from '../ui/elements/selectors/ColourTag';
 import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
+import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { Button } from '../ui/elements/buttons/Button';
 import { CancelButton } from '../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../ui/icons';
@@ -28,7 +29,7 @@ import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
-import { Lead, Row, SectionTOC } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './SelectorsShowcase.module.css';
 
@@ -239,6 +240,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['select', 'status', 'enum'],
     },
     {
+      id: 'selectors-label-info',
+      title: 'Label help tooltip',
+      searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
+    },
+    {
       id: 'selectors-autocomplete',
       title: 'Autocomplete / combobox',
       searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
@@ -337,6 +343,42 @@ export const SelectorsShowcase = () => {
             }))}
             helperText="Coloured dots + check indicator — styled, still accessible"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-label-info"
+          title="Help tooltip on the label — labelInfo"
+        >
+          <Lead>
+            Every selector takes the same <code>labelInfo</code> slot the{' '}
+            <a href="#/showcase/inputs">inputs</a> do — an{' '}
+            <a href="#/showcase/feedback">
+              <code>&lt;InfoTooltip&gt;</code>
+            </a>{' '}
+            beside the label, for a standing explanation that would otherwise
+            cost a permanent <code>helperText</code> line under the control.
+          </Lead>
+          <Select
+            label="Reason"
+            value="expired"
+            options={[
+              { value: 'expired', label: 'Expired' },
+              { value: 'damaged', label: 'Damaged' },
+              { value: 'stocktake', label: 'Stocktake correction' },
+            ]}
+            labelInfo={
+              <InfoTooltip text="Reasons are configured centrally — ask an administrator to add one." />
+            }
+          />
+          <Note>
+            <strong>All of them:</strong> Select, Combobox / AsyncCombobox and
+            MultiSelect, alongside every labelled input. The icon renders{' '}
+            <em>outside</em> the label element, so it stays out of the control's
+            accessible name; it's ignored under <code>hideLabel</code>. The
+            domain wrappers (<code>NameSearch</code>, <code>ItemSearch</code>,
+            …) don't forward it yet — add the prop to the wrapper when a caller
+            needs one.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

@@ -11,6 +11,7 @@ import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
 import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
@@ -263,6 +264,21 @@ export const FeedbackShowcase = () => {
             }
             value="1.6"
           />
+          <Checkbox
+            label="On hold"
+            labelInfo={
+              <InfoTooltip text="A held record can't be picked or shipped until the hold is lifted." />
+            }
+          />
+          <Note>
+            <strong>Every labelled input and selector takes it</strong> — see{' '}
+            <a href="#/showcase/inputs">Inputs › Label help tooltip</a> and{' '}
+            <a href="#/showcase/selectors">Selectors › Label help tooltip</a>.
+            The icon always sits outside the label element, keeping it out of
+            the control's accessible name — as on the Checkbox above, one of the
+            self-labelling controls, where it also keeps a click on the icon
+            from toggling the control.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

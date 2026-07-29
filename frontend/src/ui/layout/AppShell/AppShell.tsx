@@ -93,17 +93,23 @@ const FooterCell = (props: {
   icon: Component<IconProps>;
   label: string;
   onClick?: () => void;
+  testId?: string;
 }) => (
   <Show
     when={props.onClick}
     fallback={
-      <div class={styles.footerCell}>
+      <div class={styles.footerCell} data-testid={props.testId}>
         <Dynamic component={props.icon} class={styles.footerIcon} />
         <span class={styles.footerCellText}>{props.label}</span>
       </div>
     }
   >
-    <button type="button" class={styles.footerCell} onClick={props.onClick}>
+    <button
+      type="button"
+      class={styles.footerCell}
+      onClick={props.onClick}
+      data-testid={props.testId}
+    >
       <Dynamic component={props.icon} class={styles.footerIcon} />
       <span class={styles.footerCellText}>{props.label}</span>
     </button>
@@ -175,7 +181,7 @@ export const AppShell = (props: AppShellProps) => {
               lower={menuLower()}
               selectedId={props.selected.id}
               // The Sync entry opens the modal in place — never navigates
-              // (spec/chrome AC-CH8). Chrome behaviour, so it applies only
+              // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it applies only
               // when the host wired onSyncOpen: one that didn't (the showcase)
               // may use the same id as an ordinary destination.
               onSelect={leaf => {
@@ -206,6 +212,7 @@ export const AppShell = (props: AppShellProps) => {
                   icon={HomeIcon}
                   label={props.storeName}
                   onClick={props.onStoreClick}
+                  testId="store-selector-trigger"
                 />
                 <span class={styles.footerSpacer} aria-hidden="true" />
                 <UserMenu username={props.username} onLogout={props.onLogout} />

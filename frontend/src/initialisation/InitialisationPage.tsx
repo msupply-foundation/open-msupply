@@ -55,7 +55,7 @@ export const InitialisationPage: Component<{
   // Spec: distinct from submitting — sync has actually begun (the mutation
   // started it, or the page resumed into INITIALISING). A sync error before
   // this is true means initialisation never started, so Retry (which re-runs
-  // manualSync) would have nothing to retry — see AC-IN5.
+  // manualSync) would have nothing to retry — see OMS-REG-LGN-03.11.
   const [syncStarted, setSyncStarted] = createSignal(false);
   const [submitting, setSubmitting] = createSignal(false);
   const [syncError, setSyncError] = createSignal<SyncError>();
@@ -198,7 +198,7 @@ export const InitialisationPage: Component<{
         url: values().url,
         username: values().siteName,
         password: values().password,
-        // Spec: not user-editable — always the default (AC-IN2).
+        // Spec: not user-editable — always the default (OMS-REG-LGN-03.3).
         intervalSeconds: DEFAULT_SYNC_INTERVAL_SECONDS,
         batchSize: values().batchSize,
       },
@@ -212,7 +212,7 @@ export const InitialisationPage: Component<{
       setSyncStarted(true);
       watchProgress();
     } else {
-      // Spec (AC-IN9): initialisation never started, so the button stays
+      // Spec (OMS-REG-LGN-03.11): initialisation never started, so the button stays
       // Initialise (not Retry) and the fields unlock for correction.
       setSubmitting(false);
       setSyncError({
@@ -238,7 +238,7 @@ export const InitialisationPage: Component<{
   // Spec: fields lock while the request is in flight, and stay locked for the
   // whole time sync has actually started (including a watched-sync error —
   // that's the Retry case). A sync error BEFORE syncStarted means
-  // initialisation never began, so fields unlock for correction (AC-IN5).
+  // initialisation never began, so fields unlock for correction (OMS-REG-LGN-03.11).
   const locked = () => submitting() || syncStarted();
   const busy = () => locked() && syncError() == null;
 
@@ -361,7 +361,7 @@ export const InitialisationPage: Component<{
           <p class={styles.version}>
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
-          {/* Spec (App version, AC-VN2): absent until the startup pass has
+          {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has
               fetched it — pre-initialisation that also needs a server carrying
               open-msupply#12566. */}
           <Show when={serverVersion()}>
