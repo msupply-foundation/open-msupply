@@ -188,13 +188,20 @@ interface ComboboxProps<T> {
    */
   listboxFooter?: JSX.Element;
   /**
-   * By default the popup matches the trigger's width (Kobalte `sameWidth`). Pass
-   * `false` to let it size to its content instead — never narrower than the
-   * trigger, capped so it stays readable and never runs past the viewport — for
-   * pickers whose option text (e.g. a location's `code + name`) can outrun a
-   * narrow field.
+   * By default the popup matches the trigger's width (Kobalte `sameWidth`).
+   * Pass `false` to let it size to its content instead — never narrower than
+   * the trigger, capped so it stays readable and never runs past the viewport
+   * — for pickers whose option text (e.g. a location's `code + name`) can
+   * outrun a narrow field.
    */
   matchTriggerWidth?: boolean;
+  /**
+   * Max-width cap, TextField's vocabulary: `compact` (10rem), `short` (25rem),
+   * `long` (37.5rem — the default, since option text is often long) or `full`
+   * to fill the container. Set it to sit level with the text fields it's
+   * stacked among, whose own default is `short`.
+   */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * Control size. 'default' is the form-field size; 'small' is the compact
    * variant for dense contexts (e.g. cards). Matches the shared input size
@@ -372,6 +379,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-width={props.width}
       data-size={props.size ?? 'default'}
       data-borderless={props.borderless ? '' : undefined}
       options={options()}
