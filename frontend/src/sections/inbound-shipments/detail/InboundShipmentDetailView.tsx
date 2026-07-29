@@ -265,13 +265,42 @@ const InboundShipmentDetailView: Component = () => {
 
   // Volume-aware: inbound places received stock at a location, so the picker
   // shows each location's % used and offers the All / Empty / Available filter
-  // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
-  // read, so figures are fresh on each visit — see fetchLocationsWithVolume.
-  const [locationsData] = createResource(
-    params.storeId,
+  // (same picker as stocktakes). A plain (non-cached) read, so the figures are
+  // fresh whenever it runs — see fetchLocationsWithVolume.
+  //
+  // Fetched ON DEMAND, then held for the visit (kdd/state-management → data
+  // needed only sometimes). Unlike the stocktake detail — whose toolbar
+  // location FILTER reads this list, so it must be there on arrival — inbound's
+  // only consumers are the bulk change-location modal and the line editor, so
+  // nothing is fetched until one of the two gestures that reach them: ticking a
+  // line's checkbox (which is what raises the bulk action bar) or clicking a
+  // line (which opens the editor). The shipment's first paint pays for no
+  // locations+stock query it may never need.
+  //
+  // The latch never lowers, so that is ONE fetch per visit rather than one per
+  // interaction — a dropped gate would discard the list every time the
+  // selection cleared. Freshness comes from refetching where it actually
+  // changes: volumeUsed is server-computed and moves as stock lands, so
+  // onLinesChanged re-reads it, exactly as the stocktake detail does after
+  // every line save.
+  const locationsNeeded = createMemo(
+    prev => prev || editState() != null || selectedIds().length > 0,
+    false
+  );
+  const [locationsData, { refetch: refetchLocations }] = createResource(
+    () => (locationsNeeded() ? params.storeId : undefined),
     fetchLocationsWithVolume
   );
-  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
+  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
+  // pitfalls → No remounts on interaction). This resource now FIRST fetches
+  // during an interaction, under the already-open screen's Suspense boundary,
+  // so `.latest` alone would suspend on that first pending read and detach the
+  // very <dialog> that triggered it. The picker renders empty while it's in
+  // flight.
+  const locations = (): LocationWithVolume[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   const current = () => info();
   // The two standing conditions that refuse EVERY write, a status advance
@@ -351,6 +380,11 @@ const InboundShipmentDetailView: Component = () => {
     setSelectedIds([]);
     setLineErrors(new Map());
     refetchAll();
+    // A line save or bulk action can place stock at a location (or move it), so
+    // the pickers' % used / fullness filter must re-read — the stocktake
+    // detail's refetchAfterSave, in the shape this view already has. A no-op
+    // until something has armed the latch above.
+    void refetchLocations();
   };
   const stampErrors = (errors: InboundLineErrors) =>
     setLineErrors(new Map(errors));
@@ -779,6 +813,7 @@ const InboundShipmentDetailView: Component = () => {
                 <InboundShipmentSidePanel
                   storeId={params.storeId}
                   node={node()}
+                  open={sidePanelOpen()}
                   disabled={isDisabled()}
                   scope={scope()}
                   edit={edit}
@@ -907,6 +942,7 @@ const InboundShipmentDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled()}
                       locations={locations()}
+                      locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
