@@ -1,33 +1,18 @@
-import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from '../../../../ui/elements/buttons/SplitButton';
-import { DownloadIcon } from '../../../../ui/icons';
-import {
-  csvToExcel,
-  fetchReportFile,
-  listExportCsvFilename,
-  listExportExcelFilename,
-} from '../../../../domain/reportFiles';
-import { saveBlob } from '../../../../platform/openDocument';
-import { stripEmpty } from '../../../../typeHelpers';
-import { storeCodeOf } from '../../../../auth/authContext';
+import { type Component } from 'solid-js';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { ListExportAction } from '@/domain/reportFiles/ListExportAction';
+import { stripEmpty } from '@/typeHelpers';
 import { LocationsList } from '../locations.generated';
 import type { LocationsListVariables } from '../locations.generated';
 import type { LocationFilter } from '../listFilters';
 import { locationsToCsv } from '../locationsToCsv';
 
-// The locations list Export action (spec/locations S1, OMS-REG-INV-01.11): a split button
-// offering CSV or Excel, exporting EVERY location matching the current filter
-// — all pages, not just the visible one (list-views § regions, D12). CSV
-// downloads directly; Excel round-trips the CSV through the server's
-// csvToExcel converter. Mirrors the reference vertical's
-// ExportStocktakesAction: a self-contained action owning its own fetch + busy
-// state; failures fall through the global error modal (the helpers never
-// throw).
+// The locations list Export action (spec/locations S1, OMS-REG-INV-01.11): the
+// shared CSV/Excel split button, fed this vertical's query. Exports EVERY
+// location matching the current filter — all pages, not just the visible one
+// (list-views § regions, D12). Delivery, the busy state and the outcome report
+// live in ListExportAction — this file owns only the query.
 
 export interface ExportLocationsActionProps {
   storeId: string;
@@ -38,14 +23,6 @@ export interface ExportLocationsActionProps {
 export const ExportLocationsAction: Component<
   ExportLocationsActionProps
 > = props => {
-  const [busy, setBusy] = createSignal(false);
-
-  // An accessor read in JSX, so the labels re-translate on a language switch.
-  const options = (): SplitButtonOption[] => [
-    { value: 'csv', label: t('button.export-csv') },
-    { value: 'excel', label: t('button.export-excel') },
-  ];
-
   // Fetch every matching location (no page cap) and build the CSV. Returns
   // null when there's nothing to export. Sorted like the list's default (name
   // ascending — OMS-REG-INV-01.17) so the file reads like the screen.
@@ -61,44 +38,11 @@ export const ExportLocationsAction: Component<
     return nodes.length ? locationsToCsv(nodes) : null;
   };
 
-  const run = async (format: string): Promise<void> => {
-    if (busy()) return;
-    setBusy(true);
-    try {
-      const csv = await buildCsv();
-      if (!csv) return; // nothing to export
-      // Filenames per the shared list-export rule (OMS-REG-INV-01.11 →
-      // ui-standards/list-views § regions).
-      const storeCode = storeCodeOf(props.storeId);
-      const listName = t('filename.locations');
-      if (format === 'excel') {
-        const generated = await csvToExcel({
-          storeId: props.storeId,
-          csvData: csv,
-          filename: listExportExcelFilename(storeCode, listName),
-          sheetName: storeCode,
-        });
-        if (generated.kind !== 'fileId') return; // error already surfaced
-        const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
-      } else {
-        void saveBlob(
-          new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          listExportCsvFilename(storeCode, listName, new Date())
-        );
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <SplitButton
-      icon={<DownloadIcon />}
-      options={options()}
-      testId="export-csv"
-      menuLabel={t('button.export')}
-      onAction={format => void run(format)}
+    <ListExportAction
+      storeId={props.storeId}
+      buildCsv={buildCsv}
+      listName={t('filename.locations')}
     />
   );
 };
