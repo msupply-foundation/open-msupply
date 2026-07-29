@@ -9,20 +9,20 @@ import {
 } from './itemStats';
 
 describe('itemStats — item statistics display (spec/items S1/S2)', () => {
-  // OMS-REG-CAT-04.34 — months of stock is blank (a dash) at zero AMC, never
-  // 0/∞/error; the wire delivers null in that case. A real value shows two
-  // decimals.
-  it('months of stock is blank (dash) when null, else 2dp (CAT-04.34)', () => {
-    expect(formatMonthsOfStock(null)).toBe('—');
-    expect(formatMonthsOfStock(undefined)).toBe('—');
+  // The BAND: a fixed two decimals, and a zero-AMC item (null on the wire) reads
+  // 0.00 — the reference app's behaviour (ui-surface S2 § statistics band). The
+  // list cell dashes the same absence; see the next test.
+  it('the MOS stat band shows a fixed 2dp, 0.00 at zero AMC', () => {
+    expect(formatMonthsOfStock(null)).toBe('0.00');
+    expect(formatMonthsOfStock(undefined)).toBe('0.00');
     expect(formatMonthsOfStock(2.5)).toBe('2.50');
-    // zero is a real months-of-stock value (stock but... ) — only null blanks
     expect(formatMonthsOfStock(0)).toBe('0.00');
   });
 
-  // The list CELL takes the numeric-cell rule, NOT the band's fixed 2dp: at most
-  // two decimals, "…" + hover when precision drops. Same dash at zero AMC.
-  it('the MOS list cell follows the numeric-cell rule, not the band 2dp', () => {
+  // OMS-REG-CAT-04.34 — the list CELL renders a zero-AMC item as a dash, never
+  // `0`. It also takes the numeric-cell rule rather than the band's fixed 2dp:
+  // at most two decimals, "…" + hover when precision drops.
+  it('the MOS list cell dashes at zero AMC and truncates (CAT-04.34)', () => {
     expect(monthsOfStockCell(null)).toEqual({ text: '—' });
     // 2.5 reads "2.5" here where the band reads "2.50" — no padding zero
     expect(monthsOfStockCell(2.5)).toEqual({ text: '2.5', title: undefined });
