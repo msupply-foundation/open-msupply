@@ -8,6 +8,7 @@ import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
 import { Comment } from '../ui/elements/feedback/Comment';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
+import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
@@ -49,6 +50,11 @@ export const feedbackMetadata: PageMetadata = {
         'inline',
         'chip',
       ],
+    },
+    {
+      id: 'feedback-error-details',
+      title: 'Error details',
+      searchTerms: ['error', 'details', 'disclosure', 'raw', 'json', 'expand'],
     },
     {
       id: 'feedback-popovers',
@@ -159,6 +165,30 @@ export const FeedbackShowcase = () => {
               Verified
             </Alert>
           </Row>
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-error-details"
+          title="ErrorDetails — raw error behind a disclosure"
+        >
+          <Lead>
+            The raw error or JSON a caller tucks behind a native{' '}
+            <code>&lt;details&gt;</code> disclosure inside an error{' '}
+            <code>Alert</code>, so the message stays terse and the full
+            technical detail is one click away. <code>detail</code> shows in a
+            scrolling <code>&lt;pre&gt;</code>; an optional <code>hint</code>{' '}
+            sits above it and <code>summaryLabel</code>
+            renames the trigger.
+          </Lead>
+          <Alert severity="error">
+            <div>Sync failed — the server rejected the credentials.</div>
+            <ErrorDetails
+              detail={
+                'POST /sync → 401 Unauthorized\n{\n  "error": "invalid_site_credentials"\n}'
+              }
+              hint="Check the site name and password, then try again."
+            />
+          </Alert>
         </DashboardCard>
 
         <DashboardCard

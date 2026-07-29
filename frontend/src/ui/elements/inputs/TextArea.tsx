@@ -27,6 +27,15 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
    */
   width?: 'short' | 'long' | 'full';
   /**
+   * Type scale, as TextField: `default` (14px) or `small` (13px,
+   * `--input-font-sm`, label included) — so a multi-line field lines up with
+   * the small inputs beside it in a header field cluster (see
+   * ui/layout/Header/HeaderToolbar). The box is still `rows` tall, but block
+   * padding is derived from the size's input-height token, so `rows={1}` is
+   * exactly a TextField's height and `rows={n}` is n lines on that rhythm.
+   */
+  size?: 'default' | 'small';
+  /**
    * Visually hide the label (kept for a11y) — for use inside a FieldRow that
    * shows it.
    */
@@ -38,11 +47,13 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
  * <textarea> (no library): same 1px token border, TMF-orange focus + 3px
  * glow, 0.375rem radius, 0.875rem text and label, same label/helper/error
  * wiring (id/for + aria-describedby, aria-invalid on error). What differs is
- * only what multi-line forces: height comes from the `rows` prop (default 4,
- * as OMS) instead of the input-height tokens, vertical padding joins the
- * horizontal, line-height opens to 1.5 for wrapped text, and there's no
- * size variant. The box is fixed at `rows` — content scrolls, no resize grip
- * — matching the old OMS TextArea (MUI multiline).
+ * only what multi-line forces: height comes from the `rows` prop (default 4, as
+ * OMS) rather than being set outright, vertical padding joins the horizontal,
+ * and line-height opens to 1.5 for wrapped text. That padding is still DERIVED
+ * from the size's input-height token (see the CSS), so `rows={1}` lands exactly
+ * on a TextField's height instead of ~1.5px over it. The box is fixed at `rows`
+ * — content scrolls, no resize grip — matching the old OMS TextArea (MUI
+ * multiline).
  */
 export const TextArea = (props: TextAreaProps) => {
   const [local, rest] = splitProps(props, [
@@ -53,6 +64,7 @@ export const TextArea = (props: TextAreaProps) => {
     'required',
     'rows',
     'width',
+    'size',
     'hideLabel',
     'id',
     'class',
@@ -65,6 +77,7 @@ export const TextArea = (props: TextAreaProps) => {
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'full'}
+      data-size={local.size ?? 'default'}
     >
       <label
         class={local.hideLabel ? styles.labelHidden : styles.label}
@@ -80,6 +93,7 @@ export const TextArea = (props: TextAreaProps) => {
       <textarea
         id={textareaId()}
         class={styles.textarea}
+        data-size={local.size ?? 'default'}
         rows={local.rows ?? 4}
         data-error={local.error ? '' : undefined}
         required={local.required}

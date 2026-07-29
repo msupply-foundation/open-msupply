@@ -1,10 +1,14 @@
 import { type Component } from 'solid-js';
 import { t } from '../../../intl';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
-import { formatNumber } from '../../../intl/formatNumber';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getNumberCell,
+  getTextCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { hasPermission } from '../../../store/storeContext';
 import type { StockLineVvmLogFragment } from './stockLine.generated';
 
@@ -30,39 +34,43 @@ export const VvmHistoryPanel: Component<{
       a.createdDatetime < b.createdDatetime ? 1 : -1
     );
 
+  // Cell rendering + widths from the shared presets (docs/CELL_TYPES.md). Note
+  // the free-text Comment column deliberately does NOT use the `comment` key —
+  // that preset is the icon-and-popover cell, and this column shows the text
+  // itself.
   const columns = (): Column<Log, never>[] => [
     {
       c: { accessor: l => l.createdDatetime, id: 'date' },
       header: () => t('label.date'),
-      cell: info => localisedDate(info.row.original.createdDatetime),
+      ...getCellDefinition('date'),
     },
     {
       c: { accessor: l => l.createdDatetime, id: 'time' },
       header: () => t('label.time'),
-      meta: { align: 'right' },
-      cell: info => localisedTime(info.row.original.createdDatetime),
+      ...getCellDefinition('time'),
     },
     {
       c: { accessor: l => l.status?.description ?? '', id: 'status' },
       header: () => t('label.vvm-status'),
+      ...getCellDefinition('vvmStatus'),
     },
     {
       c: { accessor: l => l.status?.priority ?? '', id: 'priority' },
       header: () => t('label.distribution-priority'),
-      meta: { align: 'right' },
-      cell: info =>
-        info.row.original.status
-          ? formatNumber(info.row.original.status.priority)
-          : '',
+      // A number cell formats and right-aligns; a log with no status resolves
+      // to '' above and renders blank.
+      ...getNumberCell(),
+      size: remToPx(9),
     },
     {
       c: { accessor: l => l.user?.username ?? '', id: 'user' },
       header: () => t('label.entered-by'),
+      ...getCellDefinition('user'),
     },
     {
       c: { accessor: l => l.comment ?? '', id: 'comment' },
       header: () => t('label.comment'),
-      meta: { wrapLines: 2 },
+      ...getTextCell({ wrapLines: 2 }),
     },
   ];
 

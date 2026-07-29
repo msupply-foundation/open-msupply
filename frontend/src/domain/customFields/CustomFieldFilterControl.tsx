@@ -5,6 +5,7 @@ import {
   FilterSelect,
   FilterMultiSelect,
   FilterDate,
+  NotChipEditor,
 } from '../../ui/elements/selectors/FilterBar';
 import { t } from '../../intl';
 import {
@@ -192,13 +193,19 @@ export const CustomFieldFilterControl = (props: {
 };
 
 // Two controls side by side for a range (number min/max, date from/to).
+//
+// Both halves are FilterBar controls, so both would otherwise claim the chip's
+// focus target and the LAST one mounted would win. `from` is where entry
+// starts, so `to` renders in an empty focus scope (kdd/focus-targets). The
+// slots are JSX props — getters, evaluated here — so `to`'s control really is
+// constructed inside that scope.
 const Range = (props: { from: JSX.Element; to: JSX.Element }) => (
   <span
     style={{ display: 'inline-flex', gap: '0.5rem', 'align-items': 'center' }}
   >
     {props.from}
     <span aria-hidden="true">–</span>
-    {props.to}
+    <NotChipEditor>{props.to}</NotChipEditor>
   </span>
 );
 

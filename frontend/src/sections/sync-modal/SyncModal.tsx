@@ -12,6 +12,7 @@ import {
 import { useNavigate, useParams } from '@solidjs/router';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ProgressList, type ProgressStep } from '../../ui/sync/ProgressList';
@@ -209,16 +210,14 @@ export const SyncModal: Component<{
         <Show when={overview()?.error}>
           {err => {
             const errorSummary = () => syncErrorSummary(err().variant);
+            const hintText = () => {
+              const h = errorSummary().hint;
+              return h ? t(h) : undefined;
+            };
             return (
               <Alert severity="error">
                 <div>{t(errorSummary().summary)}</div>
-                <details class={styles.moreInfo}>
-                  <summary>{t('error.more-info')}</summary>
-                  <Show when={errorSummary().hint}>
-                    {hint => <p class={styles.hint}>{t(hint())}</p>}
-                  </Show>
-                  <pre class={styles.errorDetail}>{err().fullError}</pre>
-                </details>
+                <ErrorDetails detail={err().fullError} hint={hintText()} />
               </Alert>
             );
           }}

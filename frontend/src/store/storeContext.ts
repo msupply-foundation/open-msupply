@@ -3,7 +3,7 @@ import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
   type StoreContextResult,
-} from '../api/storeContext.generated';
+} from './storeContext.generated';
 import { authUser } from '../auth/authContext';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
@@ -12,33 +12,38 @@ import { authUser } from '../auth/authContext';
 // handled globally and leave the state empty; callers keep showing their
 // loading state.
 
-const [storeContext, setStoreContext] = createSignal<StoreContextResult>();
-
-// The store the loaded context belongs to — keyed on the REQUEST, not derived
-// from the response: storePreferences.id is the store id only when the store
-// has a preference row; for a store without one the server answers with a
-// default row whose id is "" (find_one_by_id_or_default), so a
-// response-derived check would never confirm and the store guard would refetch
-// forever.
-const [loadedStoreId, setLoadedStoreId] = createSignal<string>();
+// The loaded context and the store it was FETCHED for, held together in ONE
+// signal so they update atomically. Keyed on the REQUEST, not derived from the
+// response: storePreferences.id is the store id only when the store has a
+// preference row; for a store without one the server answers with a default row
+// whose id is "" (find_one_by_id_or_default), so a response-derived check would
+// never confirm and the store guard would refetch forever (kdd/state-management
+// decision 4). Coupling the id to the result in a single signal is what makes
+// the pairing atomic: the store guard's "loaded?" check reads both the id and
+// the result, and two separate signals let it observe a half-updated state
+// (result set, id not yet) between two writes and fire a redundant second
+// fetch. One signal = one write = no half-state.
+type LoadedStoreContext = { storeId: string; result: StoreContextResult };
+const [loaded, setLoaded] = createSignal<LoadedStoreContext>();
 
 const refetch = async (storeId: string | undefined) => {
   if (!storeId) {
-    setStoreContext(undefined);
-    setLoadedStoreId(undefined);
+    setLoaded(undefined);
     return;
   }
 
   const result = await graphqlFetch(StoreContext, { storeId });
   if (result.kind !== 'success') {
-    setStoreContext(undefined);
-    setLoadedStoreId(undefined);
+    setLoaded(undefined);
     return;
   }
 
-  setStoreContext(result.data);
-  setLoadedStoreId(storeId);
+  setLoaded({ storeId, result: result.data });
 };
+
+// The loaded store context (Guard 3 state): store preferences + permissions.
+// Reactive; undefined until the guard's fetch lands and between store switches.
+const storeContext = (): StoreContextResult | undefined => loaded()?.result;
 
 // The id of the store the user has currently ENTERED (Guard 3 loaded).
 // Reactive and module-level, so store-scoped global caches
@@ -49,14 +54,7 @@ const refetch = async (storeId: string | undefined) => {
 // valid to fetch. Keyed on the REQUEST (not the response's
 // storePreferences.id, which is "" for a store without a preference row).
 // Undefined between store switches (guard shows its loading state).
-const currentStoreId = () => loadedStoreId();
-
-// The id of the currently authenticated user (Guard 3 loaded). Reactive and
-// module-level for the same reason as currentStoreId — so global caches keyed
-// by user (the user layer of table config, kdd/table-state) can depend on it
-// without a component. `me` is the UserNode union member, so read is
-// `me?.userId`; undefined between store switches.
-const currentUserId = () => storeContext()?.me?.userId;
+const currentStoreId = () => loaded()?.storeId;
 
 // The stocktake display-gate preferences (spec/stocktakes › store-preference
 // gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
@@ -123,6 +121,36 @@ const inboundShipmentPreferences = () => {
     issueInForeignCurrency: store?.issueInForeignCurrency ?? false,
     manuallyLinkInternalOrderToInboundShipment:
       store?.manuallyLinkInternalOrderToInboundShipment ?? false,
+  };
+};
+
+// The outbound-shipment display/behaviour gate preferences
+// (spec/outbound-shipments › store-preference gates). Same safe-default-OFF
+// rule as the other *Preferences accessors: each is `false`/`0`/empty while the
+// context is unresolved so a gated column/field/control never flashes in before
+// its preference is known. Reactive — a post-sync refetch re-gates in place.
+// The allocation-shaping fields (doses / VVM / donor / sort / expired-issue)
+// overlap the prescription gates (both are issue flows); the outbound-only ones
+// are the invoice-status option set, the backdating window, and the
+// foreign-currency store flag. `invoiceStatusOptions` empty means UNRESTRICTED
+// (every status offered) — the permissive default, matched by allowedStatuses
+// in the outbound section (mirrors prescriptionPreferences' precedent).
+const outboundShipmentPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    sortByVvmStatusThenExpiry: prefs?.sortByVvmStatusThenExpiry ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    expiredStockPreventIssue: prefs?.expiredStockPreventIssue ?? false,
+    expiredStockIssueThreshold: prefs?.expiredStockIssueThreshold ?? 0,
+    invoiceStatusOptions: prefs?.invoiceStatusOptions ?? [],
+    backdating: {
+      shipmentsEnabled: prefs?.backdating?.shipmentsEnabled ?? false,
+      maxDays: prefs?.backdating?.maxDays ?? 0,
+    },
+    issueInForeignCurrency: store?.issueInForeignCurrency ?? false,
   };
 };
 
@@ -224,10 +252,10 @@ export {
   refetch as refetchStoreContext,
   currentStoreId,
   currentStoreName,
-  currentUserId,
   stocktakePreferences,
   stockPreferences,
   inboundShipmentPreferences,
+  outboundShipmentPreferences,
   patientPreferences,
   prescriptionPreferences,
   isDispensary,

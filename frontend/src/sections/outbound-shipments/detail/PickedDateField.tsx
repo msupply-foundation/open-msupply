@@ -5,13 +5,12 @@ import { graphqlFetch } from '../../../api/graphql';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { Popover } from '../../../ui/elements/feedback/Popover';
-import { InfoIcon } from '../../../ui/icons';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import {
   OutboundLines,
   OutboundStocktakeConflict,
 } from './outboundDetail.generated';
-import { outboundPrefs } from '../outboundPreferencesResource';
+import { outboundShipmentPreferences } from '@/store/storeContext';
 import type { OutboundNode } from './outboundUpdate';
 import {
   backdateBounds,
@@ -63,11 +62,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // renders from it.
   let confirmInFlight = false;
 
-  const backdating = () => outboundPrefs()?.prefs?.backdating;
+  const backdating = () => outboundShipmentPreferences().backdating;
   const gate = () =>
     backdatingGate({
       status: props.node.status,
-      shipmentsEnabled: backdating()?.shipmentsEnabled ?? false,
+      shipmentsEnabled: backdating().shipmentsEnabled,
       panelDisabled: props.disabled,
     });
   const enabled = () => gate().enabled;
@@ -196,15 +195,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
             reason (spec S3), reusing the ported reason messages. */}
         <Show when={gate().reasonKey}>
           {key => (
-            <Popover
-              trigger={<InfoIcon />}
-              triggerLabel={t(key())}
+            <InfoTooltip
+              text={t(key())}
+              label={t(key())}
               triggerTestId="picked-date-reason"
-              openOnHover
-              placement="top"
-            >
-              <p>{t(key())}</p>
-            </Popover>
+            />
           )}
         </Show>
       </span>

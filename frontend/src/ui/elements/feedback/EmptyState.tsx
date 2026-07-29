@@ -13,25 +13,27 @@ export interface EmptyStateProps {
    */
   title?: string;
   /**
-   * Show the sprout illustration above the heading. Default true — the full
-   * "nothing here" empty state. Pass false for a plain centred message (e.g. a
-   * loading fallback that reuses the same centred layout without the graphic +
-   * heading).
+   * Show the sprout illustration + heading. Default true. Pass false for a plain
+   * centred message (e.g. a loading fallback that reuses the same centred layout
+   * without the illustration + heading).
    */
   graphic?: boolean;
-  /** Optional call to action below the message (e.g. a "New …" Button). */
+  /**
+   * Optional call to action, rendered INLINE after the message (e.g. a "Create
+   * a new one" ghost button) — same line, matching the current app.
+   */
   children?: JSX.Element;
   /** Test id on the root, for e2e (e.g. the table/list "nothing-here" hook). */
   'data-testid'?: string;
 }
 
 /*
- * Empty state — the current app's NothingHere: a centred sprout illustration,
- * a bold "Nothing here" heading, a quiet body line, and an optional call to
- * action (e.g. a "New stocktake" / "Add item" button). Used for an empty or
- * filtered-to-nothing table (via DataTable's `empty`), an unbuilt page, or an
- * empty tab. Fills whatever container it's given, so it sits centred in the
- * available space.
+ * Empty state — the current app's NothingHere: a centred illustration, a
+ * bold "Nothing here" heading, a quiet body line, and an optional call to action
+ * (e.g. a "Create a new one" button) sitting INLINE after the message on the
+ * same line. Used for an empty or filtered-to-nothing table (via DataTable's
+ * `empty`), an unbuilt page, or an empty tab. Fills whatever container it's
+ * given, so it sits centred in the available space.
  *
  * `graphic={false}` drops the illustration + heading for a plain centred
  * message — the loading fallback reuses this layout that way.
@@ -42,7 +44,9 @@ export const EmptyState = (props: EmptyStateProps) => (
       <NothingHereIcon class={styles.graphic} />
       <p class={styles.title}>{props.title ?? t('error.no-results')}</p>
     </Show>
-    <p class={styles.message}>{props.message}</p>
-    {props.children}
+    <div class={styles.body}>
+      <span class={styles.message}>{props.message}</span>
+      {props.children}
+    </div>
   </div>
 );

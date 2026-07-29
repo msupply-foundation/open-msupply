@@ -7,7 +7,6 @@ import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
 import { Button } from '../ui/elements/buttons/Button';
-import { DashboardIcon } from '../ui/icons';
 import { navTrail, type NavItem } from './navConfig';
 
 // The stand-in page for a nav destination with no section built yet, and for
@@ -53,8 +52,7 @@ export const EntryPage: Component<{ dest?: NavItem }> = props => {
         {/* The way out. The store root is the dashboard (App routes). */}
         <Show when={params.storeId}>
           <Button
-            variant="secondary"
-            icon={<DashboardIcon />}
+            variant="ghost"
             onClick={() => navigate(`/${params.storeId}`)}
           >
             {t('error.go-to-dashboard')}

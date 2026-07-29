@@ -19,6 +19,7 @@ import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '../../../domain/item';
 import { LocationSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
@@ -119,12 +120,16 @@ const NewStockContent = (props: {
   const [draft, setDraft] = createStore<Draft>({ ...EMPTY_DRAFT });
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
+  // Item-first: the modal always opens with nothing picked, so the flow starts
+  // by typing (spec S3).
+  const itemSearch = createFocusTarget();
 
   const prefs = () => stockPreferences();
   const today = localTodayIso();
 
-  // The chosen item's defaults + variants (spec S3: seed pack size + sell price;
-  // offer variants). Keyed on the item id; undefined until an item is picked.
+  // The chosen item's defaults + variants (spec S3: seed pack size + sell
+  // price; offer variants). Keyed on the item id; undefined until an item is
+  // picked.
   const [itemDetail] = createResource(
     () => item()?.id,
     async itemId => {
@@ -160,18 +165,30 @@ const NewStockContent = (props: {
     () => props.storeId,
     fetchStockLocations
   );
-  // Locations + variants read the fetched item detail, which lingers (as
-  // `.latest`) after the item is cleared — so gate both on there still being a
-  // chosen item, else a cleared search would keep the old item's variants /
-  // location narrowing.
+  // Read the item detail WITHOUT ever suspending. It first fetches on an
+  // INTERACTION (picking an item) while this dialog is already open, and
+  // `.latest` alone STILL suspends on that first pending read — which collapses
+  // the ancestor <Suspense> and detaches the open <dialog>, losing the top
+  // layer (no backdrop, modal re-rendered in normal flow). Gate on `.state`
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). The value
+  // also lingers after the item is cleared, so every read stays gated on there
+  // still being a chosen item — else a cleared search would keep the old item's
+  // variants / location narrowing.
+  const detail = () =>
+    item() &&
+    (itemDetail.state === 'ready' || itemDetail.state === 'refreshing')
+      ? itemDetail.latest
+      : undefined;
+
   const locations = () =>
     locationsForItem(
-      allLocations.latest ?? [],
-      item() ? itemDetail.latest?.restrictedLocationTypeId : null
+      allLocations.state === 'ready' || allLocations.state === 'refreshing'
+        ? (allLocations.latest ?? [])
+        : [],
+      detail()?.restrictedLocationTypeId
     );
 
-  const variants = (): ItemVariant[] =>
-    item() ? (itemDetail.latest?.variants ?? []) : [];
+  const variants = (): ItemVariant[] => detail()?.variants ?? [];
 
   // Choosing a variant fills the variant id, manufacturer, and volume per pack
   // (from its packaging).
@@ -253,6 +270,7 @@ const NewStockContent = (props: {
       dismissable={!saving()}
       size="large"
       testId="new-stock-modal"
+      initialFocus={itemSearch}
       title={t('heading.stock-line-details')}
       actionsLead={
         <Show when={error()}>
@@ -288,7 +306,9 @@ const NewStockContent = (props: {
           <Stack gap="sm">
             <ItemSearch
               label={t('label.item')}
+              required
               storeId={props.storeId}
+              focusTarget={itemSearch}
               value={item()?.id}
               selectedItem={item()}
               onSelect={picked => {
@@ -324,6 +344,7 @@ const NewStockContent = (props: {
                       count can't go negative from the input (spec AC-N2). */}
                     <NumberField
                       label={t('label.pack-qty')}
+                      required
                       width="full"
                       decimalLimit={2}
                       value={draft.numberOfPacks}
@@ -331,6 +352,7 @@ const NewStockContent = (props: {
                     />
                     <NumberField
                       label={t('label.pack-size')}
+                      required
                       width="full"
                       min={1}
                       decimalLimit={2}
@@ -416,9 +438,14 @@ const NewStockContent = (props: {
                       onChange={v => setDraft('sellPricePerPack', v)}
                     />
                   </FormRow>
+                  {/* Required iff active positive reasons are configured (spec
+                    AC-N4) — the same condition that gates OK, marked on the
+                    field so a disabled OK is explained rather than mysterious
+                    (#601). */}
                   <ReasonSelect
                     kind="positive"
                     label={t('label.reason')}
+                    required={positiveReasonsRequired()}
                     value={draft.reasonOption?.id}
                     placeholder={t('label.select-reason')}
                     onChange={r =>
