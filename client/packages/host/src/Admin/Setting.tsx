@@ -11,6 +11,7 @@ interface SettingProps {
   component: JSX.Element;
   icon?: JSX.Element;
   infoText?: string;
+  infoTestId?: string;
   title: string;
 }
 
@@ -18,6 +19,7 @@ export const Setting: React.FC<SettingProps> = ({
   component,
   icon,
   infoText,
+  infoTestId,
   title,
 }) => {
   return (
@@ -28,7 +30,9 @@ export const Setting: React.FC<SettingProps> = ({
       <Grid flexShrink={0} flexGrow={1}>
         <Box display={'flex'}>
           <Typography style={{ fontSize: 16 }}>{title}</Typography>
-          {infoText ? <InfoTooltipIcon title={infoText} /> : null}
+          {infoText ? (
+            <InfoTooltipIcon title={infoText} testId={infoTestId} />
+          ) : null}
         </Box>
       </Grid>
       <Grid display="flex" justifyContent="flex-end">

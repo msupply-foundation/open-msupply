@@ -93,7 +93,11 @@ export const AppBarButtons = ({
           .build()
       );
     } catch (e) {
-      errorNotification(t('error.failed-to-create-inbound-shipment', { message: (e as Error).message }))();
+      errorNotification(
+        t('error.failed-to-create-inbound-shipment', {
+          message: (e as Error).message,
+        })
+      )();
     }
   };
 
@@ -237,6 +241,7 @@ export const AddButton = ({
   if (allOptions.length === 1) {
     return (
       <ButtonWithIcon
+        data-testid="new-shipment-button"
         Icon={<PlusCircleIcon />}
         label={t('button.new-shipment')}
         onClick={handleNewShipment}
@@ -246,6 +251,7 @@ export const AddButton = ({
 
   return (
     <SplitButton
+      testId="new-shipment-button"
       color="primary"
       options={allOptions}
       selectedOption={selectedOption}

@@ -143,7 +143,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                 if (newDate) setDate(newDate);
               }}
               width={350}
-              inputTestId="date-field"
+              textFieldTestId="date-field"
             />
           }
         />
