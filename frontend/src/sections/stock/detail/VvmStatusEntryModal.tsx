@@ -133,6 +133,7 @@ const VvmStatusEntryContent = (props: {
           >
             <VvmStatusSelect
               label={t('label.vvm-status')}
+              inputTestId="vvm-status-select"
               hideLabel
               value={statusId()}
               placeholder={t('label.select')}
@@ -143,6 +144,7 @@ const VvmStatusEntryContent = (props: {
         <FieldRow label={t('label.comment')}>
           <TextArea
             label={t('label.comment')}
+            data-testid="vvm-comment"
             hideLabel
             value={comment()}
             onInput={e => setComment(e.currentTarget.value)}
