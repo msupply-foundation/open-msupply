@@ -192,6 +192,7 @@ describe('validateLoadedModule', () => {
       'dashboard.stat',
       'dashboard.widget',
       'internalOrderLine.column',
+      'internalOrderLine.infoPanel',
     ]);
   });
 
@@ -208,6 +209,24 @@ describe('validateLoadedModule', () => {
       ],
     });
     expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+  });
+
+  it('refuses a bare `value` at the info-panel slot — only columns render that way', () => {
+    // A bundle offering `value` anywhere but a column slot was built against a
+    // surface this host does not have (sdk-contract § contributions).
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'internalOrderLine.infoPanel',
+          id: 'itemInfo',
+          value: () => 'nope',
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'has no Component function'
+    );
   });
 
   it('refuses a column contribution with neither a Component nor a value', () => {

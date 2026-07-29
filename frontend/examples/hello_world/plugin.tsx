@@ -8,12 +8,15 @@
  * what the greeting proves: its counter is reactive, and its text re-renders on
  * a locale switch, from a module the host never built.
  */
-import { createSignal } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
 import {
+  InfoTooltip,
   PLUGIN_API_VERSION,
+  Table,
   definePlugin,
   formatNumber,
   pluginIntl,
+  type InternalOrderLineInfoPanelProps,
 } from '@openmsupply/plugin-sdk';
 
 const CODE = 'hello_world';
@@ -85,6 +88,94 @@ const ArrivalsCell = (props: {
   </span>
 );
 
+/*
+ * The internal-order line INFO PANEL slot (plugins sdk-contract § the
+ * info-panel slot), behind `?pluginPanel`. One contribution proving the three
+ * things that slot has to prove:
+ *
+ *  1. it receives BOTH published DTOs — the line and its order — and renders
+ *     them read-only;
+ *  2. a prop change (Save & next) reaches it IN PLACE: the mount stamp and the
+ *     click counter below survive the change, because the host must not remount
+ *     a contribution to give it new props (AC-PLUG-N2);
+ *  3. SDK components carry the host's styling across the boundary: the facts
+ *     below are a host `Table`, styled by the host's own stylesheet, and the
+ *     gloss is a host `InfoTooltip` — the plugin ships no CSS at all.
+ */
+let mountCount = 0;
+
+const InfoPanel = (props: InternalOrderLineInfoPanelProps) => {
+  // Minted ONCE per mount, so a remount is visible on screen and in the DOM.
+  const stamp = `mount-${++mountCount}`;
+  const [clicks, setClicks] = createSignal(0);
+  onCleanup(() =>
+    console.info(`[plugins] ${CODE}: info panel ${stamp} was disposed`)
+  );
+  return (
+    <div
+      data-testid="hello-world-info-panel"
+      data-panel-mount={stamp}
+      data-panel-clicks={clicks()}
+    >
+      <Table label={intl.t('panel.table-label')}>
+        <thead>
+          <tr>
+            <th>{intl.t('panel.fact')}</th>
+            <th>{intl.t('panel.value')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{intl.t('panel.item')}</td>
+            <td data-testid="hello-world-info-panel-item">
+              {props.line.itemCode} · {props.line.itemName}
+            </td>
+          </tr>
+          <tr>
+            <td>{intl.t('panel.amc')}</td>
+            <td data-numeric>
+              {formatNumber(props.line.averageMonthlyConsumption)}
+            </td>
+          </tr>
+          <tr>
+            <td>{intl.t('panel.order')}</td>
+            <td>
+              #{formatNumber(props.order.requisitionNumber)} ·{' '}
+              {props.order.status} ·{' '}
+              {props.order.editable
+                ? intl.t('panel.editable')
+                : intl.t('panel.read-only')}
+            </td>
+          </tr>
+          <tr>
+            <td>{intl.t('panel.program')}</td>
+            <td>{props.order.programName ?? intl.t('panel.general-order')}</td>
+          </tr>
+          <tr>
+            <td>{intl.t('panel.period')}</td>
+            <td>{props.order.periodName ?? ''}</td>
+          </tr>
+        </tbody>
+      </Table>
+      <p>
+        <button
+          type="button"
+          data-testid="hello-world-info-panel-counter"
+          onClick={() => setClicks(count => count + 1)}
+        >
+          {intl.t('clicks', { count: formatNumber(clicks()) })}
+        </button>{' '}
+        <span data-testid="hello-world-info-panel-mount">{stamp}</span>{' '}
+        <InfoTooltip
+          text={intl.t('panel.help')}
+          label={intl.t('panel.help')}
+          triggerTestId="hello-world-info-panel-help"
+        />
+      </p>
+    </div>
+  );
+};
+
 export default definePlugin({
   manifest: {
     code: CODE,
@@ -104,6 +195,18 @@ export default definePlugin({
       'column.total-stock-description': 'Initial stock on hand plus incoming',
       'column.arrivals': 'Arrivals',
       'column.orphan': 'Orphan',
+      'panel.table-label': 'Plugin item information',
+      'panel.fact': 'Fact',
+      'panel.value': 'Value',
+      'panel.item': 'Line',
+      'panel.amc': 'AMC (units)',
+      'panel.order': 'Order',
+      'panel.program': 'Program',
+      'panel.period': 'Period',
+      'panel.general-order': 'General order',
+      'panel.editable': 'editable',
+      'panel.read-only': 'read-only',
+      'panel.help': 'Everything here came from the slot props',
     },
     fr: {
       greeting: 'Bonjour depuis un plugin',
@@ -113,6 +216,18 @@ export default definePlugin({
       'column.total-stock-description': 'Stock initial plus arrivages',
       'column.arrivals': 'Arrivages',
       'column.orphan': 'Orphelin',
+      'panel.table-label': "Informations sur l'article (plugin)",
+      'panel.fact': 'Donnée',
+      'panel.value': 'Valeur',
+      'panel.item': 'Ligne',
+      'panel.amc': 'CMM (unités)',
+      'panel.order': 'Commande',
+      'panel.program': 'Programme',
+      'panel.period': 'Période',
+      'panel.general-order': 'Commande générale',
+      'panel.editable': 'modifiable',
+      'panel.read-only': 'lecture seule',
+      'panel.help': 'Tout ceci provient des props du slot',
     },
   },
   contributions: [
@@ -161,6 +276,21 @@ export default definePlugin({
       anchor: { after: 'no-such-column' },
       when: () => flag('pluginBadAnchor'),
       value: () => '!',
+    },
+    {
+      slot: 'internalOrderLine.infoPanel',
+      id: 'itemInfo',
+      // Behind a flag so the SAME session can show the region both ways: with
+      // it, the panel renders below the line's statistics; without it, the
+      // editor has no seam at all (AC-PLUG-N1).
+      when: () => flag('pluginPanel'),
+      Component: InfoPanel,
+    },
+    {
+      slot: 'internalOrderLine.infoPanel',
+      id: 'panelBoom',
+      when: () => flag('pluginPanelBoom'),
+      Component: Boom,
     },
   ],
 });

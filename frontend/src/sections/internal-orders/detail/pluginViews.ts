@@ -1,5 +1,12 @@
-import type { InternalOrderLineView } from '../../../plugin-sdk/types';
-import type { InternalOrderLineFragment } from './internalOrderDetail.generated';
+import type {
+  InternalOrderLineView,
+  InternalOrderView,
+} from '../../../plugin-sdk/types';
+import type { EditorLine } from './edit-modal/internalOrderLineEdit';
+import type {
+  InternalOrderInfoFragment,
+  InternalOrderLineFragment,
+} from './internalOrderDetail.generated';
 
 /*
  * The internal-order slot boundary: host GraphQL data → the SDK's view DTOs
@@ -63,4 +70,80 @@ export const toLineView = (
   expiringUnits: line.expiringUnits,
   daysOutOfStock: line.daysOutOfStock,
   reason: line.reason?.reason ?? undefined,
+});
+
+/**
+ * The SAME published line view, built from the LINE EDITOR's working line — so
+ * the info-panel slot in the editor (ui-surface § S8) shows a plugin exactly
+ * what the line table's column slot shows for the same line.
+ *
+ * The editor's shape differs from the fragment's only in how it holds absent
+ * values: it coalesces an absent comment to `''` before the editor's textarea
+ * ever sees it, so an empty comment publishes as `undefined` here — the DTO's
+ * "no comment" (the parity test states this). Everything else is a rename.
+ *
+ * An add-mode DRAFT is a legitimate input: `id` is then the client-generated id
+ * the first save will create the line under, and the movement figures are 0
+ * because no line exists to have moved yet.
+ */
+export const toLineViewFromEditor = (
+  line: EditorLine
+): InternalOrderLineView => ({
+  id: line.lineId,
+  itemId: line.itemId,
+  itemCode: line.itemCode,
+  itemName: line.itemName,
+  unitName: line.unitName ?? undefined,
+  defaultPackSize: line.defaultPackSize,
+  isVaccine: line.isVaccine,
+  dosesPerUnit: line.doses,
+  comment: line.comment === '' ? undefined : line.comment,
+  requestedQuantity: line.requestedQuantity,
+  suggestedQuantity: line.suggestedQuantity,
+  availableStockOnHand: line.availableStockOnHand,
+  averageMonthlyConsumption: line.averageMonthlyConsumption,
+  monthsOfStock: line.monthsOfStock,
+  initialStockOnHandUnits: line.initialStockOnHandUnits,
+  incomingUnits: line.incomingUnits,
+  outgoingUnits: line.outgoingUnits,
+  lossInUnits: line.lossInUnits,
+  additionInUnits: line.additionInUnits,
+  expiringUnits: line.expiringUnits,
+  daysOutOfStock: line.daysOutOfStock,
+  reason: line.reason ?? undefined,
+});
+
+/**
+ * The order a line belongs to, as the SDK publishes it.
+ *
+ * Flattened and in DOMAIN words: the wire's `RequisitionNodeStatus` becomes one
+ * of three lifecycle words (the response-only `NEW` reads as `draft`, as the
+ * status trail treats it), the program / order type / period arrive as plain
+ * ids and names, and the supplier is named without the wire's "other party"
+ * framing. `editable` is the host's own editability gate, passed in rather than
+ * re-derived, so a plugin sees the same answer every edit affordance on the
+ * screen sees.
+ */
+export const toInternalOrderView = (
+  order: InternalOrderInfoFragment,
+  editable: boolean
+): InternalOrderView => ({
+  id: order.id,
+  requisitionNumber: order.requisitionNumber,
+  status:
+    order.status === 'SENT'
+      ? 'sent'
+      : order.status === 'FINALISED'
+        ? 'finalised'
+        : 'draft',
+  editable,
+  programId: order.program?.id,
+  programName: order.program?.name,
+  orderType: order.orderType ?? undefined,
+  periodId: order.period?.id,
+  periodName: order.period?.name,
+  minMonthsOfStock: order.minMonthsOfStock,
+  maxMonthsOfStock: order.maxMonthsOfStock,
+  supplierId: order.otherPartyId,
+  supplierName: order.otherPartyName,
 });
