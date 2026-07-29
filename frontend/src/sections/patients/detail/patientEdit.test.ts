@@ -136,9 +136,9 @@ describe('patientFieldErrors (DIS-02 .57 — duplicate code blocks the save)', (
   });
 
   // The message means the rule is NOT deferred (formValidation defers only
-  // message-less rules), so the clash shows while the user is still on the field
-  // rather than waiting for a save attempt.
-  it('surfaces immediately rather than on submit', () => {
+  // message-less rules), so the clash shows the moment the check answers instead
+  // of needing the form armed a second time.
+  it('is not held back until the form is armed', () => {
     const errors = codeErrors(fullDraft(), true);
     expect(errors[0]?.showOnSubmit).toBeUndefined();
     expect(errors[0]?.message).toBeDefined();

@@ -63,12 +63,12 @@ export const seedDraft = (node: PatientNode): PatientDraft => ({
 // the create wizard and the edit tab validate identically; feed to
 // createFormValidation and read back per field / as the summary.
 //
-// `codeTaken` is the settled answer to "does another patient hold this code?"
-// (spec/patients § generating a code, DIS-02 `.57`) — the caller owns the probe
-// because it is asynchronous and store-scoped. It carries a MESSAGE, so unlike
-// the required rules it surfaces as soon as it trips rather than waiting for a
-// save attempt: the user should learn the code clashes while still on the field.
-// Save stays enabled either way; the block happens on the attempt.
+// `codeTaken` is the answer to "does another patient hold this code?"
+// (spec/patients § generating a code, DIS-02 `.57`) — the caller owns the check
+// because it is asynchronous and store-scoped, and runs it on the save attempt.
+// It carries a MESSAGE, so it shows the moment the answer lands rather than
+// waiting to be armed. Save stays enabled either way; the block happens on the
+// attempt.
 export const patientFieldErrors = (
   draft: PatientDraft,
   codeTaken = false

@@ -48,7 +48,7 @@ import {
   toUpdateInput,
   type PatientDraft,
 } from './patientEdit';
-import { createCodeTakenProbe } from '../patientCode';
+import { createCodeTakenCheck } from '../patientCode';
 import { PatientDetailsForm } from './PatientDetailsForm';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -118,17 +118,18 @@ const PatientDetailView: Component = () => {
   // Details-tab validation (AC-C3): required errors stay quiet until the user
   // attempts Save, then surface per field and as the summary. Disarmed on every
   // (re)seed — a fresh patient, or the post-save reseed, starts clean.
-  // Duplicate-code check (spec/patients § generating a code). Debounced and
-  // store-scoped; skipped while the code is still the one the patient was loaded
-  // with, so a pre-existing collision doesn't block an unrelated edit.
-  const codeTaken = createCodeTakenProbe({
+  // Duplicate-code check (spec/patients § generating a code). Run on the save
+  // attempt below, store-scoped; skipped while the code is still the one the
+  // patient was loaded with, so a pre-existing collision doesn't block an
+  // unrelated edit.
+  const codeCheck = createCodeTakenCheck({
     storeId: () => params.storeId,
     code: () => edit.code,
     savedCode: () => node()?.code ?? '',
     patientId: () => node()?.id,
   });
   const validation = createFormValidation(() =>
-    patientFieldErrors(edit, codeTaken())
+    patientFieldErrors(edit, codeCheck.taken())
   );
   createEffect(
     on(node, n => {
@@ -244,9 +245,18 @@ const PatientDetailView: Component = () => {
   // Save click: arm validation first, so an invalid form reveals its errors
   // (per field + summary) instead of silently doing nothing; only a valid form
   // opens the confirmation prompt (AC-E1).
-  const attemptSave = () => {
+  //
+  // The duplicate-code check is the one rule that needs the server, so it runs
+  // here rather than in patientFieldErrors — borrowing the `saving` window so the
+  // Save button shows it working and a second click can't start a second check.
+  // A clash leaves the prompt closed and the error on the field (DIS-02 `.57`).
+  const attemptSave = async () => {
     validation.arm();
-    if (!validation.valid()) return;
+    if (!validation.valid() || saving()) return;
+    setSaving(true);
+    const taken = await codeCheck.check();
+    setSaving(false);
+    if (taken) return;
     setConfirmSaveOpen(true);
   };
 
@@ -388,7 +398,7 @@ const PatientDetailView: Component = () => {
                           data-testid="save-button"
                           loading={saving()}
                           disabled={!isDirty() || saving()}
-                          onClick={attemptSave}
+                          onClick={() => void attemptSave()}
                         >
                           {t('button.save')}
                         </Button>
