@@ -49,6 +49,7 @@ Rows = every screen/piece in scope; columns = the eleven dimensions.
 - **`padded`:** the page host passes it (its `Page` is `fillBody` for the table tabs, so the body has no edge padding); the modal host doesn't (the dialog body already pads).
 - **Shared:** `EMPTY_FIELD_VALUE` is now exported from `domain/customFields/index.ts` — it is the app-wide empty marker for a read-only field, so the Details tab and the Custom fields tab render an unset field identically.
 - **Reference copied:** `items/detail/ItemDetailView.tsx` (General/Store tabs) and `domain/customFields/CustomFieldsView.tsx`.
+- **Measure (operator's call, 2026-07-30):** the form sits in the **narrow** measure (`size="prose"`, 40rem), not the two-column-form one (58rem). At 58rem each column is ~424px against ~150px of ink, so the two clumps sat 456px apart and read as left-hugging under the centred record-name header. At 40rem the columns are ~280px — fields still left-aligned in their column, block reads centred. `FormColumn minWidth="15rem"` comes with it: `minWidth` is both the wrap threshold and the shared flex basis, so the 22rem default would wrap two columns into one stack at this measure. **Follow-up option (library, unfiled):** a named narrow-form measure (`size` value + token) would say this in the API instead of borrowing `prose`; alternatively `FormColumns` could gain a "cap the columns and centre the row" mode, which would centre the pair without narrowing the full-width group below it.
 
 ### R2 — The filter bar rendered in the page header · **applied**
 
@@ -119,6 +120,14 @@ The migration does not change shared library code. Each of these needs its own s
 - `check-reactivity` on the working diff — one REAL finding (RX, fixed above); re-reviewed after the fix. The `filters={<FilterBar …/>}` JSX prop is resolved once by `DataTable`'s `children()`, and the `pagination` object is spread live by design (`DataTable.tsx:1197-1203`), so both stay reactive.
 - No inline `style`, colour literal, px, or CSS module anywhere in the vertical; no test id changed.
 
+## Changes the visual pass produced (signed off, applied)
+
+Two operator calls came out of eyeballing the migrated detail form. Both reach beyond names, so they are recorded here and in their own homes rather than buried in the vertical.
+
+- **The form's measure** — see R1 › Measure above (`size="prose"` + `minWidth="15rem"`). Names-local.
+- **Field labels are semibold app-wide** (Carl, 2026-07-30). `--field-label-font-weight`: `--weight-medium` (500) → **`--weight-semibold`** (600). Prompted by this form: a read-only labelled value's label sat one weight step above its own value, same size and colour, with no input box to mark it as a label. Because the shared token is the point of D67 parity, raising it fixes read-only and editable together. **Four labels had inlined the same values and would have been left behind at 500**, so they now reference the token: `Select` / `Combobox` / `MultiSelect` (full `--field-label-*` set — their comments already claimed parity with `TextField`), plus the weight alone on `Checkbox`, `ToggleSwitch`, the `RadioGroup` legend and the inline `FieldRow`. Deliberately unchanged: an individual radio option's text (body text — the legend is the group's label), a `CheckboxButton` pill, and `FilterBar` trigger/chip text (chip chrome). This supersedes the 2026-07-22 "choice controls are a different pattern" note **for weight only** — they still own their size and colour. Recorded in [`DESIGN_STANDARDS.md`](../../ui/docs/DESIGN_STANDARDS.md) and [`conventions.md`](../../../spec/ui-standards/conventions.md) (which stated "medium-weight" and now states semibold).
+  - **Verified computed** on the running app (:3008, `admin`): the supplier Details tab's labels 14px/**600** over 14px/400 values; `TextField`/`TextArea`/`DateField` 14px/600 (small variant 13px/600); `Select`/`Combobox`/`MultiSelect` 14px/600; `Checkbox`, `ToggleSwitch`, `RadioGroup` legend, `FieldRow` all 14px/600.
+
 ## The visual pass — yours to complete
 
 Static checks cannot catch "compiles clean but looks wrong". Open each screen in **light and dark**:
@@ -137,6 +146,7 @@ Worth looking at specifically, since these are what changed:
 1. **Column widths + resizing** — every table now takes width presets. `code` is capped at 7rem (drag it); the PO number/target-months/lines/status widths are first-cut call-site values, tune them at the call site if they read wrong.
 2. **The PO comment column** is now an icon + popover rather than text — check it reads as intended in that table.
 3. **Field rhythm in the detail form** — labels are now **above** values, the two column groups wrap to one stack when squeezed (narrow the window: left column first), and the address pair should sit two-up then stack.
+   - The form is at the **40rem** measure with `minWidth="15rem"` columns (see R1 › Measure). Worth checking both hosts: on the supplier page the block should read centred under the record name; in the customer modal (52rem `widthRem`) it now leaves ~4rem of dialog either side — if that reads as too inset, narrowing the dialog to ~46rem is the one-line follow-up.
 4. **The dash** on empty fields, and Yes/No on manufacturer / donor / on hold.
 5. **Filter chips** — the search chip should be there on arrival with no menu step, shrink-to-content, in the table's toolbar rather than the app bar.
 6. **Pagination** now sits in the table's own footer bar, not a page band.

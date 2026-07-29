@@ -53,7 +53,14 @@ export const NameDetailForm = (props: {
   const isSupplier = () => props.role === 'supplier';
 
   return (
-    <ContentContainer size="form" padded={props.padded}>
+    // The NARROW measure, not the two-column-form one. `--measure-form` (58rem)
+    // is sized for columns of INPUTS; these are short labelled values, so at
+    // that width each column carried ~270px of dead space and the two ink
+    // blocks sat 456px apart — reading as two left-hugging clumps under a
+    // centred heading rather than one centred block. At 40rem the columns are
+    // ~280px, so the fields stay left-aligned in their column and the block
+    // reads centred (Carl 2026-07-30).
+    <ContentContainer size="prose" padded={props.padded}>
       {/* The form's block rhythm: header · columns · full-width group. */}
       <Stack gap="lg">
         <RecordNameHeader
@@ -67,7 +74,12 @@ export const NameDetailForm = (props: {
             directly; reading column 1 then column 2 preserves the spec's field
             order when the columns wrap to one. */}
         <FormColumns>
-          <FormColumn>
+          {/* `minWidth` is the wrap threshold AND the shared flex basis, so it
+              has to come down with the measure: the 22rem default wouldn't fit
+              two columns in 40rem and they'd wrap to one stack immediately.
+              15rem holds the longest label ("Address line 1") comfortably and
+              still collapses to a single stack on a phone. */}
+          <FormColumn minWidth="15rem">
             <Stack gap="md">
               <LabelledValue variant="field" label={t('name.column.code')}>
                 {fieldValue(n().code)}
@@ -106,7 +118,7 @@ export const NameDetailForm = (props: {
             </Stack>
           </FormColumn>
 
-          <FormColumn>
+          <FormColumn minWidth="15rem">
             <Stack gap="md">
               <LabelledValue variant="field" label={t('name.detail.created')}>
                 {n().createdDatetime
