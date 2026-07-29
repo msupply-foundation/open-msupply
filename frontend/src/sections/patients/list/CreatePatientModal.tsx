@@ -548,7 +548,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   onRowClick={openMatch}
                   showFullScreen={false}
                   emptyMessage={t('messages.no-matching-patients')}
-                  showFullScreen={false}
                 />
               </Show>
             </Show>
