@@ -1,4 +1,4 @@
-import type { GraphqlResult } from '../../../api/graphql';
+import type { GraphqlResult } from '@/api/graphql';
 import type { DeleteLocationResult } from './locations.generated';
 
 // Pure logic behind the delete flow (spec/locations S3, FL4). There is no
