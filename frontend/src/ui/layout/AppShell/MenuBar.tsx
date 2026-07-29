@@ -66,6 +66,7 @@ const TopLeaf = (props: {
       type="button"
       class={styles.navButton}
       data-selected={props.selected ? 'true' : undefined}
+      data-testid={`nav-${props.item.id}`}
       title={t(props.item.labelKey)}
       onClick={props.onSelect}
     >
@@ -265,12 +266,15 @@ export const MenuBar = (props: MenuBarProps) => {
         <nav
           class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
+          data-testid="drawer"
+          aria-expanded={!props.nav.railCollapsed()}
           aria-label={t('label.menu')}
         >
           <div class={styles.logoArea}>
             <button
               type="button"
               class={styles.logoButton}
+              data-testid="drawer-toggle"
               onClick={props.nav.toggleRail}
               aria-label={
                 props.nav.railCollapsed()
