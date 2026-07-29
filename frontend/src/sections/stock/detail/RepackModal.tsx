@@ -431,6 +431,7 @@ const RepackContent = (props: {
                 <FieldRow label={t('label.new-location')}>
                   <LocationSelect
                     label={t('label.new-location')}
+                    inputTestId="repack-new-location"
                     hideLabel
                     locations={locations()}
                     loading={allLocations.loading}

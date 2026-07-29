@@ -20,6 +20,8 @@ export interface VvmStatusSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
 }
 
 /*
@@ -43,6 +45,7 @@ export const VvmStatusSelect = (props: VvmStatusSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    inputTestId={props.inputTestId}
     onChange={s => props.onChange(s)}
   />
 );
