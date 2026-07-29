@@ -121,6 +121,7 @@ export const DisplaySettings: React.FC = () => {
         onToggle={onToggleCustomTheme}
         title={t('heading.custom-theme')}
         visible={userHasPermission(UserPermission.ServerAdmin)}
+        testId="custom-theme"
       />
       <SettingTextArea
         defaultValue={customLogoValue}
@@ -129,6 +130,7 @@ export const DisplaySettings: React.FC = () => {
         infoText={t('heading.custom-logo-info')}
         title={t('heading.custom-logo')}
         visible={userHasPermission(UserPermission.ServerAdmin)}
+        testId="custom-logo"
       />
     </>
   );

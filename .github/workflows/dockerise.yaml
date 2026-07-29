@@ -11,6 +11,11 @@
 #   - no dev images, no plugin tests
 #
 # Images are pushed to: msupplyfoundation/omsupply:<tag>-<db>-<arch>[-dev]
+#
+# Floating tags are also repointed (amd64 images only; bare tag = sqlite flavour):
+#   release tag      -> latest, latest-sqlite, latest-postgres
+#   develop nightly  -> latest-develop, latest-develop-sqlite, latest-develop-postgres
+#   RC nightly       -> latest-rc, latest-rc-sqlite, latest-rc-postgres
 
 name: Dockerise
 
@@ -25,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       is_release: ${{ steps.check.outputs.is_release }}
+      floating_prefix: ${{ steps.check.outputs.floating_prefix }}
     steps:
       - name: Determine if release tag
         id: check
@@ -32,9 +38,19 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is_release=true" >> $GITHUB_OUTPUT
-            echo "Tag '$TAG' is a release tag"
+            echo "floating_prefix=latest" >> $GITHUB_OUTPUT
+            echo "Tag '$TAG' is a release tag (floating: latest)"
           else
             echo "is_release=false" >> $GITHUB_OUTPUT
+            # Nightly tags from create-nightly-tags.sh: v<version>-<develop|RC>-MMDDHHMM.
+            # Anything else (e.g. manual test tags) gets no floating tag.
+            if [[ "$TAG" =~ ^v[0-9][0-9.]*-develop-[0-9]{8}$ ]]; then
+              echo "floating_prefix=latest-develop" >> $GITHUB_OUTPUT
+            elif [[ "$TAG" =~ ^v[0-9][0-9.]*-RC-[0-9]{8}$ ]]; then
+              echo "floating_prefix=latest-rc" >> $GITHUB_OUTPUT
+            else
+              echo "floating_prefix=" >> $GITHUB_OUTPUT
+            fi
             echo "Tag '$TAG' is NOT a release tag (skipping arm64 and dev builds)"
           fi
 
@@ -257,6 +273,18 @@ jobs:
             echo "target_dev=postgres-dev" >> $GITHUB_OUTPUT
           fi
 
+          # Floating tags are repointed from amd64 images only (the release
+          # matrix includes arm64); the bare tag is the sqlite flavour.
+          TAGS="msupplyfoundation/omsupply:${VERSION}-${{ matrix.db }}-${{ matrix.arch }}"
+          FLOATING="${{ needs.check-tag.outputs.floating_prefix }}"
+          if [ -n "$FLOATING" ] && [ "${{ matrix.arch }}" = "amd64" ]; then
+            TAGS="$TAGS,msupplyfoundation/omsupply:${FLOATING}-${{ matrix.db }}"
+            if [ "${{ matrix.db }}" = "sqlite" ]; then
+              TAGS="$TAGS,msupplyfoundation/omsupply:${FLOATING}"
+            fi
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v7
         with:
@@ -264,8 +292,7 @@ jobs:
           target: ${{ steps.vars.outputs.target }}
           platforms: linux/${{ matrix.arch }}
           push: true
-          tags: |
-            msupplyfoundation/omsupply:${{ env.VERSION }}-${{ matrix.db }}-${{ matrix.arch }}
+          tags: ${{ steps.vars.outputs.tags }}
 
       - name: Build and Push Docker Image Dev
         if: matrix.arch == 'amd64' && needs.check-tag.outputs.is_release == 'true'

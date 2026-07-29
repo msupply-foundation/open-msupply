@@ -370,15 +370,12 @@ pub async fn download_file(
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let service = StaticFileService::new(&settings.server.base_dir)?;
-    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
-    let file_description = service
-        .find_file(&id, static_file_category.clone())?
+    let (named_file, file_description) = service
+        .open_sync_file(table_name, record_id, &id)?
         .ok_or(SyncParsedErrorV6::OtherServerError(
             "File not found".to_string(),
         ))?;
 
-    let named_file =
-        actix_files::NamedFile::open(&file_description.path).map_err(|e| Error::from_error(&e))?;
     Ok((named_file, file_description))
 }
 
