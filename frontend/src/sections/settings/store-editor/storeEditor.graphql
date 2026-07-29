@@ -1,0 +1,48 @@
+# The store editor's facility record (spec/settings/contract.md § The store
+# editor). There is no singular name query — the record is fetched by filtering
+# `names` on the store's own name id. `properties` is a JSON STRING keyed by
+# property key; the server fabricates "{}" for a facility whose properties were
+# never set, so "never set" and "explicitly empty" are indistinguishable here.
+query storeFacility($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        id
+        name
+        code
+        properties
+      }
+    }
+  }
+}
+
+# Wholesale write: `properties` replaces the name row's whole document, and an
+# omitted/null value ERASES the stored set — so the client always sends the
+# complete document (contract § The store editor, wire traps). Success is the
+# NameNode itself; the typed error's only reachable member is RecordNotFound. A
+# permission failure never reaches this union — it arrives as a top-level
+# Forbidden GraphQL error, which the caller opts into reading
+# (returnGraphqlErrors) so the editor can keep the draft (D71).
+mutation updateNameProperties(
+  $storeId: String!
+  $id: String!
+  $properties: String!
+) {
+  updateNameProperties(
+    storeId: $storeId
+    input: { id: $id, properties: $properties }
+  ) {
+    ... on NameNode {
+      __typename
+      id
+      properties
+    }
+    ... on UpdateNamePropertiesError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
