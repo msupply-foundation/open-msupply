@@ -93,7 +93,6 @@ const Body: Component<{ onClose: () => void }> = props => {
         label={t('label.supplier-name')}
         placeholder={t('placeholder.search-by-name')}
         disabled={creating()}
-        inputTestId="supplier-search-input"
         clearable={false}
         onSelect={supplier => {
           if (supplier) void create(supplier.id);
