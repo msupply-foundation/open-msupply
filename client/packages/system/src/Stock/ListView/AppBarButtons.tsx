@@ -43,6 +43,7 @@ export const AppBarButtonsComponent = ({
           Icon={<PlusCircleIcon />}
           label={t('button.new-stock')}
           onClick={onOpen}
+          data-testid="new-stock-button"
         />
         {!simplifiedTabletView && (
           <ExportSelector

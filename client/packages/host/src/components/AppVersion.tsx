@@ -15,7 +15,11 @@ interface AppVersionProps {
   testId?: string;
 }
 
-export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style, testId }) => {
+export const AppVersion: FC<AppVersionProps> = ({
+  SiteInfo,
+  style,
+  testId = 'app-version',
+}) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 

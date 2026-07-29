@@ -68,6 +68,7 @@ export const VvmStatusLogModal = ({
       title={
         isCreating ? t('label.new-vvm-status') : t('label.edit-vvm-status')
       }
+      testId="vvm-status-modal"
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="ok" onClick={handleConfirm} disabled={isCreating && !selectedStatus} />}
     >
@@ -79,6 +80,7 @@ export const VvmStatusLogModal = ({
         }}
       >
         <InputWithLabelRow
+          testId="vvm-status-select"
           label={t('label.vvm-status')}
           Input={
             <VVMStatusSearchInput
@@ -93,6 +95,7 @@ export const VvmStatusLogModal = ({
           }}
         />
         <InputWithLabelRow
+          testId="vvm-comment"
           label={t('label.comment')}
           Input={
             <TextArea
