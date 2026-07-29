@@ -35,6 +35,8 @@ export interface StatsPanelProps {
   icon?: JSX.Element;
   /** The count query's state — each message travels with its status (see `StatsPanelState`). */
   state: StatsPanelState;
+  /** e2e testid — the panel's published id (e2e/TESTIDS.md § Dashboard). */
+  testId?: string;
   /** The Statistic children, shown when ready. */
   children?: JSX.Element;
 }
@@ -52,6 +54,7 @@ export const StatsPanel = (props: StatsPanelProps) => (
   <section
     class={styles.panel}
     aria-busy={props.state.status === 'loading' || undefined}
+    data-testid={props.testId}
   >
     <SectionTitle
       title={props.title}

@@ -110,7 +110,13 @@ export const fetchNameById = async (
 };
 
 export const namePageFetcher =
-  (storeId: string, role: NameRole, pageSize: number, storeBacked = false) =>
+  (
+    storeId: string,
+    role: NameRole,
+    pageSize: number,
+    storeBacked = false,
+    excludeId?: string
+  ) =>
   async (
     search: string,
     offset: number
@@ -126,6 +132,9 @@ export const namePageFetcher =
         // store-backed ones keeps that rejection unreachable from the UI
         // (spec/internal-orders AC-C3).
         ...(storeBacked ? { isStore: true } : {}),
+        // Withhold one party — the internal-order destination-customer picker
+        // excludes the chosen supplier (spec/internal-orders › header fields).
+        ...(excludeId ? { id: { notEqualTo: excludeId } } : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
       },
       // Sort by name ascending — stable across pages so infinite scroll doesn't

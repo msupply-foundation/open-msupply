@@ -1,7 +1,6 @@
-import { Show, createSignal, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { A } from '@solidjs/router';
 import { t } from '../../../intl';
-import { Alert } from '../../../ui/elements/feedback/Alert';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import {
@@ -10,7 +9,8 @@ import {
   localTodayIso,
   utcToLocalDay,
 } from '../../../ui/elements/inputs/dateTimeConvert';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
@@ -31,6 +31,14 @@ export interface InboundShipmentDetailToolbarProps {
   ) => Promise<{ ok: boolean; message?: string }>;
 }
 
+/*
+ * The detail header's field cluster (spec S3 § header fields), rendered as the
+ * children of the page's <HeaderToolbar>: each field carries its own label
+ * above a small control, and HeaderToolbar's FormRow gives them equal shares
+ * that wrap as a unit (ui/docs/PAGES.md § header field cluster). The kind
+ * banner is NOT here — it's the cluster's trailing compact Alert, passed to
+ * <HeaderToolbar alert={…}> by the view.
+ */
 export const InboundShipmentDetailToolbar: Component<
   InboundShipmentDetailToolbarProps
 > = props => {
@@ -39,7 +47,9 @@ export const InboundShipmentDetailToolbar: Component<
   // The received date is enabled while Received + backdating-on, yet the server
   // can still refuse the save (moving the date forward, or beyond the store's
   // max-days window). Those come back as untyped rejections; surface the
-  // verdict inline beneath the field (spec S7 / AC-B), request preserved.
+  // verdict on the field itself (spec S7 / AC-B), request preserved. It's the
+  // DateField's own `error` rather than a sibling Alert so the cluster's row
+  // stays a row of fields.
   const [receivedError, setReceivedError] = createSignal<string>();
 
   // Supplier is editable only on a manual shipment that isn't Verified — never
@@ -72,97 +82,99 @@ export const InboundShipmentDetailToolbar: Component<
 
   return (
     <>
-      {/* Kind banner: manual shipments don't auto-advance; a transfer/automatic
-          one is driven by the sending side. */}
-      <Alert severity="info">
-        {kind() === 'manual'
-          ? t('messages.inbound-manual-info')
-          : t('messages.inbound-automatic-info')}
-      </Alert>
+      <NameSearch
+        label={t('label.supplier-name')}
+        size="small"
+        storeId={props.storeId}
+        role="supplier"
+        selected={selectedSupplier()}
+        disabled={supplierLocked()}
+        onSelect={name => name && props.onSaveField({ otherPartyId: name.id })}
+      />
 
-      <FieldRow label={t('label.supplier-name')}>
-        <NameSearch
-          label={t('label.supplier-name')}
-          hideLabel
-          storeId={props.storeId}
-          role="supplier"
-          selected={selectedSupplier()}
-          disabled={supplierLocked()}
-          onSelect={name =>
-            name && props.onSaveField({ otherPartyId: name.id })
-          }
-        />
-      </FieldRow>
+      <TextArea
+        label={t('label.reference')}
+        size="small"
+        rows={1}
+        width="full"
+        data-testid="supplier-reference-field"
+        value={props.edit.state.theirReference}
+        disabled={props.disabled}
+        onInput={e =>
+          props.edit.setField('theirReference', e.currentTarget.value)
+        }
+        onBlur={() => props.edit.flush()}
+      />
 
-      <FieldRow label={t('label.reference')}>
-        <TextArea
-          label={t('label.reference')}
-          hideLabel
-          rows={1}
-          width="full"
-          data-testid="supplier-reference-field"
-          value={props.edit.state.theirReference}
-          disabled={props.disabled}
-          onInput={e =>
-            props.edit.setField('theirReference', e.currentTarget.value)
-          }
-          onBlur={() => props.edit.flush()}
-        />
-      </FieldRow>
-
-      <FieldRow label={t('label.received')}>
-        <DateField
-          label={t('label.received')}
-          hideLabel
-          value={utcToLocalDay(props.node.receivedDatetime)}
-          disabled={!receivedDateEditable()}
-          helperText={receivedDateReason()}
-          // Backdating only ever moves the date earlier — cap at the current
-          // received date. (Server also bounds by the max-days window.)
-          max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
-          onChange={value => {
-            const picked = isoDateToDate(value);
-            if (!picked) return;
-            setReceivedError(undefined);
-            // Offset-preserving so the server's backdating log records the
-            // picked local day (input is DateTime<FixedOffset>; #456). Today
-            // → the current moment; a backdated day → its local start (matches
-            // the current app).
-            const received =
-              value === localTodayIso()
-                ? dateToOffsetIso(new Date())
-                : dateToOffsetIso(picked);
-            void props
-              .onSaveField({ receivedDatetime: received })
-              .then(r => setReceivedError(r.ok ? undefined : r.message));
-          }}
-        />
-      </FieldRow>
-      <Show when={receivedError()}>
-        <Alert severity="error">{receivedError()}</Alert>
-      </Show>
+      <DateField
+        label={t('label.received')}
+        size="small"
+        width="full"
+        value={utcToLocalDay(props.node.receivedDatetime)}
+        disabled={!receivedDateEditable()}
+        // The blocking reason is a TOOLTIP on the label, per spec S3 ("disabled
+        // state carries an explanatory tooltip for each blocking reason") — not
+        // permanent helper text, which wraps to three lines in this dense row
+        // and drags the whole strip taller than the fields it explains.
+        labelInfo={
+          <Show when={receivedDateReason()}>
+            {reason => <InfoTooltip text={reason()} />}
+          </Show>
+        }
+        error={receivedError()}
+        // Backdating only ever moves the date earlier — cap at the current
+        // received date. (Server also bounds by the max-days window.)
+        max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
+        onChange={value => {
+          const picked = isoDateToDate(value);
+          if (!picked) return;
+          setReceivedError(undefined);
+          // Offset-preserving so the server's backdating log records the
+          // picked local day (input is DateTime<FixedOffset>; #456). Today
+          // → the current moment; a backdated day → its local start (matches
+          // the current app).
+          const received =
+            value === localTodayIso()
+              ? dateToOffsetIso(new Date())
+              : dateToOffsetIso(picked);
+          void props
+            .onSaveField({ receivedDatetime: received })
+            .then(r => setReceivedError(r.ok ? undefined : r.message));
+        }}
+      />
 
       {/* PO-linked: PO number (links to the order) + read-only reference (spec
-          S3 header fields). The link targets the purchase-order detail route
-          exactly as the side panel's Related-documents link does — a DEAD link
-          for now: this app mounts only the inbound-shipment vertical (App.tsx),
-          so /replenishment/purchase-order has no component yet. It resolves the
+          S3 header fields). Never-editable facts, so they're read-only
+          LabelledValues sitting flush among the inputs (variant="field") —
+          read-only reads from the absence of a box, not a greyed-out one. The
+          link targets the purchase-order detail route exactly as the side
+          panel's Related-documents link does — a DEAD link for now: this app
+          mounts only the inbound-shipment vertical (App.tsx), so
+          /replenishment/purchase-order has no component yet. It resolves the
           day someone implements the purchase-order vertical; kept in step with
           the side panel so both light up together. */}
       <Show when={props.node.purchaseOrder}>
         {po => (
           <>
-            <FieldRow label={t('label.purchase-order')}>
+            <LabelledValue
+              label={t('label.purchase-order')}
+              variant="field"
+              size="small"
+            >
               <A
                 href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
               >
                 #{po().number}
               </A>
-            </FieldRow>
+            </LabelledValue>
             <Show when={po().reference}>
-              <FieldRow label={t('label.reference')}>
-                <span>{po().reference}</span>
-              </FieldRow>
+              <LabelledValue
+                label={t('label.reference')}
+                variant="field"
+                size="small"
+              >
+                {po().reference}
+              </LabelledValue>
             </Show>
           </>
         )}

@@ -9,15 +9,15 @@ import {
   partitionCustomFields,
 } from './parse';
 
-// PROMINENT custom fields promoted to the detail-view toolbar (spec/ui-standards/
-// custom-fields › the toolbar promotion). Auto-saves like the other toolbar
-// fields: a debounced buffer flushes one patch per settled burst of edits
-// (createDebouncedEdit), never a Save button. Absent when the scope configures
-// no prominent fields. `recordId` keys the buffer so it re-seeds if the toolbar
-// is reused across records without a remount. When `disabled` (the record is
-// read-only, e.g. a Verified shipment) the fields STAY in the toolbar — a
-// prominent field's home is the primary surface — but render disabled; the
-// disabled controls emit no changes, so no save fires.
+// PROMINENT custom fields promoted to the detail-view toolbar
+// (spec/ui-standards/ custom-fields › the toolbar promotion). Auto-saves like
+// the other toolbar fields: a debounced buffer flushes one patch per settled
+// burst of edits (createDebouncedEdit), never a Save button. Absent when the
+// scope configures no prominent fields. `recordId` keys the buffer so it
+// re-seeds if the toolbar is reused across records without a remount. When
+// `disabled` (the record is read-only, e.g. a Verified shipment) the fields
+// STAY in the toolbar — a prominent field's home is the primary surface — but
+// render disabled; the disabled controls emit no changes, so no save fires.
 export const CustomFieldsToolbar = (props: {
   scope: string;
   recordId: string;

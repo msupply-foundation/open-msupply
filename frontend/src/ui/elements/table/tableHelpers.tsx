@@ -1,5 +1,5 @@
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
-import { localisedDate } from '../../../intl/formatDateTime';
+import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
 import { CheckIcon } from '../../icons';
@@ -116,6 +116,20 @@ export const getDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     formatDateCell(info.getValue<string | Date | null | undefined>()),
+});
+
+// Time-of-day: the same instant as its sibling Date column, rendered as the
+// local time only. RIGHT-aligned (a fixed-width clock reads as a number, and
+// the Date/Time pair then sits flush), blank when there's no value. The Date +
+// Time pair is the house shape for any log / ledger / history table (activity
+// logs, the stock ledger, repack + VVM history), which is why this is a preset
+// rather than a `cell` hand-written per table.
+export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'right', ...meta },
+  cell: info => {
+    const value = info.getValue<string | Date | null | undefined>();
+    return value ? localisedTime(value) : '';
+  },
 });
 
 // Expiry dates: like getDateCell, but an almost-expired date (≤3 months to
@@ -235,6 +249,8 @@ const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
       return getCurrencyCell<T>(meta);
     case 'date':
       return getDateCell<T>(meta);
+    case 'time':
+      return getTimeCell<T>(meta);
     case 'expiry':
       return getExpiryDateCell<T>(meta);
     case 'comment':
@@ -256,9 +272,13 @@ export const getCellDefinition = <T,>(
 ): CellFragment<T> => {
   const spec: CellSpec = CELL_DEF[key];
   const width = KIND_WIDTH[spec.kind];
+  // An omitted per-key maxSize inherits the kind's cap; an explicit `null`
+  // drops it (see CellSpec) — a capped column can't be dragged wider.
+  const maxSize =
+    spec.maxSize === null ? undefined : (spec.maxSize ?? width.maxSize);
   return {
     ...kindFragment<T>(spec.kind, meta),
-    ...sizing(spec.size ?? width.size, spec.maxSize ?? width.maxSize),
+    ...sizing(spec.size ?? width.size, maxSize),
   };
 };
 

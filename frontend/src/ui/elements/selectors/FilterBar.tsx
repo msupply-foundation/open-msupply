@@ -1,4 +1,4 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createContext, createSignal, useContext } from 'solid-js';
 import type { JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import {
@@ -11,6 +11,10 @@ import {
 } from '../../icons';
 import { t } from '../../../intl';
 import { createDebounced } from '../../utils/createDebounced';
+import {
+  createFocusTargets,
+  type FocusTarget,
+} from '../../utils/createFocusTarget';
 import { NumberField } from '../inputs/NumberField';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { DateRangeField } from '../inputs/DateRangeField';
@@ -62,6 +66,16 @@ export type Filter<F> = {
     /** `filter-input-<key>` (e2e/TESTIDS.md) — pass to the control so the id
      *  lands on the actual input, where the deterministic suites expect it. */
     testId: string;
+    /**
+     * This chip's focus destination (kdd/focus-targets) — where FilterBar
+     * hands the caret when this filter is just added.
+     *
+     * ONLY for a render composing a control from outside FilterBar (a domain
+     * picker, the labelled Checkbox): the Filter* controls below claim the
+     * chip's target from context themselves, so a render made of those writes
+     * no focus wiring at all.
+     */
+    focusTarget: FocusTarget;
   }) => JSX.Element;
 };
 
@@ -143,13 +157,15 @@ interface GroupOps<G extends object> {
     setFilter: (next: G) => void;
     setPartialFilter: (patch: Partial<G>) => void;
     testId: string;
+    focusTarget: FocusTarget;
   };
 }
 
 const groupOps = <G extends object>(
   filters: () => Filter<G>[],
   filter: () => G,
-  onChange: (g: G) => void
+  onChange: (g: G) => void,
+  focusTarget: (key: string) => FocusTarget
 ): GroupOps<G> => {
   const isActive = (f: Filter<G>) => f.key in filter();
   const without = (key: keyof G & string): G => {
@@ -174,6 +190,7 @@ const groupOps = <G extends object>(
       setFilter: onChange,
       setPartialFilter: patch => onChange({ ...filter(), ...patch }),
       testId: `filter-input-${f.key}`,
+      focusTarget: focusTarget(f.key),
     }),
   };
 };
@@ -203,12 +220,24 @@ export const FilterBar = <
 >(
   props: FilterBarProps<F, C>
 ) => {
+  // Every chip's editor, addressed by its FILTER KEY — the same key the filter
+  // object is keyed on, never anything DOM-facing (kdd/focus-targets). One
+  // registry serves the main and extra groups alike; their keys can't collide,
+  // since a chip is shown iff its key is present on its own group's filter.
+  const chipEditors = createFocusTargets();
+  const chipEditor = (key: string): FocusTarget => ({
+    ref: chipEditors.ref(key),
+    focus: () => chipEditors.focus(key),
+    cancel: chipEditors.cancel,
+  });
+
   // Read props live inside accessors so a chip's control tracks its own value
   // and <For> reuses chip rows across edits (kdd/state-management: no remounts).
   const main = groupOps<F>(
     () => props.filters,
     () => props.filter,
-    props.onChange
+    props.onChange,
+    chipEditor
   );
   // Extra-group ops bound to a snapshot of props.extra — fine for the menu /
   // reset / active-count, which recompute reactively; chip controls bind their
@@ -219,25 +248,22 @@ export const FilterBar = <
       ? groupOps<C>(
           () => e.filters,
           () => e.filter,
-          e.onChange
+          e.onChange,
+          chipEditor
         )
       : undefined;
   };
 
-  let barEl: HTMLDivElement | undefined;
-
   // Hand a just-added chip's editor the next action (Carl, 2026-07-24): a
-  // text/number input takes typing focus; a button editor (enum, date range)
-  // opens its chooser — the chip instantiates empty, so choosing IS the next
-  // step. Every editor stamps `filter-input-<key>` on its focusable. Returns
-  // whether it landed (FiltersMenu then suppresses its own close-time focus
-  // restoration). Keyed by string so it serves the main and extra groups alike.
-  const focusChipEditor = (key: string): boolean => {
-    const el = barEl?.querySelector<HTMLElement>(
-      `[data-testid="filter-input-${key}"]`
-    );
-    if (!el) return false;
+  // text/number/date input takes typing focus; a button editor (enum, date
+  // range) opens its chooser — the chip instantiates empty, so choosing IS the
+  // next step.
+  const handOffToChip = (key: string) => {
+    const el = chipEditors.get(key);
     if (el instanceof HTMLButtonElement) {
+      // Open synchronously, not via the armed request: the chooser takes focus
+      // as it opens, and a deferred focus() would then yank it back out to the
+      // trigger a frame later.
       el.focus();
       // A Kobalte menu trigger opens on POINTERDOWN (mouse), not on the
       // click event — a synthetic el.click() alone does nothing to it. Our
@@ -251,10 +277,11 @@ export const FilterBar = <
         })
       );
       el.click();
-    } else {
-      el.focus();
+      return;
     }
-    return true;
+    // Typing target — armed, so it also lands on a chip whose editor mounts
+    // late, and a key with no editor at all simply never lands.
+    chipEditors.focus(key);
   };
 
   // Both groups' addable filters, type-erased into one menu list.
@@ -278,12 +305,16 @@ export const FilterBar = <
   };
 
   return (
-    <div class={styles.bar} ref={barEl}>
-      <FiltersMenu available={menuItems()} focusChip={focusChipEditor} />
+    <div class={styles.bar}>
+      <FiltersMenu available={menuItems()} focusChip={handOffToChip} />
 
       <For each={main.active()}>
         {f => (
-          <FilterChip label={f.label()} onRemove={() => main.remove(f)}>
+          <FilterChip
+            label={f.label()}
+            onRemove={() => main.remove(f)}
+            focusTarget={chipEditor(f.key)}
+          >
             {f.render(main.renderProps(f))}
           </FilterChip>
         )}
@@ -295,12 +326,17 @@ export const FilterBar = <
           const ex = groupOps<C>(
             () => extra().filters,
             () => extra().filter,
-            extra().onChange
+            extra().onChange,
+            chipEditor
           );
           return (
             <For each={ex.active()}>
               {f => (
-                <FilterChip label={f.label()} onRemove={() => ex.remove(f)}>
+                <FilterChip
+                  label={f.label()}
+                  onRemove={() => ex.remove(f)}
+                  focusTarget={chipEditor(f.key)}
+                >
                   {f.render(ex.renderProps(f))}
                 </FilterChip>
               )}
@@ -320,15 +356,53 @@ export const FilterBar = <
   );
 };
 
+/*
+ * The chip's focus destination, offered to whatever control renders inside it
+ * (kdd/focus-targets). The controls below claim it themselves, so a filter
+ * DEFINITION composing them writes no focus wiring at all and can't forget to
+ * — this is the one thing every chip needs and nothing about it varies per
+ * field. A definition composing a control from OUTSIDE this file (a domain
+ * picker, the labelled Checkbox) binds `props.focusTarget` by hand instead:
+ * those components are general, and teaching them about filter chips would be
+ * the wrong coupling.
+ *
+ * Scoped by the chip, not by a key: which chip is a fact of where the control
+ * is rendered, so it's the provider's to know. Both FilterBar groups (main and
+ * extra) render through the same chip chrome, so both are served.
+ */
+const ChipFocusContext = createContext<FocusTarget>();
+
+/** The chip's focus destination — `undefined` outside a chip (a bare control on
+ *  a toolbar), which is why every claim below is optional-chained. */
+const useChipFocus = () => useContext(ChipFocusContext);
+
+/**
+ * Marks a subtree as NOT the chip's editor. A chip holding more than one
+ * focusable (a From/To range) must say which one the caret lands on: the
+ * composite wraps its LATER slots in this, so the first claims the target and
+ * the rest see an empty scope. Without it the last-mounted control would win —
+ * "To", when entry starts at "From".
+ */
+export const NotChipEditor = (props: { children: JSX.Element }) => (
+  <ChipFocusContext.Provider value={undefined}>
+    {props.children}
+  </ChipFocusContext.Provider>
+);
+
 // Chip chrome: label + the field's control + a remove button.
 const FilterChip = (props: {
   label: string;
   onRemove: () => void;
+  focusTarget: FocusTarget;
   children: JSX.Element;
 }) => (
   <div class={styles.chip}>
     <span class={styles.chipLabel}>{props.label}:</span>
-    {props.children}
+    {/* props.children is a getter compiled from the caller's JSX, so the
+        control is CONSTRUCTED here — under the provider — not at the <For>. */}
+    <ChipFocusContext.Provider value={props.focusTarget}>
+      {props.children}
+    </ChipFocusContext.Provider>
     <button
       type="button"
       class={styles.remove}
@@ -345,8 +419,8 @@ const FilterChip = (props: {
 // new chip's editor instead of the menu's default restore-to-trigger.
 const FiltersMenu = (props: {
   available: MenuItem[];
-  /** Focus the just-added chip's editor; true if it landed. */
-  focusChip: (key: string) => boolean;
+  /** Hand the just-added chip's editor the next action. */
+  focusChip: (key: string) => void;
 }) => {
   // Picking a field hands focus to the NEW chip's editor instead of the
   // menu's default close-time restore-to-trigger. The hand-off happens IN
@@ -426,6 +500,7 @@ export const FilterTextInput = (props: {
   /** Delay before onInput fires (default 300ms); 0 = every keystroke (client-side sets). */
   debounceMs?: number;
 }) => {
+  const chipFocus = useChipFocus();
   // undefined = no pending edit → the input shows the committed props.value.
   const [draft, setDraft] = createSignal<string>();
   const shown = () => draft() ?? props.value;
@@ -462,6 +537,7 @@ export const FilterTextInput = (props: {
         class={styles.input}
         type="text"
         data-testid={props.testId}
+        ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         value={shown()}
         placeholder={props.placeholder}
         aria-label={props.label}
@@ -504,6 +580,7 @@ export const FilterNumberInput = (props: {
   /** Upper bound. */
   max?: number;
 }) => {
+  const chipFocus = useChipFocus();
   const commit = createDebounced(
     (value: number | undefined) => props.onChange(value),
     300
@@ -515,6 +592,7 @@ export const FilterNumberInput = (props: {
         hideLabel
         size="small"
         data-testid={props.testId}
+        ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         placeholder={props.placeholder}
         decimalLimit={props.decimalLimit}
         min={props.min}
@@ -544,12 +622,14 @@ export const FilterSelect = <V extends string>(props: {
   /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
   testId?: string;
 }) => {
+  const chipFocus = useChipFocus();
   const current = () => props.options.find(o => o.value === props.value);
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       <DropdownMenu.Trigger
         class={styles.enumTrigger}
         data-testid={props.testId}
+        ref={(el: HTMLButtonElement) => chipFocus?.ref(el)}
         aria-label={props.label}
       >
         <span>{current()?.label ?? ''}</span>
@@ -613,6 +693,7 @@ export const FilterMultiSelect = <V extends string>(props: {
   /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
   testId?: string;
 }) => {
+  const chipFocus = useChipFocus();
   const summary = () => {
     if (props.values.length === 0) return props.placeholder;
     if (props.summary) return props.summary();
@@ -630,6 +711,7 @@ export const FilterMultiSelect = <V extends string>(props: {
       <DropdownMenu.Trigger
         class={styles.enumTrigger}
         data-testid={props.testId}
+        ref={(el: HTMLButtonElement) => chipFocus?.ref(el)}
         aria-label={props.label}
       >
         <span>{summary()}</span>
@@ -675,15 +757,19 @@ export const FilterCheckbox = (props: {
   label: string;
   /** `data-testid` for the input (FilterBar supplies `filter-input-<key>`). */
   testId?: string;
-}) => (
-  <BareCheckbox
-    class={styles.checkboxFilter}
-    checked={props.checked}
-    aria-label={props.label}
-    data-testid={props.testId}
-    onChange={event => props.onChange(event.currentTarget.checked)}
-  />
-);
+}) => {
+  const chipFocus = useChipFocus();
+  return (
+    <BareCheckbox
+      class={styles.checkboxFilter}
+      checked={props.checked}
+      aria-label={props.label}
+      data-testid={props.testId}
+      ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
+      onChange={event => props.onChange(event.currentTarget.checked)}
+    />
+  );
+};
 
 /** Inclusive range bounds on a filter key (shared by `DatetimeFilterInput`
  *  and `DateFilterInput`). */
@@ -710,6 +796,9 @@ export const FilterDateRange = (props: {
    *  `filter-input-<key>`). */
   testId?: string;
 }) => {
+  // The field's ONE focusable is its popover trigger — a button, so a
+  // just-added chip OPENS its calendar rather than merely focusing it.
+  const chipFocus = useChipFocus();
   const toLocal = (bound: string | null | undefined): string | null =>
     props.type === 'dateTime' ? utcToLocalDay(bound) : (bound ?? null);
   const toWire = (
@@ -731,6 +820,7 @@ export const FilterDateRange = (props: {
         hideLabel
         size="small"
         testId={props.testId}
+        focusTarget={chipFocus}
         value={{
           start: toLocal(props.value?.afterOrEqualTo),
           end: toLocal(props.value?.beforeOrEqualTo),
@@ -764,32 +854,37 @@ export const FilterDateTimeRange = (props: {
   fromLabel: string;
   toLabel: string;
   /** `data-testid` stem for the two fields (FilterBar supplies
-   *  `filter-input-<key>`), stamped on each field's wrapper — DateTimeField
-   *  has no testId prop of its own. Rendered as `<testId>-from` / `<testId>-to`. */
+   *  `filter-input-<key>`), stamped on each field's DATE input as
+   *  `<testId>-from` / `<testId>-to`. */
   testId?: string;
-}) => (
-  <span class={styles.bareField}>
-    <span data-testid={props.testId && `${props.testId}-from`}>
+}) => {
+  // Two whole fields in one chip: From takes the chip's target (entry starts
+  // there). The To field simply isn't offered it — it binds a prop, not the
+  // context, so there's nothing to block.
+  const chipFocus = useChipFocus();
+  return (
+    <span class={styles.bareField}>
       <DateTimeField
         label={props.fromLabel}
         hideLabel
         size="small"
+        testId={props.testId && `${props.testId}-from`}
+        focusTarget={chipFocus}
         value={props.value.start}
         onChange={start => props.onChange({ ...props.value, start })}
       />
-    </span>
-    <span aria-hidden="true">–</span>
-    <span data-testid={props.testId && `${props.testId}-to`}>
+      <span aria-hidden="true">–</span>
       <DateTimeField
         label={props.toLabel}
         hideLabel
         size="small"
+        testId={props.testId && `${props.testId}-to`}
         value={props.value.end}
         onChange={end => props.onChange({ ...props.value, end })}
       />
     </span>
-  </span>
-);
+  );
+};
 
 /**
  * A date filter — a native date input behind the calendar icon, sharing the
@@ -803,18 +898,22 @@ export const FilterDate = (props: {
   label: string;
   /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
   testId?: string;
-}) => (
-  <span class={styles.textFilter}>
-    <span class={styles.textFilterIcon}>
-      <CalendarIcon />
+}) => {
+  const chipFocus = useChipFocus();
+  return (
+    <span class={styles.textFilter}>
+      <span class={styles.textFilterIcon}>
+        <CalendarIcon />
+      </span>
+      <input
+        class={styles.input}
+        type="date"
+        data-testid={props.testId}
+        ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
+        value={props.value}
+        aria-label={props.label}
+        onInput={e => props.onInput(e.currentTarget.value)}
+      />
     </span>
-    <input
-      class={styles.input}
-      type="date"
-      data-testid={props.testId}
-      value={props.value}
-      aria-label={props.label}
-      onInput={e => props.onInput(e.currentTarget.value)}
-    />
-  </span>
-);
+  );
+};
