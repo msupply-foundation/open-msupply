@@ -186,13 +186,21 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     const draft = result.data.draftStockOutLines;
     const item = result.data.items.nodes[0];
     setItemInfo(item);
+    // A vaccine under the doses preference opens in the doses lens (.63);
+    // everything else in units. State stays unit-denominated either way —
+    // the lens only shapes the fields' entry/display.
+    setLens(
+      (item?.isVaccine ?? false) && prefs().manageVaccinesInDoses
+        ? 'doses'
+        : 'units'
+    );
     const seeded = seedDraftLines(draft.draftLines, prefs(), new Date());
     setLines(reconcile(seeded, { key: 'id' }));
     setPrescribedQuantity(draft.prescribedQuantity ?? undefined);
     setNote(draft.note ?? '');
     // Re-opening a dispensed line shows its saved state: the issue field
-    // seeds to the existing allocation's total (the lens is units on open).
-    // A fresh item has nothing allocated, so it stays empty (.32).
+    // seeds to the existing allocation's unit total (displayed through the
+    // lens). A fresh item has nothing allocated, so it stays empty (.32).
     const existingUnits = draftIssuedUnits(seeded);
     setIssueUnits(existingUnits > 0 ? round9(existingUnits) : undefined);
     setShortfall(0);
@@ -202,7 +210,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     // field. Armed here rather than gated on a load flag — Issue is inert
     // while the fetch is in flight, and the handle's frame runs after this
     // promise settles and Solid has re-rendered the enabled field.
-    
+
     if (prefs().editPrescribedQuantity) {
       prescribedQuantityFocus.focus();
     } else {
@@ -227,18 +235,30 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const showDosesLens = () =>
     (itemInfo()?.isVaccine ?? false) && prefs().manageVaccinesInDoses;
 
+  // The lens boundary (.63, rules § prescribed quantity): state and the wire
+  // are ALWAYS units — both quantity fields enter and display through the
+  // lens, so flipping it rescales the figures without touching the
+  // allocation. round9 kills the ÷/× float dust before it reaches state or
+  // display.
+  const lensToUnits = (value: number): number =>
+    dosesMode() ? round9(value / dosesPerUnit()) : value;
+  const unitsToLens = (units: number): number =>
+    round9(dosesMode() ? units * dosesPerUnit() : units);
+  const lensValue = (units: number | undefined): number | undefined =>
+    units == null ? undefined : unitsToLens(units);
+
   const allocatedUnits = () => draftIssuedUnits(lines);
   const availableUnits = () => draftAvailableUnits(lines);
 
-  // Distribute FEFO with partial packs (AC-A1); the doses lens converts
-  // before distributing (AC-AL7). Runs DEBOUNCED behind both quantity fields
-  // (the current app's AutoAllocate fields — their #2727/#3532: distributing
-  // per keystroke rewrites the entry under the user's fingers). Once the
-  // entry settles, the issue field snaps to what was ACTUALLY allocated — a
-  // request stock can't cover reads as the allocated 10, not the typed 20
-  // (.62); the shortfall banner carries the full request.
-  const runAllocation = (value: number) => {
-    const requestedUnits = dosesMode() ? value / dosesPerUnit() : value;
+  // Distribute FEFO with partial packs (AC-A1); callers hand in UNITS — the
+  // lens converts at the field boundary (AC-AL7/.63). Runs DEBOUNCED behind
+  // both quantity fields (the current app's AutoAllocate fields — their
+  // #2727/#3532: distributing per keystroke rewrites the entry under the
+  // user's fingers). Once the entry settles, the issue field snaps to what
+  // was ACTUALLY allocated — a request stock can't cover reads as the
+  // allocated 10, not the typed 20 (.62); the shortfall banner carries the
+  // full request.
+  const runAllocation = (requestedUnits: number) => {
     const {
       packsById,
       shortfallUnits,
@@ -260,26 +280,33 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         dosesPerUnit: dosesPerUnit(),
       })
     );
-    const allocated = draftIssuedUnits(lines);
-    setIssueUnits(round9(dosesMode() ? allocated * dosesPerUnit() : allocated));
+    setIssueUnits(round9(draftIssuedUnits(lines)));
     setDirty(true);
   };
   const allocate = createDebounced(runAllocation, 500);
 
-  // The issue field: echo the entry immediately, distribute when it settles.
+  // The issue field: echo the entry immediately (normalised to units),
+  // distribute when it settles.
   const onIssueChange = (value: number | undefined) => {
-    setIssueUnits(value);
-    if (value != null) allocate(value);
-    else allocate.cancel();
+    if (value == null) {
+      setIssueUnits(undefined);
+      allocate.cancel();
+      return;
+    }
+    const units = lensToUnits(value);
+    setIssueUnits(units);
+    allocate(units);
   };
 
   // The prescribed quantity drives allocation of the same quantity, capped
   // by the distribution (.62); the prescribed value itself keeps the full
   // request — it's the demand record (AC-Q1–Q3), not the issue figure.
+  // Entered through the lens, held and saved as units (.63).
   const onPrescribedChange = (value: number | undefined) => {
-    setPrescribedQuantity(value);
+    const units = value == null ? undefined : lensToUnits(value);
+    setPrescribedQuantity(units);
     setDirty(true);
-    if (value != null) allocate(value);
+    if (units != null) allocate(units);
     else allocate.cancel();
   };
 
@@ -612,7 +639,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               class={styles.quantityField}
               data-testid="prescribed-quantity-field"
               ref={prescribedQuantityFocus.ref}
-              value={prescribedQuantity()}
+              value={lensValue(prescribedQuantity())}
               min={0}
               decimalLimit={0}
               onChange={onPrescribedChange}
@@ -623,7 +650,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             class={styles.quantityField}
             data-testid="issue-field"
             ref={issueQuantityFocus.ref}
-            value={issueUnits()}
+            value={lensValue(issueUnits())}
             min={0}
             decimalLimit={0}
             disabled={gridData.loading}
@@ -659,19 +686,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 ? 'warning.cannot-create-placeholder-doses'
                 : 'warning.cannot-create-placeholder-units',
               {
-                allocatedQuantity: formatNumber(
-                  round9(
-                    dosesMode()
-                      ? allocatedUnits() * dosesPerUnit()
-                      : allocatedUnits()
-                  )
-                ),
+                allocatedQuantity: formatNumber(unitsToLens(allocatedUnits())),
                 requestedQuantity: formatNumber(
-                  round9(
-                    dosesMode()
-                      ? (allocatedUnits() + shortfall()) * dosesPerUnit()
-                      : allocatedUnits() + shortfall()
-                  )
+                  unitsToLens(allocatedUnits() + shortfall())
                 ),
               }
             )}
@@ -684,11 +701,13 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             an adjusted manual entry (.19). */}
         <Show when={warnings().length > 0}>
           <div class={styles.warningStack}>
-            <For each={warnings()}>{message => (
-              <Alert severity="warning" testId={warningTestId(message)}>
-                {warningText(message)}
-              </Alert>
-            )}</For>
+            <For each={warnings()}>
+              {message => (
+                <Alert severity="warning" testId={warningTestId(message)}>
+                  {warningText(message)}
+                </Alert>
+              )}
+            </For>
           </div>
         </Show>
         <Show
@@ -714,13 +733,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 end={
                   <>
                     {t('label.available')}:{' '}
-                    {formatNumber(
-                      round9(
-                        dosesMode()
-                          ? availableUnits() * dosesPerUnit()
-                          : availableUnits()
-                      )
-                    )}{' '}
+                    {formatNumber(unitsToLens(availableUnits()))}{' '}
                     {dosesMode() ? t('label.doses') : unitName()}
                   </>
                 }
