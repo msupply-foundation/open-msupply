@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { InlineConfig, Plugin } from 'vite';
 import solid from 'vite-plugin-solid';
 import { SHARED_MODULES } from './sharedModules.ts';
@@ -18,13 +20,22 @@ import { SHARED_MODULES } from './sharedModules.ts';
  */
 
 export interface PluginBuildOptions {
-  /** The plugin's code (== its package name); names the emitted file. */
-  code: string;
   /** The plugin's entry module, relative to `root`. */
   entry: string;
+  /**
+   * The plugin's code; names the emitted file. Defaults to the `name` in the
+   * plugin's own package.json — the same field the server CLI treats as the
+   * plugin code, so the two can never disagree. Override only for a build
+   * that deliberately mislabels itself (tests).
+   */
+  code?: string;
   /** Where the single file lands — the CLI reads `{pluginDir}/dist`. */
-  outDir: string;
-  /** The plugin's version — diagnostics only, so failures name the build. */
+  outDir?: string;
+  /**
+   * The plugin's version — diagnostics only, so failures name the build.
+   * Defaults to the package.json `version` (the install compatibility gate's
+   * field), like `code`.
+   */
   version?: string;
   /**
    * The plugin's directory. Defaults to the working directory, which is what
@@ -33,6 +44,34 @@ export interface PluginBuildOptions {
    */
   root?: string;
 }
+
+/**
+ * The plugin identity declared in `${root}/package.json` — `name` is the
+ * plugin code (what the server CLI packs and routes by), `version` the field
+ * its install gate compares. Reading it here keeps a plugin's vite config
+ * free of restating either.
+ */
+export const pluginPackageIdentity = (
+  root: string
+): { code: string; version?: string } => {
+  const path = join(root, 'package.json');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (cause) {
+    throw new Error(`plugin build: cannot read ${path}`, { cause });
+  }
+  const record = parsed as { name?: unknown; version?: unknown };
+  if (typeof record.name !== 'string' || record.name === '') {
+    throw new Error(
+      `plugin build: ${path} has no "name" — the package name IS the plugin code`
+    );
+  }
+  return {
+    code: record.name,
+    version: typeof record.version === 'string' ? record.version : undefined,
+  };
+};
 
 const SHARED_SPECIFIERS = SHARED_MODULES.map(m => m.specifier);
 
@@ -139,13 +178,30 @@ const conformancePlugin = ({
  * The Vite config a plugin builds with. Everything a conformant bundle needs is
  * here, so a plugin's own `vite.config` is one call.
  */
-export const pluginViteConfig = ({
+export const pluginViteConfig = (options: PluginBuildOptions): InlineConfig => {
+  // One source of truth for identity: package.json, unless a caller (the
+  // multi-plugin driver, a deliberately-mislabelled test build) overrides.
+  const declared =
+    options.code === undefined || options.version === undefined
+      ? pluginPackageIdentity(options.root ?? process.cwd())
+      : { code: options.code, version: options.version };
+  return pluginViteConfigResolved({
+    entry: options.entry,
+    outDir: options.outDir ?? 'dist',
+    root: options.root,
+    code: options.code ?? declared.code,
+    version: options.version ?? declared.version,
+  });
+};
+
+const pluginViteConfigResolved = ({
   code,
   entry,
   outDir,
   version,
   root,
-}: PluginBuildOptions): InlineConfig => ({
+}: Required<Pick<PluginBuildOptions, 'code' | 'entry' | 'outDir'>> &
+  Pick<PluginBuildOptions, 'version' | 'root'>): InlineConfig => ({
   configFile: false,
   logLevel: 'warn',
   root,
