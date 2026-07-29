@@ -1,8 +1,4 @@
+// Identity (code, version) comes from package.json; outDir defaults to dist.
 import { pluginViteConfig } from '../../vite/pluginBuild.ts';
 
-export default pluginViteConfig({
-  code: 'api_too_new',
-  entry: 'plugin.tsx',
-  outDir: 'dist',
-  version: '1.0.0',
-});
+export default pluginViteConfig({ entry: 'plugin.tsx' });
