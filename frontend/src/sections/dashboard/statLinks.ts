@@ -122,11 +122,16 @@ export const expiredHref = (storeId: string, today: Date): string =>
     expiryDate: dayRange('date', null, today),
   } satisfies StockFilter);
 
-// Expiring soon: today … today + 30d (contract.md § navigation correspondence —
-// the captured link window for the soon stat).
+// Expiring soon: tomorrow … today + 30d — exactly the count's window (the count
+// subtracts expired, so today's expiries belong to the expired stat). Diverges
+// from the current app's today … today + 1 calendar month link (D71).
 export const expiringSoonHref = (storeId: string, today: Date): string =>
   listHref(storeId, 'inventory/stock', {
-    expiryDate: dayRange('date', today, addDays(today, DAYS_TILL_EXPIRED)),
+    expiryDate: dayRange(
+      'date',
+      addDays(today, 1),
+      addDays(today, DAYS_TILL_EXPIRED)
+    ),
   } satisfies StockFilter);
 
 // Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th day excluded).
