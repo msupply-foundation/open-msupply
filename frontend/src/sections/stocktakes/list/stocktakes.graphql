@@ -26,6 +26,20 @@ query stocktakes(
   }
 }
 
+# "Does this store have ANY stocktake?" — a filter-independent probe used by the
+# list's empty state to choose between "Create initial stocktake" (opening
+# balance, once per store) and "New stocktake" (see StocktakesList hasStocktake).
+# Count-only: it never reads a node, so it doesn't over-fetch the list fields
+# just to test the store-wide total.
+query stocktakeCount($storeId: String!) {
+  stocktakes(storeId: $storeId, page: { first: 1 }) {
+    ... on StocktakeConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
 # Batch-delete stocktakes by id. The backend is the source of truth for what can be
 # deleted (e.g. a finalised stocktake can't) — we send every selected id and the batch
 # fails ATOMICALLY: if any item errors, nothing is deleted and each item's `response`

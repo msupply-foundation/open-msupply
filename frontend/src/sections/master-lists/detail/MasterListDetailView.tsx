@@ -135,7 +135,6 @@ const MasterListDetailView: Component = () => {
               open
               title={t('error.master-list-not-found')}
               message={t('messages.click-to-return-to-master-lists')}
-              confirmLabel={t('button.ok')}
               onConfirm={backToList}
               onClose={backToList}
             />

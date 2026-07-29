@@ -15,11 +15,8 @@ import {
   setUserTableConfig,
   isEmptyLayeredConfig,
 } from '../appData';
-import {
-  currentStoreId,
-  currentUserId,
-  hasPermission,
-} from '../store/storeContext';
+import { currentStoreId, hasPermission } from '../store/storeContext';
+import { currentUserId } from '../auth/authContext';
 import { isCentralServer } from './serverInfo';
 import { createStoreScopedResource } from './storeScopedResource';
 import { graphqlFetch } from './graphql';

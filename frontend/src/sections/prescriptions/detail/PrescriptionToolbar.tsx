@@ -136,6 +136,7 @@ export const PrescriptionToolbar: Component<
             onClose={() => setPending(undefined)}
             title={t('heading.are-you-sure')}
             message={t('messages.confirm-delete-prescription-lines')}
+            confirmVariant="danger"
             onConfirm={() => {
               props.onClearLinesAndSave(input());
               setPending(undefined);

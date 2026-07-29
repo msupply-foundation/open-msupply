@@ -250,11 +250,13 @@ const DashboardPage: Component = () => {
         {/* id: replenishment */}
         <DashboardCard
           title={t('replenishment')}
+          testId="dashboard-widget-replenishment"
           footer={
             <Button
               variant="secondary"
               icon={<PlusCircleIcon />}
               onClick={newInboundShipment}
+              data-testid="dashboard-create-replenishment"
             >
               {t('button.new-inbound-shipment')}
             </Button>
@@ -266,15 +268,18 @@ const DashboardPage: Component = () => {
             titleHref={inboundListHref(params.storeId)}
             icon={<StockIcon />}
             state={inbound.state()}
+            testId="dashboard-panel-replenishment.inbound"
           >
             {/* id: replenishment.inbound.today */}
             <Statistic
+              testId="dashboard-stat-replenishment.inbound.today"
               label={t('label.today')}
               value={num(inbound.data()?.inboundShipmentCounts.created.today)}
               href={inboundTodayHref(params.storeId, today)}
             />
             {/* id: replenishment.inbound.this-week */}
             <Statistic
+              testId="dashboard-stat-replenishment.inbound.this-week"
               label={t('label.this-week')}
               value={num(
                 inbound.data()?.inboundShipmentCounts.created.thisWeek
@@ -283,6 +288,7 @@ const DashboardPage: Component = () => {
             />
             {/* id: replenishment.inbound.not-delivered */}
             <Statistic
+              testId="dashboard-stat-replenishment.inbound.not-delivered"
               label={t('label.inbound-not-delivered')}
               value={num(inbound.data()?.inboundShipmentCounts.notDelivered)}
               href={inboundNotDeliveredHref(params.storeId)}
@@ -297,9 +303,11 @@ const DashboardPage: Component = () => {
               titleHref={inboundListHref(params.storeId)}
               icon={<StockIcon />}
               state={inboundExternal.state()}
+              testId="dashboard-panel-replenishment.inbound-external"
             >
               {/* id: replenishment.inbound-external.today */}
               <Statistic
+                testId="dashboard-stat-replenishment.inbound-external.today"
                 label={t('label.today')}
                 value={num(
                   inboundExternal.data()?.inboundShipmentExternalCounts.created
@@ -309,6 +317,7 @@ const DashboardPage: Component = () => {
               />
               {/* id: replenishment.inbound-external.this-week */}
               <Statistic
+                testId="dashboard-stat-replenishment.inbound-external.this-week"
                 label={t('label.this-week')}
                 value={num(
                   inboundExternal.data()?.inboundShipmentExternalCounts.created
@@ -318,6 +327,7 @@ const DashboardPage: Component = () => {
               />
               {/* id: replenishment.inbound-external.not-delivered */}
               <Statistic
+                testId="dashboard-stat-replenishment.inbound-external.not-delivered"
                 label={t('label.inbound-not-delivered')}
                 value={num(
                   inboundExternal.data()?.inboundShipmentExternalCounts
@@ -333,9 +343,11 @@ const DashboardPage: Component = () => {
             titleHref={internalOrderListHref(params.storeId)}
             icon={<StockIcon />}
             state={requisitions.state()}
+            testId="dashboard-panel-replenishment.internal-order"
           >
             {/* id: replenishment.internal-order.draft */}
             <Statistic
+              testId="dashboard-stat-replenishment.internal-order.draft"
               label={t('label.draft')}
               value={num(requisitions.data()?.requisitionCounts.request.draft)}
               href={internalOrderListHref(params.storeId)}
@@ -346,11 +358,13 @@ const DashboardPage: Component = () => {
         {/* id: distribution */}
         <DashboardCard
           title={t('distribution')}
+          testId="dashboard-widget-distribution"
           footer={
             <Button
               variant="secondary"
               icon={<PlusCircleIcon />}
               onClick={newOutboundShipment}
+              data-testid="dashboard-create-distribution"
             >
               {t('button.new-outbound-shipment')}
             </Button>
@@ -362,9 +376,11 @@ const DashboardPage: Component = () => {
             titleHref={outboundListHref(params.storeId)}
             icon={<StockIcon />}
             state={outbound.state()}
+            testId="dashboard-panel-distribution.shipments"
           >
             {/* id: distribution.shipments.not-shipped */}
             <Statistic
+              testId="dashboard-stat-distribution.shipments.not-shipped"
               label={t('label.have-not-shipped')}
               value={num(outbound.data()?.outboundShipmentCounts.notShipped)}
               href={outboundNotShippedHref(params.storeId)}
@@ -376,9 +392,11 @@ const DashboardPage: Component = () => {
             titleHref={customerRequisitionListHref(params.storeId)}
             icon={<StockIcon />}
             state={requisitions.state()}
+            testId="dashboard-panel-distribution.customer-requisition"
           >
             {/* id: distribution.customer-requisition.new */}
             <Statistic
+              testId="dashboard-stat-distribution.customer-requisition.new"
               label={t('label.new')}
               value={num(requisitions.data()?.requisitionCounts.response.new)}
               href={customerRequisitionListHref(params.storeId)}
@@ -387,6 +405,7 @@ const DashboardPage: Component = () => {
                 gate (OMS-REG-DB-01.39); alert emphasis when > 0. */}
             <Show when={gates()?.emergencyStat}>
               <Statistic
+                testId="dashboard-stat-distribution.customer-requisition.emergency"
                 label={t('label.emergency')}
                 value={num(
                   requisitions.data()?.requisitionCounts.emergency.new
@@ -405,11 +424,13 @@ const DashboardPage: Component = () => {
         {/* id: inventory */}
         <DashboardCard
           title={t('inventory-management')}
+          testId="dashboard-widget-inventory"
           footer={
             <Button
               variant="secondary"
               icon={<PlusCircleIcon />}
               onClick={orderMore}
+              data-testid="dashboard-create-inventory"
             >
               {t('button.order-more')}
             </Button>
@@ -421,9 +442,11 @@ const DashboardPage: Component = () => {
             titleHref={stockListHref(params.storeId)}
             icon={<StockIcon />}
             state={stock.state()}
+            testId="dashboard-panel-inventory.expiring-stock"
           >
             {/* id: inventory.expiring-stock.expired */}
             <Statistic
+              testId="dashboard-stat-inventory.expiring-stock.expired"
               label={tPlural(
                 'label.expired',
                 stock.data()?.stockCounts.expired ?? 0
@@ -433,6 +456,7 @@ const DashboardPage: Component = () => {
             />
             {/* id: inventory.expiring-stock.expiring-soon */}
             <Statistic
+              testId="dashboard-stat-inventory.expiring-stock.expiring-soon"
               label={tPlural(
                 'label.expiring-soon',
                 stock.data()?.stockCounts.expiringSoon ?? 0
@@ -443,6 +467,7 @@ const DashboardPage: Component = () => {
             {/* id: inventory.expiring-stock.expiring-three-months — the 30/90 in
                 the label are fixed copy, not slots. */}
             <Statistic
+              testId="dashboard-stat-inventory.expiring-stock.expiring-three-months"
               label={t('label.batches-expiring-between-days')}
               value={num(stock.data()?.stockCounts.expiringInNextThreeMonths)}
               href={expiringNextThreeMonthsHref(params.storeId, today)}
@@ -452,6 +477,7 @@ const DashboardPage: Component = () => {
             <Show when={gates()?.expiringBetweenThresholdsStat && slots()}>
               {s => (
                 <Statistic
+                  testId="dashboard-stat-inventory.expiring-stock.expiring-between"
                   label={t('label.batches-expiring-in-days', {
                     firstThreshold: s().firstExpiryDays,
                     secondThreshold: s().secondExpiryDays,
@@ -475,12 +501,14 @@ const DashboardPage: Component = () => {
             titleHref={itemCatalogueHref(params.storeId)}
             icon={<StockIcon />}
             state={items.state()}
+            testId="dashboard-panel-inventory.stock-levels"
           >
             {/* id: inventory.stock-levels.out-of-stock-recently-used —
                 consumption look-back gate (OMS-REG-DB-01.48). */}
             <Show when={gates()?.outOfStockRecentlyUsedStat && slots()}>
               {s => (
                 <Statistic
+                  testId="dashboard-stat-inventory.stock-levels.out-of-stock-recently-used"
                   label={t('label.out-of-stock-recently-used', {
                     num: s().consumptionLookbackMonths,
                   })}
@@ -493,6 +521,7 @@ const DashboardPage: Component = () => {
             </Show>
             {/* id: inventory.stock-levels.out-of-stock */}
             <Statistic
+              testId="dashboard-stat-inventory.stock-levels.out-of-stock"
               label={t('label.out-of-stock-all-items')}
               value={num(items.data()?.itemCounts.itemCounts.noStock)}
               href={itemsOutOfStockHref(params.storeId)}
@@ -503,6 +532,7 @@ const DashboardPage: Component = () => {
             <Show when={gates()?.atRiskStat && slots()}>
               {s => (
                 <Statistic
+                  testId="dashboard-stat-inventory.stock-levels.at-risk"
                   label={t('label.products-at-risk-of-being-out-of-stock')}
                   value={num(
                     items.data()?.itemCounts.itemCounts
@@ -519,6 +549,7 @@ const DashboardPage: Component = () => {
             <Show when={slots()}>
               {s => (
                 <Statistic
+                  testId="dashboard-stat-inventory.stock-levels.low-stock"
                   label={tPlural(
                     'label.low-stock-items',
                     items.data()?.itemCounts.itemCounts.lowStock ?? 0,
@@ -535,6 +566,7 @@ const DashboardPage: Component = () => {
             <Show when={gates()?.overstockedStat && slots()}>
               {s => (
                 <Statistic
+                  testId="dashboard-stat-inventory.stock-levels.overstocked"
                   label={t('label.overstocked-products', {
                     num: s().overstockAlertMonths,
                   })}
@@ -552,6 +584,7 @@ const DashboardPage: Component = () => {
             <Show when={slots()}>
               {s => (
                 <Statistic
+                  testId="dashboard-stat-inventory.stock-levels.high-stock"
                   label={tPlural(
                     'label.high-stock-items',
                     items.data()?.itemCounts.itemCounts.highStock ?? 0,
@@ -564,6 +597,7 @@ const DashboardPage: Component = () => {
             </Show>
             {/* id: inventory.stock-levels.total-items */}
             <Statistic
+              testId="dashboard-stat-inventory.stock-levels.total-items"
               label={tPlural(
                 'label.total-items',
                 items.data()?.itemCounts.itemCounts.total ?? 0

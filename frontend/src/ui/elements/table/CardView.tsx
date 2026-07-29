@@ -54,12 +54,24 @@ const showsLabel = <T,>(
   isHeader: boolean
 ): boolean => cell.column.columnDef.meta?.showLabel ?? !isHeader;
 
+// A cell's test id — the SAME `cell-<columnId>` table view puts on its <td>
+// (e2e/TESTIDS.md), so one row-scoped selector addresses a cell in either
+// rendering. Card view is what a tablet renders and what some grids (the
+// stocktake and inbound batch editors) render at every width, so a suite
+// reaching for a cell there found nothing until this was stamped.
+const cellTestId = <T,>(cell: TanCell<T, unknown>): string =>
+  `cell-${cell.column.id}`;
+
 // A card cell, optionally captioned by the column's string header. Unlabelled,
 // the cell fills its slot directly. Labelled, the wrapper follows the slot: a
 // HEADER field uses a FieldRow (label beside the control, one line — the card's
 // identity row); a BODY field uses a LabelledValue (label above, matching the
 // field grid). A generic function (not a sub-component) so the cell's T infers
 // cleanly at each call site, matching the other helpers here.
+//
+// BODY cells carry the cell test id here; a HEADER cell's id goes on the slot
+// wrapper the caller renders around it (cardPrimary / cardBadge), which is the
+// element standing in for table view's <td> there.
 function cellField<T>(
   cell: TanCell<T, unknown>,
   isHeader: boolean
@@ -75,14 +87,24 @@ function cellField<T>(
       content
     );
   };
-  if (!showsLabel(cell, isHeader)) return value();
+  if (!showsLabel(cell, isHeader))
+    return isHeader ? (
+      value()
+    ) : (
+      // An unlabelled body cell is a direct child of the auto-fit field grid,
+      // so a plain wrapper keeps the same layout — and it has no LabelledValue
+      // to carry the id.
+      <div data-testid={cellTestId(cell)}>{value()}</div>
+    );
   const label = columnHeaderText(cell);
   return isHeader ? (
     <FieldRow label={label} labelWidth="auto">
       {value()}
     </FieldRow>
   ) : (
-    <LabelledValue label={label}>{value()}</LabelledValue>
+    <LabelledValue label={label} data-testid={cellTestId(cell)}>
+      {value()}
+    </LabelledValue>
   );
 }
 
@@ -206,6 +228,7 @@ export function CardView<T, G extends string>(props: {
   table: Table<T>;
   cardGroups?: CardGroup<T, G>[];
   enableSelection: boolean;
+  selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
@@ -241,6 +264,9 @@ export function CardView<T, G extends string>(props: {
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
             data-selected={row.getIsSelected() ? '' : undefined}
             data-testid="table-row"
+            // The row's key, exactly as table view stamps it (TableRow), so a
+            // caller can address one row in the DOM in either rendering.
+            data-row-key={row.id}
             onClick={() => props.onRowClick?.(row.original)}
           >
             <td class={styles.cardCell}>
@@ -251,6 +277,7 @@ export function CardView<T, G extends string>(props: {
                       class={styles.cardSelect}
                       aria-label={t('table.select-row')}
                       data-testid="select-row-checkbox"
+                      disabled={props.selectionDisabled}
                       checked={row.getIsSelected()}
                       onChange={row.getToggleSelectedHandler()}
                       onClick={event => event.stopPropagation()}
@@ -262,7 +289,10 @@ export function CardView<T, G extends string>(props: {
                         // Header slots are unlabelled by default — the cell
                         // fills the slot directly (identity/title inline-start)
                         // — unless meta.showLabel opts a caption in.
-                        <div class={styles.cardPrimary}>
+                        <div
+                          class={styles.cardPrimary}
+                          data-testid={cellTestId(cell)}
+                        >
                           {cellField(cell, true)}
                         </div>
                       )}
@@ -270,7 +300,10 @@ export function CardView<T, G extends string>(props: {
                   </div>
                   <For each={inHeader('badge')}>
                     {cell => (
-                      <div class={styles.cardBadge}>
+                      <div
+                        class={styles.cardBadge}
+                        data-testid={cellTestId(cell)}
+                      >
                         {cellField(cell, true)}
                       </div>
                     )}

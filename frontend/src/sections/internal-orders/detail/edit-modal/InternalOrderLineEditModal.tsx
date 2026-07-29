@@ -9,7 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { homeCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -288,15 +288,24 @@ const LineEditContent = (
   const stat = (units: number, roundUp = false): string =>
     `${formatNumber(statInMode(units, entryMode(), packSize(), doses(), roundUp))} ${modeWord(entryMode(), current()?.unitName ?? null)}`;
 
-  // The dose caption beneath the requested number (AC-LN20): units when doses
-  // is the active mode, the dose equivalent otherwise — rounded whole.
-  const requestedCaption = () => {
-    if (!dosesApply()) return undefined;
-    const units = requestedUnits();
-    return entryMode() === 'doses'
-      ? `${formatNumber(Math.round(units))} ${current()?.unitName ?? t('label.unit')}`
-      : `${formatNumber(Math.round(units * doses()))} ${t('label.doses-plural', { count: 2 })}`;
+  // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
+  // doses is the active mode, the dose equivalent otherwise — rounded whole.
+  const otherMeasure = (units: number): string => {
+    if (entryMode() === 'doses')
+      return `${formatNumber(Math.round(units))} ${current()?.unitName ?? t('label.unit')}`;
+    const doseCount = Math.round(units * doses());
+    return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
+
+  // The dose caption beneath the requested number (AC-LN20).
+  const requestedCaption = () =>
+    dosesApply() ? otherMeasure(requestedUnits()) : undefined;
+
+  // The dose caption beneath a statistics/movements stock value (AC-LN20):
+  // each NON-ZERO stock value carries the other measure; zeros (and the
+  // fixed/time rows, which never call this) carry none.
+  const statCaption = (units: number): string | undefined =>
+    dosesApply() && units !== 0 ? otherMeasure(units) : undefined;
 
   // The draft's reason, per the order's surface: omitted where there's no
   // reason control; the chosen id where there's a variance; null (clear) at
@@ -365,20 +374,28 @@ const LineEditContent = (
     return options;
   });
 
-  // A read-only statistics row: bold label, right-aligned value. `highlight`
-  // tints the row like the edits inset panel (the middle-panel Suggested — the
-  // requested block it is read against, spec S4), the tint bleeding slightly
-  // past both sides while the text stays aligned with the column.
+  // A read-only statistics row: bold label, right-aligned value. `caption` is
+  // the muted other-measure line beneath the value (AC-LN20), right-aligned
+  // like it. `highlight` tints the row like the edits inset panel (the
+  // middle-panel Suggested — the requested block it is read against, spec S4),
+  // the tint bleeding slightly past both sides while the text stays aligned
+  // with the column.
   const StatRow = (rowProps: {
     label: string;
     value: string;
+    caption?: string;
     highlight?: boolean;
   }): JSX.Element => (
     <FieldRow
       label={rowProps.label}
       class={rowProps.highlight ? styles.highlight : undefined}
     >
-      <span class={styles.statValue}>{rowProps.value}</span>
+      <span class={styles.statValue}>
+        {rowProps.value}
+        <Show when={rowProps.caption}>
+          {caption => <span class={styles.statCaption}>{caption()}</span>}
+        </Show>
+      </span>
     </FieldRow>
   );
 
@@ -389,7 +406,9 @@ const LineEditContent = (
       dismissable={!saving()}
       size="large"
       testId="internal-order-line-edit-modal"
+      // Untitled per spec S4 — the title stays as the accessible name only.
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
       actionsLead={
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
@@ -484,6 +503,7 @@ const LineEditContent = (
                 <StatRow
                   label={t('label.our-soh')}
                   value={stat(editorLine().availableStockOnHand)}
+                  caption={statCaption(editorLine().availableStockOnHand)}
                 />
                 <StatRow
                   label={
@@ -492,6 +512,9 @@ const LineEditContent = (
                       : t('label.amc/amd')
                   }
                   value={stat(editorLine().averageMonthlyConsumption, true)}
+                  caption={statCaption(
+                    editorLine().averageMonthlyConsumption
+                  )}
                 />
                 <StatRow
                   label={t('label.months-of-stock')}
@@ -508,12 +531,16 @@ const LineEditContent = (
                     value={stat(
                       Math.ceil(editorLine().forecastTotalUnits ?? 0)
                     )}
+                    caption={statCaption(
+                      Math.ceil(editorLine().forecastTotalUnits ?? 0)
+                    )}
                   />
                 </Show>
                 <Show when={props.showExtended}>
                   <StatRow
                     label={t('label.short-expiry')}
                     value={stat(editorLine().expiringUnits)}
+                    caption={statCaption(editorLine().expiringUnits)}
                   />
                 </Show>
               </div>
@@ -524,23 +551,28 @@ const LineEditContent = (
                   <StatRow
                     label={t('label.suggested')}
                     value={stat(editorLine().suggestedQuantity, true)}
+                    caption={statCaption(editorLine().suggestedQuantity)}
                     highlight
                   />
                   <StatRow
                     label={t('label.incoming-stock')}
                     value={stat(editorLine().incomingUnits)}
+                    caption={statCaption(editorLine().incomingUnits)}
                   />
                   <StatRow
                     label={t('label.outgoing')}
                     value={stat(editorLine().outgoingUnits)}
+                    caption={statCaption(editorLine().outgoingUnits)}
                   />
                   <StatRow
                     label={t('label.losses')}
                     value={stat(editorLine().lossInUnits)}
+                    caption={statCaption(editorLine().lossInUnits)}
                   />
                   <StatRow
                     label={t('label.additions')}
                     value={stat(editorLine().additionInUnits)}
+                    caption={statCaption(editorLine().additionInUnits)}
                   />
                   <StatRow
                     label={t('label.days-out-of-stock')}

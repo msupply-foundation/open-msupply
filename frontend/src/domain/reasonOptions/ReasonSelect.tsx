@@ -71,6 +71,8 @@ export interface ReasonSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Marks the field required — passed through to the Combobox's label. */
+  required?: boolean;
   /** `data-testid` for the error message — forwarded to the Combobox. */
   errorTestId?: string;
   placeholder?: string;
@@ -99,6 +101,7 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     value={props.value}
     disabled={props.disabled}
     error={props.error}
+    required={props.required}
     errorTestId={props.errorTestId}
     placeholder={props.placeholder}
     focusTarget={props.focusTarget}
