@@ -1,0 +1,14 @@
+# The patient-code counter (spec/patients contract › generating a code). Named
+# "PatientCode" — a NumberRowType::Program counter, allocated per STORE, and
+# CONSUMED by the call whether or not the client keeps the result. The response
+# is a single-member union whose only member is NumberNode; there is no error
+# node. Gated on DOCUMENT_MUTATE (Resource::MutateProgram), NOT the
+# PATIENT_MUTATE that gates the form itself — see the contract's wire trap.
+mutation allocatePatientCodeNumber($storeId: String!, $numberName: String!) {
+  allocateProgramNumber(storeId: $storeId, input: { numberName: $numberName }) {
+    ... on NumberNode {
+      __typename
+      number
+    }
+  }
+}
