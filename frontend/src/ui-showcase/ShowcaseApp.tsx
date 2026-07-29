@@ -166,6 +166,8 @@ export function ShowcaseApp() {
       storeName="Demo store"
       onStoreClick={() => {}}
       username="Developer"
+      displayName="Dev Eloper"
+      email="developer@example.com"
       onLogout={() => {}}
     >
       {/* A `fill` section (Table) is a real full-height page that composes its
