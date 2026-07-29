@@ -40,6 +40,9 @@ import type {
 import { dashboardGates, dashboardSlots } from './dashboardPreferences';
 import { itemCountsThresholds } from './dashboardGates';
 import { countPanelState, type CountValue } from './panelState';
+import { suppressedPieces } from '../../plugins/registry';
+import { DASHBOARD_IDS } from './regions';
+import { PluginRegion } from './PluginRegion';
 import {
   customerRequisitionListHref,
   DAYS_TILL_EXPIRED,
@@ -145,16 +148,18 @@ const createCountResource = <TResult, TVariables>(
 // and the three permission-gated create shortcuts (OMS-REG-DB-01.56).
 //
 // Every widget / panel / stat is a built-in with a stable published id
-// (ui-surface § S3); the `id:` markers below mirror the published-id registry
+// (ui-surface § S3); the `id:` markers below name the published-id registry
 // (`DASHBOARD_IDS` in `regions.ts`, the single source of truth for the ids).
 // The dashboard OWNS the plugin-region merge / suppression semantics in
 // `regions.ts` (published-id tree + `mergeRegion`, unit-tested against an empty
-// contribution set — OMS-REG-DB-01.58 + OMS-REG-DB-02.2–.8). The RENDER
-// integration of those semantics
-// (mounting contributions, honouring suppression at render) belongs with the
-// plugins vertical that supplies contributions — greenfield today — so the page
-// stays explicit composition: built-ins render directly, gated only by their
-// preference gates. See BUILD_REPORT § plugin-region for the deferral.
+// contribution set — OMS-REG-DB-01.58 + OMS-REG-DB-02.2–.8); the render
+// integration is the `PluginRegion` at each container's tail plus the `shows(id)`
+// guard on each built-in. Built-ins stay explicit composition — the page renders
+// them directly, gated by their preference gates and their suppression guard —
+// so no count update can remount anything (the risk BUILD_REPORT § plugin-region
+// flagged); only contributions come from a merged list, behind one memo.
+// Suppressing a widget or panel drops its whole subtree for free, because the
+// built-ins nest.
 const DashboardPage: Component = () => {
   // storeId is guaranteed by StoreGuardLayout; counts re-key on it, so a store
   // switch re-fetches every panel (ui-surface § cross-cutting).
@@ -238,6 +243,12 @@ const DashboardPage: Component = () => {
 
   const num = (n: number | undefined) => formatNumber(n ?? 0);
 
+  // Suppression at render (OMS-REG-DB-02.6–.8): a built-in a loaded plugin names
+  // by published id is absent, not disabled. Reactive, so a plugin loading after
+  // the page mounts removes its pieces in place; and because built-ins nest,
+  // suppressing a widget or a panel takes its whole subtree with it.
+  const shows = (id: string) => !suppressedPieces().has(id);
+
   return (
     <Page
       header={
@@ -248,365 +259,561 @@ const DashboardPage: Component = () => {
     >
       <CardGrid>
         {/* id: replenishment */}
-        <DashboardCard
-          title={t('replenishment')}
-          testId="dashboard-widget-replenishment"
-          footer={
-            <Button
-              variant="secondary"
-              icon={<PlusCircleIcon />}
-              onClick={newInboundShipment}
-              data-testid="dashboard-create-replenishment"
-            >
-              {t('button.new-inbound-shipment')}
-            </Button>
-          }
-        >
-          {/* id: replenishment.inbound */}
-          <StatsPanel
-            title={t('inbound-shipment')}
-            titleHref={inboundListHref(params.storeId)}
-            icon={<StockIcon />}
-            state={inbound.state()}
-            testId="dashboard-panel-replenishment.inbound"
+        <Show when={shows(DASHBOARD_IDS.replenishment.id)}>
+          <DashboardCard
+            title={t('replenishment')}
+            testId="dashboard-widget-replenishment"
+            footer={
+              <Button
+                variant="secondary"
+                icon={<PlusCircleIcon />}
+                onClick={newInboundShipment}
+                data-testid="dashboard-create-replenishment"
+              >
+                {t('button.new-inbound-shipment')}
+              </Button>
+            }
           >
-            {/* id: replenishment.inbound.today */}
-            <Statistic
-              testId="dashboard-stat-replenishment.inbound.today"
-              label={t('label.today')}
-              value={num(inbound.data()?.inboundShipmentCounts.created.today)}
-              href={inboundTodayHref(params.storeId, today)}
-            />
-            {/* id: replenishment.inbound.this-week */}
-            <Statistic
-              testId="dashboard-stat-replenishment.inbound.this-week"
-              label={t('label.this-week')}
-              value={num(
-                inbound.data()?.inboundShipmentCounts.created.thisWeek
-              )}
-              href={inboundThisWeekHref(params.storeId, today)}
-            />
-            {/* id: replenishment.inbound.not-delivered */}
-            <Statistic
-              testId="dashboard-stat-replenishment.inbound.not-delivered"
-              label={t('label.inbound-not-delivered')}
-              value={num(inbound.data()?.inboundShipmentCounts.notDelivered)}
-              href={inboundNotDeliveredHref(params.storeId)}
-            />
-          </StatsPanel>
-          {/* id: replenishment.inbound-external — procurement gate
+            {/* id: replenishment.inbound */}
+            <Show when={shows(DASHBOARD_IDS.replenishment.inbound.id)}>
+              <StatsPanel
+                title={t('inbound-shipment')}
+                titleHref={inboundListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={inbound.state()}
+                testId="dashboard-panel-replenishment.inbound"
+              >
+                {/* id: replenishment.inbound.today */}
+                <Show when={shows(DASHBOARD_IDS.replenishment.inbound.today)}>
+                  <Statistic
+                    testId="dashboard-stat-replenishment.inbound.today"
+                    label={t('label.today')}
+                    value={num(
+                      inbound.data()?.inboundShipmentCounts.created.today
+                    )}
+                    href={inboundTodayHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: replenishment.inbound.this-week */}
+                <Show
+                  when={shows(DASHBOARD_IDS.replenishment.inbound.thisWeek)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-replenishment.inbound.this-week"
+                    label={t('label.this-week')}
+                    value={num(
+                      inbound.data()?.inboundShipmentCounts.created.thisWeek
+                    )}
+                    href={inboundThisWeekHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: replenishment.inbound.not-delivered */}
+                <Show
+                  when={shows(DASHBOARD_IDS.replenishment.inbound.notDelivered)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-replenishment.inbound.not-delivered"
+                    label={t('label.inbound-not-delivered')}
+                    value={num(
+                      inbound.data()?.inboundShipmentCounts.notDelivered
+                    )}
+                    href={inboundNotDeliveredHref(params.storeId)}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.replenishment.inbound.id}
+                />
+              </StatsPanel>
+            </Show>
+            {/* id: replenishment.inbound-external — procurement gate
               (OMS-REG-DB-01.36); absent entirely when off, not shown
               disabled. */}
-          <Show when={gates()?.externalInboundPanel}>
-            <StatsPanel
-              title={t('dashboard.inbound-shipment-external')}
-              titleHref={inboundListHref(params.storeId)}
-              icon={<StockIcon />}
-              state={inboundExternal.state()}
-              testId="dashboard-panel-replenishment.inbound-external"
+            <Show
+              when={
+                gates()?.externalInboundPanel &&
+                shows(DASHBOARD_IDS.replenishment.inboundExternal.id)
+              }
             >
-              {/* id: replenishment.inbound-external.today */}
-              <Statistic
-                testId="dashboard-stat-replenishment.inbound-external.today"
-                label={t('label.today')}
-                value={num(
-                  inboundExternal.data()?.inboundShipmentExternalCounts.created
-                    .today
-                )}
-                href={inboundTodayHref(params.storeId, today)}
-              />
-              {/* id: replenishment.inbound-external.this-week */}
-              <Statistic
-                testId="dashboard-stat-replenishment.inbound-external.this-week"
-                label={t('label.this-week')}
-                value={num(
-                  inboundExternal.data()?.inboundShipmentExternalCounts.created
-                    .thisWeek
-                )}
-                href={inboundThisWeekHref(params.storeId, today)}
-              />
-              {/* id: replenishment.inbound-external.not-delivered */}
-              <Statistic
-                testId="dashboard-stat-replenishment.inbound-external.not-delivered"
-                label={t('label.inbound-not-delivered')}
-                value={num(
-                  inboundExternal.data()?.inboundShipmentExternalCounts
-                    .notDelivered
-                )}
-                href={inboundNotDeliveredHref(params.storeId)}
-              />
-            </StatsPanel>
-          </Show>
-          {/* id: replenishment.internal-order */}
-          <StatsPanel
-            title={t('internal-order')}
-            titleHref={internalOrderListHref(params.storeId)}
-            icon={<StockIcon />}
-            state={requisitions.state()}
-            testId="dashboard-panel-replenishment.internal-order"
-          >
-            {/* id: replenishment.internal-order.draft */}
-            <Statistic
-              testId="dashboard-stat-replenishment.internal-order.draft"
-              label={t('label.draft')}
-              value={num(requisitions.data()?.requisitionCounts.request.draft)}
-              href={internalOrderListHref(params.storeId)}
+              <StatsPanel
+                title={t('dashboard.inbound-shipment-external')}
+                titleHref={inboundListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={inboundExternal.state()}
+                testId="dashboard-panel-replenishment.inbound-external"
+              >
+                {/* id: replenishment.inbound-external.today */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.replenishment.inboundExternal.today
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-replenishment.inbound-external.today"
+                    label={t('label.today')}
+                    value={num(
+                      inboundExternal.data()?.inboundShipmentExternalCounts
+                        .created.today
+                    )}
+                    href={inboundTodayHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: replenishment.inbound-external.this-week */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.replenishment.inboundExternal.thisWeek
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-replenishment.inbound-external.this-week"
+                    label={t('label.this-week')}
+                    value={num(
+                      inboundExternal.data()?.inboundShipmentExternalCounts
+                        .created.thisWeek
+                    )}
+                    href={inboundThisWeekHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: replenishment.inbound-external.not-delivered */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.replenishment.inboundExternal.notDelivered
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-replenishment.inbound-external.not-delivered"
+                    label={t('label.inbound-not-delivered')}
+                    value={num(
+                      inboundExternal.data()?.inboundShipmentExternalCounts
+                        .notDelivered
+                    )}
+                    href={inboundNotDeliveredHref(params.storeId)}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.replenishment.inboundExternal.id}
+                />
+              </StatsPanel>
+            </Show>
+            {/* id: replenishment.internal-order */}
+            <Show when={shows(DASHBOARD_IDS.replenishment.internalOrder.id)}>
+              <StatsPanel
+                title={t('internal-order')}
+                titleHref={internalOrderListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={requisitions.state()}
+                testId="dashboard-panel-replenishment.internal-order"
+              >
+                {/* id: replenishment.internal-order.draft */}
+                <Show
+                  when={shows(DASHBOARD_IDS.replenishment.internalOrder.draft)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-replenishment.internal-order.draft"
+                    label={t('label.draft')}
+                    value={num(
+                      requisitions.data()?.requisitionCounts.request.draft
+                    )}
+                    href={internalOrderListHref(params.storeId)}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.replenishment.internalOrder.id}
+                />
+              </StatsPanel>
+            </Show>
+            <PluginRegion
+              slot="dashboard.panel"
+              container={DASHBOARD_IDS.replenishment.id}
             />
-          </StatsPanel>
-        </DashboardCard>
+          </DashboardCard>
+        </Show>
 
         {/* id: distribution */}
-        <DashboardCard
-          title={t('distribution')}
-          testId="dashboard-widget-distribution"
-          footer={
-            <Button
-              variant="secondary"
-              icon={<PlusCircleIcon />}
-              onClick={newOutboundShipment}
-              data-testid="dashboard-create-distribution"
-            >
-              {t('button.new-outbound-shipment')}
-            </Button>
-          }
-        >
-          {/* id: distribution.shipments */}
-          <StatsPanel
-            title={t('heading.shipments')}
-            titleHref={outboundListHref(params.storeId)}
-            icon={<StockIcon />}
-            state={outbound.state()}
-            testId="dashboard-panel-distribution.shipments"
+        <Show when={shows(DASHBOARD_IDS.distribution.id)}>
+          <DashboardCard
+            title={t('distribution')}
+            testId="dashboard-widget-distribution"
+            footer={
+              <Button
+                variant="secondary"
+                icon={<PlusCircleIcon />}
+                onClick={newOutboundShipment}
+                data-testid="dashboard-create-distribution"
+              >
+                {t('button.new-outbound-shipment')}
+              </Button>
+            }
           >
-            {/* id: distribution.shipments.not-shipped */}
-            <Statistic
-              testId="dashboard-stat-distribution.shipments.not-shipped"
-              label={t('label.have-not-shipped')}
-              value={num(outbound.data()?.outboundShipmentCounts.notShipped)}
-              href={outboundNotShippedHref(params.storeId)}
-            />
-          </StatsPanel>
-          {/* id: distribution.customer-requisition */}
-          <StatsPanel
-            title={t('customer-requisition')}
-            titleHref={customerRequisitionListHref(params.storeId)}
-            icon={<StockIcon />}
-            state={requisitions.state()}
-            testId="dashboard-panel-distribution.customer-requisition"
-          >
-            {/* id: distribution.customer-requisition.new */}
-            <Statistic
-              testId="dashboard-stat-distribution.customer-requisition.new"
-              label={t('label.new')}
-              value={num(requisitions.data()?.requisitionCounts.response.new)}
-              href={customerRequisitionListHref(params.storeId)}
-            />
-            {/* id: distribution.customer-requisition.emergency — program-module
-                gate (OMS-REG-DB-01.39); alert emphasis when > 0. */}
-            <Show when={gates()?.emergencyStat}>
-              <Statistic
-                testId="dashboard-stat-distribution.customer-requisition.emergency"
-                label={t('label.emergency')}
-                value={num(
-                  requisitions.data()?.requisitionCounts.emergency.new
-                )}
-                href={customerRequisitionListHref(params.storeId)}
-                alert={
-                  (requisitions.data()?.requisitionCounts.emergency.new ?? 0) >
-                  0
-                }
-                alertLabel={t('label.needs-attention')}
-              />
+            {/* id: distribution.shipments */}
+            <Show when={shows(DASHBOARD_IDS.distribution.shipments.id)}>
+              <StatsPanel
+                title={t('heading.shipments')}
+                titleHref={outboundListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={outbound.state()}
+                testId="dashboard-panel-distribution.shipments"
+              >
+                {/* id: distribution.shipments.not-shipped */}
+                <Show
+                  when={shows(DASHBOARD_IDS.distribution.shipments.notShipped)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-distribution.shipments.not-shipped"
+                    label={t('label.have-not-shipped')}
+                    value={num(
+                      outbound.data()?.outboundShipmentCounts.notShipped
+                    )}
+                    href={outboundNotShippedHref(params.storeId)}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.distribution.shipments.id}
+                />
+              </StatsPanel>
             </Show>
-          </StatsPanel>
-        </DashboardCard>
+            {/* id: distribution.customer-requisition */}
+            <Show
+              when={shows(DASHBOARD_IDS.distribution.customerRequisition.id)}
+            >
+              <StatsPanel
+                title={t('customer-requisition')}
+                titleHref={customerRequisitionListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={requisitions.state()}
+                testId="dashboard-panel-distribution.customer-requisition"
+              >
+                {/* id: distribution.customer-requisition.new */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.distribution.customerRequisition.new
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-distribution.customer-requisition.new"
+                    label={t('label.new')}
+                    value={num(
+                      requisitions.data()?.requisitionCounts.response.new
+                    )}
+                    href={customerRequisitionListHref(params.storeId)}
+                  />
+                </Show>
+                {/* id: distribution.customer-requisition.emergency — program-module
+                gate (OMS-REG-DB-01.39); alert emphasis when > 0. */}
+                <Show
+                  when={
+                    gates()?.emergencyStat &&
+                    shows(
+                      DASHBOARD_IDS.distribution.customerRequisition.emergency
+                    )
+                  }
+                >
+                  <Statistic
+                    testId="dashboard-stat-distribution.customer-requisition.emergency"
+                    label={t('label.emergency')}
+                    value={num(
+                      requisitions.data()?.requisitionCounts.emergency.new
+                    )}
+                    href={customerRequisitionListHref(params.storeId)}
+                    alert={
+                      (requisitions.data()?.requisitionCounts.emergency.new ??
+                        0) > 0
+                    }
+                    alertLabel={t('label.needs-attention')}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.distribution.customerRequisition.id}
+                />
+              </StatsPanel>
+            </Show>
+            <PluginRegion
+              slot="dashboard.panel"
+              container={DASHBOARD_IDS.distribution.id}
+            />
+          </DashboardCard>
+        </Show>
 
         {/* id: inventory */}
-        <DashboardCard
-          title={t('inventory-management')}
-          testId="dashboard-widget-inventory"
-          footer={
-            <Button
-              variant="secondary"
-              icon={<PlusCircleIcon />}
-              onClick={orderMore}
-              data-testid="dashboard-create-inventory"
-            >
-              {t('button.order-more')}
-            </Button>
-          }
-        >
-          {/* id: inventory.expiring-stock */}
-          <StatsPanel
-            title={t('heading.expiring-stock')}
-            titleHref={stockListHref(params.storeId)}
-            icon={<StockIcon />}
-            state={stock.state()}
-            testId="dashboard-panel-inventory.expiring-stock"
+        <Show when={shows(DASHBOARD_IDS.inventory.id)}>
+          <DashboardCard
+            title={t('inventory-management')}
+            testId="dashboard-widget-inventory"
+            footer={
+              <Button
+                variant="secondary"
+                icon={<PlusCircleIcon />}
+                onClick={orderMore}
+                data-testid="dashboard-create-inventory"
+              >
+                {t('button.order-more')}
+              </Button>
+            }
           >
-            {/* id: inventory.expiring-stock.expired */}
-            <Statistic
-              testId="dashboard-stat-inventory.expiring-stock.expired"
-              label={tPlural(
-                'label.expired',
-                stock.data()?.stockCounts.expired ?? 0
-              )}
-              value={num(stock.data()?.stockCounts.expired)}
-              href={expiredHref(params.storeId, today)}
-            />
-            {/* id: inventory.expiring-stock.expiring-soon */}
-            <Statistic
-              testId="dashboard-stat-inventory.expiring-stock.expiring-soon"
-              label={tPlural(
-                'label.expiring-soon',
-                stock.data()?.stockCounts.expiringSoon ?? 0
-              )}
-              value={num(stock.data()?.stockCounts.expiringSoon)}
-              href={expiringSoonHref(params.storeId, today)}
-            />
-            {/* id: inventory.expiring-stock.expiring-three-months — the 30/90 in
+            {/* id: inventory.expiring-stock */}
+            <Show when={shows(DASHBOARD_IDS.inventory.expiringStock.id)}>
+              <StatsPanel
+                title={t('heading.expiring-stock')}
+                titleHref={stockListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={stock.state()}
+                testId="dashboard-panel-inventory.expiring-stock"
+              >
+                {/* id: inventory.expiring-stock.expired */}
+                <Show
+                  when={shows(DASHBOARD_IDS.inventory.expiringStock.expired)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-inventory.expiring-stock.expired"
+                    label={tPlural(
+                      'label.expired',
+                      stock.data()?.stockCounts.expired ?? 0
+                    )}
+                    value={num(stock.data()?.stockCounts.expired)}
+                    href={expiredHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: inventory.expiring-stock.expiring-soon */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.inventory.expiringStock.expiringSoon
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-inventory.expiring-stock.expiring-soon"
+                    label={tPlural(
+                      'label.expiring-soon',
+                      stock.data()?.stockCounts.expiringSoon ?? 0
+                    )}
+                    value={num(stock.data()?.stockCounts.expiringSoon)}
+                    href={expiringSoonHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: inventory.expiring-stock.expiring-three-months — the 30/90 in
                 the label are fixed copy, not slots. */}
-            <Statistic
-              testId="dashboard-stat-inventory.expiring-stock.expiring-three-months"
-              label={t('label.batches-expiring-between-days')}
-              value={num(stock.data()?.stockCounts.expiringInNextThreeMonths)}
-              href={expiringNextThreeMonthsHref(params.storeId, today)}
-            />
-            {/* id: inventory.expiring-stock.expiring-between — expiry thresholds
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.inventory.expiringStock.expiringThreeMonths
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-inventory.expiring-stock.expiring-three-months"
+                    label={t('label.batches-expiring-between-days')}
+                    value={num(
+                      stock.data()?.stockCounts.expiringInNextThreeMonths
+                    )}
+                    href={expiringNextThreeMonthsHref(params.storeId, today)}
+                  />
+                </Show>
+                {/* id: inventory.expiring-stock.expiring-between — expiry thresholds
                 gate (OMS-REG-DB-01.45). */}
-            <Show when={gates()?.expiringBetweenThresholdsStat && slots()}>
-              {s => (
-                <Statistic
-                  testId="dashboard-stat-inventory.expiring-stock.expiring-between"
-                  label={t('label.batches-expiring-in-days', {
-                    firstThreshold: s().firstExpiryDays,
-                    secondThreshold: s().secondExpiryDays,
-                  })}
-                  value={num(
-                    stock.data()?.stockCounts.expiringBetweenThresholds
+                <Show
+                  when={
+                    gates()?.expiringBetweenThresholdsStat &&
+                    shows(
+                      DASHBOARD_IDS.inventory.expiringStock.expiringBetween
+                    ) &&
+                    slots()
+                  }
+                >
+                  {s => (
+                    <Statistic
+                      testId="dashboard-stat-inventory.expiring-stock.expiring-between"
+                      label={t('label.batches-expiring-in-days', {
+                        firstThreshold: s().firstExpiryDays,
+                        secondThreshold: s().secondExpiryDays,
+                      })}
+                      value={num(
+                        stock.data()?.stockCounts.expiringBetweenThresholds
+                      )}
+                      href={expiringBetweenThresholdsHref(
+                        params.storeId,
+                        today,
+                        s().firstExpiryDays,
+                        s().secondExpiryDays
+                      )}
+                    />
                   )}
-                  href={expiringBetweenThresholdsHref(
-                    params.storeId,
-                    today,
-                    s().firstExpiryDays,
-                    s().secondExpiryDays
-                  )}
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.inventory.expiringStock.id}
                 />
-              )}
+              </StatsPanel>
             </Show>
-          </StatsPanel>
-          {/* id: inventory.stock-levels */}
-          <StatsPanel
-            title={t('heading.stock-levels')}
-            titleHref={itemCatalogueHref(params.storeId)}
-            icon={<StockIcon />}
-            state={items.state()}
-            testId="dashboard-panel-inventory.stock-levels"
-          >
-            {/* id: inventory.stock-levels.out-of-stock-recently-used —
+            {/* id: inventory.stock-levels */}
+            <Show when={shows(DASHBOARD_IDS.inventory.stockLevels.id)}>
+              <StatsPanel
+                title={t('heading.stock-levels')}
+                titleHref={itemCatalogueHref(params.storeId)}
+                icon={<StockIcon />}
+                state={items.state()}
+                testId="dashboard-panel-inventory.stock-levels"
+              >
+                {/* id: inventory.stock-levels.out-of-stock-recently-used —
                 consumption look-back gate (OMS-REG-DB-01.48). */}
-            <Show when={gates()?.outOfStockRecentlyUsedStat && slots()}>
-              {s => (
-                <Statistic
-                  testId="dashboard-stat-inventory.stock-levels.out-of-stock-recently-used"
-                  label={t('label.out-of-stock-recently-used', {
-                    num: s().consumptionLookbackMonths,
-                  })}
-                  value={num(
-                    items.data()?.itemCounts.itemCounts.outOfStockProducts
+                <Show
+                  when={
+                    gates()?.outOfStockRecentlyUsedStat &&
+                    shows(
+                      DASHBOARD_IDS.inventory.stockLevels.outOfStockRecentlyUsed
+                    ) &&
+                    slots()
+                  }
+                >
+                  {s => (
+                    <Statistic
+                      testId="dashboard-stat-inventory.stock-levels.out-of-stock-recently-used"
+                      label={t('label.out-of-stock-recently-used', {
+                        num: s().consumptionLookbackMonths,
+                      })}
+                      value={num(
+                        items.data()?.itemCounts.itemCounts.outOfStockProducts
+                      )}
+                      href={itemsOutOfStockRecentlyUsedHref(params.storeId)}
+                    />
                   )}
-                  href={itemsOutOfStockRecentlyUsedHref(params.storeId)}
-                />
-              )}
-            </Show>
-            {/* id: inventory.stock-levels.out-of-stock */}
-            <Statistic
-              testId="dashboard-stat-inventory.stock-levels.out-of-stock"
-              label={t('label.out-of-stock-all-items')}
-              value={num(items.data()?.itemCounts.itemCounts.noStock)}
-              href={itemsOutOfStockHref(params.storeId)}
-            />
-            {/* id: inventory.stock-levels.at-risk — low-stock-alert gate
+                </Show>
+                {/* id: inventory.stock-levels.out-of-stock */}
+                <Show
+                  when={shows(DASHBOARD_IDS.inventory.stockLevels.outOfStock)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-inventory.stock-levels.out-of-stock"
+                    label={t('label.out-of-stock-all-items')}
+                    value={num(items.data()?.itemCounts.itemCounts.noStock)}
+                    href={itemsOutOfStockHref(params.storeId)}
+                  />
+                </Show>
+                {/* id: inventory.stock-levels.at-risk — low-stock-alert gate
                 (OMS-REG-DB-01.51); the tooltip's months slot is the same
                 preference. */}
-            <Show when={gates()?.atRiskStat && slots()}>
-              {s => (
-                <Statistic
-                  testId="dashboard-stat-inventory.stock-levels.at-risk"
-                  label={t('label.products-at-risk-of-being-out-of-stock')}
-                  value={num(
-                    items.data()?.itemCounts.itemCounts
-                      .productsAtRiskOfBeingOutOfStock
+                <Show
+                  when={
+                    gates()?.atRiskStat &&
+                    shows(DASHBOARD_IDS.inventory.stockLevels.atRisk) &&
+                    slots()
+                  }
+                >
+                  {s => (
+                    <Statistic
+                      testId="dashboard-stat-inventory.stock-levels.at-risk"
+                      label={t('label.products-at-risk-of-being-out-of-stock')}
+                      value={num(
+                        items.data()?.itemCounts.itemCounts
+                          .productsAtRiskOfBeingOutOfStock
+                      )}
+                      href={itemsAtRiskHref(params.storeId)}
+                      info={t('messages.products-at-risk-of-stock-out-info', {
+                        num: s().lowStockAlertMonths,
+                      })}
+                    />
                   )}
-                  href={itemsAtRiskHref(params.storeId)}
-                  info={t('messages.products-at-risk-of-stock-out-info', {
-                    num: s().lowStockAlertMonths,
-                  })}
-                />
-              )}
-            </Show>
-            {/* id: inventory.stock-levels.low-stock */}
-            <Show when={slots()}>
-              {s => (
-                <Statistic
-                  testId="dashboard-stat-inventory.stock-levels.low-stock"
-                  label={tPlural(
-                    'label.low-stock-items',
-                    items.data()?.itemCounts.itemCounts.lowStock ?? 0,
-                    { num: s().understockMonths }
+                </Show>
+                {/* id: inventory.stock-levels.low-stock */}
+                <Show
+                  when={
+                    shows(DASHBOARD_IDS.inventory.stockLevels.lowStock) &&
+                    slots()
+                  }
+                >
+                  {s => (
+                    <Statistic
+                      testId="dashboard-stat-inventory.stock-levels.low-stock"
+                      label={tPlural(
+                        'label.low-stock-items',
+                        items.data()?.itemCounts.itemCounts.lowStock ?? 0,
+                        { num: s().understockMonths }
+                      )}
+                      value={num(items.data()?.itemCounts.itemCounts.lowStock)}
+                      href={itemsLowStockHref(
+                        params.storeId,
+                        s().understockMonths
+                      )}
+                    />
                   )}
-                  value={num(items.data()?.itemCounts.itemCounts.lowStock)}
-                  href={itemsLowStockHref(params.storeId, s().understockMonths)}
-                />
-              )}
-            </Show>
-            {/* id: inventory.stock-levels.overstocked — over-stock-alert gate
+                </Show>
+                {/* id: inventory.stock-levels.overstocked — over-stock-alert gate
                 (OMS-REG-DB-01.52: the threshold-0 degenerate count is never
                 displayed). Always plural (the one (s)-less label). */}
-            <Show when={gates()?.overstockedStat && slots()}>
-              {s => (
-                <Statistic
-                  testId="dashboard-stat-inventory.stock-levels.overstocked"
-                  label={t('label.overstocked-products', {
-                    num: s().overstockAlertMonths,
-                  })}
-                  value={num(
-                    items.data()?.itemCounts.itemCounts.productsOverstocked
+                <Show
+                  when={
+                    gates()?.overstockedStat &&
+                    shows(DASHBOARD_IDS.inventory.stockLevels.overstocked) &&
+                    slots()
+                  }
+                >
+                  {s => (
+                    <Statistic
+                      testId="dashboard-stat-inventory.stock-levels.overstocked"
+                      label={t('label.overstocked-products', {
+                        num: s().overstockAlertMonths,
+                      })}
+                      value={num(
+                        items.data()?.itemCounts.itemCounts.productsOverstocked
+                      )}
+                      href={itemsOverstockedHref(
+                        params.storeId,
+                        s().overstockAlertMonths
+                      )}
+                    />
                   )}
-                  href={itemsOverstockedHref(
-                    params.storeId,
-                    s().overstockAlertMonths
+                </Show>
+                {/* id: inventory.stock-levels.high-stock */}
+                <Show
+                  when={
+                    shows(DASHBOARD_IDS.inventory.stockLevels.highStock) &&
+                    slots()
+                  }
+                >
+                  {s => (
+                    <Statistic
+                      testId="dashboard-stat-inventory.stock-levels.high-stock"
+                      label={tPlural(
+                        'label.high-stock-items',
+                        items.data()?.itemCounts.itemCounts.highStock ?? 0,
+                        { num: s().overstockMonths }
+                      )}
+                      value={num(items.data()?.itemCounts.itemCounts.highStock)}
+                      href={itemsHighStockHref(
+                        params.storeId,
+                        s().overstockMonths
+                      )}
+                    />
                   )}
+                </Show>
+                {/* id: inventory.stock-levels.total-items */}
+                <Show
+                  when={shows(DASHBOARD_IDS.inventory.stockLevels.totalItems)}
+                >
+                  <Statistic
+                    testId="dashboard-stat-inventory.stock-levels.total-items"
+                    label={tPlural(
+                      'label.total-items',
+                      items.data()?.itemCounts.itemCounts.total ?? 0
+                    )}
+                    value={num(items.data()?.itemCounts.itemCounts.total)}
+                    href={itemCatalogueHref(params.storeId)}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.inventory.stockLevels.id}
                 />
-              )}
+              </StatsPanel>
             </Show>
-            {/* id: inventory.stock-levels.high-stock */}
-            <Show when={slots()}>
-              {s => (
-                <Statistic
-                  testId="dashboard-stat-inventory.stock-levels.high-stock"
-                  label={tPlural(
-                    'label.high-stock-items',
-                    items.data()?.itemCounts.itemCounts.highStock ?? 0,
-                    { num: s().overstockMonths }
-                  )}
-                  value={num(items.data()?.itemCounts.itemCounts.highStock)}
-                  href={itemsHighStockHref(params.storeId, s().overstockMonths)}
-                />
-              )}
-            </Show>
-            {/* id: inventory.stock-levels.total-items */}
-            <Statistic
-              testId="dashboard-stat-inventory.stock-levels.total-items"
-              label={tPlural(
-                'label.total-items',
-                items.data()?.itemCounts.itemCounts.total ?? 0
-              )}
-              value={num(items.data()?.itemCounts.itemCounts.total)}
-              href={itemCatalogueHref(params.storeId)}
+            <PluginRegion
+              slot="dashboard.panel"
+              container={DASHBOARD_IDS.inventory.id}
             />
-          </StatsPanel>
-        </DashboardCard>
+          </DashboardCard>
+        </Show>
+        {/* The card grid's own region: whole plugin widgets, last. */}
+        <PluginRegion slot="dashboard.widget" />
       </CardGrid>
 
       {/* The owning verticals' create flows, mounted lazily on first use. */}

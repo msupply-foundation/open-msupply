@@ -44,10 +44,18 @@ export default definePlugin({
     version: '1.0.0',
     pluginApiVersion: PLUGIN_API_VERSION,
   },
+  // Two catalogues, because one locale cannot prove anything: switching the
+  // app's language must re-render this plugin's text, and only a plugin sharing
+  // the host's ONE Solid instance can be re-rendered by the host's locale
+  // signal.
   translations: {
     en: {
       greeting: 'Hello from a plugin',
       clicks: 'Clicked {{count}} times',
+    },
+    fr: {
+      greeting: 'Bonjour depuis un plugin',
+      clicks: 'Cliqué {{count}} fois',
     },
   },
   contributions: [
