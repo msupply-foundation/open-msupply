@@ -29,6 +29,7 @@ export const OnHoldButtonComponent = memo(() => {
 
   return (
     <ToggleButton
+      data-testid="hold-toggle"
       disabled={isDisabled}
       value={onHold}
       selected={onHold}
