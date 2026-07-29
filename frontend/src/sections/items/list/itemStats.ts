@@ -3,25 +3,25 @@ import { t } from '../../../intl';
 
 // Pure display logic for item statistics (spec/items rules "item statistics",
 // ui-surface S1 columns + S2 statistics band). Colocated + pure so the
-// blank-at-zero-AMC rule and the doses gate are unit-tested
-// (OMS-REG-CAT-04.34/.35) without the screens.
+// zero-AMC rule and the doses gate are unit-tested (OMS-REG-CAT-04.34/.35)
+// without the screens. The two surfaces present a zero-AMC item differently —
+// the list cell dashes, the band shows 0.00 — so each has its own formatter.
 
 const EMPTY_CELL = '—';
 
-// Months of stock for the DETAIL STATS BAND: a fixed two decimals (AC-S2), so
-// the figure reads the same width every time in a band of headline numbers. The
-// wire value is null when AMC is 0 (the figure is undefined, not zero/∞) and
-// that absence renders as a dash — NEVER 0 (OMS-REG-CAT-04.34).
-// The list CELL is a different rule — see monthsOfStockCell below.
+// Months of stock for the DETAIL STATS BAND: a fixed two decimals, so the figure
+// reads the same width every time in a band of headline numbers. The wire value
+// is null when AMC is 0 (the figure is undefined, not zero/∞) and the band
+// renders that absence as 0.00, matching the reference app (ui-surface S2 §
+// statistics band). The LIST CELL renders the same absence as a dash and follows
+// the truncating numeric-cell rule instead — see monthsOfStockCell below.
 export const formatMonthsOfStock = (
   monthsOfStockOnHand: number | null | undefined
 ): string =>
-  monthsOfStockOnHand == null
-    ? EMPTY_CELL
-    : formatNumber(monthsOfStockOnHand, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+  formatNumber(monthsOfStockOnHand ?? 0, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 // A plain unit statistic (stock on hand, AMC), locale-formatted with thousands
 // separators. `decimals` lets AMC show two decimals while stock-on-hand rounds.
