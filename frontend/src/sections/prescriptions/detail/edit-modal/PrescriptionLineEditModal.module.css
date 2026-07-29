@@ -1,0 +1,23 @@
+/* The Batches trigger's collapsed-state allocation summary — muted and
+   regular-weight so the bold section label stays the row's anchor. */
+.batchSummary {
+  margin-inline-start: var(--space-2);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+}
+
+/* The stacked reporting banners (one Alert per reported category). */
+.warningStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* The quantity row's fields keep their compact width on wide dialogs — a
+   quantity never needs to hold more than a six-figure number — rather than
+   growing to FormRow's equal shares; the row still wraps intrinsically.
+   Two-class selector so this deterministically beats FormRow's own
+   single-class share rule (the SidePanel › Accordion convention). */
+.quantityRow > .quantityField {
+  flex: 0 1 var(--input-max-compact);
+}
