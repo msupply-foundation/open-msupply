@@ -1,4 +1,5 @@
 import {
+  children,
   createEffect,
   createMemo,
   createSignal,
@@ -477,6 +478,9 @@ export function DataTable<T, K extends string, G extends string = never>(
   // breaks that: the mapped array is only rebuilt when the caller's columns
   // actually change.
   const columnDefs = createMemo(() => props.columns.map(toColumnDef));
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const filters = children(() => props.filters);
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -812,8 +816,8 @@ export function DataTable<T, K extends string, G extends string = never>(
         {/* Filter bar slot — the page's <FilterBar>, living WITH the table
             (ui-standards § tables → filtering), not in the page header. Pure
             placement: filter state stays page-owned. */}
-        <Show when={props.filters}>
-          <div class={styles.toolbarFilters}>{props.filters}</div>
+        <Show when={filters()}>
+          <div class={styles.toolbarFilters}>{filters()}</div>
         </Show>
         {/* The control cluster — the toolbar's controls, held at the inline-end
             by its own auto margin. Wraps to its own line under the filters at
