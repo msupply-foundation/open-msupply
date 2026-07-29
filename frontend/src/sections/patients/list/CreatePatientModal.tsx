@@ -53,7 +53,7 @@ import {
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
-import { createCodeTakenProbe } from '../patientCode';
+import { createCodeTakenCheck } from '../patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
@@ -128,9 +128,10 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
   const [fetchOpen, setFetchOpen] = createSignal(false);
 
-  // Duplicate-code check (spec/patients § generating a code). No saved code to
-  // compare against while creating, so every non-empty code is checked.
-  const codeTaken = createCodeTakenProbe({
+  // Duplicate-code check (spec/patients § generating a code), run on the save
+  // attempt below. No saved code to compare against while creating, so every
+  // non-empty code is checked.
+  const codeCheck = createCodeTakenCheck({
     storeId: () => props.storeId,
     code: () => draft.code,
     savedCode: () => '',
@@ -140,7 +141,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   // Details-step validation (AC-C3): required errors stay quiet until the first
   // Save attempt, then surface per field and as the summary below the form.
   const validation = createFormValidation(() =>
-    patientFieldErrors(draft, codeTaken())
+    patientFieldErrors(draft, codeCheck.taken())
   );
 
   // Mint a fresh identifier + reset the flow each time the modal opens (AC-C5).
@@ -266,6 +267,12 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     if (!validation.valid()) return;
     setSaving(true);
     setSaveError('');
+    // The one rule that needs the server (DIS-02 `.57`) — a clash abandons the
+    // save with the error left on the Code field.
+    if (await codeCheck.check()) {
+      setSaving(false);
+      return;
+    }
     const outcome = await runInsertPatient(
       props.storeId,
       toInsertInput(patientId(), draft)

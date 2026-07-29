@@ -1,9 +1,9 @@
-import { createEffect, createSignal, onCleanup, type Accessor } from 'solid-js';
+import { createSignal, type Accessor } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
 // The resource file directly, not the domain/patient barrel: that barrel also
 // re-exports PatientSearch, and pulling a Solid component into this module puts
-// Kobalte's client-only code in the import graph of a node-environment unit test
-// (the ItemVariantEditModal → domain/name/nameResource precedent).
+// Kobalte's client-only code in the import graph of a node-environment unit
+// test (the ItemVariantEditModal → domain/name/nameResource precedent).
 import { searchLocalPatients } from '../../domain/patient/patientResource';
 import {
   AllocatePatientCodeNumber,
@@ -11,8 +11,8 @@ import {
 } from './allocatePatientCodeNumber.generated';
 
 // Generating a patient code (spec/patients § generating a code; contract ›
-// generating a code). The composed shape is the store name's first three letters
-// upper-cased + the next counter value padded to four digits — GEN0001.
+// generating a code). The composed shape is the store name's first three
+// letters upper-cased + the next counter value padded to four digits — GEN0001.
 //
 // The counter is server-side, per store, and CONSUMED by the allocate call: a
 // generated code the user then discards leaves a gap in the sequence. That is
@@ -105,12 +105,7 @@ export const generatePatientCode = async (
   return code;
 };
 
-// How long the field must settle before the duplicate check runs. Long enough
-// that typing a code doesn't fire a query per keystroke, short enough that the
-// answer is there before the user reaches Save.
-const PROBE_DELAY_MS = 400;
-
-export interface CodeProbeInput {
+export interface CodeCheckInput {
   storeId: Accessor<string>;
   /** The code as the form currently holds it. */
   code: Accessor<string>;
@@ -125,46 +120,63 @@ export interface CodeProbeInput {
   patientId: Accessor<string | undefined>;
 }
 
+export interface CodeTakenCheck {
+  /**
+   * Whether the code the field currently holds is KNOWN to be taken. False
+   * until a check has run and said so. Feed to `patientFieldErrors`.
+   */
+  taken: Accessor<boolean>;
+  /**
+   * Run the check and record the answer. Await from the save handler and
+   * abandon the save when it resolves true — `taken` is then reporting, so the
+   * field shows the error.
+   */
+  check: () => Promise<boolean>;
+}
+
 /**
  * Does another patient hold the code the form currently shows (DIS-02 `.57`)?
  *
- * A debounced signal, not a resource: this fetch is triggered by typing on an
- * ALREADY-OPEN screen, so it must never be able to suspend a boundary and tear
- * the live form down mid-edit (kdd/solid-reactivity-pitfalls › no remounts on
- * interaction). Feed the result to `patientFieldErrors`.
+ * Checked ON THE SAVE ATTEMPT, not while typing: the answer is only needed to
+ * decide whether the save may proceed, and a query per settled keystroke is a
+ * lot of traffic to answer a question nobody has asked yet. The server does not
+ * enforce this — it permits a shared code (spec/patients rules › identifier and
+ * code rules) — so the check has to happen client-side, and the save handler is
+ * the one place it must happen.
+ *
+ * A plain signal, never a resource: this fetch is triggered from a live form on
+ * an ALREADY-OPEN screen, so it must not be able to suspend a boundary and tear
+ * that form down mid-edit (kdd/solid-reactivity-pitfalls › no remounts on
+ * interaction).
  */
-export const createCodeTakenProbe = (
-  input: CodeProbeInput
-): Accessor<boolean> => {
+export const createCodeTakenCheck = (input: CodeCheckInput): CodeTakenCheck => {
   const [takenCode, setTakenCode] = createSignal<string>();
   let generation = 0;
 
-  createEffect(() => {
+  const check = async (): Promise<boolean> => {
     const storeId = input.storeId();
     const code = input.code().trim();
     const saved = input.savedCode().trim();
-    const patientId = input.patientId();
-    const probe = ++generation;
+    const attempt = ++generation;
 
     if (!storeId || !code || code === saved) {
       setTakenCode(undefined);
-      return;
+      return false;
     }
 
-    const timer = setTimeout(() => {
-      void isPatientCodeTaken(storeId, code, patientId).then(taken => {
-        // A newer probe has started since — its answer is the current one.
-        if (probe !== generation) return;
-        setTakenCode(taken ? code : undefined);
-      });
-    }, PROBE_DELAY_MS);
-    onCleanup(() => clearTimeout(timer));
-  });
-
-  // Report only while the field still holds the code the answer is about, so the
-  // error clears on the first keystroke rather than one debounce later.
-  return () => {
-    const taken = takenCode();
-    return taken !== undefined && taken === input.code().trim();
+    const taken = await isPatientCodeTaken(storeId, code, input.patientId());
+    // A later attempt has started since — its answer is the current one.
+    if (attempt !== generation) return taken;
+    setTakenCode(taken ? code : undefined);
+    return taken;
   };
+
+  // Report only while the field still holds the code the answer is about, so
+  // the error clears on the first keystroke rather than sitting there stale.
+  const taken = () => {
+    const answered = takenCode();
+    return answered !== undefined && answered === input.code().trim();
+  };
+
+  return { taken, check };
 };
