@@ -358,13 +358,8 @@ const PatientDetailView: Component = () => {
                       the whole cluster is read-only LabelledValues at the
                       inputs' `field` gap and small type scale, which is what
                       lets them line up with an editable field if one is ever
-                      added beside them. The default column template, so the
-                      three take a field-width track each and pack from the
-                      inline start — not a third of the strip apiece (which
-                      strands them far apart), and not content-width (which packs
-                      them so tightly that an empty Patient ID leaves the labels
-                      and values hard to pair up). */}
-                  <HeaderToolbar columns="content">
+                      added beside them. */}
+                  <HeaderToolbar>
                     <LabelledValue
                       label={t('label.patient-id')}
                       variant="field"

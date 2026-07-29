@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { AlertTriangleIcon } from '../../icons';
 import { hhmmToTime, timeToHhmm, type TimeValue } from './dateTimeConvert';
@@ -18,6 +18,13 @@ export interface TimeFieldProps {
   hourCycle?: 12 | 24;
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept outside the label element so it
+   * isn't part of the control's accessible name. Ignored under `hideLabel`.
+   * As TextField / FieldShell.
+   */
+  labelInfo?: JSX.Element;
 }
 
 /*
@@ -32,20 +39,12 @@ export interface TimeFieldProps {
  * emits null. (Kobalte carries the time as `{ hour, minute }`; we convert at the
  * edge.) The 12-/24-hour display follows the device locale.
  */
-export const TimeField = (props: TimeFieldProps) => (
-  <KTimeField
-    class={styles.field}
-    value={hhmmToTime(props.value)}
-    onChange={(t: TimeValue | null) => props.onChange?.(timeToHhmm(t))}
-    hourCycle={props.hourCycle}
-    validationState={props.error ? 'invalid' : 'valid'}
-    required={props.required}
-    disabled={props.disabled}
-    onKeyDown={(e: KeyboardEvent) => {
-      // Enter exits the field (the value already commits live per segment).
-      if (e.key === 'Enter' && e.target instanceof HTMLElement) e.target.blur();
-    }}
-  >
+export const TimeField = (props: TimeFieldProps) => {
+  // The label element itself (text + required asterisk). A local component so
+  // it renders fresh in either branch (bare, or beside labelInfo) — reusing
+  // one JSX node across both would try to mount it in two places. As
+  // TextField / FieldShell.
+  const Label = () => (
     <KTimeField.Label
       class={props.hideLabel ? styles.labelHidden : styles.label}
     >
@@ -56,25 +55,52 @@ export const TimeField = (props: TimeFieldProps) => (
         </span>
       </Show>
     </KTimeField.Label>
-    <div
-      class={styles.control}
-      data-error={props.error ? '' : undefined}
-      data-disabled={props.disabled ? '' : undefined}
+  );
+
+  return (
+    <KTimeField
+      class={styles.field}
+      value={hhmmToTime(props.value)}
+      onChange={(t: TimeValue | null) => props.onChange?.(timeToHhmm(t))}
+      hourCycle={props.hourCycle}
+      validationState={props.error ? 'invalid' : 'valid'}
+      required={props.required}
+      disabled={props.disabled}
+      onKeyDown={(e: KeyboardEvent) => {
+        // Enter exits the field (the value already commits live per segment).
+        if (e.key === 'Enter' && e.target instanceof HTMLElement)
+          e.target.blur();
+      }}
     >
-      <KTimeField.Input class={`${styles.timeSegs} ${styles.timeSolo}`}>
-        {segment => (
-          <KTimeField.Segment class={styles.timeSeg} segment={segment()} />
-        )}
-      </KTimeField.Input>
-    </div>
-    <Show when={props.helperText && !props.error}>
-      <KTimeField.Description class={styles.helper}>
-        {props.helperText}
-      </KTimeField.Description>
-    </Show>
-    <KTimeField.ErrorMessage class={styles.error}>
-      <AlertTriangleIcon class={styles.errorIcon} />
-      {props.error}
-    </KTimeField.ErrorMessage>
-  </KTimeField>
-);
+      <Show when={props.labelInfo && !props.hideLabel} fallback={<Label />}>
+        {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in it
+          its accessible name would leak into the control's (the
+          name-from-label computation concatenates descendant controls). */}
+        <span class={styles.labelRow}>
+          <Label />
+          {props.labelInfo}
+        </span>
+      </Show>
+      <div
+        class={styles.control}
+        data-error={props.error ? '' : undefined}
+        data-disabled={props.disabled ? '' : undefined}
+      >
+        <KTimeField.Input class={`${styles.timeSegs} ${styles.timeSolo}`}>
+          {segment => (
+            <KTimeField.Segment class={styles.timeSeg} segment={segment()} />
+          )}
+        </KTimeField.Input>
+      </div>
+      <Show when={props.helperText && !props.error}>
+        <KTimeField.Description class={styles.helper}>
+          {props.helperText}
+        </KTimeField.Description>
+      </Show>
+      <KTimeField.ErrorMessage class={styles.error}>
+        <AlertTriangleIcon class={styles.errorIcon} />
+        {props.error}
+      </KTimeField.ErrorMessage>
+    </KTimeField>
+  );
+};

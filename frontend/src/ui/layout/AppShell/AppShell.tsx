@@ -181,7 +181,7 @@ export const AppShell = (props: AppShellProps) => {
               lower={menuLower()}
               selectedId={props.selected.id}
               // The Sync entry opens the modal in place — never navigates
-              // (spec/chrome AC-CH8). Chrome behaviour, so it applies only
+              // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it applies only
               // when the host wired onSyncOpen: one that didn't (the showcase)
               // may use the same id as an ordinary destination.
               onSelect={leaf => {

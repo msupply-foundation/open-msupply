@@ -29,6 +29,13 @@
   max-width: 100%;
 }
 
+/* Label + its labelInfo affordance on one line (only rendered when there IS a
+   labelInfo — as TextField.module.css). */
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
 .label {
   /* Shared field-label token — see --field-label-* in tokens.css. */
   font-size: var(--field-label-font-size);
