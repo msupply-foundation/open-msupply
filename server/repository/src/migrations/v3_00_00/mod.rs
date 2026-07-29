@@ -31,6 +31,7 @@ mod create_site_table;
 mod migrate_user_permission_to_deterministic_id;
 mod partition_changelog_by_cursor;
 mod populate_changelog_with_rows_for_sync_v7_tables;
+mod populate_missing_changelog_for_form_schema;
 mod populate_routed_changelog_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
@@ -97,6 +98,7 @@ impl Migration for V3_00_00 {
             Box::new(add_site_is_multi_device_pg_enum::Migrate),
             Box::new(add_site_sync_metadata::Migrate),
             Box::new(add_sync_batch_size_key_value_store::Migrate),
+            Box::new(populate_missing_changelog_for_form_schema::Migrate),
         ]
     }
 }
