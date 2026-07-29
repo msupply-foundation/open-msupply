@@ -2,6 +2,7 @@ import {
   createMemo,
   createResource,
   createSignal,
+  For,
   Show,
   type Component,
 } from 'solid-js';
@@ -148,7 +149,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const itemSearch = createFocusTarget();
   // The prescribed-quantity field (.61): focused once an item is chosen (add
   // mode) and on opening an existing line, when the preference shows it.
-  const quantityFocus = createFocusTarget();
+  const prescribedQuantityFocus = createFocusTarget();
+  // Issue Quantity (.62): the focus if prescribed quantity is disabled
+  const issueQuantityFocus = createFocusTarget();
 
   const [lines, setLines] = createStore<DraftLine[]>([]);
   const [itemInfo, setItemInfo] = createSignal<ItemInfo>();
@@ -199,7 +202,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     // field. Armed here rather than gated on a load flag — Issue is inert
     // while the fetch is in flight, and the handle's frame runs after this
     // promise settles and Solid has re-rendered the enabled field.
-    issueField.focus();
+    
+    if (prefs().editPrescribedQuantity) {
+      prescribedQuantityFocus.focus();
+    } else {
+      issueQuantityFocus.focus();
+    }
     // A distribution still pending from the previous item must not land on
     // this one's freshly-seeded grid.
     allocate.cancel();
@@ -322,7 +330,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   // The collapsed Batches trigger's allocation summary (OMS-REG-DIS-03.57):
   // each drawn batch and its quantity, the unit named once at the end —
-  // `RS-A · 1,014, RS-B · 6 Tab` — folding to a count + total beyond three
+  // `RS-A · 1,014, RS-B · 6` — folding to a count + total beyond three
   // batches. Quantities display-rounded (allocation math carries float
   // noise). Hidden while expanded: the grid then shows the figures per row.
   const BatchSummary = () => {
@@ -340,12 +348,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         )} ${unitName()}`;
       const entries = batches.map(
         line =>
-          `${line.batch ?? t('label.no-batch')} · ${round(
+          `${line.batch ?? t('label.no-batch')} : ${round(
             line.numberOfPacks * line.packSize,
             2
           )}`
       );
-      return `${entries.join(', ')} ${unitName()}`;
+      return `${entries.join(', ')}`;
     };
     return (
       <Show when={!expanded() && drawn().length > 0}>
@@ -520,7 +528,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       initialFocus={
         isEdit
           ? prefs().editPrescribedQuantity
-            ? quantityFocus
+            ? prescribedQuantityFocus
             : undefined
           : itemSearch
       }
@@ -587,7 +595,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             setItemId(item.id);
             // The prescribed quantity is the first entry point once the item
             // is chosen (.61); the handle lands when the field mounts.
-            if (prefs().editPrescribedQuantity) quantityFocus.focus();
+            if (prefs().editPrescribedQuantity) prescribedQuantityFocus.focus();
           }}
         />
       </FieldRow>
@@ -603,7 +611,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               label={t('label.prescribed-quantity')}
               class={styles.quantityField}
               data-testid="prescribed-quantity-field"
-              ref={quantityFocus.ref}
+              ref={prescribedQuantityFocus.ref}
               value={prescribedQuantity()}
               min={0}
               decimalLimit={0}
@@ -614,7 +622,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             label={t('label.issue')}
             class={styles.quantityField}
             data-testid="issue-field"
-            ref={issueField.ref}
+            ref={issueQuantityFocus.ref}
             value={issueUnits()}
             min={0}
             decimalLimit={0}
@@ -676,14 +684,13 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             an adjusted manual entry (.19). */}
         <Show when={warnings().length > 0}>
           <div class={styles.warningStack}>
-            {warnings().map(message => (
+            <For each={warnings()}>{message => (
               <Alert severity="warning" testId={warningTestId(message)}>
                 {warningText(message)}
               </Alert>
-            ))}
+            )}</For>
           </div>
         </Show>
-
         <Show
           when={lines.length > 0}
           fallback={
