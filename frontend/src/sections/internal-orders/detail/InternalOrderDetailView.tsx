@@ -1103,7 +1103,7 @@ const InternalOrderDetailView: Component = () => {
                   empty={
                     canAddLines() ? (
                       <Button
-                        icon={<PlusCircleIcon />}
+                        variant="ghost"
                         data-testid="add-item-button"
                         onClick={() => setEditorLine({ mode: 'add' })}
                       >

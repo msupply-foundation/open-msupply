@@ -37,6 +37,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   numberOfMonthsThresholdToShowOverStockAlertsForProducts: 0,
   firstThresholdForExpiringItems: 0,
   secondThresholdForExpiringItems: 0,
+  warnWhenMissingRecentStocktake: { enabled: false, maxAge: 0, minItems: 0 },
   ...overrides,
 });
 
