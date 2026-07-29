@@ -32,11 +32,7 @@ import styles from './StatisticsShowcase.module.css';
 const ReplenishmentCard = () => (
   <DashboardCard
     title="Replenishment"
-    footer={
-      <Button variant="secondary" icon={<PlusCircleIcon />}>
-        New inbound shipment
-      </Button>
-    }
+    footer={<Button icon={<PlusCircleIcon />}>New inbound shipment</Button>}
   >
     <StatsPanel
       title="Inbound Shipments"
@@ -61,11 +57,7 @@ const ReplenishmentCard = () => (
 const DistributionCard = () => (
   <DashboardCard
     title="Distribution"
-    footer={
-      <Button variant="secondary" icon={<PlusCircleIcon />}>
-        New outbound shipment
-      </Button>
-    }
+    footer={<Button icon={<PlusCircleIcon />}>New outbound shipment</Button>}
   >
     <StatsPanel
       title="Outbound Shipments"
@@ -95,11 +87,7 @@ const DistributionCard = () => (
 const InventoryCard = () => (
   <DashboardCard
     title="Inventory Management"
-    footer={
-      <Button variant="secondary" icon={<PlusCircleIcon />}>
-        Order more
-      </Button>
-    }
+    footer={<Button icon={<PlusCircleIcon />}>Order more</Button>}
   >
     <StatsPanel
       title="Expiring stock"
