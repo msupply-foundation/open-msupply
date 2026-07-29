@@ -110,7 +110,7 @@
      sets the min-width floor) or a per-column `maxSize` both override it, so
      columns stay freely draggable wider and a column that opts into a tighter
      cap (Code, Comment) still wins. */
-  --table-cell-max-grow: 24rem;
+  --table-cell-max-grow: 36rem;
 }
 
 /* Column-header row stays pinned to the top of the scroll container while the
