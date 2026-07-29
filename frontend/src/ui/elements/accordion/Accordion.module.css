@@ -53,6 +53,21 @@
   border-radius: var(--radius-sm);
 }
 
+/* The trigger's label span absorbs the free width so the end-meta (when
+   present) and chevron pin to the trigger's end. */
+.label {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Muted end-of-trigger metadata (AccordionTrigger's `end` slot) — regular
+   weight so the bold trigger label stays the row's anchor. */
+.endMeta {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+}
+
 .chevron {
   flex-shrink: 0;
   color: var(--gray-dark);
