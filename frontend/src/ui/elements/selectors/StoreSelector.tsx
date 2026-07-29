@@ -119,6 +119,7 @@ export const StoreSelector = (props: {
       onKeyDown={handleKeyDown}
       onBeforeInput={handleBeforeInput}
     >
+      <h1 class={styles.title}>{t('heading.select-store')}</h1>
       <p class={styles.instructions}>
         {t('messages.select-store-instructions')}
       </p>
@@ -131,6 +132,7 @@ export const StoreSelector = (props: {
         value={query()}
         placeholder={t('placeholder.search-by-name-or-code')}
         onInput={e => setQuery(e.currentTarget.value)}
+        data-testid="store-selector-search"
       />
 
       <div class={styles.listPanel}>
