@@ -28,10 +28,14 @@ export type {
   PluginModule,
   PluginMessages,
   Contribution,
+  ContributionCore,
   AnyContribution,
+  PluginLocaleKey,
+  Anchor,
   SlotId,
   SlotPropsMap,
   SlotPlacement,
+  SlotRender,
   SlotContext,
   SlotStorePreferences,
   DashboardAnchor,
@@ -40,6 +44,18 @@ export type {
   DashboardPanelId,
   DashboardStatId,
   DashboardPieceId,
+} from './types';
+
+// ── Slot API — the internal-order line slots ────────────────────────────────
+export type {
+  InternalOrderLineView,
+  ColumnId,
+  ColumnAnchor,
+  ColumnValue,
+  ColumnCellProps,
+  ColumnDeclaration,
+  ColumnRender,
+  ColumnContribution,
 } from './types';
 
 // ── Intl ────────────────────────────────────────────────────────────────────

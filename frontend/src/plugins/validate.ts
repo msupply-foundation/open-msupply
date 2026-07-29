@@ -25,7 +25,15 @@ const SLOT_IDS: Record<SlotId, true> = {
   'dashboard.widget': true,
   'dashboard.panel': true,
   'dashboard.stat': true,
+  'internalOrderLine.column': true,
 };
+
+/**
+ * The slots whose contributions MAY render declaratively (a `value` function)
+ * instead of with a `Component` — the column slots (sdk-contract § the column
+ * slot). Everywhere else a `Component` is the only rendering there is.
+ */
+const VALUE_RENDERING_SLOTS: readonly string[] = ['internalOrderLine.column'];
 
 /** Every slot id the host recognises; anything else is refused. */
 export const KNOWN_SLOT_IDS = Object.keys(SLOT_IDS) as readonly SlotId[];
@@ -141,10 +149,19 @@ export const validateLoadedModule = (
           message: `contribution in slot "${slot}" has no id`,
         };
       }
-      if (typeof entry['Component'] !== 'function') {
+      // Something must render the contribution. A column slot accepts either
+      // form; every other slot has only `Component`, so a bundle offering a
+      // bare `value` there was built against a surface this host does not have.
+      const hasComponent = typeof entry['Component'] === 'function';
+      const hasValue =
+        VALUE_RENDERING_SLOTS.includes(slot) &&
+        typeof entry['value'] === 'function';
+      if (!hasComponent && !hasValue) {
         return {
           kind: 'refused',
-          message: `contribution "${slot}/${id}" has no Component function`,
+          message: VALUE_RENDERING_SLOTS.includes(slot)
+            ? `contribution "${slot}/${id}" has neither a Component nor a value function`
+            : `contribution "${slot}/${id}" has no Component function`,
         };
       }
       const key = `${slot}/${id}`;

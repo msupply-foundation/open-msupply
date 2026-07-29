@@ -6,7 +6,8 @@
   "omSupplyPlugin": {
     "target": "frontend",
     "types": [
-      "dashboard"
+      "dashboard",
+      "requestRequisitionLine"
     ]
   },
   "scripts": {

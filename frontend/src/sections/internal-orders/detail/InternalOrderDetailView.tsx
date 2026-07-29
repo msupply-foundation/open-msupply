@@ -1,8 +1,11 @@
 import {
+  createEffect,
+  createMemo,
   createResource,
   createSignal,
   Show,
   Suspense,
+  untrack,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
@@ -35,16 +38,24 @@ import {
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import {
+  contributionId,
+  visibleContributions,
+} from '../../../plugins/PluginSlot';
+import {
+  INTERNAL_ORDER_LINE_COLUMNS as COL,
+  mergeLineColumns,
+  type LineColumnBatch,
+} from './lineColumns';
+import { toLineView, lineMonthsOfStock } from './pluginViews';
 import {
   InternalOrderDetail,
   type InternalOrderInfoFragment,
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
-import {
-  StoreOwnName,
-  InternalOrderIndicators,
-} from './indicators.generated';
+import { StoreOwnName, InternalOrderIndicators } from './indicators.generated';
 import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
 import {
   saveInternalOrderFields,
@@ -80,6 +91,14 @@ import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 // § "Backend gaps"). It moves server-side once the PR lands.
 
 type Line = InternalOrderLineFragment;
+
+// One shared empty map, so the non-suspending batch read returns a STABLE value
+// while nothing is loaded — a fresh `new Map()` per read would make the columns
+// memo recompute on every unrelated update.
+const EMPTY_BATCH_DATA: ReadonlyMap<
+  string,
+  ReadonlyMap<string, unknown>
+> = new Map();
 
 // The client-side sort keys the read-only line table supports.
 type SortKey =
@@ -134,7 +153,11 @@ const InternalOrderDetailView: Component = () => {
     defaultConfig: {
       compact: {
         viewMode: 'card',
-        columnVisibility: { unitName: false, dps: false, targetStock: false },
+        columnVisibility: {
+          [COL.unit]: false,
+          [COL.dps]: false,
+          [COL.targetStock]: false,
+        },
       },
     },
   });
@@ -265,7 +288,8 @@ const InternalOrderDetailView: Component = () => {
     indicatorNodes().length > 0;
   const showCustomerBreakdown = () =>
     (storePrefs()?.useConsumptionAndStockFromCustomersForInternalOrders ??
-      false) && (storePrefs()?.extraFieldsInRequisition ?? false);
+      false) &&
+    (storePrefs()?.extraFieldsInRequisition ?? false);
 
   const editable = () => {
     const node = info();
@@ -334,9 +358,7 @@ const InternalOrderDetailView: Component = () => {
   // Header-level save (updateRequestRequisition), spliced back wholesale — the
   // response carries the refreshed node (with recalculated suggestions after a
   // threshold change), so no refetch is needed.
-  const saveField = async (
-    patch: Record<string, unknown>
-  ): Promise<void> => {
+  const saveField = async (patch: Record<string, unknown>): Promise<void> => {
     const node = info();
     if (!node) return;
     const result = await saveInternalOrderFields(params.storeId, {
@@ -365,10 +387,9 @@ const InternalOrderDetailView: Component = () => {
   const monthsThreshold = (node: InternalOrderInfoFragment) =>
     node.minMonthsOfStock > 0 ? node.minMonthsOfStock : node.maxMonthsOfStock;
 
-  const mos = (line: Line) =>
-    line.averageMonthlyConsumption > 0
-      ? line.availableStockOnHand / line.averageMonthlyConsumption
-      : 0;
+  // The one MOS formula, shared with the SDK line view (pluginViews) so the
+  // figure a plugin reads is the figure this column shows.
+  const mos = (line: Line) => lineMonthsOfStock(line);
   const targetStock = (line: Line) =>
     line.averageMonthlyConsumption * (info()?.maxMonthsOfStock ?? 0);
   const isExcess = (line: Line) =>
@@ -445,19 +466,19 @@ const InternalOrderDetailView: Component = () => {
     { label: String(node.requisitionNumber) },
   ];
 
-  const columns = (): Column<Line, SortKey>[] => [
+  const hostColumns = (): Column<Line, SortKey>[] => [
     {
-      c: { key: 'comment' },
+      c: { key: COL.comment },
       header: () => t('label.comment'),
       ...getCommentCell(),
     },
     {
-      c: { accessor: line => line.item.code, id: 'code' },
+      c: { accessor: line => line.item.code, id: COL.code },
       sortKey: 'code',
       header: () => t('label.code'),
     },
     {
-      c: { key: 'itemName' },
+      c: { key: COL.name },
       sortKey: 'name',
       header: () => t('label.name'),
       meta: { headerPosition: 'primary', wrapLines: 2 },
@@ -487,7 +508,7 @@ const InternalOrderDetailView: Component = () => {
       },
     },
     {
-      c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
+      c: { accessor: line => line.item.unitName ?? '', id: COL.unit },
       header: () => t('label.unit'),
     },
     // Doses per unit — gated on the vaccine-doses preference; a dash for
@@ -497,7 +518,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: line => (line.item.isVaccine ? line.item.doses : '-'),
-              id: 'dosesPerUnit',
+              id: COL.dosesPerUnit,
             },
             header: () => t('label.doses-per-unit'),
             ...getNumberCell(),
@@ -505,7 +526,7 @@ const InternalOrderDetailView: Component = () => {
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
-      c: { accessor: line => line.item.defaultPackSize, id: 'dps' },
+      c: { accessor: line => line.item.defaultPackSize, id: COL.dps },
       sortKey: 'dps',
       header: () => t('label.dps'),
       ...getNumberCell(),
@@ -513,7 +534,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: {
         accessor: line => numWithDoses(line, line.availableStockOnHand),
-        id: 'available',
+        id: COL.available,
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
@@ -524,14 +545,14 @@ const InternalOrderDetailView: Component = () => {
       c: {
         accessor: line =>
           numWithDoses(line, Math.ceil(line.averageMonthlyConsumption)),
-        id: 'amc',
+        id: COL.amc,
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
       ...getNumberCell(),
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: 'mos' },
+      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
       ...getNumberCell(),
@@ -539,7 +560,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: {
         accessor: line => numWithDoses(line, targetStock(line)),
-        id: 'targetStock',
+        id: COL.targetStock,
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
@@ -553,7 +574,7 @@ const InternalOrderDetailView: Component = () => {
             c: {
               accessor: line =>
                 numWithDoses(line, Math.ceil(line.forecastTotalUnits ?? 0)),
-              id: 'targetStockPopulation',
+              id: COL.targetStockPopulation,
             },
             header: () => t('label.target-stock-population'),
             ...getNumberCell(),
@@ -563,7 +584,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: {
         accessor: line => numWithDoses(line, line.suggestedQuantity),
-        id: 'suggested',
+        id: COL.suggested,
       },
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
@@ -576,7 +597,7 @@ const InternalOrderDetailView: Component = () => {
       // counterpart of the editor banner).
       c: {
         accessor: line => numWithDoses(line, line.requestedQuantity),
-        id: 'requested',
+        id: COL.requested,
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
@@ -608,7 +629,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: line => line.pricePerUnit ?? '',
-              id: 'pricePerUnit',
+              id: COL.pricePerUnit,
             },
             header: () => t('label.indicative-price-per-unit'),
             ...getCurrencyCell(),
@@ -617,7 +638,7 @@ const InternalOrderDetailView: Component = () => {
             c: {
               accessor: line =>
                 (line.pricePerUnit ?? 0) * line.requestedQuantity,
-              id: 'indicativePrice',
+              id: COL.indicativePrice,
             },
             header: () => t('label.indicative-price'),
             ...getCurrencyCell(),
@@ -629,42 +650,63 @@ const InternalOrderDetailView: Component = () => {
     ...(showExtended()
       ? ([
           {
-            c: { accessor: l => numWithDoses(l, l.initialStockOnHandUnits), id: 'initialSoh' },
+            c: {
+              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              id: COL.initialSoh,
+            },
             header: () => t('label.initial-stock-on-hand'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.incomingUnits), id: 'incoming' },
+            c: {
+              accessor: l => numWithDoses(l, l.incomingUnits),
+              id: COL.incoming,
+            },
             header: () => t('label.incoming'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.outgoingUnits), id: 'outgoing' },
+            c: {
+              accessor: l => numWithDoses(l, l.outgoingUnits),
+              id: COL.outgoing,
+            },
             header: () => t('label.outgoing'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.lossInUnits), id: 'losses' },
+            c: {
+              accessor: l => numWithDoses(l, l.lossInUnits),
+              id: COL.losses,
+            },
             header: () => t('label.losses'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.additionInUnits), id: 'additions' },
+            c: {
+              accessor: l => numWithDoses(l, l.additionInUnits),
+              id: COL.additions,
+            },
             header: () => t('label.additions'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
+            c: {
+              accessor: l => numWithDoses(l, l.expiringUnits),
+              id: COL.shortExpiry,
+            },
             header: () => t('label.short-expiry'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => Math.round(l.daysOutOfStock), id: 'daysOutOfStock' },
+            c: {
+              accessor: l => Math.round(l.daysOutOfStock),
+              id: COL.daysOutOfStock,
+            },
             header: () => t('label.days-out-of-stock'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
+            c: { accessor: l => l.reason?.reason ?? '', id: COL.reason },
             header: () => t('label.reason'),
             // A send's reasons backstop flags every offending line's Reason
             // cell (AC-R3): a red alert beside the (usually empty) reason text.
@@ -681,7 +723,9 @@ const InternalOrderDetailView: Component = () => {
                   <Show when={reasonFlaggedIds().has(line.id)}>
                     <AlertTriangleIcon
                       style={{ color: 'var(--error-main)' }}
-                      aria-label={t('error.reasons-not-provided-program-requisition')}
+                      aria-label={t(
+                        'error.reasons-not-provided-program-requisition'
+                      )}
                     />
                   </Show>
                   {line.reason?.reason ?? ''}
@@ -695,17 +739,127 @@ const InternalOrderDetailView: Component = () => {
     ...(showApproval()
       ? ([
           {
-            c: { accessor: l => Math.round(l.approvedQuantity), id: 'approvedPacks' },
+            c: {
+              accessor: l => Math.round(l.approvedQuantity),
+              id: COL.approvedPacks,
+            },
             header: () => t('label.approved-packs'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => l.approvalComment ?? '', id: 'approvalComment' },
+            c: {
+              accessor: l => l.approvalComment ?? '',
+              id: COL.approvalComment,
+            },
             header: () => t('label.approval-comment'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
   ];
+
+  // --- The plugin column region (ui-surface § S8) ---
+  //
+  // ONE memo per reactive step, and the contributions read inside it: the
+  // registry hands back a fresh array on every read, so reading it anywhere a
+  // `<For>` or the table could see it directly would churn the table on every
+  // unrelated update (kdd/solid-reactivity-pitfalls). `visibleContributions`
+  // also applies each contribution's `when` gate, so a contribution hidden by
+  // the session context never reaches the merge — and therefore never gets a
+  // loader run (AC-PLUG-K3).
+  const lineColumnContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.column')
+  );
+
+  // The lines a contributed column sees, as the SDK's published DTO.
+  const lineViews = createMemo(() => rows().map(toLineView));
+
+  // The batched per-page column data (AC-PLUG-K4): one loader call per
+  // contribution per rendered set of rows, never per cell. The resource key is
+  // the SERIALISED row-id list plus the contributing ids, so re-reading
+  // the same lines (a header save splicing the node back, a locale switch)
+  // does not refetch, while a filter/sort/refetch that changes it does.
+  const batchKey = () => {
+    const loaders = lineColumnContributions().filter(
+      contribution => contribution.loadData !== undefined
+    );
+    if (loaders.length === 0) return false;
+    return JSON.stringify({
+      rows: rows().map(line => line.id),
+      contributions: loaders.map(contributionId),
+    });
+  };
+
+  const [lineColumnData] = createResource(batchKey, async () => {
+    // The key drives the fetch; the inputs are read UNTRACKED so the fetcher
+    // never becomes a second, hidden dependency edge.
+    const { views, loaders } = untrack(() => ({
+      views: lineViews(),
+      loaders: lineColumnContributions().filter(
+        contribution => contribution.loadData !== undefined
+      ),
+    }));
+    const loaded = new Map<string, ReadonlyMap<string, unknown>>();
+    await Promise.all(
+      loaders.map(async contribution => {
+        try {
+          const entries = await contribution.loadData?.(views);
+          if (entries) loaded.set(contributionId(contribution), entries);
+        } catch (error) {
+          // One plugin's failed loader is that column's failure: it renders its
+          // empty state and every other column keeps working.
+          recordPluginDiagnostic({
+            level: 'error',
+            pluginCode: contribution.pluginCode,
+            message: `column "${contribution.id}" data loader failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+        }
+      })
+    );
+    return loaded;
+  });
+
+  // NON-suspending, `.state`-gated: the line editor is often open ABOVE this
+  // table, and a suspending read would remount the subtree and detach the open
+  // <dialog> from the top layer (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction). `.latest` alone is not safe — it suspends on the first
+  // pending read.
+  const lineColumnBatch = (): LineColumnBatch => ({
+    data:
+      lineColumnData.state === 'ready' || lineColumnData.state === 'refreshing'
+        ? (lineColumnData.latest ?? EMPTY_BATCH_DATA)
+        : EMPTY_BATCH_DATA,
+    loading: lineColumnData.loading,
+  });
+
+  const mergedColumns = createMemo(() =>
+    mergeLineColumns(
+      hostColumns(),
+      lineColumnContributions(),
+      toLineView,
+      lineColumnBatch()
+    )
+  );
+  const columns = () => mergedColumns().columns;
+
+  // Degradations are RECORDED here, not inside the merge: the merge runs in a
+  // memo, and recording is a write. Deduped per page instance so a re-merge (a
+  // preference gate resolving, the batch landing) cannot spam the same broken
+  // anchor.
+  const reportedDiagnostics = new Set<string>();
+  createEffect(() => {
+    for (const diagnostic of mergedColumns().diagnostics) {
+      const key = `${diagnostic.contributionId}:${diagnostic.message}`;
+      if (reportedDiagnostics.has(key)) continue;
+      reportedDiagnostics.add(key);
+      recordPluginDiagnostic({
+        level: 'warning',
+        pluginCode: diagnostic.contributionId.split('.')[0],
+        message: `internalOrderLine.column: ${diagnostic.contributionId} — ${diagnostic.message}`,
+      });
+    }
+  });
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -753,10 +907,9 @@ const InternalOrderDetailView: Component = () => {
                 edit={edit}
                 onSaveField={patch => void saveField(patch)}
                 onDeleted={() =>
-                  navigate(
-                    `/${params.storeId}/replenishment/internal-order`,
-                    { replace: true }
-                  )
+                  navigate(`/${params.storeId}/replenishment/internal-order`, {
+                    replace: true,
+                  })
                 }
               />
             }

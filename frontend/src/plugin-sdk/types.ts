@@ -52,20 +52,42 @@ export interface SlotContext {
 // ── Contributions ───────────────────────────────────────────────────────────
 
 /**
- * The uniform shape every slot takes. `P` is the slot's prop DTO
- * (`SlotPropsMap`); a contribution hidden by `when` renders nothing and runs no
- * data fetch.
+ * What every contribution carries, whatever its slot — identity, tie-break, and
+ * the visibility gate. A contribution hidden by `when` renders nothing and runs
+ * no data fetch.
  */
-export interface Contribution<P extends Record<string, unknown>> {
+export interface ContributionCore {
   /** Unique within (plugin code, slot). */
   id: string;
   /** Tie-break among contributions sharing a placement. */
   order?: number;
   /** Visibility gate over the session context. */
   when?: (ctx: SlotContext) => boolean;
+}
+
+/**
+ * The uniform shape every slot takes. `P` is the slot's prop DTO
+ * (`SlotPropsMap`).
+ *
+ * A few slots accept a declarative alternative to `Component` (the
+ * column slot's `value`), so the per-slot render fields live in
+ * `SlotRender` and this type is the common case — the one an author reads
+ * to learn the shape.
+ */
+export interface Contribution<
+  P extends Record<string, unknown>,
+> extends ContributionCore {
   /** An ordinary Solid component receiving the slot's props. */
   Component: Component<P>;
 }
+
+/**
+ * A key in the PLUGIN's own message catalogue — never a host key. The host
+ * resolves it under the plugin's namespace at render, so the same key can exist
+ * in two plugins and in the host without colliding
+ * (sdk-contract § internationalisation).
+ */
+export type PluginLocaleKey = string;
 
 // ── The dashboard slots ─────────────────────────────────────────────────────
 // The proof surface for v1 (spec/dashboard/ui-surface.md § S3): three sibling
@@ -80,9 +102,16 @@ export type DashboardStatId = string;
 export type DashboardPieceId =
   DashboardWidgetId | DashboardPanelId | DashboardStatId;
 
-/** Where a contribution sits among its siblings; defaults to the container end. */
-export type DashboardAnchor<Id extends string> =
+/**
+ * Where a contribution sits among the host's published ids; defaults to the
+ * container end. ONE shape for every anchored surface — dashboard
+ * regions, table columns — so an author learns placement once.
+ */
+export type Anchor<Id extends string> =
   { after: Id } | { before: Id } | { end: true };
+
+/** The dashboard's anchor (a published widget / panel / stat id). */
+export type DashboardAnchor<Id extends string> = Anchor<Id>;
 
 /*
  * Dashboard slot props are deliberately empty (sdk-contract § slot props —
@@ -93,6 +122,119 @@ export type DashboardAnchor<Id extends string> =
  */
 export type DashboardSlotProps = Record<string, never>;
 
+// ── The internal-order line slots ───────────────────────────────────────────
+// The line table of an internal order (a request requisition) publishes a
+// stable id per column, and a plugin adds columns anchored to them.
+// `internalOrderLine.infoPanel` joins these as the line editor's surface lands.
+// NOT `requisitionLine.*`: a customer requisition is a different screen with a
+// different DTO, and gets its own slot ids.
+
+/**
+ * One internal-order line, as the SDK publishes it — an SDK-OWNED view DTO,
+ * mapped from host data at the slot boundary (sdk-contract § SDK surface), so
+ * the plugin surface does not move when the host's query does. Read-only:
+ * quantities are in the line's own UNITS, exactly as stored, and formatting is
+ * the plugin's (through the SDK's `formatNumber`).
+ *
+ * Additive-only within a `PLUGIN_API_VERSION` major.
+ */
+export interface InternalOrderLineView {
+  /** The line's id — the key `loadData` returns its entries under. */
+  readonly id: string;
+  readonly itemId: string;
+  readonly itemCode: string;
+  readonly itemName: string;
+  /** The item's unit name; absent when the item names none. */
+  readonly unitName: string | undefined;
+  readonly defaultPackSize: number;
+  readonly isVaccine: boolean;
+  /** Doses per unit; 0 on an item that declares none. */
+  readonly dosesPerUnit: number;
+  readonly comment: string | undefined;
+  readonly requestedQuantity: number;
+  readonly suggestedQuantity: number;
+  readonly availableStockOnHand: number;
+  readonly averageMonthlyConsumption: number;
+  /** Available stock ÷ AMC; 0 when the line has no consumption. */
+  readonly monthsOfStock: number;
+  readonly initialStockOnHandUnits: number;
+  readonly incomingUnits: number;
+  readonly outgoingUnits: number;
+  readonly lossInUnits: number;
+  readonly additionInUnits: number;
+  readonly expiringUnits: number;
+  readonly daysOutOfStock: number;
+  /** The variance reason recorded on the line, where it carries one. */
+  readonly reason: string | undefined;
+}
+
+/** A published host column id — the anchor target (`HostColumnId`). */
+export type ColumnId = string;
+
+/** Where a contributed column sits; absent means the table's end. */
+export type ColumnAnchor = Anchor<ColumnId>;
+
+/** What a `value` column may return; `undefined`/`null` render blank. */
+export type ColumnValue = string | number | null | undefined;
+
+/**
+ * The props a column contribution's `Component` receives — one cell.
+ *
+ * `Row` is the table's view DTO; `Data` is this row's entry from `loadData`,
+ * `undefined` while the batch is in flight or when the loader returned no entry
+ * for the row.
+ */
+export type ColumnCellProps<Row, Data = unknown> = {
+  readonly row: Row;
+  readonly data: Data | undefined;
+  /** True while the page's `loadData` batch is in flight. */
+  readonly isLoading: boolean;
+};
+
+/**
+ * The column fields beyond the uniform core: where the column goes, how it
+ * presents, and how it gets its data.
+ */
+export interface ColumnDeclaration<Row, Data = unknown> {
+  /** Header text, as a key in the plugin's catalogue — never a literal. */
+  header: PluginLocaleKey;
+  /** Optional header explanation, as a key in the plugin's catalogue. */
+  description?: PluginLocaleKey;
+  anchor?: ColumnAnchor;
+  /** Logical, so RTL-safe; `'end'` for numeric columns. */
+  align?: 'start' | 'end';
+  /** A resting width in `rem` or `px` (e.g. `'8rem'`); else the host default. */
+  width?: string;
+  /**
+   * A batched side-fetch, run ONCE per rendered page of rows (and on refetch),
+   * outside component render, keyed by `InternalOrderLineView.id`. It MUST
+   * tolerate any subset and order of rows. Cells read their value
+   * synchronously from `data`; a contribution hidden by `when` never runs it.
+   */
+  loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
+}
+
+/**
+ * How a column produces its cells — one of two, never both:
+ *
+ * - `value` — the declarative form: return the cell's value and the host
+ *   renders it as one of its own number/text cells (locale-formatted,
+ *   aligned per `align`). What a computed numeric column needs.
+ * - `Component` — an ordinary Solid component per cell, for a column that needs
+ *   markup (a link, a badge, a loading treatment of its own).
+ */
+export type ColumnRender<Row, Data = unknown> =
+  | { value: (row: Row, data?: Data) => ColumnValue; Component?: never }
+  | { Component: Component<ColumnCellProps<Row, Data>>; value?: never };
+
+/**
+ * A contribution to a line-table column slot — the uniform core plus the column
+ * declaration plus one of the two render forms.
+ */
+export type ColumnContribution<Row, Data = unknown> = ContributionCore &
+  ColumnDeclaration<Row, Data> &
+  ColumnRender<Row, Data>;
+
 // ── The slot catalogue ──────────────────────────────────────────────────────
 
 /** Every slot id, and the props its contributions receive. */
@@ -100,14 +242,25 @@ export interface SlotPropsMap {
   'dashboard.widget': DashboardSlotProps;
   'dashboard.panel': DashboardSlotProps;
   'dashboard.stat': DashboardSlotProps;
+  'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
 }
 
 export type SlotId = keyof SlotPropsMap;
 
 /**
- * The per-slot placement fields — what a contribution must say about WHERE it
- * goes. A panel names the widget it joins and a stat names the panel; both
- * accept a built-in id or another plugin piece's id, so nesting is uniform.
+ * The dashboard's slot ids — the three whose contributions are a PROPS-LESS
+ * `Component`, and so are exactly what the shared props-less outlet renders. A
+ * slot carrying props (the column slot) has its own host surface.
+ */
+export type DashboardSlotId =
+  'dashboard.widget' | 'dashboard.panel' | 'dashboard.stat';
+
+/**
+ * The per-slot DECLARATION fields — everything a contribution says beyond the
+ * uniform core and its rendering: above all WHERE it goes. A panel names the
+ * widget it joins and a stat names the panel; both accept a built-in id or
+ * another plugin piece's id, so nesting is uniform. A column names the header
+ * and data facts its slot needs alongside its anchor.
  */
 export interface SlotPlacement {
   'dashboard.widget': { anchor?: DashboardAnchor<DashboardWidgetId> };
@@ -119,16 +272,32 @@ export interface SlotPlacement {
     panel: DashboardPanelId;
     anchor?: DashboardAnchor<DashboardStatId>;
   };
+  'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
+}
+
+/**
+ * The per-slot RENDER fields — how a contribution produces its output. Every
+ * slot takes a `Component` over its props; the column slot additionally accepts
+ * the declarative `value` form, and then `Component` is not given at all
+ * (sdk-contract § the column slot).
+ */
+export interface SlotRender {
+  'dashboard.widget': { Component: Component<DashboardSlotProps> };
+  'dashboard.panel': { Component: Component<DashboardSlotProps> };
+  'dashboard.stat': { Component: Component<DashboardSlotProps> };
+  'internalOrderLine.column': ColumnRender<InternalOrderLineView>;
 }
 
 /**
  * One flat discriminated array element: `slot` is the discriminant, so
- * narrowing on it gives the right props and the right placement fields, and a
- * plugin declares all its contributions in ONE array (sdk-contract §
- * contributions).
+ * narrowing on it gives the right props, the right declaration fields, and the
+ * right render form, and a plugin declares all its contributions in ONE array
+ * (sdk-contract § contributions).
  */
 export type AnyContribution = {
-  [S in SlotId]: { slot: S } & Contribution<SlotPropsMap[S]> & SlotPlacement[S];
+  [S in SlotId]: { slot: S } & ContributionCore &
+    SlotPlacement[S] &
+    SlotRender[S];
 }[SlotId];
 
 // ── The plugin module ───────────────────────────────────────────────────────

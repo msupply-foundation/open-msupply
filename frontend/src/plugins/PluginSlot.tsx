@@ -1,5 +1,5 @@
 import { createMemo, type JSX } from 'solid-js';
-import type { SlotId } from '../plugin-sdk/types';
+import type { DashboardSlotId, SlotId } from '../plugin-sdk/types';
 import { t } from '../intl';
 import { PluginRegionOutlet } from '../ui/elements/plugins/PluginRegionOutlet';
 import { contributionsFor, type RegisteredContribution } from './registry';
@@ -67,9 +67,7 @@ export const contributionId = (contribution: {
  * three regions — that region owns the merge instead and composes
  * `visibleContributions` itself.
  */
-export const PluginSlot = <S extends SlotId>(props: {
-  slot: S;
-}): JSX.Element => {
+export const PluginSlot = (props: { slot: DashboardSlotId }): JSX.Element => {
   const rendered = createMemo(() =>
     visibleContributions(props.slot).map(contribution => ({
       id: contributionId(contribution),

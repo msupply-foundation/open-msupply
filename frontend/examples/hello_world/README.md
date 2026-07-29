@@ -18,7 +18,10 @@ satisfies is [`spec/plugins/sdk-contract.md`](../../spec/plugins/sdk-contract.md
 {
   "name": "hello_world",
   "version": "1.0.0",
-  "omSupplyPlugin": { "target": "frontend", "types": ["dashboard"] },
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": ["dashboard", "requestRequisitionLine"]
+  },
   "scripts": { "build-plugin": "vite build" }
 }
 ```
@@ -67,6 +70,23 @@ export default definePlugin({
   systems and date order follow the app's locale.
 - **A contribution that throws is contained** to its own slot. `?pluginBoom`
   turns this plugin's throwing stat on, so you can see it happen.
+
+### Columns
+
+This plugin also contributes three columns to the internal-order line table
+(`internalOrderLine.column`), one per thing that slot has to prove — open any
+internal order's detail screen to see them:
+
+| Contribution | What it shows                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `totalStock` | the **declarative** form: a `value` function plus `anchor: { after: 'amc' }` is the whole column. The host renders it through its own number cell, so the figure is locale-formatted, `align: 'end'`-aligned, and hideable in column settings exactly like a host column |
+| `arrivals`   | the **batched** form: `loadData` is called once per rendered page of rows (never per cell) and the cell component shows its own loading state while the batch is in flight |
+| `orphan`     | the **degradation**, behind `?pluginBadAnchor`: an anchor naming a column that does not exist puts the column at the table's end and says so in diagnostics                |
+
+Anchor by a **published column id** — the frozen set is
+[`spec/internal-orders/ui-surface.md` § S8](../../spec/internal-orders/ui-surface.md#s8--plugin-slot-regions).
+A column's stored identity is `<pluginCode>.<contributionId>`, so two plugins can
+both contribute a `total` and each keeps its own persisted show/hide state.
 
 ## Data
 
