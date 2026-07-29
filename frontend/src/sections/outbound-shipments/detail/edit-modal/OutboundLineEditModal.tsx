@@ -1,6 +1,7 @@
 import {
   createMemo,
   createSignal,
+  For,
   onCleanup,
   onMount,
   Show,
@@ -31,11 +32,13 @@ import {
   getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { CheckIcon } from '../../../../ui/icons';
+import { CheckIcon, InfoIcon } from '../../../../ui/icons';
 import {
   DraftStockOutLines,
+  ItemVariants,
   SaveOutboundItemLines,
   type DraftStockOutLinesResult,
+  type ItemVariantsResult,
 } from './outboundLineEdit.generated';
 import { ItemSearch } from '../../../../domain/item';
 import { VvmStatusSelect, type VvmStatus } from '@/domain/vvmStatus';
@@ -83,6 +86,64 @@ import { issueWarningMessages } from './allocationWarnings';
 
 type DraftLine =
   DraftStockOutLinesResult['draftStockOutLines']['draftLines'][number];
+
+type ItemVariant =
+  ItemVariantsResult['items']['nodes'][number]['variants'][number];
+
+// The variant-info popover's body (spec S4 § batch grid): the item's variants
+// as a compact read-only table — name · manufacturer · VVM type (vaccine
+// items) — with the batch's own variant marked. The old app reuses its
+// variant SELECTOR disabled; this is the same information as a plain table.
+const VariantInfoTable = (props: {
+  variants: ItemVariant[];
+  selectedId: string;
+  isVaccine: boolean;
+}): JSX.Element => (
+  <Show
+    when={props.variants.length > 0}
+    fallback={<p>{t('messages.no-item-variants')}</p>}
+  >
+    <table class={styles.variantTable}>
+      <thead>
+        <tr>
+          <th />
+          <th>{t('label.name')}</th>
+          <th>{t('label.manufacturer')}</th>
+          <Show when={props.isVaccine}>
+            <th>{t('label.vvm-type')}</th>
+          </Show>
+        </tr>
+      </thead>
+      <tbody>
+        <For each={props.variants}>
+          {variant => {
+            const selected = variant.id === props.selectedId;
+            return (
+              <tr aria-current={selected ? 'true' : undefined}>
+                <td class={styles.variantMarker}>
+                  <Show when={selected}>
+                    <span
+                      role="img"
+                      aria-label={t('label.selected')}
+                      title={t('label.selected')}
+                    >
+                      <CheckIcon />
+                    </span>
+                  </Show>
+                </td>
+                <td>{variant.name}</td>
+                <td>{variant.manufacturer?.name ?? ''}</td>
+                <Show when={props.isVaccine}>
+                  <td>{variant.vvmType ?? ''}</td>
+                </Show>
+              </tr>
+            );
+          }}
+        </For>
+      </tbody>
+    </table>
+  </Show>
+);
 
 export type LineEditItem = {
   id: string;
@@ -206,6 +267,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const issueField = createFocusTarget();
 
   const [draft, setDraft] = createStore<DraftLine[]>([]);
+  // The item's variants — fetched by seedItem only when a draft line carries
+  // an itemVariantId (the batch column's variant-info popover, spec S4 §
+  // batch grid); empty for the common variant-less item.
+  const [variants, setVariants] = createSignal<ItemVariant[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
   const [issueValue, setIssueValue] = createSignal<number | undefined>();
   const [allocateIn, setAllocateIn] = createSignal<AllocateUnit>({
@@ -294,6 +359,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       0
     );
     setIssueValue(seededIssuedUnits + placeholder);
+    // The variant-info popover's data — only when some batch actually carries
+    // a variant (most items have none; no read for them). Same sequential
+    // imperative style as the draft fetch above.
+    setVariants([]);
+    if (sorted.some(line => line.itemVariantId)) {
+      const variantsResult = await graphqlFetch(ItemVariants, {
+        storeId: props.storeId,
+        itemId: picked.id,
+      });
+      if (variantsResult.kind === 'success')
+        setVariants(variantsResult.data.items.nodes[0]?.variants ?? []);
+    }
     // Land ready to type. Update mode: the clicked batch's packs input (draft
     // rows from existing lines keep the invoice-line id), or the first row on
     // an advance. A clicked PLACEHOLDER has no batch row of its own, and an
@@ -726,7 +803,33 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
-      cell: info => info.getValue<string | null>() ?? '—',
+      // A batch backed by an ITEM VARIANT carries an info marker beside its
+      // name — click reveals the item's variants with this batch's marked
+      // (spec S4 § batch grid), matching the old app's variant-info icon.
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <span class={styles.batchCell}>
+            {line.batch ?? '—'}
+            <Show when={line.itemVariantId}>
+              {variantId => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={t('label.item-variant')}
+                  triggerClass={styles.variantInfoTrigger}
+                  class={styles.variantPanel}
+                >
+                  <VariantInfoTable
+                    variants={variants()}
+                    selectedId={variantId()}
+                    isVaccine={!!item()?.isVaccine}
+                  />
+                </Popover>
+              )}
+            </Show>
+          </span>
+        );
+      },
     },
     {
       c: { key: 'expiryDate' },

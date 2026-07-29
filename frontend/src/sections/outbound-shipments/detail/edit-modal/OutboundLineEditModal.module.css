@@ -43,3 +43,49 @@
   flex: 1;
   min-block-size: 16rem;
 }
+
+/* The batch cell: batch name + (when the row carries an item variant) the
+   variant-info trigger beside it (spec S4 § batch grid). */
+.batchCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.variantInfoTrigger {
+  color: var(--gray-main);
+  font-size: 1rem;
+}
+
+.variantInfoTrigger:hover {
+  color: var(--primary-main);
+}
+
+/* The variant-info popover: the item's variants as a compact read-only table,
+   this batch's row marked. Wider than the popover default — three text
+   columns. */
+.variantPanel {
+  max-width: 40rem;
+}
+
+.variantTable {
+  border-collapse: collapse;
+  inline-size: 100%;
+}
+
+.variantTable th {
+  text-align: start;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+}
+
+.variantTable td {
+  padding: var(--space-1) var(--space-3);
+  border-block-start: 1px solid var(--color-border-value);
+}
+
+/* The marker column hugs its check. */
+.variantMarker {
+  inline-size: 1.5rem;
+  color: var(--primary-main);
+}
