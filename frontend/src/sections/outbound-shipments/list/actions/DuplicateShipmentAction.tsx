@@ -17,11 +17,11 @@ export interface DuplicateShipmentActionProps {
   customerName: () => string;
 }
 
-// "Make a copy" (rules.md § duplication, AC-X1/X2): any shipment — SHIPPED
+// "Make a copy" (rules.md § duplication, OMS-REG-DIST-02.28/X2): any shipment — SHIPPED
 // included — copies into a fresh NEW one whose stock lines became placeholders.
 // Offered for a single selection (list footer) and as a record action (detail
 // side panel). Confirm → duplicate → navigate to the copy. A typed rejection
-// (AC-X2's inactive customer, or any other) keeps the dialog open with the
+// (OMS-REG-DIST-02.29's inactive customer, or any other) keeps the dialog open with the
 // server's description inline — the confirmation is one of this vertical's
 // dialog-surfaced actions (ui-surface S6), so its failure belongs there too,
 // not the global unexpected-error modal (controls › action feedback, S6
@@ -66,7 +66,7 @@ export const DuplicateShipmentAction: Component<
     if (result.kind !== 'success') return close();
     const response = result.data.duplicateOutboundShipment;
     if (response.__typename !== 'DuplicateOutboundShipmentNode') {
-      // A typed rejection (e.g. AC-X2's inactive customer) — keep the dialog
+      // A typed rejection (e.g. OMS-REG-DIST-02.29's inactive customer) — keep the dialog
       // open with the server's description inline, rather than promoting it
       // to the global unexpected-error/reload modal.
       setErrorMessage(response.error.description);

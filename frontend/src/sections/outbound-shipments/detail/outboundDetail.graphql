@@ -185,7 +185,7 @@ query outboundLines(
 # Header / status / hold / transport / pricing updates. Returns the entity
 # only (no lines — the view refetches the lines page after a status change,
 # which can trim zero-quantity rows server-side). Typed errors are selected so
-# status-change rejections translate (AC-S1, AC-H1, AC-T1, AC-P3 — the
+# status-change rejections translate (OMS-REG-DIST-04.13, OMS-REG-DIST-02.10, OMS-REG-DIST-02.22, OMS-REG-DIST-03.9 — the
 # unallocated-lines member carries the offending lines).
 mutation updateOutboundShipment(
   $storeId: String!
@@ -233,7 +233,7 @@ mutation updateOutboundShipment(
   }
 }
 
-# Change the customer (AC-N1): the response is the NEW identity (fresh id, same
+# Change the customer (OMS-REG-DIST-02.20): the response is the NEW identity (fresh id, same
 # number) — the caller renavigates to it; the old id stops resolving.
 mutation updateOutboundShipmentName(
   $storeId: String!
@@ -253,7 +253,7 @@ mutation updateOutboundShipmentName(
   }
 }
 
-# Delete the shipment from its detail (AC-D1/D2).
+# Delete the shipment from its detail (OMS-REG-DIST-01.7/D2).
 mutation deleteOutboundShipment($storeId: String!, $id: String!) {
   deleteOutboundShipment(storeId: $storeId, id: $id) {
     __typename
@@ -384,7 +384,7 @@ mutation updateOutboundUnallocatedLine(
   }
 }
 
-# Add every stock item of a master list as zero-quantity placeholders (AC-P5).
+# Add every stock item of a master list as zero-quantity placeholders (OMS-REG-DIST-03.10).
 mutation addToOutboundFromMasterList(
   $storeId: String!
   $shipmentId: String!
@@ -424,7 +424,7 @@ query customerMasterLists($storeId: String!, $customerNameId: String!) {
   }
 }
 
-# Stocktake-conflict check for backdating (AC-B4): any stocktake counted on or
+# Stocktake-conflict check for backdating (OMS-REG-DIST-04.27): any stocktake counted on or
 # after the chosen backdated date — its reissued lines would predate stock
 # counts already on record. (The old client's named outboundStocktakeCountAfterDate
 # query is absent on this server; this is the SAME stocktakes date filter that
@@ -442,7 +442,7 @@ query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {
   }
 }
 
-# The Log tab (AC-S7): the shipment's activity history.
+# The Log tab (OMS-REG-DIST-02.30): the shipment's activity history.
 query outboundActivityLogs($storeId: String!, $recordId: String!) {
   activityLogs(
     storeId: $storeId

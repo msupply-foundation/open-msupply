@@ -14,7 +14,7 @@ export interface DeleteShipmentActionProps {
   disabled: boolean;
 }
 
-// The side panel's record delete (spec S3 § record actions, AC-D1/D2):
+// The side panel's record delete (spec S3 § record actions, OMS-REG-DIST-01.7/D2):
 // confirm → delete → back to the list. Disabled (with the shared gate) once
 // SHIPPED; a server rejection keeps the dialog open with the error inline
 // (controls › dialogs, D20). Success navigates — the list is the confirmation.
