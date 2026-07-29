@@ -191,7 +191,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         open={blockedMessage() != null}
         onClose={() => setBlockedMessage(undefined)}
         icon={<InfoIcon />}
-        title={t('heading.are-you-sure')}
+        title={t('heading.cannot-do-that')}
         description={blockedMessage()}
         actions={
           <Button
