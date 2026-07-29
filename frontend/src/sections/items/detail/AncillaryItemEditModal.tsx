@@ -4,17 +4,18 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Text } from '../../../ui/elements/typography/Text';
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from '../../../ui/icons';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { PlusCircleIcon } from '../../../ui/icons';
 import { ItemSearch } from '../../../domain/item/ItemSearch';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
+import type { ItemAncillaryItemsResult } from './ancillaryItems.generated';
 import {
   UpsertAncillaryItem,
   type UpsertAncillaryItemResult,
@@ -34,12 +35,10 @@ import {
 // advances INSIDE the mounted modal by reseeding signals, never a remount
 // (kdd/solid-reactivity-pitfalls § no remounts; mirrors LocationEditModal.tsx).
 
-export type AncillaryRow = {
-  id: string;
-  itemQuantity: number;
-  ancillaryQuantity: number;
-  ancillaryItem: { id: string; code: string; name: string } | null;
-};
+// One ancillary-supply link, derived from the query that reads it — never a
+// hand-written mirror of the wire shape (kdd/type-safety).
+export type AncillaryRow =
+  ItemAncillaryItemsResult['items']['nodes'][number]['ancillaryItems'][number];
 
 /** What the modal was opened on: a fresh add, or a clicked table row. */
 export type AncillaryEditorState =
@@ -161,42 +160,34 @@ export const AncillaryItemEditModal: Component<
           )}
         </Show>
       }
+      // The standard, ICON-LESS dialog-footer buttons (ui-standards › controls
+      // § dialogs, D55) — a footer is read as verbs in a fixed position, not a
+      // toolbar, so it earns no icon. Each supplies its own translated label.
       actions={
         <>
           <Show when={saving() === null}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
           </Show>
-          <Button
-            icon={<CheckIcon />}
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving() === 'ok'}
             disabled={
               !isFormValid(form(), props.principalItemId) || saving() !== null
             }
             onClick={() => void save(false)}
-          >
-            {t('button.save')}
-          </Button>
+          />
           <Show when={!isEdit()}>
-            <Button
-              icon={<ArrowRightIcon />}
-              iconPosition="end"
+            <SaveAndNextButton
               data-testid="dialog-button-save-and-next"
               loading={saving() === 'next'}
               disabled={
                 !isFormValid(form(), props.principalItemId) || saving() !== null
               }
               onClick={() => void save(true)}
-            >
-              {t('button.save-and-next')}
-            </Button>
+            />
           </Show>
         </>
       }
@@ -215,7 +206,11 @@ export const AncillaryItemEditModal: Component<
           setForm({ ...form(), ancillaryItemId: item?.id ?? null })
         }
       />
-      <div style={{ display: 'flex', 'align-items': 'center', gap: '0.5rem' }}>
+      {/* Ratio — two number inputs either side of a literal ":" (ui-surface
+          S5). gap="sm" (--space-2) and the default centre alignment are exactly
+          what this row had before, so the rhythm is unchanged — only the
+          hand-rolled flex is gone. */}
+      <HStack gap="sm">
         <NumberField
           label={t('label.ratio')}
           min={0}
@@ -239,7 +234,7 @@ export const AncillaryItemEditModal: Component<
             setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
           }
         />
-      </div>
+      </HStack>
     </Dialog>
   );
 };

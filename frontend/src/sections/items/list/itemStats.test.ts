@@ -56,9 +56,23 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
   // (ui-surface.md:47). Non-vaccine path (showDoses=false) needs no `t()`.
   it('formats a fractional AMC to 2dp, not a rounded 0 (ITEMS-F1)', () => {
     const row = { isVaccine: false, doses: 0 };
-    expect(unitsWithDoses(0.33, row, false)).toBe('0.33');
-    expect(unitsWithDoses(0.3333, row, false)).toBe('0.33…');
+    expect(unitsWithDoses(0.33, row, false).text).toBe('0.33');
+    expect(unitsWithDoses(0.3333, row, false).text).toBe('0.33…');
     // integer stock-on-hand is unchanged — no decimals, no ellipsis
-    expect(unitsWithDoses(12499, row, false)).toBe('12,499');
+    expect(unitsWithDoses(12499, row, false).text).toBe('12,499');
+  });
+
+  // The other half of the same numeric-cell rule (ui-surface.md:47): a
+  // truncated cell MUST expose the full-precision value as its hover text, and
+  // a cell showing every digit carries no hover at all.
+  it('a truncated cell carries the full value as its hover (ITEMS-F1)', () => {
+    const row = { isVaccine: false, doses: 0 };
+    expect(unitsWithDoses(666.6666666667, row, false)).toEqual({
+      text: '666.67…',
+      title: '666.6666666667',
+    });
+    // Nothing dropped ⇒ nothing to reveal.
+    expect(unitsWithDoses(2.5, row, false).title).toBeUndefined();
+    expect(unitsWithDoses(3000, row, false).title).toBeUndefined();
   });
 });
