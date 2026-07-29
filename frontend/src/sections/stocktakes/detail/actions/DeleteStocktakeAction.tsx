@@ -4,7 +4,8 @@ import { graphqlFetch } from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '@/ui/icons';
 import { DeleteStocktake } from '../lines/stocktakeDetail.generated';
 
 export interface DeleteStocktakeActionProps {
@@ -120,18 +121,13 @@ export const DeleteStocktakeAction: Component<
                 // loading Delete.
                 <>
                   <Show when={phase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
+                    <CancelButton
                       data-testid="dialog-button-cancel"
                       onClick={close}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    />
                   </Show>
                   <Button
-                    variant="secondary"
-                    icon={<TrashIcon />}
+                    variant="danger"
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'deleting'}
                     onClick={() => void run()}
@@ -144,7 +140,6 @@ export const DeleteStocktakeAction: Component<
               <Match when={phase() === 'error'}>
                 <Button
                   variant="secondary"
-                  icon={<CheckIcon />}
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >
