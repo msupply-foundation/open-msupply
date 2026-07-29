@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -169,7 +170,7 @@ const Body = (props: BodyProps): JSX.Element => {
     setSaving(true);
     setMessage(undefined);
     const result = await createReturnFromShipment(props.storeId, {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       supplierId: props.supplierId,
       inboundShipmentId: props.inboundShipmentId,
       theirReference: reference(),
