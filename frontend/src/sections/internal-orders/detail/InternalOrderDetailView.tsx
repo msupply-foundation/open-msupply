@@ -48,7 +48,11 @@ import {
   mergeLineColumns,
   type LineColumnBatch,
 } from './lineColumns';
-import { toLineView, lineMonthsOfStock } from './pluginViews';
+import {
+  toLineView,
+  toInternalOrderView,
+  lineMonthsOfStock,
+} from './pluginViews';
 import {
   InternalOrderDetail,
   type InternalOrderInfoFragment,
@@ -770,6 +774,18 @@ const InternalOrderDetailView: Component = () => {
     visibleContributions('internalOrderLine.column')
   );
 
+  // The line editor's info-panel contributions (§ S8 › editor region), composed
+  // the same way and for the same reason: ONE memo, so the array the outlet
+  // `<For>`s over keeps its identity and the mounted panels are never torn down
+  // by an unrelated update. Mapped to the outlet's shape here, so the modal
+  // stays free of the registry.
+  const infoPanelContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.infoPanel').map(contribution => ({
+      id: contributionId(contribution),
+      Component: contribution.Component,
+    }))
+  );
+
   // The lines a contributed column sees, as the SDK's published DTO.
   const lineViews = createMemo(() => rows().map(toLineView));
 
@@ -1159,6 +1175,11 @@ const InternalOrderDetailView: Component = () => {
               }
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
+              // The info-panel slot's other half (§ S8 › editor region): the
+              // order as the SDK's published view. A prop getter, so a header
+              // save or a status change reaches an open panel in place.
+              order={toInternalOrderView(node(), editable())}
+              infoPanelContributions={infoPanelContributions}
               onCommitted={() => {
                 // A line edit may have supplied a missing reason — drop the
                 // send-backstop flags so they don't linger stale (AC-R3).

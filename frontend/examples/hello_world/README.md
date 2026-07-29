@@ -77,16 +77,49 @@ This plugin also contributes three columns to the internal-order line table
 (`internalOrderLine.column`), one per thing that slot has to prove — open any
 internal order's detail screen to see them:
 
-| Contribution | What it shows                                                                                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Contribution | What it shows                                                                                                                                                                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `totalStock` | the **declarative** form: a `value` function plus `anchor: { after: 'amc' }` is the whole column. The host renders it through its own number cell, so the figure is locale-formatted, `align: 'end'`-aligned, and hideable in column settings exactly like a host column |
-| `arrivals`   | the **batched** form: `loadData` is called once per rendered page of rows (never per cell) and the cell component shows its own loading state while the batch is in flight |
-| `orphan`     | the **degradation**, behind `?pluginBadAnchor`: an anchor naming a column that does not exist puts the column at the table's end and says so in diagnostics                |
+| `arrivals`   | the **batched** form: `loadData` is called once per rendered page of rows (never per cell) and the cell component shows its own loading state while the batch is in flight                                                                                               |
+| `orphan`     | the **degradation**, behind `?pluginBadAnchor`: an anchor naming a column that does not exist puts the column at the table's end and says so in diagnostics                                                                                                              |
 
 Anchor by a **published column id** — the frozen set is
 [`spec/internal-orders/ui-surface.md` § S8](../../spec/internal-orders/ui-surface.md#s8--plugin-slot-regions).
 A column's stored identity is `<pluginCode>.<contributionId>`, so two plugins can
 both contribute a `total` and each keeps its own persisted show/hide state.
+
+### The line-editor info panel
+
+`itemInfo` contributes to `internalOrderLine.infoPanel` — the read-only region of
+the line editor, between the line's own panels and its context charts. Open it
+with **`?pluginPanel`**:
+
+```text
+http://localhost:3005/<store>/replenishment/internal-order/<id>?pluginPanel
+```
+
+The flag (rather than always-on) is deliberate: the same session shows the region
+both ways, and without it the editor has no seam at all — no heading, no border,
+no reserved space. Add `&pluginPanelBoom` for a second, throwing panel
+contribution: the failure is contained to its own place and the working panel
+beside it keeps going.
+
+What it demonstrates, in order of importance:
+
+| Fixture detail                                                             | What it proves                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `mount-N` beside a click counter (`data-panel-mount`, `data-panel-clicks`) | **Props update in place.** Step through lines with **Save & next**: the facts change to the new line while the stamp and the counter do not — the host must never remount a contribution to give it new props (AC-PLUG-N2). A remount would show `mount-2` and a reset counter |
+| the facts table is an SDK `Table`, the gloss an SDK `InfoTooltip`          | **SDK components carry the host's styling** across the boundary — the plugin ships no CSS, and the host serves the stylesheets its UI kit needs                                                                                                                                |
+| every row reads `props.line` / `props.order`                               | both published DTOs arrive: the line (the same view the column slot gets) and its order, flattened, in domain words (`draft`/`sent`/`finalised`, program and period as ids + names)                                                                                            |
+
+Two rules a real panel must follow, both visible here:
+
+- **Read props at render, never capture them.** `props.line` destructured once
+  would freeze on the first line for the whole walk.
+- **Gate per-record inside the component** (`if (!props.order.programId) return null`),
+  and keep `when(ctx)` for session facts only — store, permissions, preferences.
+  A `when` that depended on the record would add and remove the contribution as
+  the user steps, which is a remount by another name.
 
 ## Data
 

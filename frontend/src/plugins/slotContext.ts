@@ -16,7 +16,8 @@ import { currentStoreId, storeContext } from '../store/storeContext';
  * render, so moving between rows never re-runs `when`.
  */
 export const slotContext = (): SlotContext => {
-  const me = storeContext()?.me;
+  const context = storeContext();
+  const me = context?.me;
   return {
     storeId: currentStoreId(),
     // Passed through as the wire's own `UserPermission` values (SCREAMING_CASE)
@@ -27,11 +28,14 @@ export const slotContext = (): SlotContext => {
         ? me.permissions.nodes.flatMap(node => node.permissions)
         : [],
     storePreferences: {
-      // The CIV aggregate-AMC gate. Hard `false` until the field joins
-      // store/storeContext.graphql with the internal-order line slot: the safe
-      // default is OFF, so a gated contribution never renders before its
-      // preference is known (the app-wide *Preferences rule).
-      useConsumptionAndStockFromCustomersForInternalOrders: false,
+      // The CIV aggregate-AMC gate, from the guard-3 store-preference read.
+      // `false` while the context is unresolved — the safe default is OFF, so a
+      // gated contribution never renders before its preference is known (the
+      // app-wide *Preferences rule). Reactive: a post-sync refetch or a store
+      // switch re-evaluates every `when`.
+      useConsumptionAndStockFromCustomersForInternalOrders:
+        context?.storePreferences
+          .useConsumptionAndStockFromCustomersForInternalOrders ?? false,
     },
   };
 };

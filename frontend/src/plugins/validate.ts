@@ -26,6 +26,7 @@ const SLOT_IDS: Record<SlotId, true> = {
   'dashboard.panel': true,
   'dashboard.stat': true,
   'internalOrderLine.column': true,
+  'internalOrderLine.infoPanel': true,
 };
 
 /**

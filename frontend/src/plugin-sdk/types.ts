@@ -113,6 +113,13 @@ export type Anchor<Id extends string> =
 /** The dashboard's anchor (a published widget / panel / stat id). */
 export type DashboardAnchor<Id extends string> = Anchor<Id>;
 
+/**
+ * The placement of a slot the HOST positions: nothing to declare. Used where a
+ * region holds one fixed place in a screen rather than a row of siblings to
+ * anchor against.
+ */
+export type NoPlacement = Record<never, never>;
+
 /*
  * Dashboard slot props are deliberately empty (sdk-contract § slot props —
  * deferred): a dashboard contribution is self-sufficient through the SDK's
@@ -124,8 +131,8 @@ export type DashboardSlotProps = Record<string, never>;
 
 // ── The internal-order line slots ───────────────────────────────────────────
 // The line table of an internal order (a request requisition) publishes a
-// stable id per column, and a plugin adds columns anchored to them.
-// `internalOrderLine.infoPanel` joins these as the line editor's surface lands.
+// stable id per column, and a plugin adds columns anchored to them; the line
+// editor takes a read-only info panel over the same line.
 // NOT `requisitionLine.*`: a customer requisition is a different screen with a
 // different DTO, and gets its own slot ids.
 
@@ -235,6 +242,63 @@ export type ColumnContribution<Row, Data = unknown> = ContributionCore &
   ColumnDeclaration<Row, Data> &
   ColumnRender<Row, Data>;
 
+// ── The internal-order line info panel ──────────────────────────────────────
+
+/**
+ * The internal order a line belongs to, as the SDK publishes it — the second
+ * SDK-OWNED view DTO of this surface (sdk-contract § the info-panel slot),
+ * mapped from host data at the slot boundary.
+ *
+ * Flattened and in domain words, so a plugin never meets a host enum or a
+ * nested host node: an absent program / period / order type arrives as
+ * `undefined` (a general order), never `null` or `''`. Read-only, like every
+ * slot DTO; additive-only within a `PLUGIN_API_VERSION` major.
+ */
+export interface InternalOrderView {
+  readonly id: string;
+  /** The order's human-facing number — what the breadcrumb shows. */
+  readonly requisitionNumber: number;
+  /** The order's lifecycle stage, as a domain word. */
+  readonly status: 'draft' | 'sent' | 'finalised';
+  /**
+   * True while the order accepts edits (a draft whose supplier is enabled).
+   * A contribution is read-only decoration either way — this is context to
+   * render WITH, never a licence to write.
+   */
+  readonly editable: boolean;
+  /** The program behind the order; absent on a general order. */
+  readonly programId: string | undefined;
+  readonly programName: string | undefined;
+  /** The program order type (e.g. 'Monthly'); absent on a general order. */
+  readonly orderType: string | undefined;
+  /** The program period; absent on a general order. */
+  readonly periodId: string | undefined;
+  readonly periodName: string | undefined;
+  /** The order's months-of-stock thresholds, as stored. */
+  readonly minMonthsOfStock: number;
+  readonly maxMonthsOfStock: number;
+  /** The supplier the order is placed with. */
+  readonly supplierId: string;
+  readonly supplierName: string;
+}
+
+/**
+ * The props an `internalOrderLine.infoPanel` contribution receives: the line
+ * being edited and the order it belongs to, both as published view DTOs.
+ *
+ * Both update IN PLACE as the user steps through lines (Save & next), so a
+ * contribution MUST read them through `props` on every render rather than
+ * destructuring them once — the host never remounts the panel for a prop
+ * change (sdk-contract § the info-panel slot).
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>` (as `ColumnCellProps` is).
+ */
+export type InternalOrderLineInfoPanelProps = {
+  readonly line: InternalOrderLineView;
+  readonly order: InternalOrderView;
+};
+
 // ── The slot catalogue ──────────────────────────────────────────────────────
 
 /** Every slot id, and the props its contributions receive. */
@@ -243,6 +307,7 @@ export interface SlotPropsMap {
   'dashboard.panel': DashboardSlotProps;
   'dashboard.stat': DashboardSlotProps;
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
+  'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
 }
 
 export type SlotId = keyof SlotPropsMap;
@@ -261,6 +326,10 @@ export type DashboardSlotId =
  * widget it joins and a stat names the panel; both accept a built-in id or
  * another plugin piece's id, so nesting is uniform. A column names the header
  * and data facts its slot needs alongside its anchor.
+ *
+ * A slot whose position the HOST fixes declares nothing — the info panel's
+ * region is one place in the line editor, so there is no anchor to name
+ * (`NoPlacement`).
  */
 export interface SlotPlacement {
   'dashboard.widget': { anchor?: DashboardAnchor<DashboardWidgetId> };
@@ -273,6 +342,7 @@ export interface SlotPlacement {
     anchor?: DashboardAnchor<DashboardStatId>;
   };
   'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
+  'internalOrderLine.infoPanel': NoPlacement;
 }
 
 /**
@@ -286,6 +356,9 @@ export interface SlotRender {
   'dashboard.panel': { Component: Component<DashboardSlotProps> };
   'dashboard.stat': { Component: Component<DashboardSlotProps> };
   'internalOrderLine.column': ColumnRender<InternalOrderLineView>;
+  'internalOrderLine.infoPanel': {
+    Component: Component<InternalOrderLineInfoPanelProps>;
+  };
 }
 
 /**
