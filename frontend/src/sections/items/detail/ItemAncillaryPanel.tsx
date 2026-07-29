@@ -6,6 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { createTableConfig } from '../../../api/createTableConfig';
 import { t } from '../../../intl';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
@@ -46,6 +47,10 @@ export const ItemAncillaryPanel: Component<{
   onEditorChange: (editor: AncillaryEditorState | undefined) => void;
 }> = props => {
   const [pendingDelete, setPendingDelete] = createSignal<AncillaryRow>();
+
+  // Column config — also what puts the Columns + Settings controls in the
+  // table's toolbar (DataTable renders both only when `setConfig` is wired).
+  const tableConfig = createTableConfig({ tableId: 'item-ancillary-items' });
 
   const [data, { refetch }] = createResource(
     () => ({ storeId: props.storeId, itemId: props.itemId }),
@@ -153,6 +158,14 @@ export const ItemAncillaryPanel: Component<{
             : undefined
         }
         emptyMessage={t('messages.no-ancillary-items')}
+        config={tableConfig.config()}
+        setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         empty={
           <Show when={props.isCentral}>
             <Button

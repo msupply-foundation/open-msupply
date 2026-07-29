@@ -9,8 +9,6 @@ import {
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
-import { HStack } from '../../../ui/layout/Stack/HStack';
-import { Text } from '../../../ui/elements/typography/Text';
 import {
   FilterBar,
   FilterSelect,
@@ -18,14 +16,20 @@ import {
   constructFilters,
   type Filter,
   type FilterDef,
-  type IsoDateTimeRange,
 } from '../../../ui/elements/selectors/FilterBar';
+import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
   ItemLedger,
   type ItemLedgerResult,
   type ItemLedgerVariables,
 } from './itemLedger.generated';
+import {
+  buildWireFilter,
+  type InvoiceStatus,
+  type InvoiceType,
+  type LedgerFilter,
+} from './itemLedgerFilter';
 import { ledgerRowHref } from './itemLedgerNav';
 
 // The item detail's Ledger tab (spec/items S2 › Ledger tab, rules.md § the
@@ -37,20 +41,29 @@ import { ledgerRowHref } from './itemLedgerNav';
 // (kdd/state-management), independent of the itemDetail read.
 
 type LedgerRow = ItemLedgerResult['itemLedger']['nodes'][number];
-type InvoiceType = LedgerRow['invoiceType'];
-type InvoiceStatus = LedgerRow['invoiceStatus'];
 
-type LedgerFilter = {
-  invoiceType?: InvoiceType | null;
-  invoiceStatus?: InvoiceStatus | null;
-  from?: string | null;
-  to?: string | null;
-};
-
-type LedgerState = LedgerFilter & { offset: number; first: number };
+// The filter is its OWN key, never spread across the state's top level (as the
+// items list does too). Both of FilterBar's chip operations depend on it:
+//   • REMOVING a chip deletes its key, so the new filter must REPLACE the old
+//     object — merged into a flat state, the deleted key just survives from the
+//     previous value and the chip won't clear.
+//   • ADDING a chip writes `<key>: null` (its added-but-empty marker), and
+//     useUrlQueryState strips TOP-LEVEL nulls when it parses the URL — so a
+//     flat null is erased on the round trip and the chip never appears at all.
+// Nested, the whole filter object survives as one value and both work.
+type LedgerState = { filter: LedgerFilter; offset: number; first: number };
 
 const DEFAULT_PAGE_SIZE = 20;
-const DEFAULT_STATE: LedgerState = { offset: 0, first: DEFAULT_PAGE_SIZE };
+// `datetime: null` SEEDS the date-time chip so it is on the bar from the first
+// render with no menu step — this app's way of expressing the reference app's
+// `isDefault: true` on that filter. A null bound never reaches the query, and
+// the chip is still removable like any other (a URL whose filter object omits
+// it wins over this default).
+const DEFAULT_STATE: LedgerState = {
+  filter: { datetime: null },
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
+};
 
 // Widths (rem) for the two columns no preset key covers — an explicit helper
 // carries rendering only, never a width (docs/CELL_TYPES.md § Width model), so
@@ -59,6 +72,15 @@ const DEFAULT_STATE: LedgerState = { offset: 0, first: DEFAULT_PAGE_SIZE };
 // unit figure.
 const STATUS_WIDTH_REM = 7.5;
 const CHANGE_WIDTH_REM = 5;
+// "Inventory adjustment" / "Outbound shipment" are the long ones.
+const TYPE_WIDTH_REM = 11;
+// The shared `invoiceNumber` preset is 3.5rem — right for the other consumer,
+// whose header is just "#" — but this table spells out "Invoice number", which
+// wraps at that width. A ONE-OFF override, per _globalColumnConfig's own
+// guidance (change the shared value only when every consumer wants it).
+// Calibrated against the `locationCode` key, whose 13-character header measured
+// 8.5rem; this one is a character longer.
+const INVOICE_NUMBER_WIDTH_REM = 9;
 
 // The document-type / status labels (spec ui-surface.md § Ledger tab
 // columns) — explicit per-vertical lookups (kdd/explicit-composition), not a
@@ -129,9 +151,14 @@ const INVOICE_TYPES: InvoiceType[] = [
   'REPACK',
 ];
 
+// The statuses the Status chip OFFERS — NEW and ALLOCATED are deliberately
+// absent, matching the reference app's ledger filter. Both are pre-dispatch
+// states in which no stock has moved (see InvoiceNodeStatus in schema.graphql:
+// "No stock changes in this status"), so no ledger row can ever carry them and
+// offering them would be a filter that always matches nothing. STATUS_LABEL
+// above stays COMPLETE — it labels the Status column, which renders whatever
+// the row carries.
 const INVOICE_STATUSES: InvoiceStatus[] = [
-  'NEW',
-  'ALLOCATED',
   'PICKED',
   'SHIPPED',
   'DELIVERED',
@@ -140,11 +167,27 @@ const INVOICE_STATUSES: InvoiceStatus[] = [
   'CANCELLED',
 ];
 
-// Only invoiceType/invoiceStatus are addable FilterBar chips; from/to render
-// as an always-present control beside the bar (dismissed here — same shape
-// as the items list's always-present code-or-name search, listFilters.tsx).
+// Every filter is a chip on the ONE bar — there is no control standing beside
+// it (ui-standards § tables → toolbar/filtering). The date-time range leads,
+// grouped under a single "Date/time" label exactly as the reference app groups
+// its two dateTime elements under one filter, and is seeded present by
+// DEFAULT_STATE above.
 const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
   constructFilters<LedgerFilter>({
+    datetime: {
+      label: () => t('label.datetime'),
+      render: props => (
+        <FilterDateTimeRange
+          // Both bounds live in this one chip, so the group label is the chip's
+          // and each field keeps its own accessible name.
+          value={props.filter().datetime ?? { start: null, end: null }}
+          onChange={range => props.setPartialFilter({ datetime: range })}
+          fromLabel={t('label.from-datetime')}
+          toLabel={t('label.to-datetime')}
+          testId={props.testId}
+        />
+      ),
+    } satisfies FilterDef<LedgerFilter>,
     invoiceType: {
       label: () => t('label.type'),
       render: props => (
@@ -190,27 +233,7 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
         />
       ),
     } satisfies FilterDef<LedgerFilter>,
-    from: null,
-    to: null,
   });
-
-const buildWireFilter = (
-  itemId: string,
-  f: LedgerFilter
-): NonNullable<ItemLedgerVariables['filter']> => {
-  const filter: NonNullable<ItemLedgerVariables['filter']> = {
-    itemId: { equalTo: itemId },
-  };
-  if (f.invoiceType) filter.invoiceType = { equalTo: f.invoiceType };
-  if (f.invoiceStatus) filter.invoiceStatus = { equalTo: f.invoiceStatus };
-  if (f.from || f.to) {
-    filter.datetime = {
-      ...(f.from ? { afterOrEqualTo: f.from } : {}),
-      ...(f.to ? { beforeOrEqualTo: f.to } : {}),
-    };
-  }
-  return filter;
-};
 
 export const ItemLedgerPanel: Component<{
   storeId: string;
@@ -220,13 +243,22 @@ export const ItemLedgerPanel: Component<{
   const { query, setQuery } = useUrlQueryState<LedgerState>(DEFAULT_STATE);
   const filters = buildLedgerFilters();
 
+  // Column config (order/sizing/pinning/visibility/density), resolved default →
+  // global → user (kdd/table-state). It is also what puts the Columns and
+  // Settings controls in the table's toolbar at all — DataTable renders both
+  // only when `setConfig` is wired — so a table without it silently loses them.
+  // 17 columns make this the tab that needs them most.
+  const tableConfig = createTableConfig({ tableId: 'item-ledger' });
+
+  // REPLACE the filter object, never merge into it — a chip removal is
+  // expressed by the key's ABSENCE, which a merge would silently undo.
   const onFilterChange = (filter: LedgerFilter) =>
-    setQuery({ ...query(), ...filter, offset: 0 });
+    setQuery({ ...query(), filter, offset: 0 });
 
   const variables = (): ItemLedgerVariables => ({
     storeId: props.storeId,
     page: { first: query().first, offset: query().offset },
-    filter: buildWireFilter(props.itemId, query()),
+    filter: buildWireFilter(props.itemId, query().filter),
   });
 
   const [data] = createResource(
@@ -256,11 +288,9 @@ export const ItemLedgerPanel: Component<{
   // Cell rendering, alignment AND width come from the shared presets
   // (docs/CELL_TYPES.md) — the Date/Time pair, the numbers, the money columns
   // and the text columns are all standard types, so nothing here formats a
-  // value by hand. Mirrors the sibling stock ledger (stock/detail/LedgerPanel),
-  // the same table shape. Only Type and Status keep an explicit `cell`: Type
-  // composes two fields, and Status needs a label map no key can supply (there
-  // is no Status preset — docs/CELL_TYPES.md § Status), so each pairs its cell
-  // with an explicit width.
+  // value by hand. Only Type and Status keep an explicit `cell`, each needing a
+  // label map no preset key can supply (there is no Status preset —
+  // docs/CELL_TYPES.md § Status), so each pairs its cell with a width.
   //
   // createMemo, NOT a plain function: this array is read by TanStack, which
   // memoizes on its REFERENCE — a fresh array per read invalidates four layers
@@ -272,13 +302,21 @@ export const ItemLedgerPanel: Component<{
       c: { accessor: l => l.invoiceType, id: 'type' },
       header: () => t('label.type'),
       ...getTextCell(),
-      cell: info =>
-        `${TYPE_LABEL[info.row.original.invoiceType]} ${info.row.original.invoiceNumber}`,
+      size: remToPx(TYPE_WIDTH_REM),
+      // The document type ALONE. The sibling stock ledger appends the invoice
+      // number to this cell, but that table has no Invoice number column; this
+      // one does (next column), so appending it printed the same value twice in
+      // every row. ui-surface S2 › Ledger tab names this column as the
+      // translated type label only, and so does the reference app.
+      cell: info => TYPE_LABEL[info.row.original.invoiceType],
     },
     {
       c: { key: 'invoiceNumber' },
       header: () => t('label.invoice-number'),
+      // Preset for the rendering (right-aligned, tabular, locale-formatted),
+      // own width so the spelled-out header sits on one line.
       ...getCellDefinition('invoiceNumber'),
+      size: remToPx(INVOICE_NUMBER_WIDTH_REM),
     },
     {
       c: { accessor: l => l.datetime, id: 'date' },
@@ -373,35 +411,14 @@ export const ItemLedgerPanel: Component<{
       rowKey={l => l.id}
       // Filters render in the TABLE's toolbar, never a page-level band above it
       // (ui-standards § tables → toolbar — binding for every table, list or
-      // detail). The always-present date-time range sits beside the chip bar
-      // (ui-surface S2 › Ledger tab), so the pair carries its own rhythm; the
-      // toolbar slot sets no gap of its own.
+      // detail). ONE bar carries all three chips, the date-time range included
+      // (seeded present, see DEFAULT_STATE) — nothing stands beside it.
       filters={
-        <HStack gap="sm" wrap>
-          {/* The range's two fields hide their own labels, so this names the
-              PAIR on screen (ui-surface: "grouped as Date/time"); each field
-              keeps its own accessible name from fromLabel/toLabel. */}
-          <Text variant="bodySmall">{t('label.datetime')}</Text>
-          <FilterDateTimeRange
-            value={
-              {
-                start: query().from ?? null,
-                end: query().to ?? null,
-              } satisfies IsoDateTimeRange
-            }
-            onChange={range =>
-              onFilterChange({ from: range.start, to: range.end })
-            }
-            fromLabel={t('label.from-datetime')}
-            toLabel={t('label.to-datetime')}
-            testId="filter-input-datetime"
-          />
-          <FilterBar
-            filters={filters}
-            filter={query()}
-            onChange={onFilterChange}
-          />
-        </HStack>
+        <FilterBar
+          filters={filters}
+          filter={query().filter}
+          onChange={onFilterChange}
+        />
       }
       loading={data.loading}
       onRowClick={row => {
@@ -409,6 +426,16 @@ export const ItemLedgerPanel: Component<{
         if (href) navigate(href);
       }}
       emptyMessage={t('messages.no-item-ledger')}
+      config={tableConfig.config()}
+      setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
+      // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+      // the install-wide default; everyone else gets no action. Reactive gate.
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
       pagination={{
         offset: query().offset,
         pageSize: query().first,

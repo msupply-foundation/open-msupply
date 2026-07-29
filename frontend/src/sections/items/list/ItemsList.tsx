@@ -19,7 +19,13 @@ import { ItemPreferences } from '../itemPreferences.generated';
 import { ItemMasterLists } from './itemMasterLists.generated';
 import { buildItemFilter, type ItemsListFilter } from './itemFilter';
 import { buildItemsFilters } from './listFilters';
-import { fixedColumns, type ItemRow, type SortKey } from './itemColumns';
+import {
+  CARD_GROUPS,
+  fixedColumns,
+  type GroupKey,
+  type ItemRow,
+  type SortKey,
+} from './itemColumns';
 import {
   customFieldDefinitions,
   customFieldColumns,
@@ -154,9 +160,15 @@ const ItemsList: Component = () => {
   // REFERENCE, so a fresh one per read invalidates four layers of its internal
   // memo chain (kdd/solid-reactivity-pitfalls §14). Re-derives when the doses
   // preference, the custom-field definitions or the language change.
-  const columns = createMemo((): Column<ItemRow, SortKey>[] => [
+  const columns = createMemo((): Column<ItemRow, SortKey, GroupKey>[] => [
     ...fixedColumns(showDoses),
-    ...customFieldColumns<ItemRow, SortKey>(cfDefs(), row => row.customFields),
+    // Every configured custom field goes behind the card's "Custom fields"
+    // disclosure; in table view the cardGroup is ignored.
+    ...customFieldColumns<ItemRow, SortKey, GroupKey>(
+      cfDefs(),
+      row => row.customFields,
+      'customFields'
+    ),
   ]);
 
   const filters = createMemo(() =>
@@ -194,6 +206,13 @@ const ItemsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
+        // ONE column list, two renderings (docs/CARD_TABLE_MODEL.md): each
+        // column declares its card slot in itemColumns.tsx. Below 600px the
+        // table is ALWAYS the card view, and 17 columns (7 fixed + a
+        // deployment's custom fields) render flat without these groups. The
+        // toggle offers the same card above that band.
+        cardGroups={CARD_GROUPS}
+        showCardToggle
         // Filters render in the TABLE's toolbar, never the page header
         // (ui-standards § tables → toolbar — binding for every table, list
         // or detail, and it overrides where a vertical spec puts them).
@@ -222,6 +241,15 @@ const ItemsList: Component = () => {
         emptyMessage={t('error.no-items-to-display')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+        // the install-wide default; everyone else gets no action. The gate is
+        // reactive, so the shared DataTable stays agnostic about permissions.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         pagination={{
           offset: query().offset,
           pageSize: query().first,

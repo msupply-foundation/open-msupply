@@ -2,6 +2,7 @@ import { createResource, For, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
+import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ItemVariants } from './itemVariants.generated';
@@ -54,35 +55,42 @@ export const ItemVariantsPanel: Component<{
 
   return (
     <>
-      <Show
-        when={rows().length > 0}
-        fallback={
-          // A ghost, icon-less CTA — the app's empty-state create affordance
-          // (the ancillary tab and the stocktakes list read the same).
-          <EmptyState message={t('messages.no-item-variants')}>
-            <Button
-              variant="ghost"
-              onClick={() => props.onEditorChange({ mode: 'create' })}
-            >
-              {t('label.add-variant')}
-            </Button>
-          </EmptyState>
-        }
-      >
-        <CardGrid minColumnWidth="24rem">
-          <For each={rows()}>
-            {variant => (
-              <ItemVariantCard
-                storeId={props.storeId}
-                variant={variant}
-                isVaccine={props.isVaccine}
-                onEdit={() => props.onEditorChange({ mode: 'edit', variant })}
-                onChanged={onChanged}
-              />
-            )}
-          </For>
-        </CardGrid>
-      </Show>
+      {/* `padded`: the detail page is fillBody (so its table tabs fill the
+          region), which strips the Page body's edge padding — without this the
+          cards butt against the tab strip and the region edges. `form` is the
+          measure, matching the General/Store tabs, so the variant cards sit in
+          the same reading column as the rest of the record. */}
+      <ContentContainer size="form" padded>
+        <Show
+          when={rows().length > 0}
+          fallback={
+            // A ghost, icon-less CTA — the app's empty-state create affordance
+            // (the ancillary tab and the stocktakes list read the same).
+            <EmptyState message={t('messages.no-item-variants')}>
+              <Button
+                variant="ghost"
+                onClick={() => props.onEditorChange({ mode: 'create' })}
+              >
+                {t('label.add-variant')}
+              </Button>
+            </EmptyState>
+          }
+        >
+          <CardGrid minColumnWidth="24rem">
+            <For each={rows()}>
+              {variant => (
+                <ItemVariantCard
+                  storeId={props.storeId}
+                  variant={variant}
+                  isVaccine={props.isVaccine}
+                  onEdit={() => props.onEditorChange({ mode: 'edit', variant })}
+                  onChanged={onChanged}
+                />
+              )}
+            </For>
+          </CardGrid>
+        </Show>
+      </ContentContainer>
 
       <Show when={props.editor}>
         {editor => (
