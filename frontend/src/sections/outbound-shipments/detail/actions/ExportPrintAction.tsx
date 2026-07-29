@@ -5,7 +5,7 @@ import { PrinterIcon } from '../../../../ui/icons';
 import { SelectReportModal } from '../../../../domain/reports';
 
 // The outbound-shipment detail Export/Print action (spec S3 → reports S4,
-// AC-E1–E3): the header trigger button + the shared "Select a form" dialog
+// OMS-REG-DIST-04.9–E3): the header trigger button + the shared "Select a form" dialog
 // (owned by the reports vertical). Peer of the other detail actions
 // (self-contained button + modal, kdd/action-modal) and a static mirror of the
 // inbound / customer-return / stocktake ExportPrintAction. The selector is

@@ -193,7 +193,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         open={noLinesBlocked()}
         onClose={() => setNoLinesBlocked(false)}
         icon={<InfoIcon />}
-        title={t('heading.are-you-sure')}
+        title={t('heading.cannot-do-that')}
         description={t('messages.no-lines')}
         actions={
           <Button

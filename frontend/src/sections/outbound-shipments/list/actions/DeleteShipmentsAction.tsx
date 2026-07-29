@@ -21,7 +21,7 @@ export interface DeleteShipmentsActionProps {
   onDeleted: () => void;
 }
 
-// The list's bulk delete (spec S1 bulk actions, AC-D3): the whole batch is
+// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.21): the whole batch is
 // refused when ANY selected shipment is not deletable — a UI pre-check with a
 // blocking notice instead of the confirmation, no server call (rules.md § the
 // list; controls › action feedback); per-row enforcement remains server-side.
@@ -38,7 +38,7 @@ export const DeleteShipmentsAction: Component<
   const onClick = () => {
     // Pre-check: every selected shipment must be deletable (NEW / ALLOCATED /
     // PICKED) or the whole batch is refused with an explanatory notice in
-    // place of the confirmation (AC-D3).
+    // place of the confirmation (OMS-REG-DIST-01.21).
     if (props.selectedRows().some(row => !isDeletable(row.status))) {
       setBlockedOpen(true);
       return;

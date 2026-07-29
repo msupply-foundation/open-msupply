@@ -23,6 +23,7 @@ import {
   utcToLocalDay,
 } from '../inputs/dateTimeConvert';
 import { DateTimeField } from '../inputs/DateTimeField';
+import { Combobox } from './Combobox';
 import styles from './FilterBar.module.css';
 
 /*
@@ -433,7 +434,13 @@ const FiltersMenu = (props: {
       {/* The spec's dashed "Add filter" pill (ui-standards § tables →
           filtering): funnel icon + label, no chevron. Purely additive —
           Clear all lives in the bar. */}
-      <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
+      {/* Disabled once every filter is already added — nothing left to pick,
+          so avoid opening an empty popover. */}
+      <DropdownMenu.Trigger
+        class={styles.trigger}
+        data-testid="filters-menu"
+        disabled={props.available.length === 0}
+      >
         <FilterIcon class={styles.triggerIcon} />
         <span>{t('label.add-filter')}</span>
       </DropdownMenu.Trigger>
@@ -669,6 +676,47 @@ export const FilterSelect = <V extends string>(props: {
     </DropdownMenu.Root>
   );
 };
+
+/**
+ * A searchable single-select filter — the combobox sibling of `FilterSelect`
+ * (a plain, non-searchable dropdown). Wraps the app `Combobox` de-boxed
+ * (`borderless`) so it reads on the chip pill like the other editors; for a
+ * large, searchable option set (locations, items) where a plain dropdown would
+ * be unwieldy. Generic over the option type — the caller supplies the items +
+ * `itemToString`/`itemToValue`, exactly as `Combobox` takes them.
+ */
+export const FilterCombobox = <T,>(props: {
+  value?: string;
+  items: T[];
+  itemToString: (item: T) => string;
+  itemToValue: (item: T) => string;
+  onChange: (item: T | null) => void;
+  label: string;
+  placeholder?: string;
+  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
+  /** Focus handle for the just-added chip (FilterBar's render supplies it). */
+  focusTarget?: FocusTarget;
+}) => (
+  <Combobox<T>
+    label={props.label}
+    hideLabel
+    size="small"
+    borderless
+    // No clear button — the chip's own remove (×) clears the filter; a second
+    // × inside the control would be redundant (unlike a standalone Combobox).
+    clearable={false}
+    matchTriggerWidth={false}
+    items={props.items}
+    itemToString={props.itemToString}
+    itemToValue={props.itemToValue}
+    value={props.value}
+    placeholder={props.placeholder}
+    inputTestId={props.testId}
+    focusTarget={props.focusTarget}
+    onChange={props.onChange}
+  />
+);
 
 /**
  * A multi-select enum filter — FilterSelect's many-value sibling: the same
