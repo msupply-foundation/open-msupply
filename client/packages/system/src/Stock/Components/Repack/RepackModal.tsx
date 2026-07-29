@@ -166,6 +166,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       height={700}
       slideAnimation={false}
       title={t('title.repack-details')}
+      testId="repack-modal"
       okButton={
         <DialogButton
           variant="save"
