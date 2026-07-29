@@ -8,15 +8,19 @@ import {
 } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
+import { isCentralServer } from '../../api/serverInfo';
+import { InitialisationStatus } from '../../api/initialisation.generated';
 import { locale, t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
 import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../../ui/layout/Stack/Stack';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import { Text } from '../../ui/elements/typography/Text';
 import { Select } from '../../ui/elements/selectors/Select';
+import { FieldRow } from '../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { TextArea } from '../../ui/elements/inputs/TextArea';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -53,6 +57,23 @@ const HelpPage: Component = () => {
     return result.data.helpDocuments.nodes;
   });
   const documents = () => showableDocuments(docsData.latest ?? []);
+
+  // App-bar site name (spec/help ui-surface § App bar; rules § the Help page):
+  // the startup vertical's initialisationStatus read, consumed here — shown
+  // only when the server reports one, as the Settings header does. Read via
+  // the .state gate, never suspending: the contact form below is live user
+  // state this page must not lose (kdd/solid-reactivity-pitfalls § no
+  // remounts).
+  const [statusData] = createResource(async () => {
+    const result = await graphqlFetch(InitialisationStatus, {});
+    return result.kind === 'success'
+      ? result.data.initialisationStatus
+      : undefined;
+  });
+  const siteName = () =>
+    statusData.state === 'ready' || statusData.state === 'refreshing'
+      ? (statusData.latest?.siteName ?? undefined)
+      : undefined;
 
   // Contact form (OMS-REG-HLP-01.2-.9, .23-.27).
   const [reason, setReason] = createSignal<ContactType>('FEEDBACK');
@@ -104,6 +125,42 @@ const HelpPage: Component = () => {
       header={
         <Header>
           <Breadcrumb crumbs={[{ label: t('help') }]} />
+          <HeaderButtons>
+            {/* App-bar end area (spec/help S1 § App bar): the labelled build
+                version — the shared utility-page treatment, chrome
+                OMS-REG-FTR-02.11 — with the site name above it and, on a
+                central server, the central-server marker. Read-only text, no
+                controls. A plain grouping div so the FieldRows block-stack
+                flush (they are flex children of HeaderButtons otherwise),
+                matching the Settings header's server-info column. */}
+            <div>
+              <Show when={siteName()}>
+                {name => (
+                  <FieldRow label={t('label.site')}>
+                    <Text
+                      variant="body"
+                      as="span"
+                      data-testid="server-site-name"
+                    >
+                      {name()}
+                    </Text>
+                  </FieldRow>
+                )}
+              </Show>
+              <FieldRow label={t('label.app-version')}>
+                <Text variant="body" as="span" data-testid="app-version">
+                  {APP_VERSION}
+                </Text>
+              </FieldRow>
+              {/* Central-server line: a FieldRow label with no value, reusing
+                  the same label styling as the rows above. */}
+              <Show when={isCentralServer()}>
+                <FieldRow label={t('label.central-server')} labelWidth="auto">
+                  {null}
+                </FieldRow>
+              </Show>
+            </div>
+          </HeaderButtons>
         </Header>
       }
     >
