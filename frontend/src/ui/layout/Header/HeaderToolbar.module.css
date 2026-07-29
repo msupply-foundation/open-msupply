@@ -1,68 +1,24 @@
 /*
- * HeaderToolbar layout — the header standard's Tier-2 meta strip, layered over
- * the generic <Toolbar> row (see HeaderToolbar.tsx). Toolbar owns the
- * full-width toolbar line; this owns the strip: a field GRID with its alert(s)
- * on the line below.
+ * HeaderToolbar layout — the field-cluster specifics layered over the generic
+ * <Toolbar> row (see HeaderToolbar.tsx). Toolbar owns the full-width toolbar
+ * line; this owns the grow container + the trailing-Alert alignment.
  */
 
-/* The strip. Takes the whole toolbar line (Toolbar is itself a wrapping flex
-   row, so this claims it with flex-basis 100%), then stacks: the field grid at
-   full width, then any alert beneath it, each hugging its content at the inline
-   start.
-
-   A COLUMN, not the standard's `.doc__meta` row-with-a-trailing-chip. The chip
-   shares that row only while it fits, and when it doesn't, flexbox has no way to
-   prefer "wrap the chip" over "squeeze the grid" — it just hands the grid a
-   narrower width, and the grid quietly drops columns. So a long message doesn't
-   push the chip onto its own line, it folds four fields into 2×2, and the
-   header's worst-looking state is decided by how wordy the message is (per
-   locale, at that). Stacking makes the fields' row the fields' own: they always
-   get the full strip and their full column count, and the chip is always where
-   the row-based version only sometimes put it. */
-.strip {
-  flex: 1 1 100%;
-  min-inline-size: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-2);
-}
-
-/* A COMPACT alert hugs its content at the inline start instead of spanning the
-   strip (that's what compact means); a full-width one takes the whole line, as
-   `align-items: stretch` above already gives it. */
-.strip > [data-compact] {
-  align-self: start;
-}
-
-/* The field grid — the standard's `.fields`. A grid rather than a wrapping flex
-   row so columns LINE UP across rows once the cluster does wrap (flex-wrap
-   can't promise that). */
+/* Grow container: makes the FormRow FILL the toolbar width rather than
+   content-sizing narrower and wrapping early, so it packs as-many-fields-per-
+   row-as-fit. `1 1 auto` keeps the basis at the field content, so when the
+   fields + a trailing chip don't both fit, the CHIP wraps first — not the
+   fields into a stuck two-up block. */
 .fields {
-  align-self: stretch;
+  flex: 1 1 auto;
   min-inline-size: 0;
-  display: grid;
-  grid-template-columns: var(--header-field-cols, 1fr);
-  align-items: start;
-  gap: var(--space-3) var(--space-4);
-  /* Opt a read-only LabelledValue into the control footprint it stands in for
-     (the standard's `.ro`) — see LabelledValue.module.css. With the cells
-     top-aligned, a bare value would otherwise sit up on the LABEL line of its
-     neighbours' inputs; reserving the control's height drops it to where their
-     input text is. Small, because the cluster's controls are `size="small"`. */
-  --labelled-value-control-block-size: var(--input-height-sm);
 }
 
-/* `columns="content"` — each field only as wide as its data. A wrapping flex
-   row, not a grid: auto-fill rejects an intrinsic track size, and a bare
-   `max-content` template is one column that would stack the fields. Nothing is
-   lost — content-sized cells have no shared columns to line up across rows. */
-.fields[data-columns='content'] {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-}
-
-.fields[data-columns='content'] > * {
-  flex: 0 1 auto;
+/* A trailing compact Alert (data-compact is the Alert's own hook) drops to the
+   BOTTOM of the field row: it sits on the input-box line while every field
+   label lines up along the top (the FormRow top-aligns its items). align-self
+   resolves against the chip's flex parent — the FormRow, a row — so flex-end
+   is the bottom, not sideways. */
+.fields [data-compact] {
+  align-self: flex-end;
 }

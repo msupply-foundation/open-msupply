@@ -45,6 +45,8 @@ export interface AsyncComboboxProps<T> {
   onSelect: (item: T | null) => void;
   placeholder?: string;
   hideLabel?: boolean;
+  /** InfoTooltip beside the label — passed through to the Combobox. */
+  labelInfo?: JSX.Element;
   disabled?: boolean;
   error?: string;
   /** Marks the field required — passed through to the Combobox's label. */
@@ -203,6 +205,7 @@ export const AsyncCombobox = <T,>(
     <Combobox<T>
       label={props.label}
       hideLabel={props.hideLabel}
+      labelInfo={props.labelInfo}
       class={props.class}
       disabled={props.disabled}
       error={props.error}

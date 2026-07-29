@@ -38,20 +38,6 @@
   overflow-wrap: anywhere;
 }
 
-/* Opt-in control FOOTPRINT for the `field` variant — the header standard's
-   `.ro`: a read-only value standing in for a control reserves the control's
-   height and centres in it, so it lands on the same line as the input boxes
-   beside it instead of floating up on their label line. A container opts in by setting
-   --labelled-value-control-block-size (HeaderToolbar does); everywhere else the
-   `auto` default leaves the value exactly as it was. `align-content` centres
-   without switching the box to flex/grid, so a value with several inline
-   children keeps its inline flow. A longer value grows past the height rather
-   than being clipped by it. */
-.field[data-variant='field'] .value {
-  min-block-size: var(--labelled-value-control-block-size, auto);
-  align-content: center;
-}
-
 /* Small size — 13px label AND value (--input-font-sm), mirroring the input
    components' `size="small"` (TextField/DateField), so a read-only value reads
    the same as the small inputs it sits beside in a dense row like the header
