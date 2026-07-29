@@ -32,7 +32,7 @@ import {
   updateInboundShipment,
 } from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
-import { scopeOf } from '../inboundShipmentScope';
+import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
@@ -49,7 +49,12 @@ export interface InboundShipmentSidePanelProps {
   node: InboundInfoFragment;
   /** True once Verified (global edit lock). */
   disabled: boolean;
-  isExternal: boolean;
+  /**
+   * The shipment's permission scope, from the route (see
+   * inboundShipmentScope). Selects `type` on the whole-shipment copy read and
+   * the plain-vs-`...External` mutation twins below.
+   */
+  scope: InboundScope;
   edit: InboundFieldEdit;
   /** Store gates for the donor section + foreign-currency change. */
   donorTracking: boolean;
@@ -85,6 +90,9 @@ export const InboundShipmentSidePanel: Component<
   const [serviceOpen, setServiceOpen] = createSignal(false);
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
 
+  // Which mutation twin the scope's writes go through (plain vs `...External`).
+  const isExternal = () => isExternalScope(props.scope);
+
   // The itemised service lines feeding the Charges → Service charges block.
   // Re-read when the service-line modal saves or the service tax rate changes
   // (bump the version); pricing totals come from the node via onRefetch.
@@ -113,7 +121,7 @@ export const InboundShipmentSidePanel: Component<
   const setServiceTax = (percentage: number) => {
     const lines = serviceLines() ?? [];
     if (lines.length === 0) return;
-    void runInboundBatch(props.storeId, props.isExternal, {
+    void runInboundBatch(props.storeId, isExternal(), {
       updateInboundShipmentServiceLines: lines.map(line => ({
         id: line.id,
         tax: { percentage },
@@ -132,15 +140,14 @@ export const InboundShipmentSidePanel: Component<
   // unpaginated — for the copy action (rules § copy to clipboard, case .34).
   // The detail's own lines read is server-paged and excludes SERVICE rows, so
   // this is its own one-shot fetch through the FullInboundShipment query;
-  // `type` is the shipment's own permission scope, taken from its
-  // purchaseOrderId rather than re-probing the held scopes. A fetch failure
-  // routes to the global error modal; a NodeError (not expected from a screen
-  // showing the record) copies nothing.
+  // `type` is the shipment's own permission scope, the one the route carries.
+  // A fetch failure routes to the global error modal; a NodeError (not expected
+  // from a screen showing the record) copies nothing.
   const loadFullShipment = async () => {
     const result = await graphqlFetch(FullInboundShipment, {
       storeId: props.storeId,
       id: props.node.id,
-      type: scopeOf(props.node.purchaseOrderId),
+      type: props.scope,
     });
     if (result.kind !== 'success') return undefined;
     if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
@@ -432,7 +439,7 @@ export const InboundShipmentSidePanel: Component<
             <DeleteInboundShipmentAction
               storeId={props.storeId}
               invoiceId={props.node.id}
-              isExternal={props.isExternal}
+              isExternal={isExternal()}
               number={() => props.node.invoiceNumber}
               disabled={false}
               onDeleted={props.onDeleted}
@@ -455,6 +462,7 @@ export const InboundShipmentSidePanel: Component<
         onClose={() => setDonorOpen(false)}
         storeId={props.storeId}
         node={props.node}
+        isExternal={isExternal()}
         onSaved={props.onSaved}
       />
       {/* The shared service-charges editor (spec S6) with inbound's wire
@@ -471,7 +479,7 @@ export const InboundShipmentSidePanel: Component<
         save={async batch => {
           const result = await saveInboundServiceCharges(
             props.storeId,
-            props.isExternal,
+            isExternal(),
             props.node.id,
             batch
           );
@@ -489,7 +497,7 @@ export const InboundShipmentSidePanel: Component<
         save={async input => {
           const result = await updateInboundShipment(
             props.storeId,
-            props.isExternal,
+            isExternal(),
             { id: props.node.id, ...input }
           );
           if (result.kind !== 'saved') return result;
