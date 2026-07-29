@@ -660,15 +660,7 @@ const OutboundDetailView: Component = () => {
           ]
         : []),
       {
-        // Per UNIT — pack price ÷ pack size (spec § line table col 15);
-        // placeholders have no price until stock is allocated.
-        c: {
-          accessor: line =>
-            line.type === 'UNALLOCATED_STOCK'
-              ? null
-              : line.sellPricePerPack / line.packSize,
-          id: 'unitSellPrice',
-        },
+        c: { key: 'sellPricePerPack' },
         header: () => t('label.unit-sell-price'),
         ...getCurrencyCell(),
       },
