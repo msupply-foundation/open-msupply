@@ -38,6 +38,8 @@ export interface CampaignOrProgramSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
 }
 
 /*
@@ -102,6 +104,7 @@ export const CampaignOrProgramSelect = (
       value={value()}
       disabled={props.disabled}
       placeholder={props.placeholder}
+      inputTestId={props.inputTestId}
       onChange={o => {
         if (!o) return props.onChange(null);
         props.onChange(
