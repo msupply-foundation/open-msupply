@@ -1,5 +1,5 @@
 /* The editor's header: Item picker · Available line · Issue quantity +
-   Allocate-in lens · placeholder notice, on ONE wrapping row (spec S4, D74) —
+   Allocate-in lens · placeholder notice, on ONE wrapping row (spec S4, D76) —
    each piece drops to its own row as space runs out, bottoming out at the
    fully stacked layout on narrow screens. Bottom-aligned so the Available
    text and the labelled fields share a baseline. */
