@@ -69,6 +69,11 @@ export const accordionMetadata: PageMetadata = {
       title: 'Closed-state preview',
       searchTerms: ['collapsed', 'default'],
     },
+    {
+      id: 'accordion-card',
+      title: 'Card sections',
+      searchTerms: ['panel', 'filled', 'contained', 'variant'],
+    },
   ],
 };
 
@@ -148,6 +153,39 @@ export const AccordionShowcase = () => {
               <AccordionContent>
                 <p class={styles.panelText}>
                   Full notes editor would render here.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </DashboardCard>
+
+        <DashboardCard id="accordion-card" title="Card sections">
+          <Lead>
+            <code>variant="card"</code> renders each item as a filled rounded
+            panel — for a disclosure that must read as its own region inside a
+            form or dialog body (the prescription line editor's Batches
+            section). The flat default stays inline-flush; the card owns its
+            inset. Composes with the closed-state preview.
+          </Lead>
+          <Accordion collapsible variant="card" defaultValue={[]}>
+            <AccordionItem value="batches-demo">
+              <AccordionTrigger as="h2" end="Available: 42,961 Tab">
+                <PreviewTriggerLabel
+                  label="Batches"
+                  preview="RS-A-030453 · 1,014 Tab"
+                />
+              </AccordionTrigger>
+              <AccordionContent>
+                <p class={styles.panelText}>
+                  The batch table would render here.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="directions-demo">
+              <AccordionTrigger as="h2">Directions</AccordionTrigger>
+              <AccordionContent>
+                <p class={styles.panelText}>
+                  Directions fields would render here.
                 </p>
               </AccordionContent>
             </AccordionItem>

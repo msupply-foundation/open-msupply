@@ -56,7 +56,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
         testId={props.testId}
         placeholder={t('label.any')}
         values={props.filter().status?.equalAny ?? []}
-        // Options limited by the _invoice status options_ preference (AC-PR1);
+        // Options limited by the _invoice status options_ preference (OMS-REG-DIST-04.22);
         // computed in render so the preference fetch resolves reactively.
         options={allowedStatuses().map(value => ({
           value: value as StatusValue,

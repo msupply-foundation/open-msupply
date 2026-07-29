@@ -35,6 +35,7 @@ import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
 import {
   FilterBar,
+  FilterCombobox,
   FilterMultiSelect,
   FilterTextInput,
   type Filter,
@@ -344,6 +345,7 @@ const CellTypesTable = () => {
 type DemoFilter = {
   search?: string | null;
   status?: StockStatus[] | null;
+  item?: string | null;
 };
 
 // The status options offered in the multi-select, derived from the one STATUS
@@ -390,6 +392,23 @@ const FILTER_FIELDS: Filter<DemoFilter>[] = [
       />
     ),
   },
+  {
+    key: 'item',
+    label: () => 'Item',
+    render: props => (
+      <FilterCombobox
+        label="Item"
+        placeholder="Item"
+        items={ITEMS}
+        itemToString={i => `${i.code} — ${i.name}`}
+        itemToValue={i => i.code}
+        testId={props.testId}
+        focusTarget={props.focusTarget}
+        value={props.filter().item ?? undefined}
+        onChange={i => props.setPartialFilter({ item: i?.code ?? null })}
+      />
+    ),
+  },
 ];
 
 // 3 — A working table: the toolbar/footer features a real list ships, all on
@@ -426,9 +445,10 @@ const WorkingTable = () => {
   // empty chip) is ignored — mirrors the page stripping empty keys before it
   // queries.
   const filtered = createMemo(() => {
-    const { search, status } = filter();
+    const { search, status, item } = filter();
     const needle = search?.trim().toLowerCase();
     return DATA.filter(r => {
+      if (item && r.code !== item) return false;
       if (status && status.length && !status.includes(r.status)) return false;
       if (
         needle &&

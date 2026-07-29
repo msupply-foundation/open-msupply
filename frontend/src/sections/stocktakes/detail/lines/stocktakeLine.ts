@@ -22,7 +22,8 @@ export const isUncounted = (line: CountLine): boolean =>
 // The line's difference = counted − snapshot, or null while the line is
 // uncounted (OMS-REG-INV-03.49). A missing snapshot reads as 0, so a first
 // count of a brand-new batch shows its full counted quantity as the difference.
-export const lineDifference = (line: CountLine): number | null =>
-  isUncounted(line)
-    ? null
-    : (line.countedNumberOfPacks as number) - (line.snapshotNumberOfPacks ?? 0);
+export const lineDifference = (line: CountLine): number | null => {
+  const counted = line.countedNumberOfPacks;
+  if (counted == null) return null;
+  return counted - (line.snapshotNumberOfPacks ?? 0);
+};
