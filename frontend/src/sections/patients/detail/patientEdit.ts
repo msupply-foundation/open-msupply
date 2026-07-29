@@ -139,15 +139,28 @@ export const toUpdateInput = (
   draft: PatientDraft
 ): UpdatePatientVariables['input'] => toFullInput(id, draft);
 
-// Age in whole years derived from date of birth (AC-M3), matching the server's
-// floor(days-since-dob / 365). Undefined when there is no (or a future) dob.
+// Age in COMPLETED CALENDAR YEARS derived from date of birth (AC-M3). Undefined
+// when there is no (or a future) dob.
+//
+// Compares CALENDAR FIELDS, not instants: subtract the years, then take one
+// back if this year's birthday hasn't come round yet. Elapsed-time arithmetic
+// gets this wrong twice over — floor(days / 365) overcounts once leap days
+// accumulate (a 1 January dob three years back reads a year high late in
+// December), and even a real `differenceInYears` measures instants, so a zone
+// that has CHANGED offset since the birth year (Asia/Kathmandu moved +05:30 →
+// +05:45 in 1986) comes up 15 minutes short of the birthday and reads a year
+// low. Integer comparison on local y/m/d has neither failure mode.
 export const ageFromDob = (dob: string | null): number | undefined => {
   if (!dob) return undefined;
   const birth = isoDateToDate(dob);
   if (!birth) return undefined;
-  const ms = Date.now() - birth.getTime();
-  if (ms < 0) return undefined;
-  return Math.floor(ms / (365 * 24 * 60 * 60 * 1000));
+  const now = new Date();
+  const years = now.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+  const age = beforeBirthday ? years - 1 : years;
+  return age < 0 ? undefined : age;
 };
 
 /**
@@ -158,9 +171,9 @@ export const ageFromDob = (dob: string | null): number | undefined => {
  * path has nowhere to put one (the wire input carries no such field) and the
  * spec keeps it out of the saved record.
  *
- * Round-trips through ageFromDob for every realistic age: a Jan-1 birth date
- * puts the accumulated leap days well inside the current year's slack, so
- * floor(days / 365) lands back on the age the user typed.
+ * Round-trips through ageFromDob exactly, in every timezone: the birthday is
+ * 1 January, so by any later day of the current local year that many calendar
+ * years are complete.
  */
 export const dobFromAge = (age: number): string =>
   `${new Date().getFullYear() - age}-01-01`;

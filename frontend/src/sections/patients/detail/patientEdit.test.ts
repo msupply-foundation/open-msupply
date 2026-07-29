@@ -30,11 +30,38 @@ const fullDraft = (): PatientDraft => ({
 describe('ageFromDob (AC-M3 — age derived from date of birth)', () => {
   afterEach(() => vi.useRealTimers());
 
-  it('is whole years floor(days / 365) from the date of birth', () => {
+  it('is completed calendar years from the date of birth', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
     // 30 calendar years back → 30 whole years.
     expect(ageFromDob('1996-07-22')).toBe(30);
+  });
+
+  // A day short of the birthday is still the younger age — the property a
+  // days/365 division gets wrong once leap days accumulate.
+  it('counts the year only once the birthday has passed', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 22, 12));
+    expect(ageFromDob('1996-07-23')).toBe(29);
+    expect(ageFromDob('1996-07-22')).toBe(30);
+  });
+
+  // The regression this file's round-trip test caught in CI but not locally: on
+  // 31 December, three leap-inclusive years past a 1 January date of birth,
+  // floor(days / 365) read 3 where the calendar says 2.
+  it('does not overcount a January date of birth late in December', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 11, 31, 23));
+    expect(ageFromDob('2024-01-01')).toBe(2);
+  });
+
+  // The second one the round-trip caught, in Asia/Kathmandu only: the zone
+  // moved +05:30 → +05:45 in 1986, so instant arithmetic lands 15 minutes short
+  // of a 1986 birthday and reads a year low. Comparing calendar fields can't.
+  it('is unaffected by a zone changing offset since the birth year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 1));
+    expect(ageFromDob('1986-01-01')).toBe(40);
   });
 
   it('is undefined with no date of birth', () => {
@@ -65,18 +92,23 @@ describe('dobFromAge (an age entered in place of a date of birth)', () => {
 
   // The form drives both directions off the single dateOfBirth field, so a
   // typed age must survive the trip back out as the SAME number — otherwise the
-  // field fights the typist. Checked across the whole offered range, at both
-  // ends of the year (Jan 1 is the tightest case: no slack from days elapsed).
-  it.each(['2026-01-01T00:00:00Z', '2026-12-31T23:00:00Z'])(
-    'round-trips every age 0–150 at %s',
-    now => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(now));
-      for (let age = 0; age <= 150; age++) {
-        expect(ageFromDob(dobFromAge(age))).toBe(age);
-      }
+  // field fights the typist. Checked across the whole offered range at both
+  // ends of the year.
+  //
+  // The instants are LOCAL (`new Date(y, m, d)`), not UTC strings: both helpers
+  // read the local calendar, so a UTC string lands on a different local date in
+  // every timezone — which is how the December end of this range passed in NZ
+  // (UTC+13, already next year) and failed in CI (UTC).
+  it.each([
+    ['1 January', new Date(2026, 0, 1)],
+    ['31 December', new Date(2026, 11, 31, 23)],
+  ])('round-trips every age 0–150 on %s', (_label, now) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    for (let age = 0; age <= 150; age++) {
+      expect(ageFromDob(dobFromAge(age))).toBe(age);
     }
-  );
+  });
 });
 
 describe('isDraftValid (AC-C3 — built-in form requires code + names)', () => {
@@ -136,8 +168,8 @@ describe('patientFieldErrors (DIS-02 .57 — duplicate code blocks the save)', (
   });
 
   // The message means the rule is NOT deferred (formValidation defers only
-  // message-less rules), so the clash shows the moment the check answers instead
-  // of needing the form armed a second time.
+  // message-less rules), so the clash shows the moment the check answers
+  // instead of needing the form armed a second time.
   it('is not held back until the form is armed', () => {
     const errors = codeErrors(fullDraft(), true);
     expect(errors[0]?.showOnSubmit).toBeUndefined();
