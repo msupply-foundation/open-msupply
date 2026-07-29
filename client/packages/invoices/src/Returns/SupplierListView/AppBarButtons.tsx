@@ -34,11 +34,12 @@ export const AppBarButtonsComponent = ({
   const navigate = useNavigate();
 
   const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
-  const { fetchAsync, isPending: isLoading } = useReturns.document.listAllSupplier({
-    key: 'createdDateTime',
-    direction: 'desc',
-    isDesc: true,
-  });
+  const { fetchAsync, isPending: isLoading } =
+    useReturns.document.listAllSupplier({
+      key: 'createdDateTime',
+      direction: 'desc',
+      isDesc: true,
+    });
 
   const getCsvData = async () => {
     const data = await fetchAsync();
@@ -49,6 +50,7 @@ export const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-return-button"
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
           onClick={onNew}
@@ -60,6 +62,7 @@ export const AppBarButtonsComponent = ({
         />
       </Grid>
       <SupplierSearchModal
+        testId="supplier-search-modal"
         open={isOpen}
         onClose={onCloseModal}
         onChange={async name => {
