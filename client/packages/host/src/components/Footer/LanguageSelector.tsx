@@ -27,6 +27,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   const languageButtons = languageOptions.map(l => (
     <FlatButton
+      testId={`language-selector-option-${l.value}`}
       label={l.label}
       name={l.value}
       disabled={l.value === currentLanguage}

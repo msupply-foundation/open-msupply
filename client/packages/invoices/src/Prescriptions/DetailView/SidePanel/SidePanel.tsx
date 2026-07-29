@@ -84,6 +84,7 @@ export const SidePanelComponent = () => {
               icon={<DeleteIcon />}
               title={t('label.delete')}
               onClick={onDelete}
+              testId="delete-prescription-button"
             />
           )}
           {canCancel && (
@@ -91,6 +92,7 @@ export const SidePanelComponent = () => {
               icon={<MinusCircleIcon />}
               title={t('label.cancel-prescription')}
               onClick={onCancel}
+              testId="cancel-prescription-button"
             />
           )}
           <DetailPanelAction

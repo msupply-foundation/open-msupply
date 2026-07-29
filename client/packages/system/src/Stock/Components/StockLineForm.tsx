@@ -139,7 +139,11 @@ export const StockLineForm = ({
       <Grid container direction="column">
         {isInvalidLocation && (
           <Grid container justifyContent="center">
-            <Alert severity="warning" sx={{ maxWidth: 800 }}>
+            <Alert
+              severity="warning"
+              sx={{ maxWidth: 800 }}
+              data-testid="invalid-location-warning"
+            >
               {t('messages.stock-location-invalid')}
             </Alert>
           </Grid>

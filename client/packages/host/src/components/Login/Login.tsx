@@ -241,12 +241,14 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
       ErrorMessage={
         error &&
         loginError.error !== '' && (
-          <BoxedErrorWithDetails
-            details={error.detail || ''}
-            error={loginError.error}
-            hint={loginError.hint}
-            width="100%"
-          />
+          <div data-testid="login-error" style={{ width: '100%' }}>
+            <BoxedErrorWithDetails
+              details={error.detail || ''}
+              error={loginError.error}
+              hint={loginError.hint}
+              width="100%"
+            />
+          </div>
         )
       }
       onLogin={async () => {
