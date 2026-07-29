@@ -683,7 +683,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: () => t('label.expiry'),
       ...getExpiryDateCell(),
     },
-    ...(prefs().manageVvmStatusForStock
+    // Vaccine items only, under either VVM preference (spec § S4 batch grid;
+    // only vaccine stock carries a VVM status) — same gate as the
+    // prescriptions editor's VVM column.
+    ...(item()?.isVaccine &&
+    (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry)
       ? [
           {
             c: {
