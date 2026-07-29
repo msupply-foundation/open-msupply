@@ -1068,83 +1068,84 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* Item row: the shared server-searched item lookup (spec S4 — the
-          registry's async catalogue-lookup; no client-side cached cap), locked
-          in update mode. `selectedItem` labels the current value when it isn't
-          in the search's own paginated results (a row-click open / walk
-          advance). Clearing (×) returns to the empty search state — like an
-          add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
-      <ItemSearch
-        label={t('label.item')}
-        storeId={props.storeId}
-        disabled={updateMode() || saving()}
-        focusTarget={itemSearch}
-        value={item()?.id}
-        selectedItem={item()}
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
-        onSelect={option => {
-          if (option)
-            void seedItem({
-              id: option.id,
-              code: option.code,
-              name: option.name,
-              unitName: option.unitName,
-              isVaccine: option.isVaccine,
-              doses: option.doses,
-            });
-          else backToSearch();
-        }}
-      />
-
-      {/* Available on its own line, then the issue row: quantity + allocate-in. */}
-      <Show when={item()}>
-        <div style={{ 'margin-block': 'var(--space-3) var(--space-2)' }}>
-          <span>
+      {/* The header row (spec S4, D74): Item picker · Available · Issue +
+          Allocate-in · placeholder notice on ONE wrapping flex row — each
+          piece drops to its own row as space runs out (see the module CSS). */}
+      <div class={styles.headerRow}>
+        {/* The shared server-searched item lookup (spec S4 — the registry's
+            async catalogue-lookup; no client-side cached cap), locked in
+            update mode. `selectedItem` labels the current value when it isn't
+            in the search's own paginated results (a row-click open / walk
+            advance). Clearing (×) returns to the empty search state — like an
+            add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
+        <div class={styles.itemField}>
+          <ItemSearch
+            label={t('label.item')}
+            storeId={props.storeId}
+            disabled={updateMode() || saving()}
+            focusTarget={itemSearch}
+            value={item()?.id}
+            selectedItem={item()}
+            placeholder={t('placeholder.enter-an-item-code-or-name')}
+            onSelect={option => {
+              if (option)
+                void seedItem({
+                  id: option.id,
+                  code: option.code,
+                  name: option.name,
+                  unitName: option.unitName,
+                  isVaccine: option.isVaccine,
+                  doses: option.doses,
+                });
+              else backToSearch();
+            }}
+          />
+        </div>
+        <Show when={item()}>
+          <span class={styles.available}>
             {t('label.available')}: {formatNumber(availableUnits())}{' '}
             {unitName()}
           </span>
-        </div>
-        {/* One control per row below the compact breakpoint (the same cutoff
-            where this large Dialog goes full-screen) — see the module CSS. */}
-        <div class={styles.issueRow}>
-          {/* Both controls at the default height — NumberField's "small"
-              (2.25rem) and Select's "sm" (1.75rem — the Pagination scale)
-              don't align with each other. */}
-          <NumberField
-            label={t('label.issue')}
-            min={0}
-            data-testid="issue-quantity-input"
-            ref={issueField.ref}
-            value={issueValue()}
-            disabled={saving()}
-            onChange={onIssueChange}
-          />
-          <Select
-            label={t('label.units')}
-            value={allocateInValue()}
-            options={[
-              { value: 'units', label: unitName() },
-              // The doses lens (AC-AL7): vaccine items under the
-              // manage-vaccines-in-doses preference only.
-              ...(prefs().manageVaccinesInDoses && item()?.isVaccine
-                ? [{ value: 'doses', label: t('label.doses') }]
-                : []),
-              ...distinctPackSizes().map(size => ({
-                value: `packs-${size}`,
-                label: t('label.packs-of-pack-size', { packSize: size }),
-              })),
-            ]}
-            onValueChange={value => {
-              const next: AllocateUnit =
-                value === 'units'
-                  ? { kind: 'units' }
-                  : value === 'doses'
-                    ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
-                    : { kind: 'packs', size: Number(value.slice(6)) };
-              switchLensTo(next);
-            }}
-          />
-          {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
+          {/* Issue + Allocate-in wrap as a unit. Both controls at the default
+              height — NumberField's "small" (2.25rem) and Select's "sm"
+              (1.75rem — the Pagination scale) don't align with each other. */}
+          <div class={styles.issueGroup}>
+            <NumberField
+              label={t('label.issue')}
+              min={0}
+              data-testid="issue-quantity-input"
+              ref={issueField.ref}
+              value={issueValue()}
+              disabled={saving()}
+              onChange={onIssueChange}
+            />
+            <Select
+              label={t('label.units')}
+              value={allocateInValue()}
+              options={[
+                { value: 'units', label: unitName() },
+                // The doses lens (AC-AL7): vaccine items under the
+                // manage-vaccines-in-doses preference only.
+                ...(prefs().manageVaccinesInDoses && item()?.isVaccine
+                  ? [{ value: 'doses', label: t('label.doses') }]
+                  : []),
+                ...distinctPackSizes().map(size => ({
+                  value: `packs-${size}`,
+                  label: t('label.packs-of-pack-size', { packSize: size }),
+                })),
+              ]}
+              onValueChange={value => {
+                const next: AllocateUnit =
+                  value === 'units'
+                    ? { kind: 'units' }
+                    : value === 'doses'
+                      ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                      : { kind: 'packs', size: Number(value.slice(6)) };
+                switchLensTo(next);
+              }}
+            />
+          </div>
+          {/* Placeholder notice (info) — fills the rest of the header row,
               matching the old app; shown when a shortfall became a placeholder. */}
           <Show when={placeholderUnits() > 0}>
             <div class={styles.placeholderNotice}>
@@ -1158,8 +1159,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               </Alert>
             </div>
           </Show>
-        </div>
+        </Show>
+      </div>
 
+      {/* The grid + footer + banners keep their own item gate — the header
+          row above renders its picker item-less in add mode. */}
+      <Show when={item()}>
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
         <div class={styles.batchGrid}>
