@@ -42,19 +42,24 @@ import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
 import { formatNumber, round } from '../../../../intl';
 import {
+  clampManualPacks,
+  issuedUnits,
+  lensToUnits,
+  round9,
+  unitsToLens,
+  type AllocateUnit,
+} from '@/domain/allocation';
+import {
   allocateUnits,
   buildSaveInput,
   canSave,
-  clampPacks,
   draftAvailableUnits,
-  draftIssuedUnits,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
 import {
   issueWarningMessages,
   manualEntryMessages,
-  round9,
   type PrescriptionWarningMessage,
 } from './allocationWarnings';
 import { expandAbbreviations } from './directions';
@@ -205,7 +210,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     // Re-opening a dispensed line shows its saved state: the issue field
     // seeds to the existing allocation's unit total (displayed through the
     // lens). A fresh item has nothing allocated, so it stays empty (.32).
-    const existingUnits = draftIssuedUnits(seeded);
+    const existingUnits = issuedUnits(seeded);
     setIssueUnits(existingUnits > 0 ? round9(existingUnits) : undefined);
     setShortfall(0);
     setWarnings([]);
@@ -242,17 +247,17 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   // The lens boundary (.63, rules § prescribed quantity): state and the wire
   // are ALWAYS units — both quantity fields enter and display through the
-  // lens, so flipping it rescales the figures without touching the
-  // allocation. round9 kills the ÷/× float dust before it reaches state or
-  // display.
-  const lensToUnits = (value: number): number =>
-    dosesMode() ? round9(value / dosesPerUnit()) : value;
-  const unitsToLens = (units: number): number =>
-    round9(dosesMode() ? units * dosesPerUnit() : units);
+  // shared allocate-in lens (domain/allocation lensToUnits/unitsToLens), so
+  // flipping it rescales the figures without touching the allocation.
+  // Prescriptions has no packs lens; the shape is units or doses.
+  const allocateLens = (): AllocateUnit =>
+    dosesMode()
+      ? { kind: 'doses', dosesPerUnit: dosesPerUnit() }
+      : { kind: 'units' };
   const lensValue = (units: number | undefined): number | undefined =>
-    units == null ? undefined : unitsToLens(units);
+    units == null ? undefined : unitsToLens(units, allocateLens());
 
-  const allocatedUnits = () => draftIssuedUnits(lines);
+  const allocatedUnits = () => issuedUnits(lines);
   const availableUnits = () => draftAvailableUnits(lines);
 
   // Who owns the distribution waiting behind the debounce. Clearing a field
@@ -292,7 +297,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         dosesPerUnit: dosesPerUnit(),
       })
     );
-    setIssueUnits(round9(draftIssuedUnits(lines)));
+    setIssueUnits(round9(issuedUnits(lines)));
     setDirty(true);
   };
   const allocate = createDebounced(runAllocation, 500);
@@ -314,12 +319,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // (save() flushes it before reading the draft).
   const onIssueChange = (value: number | undefined) => {
     setDirty(true);
-    if (value == null) {
+    const units = lensToUnits(value, allocateLens());
+    if (units == null) {
       setIssueUnits(undefined);
       cancelAllocate('issue');
       return;
     }
-    const units = lensToUnits(value);
     setIssueUnits(units);
     scheduleAllocate('issue', units);
   };
@@ -329,7 +334,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // request — it's the demand record (AC-Q1–Q3), not the issue figure.
   // Entered through the lens, held and saved as units (.63).
   const onPrescribedChange = (value: number | undefined) => {
-    const units = value == null ? undefined : lensToUnits(value);
+    const units = lensToUnits(value, allocateLens());
     setPrescribedQuantity(units);
     setDirty(true);
     if (units != null) scheduleAllocate('prescribed', units);
@@ -348,11 +353,15 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     // debounce — left pending, it would fire (or be flushed by save) and
     // silently rewrite this row with the auto-pick.
     cancelAllocate();
-    const applied = clampPacks(value, lines[index].availablePacks);
+    // Bounded 0…available, keeping the exact fraction — prescriptions is the
+    // partial-pack consumer (rules § allocation).
+    const applied = clampManualPacks(value, lines[index].availablePacks, {
+      partialPacks: true,
+    });
     setLines(index, 'numberOfPacks', applied);
     // The issue field mirrors the actual total after a row edit (the current
     // app derives it from the rows, so it can never disagree).
-    setIssueUnits(round9(draftIssuedUnits(lines)));
+    setIssueUnits(round9(issuedUnits(lines)));
     setShortfall(0);
     setWarnings(manualEntryMessages(applied, lines[index].packSize));
     setDirty(true);
@@ -726,9 +735,11 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 ? 'warning.cannot-create-placeholder-doses'
                 : 'warning.cannot-create-placeholder-units',
               {
-                allocatedQuantity: formatNumber(unitsToLens(allocatedUnits())),
+                allocatedQuantity: formatNumber(
+                  unitsToLens(allocatedUnits(), allocateLens())
+                ),
                 requestedQuantity: formatNumber(
-                  unitsToLens(allocatedUnits() + shortfall())
+                  unitsToLens(allocatedUnits() + shortfall(), allocateLens())
                 ),
               }
             )}
@@ -773,7 +784,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 end={
                   <>
                     {t('label.available')}:{' '}
-                    {formatNumber(unitsToLens(availableUnits()))}{' '}
+                    {formatNumber(
+                      unitsToLens(availableUnits(), allocateLens())
+                    )}{' '}
                     {dosesMode() ? t('label.doses') : unitName()}
                   </>
                 }

@@ -45,6 +45,8 @@ import {
 import { toSaveLineInputs } from './saveLineInputs';
 import {
   availableUnits as sumAvailableUnits,
+  issuedUnits as sumIssuedUnits,
+  distinctPackSizes as packSizesIn,
   autoAllocateBarReasons,
   barReasons,
   clampManualPacks,
@@ -418,12 +420,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // fields, so per-pack edits still mutate in place without rebuilding the grid
   // (no remount / focus loss — kdd/solid-reactivity-pitfalls).
   const draftRows = createMemo(() => [...draft]);
-  const issuedUnits = createMemo(() =>
-    draft.reduce((sum, line) => sum + line.numberOfPacks * line.packSize, 0)
-  );
-  const distinctPackSizes = createMemo(() => [
-    ...new Set(draft.map(line => line.packSize)),
-  ]);
+  const issuedUnits = createMemo(() => sumIssuedUnits(draft));
+  const distinctPackSizes = createMemo(() => packSizesIn(draft));
 
   const unitName = () => item()?.unitName ?? t('label.unit');
 
