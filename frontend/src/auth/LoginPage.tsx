@@ -52,8 +52,12 @@ export const LoginPage: Component = () => {
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
-    if (result.kind === 'error')
+    if (result.kind === 'error') {
+      // Clear the password on a failed login (finding F6 — align with the
+      // current app; a wrong password is re-entered, not left in the field).
+      setPassword('');
       setSubmitState({ kind: 'error', message: result.message });
+    }
   };
 
   return (
