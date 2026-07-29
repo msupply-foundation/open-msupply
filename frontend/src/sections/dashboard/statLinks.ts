@@ -124,7 +124,7 @@ export const expiredHref = (storeId: string, today: Date): string =>
 
 // Expiring soon: tomorrow … today + 30d — exactly the count's window (the count
 // subtracts expired, so today's expiries belong to the expired stat). Diverges
-// from the current app's today … today + 1 calendar month link (D71).
+// from the current app's today … today + 1 calendar month link (D74).
 export const expiringSoonHref = (storeId: string, today: Date): string =>
   listHref(storeId, 'inventory/stock', {
     expiryDate: dayRange(
