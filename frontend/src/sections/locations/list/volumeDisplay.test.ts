@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   availableVolume,
   getVolumeUsedPercentage,
-} from '../../../domain/location/volume';
+} from '@/domain/location/volume';
 
 // AC-citing tests for the volume criteria (spec/locations/acceptance.md
 // § volume) over the SHARED helpers in src/domain/location/volume.ts — the one
