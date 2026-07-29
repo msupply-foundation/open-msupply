@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toSaveLineInputs } from './saveLineInputs';
 
-// AC-I8's untouched-values half, at the wire seam: the item-set save
+// OMS-REG-DIST-03.21's untouched-values half, at the wire seam: the item-set save
 // OVERWRITES receivedNumberOfPacks and reasonOptionId on every updated line
 // (contract § issuing lines wire trap), so the mapping must echo the draft's
 // stored values — never omit them, never fake a blank received count from the

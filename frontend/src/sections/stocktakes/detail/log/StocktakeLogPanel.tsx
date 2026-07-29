@@ -5,10 +5,8 @@ import type { LocaleKey } from '@/intl/locales';
 import { dictionaries, locale } from '@/intl/intl';
 import { localisedTime } from '@/intl/formatDateTime';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import {
-  DataTable,
-  type Column,
-} from '@/ui/elements/table/DataTable';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import { getDateCell } from '@/ui/elements/table/tableHelpers';
 import {
   StocktakeLog,
@@ -104,17 +102,7 @@ const changeDetails = (from: string | null, to: string | null): JSX.Element => {
         );
       }
     }
-    return (
-      <span
-        style={{
-          display: 'inline-flex',
-          'flex-direction': 'column',
-          gap: '0.25rem',
-        }}
-      >
-        {changes}
-      </span>
-    );
+    return <Stack gap="sm">{changes}</Stack>;
   }
 
   // Scalar fallback.

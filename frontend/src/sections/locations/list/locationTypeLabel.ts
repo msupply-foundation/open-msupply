@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 
 // A location type shown the ONE way the spec names it on screen — name +
 // temperature range (spec/locations/ui-surface.md S1 column 3 and the S2

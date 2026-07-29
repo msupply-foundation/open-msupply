@@ -1,28 +1,33 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
-import { round } from '../../../intl/formatNumber';
-import { Page } from '../../../ui/layout/Page/Page';
-import { Header } from '../../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { round } from '@/intl/formatNumber';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
   DataTable,
   type Column,
   type SortState,
-} from '../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../../api/createTableConfig';
-import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
-import { useUrlQueryState } from '../../../list/urlQueryState';
-import { getVolumeUsedPercentage } from '../../../domain/location';
+} from '@/ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getNumberCell,
+  getTextCell,
+} from '@/ui/elements/table/tableHelpers';
+import { getBooleanCell } from '@/ui/elements/table/BooleanCell';
+import { remToPx } from '@/ui/utils/rem';
+import { createTableConfig } from '@/api/createTableConfig';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
+import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import { getVolumeUsedPercentage } from '@/domain/location';
 import { LocationsList as LocationsListQuery } from './locations.generated';
 import type { LocationsListVariables } from './locations.generated';
 import { filterFields, type LocationFilter } from './listFilters';
@@ -145,13 +150,17 @@ const LocationsList: Component = () => {
       c: { key: 'code' },
       sortKey: 'code',
       header: () => t('label.code'),
+      // The code cell type: monospace + the short-code width preset (a bare
+      // helper carries no width, so the column would mis-size and resize badly
+      // — docs/CELL_TYPES.md § Width model).
+      ...getCellDefinition('code'),
     },
     {
       c: { key: 'name' },
       sortKey: 'name',
       header: () => t('label.name'),
-      // Card view: the name is the card's title.
-      meta: { headerPosition: 'primary' },
+      // The text (flex-sink) preset; card view: the name is the card's title.
+      ...getCellDefinition('name', { headerPosition: 'primary' }),
     },
     {
       // Location type, shown as name + temperature range (ui-surface S1
@@ -161,29 +170,38 @@ const LocationsList: Component = () => {
         id: 'locationType',
       },
       header: () => t('label.location-type'),
+      // No CELL_DEF key for this column, so the cell type is the explicit
+      // helper and the width is set here (the sanctioned route for an uncommon
+      // column — docs/CELL_TYPES.md); "Cold room (2 to 8°C)" needs the room.
+      ...getTextCell(),
+      size: remToPx(14),
     },
     {
       c: { key: 'volume' },
       header: () => t('label.volume'),
+      // Width set at the call site: no CELL_DEF key, and the header
+      // "Volume (m³)" is the binding constraint, not the value.
       ...getNumberCell(),
+      size: remToPx(7),
     },
     {
       // Fullness, read-only (OMS-REG-INV-01.30): used ÷ capacity, no figure when capacity
-      // is 0 (OMS-REG-INV-01.31). Registry gap: the proportion-BAR treatment has no built
-      // component yet, so this renders the percentage text (see BUILD_REPORT).
+      // is 0 (OMS-REG-INV-01.31). Registry gap: the proportion-BAR role has no
+      // built component (a ⛔ row in the registry), so this renders the
+      // percentage text as the documented interim.
       c: { accessor: fullnessLabel, id: 'volumeUsed' },
       header: () => t('label.volume-used'),
       ...getNumberCell(),
+      size: remToPx(7.5),
     },
     {
-      // Presence marker carrying the state's accessible name — real text when
-      // on hold, blank otherwise (D8; the registry's dedicated boolean-cell
-      // component is not built, so the marker is the translated label itself).
-      c: {
-        accessor: row => (row.onHold ? t('label.on-hold') : ''),
-        id: 'onHold',
-      },
+      // The boolean flag cell (registry "boolean cell in a table"): a centred
+      // dot when on hold, blank otherwise, the marker carrying the state's
+      // accessible name (D8) — never a silent glyph.
+      c: { key: 'onHold' },
       header: () => t('label.on-hold'),
+      ...getBooleanCell({ display: 'dot', label: t('label.on-hold') }),
+      size: remToPx(4),
     },
   ];
 
@@ -210,13 +228,6 @@ const LocationsList: Component = () => {
               filter={() => query().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -257,6 +268,15 @@ const LocationsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // toolbar: never the page header), state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}

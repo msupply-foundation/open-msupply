@@ -1,8 +1,0 @@
-/* The S2 modal's one layout deviation from a plain stacked form: Volume and
- * Volume used sit side by side on one row (spec/locations/ui-surface.md S2
- * layout item 4). Spacing from the theme tokens only. */
-.volumeRow {
-  display: flex;
-  gap: var(--space-4);
-  align-items: flex-start;
-}

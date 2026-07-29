@@ -16,9 +16,9 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  getCellDefinition,
   getCommentCell,
   getDateCell,
-  getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
@@ -243,9 +243,10 @@ const StocktakesList: Component = () => {
       // Language-neutral '#' for the number column (universal symbol; no t()
       // needed).
       header: () => '#',
-      // getNumberCell merges extra meta — card:'primary' makes the number the
-      // card's title (top-left); right-aligned in table view.
-      ...getNumberCell({ headerPosition: 'primary' }),
+      // The stocktake number is a short record number (like invoiceNumber), so
+      // getCellDefinition gives it the narrow number-width preset + right-align;
+      // headerPosition:'primary' makes it the card's title (top-left).
+      ...getCellDefinition('stocktakeNumber', { headerPosition: 'primary' }),
     },
     {
       c: { key: 'status' },

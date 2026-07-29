@@ -40,6 +40,7 @@ export const Header = (props: HeaderProps) => {
         <button
           type="button"
           class={styles.hamburger}
+          data-testid="mobile-nav-toggle"
           onClick={() => shell?.openNav()}
           aria-label={t('button.open-the-menu')}
         >
