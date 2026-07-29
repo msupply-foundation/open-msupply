@@ -26,8 +26,13 @@ export const ConsumptionHistoryChart = (props: {
   height?: number;
 }) => {
   const data = createMemo(() => props.data);
+  // The moving-average line shares the y scale, so it belongs in the domain —
+  // its values can exceed every bar (e.g. all-zero consumption months).
   const maxValue = createMemo(() =>
-    Math.max(1, ...data().map(d => d.consumption))
+    Math.max(
+      1,
+      ...data().map(d => Math.max(d.consumption, d.averageMonthlyConsumption))
+    )
   );
   const barClass = (d: ConsumptionHistoryPoint) =>
     d.isHistoric ? styles.historic : d.isCurrent ? styles.current : styles.projected;
