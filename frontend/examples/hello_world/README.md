@@ -74,8 +74,9 @@ export default definePlugin({
 ### Columns
 
 This plugin also contributes three columns to the internal-order line table
-(`internalOrderLine.column`), one per thing that slot has to prove — open any
-internal order's detail screen to see them:
+(`internalOrderLine.column`), one per thing that slot has to prove — run
+`OMS_PLUGIN_DIRS=examples/hello_world pnpm dev` ([the dev loop](#the-dev-loop))
+and open any internal order's detail screen to see them:
 
 | Contribution | What it shows                                                                                                                                                                                                                                                            |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -177,7 +178,8 @@ OMS_PLUGIN_DIRS=../civ-plugins/frontend/latest pnpm dev
 Colon- or comma-separated, each entry absolute or relative to the repo root. Your
 plugin's **source** is imported into the app's own module graph, so you get one
 Solid runtime, the live in-tree SDK (no rebuild after an SDK edit), and **HMR on
-your own files**. Every `examples/*` plugin is loaded this way too, always.
+your own files**. Loading is opt-in — nothing loads unless named, the in-repo
+plugins included: `OMS_PLUGIN_DIRS=examples/hello_world pnpm dev` runs this one.
 
 - The entry module is the first of `plugin.tsx`, `plugin.ts`, `src/plugin.tsx`,
   `src/plugin.ts` that exists in the directory — the same rule
