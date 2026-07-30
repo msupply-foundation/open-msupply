@@ -322,6 +322,93 @@
   flex-shrink: 0;
 }
 
+/* The range picker's popover: the calendar with a footer under it (see
+   DateRangeField). The Popover owns the surface + its padding, so this stacks
+   the two and the footer's hairline sits inset by that padding. */
+.rangePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Footer: the two picked sides STACKED, with the pair's Clear dates beside them
+   at the inline-end. Stacked because the calendar grid stretches to the panel,
+   so a footer wider than the calendar's intrinsic width spreads the day cells
+   apart — two short rows stay inside it where one long row didn't. Wraps (Clear
+   dates dropping under the stack) if a long localised date still outgrows the
+   calendar. */
+.rangeFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--color-divider);
+  font-size: var(--text-xs);
+}
+
+/* One grid for BOTH sides — label / value / clear as three columns — so From
+   and To line up down the stack rather than each row measuring itself. */
+.rangeSides {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  column-gap: var(--space-1);
+}
+
+/* Each side's three parts ARE the grid's cells (see RangeSide). */
+.rangeSide {
+  display: contents;
+}
+
+.rangeSideLabel {
+  color: var(--text-secondary);
+}
+
+.rangeSideValue {
+  color: var(--text-body);
+}
+
+/* An unset side reads as a placeholder, matching the trigger's own '…' */
+.rangeSideValue[data-empty] {
+  color: var(--text-disabled);
+}
+
+.rangeSideClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.75em;
+  cursor: pointer;
+}
+
+.rangeSideClear:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+  color: var(--secondary-main);
+}
+
+.rangeClear {
+  margin-inline-start: auto;
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--secondary-main);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rangeClear:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .control {
     transition: none;

@@ -1,0 +1,91 @@
+# The shared program-indicators machinery (kdd/domain-modules): the
+# definitions-plus-values read and the in-place cell edit behind the
+# Indicators tab both requisition verticals show. The surface is specced at
+# internal-orders (spec/internal-orders S3 § Indicators tab) and consumed by
+# requisitions with the response-side variations (spec/requisitions
+# § indicator values); each vertical supplies its own reporting identity as
+# $customerNameId — the store's OWN name on the ordering side, the CUSTOMER's
+# name on the response side.
+
+# The program's indicator definitions + the period's cell values + the
+# per-line customer breakdown (rendered only by the ordering side). `value` is
+# null for a cell with no stored row (the client hides such columns and drops
+# all-null lines). valueType is the DECLARED type (renders the input);
+# validation uses the effective type server-side (contract wire trap).
+query programIndicatorValues(
+  $storeId: String!
+  $programId: String!
+  $periodId: String!
+  $customerNameId: String!
+) {
+  programIndicators(
+    storeId: $storeId
+    filter: { programId: { equalTo: $programId } }
+  ) {
+    ... on ProgramIndicatorConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        lineAndColumns {
+          line {
+            id
+            code
+            name
+            lineNumber
+            valueType
+            isActive
+          }
+          columns {
+            id
+            name
+            columnNumber
+            valueType
+            value(
+              periodId: $periodId
+              storeId: $storeId
+              customerNameId: $customerNameId
+            ) {
+              id
+              value
+            }
+          }
+          customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
+            id
+            customer(storeId: $storeId) {
+              id
+              name
+            }
+            datetime
+            indicatorInformation {
+              columnId
+              value
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The in-place cell edit (AC-I5): saves as typed, no confirm. Typed errors
+# RecordNotFound / ValueTypeNotCorrect surface as field feedback.
+mutation updateIndicatorValue(
+  $storeId: String!
+  $input: UpdateIndicatorValueInput!
+) {
+  updateIndicatorValue(storeId: $storeId, input: $input) {
+    __typename
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
