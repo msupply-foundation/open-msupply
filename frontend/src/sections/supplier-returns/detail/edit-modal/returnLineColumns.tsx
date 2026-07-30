@@ -128,7 +128,7 @@ export const reasonColumns = (
     ...getDateCell(),
   },
   {
-    c: { id: 'returnReasonInput' },
+    c: { id: 'returnReason' },
     header: () => t('label.reason'),
     cell: info => {
       const line = info.row.original;
