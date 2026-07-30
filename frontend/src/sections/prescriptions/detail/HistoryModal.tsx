@@ -78,8 +78,8 @@ export const HistoryModal: Component<HistoryModalProps> = props => {
         rows={rows()}
         rowKey={row => row.id}
         loading={data.loading}
-        emptyMessage={t('error.no-results')}
         showFullScreen={false}
+        emptyMessage={t('error.no-results')}
       />
     </Dialog>
   );

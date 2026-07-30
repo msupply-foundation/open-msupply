@@ -1,10 +1,10 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 import {
   FilterTextInput,
   constructFilters,
   type Filter,
-} from '../../../ui/elements/selectors/FilterBar';
-import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
+} from '@/ui/elements/selectors/FilterBar';
+import { Checkbox } from '@/ui/elements/inputs/Checkbox';
 import type { LocationsListVariables } from './locations.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no

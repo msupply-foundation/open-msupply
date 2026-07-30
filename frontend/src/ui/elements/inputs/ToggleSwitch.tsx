@@ -1,4 +1,4 @@
-import { createUniqueId } from 'solid-js';
+import { createUniqueId, Show, type JSX } from 'solid-js';
 import styles from './ToggleSwitch.module.css';
 
 export interface ToggleSwitchProps {
@@ -14,6 +14,15 @@ export interface ToggleSwitchProps {
    * neutral grey — state is never conveyed by colour alone (the thumb moves).
    */
   variant?: 'default' | 'caution';
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the setting. Rendered as a SIBLING of the
+   * <label> rather than inside it: nested, its own accessible name would leak
+   * into the switch's, and its click would land on the label and flip the
+   * switch. With one present the root becomes that wrapping row (and carries
+   * `class`); without one the DOM is unchanged. As TextField.
+   */
+  labelInfo?: JSX.Element;
   id?: string;
   class?: string;
   /** Test id on the native input (cross-FE test-id contract). */
@@ -35,9 +44,18 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
   const autoId = createUniqueId();
   const inputId = () => props.id ?? autoId;
 
-  return (
+  // The <label> that wraps the switch + its text. A local component so it
+  // renders fresh in either branch (bare, or beside labelInfo) — reusing one
+  // JSX node across both would try to mount it in two places. As TextField.
+  // `class` stays on whichever element is the root, so a caller's layout class
+  // always lands on the outermost box.
+  const Label = () => (
     <label
-      class={props.class ? `${styles.root} ${props.class}` : styles.root}
+      class={
+        props.class && !props.labelInfo
+          ? `${styles.root} ${props.class}`
+          : styles.root
+      }
       data-disabled={props.disabled ? '' : undefined}
       data-variant={props.variant ?? 'default'}
     >
@@ -56,5 +74,18 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
       </span>
       <span class={styles.label}>{props.label}</span>
     </label>
+  );
+
+  return (
+    <Show when={props.labelInfo} fallback={<Label />}>
+      <span
+        class={
+          props.class ? `${styles.labelRow} ${props.class}` : styles.labelRow
+        }
+      >
+        <Label />
+        {props.labelInfo}
+      </span>
+    </Show>
   );
 };

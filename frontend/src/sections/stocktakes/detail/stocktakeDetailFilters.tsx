@@ -1,9 +1,11 @@
 import { t } from '@/intl';
 import {
+  FilterCombobox,
+  FilterTextInput,
   constructFilters,
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
-import { LocationSelect, type Location } from '@/domain/location';
+import { type Location } from '@/domain/location';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
@@ -15,12 +17,13 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 // key and this map stops compiling until we decide expose-or-dismiss.
 //
 // The detail table is server-filtered now (kdd/stocktake-line-editing), so the
-// only filters we can offer are the ones the backend supports. `itemCodeOrName`
-// is the always-on item search rendered by the toolbar (not a chip), so it's
-// dismissed here; `locationId` is the one addable chip (exact-match location
-// picker). The filters the OLD client-side filter offered but the server can't
-// do yet — batch (no field), expiry-before (no field), and the "show error
-// lines" filter — are TODOs below.
+// only filters we can offer are the ones the backend supports: `itemCodeOrName`
+// (the item name/code search) and `locationId` (an exact-match location
+// picker), both addable chips in the table toolbar's FilterBar — the same
+// filter-chip model as the list, no separate always-on search field. The
+// filters the OLD client-side filter offered but the server can't do yet —
+// batch (no field), expiry-before (no field), and the "show error lines"
+// filter — are TODOs below.
 // The location filter uses the plain, VOLUME-BLIND picker: it only narrows the
 // line list to a location, so capacity is irrelevant (spec/stocktakes/
 // ui-surface.md). The locations are fetched by the detail VIEW (one fetch,
@@ -31,13 +34,32 @@ export const stocktakeDetailFilters = (
 ): Filter<StocktakeLineFilter>[] =>
   constructFilters<StocktakeLineFilter>({
     // ─ user-facing (addable chips), in display order ─────────────────────────
+    // Item name / code search (server itemCodeOrName.like). Blank clears to
+    // null so stripEmpty drops it (a blank `like` would match everything).
+    itemCodeOrName: {
+      label: () => t('label.name'),
+      render: props => (
+        <FilterTextInput
+          label={t('label.name')}
+          testId={props.testId}
+          value={props.filter().itemCodeOrName?.like ?? ''}
+          onInput={value =>
+            props.setPartialFilter({
+              itemCodeOrName: value ? { like: value } : null,
+            })
+          }
+        />
+      ),
+    },
     locationId: {
       label: () => t('label.location'),
       render: props => (
-        <LocationSelect
+        <FilterCombobox
           label={t('label.location')}
-          hideLabel
-          locations={locations()}
+          items={locations()}
+          itemToString={l => `${l.code} — ${l.name}`}
+          itemToValue={l => l.id}
+          testId={props.testId}
           focusTarget={props.focusTarget}
           value={props.filter().locationId?.equalTo ?? undefined}
           placeholder={t('label.location')}
@@ -53,9 +75,6 @@ export const stocktakeDetailFilters = (
     },
 
     // ─ dismissed (not addable chips) ─────────────────────────────────────────
-    // The always-on item search (name OR code) — rendered by the toolbar, not
-    // as a chip.
-    itemCodeOrName: null,
     // TODO: batch filter. The old client filter offered it, but
     // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
     // TODO: expiry-before filter. No expiry field on the server filter — needs a

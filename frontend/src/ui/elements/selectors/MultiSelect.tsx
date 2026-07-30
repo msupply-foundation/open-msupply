@@ -24,6 +24,12 @@ interface MultiSelectProps<T> {
    * scale (see --input-height*).
    */
   size?: 'default' | 'small';
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept outside the label element so it
+   * isn't part of the control's accessible name. As TextField.
+   */
+  labelInfo?: JSX.Element;
   class?: string;
 }
 
@@ -85,7 +91,20 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
         </KCombobox.Item>
       )}
     >
-      <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+      <Show
+        when={props.labelInfo}
+        fallback={
+          <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+        }
+      >
+        {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in it
+            its accessible name would leak into the input's (the
+            name-from-label computation concatenates descendant controls). */}
+        <span class={styles.labelRow}>
+          <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+          {props.labelInfo}
+        </span>
+      </Show>
       <KCombobox.Control<T> class={styles.control}>
         {state => (
           <>

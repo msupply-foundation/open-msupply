@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlFetch } from '../../../api/graphql';
 import { changeShipmentCurrency, changeShipmentStatus } from './outboundUpdate';
 
-// The status/currency wire mappings (contract § header fields, AC-H1/H2,
+// The status/currency wire mappings (contract § header fields, OMS-REG-DIST-02.10/.27,
 // ui-surface § Foreign currency): what goes ON the wire (the one-save
 // release-and-advance input) and how each typed verdict comes back off it.
 // graphqlFetch is mocked at the module seam — these functions ARE the
@@ -33,7 +33,7 @@ describe('changeShipmentStatus', () => {
     });
   });
 
-  it('AC-H2: releaseHold sends the ONE-save {id, status, onHold: false}', async () => {
+  it('OMS-REG-DIST-02.27: releaseHold sends the ONE-save {id, status, onHold: false}', async () => {
     fetchMock.mockResolvedValue(
       success({ __typename: 'InvoiceNode', id: 'i1' })
     );
@@ -44,7 +44,7 @@ describe('changeShipmentStatus', () => {
     });
   });
 
-  it('AC-H1: the on-hold rejection arms the release retry (heldShipment)', async () => {
+  it('OMS-REG-DIST-02.10: the on-hold rejection arms the release retry (heldShipment)', async () => {
     fetchMock.mockResolvedValue(
       success({
         __typename: 'UpdateOutboundShipmentError',
@@ -66,7 +66,7 @@ describe('changeShipmentStatus', () => {
     });
   });
 
-  it('AC-P3: the unallocated-lines rejection carries the offending items', async () => {
+  it('OMS-REG-DIST-03.9: the unallocated-lines rejection carries the offending items', async () => {
     fetchMock.mockResolvedValue(
       success({
         __typename: 'UpdateOutboundShipmentError',

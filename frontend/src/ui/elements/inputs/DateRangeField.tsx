@@ -1,4 +1,4 @@
-import { createUniqueId } from 'solid-js';
+import { createUniqueId, type JSX } from 'solid-js';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import type { FocusTarget } from '../../utils/createFocusTarget';
@@ -39,6 +39,12 @@ export interface DateRangeFieldProps {
   disabled?: boolean;
   size?: 'default' | 'small';
   hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field (see FieldShell). Ignored under
+   * `hideLabel`.
+   */
+  labelInfo?: JSX.Element;
   id?: string;
   /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
   testId?: string;
@@ -80,6 +86,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
       required={props.required}
       error={props.error}
       helperText={props.helperText}
+      labelInfo={props.labelInfo}
       controlId={id()}
     >
       {({ describedBy, invalid }) => (

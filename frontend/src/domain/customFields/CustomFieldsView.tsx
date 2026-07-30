@@ -1,34 +1,52 @@
-import { For, Match, Show, Switch } from 'solid-js';
+import { createMemo, For, Show } from 'solid-js';
 import { t } from '../../intl';
 import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
-import { Select } from '../../ui/elements/selectors/Select';
-import { DetailContainer } from '../../ui/layout/Detail/DetailContainer';
-import { DetailSection } from '../../ui/layout/Detail/DetailSection';
-import { DetailRow } from '../../ui/layout/Detail/DetailRow';
+import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
+import { FormColumns } from '../../ui/layout/Form/FormColumns';
+import { FormColumn } from '../../ui/layout/Form/FormColumn';
+import { Stack } from '../../ui/layout/Stack/Stack';
 import { customFieldDefinitions } from './customFieldsResource';
 import {
-  customFieldValue,
   parseCustomField,
-  resolveOptionName,
   shownCustomFields,
+  type ParsedCustomField,
 } from './parse';
-import { customFieldDisplayString } from './display';
+import { customFieldFormText } from './display';
 
 // The READ-ONLY custom-fields tab (spec/ui-standards/custom-fields › the tab):
-// every shown field for the scope as a labelled detail row, its control chosen
-// by the parsed kind — boolean → disabled checkbox, option → resolved name in a
-// disabled dropdown (the read-only counterpart of the picker), everything else
-// → a read-only value (numbers/dates localised via customFieldDisplayString).
-// The read-only surface for a genuinely read-only vertical (names, items) — it
-// has no toolbar, so every shown field renders here. Editable verticals whose
-// record can lock (invoices/patient) instead use CustomFieldsEditTab with
-// `disabled`, keeping the label-above form. Empty state when the scope
-// configures nothing shown.
+// two columns of labelled values, one per shown field for the scope.
+//
+// The fields are RUNTIME DATA (whatever the deployment configures), so the
+// split can't name particular fields — it takes the first half down column one
+// and the rest down column two. Reading down column 1 then column 2 therefore
+// preserves the configured order, which is what the standard asks for, and the
+// columns wrap to a single stack when squeezed (FormColumns) in that same
+// order.
+//
+// NOT disabled inputs. A field that can NEVER be edited must not render as a
+// disabled control (the rule D67 states for the item detail's other tabs, which
+// holds for every never-editable field): a greyed-out box reads as "editable
+// but locked", inviting a click that does nothing, when the truth is that this
+// value is not editable here at all. Read-only reads from the ABSENCE of input
+// chrome. Scopes whose values ARE writable (patients, the invoice kinds) use
+// CustomFieldsEditTab instead — a real form with a real save.
+//
+// Both consumers (items, names/suppliers) render this inside a fillBody page,
+// whose body carries no padding — hence ContentContainer's `padded` below,
+// which also centres the block at the same measure the sibling read-only tabs
+// use.
 export const CustomFieldsView = (props: { scope: string; values: unknown }) => {
   const reader = customFieldDefinitions(props.scope);
-  const fields = () =>
-    shownCustomFields(reader.noSuspense()).map(parseCustomField);
+  const fields = createMemo(() =>
+    shownCustomFields(reader.noSuspense()).map(parseCustomField)
+  );
+  // Split point: the taller half leads, so an odd count puts the extra field in
+  // column one rather than leaving column two longer than the one beside it.
+  const split = () => Math.ceil(fields().length / 2);
+  const firstColumn = () => fields().slice(0, split());
+  const secondColumn = () => fields().slice(split());
 
   return (
     <Show when={!reader.loading()} fallback={<Spinner center />}>
@@ -41,68 +59,48 @@ export const CustomFieldsView = (props: { scope: string; values: unknown }) => {
           />
         }
       >
-        <DetailContainer>
-          <DetailSection>
-            <For each={fields()}>
-              {field => (
-                <Switch
-                  fallback={
-                    <DetailRow
-                      label={field.def.name}
-                      value={customFieldDisplayString(field, props.values)}
-                    />
-                  }
-                >
-                  <Match when={field.kind === 'boolean'}>
-                    <DetailRow
-                      label={field.def.name}
-                      checked={Boolean(
-                        customFieldValue(props.values, field.def.key)
-                      )}
-                    />
-                  </Match>
-                  <Match when={field.kind === 'option'}>
-                    <DetailRow
-                      label={field.def.name}
-                      control={
-                        <OptionValue field={field} values={props.values} />
-                      }
-                    />
-                  </Match>
-                </Switch>
-              )}
-            </For>
-          </DetailSection>
-        </DetailContainer>
+        {/* `padded`: both consumers render this inside a fillBody page, whose
+            body carries no padding of its own. `form` is the same measure the
+            item detail's other read-only tabs use, so the tabs read alike. */}
+        <ContentContainer size="form" padded>
+          <FormColumns>
+            <FormColumn>
+              <FieldColumn fields={firstColumn()} values={props.values} />
+            </FormColumn>
+            {/* Only when it has fields: an empty column would still claim its
+                half of the row and squeeze the filled one. */}
+            <Show when={secondColumn().length > 0}>
+              <FormColumn>
+                <FieldColumn fields={secondColumn()} values={props.values} />
+              </FormColumn>
+            </Show>
+          </FormColumns>
+        </ContentContainer>
       </Show>
     </Show>
   );
 };
 
-// A read-only option value: the resolved option name in a disabled dropdown
-// (the read-only counterpart of the option picker — detail-views › option value).
-const OptionValue = (props: {
-  field: ReturnType<typeof parseCustomField>;
+// One column's worth of fields. FormColumn's own gap is the between-SECTIONS
+// rhythm (--space-6), too airy for individual fields, so the fields carry their
+// own tighter stack.
+const FieldColumn = (props: {
+  fields: ParsedCustomField[];
   values: unknown;
-}) => {
-  const id = () => {
-    const v = customFieldValue(props.values, props.field.def.key);
-    return v == null ? '' : String(v);
-  };
-  return (
-    <Select
-      label={props.field.def.name}
-      hideLabel
-      disabled
-      width="full"
-      placeholder=""
-      testId={`custom-field-${props.field.def.key}`}
-      options={
-        id()
-          ? [{ value: id(), label: resolveOptionName(props.field.def, id()) }]
-          : []
-      }
-      value={id() || undefined}
-    />
-  );
-};
+}) => (
+  <Stack gap="md">
+    <For each={props.fields}>
+      {field => (
+        <LabelledValue
+          variant="field"
+          label={field.def.name}
+          // The e2e hook, on every field kind (e2e/TESTIDS.md) — it used
+          // to ride only the option type's dropdown.
+          data-testid={`custom-field-${field.def.key}`}
+        >
+          {customFieldFormText(field, props.values)}
+        </LabelledValue>
+      )}
+    </For>
+  </Stack>
+);
