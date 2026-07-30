@@ -39,6 +39,38 @@ query requisitionItemStats($storeId: String!, $itemId: String!) {
   }
 }
 
+# The stats tabs' read (spec S4 § stats tabs): both summaries computed
+# server-side from the SAVED line — keyed on the line id, so a not-yet-saved
+# add-mode item has no stats and the tabs sit in their empty state (D75).
+# responseStoreStats is the My store tab; requestStoreStats the Customer tab's
+# target-quantity breakdown (contract › line editing).
+query responseLineStats($storeId: String!, $requisitionLineId: String!) {
+  responseRequisitionStats(
+    storeId: $storeId
+    requisitionLineId: $requisitionLineId
+  ) {
+    __typename
+    ... on ResponseRequisitionStatsNode {
+      responseStoreStats {
+        stockOnHand
+        stockOnOrder
+        incomingStock
+        requestedQuantity
+        otherRequestedQuantity
+      }
+      requestStoreStats {
+        stockOnHand
+        averageMonthlyConsumption
+        maxMonthsOfStock
+        suggestedQuantity
+      }
+    }
+    ... on RequisitionLineStatsError {
+      __typename
+    }
+  }
+}
+
 # ADD, phase 1: realise the line (all quantities zero server-side). Typed
 # errors (duplicate item, cannot-edit, …) get the generic failure surface —
 # the picker loads an existing item's line rather than inserting (D74), so

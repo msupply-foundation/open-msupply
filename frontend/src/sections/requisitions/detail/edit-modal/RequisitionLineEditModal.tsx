@@ -1,6 +1,7 @@
 import { generateUUID } from '../../../../uuid';
 import {
   createMemo,
+  createResource,
   createSignal,
   onCleanup,
   onMount,
@@ -29,6 +30,7 @@ import type { RequisitionDetailLineFragment } from '../requisitionDetail.generat
 import {
   buildAddPreview,
   editorLineFromLine,
+  fetchLineStats,
   figureInMode,
   modeToUnits,
   modeWord,
@@ -39,14 +41,14 @@ import {
   type EntryMode,
   type LineDraft,
 } from './requisitionLineEdit';
+import { RequisitionLineStats } from './RequisitionLineStats';
 import styles from './RequisitionLineEditModal.module.css';
 
 // The requisition line editor (spec/requisitions S4): add an item (add mode —
 // manual non-program requisitions only) or fill one line (edit mode, any
-// status; read-only opens with every control disabled). The stats tabs
-// (My store · Customer, with the volume block and the forecast calculation
-// display) are a later slice — this is the entry surface: item header, the
-// figure grid, and the Save / Save & next walk.
+// status; read-only opens with every control disabled). Beneath the figure
+// grid sit the two read-only stats tabs (My store · Customer, with the volume
+// block and the forecast calculation display — RequisitionLineStats).
 
 export interface RequisitionLineEditModalProps {
   open: boolean;
@@ -66,6 +68,12 @@ export interface RequisitionLineEditModalProps {
   showExtended: boolean;
   /** Approved figure: the authorisation preference with an Approved status. */
   showApproved: boolean;
+  /**
+   * Finalised requisition — withholds the My store tab's other-stores legend
+   * row (spec S4 § stats tabs); distinct from `editable`, which other
+   * standing states also clear.
+   */
+  finalised: boolean;
   // Preference gates (spec S4).
   showDoses: boolean;
   showForecast: boolean;
@@ -257,6 +265,37 @@ const LineEditContent = (
   const dosesApply = () =>
     props.showDoses && (current()?.isVaccine ?? false) && doses() > 0;
 
+  // The stats tabs' server read (spec S4 § stats tabs), keyed on the SAVED
+  // line — a not-yet-saved add-mode item has none (D75) — and re-read after
+  // each save (savedTick). Read non-suspending: the resource lives under the
+  // open modal, so a direct read would remount it (kdd/solid-reactivity-
+  // pitfalls › no remounts on interaction).
+  const [savedTick, setSavedTick] = createSignal(0);
+  const statsKey = () => {
+    const editorLine = line();
+    if (!editorLine || editorLine.isNew) return false;
+    return JSON.stringify({ id: editorLine.lineId, tick: savedTick() });
+  };
+  const [stats] = createResource(statsKey, async serialised => {
+    const { id } = JSON.parse(serialised) as { id: string };
+    return fetchLineStats(props.storeId, id);
+  });
+  const statsNode = () =>
+    stats.state === 'ready' || stats.state === 'refreshing'
+      ? stats.latest
+      : undefined;
+
+  // The customer's volume snapshot (AC-LE12): the live item volume at the
+  // supply as typed, and whether the capacity is spent — driving the Customer
+  // tab's volume block and the warning banner beneath the item header.
+  const volumeSnapshot = () => current()?.availableVolumeAtLocationType ?? null;
+  const itemVolume = () =>
+    (volumeSnapshot()?.itemVolumePerUnit ?? 0) * (draft()?.supplyQuantity ?? 0);
+  const volumeSpent = () => {
+    const snapshot = volumeSnapshot();
+    return !!snapshot && snapshot.availableVolume - itemVolume() <= 0;
+  };
+
   const requestedUnits = () => draft()?.requestedQuantity ?? 0;
   const supplyUnits = () => draft()?.supplyQuantity ?? 0;
 
@@ -349,6 +388,9 @@ const LineEditContent = (
       : await saveExistingLine(props.storeId, editorLine, wireDraft);
     setSaving(false);
     if (result.kind === 'saved') {
+      // The stats tabs summarise the SAVED line — re-read them so the bars
+      // reflect what was just committed.
+      setSavedTick(tick => tick + 1);
       props.onCommitted();
       return true;
     }
@@ -711,6 +753,17 @@ const LineEditContent = (
         />
       </Show>
 
+      {/* The no-capacity warning beneath the item header (AC-LE12): shown
+          while the typed supply spends the customer's storage capacity —
+          guidance only, the save is never blocked. */}
+      <Show when={volumeSpent()}>
+        <Alert severity="warning">
+          {t('label.location-type-full-warning', {
+            locationType: volumeSnapshot()!.locationType.name,
+          })}
+        </Alert>
+      </Show>
+
       <Show when={current()}>
         <div class={styles.grid}>
           <Show
@@ -798,6 +851,28 @@ const LineEditContent = (
             </div>
           </Show>
         </div>
+
+        {/* The two read-only stats tabs (spec S4 § stats tabs): My store ·
+            Customer, with the volume block and the forecast calculation
+            display. */}
+        <RequisitionLineStats
+          stats={statsNode()}
+          entryMode={entryMode()}
+          packSize={packSize()}
+          unitName={current()?.unitName ?? null}
+          finalised={props.finalised}
+          showForecast={props.showForecast}
+          courses={current()?.vaccineCourses ?? []}
+          volume={
+            volumeSnapshot()
+              ? {
+                  locationTypeName: volumeSnapshot()!.locationType.name,
+                  availableVolume: volumeSnapshot()!.availableVolume,
+                  itemVolume: itemVolume(),
+                }
+              : null
+          }
+        />
       </Show>
     </Dialog>
   );

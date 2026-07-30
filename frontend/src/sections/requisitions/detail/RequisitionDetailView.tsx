@@ -955,6 +955,7 @@ const RequisitionDetailView: Component = () => {
               transferred={!!node().linkedRequisition}
               showExtended={showExtended()}
               showApproved={showApprovedFigure()}
+              finalised={node().status === 'FINALISED'}
               showDoses={showDoses()}
               showForecast={showForecast()}
               showExcess={showExcess()}

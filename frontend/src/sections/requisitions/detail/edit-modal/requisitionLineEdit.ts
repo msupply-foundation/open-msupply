@@ -1,9 +1,15 @@
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import {
+  parseVaccineCourses,
+  type VaccineCourse,
+} from '../../../../domain/forecast';
+import {
   RequisitionItemStats,
   InsertRequisitionLine,
   UpdateRequisitionLine,
+  ResponseLineStats,
+  type ResponseLineStatsResult,
 } from './requisitionLineEdit.generated';
 import type { RequisitionDetailLineFragment } from '../requisitionDetail.generated';
 
@@ -37,6 +43,12 @@ export type EditorLine = {
   remainingQuantityToSupply: number;
   alreadyIssued: number;
   forecastTotalUnits: number | null;
+  /** The forecast's per-course breakdown (AC-LE13); empty on a forecast-less
+   *  line. */
+  vaccineCourses: VaccineCourse[];
+  /** The customer's volume snapshot on a storage-restricted transferred line
+   *  (rules › volume guidance); null on a manual line. */
+  availableVolumeAtLocationType: RequisitionDetailLineFragment['availableVolumeAtLocationType'];
   // The editable draft's seed values.
   supplyQuantity: number;
   requestedQuantity: number;
@@ -117,6 +129,8 @@ export const buildAddPreview = async (
     remainingQuantityToSupply: 0,
     alreadyIssued: 0,
     forecastTotalUnits: null,
+    vaccineCourses: [],
+    availableVolumeAtLocationType: null,
     supplyQuantity: 0,
     requestedQuantity: 0,
     availableStockOnHand: 0,
@@ -152,6 +166,8 @@ export const editorLineFromLine = (
   remainingQuantityToSupply: line.remainingQuantityToSupply,
   alreadyIssued: line.alreadyIssued,
   forecastTotalUnits: line.forecastTotalUnits,
+  vaccineCourses: parseVaccineCourses(line.vaccineCourses),
+  availableVolumeAtLocationType: line.availableVolumeAtLocationType,
   supplyQuantity: line.supplyQuantity,
   requestedQuantity: line.requestedQuantity,
   availableStockOnHand: line.availableStockOnHand,
@@ -268,3 +284,29 @@ export const saveExistingLine = (
   line: EditorLine,
   draft: LineDraft
 ): Promise<SaveLineResult> => updateLine(storeId, line.lineId, draft);
+
+// --- Stats tabs (spec S4 § stats tabs) -----------------------------------------
+
+// Both summaries, computed server-side from the SAVED line. Keyed on the line
+// id — a not-yet-saved add-mode item has none (D75), and the tabs sit in
+// their empty state. An error answer (or a transport failure) reads the same
+// as no stats.
+export type LineStats = Extract<
+  ResponseLineStatsResult['responseRequisitionStats'],
+  { __typename: 'ResponseRequisitionStatsNode' }
+>;
+
+export const fetchLineStats = async (
+  storeId: string,
+  requisitionLineId: string
+): Promise<LineStats | undefined> => {
+  const result = await graphqlFetch(ResponseLineStats, {
+    storeId,
+    requisitionLineId,
+  });
+  if (result.kind !== 'success') return undefined;
+  const response = result.data.responseRequisitionStats;
+  return response.__typename === 'ResponseRequisitionStatsNode'
+    ? response
+    : undefined;
+};
