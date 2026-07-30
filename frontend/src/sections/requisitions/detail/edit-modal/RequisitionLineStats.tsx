@@ -187,8 +187,11 @@ export const RequisitionLineStats: Component<{
   // The Customer tab's target-quantity breakdown (spec S4 § stats tabs): a
   // months-of-stock axis (0 → max months, each division the cumulative AMC)
   // over the stock-on-hand and suggested-order bars, proportioned to the
-  // target quantity. The unable-to-calculate notes sit ABOVE the axis — both
-  // can show at once — with the axis still rendered.
+  // target quantity. The unable-to-calculate notes — both can show at once —
+  // REPLACE the breakdown: while either holds there is nothing to draw (no
+  // AMC → no target; no stock and no suggested → no bars), so the heading,
+  // axis, and bars are withheld (D87; the reference renders a degenerate
+  // zero-width axis beneath the notes).
   const TargetBreakdown = (): JSX.Element => {
     const s = () => props.stats?.requestStoreStats;
     const amc = () => q(s()?.averageMonthlyConsumption ?? 0);
@@ -196,7 +199,11 @@ export const RequisitionLineStats: Component<{
     const suggested = () => q(s()?.suggestedQuantity ?? 0);
     const maxMonths = () => s()?.maxMonthsOfStock ?? 0;
     const target = () => maxMonths() * amc();
-    const axisWidth = () => percent(target(), soh());
+    const canCalculate = () =>
+      amc() > 0 && !(soh() === 0 && suggested() === 0);
+    // The axis shrinks when stock exceeds the target, else spans the row.
+    const axisWidth = () =>
+      soh() > target() ? Math.round((100 * target()) / soh()) : 100;
     const showText = () => axisWidth() > MIN_AXIS_WIDTH_FOR_TEXT;
     const months = () =>
       Array.from({ length: Math.ceil(maxMonths()) }, (_, i) => i + 1);
@@ -219,54 +226,58 @@ export const RequisitionLineStats: Component<{
             {t('error.soh-and-suggested-quantity-are-zero')}
           </p>
         </Show>
-        <h3 class={styles.sectionHeading}>
-          {`${t('heading.target-quantity')} (${measure()})`}
-        </h3>
-        <div class={styles.monthAxis} style={{ width: `${axisWidth()}%` }}>
-          <div class={styles.monthEdge}>
-            <Show when={showText()}>
-              <span class={styles.monthEdgeLabel}>0</span>
+        <Show when={canCalculate()}>
+          <h3 class={styles.sectionHeading}>
+            {`${t('heading.target-quantity')} (${measure()})`}
+          </h3>
+          <div class={styles.monthAxis} style={{ width: `${axisWidth()}%` }}>
+            <div class={styles.monthEdge}>
+              <Show when={showText()}>
+                <span class={styles.monthEdgeLabel}>0</span>
+              </Show>
+            </div>
+            <For each={months()}>
+              {m => (
+                <div class={styles.monthCell} title={monthText(m)}>
+                  <div class={styles.monthValue}>{monthText(m)}</div>
+                </div>
+              )}
+            </For>
+          </div>
+          <div class={styles.valueBars}>
+            <div class={styles.divider} />
+            <Show when={soh() > 0}>
+              <div
+                class={styles.valueBar}
+                style={{ 'flex-basis': `${barFlex(soh())}%` }}
+                title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
+              >
+                <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
+                  <span class={styles.valueNum}>{formatNumber(soh())}</span>
+                </div>
+                <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
+              </div>
+              <div class={styles.divider} />
+            </Show>
+            <Show when={suggested() > 0}>
+              <div
+                class={styles.valueBar}
+                style={{ 'flex-basis': `${barFlex(suggested())}%` }}
+                title={`${t('label.suggested-order-quantity')}: ${legendValue(suggested())}`}
+              >
+                <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
+                  <span class={styles.valueNum}>
+                    {formatNumber(suggested())}
+                  </span>
+                </div>
+                <div class={styles.valueLabel}>
+                  {t('label.suggested-order-quantity')}
+                </div>
+              </div>
+              <div class={styles.divider} />
             </Show>
           </div>
-          <For each={months()}>
-            {m => (
-              <div class={styles.monthCell} title={monthText(m)}>
-                <div class={styles.monthValue}>{monthText(m)}</div>
-              </div>
-            )}
-          </For>
-        </div>
-        <div class={styles.valueBars}>
-          <div class={styles.divider} />
-          <Show when={soh() > 0}>
-            <div
-              class={styles.valueBar}
-              style={{ 'flex-basis': `${barFlex(soh())}%` }}
-              title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
-            >
-              <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                <span class={styles.valueNum}>{formatNumber(soh())}</span>
-              </div>
-              <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
-            </div>
-            <div class={styles.divider} />
-          </Show>
-          <Show when={suggested() > 0}>
-            <div
-              class={styles.valueBar}
-              style={{ 'flex-basis': `${barFlex(suggested())}%` }}
-              title={`${t('label.suggested-order-quantity')}: ${legendValue(suggested())}`}
-            >
-              <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
-                <span class={styles.valueNum}>{formatNumber(suggested())}</span>
-              </div>
-              <div class={styles.valueLabel}>
-                {t('label.suggested-order-quantity')}
-              </div>
-            </div>
-            <div class={styles.divider} />
-          </Show>
-        </div>
+        </Show>
       </section>
     );
   };
