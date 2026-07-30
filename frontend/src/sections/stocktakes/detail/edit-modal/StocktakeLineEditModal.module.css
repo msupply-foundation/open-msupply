@@ -4,7 +4,6 @@
 .addTitle {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
   inline-size: 100%;
   min-inline-size: 0;
   font-weight: var(--weight-regular);
@@ -14,15 +13,4 @@
   flex: 1 1 auto;
   min-inline-size: 0;
   max-inline-size: 60rem;
-}
-
-/* Body prompt shown in add mode before an item is picked (in place of the
-   empty batch table). */
-.selectPrompt {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-block-size: 8rem;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
 }

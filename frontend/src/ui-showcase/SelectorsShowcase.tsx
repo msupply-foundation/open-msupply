@@ -11,12 +11,14 @@ import {
 } from '../ui/elements/selectors/ColourTag';
 import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
+import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { Button } from '../ui/elements/buttons/Button';
 import { CancelButton } from '../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterCheckbox,
+  FilterCombobox,
   FilterDateRange,
   FilterMultiSelect,
   FilterNumberInput,
@@ -28,7 +30,7 @@ import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
-import { Lead, Row, SectionTOC } from './common';
+import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './SelectorsShowcase.module.css';
 
@@ -100,13 +102,14 @@ const itemFilter = (item: DemoItem, input: string) => {
  * A demo filter object, shaped like a list page's GraphQL filter (the
  * FilterBar is generic over it — see kdd/page-composition). A key PRESENT
  * (even as null/'') means its chip is shown; absent means it isn't. One of
- * EVERY chip editor type: text, number, single-select, multi-select, date
- * range and boolean — the full OMS filter-type parity set.
+ * EVERY chip editor type: text, number, single-select, searchable combobox,
+ * multi-select, date range and boolean — the full OMS filter-type parity set.
  */
 interface InvoiceFilter {
   otherPartyName?: string | null;
   invoiceNumber?: number | null;
   theirReference?: string | null;
+  item?: string | null;
   status?: string | null;
   statuses?: string[] | null;
   createdDatetime?: {
@@ -202,6 +205,23 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     ),
   },
   {
+    key: 'item',
+    label: () => 'Item',
+    render: props => (
+      <FilterCombobox
+        label="Item"
+        placeholder="Item"
+        items={ITEMS}
+        itemToString={i => `${i.code} — ${i.name}`}
+        itemToValue={i => i.code}
+        testId={props.testId}
+        focusTarget={props.focusTarget}
+        value={props.filter().item ?? undefined}
+        onChange={i => props.setPartialFilter({ item: i?.code ?? null })}
+      />
+    ),
+  },
+  {
     key: 'createdDatetime',
     label: () => 'Created',
     render: props => (
@@ -237,6 +257,11 @@ export const selectorsMetadata: PageMetadata = {
       id: 'selectors-select',
       title: 'Drop-down',
       searchTerms: ['select', 'status', 'enum'],
+    },
+    {
+      id: 'selectors-label-info',
+      title: 'Label help tooltip',
+      searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
     },
     {
       id: 'selectors-autocomplete',
@@ -337,6 +362,42 @@ export const SelectorsShowcase = () => {
             }))}
             helperText="Coloured dots + check indicator — styled, still accessible"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-label-info"
+          title="Help tooltip on the label — labelInfo"
+        >
+          <Lead>
+            Every selector takes the same <code>labelInfo</code> slot the{' '}
+            <a href="#/showcase/inputs">inputs</a> do — an{' '}
+            <a href="#/showcase/feedback">
+              <code>&lt;InfoTooltip&gt;</code>
+            </a>{' '}
+            beside the label, for a standing explanation that would otherwise
+            cost a permanent <code>helperText</code> line under the control.
+          </Lead>
+          <Select
+            label="Reason"
+            value="expired"
+            options={[
+              { value: 'expired', label: 'Expired' },
+              { value: 'damaged', label: 'Damaged' },
+              { value: 'stocktake', label: 'Stocktake correction' },
+            ]}
+            labelInfo={
+              <InfoTooltip text="Reasons are configured centrally — ask an administrator to add one." />
+            }
+          />
+          <Note>
+            <strong>All of them:</strong> Select, Combobox / AsyncCombobox and
+            MultiSelect, alongside every labelled input. The icon renders{' '}
+            <em>outside</em> the label element, so it stays out of the control's
+            accessible name; it's ignored under <code>hideLabel</code>. The
+            domain wrappers (<code>NameSearch</code>, <code>ItemSearch</code>,
+            …) don't forward it yet — add the prop to the wrapper when a caller
+            needs one.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

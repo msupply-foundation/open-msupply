@@ -1,30 +1,19 @@
-import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from '../../../../ui/elements/buttons/SplitButton';
-import { DownloadIcon } from '../../../../ui/icons';
-import {
-  csvToExcel,
-  fetchReportFile,
-  listExportCsvFilename,
-  listExportExcelFilename,
-} from '../../../../domain/reportFiles';
-import { saveBlob } from '../../../../platform/openDocument';
-import { storeCodeOf } from '../../../../auth/authContext';
-import { stripEmpty } from '../../../../typeHelpers';
+import { type Component } from 'solid-js';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { ListExportAction } from '@/domain/reportFiles/ListExportAction';
+import { stripEmpty } from '@/typeHelpers';
 import { Prescriptions } from '../prescriptions.generated';
 import type { PrescriptionsVariables } from '../prescriptions.generated';
 import type { PrescriptionFilter } from '../listFilters';
 import { prescriptionsToCsv } from '../prescriptionsToCsv';
 
-// The prescriptions list Export (spec/prescriptions AC-L4): a split button
-// offering CSV or Excel over EVERY row matching the current filter (all
+// The prescriptions list Export (spec/prescriptions AC-L4): the shared
+// CSV/Excel split button over EVERY row matching the current filter (all
 // pages). Filenames follow the shared list-export rule with
 // `filename.prescriptions` as the list-name slot (ui-standards/list-views §
-// regions). Same self-contained shape as the stocktakes export action.
+// regions). Delivery, the busy state and the outcome report live in
+// ListExportAction — this file owns only the query.
 
 export interface ExportPrescriptionsActionProps {
   storeId: string;
@@ -35,13 +24,6 @@ export interface ExportPrescriptionsActionProps {
 export const ExportPrescriptionsAction: Component<
   ExportPrescriptionsActionProps
 > = props => {
-  const [busy, setBusy] = createSignal(false);
-
-  const options = (): SplitButtonOption[] => [
-    { value: 'csv', label: t('button.export-csv') },
-    { value: 'excel', label: t('button.export-excel') },
-  ];
-
   const buildCsv = async (): Promise<string | null> => {
     const variables: PrescriptionsVariables = {
       storeId: props.storeId,
@@ -59,42 +41,11 @@ export const ExportPrescriptionsAction: Component<
     return nodes.length ? prescriptionsToCsv(nodes) : null;
   };
 
-  const run = async (format: string): Promise<void> => {
-    if (busy()) return;
-    setBusy(true);
-    try {
-      const csv = await buildCsv();
-      if (!csv) return; // nothing to export
-      const storeCode = storeCodeOf(props.storeId);
-      const listName = t('filename.prescriptions');
-      if (format === 'excel') {
-        const generated = await csvToExcel({
-          storeId: props.storeId,
-          csvData: csv,
-          filename: listExportExcelFilename(storeCode, listName),
-          sheetName: storeCode,
-        });
-        if (generated.kind !== 'fileId') return;
-        const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
-      } else {
-        void saveBlob(
-          new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          listExportCsvFilename(storeCode, listName, new Date())
-        );
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <SplitButton
-      icon={<DownloadIcon />}
-      options={options()}
-      testId="export-csv"
-      menuLabel={t('button.export')}
-      onAction={format => void run(format)}
+    <ListExportAction
+      storeId={props.storeId}
+      buildCsv={buildCsv}
+      listName={t('filename.prescriptions')}
     />
   );
 };

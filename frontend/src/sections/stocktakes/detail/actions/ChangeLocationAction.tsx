@@ -4,13 +4,9 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
-import {
-  CheckIcon,
-  MapPinIcon,
-  SearchIcon,
-  XCircleIcon,
-} from '@/ui/icons';
+import { MapPinIcon } from '@/ui/icons';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
@@ -150,18 +146,13 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             // Apply.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
                 variant="primary"
-                icon={<CheckIcon />}
                 loading={phase() === 'working'}
                 data-testid="dialog-button-ok"
                 onClick={() => void run()}
@@ -174,7 +165,6 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
           <Match when={phase() === 'success'}>
             <Button
               variant="secondary"
-              icon={<CheckIcon />}
               data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
@@ -182,17 +172,12 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
             <Button
               variant="primary"
-              icon={<SearchIcon />}
               onClick={() => {
                 props.onShowErrors();
                 props.onClose();

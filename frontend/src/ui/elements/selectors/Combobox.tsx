@@ -165,6 +165,13 @@ interface ComboboxProps<T> {
    */
   hideLabel?: boolean;
   /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept outside the label element so it
+   * isn't part of the control's accessible name. Ignored under `hideLabel`.
+   * As TextField.
+   */
+  labelInfo?: JSX.Element;
+  /**
    * Content pinned at the TOP of the open listbox popup, above the options — a
    * sticky in-dropdown header for controls that scope the list (e.g. the
    * location picker's fullness filter). Interacting with it keeps the popup open
@@ -181,13 +188,20 @@ interface ComboboxProps<T> {
    */
   listboxFooter?: JSX.Element;
   /**
-   * By default the popup matches the trigger's width (Kobalte `sameWidth`). Pass
-   * `false` to let it size to its content instead — never narrower than the
-   * trigger, capped so it stays readable and never runs past the viewport — for
-   * pickers whose option text (e.g. a location's `code + name`) can outrun a
-   * narrow field.
+   * By default the popup matches the trigger's width (Kobalte `sameWidth`).
+   * Pass `false` to let it size to its content instead — never narrower than
+   * the trigger, capped so it stays readable and never runs past the viewport
+   * — for pickers whose option text (e.g. a location's `code + name`) can
+   * outrun a narrow field.
    */
   matchTriggerWidth?: boolean;
+  /**
+   * Max-width cap, TextField's vocabulary: `compact` (10rem), `short` (25rem),
+   * `long` (37.5rem — the default, since option text is often long) or `full`
+   * to fill the container. Set it to sit level with the text fields it's
+   * stacked among, whose own default is `short`.
+   */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * Control size. 'default' is the form-field size; 'small' is the compact
    * variant for dense contexts (e.g. cards). Matches the shared input size
@@ -195,6 +209,12 @@ interface ComboboxProps<T> {
    */
   size?: 'default' | 'small';
   class?: string;
+  /**
+   * De-box the control (no border / background) for embedding in a filter chip
+   * / pill (FilterBar's FilterCombobox), so it reads on the tinted pill like the
+   * other chip editors rather than as a nested input box.
+   */
+  borderless?: boolean;
 }
 
 /*
@@ -341,10 +361,27 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       props.onReachEnd?.();
   };
 
+  // The label element itself (text + required asterisk). A local component so
+  // it renders fresh in either branch (bare, or beside labelInfo) — reusing
+  // one JSX node across both would try to mount it in two places. As
+  // TextField.
+  const Label = () => (
+    <KCombobox.Label class={styles.label}>
+      {props.label}
+      <Show when={props.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </KCombobox.Label>
+  );
+
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-width={props.width}
       data-size={props.size ?? 'default'}
+      data-borderless={props.borderless ? '' : undefined}
       options={options()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
@@ -385,14 +422,15 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           the label the surrounding layout (a FieldRow) already shows (a hidden
           twin trips strict text-locator matches in the shared e2e suites). */}
       <Show when={!props.hideLabel}>
-        <KCombobox.Label class={styles.label}>
-          {props.label}
-          <Show when={props.required}>
-            <span class={styles.required} aria-hidden="true">
-              *
-            </span>
-          </Show>
-        </KCombobox.Label>
+        <Show when={props.labelInfo} fallback={<Label />}>
+          {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in
+              it its accessible name would leak into the input's (the
+              name-from-label computation concatenates descendant controls). */}
+          <span class={styles.labelRow}>
+            <Label />
+            {props.labelInfo}
+          </span>
+        </Show>
       </Show>
       <KCombobox.Control
         class={styles.control}

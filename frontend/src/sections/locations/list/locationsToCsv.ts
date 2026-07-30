@@ -1,5 +1,5 @@
-import { t } from '../../../intl';
-import { toCsv } from '../../../domain/reportFiles';
+import { t } from '@/intl';
+import { toCsv } from '@/domain/reportFiles';
 import type { LocationRow } from './locationEdit';
 
 // The locations list → CSV (OMS-REG-INV-01.11–.13). Headers are translated;

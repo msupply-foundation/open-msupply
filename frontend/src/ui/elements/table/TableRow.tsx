@@ -37,6 +37,32 @@ const cellMaxWidthPx = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
 };
 
+// The full string a truncated single-line cell would reveal (issue #432): the
+// plain-string leaf value. Strings only — numbers/dates/booleans render short
+// and objects aren't display text — and only for non-wrapping cells (a wrapping
+// cell shows its full text already). Cheap: a value read, no measurement.
+const cellTitle = <T,>(cell: TanCell<T, unknown>): string | undefined => {
+  if (cellWrapLines(cell)) return undefined;
+  const value = cell.getValue();
+  return typeof value === 'string' && value !== '' ? value : undefined;
+};
+
+// Native hover-reveal, gated on ACTUAL clipping (issue #432 follow-up, PR #638):
+// a single-line cell overflows exactly when its content is wider than its box,
+// so expose the full value as a `title` only then — a short value that fits
+// gets no tooltip. Measured lazily on pointer-enter: one scrollWidth read on the
+// single hovered cell, set well before the native tooltip's hover delay elapses
+// — no render-time pass and no whole-table measurement, so the width model's
+// perf posture is unchanged. Applies to every list table (shared row renderer).
+const revealIfClipped = <T,>(
+  td: HTMLTableCellElement,
+  cell: TanCell<T, unknown>
+): void => {
+  const full = cellTitle(cell);
+  if (full && td.scrollWidth > td.clientWidth) td.title = full;
+  else td.removeAttribute('title');
+};
+
 // A body row: its cells, clickable when onRowClick is set. Extracted from
 // DataTable.tsx (table-view row rendering).
 export function TableRow<T>(props: {
@@ -134,6 +160,10 @@ export function TableRow<T>(props: {
               // Cross-FE test-id contract (e2e/TESTIDS.md): `cell-<columnId>`,
               // scoped by row (row.getByTestId('cell-batch')).
               data-testid={`cell-${cell.column.id}`}
+              // Hover-reveal for an ellipsised value — set only when the cell is
+              // actually clipped, measured on pointer-enter (issue #432 follow-up,
+              // PR #638). No static `title`, so cells that fit show no tooltip.
+              onMouseEnter={event => revealIfClipped(event.currentTarget, cell)}
               data-align={cellAlign(cell)}
               data-mono={cellMono(cell) ? '' : undefined}
               data-pinned={cell.column.getIsPinned() || undefined}

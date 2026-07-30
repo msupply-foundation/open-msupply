@@ -53,6 +53,7 @@ import {
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
+import { createCodeTakenCheck } from '../patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
@@ -127,9 +128,21 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
   const [fetchOpen, setFetchOpen] = createSignal(false);
 
+  // Duplicate-code check (spec/patients § generating a code), run on the save
+  // attempt below. No saved code to compare against while creating, so every
+  // non-empty code is checked.
+  const codeCheck = createCodeTakenCheck({
+    storeId: () => props.storeId,
+    code: () => draft.code,
+    savedCode: () => '',
+    patientId: () => undefined,
+  });
+
   // Details-step validation (AC-C3): required errors stay quiet until the first
   // Save attempt, then surface per field and as the summary below the form.
-  const validation = createFormValidation(() => patientFieldErrors(draft));
+  const validation = createFormValidation(() =>
+    patientFieldErrors(draft, codeCheck.taken())
+  );
 
   // Mint a fresh identifier + reset the flow each time the modal opens (AC-C5).
   createEffect(() => {
@@ -226,6 +239,13 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     }
   };
 
+  // What a match row DOES: a local match opens that patient, a central-only one
+  // opens the fetch modal. Bound to the whole row as well as its trailing icon —
+  // the step's own instruction (messages.patients-create) tells the user to
+  // "click an existing patient below", so the row itself has to be the target.
+  const openMatch = (row: MatchRow) =>
+    row.kind === 'central' ? openFetch(row) : openExisting(row.id);
+
   // Advance to the details step, seeding the plain form from the entered search
   // details (spec/patients step ③).
   const advanceToDetails = () => {
@@ -247,6 +267,12 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     if (!validation.valid()) return;
     setSaving(true);
     setSaveError('');
+    // The one rule that needs the server (DIS-02 `.57`) — a clash abandons the
+    // save with the error left on the Code field.
+    if (await codeCheck.check()) {
+      setSaving(false);
+      return;
+    }
     const outcome = await runInsertPatient(
       props.storeId,
       toInsertInput(patientId(), draft)
@@ -295,19 +321,26 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     {
       c: { id: 'action' },
       header: () => '',
+      // The trailing icon does what the row does — it is here to distinguish a
+      // central-only candidate (download → retrieve) from a local match (home →
+      // open). Its click must not ALSO bubble to the row handler.
       cell: info => {
         const row = info.row.original;
+        const open = (event: MouseEvent) => {
+          event.stopPropagation();
+          openMatch(row);
+        };
         return row.kind === 'central' ? (
           <IconButton
             icon={<DownloadIcon />}
-            label={t('button.ok')}
-            onClick={() => openFetch(row)}
+            label={t('messages.click-to-fetch')}
+            onClick={open}
           />
         ) : (
           <IconButton
             icon={<HomeIcon />}
             label={t('label.details')}
-            onClick={() => openExisting(row.id)}
+            onClick={open}
           />
         );
       },
@@ -434,6 +467,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 label={t('label.first-name')}
                 width="full"
                 required
+                data-testid="input-firstName"
                 value={search.firstName}
                 onInput={e => setSearch('firstName', e.currentTarget.value)}
               />
@@ -441,6 +475,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 label={t('label.last-name')}
                 width="full"
                 required
+                data-testid="input-lastName"
                 value={search.lastName}
                 onInput={e => setSearch('lastName', e.currentTarget.value)}
               />
@@ -453,6 +488,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               />
               <Combobox<GenderOption>
                 label={t('label.gender')}
+                width="full"
                 items={genderOptions()}
                 itemToString={o => o.label}
                 itemToValue={o => o.value}
@@ -495,7 +531,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 </Alert>
               </Show>
               <Show when={centralUnreachable()}>
-                <Alert severity="warning">
+                <Alert severity="warning" testId="central-search-error">
                   {t('messages.failed-to-reach-central')}{' '}
                   <Button
                     variant="secondary"
@@ -511,8 +547,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   columns={resultColumns()}
                   rows={matches()}
                   rowKey={row => `${row.kind}:${row.id}`}
-                  emptyMessage={t('messages.no-matching-patients')}
+                  onRowClick={openMatch}
                   showFullScreen={false}
+                  emptyMessage={t('messages.no-matching-patients')}
                 />
               </Show>
             </Show>
@@ -524,9 +561,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             </Show>
             <PatientDetailsForm
               storeId={props.storeId}
+              patientId={patientId()}
               draft={draft}
               setField={setDraftField}
               errorFor={validation.errorFor}
+              creating
             />
             <FormErrorSummary
               errors={validation.visible()}

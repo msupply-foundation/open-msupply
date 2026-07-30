@@ -1,6 +1,7 @@
 import {
   createMemo,
   createSignal,
+  For,
   onCleanup,
   onMount,
   Show,
@@ -8,7 +9,7 @@ import {
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { getPlural, t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -31,13 +32,16 @@ import {
   getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { CheckIcon } from '../../../../ui/icons';
+import { CheckIcon, InfoIcon } from '../../../../ui/icons';
 import {
   DraftStockOutLines,
+  ItemVariants,
   SaveOutboundItemLines,
   type DraftStockOutLinesResult,
+  type ItemVariantsResult,
 } from './outboundLineEdit.generated';
 import { ItemSearch } from '../../../../domain/item';
+import { VvmStatusSelect, type VvmStatus } from '@/domain/vvmStatus';
 import {
   createFocusTarget,
   createFocusTargets,
@@ -68,13 +72,13 @@ import { issueWarningMessages } from './allocationWarnings';
 // server-computed draft (draftStockOutLines: one row per batch with
 // available/in-store packs + the item's existing lines pre-filled); entry in
 // the Issue field auto-distributes FEFO client-side (AC-AL1's manual-entry
-// face), per-batch packs are directly editable bounded 0…available (AC-I5),
-// and quantity beyond available becomes the placeholder while NEW (AC-P1/P3).
-// Save is the item-set save (saveOutboundShipmentItemLines, AC-I6): lines +
+// face), per-batch packs are directly editable bounded 0…available (OMS-REG-DIST-03.19),
+// and quantity beyond available becomes the placeholder while NEW (OMS-REG-DIST-03.23/.9).
+// Save is the item-set save (saveOutboundShipmentItemLines, OMS-REG-DIST-03.20): lines +
 // placeholder in one call; every rejection is a non-typed GraphQL error
 // (contract wire trap) surfaced in the footer.
 //
-// Two modes (spec S4, AC-V6..V8): 'update' (opened from a row — the picker
+// Two modes (spec S4, OMS-REG-DIST-03.31..33): 'update' (opened from a row — the picker
 // locks, the clicked batch is scrolled into view + focused, and "OK & next"
 // walks the parent's sorted/paginated line list via the parent-owned
 // nextItem) and 'add' ("Add item", or fallen into when the walk runs out —
@@ -84,6 +88,64 @@ import { issueWarningMessages } from './allocationWarnings';
 
 type DraftLine =
   DraftStockOutLinesResult['draftStockOutLines']['draftLines'][number];
+
+type ItemVariant =
+  ItemVariantsResult['items']['nodes'][number]['variants'][number];
+
+// The variant-info popover's body (spec S4 § batch grid): the item's variants
+// as a compact read-only table — name · manufacturer · VVM type (vaccine
+// items) — with the batch's own variant marked. The old app reuses its
+// variant SELECTOR disabled; this is the same information as a plain table.
+const VariantInfoTable = (props: {
+  variants: ItemVariant[];
+  selectedId: string;
+  isVaccine: boolean;
+}): JSX.Element => (
+  <Show
+    when={props.variants.length > 0}
+    fallback={<p>{t('messages.no-item-variants')}</p>}
+  >
+    <table class={styles.variantTable}>
+      <thead>
+        <tr>
+          <th />
+          <th>{t('label.name')}</th>
+          <th>{t('label.manufacturer')}</th>
+          <Show when={props.isVaccine}>
+            <th>{t('label.vvm-type')}</th>
+          </Show>
+        </tr>
+      </thead>
+      <tbody>
+        <For each={props.variants}>
+          {variant => {
+            const selected = variant.id === props.selectedId;
+            return (
+              <tr aria-current={selected ? 'true' : undefined}>
+                <td class={styles.variantMarker}>
+                  <Show when={selected}>
+                    <span
+                      role="img"
+                      aria-label={t('label.selected')}
+                      title={t('label.selected')}
+                    >
+                      <CheckIcon />
+                    </span>
+                  </Show>
+                </td>
+                <td>{variant.name}</td>
+                <td>{variant.manufacturer?.name ?? ''}</td>
+                <Show when={props.isVaccine}>
+                  <td>{variant.vvmType ?? ''}</td>
+                </Show>
+              </tr>
+            );
+          }}
+        </For>
+      </tbody>
+    </table>
+  </Show>
+);
 
 export type LineEditItem = {
   id: string;
@@ -121,7 +183,7 @@ interface OutboundLineEditModalProps {
   initialItem?: LineEditItem;
   /**
    * The clicked LINE id for a row-click open — the editor scrolls its batch
-   * into view and focuses its packs input (AC-V6; draft rows built from
+   * into view and focuses its packs input (OMS-REG-DIST-03.31; draft rows built from
    * existing lines keep the invoice-line id). Omitted for "Add item"; a
    * clicked placeholder row has no batch row, so the Issue field is focused.
    */
@@ -207,6 +269,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const issueField = createFocusTarget();
 
   const [draft, setDraft] = createStore<DraftLine[]>([]);
+  // The item's variants — fetched by seedItem only when a draft line carries
+  // an itemVariantId (the batch column's variant-info popover, spec S4 §
+  // batch grid); empty for the common variant-less item.
+  const [variants, setVariants] = createSignal<ItemVariant[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
   const [issueValue, setIssueValue] = createSignal<number | undefined>();
   const [allocateIn, setAllocateIn] = createSignal<AllocateUnit>({
@@ -217,6 +283,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
   // Zero-allocation saves need a second confirmation (spec S4 § save).
   const [zeroConfirm, setZeroConfirm] = createSignal(false);
+  // So does a zero-packs line whose VVM status changed — the set-save deletes
+  // zero-pack lines, silently dropping that status change (spec S4 § save).
+  const [vvmConfirm, setVvmConfirm] = createSignal(false);
   // Warnings raised by the last distribution (spec S4 § warnings).
   const [warnings, setWarnings] = createSignal<string[]>([]);
   // Dirty gate: OK is disabled until something changed (matches the e2e
@@ -230,7 +299,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // batches + placeholder). The ONE seed path — sequential imperative fetch,
   // not a resource (issue #428's "do things sequential"): on mount (update
   // mode), on item pick (add mode), and on an "OK & next" advance.
-  // `focusLineId` is the clicked batch to scroll/focus once loaded (AC-V6);
+  // `focusLineId` is the clicked batch to scroll/focus once loaded (OMS-REG-DIST-03.31);
   // omitted → the first batch row (an advance), undefined row → Issue field.
   const seedItem = async (picked: LineEditItem, focusLineId?: string) => {
     setItem(picked);
@@ -245,6 +314,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setAllocateIn({ kind: 'units' });
     setDirty(false);
     setZeroConfirm(false);
+    setVvmConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
       storeId: props.storeId,
       itemId: picked.id,
@@ -267,6 +337,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     seededPacksById = new Map(
       sorted.map(line => [line.id, line.numberOfPacks])
     );
+    seededVvmIdById = new Map(
+      sorted.map(line => [line.id, line.vvmStatus?.id ?? null])
+    );
     nonAllocatableIds = new Set(
       sorted.filter(line => !rowHasAllocatableStock(line)).map(line => line.id)
     );
@@ -288,18 +361,33 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       0
     );
     setIssueValue(seededIssuedUnits + placeholder);
+    // The variant-info popover's data — only when some batch actually carries
+    // a variant (most items have none; no read for them). Fire-and-forget,
+    // unlike the draft fetch above: nothing below depends on it, so the focus
+    // landing and the auto-allocation never wait on this second round-trip.
+    // The item guard drops a response that lands after a switch away.
+    setVariants([]);
+    if (sorted.some(line => line.itemVariantId)) {
+      void graphqlFetch(ItemVariants, {
+        storeId: props.storeId,
+        itemId: picked.id,
+      }).then(variantsResult => {
+        if (variantsResult.kind === 'success' && item()?.id === picked.id)
+          setVariants(variantsResult.data.items.nodes[0]?.variants ?? []);
+      });
+    }
     // Land ready to type. Update mode: the clicked batch's packs input (draft
     // rows from existing lines keep the invoice-line id), or the first row on
     // an advance. A clicked PLACEHOLDER has no batch row of its own, and an
     // add-mode pick has no clicked row at all — both land on the Issue field
-    // (AC-V6).
+    // (OMS-REG-DIST-03.31).
     const rowId =
       mode() === 'update' ? (focusLineId ?? sorted[0]?.id) : undefined;
     if (rowId) batchFields.focus(rowId);
     else issueField.focus();
     setLoadingLines(false);
 
-    // Auto-allocate on open (AC-A5): a NEW shipment's *pure* placeholder — an
+    // Auto-allocate on open (OMS-REG-DIST-03.26): a NEW shipment's *pure* placeholder — an
     // item carrying a requested quantity with nothing yet allocated — is
     // distributed against available stock the moment the editor opens, the
     // same FEFO run the Issue field performs (seeded with the requested
@@ -346,6 +434,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setErrorMessage(undefined);
     setDirty(false);
     setZeroConfirm(false);
+    setVvmConfirm(false);
     setLoadingLines(false);
     itemSearch.focus();
   };
@@ -375,6 +464,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // (non-reactive) snapshots set by seedItem, so zeroing a held row mid-edit
   // doesn't lock it and rows don't reorder underneath the user.
   let seededPacksById = new Map<string, number>();
+  // Each row's VVM status AS SEEDED — the save guard warns when a zero-packs
+  // row's status differs from this (its change won't survive the set-save).
+  let seededVvmIdById = new Map<string, string | null>();
   let nonAllocatableIds = new Set<string>();
   const isBarred = (line: DraftLine): boolean =>
     barReasons(
@@ -482,10 +574,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       )
     );
     setDirty(true);
-    // The allocation just changed — any earlier zero-allocation confirmation
-    // no longer applies (spec S4 § save; it must be re-earned against the
-    // current quantity, e.g. after raising it back above zero).
+    // The allocation just changed — any earlier zero-allocation / unsaved-VVM
+    // confirmation no longer applies (spec S4 § save; it must be re-earned
+    // against the current quantity, e.g. after raising it back above zero).
     setZeroConfirm(false);
+    setVvmConfirm(false);
   };
 
   // NumberField hands us a committed number (already numeric-only and clamped
@@ -499,7 +592,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     distribute(units ?? 0);
   };
 
-  // Direct per-batch edit (AC-I5/AC-AL6): whole packs — a fractional entry
+  // Direct per-batch edit (OMS-REG-DIST-03.19/AC-AL6): whole packs — a fractional entry
   // rounds UP, an entry beyond availability clamps DOWN to the whole-pack
   // floor (rules.md § whole-pack arithmetic). An adjusted entry is reported
   // (AC-AL13), and any earlier distribution banners are REPLACED — they
@@ -522,11 +615,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     );
     setDirty(true);
     // As in distribute() — a direct per-batch edit also invalidates a stale
-    // zero-allocation confirmation.
+    // zero-allocation / unsaved-VVM confirmation.
     setZeroConfirm(false);
+    setVvmConfirm(false);
   };
 
-  // The received count (AC-I8): the packs the destination reported for this
+  // The received count (OMS-REG-DIST-03.21): the packs the destination reported for this
   // batch row — blank (null) until recorded, clearable back to blank. The
   // Difference column derives from it in place; nothing re-distributes.
   const setReceived = (id: string, value: number | null) => {
@@ -534,6 +628,24 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (index < 0) return;
     setDraft(index, 'receivedNumberOfPacks', value);
     setDirty(true);
+  };
+
+  // VVM status per batch (spec S4 § batch grid): the save writes the picked
+  // status onto the BATCH itself — the stock line, with a status-log entry —
+  // not just this shipment line (contract § issuing lines). An UNUSABLE pick
+  // zeroes the row's issued packs (unusable stock is never issued —
+  // stock-allocation § barred batches); the live bar then disables the row,
+  // as in the old app.
+  const setVvmStatus = (id: string, status: VvmStatus | null) => {
+    const index = draft.findIndex(line => line.id === id);
+    if (index < 0) return;
+    setDraft(index, 'vvmStatus', status);
+    if (status?.unusable) setDraft(index, 'numberOfPacks', 0);
+    setDirty(true);
+    // As in distribute()/setPacks() — the confirmations are re-earned against
+    // the changed draft.
+    setZeroConfirm(false);
+    setVvmConfirm(false);
   };
 
   const save = async (): Promise<boolean> => {
@@ -551,7 +663,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           // The full set, zeros included — the item-set save replaces the
           // item's lines (zero packs removes an existing line), and the
           // explicit placeholder quantity creates/updates/deletes the
-          // placeholder to match (AC-I6). Received counts and variance
+          // placeholder to match (OMS-REG-DIST-03.20). Received counts and variance
           // reasons are echoed through (see ./saveLineInputs).
           lines: toSaveLineInputs(draft),
           placeholderQuantity: placeholderUnits(),
@@ -571,9 +683,28 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     return true;
   };
 
-  // Zero allocated quantity requires a second confirmation (spec S4 § save).
+  // Save guards (spec S4 § save), in the old app's precedence: a zero-packs
+  // line whose VVM status changed warns FIRST — the set-save deletes
+  // zero-pack lines, so that status change is silently dropped (a second OK
+  // proceeds without it). The zero-allocation confirmation applies only when
+  // no such VVM change is pending.
+  const vvmChangeOnZeroPacksLine = () =>
+    draft.some(
+      line =>
+        line.numberOfPacks === 0 &&
+        (line.vvmStatus?.id ?? null) !== (seededVvmIdById.get(line.id) ?? null)
+    );
   const confirmThen = (proceed: () => void) => {
-    if (issuedUnits() === 0 && placeholderUnits() === 0 && !zeroConfirm()) {
+    if (vvmChangeOnZeroPacksLine()) {
+      if (!vvmConfirm()) {
+        setVvmConfirm(true);
+        return;
+      }
+    } else if (
+      issuedUnits() === 0 &&
+      placeholderUnits() === 0 &&
+      !zeroConfirm()
+    ) {
       setZeroConfirm(true);
       return;
     }
@@ -587,7 +718,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       });
     });
 
-  // OK & next (spec S4, AC-V7): save, then continue rapid entry — never a
+  // OK & next (spec S4, OMS-REG-DIST-03.32): save, then continue rapid entry — never a
   // dead end (matching the stocktake / inbound editors, so never disabled):
   // - UPDATE mode: ask the parent for the next item in its sorted/paginated
   //   order (the covered set guards repeats) and seed it in place; when the
@@ -674,21 +805,65 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
-      cell: info => info.getValue<string | null>() ?? '—',
+      // A batch backed by an ITEM VARIANT carries an info marker beside its
+      // name — click reveals the item's variants with this batch's marked
+      // (spec S4 § batch grid), matching the old app's variant-info icon.
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <span class={styles.batchCell}>
+            {line.batch ?? '—'}
+            <Show when={line.itemVariantId}>
+              {variantId => (
+                <Popover
+                  trigger={<InfoIcon />}
+                  triggerLabel={t('label.item-variant')}
+                  triggerClass={styles.variantInfoTrigger}
+                  class={styles.variantPanel}
+                >
+                  <VariantInfoTable
+                    variants={variants()}
+                    selectedId={variantId()}
+                    isVaccine={!!item()?.isVaccine}
+                  />
+                </Popover>
+              )}
+            </Show>
+          </span>
+        );
+      },
     },
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
       ...getExpiryDateCell(),
     },
-    ...(prefs().manageVvmStatusForStock
+    // Vaccine items only, under either VVM preference (spec § S4 batch grid;
+    // only vaccine stock carries a VVM status). An EDITABLE status picker —
+    // unlike the prescriptions editor's read-only text — disabled on the same
+    // rows as the Packs-issued cell; the value lives in the draft store, read
+    // in the cell render (an accessor-computed cell freezes on in-place store
+    // edits — see the canAllocate note above).
+    ...(item()?.isVaccine &&
+    (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry)
       ? [
           {
-            c: {
-              accessor: (line: DraftLine) => line.vvmStatus?.description ?? '',
-              id: 'vvmStatus',
-            },
+            c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
+            size: 170,
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  size="small"
+                  disabled={rowDisabled(line)}
+                  value={line.vvmStatus?.id}
+                  onChange={status => setVvmStatus(line.id, status)}
+                />
+              );
+            },
           } as Column<DraftLine, never>,
         ]
       : []),
@@ -753,7 +928,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...getNumberCell(),
     },
     {
-      // Packs issued from this batch (AC-I5), bounded 0…available.
+      // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available.
       c: { key: 'numberOfPacks' },
       header: () => t('label.issued'),
       meta: { align: 'right' },
@@ -777,7 +952,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { id: 'unitsIssued' },
-      header: () => t('label.units-issued', { unit: unitName() }),
+      // "Vials issued" — the unit pluralised as a category (old-app parity).
+      header: () => t('label.units-issued', { unit: getPlural(unitName(), 2) }),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
@@ -790,7 +966,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         );
       },
     },
-    // Received count + derived difference (AC-I8) — non-store customers only
+    // Received count + derived difference (OMS-REG-DIST-03.21) — non-store customers only
     // (a transfer's counts mirror back from the receiving side). Blank until
     // the destination's count is recorded; disabled on the same rows the
     // Packs-issued cell is.
@@ -895,83 +1071,88 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* Item row: the shared server-searched item lookup (spec S4 — the
-          registry's async catalogue-lookup; no client-side cached cap), locked
-          in update mode. `selectedItem` labels the current value when it isn't
-          in the search's own paginated results (a row-click open / walk
-          advance). Clearing (×) returns to the empty search state — like an
-          add-mode item switch, unsaved edits are discarded (AC-V8). */}
-      <ItemSearch
-        label={t('label.item')}
-        storeId={props.storeId}
-        disabled={updateMode() || saving()}
-        focusTarget={itemSearch}
-        value={item()?.id}
-        selectedItem={item()}
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
-        onSelect={option => {
-          if (option)
-            void seedItem({
-              id: option.id,
-              code: option.code,
-              name: option.name,
-              unitName: option.unitName,
-              isVaccine: option.isVaccine,
-              doses: option.doses,
-            });
-          else backToSearch();
-        }}
-      />
-
-      {/* Available on its own line, then the issue row: quantity + allocate-in. */}
-      <Show when={item()}>
-        <div style={{ 'margin-block': 'var(--space-3) var(--space-2)' }}>
-          <span>
-            {t('label.available')}: {formatNumber(availableUnits())}{' '}
-            {unitName()}
-          </span>
-        </div>
-        {/* One control per row below the compact breakpoint (the same cutoff
-            where this large Dialog goes full-screen) — see the module CSS. */}
-        <div class={styles.issueRow}>
-          {/* Both controls at the default height — NumberField's "small"
-              (2.25rem) and Select's "sm" (1.75rem — the Pagination scale)
-              don't align with each other. */}
-          <NumberField
-            label={t('label.issue')}
-            min={0}
-            data-testid="issue-quantity-input"
-            ref={issueField.ref}
-            value={issueValue()}
-            disabled={saving()}
-            onChange={onIssueChange}
-          />
-          <Select
-            label={t('label.units')}
-            value={allocateInValue()}
-            options={[
-              { value: 'units', label: unitName() },
-              // The doses lens (AC-AL7): vaccine items under the
-              // manage-vaccines-in-doses preference only.
-              ...(prefs().manageVaccinesInDoses && item()?.isVaccine
-                ? [{ value: 'doses', label: t('label.doses') }]
-                : []),
-              ...distinctPackSizes().map(size => ({
-                value: `packs-${size}`,
-                label: t('label.packs-of-pack-size', { packSize: size }),
-              })),
-            ]}
-            onValueChange={value => {
-              const next: AllocateUnit =
-                value === 'units'
-                  ? { kind: 'units' }
-                  : value === 'doses'
-                    ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
-                    : { kind: 'packs', size: Number(value.slice(6)) };
-              switchLensTo(next);
+      {/* The header row (spec S4, D76): Item picker · Available · Issue +
+          Allocate-in · placeholder notice on ONE wrapping flex row — each
+          piece drops to its own row as space runs out (see the module CSS). */}
+      <div class={styles.headerRow}>
+        {/* The shared server-searched item lookup (spec S4 — the registry's
+            async catalogue-lookup; no client-side cached cap), locked in
+            update mode. `selectedItem` labels the current value when it isn't
+            in the search's own paginated results (a row-click open / walk
+            advance). Clearing (×) returns to the empty search state — like an
+            add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
+        <div class={styles.itemField}>
+          <ItemSearch
+            label={t('label.item')}
+            storeId={props.storeId}
+            disabled={updateMode() || saving()}
+            focusTarget={itemSearch}
+            value={item()?.id}
+            selectedItem={item()}
+            placeholder={t('placeholder.enter-an-item-code-or-name')}
+            onSelect={option => {
+              if (option)
+                void seedItem({
+                  id: option.id,
+                  code: option.code,
+                  name: option.name,
+                  unitName: option.unitName,
+                  isVaccine: option.isVaccine,
+                  doses: option.doses,
+                });
+              else backToSearch();
             }}
           />
-          {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
+        </div>
+        <Show when={item()}>
+          <span class={styles.available}>
+            {/* Unit name pluralised to the count (old-app parity — English
+                only; getPlural passes other languages through). */}
+            {t('label.available')}: {formatNumber(availableUnits())}{' '}
+            {getPlural(unitName(), availableUnits())}
+          </span>
+          {/* Issue + Allocate-in wrap as a unit. Both controls at the default
+              height — NumberField's "small" (2.25rem) and Select's "sm"
+              (1.75rem — the Pagination scale) don't align with each other. */}
+          <div class={styles.issueGroup}>
+            <NumberField
+              label={t('label.issue')}
+              min={0}
+              data-testid="issue-quantity-input"
+              ref={issueField.ref}
+              value={issueValue()}
+              disabled={saving()}
+              onChange={onIssueChange}
+            />
+            <Select
+              label={t('label.units')}
+              value={allocateInValue()}
+              options={[
+                // The unit option reads as a category — always plural
+                // ("Vials"), the old app's getPlural(unit, 2).
+                { value: 'units', label: getPlural(unitName(), 2) },
+                // The doses lens (AC-AL7): vaccine items under the
+                // manage-vaccines-in-doses preference only.
+                ...(prefs().manageVaccinesInDoses && item()?.isVaccine
+                  ? [{ value: 'doses', label: t('label.doses') }]
+                  : []),
+                ...distinctPackSizes().map(size => ({
+                  value: `packs-${size}`,
+                  label: t('label.packs-of-pack-size', { packSize: size }),
+                })),
+              ]}
+              onValueChange={value => {
+                const next: AllocateUnit =
+                  value === 'units'
+                    ? { kind: 'units' }
+                    : value === 'doses'
+                      ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                      : { kind: 'packs', size: Number(value.slice(6)) };
+                switchLensTo(next);
+              }}
+            />
+          </div>
+          {/* Placeholder notice (info) — fills the rest of the header row,
               matching the old app; shown when a shortfall became a placeholder. */}
           <Show when={placeholderUnits() > 0}>
             <div class={styles.placeholderNotice}>
@@ -985,8 +1166,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               </Alert>
             </div>
           </Show>
-        </div>
+        </Show>
+      </div>
 
+      {/* The grid + footer + banners keep their own item gate — the header
+          row above renders its picker item-less in add mode. */}
+      <Show when={item()}>
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
         <div class={styles.batchGrid}>
@@ -1040,6 +1225,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         {/* Zero-allocation second confirmation (spec S4 § save). */}
         <Show when={zeroConfirm()}>
           <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
+        </Show>
+
+        {/* A zero-packs line's VVM change won't survive the save — its own
+            distinct confirmation, taking precedence (spec S4 § save). */}
+        <Show when={vvmConfirm()}>
+          <Alert severity="warning">
+            {t('messages.unsaved-outbound-vvm-status')}
+          </Alert>
         </Show>
       </Show>
     </Dialog>

@@ -8,7 +8,7 @@ import {
 } from './backdating';
 import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
 
-describe('backdatingGate (AC-B1)', () => {
+describe('backdatingGate (OMS-REG-DIST-04.23)', () => {
   it('is enabled while NEW with the preference on and the panel editable', () => {
     expect(
       backdatingGate({
@@ -51,7 +51,7 @@ describe('backdatingGate (AC-B1)', () => {
   });
 });
 
-describe('backdateBounds (AC-B1 picker window)', () => {
+describe('backdateBounds (OMS-REG-DIST-04.23 picker window)', () => {
   it("bounds the picker to [now − (maxDays − 1), now] — the old app's +1 buffer for the server UTC boundary check", () => {
     expect(backdateBounds(new Date(2026, 6, 22, 12, 0, 0), 30)).toEqual({
       min: '2026-06-23',
@@ -72,7 +72,7 @@ describe('backdateBounds (AC-B1 picker window)', () => {
   });
 });
 
-describe('withinBackdateBounds (AC-B1 save-path rejection)', () => {
+describe('withinBackdateBounds (OMS-REG-DIST-04.23 save-path rejection)', () => {
   const bounds = { min: '2026-06-22', max: '2026-07-22' };
 
   it('accepts a day inside the window, including both edges', () => {
@@ -118,7 +118,7 @@ describe('backdatedDatetimeFor', () => {
   });
 });
 
-describe('backdateWarnings (AC-B2/B4)', () => {
+describe('backdateWarnings (OMS-REG-DIST-04.24/.27)', () => {
   it('warns about line removal when the shipment has lines', () => {
     expect(
       backdateWarnings({ hasLines: true, stocktakeConflict: false })

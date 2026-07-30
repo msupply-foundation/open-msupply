@@ -38,6 +38,7 @@ query draftStockOutLines(
         unusable
         priority
       }
+      itemVariantId
       receivedNumberOfPacks
       reasonOption {
         id
@@ -58,7 +59,33 @@ query draftStockOutLines(
   }
 }
 
-# The item-set save (AC-I6): replaces the item's lines as a set — changed packs
+# The item's variants, for the batch column's variant-info popover (spec S4
+# § batch grid): a batch row carrying an itemVariantId reveals the item's
+# variant list with its own marked. Fetched by seedItem only when some draft
+# line carries a variant id — most items have none and skip this read.
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        variants {
+          id
+          name
+          vvmType
+          manufacturer(storeId: $storeId) {
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
+# The item-set save (OMS-REG-DIST-03.20): replaces the item's lines as a set — changed packs
 # updated, zeroed batches removed, the placeholder created/updated/removed to
 # match. Returns the invoice node; the view refetches the detail (totals,
 # trims, and placeholder management are server-side).
