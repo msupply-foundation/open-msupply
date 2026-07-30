@@ -63,13 +63,16 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   );
 };
 
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+// No success phase: a clean delete CLOSES the dialog — closure is the
+// confirmation and the rows vanishing behind it is the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
+type Phase = 'confirm' | 'working' | 'error';
 
 const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorCount, setErrorCount] = createSignal(0);
-  // Count snapshotted on open (Body mounts once per open) so the
-  // confirm/success message can't shift.
+  // Count snapshotted on open (Body mounts once per open) so the confirm
+  // message can't shift.
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -80,7 +83,8 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
     });
     if (!outcome) return props.onClose();
     props.onCommit(outcome.commit);
-    if (outcome.errors.size === 0) return setPhase('success');
+    // Clean delete: close — the rows are already gone behind the dialog.
+    if (outcome.errors.size === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
     setErrorCount(outcome.errors.size);
     setPhase('error');
@@ -93,14 +97,17 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The error phase is no longer a question, so the heading stops asking
+      // one (it would otherwise read "Are you sure?" over a rejection).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           fallback={tPlural('messages.confirm-delete-stocktake_lines', count)}
         >
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-lines', count)}
-          </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
               {tPlural('messages.line-errors', errorCount())}
@@ -131,15 +138,6 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              data-testid="dialog-button-ok"
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           <Match when={phase() === 'error'}>
             <CancelButton
               data-testid="dialog-button-cancel"

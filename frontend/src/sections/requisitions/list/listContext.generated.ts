@@ -11,6 +11,9 @@ export type RequisitionListContextResult = {
   responseRequisitionRequiresAuthorisation: boolean;
   omProgramModule: boolean;
 };
+  preferences: {
+  canCreateInternalOrderFromARequisition: boolean;
+};
   names: ({
   __typename: "NameConnector";
 } & {
@@ -21,7 +24,7 @@ export type RequisitionListContextResult = {
 };
 
 export const RequisitionListContext = {
-  query: "query requisitionListContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    responseRequisitionRequiresAuthorisation\n    omProgramModule\n  }\n  names(storeId: $storeId, page: {first: 1000}, filter: {isCustomer: true}) {\n    ... on NameConnector {\n      __typename\n      nodes {\n        id\n      }\n    }\n  }\n}",
+  query: "query requisitionListContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    responseRequisitionRequiresAuthorisation\n    omProgramModule\n  }\n  preferences(storeId: $storeId) {\n    canCreateInternalOrderFromARequisition\n  }\n  names(storeId: $storeId, page: {first: 1000}, filter: {isCustomer: true}) {\n    ... on NameConnector {\n      __typename\n      nodes {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<RequisitionListContextResult, RequisitionListContextVariables>;
 
 export type CustomerProgramsGateVariables = {

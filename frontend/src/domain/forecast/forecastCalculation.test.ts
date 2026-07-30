@@ -3,7 +3,7 @@ import {
   parseVaccineCourses,
   forecastSteps,
   type VaccineCourse,
-} from './internalOrderLineEdit';
+} from './forecast';
 
 // The population-forecast calculation display's arithmetic
 // (spec/internal-orders S4 § Population-based forecasting, AC-PF7). The

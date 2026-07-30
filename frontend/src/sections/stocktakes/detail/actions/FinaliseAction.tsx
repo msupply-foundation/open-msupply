@@ -6,7 +6,7 @@ import { SplitButton } from '@/ui/elements/buttons/SplitButton';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '@/ui/icons';
+import { ArrowRightIcon, XCircleIcon } from '@/ui/icons';
 import { STATUS_FLOW, STATUS_LABELS, statusIndex } from '../stocktakeStatus';
 import { finaliseStocktake } from '../stocktakeUpdate';
 import type { StocktakeInfoFragment } from '../lines/stocktakeDetail.generated';
@@ -37,23 +37,24 @@ export interface FinaliseActionProps {
 // (kdd/action-modal), but its trigger is the status stepper's SplitButton
 // rather than a plain button. It owns the button, the finalise mutation
 // (finaliseStocktake — the ONLY status write, NEW → FINALISED, no un-finalise),
-// the confirm → working → success | error dialog.
+// the confirm → working → error dialog.
 //
 // The confirm dialog is inline (not via a shared ActionModal) so the whole
 // flow is readable in one place (kdd/explicit-composition). On success
-// onApplied merges the saved node (the FINALISED status shows in the footer
-// behind the success message); on a rejection onError stamps the offending
-// lines (rows show them), the error phase shows the server's translated
-// message and offers "Show error lines" (onShowErrors) when the rejection
-// carries line ids. A transport failure is silent (handled globally) → just
-// closes.
+// onApplied merges the saved node and the dialog CLOSES — closure is the
+// confirmation, and the FINALISED status now showing in the footer is the
+// visible result (spec/ui-standards/controls.md § dialogs, D22; § action
+// feedback, D21). On a rejection onError stamps the offending lines (rows show
+// them), the error phase shows the server's translated message and offers
+// "Show error lines" (onShowErrors) when the rejection carries line ids. A
+// transport failure is silent (handled globally) → just closes.
 //
 // There is deliberately NO client-side "has counted lines" pre-check: the old
 // one only saw the current page and wrongly blocked finalising a stocktake with
 // placeholder lines on the first page but counted lines further in (issue
 // #791). The server is the source of truth — a truly-empty stocktake comes back
 // as NoLines and lands in the error phase like any other rejection.
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+type Phase = 'confirm' | 'working' | 'error';
 
 export const FinaliseAction: Component<FinaliseActionProps> = props => {
   // pendingStatus != null opens the finalise confirm dialog (set by the split
@@ -85,29 +86,15 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
   const nextStatus = () => STATUS_FLOW[currentIndex() + 1];
 
   // The dialog's header tracks the phase: confirm/working ask ("Are you sure?"
-  // → arrow); success reports the outcome ("Finalised" ✓); error flags it
-  // (something-wrong ✗). Keeping "Are you sure?" + the forward arrow on the
-  // success screen read wrong once the stocktake was already finalised.
-  const title = () => {
-    switch (phase()) {
-      case 'success':
-        return t('status.finalised');
-      case 'error':
-        return t('error.something-wrong');
-      default:
-        return t('heading.are-you-sure');
-    }
-  };
-  const icon = () => {
-    switch (phase()) {
-      case 'success':
-        return <CheckIcon />;
-      case 'error':
-        return <XCircleIcon />;
-      default:
-        return <ArrowRightIcon />;
-    }
-  };
+  // → arrow); the error phase is no longer a question, so it stops asking one
+  // ("Can't do that!" ✗) — it would otherwise read "Are you sure?" with a
+  // forward arrow over a rejection. Success has no screen: it closes.
+  const title = () =>
+    phase() === 'error'
+      ? t('heading.cannot-do-that')
+      : t('heading.are-you-sure');
+  const icon = () =>
+    phase() === 'error' ? <XCircleIcon /> : <ArrowRightIcon />;
 
   const openConfirm = (status: string) => {
     // A finalised/locked stocktake can't change status — the split button is
@@ -126,7 +113,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
     if (result.kind === 'failed') return close();
     if (result.kind === 'saved') {
       props.onApplied(result.node);
-      return setPhase('success');
+      return close(); // success closes — the FINALISED status IS the confirmation
     }
     props.onError(result.lineIds); // stamp so the rows show the mismatch
     setErrorMessage(result.message); // the server's translated rejection text
@@ -151,7 +138,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         </ContentFooterActions>
       </Show>
 
-      {/* Finalise confirm → working → success | error. Opened by the SplitButton via pendingStatus.
+      {/* Finalise confirm → working → error. Opened by the SplitButton via pendingStatus.
           Gated by <Show> so the confirm <dialog> isn't in the DOM at all while
           closed — otherwise this always-mounted `confirmation-modal` testid
           coexists with a sibling action's confirm (e.g. change-location),
@@ -171,7 +158,6 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                 status: t('status.finalised'),
               })}
             >
-              <Match when={phase() === 'success'}>{t('messages.saved')}</Match>
               <Match when={phase() === 'error'}>
                 <Alert severity="error">{errorMessage()}</Alert>
               </Match>
@@ -202,15 +188,6 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                 </>
               }
             >
-              <Match when={phase() === 'success'}>
-                <Button
-                  variant="secondary"
-                  data-testid="dialog-button-ok"
-                  onClick={close}
-                >
-                  {t('button.ok')}
-                </Button>
-              </Match>
               <Match when={phase() === 'error'}>
                 {/* "Show error lines" only makes sense when the rejection
                     carries offending line ids (the snapshot mismatch). A

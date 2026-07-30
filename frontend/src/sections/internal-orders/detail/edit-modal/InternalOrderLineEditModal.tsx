@@ -57,7 +57,7 @@ import {
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
-import { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
+import { ForecastCalculationDisplay } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add

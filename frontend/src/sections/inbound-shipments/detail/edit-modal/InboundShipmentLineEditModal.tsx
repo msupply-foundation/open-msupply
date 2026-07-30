@@ -763,7 +763,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'numberOfPacks' },
-      header: () => t('label.pack-quantity'),
+      header: () => t('label.packs-received'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -771,7 +771,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         return (
           <NumberField
             ref={batchFields.ref(b.id)}
-            label={t('label.pack-quantity')}
+            label={t('label.packs-received')}
             hideLabel
             size="small"
             value={b.numberOfPacks}
@@ -787,14 +787,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'packSize' },
-      header: () => t('label.pack-size'),
+      header: () => t('label.received-pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
         return (
           <NumberField
-            label={t('label.pack-size')}
+            label={t('label.received-pack-size')}
             hideLabel
             size="small"
             value={b.packSize}

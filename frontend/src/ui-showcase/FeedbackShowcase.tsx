@@ -253,9 +253,22 @@ export const FeedbackShowcase = () => {
             tap. Pass it to an input's <code>labelInfo</code> slot to explain a
             field (below), or drop it inline beside any term.
           </Lead>
+          <Lead>
+            <code>tone</code> sets the marker's emphasis. The default grey suits
+            a marker beside a label — the label carries the weight, and the icon
+            brightens on hover. <code>primary</code> is the standing brand-toned
+            mark for one that stands alone in a muted row (dashboard stats,
+            where the current app renders it that way): it doesn't brighten, it
+            tints its own background on hover instead.
+          </Lead>
           <div class={styles.popoverRow}>
             <span>Standalone: </span>
             <InfoTooltip text="The number of local (home) currency units per one PO currency unit." />
+            <span>Primary tone: </span>
+            <InfoTooltip
+              tone="primary"
+              text="The standing brand-toned marker — as used on a dashboard stat."
+            />
           </div>
           <TextField
             label="Currency rate"

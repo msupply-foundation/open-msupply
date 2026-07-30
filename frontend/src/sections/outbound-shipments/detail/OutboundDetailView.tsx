@@ -61,7 +61,7 @@ import { outboundShipmentPreferences } from '@/store/storeContext';
 import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
 import { OutboundSidePanel } from './OutboundSidePanel';
-import { LogTab } from './LogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   OutboundLineEditModal,
   type LineEditItem,
@@ -981,7 +981,17 @@ const OutboundDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <LogTab storeId={params.storeId} recordId={current().id} />
+                {/* The shared activity-log surface (domain/activityLog) — the
+                    same Date · Time · User · Event · Details table every other
+                    vertical's Log tab renders. Oldest-first, preserving this
+                    tab's existing order and matching the real OMS
+                    ActivityLogList (which sends no sort and takes the server's
+                    datetime-ascending default). */}
+                <ActivityLogPanel
+                  storeId={params.storeId}
+                  recordId={current().id}
+                  order="oldest-first"
+                />
               </TabPanel>
 
               <OutboundLineEditModal
