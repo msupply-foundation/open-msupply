@@ -49,7 +49,10 @@ import {
 } from './requisitionDetail.generated';
 import { RequisitionDetailContext } from './detailContext.generated';
 import { saveRequisitionFields } from './requisitionUpdate';
-import { isRequisitionEditable } from './requisitionDetailStatus';
+import {
+  isApprovalBlocked,
+  isRequisitionEditable,
+} from './requisitionDetailStatus';
 import {
   RequisitionToolbar,
   type HeaderEditFields,
@@ -768,7 +771,27 @@ const RequisitionDetailView: Component = () => {
                 </Toolbar>
               </Header>
             }
-            contentFooter={<RequisitionStatusFooter node={node()} />}
+            contentFooter={
+              <RequisitionStatusFooter
+                storeId={params.storeId}
+                node={node()}
+                editable={editable()}
+                // ONLY approval blocking → the status button shows disabled
+                // instead of hiding (spec S2 § footer).
+                approvalBlocked={
+                  node().status === 'NEW' &&
+                  !node().otherParty.store?.isDisabled &&
+                  isApprovalBlocked(node())
+                }
+                // A finalise is an order-level save: splice the returned node
+                // back (the indicator advances, the whole screen re-renders
+                // read-only through the shared editability gate).
+                onSaved={saved => mutate(() => saved)}
+                onReasonsNotProvided={ids =>
+                  setReasonFlaggedIds(new Set(ids))
+                }
+              />
+            }
           >
             {/* Details | Documents | Log (spec S2 § tabs; Indicators arrives
                 with its slice). The active tab persists in the URL. */}

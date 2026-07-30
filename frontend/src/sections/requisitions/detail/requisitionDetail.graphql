@@ -113,6 +113,11 @@ fragment RequisitionInfo on RequisitionNode {
     username
     email
   }
+  # The raise/finalise gates (contract › raising a shipment): the lines with a
+  # positive remainder — the raise pre-check and the finalise warning count.
+  linesRemainingToSupply {
+    totalCount
+  }
   shipments {
     totalCount
     nodes {
@@ -159,6 +164,29 @@ query requisitionDetail($storeId: String!, $id: String!) {
 # validated against the WHOLE record (rules › header edits): a program
 # requisition's unreasoned variance rejects any save naming the offending
 # lines (their Reason cells flag), and the emergency cap names its maximum.
+# Raising a shipment (rules › raising a shipment): the outstanding remainder
+# becomes a NEW outbound shipment of placeholder lines, permanently linked.
+# The UI pre-checks permission and nothing-remaining without a call; the typed
+# rejections below are the server's. Approval is NOT re-validated here — the
+# withheld action while approval blocks editing is client-side only.
+mutation createShipmentFromRequisition(
+  $storeId: String!
+  $input: CreateRequisitionShipmentInput!
+) {
+  createRequisitionShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on CreateRequisitionShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 mutation updateRequisition(
   $storeId: String!
   $input: UpdateResponseRequisitionInput!
