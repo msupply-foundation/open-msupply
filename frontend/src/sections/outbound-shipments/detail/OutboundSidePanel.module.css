@@ -1,14 +1,3 @@
-/* The shipment-level summary row's label ("Grand total"): bold at BODY size —
-   deliberately the weight and size the row had before the UI migration, because
-   SIDE_PANEL.md § Known open items leaves the standard totals-row treatment
-   unpicked ("inbound bolds label + value, outbound only the label — pick one
-   and, if it recurs, promote it"). Choosing a look here would settle that by
-   accident, so this row's appearance is held still until the side-panel design
-   spec settles it. A scoped class rather than an inline style. */
-.totalLabel {
-  font-weight: var(--weight-bold);
-}
-
 /* A group heading's text + its info gloss, INSIDE SidePanelSubheading's <h3>.
    An <h3> takes phrasing content, so the row can't be an HStack (a <div>) — this
    is the inline-level equivalent, and it is what SIDE_PANEL.md's own
