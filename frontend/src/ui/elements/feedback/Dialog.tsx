@@ -122,6 +122,14 @@ export interface DialogProps {
    */
   size?: 'auto' | 'large';
   /**
+   * Drops the dialog's panel surface — no background, no shadow, no padding —
+   * so the content floats directly over the scrim. For an overlay whose own
+   * children already carry surfaces (the command palette: a text field and an
+   * option list, nothing behind them). Everything else <Dialog> gives stays:
+   * top layer, inert page, Escape, focus restore, scrim-click dismiss.
+   */
+  chromeless?: boolean;
+  /**
    * Where focus lands when the dialog opens, overriding the default (the
    * dialog panel — see the note on `.body` below). Pass a
    * `createFocusTarget()` handle that a control inside the dialog is bound to.
@@ -409,27 +417,36 @@ export const Dialog = (props: DialogProps) => {
    * (ui-surface S1: "Dialog-contributed, present only while a dialog is open —
    * Save and Cancel, each showing its keys").
    *
-   * `disabled` is what gates them on `props.open`: dialog content stays MOUNTED
-   * while closed (several call sites keep the <Dialog> rendered and flip `open`),
-   * so a plain unconditional registration would leave Save in the palette for a
-   * dialog nobody can see. Gating via `disabled` rather than conditional
-   * creation keeps the action's lifetime tied to this component and out of an
-   * effect, where re-runs would churn the registration (kdd/keyboard-layer).
+   * `disabled` is what gates them on `props.open`: dialog content stays
+   * MOUNTED while closed (several call sites keep the <Dialog> rendered and
+   * flip `open`), so a plain unconditional registration would leave Save in
+   * the palette for a dialog nobody can see. Gating via `disabled` rather than
+   * conditional creation keeps the action's lifetime tied to this component
+   * and out of an effect, where re-runs would churn the registration
+   * (kdd/keyboard-layer).
    *
    * Alt+S is `surface` tier, so it fires from inside a text field — the whole
-   * point of the dialog tier (AC-KB2). Escape needs no action to work: the UA's
-   * close request handles it, and the binding is declared on CancelButton purely
-   * so the badge and this entry can render it.
+   * point of the dialog tier (AC-KB2). Escape needs no action to work: the
+   * UA's close request handles it, and the binding is declared on CancelButton
+   * purely so the badge and this entry can render it.
+   *
+   * Alt+S targets the PLAIN confirm, never `enterTarget()`. KB-E2's "a
+   * continuing action wins" is about ENTER, whose target is implicit — the
+   * user pressed a general "go on" key and the footer decides what that means.
+   * Alt+S is the Save button's OWN binding: it is the key that button
+   * advertises on its badge (AC-KB15), so running Save & next from it would
+   * fire an action the user did not aim at, and one whose badge sits on a
+   * different button.
    */
-  const confirmable = () =>
-    props.open &&
-    claims.get('plain') !== undefined &&
-    enterTarget() !== undefined;
+  const saveTarget = (): ConfirmClaim | undefined => {
+    const plain = claims.get('plain');
+    return plain && !plain.disabled() ? plain : undefined;
+  };
   createAction({
     name: 'button.save',
     shortcut: ALT_S,
-    run: () => enterTarget()?.activate(),
-    disabled: () => !confirmable(),
+    run: () => saveTarget()?.activate(),
+    disabled: () => !props.open || saveTarget() === undefined,
   });
   createAction({
     name: 'button.cancel',
@@ -447,11 +464,11 @@ export const Dialog = (props: DialogProps) => {
         dialog = el;
         setDialogEl(el);
       }}
-      class={
-        props.size === 'large'
-          ? `${styles.dialog} ${styles.large}`
-          : styles.dialog
-      }
+      classList={{
+        [styles.dialog ?? '']: true,
+        [styles.large ?? '']: props.size === 'large',
+        [styles.chromeless ?? '']: props.chromeless === true,
+      }}
       data-testid={props.testId}
       data-fullscreen={fullscreen() && props.size === 'large' ? '' : undefined}
       style={{

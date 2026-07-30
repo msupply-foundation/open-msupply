@@ -21,7 +21,7 @@ import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterAct
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
 import { createAddAction } from '@/ui/utils/keyActions';
-import { ALT_N } from '@/ui/utils/shortcuts';
+import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { SidebarIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
 import {
@@ -872,6 +872,9 @@ const StocktakeDetailView: Component = () => {
                         variant="secondary"
                         icon={<SidebarIcon />}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}

@@ -27,8 +27,8 @@ setLocale('en');
 //
 //   1. macOS Option+letter delivers a composed character or a dead key in
 //      `event.key`, so letters must match `event.code`;
-//      (the same argument covers digits on AZERTY, where Ctrl+1 arrives as '&' —
-//      no digit binding survives, see spec DIVERGENCES D76);
+//      (the same argument covers digits on AZERTY, where Ctrl+1 arrives as '&';
+//      no digit binding exists today, so none is asserted here);
 //   3. Cmd+K on macOS and Ctrl+K elsewhere is ONE binding (`mod`), and Ctrl+K
 //      on a Mac must NOT fire it;
 //   4. a bare-character binding ('+') arrives WITH shiftKey on most layouts, so

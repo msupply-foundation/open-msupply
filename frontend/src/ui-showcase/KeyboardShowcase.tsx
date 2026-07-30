@@ -1,9 +1,10 @@
-import { createSignal, For, Show } from 'solid-js';
+import { createSignal, For, onCleanup, onMount, Show } from 'solid-js';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Button } from '../ui/elements/buttons/Button';
 import { CommandPaletteView } from '../ui/elements/keyboard/CommandPaletteView';
+import { startKeyboardDispatcher } from '../keyboard/keyboardDispatcher';
 import { registeredActions } from '../ui/utils/keyActions';
 import { modifierHeld } from '../ui/utils/modifierHint';
 import {
@@ -32,10 +33,15 @@ import type { PageMetadata } from './metadata';
  * dynamically-composed set, INSPECTABLE beats greppable — and the showcase is
  * already dev-only and dead-code-eliminated from production builds.
  *
- * NOTE the showcase is not an AppShell and mounts no KeyboardHost, so no
- * dispatcher is running here: the badges below are driven by pressing Alt/Ctrl
- * only if a host page has one. The demo therefore also offers an explicit
- * toggle-free view — hold Alt over the buttons in the real app to see them.
+ * The showcase is not an AppShell and mounts no KeyboardHost, so nothing here
+ * would otherwise write modifierHeld: the badges could never reveal and the
+ * live status line would permanently read "no modifier". The page therefore
+ * starts the ONE real dispatcher itself for as long as it is mounted — the same
+ * function KeyboardHost calls, never a second listener of its own, which would
+ * be a second writer of the signal modifierHint reserves for the dispatcher.
+ *
+ * Only the dispatcher, not the host: no global or nav actions are registered
+ * here, so the registry stays whatever this page's own components create.
  */
 
 const DEMO_SHORTCUTS = [
@@ -63,6 +69,11 @@ const DEMO_ENTRIES = [
 
 export const KeyboardShowcase = () => {
   const [paletteOpen, setPaletteOpen] = createSignal(false);
+
+  onMount(() => {
+    const stop = startKeyboardDispatcher();
+    onCleanup(stop);
+  });
 
   return (
     <ContentContainer>
@@ -98,11 +109,11 @@ export const KeyboardShowcase = () => {
         <DashboardCard id="keyboard-badges" title="Shortcut hint badges">
           <Stack gap="md">
             <Note>
-              Hold <strong>Alt</strong> or <strong>Ctrl</strong> in the real app
-              and every control carrying a shortcut reveals it. The badge
-              renders from the same <code>Shortcut</code> value the control
-              exposes as <code>aria-keyshortcuts</code>, so the two cannot
-              drift.
+              Hold <strong>Alt</strong> or <strong>Ctrl</strong> — here or
+              anywhere in the app — and every control carrying a shortcut
+              reveals it. The badge renders from the same <code>Shortcut</code>{' '}
+              value the control exposes as <code>aria-keyshortcuts</code>, so
+              the two cannot drift.
               {modifierHeld()
                 ? ' A modifier is held right now.'
                 : ' No modifier is held right now.'}

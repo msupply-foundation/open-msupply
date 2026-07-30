@@ -149,6 +149,10 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
       title={t('heading.keyboard-shortcuts')}
       titleHidden
       initialFocus={search}
+      // No panel behind it: the search field and the results list each carry
+      // their own surface, so the palette floats as those two boxes over the
+      // dimmed page rather than sitting on a card.
+      chromeless
       widthRem={34}
       testId="command-palette"
     >

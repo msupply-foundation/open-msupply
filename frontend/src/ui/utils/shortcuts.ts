@@ -20,8 +20,8 @@ import { t } from '../../intl';
  *
  *  - LETTERS MATCH `code`, NOT `key`. On macOS Option+M delivers key === 'µ' and
  *    Option+N a dead key, while `code` stays 'KeyM' / 'KeyN'. (The same holds for
- *    digits on AZERTY, where Ctrl+1 arrives as '&' — no digit binding survives,
- *    see the note above the palette key.) Named keys and punctuation ('Escape',
+ *    digits on AZERTY, where Ctrl+1 arrives as '&' — no digit binding exists
+ *    today, so that branch isn't carried.) Named keys and punctuation ('Escape',
  *    '+') match `key`, because a BARE character binding is layout-dependent by
  *    intent (KB-L2: a surface may claim '+' only where '+' isn't valid input).
  *  - `mod`, NOT `meta`. KB-P1 makes the palette Cmd+K on macOS and Ctrl+K
@@ -158,12 +158,10 @@ export const ALT_S = shortcut({ alt: true, code: 'KeyS', tier: 'surface' });
 export const MOD_K = shortcut({ mod: true, code: 'KeyK', tier: 'surface' });
 
 /*
- * No tab-switching bindings. The spec's `Ctrl+1` / `Ctrl+2` / `Ctrl+3` bind the
- * stocktake line editor's Batch / Pricing / Other TABS, and this app has no
- * tabbed tables — a line editor groups its fields into card-group panels, so
- * there is nothing to switch between (spec DIVERGENCES D76). Leaving the consts
- * here unused would be exactly the drift the binding table exists to prevent, and
- * the keys go back to the browser, where they switch its own tabs.
+ * No tab-switching bindings: nothing in this app has tabbed tables to switch
+ * between, so `Ctrl+1`–`Ctrl+3` are unclaimed and go to the browser, where they
+ * switch its own tabs. Consts kept here for bindings nothing can fire would be
+ * exactly the drift this table exists to prevent.
  */
 
 /**
@@ -234,7 +232,7 @@ export const matches = (s: Shortcut, event: KeyboardEvent): boolean => {
 
 // 'KeyD' → 'D'. A `key`-matched binding renders its key as-is ('Escape', '+').
 // Every code-matched binding in the table is a letter; a digit binding would add
-// a `Digit` branch here, and its test alongside (see D76 on why none remain).
+// a `Digit` branch here, and its test alongside.
 const keyName = (s: Shortcut): string => {
   if (s.key !== undefined) return s.key;
   const code = s.code ?? '';
