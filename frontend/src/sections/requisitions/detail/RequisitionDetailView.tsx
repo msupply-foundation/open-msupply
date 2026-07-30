@@ -36,10 +36,13 @@ import {
 } from '../../../ui/elements/selectors/FilterBar';
 import {
   AlertTriangleIcon,
+  MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
   TruckIcon,
 } from '../../../ui/icons';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
@@ -66,14 +69,18 @@ import {
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
+import {
+  DeleteRequisitionLinesAction,
+  type DeleteLinesBlock,
+} from './actions/DeleteRequisitionLinesAction';
 import { RequisitionLineEditModal } from './edit-modal/RequisitionLineEditModal';
 
 // The requisition detail view (spec/requisitions S2): view, header edits
 // (customer reference / comment / colour), the side panel (S5), the Documents
-// and Log tabs, Export/Print (reports S4), and navigation/not-found. The line
-// editor (S4), the supply actions (auto-populate, Create shipment), the
-// finalise action, line selection/deletion, the master-list add, and the
-// Indicators tab are later slices.
+// and Log tabs, Export/Print (reports S4), line selection + bulk delete
+// (AC-LD1–LD4), and navigation/not-found. The line editor (S4), the supply
+// actions (auto-populate, Create shipment), the finalise action, and the
+// master-list add are later slices.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -267,6 +274,20 @@ const RequisitionDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+
+  // Line-table row selection (AC-LD1). Owned by the page (like sort/filter);
+  // a non-empty selection swaps the status footer for the bulk-action bar
+  // (spec S2 § footer). Checkboxes are always offered — on a blocked
+  // requisition the Delete click explains instead (AC-LD2).
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // The standing states the UI mirrors without a server call (rules ›
+  // deleting lines): not editable-by-status first, then transfer-linked.
+  const deleteBlock = (): DeleteLinesBlock | undefined =>
+    !editable()
+      ? 'not-editable'
+      : info()?.linkedRequisition
+        ? 'transferred'
+        : undefined;
 
   // Save & next's walk (AC-LE5): the next line after the current one in the
   // table's current sort/filter order, skipping ones already visited this
@@ -822,25 +843,62 @@ const RequisitionDetailView: Component = () => {
               </Header>
             }
             contentFooter={
-              <RequisitionStatusFooter
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                // ONLY approval blocking → the status button shows disabled
-                // instead of hiding (spec S2 § footer).
-                approvalBlocked={
-                  node().status === 'NEW' &&
-                  !node().otherParty.store?.isDisabled &&
-                  isApprovalBlocked(node())
+              // Bulk-action bar while lines are selected (spec S2 § footer);
+              // otherwise the requisition's status footer — clearing the
+              // selection restores it.
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <RequisitionStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    editable={editable()}
+                    // ONLY approval blocking → the status button shows disabled
+                    // instead of hiding (spec S2 § footer).
+                    approvalBlocked={
+                      node().status === 'NEW' &&
+                      !node().otherParty.store?.isDisabled &&
+                      isApprovalBlocked(node())
+                    }
+                    // A finalise is an order-level save: splice the returned
+                    // node back (the indicator advances, the whole screen
+                    // re-renders read-only through the shared editability
+                    // gate).
+                    onSaved={saved => mutate(() => saved)}
+                    onReasonsNotProvided={ids =>
+                      setReasonFlaggedIds(new Set(ids))
+                    }
+                  />
                 }
-                // A finalise is an order-level save: splice the returned node
-                // back (the indicator advances, the whole screen re-renders
-                // read-only through the shared editability gate).
-                onSaved={saved => mutate(() => saved)}
-                onReasonsNotProvided={ids =>
-                  setReasonFlaggedIds(new Set(ids))
-                }
-              />
+              >
+                <ContentFooter>
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  {/* On a read-only or transfer-linked requisition the click
+                      explains why it can't proceed rather than confirming
+                      (AC-LD2). onDeleted clears the selection (unmounting this
+                      bar) and re-reads the line list (AC-LD1). */}
+                  <DeleteRequisitionLinesAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
+                    blocked={deleteBlock}
+                    onDeleted={() => {
+                      setSelectedIds([]);
+                      void refetch();
+                    }}
+                  />
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<MinusCircleIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
             }
           >
             {/* Details | Documents | Log | (gated) Indicators (spec S2 §
@@ -914,6 +972,14 @@ const RequisitionDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Leading-checkbox row selection for the bulk line delete
+                  // (spec S2 § line table): checkbox-only — the row click
+                  // stays bound to the editor. Always offered, on every
+                  // standing state: a blocked delete explains on click
+                  // (AC-LD2) rather than withholding the affordance.
+                  enableSelection
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
                 />
               </TabPanel>
               <TabPanel value="documents">
