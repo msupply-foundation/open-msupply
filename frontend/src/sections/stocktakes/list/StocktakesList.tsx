@@ -1,4 +1,10 @@
-import { createMemo, createResource, createSignal, Show } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
@@ -10,6 +16,9 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { createFocusTarget } from '@/ui/utils/createFocusTarget';
+import { ALT_N } from '@/ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -102,6 +111,15 @@ const StocktakesList: Component = () => {
   // it open. On a successful create it navigates away to the new stocktake's
   // detail page, so the list needs no refetch here.
   const [createOpen, setCreateOpen] = createSignal(false);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header button and the
+  // ghost button in the table's empty slot. Each carries `shortcut={ALT_N}` for
+  // its badge; neither owns the action.
+  createAddAction({
+    name: 'label.new-stocktake',
+    run: () => setCreateOpen(true),
+  });
   // The initial (opening-balance) create action — offered from the empty state
   // only when the store has NO stocktakes at all (see hasStocktake below). Like
   // createOpen, a successful create navigates away.
@@ -174,6 +192,25 @@ const StocktakesList: Component = () => {
   // read non-suspending lets the DataTable mount immediately and show its
   // `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
   const rows = () => data.latest?.nodes ?? [];
+
+  /*
+   * KB-F1: "A list screen seeds its table, making arrow-key row navigation
+   * available immediately… It MUST NOT steal focus from a text field that already
+   * holds it — an arrival that races a search field or a just-dismissed palette
+   * yields to the field" (AC-KB28/AC-KB29).
+   *
+   * `seed()`, not `focus()`, is what expresses that yielding. Fired once the
+   * first rows land rather than on mount, because there is nothing to navigate
+   * until then; the handle arms the request and lands it when the table attaches,
+   * so no load gate is needed here.
+   */
+  const tableFocus = createFocusTarget();
+  let seeded = false;
+  createEffect(() => {
+    if (seeded || rows().length === 0) return;
+    seeded = true;
+    tableFocus.seed();
+  });
   const totalCount = () => data.latest?.totalCount ?? 0;
 
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
@@ -290,6 +327,7 @@ const StocktakesList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-stocktake-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -338,6 +376,9 @@ const StocktakesList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // Arrow-key row navigation, Enter to open, Escape to clear (KB-N1/KB-E5).
+        rowNavigation
+        focusTarget={tableFocus}
         // Filters live in the table's own toolbar (ui-standards § tables →
         // filtering), never the page header; state stays URL-backed here.
         filters={
@@ -365,6 +406,7 @@ const StocktakesList: Component = () => {
           hasStocktake() ? (
             <Button
               variant="ghost"
+              shortcut={ALT_N}
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >

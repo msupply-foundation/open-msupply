@@ -20,6 +20,8 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_N } from '@/ui/utils/shortcuts';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { SidebarIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
 import {
@@ -377,6 +379,32 @@ const StocktakeDetailView: Component = () => {
   // --
 
   const current = () => info();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
+  // declaration for the two controls that trigger it (the toolbar button and the
+  // ghost button in the table's empty slot); each carries `shortcut={ALT_N}` for
+  // its badge, neither owns the action.
+  //
+  // Reads `current()` rather than the `node` the JSX binds: that one is a <Show>
+  // render-prop accessor scoped inside the tree, while the action is declared at
+  // component scope. Disabled while there is no stocktake yet, or once it is
+  // finalised and there is nothing to add to — evaluated at keypress time, so no
+  // re-registration when the status changes.
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    // Gated on `.state`, NOT on `current()` — which reads `data.latest`, and
+    // `.latest` suspends on the first pending read (kdd/solid-reactivity-pitfalls
+    // § no remounts). The command palette evaluates every action's `disabled()`
+    // inside its own render, so a suspending read here would suspend THE PALETTE
+    // whenever it was opened while this screen was still first-loading. An
+    // action's `disabled` must never read a suspending source.
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const stocktake = data.latest;
+      return !stocktake || isDisabled(stocktake);
+    },
+  });
 
   // A stocktake-level field save: patch → updateStocktake, replace `info` in
   // place on success. No user-facing error branch — any rejection here is
@@ -818,7 +846,11 @@ const StocktakeDetailView: Component = () => {
                     {/* "Add item" — opens the line-edit modal in the item-search
                     state. Only while the stocktake is editable. */}
                     <Show when={!isDisabled(node())}>
-                      <Button icon={<PlusCircleIcon />} onClick={openAdd}>
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
+                        onClick={openAdd}
+                      >
                         {t('button.add-item')}
                       </Button>
                     </Show>
@@ -970,6 +1002,7 @@ const StocktakeDetailView: Component = () => {
                     isDisabled(node()) ? undefined : (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >

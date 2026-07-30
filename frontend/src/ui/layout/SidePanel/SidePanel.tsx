@@ -22,6 +22,12 @@ export interface SidePanelProps {
   onClose?: () => void;
   /** The panel's content — a stack of <SidePanelSection>s, page-owned. */
   children: JSX.Element;
+  /**
+   * The panel element. `Page` binds a focus target here so that when the panel
+   * takes over the viewport in overlay mode, focus moves INTO it rather than
+   * staying parked behind the trap (spec/keyboard KB-X2).
+   */
+  ref?: (el: HTMLElement) => void;
 }
 
 /*
@@ -37,7 +43,11 @@ export interface SidePanelProps {
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside
+    ref={el => props.ref?.(el)}
     class={styles.panel}
+    // Programmatically focusable so Page can move focus into the panel when it
+    // becomes an overlay; never a Tab stop of its own (KB-T1 allows only 0/-1).
+    tabindex="-1"
     data-testid="detail-panel"
     aria-label={props.label ?? 'Details'}
   >

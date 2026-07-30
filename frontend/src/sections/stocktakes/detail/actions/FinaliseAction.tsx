@@ -165,6 +165,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   <Button
                     variant="primary"
                     loading={phase() === 'working'}
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     onClick={() => void run()}
                   >
@@ -178,6 +179,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
               <Match when={phase() === 'success'}>
                 <Button
                   variant="secondary"
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >
@@ -215,7 +217,11 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
           title={t('heading.nothing-counted-yet')}
           description={t('messages.no-lines')}
           actions={
-            <Button variant="secondary" onClick={() => setNoLinesOpen(false)}>
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={() => setNoLinesOpen(false)}
+            >
               {t('button.ok')}
             </Button>
           }

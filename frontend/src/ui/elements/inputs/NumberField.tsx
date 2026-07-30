@@ -1,6 +1,7 @@
 import { createEffect, createSignal, on, onMount, splitProps } from 'solid-js';
 import { locale } from '../../../intl/intl';
 import { TextField, type TextFieldProps } from './TextField';
+import { useInTableCell } from '../table/inTableCell';
 import {
   displayString,
   editString,
@@ -142,6 +143,13 @@ export const NumberField = (props: NumberFieldProps) => {
     noFormatting: local.noFormatting,
   });
 
+  /*
+   * Whether this field sits in a table cell (KB-S2 — see inTableCell.ts). Read
+   * ONCE at setup, not reactively: a field does not migrate in or out of a cell,
+   * and the value is the same for every field the table renders.
+   */
+  const inTableCell = useInTableCell();
+
   const [text, setText] = createSignal(
     displayString(local.value ?? local.defaultValue, constraints(), locale())
   );
@@ -258,6 +266,20 @@ export const NumberField = (props: NumberFieldProps) => {
     e: KeyboardEvent & { currentTarget: HTMLInputElement }
   ) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      /*
+       * KB-S2: "A numeric field INSIDE A TABLE CELL instead lets arrow keys move
+       * the text cursor, and MUST NOT step the value or move the row focus."
+       *
+       * So in a cell we neither step nor preventDefault (the caret moves on the
+       * UA's own default action) — but we DO keep stopPropagation, which is what
+       * stops the table's row-navigation rung seeing the key. That second half is
+       * KB-N2 from the field's side: the table also checks `isTextEntry`, so the
+       * two guards agree, and either alone would be enough.
+       */
+      if (inTableCell) {
+        e.stopPropagation();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       const amount =
