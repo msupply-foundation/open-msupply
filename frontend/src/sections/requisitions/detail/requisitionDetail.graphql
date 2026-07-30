@@ -52,9 +52,22 @@ fragment RequisitionDetailLine on RequisitionLineNode {
   }
   # The customer's population forecast, copied by the transfer (context only —
   # never written from this side; rules › forecast context). Gated client-side
-  # on displayPopulationBasedForecasting + a non-null, non-zero total.
+  # on displayPopulationBasedForecasting + a non-null, non-zero total;
+  # vaccineCourses is the calculation display's per-course JSON (AC-LE13).
   forecastTotalUnits
   forecastTotalDoses
+  vaccineCourses
+  # The customer's volume snapshot on a storage-restricted transferred line
+  # (rules › volume guidance; null on a manual line). availableVolume arrives
+  # net of the requisition's OTHER lines' claims — the editor subtracts this
+  # line's own live share (contract › line editing).
+  availableVolumeAtLocationType {
+    locationType {
+      name
+    }
+    availableVolume
+    itemVolumePerUnit
+  }
   suggestedQuantity
   requestedQuantity
   approvedQuantity

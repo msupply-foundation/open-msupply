@@ -30,6 +30,37 @@ export const RequisitionItemStats = {
   query: "query requisitionItemStats($storeId: String!, $itemId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        unitName\n        defaultPackSize\n        doses\n        isVaccine\n        stats(storeId: $storeId) {\n          availableStockOnHand\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<RequisitionItemStatsResult, RequisitionItemStatsVariables>;
 
+export type ResponseLineStatsVariables = {
+  storeId: string;
+  requisitionLineId: string;
+};
+
+export type ResponseLineStatsResult = {
+  responseRequisitionStats: ({
+  __typename: "ResponseRequisitionStatsNode";
+} & {
+  responseStoreStats: {
+  stockOnHand: number;
+  stockOnOrder: number;
+  incomingStock: number;
+  requestedQuantity: number;
+  otherRequestedQuantity: number;
+};
+  requestStoreStats: {
+  stockOnHand: number;
+  averageMonthlyConsumption: number;
+  maxMonthsOfStock: number;
+  suggestedQuantity: number;
+};
+}) | ({
+  __typename: "RequisitionLineStatsError";
+});
+};
+
+export const ResponseLineStats = {
+  query: "query responseLineStats($storeId: String!, $requisitionLineId: String!) {\n  responseRequisitionStats(\n    storeId: $storeId\n    requisitionLineId: $requisitionLineId\n  ) {\n    __typename\n    ... on ResponseRequisitionStatsNode {\n      responseStoreStats {\n        stockOnHand\n        stockOnOrder\n        incomingStock\n        requestedQuantity\n        otherRequestedQuantity\n      }\n      requestStoreStats {\n        stockOnHand\n        averageMonthlyConsumption\n        maxMonthsOfStock\n        suggestedQuantity\n      }\n    }\n    ... on RequisitionLineStatsError {\n      __typename\n    }\n  }\n}",
+} as TypedDocument<ResponseLineStatsResult, ResponseLineStatsVariables>;
+
 export type InsertRequisitionLineVariables = {
   storeId: string;
   input: {
