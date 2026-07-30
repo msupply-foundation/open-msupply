@@ -19,7 +19,7 @@ const MobileContainer = styled('div')({});
 // mounted at any one time as mounting this in multiple locations would cause
 // some pretty weird behaviour
 export const AppBarContent: FC = () => {
-  const { setAppBarContentRef } = useHostContext();
+  const setAppBarContentRef = useHostContext(s => s.setAppBarContentRef);
   const ref = useRef(null);
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -35,7 +35,7 @@ export const AppBarContent: FC = () => {
 };
 
 export const AppBarContentPortal: FC<BoxProps> = props => {
-  const { appBarContentRef } = useHostContext();
+  const appBarContentRef = useHostContext(s => s.appBarContentRef);
 
   if (!appBarContentRef?.current) return null;
 

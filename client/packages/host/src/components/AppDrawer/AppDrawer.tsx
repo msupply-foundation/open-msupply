@@ -146,7 +146,7 @@ export const AppDrawer: React.FC = () => {
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const drawer = useDrawer();
   const { store } = useAuthContext();
-  const { fullScreen } = useHostContext();
+  const fullScreen = useHostContext(s => s.fullScreen);
   const pluginCategories = usePluginNewCategories();
 
   React.useEffect(() => {

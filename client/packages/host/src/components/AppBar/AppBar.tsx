@@ -35,7 +35,8 @@ export const AppBar: React.FC = () => {
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
   const { store } = useAuthContext();
-  const { fullScreen, setFullScreen } = useHostContext();
+  const fullScreen = useHostContext(s => s.fullScreen);
+  const setFullScreen = useHostContext(s => s.setFullScreen);
   const hasVaccineModule = store?.preferences.vaccineModule ?? false;
   const containerStyle = isDashboard
     ? { borderBottom: 0, minHeight: '10px' }

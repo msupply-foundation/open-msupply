@@ -19,7 +19,7 @@ import { useHost } from '../../api';
 
 export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
-  const { setPageTitle } = useHostContext();
+  const setPageTitle = useHostContext(s => s.setPageTitle);
   const { logout } = useAuthContext();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',

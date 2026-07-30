@@ -24,7 +24,7 @@ export const Breadcrumbs = ({
   topLevelPaths?: string[];
 }) => {
   const t = useTranslation();
-  const { fullScreen } = useHostContext();
+  const fullScreen = useHostContext(s => s.fullScreen);
   const { plugins } = usePluginProvider();
 
   // Plugin category-root pages live at `/<categoryKey>` (no second segment),

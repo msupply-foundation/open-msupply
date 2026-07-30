@@ -21,7 +21,7 @@ import { mapSyncError } from 'packages/system/src';
 
 export const Initialise = () => {
   const t = useTranslation();
-  const { setPageTitle } = useHostContext();
+  const setPageTitle = useHostContext(s => s.setPageTitle);
   const nativeClient = useNativeClient();
   const exportLog = useExportLog();
   const { warning } = useNotification();

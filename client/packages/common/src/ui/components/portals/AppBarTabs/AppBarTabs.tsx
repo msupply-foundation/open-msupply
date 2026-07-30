@@ -10,7 +10,7 @@ const Container = styled('div')({
 });
 
 export const AppBarTabs: FC = () => {
-  const { setAppBarTabsRef } = useHostContext();
+  const setAppBarTabsRef = useHostContext(s => s.setAppBarTabsRef);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export const AppBarTabs: FC = () => {
 };
 
 export const AppBarTabsPortal: FC<BoxProps> = props => {
-  const { appBarTabsRef } = useHostContext();
+  const appBarTabsRef = useHostContext(s => s.appBarTabsRef);
 
   if (!appBarTabsRef?.current) return null;
 

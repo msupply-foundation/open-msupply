@@ -3,7 +3,7 @@ import React, { FC, useEffect, useRef } from 'react';
 import { useHostContext, useIsExtraSmallScreen } from '@common/hooks';
 
 export const AppBarButtons: FC = () => {
-  const { setAppBarButtonsRef } = useHostContext();
+  const setAppBarButtonsRef = useHostContext(s => s.setAppBarButtonsRef);
   const ref = useRef(null);
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -24,7 +24,7 @@ export const AppBarButtons: FC = () => {
 };
 
 export const AppBarButtonsPortal: FC<BoxProps> = props => {
-  const { appBarButtonsRef } = useHostContext();
+  const appBarButtonsRef = useHostContext(s => s.appBarButtonsRef);
 
   if (!appBarButtonsRef?.current) return null;
 

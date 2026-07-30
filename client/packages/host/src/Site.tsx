@@ -82,7 +82,7 @@ const isModifierKey = (e: KeyboardEvent) => {
 export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
-  const { setPageTitle } = useHostContext();
+  const setPageTitle = useHostContext(s => s.setPageTitle);
   const pageTitle = getPageTitle(location.pathname);
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const rootNavigationPath = useRootNavigationPath();
@@ -94,7 +94,15 @@ export const Site: FC = () => {
 
   useEffect(() => {
     setPageTitle(pageTitle);
-  }, [location, pageTitle, setPageTitle]);
+    // Deliberately NOT keyed on `location`: it is a new object on every location
+    // change, including a search-param-only change (sort, filter, pagination,
+    // tab) that cannot alter the title. Re-running then called setPageTitle with
+    // an identical string, and because every `useHostContext()` consumer
+    // subscribes to the whole zustand store, that wrote a fresh state object and
+    // re-rendered the entire app shell a SECOND time before paint. `pageTitle`
+    // is a string, so keying on it runs the effect exactly when the title
+    // really changes.
+  }, [pageTitle, setPageTitle]);
 
   // Listen for modifier keys to show keyboard shortcut hints in the UI
   useEffect(() => {

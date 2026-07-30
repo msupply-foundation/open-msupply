@@ -7,7 +7,8 @@ import { useNotification } from '../useNotification';
 
 export const FullScreenButton = () => {
   const t = useTranslation();
-  const { fullScreen, setFullScreen } = useHostContext();
+  const fullScreen = useHostContext(s => s.fullScreen);
+  const setFullScreen = useHostContext(s => s.setFullScreen);
   const { success } = useNotification();
 
   const exitFullScreen = (e: KeyboardEvent) => {

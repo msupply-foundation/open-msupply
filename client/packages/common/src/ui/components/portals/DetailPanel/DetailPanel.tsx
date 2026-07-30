@@ -55,7 +55,7 @@ const StyledDrawer = styled(Box, {
 }));
 
 export const DetailPanel: FC = () => {
-  const { setDetailPanelRef } = useHostContext();
+  const setDetailPanelRef = useHostContext(s => s.setDetailPanelRef);
   const { isOpen } = useDetailPanelStore();
   const ref = useRef(null);
 
@@ -72,7 +72,7 @@ export const DetailPanelPortal: FC<
   const t = useTranslation();
   const theme = useAppTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.xl));
-  const { detailPanelRef } = useHostContext();
+  const detailPanelRef = useHostContext(s => s.detailPanelRef);
   const { hasUserSet, isOpen, close } = useDetailPanelStore();
 
   const setIsOpen = (isOpen: boolean) =>
