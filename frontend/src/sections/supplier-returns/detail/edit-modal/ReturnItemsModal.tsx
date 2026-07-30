@@ -10,16 +10,17 @@ import {
   DialogSaveButton,
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
+import { EmptyState } from '../../../../ui/elements/feedback/EmptyState';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { FormRow } from '../../../../ui/layout/Form/FormRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
 import { GenerateSupplierReturnLines } from '../supplierReturnDetail.generated';
-import styles from './ReturnItemsModal.module.css';
 import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
@@ -162,12 +163,20 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setLoadingLines(false);
   };
 
+  // The item lookup — live only in add mode, where it is the editor's starting
+  // control (ui/utils/createFocusTarget).
+  const itemSearch = createFocusTarget();
+
+  // Seed on mount: a row open starts on its item; an add open starts in the
+  // empty search state, focusing the item selector.
   onMount(() => {
     if (props.mode === 'update' && props.initialItemId) {
       const item = props.itemById(props.initialItemId);
       if (!item) return props.onClose();
       void seedItem(item);
+      return;
     }
+    itemSearch.focus();
   });
 
   const backToSearch = () => {
@@ -176,6 +185,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setMessage(undefined);
     setZeroConfirmed(false);
     setDraft(reconcile([], { key: 'id' }));
+    itemSearch.focus();
   };
 
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
@@ -283,7 +293,33 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={t('heading.return-items')}
+      // The item lookup IS the dialog's title (the reference line editor's
+      // treatment): live in add mode — ALL available items, not narrowed to the
+      // supplier (SRN-001 .1) — and locked to the row's item in update mode.
+      // The dialog keeps its accessible name through `ariaLabel`.
+      title={
+        <ItemSearch
+          label={t('label.item')}
+          hideLabel
+          storeId={props.storeId}
+          focusTarget={itemSearch}
+          excludeItemIds={props.excludeItemIds()}
+          value={currentItem()?.id}
+          selectedItem={currentItem()}
+          disabled={props.mode !== 'add'}
+          onSelect={item =>
+            item
+              ? void seedItem({
+                  id: item.id,
+                  code: item.code,
+                  name: item.name,
+                })
+              : backToSearch()
+          }
+          placeholder={t('placeholder.enter-an-item-code-or-name')}
+        />
+      }
+      ariaLabel={t('heading.return-items')}
       actionsLead={
         <Show when={message()}>
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
@@ -348,70 +384,74 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         </>
       }
     >
-      {/* Item row under the "Return items" title: the labelled catalogue lookup
-          — live in add mode (ALL available items, not narrowed to the supplier —
-          SRN-001 .1), locked to the row's item in update mode. */}
-      <ItemSearch
-        label={t('label.item')}
-        storeId={props.storeId}
-        excludeItemIds={props.excludeItemIds()}
-        value={currentItem()?.id}
-        selectedItem={currentItem()}
-        disabled={props.mode !== 'add'}
-        onSelect={item =>
-          item
-            ? void seedItem({ id: item.id, code: item.code, name: item.name })
-            : backToSearch()
-        }
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
-      />
+      {/* Before an item is picked (the lookup lives in the dialog title): the
+          shared centred prompt in place of the grid — the reference line
+          editor's treatment. */}
       <Show
         when={!noItemYet()}
         fallback={
-          <Text variant="body" class={styles.hint}>
-            {t('placeholder.enter-an-item-code-or-name')}
-          </Text>
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-return')}
+          />
         }
       >
-        {/* The wizard's step indicator — the shared determinate progress list:
-            reaching the reason step completes "Select quantity" and starts
-            "Select reason" (ui-surface S4 § layout). */}
-        <ProgressList
-          variant="secondary"
-          steps={[
-            {
-              label: t('label.select-quantity'),
-              started: true,
-              finished: step() === 'reason',
-            },
-            {
-              label: t('label.select-reason'),
-              started: step() === 'reason',
-              finished: false,
-            },
-          ]}
-        />
-        {/* Context row: who the goods go back to (read-only) and the return's
-            supplier reference — edited through the shared debounced buffer, the
-            same save path as the detail toolbar. The two-up row stacks
-            intrinsically when the dialog is squeezed. */}
-        <FormRow>
-          <FieldRow label={t('label.return-to')}>
-            <Text variant="body">{props.returnToName}</Text>
-          </FieldRow>
-          <FieldRow label={t('label.supplier-reference')}>
-            <TextField
-              label={t('label.supplier-reference')}
-              hideLabel
-              size="small"
-              value={props.edit.state.theirReference}
-              onInput={e =>
-                props.edit.setField('theirReference', e.currentTarget.value)
-              }
-              onBlur={() => props.edit.flush()}
-            />
-          </FieldRow>
-        </FormRow>
+        {/* The wizard's step indicator — the shared determinate progress list,
+            which the two-step flow maps onto directly: reaching the reason step
+            completes "Select quantity" and starts "Select reason" (ui-surface S4
+            § layout). Capped to a reading measure (the content-measure role):
+            the list divides its width between steps, so left full-bleed in this
+            workbench-width dialog the two markers fly to opposite edges with a
+            metre of connector between them. */}
+        <ContentContainer size="form">
+          <ProgressList
+            variant="secondary"
+            steps={[
+              {
+                label: t('label.select-quantity'),
+                started: true,
+                finished: step() === 'reason',
+              },
+              {
+                label: t('label.select-reason'),
+                started: step() === 'reason',
+                finished: false,
+              },
+            ]}
+          />
+        </ContentContainer>
+        {/* Under the stepper: who the goods go back to and the return's supplier
+            reference — a header FIELD CLUSTER, each field labelled above its
+            control, with the read-only fact as a `field`-variant LabelledValue
+            so it sits flush beside the editable one.
+
+            A generic HStack, NOT the two-up FormRow the page-header cluster
+            (`HeaderToolbar`) uses: that shares the row equally between its
+            fields, which is right for a page header spanning the viewport but
+            stretches a short reference field across a workbench-width dialog.
+            Here the fields size to themselves (the TextField keeps its own
+            `short` cap) and the pair hugs the inline-start, wrapping when the
+            dialog goes full-screen (ui-standards components § layout — dialog
+            context row). The reference edits through the shared debounced
+            buffer, the same save path as the detail toolbar. */}
+        <HStack gap="lg" align="start" wrap>
+          <LabelledValue
+            label={t('label.return-to')}
+            variant="field"
+            size="small"
+          >
+            {props.returnToName}
+          </LabelledValue>
+          <TextField
+            label={t('label.supplier-reference')}
+            size="small"
+            value={props.edit.state.theirReference}
+            onInput={e =>
+              props.edit.setField('theirReference', e.currentTarget.value)
+            }
+            onBlur={() => props.edit.flush()}
+          />
+        </HStack>
         {/* No Add-batch action — supplier-return lines are existing stock lines,
             not invented batches (ui-surface S4). */}
         <Show

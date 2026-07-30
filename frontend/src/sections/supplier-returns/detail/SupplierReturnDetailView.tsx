@@ -18,7 +18,13 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
+import {
+  Tabs,
+  TabList,
+  TabPanel,
+  type TabDef,
+} from '../../../ui/elements/tabs/Tabs';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { InfoIcon, PlusCircleIcon } from '../../../ui/icons';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
@@ -65,7 +71,7 @@ type Line = SupplierReturnLineFragment;
 const SupplierReturnDetailView: Component = () => {
   const params = useParams<{ storeId: string; returnId: string }>();
   const navigate = useNavigate();
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [supplierError, setSupplierError] = createSignal<string | undefined>();
 
   type EditState =
@@ -81,7 +87,12 @@ const SupplierReturnDetailView: Component = () => {
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, id: params.returnId }),
     async variables => {
-      const result = await graphqlFetch(SupplierReturnDetail, variables);
+      const result = await graphqlFetch(SupplierReturnDetail, variables, {
+        mapSuccessToError: d =>
+          d.invoice.__typename === 'NodeError'
+            ? d.invoice.error.description
+            : undefined,
+      });
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
@@ -94,8 +105,7 @@ const SupplierReturnDetailView: Component = () => {
   const hasLines = () => rows().length > 0;
 
   // The store preferences the status controls key off (rules § preference
-  // gates). `.latest` — read at the screen's initial load (no live state yet);
-  // empty = no restriction while loading.
+  // gates).
   const [prefs] = createResource(
     () => params.storeId,
     async storeId => {
@@ -104,7 +114,15 @@ const SupplierReturnDetailView: Component = () => {
       return result.data.preferences;
     }
   );
-  const statusOptions = () => prefs.latest?.invoiceStatusOptions ?? [];
+  // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction): the footer's status controls read the options lazily as they
+  // render, so a still-pending preference must never suspend this screen's
+  // boundary — `.latest` alone would, on its first pending read, tearing down
+  // the open screen. Unresolved = no restriction.
+  const statusOptions = () =>
+    prefs.state === 'ready' || prefs.state === 'refreshing'
+      ? (prefs.latest?.invoiceStatusOptions ?? [])
+      : [];
 
   // --- Return-level saves (updateSupplierReturn, spliced back, no refetch) ---
 
@@ -206,6 +224,14 @@ const SupplierReturnDetailView: Component = () => {
   const openRow = (line: Line) =>
     setEditState({ mode: 'update', itemId: line.item.id });
   const openAdd = () => setEditState({ mode: 'add' });
+
+  // The page-level tab set (ui-surface S3 § tabs) — the strip renders in the
+  // Header, the panels in the body.
+  const tabs = (): TabDef[] => [
+    { value: 'details', label: t('label.details') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
+    { value: 'log', label: t('label.log') },
+  ];
 
   // The item the modal opens on — narrowed off the union ONCE (re-reading the
   // accessor inside the JSX would lose the narrowing and need a cast).
@@ -325,95 +351,102 @@ const SupplierReturnDetailView: Component = () => {
         {node => {
           const disabled = createMemo(() => isReturnDisabled(node()));
           return (
-            <Page
-              fillBody
-              sidePanelOpen={sidePanelOpen()}
-              sidePanelTitle={t('heading.details')}
-              onSidePanelClose={() => setSidePanelOpen(false)}
-              sidePanelContent={
-                <SupplierReturnSidePanel
-                  node={node()}
-                  disabled={disabled()}
-                  edit={edit}
-                  onSetColour={setColour}
-                />
-              }
-              header={
-                <Header>
-                  <Breadcrumb crumbs={crumbs(node())} />
-                  <HeaderButtons>
-                    {/* Add item hides once the return is read-only (D39). */}
-                    <Show when={!disabled()}>
-                      <Button
-                        icon={<PlusCircleIcon />}
-                        data-testid="add-item-button"
-                        onClick={openAdd}
-                      >
-                        {t('button.add-item')}
-                      </Button>
-                    </Show>
-                    <ExportPrintAction returnId={node().id} />
-                    <Show when={!sidePanelOpen()}>
-                      <Button
-                        variant="secondary"
-                        icon={<InfoIcon />}
-                        onClick={() => setSidePanelOpen(true)}
-                      >
-                        {t('button.more')}
-                      </Button>
-                    </Show>
-                  </HeaderButtons>
-                  {/* The header field cluster (ui-standards → HeaderToolbar):
-                      each field labelled above its control, equal shares
-                      wrapping as a unit. There is no standing-context banner —
-                      a supplier return has one forward-only lifecycle. */}
-                  <HeaderToolbar>
-                    <SupplierReturnToolbar
-                      storeId={params.storeId}
-                      node={node()}
-                      disabled={disabled()}
-                      edit={edit}
-                      onChangeSupplier={id => void onChangeSupplier(id)}
-                      supplierError={supplierError()}
-                    />
-                    {/* PROMINENT custom fields — stay in the toolbar even when
-                        read-only, just disabled. They wear their own labels
-                        like the fields above (the cluster's `field` layout). */}
-                    <CustomFieldsToolbar
-                      scope="supplier_return"
-                      recordId={node().id}
-                      values={node().customFields}
-                      disabled={disabled()}
-                      layout="field"
-                      onSave={patch => void saveField({ customFields: patch })}
-                    />
-                  </HeaderToolbar>
-                </Header>
-              }
-              contentFooter={
-                <SupplierReturnStatusFooter
-                  storeId={params.storeId}
-                  node={node()}
-                  disabled={disabled()}
-                  hasLines={hasLines()}
-                  statusOptions={statusOptions()}
-                  onSetHold={setHold}
-                  onAdvanced={onAdvanced}
-                />
-              }
-            >
-              {/* Details | Custom fields | Log (ui-surface S3 § tabs). */}
-              <Tabs defaultValue="details">
-                <TabList
-                  tabs={[
-                    { value: 'details', label: t('label.details') },
-                    {
-                      value: 'custom-fields',
-                      label: t('label.custom-fields'),
-                    },
-                    { value: 'log', label: t('label.log') },
-                  ]}
-                />
+            // The <Tabs> root wraps the whole Page from outside (display:
+            // contents, so it adds no layout box): the TabList lives in the
+            // Header — claiming its bottom edge — and the TabPanels in the
+            // body, both sharing this one tabs context (ui-standards →
+            // page-level tabs).
+            <Tabs defaultValue="details">
+              <Page
+                fillBody
+                sidePanelOpen={sidePanelOpen()}
+                sidePanelTitle={t('heading.details')}
+                onSidePanelClose={() => setSidePanelOpen(false)}
+                sidePanelContent={
+                  <SupplierReturnSidePanel
+                    node={node()}
+                    disabled={disabled()}
+                    edit={edit}
+                    onSetColour={setColour}
+                  />
+                }
+                header={
+                  <Header>
+                    <Breadcrumb crumbs={crumbs(node())} />
+                    <HeaderButtons>
+                      {/* Add item hides once the return is read-only (D39). */}
+                      <Show when={!disabled()}>
+                        <Button
+                          icon={<PlusCircleIcon />}
+                          data-testid="add-item-button"
+                          onClick={openAdd}
+                        >
+                          {t('button.add-item')}
+                        </Button>
+                      </Show>
+                      {/* Primary only while Add item is hidden, so the header
+                          never shows two filled buttons (controls.md — one
+                          primary action per region). */}
+                      <ExportPrintAction
+                        returnId={node().id}
+                        leadingAction={disabled()}
+                      />
+                      <Show when={!sidePanelOpen()}>
+                        <Button
+                          variant="secondary"
+                          icon={<InfoIcon />}
+                          onClick={() => setSidePanelOpen(true)}
+                        >
+                          {t('button.more')}
+                        </Button>
+                      </Show>
+                    </HeaderButtons>
+                    {/* The header field cluster (ui-standards → HeaderToolbar):
+                        each field labelled above its control, equal shares
+                        wrapping as a unit. There is no standing-context banner
+                        — a supplier return has one forward-only lifecycle. */}
+                    <HeaderToolbar>
+                      <SupplierReturnToolbar
+                        storeId={params.storeId}
+                        node={node()}
+                        disabled={disabled()}
+                        edit={edit}
+                        onChangeSupplier={id => void onChangeSupplier(id)}
+                        supplierError={supplierError()}
+                      />
+                      {/* PROMINENT custom fields — stay in the toolbar even
+                          when read-only, just disabled. They wear their own
+                          labels like the fields above (the cluster's `field`
+                          layout). */}
+                      <CustomFieldsToolbar
+                        scope="supplier_return"
+                        recordId={node().id}
+                        values={node().customFields}
+                        disabled={disabled()}
+                        layout="field"
+                        onSave={patch =>
+                          void saveField({ customFields: patch })
+                        }
+                      />
+                    </HeaderToolbar>
+                    {/* Last child of the Header → the tab strip claims its
+                        bottom edge (Header.module.css / Tabs). Details | Custom
+                        fields | Log (ui-surface S3 § tabs). */}
+                    <TabList tabs={tabs()} />
+                  </Header>
+                }
+                contentFooter={
+                  <SupplierReturnStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    disabled={disabled()}
+                    hasLines={hasLines()}
+                    statusOptions={statusOptions()}
+                    onSetHold={setHold}
+                    onAdvanced={onAdvanced}
+                  />
+                }
+              >
                 <TabPanel value="details">
                   <DataTable
                     columns={columns()}
@@ -421,11 +454,11 @@ const SupplierReturnDetailView: Component = () => {
                     rowKey={line => line.id}
                     loading={data.loading}
                     onRowClick={disabled() ? undefined : openRow}
-                    emptyMessage={t('error.no-outbound-items')}
+                    emptyMessage={t('error.no-supplier-return-items')}
                     empty={
                       disabled() ? undefined : (
                         <Button
-                          icon={<PlusCircleIcon />}
+                          variant="ghost"
                           data-testid="nothing-here-create-button"
                           onClick={openAdd}
                         >
@@ -435,6 +468,14 @@ const SupplierReturnDetailView: Component = () => {
                     }
                     config={tableConfig.config()}
                     setConfig={tableConfig.setConfig}
+                    configIsDefault={tableConfig.isConfigDefault()}
+                    // Central-server admins (EDIT_CENTRAL_DATA) can promote
+                    // their layout to the install-wide default.
+                    onSaveGlobalDefault={
+                      tableConfig.canSaveGlobalDefault()
+                        ? tableConfig.saveGlobalTableConfig
+                        : undefined
+                    }
                   />
                 </TabPanel>
                 <TabPanel value="custom-fields">
@@ -449,23 +490,23 @@ const SupplierReturnDetailView: Component = () => {
                 <TabPanel value="log">
                   <LogTab storeId={params.storeId} recordId={node().id} />
                 </TabPanel>
-              </Tabs>
-              <ReturnItemsModal
-                open={editState() != null}
-                onClose={() => setEditState(undefined)}
-                storeId={params.storeId}
-                returnId={node().id}
-                mode={editState()?.mode ?? 'update'}
-                initialItemId={editItemId()}
-                excludeItemIds={existingItemIds}
-                nextItem={nextItem}
-                itemById={itemById}
-                onSaved={onLinesSaved}
-                existingLineIds={existingLineIds}
-                returnToName={node().otherPartyName}
-                edit={edit}
-              />
-            </Page>
+                <ReturnItemsModal
+                  open={editState() != null}
+                  onClose={() => setEditState(undefined)}
+                  storeId={params.storeId}
+                  returnId={node().id}
+                  mode={editState()?.mode ?? 'update'}
+                  initialItemId={editItemId()}
+                  excludeItemIds={existingItemIds}
+                  nextItem={nextItem}
+                  itemById={itemById}
+                  onSaved={onLinesSaved}
+                  existingLineIds={existingLineIds}
+                  returnToName={node().otherPartyName}
+                  edit={edit}
+                />
+              </Page>
+            </Tabs>
           );
         }}
       </Show>

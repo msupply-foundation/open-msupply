@@ -482,7 +482,11 @@ const CustomerReturnDetailView: Component = () => {
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
       header: () => t('label.unit'),
-      ...getCellDefinition('unitName'),
+      // The `unit` preset, not `unitName`: same cell type (short text), but a
+      // width that allows for the "Unit" header — `unitName`'s 2rem is narrower
+      // than the header word itself, so the column collides with Pack size
+      // beside it (LIB-4).
+      ...getCellDefinition('unit'),
     },
     {
       c: { key: 'packSize' },
@@ -572,10 +576,14 @@ const CustomerReturnDetailView: Component = () => {
                         </Button>
                       </Show>
                       {/* Export/Print — the reports vertical's record-screen
-                          selector (reports S4), available at every status;
-                          same self-contained action + tone as the stocktake
-                          detail. */}
-                      <ExportPrintAction returnId={node().id} />
+                          selector (reports S4), available at every status.
+                          Primary only while Add item is hidden, so the header
+                          never shows two filled buttons (controls.md — one
+                          primary action per region). */}
+                      <ExportPrintAction
+                        returnId={node().id}
+                        leadingAction={disabled()}
+                      />
                       {/* More — the closed-panel reopen affordance, at the end
                           of the app-bar page-action cluster (spec ui-standards/
                           layout.md → page regions). Shows ONLY while the panel
