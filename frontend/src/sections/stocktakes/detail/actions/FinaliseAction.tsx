@@ -180,8 +180,8 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
           actions={
             <Switch
               fallback={
-                // confirm / working: Cancel (hidden while working) + the loading
-                // Finalise.
+                // confirm / working: Cancel (hidden while working) + the
+                // loading Finalise.
                 <>
                   <Show when={phase() === 'confirm'}>
                     <CancelButton

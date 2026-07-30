@@ -19,10 +19,10 @@ export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
   /** Render a different element without changing the visual style. */
   as?: string;
   /**
-   * Render in the monospace family (`--font-mono`) — codes, batches, IDs & dense
-   * identifiers (ui-standards › typography). A family swap only: orthogonal to
-   * `variant` (compose with `bodySmall` for the spec's slightly-smaller code)
-   * and sets no colour, so the container still owns it.
+   * Render in the monospace family (`--font-mono`) — codes, batches, IDs &
+   * dense identifiers (ui-standards › typography). A family swap only:
+   * orthogonal to `variant` (compose with `bodySmall` for the spec's
+   * slightly-smaller code) and sets no colour, so the container still owns it.
    */
   mono?: boolean;
 }

@@ -34,8 +34,8 @@ import type { ReturnFieldEdit } from './returnEdit';
 // Additional info (edited-by / colour / comment) and Related documents (the
 // originating outbound shipment, when there is one) are collapsible info
 // sections (open by default); the record actions — Delete (offered only while
-// NEW — rules § deletion, OMS-REG-DIST-07.42) and Copy to clipboard — are pinned at the
-// panel's end, below them.
+// NEW — rules § deletion, OMS-REG-DIST-07.42) and Copy to clipboard — are
+// pinned at the panel's end, below them.
 
 export interface CustomerReturnSidePanelProps {
   node: CustomerReturnInfoFragment;

@@ -22,11 +22,11 @@ export type InvoiceStatus = LedgerRow['invoiceStatus'];
  * are one chip (the reference app groups them under a single "Date/time" filter
  * too).
  *
- * This object is always carried as a SINGLE nested value in the URL state, never
- * spread across its top level: FilterBar expresses a chip removal as the key's
- * absence, so the filter must be replaced wholesale rather than merged, and
- * useUrlQueryState strips top-level nulls when parsing a URL (which would erase
- * an added-but-empty chip on the round trip).
+ * This object is always carried as a SINGLE nested value in the URL state,
+ * never spread across its top level: FilterBar expresses a chip removal as the
+ * key's absence, so the filter must be replaced wholesale rather than merged,
+ * and useUrlQueryState strips top-level nulls when parsing a URL (which would
+ * erase an added-but-empty chip on the round trip).
  */
 export type LedgerFilter = {
   invoiceType?: InvoiceType | null;

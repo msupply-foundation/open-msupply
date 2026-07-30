@@ -33,7 +33,8 @@ import {
 //    with the identifier in `extensions.details` — caught via
 //    returnGraphqlErrors and read from `rejectionDetail`.
 // Both map through `stockErrorMessage` to the initiating surface's banner; no
-// stock action outcome is ever a toast (spec AC-B1, controls › action feedback).
+// stock action outcome is ever a toast (spec AC-B1, controls › action
+// feedback).
 
 // A mutation outcome the caller renders: ok (proceed / close), error (show the
 // message in the modal, keep it open + input preserved), or undefined =
@@ -211,8 +212,8 @@ export const runInsertRepack = async (
   };
 };
 
-// Record a VVM status change (spec/stock S6). No typed error union — a rejection
-// is a plain GraphQL error.
+// Record a VVM status change (spec/stock S6). No typed error union — a
+// rejection is a plain GraphQL error.
 export const runInsertVvmStatusLog = async (
   storeId: string,
   input: InsertVvmStatusLogVariables['input']

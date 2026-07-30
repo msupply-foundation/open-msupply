@@ -39,7 +39,10 @@ export const lensToUnits = (
   return value;
 };
 
-/** Units re-expressed in a lens — the display face of lensToUnits (rounded, as above). */
+/**
+ * Units re-expressed in a lens — the display face of lensToUnits (rounded, as
+ * above).
+ */
 export const unitsToLens = (units: number, lens: AllocateUnit): number => {
   if (lens.kind === 'packs') return round9(units / lens.size);
   if (lens.kind === 'doses') return round9(units * (lens.dosesPerUnit || 1));

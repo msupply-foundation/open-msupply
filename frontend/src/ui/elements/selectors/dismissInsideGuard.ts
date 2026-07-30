@@ -1,12 +1,14 @@
-// Kobalte's DismissableLayer (Select/Combobox Content) fires `onInteractOutside`
-// for an interaction it judges to be outside the popup — on a pointerdown, but
-// ALSO on a focus change. When the popup is portal-mounted INTO a native
-// <dialog> (so it isn't inert / behind the top layer — see utils/portalMount),
-// clicking an option is mis-reported as outside via that FOCUS path:
+// Kobalte's DismissableLayer (Select/Combobox Content) fires
+// `onInteractOutside` for an interaction it judges to be outside the popup —
+// on a pointerdown, but ALSO on a focus change. When the popup is
+// portal-mounted INTO a native <dialog> (so it isn't inert / behind the top
+// layer — see utils/portalMount), clicking an option is mis-reported as
+// outside via that FOCUS path:
 //
-//   pointerdown on the <li> option  → target is inside the content → NOT outside
-//   → but the option isn't focusable, so focus bounces off the input up to the
-//     <dialog>, and Kobalte reports focusout/focusin with target = the DIALOG
+//   pointerdown on the <li> option → target is inside content → NOT outside
+//   → but the option isn't focusable, so focus bounces off the input up to
+//     the <dialog>, and Kobalte reports focusout/focusin with target = the
+//     DIALOG
 //   → that dialog is an ANCESTOR of the content, so it reads as "outside" and
 //     dismisses the listbox between mousedown and pointerup — the click never
 //     lands on the option and selection silently fails (keyboard still works;

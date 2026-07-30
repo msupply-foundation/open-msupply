@@ -35,7 +35,9 @@ export interface ItemVariantCardProps {
   variant: ItemVariantRow;
   isVaccine: boolean;
   onEdit: () => void;
-  /** A change landed (delete / bundle add / bundle delete) — refetch the list. */
+  /**
+   * A change landed (delete / bundle add / bundle delete) — refetch the list.
+   */
   onChanged: () => void;
 }
 
