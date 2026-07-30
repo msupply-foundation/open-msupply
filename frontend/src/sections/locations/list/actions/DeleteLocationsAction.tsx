@@ -1,11 +1,12 @@
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import type { Component } from 'solid-js';
-import { t, tPlural } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { t, tPlural } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '@/ui/icons';
 import { DeleteLocation } from '../locations.generated';
 import {
   deleteOutcome,
@@ -59,8 +60,10 @@ export const DeleteLocationsAction: Component<
   const [open, setOpen] = createSignal(false);
   return (
     <>
+      {/* A destructive action carries the danger tone wherever it is offered
+          (ui-standards/controls.md; Carl 2026-07-29: every delete is danger). */}
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
@@ -184,6 +187,9 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
           </Match>
         </Switch>
       }
+      // Icon-less footer buttons, the destructive confirm in the danger tone
+      // (ui-standards/controls.md § footer button identity, D55 — "OK" is
+      // permitted for a genuine are-you-sure).
       actions={
         <Show
           when={report()}
@@ -192,17 +198,10 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
             // Delete (OMS-REG-INV-01.34 — nothing is deleted until confirmed).
             <>
               <Show when={phase().kind === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 data-testid="confirmation-modal-ok"
                 loading={phase().kind === 'deleting'}
                 onClick={() => void run()}
@@ -212,11 +211,8 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
-            onClick={dismissReport}
-          >
+          {/* The report must be acknowledged: Close is the only way out. */}
+          <Button variant="secondary" onClick={dismissReport}>
             {t('button.close')}
           </Button>
         </Show>

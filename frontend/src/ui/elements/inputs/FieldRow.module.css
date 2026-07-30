@@ -26,7 +26,10 @@
 .label {
   color: var(--text-body);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
+  /* The shared field-label weight, so an inline `label: control` row reads the
+     same as a label-above field (Carl 2026-07-30). Size/colour stay local —
+     this pattern sets its own (see DESIGN_STANDARDS § label sizing). */
+  font-weight: var(--field-label-font-weight);
 }
 
 /* Required marker — the same asterisk the label-above fields put on their

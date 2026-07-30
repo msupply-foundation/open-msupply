@@ -23,7 +23,7 @@ query storeFacility($storeId: String!, $nameId: String!) {
 # NameNode itself; the typed error's only reachable member is RecordNotFound. A
 # permission failure never reaches this union — it arrives as a top-level
 # Forbidden GraphQL error, which the caller opts into reading
-# (returnGraphqlErrors) so the editor can keep the draft (D71).
+# (returnGraphqlErrors) so the editor can keep the draft (D79).
 mutation updateNameProperties(
   $storeId: String!
   $id: String!

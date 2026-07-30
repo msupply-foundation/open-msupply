@@ -22,6 +22,12 @@ query storeContext($storeId: String!) {
     # prescribed-quantity field/column. A legacy store preference, not a
     # PreferencesNode field.
     editPrescribedQuantityOnPrescription
+    # The plugin slot context's store-preference gate (spec/plugins/sdk-contract
+    # § contributions): the customer-statistics preference a contribution's
+    # `when` may gate on. Read globally here — a contribution is gated at every
+    # slot, not per screen, so it cannot ride the internal-order detail's own
+    # context query.
+    useConsumptionAndStockFromCustomersForInternalOrders
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
@@ -71,6 +77,15 @@ query storeContext($storeId: String!) {
     numberOfMonthsThresholdToShowOverStockAlertsForProducts
     firstThresholdForExpiringItems
     secondThresholdForExpiringItems
+    # Internal-orders create gate (spec/internal-orders AC-C1/C5), read by the
+    # dashboard's Order-more shortcut so it runs the same recent-stocktake
+    # warning as the list's New-order button (which fetches it in its own
+    # list context).
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
   }
   me {
     ... on UserNode {

@@ -1,0 +1,64 @@
+# The plugin-data store (spec/plugins/contract.md § plugin data): records owned
+# by one plugin's code, named by a plugin-chosen identifier, optionally scoped
+# to a store. `data` is a String the plugin encodes as it likes (JSON by
+# convention) — the SDK passes it through untouched.
+
+fragment pluginDataRow on PluginDataNode {
+  id
+  dataIdentifier
+  relatedRecordId
+  storeId
+  data
+  datetime
+}
+
+query pluginDataList(
+  $storeId: String!
+  $pluginCode: String!
+  $filter: PluginDataFilterInput
+  $sort: [PluginDataSortInput!]
+  $page: PaginationInput
+) {
+  pluginData(
+    storeId: $storeId
+    pluginCode: $pluginCode
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on PluginDataConnector {
+      __typename
+      totalCount
+      nodes {
+        ...pluginDataRow
+      }
+    }
+  }
+}
+
+mutation pluginDataInsert($storeId: String!, $input: InsertPluginDataInput!) {
+  insertPluginData(storeId: $storeId, input: $input) {
+    ... on PluginDataNode {
+      __typename
+      ...pluginDataRow
+    }
+  }
+}
+
+mutation pluginDataUpdate($storeId: String!, $input: UpdatePluginDataInput!) {
+  updatePluginData(storeId: $storeId, input: $input) {
+    ... on PluginDataNode {
+      __typename
+      ...pluginDataRow
+    }
+  }
+}
+
+mutation pluginDataDelete($storeId: String!, $id: String!) {
+  deletePluginData(storeId: $storeId, id: $id) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}

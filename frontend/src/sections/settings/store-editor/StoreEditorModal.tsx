@@ -49,7 +49,7 @@ import {
  * every time — a partial save silently erases what it omits (contract § The
  * store editor). A failed save surfaces inline and keeps the editor open with
  * the draft intact, and Save is disabled while the session can edit nothing
- * (D71).
+ * (D79).
  *
  * The Preferences tab is a known gap (spec/settings README § Status): the tab
  * group renders Properties alone until that capture pass lands.
@@ -144,7 +144,7 @@ export const StoreEditorModal = (props: {
     setSaveFailed(false);
     // Local error handling (returnGraphqlErrors): a Forbidden or any other
     // failure keeps the editor open with the draft intact and its own inline
-    // message, rather than the global surfaces closing over it (D71).
+    // message, rather than the global surfaces closing over it (D79).
     const result = await graphqlFetch(
       UpdateNameProperties,
       {
@@ -190,7 +190,7 @@ export const StoreEditorModal = (props: {
           <DialogSaveButton
             loading={saving()}
             // Nothing editable → a Save that could only no-op or fail
-            // (ui-standards › blocked affordances, D71).
+            // (ui-standards › blocked affordances, D79).
             disabled={!canEdit()}
             onClick={() => void save()}
             data-testid="dialog-button-save"

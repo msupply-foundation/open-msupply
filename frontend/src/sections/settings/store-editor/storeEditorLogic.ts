@@ -101,7 +101,7 @@ export const isDefinitionEditable = (
   session.canMutate && (session.isCentralServer || definition.remoteEditable);
 
 /*
- * Whether the session can edit ANYTHING in the editor — the Save gate (D71:
+ * Whether the session can edit ANYTHING in the editor — the Save gate (D79:
  * a Save that can only no-op or fail is a blocked affordance). Latitude and
  * longitude count: they are property values too, so an otherwise read-only
  * session that can still stage a live location has something to save. With no
