@@ -1047,6 +1047,8 @@ const OutboundDetailView: Component = () => {
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
                 customerIsStore={current().otherParty.store != null}
+                currencyCode={current().currency?.code}
+                currencyRate={current().currencyRate}
                 initialItem={editState()?.item}
                 initialLineId={editState()?.lineId}
                 nextItem={nextItem}

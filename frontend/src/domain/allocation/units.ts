@@ -50,6 +50,31 @@ export const unitsToLens = (units: number, lens: AllocateUnit): number => {
 };
 
 /**
+ * Per-batch doses ⇄ packs conversion (old-app parity — QuantityUtils):
+ * doses = packs × pack size × doses-per-unit. Unlike the lens conversions
+ * above (one item-level lens for the whole grid), these take a SINGLE batch's
+ * own `packSize`/`dosesPerUnit` — a variant may override the item's, so the
+ * batch grid converts row by row. A zero/missing rate falls back to 1, as the
+ * lens conversions do (the old app's `dosesPerUnit || 1`).
+ *
+ * `packsToDoses` rounds to whole doses — doses are shown and entered as whole
+ * numbers. `dosesToPacks` returns the raw (possibly fractional) pack count for
+ * `clampManualPacks` to round UP and clamp, so a doses entry that isn't a
+ * whole number of packs is reported back as an adjustment (AC-AL13).
+ */
+export const packsToDoses = (
+  packs: number,
+  packSize: number,
+  dosesPerUnit: number
+): number => Math.round(packs * packSize * (dosesPerUnit || 1));
+
+export const dosesToPacks = (
+  doses: number,
+  packSize: number,
+  dosesPerUnit: number
+): number => doses / (packSize * (dosesPerUnit || 1));
+
+/**
  * Clamp a manual per-batch packs entry (rules.md § whole-pack arithmetic,
  * AC-AL6): never negative or non-finite. Whole-pack consumers round a
  * fractional entry UP to whole packs, and an entry beyond availability

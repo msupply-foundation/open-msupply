@@ -23,6 +23,8 @@ export {
   clampManualPacks,
   lensToUnits,
   unitsToLens,
+  packsToDoses,
+  dosesToPacks,
   round9,
   availableUnits,
   issuedUnits,
