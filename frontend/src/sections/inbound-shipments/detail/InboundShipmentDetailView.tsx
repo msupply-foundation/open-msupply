@@ -682,7 +682,7 @@ const InboundShipmentDetailView: Component = () => {
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
-        header: () => t('label.pack-size'),
+        header: () => t('label.received-pack-size'),
         ...getCellDefinition('packSize'),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
@@ -704,7 +704,7 @@ const InboundShipmentDetailView: Component = () => {
         : []),
       {
         c: { key: 'numberOfPacks' },
-        header: () => t('label.pack-quantity'),
+        header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
       // Difference (H6) — supplier-shipped packs minus received packs; blank
