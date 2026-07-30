@@ -176,6 +176,13 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
 
+  /* --- Layout widths -------------------------------------------------- */
+  /* The docked details side panel. Single source of truth: SidePanel's own
+     `.panel` and the Page frame's `.panelSlot` both size from this, so the
+     panel and the slot it slides into can never drift out of sync (they did,
+     which clipped the panel's inline-end). */
+  --side-panel-width: 24rem;
+
   /* --- Radius --------------------------------------------------------- */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
