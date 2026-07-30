@@ -295,6 +295,7 @@ const CustomerReturnsList: Component = () => {
             >
               <ColourTagPicker
                 colour={row.colour ?? null}
+                variant="row"
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
@@ -478,7 +479,12 @@ const CustomerReturnsList: Component = () => {
         description={t('messages.manual-returns-preferences-disabled')}
         // The standard, icon-less dialog acknowledgement (D55) — this notice
         // confirms nothing and saves nothing, so OK is the right label.
-        actions={<OkButton onClick={() => setDisabledNoticeOpen(false)} />}
+        actions={
+          <OkButton
+            data-testid="dialog-button-ok"
+            onClick={() => setDisabledNoticeOpen(false)}
+          />
+        }
       />
     </Page>
   );

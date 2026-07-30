@@ -239,7 +239,12 @@ export const CustomerReturnSidePanel: Component<
           title={t('error.something-wrong')}
           description={deleteError()}
           // The standard, icon-less acknowledgement (D55).
-          actions={<OkButton onClick={() => setDeleteError(undefined)} />}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setDeleteError(undefined)}
+            />
+          }
         />
       </Show>
     </>

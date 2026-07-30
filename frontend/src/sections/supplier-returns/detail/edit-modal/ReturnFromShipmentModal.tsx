@@ -11,9 +11,9 @@ import {
   DialogSaveButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { FormRow } from '../../../../ui/layout/Form/FormRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
@@ -262,39 +262,46 @@ const Body = (props: BodyProps): JSX.Element => {
     >
       {/* The wizard's step indicator — the shared determinate progress list;
           reaching the reason step completes "Select quantity" (ui-surface S4
-          § layout). */}
-      <ProgressList
-        variant="secondary"
-        steps={[
-          {
-            label: t('label.select-quantity'),
-            started: true,
-            finished: step() === 'reason',
-          },
-          {
-            label: t('label.select-reason'),
-            started: step() === 'reason',
-            finished: false,
-          },
-        ]}
-      />
-      {/* Context row: who the goods go back to (read-only) and the return's
-          supplier reference, pre-filled. The two-up row stacks intrinsically
-          when the dialog is squeezed — the same shape as ReturnItemsModal. */}
-      <FormRow>
-        <FieldRow label={t('label.return-to')}>
-          <Text variant="body">{props.supplierName}</Text>
-        </FieldRow>
-        <FieldRow label={t('label.supplier-reference')}>
-          <TextField
-            label={t('label.supplier-reference')}
-            hideLabel
-            size="small"
-            value={reference()}
-            onInput={e => setReference(e.currentTarget.value)}
-          />
-        </FieldRow>
-      </FormRow>
+          § layout). Capped to a reading measure, as in the per-item modal: the
+          list divides its width between steps, so full-bleed in a
+          workbench-width dialog the markers fly to opposite edges. */}
+      <ContentContainer size="form">
+        <ProgressList
+          variant="secondary"
+          steps={[
+            {
+              label: t('label.select-quantity'),
+              started: true,
+              finished: step() === 'reason',
+            },
+            {
+              label: t('label.select-reason'),
+              started: step() === 'reason',
+              finished: false,
+            },
+          ]}
+        />
+      </ContentContainer>
+      {/* Context row: who the goods go back to and the return's supplier
+          reference, pre-filled "From inbound shipment #N" (rules § creation — a
+          UI default). The per-item modal's field cluster, same shape: label
+          above control, each field sized to itself, hugging the inline-start and
+          wrapping when the dialog goes full-screen. */}
+      <HStack gap="lg" align="start" wrap>
+        <LabelledValue
+          label={t('label.return-to')}
+          variant="field"
+          size="small"
+        >
+          {props.supplierName}
+        </LabelledValue>
+        <TextField
+          label={t('label.supplier-reference')}
+          size="small"
+          value={reference()}
+          onInput={e => setReference(e.currentTarget.value)}
+        />
+      </HStack>
       <Show
         when={step() === 'reason'}
         fallback={

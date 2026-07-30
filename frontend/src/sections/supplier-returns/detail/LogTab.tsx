@@ -1,7 +1,6 @@
 import { createResource, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
@@ -73,14 +72,18 @@ export const LogTab: Component<{
     return [...nodes].sort((a, b) => (a.datetime < b.datetime ? 1 : -1));
   };
 
+  // Date / time / user take their cell-type presets (rendering AND width —
+  // docs/CELL_TYPES.md): the accessors hand over the raw instant and the
+  // presets localise it, so the columns hold the value rather than a
+  // pre-formatted string.
   const columns = (): Column<LogRow, never>[] => [
     {
-      c: { accessor: row => localisedDate(row.datetime), id: 'date' },
+      c: { accessor: row => row.datetime, id: 'date' },
       header: () => t('label.date'),
       ...getCellDefinition('date'),
     },
     {
-      c: { accessor: row => localisedTime(row.datetime), id: 'time' },
+      c: { accessor: row => row.datetime, id: 'time' },
       header: () => t('label.time'),
       ...getCellDefinition('time'),
     },
@@ -90,11 +93,12 @@ export const LogTab: Component<{
       ...getCellDefinition('user'),
     },
     {
+      // No CELL_DEF key for an event description — the explicit text helper
+      // plus a call-site width, wrapping to two lines.
       c: { accessor: eventLabel, id: 'event' },
       header: () => t('label.event'),
-      // No CELL_DEF key — the event phrase is the row's widest text.
       ...getTextCell({ wrapLines: 2 }),
-      size: remToPx(12),
+      size: remToPx(18.75),
     },
   ];
 
@@ -107,6 +111,14 @@ export const LogTab: Component<{
       emptyMessage={t('messages.no-log-entries')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
+      // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+      // the install-wide default.
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
     />
   );
 };

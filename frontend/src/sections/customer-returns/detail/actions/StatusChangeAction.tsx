@@ -215,7 +215,12 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         icon={<InfoIcon />}
         title={t('heading.cannot-do-that')}
         description={t('messages.no-lines')}
-        actions={<OkButton onClick={() => setNoLinesBlocked(false)} />}
+        actions={
+          <OkButton
+            data-testid="dialog-button-ok"
+            onClick={() => setNoLinesBlocked(false)}
+          />
+        }
       />
     </>
   );
