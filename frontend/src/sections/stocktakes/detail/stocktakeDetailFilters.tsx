@@ -77,11 +77,11 @@ export const stocktakeDetailFilters = (
     // ─ dismissed (not addable chips) ─────────────────────────────────────────
     // TODO: batch filter. The old client filter offered it, but
     // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
-    // TODO: expiry-before filter. No expiry field on the server filter — needs a
-    // backend addition.
-    // TODO: "show error lines" filter. The error dialog used to switch a
-    // client-only id set; server-side this would be `id.equalAny` (or
-    // stockLineId) with the failed ids. Errors still flag inline on the row.
+    // TODO: expiry-before filter. No expiry field on the server filter — needs
+    // a backend addition. TODO: "show error lines" filter. The error dialog
+    // used to switch a client-only id set; server-side this would be
+    // `id.equalAny` (or stockLineId) with the failed ids. Errors still flag
+    // inline on the row.
     id: null,
     stocktakeId: null,
     itemId: null,

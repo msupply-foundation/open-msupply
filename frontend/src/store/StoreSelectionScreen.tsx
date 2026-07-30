@@ -6,10 +6,11 @@ import styles from '../ui/styles/shared.module.css';
 // Spec (startup S3, [D14]): the store-selection screen — a routed page at
 // /resolve-store, not an in-place modal. Reached by the guard pipeline
 // whenever the URL does not resolve a store, and by the bottom-bar store
-// selector to switch store (OMS-REG-LGN-02.11). The page frame is the "screen"; its
-// content is the shared StoreSelector panel (search + list with Default /
-// Last-used chips + Continue). The caller has already ordered the previously
-// logged-in and default stores to the top and names them so the chips show.
+// selector to switch store (OMS-REG-LGN-02.11). The page frame is the
+// "screen"; its content is the shared StoreSelector panel (search + list with
+// Default / Last-used chips + Continue). The caller has already ordered the
+// previously logged-in and default stores to the top and names them so the
+// chips show.
 export const StoreSelectionScreen: Component<{
   stores: StoreSummary[];
   defaultStoreId?: string;

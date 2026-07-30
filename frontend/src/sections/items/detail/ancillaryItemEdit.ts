@@ -6,7 +6,8 @@ import type {
 
 // Pure logic for the ancillary-item edit modal (spec/items S5, rules.md §
 // ancillary supplies). Colocated + pure so the ratio/validity/error-mapping
-// rules are unit-tested without the screen — mirrors locations' locationEdit.ts.
+// rules are unit-tested without the screen — mirrors locations'
+// locationEdit.ts.
 
 export type DraftAncillaryItem = {
   ancillaryItemId: string | null;
@@ -57,11 +58,12 @@ export type SaveRejection =
   | { kind: 'maxDepth'; max: number; actual: number }
   | { kind: 'other'; description: string };
 
-// The three typed rejections get the case's own copy (error.duplicate-ancillary-item
-// / .ancillary-cycle-detected / .ancillary-max-depth-exceeded); everything else
-// (DatabaseError/InternalError) shows the server's own description untranslated —
-// confirmed against the real app's useUpsertAncillaryItem.ts translateError,
-// which does exactly this (no generic "failed to save" key exists or is needed).
+// The three typed rejections get the case's own copy
+// (error.duplicate-ancillary-item / .ancillary-cycle-detected /
+// .ancillary-max-depth-exceeded); everything else (DatabaseError/InternalError)
+// shows the server's own description untranslated — confirmed against the real
+// app's useUpsertAncillaryItem.ts translateError, which does exactly this (no
+// generic "failed to save" key exists or is needed).
 export const saveRejection = (error: UpsertError): SaveRejection => {
   switch (error.__typename) {
     case 'DuplicateAncillaryItem':

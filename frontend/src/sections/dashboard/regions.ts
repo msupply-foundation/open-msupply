@@ -84,7 +84,9 @@ export const DASHBOARD_IDS = {
 // ── Region model ─────────────────────────────────────────────────────────────
 
 export type AnchorPosition = 'before' | 'after';
-/** A contribution's placement request: before/after a built-in's published id. */
+/**
+ * A contribution's placement request: before/after a built-in's published id.
+ */
 export interface RegionAnchor {
   position: AnchorPosition;
   id: string;
@@ -92,10 +94,11 @@ export interface RegionAnchor {
 
 /**
  * A built-in piece as `mergeRegion` sees it — just its id and whether a
- * preference gate currently hides it. A hidden built-in is NOT rendered, but its
- * id still *exists* as an anchor target (ui-surface § published ids: "a
+ * preference gate currently hides it. A hidden built-in is NOT rendered, but
+ * its id still *exists* as an anchor target (ui-surface § published ids: "a
  * preference-gated built-in that its gate hides is simply absent; its id still
- * exists"). Rendering is the page's; the merge only needs identity + visibility.
+ * exists"). Rendering is the page's; the merge only needs identity +
+ * visibility.
  */
 export interface RegionBuiltIn {
   id: string;
@@ -119,7 +122,10 @@ export type MergedEntry =
   | { kind: 'builtin'; id: string }
   | { kind: 'plugin'; id: string; Component: Component };
 
-/** A recorded degradation — surfaced, never silent (ui-surface § region semantics). */
+/**
+ * A recorded degradation — surfaced, never silent (ui-surface § region
+ * semantics).
+ */
 export interface RegionDiagnostic {
   contributionId: string;
   message: string;
@@ -135,16 +141,18 @@ export interface MergedRegion {
  * Merge plugin contributions into a region's built-ins (OMS-REG-DB-02.2–.8).
  *
  * Order (deterministic, identical across reloads, independent of plugin load
- * order — OMS-REG-DB-02.2–.5): anchor position (before/after a published id, else container
- * end) first, then contribution `order`, then contribution `id`. A contribution
- * whose anchor id does not resolve to a *rendered* built-in (missing, or hidden
- * by its gate, or itself suppressed) falls to the container end and the
- * degradation is recorded in `diagnostics` — never silent.
+ * order — OMS-REG-DB-02.2–.5): anchor position (before/after a published id,
+ * else container end) first, then contribution `order`, then contribution
+ * `id`. A contribution whose anchor id does not resolve to a *rendered*
+ * built-in (missing, or hidden by its gate, or itself suppressed) falls to the
+ * container end and the degradation is recorded in `diagnostics` — never
+ * silent.
  *
- * Suppression (OMS-REG-DB-02.6–.8): a built-in in `suppressed` is removed (the page, whose
- * built-ins nest, drops the whole subtree when it suppresses a widget or panel).
- * Suppression removes only built-ins; a plugin cannot suppress another plugin's
- * contribution, so `contributions` is never filtered by `suppressed`.
+ * Suppression (OMS-REG-DB-02.6–.8): a built-in in `suppressed` is removed (the
+ * page, whose built-ins nest, drops the whole subtree when it suppresses a
+ * widget or panel). Suppression removes only built-ins; a plugin cannot
+ * suppress another plugin's contribution, so `contributions` is never filtered
+ * by `suppressed`.
  */
 export const mergeRegion = (
   builtIns: readonly RegionBuiltIn[],
@@ -184,7 +192,9 @@ export const mergeRegion = (
   };
 };
 
-/** Every published id, flattened — the id-stability surface (ui-surface § S3). */
+/**
+ * Every published id, flattened — the id-stability surface (ui-surface § S3).
+ */
 export const publishedIds = (): string[] => {
   const ids: string[] = [];
   for (const widget of Object.values(DASHBOARD_IDS)) {

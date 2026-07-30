@@ -65,9 +65,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const nextTarget = () => targets()[0];
 
   const openConfirm = (status: string) => {
-    // No lines / on hold: explain rather than dead-end (OMS-REG-DIST-07.38 / .7's UI
-    // surface — the same rejections are server-enforced and asserted by the
-    // ACs).
+    // No lines / on hold: explain rather than dead-end (OMS-REG-DIST-07.38 /
+    // .7's UI surface — the same rejections are server-enforced and asserted by
+    // the ACs).
     if (!props.hasLines) {
       setBlockedMessage(t('messages.no-lines'));
       return;

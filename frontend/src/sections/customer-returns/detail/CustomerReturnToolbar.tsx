@@ -22,9 +22,13 @@ export interface CustomerReturnToolbarProps {
   storeId: string;
   node: CustomerReturnInfoFragment;
   disabled: boolean;
-  /** The shared return edit buffer — this toolbar reads/writes theirReference. */
+  /**
+   * The shared return edit buffer — this toolbar reads/writes theirReference.
+   */
   edit: ReturnFieldEdit;
-  /** A customer change: re-checked server-side; typed errors come back inline. */
+  /**
+   * A customer change: re-checked server-side; typed errors come back inline.
+   */
   onChangeCustomer: (customerId: string) => void;
   /** The last customer-change rejection, shown on the lookup. */
   customerError?: string;
