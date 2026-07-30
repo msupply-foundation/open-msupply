@@ -259,3 +259,29 @@ mutation addRequisitionFromMasterList(
     }
   }
 }
+
+# Auto-populating supply quantities (rules § auto-populating; OMS-REG-DIST-05
+# .9/.30/.31): one call fills every line's supply quantity — the requested
+# quantity, or the APPROVED quantity when the requisition carries an approval
+# status (the server picks; the client only mirrors the choice in its labels).
+# Success returns the full line set (the client refetches regardless). Typed
+# rejections: CannotEditRequisition (Finalised / disabled store / approval
+# block, undistinguished on the wire) and RecordNotFound.
+mutation supplyRequestedQuantity(
+  $storeId: String!
+  $input: SupplyRequestedQuantityInput!
+) {
+  supplyRequestedQuantity(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on SupplyRequestedQuantityError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

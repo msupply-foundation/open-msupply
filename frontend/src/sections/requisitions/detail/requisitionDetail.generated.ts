@@ -227,3 +227,29 @@ export type AddRequisitionFromMasterListResult = {
 export const AddRequisitionFromMasterList = {
   query: "mutation addRequisitionFromMasterList($storeId: String!, $input: ResponseAddFromMasterListInput!) {\n  responseAddFromMasterList(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineConnector {\n      __typename\n      totalCount\n    }\n    ... on ResponseAddFromMasterListError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<AddRequisitionFromMasterListResult, AddRequisitionFromMasterListVariables>;
+
+export type SupplyRequestedQuantityVariables = {
+  storeId: string;
+  input: {
+    responseRequisitionId: string;
+  };
+};
+
+export type SupplyRequestedQuantityResult = {
+  supplyRequestedQuantity: ({
+  __typename: "RequisitionLineConnector";
+} & {
+  totalCount: number;
+}) | ({
+  __typename: "SupplyRequestedQuantityError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const SupplyRequestedQuantity = {
+  query: "mutation supplyRequestedQuantity($storeId: String!, $input: SupplyRequestedQuantityInput!) {\n  supplyRequestedQuantity(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineConnector {\n      __typename\n      totalCount\n    }\n    ... on SupplyRequestedQuantityError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<SupplyRequestedQuantityResult, SupplyRequestedQuantityVariables>;
