@@ -130,7 +130,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   const [saving, setSaving] = createSignal(false);
   const [loadingLines, setLoadingLines] = createSignal(true);
   const [message, setMessage] = createSignal<
-    { severity: 'error' | 'warning'; text: string } | undefined
+    | {
+        severity: 'error' | 'warning';
+        text: string;
+        /** Test hook: which block this is (e2e/TESTIDS.md). */
+        kind: 'pack-size' | 'zero-quantity' | 'save-error';
+      }
+    | undefined
   >();
   // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.28): proceeding at
   // zero quantity warns once; the next OK applies the removal.
@@ -276,6 +282,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (validateStep1(drafts) === 'invalid-pack-size') {
       setMessage({
         severity: 'error',
+        kind: 'pack-size',
         text: t('messages.alert-invalid-pack-size'),
       });
       return false;
@@ -285,6 +292,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (!returning && !removing) {
       setMessage({
         severity: 'error',
+        kind: 'zero-quantity',
         text: t('messages.alert-zero-return-quantity'),
       });
       return false;
@@ -292,6 +300,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (removing && !zeroConfirmed()) {
       setMessage({
         severity: 'warning',
+        kind: 'zero-quantity',
         text: t('messages.zero-return-quantity-will-delete-lines'),
       });
       setZeroConfirmed(true);
@@ -336,7 +345,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (result.kind === 'error') {
       // Every rejection is non-typed (contract wire trap) — show the server's
       // message in the modal.
-      setMessage({ severity: 'error', text: result.message });
+      setMessage({ severity: 'error', kind: 'save-error', text: result.message });
       return false;
     }
     // The parent refetches the line table's current page; the mutation's own
@@ -435,7 +444,16 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       }
       actionsLead={
         <Show when={message()}>
-          {m => <Alert severity={m().severity}>{m().text}</Alert>}
+          {m => (
+            <Alert
+              severity={m().severity}
+              testId={
+                m().kind === 'save-error' ? 'save-error-alert' : `${m().kind}-alert`
+              }
+            >
+              {m().text}
+            </Alert>
+          )}
         </Show>
       }
       // The footer (ui-surface S4 § layout): Cancel (step 1) / Back (step 2) ·

@@ -1,0 +1,16 @@
+/*
+ * Claim the full width of the shared Toolbar row (a wrapping flex row) for the
+ * toolbar's layout, so its two FormColumns and the notices stack on their own
+ * lines rather than flowing inline — the same `flex-basis: 100%` mechanism the
+ * internal-order toolbar uses. Everything inside is composed from the common
+ * layout primitives (FormColumns / FormColumn / FormRow / Stack / FieldRow);
+ * this rule owns nothing but the row claim + the vertical gap between the
+ * columns and the notices.
+ */
+.layout {
+  flex-basis: 100%;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

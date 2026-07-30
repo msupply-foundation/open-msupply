@@ -626,7 +626,11 @@ const CustomerReturnDetailView: Component = () => {
                         waits until it is received (OMS-REG-DIST-07.43). */}
                     <HeaderToolbar
                       alert={
-                        <Alert severity="info" compact>
+                        <Alert
+                          severity="info"
+                          compact
+                          testId="return-kind-banner"
+                        >
                           <Show
                             when={returnKind(node()) === 'transfer'}
                             fallback={t('info.manual-return')}

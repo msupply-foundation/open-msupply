@@ -1,11 +1,10 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { IconButton } from '../../../ui/elements/buttons/IconButton';
+import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { CloseIcon } from '../../../ui/icons';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
@@ -106,14 +105,11 @@ export const OutboundStatusFooter: Component<
         preflight={props.preflight}
         onSaved={props.onSaved}
         closeButton={
-          // Plain (unbordered) icon button — the same close the inbound
-          // status footer renders.
-          <IconButton
-            icon={<CloseIcon />}
-            label={t('button.close')}
-            data-testid="close-button"
-            onClick={props.onClose}
-          />
+          // The standard action-footer close (registry § buttons & status):
+          // secondary, close glyph, and LABELLED — a footer action is read as a
+          // verb. It sheds its label to the icon on phones by default, so the
+          // dense case is a width outcome, not a per-vertical choice.
+          <CloseButton data-testid="close-button" onClick={props.onClose} />
         }
       />
 

@@ -46,6 +46,12 @@
      JS literal. */
   --table-leading-col: 3rem;
 
+  /* Width of a frozen block's edge shadow ([data-frozen-edge]::after). One
+     source of truth: the strip is drawn OUTSIDE its cell, so a clipping body
+     cell must reopen exactly this much room for it (.td[data-frozen-edge]) — if
+     the two drifted apart the shadow would come back cropped. */
+  --table-frozen-shadow: 0.5rem;
+
   /* Row background fade (ui-standards § tables: transition background
      0.15s on body rows) — carried by the cells, which paint the hover
      wash / selection tint. A custom property rather than a transition
@@ -237,6 +243,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   transition: background-color var(--table-bg-fade);
+}
+
+/* The one body cell that must NOT clip absolutely: a frozen block's outer edge
+   carries the freeze shadow as a strip drawn entirely OUTSIDE its box
+   ([data-frozen-edge]::after, left/right: 100%), and .td's ellipsis clipping
+   above swallowed it — so a pinned data column showed its shadow on the header
+   row only (the .th doesn't clip; it clips inside .thLabel), and the leading
+   selection column, which never clips, was fine (Carl 2026-07-30).
+   `clip` + a clip margin of exactly the strip's width reopens just enough room
+   for it: the ellipsis is still placed at the cell's own edge, so no text gains
+   the extra 0.5rem, and unlike `visible` this needs no inner wrapper. The
+   margin is uniform (per-side longhands aren't baseline), which is harmless
+   here — body cells are single-line or line-clamped, so nothing overflows
+   vertically to escape. Chromium still reports scrollWidth past the clip, so
+   the hover-reveal tooltip (revealIfClipped in TableRow.tsx) is unaffected. */
+.td[data-frozen-edge] {
+  overflow: clip;
+  overflow-clip-margin: var(--table-frozen-shadow);
 }
 
 /* Monospace value cells — the `code` cell kind (item code, batch, location).
@@ -686,7 +710,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   position: absolute;
   top: 0;
   bottom: -1px;
-  width: 0.5rem;
+  width: var(--table-frozen-shadow);
   pointer-events: none;
   /* Revealed only once content is actually hidden past that edge — i.e. when
      something is passing UNDER the frozen column (data-hidden-left /
