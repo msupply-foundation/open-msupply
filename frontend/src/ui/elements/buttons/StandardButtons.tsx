@@ -1,11 +1,12 @@
 import { splitProps } from 'solid-js';
 import { t } from '../../../intl';
-import { SaveIcon } from '../../icons';
+import { SaveIcon, XCircleIcon } from '../../icons';
 import { Button, type ButtonProps } from './Button';
 
 /*
  * Pre-composed buttons for the handful of actions that recur across almost
- * every dialog and form — OK, Cancel, Save, and the "…& next" variants. Each
+ * every dialog, form and record footer — OK, Cancel, Save, Close, and the
+ * "…& next" variants. Each
  * is a thin wrapper over <Button> that fixes the identity (variant, label, and
  * for Save the icon + collapse) so callers get one consistent, translated
  * control instead of re-deciding the tone/label every time:
@@ -35,6 +36,30 @@ export const CancelButton = (props: StandardButtonProps) => (
     {t('button.cancel')}
   </Button>
 );
+
+/*
+ * Leave a record screen without saving — the action-footer counterpart to
+ * CancelButton, sitting beside the status control on a detail footer (Carl,
+ * 2026-07-30). Secondary + the close glyph, and LABELLED: a footer action is
+ * read as a verb, so an icon-only glyph was the rejected alternative (two
+ * verticals had hand-rolled one; three had the labelled form, which won).
+ * Collapsible by default like SaveButton — on phones it sheds the label to the
+ * icon, keeping the accessible name, which is where an icon-only close is
+ * actually the right density.
+ */
+export const CloseButton = (props: StandardButtonProps) => {
+  const [local, rest] = splitProps(props, ['collapsible']);
+  return (
+    <Button
+      variant="secondary"
+      icon={<XCircleIcon />}
+      collapsible={local.collapsible ?? true}
+      {...rest}
+    >
+      {t('button.close')}
+    </Button>
+  );
+};
 
 /*
  * Primary save with the save icon. Collapsible by default (sheds its label to
