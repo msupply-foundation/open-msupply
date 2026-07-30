@@ -45,8 +45,8 @@ export interface ConfirmDialogProps {
 
 /*
  * Confirmation preset built on <Dialog> — the standard "Are you sure?"
- * Cancel/confirm pattern. The owning component keeps `open` state, renders this,
- * and handles onConfirm. Ported from the RnD prototype's ConfirmDialog.
+ * Cancel/confirm pattern. The owning component keeps `open` state, renders
+ * this, and handles onConfirm. Ported from the RnD prototype's ConfirmDialog.
  *
  * The footer is the library's standard buttons (StandardButtons), not
  * look-alikes: CancelButton beside OkButton / DialogSaveButton. So the labels

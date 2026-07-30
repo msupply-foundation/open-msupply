@@ -129,7 +129,8 @@ const Body = (props: BodyProps): JSX.Element => {
       },
     });
     // The response union's only member is the connector, so any failure here is
-    // the global unexpected-error modal's — stay in the loading phase behind it.
+    // the global unexpected-error modal's — stay in the loading phase behind
+    // it.
     if (result.kind !== 'success') return;
     setDraft(
       reconcile(

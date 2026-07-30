@@ -35,8 +35,9 @@ import styles from '../Settings.module.css';
  * S4 — Configure supply levels (spec/settings/ui-surface.md § S4): edit the
  * allowed values of the one supply-level property. A value currently recorded
  * against at least one store cannot be removed (its remove control is
- * disabled) and duplicates are prevented before saving (OMS-REG-SET-05.27). A failed
- * save shows `error.failed-to-save-supply-level` and the modal stays open
+ * disabled) and duplicates are prevented before saving (OMS-REG-SET-05.27). A
+ * failed save shows `error.failed-to-save-supply-level` and the modal stays
+ * open
  * with entries intact (ui-standards controls › dialogs).
  */
 export const SupplyLevelsModal = (props: {
@@ -63,10 +64,11 @@ export const SupplyLevelsModal = (props: {
   });
 
   // The in-use set: every store's recorded properties JSON, parsed for the
-  // supply-level key (OMS-REG-SET-05.27; the consumed query carries a ⚠️ VERIFY in the
-  // spec — see contract § Configuration). Read via the .state gate, never
-  // suspending — this resource first fetches on an interaction, inside an
-  // open <dialog> (kdd/solid-reactivity-pitfalls § no remounts, hard gate).
+  // supply-level key (OMS-REG-SET-05.27; the consumed query carries a ⚠️
+  // VERIFY in the spec — see contract § Configuration). Read via the .state
+  // gate, never suspending — this resource first fetches on an interaction,
+  // inside an open <dialog> (kdd/solid-reactivity-pitfalls § no remounts, hard
+  // gate).
   const [inUseData] = createResource(
     () => (props.open ? params.storeId : undefined),
     async storeId => {

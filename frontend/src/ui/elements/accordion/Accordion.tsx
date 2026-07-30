@@ -11,14 +11,23 @@ import { ChevronDownIcon } from '../../icons';
 import styles from './Accordion.module.css';
 
 export interface AccordionProps {
-  /** Controlled: semantic key(s) of the currently-open item(s) (see AccordionItem.value). */
+  /**
+   * Controlled: semantic key(s) of the currently-open item(s) (see
+   * AccordionItem.value).
+   */
   value?: string[];
   /** Uncontrolled: semantic key(s) open on first render. */
   defaultValue?: string[];
   onValueChange?: (value: string[]) => void;
-  /** Allow more than one item open at once (a shared group of independent items). */
+  /**
+   * Allow more than one item open at once (a shared group of independent
+   * items).
+   */
   multiple?: boolean;
-  /** In single-open mode, allow closing the open item by clicking its trigger again. */
+  /**
+   * In single-open mode, allow closing the open item by clicking its trigger
+   * again.
+   */
   collapsible?: boolean;
   /**
    * `card` renders each item as a filled rounded panel (the current app's
@@ -96,7 +105,10 @@ export const AccordionItem = (props: AccordionItemProps) => (
 );
 
 export interface AccordionTriggerProps {
-  /** Heading level wrapping the trigger, for document-outline correctness. Default 'h3'. */
+  /**
+   * Heading level wrapping the trigger, for document-outline correctness.
+   * Default 'h3'.
+   */
   as?: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   /**
    * Muted metadata pinned to the trigger's end, beside the chevron — a
@@ -112,7 +124,8 @@ export interface AccordionTriggerProps {
 
 export const AccordionTrigger = (props: AccordionTriggerProps) => {
   const value = useContext(ItemValueContext);
-  // accordion-trigger-<value> per e2e/TESTIDS.md: value lowercased, spaces → '-'
+  // accordion-trigger-<value> per e2e/TESTIDS.md: value lowercased, spaces →
+  // '-'
   const testId = value
     ? `accordion-trigger-${value.toLowerCase().replace(/\s+/g, '-')}`
     : undefined;

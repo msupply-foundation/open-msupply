@@ -69,7 +69,10 @@ type SortKey = NonNullable<OutboundShipmentsVariables['sort']>[number]['key'];
 
 type OutboundListState = {
   filter: OutboundFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: OutboundShipmentsVariables['sort'];
   offset: number;
@@ -108,8 +111,9 @@ const OutboundShipmentsList: Component = () => {
     },
   });
 
-  // Custom-field definitions for the outbound_shipment scope — shared scope-keyed
-  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  // Custom-field definitions for the outbound_shipment scope — shared
+  // scope-keyed cache, read non-suspending. Empty ⇒ no custom-field
+  // columns/filters.
   const cfReader = customFieldDefinitions('outbound_shipment');
   const cfDefs = () => cfReader.noSuspense();
   const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
@@ -163,8 +167,8 @@ const OutboundShipmentsList: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Single-key server sort (OMS-REG-DIST-01.16 — the resolver honours only the last key, so
-  // exactly one is ever sent).
+  // Single-key server sort (OMS-REG-DIST-01.16 — the resolver honours only the
+  // last key, so exactly one is ever sent).
   const onSort = (key: SortKey, desc: boolean) => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   };
@@ -370,8 +374,9 @@ const OutboundShipmentsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // Read-only rows (SHIPPED+) take the disabled state (OMS-REG-DIST-01.17); they
-        // stay clickable — row click still opens the detail.
+        // Read-only rows (SHIPPED+) take the disabled state
+        // (OMS-REG-DIST-01.17); they stay clickable — row click still opens the
+        // detail.
         rowState={row => (!isEditable(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-outbound-shipments')}
         empty={
@@ -388,9 +393,9 @@ const OutboundShipmentsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
-        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
-        // matching the stocktakes list (kdd/table-state). State stays
-        // page-owned / URL-backed.
+        // Pagination renders as an overlay INSIDE the table
+        // (bottom-inline-end), matching the stocktakes list (kdd/table-state).
+        // State stays page-owned / URL-backed.
         pagination={{
           offset: query().offset,
           pageSize: query().first,

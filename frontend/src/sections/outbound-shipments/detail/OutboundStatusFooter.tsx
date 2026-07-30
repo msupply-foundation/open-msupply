@@ -12,20 +12,22 @@ import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
 // The shipment status footer (spec S3 § status footer): the Hold toggle
-// (confirmation both ways — OMS-REG-DIST-02.10/.27), the lifecycle indicator over the FULL
-// status sequence (transfer statuses included, limited by the invoice-status-
-// options preference — OMS-REG-DIST-04.22), Close (back to the list), and the
-// status-change split button (its own action component). Replaced by the
-// bulk-action bar while lines are selected (OMS-REG-DIST-04.20).
+// (confirmation both ways — OMS-REG-DIST-02.10/.27), the lifecycle indicator
+// over the FULL status sequence (transfer statuses included, limited by the
+// invoice-status- options preference — OMS-REG-DIST-04.22), Close (back to the
+// list), and the status-change split button (its own action component).
+// Replaced by the bulk-action bar while lines are selected
+// (OMS-REG-DIST-04.20).
 
 export interface OutboundStatusFooterProps {
   storeId: string;
   node: OutboundNode;
   /**
-   * Whole-shipment pre-flight probe (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16), run when the status button
-   * is invoked — the current lines page can't answer for the whole shipment
-   * (rules.md § server-paginated line table). Undefined = the probe failed
-   * (already routed to the global error modal); the action aborts.
+   * Whole-shipment pre-flight probe (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16),
+   * run when the status button is invoked — the current lines page can't
+   * answer for the whole shipment (rules.md § server-paginated line table).
+   * Undefined = the probe failed (already routed to the global error modal);
+   * the action aborts.
    */
   preflight: () => Promise<StatusPreflight | undefined>;
   /** Toggle hold (writes onHold via the field-save path). */
@@ -64,12 +66,12 @@ export const OutboundStatusFooter: Component<
       date: stamps[status],
     }));
   };
-  // OMS-REG-DIST-04.22: a current status the preference EXCLUDES displays as the nearest
-  // included EARLIER status — the LAST allowed entry at or before the current
-  // one (allowedStatuses() is already in ascending flow order). A plain loop
-  // rather than Array#findLastIndex: eslint-plugin-solid doesn't recognise it
-  // as a safe callback host (unlike findIndex/map/etc.), so it misreports the
-  // predicate's currentIndex() read as untracked.
+  // OMS-REG-DIST-04.22: a current status the preference EXCLUDES displays as
+  // the nearest included EARLIER status — the LAST allowed entry at or before
+  // the current one (allowedStatuses() is already in ascending flow order). A
+  // plain loop rather than Array#findLastIndex: eslint-plugin-solid doesn't
+  // recognise it as a safe callback host (unlike findIndex/map/etc.), so it
+  // misreports the predicate's currentIndex() read as untracked.
   const indicatorIndex = () => {
     const allowed = allowedStatuses();
     let result = -1;

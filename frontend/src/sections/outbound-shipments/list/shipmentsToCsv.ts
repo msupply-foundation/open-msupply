@@ -5,11 +5,11 @@ import type { OutboundShipmentsResult } from './outboundShipments.generated';
 
 type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 
-// The outbound-shipments list → CSV (spec/outbound-shipments S1 Export, OMS-REG-DIST-01.18).
-// Columns match the list's visible fields; status uses the same catalog labels
-// as the list's chip. Feeds either a direct .csv download or the server's
-// csvToExcel conversion (domain/reportFiles) — mirroring the reference
-// stocktakesToCsv.
+// The outbound-shipments list → CSV (spec/outbound-shipments S1 Export,
+// OMS-REG-DIST-01.18). Columns match the list's visible fields; status uses the
+// same catalog labels as the list's chip. Feeds either a direct .csv download
+// or the server's csvToExcel conversion (domain/reportFiles) — mirroring the
+// reference stocktakesToCsv.
 export const shipmentsToCsv = (rows: ShipmentRow[]): string => {
   const fields = [
     t('label.name'),

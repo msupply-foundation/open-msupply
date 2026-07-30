@@ -61,7 +61,9 @@ export interface LineEditModalProps {
    * locked); null → ADD mode ("Add item", an active item search).
    */
   item: EditItem | null;
-  /** The opened item's existing rows (one card per row), seeded into the draft. */
+  /**
+   * The opened item's existing rows (one card per row), seeded into the draft.
+   */
   lines: InboundLineFragment[];
 }
 
@@ -177,7 +179,8 @@ type DraftBatch = {
 // Static option lists standing in for the real modal's GraphQL-backed pickers
 // (LocationVolumeSelect / NameSearch / CampaignOrProgramSelect) — the showcase
 // has no store, so these are seeded from the detail table's own sample data so
-// the picked values round-trip. Value is what a row stores; label is what shows.
+// the picked values round-trip. Value is what a row stores; label is what
+// shows.
 const LOCATION_OPTIONS = [
   { value: 'A.01', label: 'A.01 · Aisle A · Bay 01' },
   { value: 'A.02', label: 'A.02 · Aisle A · Bay 02' },

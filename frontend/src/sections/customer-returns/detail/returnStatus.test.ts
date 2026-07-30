@@ -70,14 +70,14 @@ describe('status flow per kind (rules § status lifecycle)', () => {
 });
 
 describe('nextStatuses — forward-only targets', () => {
-  // OMS-REG-DIST-07.37 — a NEW manual return may go straight to VERIFIED, skipping
-  // RECEIVED (both forward steps offered).
+  // OMS-REG-DIST-07.37 — a NEW manual return may go straight to VERIFIED,
+  // skipping RECEIVED (both forward steps offered).
   it('offers both confirmations from NEW on a manual return', () => {
     expect(nextStatuses('manual', 'NEW')).toEqual(['RECEIVED', 'VERIFIED']);
   });
 
-  // OMS-REG-DIST-07.39 — forward only: from RECEIVED only VERIFIED remains; VERIFIED is
-  // terminal and offers nothing.
+  // OMS-REG-DIST-07.39 — forward only: from RECEIVED only VERIFIED remains;
+  // VERIFIED is terminal and offers nothing.
   it('offers only VERIFIED from RECEIVED, nothing from VERIFIED', () => {
     expect(nextStatuses('manual', 'RECEIVED')).toEqual(['VERIFIED']);
     expect(nextStatuses('manual', 'VERIFIED')).toEqual([]);

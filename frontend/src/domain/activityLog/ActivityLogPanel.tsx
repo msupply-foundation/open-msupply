@@ -16,8 +16,8 @@ import {
 
 // The shared "Log" tab surface: the activity-log entries recorded against ONE
 // record, scoped by recordId. A read-only, non-paginated table — Date · Time ·
-// User · Event · Details — mirroring the real OMS ActivityLogList. Its own query
-// (kdd/state-management), independent of the record's other resources, so
+// User · Event · Details — mirroring the real OMS ActivityLogList. Its own
+// query (kdd/state-management), independent of the record's other resources, so
 // switching to the tab fetches it once. The log is append-only and short per
 // record, so — like OMS — we pull a generous single page and don't paginate.
 //

@@ -72,7 +72,10 @@ type SortKey = NonNullable<SupplierReturnsVariables['sort']>[number]['key'];
 
 type ReturnsListState = {
   filter: ReturnsFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: SupplierReturnsVariables['sort'];
   offset: number;
@@ -171,7 +174,8 @@ const SupplierReturnsList: Component = () => {
 
   // The store preferences this list keys off: fetched once per store. `.latest`
   // + undefined-tolerant read — while unresolved, treat manual returns as
-  // ENABLED (the common case; flashing the notice would be the wrong direction).
+  // ENABLED (the common case; flashing the notice would be the wrong
+  // direction).
   const [prefs] = createResource(
     () => params.storeId,
     async storeId => {
@@ -190,8 +194,9 @@ const SupplierReturnsList: Component = () => {
   const filters = createFilters(() => prefs.latest?.invoiceStatusOptions ?? []);
 
   const onNewReturn = () => {
-    // Preference gate first (rules § preference & permission gates): with manual
-    // returns disabled the notice shows even to a user lacking the permission.
+    // Preference gate first (rules § preference & permission gates): with
+    // manual returns disabled the notice shows even to a user lacking the
+    // permission.
     if (manualReturnsDisabled()) {
       setDisabledNoticeOpen(true);
       return;
@@ -199,7 +204,8 @@ const SupplierReturnsList: Component = () => {
     // Then the standing permission mirror (validation § permission gating):
     // creating requires SUPPLIER_RETURN_MUTATE. Lacking it, the global
     // permission-denied modal shows at once — never a toast, and no supplier
-    // picker opens. The server enforces the same resource on the write regardless.
+    // picker opens. The server enforces the same resource on the write
+    // regardless.
     if (!hasPermission('SUPPLIER_RETURN_MUTATE')) {
       reportPermissionDenied(['SupplierReturnMutate']);
       return;

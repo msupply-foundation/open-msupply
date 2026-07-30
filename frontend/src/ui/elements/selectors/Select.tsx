@@ -61,7 +61,10 @@ interface SelectProps {
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   class?: string;
-  /** `data-testid` for the trigger button (locale-stable test hook, e2e/TESTIDS.md). */
+  /**
+   * `data-testid` for the trigger button (locale-stable test hook,
+   * e2e/TESTIDS.md).
+   */
   testId?: string;
   /**
    * A `createFocusTarget()` handle bound to the trigger button — for an owner

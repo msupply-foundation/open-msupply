@@ -6,10 +6,11 @@ import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 // only ever advances forward through its kind's sequence:
 //   Manual (external/internal): New → Delivered → Received → Verified
 //   From a purchase order:      New → Shipped → Delivered → Received → Verified
-//   Transfer (requisition/link):New → Picked → Shipped → Delivered → Received → Verified
-// Shared by the list status chip, the detail status footer's StatusIndicator
-// (renders every stage), and the status-change split button (offers every
-// later reachable status). Status is forward-only and never reverses.
+// Transfer (requisition/link):New → Picked → Shipped → Delivered → Received →
+// Verified Shared by the list status chip, the detail status footer's
+// StatusIndicator (renders every stage), and the status-change split button
+// (offers every later reachable status). Status is forward-only and never
+// reverses.
 
 export type InboundStatus =
   'NEW' | 'PICKED' | 'SHIPPED' | 'DELIVERED' | 'RECEIVED' | 'VERIFIED';

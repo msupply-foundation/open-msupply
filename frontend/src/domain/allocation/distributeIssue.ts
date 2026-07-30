@@ -46,7 +46,10 @@ export type DistributableLine = {
 export type Distribution = {
   /** Packs to issue per line id (every input line gets an entry). */
   packsById: Map<string, number>;
-  /** Units requested but not covered by usable stock (the consumer's remainder — e.g. outbound's placeholder). */
+  /**
+   * Units requested but not covered by usable stock (the consumer's remainder
+   * — e.g. outbound's placeholder).
+   */
   shortfallUnits: number;
   /** Units issued beyond the request (whole-pack rounding, AC-AL3). */
   overAllocatedUnits: number;

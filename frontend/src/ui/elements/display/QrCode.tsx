@@ -6,17 +6,29 @@ import { QrCode as QrEncoder, QrEcc } from './qr/qrEncoder';
 interface QrCodeProps {
   /** The text/URL to encode (byte mode, UTF-8). */
   value: string;
-  /** Inline (trigger) side length. Number → px; string → any CSS length. Default 50. */
+  /**
+   * Inline (trigger) side length. Number → px; string → any CSS length.
+   * Default 50.
+   */
   size?: number | string;
   /** Side length of the enlarged copy popped on click. Default 256. */
   expandedSize?: number | string;
   /** Error correction level. Default Low (react-qr-code's default). */
   ecc?: QrEcc;
-  /** Light modules per side of the quiet-zone border. Default 0, per react-qr-code. */
+  /**
+   * Light modules per side of the quiet-zone border. Default 0, per
+   * react-qr-code.
+   */
   margin?: number;
-  /** Accessible name for the enlarged symbol; omitted → decorative (aria-hidden). */
+  /**
+   * Accessible name for the enlarged symbol; omitted → decorative
+   * (aria-hidden).
+   */
   title?: string;
-  /** Accessible name for the click-to-expand trigger. Default t('messages.click-to-expand'). */
+  /**
+   * Accessible name for the click-to-expand trigger. Default
+   * t('messages.click-to-expand').
+   */
   expandLabel?: string;
   /** `data-testid` for the inline trigger (e2e/TESTIDS.md). */
   triggerTestId?: string;

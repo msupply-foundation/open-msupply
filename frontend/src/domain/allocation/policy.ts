@@ -11,7 +11,9 @@ import {
   dateToIsoDate,
 } from '../../ui/elements/inputs/dateTimeConvert';
 
-/** The preference values that shape barring and ordering (consumer-resolved). */
+/**
+ * The preference values that shape barring and ordering (consumer-resolved).
+ */
 export interface AllocationPreferences {
   expiredStockPreventIssue: boolean;
   /** Days before expiry at which the expired-issue guard bars a batch. */
@@ -47,7 +49,10 @@ export interface BarrableBatch {
    * no exception (on hold always bars).
    */
   numberOfPacks?: number;
-  /** Available packs — the on-hold exception also needs stock to adjust against. */
+  /**
+   * Available packs — the on-hold exception also needs stock to adjust
+   * against.
+   */
   availablePacks?: number;
   /**
    * Whether the batch's item is a vaccine — the manual unusable-VVM bar

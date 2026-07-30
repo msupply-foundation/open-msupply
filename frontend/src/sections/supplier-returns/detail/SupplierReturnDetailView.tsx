@@ -73,9 +73,10 @@ const SupplierReturnDetailView: Component = () => {
 
   const tableConfig = createTableConfig({ tableId: 'supplier-return-detail' });
 
-  // Fetch the return. A non-return / bad id resolves to undefined — the not-found
-  // deep-link alert renders below (ui-surface S3 § tabs). The resource IS the
-  // local state: every save writes back with `mutate` (kdd/state-management).
+  // Fetch the return. A non-return / bad id resolves to undefined — the
+  // not-found deep-link alert renders below (ui-surface S3 § tabs). The
+  // resource IS the local state: every save writes back with `mutate`
+  // (kdd/state-management).
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, id: params.returnId }),
     async variables => {
@@ -146,8 +147,8 @@ const SupplierReturnDetailView: Component = () => {
   };
 
   // Changing the supplier is a SEPARATE, delete-and-recreate mutation (rules §
-  // header rules): success returns a NEW node under a NEW id, so navigate to it;
-  // its typed rejections surface inline on the supplier lookup.
+  // header rules): success returns a NEW node under a NEW id, so navigate to
+  // it; its typed rejections surface inline on the supplier lookup.
   const onChangeSupplier = async (supplierId: string) => {
     setSupplierError(undefined);
     const node = data();

@@ -16,8 +16,8 @@ import { clampQuantity, type DraftReturnLine } from './returnLineLogic';
 // modal (ReturnFromShipmentModal, over an inbound shipment) — so the columns
 // can't drift between them.
 //
-// A supplier-return line is an EXISTING stock line: batch, expiry, pack size and
-// the available figure are the stock line's own, shown read-only — only the
+// A supplier-return line is an EXISTING stock line: batch, expiry, pack size
+// and the available figure are the stock line's own, shown read-only — only the
 // returned quantity is editable (contrast customer returns' invented batches).
 
 // Edit ONE field of ONE draft line (a fine-grained store write —
@@ -82,9 +82,9 @@ export const quantityColumns = (
     c: { key: 'numberOfPacksToReturn' },
     header: () => t('label.quantity-to-return'),
     ...getNumberCell(),
-    // NumberField (not a raw controlled input): it clamps to min/max and repairs
-    // the DOM when a keystroke is rejected — the §13 pitfall a plain value=
-    // binding would hit (kdd/solid-reactivity-pitfalls).
+    // NumberField (not a raw controlled input): it clamps to min/max and
+    // repairs the DOM when a keystroke is rejected — the §13 pitfall a plain
+    // value= binding would hit (kdd/solid-reactivity-pitfalls).
     cell: info => {
       const line = info.row.original;
       return (

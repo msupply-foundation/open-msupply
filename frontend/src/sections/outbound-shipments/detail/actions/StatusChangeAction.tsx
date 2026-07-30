@@ -33,16 +33,17 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // allowed next status with earlier ones disabled; hidden entirely when
 // read-only. ONE client pre-flight guard (ui-standards/validation.md — the
 // sanctioned lineless server gap): no lines / only placeholder lines →
-// notice, no server call (OMS-REG-DIST-04.16). The pre-flight answers are whole-shipment
-// SERVER probes supplied by the view (the lines are server-paginated — the
-// loaded page can't answer for the shipment), run sequentially when the
-// button is invoked. Everything else submits and surfaces the server's
-// verdict inline in the confirmation dialog — on-hold (OMS-REG-DIST-02.10) and
-// unallocated-placeholder (OMS-REG-DIST-03.9) rejections land in the error phase; the
-// confirmation itself carries the zero-quantity removal warning (OMS-REG-DIST-04.15).
-// The on-hold notice is ACTIONABLE (D59): it offers "Release hold and
-// confirm ‹status›" — one save carrying both the release and the advance
-// (rules.md § on hold, OMS-REG-DIST-02.27) — instead of the old app's dead-end toast.
+// notice, no server call (OMS-REG-DIST-04.16). The pre-flight answers are
+// whole-shipment SERVER probes supplied by the view (the lines are
+// server-paginated — the loaded page can't answer for the shipment), run
+// sequentially when the button is invoked. Everything else submits and surfaces
+// the server's verdict inline in the confirmation dialog — on-hold
+// (OMS-REG-DIST-02.10) and unallocated-placeholder (OMS-REG-DIST-03.9)
+// rejections land in the error phase; the confirmation itself carries the
+// zero-quantity removal warning (OMS-REG-DIST-04.15). The on-hold notice is
+// ACTIONABLE (D59): it offers "Release hold and confirm ‹status›" — one save
+// carrying both the release and the advance (rules.md § on hold,
+// OMS-REG-DIST-02.27) — instead of the old app's dead-end toast.
 
 /** Whole-shipment pre-flight answers (probed at action time, never derived
  * from the loaded page). */
@@ -75,7 +76,8 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   // Set when the notice is the ON-HOLD rejection: the status the user tried
   // to reach, offered as "Release hold and confirm ‹status›" — one save that
-  // both releases and advances (OMS-REG-DIST-02.27, D59). Cleared with the notice.
+  // both releases and advances (OMS-REG-DIST-02.27, D59). Cleared with the
+  // notice.
   const [holdRetryStatus, setHoldRetryStatus] = createSignal<
     SettableStatus | undefined
   >();
@@ -128,9 +130,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     if (!editable() || probing()) return;
     // The one sanctioned pre-flight (validation.md): no lines (or only
     // placeholders) — the server would ACCEPT a lineless confirmation
-    // (captured server gap, OMS-REG-DIST-04.16), so the notice is the only guard. Probed
-    // whole-shipment at click time; a failed probe already raised the global
-    // error modal, so just abort.
+    // (captured server gap, OMS-REG-DIST-04.16), so the notice is the only
+    // guard. Probed whole-shipment at click time; a failed probe already raised
+    // the global error modal, so just abort.
     setProbing(true);
     const flight = await props.preflight();
     setProbing(false);
@@ -181,8 +183,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     setHoldRetryStatus(undefined);
   };
 
-  // The on-hold notice's action (OMS-REG-DIST-02.27, D59): retry the SAME status change
-  // with the hold released in one save — {id, status, onHold: false}.
+  // The on-hold notice's action (OMS-REG-DIST-02.27, D59): retry the SAME
+  // status change with the hold released in one save — {id, status, onHold:
+  // false}.
   const releaseAndConfirm = async () => {
     const status = holdRetryStatus();
     if (!status || releasing()) return;
