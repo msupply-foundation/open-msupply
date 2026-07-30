@@ -195,20 +195,27 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       />
 
       {/* Blocked advance — no lines: an info-only dialog (adding a line lifts
-          the block). The on-hold block is handled inline above (actionable). */}
-      <Dialog
-        open={noLinesBlocked()}
-        onClose={() => setNoLinesBlocked(false)}
-        icon={<InfoIcon />}
-        title={t('heading.cannot-do-that')}
-        description={t('messages.no-lines')}
-        actions={
-          <OkButton
-            data-testid="dialog-button-ok"
-            onClick={() => setNoLinesBlocked(false)}
-          />
-        }
-      />
+          the block). The on-hold block is handled inline above (actionable).
+
+          Mounted only while open (kdd/action-modal), like every other notice
+          here: a closed-but-mounted Dialog leaves its footer button — and so
+          its shared `dialog-button-ok` id — in the DOM, which makes that id
+          ambiguous for anything selecting on it (e2e/TESTIDS.md). */}
+      <Show when={noLinesBlocked()}>
+        <Dialog
+          open
+          onClose={() => setNoLinesBlocked(false)}
+          icon={<InfoIcon />}
+          title={t('heading.cannot-do-that')}
+          description={t('messages.no-lines')}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setNoLinesBlocked(false)}
+            />
+          }
+        />
+      </Show>
     </>
   );
 };

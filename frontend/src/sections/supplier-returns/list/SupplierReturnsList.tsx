@@ -463,19 +463,23 @@ const SupplierReturnsList: Component = () => {
         onClose={() => setCreateOpen(false)}
       />
       {/* The manual-returns-disabled notice: an info-only dialog in place of the
-          create flow while the store preference is on. */}
-      <Dialog
-        open={disabledNoticeOpen()}
-        onClose={() => setDisabledNoticeOpen(false)}
-        title={t('button.new-return')}
-        description={t('messages.manual-returns-preferences-disabled')}
-        actions={
-          <OkButton
-            data-testid="dialog-button-ok"
-            onClick={() => setDisabledNoticeOpen(false)}
-          />
-        }
-      />
+          create flow while the store preference is on. Mounted only while open
+          (kdd/action-modal) — a closed-but-mounted Dialog leaves its shared
+          `dialog-button-ok` id in the DOM. */}
+      <Show when={disabledNoticeOpen()}>
+        <Dialog
+          open
+          onClose={() => setDisabledNoticeOpen(false)}
+          title={t('button.new-return')}
+          description={t('messages.manual-returns-preferences-disabled')}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setDisabledNoticeOpen(false)}
+            />
+          }
+        />
+      </Show>
     </Page>
   );
 };

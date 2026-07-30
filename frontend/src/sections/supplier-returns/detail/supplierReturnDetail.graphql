@@ -93,6 +93,29 @@ query supplierReturnDetail($storeId: String!, $id: String!) {
   }
 }
 
+# The WHOLE record for Copy to clipboard (ui-standards/controls.md § copy to
+# clipboard): the header, every line, and the linked references the detail reads.
+# A SEPARATE operation from supplierReturnDetail, which is header-only so the
+# screen's own read stays lean — and from supplierReturnLines, which is one
+# server-paginated PAGE. The standard is explicit that copy "MUST make its own
+# unpaginated read, not serialise the page on screen", and the nested `lines`
+# connector is that read: it takes no page argument, so it carries the complete
+# line set.
+query supplierReturnForCopy($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...SupplierReturnInfo
+      lines {
+        totalCount
+        nodes {
+          ...SupplierReturnLine
+        }
+      }
+    }
+  }
+}
+
 # ONE server-paginated / server-sorted page of the return's lines — the detail
 # table (spec/supplier-returns/rules.md § server-paginated line table). A
 # supplier return's lines are STOCK_OUT lines; the caller pins invoiceId + type

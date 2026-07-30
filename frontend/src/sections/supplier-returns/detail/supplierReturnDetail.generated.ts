@@ -84,6 +84,26 @@ export const SupplierReturnDetail = {
   query: "query supplierReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...SupplierReturnInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment SupplierReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  transportReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    purchaseOrderId\n    user {\n      username\n    }\n  }\n  customFields\n}",
 } as TypedDocument<SupplierReturnDetailResult, SupplierReturnDetailVariables>;
 
+export type SupplierReturnForCopyVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type SupplierReturnForCopyResult = {
+  invoice: ({
+  __typename: "InvoiceNode";
+} & {
+  lines: {
+  totalCount: number;
+  nodes: Array<SupplierReturnLineFragment>;
+};
+} & SupplierReturnInfoFragment);
+};
+
+export const SupplierReturnForCopy = {
+  query: "query supplierReturnForCopy($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...SupplierReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...SupplierReturnLine\n        }\n      }\n    }\n  }\n}\n\nfragment SupplierReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  transportReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    purchaseOrderId\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment SupplierReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  costPricePerPack\n  note\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+} as TypedDocument<SupplierReturnForCopyResult, SupplierReturnForCopyVariables>;
+
 export type SupplierReturnLinesVariables = {
   storeId: string;
   filter?: {
