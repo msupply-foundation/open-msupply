@@ -246,38 +246,55 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
 
   const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
 
-  // Controlled selection: keep the internal `selected` item in sync with
-  // `value` (resolve the key against the current items). `value === undefined`
-  // means "no selection" → clear `selected` (so a caller that resets its value
-  // — e.g. after saving, or when its bound field is cleared — empties the
-  // input, rather than the input keeping the stale item). When the key isn't in
-  // `items` (a server-fed selection from outside the current result page), fall
-  // back to `selectedItem` if the caller supplied it. Guarded by
-  // `on([value, items], ...)` so it only reacts to those two, not the user's
-  // own pick — tracking `items` too (not just `value`) matters for a
-  // non-suspending resource: a picker that mounts with `value` already set
-  // (e.g. a detail screen loaded with a clinician already attached) resolves
-  // against an empty `items` on the first run, and without `items` in the
-  // dependency list the lookup would never re-run once the resource's fetch
-  // actually lands — leaving the field permanently blank.
+  // Controlled selection: `value` OWNS the selection — `items` only resolves it
+  // to an item so the field can show a label. So `value === undefined` means
+  // "no selection" → clear `selected` (a caller that resets its value — after
+  // saving, or when its bound field is cleared — empties the input rather than
+  // keeping the stale item), and a key is resolved against, in order: the
+  // current `items`, the caller's `selectedItem` (a server-fed selection from
+  // outside the current result page), then the selection ALREADY resolved.
   //
-  // Async/server pickers whose current selection may not be in the loaded page
-  // keep it visible by seeding it into `items` themselves (see AsyncCombobox) —
-  // the resolution here is a plain lookup against whatever `items` holds.
+  // That last fallback is what keeps a seeded lookup typeable. In server mode
+  // `items` holds the rows matching what the user is TYPING, which the current
+  // selection usually is not — so resolving against `items` alone dropped the
+  // selection on the first keystroke, and Kobalte answers a cleared selection
+  // by resetting the input text (resetInputValue → setInputValue('')). That
+  // empty value came back as onInputChange(''), which reset the query, which
+  // re-seeded the selection, which reset the input to the selection's label:
+  // every keystroke bounced back to the record's current party and no other
+  // party could ever be searched for (exploratory 2026-07-30, CRN-F2).
+  //
+  // The comparison is by KEY, never by object identity. Callers legitimately
+  // mint the seed inline (`selected={{ id, name }}`) or from a getter, so a
+  // FRESH object arrives on every reactive read; an identity test would re-set
+  // the selection — and so reset the input text — on every pass. Same key means
+  // same selection: the label is keyed too, and a dropdown row always comes
+  // from `items`, so holding on to the object we already have goes nowhere
+  // stale.
+  //
+  // Guarded by `on([value, items], ...)` so it only reacts to those two, not
+  // the user's own pick — tracking `items` too matters for a non-suspending
+  // resource: a picker that mounts with `value` already set (e.g. a detail
+  // screen loaded with a clinician already attached) resolves against an empty
+  // `items` on the first run, and without `items` in the dependency list the
+  // lookup would never re-run once the resource's fetch lands — leaving the
+  // field permanently blank.
   createEffect(
     on([() => props.value, () => props.items], ([value, items]) => {
-      const inItems =
+      const current = selected();
+      const resolved =
         value === undefined
-          ? null
-          : (items.find(item => keyOf(item) === value) ?? null);
-      const fallback =
-        value !== undefined &&
-        props.selectedItem &&
-        keyOf(props.selectedItem) === value
-          ? props.selectedItem
-          : null;
-      const match = inItems ?? fallback;
-      if (match !== selected()) setSelected(() => match);
+          ? undefined
+          : (items.find(item => keyOf(item) === value) ??
+            (props.selectedItem && keyOf(props.selectedItem) === value
+              ? props.selectedItem
+              : undefined) ??
+            (current && keyOf(current) === value ? current : undefined));
+      if (!resolved) {
+        if (current !== null) setSelected(null);
+      } else if (!current || keyOf(current) !== value) {
+        setSelected(() => resolved);
+      }
     })
   );
   // Inside a Dialog, mount the listbox into the dialog element (top layer +
@@ -332,19 +349,35 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     props.onChange?.(item);
   };
 
-  // The options Kobalte sees. Kobalte can only DISPLAY a selected value that is
-  // present in its options collection, so when `selectedItem` is the current
-  // value but isn't in `items` (a selection from outside the loaded page), we
-  // prepend it — otherwise the field would show blank. While loading we show no
-  // options EXCEPT that pinned selected item (so the label survives a refetch).
+  // The pinned selection. Kobalte resolves a selected value against its options
+  // collection — that's where it reads the label from, and a key missing from
+  // it blanks the input — so whenever `items` doesn't hold the resolved
+  // selection we put it in the collection ourselves: a selection from outside
+  // the loaded page, or (server mode) one that simply isn't a match for what
+  // the user is typing.
+  //
+  // A pin is in the collection for RESOLUTION, not for display: in server mode
+  // it is filtered back out of the listbox (see defaultFilter), so searching
+  // for a different party is never masked by the current one sitting above the
+  // real matches (#549).
+  const pinned = createMemo<T | undefined>(() => {
+    const sel = selected();
+    if (!sel) return undefined;
+    const base = props.loading ? [] : props.items;
+    return base.some(item => keyOf(item) === keyOf(sel)) ? undefined : sel;
+  });
+  const pinnedKey = () => {
+    const pin = pinned();
+    return pin ? keyOf(pin) : undefined;
+  };
+
+  // The options Kobalte sees: the caller's rows plus the pin above. While
+  // loading we show no options EXCEPT that pin (so the label survives a
+  // refetch).
   const options = createMemo<T[]>(() => {
     const base = props.loading ? [] : props.items;
-    const sel = props.selectedItem;
-    if (sel && props.value !== undefined && keyOf(sel) === props.value) {
-      const present = base.some(item => keyOf(item) === props.value);
-      if (!present) return [sel, ...base];
-    }
-    return base;
+    const pin = pinned();
+    return pin ? [pin, ...base] : base;
   });
 
   // Server-mode infinite scroll: when the listbox is scrolled near its bottom,
@@ -389,10 +422,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       optionDisabled={
         props.itemDisabled ? item => props.itemDisabled!(item as T) : undefined
       }
-      // Server mode disables the client filter (the caller refetches `items`);
-      // client mode keeps the local substring/predicate filter.
+      // Server mode disables the client filter (the caller refetches `items`) —
+      // except for the pin, which is in the collection only so the selection
+      // resolves and must not show up among the typed query's results (see
+      // `pinned`). Client mode keeps the local substring/predicate filter.
       defaultFilter={
-        serverMode() ? () => true : item => matches(item as T, filterText())
+        serverMode()
+          ? item => keyOf(item as T) !== pinnedKey()
+          : item => matches(item as T, filterText())
       }
       value={selected()}
       onChange={handleChange}

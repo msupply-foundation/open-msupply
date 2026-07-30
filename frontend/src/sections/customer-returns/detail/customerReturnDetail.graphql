@@ -25,6 +25,7 @@ fragment CustomerReturnInfo on InvoiceNode {
   verifiedDatetime
   otherPartyId
   otherPartyName
+  transportReference
   user {
     username
     email
