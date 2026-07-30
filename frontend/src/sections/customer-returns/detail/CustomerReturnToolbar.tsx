@@ -45,6 +45,9 @@ export const CustomerReturnToolbar: Component<
         size="small"
         storeId={props.storeId}
         role="customer"
+        // The shared customer-lookup hook (e2e/TESTIDS.md) — the same id the
+        // new-return modal's picker carries, so one contract covers both.
+        inputTestId="customer-search-input"
         // Seed the record's current customer so the selection's label
         // resolves before (or regardless of) its page. The detail fragment
         // carries only the party's id + name; the seed's other fields are
