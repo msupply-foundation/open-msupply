@@ -59,6 +59,10 @@ import {
 } from './RequisitionToolbar';
 import { RequisitionStatusFooter } from './RequisitionStatusFooter';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import {
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
@@ -211,6 +215,52 @@ const RequisitionDetailView: Component = () => {
     info()?.approvalStatus === 'APPROVED';
   const showForecast = () =>
     prefs()?.displayPopulationBasedForecasting ?? false;
+
+  // The Indicators tab's data (definitions + this period's values), keyed to
+  // the CUSTOMER's reporting identity — the store's record of the customer's
+  // report, never the store's own figures (rules › indicator values). Fetched
+  // only for a program requisition once its period resolves; the serialised
+  // variables are the resource key so identical content never refetches. Read
+  // non-suspending so it never remounts the open screen.
+  const indicatorVariables = () => {
+    const node = info();
+    if (!node?.program || !node.period) return false;
+    return JSON.stringify({
+      storeId: params.storeId,
+      programId: node.program.id,
+      periodId: node.period.id,
+      customerNameId: node.otherPartyId,
+    });
+  };
+  const [indicators] = createResource(indicatorVariables, async serialised => {
+    const result = await graphqlFetch(
+      ProgramIndicatorValues,
+      JSON.parse(serialised)
+    );
+    if (result.kind !== 'success') return undefined;
+    return result.data.programIndicators.nodes;
+  });
+  const indicatorNodes = () =>
+    indicators.state === 'ready' || indicators.state === 'refreshing'
+      ? (indicators.latest ?? [])
+      : [];
+  // Indicators tab gate (spec S2 § tabs, AC-V5): a non-emergency program
+  // requisition of a store-backed customer whose program defines ≥1
+  // indicator.
+  const showIndicators = () =>
+    isProgram() &&
+    info()?.isEmergency === false &&
+    !!info()?.otherParty.store &&
+    indicatorNodes().length > 0;
+  // Whether the gate can still flip: the Indicators tab registers only after
+  // its read resolves, so until then a deep-linked ?tab=indicators names a
+  // tab Kobalte can't select yet.
+  const indicatorGateResolving = () => {
+    const node = info();
+    if (!node) return true;
+    if (!node.program) return false;
+    return indicators.state !== 'ready' && indicators.state !== 'errored';
+  };
 
   // The line editor (S4): closed, open in add mode, or open on an existing
   // line. One signal drives both.
@@ -793,17 +843,33 @@ const RequisitionDetailView: Component = () => {
               />
             }
           >
-            {/* Details | Documents | Log (spec S2 § tabs; Indicators arrives
-                with its slice). The active tab persists in the URL. */}
+            {/* Details | Documents | Log | (gated) Indicators (spec S2 §
+                tabs). The active tab persists in the URL. */}
             <Tabs
               value={searchParams.tab ?? 'details'}
-              onValueChange={tab => setSearchParams({ tab })}
+              onValueChange={tab => {
+                // While a deep-linked ?tab=indicators is waiting on its gate,
+                // Kobalte reports a fallback to the first tab — swallow it so
+                // the fallback never clobbers the URL; once the gate flips the
+                // requested tab registers and is selected. A requisition whose
+                // gate settles closed corrects the URL through this same path.
+                if (
+                  searchParams.tab === 'indicators' &&
+                  tab !== 'indicators' &&
+                  indicatorGateResolving()
+                )
+                  return;
+                setSearchParams({ tab });
+              }}
             >
               <TabList
                 tabs={[
                   { value: 'details', label: t('label.details') },
                   { value: 'documents', label: t('label.documents') },
                   { value: 'log', label: t('label.log') },
+                  ...(showIndicators()
+                    ? [{ value: 'indicators', label: t('label.indicators') }]
+                    : []),
                 ]}
               />
               <TabPanel value="details">
@@ -862,6 +928,19 @@ const RequisitionDetailView: Component = () => {
                   order="oldest-first"
                 />
               </TabPanel>
+              <Show when={showIndicators()}>
+                <TabPanel value="indicators">
+                  {/* The shared indicators surface — no customer breakdown on
+                      the response side, on any store configuration (rules ›
+                      indicator values, AC-IN1). */}
+                  <ProgramIndicatorsTab
+                    storeId={params.storeId}
+                    nodes={indicatorNodes()}
+                    editable={editable()}
+                    showCustomerBreakdown={false}
+                  />
+                </TabPanel>
+              </Show>
             </Tabs>
 
             {/* The line editor (S4): add mode from the Add action / empty
