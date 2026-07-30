@@ -398,6 +398,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // Resolved once — a JSX prop read twice builds two element trees
   // (kdd/solid-reactivity-pitfalls §3).
   const labelInfo = children(() => props.labelInfo);
+  const endAction = children(() => props.endAction);
   const listboxHeader = children(() => props.listboxHeader);
   const Label = () => (
     <KCombobox.Label class={styles.label}>
@@ -533,8 +534,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <ChevronDownIcon />
           </KCombobox.Icon>
         </KCombobox.Trigger>
-        <Show when={props.endAction}>
-          <span class={styles.endAction}>{props.endAction}</span>
+        <Show when={endAction()}>
+          <span class={styles.endAction}>{endAction()}</span>
         </Show>
       </KCombobox.Control>
       {/* Error message (with an alert icon) takes precedence over helperText — mirrors
