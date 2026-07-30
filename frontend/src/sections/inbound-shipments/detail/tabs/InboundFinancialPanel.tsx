@@ -136,12 +136,12 @@ export const InboundFinancialPanel: Component<{
       },
       {
         c: { key: 'numberOfPacks' },
-        header: () => t('label.pack-quantity'),
+        header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks'),
       },
       {
         c: { key: 'packSize' },
-        header: () => t('label.pack-size'),
+        header: () => t('label.received-pack-size'),
         ...getCellDefinition('packSize'),
       },
       {
