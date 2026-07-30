@@ -40,9 +40,14 @@ export interface FormValidation {
   reset: () => void;
   /** Whether Save has been attempted. */
   armed: Accessor<boolean>;
-  /** Message for an input's `error` prop, or undefined when that field is clean. */
+  /**
+   * Message for an input's `error` prop, or undefined when that field is
+   * clean.
+   */
   errorFor: (id: string) => string | undefined;
-  /** The currently-visible errors, in author order — feed to FormErrorSummary. */
+  /**
+   * The currently-visible errors, in author order — feed to FormErrorSummary.
+   */
   visible: Accessor<FieldError[]>;
   /** True when nothing is failing — the gate the save handler checks. */
   valid: Accessor<boolean>;

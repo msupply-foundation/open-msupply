@@ -95,8 +95,8 @@ import {
   ExportPrintAction,
 } from './actions';
 // "Return selected lines" → the supplier-return from-shipment create flow. The
-// entry point is owned here (inbound detail); the flow is the returns vertical's
-// (mirrors outbound-shipments → customer-returns).
+// entry point is owned here (inbound detail); the flow is the returns
+// vertical's (mirrors outbound-shipments → customer-returns).
 import { ReturnFromInboundAction } from '../../supplier-returns/detail/edit-modal/ReturnFromInboundAction';
 
 // The inbound-shipment detail view (spec S3). Mirrors the stocktake detail
@@ -118,9 +118,9 @@ type DetailUrlState = {
   offset: number;
   first: number;
 };
-// The columns spec S3's line table marks "hidden by default (narrow)" — keyed by
-// column ID (not accessor key). The compact band starts from this whole set; the
-// base band hides the four a desktop still keeps out of the way.
+// The columns spec S3's line table marks "hidden by default (narrow)" — keyed
+// by column ID (not accessor key). The compact band starts from this whole set;
+// the base band hides the four a desktop still keeps out of the way.
 const NARROW_HIDDEN: Record<string, boolean> = {
   comment: false,
   vvmStatus: false,

@@ -9,11 +9,12 @@ import {
 import { forecastSteps, type VaccineCourse } from './internalOrderLineEdit';
 import styles from './ForecastCalculationDisplay.module.css';
 
-// The population-forecast calculation display (spec/internal-orders S4, AC-PF7):
-// where the store shows population-based forecasting and the edited line carries
-// a forecast, this stands in for the context charts — the per-course arithmetic
-// the server captured (RequisitionLineNode.vaccineCourses), walked step by step.
-// One collapsible section per course group; each walks the three forecast steps.
+// The population-forecast calculation display (spec/internal-orders S4,
+// AC-PF7): where the store shows population-based forecasting and the edited
+// line carries a forecast, this stands in for the context charts — the
+// per-course arithmetic the server captured
+// (RequisitionLineNode.vaccineCourses), walked step by step. One collapsible
+// section per course group; each walks the three forecast steps.
 
 // A single arithmetic step: its formula (tinted), the line's stored figures
 // substituted (muted), and the emphasised result — the three-piece shape the

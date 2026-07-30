@@ -9,7 +9,8 @@ import { getVolumeUsedPercentage, isAvailable, isEmpty } from './volume';
 import styles from './LocationVolumeSelect.module.css';
 
 // The three fullness-filter modes (spec/ui-standards/components.md → Location
-// lookup — plain vs volume-aware), always offered as a tab strip in the dropdown.
+// lookup — plain vs volume-aware), always offered as a tab strip in the
+// dropdown.
 type Fullness = 'all' | 'empty' | 'available';
 
 export interface LocationVolumeSelectProps {

@@ -6,7 +6,9 @@ import styles from './DateTimeFields.module.css';
 
 export interface TimeFieldProps {
   label: string;
-  /** Wall-clock time of day, `HH:mm` (24-hour), or null/undefined when empty. */
+  /**
+   * Wall-clock time of day, `HH:mm` (24-hour), or null/undefined when empty.
+   */
   value?: string | null;
   /** Fired with the new `HH:mm` time, or null when cleared. */
   onChange?: (value: string | null) => void;
@@ -29,15 +31,16 @@ export interface TimeFieldProps {
 
 /*
  * Time-of-day input (spec: ui-standards/inputs.md § Dates & times). Our markup
- * + tokens over Kobalte's headless TimeField — segmented spin-button hour/minute
- * fields (type digits or arrow to step; can't hold an invalid time), the same
- * "buy the behaviour, own the look" bargain as our other Kobalte widgets, and
- * no new dependency (Kobalte is already in). Renders identically everywhere.
+ * + tokens over Kobalte's headless TimeField — segmented spin-button
+ * hour/minute fields (type digits or arrow to step; can't hold an invalid
+ * time), the same "buy the behaviour, own the look" bargain as our other
+ * Kobalte widgets, and no new dependency (Kobalte is already in). Renders
+ * identically everywhere.
  *
  * The value is a plain 24-hour `HH:mm` string with no date and no timezone —
  * there is no GraphQL `Time` scalar, so it passes straight through; clearing
- * emits null. (Kobalte carries the time as `{ hour, minute }`; we convert at the
- * edge.) The 12-/24-hour display follows the device locale.
+ * emits null. (Kobalte carries the time as `{ hour, minute }`; we convert at
+ * the edge.) The 12-/24-hour display follows the device locale.
  */
 export const TimeField = (props: TimeFieldProps) => {
   // The label element itself (text + required asterisk). A local component so

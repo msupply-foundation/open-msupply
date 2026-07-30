@@ -52,10 +52,11 @@ export function TableSettings<T>(props: {
    */
   resetDisabled?: boolean;
   /**
-   * Per-facet applicability (issue #572): each granular reset is disabled unless
-   * that facet actually differs from the default — e.g. Reset column order is
-   * offered only once the columns have been reordered. Supplied by DataTable
-   * (derived from the resolved config); undefined leaves the action enabled.
+   * Per-facet applicability (issue #572): each granular reset is disabled
+   * unless that facet actually differs from the default — e.g. Reset column
+   * order is offered only once the columns have been reordered. Supplied by
+   * DataTable (derived from the resolved config); undefined leaves the action
+   * enabled.
    */
   orderChanged?: boolean;
   anyColumnHidden?: boolean;

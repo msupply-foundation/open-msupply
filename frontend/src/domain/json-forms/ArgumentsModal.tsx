@@ -204,10 +204,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       : []
   );
 
-  // Locations for a `location`-kind argument, fetched locally (no global cache —
-  // the location domain owns none anymore). Volume-blind: a report filter only
-  // references a location. Non-suspending read so a pending fetch never trips an
-  // ancestor <Suspense>.
+  // Locations for a `location`-kind argument, fetched locally (no global cache
+  // — the location domain owns none anymore). Volume-blind: a report filter
+  // only references a location. Non-suspending read so a pending fetch never
+  // trips an ancestor <Suspense>.
   const [locationsData] = createResource(currentStoreId, fetchLocations);
   const locations = (): Location[] =>
     locationsData.state === 'ready' || locationsData.state === 'refreshing'
@@ -458,9 +458,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               <Match when={field.kind === 'number' ? field : undefined} keyed>
                 {numberField => (
                   /* Constrained numeric entry (AC-R4): NumberField gates
-                     keystrokes and raises the decimal keypad. The schema
-                     declares no precision; two decimal places covers the
-                     fractional-months cases without float noise. */
+                   * keystrokes and raises the decimal keypad. The schema
+                   * declares no precision; two decimal places covers the
+                   * fractional-months cases without float noise.
+                   */
                   <NumberField
                     label={numberField.label}
                     width="full"
@@ -638,8 +639,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {nameField => (
                   /* AC-R13: the party picker writes the scoped key = the
-                     name's id, nothing else; the picked object lives in
-                     pickedNames for label display only. */
+                   * name's id, nothing else; the picked object lives in
+                   * pickedNames for label display only.
+                   */
                   <NameSearch
                     label={nameField.label}
                     storeId={currentStoreId() ?? ''}
@@ -659,8 +661,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {itemField => (
                   /* AC-R14: the item picker's two-key write — the scoped key
-                     = the item's id plus the hard-coded sibling `itemName`
-                     shipped templates print (contract "Arguments"). */
+                   * = the item's id plus the hard-coded sibling `itemName`
+                   * shipped templates print (contract "Arguments").
+                   */
                   <ItemSearch
                     label={itemField.label}
                     storeId={currentStoreId() ?? ''}
@@ -701,8 +704,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {periodField => (
                   /* AC-R16: the write forks on the scoped key — id at
-                     `periodId`, span (+ `before` companion) anywhere else
-                     (periodSearchWrites). */
+                   * `periodId`, span (+ `before` companion) anywhere else
+                   * (periodSearchWrites).
+                   */
                   <PeriodArgumentField
                     field={periodField}
                     storeId={currentStoreId()}
@@ -721,8 +725,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {sfField => (
                   /* AC-R17: the cascade ignores its scoped key and writes the
-                     five flat keys via scheduleCascadeWrites; the schema's
-                     required list gates the keys it renders (see submit). */
+                   * five flat keys via scheduleCascadeWrites; the schema's
+                   * required list gates the keys it renders (see submit).
+                   */
                   <ScheduleFormFields
                     storeId={currentStoreId() ?? ''}
                     programs={programs()}
