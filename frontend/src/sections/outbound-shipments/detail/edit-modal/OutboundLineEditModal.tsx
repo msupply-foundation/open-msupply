@@ -28,6 +28,7 @@ import {
 } from '../../../../ui/elements/table/DataTable';
 import {
   getExpiryDateCell,
+  getFlagCell,
   getNumberCell,
   getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
@@ -60,6 +61,8 @@ import {
   fillOrderCompare,
   lensToUnits,
   unitsToLens,
+  packsToDoses,
+  dosesToPacks,
   type AllocateUnit,
   type AllocationPreferences,
   type IssueWarning,
@@ -201,6 +204,14 @@ interface OutboundLineEditModalProps {
    * columns.
    */
   customerIsStore: boolean;
+  /**
+   * The shipment's currency + rate (the side panel's foreign-currency block)
+   * — the FC sell-price column re-expresses each batch's pack price at this
+   * rate. Code undefined while the shipment has no currency set (home
+   * currency) — the column then renders blank cells.
+   */
+  currencyCode?: string | null;
+  currencyRate: number;
   /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
 }
@@ -295,7 +306,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
 
-  const tableConfig = createTableConfig({ tableId: 'outbound-line-edit' });
+  const tableConfig = createTableConfig({
+    tableId: 'outbound-line-edit',
+    // Manufacturer starts hidden (the old app's defaultHidden) — declared per
+    // band, since bands don't share; the Columns popover restores it.
+    defaultConfig: {
+      base: { columnVisibility: { manufacturer: false } },
+      compact: { columnVisibility: { manufacturer: false } },
+    },
+  });
   const prefs = () => outboundShipmentPreferences();
 
   // Seed one item's draft (server-computed: existing lines + available
@@ -380,14 +399,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           setVariants(variantsResult.data.items.nodes[0]?.variants ?? []);
       });
     }
-    // Land ready to type. Update mode: the clicked batch's packs input (draft
-    // rows from existing lines keep the invoice-line id), or the first row on
-    // an advance. A clicked PLACEHOLDER has no batch row of its own, and an
-    // add-mode pick has no clicked row at all — both land on the Issue field
-    // (OMS-REG-DIST-03.31).
-    const rowId =
-      mode() === 'update' ? (focusLineId ?? sorted[0]?.id) : undefined;
-    if (rowId) batchFields.focus(rowId);
+    // Land ready to type (OMS-REG-DIST-03.31). Update mode: the clicked batch's packs
+    // input (draft rows from existing lines keep the invoice-line id), or the
+    // first row on an advance (nothing was clicked). A clicked PLACEHOLDER row
+    // has no batch row of its own — its line id is absent from the draft, so
+    // the id must be MATCHED, not merely present — and an add-mode pick has no
+    // clicked row at all: both land on the Issue field.
+    const rowId = () => {
+      if (mode() !== 'update') return undefined;
+      if (focusLineId == null) return sorted[0]?.id;
+      return sorted.some(line => line.id === focusLineId)
+        ? focusLineId
+        : undefined;
+    };
+    const focusRow = rowId();
+    if (focusRow) batchFields.focus(focusRow);
     else issueField.focus();
     setLoadingLines(false);
 
@@ -522,6 +548,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const unitName = () => item()?.unitName ?? t('label.unit');
 
+  // The DOSES lens re-expresses the batch grid's stock columns (old-app
+  // parity — its dosesView column variants): In store / Available / issued
+  // switch to dose quantities, the helper column flips to packs, and
+  // Doses-per-unit context appears.
+  const dosesView = () => allocateIn().kind === 'doses';
+  // Per-batch doses ⇔ packs uses the LINE's own pack size / doses-per-unit (a
+  // variant may override the item's), so the grid converts row by row via the
+  // shared domain helpers (packsToDoses / dosesToPacks).
+
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
   // bare second allocateIn() call is not narrowed).
@@ -607,13 +642,25 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const index = draft.findIndex(line => line.id === id);
     if (index < 0) return;
     const line = draft[index]!;
-    const applied = clampManualPacks(value, line.availablePacks);
+    // Under the doses lens the cell's entry IS doses (the old app's issue()
+    // with AllocateInType.Doses): convert through the line's doses-per-unit
+    // before the shared whole-pack clamp, and report any adjustment in the
+    // entered doses too.
+    const inDoses = dosesView();
+    const requestedPacks =
+      inDoses && value != null
+        ? dosesToPacks(value, line.packSize, line.dosesPerUnit)
+        : value;
+    const applied = clampManualPacks(requestedPacks, line.availablePacks);
     setDraft(index, 'numberOfPacks', applied);
+    const appliedQuantity = inDoses
+      ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
+      : applied;
     setWarnings(
-      value != null && applied !== value
+      value != null && appliedQuantity !== value
         ? [
             t('messages.over-allocated-line', {
-              quantity: formatNumber(applied),
+              quantity: formatNumber(appliedQuantity),
               issueQuantity: formatNumber(value),
             }),
           ]
@@ -797,6 +844,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // header-less tick column gets the 150px default and reads as a gap.
       size: 36,
       header: () => '',
+      // Blank in the grid, but NAMED in the Columns popover (the old app's
+      // header-string / empty-Header split).
+      meta: {
+        columnSettingsLabel: () => t('description.used-in-auto-allocation'),
+      },
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
           <Popover
@@ -843,7 +895,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { key: 'expiryDate' },
-      header: () => t('label.expiry'),
+      header: () => t('label.expiry-date'),
       ...getExpiryDateCell(),
     },
     // Vaccine items only, under either VVM preference (spec § S4 batch grid;
@@ -908,51 +960,136 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: () => t('label.sell-price'),
+      header: () => t('label.pack-sell-price'),
       ...getCurrencyCell(),
     },
+    // Foreign-currency pack price (old-app parity): external customers under
+    // the issue-in-foreign-currency store preference — the home price
+    // re-expressed at the shipment's currency rate (the side panel's
+    // foreign-currency block), formatted in that currency. Blank while the
+    // shipment has no currency set. Static per row, so an accessor is safe.
+    ...(!props.customerIsStore && prefs().issueInForeignCurrency
+      ? [
+          {
+            c: {
+              accessor: (line: DraftLine) =>
+                line.sellPricePerPack / (props.currencyRate || 1),
+              id: 'foreignCurrencySellPricePerPack',
+            },
+            header: () => t('label.fc-sell-price'),
+            meta: { align: 'right' },
+            cell: info =>
+              props.currencyCode
+                ? formatNumber(info.getValue<number>(), {
+                    style: 'currency',
+                    currency: props.currencyCode,
+                    currencyDisplay: 'narrowSymbol',
+                    // formatNumber's max-digits default (10) beats Intl's own
+                    // currency default of 2 — state both, as
+                    // formatCurrencyCell does.
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : '',
+          } as Column<DraftLine, never>,
+        ]
+      : []),
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
       ...getNumberCell(),
     },
-    ...(prefs().manageVaccinesInDoses
+    // Doses-per-unit context, under the DOSES lens only (the old app's
+    // includeColumn: dosesView — the preference alone previously showed it
+    // for non-vaccine items too). The header names the unit.
+    ...(dosesView()
       ? [
           {
             c: { key: 'dosesPerUnit' },
-            header: () => t('label.doses-per-unit'),
+            header: () => t('label.doses-per-unit-name', { unit: unitName() }),
             ...getNumberCell(),
           } as Column<DraftLine, never>,
         ]
       : []),
     {
-      c: { key: 'inStorePacks' },
-      header: () => t('label.in-store'),
+      // In-store stock — re-expressed in doses under the doses lens (old-app
+      // parity). Static per row, so an accessor is safe: a lens flip rebuilds
+      // the whole column set (columns() reads the lens), unlike the in-place
+      // per-batch edits the canAllocate note covers.
+      c: {
+        accessor: line =>
+          dosesView()
+            ? packsToDoses(line.inStorePacks, line.packSize, line.dosesPerUnit)
+            : line.inStorePacks,
+        id: 'inStorePacks',
+      },
+      header: () =>
+        dosesView() ? t('label.in-store-doses') : t('label.in-store'),
       ...getNumberCell(),
     },
     {
-      c: { key: 'availablePacks' },
-      header: () => t('label.available'),
+      // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
+      // (old-app parity: nothing here may be issued); doses under the doses
+      // lens.
+      c: {
+        accessor: line => {
+          if (line.stockLineOnHold || line.location?.onHold) return 0;
+          return dosesView()
+            ? packsToDoses(
+                line.availablePacks,
+                line.packSize,
+                line.dosesPerUnit
+              )
+            : line.availablePacks;
+        },
+        id: 'availablePacks',
+      },
+      header: () =>
+        dosesView()
+          ? t('label.available-doses')
+          : t('label.available-in-packs'),
       ...getNumberCell(),
     },
     {
-      // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available.
+      // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available —
+      // shown and ENTERED in doses under the doses lens (old-app parity;
+      // setPacks converts through the line's doses-per-unit).
       c: { key: 'numberOfPacks' },
-      header: () => t('label.issued'),
+      header: () =>
+        dosesView() ? t('label.doses-issued') : t('label.pack-quantity-issued'),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
+        const label = dosesView()
+          ? t('label.doses-issued')
+          : t('label.pack-quantity-issued');
         return (
           <NumberField
             ref={batchFields.ref(line.id)}
-            label={t('label.issued')}
+            label={label}
             hideLabel
             size="small"
             min={0}
-            max={line.availablePacks}
+            max={
+              dosesView()
+                ? packsToDoses(
+                    line.availablePacks,
+                    line.packSize,
+                    line.dosesPerUnit
+                  )
+                : line.availablePacks
+            }
             decimalLimit={2}
             disabled={rowDisabled(line)}
-            value={line.numberOfPacks || undefined}
+            value={
+              (dosesView()
+                ? packsToDoses(
+                    line.numberOfPacks,
+                    line.packSize,
+                    line.dosesPerUnit
+                  )
+                : line.numberOfPacks) || undefined
+            }
             onChange={value => setPacks(line.id, value ?? null)}
           />
         );
@@ -961,15 +1098,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { id: 'unitsIssued' },
       // "Vials issued" — the unit pluralised as a category (old-app parity).
-      header: () => t('label.units-issued', { unit: getPlural(unitName(), 2) }),
+      // Under the doses lens the helpful counterpart flips to PACKS issued.
+      header: () =>
+        dosesView()
+          ? t('label.pack-quantity-issued')
+          : t('label.units-issued', { unit: getPlural(unitName(), 2) }),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
         return (
           <>
-            {formatNumber(line.numberOfPacks * line.packSize, {
-              maximumFractionDigits: 2,
-            })}
+            {formatNumber(
+              dosesView()
+                ? line.numberOfPacks
+                : line.numberOfPacks * line.packSize,
+              { maximumFractionDigits: 2 }
+            )}
           </>
         );
       },
@@ -1022,6 +1166,35 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             },
           } as Column<DraftLine, never>,
         ]),
+    {
+      // Volume this batch's issue occupies (old-app parity): volume-per-pack
+      // × packs issued. Computed in the CELL render — numberOfPacks mutates
+      // in place (see the canAllocate note above).
+      c: { id: 'volume' },
+      header: () => t('label.volume'),
+      meta: { align: 'right' },
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <>
+            {formatNumber((line.volumePerPack ?? 0) * line.numberOfPacks, {
+              maximumFractionDigits: 2,
+            })}
+          </>
+        );
+      },
+    },
+    {
+      // On-hold flag (the stock line or its location) — the row is already
+      // disabled and its Available shows 0; the check names WHY (old-app
+      // parity).
+      c: {
+        accessor: line => line.stockLineOnHold || !!line.location?.onHold,
+        id: 'onHold',
+      },
+      header: () => t('label.on-hold'),
+      ...getFlagCell(t('label.on-hold')),
+    },
   ];
 
   return (

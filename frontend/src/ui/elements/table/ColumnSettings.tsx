@@ -88,7 +88,12 @@ export function ColumnSettings<T>(props: {
   // flexRender — none of our headers read the context argument, so an empty
   // one is safe here. Falls back to the column id if a column has no header.
   const label = (id: string): JSX.Element => {
-    const header = props.table.getColumn(id)?.columnDef.header;
+    const def = props.table.getColumn(id)?.columnDef;
+    // A column whose grid header renders empty/iconic names itself here via
+    // meta.columnSettingsLabel (e.g. the line editor's auto-allocation tick).
+    const settingsLabel = def?.meta?.columnSettingsLabel;
+    if (settingsLabel) return settingsLabel();
+    const header = def?.header;
     if (typeof header !== 'function') return id;
     return header({} as HeaderContext<T, unknown>);
   };

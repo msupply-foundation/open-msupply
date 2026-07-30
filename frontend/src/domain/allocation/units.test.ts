@@ -3,8 +3,10 @@ import {
   availableUnits,
   clampManualPacks,
   distinctPackSizes,
+  dosesToPacks,
   issuedUnits,
   lensToUnits,
+  packsToDoses,
   round9,
   unitsToLens,
 } from './units';
@@ -88,5 +90,40 @@ describe('unit sums', () => {
 
   it('distinctPackSizes lists each size once', () => {
     expect(distinctPackSizes(batches)).toEqual([10, 5, 20]);
+  });
+});
+
+describe('packsToDoses / dosesToPacks (per-batch doses lens — old-app parity)', () => {
+  it('packsToDoses = packs × pack size × doses-per-unit, rounded to whole doses', () => {
+    expect(packsToDoses(3, 1, 10)).toBe(30); // 3 packs × 1 unit × 10 doses/unit
+    expect(packsToDoses(2, 12, 1)).toBe(24); // 1 dose/unit → just packs × size
+    expect(packsToDoses(1, 1, 3.5)).toBe(4); // 3.5 doses → 4 (doses are whole)
+  });
+
+  it('falls back to 1 dose-per-unit on a zero/missing rate (old app dosesPerUnit || 1)', () => {
+    expect(packsToDoses(3, 5, 0)).toBe(15); // 0 → 1
+    expect(dosesToPacks(15, 5, 0)).toBe(3); // 0 → 1
+  });
+
+  it('dosesToPacks inverts through pack size and doses-per-unit (raw, unclamped)', () => {
+    expect(dosesToPacks(30, 1, 10)).toBe(3); // exact whole packs
+    expect(dosesToPacks(25, 1, 10)).toBe(2.5); // fractional — clamp rounds later
+    expect(dosesToPacks(36, 12, 1)).toBe(3);
+  });
+
+  it('round-trips a doses entry as the line editor does — convert, whole-pack clamp, report (OMS-REG-DIST-03.19)', () => {
+    // 25 doses at 10 doses/vial (pack size 1) = 2.5 packs → rounds UP to 3
+    // whole packs, reported back as 30 doses (the over-allocated-line
+    // warning: "a quantity of 30 has been allocated rather than 25").
+    const packs = clampManualPacks(dosesToPacks(25, 1, 10), 5);
+    expect(packs).toBe(3);
+    expect(packsToDoses(packs, 1, 10)).toBe(30);
+  });
+
+  it('clamps a doses entry beyond availability down to the batch floor', () => {
+    // Available 2 packs (= 20 doses); entering 25 doses clamps to 2 packs.
+    const packs = clampManualPacks(dosesToPacks(25, 1, 10), 2);
+    expect(packs).toBe(2);
+    expect(packsToDoses(packs, 1, 10)).toBe(20);
   });
 });
