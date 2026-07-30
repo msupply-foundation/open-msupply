@@ -58,12 +58,13 @@ Now `styles.buton` is a TypeScript error, in the editor and in `check`. Note tcm
 **The fix, part 2 — the theme contract** (`scripts/check-theme-tokens.mjs`): `tokens.css` has a region inside `:root` fenced by `/* @theme-contract:start */` … `/* @theme-contract:end */` comment markers. The script enforces, for every `[data-theme='…']` block in the file:
 
 1. **Completeness** — every contract token is overridden (no forgotten dark values);
-2. **No strays** — the block overrides _only_ contract tokens (catches typos, and attempts to theme a static token).
+2. **No strays** — the block overrides _only_ contract tokens (catches typos, and attempts to theme a static token);
+3. **Custom-theme coverage** — every contract token is either reachable from a custom-theme role/recipe or listed in `NOT_THEMABLE`, both in [`src/ui/branding/themeRecipes.ts`](../branding/themeRecipes.ts). This is what stops a new colour token silently becoming unthemable for sites. See [`kdd/custom-themes`](../../../kdd/custom-themes/draft-kdd.md) and [CUSTOM_THEMES.md](./CUSTOM_THEMES.md).
 
 **Adding a token** — decide which kind it is:
 
-- **Themed** (colours, shadows — anything that differs between light and dark): declare it _inside_ the contract markers, then add an override to **every** `[data-theme]` block. The script fails until you do both.
-- **Static** (spacing, radii, typography, sizes): declare it _below_ the contract markers, and don't touch the theme blocks.
+- **Themed** (colours, shadows — anything that differs between light and dark): declare it _inside_ the contract markers, then add an override to **every** `[data-theme]` block. The script fails until you do both. Then decide whether a **site's custom theme** should be able to change it: give it a recipe/role in `themeRecipes.ts`, or add it to `NOT_THEMABLE` with the reason. The script fails until you do one of those too.
+- **Static** (spacing, radii, typography, sizes): declare it _below_ the contract markers, and don't touch the theme blocks. Static tokens are out of a custom theme's reach by construction — that is why a custom theme cannot break the layout.
 
 ## Page-CSS check (step 5)
 

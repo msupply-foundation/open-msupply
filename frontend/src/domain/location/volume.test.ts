@@ -4,6 +4,7 @@ import {
   getVolumeUsedPercentage,
   isAvailable,
   isEmpty,
+  passesFullness,
 } from './volume';
 
 // A minimal location shape for the pure volume helpers (the real node has
@@ -108,5 +109,96 @@ describe('isAvailable with a required volume', () => {
 
   it('stays false when on hold even if the volume would fit', () => {
     expect(isAvailable(loc(10, 0, 0, true), 1)).toBe(false);
+  });
+});
+
+// The picker's fullness filter, and the two exemptions that stop it hiding a
+// valid choice (spec/stock AC-LV2). Both failure modes are silent — a location
+// merely goes missing from a list — so they are asserted here rather than left
+// to the widget.
+const withId = (
+  id: string,
+  volume: number,
+  volumeUsed: number,
+  totalCount: number,
+  onHold = false
+) => ({ id, ...loc(volume, volumeUsed, totalCount, onHold) });
+
+describe('passesFullness', () => {
+  it('keeps everything under "all", exemptions irrelevant', () => {
+    expect(passesFullness(withId('a', 10, 10, 5), 'all')).toBe(true);
+    expect(passesFullness(withId('a', 10, 10, 5, true), 'all')).toBe(true);
+  });
+
+  it('filters on stock under "empty" and on room under "available"', () => {
+    expect(passesFullness(withId('a', 10, 0, 0), 'empty')).toBe(true);
+    expect(passesFullness(withId('a', 10, 2, 3), 'empty')).toBe(false);
+    expect(
+      passesFullness(withId('a', 10, 2, 3), 'available', { requiredVolume: 5 })
+    ).toBe(true);
+    expect(
+      passesFullness(withId('a', 10, 2, 3), 'available', { requiredVolume: 50 })
+    ).toBe(false);
+  });
+
+  it('always keeps the selected location, so a line can be re-saved unchanged', () => {
+    // Full, over capacity, and on hold — selected still survives, every mode.
+    const full = withId('sel', 10, 10, 5);
+    const held = withId('sel', 10, 0, 0, true);
+    for (const mode of ['empty', 'available'] as const) {
+      expect(passesFullness(full, mode, { selectedId: 'sel' })).toBe(true);
+      expect(passesFullness(held, mode, { selectedId: 'sel' })).toBe(true);
+    }
+  });
+
+  // The repack bug this exemption exists for: capacity 100, volumeUsed 80 of
+  // which THIS line contributes 30. Repacking all 30 back into it is a pure
+  // relocation (AC-R7), but 100 − 80 = 20 < 30, so without the exemption the
+  // one location the stock certainly fits in is filtered out.
+  it('keeps the location the stock is already in under "available"', () => {
+    const origin = withId('orig', 100, 80, 4);
+    expect(passesFullness(origin, 'available', { requiredVolume: 30 })).toBe(
+      false
+    );
+    expect(
+      passesFullness(origin, 'available', {
+        requiredVolume: 30,
+        originalLocationId: 'orig',
+      })
+    ).toBe(true);
+  });
+
+  it('exempts the origin even when it is completely full', () => {
+    expect(
+      passesFullness(withId('orig', 10, 10, 2), 'available', {
+        originalLocationId: 'orig',
+      })
+    ).toBe(true);
+  });
+
+  it('does NOT exempt the origin from "empty" — it holds this stock', () => {
+    expect(
+      passesFullness(withId('orig', 100, 80, 4), 'empty', {
+        originalLocationId: 'orig',
+      })
+    ).toBe(false);
+  });
+
+  it('leaves other locations unexempted', () => {
+    expect(
+      passesFullness(withId('other', 100, 80, 4), 'available', {
+        requiredVolume: 30,
+        originalLocationId: 'orig',
+        selectedId: 'sel',
+      })
+    ).toBe(false);
+  });
+
+  it('still refuses an on-hold origin-less location under "available"', () => {
+    expect(
+      passesFullness(withId('a', 100, 0, 0, true), 'available', {
+        originalLocationId: 'orig',
+      })
+    ).toBe(false);
   });
 });

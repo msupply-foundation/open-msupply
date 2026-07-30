@@ -8,11 +8,16 @@
 #   (OMS-REG-DIST-05.23).
 # - omProgramModule → the Emergency filter (OMS-REG-DIST-05.24 — the
 #   reference app's gate, confirmed against the running OMS client).
+# - canCreateInternalOrderFromARequisition → the Create-order action
+#   (OMS-FUN-DIS-03.16; the mutation itself is not preference-gated).
 # - names(isCustomer) → the customer ids feeding customerProgramsGate below.
 query requisitionListContext($storeId: String!) {
   storePreferences(storeId: $storeId) {
     responseRequisitionRequiresAuthorisation
     omProgramModule
+  }
+  preferences(storeId: $storeId) {
+    canCreateInternalOrderFromARequisition
   }
   names(
     storeId: $storeId
