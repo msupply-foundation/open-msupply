@@ -22,8 +22,11 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 // picker), both chips in the table toolbar's FilterBar — the search a DEFAULT
 // filter, Location addable from the filter menu. The
 // filters the OLD client-side filter offered but the server can't do yet —
-// batch (no field), expiry-before (no field), and the "show error lines"
-// filter — are TODOs below.
+// batch (no field), expiry-before (no field) — are TODOs below. The "show
+// error lines" filter IS built, but it doesn't belong here: it's a boolean
+// toggle over the view's transient error id-set, not a wire-filter key the
+// user types into, so it rides FilterBar's `extra` group in
+// StocktakeLineFilters.tsx (resolved to `id.equalAny` at query time).
 // The location filter uses the plain, VOLUME-BLIND picker: it only narrows the
 // line list to a location, so capacity is irrelevant (spec/stocktakes/
 // ui-surface.md). The locations are fetched by the detail VIEW (one fetch,
@@ -89,10 +92,11 @@ export const stocktakeDetailFilters = (
     // TODO: batch filter. The old client filter offered it, but
     // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
     // TODO: expiry-before filter. No expiry field on the server filter — needs
-    // a backend addition. TODO: "show error lines" filter. The error dialog
-    // used to switch a client-only id set; server-side this would be
-    // `id.equalAny` (or stockLineId) with the failed ids. Errors still flag
-    // inline on the row.
+    // a backend addition.
+    // `id` is dismissed HERE (it's not a user-typed chip), but it IS used by
+    // the "show error lines" filter — driven from the view's error id-set as
+    // `id.equalAny`, wired through FilterBar's `extra` group in
+    // StocktakeLineFilters.tsx, not this wire-filter map.
     id: null,
     stocktakeId: null,
     itemId: null,

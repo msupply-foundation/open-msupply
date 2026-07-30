@@ -1,4 +1,4 @@
-/* The master-list picker (spec/internal-orders S7): a scrollable one-column
+/* The master-list picker (shared search-and-pick modal, spec/internal-orders S7): a scrollable one-column
    list of selectable rows beneath the search field. */
 .list {
   display: flex;

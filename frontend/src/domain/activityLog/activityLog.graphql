@@ -1,7 +1,8 @@
 # The shared activity-log surface (a record's Log tab): the activity-log entries
 # recorded against ONE record, scoped by recordId. Read-only, non-paginated (the
 # log is append-only and short per record — a generous single page). Sorted by
-# id descending = most recent first (activity-log ids are monotonic). `to`/`from`
+# id (monotonic): descending = most recent first, or ascending where the
+# consuming spec mandates oldest-first (the panel's `order` prop). `to`/`from`
 # carry the change detail (a scalar or a JSON blob) shown in the Details column;
 # `type` maps to a `log.*` translation key (Formatter parity: TYPE → log.<kebab>).
 fragment ActivityLog on ActivityLogNode {

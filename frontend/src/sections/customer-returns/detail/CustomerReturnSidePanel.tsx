@@ -24,7 +24,7 @@ import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  CustomerReturnDetail,
+  CustomerReturnForCopy,
   type CustomerReturnInfoFragment,
 } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
@@ -79,13 +79,15 @@ export const CustomerReturnSidePanel: Component<
   };
 
   // The WHOLE return — header, every line, and the linked records — for the
-  // copy action (controls § copy to clipboard). This panel is handed the info
-  // node alone, so copy re-reads the detail query, whose nested `lines`
-  // connector takes no page argument and so carries the complete line set. A
+  // copy action (controls § copy to clipboard). Its OWN operation, not the
+  // screen's: customerReturnDetail is header-only and the line table holds one
+  // server-paginated page, and the standard requires copy to make an
+  // unpaginated read rather than serialise the page on screen. The nested
+  // `lines` connector takes no page argument, so it carries the complete set. A
   // fetch failure routes to the global error modal; a NodeError (not expected
   // from a screen showing the record) copies nothing.
   const loadFullReturn = async () => {
-    const result = await graphqlFetch(CustomerReturnDetail, {
+    const result = await graphqlFetch(CustomerReturnForCopy, {
       storeId: params.storeId,
       id: props.node.id,
     });
@@ -172,6 +174,7 @@ export const CustomerReturnSidePanel: Component<
                 </Show>
               </Text>
               <RecordLink
+                testId="originating-shipment-link"
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
@@ -220,14 +223,19 @@ export const CustomerReturnSidePanel: Component<
         </SidePanelActions>
       </SidePanelSection>
 
-      <ConfirmDialog
-        open={deleteConfirm()}
-        onClose={() => setDeleteConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural('messages.confirm-delete-returns', 1)}
-        confirmVariant="danger"
-        onConfirm={() => void runDelete()}
-      />
+      {/* Mounted only while open (kdd/action-modal) — see the status footer's
+          hold confirm: a closed dialog keeps its `confirmation-modal` + footer
+          ids matchable. */}
+      <Show when={deleteConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setDeleteConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={tPlural('messages.confirm-delete-returns', 1)}
+          confirmVariant="danger"
+          onConfirm={() => void runDelete()}
+        />
+      </Show>
 
       {/* An unexpected delete rejection (not a permission block, which routes to
           the global modal) — surfaced here rather than swallowed. */}
@@ -239,7 +247,12 @@ export const CustomerReturnSidePanel: Component<
           title={t('error.something-wrong')}
           description={deleteError()}
           // The standard, icon-less acknowledgement (D55).
-          actions={<OkButton onClick={() => setDeleteError(undefined)} />}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setDeleteError(undefined)}
+            />
+          }
         />
       </Show>
     </>

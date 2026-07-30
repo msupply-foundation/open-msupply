@@ -1,15 +1,16 @@
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
+import { graphqlFetch } from '../../api/graphql';
+import { t } from '../../intl';
 import {
   UpdateIndicatorValue,
-  type InternalOrderIndicatorsResult,
+  type ProgramIndicatorValuesResult,
 } from './indicators.generated';
 
-// Indicators-tab domain logic (spec/internal-orders S3 § Indicators tab): the
-// line merge (AC-I4) and the per-cell save (AC-I5–I7).
+// Shared Indicators-tab domain logic (spec/internal-orders S3 § Indicators
+// tab owns the surface; spec/requisitions § indicator values consumes it):
+// the line merge (AC-I4) and the per-cell save (AC-I5–I7).
 
 type IndicatorConnector = Extract<
-  InternalOrderIndicatorsResult['programIndicators'],
+  ProgramIndicatorValuesResult['programIndicators'],
   { __typename: 'ProgramIndicatorConnector' }
 >;
 export type IndicatorNode = IndicatorConnector['nodes'][number];

@@ -441,24 +441,3 @@ query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {
     }
   }
 }
-
-# The Log tab (OMS-REG-DIST-02.30): the shipment's activity history.
-query outboundActivityLogs($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      nodes {
-        id
-        type
-        datetime
-        to
-        user {
-          username
-        }
-      }
-    }
-  }
-}

@@ -1,0 +1,46 @@
+{
+  "name": "Open mSupply (system default)",
+  "light": {
+    "brand": {
+      "base": "#e95c30",
+      "dark": "#c43c11",
+      "gradient": ["#ff8800", "#e63535"]
+    },
+    "accent": {
+      "base": "#3e7bfa",
+      "gradient": ["#78a3fc", "#3e7bfa"]
+    },
+    "danger": { "base": "#e63535", "background": "#ffcdce" },
+    "warning": { "base": "#f2a001", "alert": "#ed6c02" },
+    "success": "#2e7d32",
+    "surface": "#ffffff",
+    "text": { "body": "#1c1c28", "muted": "#555770" },
+    "status": {
+      "shipped": "#1fb6b6",
+      "delivered": "#7c5cff",
+      "received": "#5c86ff",
+      "verified": "#38a169",
+      "finalised": "#38a169"
+    }
+  },
+  "dark": {
+    "brand": { "base": "#e95c30", "gradient": ["#ff8800", "#e63535"] },
+    "accent": {
+      "base": "#5b8def",
+      "dark": "#4a7ce8",
+      "gradient": ["#78a3fc", "#3e7bfa"]
+    },
+    "danger": { "base": "#ff5f5f", "background": "#4a1f22" },
+    "warning": { "base": "#ffb020", "alert": "#ff8f33" },
+    "success": "#4caf50",
+    "surface": "#21212b",
+    "text": { "body": "#ececf2", "muted": "#a8a9bd" },
+    "status": {
+      "shipped": "#2ecbcb",
+      "delivered": "#9678ff",
+      "received": "#7a9dff",
+      "verified": "#48c78e",
+      "finalised": "#48c78e"
+    }
+  }
+}

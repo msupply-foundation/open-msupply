@@ -11,6 +11,13 @@ export interface InfoTooltipProps {
    * the localised "More information".
    */
   label?: string;
+  /**
+   * Emphasis. `'default'` is the quiet grey that brightens on hover, for a
+   * marker beside a label. `'primary'` is the standing brand-toned mark for one
+   * standing alone in a muted row (dashboard stats — the app's own treatment),
+   * which tints its background on hover rather than brightening.
+   */
+  tone?: 'default' | 'primary';
   /** Preferred popover side/alignment. Default 'top'. */
   placement?: PopoverPlacement;
   /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
@@ -27,7 +34,9 @@ export interface InfoTooltipProps {
  * render it inline anywhere a term needs a gloss.
  */
 export const InfoTooltip = (props: InfoTooltipProps) => (
-  <span class={styles.wrapper}>
+  // The tone attribute rides the wrapper we own, not the trigger button: the
+  // button belongs to Popover, and its typed `triggerProps` takes no data-*.
+  <span class={styles.wrapper} data-tone={props.tone ?? 'default'}>
     <Popover
       openOnHover
       placement={props.placement ?? 'top'}
