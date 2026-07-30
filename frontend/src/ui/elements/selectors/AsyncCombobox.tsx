@@ -1,4 +1,4 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createMemo, createSignal, type JSX } from 'solid-js';
 import { Combobox } from './Combobox';
 import {
   createPaginatedSearch,
@@ -47,6 +47,8 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   /** InfoTooltip beside the label — passed through to the Combobox. */
   labelInfo?: JSX.Element;
+  /** A trailing in-field action — passed through to the Combobox. */
+  endAction?: JSX.Element;
   disabled?: boolean;
   error?: string;
   /** Marks the field required — passed through to the Combobox's label. */
@@ -138,14 +140,18 @@ export const AsyncCombobox = <T,>(
   // doesn't match what was typed (#318). The interim list is only as good as
   // the held page (~one page of the old query), which is fine: when the real
   // page-0 response lands, `pending` drops and it replaces this wholesale.
-  const base = (): T[] => {
+  // A MEMO, not a plain getter: the array identity must change only when its
+  // contents do. Read on every render pass, a getter hands back a fresh array
+  // each time, and `items` below inherits that churn — which is load-bearing,
+  // see its note.
+  const base = createMemo((): T[] => {
     if (!search.pending()) return search.items();
     const needle = query().toLocaleLowerCase();
     if (!needle) return search.items();
     return search
       .items()
       .filter(i => props.itemToString(i).toLocaleLowerCase().includes(needle));
-  };
+  });
 
   // The caller's selected node leads the list (deduped) so a controlled value
   // resolves even before its page is fetched. We seed it when it either matches
@@ -173,7 +179,16 @@ export const AsyncCombobox = <T,>(
   // placeholder fields (e.g. "0 Units") permanently shadow the real,
   // freshly-fetched data for as long as the item stays the controlled selection
   // (#549).
-  const items = (): T[] => {
+  //
+  // A MEMO for the same reason as `base`, and here it is load-bearing rather
+  // than merely tidy: Kobalte owns the input's text and resyncs it from its
+  // selection whenever its selectedKeys signal RE-EMITS (its
+  // `on(selectedKeys, resetInputValue)`). A fresh array identity per read made
+  // Combobox's `on([value, items])` selection-sync effect re-run on every
+  // render pass, which re-emitted that signal mid-typing — so each keystroke
+  // was overwritten by the selected item's label and the field could never be
+  // retyped over (you could not change a prescription's patient).
+  const items = createMemo((): T[] => {
     const seed = props.selected;
     if (!seed) return base();
     const key = props.itemToValue(seed);
@@ -186,7 +201,7 @@ export const AsyncCombobox = <T,>(
     const isControlledValue = props.value !== undefined && props.value === key;
     if (!seedMatches && !isControlledValue) return base();
     return [seed, ...rest];
-  };
+  });
 
   const value = () =>
     props.value ??
@@ -206,6 +221,7 @@ export const AsyncCombobox = <T,>(
       label={props.label}
       hideLabel={props.hideLabel}
       labelInfo={props.labelInfo}
+      endAction={props.endAction}
       class={props.class}
       disabled={props.disabled}
       error={props.error}
@@ -250,7 +266,18 @@ export const AsyncCombobox = <T,>(
         setQuery(next);
         search.setSearch(next);
       }}
-      onOpenChange={open => open && search.ensure()}
+      onOpenChange={open => {
+        if (open) return search.ensure();
+        // Closing without picking ABANDONS the search, so forget the typed
+        // text. It is what drops the committed selection out of `items` (see
+        // its seed rule), and Kobalte looks the selection up in that list to
+        // restore the input's text as the field closes — with a stale query
+        // still narrowing the list, the lookup misses and the field blanks,
+        // reading as "the patient was deleted" on a field that cannot be
+        // emptied. Only the local query is reset, not the fetch: the held rows
+        // stay as they are, so no request is issued to close a popup.
+        setQuery('');
+      }}
       onReachEnd={() => search.loadMore()}
       onChange={item => props.onSelect(item)}
     />

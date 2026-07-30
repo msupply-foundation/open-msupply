@@ -1,4 +1,5 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createMemo, createSignal, Show, type Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -47,15 +48,19 @@ export interface PrescriptionToolbarProps {
 export const PrescriptionToolbar: Component<
   PrescriptionToolbarProps
 > = props => {
+  const navigate = useNavigate();
   // A pending date/program change awaiting the clear-lines confirmation.
   const [pending, setPending] = createSignal<Omit<UpdateInput, 'id'>>();
 
   const hasLines = () => props.node.lines.totalCount > 0;
 
-  const patientOption = (): PatientOption | undefined => {
+  // A MEMO, not a getter: it MINTS an option object, so a getter would hand a
+  // new identity to the picker on every read and invalidate everything
+  // downstream that keys off it — including the combobox's own selection sync.
+  const patientOption = createMemo((): PatientOption | undefined => {
     const patient = props.node.patient;
     return patient ? minimalPatientOption(patient.id, patient.name) : undefined;
-  };
+  });
 
   // The shown day: the prescription date's LOCAL calendar day.
   const shownDay = () =>
@@ -74,11 +79,18 @@ export const PrescriptionToolbar: Component<
         storeId={props.storeId}
         selected={patientOption()}
         disabled={props.disabled}
-        // The picker's view-patient affordance (spec/patients S4 allow-edit),
-        // available whatever the prescription's own editability — it opens the
-        // patient, not the prescription (ui-surface S3 § header fields).
-        viewHref={patientId =>
-          `/${props.storeId}/dispensary/patients/${patientId}`
+        // No clear affordance: a prescription always HAS a patient, so the
+        // field is never nullable — it is changed by picking another, never
+        // emptied (ui-standards/controls § clearability follows optionality,
+        // D5; the current app's patient input is likewise not clearable).
+        clearable={false}
+        // The picker's edit-patient affordance (spec/patients S4 allow-edit),
+        // available whatever the prescription's own editability — it edits the
+        // patient, not the prescription (ui-surface S3 § header fields). It
+        // opens the patient's own screen, which holds the details form and the
+        // Insurance tab; S4's two-tab edit modal is not built.
+        onEditPatient={patientId =>
+          navigate(`/${props.storeId}/dispensary/patients/${patientId}`)
         }
         // A prescription always has a patient: the picker never clears
         // (null selections are ignored), it only swaps (AC-N1).

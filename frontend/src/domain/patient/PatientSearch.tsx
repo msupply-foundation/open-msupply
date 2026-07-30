@@ -1,15 +1,14 @@
 import { Show, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
-import { RecordLink } from '../../ui/elements/typography/RecordLink';
-import { PlusCircleIcon } from '../../ui/icons';
+import { IconButton } from '../../ui/elements/buttons/IconButton';
+import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   patientSearchPageFetcher,
   type PatientOption,
 } from './patientResource';
-import styles from './PatientSearch.module.css';
 
 export interface PatientSearchProps {
   label: string;
@@ -48,18 +47,17 @@ export interface PatientSearchProps {
    */
   onCreatePatient?: () => void;
   /**
-   * When set, the picker offers its **View patient** affordance for the
-   * currently-selected patient (spec/patients S4 allow-edit): a link to the
-   * patient's own screen, where the details form and Insurance tab already
-   * live. The caller supplies the route because route shape is the app's, not
-   * the domain module's.
+   * When set, the picker offers its **edit-patient** affordance for the
+   * currently-selected patient (spec/patients S4 allow-edit): an edit button
+   * at the end of the field, as the current app has. The consuming vertical
+   * decides what it opens (routing is the app's concern, not the domain
+   * module's) and is handed the selected patient's id.
    *
-   * Called with the selected patient's id; returns its href. The affordance is
-   * offered only while a patient IS selected, and is NOT gated by `disabled`:
-   * it edits the patient, not the record hosting this picker (prescriptions
+   * Offered only while a patient IS selected, and NOT gated by `disabled`: it
+   * edits the patient, not the record hosting this picker (prescriptions
    * ui-surface S3 — it stays available on a read-only prescription).
    */
-  viewHref?: (patientId: string) => string;
+  onEditPatient?: (patientId: string) => void;
 }
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
@@ -99,31 +97,30 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * (OMS-REG-DIS-01 `.52`, D68).
  *
  * Consumed by other surfaces (prescriptions, next-of-kin). Its allow-edit
- * affordance (spec/patients S4) is `viewHref`: a link to the selected
- * patient's own screen, riding the field's LABEL row so it costs no space in a
- * header field cluster and stays legible while the picker itself is disabled.
- * (S4's fuller two-tab edit modal, with Save and this same View-patient
- * action, is not built — reaching the patient's screen is the part the
- * dispensing header needs.)
+ * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
+ * of the field — the current app's placement — so it costs the label row
+ * nothing and stays live while the picker itself is disabled. (S4's fuller
+ * two-tab edit modal is not built; the consumer decides where the affordance
+ * leads.)
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>
     label={props.label}
     hideLabel={props.hideLabel}
-    // The view-patient link, beside the label: offered only once a patient is
-    // selected (there is nothing to view otherwise), and deliberately NOT
-    // gated by `disabled` — it opens the patient, not the record hosting the
-    // picker (prescriptions ui-surface S3).
-    labelInfo={
-      <Show when={props.viewHref && props.selected}>
+    // The edit-patient button, at the end of the field: offered only once a
+    // patient is selected (there is nothing to edit otherwise), and
+    // deliberately NOT gated by `disabled` — it edits the patient, not the
+    // record hosting the picker (prescriptions ui-surface S3).
+    endAction={
+      <Show when={props.onEditPatient && props.selected}>
         {selected => (
-          <RecordLink
-            href={props.viewHref?.(selected().id) ?? ''}
-            class={styles.viewLink}
-            testId="view-patient-link"
-          >
-            {t('button.view-patient')}
-          </RecordLink>
+          <IconButton
+            icon={<EditIcon />}
+            label={t('label.edit')}
+            size="small"
+            data-testid="edit-patient-button"
+            onClick={() => props.onEditPatient?.(selected().id)}
+          />
         )}
       </Show>
     }
