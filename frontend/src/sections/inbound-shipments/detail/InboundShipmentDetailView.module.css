@@ -1,0 +1,15 @@
+/*
+ * Reach-for order step 4 — scoped to this screen, tokens only.
+ *
+ * A line that arrived via another store's transfer can't be independently
+ * deleted, so its item code reads in the error tone to make the provenance
+ * visible (spec S8 → per-line indicators). There is no errorable-code cell in
+ * the library — `CELL_TYPES.md` shows an `ErrorableCode` in an example, but no
+ * such component exists — so the tone lives here until one does.
+ *
+ * Colour is not the only cue: the row's hover text names the reason, and the
+ * attempted delete returns the server's explanation.
+ */
+.errorCode {
+  color: var(--error-main);
+}
