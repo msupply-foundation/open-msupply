@@ -142,81 +142,99 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         )}
       </Show>
 
-      <Dialog
-        open={pending() != null}
-        dismissable={phase() !== 'working'}
-        onClose={close}
-        icon={<ArrowRightIcon />}
-        testId="confirmation-modal"
-        // The error phase is no longer a question, so the heading stops asking
-        // one (it would otherwise read "Are you sure?" over a rejection).
-        title={
-          phase() === 'error'
-            ? t('heading.cannot-do-that')
-            : t('heading.are-you-sure')
-        }
-        description={
-          <Switch
-            fallback={
-              // On hold, the prompt says what the one save will do; otherwise
-              // the plain status confirmation.
-              releaseHold()
-                ? t('messages.confirm-release-hold-and-status-as', {
-                    status: statusLabel(pending() ?? 'RECEIVED'),
-                  })
-                : t('messages.confirm-status-as', {
-                    status: statusLabel(pending() ?? 'RECEIVED'),
-                  })
-            }
-          >
-            <Match when={phase() === 'error'}>
-              <Alert severity="error">{errorMessage()}</Alert>
-            </Match>
-          </Switch>
-        }
-        // Dialog-footer identity (D55): icon-less throughout. The confirm keeps
-        // its own verb ("Confirm {status}") — a custom label is outside
-        // "standard territory", so it stays a primary <Button> — while Cancel
-        // and the error acknowledgement are the pre-composed pair.
-        actions={
-          <Switch
-            fallback={
-              <>
-                <Show when={phase() === 'confirm'}>
-                  <CancelButton
-                    data-testid="dialog-button-cancel"
-                    onClick={close}
-                  />
-                </Show>
-                <Button
-                  variant="primary"
-                  loading={phase() === 'working'}
-                  data-testid="confirmation-modal-ok"
-                  onClick={() => void run()}
-                >
-                  {confirmLabel(pending() ?? 'RECEIVED')}
-                </Button>
-              </>
-            }
-          >
-            <Match when={phase() === 'error'}>
-              <OkButton data-testid="dialog-button-ok" onClick={close} />
-            </Match>
-          </Switch>
-        }
-      />
+      {/* Mounted only while open (kdd/action-modal) — a closed dialog keeps its
+          `confirmation-modal` + footer ids matchable. `phase` lives in this
+          component, not the dialog, and openConfirm resets it, so gating costs
+          no state. */}
+      <Show when={pending() != null}>
+        <Dialog
+          open
+          dismissable={phase() !== 'working'}
+          onClose={close}
+          icon={<ArrowRightIcon />}
+          testId="confirmation-modal"
+          // The error phase is no longer a question, so the heading stops asking
+          // one (it would otherwise read "Are you sure?" over a rejection).
+          title={
+            phase() === 'error'
+              ? t('heading.cannot-do-that')
+              : t('heading.are-you-sure')
+          }
+          description={
+            <Switch
+              fallback={
+                // On hold, the prompt says what the one save will do; otherwise
+                // the plain status confirmation.
+                releaseHold()
+                  ? t('messages.confirm-release-hold-and-status-as', {
+                      status: statusLabel(pending() ?? 'RECEIVED'),
+                    })
+                  : t('messages.confirm-status-as', {
+                      status: statusLabel(pending() ?? 'RECEIVED'),
+                    })
+              }
+            >
+              <Match when={phase() === 'error'}>
+                <Alert severity="error">{errorMessage()}</Alert>
+              </Match>
+            </Switch>
+          }
+          // Dialog-footer identity (D55): icon-less throughout. The confirm keeps
+          // its own verb ("Confirm {status}") — a custom label is outside
+          // "standard territory", so it stays a primary <Button> — while Cancel
+          // and the error acknowledgement are the pre-composed pair.
+          actions={
+            <Switch
+              fallback={
+                <>
+                  <Show when={phase() === 'confirm'}>
+                    <CancelButton
+                      data-testid="dialog-button-cancel"
+                      onClick={close}
+                    />
+                  </Show>
+                  <Button
+                    variant="primary"
+                    loading={phase() === 'working'}
+                    data-testid="confirmation-modal-ok"
+                    onClick={() => void run()}
+                  >
+                    {confirmLabel(pending() ?? 'RECEIVED')}
+                  </Button>
+                </>
+              }
+            >
+              <Match when={phase() === 'error'}>
+                <OkButton data-testid="dialog-button-ok" onClick={close} />
+              </Match>
+            </Switch>
+          }
+        />
+      </Show>
 
       {/* Blocked advance — no lines: an info-only dialog (adding a line lifts
           the block, OMS-REG-DIST-07.38). The on-hold block is handled inline
-          above (actionable — D59). */}
-      <Dialog
-        open={noLinesBlocked()}
-        onClose={() => setNoLinesBlocked(false)}
-        icon={<InfoIcon />}
-        title={t('heading.cannot-do-that')}
-        description={t('messages.no-lines')}
-        actions={<OkButton onClick={() => setNoLinesBlocked(false)} />}
-      />
+          above (actionable — D59).
+
+          Mounted only while open (kdd/action-modal), like every other notice
+          here: a closed-but-mounted Dialog leaves its footer button — and so
+          its shared `dialog-button-ok` id — in the DOM, which makes that id
+          ambiguous for anything selecting on it (e2e/TESTIDS.md). */}
+      <Show when={noLinesBlocked()}>
+        <Dialog
+          open
+          onClose={() => setNoLinesBlocked(false)}
+          icon={<InfoIcon />}
+          title={t('heading.cannot-do-that')}
+          description={t('messages.no-lines')}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setNoLinesBlocked(false)}
+            />
+          }
+        />
+      </Show>
     </>
   );
 };

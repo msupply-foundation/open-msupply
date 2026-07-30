@@ -175,6 +175,10 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           inputTestId="clinician-select"
           value={clinicianId()}
+          // The create-clinician side flow (S8): the picker owns it, and a
+          // clinician created here comes back selected.
+          allowCreate
+          storeId={params.storeId}
           onChange={clinician => setClinicianId(clinician?.id)}
         />
       </FieldRow>

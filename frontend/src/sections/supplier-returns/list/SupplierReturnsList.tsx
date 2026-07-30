@@ -90,8 +90,10 @@ const DEFAULT_STATE: ReturnsListState = {
 };
 
 // Status → chip colour token (tokens.css --status-*); label via the shared
-// translated map. Text + style, never colour alone.
-const STATUS_COLOURS: Record<string, string> = {
+// translated map. Text + style, never colour alone. Keyed by the GENERATED
+// status union (partial: the union also carries statuses a supplier return
+// never reaches), so a typo'd or dropped key is a compile error.
+const STATUS_COLOURS: Partial<Record<ReturnRow['status'], string>> = {
   NEW: 'var(--status-new)',
   PICKED: 'var(--status-picked)',
   SHIPPED: 'var(--status-shipped)',
@@ -170,10 +172,7 @@ const SupplierReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
-  // The store preferences this list keys off: fetched once per store. `.latest`
-  // + undefined-tolerant read — while unresolved, treat manual returns as
-  // ENABLED (the common case; flashing the notice would be the wrong
-  // direction).
+  // The store preferences this list keys off: fetched once per store.
   const [prefs] = createResource(
     () => params.storeId,
     async storeId => {
@@ -182,14 +181,26 @@ const SupplierReturnsList: Component = () => {
       return result.data.preferences;
     }
   );
+  // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction): the status chip reads the options lazily as it renders, so a
+  // still-pending preference must never suspend this screen's boundary —
+  // `.latest` alone would, on its first pending read, tearing down the open
+  // chip. Unresolved = no restriction (and manual returns ENABLED — the common
+  // case; flashing the notice would be the wrong direction).
+  const loadedPrefs = () =>
+    prefs.state === 'ready' || prefs.state === 'refreshing'
+      ? prefs.latest
+      : undefined;
   const manualReturnsDisabled = () =>
-    prefs.latest?.disableManualReturns ?? false;
+    loadedPrefs()?.disableManualReturns ?? false;
 
   // Built once per mount (stable identity — FilterBar never remounts a chip);
   // the accessor is read lazily per render, so the status options narrow in
   // place when the invoice-status-options preference resolves (rules
   // § preference gates).
-  const filters = createFilters(() => prefs.latest?.invoiceStatusOptions ?? []);
+  const filters = createFilters(
+    () => loadedPrefs()?.invoiceStatusOptions ?? []
+  );
 
   const onNewReturn = () => {
     // Preference gate first (rules § preference & permission gates): with
@@ -243,6 +254,10 @@ const SupplierReturnsList: Component = () => {
   // store can no longer edit (Shipped) — the same standing gate as everything
   // else.
   const setColour = async (row: ReturnRow, colour: string) => {
+    // No typed-error branch to read: `UpdateSupplierReturnResponse` is
+    // `InvoiceNode` alone (contract § header saves), so every rejection arrives
+    // as a graphqlError and the global modal has already shown it — unlike the
+    // customer-returns twin, whose union carries an error member.
     const result = await graphqlFetch(UpdateSupplierReturnColour, {
       storeId: params.storeId,
       id: row.id,
@@ -412,7 +427,7 @@ const SupplierReturnsList: Component = () => {
         emptyMessage={t('error.no-supplier-returns')}
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
             data-testid="nothing-here-create-button"
             onClick={onNewReturn}
           >
@@ -424,6 +439,14 @@ const SupplierReturnsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+        // the install-wide default; everyone else gets no action.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         // Pagination renders as an overlay INSIDE the table, not in a page
         // footer band — consistent with the stocktakes list (kdd/table-state).
         // State stays page-owned / URL-backed.
@@ -440,19 +463,23 @@ const SupplierReturnsList: Component = () => {
         onClose={() => setCreateOpen(false)}
       />
       {/* The manual-returns-disabled notice: an info-only dialog in place of the
-          create flow while the store preference is on. */}
-      <Dialog
-        open={disabledNoticeOpen()}
-        onClose={() => setDisabledNoticeOpen(false)}
-        title={t('button.new-return')}
-        description={t('messages.manual-returns-preferences-disabled')}
-        actions={
-          <OkButton
-            data-testid="dialog-button-ok"
-            onClick={() => setDisabledNoticeOpen(false)}
-          />
-        }
-      />
+          create flow while the store preference is on. Mounted only while open
+          (kdd/action-modal) — a closed-but-mounted Dialog leaves its shared
+          `dialog-button-ok` id in the DOM. */}
+      <Show when={disabledNoticeOpen()}>
+        <Dialog
+          open
+          onClose={() => setDisabledNoticeOpen(false)}
+          title={t('button.new-return')}
+          description={t('messages.manual-returns-preferences-disabled')}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setDisabledNoticeOpen(false)}
+            />
+          }
+        />
+      </Show>
     </Page>
   );
 };
