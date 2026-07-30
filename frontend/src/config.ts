@@ -8,11 +8,10 @@ export const FILES_URL = '/files';
 
 // Sync-file store: per-record document attachments (an inbound shipment's
 // documents, etc.) live behind a REST endpoint, not GraphQL —
-//   POST   /sync_files/<tableName>/<recordId>          (multipart, field "files")
-//   GET    /sync_files/<tableName>/<recordId>/<fileId> (download)
-//   DELETE /sync_files/<tableName>/<recordId>/<fileId>
-// Proxied to the backend in dev (see vite.config.ts). Mirrors the reference
-// app's Environment.SYNC_FILES_URL.
+// POST   /sync_files/<tableName>/<recordId>          (multipart, field
+// "files") GET    /sync_files/<tableName>/<recordId>/<fileId> (download) DELETE
+// /sync_files/<tableName>/<recordId>/<fileId> Proxied to the backend in dev
+// (see vite.config.ts). Mirrors the reference app's Environment.SYNC_FILES_URL.
 export const SYNC_FILES_URL = '/sync_files';
 
 // Custom (server-supplied) translations. The server returns a flat key→value
@@ -37,6 +36,14 @@ export const SUPPORT_DATABASE_URL = '/support/database';
 // client sends — route confirmed in server source
 // (server/server/src/print/mod.rs → test_printer).
 export const PRINT_LABEL_TEST_URL = '/print/label-test';
+
+// Installed frontend-plugin bundles (spec/plugins/contract.md § discovery &
+// loading): the server serves each at `<this>/{path}`, where `path` is the
+// `code/entry` the discovery query reports. Immutable-cached, so the content
+// hash rides as a `?v=` token (src/plugins/bundleUrl.ts). Proxied to the
+// backend in dev AND in preview (see vite.config.ts) — the plugin production
+// path is exercised against a real server.
+export const FRONTEND_PLUGINS_URL = '/frontend_plugins';
 
 export const DEFAULT_SYNC_INTERVAL_SECONDS = 300;
 // The current app's status-poll cadence (spec/sync-modal contract: ~2 s
