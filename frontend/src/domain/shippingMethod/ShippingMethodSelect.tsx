@@ -11,6 +11,8 @@ export interface ShippingMethodSelectProps {
   onChange: (method: ShippingMethod | null) => void;
   label: string;
   hideLabel?: boolean;
+  /** Control size — 'small' for dense contexts (a side-panel field row). */
+  size?: 'default' | 'small';
   disabled?: boolean;
   placeholder?: string;
 }
@@ -25,6 +27,7 @@ export const ShippingMethodSelect = (
   <Combobox<ShippingMethod>
     label={props.label}
     hideLabel={props.hideLabel}
+    size={props.size}
     items={shippingMethodsResource.noSuspense()}
     loading={shippingMethodsResource.loading()}
     itemToString={m => m.method}

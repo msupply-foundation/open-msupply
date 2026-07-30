@@ -5,11 +5,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
-  CheckIcon,
-  InfoIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { InfoIcon, TrashIcon } from '../../../../ui/icons';
 import { isDeletable } from '../../outboundStatus';
 import { DeleteOutboundShipments } from '../outboundShipments.generated';
 
@@ -49,7 +48,7 @@ export const DeleteShipmentsAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={onClick}
@@ -69,15 +68,7 @@ export const DeleteShipmentsAction: Component<
           description={
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
-          actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={() => setBlockedOpen(false)}
-            >
-              {t('button.ok')}
-            </Button>
-          }
+          actions={<OkButton onClick={() => setBlockedOpen(false)} />}
         />
       </Show>
     </>
@@ -139,17 +130,10 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -160,22 +144,10 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
+            <OkButton onClick={props.onClose} />
           </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            <CancelButton onClick={props.onClose} />
           </Match>
         </Switch>
       }

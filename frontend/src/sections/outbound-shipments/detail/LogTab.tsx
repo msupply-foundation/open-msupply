@@ -1,8 +1,13 @@
 import { createResource, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDateTime } from '../../../intl/formatDateTime';
+import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import {
   OutboundActivityLogs,
@@ -51,19 +56,31 @@ export const LogTab: Component<{
     return row.to ? `${type} — ${row.to}` : type;
   };
 
+  // Date + Time as a PAIR over the same instant — the house shape for any log /
+  // ledger / history table (CELL_TYPES.md § Time), shared with the returns,
+  // inbound, ledger and VVM-history tables.
   const columns = (): Column<LogRow, never>[] => [
     {
-      c: { key: 'datetime' },
-      header: () => t('label.date-time'),
-      cell: info => localisedDateTime(info.getValue<string>()),
+      c: { accessor: row => localisedDate(row.datetime), id: 'date' },
+      header: () => t('label.date'),
+      ...getCellDefinition('date'),
     },
     {
-      c: { accessor: row => row.user?.username ?? '—', id: 'user' },
+      c: { accessor: row => localisedTime(row.datetime), id: 'time' },
+      header: () => t('label.time'),
+      ...getCellDefinition('time'),
+    },
+    {
+      c: { accessor: row => row.user?.username ?? '', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
     {
       c: { accessor: row => eventLabel(row), id: 'event' },
       header: () => t('label.event'),
+      // No CELL_DEF key — the event phrase is the row's widest text.
+      ...getTextCell({ wrapLines: 2 }),
+      size: remToPx(12),
     },
   ];
 

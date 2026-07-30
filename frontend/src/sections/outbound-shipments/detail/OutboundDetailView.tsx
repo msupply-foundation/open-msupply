@@ -15,13 +15,12 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
   DataTable,
@@ -29,34 +28,21 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  FilterBar,
-  FilterTextInput,
-} from '../../../ui/elements/selectors/FilterBar';
-import {
   formatCurrencyCell,
-  getCurrencyCell,
-  getExpiryDateCell,
+  getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
-import { createMediaQuery } from '../../../ui/utils/createMediaQuery';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import {
-  CheckIcon,
-  InfoIcon,
-  MinusCircleIcon,
-  PlusCircleIcon,
-} from '../../../ui/icons';
-import { NameSearch } from '../../../domain/name';
+import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
-import {
-  CustomFieldsEditTab,
-  CustomFieldsToolbar,
-} from '../../../domain/customFields';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
   OutboundDetail,
   OutboundLines,
@@ -68,10 +54,11 @@ import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
 import type { OutboundLineFilter } from './outboundLineFilter';
 import { createNextItemWalk } from './nextItemWalk';
-import { outboundDetailFilters } from './outboundDetailFilters';
+import { OutboundLineFilters } from './OutboundLineFilters';
 import type { StatusPreflight } from './actions/StatusChangeAction';
 import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundShipmentPreferences } from '@/store/storeContext';
+import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
 import { OutboundSidePanel } from './OutboundSidePanel';
 import { LogTab } from './LogTab';
@@ -162,12 +149,13 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel: auto-open on wide viewports, closed below (the responsive
-  // detail-panel behaviour the shared e2e suites drive); the More button and
-  // the panel's close re-take control until the breakpoint next flips.
-  const isWide = createMediaQuery('(min-width: 1536px)');
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
-  createEffect(() => setSidePanelOpen(isWide()));
+  // Side panel open state — the SHARED helper (registry § side/detail panel):
+  // the wide-viewport default is a DERIVATION (`choice() ?? wide()`), so a
+  // user's explicit open/close wins over it and persists across reloads
+  // (spec S3 § side panel). Never an effect writing the signal from the
+  // breakpoint: that both ignores the stored choice and re-forces the panel
+  // open every time the media query re-evaluates.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
@@ -349,10 +337,8 @@ const OutboundDetailView: Component = () => {
         // Code starts pinned left (spec S3 § line table: "item code, pinned
         // left") — the row anchor stays visible while the wide table scrolls.
         columnPinning: { left: ['itemCode'] },
-        // Name starts at twice the default column width (rem — the config
-        // layer's unit): item names routinely run to several words, and the
-        // primary column earns the room before the 2-line wrap truncates.
-        columnSizing: { itemName: 18.75 },
+        // Name's width comes from its `text` cell-type preset (the widest kind,
+        // and the flex-fill sink) — no per-table override needed.
         columnVisibility: {
           // The denser columns start hidden (spec S1's hidden-by-default idea
           // applied to the detail table); the user reveals them via column
@@ -520,11 +506,6 @@ const OutboundDetailView: Component = () => {
   const dosesOn = () => prefs().manageVaccinesInDoses;
   const vvmOn = () => prefs().manageVvmStatusForStock;
 
-  // Build the filter definitions ONCE (a component body runs once at mount).
-  // The location chip's render reads `locations` through the accessor, so the
-  // live list flows in without rebuilding the filter array.
-  const detailFilters = outboundDetailFilters(locations);
-
   const crumbs = (current: OutboundNode) => [
     { label: t('distribution') },
     {
@@ -558,12 +539,18 @@ const OutboundDetailView: Component = () => {
         sortKey: 'itemCode',
         header: () => t('label.code'),
         footer: () => t('label.total'),
+        // The `code` kind carries the monospace treatment the spec's line-table
+        // column 1 asks for ("text (mono)"), plus the shared code width.
+        ...getCellDefinition('itemCode'),
       },
       {
         c: { key: 'itemName' },
         sortKey: 'itemName',
         header: () => t('label.name'),
-        meta: { headerPosition: 'primary', wrapLines: 2 },
+        ...getCellDefinition('itemName', {
+          headerPosition: 'primary',
+          wrapLines: 2,
+        }),
       },
       {
         c: {
@@ -575,12 +562,14 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
+        // Mono, per the spec's line-table column 3.
+        ...getCellDefinition('batch'),
       },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry-date'),
-        ...getExpiryDateCell(),
+        ...getCellDefinition('expiryDate'),
       },
       ...(vvmOn()
         ? [
@@ -590,7 +579,8 @@ const OutboundDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: () => t('label.vvm-status'),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition('vvmStatus'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
@@ -599,16 +589,18 @@ const OutboundDetailView: Component = () => {
         // near enough in practice (codes prefix names in this dataset).
         sortKey: 'locationName',
         header: () => t('label.location'),
+        ...getCellDefinition('locationCode'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
         header: () => t('label.unit'),
+        ...getCellDefinition('unitName'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: () => t('label.pack-size'),
-        ...getNumberCell(),
+        ...getCellDefinition('packSize'),
       },
       ...(dosesOn()
         ? [
@@ -619,19 +611,19 @@ const OutboundDetailView: Component = () => {
                 id: 'dosesPerUnit',
               },
               header: () => t('label.doses-per-unit'),
-              ...getNumberCell(),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition('dosesPerUnit'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
         header: () => t('label.pack-quantity'),
-        ...getNumberCell(),
+        ...getCellDefinition('numberOfPacks'),
       },
       {
         c: { key: 'receivedNumberOfPacks' },
         header: () => t('label.packs-received'),
-        ...getNumberCell(),
+        ...getCellDefinition('receivedNumberOfPacks'),
       },
       {
         c: {
@@ -642,7 +634,7 @@ const OutboundDetailView: Component = () => {
           id: 'difference',
         },
         header: () => t('label.difference'),
-        ...getNumberCell(),
+        ...getCellDefinition('difference'),
       },
       {
         c: {
@@ -650,7 +642,7 @@ const OutboundDetailView: Component = () => {
           id: 'unitQuantity',
         },
         header: () => t('label.unit-quantity'),
-        ...getNumberCell(),
+        ...getCellDefinition('unitQuantity'),
       },
       ...(dosesOn()
         ? [
@@ -663,14 +655,14 @@ const OutboundDetailView: Component = () => {
                 id: 'doses',
               },
               header: () => t('label.doses'),
-              ...getNumberCell(),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition('doses'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'sellPricePerPack' },
         header: () => t('label.unit-sell-price'),
-        ...getCurrencyCell(),
+        ...getCellDefinition('sellPricePerPack'),
       },
       {
         // Pack sell price × packs, BEFORE tax (spec § line table col 16) —
@@ -684,7 +676,7 @@ const OutboundDetailView: Component = () => {
         },
         header: () => t('label.total'),
         footer: () => formatCurrencyCell(totals.price),
-        ...getCurrencyCell(),
+        ...getCellDefinition('total'),
       },
       {
         // Line volume — volume per pack × packs (the old app's volume column),
@@ -700,6 +692,8 @@ const OutboundDetailView: Component = () => {
         // mismatch.
         footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
         ...getNumberCell(),
+        // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
+        size: remToPx(6),
       },
     ];
   };
@@ -722,18 +716,14 @@ const OutboundDetailView: Component = () => {
               title={t('heading.not-found')}
               description={t('error.shipment-not-found')}
               actions={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                <OkButton
                   data-testid="dialog-button-ok"
                   onClick={() =>
                     navigate(
                       `/${params.storeId}/distribution/outbound-shipment`
                     )
                   }
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               }
             />
           </Show>
@@ -803,81 +793,24 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
-                    {/* Inline label: control pairs on one row (FieldRow, the
-                        current app's toolbar layout — the controls hide their
-                        own labels, the rows carry them). Customer lookup:
-                        disabled when not editable or when the shipment came
-                        from a requisition (OMS-REG-DIST-02.19). */}
-                    <FieldRow label={t('label.customer-name')}>
-                      <NameSearch
-                        label={t('label.customer-name')}
-                        hideLabel
-                        storeId={params.storeId}
-                        role="customer"
-                        // Seed the record's current customer so the selection's
-                        // label resolves before (or regardless of) its page.
-                        selected={{
-                          id: current().otherParty.id,
-                          name: current().otherParty.name,
-                          code: current().otherParty.code,
-                          isOnHold: current().otherParty.isOnHold,
-                          isStore: current().otherParty.store != null,
-                          isSupplier: false,
-                          isDonor: false,
-                        }}
-                        disabled={!editable() || current().requisition != null}
-                        error={customerError()}
-                        clearable={false}
-                        onSelect={customer => {
-                          if (customer) void changeCustomer(customer.id);
-                        }}
-                      />
-                    </FieldRow>
-                    <FieldRow label={t('label.customer-ref')}>
-                      <TextField
-                        label={t('label.customer-ref')}
-                        hideLabel
-                        size="small"
-                        data-testid="customer-reference-field"
-                        value={edit.state.theirReference}
-                        disabled={!editable()}
-                        onInput={e =>
-                          edit.setField('theirReference', e.currentTarget.value)
-                        }
-                        onBlur={() => edit.flush()}
-                      />
-                    </FieldRow>
-                    {/* PROMINENT custom fields — stay in the toolbar even when
-                        the shipment is read-only (past PICKED), just disabled. */}
-                    <CustomFieldsToolbar
-                      scope="outbound_shipment"
-                      recordId={current().id}
-                      values={current().customFields}
+                  {/* The header field cluster — never a hand-rolled <Toolbar>
+                      + FieldRow (ui/docs/PAGES.md § header field cluster). The
+                      line filters live in the DataTable's own toolbar below. */}
+                  <HeaderToolbar>
+                    <OutboundDetailToolbar
+                      storeId={params.storeId}
+                      node={current()}
                       disabled={!editable()}
-                      onSave={patch => void saveField({ customFields: patch })}
-                    />
-                    {/* Always-on item search — name OR code (server
-                        itemCodeOrName.like, OMS-REG-DIST-03.30), like the stocktakes
-                        detail. Blank clears to null so stripEmpty drops it (a
-                        blank `like` would match everything). */}
-                    <FilterTextInput
-                      label={t('placeholder.filter-items')}
-                      placeholder={t('placeholder.filter-items')}
-                      value={filter().itemCodeOrName?.like ?? ''}
-                      onInput={value =>
-                        onFilterChange({
-                          ...filter(),
-                          itemCodeOrName: value ? { like: value } : null,
-                        })
+                      edit={edit}
+                      customerError={customerError()}
+                      onChangeCustomer={customerId =>
+                        void changeCustomer(customerId)
+                      }
+                      onSaveCustomFields={patch =>
+                        void saveField({ customFields: patch })
                       }
                     />
-                    <FilterBar
-                      filters={detailFilters}
-                      filter={filter()}
-                      onChange={onFilterChange}
-                    />
-                  </Toolbar>
+                  </HeaderToolbar>
                   <TabList
                     tabs={[
                       {
@@ -976,6 +909,17 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live WITH the table, in its own toolbar — never the
+                  // page header (ui-standards § tables › toolbar, binding). The
+                  // item search is the permanent default chip; Location is
+                  // addable (OutboundLineFilters).
+                  filters={
+                    <OutboundLineFilters
+                      filter={filter()}
+                      onFilterChange={onFilterChange}
+                      locations={locations()}
+                    />
+                  }
                   // Non-suspending loading read — a between-page/filter/sort
                   // refetch keeps rows + shows the refreshing bar; a post-save
                   // refetch is silent (tableLoading gates it out). Initial
@@ -1085,13 +1029,7 @@ const OutboundDetailView: Component = () => {
                   title={t('button.return-lines')}
                   description={t('messages.cant-return-shipment')}
                   actions={
-                    <Button
-                      variant="secondary"
-                      icon={<CheckIcon />}
-                      onClick={() => setReturnNoticeOpen(false)}
-                    >
-                      {t('button.ok')}
-                    </Button>
+                    <OkButton onClick={() => setReturnNoticeOpen(false)} />
                   }
                 />
               </Show>
