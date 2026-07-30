@@ -21,7 +21,7 @@ import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
 import { GenerateSupplierReturnLines } from '../supplierReturnDetail.generated';
-import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
+import { saveReturnLines } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
   existingLinesBeingRemoved,
@@ -49,14 +49,6 @@ type Step = 'quantity' | 'reason';
 
 export type ReturnItem = { id: string; code: string; name: string };
 
-// What a successful save hands back: the whole return with its refreshed line
-// set (updateSupplierReturnLines returns the full invoice — the view replaces
-// its node wholesale, no refetch).
-export type ReturnLinesSaved = Extract<
-  SaveReturnLinesResult,
-  { kind: 'saved' }
->['node'];
-
 export interface ReturnItemsModalProps {
   open: boolean;
   onClose: () => void;
@@ -74,8 +66,13 @@ export interface ReturnItemsModalProps {
   nextItem: (currentItemId: string) => ReturnItem | undefined;
   /** Resolve an item's descriptor from the current rows (update mode). */
   itemById: (id: string) => ReturnItem | undefined;
-  /** A save landed — the view replaces its node with the returned one. */
-  onSaved: (node: ReturnLinesSaved) => void;
+  /**
+   * A save landed — the view clears the selection and refetches the line
+   * table's current page. The mutation's own line set is deliberately NOT
+   * spliced in: the table is server-paginated and sorted, so only the server
+   * knows which lines belong on the held page.
+   */
+  onSaved: () => void;
   /** Existing line ids on the return (seeds the drafts' `existing` flag). */
   existingLineIds: () => ReadonlySet<string>;
   /** "Return to" — the supplier the goods go back to (read-only). */
@@ -256,7 +253,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       setMessage({ severity: 'error', text: result.message });
       return false;
     }
-    props.onSaved(result.node);
+    props.onSaved();
     return true;
   };
 

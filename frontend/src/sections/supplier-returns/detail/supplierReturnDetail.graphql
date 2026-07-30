@@ -83,17 +83,35 @@ query supplierReturnDetail($storeId: String!, $id: String!) {
     __typename
     ... on InvoiceNode {
       ...SupplierReturnInfo
-      lines {
-        totalCount
-        nodes {
-          ...SupplierReturnLine
-        }
-      }
     }
     ... on NodeError {
       error {
         __typename
         description
+      }
+    }
+  }
+}
+
+# ONE server-paginated / server-sorted page of the return's lines — the detail
+# table (spec/supplier-returns/rules.md § server-paginated line table). A
+# supplier return's lines are STOCK_OUT lines; the caller pins invoiceId + type
+# and supplies sort + page from the URL state. totalCount is the return's whole
+# line count: it backs the pager, the no-lines status precondition, and the
+# "Save & next" cross-page walk. Wire trap: only the LAST sort key is honoured —
+# send exactly one.
+query supplierReturnLines(
+  $storeId: String!
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+  $page: PaginationInput
+) {
+  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...SupplierReturnLine
       }
     }
   }
@@ -138,12 +156,6 @@ mutation updateSupplierReturnLines(
     ... on InvoiceNode {
       __typename
       ...SupplierReturnInfo
-      lines {
-        totalCount
-        nodes {
-          ...SupplierReturnLine
-        }
-      }
     }
   }
 }

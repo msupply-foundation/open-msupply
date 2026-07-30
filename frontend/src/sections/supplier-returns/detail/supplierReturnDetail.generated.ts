@@ -70,11 +70,6 @@ export type SupplierReturnDetailVariables = {
 export type SupplierReturnDetailResult = {
   invoice: ({
   __typename: "InvoiceNode";
-} & {
-  lines: {
-  totalCount: number;
-  nodes: Array<SupplierReturnLineFragment>;
-};
 } & SupplierReturnInfoFragment) | ({
   __typename: "NodeError";
 } & {
@@ -86,8 +81,133 @@ export type SupplierReturnDetailResult = {
 };
 
 export const SupplierReturnDetail = {
-  query: "query supplierReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...SupplierReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...SupplierReturnLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment SupplierReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  transportReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    purchaseOrderId\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment SupplierReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  costPricePerPack\n  note\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+  query: "query supplierReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...SupplierReturnInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment SupplierReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  transportReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    purchaseOrderId\n    user {\n      username\n    }\n  }\n  customFields\n}",
 } as TypedDocument<SupplierReturnDetailResult, SupplierReturnDetailVariables>;
+
+export type SupplierReturnLinesVariables = {
+  storeId: string;
+  filter?: {
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    storeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    invoiceId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    locationId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    itemId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    type?: {
+    equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
+    equalAny?: Array<"STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE"> | null;
+    notEqualTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
+    notEqualAll?: Array<"STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE"> | null;
+  } | null;
+    requisitionId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    numberOfPacks?: {
+    equalTo?: number | null;
+    equalAny?: Array<number> | null;
+    notEqualTo?: number | null;
+    equalAnyOrNull?: Array<number> | null;
+    notEqualAll?: Array<number> | null;
+  } | null;
+    invoiceType?: {
+    equalTo?: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK" | null;
+    equalAny?: Array<"OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK"> | null;
+    notEqualTo?: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK" | null;
+    notEqualAll?: Array<"OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "PRESCRIPTION" | "INVENTORY_ADDITION" | "INVENTORY_REDUCTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "REPACK"> | null;
+  } | null;
+    invoiceStatus?: {
+    equalTo?: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED" | null;
+    equalAny?: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED"> | null;
+    notEqualTo?: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED" | null;
+    notEqualAll?: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED"> | null;
+  } | null;
+    stockLineId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    reasonOption?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    verifiedDatetime?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    programId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    isProgramInvoice?: boolean | null;
+  } | null;
+  sort?: Array<{
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName";
+    desc?: boolean | null;
+  }> | null;
+  page?: {
+    first?: number | null;
+    offset?: number | null;
+  } | null;
+};
+
+export type SupplierReturnLinesResult = {
+  invoiceLines: ({
+  __typename: "InvoiceLineConnector";
+} & {
+  totalCount: number;
+  nodes: Array<SupplierReturnLineFragment>;
+});
+};
+
+export const SupplierReturnLines = {
+  query: "query supplierReturnLines($storeId: String!, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!], $page: PaginationInput) {\n  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...SupplierReturnLine\n      }\n    }\n  }\n}\n\nfragment SupplierReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  costPricePerPack\n  note\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+} as TypedDocument<SupplierReturnLinesResult, SupplierReturnLinesVariables>;
 
 export type UpdateSupplierReturnVariables = {
   storeId: string;
@@ -130,16 +250,11 @@ export type UpdateSupplierReturnLinesVariables = {
 export type UpdateSupplierReturnLinesResult = {
   updateSupplierReturnLines: ({
   __typename: "InvoiceNode";
-} & {
-  lines: {
-  totalCount: number;
-  nodes: Array<SupplierReturnLineFragment>;
-};
 } & SupplierReturnInfoFragment);
 };
 
 export const UpdateSupplierReturnLines = {
-  query: "mutation updateSupplierReturnLines($storeId: String!, $input: UpdateSupplierReturnLinesInput!) {\n  updateSupplierReturnLines(storeId: $storeId, input: $input) {\n    ... on InvoiceNode {\n      __typename\n      ...SupplierReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...SupplierReturnLine\n        }\n      }\n    }\n  }\n}\n\nfragment SupplierReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  transportReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    purchaseOrderId\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment SupplierReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  costPricePerPack\n  note\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+  query: "mutation updateSupplierReturnLines($storeId: String!, $input: UpdateSupplierReturnLinesInput!) {\n  updateSupplierReturnLines(storeId: $storeId, input: $input) {\n    ... on InvoiceNode {\n      __typename\n      ...SupplierReturnInfo\n    }\n  }\n}\n\nfragment SupplierReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  transportReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    purchaseOrderId\n    user {\n      username\n    }\n  }\n  customFields\n}",
 } as TypedDocument<UpdateSupplierReturnLinesResult, UpdateSupplierReturnLinesVariables>;
 
 export type UpdateSupplierReturnOtherPartyVariables = {
