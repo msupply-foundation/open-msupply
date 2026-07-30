@@ -592,7 +592,7 @@ const OutboundPanelContent = () => {
             label="Reference"
             hideLabel
             size="small"
-            width="compact"
+            width="full"
             value={reference()}
             onInput={e => setReference(e.currentTarget.value)}
           />

@@ -195,6 +195,7 @@ export const SupplierReturnSidePanel: Component<
           <TextField
             label={t('label.reference')}
             hideLabel
+            size="small"
             width="full"
             data-testid="transport-reference-field"
             value={props.edit.state.transportReference}
