@@ -17,6 +17,7 @@ import {
   clearCustomLogo,
   clearCustomTheme,
 } from '../../../ui/branding/applyBranding';
+import { isDarkMode, setColourScheme } from '../../../ui/styles/colourScheme';
 import { changeLanguage, locale, t } from '../../../intl';
 import {
   checkTheme,
@@ -261,6 +262,18 @@ export const DisplaySettingsSection = () => {
           testId="custom-logo"
         />
       </Show>
+      {/*
+        Outside the Server Admin gate on purpose: the colour scheme is a
+        personal display preference held on this device, like the language
+        above — not a store setting. It sits last so that, for an admin, it
+        reads as the third switch in the group.
+      */}
+      <ToggleSwitch
+        label={t('heading.dark-mode')}
+        checked={isDarkMode()}
+        onChange={checked => setColourScheme(checked ? 'dark' : 'light')}
+        testId="dark-mode-toggle"
+      />
     </Stack>
   );
 };

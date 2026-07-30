@@ -785,6 +785,7 @@
   "heading.custom-logo-info": "Replaces the default \"mSupply man\". The logo has to be in svg format, e.g. <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>...<svg...>",
   "heading.custom-theme": "Custom theme",
   "heading.custom-theme-info": "Sets the app's colours. Give a setting like \"brand\" a hex colour, e.g. { \"brand\": \"#0b6e99\" } — anything you leave out keeps its built-in value, and \"light\" / \"dark\" blocks can set each theme separately.",
+  "heading.dark-mode": "Dark mode",
   "heading.delete-stock-movement": "Delete stock movement",
   "heading.description": "Description",
   "heading.details": "Details",
