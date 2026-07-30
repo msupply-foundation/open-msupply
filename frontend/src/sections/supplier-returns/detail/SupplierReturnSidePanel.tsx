@@ -1,5 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { A, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import {
@@ -8,8 +8,12 @@ import {
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { Text } from '../../../ui/elements/typography/Text';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
@@ -17,8 +21,8 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
   SupplierReturnDetail,
@@ -96,29 +100,16 @@ export const SupplierReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Text variant="body" as="span">
               {props.node.user?.username ?? '—'}
             </Text>
+            {/* The user's email behind the shared info affordance — no icon
+                when there is no email. */}
             <Show when={props.node.user?.email}>
-              {email => (
-                <Popover
-                  trigger={<InfoIcon />}
-                  triggerLabel={email()}
-                  openOnHover
-                  placement="top"
-                >
-                  <p>{email()}</p>
-                </Popover>
-              )}
+              {email => <InfoTooltip text={email()} label={email()} />}
             </Show>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show
@@ -133,7 +124,8 @@ export const SupplierReturnSidePanel: Component<
           </Show>
         </FieldRow>
         <FieldRow label={t('heading.comment')}>
-          <TextField
+          {/* Multi-line in place (ui-surface S3 § side panel). */}
+          <TextArea
             label={t('heading.comment')}
             hideLabel
             width="full"
@@ -161,14 +153,9 @@ export const SupplierReturnSidePanel: Component<
           }
         >
           {shipment => (
-            <span
-              style={{
-                display: 'flex',
-                'align-items': 'center',
-                'justify-content': 'space-between',
-                gap: 'var(--space-3)',
-              }}
-            >
+            // The dated, attributed description inline-start, the #N link
+            // pinned inline-end.
+            <HStack gap="md" justify="between">
               <Text variant="body">
                 {t('messages.inbound-shipment-created-on', {
                   date: localisedDate(shipment().createdDatetime),
@@ -180,7 +167,10 @@ export const SupplierReturnSidePanel: Component<
                   })}
                 </Show>
               </Text>
-              <A
+              {/* The shared related-record link (no `kind` — a shipment is a
+                  neutral reference), as the customer-returns twin renders the
+                  mirror-image link. */}
+              <RecordLink
                 href={inboundShipmentHref(
                   params.storeId,
                   shipment().id,
@@ -188,8 +178,8 @@ export const SupplierReturnSidePanel: Component<
                 )}
               >
                 #{shipment().invoiceNumber}
-              </A>
-            </span>
+              </RecordLink>
+            </HStack>
           )}
         </Show>
       </SidePanelSection>
@@ -253,13 +243,10 @@ export const SupplierReturnSidePanel: Component<
           title={t('error.something-wrong')}
           description={deleteError()}
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
+            <OkButton
+              data-testid="dialog-button-ok"
               onClick={() => setDeleteError(undefined)}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           }
         />
       </Show>
