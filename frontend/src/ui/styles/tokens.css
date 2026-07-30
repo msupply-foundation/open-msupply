@@ -321,7 +321,16 @@
   --gray-pale: #2a3550;
 
   --color-border-value: #33333f;
-  --color-divider: #2c2c38;
+  /* The app-wide hairline (table row rules, side-panel section splits, accordion
+     and form-section rules, menu-bar and split-button separators). Matches
+     --color-border-value / --header-border: one hairline colour, as in light.
+     NOT the light theme's relationship mirrored literally — there the divider is
+     the WEAKEST line (#eaeaea, a shade closer to white than border-value), and
+     inverting that put it a shade closer to the dark background instead, at
+     1.16:1 against --bg-white where light's own divider manages 1.20:1. It read
+     as absent. #33333f lands at 1.28:1, matching light's border-value (1.27:1),
+     so a hairline carries the same weight in both themes (Carl, 2026-07-30). */
+  --color-divider: #33333f;
   --outline-main: #b8b9cc;
   --input-border: #3d3e4c; /* field edge — a touch above border-value so inputs read */
 

@@ -1,0 +1,22 @@
+/*
+ * List styling the library doesn't cover (reach-for order step 4 — scoped to
+ * this screen, tokens only).
+ *
+ * The supplier column's KIND icon is toned to say what the supplier is (spec S1
+ * column 1): a house in the primary colour when the supplier is itself another
+ * store in the system, a truck in the secondary colour for an external one. The
+ * icon set has no semantic tone prop — icons paint with `currentColor` — so the
+ * tone is set here rather than inline. A `tone` prop (or a shared party-kind
+ * icon) is the library gap this covers for now; `src/domain/name/NameSearch.tsx`
+ * needs exactly the same thing for its option rows.
+ *
+ * Colour is redundant here, never the only cue: the two kinds use different
+ * glyphs, and each carries its own accessible name.
+ */
+.kindInternal {
+  color: var(--primary-main);
+}
+
+.kindExternal {
+  color: var(--secondary-main);
+}

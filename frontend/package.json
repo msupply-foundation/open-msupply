@@ -8,6 +8,7 @@
     "dev": "concurrently -k -n vite,css-types -c auto \"vite\" \"tcm --watch --pattern '**/*.module.css' src\"",
     "build": "tcm --pattern '**/*.module.css' src && tsc -b && vite build",
     "build:showcase": "tcm --pattern '**/*.module.css' src && tsc -b && vite build --config vite.showcase.config.ts",
+    "build:plugins": "node scripts/build-plugins.mjs",
     "preview": "vite preview",
     "preview:showcase": "vite preview --config vite.showcase.config.ts",
     "css:types": "tcm --pattern '**/*.module.css' src",

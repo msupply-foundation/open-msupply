@@ -23,7 +23,7 @@ import type { CustomerReturnInfoFragment } from '../customerReturnDetail.generat
 export interface StatusChangeActionProps {
   storeId: string;
   node: CustomerReturnInfoFragment;
-  /** ≥1 line — advancing an empty return is blocked (AC-S4). */
+  /** ≥1 line — advancing an empty return is blocked (OMS-REG-DIST-07.38). */
   hasLines: boolean;
   /** The invoice-status-options preference (empty = no restriction). */
   statusOptions: readonly string[];
@@ -39,7 +39,8 @@ export interface StatusChangeActionProps {
 // preference; hidden when the return offers no advance (terminal, or a
 // transfer still in the sender's hands). While ON HOLD (or with no lines) the
 // button stays active-and-explaining — the click surfaces the block instead of
-// acting (D39); hold blocks exactly this advance (AC-S5), releasing clears it.
+// acting (D39); hold blocks exactly this advance (OMS-REG-DIST-07.7),
+// releasing clears it (.32).
 //
 // Every rejection is NON-typed (contract § advancing status):
 // advanceReturnStatus maps extensions.details to translated copy shown in the
@@ -65,7 +66,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const nextTarget = () => targets()[0];
 
   const openConfirm = (status: string) => {
-    // No lines / on hold: explain rather than dead-end (AC-S4 / AC-S5's UI
+    // No lines / on hold: explain rather than dead-end (OMS-REG-DIST-07.38 / .7's UI
     // surface — the same rejections are server-enforced and asserted by the
     // ACs).
     if (!props.hasLines) {
@@ -186,7 +187,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       />
 
       {/* Blocked advance (no lines / on hold): an info-only dialog explaining
-          why the advance can't run yet (AC-S4 / AC-S5). */}
+          why the advance can't run yet (OMS-REG-DIST-07.38 / .7). */}
       <Dialog
         open={blockedMessage() != null}
         onClose={() => setBlockedMessage(undefined)}
