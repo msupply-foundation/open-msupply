@@ -45,7 +45,9 @@ export type DatePickerPanelProps = {
     }
 );
 
-/** The corvu render-prop fields this panel reads (single and range share them). */
+/**
+ * The corvu render-prop fields this panel reads (single and range share them).
+ */
 interface CalendarCtx {
   month: Date;
   setMonth: (month: Date) => void;
@@ -291,29 +293,33 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     </div>
   );
 
-  return props.mode === 'range' ? (
-    <Calendar
-      mode="range"
-      value={props.value}
-      onValueChange={range => props.onSelect(range)}
-      month={month()}
-      onMonthChange={setMonth}
-      disabled={disabled}
-      required={props.required}
-    >
-      {ctx => body(ctx)}
-    </Calendar>
-  ) : (
-    <Calendar
-      mode="single"
-      value={props.value}
-      onValueChange={date => props.onSelect(date)}
-      month={month()}
-      onMonthChange={setMonth}
-      disabled={disabled}
-      required={props.required}
-    >
-      {ctx => body(ctx)}
-    </Calendar>
+  return (
+    <>
+      {props.mode === 'range' ? (
+        <Calendar
+          mode="range"
+          value={props.value}
+          onValueChange={range => props.onSelect(range)}
+          month={month()}
+          onMonthChange={setMonth}
+          disabled={disabled}
+          required={props.required}
+        >
+          {ctx => body(ctx)}
+        </Calendar>
+      ) : (
+        <Calendar
+          mode="single"
+          value={props.value}
+          onValueChange={date => props.onSelect(date)}
+          month={month()}
+          onMonthChange={setMonth}
+          disabled={disabled}
+          required={props.required}
+        >
+          {ctx => body(ctx)}
+        </Calendar>
+      )}
+    </>
   );
 };

@@ -385,20 +385,20 @@ export function DataTable<T, K extends string, G extends string = never>(
 
   // --- Sort control (card view). With no clickable column headers, sorting
   // moves to a toolbar popover. Its options are the sortable columns (those
-  // declaring a sortKey); picking one sorts ascending, re-picking the active one
-  // flips direction — the SAME onSort a header click calls, so the page's sort
-  // state model is untouched. Shown only in card view (headers handle it in
-  // table view) and only when the page wired onSort + has sortable columns.
+  // declaring a sortKey); picking one sorts ascending, re-picking the active
+  // one flips direction — the SAME onSort a header click calls, so the page's
+  // sort state model is untouched. Shown only in card view (headers handle it
+  // in table view) and only when the page wired onSort + has sortable columns.
   const sortableColumns = () =>
     props.columns.filter(c => c.sortKey !== undefined);
   // A column's header text, for a sort-option label. Our `header` is always a
   // FUNCTION (columnTypes.ts narrows it that way so the text re-resolves on a
   // locale change), so it must be CALLED — the old `typeof header === 'string'`
   // test never matched and every option fell back to the raw sortKey
-  // ("itemCode", "costPricePerPack"). Same treatment as HeaderCell (flexRender),
-  // CardView.columnHeaderText and ColumnSettings.label; none of our headers read
-  // the context argument, so an empty one is safe. The sortKey stays the last
-  // resort for a column with no header at all.
+  // ("itemCode", "costPricePerPack"). Same treatment as HeaderCell
+  // (flexRender), CardView.columnHeaderText and ColumnSettings.label; none of
+  // our headers read the context argument, so an empty one is safe. The sortKey
+  // stays the last resort for a column with no header at all.
   const columnLabel = (c: Column<T, K, G>): JSX.Element =>
     typeof c.header === 'function'
       ? c.header({} as HeaderContext<T, unknown>)
@@ -463,13 +463,14 @@ export function DataTable<T, K extends string, G extends string = never>(
   const columnSizing = (): ColumnSizingState =>
     transientSizing() ?? configSizingPx();
 
-  // Table view shows a column unless it's declared card-only (meta.hideOnTable).
-  // TanStack keeps the FULL column set (config/order/sizing stay whole); we just
-  // skip rendering a card-only column's header/body/footer cells here, and the
-  // Columns popover drops card-only columns in table view (see ColumnSettings).
-  // A card-only column with a footer must not force a <tfoot>, so hasFooter
-  // gates on this too. (Card grouping is card-view only — see props.cardGroups /
-  // CardView — so table view no longer filters by group.)
+  // Table view shows a column unless it's declared card-only
+  // (meta.hideOnTable). TanStack keeps the FULL column set (config/order/sizing
+  // stay whole); we just skip rendering a card-only column's header/body/footer
+  // cells here, and the Columns popover drops card-only columns in table view
+  // (see ColumnSettings). A card-only column with a footer must not force a
+  // <tfoot>, so hasFooter gates on this too. (Card grouping is card-view only —
+  // see props.cardGroups / CardView — so table view no longer filters by
+  // group.)
   const showInTableView = (columnDef: {
     meta?: { hideOnTable?: boolean };
   }): boolean => !columnDef.meta?.hideOnTable;
@@ -746,17 +747,17 @@ export function DataTable<T, K extends string, G extends string = never>(
   // Which cells sit on a frozen BLOCK's outer edge — the boundary the scrolling
   // content actually passes: the LAST left-pinned column and the FIRST
   // right-pinned one. That edge carries the freeze cue (a 1px seam at rest, the
-  // shadow once content is under it); columns inside the block carry neither, or
-  // the block would read as several separate frozen strips.
+  // shadow once content is under it); columns inside the block carry neither,
+  // or the block would read as several separate frozen strips.
   //
   // Read from the per-side lists, NOT from getVisibleLeafColumns(): the two are
-  // ordered differently, and only the per-side ones match the DOM. Header groups
-  // are built [...left, ...center, ...right] with each pinned block in its
-  // columnPinning array order, while getVisibleLeafColumns() follows
+  // ordered differently, and only the per-side ones match the DOM. Header
+  // groups are built [...left, ...center, ...right] with each pinned block in
+  // its columnPinning array order, while getVisibleLeafColumns() follows
   // columnOrder. Reordering two pinned columns rewrites columnOrder alone, so
-  // the two disagree and the cue stayed on the column that WAS outermost
-  // (Carl 2026-07-28). Filtered by showInTableView for the same reason we don't
-  // use TanStack's getIsLastColumn('left'): a column that isn't rendered can't
+  // the two disagree and the cue stayed on the column that WAS outermost (Carl
+  // 2026-07-28). Filtered by showInTableView for the same reason we don't use
+  // TanStack's getIsLastColumn('left'): a column that isn't rendered can't
   // carry the cue.
   const framedPinned = (side: 'left' | 'right') =>
     (side === 'left'
@@ -779,11 +780,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // wants no line beside the checkbox, shadow or not).
   const leadingIsFrozenEdge = () => lastLeftPinnedId() === undefined;
 
-  // Per-facet applicability for the Settings popover's resets (issue #572): each
-  // reset is enabled only when that facet actually differs from the default,
-  // derived from the resolved config (reactive) so it needs no extra per-page
-  // plumbing. "Show all columns" keys on any column being hidden, not a user
-  // override, so it's offered whenever there's something to reveal.
+  // Per-facet applicability for the Settings popover's resets (issue #572):
+  // each reset is enabled only when that facet actually differs from the
+  // default, derived from the resolved config (reactive) so it needs no extra
+  // per-page plumbing. "Show all columns" keys on any column being hidden, not
+  // a user override, so it's offered whenever there's something to reveal.
   const columnOrderChanged = () => {
     const order = props.config?.columnOrder;
     if (!order || order.length === 0) return false;

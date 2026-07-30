@@ -17,11 +17,11 @@ import styles from './ColumnSettings.module.css';
 // then a row per column — an eye / eye-off visibility toggle + name (the
 // clickable label), with Move up/down and Pin left/right control groups
 // trailing (column WIDTH is set by dragging the header edge, not here). It's a
-// thin renderer over TanStack's own per-column getters/handlers (kdd/table-state
-// — the brains are TanStack's; we only draw the UI): getIsVisible/getCanHide,
-// getCanPin/getIsPinned/pin. Table-wide actions (density, Reset table to
-// default, save-as-global-default) live in the separate Settings popover — see
-// TableSettings.
+// thin renderer over TanStack's own per-column getters/handlers
+// (kdd/table-state — the brains are TanStack's; we only draw the UI):
+// getIsVisible/getCanHide, getCanPin/getIsPinned/pin. Table-wide actions
+// (density, Reset table to default, save-as-global-default) live in the
+// separate Settings popover — see TableSettings.
 //
 // Writes go through setConfig (the same controlled path DataTable uses), so
 // persistence + layering still apply.

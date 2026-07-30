@@ -1086,8 +1086,8 @@ const InternalOrderDetailView: Component = () => {
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
                   // Placeholder lines (requested 0) read in the info tone —
-                  // whole-row blue text, de-emphasising them (ui-surface S3 line
-                  // table), matching outbound's placeholder lines.
+                  // whole-row blue text, de-emphasising them (ui-surface S3
+                  // line table), matching outbound's placeholder lines.
                   rowTone={line =>
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }

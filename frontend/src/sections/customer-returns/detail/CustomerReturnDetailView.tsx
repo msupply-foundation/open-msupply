@@ -13,17 +13,28 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
-import { InfoIcon, PlusCircleIcon } from '../../../ui/icons';
-import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
-  getCurrencyCell,
-  getDateCell,
+  Tabs,
+  TabList,
+  TabPanel,
+  type TabDef,
+} from '../../../ui/elements/tabs/Tabs';
+import { PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
+import {
+  DataTable,
+  type CardGroup,
+  type Column,
+} from '../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
@@ -46,7 +57,7 @@ import {
   type ReturnItem,
   type ReturnLinesSaved,
 } from './edit-modal/ReturnItemsModal';
-import { isReturnDisabled } from './returnStatus';
+import { isReturnDisabled, returnKind } from './returnStatus';
 import { saveReturnFields } from './returnUpdate';
 import type { ReturnEditFields } from './returnEdit';
 import { ExportPrintAction } from './actions/ExportPrintAction';
@@ -56,15 +67,27 @@ import { ExportPrintAction } from './actions/ExportPrintAction';
 // read-only line table grouped by item (row click → the return-items modal),
 // the Additional-info side panel, and the status footer (hold / lifecycle /
 // close / advance). Every edit affordance shares the one editability gate
-// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return still
-// in the sender's hands — is read-only.
+// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer
+// return still in the sender's hands — is read-only.
 
 type Line = CustomerReturnLineFragment;
+
+// Card view (below 600px): the item name is the card title (headerPosition
+// 'primary') and the packs returned its badge; Code / Batch / Expiry / Unit
+// form the always-shown default group and every remaining column drops into
+// one collapsed "More details" disclosure (ui-standards → CARD_TABLE_MODEL).
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
 
 const CustomerReturnDetailView: Component = () => {
   const params = useParams<{ storeId: string; returnId: string }>();
   const navigate = useNavigate();
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  // The shared side-panel open state: responsive default (open on a wide
+  // viewport) with the user's explicit choice persisted — the same helper every
+  // other detail screen uses.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [customerError, setCustomerError] = createSignal<string | undefined>();
 
   type EditState =
@@ -114,7 +137,14 @@ const CustomerReturnDetailView: Component = () => {
       return result.data.preferences;
     }
   );
-  const statusOptions = () => prefs.latest?.invoiceStatusOptions ?? [];
+  // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction): the page body renders as soon as the return resolves, so a
+  // still-pending preferences read must never suspend this screen's boundary —
+  // `.latest` alone would, on its first pending read. Empty = no restriction.
+  const statusOptions = () =>
+    prefs.state === 'ready' || prefs.state === 'refreshing'
+      ? (prefs.latest?.invoiceStatusOptions ?? [])
+      : [];
 
   // --- Return-level saves (updateCustomerReturn, spliced back, no refetch) ---
 
@@ -208,6 +238,14 @@ const CustomerReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
+  // The page-level tab set (ui-surface S3 § tabs) — the strip renders in the
+  // Header, the panels in the body.
+  const tabs = (): TabDef[] => [
+    { value: 'details', label: t('label.details') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
+    { value: 'log', label: t('label.log') },
+  ];
+
   const crumbs = (node: CustomerReturnInfoFragment) => [
     { label: t('distribution') },
     {
@@ -218,53 +256,71 @@ const CustomerReturnDetailView: Component = () => {
     { label: String(node.invoiceNumber) },
   ];
 
-  // Line columns (ui-surface S3 § line table), grouped by item.
-  const columns = (): Column<Line, never>[] => [
+  // Line columns (ui-surface S3 § line table). Each takes its cell-type width
+  // preset via getCellDefinition (docs/CELL_TYPES.md) — a bare helper carries
+  // no `size`, so the column would mis-width and resize badly; `code`/`batch`
+  // also gain the monospace treatment the spec's column table names. Code /
+  // Batch / Expiry / Unit stay in the card's default group; the rest fold into
+  // the collapsed "More details" disclosure (CARD_GROUPS above).
+  const columns = (): Column<Line, never, GroupKey>[] => [
     {
       c: { accessor: line => line.item.code, id: 'item.code' },
       header: () => t('label.code'),
+      ...getCellDefinition('code'),
     },
     {
       c: { key: 'itemName' },
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
+      ...getCellDefinition('batch'),
     },
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
-      ...getDateCell(),
+      // The expiry preset, not the plain date cell: it carries the near-expiry
+      // emphasis the spec's column 4 names.
+      ...getCellDefinition('expiryDate'),
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
       header: () => t('label.unit'),
+      ...getCellDefinition('unitName'),
     },
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
-      ...getNumberCell(),
+      ...getCellDefinition('packSize'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'numberOfPacks' },
       header: () => t('label.num-packs'),
-      ...getNumberCell(),
-      meta: { headerPosition: 'badge' },
+      ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
     },
     {
+      // No CELL_DEF key — the explicit helper plus a call-site width, since
+      // "Total quantity" is the binding constraint, not the value.
       c: {
         accessor: line => line.packSize * line.numberOfPacks,
         id: 'totalQuantity',
       },
       header: () => t('label.total-quantity'),
       ...getNumberCell(),
+      size: remToPx(7),
+      cardGroup: 'more',
     },
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('sellPricePerPack'),
+      cardGroup: 'more',
     },
     {
       c: {
@@ -272,12 +328,14 @@ const CustomerReturnDetailView: Component = () => {
         id: 'lineTotal',
       },
       header: () => t('label.line-total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('lineTotal'),
+      cardGroup: 'more',
     },
     {
       c: { key: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
-      ...getNumberCell(),
+      ...getCellDefinition('volumePerPack'),
+      cardGroup: 'more',
     },
   ];
 
@@ -289,95 +347,131 @@ const CustomerReturnDetailView: Component = () => {
         {node => {
           const disabled = createMemo(() => isReturnDisabled(node()));
           return (
-            <Page
-              fillBody
-              sidePanelOpen={sidePanelOpen()}
-              sidePanelTitle={t('heading.details')}
-              onSidePanelClose={() => setSidePanelOpen(false)}
-              sidePanelContent={
-                <CustomerReturnSidePanel
-                  node={node()}
-                  disabled={disabled()}
-                  edit={edit}
-                  onSetColour={setColour}
-                />
-              }
-              header={
-                <Header>
-                  <Breadcrumb crumbs={crumbs(node())} />
-                  <HeaderButtons>
-                    <Show when={!disabled()}>
-                      <Button
-                        icon={<PlusCircleIcon />}
-                        data-testid="add-item-button"
-                        onClick={openAdd}
-                      >
-                        {t('button.add-item')}
-                      </Button>
-                    </Show>
-                    {/* Export/Print — the reports vertical's record-screen
-                        selector (reports S4), available at every status;
-                        same self-contained action + tone as the stocktake
-                        detail. */}
-                    <ExportPrintAction returnId={node().id} />
-                    <Show when={!sidePanelOpen()}>
-                      <Button
-                        variant="secondary"
-                        icon={<InfoIcon />}
-                        onClick={() => setSidePanelOpen(true)}
-                      >
-                        {t('button.more')}
-                      </Button>
-                    </Show>
-                  </HeaderButtons>
-                  <Toolbar>
-                    <CustomerReturnToolbar
-                      storeId={params.storeId}
-                      node={node()}
-                      disabled={disabled()}
-                      edit={edit}
-                      onChangeCustomer={id => void changeCustomer(id)}
-                      customerError={customerError()}
-                    />
-                    {/* PROMINENT custom fields — stay in the toolbar even when
-                        the return is read-only, just disabled. */}
-                    <CustomFieldsToolbar
-                      scope="customer_return"
-                      recordId={node().id}
-                      values={node().customFields}
-                      disabled={disabled()}
-                      onSave={patch => void saveField({ customFields: patch })}
-                    />
-                  </Toolbar>
-                </Header>
-              }
-              contentFooter={
-                <CustomerReturnStatusFooter
-                  storeId={params.storeId}
-                  node={node()}
-                  disabled={disabled()}
-                  hasLines={hasLines()}
-                  statusOptions={statusOptions()}
-                  onSetHold={setHold}
-                  onAdvanced={onAdvanced}
-                />
-              }
-            >
-              {/* Details | Log (ui-surface S3 § tabs). */}
-              <Tabs defaultValue="details">
-                <TabList
-                  tabs={[
-                    { value: 'details', label: t('label.details') },
-                    {
-                      value: 'custom-fields',
-                      label: t('label.custom-fields'),
-                    },
-                    { value: 'log', label: t('label.log') },
-                  ]}
-                />
+            // The <Tabs> root wraps the whole Page from outside (display:
+            // contents, so it adds no layout box): the TabList lives in the
+            // Header — claiming its bottom edge — and the TabPanels in the
+            // body, both sharing this one tabs context (ui-standards →
+            // page-level tabs).
+            <Tabs defaultValue="details">
+              <Page
+                fillBody
+                sidePanelOpen={sidePanelOpen()}
+                sidePanelTitle={t('heading.details')}
+                onSidePanelClose={() => setSidePanelOpen(false)}
+                sidePanelContent={
+                  <CustomerReturnSidePanel
+                    node={node()}
+                    disabled={disabled()}
+                    edit={edit}
+                    onSetColour={setColour}
+                  />
+                }
+                header={
+                  <Header>
+                    <Breadcrumb crumbs={crumbs(node())} />
+                    <HeaderButtons>
+                      <Show when={!disabled()}>
+                        <Button
+                          icon={<PlusCircleIcon />}
+                          data-testid="add-item-button"
+                          onClick={openAdd}
+                        >
+                          {t('button.add-item')}
+                        </Button>
+                      </Show>
+                      {/* Export/Print — the reports vertical's record-screen
+                          selector (reports S4), available at every status;
+                          same self-contained action + tone as the stocktake
+                          detail. */}
+                      <ExportPrintAction returnId={node().id} />
+                      {/* More — the closed-panel reopen affordance, at the end
+                          of the app-bar page-action cluster (spec ui-standards/
+                          layout.md → page regions). Shows ONLY while the panel
+                          is closed; uses the sidebar glyph (not the info icon),
+                          and reopening counts as the user's explicit open
+                          choice. */}
+                      <Show when={!sidePanelOpen()}>
+                        <Button
+                          variant="secondary"
+                          icon={<SidebarIcon />}
+                          data-testid="open-detail-panel-button"
+                          onClick={() => setSidePanelOpen(true)}
+                        >
+                          {t('button.more')}
+                        </Button>
+                      </Show>
+                    </HeaderButtons>
+                    {/* The header field cluster (ui-standards → HeaderToolbar):
+                        each field labelled above its control, equal shares
+                        wrapping as a unit. The kind banner (rules § manual vs
+                        transfer) is the cluster's trailing compact Alert — it
+                        rides the row's end and drops to its own line when the
+                        row can't hold it: manual returns don't track delivery
+                        automatically; a transfer return explains why editing
+                        waits until it is received (OMS-REG-DIST-07.43). */}
+                    <HeaderToolbar
+                      alert={
+                        <Alert severity="info" compact>
+                          <Show
+                            when={returnKind(node()) === 'transfer'}
+                            fallback={t('info.manual-return')}
+                          >
+                            {t('info.automatic-return')}
+                            <Show
+                              when={disabled() && node().status !== 'VERIFIED'}
+                            >
+                              {' '}
+                              {t('info.automatic-return-no-edit')}
+                            </Show>
+                          </Show>
+                        </Alert>
+                      }
+                    >
+                      <CustomerReturnToolbar
+                        storeId={params.storeId}
+                        node={node()}
+                        disabled={disabled()}
+                        edit={edit}
+                        onChangeCustomer={id => void changeCustomer(id)}
+                        customerError={customerError()}
+                      />
+                      {/* PROMINENT custom fields — stay in the cluster even
+                          when the return is read-only, just disabled. They wear
+                          their own labels like the fields beside them (the
+                          cluster's `field` layout). */}
+                      <CustomFieldsToolbar
+                        scope="customer_return"
+                        recordId={node().id}
+                        values={node().customFields}
+                        disabled={disabled()}
+                        layout="field"
+                        onSave={patch =>
+                          void saveField({ customFields: patch })
+                        }
+                      />
+                    </HeaderToolbar>
+                    {/* Last child of the Header → the tab strip claims its
+                        bottom edge (Header.module.css / Tabs). Details | Custom
+                        fields | Log (ui-surface S3 § tabs). */}
+                    <TabList tabs={tabs()} />
+                  </Header>
+                }
+                contentFooter={
+                  <CustomerReturnStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    disabled={disabled()}
+                    hasLines={hasLines()}
+                    statusOptions={statusOptions()}
+                    onSetHold={setHold}
+                    onAdvanced={onAdvanced}
+                  />
+                }
+              >
                 <TabPanel value="details">
                   <DataTable
                     columns={columns()}
+                    cardGroups={CARD_GROUPS}
                     rows={rows()}
                     rowKey={line => line.id}
                     loading={data.loading}
@@ -396,12 +490,20 @@ const CustomerReturnDetailView: Component = () => {
                     }
                     config={tableConfig.config()}
                     setConfig={tableConfig.setConfig}
+                    configIsDefault={tableConfig.isConfigDefault()}
+                    // Central-server admins (EDIT_CENTRAL_DATA) can promote
+                    // their layout to the install-wide default.
+                    onSaveGlobalDefault={
+                      tableConfig.canSaveGlobalDefault()
+                        ? tableConfig.saveGlobalTableConfig
+                        : undefined
+                    }
                   />
                 </TabPanel>
                 <TabPanel value="custom-fields">
                   {/* Custom fields for the customer_return scope — disabled once
                       the return is read-only. Prominent fields live in the
-                      toolbar, so the tab shows the rest. */}
+                      header cluster, so the tab shows the rest. */}
                   <CustomFieldsEditTab
                     scope="customer_return"
                     promoteToToolbar
@@ -413,27 +515,27 @@ const CustomerReturnDetailView: Component = () => {
                 <TabPanel value="log">
                   <LogTab storeId={params.storeId} recordId={node().id} />
                 </TabPanel>
-              </Tabs>
-              <ReturnItemsModal
-                open={editState() != null}
-                onClose={() => setEditState(undefined)}
-                storeId={params.storeId}
-                returnId={node().id}
-                mode={editState()?.mode ?? 'update'}
-                initialItemId={
-                  editState()?.mode === 'update'
-                    ? (editState() as { itemId: string }).itemId
-                    : undefined
-                }
-                excludeItemIds={existingItemIds}
-                nextItem={nextItem}
-                itemById={itemById}
-                onSaved={onLinesSaved}
-                existingLineIds={existingLineIds}
-                returnFromName={node().otherPartyName}
-                edit={edit}
-              />
-            </Page>
+                <ReturnItemsModal
+                  open={editState() != null}
+                  onClose={() => setEditState(undefined)}
+                  storeId={params.storeId}
+                  returnId={node().id}
+                  mode={editState()?.mode ?? 'update'}
+                  initialItemId={
+                    editState()?.mode === 'update'
+                      ? (editState() as { itemId: string }).itemId
+                      : undefined
+                  }
+                  excludeItemIds={existingItemIds}
+                  nextItem={nextItem}
+                  itemById={itemById}
+                  onSaved={onLinesSaved}
+                  existingLineIds={existingLineIds}
+                  returnFromName={node().otherPartyName}
+                  edit={edit}
+                />
+              </Page>
+            </Tabs>
           );
         }}
       </Show>
