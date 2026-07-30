@@ -107,6 +107,16 @@ import {
 
 type Line = OutboundLineFragment;
 
+// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
+// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
+// config expresses this as a per-key `maxSize: null`; at a call site the key has
+// to be removed outright — an explicit `maxSize: undefined` would override
+// TanStack's own default rather than fall back to it.
+const uncapped = <T,>({
+  maxSize: _cap,
+  ...rest
+}: ReturnType<typeof getCellDefinition<T>>) => rest;
+
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
 // sort on (VVM, unit, doses, quantities, prices, received/difference, volume —
@@ -565,7 +575,13 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
-        ...getCellDefinition('batch'),
+        // The batch preset's cell + width floor, but WITHOUT the `code` kind's
+        // 7rem growth cap: this column doesn't only hold a code — an
+        // unallocated line renders the word "Placeholder", which fills the cap
+        // exactly, pinning the column at 7rem so it can't be dragged wider at
+        // all. Same reasoning (and the same fix) as the `locationCode` key's
+        // "own size, NO cap" note in _globalColumnConfig (#601).
+        ...uncapped(getCellDefinition<Line>('batch')),
       },
       {
         c: { key: 'expiryDate' },
