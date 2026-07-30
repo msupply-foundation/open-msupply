@@ -2266,6 +2266,8 @@
   "message.page-not-found": "That page doesn't exist. The link may be out of date.",
   "message.placeholder-line": "A placeholder line has been created for additional requested quantity",
   "message.placeholder-lines-cannot-be-returned": "Placeholder lines cannot be returned",
+  "message.print-failed": "Print failed",
+  "message.print-success": "Printed",
   "message.program-period": "Only the first five historic and future periods are available for selection.",
   "message.remember-store-choice": "Remember my choice",
   "message.select-program-first": "Select a program first",

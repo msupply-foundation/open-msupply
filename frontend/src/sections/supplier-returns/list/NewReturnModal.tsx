@@ -6,6 +6,7 @@ import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { NameSearch } from '../../../domain/name';
 import { InsertSupplierReturn } from './supplierReturns.generated';
 
@@ -68,13 +69,19 @@ const Body: Component<{ onClose: () => void }> = props => {
     navigate(`/${params.storeId}/replenishment/supplier-return/${response.id}`);
   };
 
+  // The supplier lookup is this dialog's only control, so the dialog opens on
+  // it (ui-standards › accessibility › keyboard).
+  const supplierSearch = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={supplierSearch}
       onClose={props.onClose}
       dismissable={!creating()}
       testId="supplier-search-modal"
       title={t('label.supplier-name')}
+      // The standard, icon-less dialog dismiss (D55).
       actions={
         <CancelButton
           data-testid="dialog-button-cancel"
@@ -89,6 +96,7 @@ const Body: Component<{ onClose: () => void }> = props => {
         placeholder={t('placeholder.search-by-name')}
         disabled={creating()}
         inputTestId="supplier-search-input"
+        focusTarget={supplierSearch}
         clearable={false}
         onSelect={supplier => {
           if (supplier) void create(supplier.id);

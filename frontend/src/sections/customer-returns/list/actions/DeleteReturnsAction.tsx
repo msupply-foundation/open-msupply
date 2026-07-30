@@ -54,8 +54,10 @@ export const DeleteReturnsAction: Component<
 
   return (
     <>
+      {/* Destructive tone (ui-standards: delete = danger), matching the
+          reference vertical's bulk delete and the confirm below. */}
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={onClick}
@@ -76,7 +78,12 @@ export const DeleteReturnsAction: Component<
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
           // The standard, icon-less acknowledgement (D55).
-          actions={<OkButton onClick={() => setBlockedOpen(false)} />}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setBlockedOpen(false)}
+            />
+          }
         />
       </Show>
     </>
@@ -145,7 +152,10 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <CancelButton onClick={finish} />
+                <CancelButton
+                  data-testid="dialog-button-cancel"
+                  onClick={finish}
+                />
               </Show>
               <Button
                 variant="danger"
@@ -159,7 +169,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <OkButton onClick={finish} />
+            <OkButton data-testid="dialog-button-ok" onClick={finish} />
           </Match>
         </Switch>
       }
