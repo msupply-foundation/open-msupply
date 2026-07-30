@@ -1,0 +1,37 @@
+/*
+ * Reach-for order step 4 — scoped to this screen, tokens only.
+ *
+ * The Auth-status Select's options carry a small coloured dot so the state reads
+ * at a glance. The registry has no role for it: `StatusChip` is a dot PLUS a
+ * label on a tinted pill, which would duplicate the option's own text, and the
+ * showcase's equivalent `Dot` is showcase-local (src/ui must not import from
+ * there). So the dot stays hand-rolled here. Flagged as a library-component
+ * candidate.
+ *
+ * One class per state rather than a colour passed in: a custom property would
+ * have to be set through an inline `style`, which is what this replaces.
+ *
+ * The dot is decorative — it is `aria-hidden` and the option's text names the
+ * state, so nothing rests on colour alone.
+ */
+.statusDot {
+  display: inline-block;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+}
+
+/* Awaiting authorisation. */
+.statusPending {
+  background: var(--color-warning);
+}
+
+/* Approved. */
+.statusPassed {
+  background: var(--success-main);
+}
+
+/* Rejected. */
+.statusRejected {
+  background: var(--error-main);
+}

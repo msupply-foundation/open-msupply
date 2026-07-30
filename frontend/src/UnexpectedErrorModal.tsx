@@ -70,12 +70,17 @@ const UnexpectedError: Component = () => (
     description={unexpectedError()}
     actions={
       <>
-        <Button variant="secondary" onClick={() => location.reload()}>
+        <Button
+          variant="secondary"
+          data-testid="unexpected-error-retry"
+          onClick={() => location.reload()}
+        >
           {t('button.try-again')}
         </Button>
         <Show when={authUser()}>
           <Button
             variant="secondary"
+            data-testid="unexpected-error-dashboard"
             onClick={() => (location.href = import.meta.env.BASE_URL)}
           >
             {t('button.dashboard')}

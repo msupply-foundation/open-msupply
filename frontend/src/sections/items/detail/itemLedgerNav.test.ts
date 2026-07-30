@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ledgerRowHref } from './itemLedgerNav';
 
-const row = (invoiceType: string) => ({
+const row = (invoiceType: string, isExternal = false) => ({
   invoiceType: invoiceType as never,
   invoiceId: 'inv-1',
+  isExternal,
 });
 
 // OMS-REG-CAT-04.23/.43 — a ledger row navigates to its source document's own
@@ -16,9 +17,18 @@ describe('ledgerRowHref (CAT-04.23/.43)', () => {
     );
   });
 
-  it('routes an inbound shipment — the same route regardless of isExternal', () => {
+  // One route for both inbound scopes; isExternal only selects the route's
+  // scope param, which the detail's single read needs (it can't be recovered
+  // from the id).
+  it('routes an inbound shipment in the plain scope', () => {
     expect(ledgerRowHref('store-1', row('INBOUND_SHIPMENT'))).toBe(
-      '/store-1/replenishment/inbound-shipment/inv-1'
+      '/store-1/replenishment/inbound-shipment/inv-1?type=INBOUND_SHIPMENT'
+    );
+  });
+
+  it('routes a PO-linked inbound shipment in the external scope', () => {
+    expect(ledgerRowHref('store-1', row('INBOUND_SHIPMENT', true))).toBe(
+      '/store-1/replenishment/inbound-shipment/inv-1?type=INBOUND_SHIPMENT_EXTERNAL'
     );
   });
 
