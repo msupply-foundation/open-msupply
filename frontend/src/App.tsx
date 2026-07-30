@@ -43,6 +43,7 @@ import { ReLoginModal } from './auth/ReLoginModal';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
 import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
+import { PluginGate } from './plugins/PluginGate';
 import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
@@ -134,7 +135,14 @@ export const App: Component = () => {
         </Match>
         <Match when={phase() === 'operational'}>
           <Show when={authUser()} fallback={<LoginPage />}>
-            {/* base matches Vite's `base` config so the same build can be
+            {/* Installed frontend plugins load here (spec/plugins/rules.md §
+                lifecycle): a session exists, and nothing operational has
+                rendered yet, so a contribution can never pop into an
+                already-rendered screen. Store context is deliberately NOT
+                waited for — it is a render-time input to each contribution's
+                visibility gate. */}
+            <PluginGate>
+              {/* base matches Vite's `base` config so the same build can be
                 mounted at a non-root path (e.g. the demo server's /spec
                 track). import.meta.env.BASE_URL always ends in "/" (Vite's
                 convention); solid-router's own root-route resolution
@@ -143,45 +151,46 @@ export const App: Component = () => {
                 double slash — "/spec//id" — that fails to match any route
                 and drops the base entirely. Trimmed here, once, at the
                 source. */}
-            <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-              {/* Store guard wraps the routed app shell; the shell mounts once and
+              <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+                {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}
-              <Route path="/:storeId" component={StoreGuardLayout}>
-                <Route path="/" component={ShellLayout}>
-                  {/* The store root is the landing screen — the dashboard
+                <Route path="/:storeId" component={StoreGuardLayout}>
+                  <Route path="/" component={ShellLayout}>
+                    {/* The store root is the landing screen — the dashboard
                       (spec/dashboard S1), same page as the nav's `dashboard`
                       destination. */}
-                  <Route path="/" component={DashboardPage} />
-                  <For each={Object.entries(sectionRoutes)}>
-                    {([path, routes]) => (
-                      <Route path={`/${path}`}>{routes()}</Route>
-                    )}
-                  </For>
-                  <For
-                    each={navDestinations.filter(
-                      dest => !sectionRoutes[dest.path]
-                    )}
-                  >
-                    {dest => (
-                      <Route
-                        path={`/${dest.path}`}
-                        component={() => <EntryPage dest={dest} />}
-                      />
-                    )}
-                  </For>
-                  {/* Catch-all inside the shell: an unknown in-store path is
+                    <Route path="/" component={DashboardPage} />
+                    <For each={Object.entries(sectionRoutes)}>
+                      {([path, routes]) => (
+                        <Route path={`/${path}`}>{routes()}</Route>
+                      )}
+                    </For>
+                    <For
+                      each={navDestinations.filter(
+                        dest => !sectionRoutes[dest.path]
+                      )}
+                    >
+                      {dest => (
+                        <Route
+                          path={`/${dest.path}`}
+                          component={() => <EntryPage dest={dest} />}
+                        />
+                      )}
+                    </For>
+                    {/* Catch-all inside the shell: an unknown in-store path is
                       the not-found page (no destination), which keeps the app
                       bar — and so the menu — reachable. */}
-                  <Route path="*" component={() => <EntryPage />} />
+                    <Route path="*" component={() => <EntryPage />} />
+                  </Route>
                 </Route>
-              </Route>
-              <Route
-                path="*"
-                component={() => <Navigate href={resolveStorePath} />}
-              />
-            </Router>
-            <ReLoginModal />
+                <Route
+                  path="*"
+                  component={() => <Navigate href={resolveStorePath} />}
+                />
+              </Router>
+              <ReLoginModal />
+            </PluginGate>
           </Show>
         </Match>
       </Switch>

@@ -1,31 +1,18 @@
-import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from '../../../../ui/elements/buttons/SplitButton';
-import { DownloadIcon } from '../../../../ui/icons';
-import {
-  csvToExcel,
-  fetchReportFile,
-  listExportCsvFilename,
-  listExportExcelFilename,
-} from '../../../../domain/reportFiles';
-import { saveBlob } from '../../../../platform/openDocument';
-import { storeCodeOf } from '../../../../auth/authContext';
-import { stripEmpty } from '../../../../typeHelpers';
+import { type Component } from 'solid-js';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { ListExportAction } from '@/domain/reportFiles/ListExportAction';
+import { stripEmpty } from '@/typeHelpers';
 import { StockLines, type StockLinesVariables } from '../stock.generated';
 import type { StockFilter } from '../listFilters';
 import { stockToCsv } from '../stockToCsv';
 
-// The stock list Export action (spec/stock AC-L6): a split button offering CSV
-// or Excel, exporting EVERY stock line matching the current filter (all pages,
-// packs-on-hand only) — not just the visible page. CSV downloads directly;
-// Excel round-trips the CSV through the server's converter then downloads the
-// workbook (domain/reportFiles). Self-contained, owning its own fetch + busy
-// state; failures fall through the global error modal. Exports the flat line
-// list regardless of the grouped toggle (the underlying rows).
+// The stock list Export action (spec/stock AC-L6): the shared CSV/Excel split
+// button, fed this vertical's query. Exports EVERY stock line matching the
+// current filter (all pages, packs-on-hand only) — not just the visible page,
+// and the flat line list regardless of the grouped toggle. Delivery, the busy
+// state and the outcome report live in ListExportAction — this file owns only
+// the query.
 
 export interface ExportStockActionProps {
   storeId: string;
@@ -36,13 +23,6 @@ export interface ExportStockActionProps {
 const EXPORT_PAGE = 10000;
 
 export const ExportStockAction: Component<ExportStockActionProps> = props => {
-  const [busy, setBusy] = createSignal(false);
-
-  const options: SplitButtonOption[] = [
-    { value: 'csv', label: t('button.export-csv') },
-    { value: 'excel', label: t('button.export-excel') },
-  ];
-
   const buildCsv = async (): Promise<string | null> => {
     const variables: StockLinesVariables = {
       storeId: props.storeId,
@@ -56,44 +36,11 @@ export const ExportStockAction: Component<ExportStockActionProps> = props => {
     return nodes.length ? stockToCsv(nodes) : null;
   };
 
-  const run = async (format: string): Promise<void> => {
-    if (busy()) return;
-    setBusy(true);
-    try {
-      const csv = await buildCsv();
-      if (!csv) return;
-      // Filenames per the shared list-export rule
-      // (ui-standards/list-views § regions).
-      const storeCode = storeCodeOf(props.storeId);
-      const listName = t('filename.stock');
-      if (format === 'excel') {
-        const generated = await csvToExcel({
-          storeId: props.storeId,
-          csvData: csv,
-          filename: listExportExcelFilename(storeCode, listName),
-          sheetName: storeCode,
-        });
-        if (generated.kind !== 'fileId') return;
-        const file = await fetchReportFile(generated.fileId);
-        if (file.kind === 'success') void saveBlob(file.blob, file.filename);
-      } else {
-        void saveBlob(
-          new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-          listExportCsvFilename(storeCode, listName, new Date())
-        );
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <SplitButton
-      icon={<DownloadIcon />}
-      options={options}
-      testId="export-csv"
-      menuLabel={t('button.export')}
-      onAction={format => void run(format)}
+    <ListExportAction
+      storeId={props.storeId}
+      buildCsv={buildCsv}
+      listName={t('filename.stock')}
     />
   );
 };

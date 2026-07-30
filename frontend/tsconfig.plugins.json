@@ -1,0 +1,48 @@
+{
+  /*
+   * The example plugins, typechecked exactly as an out-of-tree plugin would be:
+   * the SDK resolved from source through the `@openmsupply/plugin-sdk` path
+   * mapping (what civ-plugins does with a submodule/sibling checkout), and NO
+   * `@/*` mapping — an example reaching into host source must not compile.
+   * Compiler options mirror tsconfig.app.json so a plugin sees the host's
+   * strictness and JSX runtime.
+   */
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.plugins.tsbuildinfo",
+    "target": "es2023",
+    "module": "esnext",
+    "lib": ["ES2023", "DOM"],
+    "types": ["vite/client"],
+    "allowArbitraryExtensions": true,
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "paths": { "@openmsupply/plugin-sdk": ["./src/plugin-sdk/index.ts"] },
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  /*
+   * The globals the SDK's own graph relies on (Vite `define` injections). They
+   * are ambient declarations, so they must be listed: `include` here is
+   * examples-only, and the SDK arrives through the path mapping rather than
+   * through the file list.
+   */
+  "include": [
+    "examples/**/*.ts",
+    "examples/**/*.tsx",
+    "src/globals.d.ts",
+    "src/intl/globals.d.ts"
+  ]
+}

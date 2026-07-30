@@ -3,8 +3,9 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 
 // Pure status/kind logic for customer returns
 // (spec/customer-returns/rules.md § manual vs transfer + § status lifecycle +
-// § editability). Kept free of components so the AC-citing tests exercise it
-// directly (acceptance.md AC-E7, AC-S4/S5, AC-T1, AC-D3).
+// § editability). Kept free of components so the behaviour-citing tests
+// exercise it directly (cases/OMS-REG-DIST-07 .26, .38, .7/.32/.33, .43/.44,
+// .42).
 
 // The InvoiceNodeStatus values a customer return passes through. DELIVERED is a
 // legacy intermediate customer returns always skip (contract § status
@@ -87,7 +88,7 @@ export const nextStatuses = (
 // Standing editability (rules § editability): header fields, lines, hold,
 // delete. A VERIFIED return is immutable; a transfer return is read-only until
 // RECEIVED (the UI's conservative gate — the receive action itself is offered
-// from SHIPPED via nextStatuses above). AC-E7 / AC-T1.
+// from SHIPPED via nextStatuses above). OMS-REG-DIST-07.26 / .43 / .44.
 export const isReturnDisabled = (node: {
   status: ReturnStatus;
   linkedShipment?: { id: string } | null;
@@ -99,7 +100,7 @@ export const isReturnDisabled = (node: {
 
 // The status button's own gate (rules § advancing status — preconditions):
 // hold blocks ONLY status changes; no-lines blocks the advance (both also
-// server-enforced — AC-S4 / AC-S5). The button stays clickable on no-lines so
+// server-enforced — OMS-REG-DIST-07.38 / .7). The button stays clickable on no-lines so
 // the click explains itself (messages.no-lines dialog) rather than dead-ending.
 export const advanceBlockedByHold = (node: { onHold: boolean }): boolean =>
   node.onHold;

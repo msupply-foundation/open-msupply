@@ -150,7 +150,7 @@ describe('storeEditorLogic — store editor (spec/settings S5)', () => {
   });
 
   // OMS-REG-SET-05.29 / .30 — Save is disabled while the session can edit
-  // nothing (D71), including when the server holds no definitions at all.
+  // nothing (D79), including when the server holds no definitions at all.
   it('Save is enabled only when something is editable (SET-05.29/.30)', () => {
     const definitions = [
       definition('latitude', 'Latitude', { valueType: 'FLOAT' }),

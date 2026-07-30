@@ -1,4 +1,4 @@
-import { stripEmpty } from '../../../typeHelpers';
+import { stripEmpty } from '@/typeHelpers';
 import type { LocationsListVariables } from './locations.generated';
 import type { LocationFilter } from './listFilters';
 

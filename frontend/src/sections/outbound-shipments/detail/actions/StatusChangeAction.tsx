@@ -33,16 +33,16 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // allowed next status with earlier ones disabled; hidden entirely when
 // read-only. ONE client pre-flight guard (ui-standards/validation.md — the
 // sanctioned lineless server gap): no lines / only placeholder lines →
-// notice, no server call (AC-S6). The pre-flight answers are whole-shipment
+// notice, no server call (OMS-REG-DIST-04.16). The pre-flight answers are whole-shipment
 // SERVER probes supplied by the view (the lines are server-paginated — the
 // loaded page can't answer for the shipment), run sequentially when the
 // button is invoked. Everything else submits and surfaces the server's
-// verdict inline in the confirmation dialog — on-hold (AC-H1) and
-// unallocated-placeholder (AC-P3) rejections land in the error phase; the
-// confirmation itself carries the zero-quantity removal warning (AC-S5).
+// verdict inline in the confirmation dialog — on-hold (OMS-REG-DIST-02.10) and
+// unallocated-placeholder (OMS-REG-DIST-03.9) rejections land in the error phase; the
+// confirmation itself carries the zero-quantity removal warning (OMS-REG-DIST-04.15).
 // The on-hold notice is ACTIONABLE (D59): it offers "Release hold and
 // confirm ‹status›" — one save carrying both the release and the advance
-// (rules.md § on hold, AC-H2) — instead of the old app's dead-end toast.
+// (rules.md § on hold, OMS-REG-DIST-02.27) — instead of the old app's dead-end toast.
 
 /** Whole-shipment pre-flight answers (probed at action time, never derived
  * from the loaded page). */
@@ -67,7 +67,7 @@ type Phase = 'confirm' | 'working';
 
 export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   // pendingStatus != null opens the confirm dialog; infoMessage the lineless
-  // blocking notice (the AC-S6 server gap).
+  // blocking notice (the OMS-REG-DIST-04.16 server gap).
   const [pendingStatus, setPendingStatus] = createSignal<
     SettableStatus | undefined
   >();
@@ -75,7 +75,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   // Set when the notice is the ON-HOLD rejection: the status the user tried
   // to reach, offered as "Release hold and confirm ‹status›" — one save that
-  // both releases and advances (AC-H2, D59). Cleared with the notice.
+  // both releases and advances (OMS-REG-DIST-02.27, D59). Cleared with the notice.
   const [holdRetryStatus, setHoldRetryStatus] = createSignal<
     SettableStatus | undefined
   >();
@@ -86,7 +86,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
 
   // Options: the client-settable statuses the preference allows, earlier ones
   // shown disabled (spec: "options = every allowed next status, earlier
-  // statuses shown disabled"; AC-PR1 limits the set).
+  // statuses shown disabled"; OMS-REG-DIST-04.22 limits the set).
   const statusOptions = createMemo(() =>
     CLIENT_SETTABLE.filter(status => allowedStatuses().includes(status)).map(
       status => ({
@@ -119,7 +119,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   };
 
   // The zero-quantity item names from the LAST probe — rendered in the
-  // confirmation's removal warning (AC-S5).
+  // confirmation's removal warning (OMS-REG-DIST-04.15).
   const [zeroQuantityItems, setZeroQuantityItems] = createSignal<string[]>([]);
   // Guards double-invocation while the probe's sequential fetches run.
   const [probing, setProbing] = createSignal(false);
@@ -128,7 +128,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     if (!editable() || probing()) return;
     // The one sanctioned pre-flight (validation.md): no lines (or only
     // placeholders) — the server would ACCEPT a lineless confirmation
-    // (captured server gap, AC-S6), so the notice is the only guard. Probed
+    // (captured server gap, OMS-REG-DIST-04.16), so the notice is the only guard. Probed
     // whole-shipment at click time; a failed probe already raised the global
     // error modal, so just abort.
     setProbing(true);
@@ -163,7 +163,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       // doesn't apply) and the verdict surfaces as the footer's blocking
       // notice — the same surface, still never a toast. The shared suite
       // pins this close-then-notice shape. The on-hold verdict additionally
-      // arms the notice's release-and-advance action (AC-H2, D59).
+      // arms the notice's release-and-advance action (OMS-REG-DIST-02.27, D59).
       close();
       setHoldRetryStatus(result.heldShipment ? status : undefined);
       setInfoMessage(result.message);
@@ -181,7 +181,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     setHoldRetryStatus(undefined);
   };
 
-  // The on-hold notice's action (AC-H2, D59): retry the SAME status change
+  // The on-hold notice's action (OMS-REG-DIST-02.27, D59): retry the SAME status change
   // with the hold released in one save — {id, status, onHold: false}.
   const releaseAndConfirm = async () => {
     const status = holdRetryStatus();
@@ -229,7 +229,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       {/* Confirm → working → success — mounted only while open, so its
           confirmation-modal test hook never coexists with another dialog's.
           Zero-quantity rows add the removal warning to the confirmation
-          (AC-S5); proceeding lets the server trim them. */}
+          (OMS-REG-DIST-04.15); proceeding lets the server trim them. */}
       <Show when={pendingStatus() != null}>
         <Dialog
           open
@@ -280,7 +280,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       </Show>
 
       {/* Blocking notice: the lineless pre-flight (guards 1–2) and server
-          verdicts. The ON-HOLD verdict is actionable (AC-H2, D59): alongside
+          verdicts. The ON-HOLD verdict is actionable (OMS-REG-DIST-02.27, D59): alongside
           OK it offers "Release hold and confirm ‹status›" — one save carrying
           both the release and the advance. */}
       <Show when={infoMessage() != null}>
