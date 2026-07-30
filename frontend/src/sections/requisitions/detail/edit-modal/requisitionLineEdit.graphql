@@ -1,0 +1,83 @@
+# Requisition LINE editor (spec/requisitions S4).
+#
+# Two save paths (contract › line editing):
+#  · ADD  — insertResponseRequisitionLine (a new line at zero quantities, the
+#    indicative price captured under its preference) then
+#    updateResponseRequisitionLine with the drafted figures, sequentially —
+#    unlike the request side, BatchResponseRequisitionInput carries only
+#    deletes, so there is no one-call insert+update batch. A client-generated
+#    line id ties the two.
+#  · EDIT — updateResponseRequisitionLine carries the WHOLE draft each save
+#    (contract: an omitted optionId clears the stored reason, so the draft
+#    always resends it).
+#
+# ADD mode previews the item's figures from a live read BEFORE any line exists
+# (D75 — nothing persists until the first Save): code/name/unit/pack/doses and
+# our current stock. The customer-demand figures of a manually added line are
+# genuinely zero (the customer never asked), so no suggestion is previewed.
+
+# One item's current figures for the add-mode preview. `stats` triggers the
+# AMC calculation — acceptable for a single picked item (contrast
+# item.graphql's search, which sums availableBatches to avoid it).
+query requisitionItemStats($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        unitName
+        defaultPackSize
+        doses
+        isVaccine
+        stats(storeId: $storeId) {
+          availableStockOnHand
+        }
+      }
+    }
+  }
+}
+
+# ADD, phase 1: realise the line (all quantities zero server-side). Typed
+# errors (duplicate item, cannot-edit, …) get the generic failure surface —
+# the picker loads an existing item's line rather than inserting (D74), so
+# they are not normally reachable.
+mutation insertRequisitionLine(
+  $storeId: String!
+  $input: InsertResponseRequisitionLineInput!
+) {
+  insertResponseRequisitionLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineNode {
+      id
+    }
+    ... on InsertResponseRequisitionLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# EDIT (and ADD phase 2): the whole draft. Typed errors surface inline
+# (contract › line editing): the variance-reason guard names the field, a
+# cannot-edit rejection shows its message.
+mutation updateRequisitionLine(
+  $storeId: String!
+  $input: UpdateResponseRequisitionLineInput!
+) {
+  updateResponseRequisitionLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineNode {
+      id
+    }
+    ... on UpdateResponseRequisitionLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
