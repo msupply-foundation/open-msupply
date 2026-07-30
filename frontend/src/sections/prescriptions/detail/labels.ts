@@ -59,13 +59,24 @@ export const buildLabels = (
 };
 
 /**
+ * The outcome of a print attempt. `detail` is what the user is shown behind the
+ * error disclosure, so it must always say something: the endpoint has no
+ * structured error shape (spec/prescriptions/contract.md § label printing), the
+ * plain-text body IS the message.
+ */
+export type PrintLabelsOutcome = { ok: true } | { ok: false; detail: string };
+
+/**
  * POST the labels to the server's prescription label-print endpoint. Same
- * non-throwing style as the report-file fetches: a failure resolves false and
- * the caller shows its notice.
+ * non-throwing style as the report-file fetches — a failure resolves, it never
+ * throws — and the caller reports it on the control that started it
+ * (spec/ui-standards/controls.md § action feedback). Every failure path here
+ * MUST resolve a detail: an unprintable label reaches nobody but this user, and
+ * a report with nothing in it is what issue #818 was.
  */
 export const printLabels = async (
   labels: PrescriptionLabel[]
-): Promise<boolean> => {
+): Promise<PrintLabelsOutcome> => {
   try {
     const response = await fetch(PRINT_LABEL_PRESCRIPTION_URL, {
       method: 'POST',
@@ -73,8 +84,21 @@ export const printLabels = async (
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(labels),
     });
-    return response.ok;
-  } catch {
-    return false;
+    if (response.ok) return { ok: true };
+    // The body carries the server's message ("Error getting printer settings:
+    // …", or the printer error itself). Reading it can fail on its own, and an
+    // empty body would leave the report blank — fall back to the status line.
+    const body = await response.text().catch(() => '');
+    return {
+      ok: false,
+      detail: body.trim() || `${response.status} ${response.statusText}`.trim(),
+    };
+  } catch (error) {
+    // A transport failure (server down, DNS, offline) — never a structured
+    // Error necessarily, so don't assume `.message` is there.
+    return {
+      ok: false,
+      detail: error instanceof Error ? error.message : String(error),
+    };
   }
 };
