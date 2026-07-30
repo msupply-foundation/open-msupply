@@ -5,11 +5,10 @@ import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  InfoIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   filterByStatusPreference,
   nextStatuses,
@@ -144,23 +143,22 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             </Match>
           </Switch>
         }
+        // Dialog-footer identity (D55): icon-less throughout. The confirm keeps
+        // its own verb ("Confirm {status}") — a custom label is outside
+        // "standard territory", so it stays a primary <Button> — while Cancel
+        // and the outcome acknowledgement are the pre-composed pair.
         actions={
           <Switch
             fallback={
               <>
                 <Show when={phase() === 'confirm'}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
+                  <CancelButton
                     data-testid="dialog-button-cancel"
                     onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
                 <Button
                   variant="primary"
-                  icon={<ArrowRightIcon />}
                   loading={phase() === 'working'}
                   data-testid="confirmation-modal-ok"
                   onClick={() => void run()}
@@ -173,14 +171,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             }
           >
             <Match when={phase() === 'success' || phase() === 'error'}>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                data-testid="dialog-button-ok"
-                onClick={close}
-              >
-                {t('button.ok')}
-              </Button>
+              <OkButton data-testid="dialog-button-ok" onClick={close} />
             </Match>
           </Switch>
         }
@@ -194,15 +185,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         icon={<InfoIcon />}
         title={t('heading.cannot-do-that')}
         description={blockedMessage()}
-        actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
-            onClick={() => setBlockedMessage(undefined)}
-          >
-            {t('button.ok')}
-          </Button>
-        }
+        actions={<OkButton onClick={() => setBlockedMessage(undefined)} />}
       />
     </>
   );
