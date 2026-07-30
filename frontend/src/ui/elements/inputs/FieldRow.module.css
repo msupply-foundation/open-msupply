@@ -6,12 +6,17 @@
  */
 .row {
   display: grid;
-  /* The control column is guaranteed a working minimum (8rem — a full date
-     fits; capped at 60% so a very narrow row can't overflow): a long (or
-     translated) label takes its natural width only while that guarantee
-     holds, then WRAPS instead of squeezing the control's value out of view
-     (e.g. the side panel's date fields). */
-  grid-template-columns: minmax(6rem, max-content) minmax(min(8rem, 60%), 1fr);
+  /* The label track defaults to "min 6rem, grow to fit" — but because each row
+     is its own grid, that only keeps VALUES aligned across sibling rows while
+     every label is short enough to sit at the 6rem floor; a longer label grows
+     its own track and shoves that row's value right. A host that stacks many
+     rows with mixed-length labels (the side panel) overrides `--field-row-label`
+     with a FIXED track so every value aligns and long labels wrap within it.
+     The control column keeps a working minimum (8rem — a full date fits; capped
+     at 60% so a very narrow row can't overflow). */
+  grid-template-columns:
+    var(--field-row-label, minmax(6rem, max-content))
+    minmax(min(8rem, 60%), 1fr);
   align-items: center;
   gap: var(--space-2) var(--space-3);
 }
