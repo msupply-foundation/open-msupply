@@ -82752,6 +82752,32 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 2291,
+   "record_id": "e2e_nsj_gry_supplier_only",
+   "received_datetime": "2026-07-29T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "name_store_join",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_nsj_gry_supplier_only",
+    "name_id": "D97D41791C0F494E86D86F2E25E57925",
+    "name_is_customer": false,
+    "name_is_supplier": true,
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],
