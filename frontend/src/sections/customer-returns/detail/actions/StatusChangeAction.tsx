@@ -5,11 +5,10 @@ import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  InfoIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   filterByStatusPreference,
   nextStatuses,
@@ -23,7 +22,7 @@ import type { CustomerReturnInfoFragment } from '../customerReturnDetail.generat
 export interface StatusChangeActionProps {
   storeId: string;
   node: CustomerReturnInfoFragment;
-  /** ≥1 line — advancing an empty return is blocked (AC-S4). */
+  /** ≥1 line — advancing an empty return is blocked (OMS-REG-DIST-07.38). */
   hasLines: boolean;
   /** The invoice-status-options preference (empty = no restriction). */
   statusOptions: readonly string[];
@@ -39,7 +38,8 @@ export interface StatusChangeActionProps {
 // preference; hidden when the return offers no advance (terminal, or a
 // transfer still in the sender's hands). While ON HOLD (or with no lines) the
 // button stays active-and-explaining — the click surfaces the block instead of
-// acting (D39); hold blocks exactly this advance (AC-S5), releasing clears it.
+// acting (D39); hold blocks exactly this advance (OMS-REG-DIST-07.7),
+// releasing clears it (.32).
 //
 // Every rejection is NON-typed (contract § advancing status):
 // advanceReturnStatus maps extensions.details to translated copy shown in the
@@ -65,9 +65,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const nextTarget = () => targets()[0];
 
   const openConfirm = (status: string) => {
-    // No lines / on hold: explain rather than dead-end (AC-S4 / AC-S5's UI
-    // surface — the same rejections are server-enforced and asserted by the
-    // ACs).
+    // No lines / on hold: explain rather than dead-end (OMS-REG-DIST-07.38 /
+    // .7's UI surface — the same rejections are server-enforced and asserted by
+    // the ACs).
     if (!props.hasLines) {
       setBlockedMessage(t('messages.no-lines'));
       return;
@@ -143,23 +143,22 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             </Match>
           </Switch>
         }
+        // Dialog-footer identity (D55): icon-less throughout. The confirm keeps
+        // its own verb ("Confirm {status}") — a custom label is outside
+        // "standard territory", so it stays a primary <Button> — while Cancel
+        // and the outcome acknowledgement are the pre-composed pair.
         actions={
           <Switch
             fallback={
               <>
                 <Show when={phase() === 'confirm'}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
+                  <CancelButton
                     data-testid="dialog-button-cancel"
                     onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
                 <Button
                   variant="primary"
-                  icon={<ArrowRightIcon />}
                   loading={phase() === 'working'}
                   data-testid="confirmation-modal-ok"
                   onClick={() => void run()}
@@ -172,36 +171,21 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             }
           >
             <Match when={phase() === 'success' || phase() === 'error'}>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                data-testid="dialog-button-ok"
-                onClick={close}
-              >
-                {t('button.ok')}
-              </Button>
+              <OkButton data-testid="dialog-button-ok" onClick={close} />
             </Match>
           </Switch>
         }
       />
 
       {/* Blocked advance (no lines / on hold): an info-only dialog explaining
-          why the advance can't run yet (AC-S4 / AC-S5). */}
+          why the advance can't run yet (OMS-REG-DIST-07.38 / .7). */}
       <Dialog
         open={blockedMessage() != null}
         onClose={() => setBlockedMessage(undefined)}
         icon={<InfoIcon />}
         title={t('heading.cannot-do-that')}
         description={blockedMessage()}
-        actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
-            onClick={() => setBlockedMessage(undefined)}
-          >
-            {t('button.ok')}
-          </Button>
-        }
+        actions={<OkButton onClick={() => setBlockedMessage(undefined)} />}
       />
     </>
   );

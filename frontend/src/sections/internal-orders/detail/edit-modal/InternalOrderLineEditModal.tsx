@@ -91,7 +91,9 @@ export interface InternalOrderLineEditModalProps {
   showPricing: boolean;
   showForecast: boolean;
   showExcess: boolean;
-  /** Customer-statistics program order → the movements panel + reason (AC-R1). */
+  /**
+   * Customer-statistics program order → the movements panel + reason (AC-R1).
+   */
   showExtended: boolean;
   orderInPacks: boolean;
   /** An existing line → edit mode; omitted → add mode. */

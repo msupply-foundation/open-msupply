@@ -1,11 +1,12 @@
 // Stat-link builders (spec/dashboard/rules.md § navigation correspondence,
-// OMS-REG-DB-01.55): every stat links into the list holding exactly the records it counts,
-// so the filter each link applies restates the count's definition. The
-// dashboard owns WHAT each stat filters by; the target list owns the URL
-// encoding — here that is the shared `?query=` JSON param (kdd/url-structure),
-// with the filter object conforming to the target list's generated GraphQL
-// filter input (kdd/type-safety: type-only imports of the target lists' own
-// filter types, so a drift in their contract stops compiling here).
+// OMS-REG-DB-01.55): every stat links into the list holding exactly the
+// records it counts, so the filter each link applies restates the count's
+// definition. The dashboard owns WHAT each stat filters by; the target list
+// owns the URL encoding — here that is the shared `?query=` JSON param
+// (kdd/url-structure), with the filter object conforming to the target list's
+// generated GraphQL filter input (kdd/type-safety: type-only imports of the
+// target lists' own filter types, so a drift in their contract stops compiling
+// here).
 //
 // Lists that don't exist yet (customer requisitions) get their registered
 // placeholder, unfiltered — they begin filtering once the list ships
@@ -34,7 +35,8 @@ export const DAYS_TILL_EXPIRED = 30;
 // FilterDateRange): 'dateTime' widens each day to inclusive UTC instants via
 // the shared conversion (#456); 'date' passes the plain ISO day through
 // (`Date` scalar). Open-ended when a bound is null. So every dated stat link
-// declares its field's scalar and gets the right conversion — none hand-rolls it.
+// declares its field's scalar and gets the right conversion — none hand-rolls
+// it.
 const dayRange = (
   type: 'date' | 'dateTime',
   from: Date | null,
@@ -127,7 +129,8 @@ export const internalOrderDraftHref = (storeId: string): string =>
 export const outboundListHref = (storeId: string): string =>
   listHref(storeId, 'distribution/outbound-shipment');
 
-// Not shipped = New/Allocated/Picked (rules.md § outbound shipments; OMS-REG-DB-01.37).
+// Not shipped = New/Allocated/Picked (rules.md § outbound shipments;
+// OMS-REG-DB-01.37).
 export const outboundNotShippedHref = (storeId: string): string =>
   listHref(storeId, 'distribution/outbound-shipment', {
     status: { equalAny: ['NEW', 'ALLOCATED', 'PICKED'] },
@@ -160,7 +163,8 @@ export const expiringSoonHref = (storeId: string, today: Date): string =>
     ),
   } satisfies StockFilter);
 
-// Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th day excluded).
+// Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th
+// day excluded).
 export const expiringNextThreeMonthsHref = (
   storeId: string,
   today: Date
@@ -169,7 +173,8 @@ export const expiringNextThreeMonthsHref = (
     expiryDate: dayRange('date', addDays(today, 30), addDays(today, 89)),
   } satisfies StockFilter);
 
-// Between thresholds: today + first … today + second (whole days — OMS-REG-DB-01.45).
+// Between thresholds: today + first … today + second (whole days —
+// OMS-REG-DB-01.45).
 export const expiringBetweenThresholdsHref = (
   storeId: string,
   today: Date,
@@ -185,18 +190,19 @@ export const expiringBetweenThresholdsHref = (
   } satisfies StockFilter);
 
 // Item catalogue (spec/items). The stock-level stats link into this list
-// filtered to the records each counts (OMS-REG-DB-01.55). The dashboard conforms to the
-// list's OWN filter contract — the UI-side `ItemsListFilter` its
-// `useUrlQueryState` reads (`lens` / `atRisk` / min-max months-of-stock), which
-// the list expands to the wire `ItemFilterInput` itself. That vocabulary is the
-// list's, not contract.md's guessed `stockStatus` / `productsAtRiskOfBeingOutOfStock`
-// (candidate spec refinement — see the build report). Total items and the panel
-// title use the unfiltered catalogue.
+// filtered to the records each counts (OMS-REG-DB-01.55). The dashboard
+// conforms to the list's OWN filter contract — the UI-side `ItemsListFilter`
+// its `useUrlQueryState` reads (`lens` / `atRisk` / min-max months-of-stock),
+// which the list expands to the wire `ItemFilterInput` itself. That vocabulary
+// is the list's, not contract.md's guessed `stockStatus` /
+// `productsAtRiskOfBeingOutOfStock` (candidate spec refinement — see the build
+// report). Total items and the panel title use the unfiltered catalogue.
 
 export const itemCatalogueHref = (storeId: string): string =>
   listHref(storeId, 'catalogue/items');
 
-// Out of stock (recently used): zero on hand + recent consumption (OMS-REG-DB-01.48 count).
+// Out of stock (recently used): zero on hand + recent consumption
+// (OMS-REG-DB-01.48 count).
 export const itemsOutOfStockRecentlyUsedHref = (storeId: string): string =>
   listHref(storeId, 'catalogue/items', {
     lens: 'out-of-stock-recent',
@@ -214,7 +220,8 @@ export const itemsAtRiskHref = (storeId: string): string =>
     atRisk: 'at-risk',
   } satisfies ItemsListFilter);
 
-// Low stock: months of stock below the understock threshold (OMS-REG-DB-01.49 count).
+// Low stock: months of stock below the understock threshold (OMS-REG-DB-01.49
+// count).
 export const itemsLowStockHref = (
   storeId: string,
   understockMonths: number
@@ -223,7 +230,8 @@ export const itemsLowStockHref = (
     maxMonthsOfStock: understockMonths,
   } satisfies ItemsListFilter);
 
-// High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50 count).
+// High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50
+// count).
 export const itemsHighStockHref = (
   storeId: string,
   overstockMonths: number
@@ -232,8 +240,9 @@ export const itemsHighStockHref = (
     minMonthsOfStock: overstockMonths,
   } satisfies ItemsListFilter);
 
-// Overstocked: months of stock above the over-stock-alert threshold (OMS-REG-DB-01.52
-// count) — a different threshold from high stock (rules § stock levels).
+// Overstocked: months of stock above the over-stock-alert threshold
+// (OMS-REG-DB-01.52 count) — a different threshold from high stock (rules §
+// stock levels).
 export const itemsOverstockedHref = (
   storeId: string,
   overstockAlertMonths: number

@@ -6,7 +6,8 @@ import {
   isEmpty,
 } from './volume';
 
-// A minimal location shape for the pure volume helpers (the real node has more).
+// A minimal location shape for the pure volume helpers (the real node has
+// more).
 const loc = (
   volume: number,
   volumeUsed: number,
@@ -62,7 +63,8 @@ describe('isEmpty', () => {
 
   it('is false as soon as any stock is held', () => {
     expect(isEmpty(loc(10, 2, 1))).toBe(false);
-    // Even stock without volume data (volumeUsed 0 but totalCount > 0) is stock.
+    // Even stock without volume data (volumeUsed 0 but totalCount > 0) is
+    // stock.
     expect(isEmpty(loc(10, 0, 3))).toBe(false);
   });
 });

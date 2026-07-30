@@ -15,12 +15,12 @@ import type { PatientsVariables } from './patients.generated';
 export type PatientFilter = NonNullable<PatientsVariables['filter']>;
 
 /*
- * Type-driven, EXHAUSTIVE filter definitions for the patient list (spec/patients
- * S1 › Filters, AC-L2/L3). The map passed to constructFilters is keyed by EVERY
- * key of PatientFilterInput: a definition to expose, or `null` to dismiss — so
- * codegen adding a filter key breaks compilation until it is classified, and
- * this one map is both the definitions and the completeness proof. Map key order
- * is the toolbar display order.
+ * Type-driven, EXHAUSTIVE filter definitions for the patient list
+ * (spec/patients S1 › Filters, AC-L2/L3). The map passed to constructFilters
+ * is keyed by EVERY key of PatientFilterInput: a definition to expose, or
+ * `null` to dismiss — so codegen adding a filter key breaks compilation until
+ * it is classified, and this one map is both the definitions and the
+ * completeness proof. Map key order is the toolbar display order.
  *
  * Text filters match as substrings ({ like }); the Patient ID (identifier)
  * filter is the broad OR match across code / secondary code / name / program-
@@ -92,7 +92,8 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
     ),
   },
   // Gender — a single-select over the store's configured subset (AC-G3), exact
-  // match. gender.equalAny is honoured too, but a single-select maps to equalTo.
+  // match. gender.equalAny is honoured too, but a single-select maps to
+  // equalTo.
   gender: {
     label: () => t('label.gender'),
     render: props => (

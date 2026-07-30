@@ -16,11 +16,12 @@ import {
 //     reader can't tell "no value" from "failed to load".
 // Keep both in step: a new value type needs a rendering in each.
 
-// A field's stored value as a DISPLAY STRING, chosen by kind (spec/ui-standards/
-// custom-fields › value types) — used by list columns. Localises numbers and
-// dates; resolves an option id to its name. boolean and unsupported are handled
-// richer/absent by their surfaces, so here a boolean is a plain check mark and
-// unsupported is blank. Imports i18n, so it is NOT in the pure parser.
+// A field's stored value as a DISPLAY STRING, chosen by kind
+// (spec/ui-standards/ custom-fields › value types) — used by list columns.
+// Localises numbers and dates; resolves an option id to its name. boolean and
+// unsupported are handled richer/absent by their surfaces, so here a boolean is
+// a plain check mark and unsupported is blank. Imports i18n, so it is NOT in
+// the pure parser.
 export const customFieldDisplayString = (
   field: ParsedCustomField,
   raw: unknown
