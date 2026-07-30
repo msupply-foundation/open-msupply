@@ -5,7 +5,7 @@ import {
 } from './allocationWarnings';
 
 describe('issueWarningMessages (stock-allocation § reporting → banner descriptors)', () => {
-  it('maps every skipped category to its ported label (AC-AL2 — .59)', () => {
+  it('reports each skipped category as its own whole-sentence message (AC-AL2 — .59)', () => {
     expect(
       issueWarningMessages(
         [
@@ -17,15 +17,19 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
         { doses: false, dosesPerUnit: 1 }
       )
     ).toEqual([
-      {
-        key: 'messages.allocated-lines-skipped-line-reasons',
-        reasons: [
-          'label.on-hold',
-          'label.expired',
-          'label.unusable-vvm-status',
-        ],
-      },
+      { key: 'messages.stock-on-hold' },
+      { key: 'messages.stock-expired' },
+      { key: 'messages.stock-unusable-vvm' },
     ]);
+  });
+
+  it('reports only the categories that applied (.59)', () => {
+    expect(
+      issueWarningMessages([{ kind: 'skipped-barred', reasons: ['expired'] }], {
+        doses: false,
+        dosesPerUnit: 1,
+      })
+    ).toEqual([{ key: 'messages.stock-expired' }]);
   });
 
   it('maps the split-pack warning to units (AC-AL12 — .58)', () => {

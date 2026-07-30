@@ -27,11 +27,6 @@ export interface StocktakeStatusFooterProps {
    * (OMS isDisabled).
    */
   disabled: boolean;
-  /**
-   * No countable lines → finalise is blocked (OMS no-lines guard);
-   * FinaliseAction explains why.
-   */
-  canFinalise: boolean;
   /** Toggle the on-hold lock (writes isLocked). */
   onSetHold: (hold: boolean) => void;
   /**
@@ -92,7 +87,6 @@ export const StocktakeStatusFooter: Component<
         storeId={props.storeId}
         node={props.node}
         disabled={props.disabled}
-        canFinalise={props.canFinalise}
         onApplied={props.onFinalised}
         onError={props.onError}
         onShowErrors={props.onShowErrors}

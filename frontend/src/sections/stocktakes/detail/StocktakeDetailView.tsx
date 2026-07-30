@@ -192,9 +192,9 @@ const StocktakeDetailView: Component = () => {
         // control) — the spec's "hidden by default" set for the detail line
         // table (spec/stocktakes S3), which mirrors OMS's defaultHideOnMobile
         // columns. Snapshot / Counted / Difference / Reason / Comment stay
-        // visible. Gated columns (dosesPerUnit / donor) only appear in the table
-        // at all when their store preference is on; this sets their initial
-        // visibility once present.
+        // visible. Gated columns (dosesPerUnit / donor) only appear in the
+        // table at all when their store preference is on; this sets their
+        // initial visibility once present.
         columnVisibility: {
           manufactureDate: false,
           location: false,
@@ -302,12 +302,13 @@ const StocktakeDetailView: Component = () => {
   };
 
   // Locations WITH capacity for this store, fetched HERE (not from a global
-  // cache) and passed down to the line editor + change-location picker, so their
-  // % used / fullness filter reflect current stock. `volumeUsed` is
+  // cache) and passed down to the line editor + change-location picker, so
+  // their % used / fullness filter reflect current stock. `volumeUsed` is
   // server-computed and shifts whenever a count commits stock into/out of a
-  // location, so this is REFETCHED after every line save (see refetchAfterSave).
-  // The detail location FILTER also reads it (code/name only). Non-suspending
-  // read via `.latest` so a refetch never trips the view's Suspense boundary.
+  // location, so this is REFETCHED after every line save (see
+  // refetchAfterSave). The detail location FILTER also reads it (code/name
+  // only). Non-suspending read via `.latest` so a refetch never trips the
+  // view's Suspense boundary.
   const [locationsData, { refetch: refetchLocations }] = createResource(
     () => params.storeId,
     async storeId => {
@@ -347,11 +348,12 @@ const StocktakeDetailView: Component = () => {
     )
   );
 
-  // A stocktake can be finalised only when it has at least one counted line
-  // (OMS no-lines guard). Best-effort over the CURRENT page — a fuller guard
-  // would need a server count; the finalise mutation is the source of truth.
-  const canFinalise = () =>
-    rows().some(line => line.countedNumberOfPacks != null);
+  // No client-side "has counted lines" guard. The old best-effort check only
+  // saw the CURRENT page (rows()), so a stocktake with placeholder lines on the
+  // first page but counted lines further in was wrongly blocked from finalising
+  // (issue #791). Finalise now always reaches the server, which is the source
+  // of truth: it accepts an all-uncounted stocktake (a no-op) and rejects a
+  // truly-empty one with NoLines, surfaced in the finalise-rejection dialog.
 
   // Header click: TanStack computed the next direction; record it as the
   // GraphQL sort array and reset to the first page.
@@ -616,7 +618,8 @@ const StocktakeDetailView: Component = () => {
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
-      // backend gap). Matches OMS's columns.tsx itemUnit, placed after Location.
+      // backend gap). Matches OMS's columns.tsx itemUnit, placed after
+      // Location.
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
       header: () => t('label.unit-name'),
       cardGroup: 'more',
@@ -644,8 +647,8 @@ const StocktakeDetailView: Component = () => {
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
-    // Snapshot — omitted entirely while counting under blind stocktake (reappears
-    // once finalised; see hideSnapshotStock above).
+    // Snapshot — omitted entirely while counting under blind stocktake
+    // (reappears once finalised; see hideSnapshotStock above).
     ...(hideSnapshotStock()
       ? []
       : [
@@ -686,8 +689,8 @@ const StocktakeDetailView: Component = () => {
       ...getNumberCell(),
       meta: { align: 'right', headerPosition: 'badge' },
     },
-    // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine rows
-    // only (blank otherwise); nothing stored per line (see ./lines/doses).
+    // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
+    // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
     ...(prefs().manageVaccinesInDoses
       ? [
           {
@@ -717,8 +720,8 @@ const StocktakeDetailView: Component = () => {
             ...getNumberCell(),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]),
-    // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
-    // Campaign · Comment. No price columns — Sell/Cost price live only in the
+    // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer
+    // · Campaign · Comment. No price columns — Sell/Cost price live only in the
     // line editor's Pricing tab, never as detail-table columns (spec S3).
     // Reason — omitted for the stocktake's whole life under blind stocktake,
     // since no reason is ever required (see hideReason above).
@@ -737,9 +740,9 @@ const StocktakeDetailView: Component = () => {
             cardGroup: 'more',
           } satisfies Column<Line, SortKey, GroupKey>,
         ]),
-    // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
-    // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
-    // no sortKey (server can't sort it — kdd/type-safety, D23).
+    // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain
+    // scalar on the line. Unsortable: StocktakeLineSortFieldInput has no donor
+    // key, so no sortKey (server can't sort it — kdd/type-safety, D23).
     ...(prefs().allowTrackingOfStockByDonor
       ? [
           {
@@ -785,7 +788,8 @@ const StocktakeDetailView: Component = () => {
     // stocktake-level save is a mutate() (never suspends) and a Documents-tab
     // refetch reads through `.latest` (previous node stays on screen) — so this
     // fallback shows only on the initial info fetch. The lines resource is
-    // likewise read non-suspending (.latest), so a lines refetch never trips it.
+    // likewise read non-suspending (.latest), so a lines refetch never trips
+    // it.
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy — a
           keyed Show would tear down + rebuild on every stocktake-level save
@@ -869,7 +873,6 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled(node())}
-                      canFinalise={canFinalise()}
                       onSetHold={setHold}
                       onFinalised={onFinalised}
                       onError={lineIds =>
@@ -961,9 +964,10 @@ const StocktakeDetailView: Component = () => {
                   onRowClick={isDisabled(node()) ? undefined : openRow}
                   // Uncounted lines (no counted value) read in the info tone —
                   // whole-row action-blue text, marking them as awaiting a
-                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68). They're the
-                  // lines trimmed on finalise. Flat table, so a leaf-row
-                  // predicate is enough (no grouped parents to propagate to).
+                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68).
+                  // They're the lines trimmed on finalise. Flat table, so a
+                  // leaf-row predicate is enough (no grouped parents to
+                  // propagate to).
                   rowTone={line => (isUncounted(line) ? 'info' : undefined)}
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={

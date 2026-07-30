@@ -85,12 +85,31 @@ declare module '@tanstack/solid-table' {
      */
     hideOnCard?: boolean;
     /**
+     * An explanation of what this column's figure means, as ALREADY-TRANSLATED
+     * text — the header's tooltip content (spec/internal-orders § S3 lists the
+     * `description.*` key per column; a plugin column carries its own key,
+     * resolved in the plugin's namespace). Threaded here so the header tooltip
+     * is declared once per column, wherever the column came from. ⚠️ The
+     * header-cell tooltip render is a host follow-up; setting this today is how
+     * a column declares the text, not yet how it shows.
+     */
+    description?: string;
+    /**
      * Omit this column from the Columns settings popover — it stays in the
      * view, it's just not user-configurable (no show/hide/move/pin row). For
      * structural columns the user shouldn't touch, e.g. a card's identity
      * (headerPosition 'primary') or its row-actions column.
      */
     hideFromColumnSettings?: boolean;
+    /**
+     * The row label in the Columns settings popover, for a column whose grid
+     * header deliberately renders EMPTY or iconic but stays user-hideable
+     * (e.g. the line editor's auto-allocation tick — blank header in the
+     * grid, named in the popover). A function, like `header`, so the text
+     * re-resolves on a locale change. Columns with a text header don't set
+     * this — the popover calls `header`.
+     */
+    columnSettingsLabel?: () => string;
   }
 }
 

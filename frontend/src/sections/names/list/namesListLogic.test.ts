@@ -66,8 +66,8 @@ describe("AC-N2 Supplier list is the active store's suppliers", () => {
 
 describe('AC-N3 Listed names are visible to the store', () => {
   it('applies the relationship flag that (server-side) implies visibility', () => {
-    // Filtering by isCustomer/isSupplier selects names whose relationship to the
-    // active store carries the flag — which is also what makes them visible
+    // Filtering by isCustomer/isSupplier selects names whose relationship to
+    // the active store carries the flag — which is also what makes them visible
     // (contract › store scoping), so no separate isVisible is needed.
     expect(roleRelationshipFilter('customer')).toEqual({ isCustomer: true });
     expect(roleRelationshipFilter('supplier')).toEqual({ isSupplier: true });
@@ -228,7 +228,8 @@ describe('AC-N16 No create/edit/delete/select/export', () => {
 describe('AC-N17 Requires authentication and an active store', () => {
   it('the query is store-scoped — it cannot be built without a storeId', () => {
     // storeId is a required variable; the section mounts only behind the store
-    // guard (an authenticated user with an active store), so no store ⇒ no list.
+    // guard (an authenticated user with an active store), so no store ⇒ no
+    // list.
     const vars = buildVariables({
       storeId: 'A',
       role: 'customer',

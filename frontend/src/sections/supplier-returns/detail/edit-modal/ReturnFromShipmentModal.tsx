@@ -6,8 +6,13 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { FormRow } from '../../../../ui/layout/Form/FormRow';
 import { Text } from '../../../../ui/elements/typography/Text';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -26,8 +31,6 @@ import {
   reasonColumns,
   type UpdateLine,
 } from './returnLineColumns';
-// The shared wizard context-row layout (stacks below the compact breakpoint).
-import styles from './ReturnItemsModal.module.css';
 
 // S4, from-shipment mode — the return-items modal launched from an inbound
 // shipment's "Return selected lines" (spec/supplier-returns/ui-surface.md S4;
@@ -129,7 +132,8 @@ const Body = (props: BodyProps): JSX.Element => {
       },
     });
     // The response union's only member is the connector, so any failure here is
-    // the global unexpected-error modal's — stay in the loading phase behind it.
+    // the global unexpected-error modal's — stay in the loading phase behind
+    // it.
     if (result.kind !== 'success') return;
     setDraft(
       reconcile(
@@ -217,15 +221,13 @@ const Body = (props: BodyProps): JSX.Element => {
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
+            {/* Back is a non-standard verb, so a plain (icon-less) Button. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -249,13 +251,11 @@ const Body = (props: BodyProps): JSX.Element => {
               </Button>
             }
           >
-            <Button
+            <DialogSaveButton
               loading={saving()}
               data-testid="dialog-button-ok"
               onClick={() => void onSave()}
-            >
-              {t('button.save')}
-            </Button>
+            />
           </Show>
         </>
       }
@@ -279,9 +279,9 @@ const Body = (props: BodyProps): JSX.Element => {
         ]}
       />
       {/* Context row: who the goods go back to (read-only) and the return's
-          supplier reference, pre-filled. One field per row below the compact
-          breakpoint — the ReturnItemsModal's shared contextRow. */}
-      <div class={styles.contextRow}>
+          supplier reference, pre-filled. The two-up row stacks intrinsically
+          when the dialog is squeezed — the same shape as ReturnItemsModal. */}
+      <FormRow>
         <FieldRow label={t('label.return-to')}>
           <Text variant="body">{props.supplierName}</Text>
         </FieldRow>
@@ -294,7 +294,7 @@ const Body = (props: BodyProps): JSX.Element => {
             onInput={e => setReference(e.currentTarget.value)}
           />
         </FieldRow>
-      </div>
+      </FormRow>
       <Show
         when={step() === 'reason'}
         fallback={

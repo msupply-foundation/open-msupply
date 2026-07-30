@@ -43,7 +43,8 @@ export type GraphqlFailure =
   // Spec (Permission denied): authenticated but lacking the permission for the
   // request. Sets the global forbidden signal (the same modal as unexpected
   // errors, but a permission-denied variant with a single OK). Consumers treat
-  // this as a continuation of their loading phase, exactly like unexpectedError.
+  // this as a continuation of their loading phase, exactly like
+  // unexpectedError.
   | { kind: 'forbidden' }
   // Anything the flow does not handle itself: connection failures, unusable
   // responses, and — unless returnGraphqlErrors is set — GraphQL errors. Also
@@ -99,8 +100,8 @@ export const isForbidden = (errors: GraphqlErrorItem[]): boolean =>
 // We surface only the HasPermission(...) names — the actual UserPermission the
 // user is missing (PascalCase, e.g. StocktakeMutate; NOT the query's
 // SCREAMING_CASE) — and drop the structural checks like HasStoreAccess. Names
-// are de-duplicated in first-seen order; empty when details is absent/unparsable
-// (the modal then shows a generic permission-denied message).
+// are de-duplicated in first-seen order; empty when details is
+// absent/unparsable (the modal then shows a generic permission-denied message).
 export const missingPermissions = (errors: GraphqlErrorItem[]): string[] => {
   const seen = new Set<string>();
   for (const e of errors) {
@@ -165,9 +166,9 @@ export const clearForbiddenError = (): void => {
 // Spec (Permission denied): surface the global permission-denied modal from a
 // client-side affordance check — a role the user's loaded permissions lack,
 // caught before the action is fired (e.g. refusing a create up front instead of
-// hiding the button). The same modal a server Forbidden routes to. Names are the
-// PascalCase form the modal humanises, matching the wire's HasPermission(...)
-// names an actual Forbidden would carry.
+// hiding the button). The same modal a server Forbidden routes to. Names are
+// the PascalCase form the modal humanises, matching the wire's
+// HasPermission(...) names an actual Forbidden would carry.
 export const reportPermissionDenied = (permissions: string[]): void => {
   setForbiddenError(permissions);
 };

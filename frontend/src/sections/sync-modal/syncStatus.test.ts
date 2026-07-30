@@ -81,7 +81,7 @@ const INIT_CENTRAL: SyncSurfaceContext = {
 const labels = (status: SyncStatusFragment, ctx: SyncSurfaceContext) =>
   toSyncOverview(status, ctx)?.steps.map(s => s.label);
 
-describe('toSyncOverview — phase set matches the context (AC-S5)', () => {
+describe('toSyncOverview — phase set matches the context (SYNC-03.23)', () => {
   it('is undefined without a status', () => {
     expect(toSyncOverview(null, MODAL)).toBeUndefined();
     expect(toSyncOverview(undefined, MODAL)).toBeUndefined();
@@ -167,7 +167,7 @@ describe('toSyncOverview — phase set matches the context (AC-S5)', () => {
   });
 });
 
-describe('toSyncOverview — phase list with progress (AC-S2)', () => {
+describe('toSyncOverview — phase list with progress (SYNC-03.19, .20)', () => {
   it('marks an in-progress phase with done/total where countable', () => {
     const push = toSyncOverview(
       v7({ isSyncing: true, push: phase({ done: 5, total: 10 }) }),
@@ -238,7 +238,7 @@ describe('toSyncOverview — phase list with progress (AC-S2)', () => {
   });
 });
 
-describe('toSyncOverview — backfill "Special syncs" descriptions (AC-S6)', () => {
+describe('toSyncOverview — backfill "Special syncs" descriptions (SYNC-03.24)', () => {
   it('surfaces V7 linkedDescriptions in order, mapping each kind', () => {
     const ov = toSyncOverview(
       v7({
@@ -268,7 +268,7 @@ describe('toSyncOverview — backfill "Special syncs" descriptions (AC-S6)', () 
   });
 });
 
-describe('statusLineKind — status-line precedence (AC-S1)', () => {
+describe('statusLineKind — status-line precedence (SYNC-03.18)', () => {
   const idle = toSyncOverview(v7(), MODAL);
   const syncing = toSyncOverview(v7({ isSyncing: true }), MODAL);
 
@@ -287,7 +287,7 @@ describe('statusLineKind — status-line precedence (AC-S1)', () => {
   });
 });
 
-describe('records-to-push drains on success (AC-Q2)', () => {
+describe('records-to-push drains on success (SYNC-03.6)', () => {
   it('a successful run with a zero count reads nothing-to-push', () => {
     const succeeded = toSyncOverview(
       v7({ lastSuccessfulSync: { started: 'a', finished: 'b' } }),
@@ -297,7 +297,7 @@ describe('records-to-push drains on success (AC-Q2)', () => {
   });
 });
 
-describe('display tracks the latest status (AC-S4)', () => {
+describe('display tracks the latest status (SYNC-03.22)', () => {
   it('is a pure function of the latest status — successive statuses yield successive displays', () => {
     expect(
       statusLineKind(toSyncOverview(v7({ isSyncing: true }), MODAL), 0)
@@ -314,7 +314,7 @@ describe('display tracks the latest status (AC-S4)', () => {
   });
 });
 
-describe('duration decomposition and units (AC-S3)', () => {
+describe('duration decomposition and units (SYNC-03.21)', () => {
   const base = Date.parse('2026-01-01T00:00:00Z');
   const parts = (seconds: number) =>
     syncDurationParts(
@@ -355,7 +355,7 @@ describe('duration decomposition and units (AC-S3)', () => {
   });
 });
 
-describe('Sync-now busy state machine (AC-T1)', () => {
+describe('Sync-now busy state machine (SYNC-03.25)', () => {
   const idleStatus = v7({
     lastSuccessfulSync: { started: 'a', finished: 'b' },
   });
@@ -422,7 +422,7 @@ describe('Sync-now busy state machine (AC-T1)', () => {
   });
 });
 
-describe('a failed run preserves the last-successful record (AC-E2)', () => {
+describe('a failed run preserves the last-successful record (SYNC-03.29)', () => {
   it('keeps lastSuccessful and reports not-succeeded while errored', () => {
     const ov = toSyncOverview(
       v7({
@@ -446,7 +446,7 @@ describe('a failed run preserves the last-successful record (AC-E2)', () => {
   });
 });
 
-describe('a later successful run clears the error (AC-E3)', () => {
+describe('a later successful run clears the error (SYNC-03.30)', () => {
   it('error is a pure derivation of the latest status — a subsequent error-free run clears it', () => {
     const errored = toSyncOverview(
       v7({ error: { variantV7: 'CONNECTION_ERROR', fullError: 'refused' } }),

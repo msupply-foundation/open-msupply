@@ -21,12 +21,12 @@ export interface DeleteShipmentsActionProps {
   onDeleted: () => void;
 }
 
-// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.21): the whole batch is
-// refused when ANY selected shipment is not deletable — a UI pre-check with a
-// blocking notice instead of the confirmation, no server call (rules.md § the
-// list; controls › action feedback); per-row enforcement remains server-side.
-// Same confirm → deleting → success | error dialog shape as the stocktakes
-// delete action (kdd/action-modal).
+// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.21): the whole
+// batch is refused when ANY selected shipment is not deletable — a UI pre-check
+// with a blocking notice instead of the confirmation, no server call (rules.md
+// § the list; controls › action feedback); per-row enforcement remains
+// server-side. Same confirm → deleting → success | error dialog shape as the
+// stocktakes delete action (kdd/action-modal).
 type Phase = 'confirm' | 'deleting' | 'success' | 'error';
 
 export const DeleteShipmentsAction: Component<

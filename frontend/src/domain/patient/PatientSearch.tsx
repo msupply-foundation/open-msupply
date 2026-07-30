@@ -1,7 +1,8 @@
 import { Show, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
-import { PlusCircleIcon } from '../../ui/icons';
+import { IconButton } from '../../ui/elements/buttons/IconButton';
+import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
@@ -28,7 +29,9 @@ export interface PatientSearchProps {
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
-  /** Override the input's `data-testid` (defaults to `patient-search-input`). */
+  /**
+   * Override the input's `data-testid` (defaults to `patient-search-input`).
+   */
   inputTestId?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
@@ -45,6 +48,18 @@ export interface PatientSearchProps {
    * flow from this callback and selects the result via `onSelect`.
    */
   onCreatePatient?: () => void;
+  /**
+   * When set, the picker offers its **edit-patient** affordance for the
+   * currently-selected patient (spec/patients S4 allow-edit): an edit button
+   * at the end of the field, as the current app has. The consuming vertical
+   * decides what it opens (routing is the app's concern, not the domain
+   * module's) and is handed the selected patient's id.
+   *
+   * Offered only while a patient IS selected, and NOT gated by `disabled`: it
+   * edits the patient, not the record hosting this picker (prescriptions
+   * ui-surface S3 — it stays available on a read-only prescription).
+   */
+  onEditPatient?: (patientId: string) => void;
 }
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
@@ -76,21 +91,41 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * shows the derived name. A thin binding over AsyncCombobox: it supplies the
  * search fetcher + the option row; the combobox owns the input/listbox/paging.
  *
- * The empty query is gated (spec/patients S4): an unqueried picker does NOT list
- * every site patient — it shows the `messages.type-to-search` hint ("Start
- * typing to search") in place of results and issues no request until text is
- * typed. Once a search settles with no match the copy switches to
+ * The empty query is gated (spec/patients S4): an unqueried picker does NOT
+ * list every site patient — it shows the `messages.type-to-search` hint
+ * ("Start typing to search") in place of results and issues no request until
+ * text is typed. Once a search settles with no match the copy switches to
  * `messages.no-matching-patients` — the fact the user is actually after
  * (OMS-REG-DIS-01 `.52`, D68).
  *
- * Consumed by other surfaces (prescriptions, next-of-kin). The allow-edit
- * inline affordance (spec/patients S4) is added by its consuming vertical when
- * built — see the implementation flags.
+ * Consumed by other surfaces (prescriptions, next-of-kin). Its allow-edit
+ * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
+ * of the field — the current app's placement — so it costs the label row
+ * nothing and stays live while the picker itself is disabled. (S4's fuller
+ * two-tab edit modal is not built; the consumer decides where the affordance
+ * leads.)
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>
     label={props.label}
     hideLabel={props.hideLabel}
+    // The edit-patient button, at the end of the field: offered only once a
+    // patient is selected (there is nothing to edit otherwise), and
+    // deliberately NOT gated by `disabled` — it edits the patient, not the
+    // record hosting the picker (prescriptions ui-surface S3).
+    endAction={
+      <Show when={props.onEditPatient && props.selected}>
+        {selected => (
+          <IconButton
+            icon={<EditIcon />}
+            label={t('label.edit')}
+            size="small"
+            data-testid="edit-patient-button"
+            onClick={() => props.onEditPatient?.(selected().id)}
+          />
+        )}
+      </Show>
+    }
     size={props.size}
     class={props.class}
     disabled={props.disabled}

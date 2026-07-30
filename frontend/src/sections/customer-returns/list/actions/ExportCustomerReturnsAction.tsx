@@ -8,8 +8,9 @@ import {
 } from '../customerReturns.generated';
 import { customerReturnsToCsv } from '../customerReturnsToCsv';
 
-// The customer-returns list Export action (spec/customer-returns S1, AC-L4):
-// the shared CSV/Excel split button, fed this vertical's query. Exports EVERY
+// The customer-returns list Export action (spec/customer-returns S1,
+// OMS-REG-DIST-07.15): the shared CSV/Excel split button, fed this vertical's
+// query. Exports EVERY
 // return matching the current filter (all pages, newest first). Delivery, the
 // busy state and the outcome report live in ListExportAction — this file owns
 // only the query.
