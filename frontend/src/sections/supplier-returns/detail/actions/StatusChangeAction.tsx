@@ -1,15 +1,14 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  InfoIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   filterByStatusPreference,
   nextStatuses,
@@ -170,18 +169,15 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             fallback={
               <>
                 <Show when={phase() === 'confirm'}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
+                  <CancelButton
                     data-testid="dialog-button-cancel"
                     onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
+                {/* A custom verb ("Confirm Picked" / "Release hold & …"), so a
+                    plain Button — icon-less like every dialog footer (D55). */}
                 <Button
                   variant="primary"
-                  icon={<ArrowRightIcon />}
                   loading={phase() === 'working'}
                   data-testid="confirmation-modal-ok"
                   onClick={() => void run()}
@@ -192,14 +188,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             }
           >
             <Match when={phase() === 'error'}>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                data-testid="dialog-button-ok"
-                onClick={close}
-              >
-                {t('button.ok')}
-              </Button>
+              <OkButton data-testid="dialog-button-ok" onClick={close} />
             </Match>
           </Switch>
         }
@@ -214,13 +203,10 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         title={t('heading.cannot-do-that')}
         description={t('messages.no-lines')}
         actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
+          <OkButton
+            data-testid="dialog-button-ok"
             onClick={() => setNoLinesBlocked(false)}
-          >
-            {t('button.ok')}
-          </Button>
+          />
         }
       />
     </>

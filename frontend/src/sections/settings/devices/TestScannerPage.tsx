@@ -24,9 +24,9 @@ import styles from '../Settings.module.css';
  * watch results arrive live, to verify a physical/mock device is working.
  * Nothing scanned here is recorded server-side — results accumulate locally
  * and Clear results empties the list without touching the scanner connection
- * (rules § Devices — barcode scanner). With no scanner present the scan controls are disabled; an
- * available scanner — including the mock — enables them (rules § Devices —
- * barcode scanner).
+ * (rules § Devices — barcode scanner). With no scanner present the scan
+ * controls are disabled; an available scanner — including the mock — enables
+ * them (rules § Devices — barcode scanner).
  */
 const TestScannerPage: Component = () => {
   const params = useParams<{ storeId: string }>();

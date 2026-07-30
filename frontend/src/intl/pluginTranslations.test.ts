@@ -63,8 +63,8 @@ describe('registerPluginTranslations', () => {
 
   it('survives a locale switch replacing the whole host dictionary', () => {
     // `loadDictionary` merges with `{ ...previous, [locale]: dict }` — a WHOLE
-    // per-locale replacement. Anything merged into the host dictionaries would be
-    // lost here; a separate layer is not.
+    // per-locale replacement. Anything merged into the host dictionaries would
+    // be lost here; a separate layer is not.
     registerPluginTranslations('civ_plugins', {
       en: { amc: 'AMC' },
       fr: { amc: 'CMM' },
@@ -72,8 +72,8 @@ describe('registerPluginTranslations', () => {
     setDictionaries({ en: { dashboard: 'Dashboard' } });
     expect(key('civ_plugins:amc')).toBe('AMC');
 
-    // The locale switch: a fresh dictionary object for the new locale, exactly as
-    // loadDictionary produces it.
+    // The locale switch: a fresh dictionary object for the new locale, exactly
+    // as loadDictionary produces it.
     setDictionaries(previous => ({
       ...previous,
       fr: { dashboard: 'Tableau' },
@@ -96,7 +96,8 @@ describe('registerPluginTranslations', () => {
       en: { amc: 'AMC', dashboard: 'Should not shadow the host' },
     });
     setDictionaries({ en: { dashboard: 'Dashboard' } });
-    // The plugin's own `dashboard` is namespaced, so it cannot shadow the host's.
+    // The plugin's own `dashboard` is namespaced, so it cannot shadow the
+    // host's.
     expect(t('dashboard')).toBe('Dashboard');
     expect(key('civ_plugins:dashboard')).toBe('Should not shadow the host');
   });

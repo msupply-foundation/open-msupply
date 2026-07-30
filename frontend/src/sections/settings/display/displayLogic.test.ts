@@ -7,9 +7,9 @@ import {
   themeSaveInput,
 } from './displayLogic';
 
-// OMS-REG-SET-01.13 — Custom theme requires valid JSON: invalid JSON refuses the save
-// with a parse-error message; nothing is sent to the server (the caller only
-// builds an input once parsing succeeds).
+// OMS-REG-SET-01.13 — Custom theme requires valid JSON: invalid JSON refuses
+// the save with a parse-error message; nothing is sent to the server (the
+// caller only builds an input once parsing succeeds).
 describe('custom theme requires valid JSON (SET-01.13)', () => {
   it('accepts parseable JSON', () => {
     expect(parseThemeJson('{"palette": {"mode": "dark"}}')).toEqual({
@@ -30,8 +30,8 @@ describe('custom theme requires valid JSON (SET-01.13)', () => {
   });
 });
 
-// OMS-REG-SET-01.18 — Custom logo has no content validation: the save input is built
-// from arbitrary text with no format check (contrast OMS-REG-SET-01.13).
+// OMS-REG-SET-01.18 — Custom logo has no content validation: the save input is
+// built from arbitrary text with no format check (contrast OMS-REG-SET-01.13).
 describe('custom logo has no content validation (SET-01.18)', () => {
   it('builds a save input from arbitrary, non-SVG text', () => {
     expect(logoSaveInput('definitely not svg')).toEqual({

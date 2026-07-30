@@ -56,7 +56,9 @@ export interface PluginQuery<Output> {
    * (kdd/solid-reactivity-pitfalls § no remounts on interaction).
    */
   data: Accessor<Output | undefined>;
-  /** True while a call is in flight — for a spinner, not for gating the read. */
+  /**
+   * True while a call is in flight — for a spinner, not for gating the read.
+   */
   loading: Accessor<boolean>;
 }
 

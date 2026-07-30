@@ -169,10 +169,10 @@ const StocktakesList: Component = () => {
   // Read `data.latest`, NOT `data()`: `.latest` never suspends (it returns the
   // previous value during a refetch, and undefined before the first load),
   // whereas reading `data()` while pending suspends the whole list into the
-  // router's fallback-less <Suspense> — leaving the page BLANK on a slow initial
-  // load instead of showing the table's loading spinner (#160/#196). Keeping the
-  // read non-suspending lets the DataTable mount immediately and show its
-  // `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
+  // router's fallback-less <Suspense> — leaving the page BLANK on a slow
+  // initial load instead of showing the table's loading spinner (#160/#196).
+  // Keeping the read non-suspending lets the DataTable mount immediately and
+  // show its `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
@@ -193,13 +193,13 @@ const StocktakesList: Component = () => {
       return result.data.stocktakes.totalCount > 0;
     }
   );
-  // Read `.latest` (non-suspending), NOT `hasStocktakeData()`: a suspending read
-  // here would collapse the whole list into the router's fallback-less Suspense
-  // on first load (blank page — the same trap as `data()` above). Undefined
-  // while unresolved — treat as "has stocktakes" so we DON'T flash the
-  // initial-create affordance before we know (a store with stocktakes is the
-  // common case; showing "New stocktake" and correcting to "initial" would be
-  // the wrong direction to flicker).
+  // Read `.latest` (non-suspending), NOT `hasStocktakeData()`: a suspending
+  // read here would collapse the whole list into the router's fallback-less
+  // Suspense on first load (blank page — the same trap as `data()` above).
+  // Undefined while unresolved — treat as "has stocktakes" so we DON'T flash
+  // the initial-create affordance before we know (a store with stocktakes is
+  // the common case; showing "New stocktake" and correcting to "initial" would
+  // be the wrong direction to flicker).
   const hasStocktake = () => hasStocktakeData.latest ?? true;
 
   const currentSort = (): SortState<SortKey> | undefined => {
@@ -244,8 +244,9 @@ const StocktakesList: Component = () => {
       // needed).
       header: () => '#',
       // The stocktake number is a short record number (like invoiceNumber), so
-      // getCellDefinition gives it the narrow number-width preset + right-align;
-      // headerPosition:'primary' makes it the card's title (top-left).
+      // getCellDefinition gives it the narrow number-width preset +
+      // right-align; headerPosition:'primary' makes it the card's title
+      // (top-left).
       ...getCellDefinition('stocktakeNumber', { headerPosition: 'primary' }),
     },
     {
@@ -357,10 +358,10 @@ const StocktakesList: Component = () => {
         onRowClick={openRow}
         emptyMessage={`${t('error.no-stocktakes')} ${hasStocktake() ? '' : t('label.click-to-create-an')}`}
         // The empty-state action flips on whether the store has ANY stocktake
-        // (mirrors OMS): a store with none is offered the once-per-store INITIAL
-        // (opening-balance) create — a plain confirm, no mode controls; a store
-        // that already has stocktakes (incl. filtered-to-nothing) gets the
-        // regular "New stocktake" modal.
+        // (mirrors OMS): a store with none is offered the once-per-store
+        // INITIAL (opening-balance) create — a plain confirm, no mode controls;
+        // a store that already has stocktakes (incl. filtered-to-nothing) gets
+        // the regular "New stocktake" modal.
         empty={
           hasStocktake() ? (
             <Button
@@ -395,9 +396,10 @@ const StocktakesList: Component = () => {
             ? tableConfig.saveGlobalTableConfig
             : undefined
         }
-        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
-        // not in a page footer band — consistent with the stocktake detail view
-        // (kdd/table-state). State stays page-owned/URL-backed.
+        // Pagination renders as an overlay INSIDE the table
+        // (bottom-inline-end), not in a page footer band — consistent with the
+        // stocktake detail view (kdd/table-state). State stays
+        // page-owned/URL-backed.
         pagination={{
           offset: query().offset,
           pageSize: query().first,

@@ -2,12 +2,11 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { XCircleIcon } from '../../../ui/icons';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, statusSteps } from './returnStatus';
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
@@ -15,11 +14,13 @@ import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generate
 // The return-level footer (spec/supplier-returns/ui-surface.md S3 § layout —
 // footer): Hold toggle · lifecycle indicator (New · Picked · Shipped · Received
 // · Verified — Received/Verified for display only, filtered by the invoice-
-// status-options preference) · spacer · Close · the status-advance split button.
+// status-options preference) · spacer · Close · the status-advance split
+// button.
 //
 // Hold is a soft pause on status change only (rules § header rules): the toggle
 // stays available while the return is editable, confirms before flipping, and
-// the messages flip with direction. It hides once the return is read-only (D39).
+// the messages flip with direction. It hides once the return is read-only
+// (D39).
 
 export interface SupplierReturnStatusFooterProps {
   storeId: string;
@@ -67,16 +68,12 @@ export const SupplierReturnStatusFooter: Component<
       {/* One inline-end cluster: Close sits right beside the Confirm-status
           split button. */}
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        <CloseButton
           data-testid="close-button"
           onClick={() =>
             navigate(`/${params.storeId}/replenishment/supplier-return`)
           }
-        >
-          {t('button.close')}
-        </Button>
+        />
         <StatusChangeAction
           storeId={props.storeId}
           node={props.node}

@@ -75,14 +75,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Nav visibility gates — reactive, because they read runtime signals the
   // static nav model can't. Two concerns, one pass:
-  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only in
-  //    dispensary mode; the patients route guard blocks direct-URL entry to match.
+  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only
+  //    in dispensary mode; the patients route guard blocks direct-URL entry
+  //    to match.
   //  • Central-only destinations (spec/help S2): a `central`-flagged entry
   //    (Manage › Help documents) shows only on a central server to a server
   //    admin; the help section's route guard blocks direct-URL entry to match.
-  // Memoised so the gated arrays — and the section objects rebuilt when a child
-  // is dropped — keep stable references; otherwise MenuBar's <For> would remount
-  // nav sections on every shell re-render (kdd/solid-reactivity-pitfalls).
+  // Memoised so the gated arrays — and the section objects rebuilt when a
+  // child is dropped — keep stable references; otherwise MenuBar's <For> would
+  // remount nav sections on every shell re-render
+  // (kdd/solid-reactivity-pitfalls).
   const centralAdmin = () => isCentralServer() && hasPermission('SERVER_ADMIN');
   const visible = (n: { central?: boolean }) => !n.central || centralAdmin();
   const gateNav = (items: NavItem[]): NavItem[] =>
@@ -100,8 +102,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
   // the one named by the URL. Activating the store selector routes to the
-  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs out (spec:
-  // explicit logout).
+  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs
+  // out (spec: explicit logout).
   const activeStore = () =>
     authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
