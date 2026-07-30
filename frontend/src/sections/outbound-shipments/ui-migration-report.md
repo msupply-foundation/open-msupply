@@ -163,6 +163,18 @@ Dimension 5: "button-variant semantics (delete = `danger`)"; registry `ConfirmDi
 
 [OutboundLineEditModal.tsx](detail/edit-modal/OutboundLineEditModal.tsx) ×6 and [OutboundDetailView.tsx](detail/OutboundDetailView.tsx) ×3, all on conditionally-spread column objects. **Zero occurrences** across stocktakes, inbound and supplier-returns, so this is an outbound-only pattern rather than a house one; `kdd/type-safety` keeps `as` for trusted layers. Worth an attempt to remove by typing the array element (or the conditional spread) instead — **if it can't be removed cleanly it becomes a documented exception, not a forced change.**
 
+### F16 — The Log tab combined Date and Time where every other log surface splits them (dim 3, cross-vertical consistency)
+
+[LogTab.tsx](detail/LogTab.tsx) rendered one `Date/time` column. **Found after the main fixes had landed**, by re-checking a claim in this report's own first draft — the initial audit under-counted the sibling surfaces and mis-triaged the split as a content change.
+
+**The house pattern is unanimous:** the shared [`ActivityLogPanel`](../../domain/activityLog/ActivityLogPanel.tsx) (used by items, patients, prescriptions, stock) and all six hand-rolled log surfaces (inbound, stocktakes, internal orders, supplier returns, customer returns) render **Date · Time · User · Event**, and so does the current app's `ActivityLogList` — the same `datetime` field shown twice, formatted two ways. Outbound was the only one of seven combining them. Splitting one field across two columns is presentation, not a change of content, so it was in scope all along.
+
+**Fixed:** two columns on the `date` and `time` presets. The Event column keeps folding the log's `to` value into its label; adding the **Details** column that four of the seven carry would be a genuine content change, so it is left for a spec-owner ruling.
+
+**The process lesson:** the audit's sibling sweep stopped at the first two agreeing verticals — the exact failure mode [supplier-returns' F10](../supplier-returns/ui-migration-report.md) recorded ("a cross-vertical check that stops at the first agreeing pair isn't a majority"). Repeating it here says the sweep has to be exhaustive by default.
+
+**Also noted, not changed:** six verticals hand-roll a log surface rather than consuming the shared panel, each with its own query — a consolidation task well beyond this migration, flagged as **LIB-6**.
+
 ## Dimensions that are already clean
 
 **7 — Reactivity.** The two resources that first fetch on an **interaction** — the Log tab ([LogTab.tsx:39](detail/LogTab.tsx#L39)) and the master-list picker ([AddFromMasterListAction.tsx:63](detail/actions/AddFromMasterListAction.tsx#L63)) — both use the `.state === 'ready' || 'refreshing'` gate the root `CLAUDE.md` requires. The `.latest`-alone reads (detail node, lines, service lines, locations; list rows) all belong to resources whose first fetch coincides with the screen's own first load, which is the sanctioned boundary, and each carries a comment saying so. The post-fix [`check-reactivity`](../../../.claude/skills/check-reactivity/SKILL.md) run over the diff found nothing — see [Reactivity re-check](#reactivity-re-check).
@@ -227,7 +239,7 @@ Run over the diff per the [`check-reactivity`](../../../.claude/skills/check-rea
 - **The related-documents hover tooltip** ([OutboundSidePanel.tsx](detail/OutboundSidePanel.tsx)) keeps raw `Popover openOnHover`: `InfoTooltip` hard-codes an `InfoIcon` trigger, and here the trigger must be the **label text** because the entry's number is already a link. `Popover` is the primitive `InfoTooltip` wraps — not a hand-roll. → **LIB-2**.
 - **`title` on the disabled Duplicate button** — this **is** the house pattern; inbound's F10 cites this exact line as its reference.
 - **`<strong data-testid="selected-rows-count">`** — 12 sites across 10 verticals including the reference.
-- **The Log tab's single Date/time column** — inbound and supplier-returns split date and time into two columns, so outbound is 1-of-3. Changing the column _set_ is content, not composition, so the migration left it and sized it instead. Worth a spec-owner ruling if the logs should read alike across verticals.
+- ~~**The Log tab's single Date/time column**~~ — **corrected and fixed, see F16.** The first draft counted only two sibling logs and called the split content rather than composition; both were wrong. All six hand-rolled log surfaces AND the shared [`ActivityLogPanel`](../../domain/activityLog/ActivityLogPanel.tsx) split Date and Time, as does the current app — outbound was 1-of-7.
 - `rowState` (not the retired `rowDimmed`), `ColourTagPicker variant="row"`/`"field"`, `createTableConfig` on all four tables, `ConfirmDialog` where the body is a plain message, and no colour or px literals anywhere.
 
 ## Library findings surfaced (not fixed here)
@@ -236,6 +248,7 @@ Run over the diff per the [`check-reactivity`](../../../.claude/skills/check-rea
 - **LIB-2 — `InfoTooltip` has no custom `trigger`.** Its trigger is a fixed `InfoIcon`, so a "gloss on a word" must drop to raw `Popover`.
 - **LIB-3 — no inline-level `HStack`.** `HStack`/`Stack` are block-level `<div>`s, so a row inside a heading or other phrasing context needs a local class (`.groupHeading` here). An `as` prop, or an inline variant, would close it.
 - **LIB-4 — `HStack` can't express a two-axis gap or per-child flex basis.** That is what keeps `.headerRow` a CSS module.
+- **LIB-6 — six verticals hand-roll a log surface** (outbound, inbound, stocktakes, internal orders, both returns) instead of consuming the shared `domain/activityLog/ActivityLogPanel` that items, patients, prescriptions and stock use — six near-identical queries and column sets. Surfaced by F16; a consolidation task, not a migration one.
 - **LIB-5 — inherited, already filed by siblings:** the icon-tone class (inbound's LIB-3, used here by `.variantInfoTrigger`) and a native `title` on a disabled button not rendering in Chromium (inbound's LIB-5, which Duplicate relies on).
 
 ## Boutique / uncovered elements
