@@ -7,16 +7,15 @@ import {
 } from 'solid-js';
 import { t } from '../../../../intl';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  InfoIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   CLIENT_SETTABLE,
   STATUS_LABELS,
@@ -260,23 +259,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           actions={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={close} />
               </Show>
-              <Button
-                variant="primary"
-                icon={<ArrowRightIcon />}
+              <OkButton
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
-              >
-                {t('button.ok')}
-              </Button>
+              />
             </>
           }
         />
@@ -296,19 +285,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           description={infoMessage()}
           actions={
             <>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                disabled={releasing()}
-                onClick={closeNotice}
-              >
-                {t('button.ok')}
-              </Button>
+              <OkButton disabled={releasing()} onClick={closeNotice} />
               <Show when={holdRetryStatus()}>
                 {retry => (
+                  // A non-standard verb, so a plain Button — icon-less, like
+                  // every other dialog footer action (D55).
                   <Button
                     variant="primary"
-                    icon={<ArrowRightIcon />}
                     data-testid="release-hold-and-confirm-button"
                     loading={releasing()}
                     onClick={() => void releaseAndConfirm()}

@@ -3,6 +3,8 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { localisedDateTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import {
   OutboundActivityLogs,
@@ -56,14 +58,21 @@ export const LogTab: Component<{
       c: { key: 'datetime' },
       header: () => t('label.date-time'),
       cell: info => localisedDateTime(info.getValue<string>()),
+      // One column carrying date AND time, so neither the `date` nor the `time`
+      // preset fits — it takes their combined room instead.
+      size: remToPx(11),
     },
     {
       c: { accessor: row => row.user?.username ?? '—', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
     {
       c: { accessor: row => eventLabel(row), id: 'event' },
       header: () => t('label.event'),
+      // An open server set of event labels — the widest column, sized as the
+      // inbound log's event column is.
+      size: remToPx(12),
     },
   ];
 

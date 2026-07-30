@@ -7,7 +7,7 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -16,13 +16,9 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getCurrencyCell,
-  getDateCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
+import { remToPx } from '../../../ui/utils/rem';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
   ColourTagDot,
@@ -209,17 +205,14 @@ const OutboundShipmentsList: Component = () => {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('otherPartyName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Show
               when={isEditable(row.status)}
               fallback={<ColourTagDot colour={row.colour ?? null} />}
@@ -231,7 +224,7 @@ const OutboundShipmentsList: Component = () => {
               />
             </Show>
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -249,30 +242,36 @@ const OutboundShipmentsList: Component = () => {
         );
       },
       meta: { headerPosition: 'badge' },
+      // Status is a page-rendered cell type (no preset — it needs a
+      // status→colour map), so the column carries its own width
+      // (ui/docs/CELL_TYPES.md § cell-type inventory).
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: () => t('label.number'),
-      ...getNumberCell(),
+      ...getCellDefinition('invoiceNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       // Reference is not sortable (ui-surface S1 columns table).
       c: { key: 'theirReference' },
       header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
     },
     {
       // Comment is the shared comment cell (bubble + hover popover, as the
       // inbound list renders it) — not sortable (ui-surface S1).
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       // Shipment total after tax (nested under pricing) — an accessor column.
@@ -281,7 +280,7 @@ const OutboundShipmentsList: Component = () => {
         id: 'totalAfterTax',
       },
       header: () => t('label.total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('totalAfterTax'),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.
     ...customFieldColumns<ShipmentRow, SortKey>(
@@ -314,18 +313,6 @@ const OutboundShipmentsList: Component = () => {
               filter={() => variables().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -370,6 +357,20 @@ const OutboundShipmentsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering), never the page header; state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}

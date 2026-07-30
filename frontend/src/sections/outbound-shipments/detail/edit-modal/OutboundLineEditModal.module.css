@@ -28,11 +28,12 @@
 }
 
 /* Issue + Allocate-in wrap as a unit — a lens without its quantity (or vice
-   versa) on a lonely row reads as a separate control. */
+   versa) on a lonely row reads as a separate control. The row itself is an
+   HStack (align="end" gap="lg"); this only stops the pair being stretched by
+   the header row's own flex. */
 .issueGroup {
-  display: flex;
-  align-items: end;
-  gap: var(--space-4);
+  flex: 0 0 auto;
+  inline-size: auto;
 }
 
 /* The "placeholder added" info notice fills what's left of the row, wrapping
@@ -57,12 +58,12 @@
   min-block-size: 16rem;
 }
 
-/* The batch cell: batch name + (when the row carries an item variant) the
-   variant-info trigger beside it (spec S4 § batch grid). */
-.batchCell {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+/* The grid footer (placeholder + running total) and the warning stack sit just
+   below the grid; the HStack/Stack own their own layout, so only the offset
+   from the grid lives here. */
+.gridFooter,
+.warnings {
+  margin-block-start: var(--space-2);
 }
 
 .variantInfoTrigger {
@@ -81,24 +82,8 @@
   max-width: 40rem;
 }
 
-.variantTable {
-  border-collapse: collapse;
-  inline-size: 100%;
-}
-
-.variantTable th {
-  text-align: start;
-  font-weight: 600;
-  padding: var(--space-1) var(--space-3);
-}
-
-.variantTable td {
-  padding: var(--space-1) var(--space-3);
-  border-block-start: 1px solid var(--color-border-value);
-}
-
-/* The marker column hugs its check. */
+/* The variants list is the library's static sub-table (Table), which owns the
+   row look; only the marker column's tint is ours. */
 .variantMarker {
-  inline-size: 1.5rem;
   color: var(--primary-main);
 }
