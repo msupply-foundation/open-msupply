@@ -1,0 +1,9 @@
+# Create a clinician from the picker (spec/prescriptions contract › patient,
+# clinician, program, diagnosis). The response is a bare IdResponse — there is NO
+# error node to branch on; every rejection is a top-level GraphQL error, decoded
+# generically by clinicianApi.ts.
+mutation insertClinician($storeId: String!, $input: InsertClinicianInput!) {
+  insertClinician(storeId: $storeId, input: $input) {
+    id
+  }
+}
