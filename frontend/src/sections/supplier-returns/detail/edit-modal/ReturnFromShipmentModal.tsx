@@ -11,6 +11,7 @@ import {
   DialogSaveButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { createFocusTargets } from '../../../../ui/utils/createFocusTarget';
 import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
 import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
 import { HStack } from '../../../../ui/layout/Stack/HStack';
@@ -109,6 +110,11 @@ const Body = (props: BodyProps): JSX.Element => {
     tableId: 'supplier-return-from-shipment-edit',
   });
 
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
+
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
   // step message.
   const update: UpdateLine = (id, field, value) => {
@@ -135,16 +141,16 @@ const Body = (props: BodyProps): JSX.Element => {
     // the global unexpected-error modal's — stay in the loading phase behind
     // it.
     if (result.kind !== 'success') return;
-    setDraft(
-      reconcile(
-        seedDrafts(
-          result.data.generateSupplierReturnLines.nodes,
-          new Set<string>()
-        ),
-        { key: 'id' }
-      )
+    const seeded = seedDrafts(
+      result.data.generateSupplierReturnLines.nodes,
+      new Set<string>()
     );
+    setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
+    // The first quantity field is what this dialog opens for — every other
+    // control here is read-only. Armed, not applied: the request lands as the
+    // grid attaches (ui/utils/createFocusTarget).
+    quantityFields.focus(seeded[0]?.id ?? '');
   };
 
   onMount(() => void loadDrafts());
@@ -167,6 +173,17 @@ const Body = (props: BodyProps): JSX.Element => {
     if (!gateStep1()) return;
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(reasonStepLines(draft.slice())[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const onSave = async () => {
@@ -231,10 +248,7 @@ const Body = (props: BodyProps): JSX.Element => {
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -306,7 +320,7 @@ const Body = (props: BodyProps): JSX.Element => {
         when={step() === 'reason'}
         fallback={
           <DataTable
-            columns={quantityColumns(update)}
+            columns={quantityColumns(update, quantityFields)}
             rows={draft.filter(() => true)}
             rowKey={line => line.id}
             loading={loadingLines()}
@@ -319,7 +333,7 @@ const Body = (props: BodyProps): JSX.Element => {
         }
       >
         <DataTable
-          columns={reasonColumns(update)}
+          columns={reasonColumns(update, reasonFields)}
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}
