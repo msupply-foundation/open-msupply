@@ -172,6 +172,7 @@ export const CustomerReturnSidePanel: Component<
                 </Show>
               </Text>
               <RecordLink
+                testId="originating-shipment-link"
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
