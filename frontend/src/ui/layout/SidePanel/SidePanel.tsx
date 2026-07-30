@@ -27,13 +27,13 @@ export interface SidePanelProps {
 /*
  * Details panel — the detail-view right-hand panel (the current app's
  * DetailPanel): additional info, related documents, comments. Pinned to the
- * inline-end edge of the Page's middle region; the Page frame owns how it docks
- * (a column that slides in and pushes the body at navOverlay and above, an
- * off-canvas drawer + scrim below it, with a drop shadow — see Page.module.css).
- * Pure layout + look, no open state of its own: the page composes
- * <SidePanelSection>s, hands the panel to Page's `sidePanel` slot, and passes
- * `onClose` (→ the close button, top inline-end). Scrolls independently of the
- * body.
+ * inline-end edge of the Page's middle region; the Page frame owns how it
+ * docks (a column that slides in and pushes the body at navOverlay and above,
+ * an off-canvas drawer + scrim below it, with a drop shadow — see
+ * Page.module.css). Pure layout + look, no open state of its own: the page
+ * composes <SidePanelSection>s, hands the panel to Page's `sidePanel` slot,
+ * and passes `onClose` (→ the close button, top inline-end). Scrolls
+ * independently of the body.
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside
@@ -123,6 +123,30 @@ export const SidePanelSection = (props: SidePanelSectionProps) => {
     </section>
   );
 };
+
+export interface SidePanelSubheadingProps {
+  /** The sub-heading text — an `<h3>` within the section's `<h2>`. */
+  children: JSX.Element;
+  /**
+   * An optional control pinned to the heading's inline-end — a group action
+   * such as an Edit button (e.g. the Charges panel's Service-charges editor).
+   */
+  action?: JSX.Element;
+}
+
+/**
+ * A sub-heading grouping fields within a SidePanelSection — the pricing-group
+ * headings inside a shipment's Charges panel ("Stock charges", "Service
+ * charges"). A bold `<h3>` under the section's `<h2>`, with a gap below
+ * separating it from its group's rows; an optional `action` pins to the
+ * inline-end (centred against the heading).
+ */
+export const SidePanelSubheading = (props: SidePanelSubheadingProps) => (
+  <div class={styles.subheading}>
+    <h3 class={styles.subheadingTitle}>{props.children}</h3>
+    {props.action}
+  </div>
+);
 
 /**
  * The record-actions cluster inside a panel section (the registry's

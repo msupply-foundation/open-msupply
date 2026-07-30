@@ -1,6 +1,6 @@
 /*
- * The plugin-data store (spec/plugins/sdk-contract.md § data access): typed CRUD
- * over the plugin's own server-side records.
+ * The plugin-data store (spec/plugins/sdk-contract.md § data access): typed
+ * CRUD over the plugin's own server-side records.
  *
  * The plugin's code and the entered store are injected on every call, so a
  * plugin can only ever read and write its own records, in the store the user is
@@ -40,7 +40,8 @@ export type PluginDataWrite = Omit<
 
 /**
  * The `dataIdentifier` reserved for a plugin's own settings, edited by its
- * configuration contribution. Convention only — nothing enforces it on the wire.
+ * configuration contribution. Convention only — nothing enforces it on the
+ * wire.
  */
 export const CONFIGURATION_IDENTIFIER = 'configuration';
 

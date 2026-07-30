@@ -67,8 +67,8 @@ import { ExportPrintAction } from './actions/ExportPrintAction';
 // read-only line table grouped by item (row click → the return-items modal),
 // the Additional-info side panel, and the status footer (hold / lifecycle /
 // close / advance). Every edit affordance shares the one editability gate
-// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return still
-// in the sender's hands — is read-only.
+// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer
+// return still in the sender's hands — is read-only.
 
 type Line = CustomerReturnLineFragment;
 

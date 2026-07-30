@@ -3,16 +3,21 @@ import { ItemsWithStock, type ItemsWithStockResult } from './item.generated';
 import type { Page } from '../../ui/utils/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
-// "code - name" and available stock (Σ available batch packs * packSize) + unit;
-// id feeds the selection and the exclude-already-added logic.
+// "code - name" and available stock (Σ available batch packs * packSize) +
+// unit; id feeds the selection and the exclude-already-added logic.
 export type ItemOption = {
   id: string;
   code: string;
   name: string;
   unitName: string | null;
-  /** Available units in store = Σ availableBatches (availableNumberOfPacks * packSize). */
+  /**
+   * Available units in store = Σ availableBatches (availableNumberOfPacks *
+   * packSize).
+   */
   availableUnits: number;
-  /** Whether the item is a vaccine — gates the doses / VVM display downstream. */
+  /**
+   * Whether the item is a vaccine — gates the doses / VVM display downstream.
+   */
   isVaccine: boolean;
   /** The item's configured doses-per-unit — the doses-display multiplier. */
   doses: number;
@@ -30,8 +35,8 @@ type ItemNode = Extract<
   { __typename: 'ItemConnector' }
 >['nodes'][number];
 
-// Σ over the item's available batches of availableNumberOfPacks * packSize — the
-// AVAILABLE-stock figure shown in the option row (summed client-side; see
+// Σ over the item's available batches of availableNumberOfPacks * packSize —
+// the AVAILABLE-stock figure shown in the option row (summed client-side; see
 // item.graphql for why not a stat, and why available rather than total).
 const availableUnitsOf = (node: ItemNode): number =>
   node.availableBatches.nodes.reduce(
@@ -47,9 +52,10 @@ const availableUnitsOf = (node: ItemNode): number =>
  * failed fetch (graphqlFetch already surfaced it).
  *
  * A curried factory so the selector binds storeId + a live exclusions accessor
- * once and hands createPaginatedSearch a plain (search, offset) => Page fetcher.
- * excludeItemIds is an accessor (not a snapshot) so each fetch uses the current
- * exclusions — e.g. after "OK & next" adds an item, the next search excludes
+ * once and hands createPaginatedSearch a plain (search, offset) => Page
+ * fetcher. excludeItemIds is an accessor (not a snapshot) so each fetch uses
+ * the current exclusions — e.g. after "OK & next" adds an item, the next
+ * search excludes
  * it — without recreating the search primitive.
  */
 /**

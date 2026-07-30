@@ -21,17 +21,17 @@ export interface DeleteReturnsActionProps {
 // The returns-list bulk delete (spec/customer-returns, the delete flow —
 // OMS-REG-DIST-07.40/.41) — the
 // outbound DeleteShipmentsAction shape: the whole batch is refused when ANY
-// selected return is not deletable (only NEW is — OMS-REG-DIST-07.41) — a UI pre-check with
-// a blocking notice instead of the confirmation, no server call; per-row
-// enforcement remains server-side. There is NO batch mutation for customer
-// returns, so a confirmed batch runs one deleteCustomerReturn per id; the
-// pre-check means those should all succeed — any server rejection (a status
-// changed under a stale list) still lands in the error phase as a backstop.
-// A clean sweep closes silently (closure is the confirmation — ui-standards
+// selected return is not deletable (only NEW is — OMS-REG-DIST-07.41) — a UI
+// pre-check with a blocking notice instead of the confirmation, no server call;
+// per-row enforcement remains server-side. There is NO batch mutation for
+// customer returns, so a confirmed batch runs one deleteCustomerReturn per id;
+// the pre-check means those should all succeed — any server rejection (a status
+// changed under a stale list) still lands in the error phase as a backstop. A
+// clean sweep closes silently (closure is the confirmation — ui-standards
 // controls.md § dialogs). The hand-back to the list (clear selection +
-// re-query) is DEFERRED to the dialog's close: clearing the selection
-// collapses the selection-gated footer this dialog lives in, so calling it
-// mid-flow unmounts the dialog before the error phase can show.
+// re-query) is DEFERRED to the dialog's close: clearing the selection collapses
+// the selection-gated footer this dialog lives in, so calling it mid-flow
+// unmounts the dialog before the error phase can show.
 type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteReturnsAction: Component<
@@ -43,7 +43,8 @@ export const DeleteReturnsAction: Component<
   const onClick = () => {
     // Pre-check: every selected return must be deletable (NEW only) or the
     // whole batch is refused with an explanatory notice in place of the
-    // confirmation (the current app's client-side gate; OMS-REG-DIST-07.41's UI half).
+    // confirmation (the current app's client-side gate; OMS-REG-DIST-07.41's
+    // UI half).
     if (props.selectedRows().some(row => row.status !== 'NEW')) {
       setBlockedOpen(true);
       return;

@@ -56,8 +56,8 @@ export const createFilters = (
           testId={props.testId}
           placeholder={t('placeholder.search-by-name')}
           value={props.filter().otherPartyName?.like ?? ''}
-          // Blank box → null, never { like: '' } (an empty like would match as a
-          // real substring).
+          // Blank box → null, never { like: '' } (an empty like would match as
+          // a real substring).
           onInput={value =>
             props.setPartialFilter({
               otherPartyName: value ? { like: value } : null,
@@ -107,8 +107,8 @@ export const createFilters = (
     linkedInvoiceId: null,
     purchaseOrderId: null,
     programId: null,
-    // Number / reference filters — not offered on this list (the spec's S1 names
-    // name + status only; number deep-linking goes via the URL).
+    // Number / reference filters — not offered on this list (the spec's S1
+    // names name + status only; number deep-linking goes via the URL).
     invoiceNumber: null,
     invoiceNumberOrStatus: null,
     purchaseOrderNumber: null,
