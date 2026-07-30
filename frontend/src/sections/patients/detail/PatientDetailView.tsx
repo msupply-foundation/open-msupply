@@ -37,7 +37,10 @@ import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
-import { CustomFieldsEditTab } from '../../../domain/customFields';
+import {
+  CustomFieldsEditTab,
+  EMPTY_FIELD_VALUE,
+} from '../../../domain/customFields';
 import {
   draftEquals,
   emptyDraft,
@@ -160,13 +163,25 @@ const PatientDetailView: Component = () => {
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
   // load only once that surface is shown. Modal state: undefined = closed,
-  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add). `.latest` reads
-  // keep these off the Suspense boundary the patient resource owns.
+  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add).
+  //
+  // Every secondary resource below is read through a `state` GATE, never
+  // `.latest` alone: `.latest` SUSPENDS on a first pending read, and these are
+  // read inside tab panels, which Kobalte unmounts while inactive — so the
+  // first read happens on the tab click. Suspending then would tear down this
+  // whole screen (and detach an open dialog) mid-interaction
+  // (kdd/solid-reactivity-pitfalls › no remounts on interaction). Only the
+  // patient resource above reads suspending: that is the screen's first load,
+  // which has no live user state to lose.
   const [providers] = createResource(
     () => params.storeId,
     fetchInsuranceProviders
   );
-  const hasInsurance = () => (providers.latest ?? []).length > 0;
+  const providerList = () =>
+    providers.state === 'ready' || providers.state === 'refreshing'
+      ? (providers.latest ?? [])
+      : [];
+  const hasInsurance = () => providerList().length > 0;
 
   const [insuranceState, setInsuranceState] = createSignal<{
     policy?: InsurancePolicyFragment;
@@ -179,7 +194,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchInsurancePolicies
   );
-  const policies = () => policiesData.latest ?? [];
+  const policies = () =>
+    policiesData.state === 'ready' || policiesData.state === 'refreshing'
+      ? (policiesData.latest ?? [])
+      : [];
 
   // Program-module tabs (spec § program-module tabs): Programs / Encounters /
   // Vaccinations, read-only lists gated on the program module. Enrolments load
@@ -198,7 +216,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientProgramEnrolments
   );
-  const enrolments = () => enrolmentsData.latest ?? [];
+  const enrolments = () =>
+    enrolmentsData.state === 'ready' || enrolmentsData.state === 'refreshing'
+      ? (enrolmentsData.latest ?? [])
+      : [];
   const immunisationEnrolments = () =>
     enrolments().filter(e => e.isImmunisationProgram);
 
@@ -213,7 +234,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientEncounters
   );
-  const encounters = () => encountersData.latest ?? [];
+  const encounters = () =>
+    encountersData.state === 'ready' || encountersData.state === 'refreshing'
+      ? (encountersData.latest ?? [])
+      : [];
 
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
@@ -319,7 +343,7 @@ const PatientDetailView: Component = () => {
   ];
 
   const dobDisplay = (n: NonNullable<ReturnType<typeof node>>) => {
-    if (!n.dateOfBirth) return '—';
+    if (!n.dateOfBirth) return EMPTY_FIELD_VALUE;
     const date = localisedDate(n.dateOfBirth);
     const age = getDisplayAge(n.dateOfBirth);
     return age ? `${date} (${t('label.age')}: ${age})` : date;
@@ -375,7 +399,7 @@ const PatientDetailView: Component = () => {
                     >
                       {(() => {
                         const g = n().gender;
-                        return g ? genderLabel(g) : '—';
+                        return g ? genderLabel(g) : EMPTY_FIELD_VALUE;
                       })()}
                     </LabelledValue>
                     <LabelledValue
@@ -420,27 +444,26 @@ const PatientDetailView: Component = () => {
               <TabPanel value="details">
                 {/* fillBody strips the body's edge padding (so the Log table
                     fills the region); the Details form is a padded, centred,
-                    width-capped measure of its own (ui-standards/detail-views
-                    → detail form). */}
-                <div style={{ padding: 'var(--space-5)' }}>
-                  <ContentContainer size="form">
-                    <Show when={saveError()}>
-                      <Alert severity="error">{saveError()}</Alert>
-                    </Show>
-                    <PatientDetailsForm
-                      storeId={params.storeId}
-                      patientId={params.patientId}
-                      draft={edit}
-                      setField={setField}
-                      disabled={!canMutate()}
-                      errorFor={validation.errorFor}
-                    />
-                    <FormErrorSummary
-                      errors={validation.visible()}
-                      testId="patient-detail-error-summary"
-                    />
-                  </ContentContainer>
-                </div>
+                    width-capped measure of its own — which is exactly what
+                    ContentContainer's `padded` supplies (ui-standards/
+                    detail-views → detail form). */}
+                <ContentContainer size="form" padded>
+                  <Show when={saveError()}>
+                    <Alert severity="error">{saveError()}</Alert>
+                  </Show>
+                  <PatientDetailsForm
+                    storeId={params.storeId}
+                    patientId={params.patientId}
+                    draft={edit}
+                    setField={setField}
+                    disabled={!canMutate()}
+                    errorFor={validation.errorFor}
+                  />
+                  <FormErrorSummary
+                    errors={validation.visible()}
+                    testId="patient-detail-error-summary"
+                  />
+                </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>
                 {/* Read-only program-module lists. Programs + Vaccinations
@@ -509,7 +532,7 @@ const PatientDetailView: Component = () => {
                 storeId={params.storeId}
                 patientId={n().id}
                 patientName={n().name}
-                providers={providers.latest ?? []}
+                providers={providerList()}
                 policy={insuranceState()?.policy}
                 onSaved={() => void refetchPolicies()}
               />

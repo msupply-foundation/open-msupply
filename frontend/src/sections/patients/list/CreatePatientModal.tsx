@@ -18,8 +18,9 @@ import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
+import { remToPx } from '../../../ui/utils/rem';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -296,15 +297,34 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     navigate(`/${props.storeId}/dispensary/patients/${outcome.id}`);
   };
 
+  // Cell-type presets carry the rendering AND the width (ui/docs/CELL_TYPES.md).
+  // Deceased reads as a word here, not the list's flag: this table is scanned to
+  // judge whether a candidate IS the patient, and it holds a handful of rows.
   const resultColumns = (): Column<MatchRow, never>[] => [
-    { c: { key: 'code' }, header: () => t('label.patient-id') },
-    { c: { key: 'code2' }, header: () => t('label.patient-nuic') },
-    { c: { key: 'firstName' }, header: () => t('label.first-name') },
-    { c: { key: 'lastName' }, header: () => t('label.last-name') },
+    {
+      c: { key: 'code' },
+      header: () => t('label.patient-id'),
+      ...getCellDefinition('code'),
+    },
+    {
+      c: { key: 'code2' },
+      header: () => t('label.patient-nuic'),
+      ...getCellDefinition('code2'),
+    },
+    {
+      c: { key: 'firstName' },
+      header: () => t('label.first-name'),
+      ...getCellDefinition('firstName'),
+    },
+    {
+      c: { key: 'lastName' },
+      header: () => t('label.last-name'),
+      ...getCellDefinition('lastName'),
+    },
     {
       c: { key: 'dateOfBirth' },
       header: () => t('label.date-of-birth'),
-      ...getDateCell(),
+      ...getCellDefinition('dateOfBirth'),
     },
     {
       c: {
@@ -313,15 +333,21 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         id: 'gender',
       },
       header: () => t('label.gender'),
+      ...getCellDefinition('gender'),
     },
     {
       c: { key: 'isDeceased' },
       header: () => t('label.deceased'),
       ...getBooleanCell({ display: 'yesNo' }),
+      // Yes/No text under the header word, which is the wider of the two.
+      size: remToPx(5.5),
     },
     {
       c: { id: 'action' },
       header: () => '',
+      // One icon button, never grows.
+      size: remToPx(3),
+      maxSize: remToPx(3),
       // The trailing icon does what the row does — it is here to distinguish a
       // central-only candidate (download → retrieve) from a local match (home →
       // open). Its click must not ALSO bubble to the row handler.

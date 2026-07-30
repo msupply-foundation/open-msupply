@@ -11,19 +11,16 @@ import { customFieldDefinitions } from './customFieldsResource';
 import {
   parseCustomField,
   shownCustomFields,
+  splitIntoColumns,
   type ParsedCustomField,
 } from './parse';
 import { customFieldFormText } from './display';
 
 // The READ-ONLY custom-fields tab (spec/ui-standards/custom-fields › the tab):
-// two columns of labelled values, one per shown field for the scope.
-//
-// The fields are RUNTIME DATA (whatever the deployment configures), so the
-// split can't name particular fields — it takes the first half down column one
-// and the rest down column two. Reading down column 1 then column 2 therefore
-// preserves the configured order, which is what the standard asks for, and the
-// columns wrap to a single stack when squeezed (FormColumns) in that same
-// order.
+// two columns of labelled values, one per shown field for the scope. The split
+// is the module's shared splitIntoColumns (the editable tab lays out the same
+// way), and the columns wrap to a single stack when squeezed (FormColumns) in
+// that same order.
 //
 // NOT disabled inputs. A field that can NEVER be edited must not render as a
 // disabled control (the rule D67 states for the item detail's other tabs, which
@@ -42,11 +39,9 @@ export const CustomFieldsView = (props: { scope: string; values: unknown }) => {
   const fields = createMemo(() =>
     shownCustomFields(reader.noSuspense()).map(parseCustomField)
   );
-  // Split point: the taller half leads, so an odd count puts the extra field in
-  // column one rather than leaving column two longer than the one beside it.
-  const split = () => Math.ceil(fields().length / 2);
-  const firstColumn = () => fields().slice(0, split());
-  const secondColumn = () => fields().slice(split());
+  const columns = createMemo(() => splitIntoColumns(fields()));
+  const firstColumn = () => columns()[0];
+  const secondColumn = () => columns()[1];
 
   return (
     <Show when={!reader.loading()} fallback={<Spinner center />}>

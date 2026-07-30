@@ -34,6 +34,7 @@ export {
   customFieldValue,
   shownCustomFields,
   partitionCustomFields,
+  splitIntoColumns,
   orderOptionsHierarchically,
   optionAndDescendantIds,
   ancestorIds,
