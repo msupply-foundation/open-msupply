@@ -24,7 +24,7 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
-import { MSupplyGuyLogo } from '../ui/icons';
+import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
   DEFAULT_SYNC_INTERVAL_SECONDS,
@@ -259,7 +259,7 @@ export const InitialisationPage: Component<{
             aria-label={t('button.initialise')}
             onSubmit={submit}
           >
-            <MSupplyGuyLogo class={styles.logo} />
+            <AppLogo class={styles.logo} />
             <TextField
               label={t('label.settings-url')}
               width="full"

@@ -1,6 +1,6 @@
-# Custom themes — format design (proposal)
+# Custom themes — format reference
 
-**Status:** design proposal for review (Carl, 2026-07-30). Nothing implemented yet. Once the format is signed off, this doc becomes the format reference + implementation guide, a `kdd/custom-themes` entry records the decision, and the existing Settings › Display › **Custom theme** editor is wired to it.
+**Status:** implemented (2026-07-30). This is the format reference and the implementation guide; the decision and its rejected alternatives live in [`kdd/custom-themes`](../../../kdd/custom-themes/draft-kdd.md), and the user-facing half is [CUSTOM_THEME_EXAMPLE.md](./CUSTOM_THEME_EXAMPLE.md). The code is `src/ui/branding/` — `customTheme.ts` (the pure compiler), `themeRecipes.ts` (the fitted table), `applyBranding.ts` (the DOM side) and `AppLogo.tsx` — wired into Settings › Display and the startup pass.
 
 ## What this is for
 
@@ -101,13 +101,13 @@ Escape hatch — one token, exactly:
 
 - `surface`, `warning`, `success` are bare strings in both modes — one colour each regenerates every background, and the whole neutral scale falls out of `surface` + `text`. `border` is absent entirely: the stock borders derive from `surface`/`text` to within 2/255, so nothing needs saying.
 - `text` needs the object form (`body` + `muted`) — see the two-anchor finding above.
-- `brand.dark` and `accent.light` are pinned in light mode: the stock `-dark`/`-light` variants are saturating darkens rather than plain black/white mixes, and the ladder misses `--primary-dark` `#c43c11` by 17/255 (it lands on `#b34522`, visibly duller). Everything else in both ladders derives to Δ≤3.
+- `brand.dark` (light mode) and `accent.dark` (dark mode) are the only pinned ladder steps. The first is a hand-picked saturating darken the shared rule lands 9/255 off; the second is where the stock dark theme contradicts its own principle — `tokens.css` says a `-dark` variant flips _lighter_ on a dark ground, `--primary-dark` obeys, and `--secondary-dark` goes the other way. Everything else in both ladders derives to Δ≤8.
 - Both `gradient`s are given explicitly, because the stock hero gradients are deliberately _not_ brand ladders — `--gradient-primary` runs orange → red across two hues neither of which is `--primary-main`.
 - `danger.background` is pinned: `--error-bg` is a hand-picked pink/maroon, not a page↔danger mix (Δ6 light, Δ15 dark).
 - `status` carries the five that aren't aliases (`shipped`, `delivered`, `received`, and `verified`/`finalised`, whose green differs from `--success-main`). The other four — `new`, `allocated`, `picked`, `cancelled` — are omitted because they alias roles already set.
 - `warning` needs its object form, because the palette carries two ambers with **disjoint consumers**: `--color-warning` `#f2a001` is inline caution — field warning text (TextField, TextArea, Checkbox, Combobox), the DataTable selected+warning row tint, `--status-picked` — while `--warning-main` `#ed6c02` is the warning _severity panel_ and nothing else (Alert, Badge). That's a real distinction, so it's `warning.alert`, not an escape-hatch entry (Carl asked; consumers checked 2026-07-30). It is nonetheless the palette's only role split of its kind — `danger` serves both panel and inline from one `--error-main`, and `info` just aliases the accent — so **whether `--warning-main` should exist at all is an open design-system question**, noted in DESIGN_STANDARDS. It is MUI's untouched default (see the Alert row in UI_ELEMENTS), whereas `--color-warning` is the amber the brand standards were reconciled against. If the two are unified in `tokens.css`, `warning.alert` becomes redundant and the role goes back to a bare string; the format doesn't force that decision either way.
 
-That is 12 pinned values across ~65 tokens, and no `tokens` entries at all — the escape hatch turned out to be unnecessary for the hardest possible case. A site theme would pin far fewer: every one of those pins is a place the design system deliberately broke its own pattern.
+That is 11 pinned values across ~65 tokens, and no `tokens` entries at all — the escape hatch turned out to be unnecessary for the hardest possible case. A site theme would pin far fewer: every one of those pins is a place the design system deliberately broke its own pattern.
 
 `tokens` honours only names inside the theme contract that the role map classifies as themable; anything else (a spacing token, `--qr-foreground`, a typo) is warned about and ignored, like any other unrecognised key. It exists so a one-off need never forces a format change, and it is documented as the last resort.
 
@@ -130,26 +130,36 @@ To control dark surfaces, add a `dark` block. This rule is stated in the Setting
 
 ### Deliberately not derived
 
-`shipped`, `delivered`, `received` have their own hues with no palette relationship, so they are settable but never derived. The other six statuses default to aliases of the roles above (`new` → the mid grey, `allocated` → `accent`, `picked` → `warning`, `cancelled` → `danger`, `verified`/`finalised` → `success`), exactly as `tokens.css` does today.
+`shipped`, `delivered`, `received` have their own hues with no palette relationship, so they are settable but never derived. The other six statuses default to aliases of the roles above (`new` → the mid grey, `allocated` → `accent`, `picked` → `warning`, `cancelled` → `danger`, `verified`/`finalised` → `success`), exactly as `tokens.css` does today — and four of them (`new`, `allocated`, `picked`, `cancelled`) are literally `var()` aliases in `tokens.css`, so they follow their role with nothing emitted at all.
+
+### The neutral family is one unit
+
+`surface`, `text` and `border` emit **together**: mentioning any one of them emits all three groups' tokens. They share the same two anchors (the page colour and the muted ink), so moving the page without moving the greys mixed from it would leave light-theme greys on a dark page. This is the one place the "partial at role granularity" rule is coarser than a single role — the family is the honest unit, and re-emitting an untouched neutral costs nothing because the recipe reproduces its stock value.
 
 ## How derivation works
 
 Each themable token has one **recipe row** per mode:
 
+The live table is [`src/ui/branding/themeRecipes.ts`](../branding/themeRecipes.ts); a row is a `mix` (a `color-mix` between two anchors), a `shade` (a lightness/chroma step in `oklch`), a `ring`, a `gradient`, or a `contrast` pick:
+
 ```
 token             light                                  dark
---bg-drawer       mix(page, body, 5%)                    mix(page, black, 24%)
---gray-main       mix(page, muted, 65%)                  mix(page, muted, 91%)
---primary-light   mix(base, white, 17%) [oklab]          mix(base, white, 30%) [oklab]
---primary-dark    mix(base, black, 18%) [oklab]          mix(base, white, 19%) [oklab]
+--bg-drawer       mix(page, body, 95%)                   mix(page, black, 76%)
+--gray-main       mix(page, muted, 35%)                  mix(page, muted, 9%)
+--primary-light   shade(brand, l×1.08, c×0.78)           shade(brand, l×1.12, c×0.70)
+--primary-dark    shade(brand, l×0.87, c×0.94)           shade(brand, l×1.10, c×0.82)
 --focus-ring      0 0 0 0.1875rem mix(accent, transparent, 25%)   …45%
 ```
+
+Percentages are the share of the **first** anchor, matching `color-mix` itself.
 
 Three properties make this safe rather than clever:
 
 1. **Neutrals derive from _two_ ink anchors, not one.** Surfaces (`--bg-*`) sit on the page → `text.body` line; the greys, borders and disabled ink (`--gray-*`, `--color-border-value`, `--header-border`, `--input-border`, `--text-disabled`) sit on the page → `text.muted` line, which in the stock palette is a distinctly bluer navy. Anchoring everything on `body` — the obvious single-anchor design — misses the grey family by 7–9/255 per channel and the borders by 3; re-anchoring them on `muted` brings the greys to 1–5 and the borders to 1–2. `text.muted` is therefore a real derivation input, not a convenience member: a theme that sets `text` as a bare string gets a `muted` derived from `body`, and its greys shift a shade. Measured while writing [system-theme.example.json](./system-theme.example.json).
-2. **The amounts are fitted to the stock palette, not invented.** Feeding the stock inputs back in reproduces today's values — `surface.page: "#fff"` + `text.body: "#1c1c28"` + `text.muted: "#555770"` regenerates `--bg-toolbar` `#fafafc` (98%, Δ1), `--bg-drawer` `#f2f2f5` (95%, Δ1), `--table-card-surface` `#f4f5f7` (96%, Δ1), `--input-border` `#c0c0c4` (72%, Δ0), `--color-border-value` `#e4e4eb` (84%, Δ2), `--gray-main` `#8f90a6` (35%, Δ3), `--text-disabled` `#7a7b90` (21%, Δ1). Dark is tighter still — the four chrome surfaces (`--bg-drawer`, `--bg-toolbar`, `--header-bg`, `--table-card-surface`) come back **exact** from page → black. The composite recipes fit exactly too: the stock light `--focus-ring` _is_ `--secondary-main` at 25%, and `--focus-ring-error` _is_ `--error-main` at 20%. A unit test asserts the round-trip **within 5/255 per channel** for every neutral token in both modes, using that example file as its fixture — so the derivation table can't drift from the design system it was fitted to. Hue ladders are looser by nature (see the example file's notes) and are asserted only where they fit: `--primary-light` Δ3, `--secondary-dark` Δ2, dark `--primary-light`/`--primary-dark` Δ3/Δ2.
-3. **Recipes compile to CSS, not to computed hex.** The emitted declaration is `--bg-drawer: color-mix(in srgb, var(--bg-white) 94%, var(--text-body));`. It reads correctly in devtools, it resolves against whatever the author set (or the stock value, if they set neither), and it needs no colour maths at runtime. Perceptual mixes (the hue ladders) use `in oklab`; neutral mixes use `in srgb`, which is what the fitted percentages were measured in. `color-mix` is unconditionally fine — the enforced Chromium floor is 138 (`scripts/check-min-browser.mjs`).
+2. **The amounts are fitted to the stock palette, not invented.** Feeding the stock inputs back in reproduces today's values — `surface.page: "#fff"` + `text.body: "#1c1c28"` + `text.muted: "#555770"` regenerates `--bg-toolbar` `#fafafc` (98%, Δ1), `--bg-drawer` `#f2f2f5` (95%, Δ2), `--table-card-surface` `#f4f5f7` (96%, Δ2), `--input-border` `#c0c0c4` (72%, Δ1), `--color-border-value` `#e4e4eb` (84%, Δ3), `--gray-main` `#8f90a6` (35%, Δ4), `--text-disabled` `#7a7b90` (21%, Δ2). Dark is tighter still — the four chrome surfaces (`--bg-drawer`, `--bg-toolbar`, `--header-bg`, `--table-card-surface`) come back **exact** from page → black. The composite recipes fit exactly too: the stock light `--focus-ring` _is_ `--secondary-main` at 25%, and `--focus-ring-error` _is_ `--error-main` at 20%. `customTheme.test.ts` asserts the round-trip **within 5/255 per channel** for every neutral token in both modes, and within 9 for the four hue-ladder tokens, using the example file as its fixture — so the derivation table can't drift from the design system it was fitted to.
+3. **Recipes compile to CSS, not to computed hex.** The emitted declaration is `--bg-drawer: color-mix(in srgb, var(--bg-white) 95%, var(--text-body));`. It reads correctly in devtools, it resolves against whatever the author set (or the stock value, if they set neither), and it needs no colour maths at runtime. Neutral mixes use `color-mix(in srgb, …)`, the space the percentages were fitted in. The hue ladders use **relative colour syntax** — `oklch(from var(--primary-main) calc(l * 1.08) calc(c * 0.78) h)` — which keeps the hue and steps lightness and chroma: mixing toward white/black desaturates, and missed the stock `--primary-dark` by 17/255 where this lands within 9. Both features are far under the enforced Chromium floor of 138 (`color-mix` needs 111, relative colour syntax 119 — `scripts/check-min-browser.mjs`).
+
+The round-trip has also been **verified in a real engine**, not only against the node reference implementation the test uses: driving headless Chromium over the emitted stylesheet and sampling each token's painted pixel put all 97 token/mode pairs inside tolerance, worst Δ9 (light `--secondary-dark`). Worth repeating if the recipe kinds ever change, since only a browser can prove the emitted syntax parses.
 
 JavaScript colour maths is needed in exactly two places, both about contrast rather than tinting: choosing `brand.on` / `text.onGradient` (white vs. dark ink) when the author doesn't supply it, and computing the contrast **warnings**. Hence the hex/rgb/hsl-only rule for role colours.
 
@@ -165,7 +175,7 @@ Complete, so that adding a colour token to the contract forces a themability dec
 | `warning`     | `--warning-main` `--color-warning` `--status-picked`                                                                                                                                                                                                                 |
 | `success`     | `--success-main` `--status-verified` `--status-finalised`                                                                                                                                                                                                            |
 | `surface`     | `--bg-white` `--surface-raised` `--table-card-surface` `--bg-drawer` `--bg-menu` `--bg-toolbar` `--bg-row` `--bg-group-light` `--bg-group-main` `--bg-group-dark` `--bg-input` `--bg-disabled` `--header-bg` `--drawer-selected-bg` `--drawer-hover-bg` `--bg-login` |
-| `text`        | `--text-body` `--text-secondary` `--text-label` `--button-text` `--text-disabled` `--gray-main` `--gray-light` `--gray-dark` `--login-hero-text`                                                                                                                     |
+| `text`        | `--text-body` `--text-secondary` `--text-label` `--button-text` `--text-disabled` `--gray-main` `--gray-light` `--gray-dark` `--login-hero-text` (also emitted by `brand` — the hero ink is contrast-picked from the brand gradient it sits on)                      |
 | `border`      | `--color-border-value` `--color-divider` `--input-border` `--header-border` `--outline-main`                                                                                                                                                                         |
 | `status`      | the nine `--status-*`                                                                                                                                                                                                                                                |
 | `tokens` only | `--shadow-1`…`--shadow-4` `--shadow-drawer` `--shadow-frozen-col` `--overlay-scrim` — themable, but no role reaches them (no `shadow` role); a `tokens` entry carries the whole `box-shadow` value                                                                   |
@@ -176,7 +186,7 @@ Note `--warning-main` (alert orange) and `--color-warning` (the CCE amber) are d
 ## Applying a theme
 
 ```ts
-// src/ui/styles/customTheme.ts — pure, colocated tests
+// src/ui/branding/customTheme.ts — pure, colocated tests
 compileTheme(text: string): {
   css: string;
   errors: ThemeProblem[];    // block the save
@@ -184,27 +194,41 @@ compileTheme(text: string): {
 };
 ```
 
-Emitted CSS is one block per mode:
+Emitted CSS is one block per mode — this is the real output for `{ "brand": "#0b6e99" }`:
 
 ```css
 :root:root {
+  --primary-light: oklch(
+    from var(--primary-main) calc(l * 1.08) calc(c * 0.78) h
+  );
+  --primary-dark: oklch(
+    from var(--primary-main) calc(l * 0.87) calc(c * 0.94) h
+  );
+  --primary-contrast: #fff;
+  --gradient-primary: linear-gradient(
+    156deg,
+    var(--primary-light) 4%,
+    var(--primary-dark) 96%
+  );
   --primary-main: #0b6e99;
-  --primary-light: color-mix(in oklab, var(--primary-main) 80%, #fff);
-  /* … */
 }
 :root:root[data-theme='dark'] {
-  /* … */
+  /* the same roles, with the dark-mode recipes */
 }
 ```
+
+Note the ordering inside a block: derived tokens are written first and the author's literals last, so an explicitly-set member always wins over its own recipe.
 
 The doubled `:root:root` is deliberate: it outranks both `:root` and `:root[data-theme='dark']` in `tokens.css` regardless of stylesheet order (dev-server style injection and HMR both append), while keeping the custom dark block ahead of the custom light block. The result is injected as a single `<style id="oms-custom-theme">` appended to `<head>`.
 
 Lifecycle:
 
-- **Pre-paint.** The compiled CSS is cached in `localStorage` (`oms-custom-theme-css`, alongside the existing `oms-theme` key) and injected by the inline script in `index.html` / `showcase.html`, so a themed site never flashes TMF orange on load. The pre-paint script stays a few lines of ES5 — it injects a string, it does not compile.
-- **After login.** `displaySettings` is fetched with the stored hash (the same value+hash protocol the reference app uses at Login); on change, recompile, refresh the cache, and swap the style element's text — no reload.
-- **On save** in Settings: compile first, refuse the save on errors, then persist, cache, and reload the app (the behaviour spec/settings/rules.md already requires).
+- **Pre-paint.** The compiled CSS is cached in `localStorage` (`oms-custom-theme-css`, alongside the existing `oms-theme` key) and injected by the inline script in `index.html`, so a themed site never flashes TMF orange on load. The pre-paint script stays a few lines of ES5 — it injects a string, it does not compile.
+- **At startup**, not after login: `fetchDisplaySettings()` joins the `Promise.all` in `App.runStartup` beside `fetchServerInfo()`. The query runs on the server's `basic_context()`, i.e. unauthenticated, which is the point — the login and initialisation screens are the branded hero pages, so branding has to land before anyone signs in. It sends the cached hashes, so an unchanged theme costs one small round-trip and no work.
+- **On save** in Settings: compile first, refuse the save on errors, then persist, cache (using the hash the mutation returns, so the reload paints the new theme pre-paint), and reload the app — the behaviour spec/settings/rules.md requires.
 - **On clear** (toggle off): drop the cache and remove the style element in place — immediate, no reload.
+
+One server subtlety worth knowing when touching this: a `null` field in the response means "unchanged from the hash you sent" **or** "never set" — the server cannot distinguish them (`display_settings.rs`, `match_node`). Both mean "keep what you have". A setting that was _cleared_ comes back as an empty value with its own hash, not as `null`, which is how clearing on another device still reaches this one.
 
 **Failure is inert.** An invalid declaration is dropped by the CSS parser, so a bad theme cannot white-screen the app or block the Settings page that removes it. That is the answer to the ⚠️ VERIFY in spec/settings/rules.md: a valid-JSON-but-wrong-shape document is now either refused at save time (nothing recognised) or applied as far as it is understood with the rest warned about — and anything that still slips through degrades cosmetically, with the toggle as a working recovery path.
 
@@ -228,10 +252,12 @@ Warnings are computed per mode, and are the reason validation lives in a pure mo
 
 ## Settings UI
 
-The existing `EditorToggleRow` in [DisplaySettingsSection.tsx](../../sections/settings/display/DisplaySettingsSection.tsx) stays as-is — toggle on reveals the editor, save is explicit, toggle off clears immediately. Three changes:
+The existing `EditorToggleRow` in [DisplaySettingsSection.tsx](../../sections/settings/display/DisplaySettingsSection.tsx) keeps its shape — toggle on reveals the editor, save is explicit, toggle off clears immediately. What changed:
 
-1. `parseThemeJson` in [displayLogic.ts](../../sections/settings/display/displayLogic.ts) becomes `compileTheme`, so the save gate is shape-aware; the single `Alert` becomes a list of errors and, separately, warnings.
-2. The empty seed becomes a minimal real document (`{ "brand": "#0b6e99" }`) rather than `{}`, plus an `InfoTooltip` naming the roles — the logo row already has this shape.
+1. `parseThemeJson` in [displayLogic.ts](../../sections/settings/display/displayLogic.ts) became `checkTheme`, backed by `compileTheme`, so the save gate is shape-aware; the single `Alert` became a list of errors and, separately, warnings.
+2. The empty seed became a minimal real document (`{ "brand": "#0b6e99" }`) rather than `{}`, plus an `InfoTooltip` naming the roles — the logo row already had this shape.
+3. **Warnings are live, errors are not.** A successful save reloads the app, so a warning only reported afterwards would never be read; warnings therefore describe the text as it stands, while errors appear on a save attempt (half-typed JSON is not an error yet).
+4. The **logo** row now applies what it saves: `AppLogo` reads a signal, so the drawer and hero logos change the moment it saves or clears, with no reload — the theme's reload is only needed because CSS custom properties are set at the document root.
 
 There is deliberately **no Preview** (Carl, 2026-07-30): saving already applies the theme via the app reload, and the toggle reverts it, so "install it and look" is the preview. That also keeps the Settings behaviour a reconciliation of the reference app rather than an addition to it.
 
@@ -241,9 +267,10 @@ A dev-only showcase page (`#/showcase/theming`) is the natural authoring surface
 
 ## Tooling and enforcement
 
-- `scripts/check-theme-tokens.mjs` gains a third check: every token named by the role map exists in the contract, and every contract token is either covered by a role or in the explicit not-themable list. Adding a colour token then can't silently be unthemable.
-- Colocated unit tests: the stock round-trip fidelity test (above), partial-emission (only mentioned groups appear in the output), single-block dark carry-over, and one case per validation error.
-- No new dependency, at all. The colour parser and contrast maths are ~60 lines; everything else is `color-mix` in the emitted CSS.
+- `scripts/check-theme-tokens.mjs` has a third check: every token named in `themeRecipes.ts` exists in the contract, and every contract token is either covered by a role/recipe or listed in `NOT_THEMABLE`. Adding a colour token therefore can't silently become unthemable. It reads the table with a regex rather than importing it — node can't strip TypeScript — which is why the token keys there are plain single-quoted literals, noted on both sides.
+- Colocated unit tests (`customTheme.test.ts`, 22): the stock round-trip fidelity test (above), partial emission, the neutral family moving as a unit, single-block dark carry-over, explicit members beating their recipes, and one case per validation problem.
+- **Not covered by unit tests:** `applyBranding.ts` needs a DOM, and vitest runs in the node environment here (adding jsdom for one file would buy a dependency to test ~40 lines). Its two risky parts were verified by driving headless Chromium instead — the emitted CSS resolving to the right pixels, and the SVG sanitiser stripping `<script>`, `on*` handlers, `<foreignObject>` and external `href`s while keeping same-document `#refs`. Repeat that if either changes.
+- No new dependency, at all. The colour parser and contrast maths are ~90 lines; everything else is CSS the browser evaluates.
 
 ## Rejected alternatives
 
@@ -281,19 +308,17 @@ It's easy because the reference app deep-merges the saved document over its own 
 
 ~35 rows. The only fiddly one is `mixins.header.borderBottom`, where the colour has to be picked out of a `1px solid #cbced4` shorthand. Reported as dropped, with a reason: `components` style overrides (arbitrary MUI CSS), everything sized (`zIndex`, `breakpoints`, `mixins.table`, `icon`, `footer` — not themable here by design), and the palette groups with no counterpart in our tokens yet (`chart.*` incl. `chart.lines`, `cceStatus.*`, `invoiceLineStatus.*`, `vaccinationStatus.*`, `programs.*`).
 
-## Implementation plan
+## Where the code lives
 
-1. `src/ui/styles/customTheme.ts` — types, colour parser, recipe table, `compileTheme`, contrast checks; colocated tests incl. the stock round-trip.
-2. `src/ui/styles/applyCustomTheme.ts` — style-element injection + `localStorage` cache; pre-paint snippet in `index.html` / `showcase.html`.
-3. Boot wiring — fetch `displaySettings` with the stored hash after login, compile, cache, apply.
-4. Settings — `compileTheme` gate, problem list (errors + warnings), seed, tooltip.
-5. `scripts/check-theme-tokens.mjs` coverage check.
-6. Docs — this doc becomes the format reference; `kdd/custom-themes` records the decision; pointers added to `src/ui/CLAUDE.md` and `src/ui/docs/STYLING.md`.
-7. Spec — spec/settings/rules.md § Display settings (validation is now shape-aware; ⚠️ VERIFY resolved) and a DIVERGENCES entry alongside D52, via spec/PROCESS.md.
-8. `scripts/convert-legacy-theme.mjs` — the standalone MUI converter (no app code).
-9. Optional — `#/showcase/theming` authoring page.
+| File                                                               | Role                                                                                                                                                               |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`src/ui/branding/customTheme.ts`](../branding/customTheme.ts)     | The pure compiler: colour parsing, contrast, `compileTheme(text) → { css, errors, warnings }`. No DOM, no app imports, so it runs in vitest's node environment.    |
+| [`src/ui/branding/themeRecipes.ts`](../branding/themeRecipes.ts)   | The fitted recipe table, the role/member map, and `NOT_THEMABLE`. Parsed by `scripts/check-theme-tokens.mjs`, so its token keys stay plain single-quoted literals. |
+| [`src/ui/branding/applyBranding.ts`](../branding/applyBranding.ts) | The DOM side: the `<style id="oms-custom-theme">` element, the `localStorage` cache, and the custom-logo signal + SVG sanitiser.                                   |
+| [`src/ui/branding/AppLogo.tsx`](../branding/AppLogo.tsx)           | The site's logo or the stock mSupply guy — used by the drawer, login and initialisation heroes.                                                                    |
+| [`src/api/displaySettings.ts`](../../api/displaySettings.ts)       | The startup fetch, alongside `fetchServerInfo` in `App.runStartup`.                                                                                                |
 
-Steps 1–5 are the shippable unit; 6–7 land with them. 8 is independent and can follow.
+Two things are deliberately **not** done: the standalone `scripts/convert-legacy-theme.mjs` (see [Legacy themes](#legacy-themes)) and the dev-only `#/showcase/theming` authoring page. The dev showcase does inherit custom theming for free, since it runs inside `index.html`; the standalone showcase build does not, because `showcase.html` deliberately omits the app-only pre-boot scripts.
 
 ## Decisions taken
 
