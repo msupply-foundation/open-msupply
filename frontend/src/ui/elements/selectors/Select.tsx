@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import * as KSelect from '@kobalte/core/select';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import { CheckIcon, ChevronDownIcon } from '../../icons';
@@ -61,7 +61,10 @@ interface SelectProps {
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   class?: string;
-  /** `data-testid` for the trigger button (locale-stable test hook, e2e/TESTIDS.md). */
+  /**
+   * `data-testid` for the trigger button (locale-stable test hook,
+   * e2e/TESTIDS.md).
+   */
   testId?: string;
   /**
    * A `createFocusTarget()` handle bound to the trigger button — for an owner
@@ -101,6 +104,9 @@ export const Select = (props: SelectProps) => {
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
   // one JSX node across both would try to mount it in two places. As
   // TextField.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <KSelect.Label class={styles.label}>
       {props.label}
@@ -150,13 +156,13 @@ export const Select = (props: SelectProps) => {
       )}
     >
       <Show when={!props.hideLabel}>
-        <Show when={props.labelInfo} fallback={<Label />}>
+        <Show when={labelInfo()} fallback={<Label />}>
           {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in
               it its accessible name would leak into the control's (the
               name-from-label computation concatenates descendant controls). */}
           <span class={styles.labelRow}>
             <Label />
-            {props.labelInfo}
+            {labelInfo()}
           </span>
         </Show>
       </Show>

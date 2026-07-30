@@ -13,20 +13,24 @@ import type { ReturnFieldEdit } from './returnEdit';
 // § header field cluster) — the same shape every other detail header uses.
 //
 // The fields: the supplier lookup and the in-place supplier reference. The
-// supplier is
-// changeable only while the return is editable AND has no originating shipment
-// (rules § header rules) — the link is set at creation and freezes the party. A
-// change is a delete-and-recreate (rules § header rules), re-runs the supplier
-// checks, and its typed rejections surface inline on the lookup. There is no
-// kind banner: a supplier return has a single forward-only lifecycle.
+// supplier is changeable only while the return is editable AND has no
+// originating shipment (rules § header rules) — the link is set at creation
+// and freezes the party. A change is a delete-and-recreate (rules § header
+// rules), re-runs the supplier checks, and its typed rejections surface
+// inline on the lookup. There is no kind banner: a supplier return has a
+// single forward-only lifecycle.
 
 export interface SupplierReturnToolbarProps {
   storeId: string;
   node: SupplierReturnInfoFragment;
   disabled: boolean;
-  /** The shared return edit buffer — this toolbar reads/writes theirReference. */
+  /**
+   * The shared return edit buffer — this toolbar reads/writes theirReference.
+   */
   edit: ReturnFieldEdit;
-  /** A supplier change: re-checked server-side; typed errors come back inline. */
+  /**
+   * A supplier change: re-checked server-side; typed errors come back inline.
+   */
   onChangeSupplier: (supplierId: string) => void;
   /** The last supplier-change rejection, shown on the lookup. */
   supplierError?: string;

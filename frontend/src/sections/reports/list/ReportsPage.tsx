@@ -59,7 +59,9 @@ type CategoryDef = {
   titleKey: LocaleKey;
   subContexts: readonly string[];
   gate: CategoryGate;
-  /** The category-heading icon (spec S1: headings carry the icon, cards none). */
+  /**
+   * The category-heading icon (spec S1: headings carry the icon, cards none).
+   */
   icon: () => JSX.Element;
 };
 

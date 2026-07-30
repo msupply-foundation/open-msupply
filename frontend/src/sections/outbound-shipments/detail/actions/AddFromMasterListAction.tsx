@@ -22,13 +22,13 @@ export interface AddFromMasterListActionProps {
   onCommitted: () => void;
 }
 
-// "Add from master list" (rules.md § adding from a master list, OMS-REG-DIST-03.10): every
-// stock item of a CUSTOMER-visible master list lands as a zero-quantity
-// placeholder (already-present items skipped server-side). The picker offers
-// only lists joined to the customer, so the not-for-this-customer rejection is
-// a race — surfaced as an inline notice in the dialog, which stays open
-// (controls › dialogs, D20). Success closes it: the refreshed line table is
-// the confirmation.
+// "Add from master list" (rules.md § adding from a master list,
+// OMS-REG-DIST-03.10): every stock item of a CUSTOMER-visible master list lands
+// as a zero-quantity placeholder (already-present items skipped server-side).
+// The picker offers only lists joined to the customer, so the
+// not-for-this-customer rejection is a race — surfaced as an inline notice in
+// the dialog, which stays open (controls › dialogs, D20). Success closes it:
+// the refreshed line table is the confirmation.
 export const AddFromMasterListAction: Component<
   AddFromMasterListActionProps
 > = props => {

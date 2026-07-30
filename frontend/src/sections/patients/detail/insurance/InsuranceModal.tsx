@@ -101,7 +101,8 @@ const Body: Component<InsuranceModalProps> = props => {
   ];
 
   // At least one policy number is required (each part required only while the
-  // other is empty) — enforced on create; locked (and thus unvalidated) on edit.
+  // other is empty) — enforced on create; locked (and thus unvalidated) on
+  // edit.
   const hasAnyPolicyNumber = () =>
     draft.policyNumberFamily.trim() !== '' ||
     draft.policyNumberPerson.trim() !== '';

@@ -15,14 +15,15 @@ export type StoreOption = {
 /*
  * Store selector — the searchable store-picker panel, styled after the current
  * app's login store-selector (host/LoginStoreSelectorPanel): a search field, a
- * bordered scrollable list of selectable rows (with Default / Last-used chips),
- * and a Continue button. Presentational and dismiss-agnostic — it takes the
- * (already-ordered) stores and reports the chosen id via onConfirm; the host
- * decides where it lives (in the app it fills the store-selection Dialog) and
- * what confirming does. Selection is select-then-Continue (double-click a row
- * confirms directly; arrow keys move the highlighted row and Enter anywhere in
- * the panel confirms it — spec startup S3 › keyboard, OMS-REG-LGN-02.15–.18); the effective
- * selection falls back to default → last-used
+ * bordered scrollable list of selectable rows (with Default / Last-used
+ * chips), and a Continue button. Presentational and dismiss-agnostic — it
+ * takes the (already-ordered) stores and reports the chosen id via onConfirm;
+ * the host decides where it lives (in the app it fills the store-selection
+ * Dialog) and what confirming does. Selection is select-then-Continue
+ * (double-click a row confirms directly; arrow keys move the highlighted row
+ * and Enter anywhere in the panel confirms it — spec startup S3 › keyboard,
+ * OMS-REG-LGN-02.15–.18); the effective selection falls back to default →
+ * last-used
  * → first visible so Continue is always actionable.
  *
  * Colour independence: the Default / Last-used markers are StatusChips (dot +

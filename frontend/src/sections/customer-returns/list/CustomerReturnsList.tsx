@@ -55,9 +55,9 @@ import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 // standard list screen over the invoices query pinned to CUSTOMER_RETURN.
 // Columns Name (+ colour swatch) / Status / Number / Created date / Comment /
 // Reference; filters name + status; default sort created date, newest first
-// (OMS-REG-DIST-07.12/.13); bulk Delete on selection (.40). "New return" opens the customer
-// selection (S2) — gated by the disable-manual-returns preference, which is a
-// UI-only affordance gate (OMS-REG-DIST-07.18).
+// (OMS-REG-DIST-07.12/.13); bulk Delete on selection (.40). "New return" opens
+// the customer selection (S2) — gated by the disable-manual-returns preference,
+// which is a UI-only affordance gate (OMS-REG-DIST-07.18).
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -80,7 +80,8 @@ type ReturnsListState = {
   first: number;
 };
 
-// Default sort: created date, newest first (OMS-REG-DIST-07.13; matches the running app).
+// Default sort: created date, newest first (OMS-REG-DIST-07.13; matches the
+// running app).
 const DEFAULT_STATE: ReturnsListState = {
   filter: {},
   sort: [{ key: 'createdDatetime', desc: true }],
@@ -112,8 +113,8 @@ const CustomerReturnsList: Component = () => {
   const { query, setQuery } = useUrlQueryState<ReturnsListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
-  // The disable-manual-returns notice (OMS-REG-DIST-07.18): shown instead of the customer
-  // selection when the store preference is on.
+  // The disable-manual-returns notice (OMS-REG-DIST-07.18): shown instead of
+  // the customer selection when the store preference is on.
   const [disabledNoticeOpen, setDisabledNoticeOpen] = createSignal(false);
 
   const tableConfig = createTableConfig({
@@ -171,10 +172,10 @@ const CustomerReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
-  // The store preferences this list keys off (OMS-REG-DIST-07.18): fetched once per store.
-  // `.latest` + undefined-tolerant read — while unresolved, treat manual
-  // returns as ENABLED (the common case; flashing the notice would be the
-  // wrong direction).
+  // The store preferences this list keys off (OMS-REG-DIST-07.18): fetched
+  // once per store. `.latest` + undefined-tolerant read — while unresolved,
+  // treat manual returns as ENABLED (the common case; flashing the notice would
+  // be the wrong direction).
   const [prefs] = createResource(
     () => params.storeId,
     async storeId => {

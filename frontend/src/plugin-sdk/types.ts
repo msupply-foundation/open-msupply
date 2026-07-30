@@ -39,7 +39,9 @@ export interface SlotStorePreferences {
  * not.
  */
 export interface SlotContext {
-  /** The store the user has entered; undefined before the store guard resolves. */
+  /**
+   * The store the user has entered; undefined before the store guard resolves.
+   */
   storeId: string | undefined;
   /**
    * The user's permissions in the entered store, as the server's PascalCase
@@ -95,7 +97,10 @@ export type PluginLocaleKey = string;
 // `internalOrderLine.infoPanel` join the maps below as their host surfaces
 // land — a new slot is an additive change, a rename is an API-version bump.
 
-/** A published host id — `<widget>` / `<widget>.<panel>` / `<widget>.<panel>.<stat>`. */
+/**
+ * A published host id — `<widget>` / `<widget>.<panel>` /
+ * `<widget>.<panel>.<stat>`.
+ */
 export type DashboardWidgetId = string;
 export type DashboardPanelId = string;
 export type DashboardStatId = string;
@@ -210,7 +215,9 @@ export interface ColumnDeclaration<Row, Data = unknown> {
   anchor?: ColumnAnchor;
   /** Logical, so RTL-safe; `'end'` for numeric columns. */
   align?: 'start' | 'end';
-  /** A resting width in `rem` or `px` (e.g. `'8rem'`); else the host default. */
+  /**
+   * A resting width in `rem` or `px` (e.g. `'8rem'`); else the host default.
+   */
   width?: string;
   /**
    * A batched side-fetch, run ONCE per rendered page of rows (and on refetch),
@@ -386,7 +393,10 @@ export type PluginMessages = Readonly<Record<string, string>>;
 export interface PluginDefinition {
   manifest: PluginManifest;
   contributions?: readonly AnyContribution[];
-  /** Registered under namespace = the plugin's code, layered under server overrides. */
+  /**
+   * Registered under namespace = the plugin's code, layered under server
+   * overrides.
+   */
   translations?: Partial<Record<SupportedLocale, PluginMessages>>;
   /** Built-in dashboard pieces to hide by published id (built-ins only). */
   suppress?: readonly DashboardPieceId[];

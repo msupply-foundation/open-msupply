@@ -28,7 +28,9 @@ export interface PatientSearchProps {
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
-  /** Override the input's `data-testid` (defaults to `patient-search-input`). */
+  /**
+   * Override the input's `data-testid` (defaults to `patient-search-input`).
+   */
   inputTestId?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
@@ -76,10 +78,10 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * shows the derived name. A thin binding over AsyncCombobox: it supplies the
  * search fetcher + the option row; the combobox owns the input/listbox/paging.
  *
- * The empty query is gated (spec/patients S4): an unqueried picker does NOT list
- * every site patient — it shows the `messages.type-to-search` hint ("Start
- * typing to search") in place of results and issues no request until text is
- * typed. Once a search settles with no match the copy switches to
+ * The empty query is gated (spec/patients S4): an unqueried picker does NOT
+ * list every site patient — it shows the `messages.type-to-search` hint
+ * ("Start typing to search") in place of results and issues no request until
+ * text is typed. Once a search settles with no match the copy switches to
  * `messages.no-matching-patients` — the fact the user is actually after
  * (OMS-REG-DIS-01 `.52`, D68).
  *
