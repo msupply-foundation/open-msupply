@@ -4,7 +4,11 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getNumberCell,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import type {
   InboundInfoFragment,
@@ -115,35 +119,43 @@ export const InboundDeliveryPanel: Component<{
     {
       c: { key: 'code' },
       header: () => t('label.code'),
+      ...getCellDefinition('code'),
     },
     {
       c: { key: 'name' },
       header: () => t('label.name'),
+      ...getCellDefinition('name'),
     },
+    // The three status-shifted columns have no CELL_DEF key, and their headers
+    // ("Previous deliveries", "This delivery", "In transit") are the binding
+    // constraint, not the unit counts — so they size at the call site.
     {
       c: { key: 'previous' },
       header: () => t('label.previous-deliveries'),
       ...getNumberCell(),
+      size: remToPx(9),
     },
     {
       c: { key: 'thisDelivery' },
       header: () => t('label.this-delivery'),
       ...getNumberCell(),
+      size: remToPx(8),
     },
     {
       c: { key: 'inTransit' },
       header: () => t('label.in-transit'),
       ...getNumberCell(),
+      size: remToPx(7),
     },
     {
       c: { key: 'remaining' },
       header: () => t('label.remaining'),
-      ...getNumberCell(),
+      ...getCellDefinition('remaining'),
     },
     {
       c: { key: 'poQuantity' },
       header: () => t('label.po-quantity'),
-      ...getNumberCell(),
+      ...getCellDefinition('poQuantity'),
     },
   ];
 

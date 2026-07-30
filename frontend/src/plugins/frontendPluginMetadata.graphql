@@ -1,0 +1,13 @@
+# Plugin discovery (spec/plugins/contract.md § discovery & loading): the
+# installed frontend plugins for this server — code, where the bundle is served,
+# and a content hash of its bytes (the `?v=` cache-busting token).
+#
+# Unauthenticated and store-agnostic on the server, so the loader may run it as
+# soon as a session exists and never has to wait for store context.
+query frontendPluginMetadata {
+  frontendPluginMetadata {
+    code
+    path
+    hash
+  }
+}

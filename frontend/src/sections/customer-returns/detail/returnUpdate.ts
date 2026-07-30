@@ -106,7 +106,7 @@ export const advanceReturnStatus = async (
   id: string,
   status: 'RECEIVED' | 'VERIFIED',
   // Advancing may release the hold in the same change (rules § advancing
-  // status — the same-request release; AC-S6).
+  // status — the same-request release; OMS-REG-DIST-07.34).
   onHold?: boolean
 ): Promise<AdvanceReturnResult> => {
   const result = await graphqlFetch(
@@ -210,7 +210,7 @@ export const deleteReturn = async (
 // --- Create from an originating shipment ------------------------------------
 
 // The from-shipment creation path (rules § creation — from an originating
-// outbound shipment; AC-C4–C7): insertCustomerReturn with outboundShipmentId
+// outbound shipment; OMS-REG-DIST-07.19–.22): insertCustomerReturn with outboundShipmentId
 // set. The server records the originating shipment (InvoiceNode.originalShipment)
 // and auto-advances the return to VERIFIED in the same transaction, so the
 // response node is already terminal with its stock introduced (contract
