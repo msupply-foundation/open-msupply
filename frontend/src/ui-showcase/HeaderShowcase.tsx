@@ -307,37 +307,43 @@ export const HeaderShowcase = () => {
           title="Toolbar fields — weighted shares, sized by the data"
         >
           <Lead>
-            A <em>different</em> cluster from the card above — a prescription
-            header, where the field mix makes the shares worth declaring: two
-            person-name pickers, a program and a prominent custom field around a
-            fixed-format date. A field's column is sized by its data, never by
-            its count, so equal shares only hold while every field carries
-            comparably long data. <code>&lt;FormRowItem&gt;</code> wraps ONE
-            item of the row to give it a <code>weight</code> — its share of the
-            whole row, the design standard's <code>fr</code> (the slot's flex
-            basis is <code>0</code>, so the row's <em>entire</em> width
-            distributes in proportion, not just what's left once every item has
-            taken a basis) — plus its own <code>minWidth</code>, the floor it
-            never shrinks below. Anything left unwrapped keeps the equal share
-            of the card above, and a compact <code>&lt;Alert&gt;</code> is never
-            wrapped: it would lose the bottom-hug it gets as a direct child of
-            the row. These are the shipped numbers: Patient <code>1.9</code> at
-            an <code>11rem</code> floor and Clinician <code>1.55</code> on the
-            row's own <code>10rem</code> hold person names (MOHAMED, DJIBRIL
-            ABDULLAHI is 26 characters), Program takes <code>1.2</code>, a
-            prominent custom field of kind option / number / date{' '}
-            <code>0.9</code> at <code>9.5rem</code>, and the Date is{' '}
-            <code>{'weight={0}'}</code> — pinned to the <code>9rem</code> its
-            fixed format can never outgrow, handing every spare pixel to its
-            siblings instead of claiming a fifth of the strip. The floors are
-            the load-bearing part: they set the wrap point as well as the shrink
-            order, so a cluster's floors must sum to no more than the unweighted
-            row's would — <code>11 + 10 + 9 + 10 + 9.5 = 49.5rem</code> against
-            five × <code>10rem</code> — or the header wraps <em>earlier</em>{' '}
-            than it did and grows a line. (The shipped header carries a second
-            prominent custom field on the same share: <code>59rem</code> against
-            six × <code>10rem</code>.) Squeeze the panel: the row still wraps as
-            a unit, at the same width it wrapped unweighted.
+            A prescription header, where the field mix makes the shares worth
+            declaring: two person-name pickers and a program around a
+            fixed-format date. A field's column is sized by its{' '}
+            <strong>data</strong>, never by its count — so the equal shares of
+            the card above only hold while every field carries comparably long
+            data.
+          </Lead>
+          <Lead>
+            <code>&lt;FormRowItem&gt;</code> wraps one item of the row and gives
+            it three numbers: <code>weight</code>, its share of the whole row
+            (the design standard's <code>fr</code>); <code>minWidth</code>, the
+            floor it never shrinks below; and <code>maxWidth</code>, the ceiling
+            it never grows past. A ceiling is for a field with no use for more
+            room — its surplus flows on to the name fields instead, and if it
+            wraps to a line of its own it stops stretching across the whole of
+            it.
+          </Lead>
+          <Lead>
+            The shipped numbers: Patient <code>1.9</code> from{' '}
+            <code>11rem</code> and Clinician <code>1.55</code> hold person names
+            (MOHAMED, DJIBRIL ABDULLAHI is 26 characters), Program{' '}
+            <code>1.2</code>, a prominent custom field of kind option / number /
+            date <code>0.9</code> between <code>9.5rem</code> and{' '}
+            <code>14rem</code>, and the Date <code>{'weight={0}'}</code> —
+            pinned to the <code>9rem</code> its fixed format can never outgrow,
+            so every spare pixel goes to its siblings. Anything left unwrapped
+            keeps the equal share; a compact <code>&lt;Alert&gt;</code> is never
+            wrapped, or it loses the bottom-hug it gets as a direct child of the
+            row.
+          </Lead>
+          <Lead>
+            Squeeze the panel: the row still wraps as a unit, at the same width
+            it wrapped unweighted. That's the floors' second job — they set the
+            wrap point as well as the shrink order, so a cluster's floors must
+            sum to no more than the unweighted row's would:{' '}
+            <code>11 + 10 + 9 + 10 + 9.5 = 49.5rem</code> against five ×{' '}
+            <code>10rem</code>.
           </Lead>
           <PageFrame>
             <Header>
@@ -398,8 +404,9 @@ export const HeaderShowcase = () => {
                   />
                 </FormRowItem>
                 {/* A prominent custom field, on the narrower share the cluster
-                    gives an option / number / date one. */}
-                <FormRowItem weight={0.9} minWidth="9.5rem">
+                    gives an option / number / date one — and the ceiling that
+                    keeps it from filling a line of its own once it wraps. */}
+                <FormRowItem weight={0.9} minWidth="9.5rem" maxWidth="14rem">
                   <Combobox<string>
                     label="Priority"
                     size="small"
@@ -416,14 +423,11 @@ export const HeaderShowcase = () => {
           </PageFrame>
           <Note>
             Measured on the reference store's six-field header (#782): the
-            Patient field's value room goes 45 → 87px at a 1060px row (a ~1366px
-            window) and 57 → 127px at 1132px (~1440px), and the full
-            26-character name fits from a 1372px row (~1680px) up — it never
-            fitted before. The two option fields give up 89 → 66px, the trade
-            the standard asks for; the header's height and its wrap point are
-            unchanged at every width. The rest of what a long name needs is the
-            picker's own ~90px of icon chrome (magnifier, clear, chevron) — a
-            separate follow-up against the shared Combobox, not this change.
+            Patient field's value room goes 45 → 87px at a ~1366px window and 57
+            → 127px at ~1440px, and the full 26-character name fits from ~1680px
+            up — it never fitted before. The two option fields give up 89 →
+            66px, the trade the standard asks for, and the header's height and
+            wrap point are unchanged at every width.
           </Note>
         </DashboardCard>
 
