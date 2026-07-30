@@ -1,17 +1,18 @@
 import { For, type JSX } from 'solid-js';
-import { t } from '../../../../intl';
+import { t } from '../../intl';
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '../../../../ui/elements/accordion/Accordion';
-import { forecastSteps, type VaccineCourse } from './internalOrderLineEdit';
+} from '../../ui/elements/accordion/Accordion';
+import { forecastSteps, type VaccineCourse } from './forecast';
 import styles from './ForecastCalculationDisplay.module.css';
 
 // The population-forecast calculation display (spec/internal-orders S4,
-// AC-PF7): where the store shows population-based forecasting and the edited
-// line carries a forecast, this stands in for the context charts — the
+// AC-PF7; shown by requisitions on a transferred forecast line, AC-LE13):
+// where the store shows population-based forecasting and the edited line
+// carries a forecast, this stands in for the ordinary context charts — the
 // per-course arithmetic the server captured
 // (RequisitionLineNode.vaccineCourses), walked step by step. One collapsible
 // section per course group; each walks the three forecast steps.
