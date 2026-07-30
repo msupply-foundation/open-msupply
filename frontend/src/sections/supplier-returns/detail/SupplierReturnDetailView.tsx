@@ -27,7 +27,12 @@ import {
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import {
+  InfoIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+  SidebarIcon,
+} from '../../../ui/icons';
 import {
   DataTable,
   type CardGroup,
@@ -539,10 +544,17 @@ const SupplierReturnDetailView: Component = () => {
                         returnId={node().id}
                         leadingAction={disabled()}
                       />
+                      {/* More — the closed-panel reopen affordance, at the end
+                          of the app-bar page-action cluster (spec ui-standards/
+                          layout.md → page regions). Shows ONLY while the panel
+                          is closed; uses the sidebar glyph (not the info icon),
+                          and reopening counts as the user's explicit open
+                          choice. */}
                       <Show when={!sidePanelOpen()}>
                         <Button
                           variant="secondary"
-                          icon={<InfoIcon />}
+                          icon={<SidebarIcon />}
+                          data-testid="open-detail-panel-button"
                           onClick={() => setSidePanelOpen(true)}
                         >
                           {t('button.more')}
