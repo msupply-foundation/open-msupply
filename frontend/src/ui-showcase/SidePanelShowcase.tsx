@@ -26,7 +26,14 @@ import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
-import { Lead, Row } from './common';
+import {
+  AnatomyTree,
+  Lead,
+  Note,
+  Row,
+  SectionTOC,
+  type AnatomyNode,
+} from './common';
 import type { PageMetadata } from './metadata';
 import styles from './SidePanelShowcase.module.css';
 
@@ -45,8 +52,60 @@ export const sidePanelMetadata: PageMetadata = {
       title: 'Outbound shipment panel',
       searchTerms: ['detail panel', 'invoice', 'customer', 'requisition'],
     },
+    {
+      id: 'side-panel-anatomy',
+      title: 'Anatomy',
+      searchTerms: ['nesting', 'structure', 'parts'],
+    },
+    {
+      id: 'side-panel-building-blocks',
+      title: 'Building blocks',
+      searchTerms: [
+        'components',
+        'section',
+        'subheading',
+        'field row',
+        'actions',
+      ],
+    },
   ],
 };
+
+/* How the parts nest — the visual companion to the composition contract
+ * (src/ui/docs/SIDE_PANEL.md). One node per building block, noted with the one
+ * job it owns; keep it in step with the real panels' assembly. */
+const ANATOMY: AnatomyNode[] = [
+  {
+    name: 'SidePanel',
+    note: 'the docked <aside>: sticky header (label + close) and its own scroll',
+    children: [
+      {
+        name: 'SidePanelSection',
+        note: 'a titled <h2>, usually collapsible — sections stack top to bottom',
+        children: [
+          {
+            name: 'FieldRow',
+            note: 'a label : value / control row — values share one aligned column',
+          },
+          {
+            name: 'SidePanelSubheading',
+            note: 'a bold ruled <h3> grouping rows; optional inline-end action',
+          },
+        ],
+      },
+      {
+        name: 'SidePanelSection value="actions"',
+        note: 'the last section, pinned at the panel foot',
+        children: [
+          {
+            name: 'SidePanelActions',
+            note: 'the record-action cluster — labelled buttons, one per row',
+          },
+        ],
+      },
+    ],
+  },
+];
 
 // A plain home-currency formatter for the demo — the real panels format via
 // the intl currency layer; here static representative values are enough.
@@ -56,33 +115,14 @@ const money = (value: number): string =>
     maximumFractionDigits: 2,
   })}`;
 
-// A group sub-heading's content with a leading info bubble — the pricing-group
-// convention from the real outbound panel (the bold + gap come from
-// SidePanelSubheading's own <h3>).
+// A group sub-heading's content with a trailing info bubble — the icon sits
+// AFTER the heading text (InfoTooltip's own wrapper supplies the gap). The
+// bold weight comes from SidePanelSubheading's <h3>; the popover's own text
+// stays regular (Popover panel sets its own weight).
 const withInfo = (label: string, info: string): JSX.Element => (
-  <span
-    style={{
-      display: 'inline-flex',
-      'align-items': 'center',
-      gap: 'var(--space-1)',
-    }}
-  >
-    <InfoTooltip text={info} label={label} placement="bottom-start" />
+  <span style={{ display: 'inline-flex', 'align-items': 'center' }}>
     {label}
-  </span>
-);
-
-// The inline cluster the panels use for a value that carries an adornment
-// alongside it (the tax rows' input + amount).
-const inline = (children: JSX.Element): JSX.Element => (
-  <span
-    style={{
-      display: 'inline-flex',
-      gap: 'var(--space-2)',
-      'align-items': 'center',
-    }}
-  >
-    {children}
+    <InfoTooltip text={info} label={label} placement="bottom-start" />
   </span>
 );
 
@@ -198,22 +238,20 @@ const InboundPanelContent = () => {
           <span>{money(stockSubtotal)}</span>
         </FieldRow>
         <FieldRow label="Tax">
-          {inline(
-            <>
-              <NumberField
-                label="Stock tax"
-                hideLabel
-                size="small"
-                value={stockTax()}
-                min={0}
-                max={100}
-                decimalLimit={2}
-                endAdornment="%"
-                onChange={value => setStockTax(value ?? 0)}
-              />
-              <span>{money(stockTaxAmount())}</span>
-            </>
-          )}
+          {/* Trial: the calculated tax amount as the input's helper text
+              (below the field) instead of a value off to its right. */}
+          <NumberField
+            label="Stock tax"
+            hideLabel
+            size="small"
+            value={stockTax()}
+            min={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            helperText={money(stockTaxAmount())}
+            onChange={value => setStockTax(value ?? 0)}
+          />
         </FieldRow>
         <FieldRow label="Total">
           <span>{money(stockTotal())}</span>
@@ -243,22 +281,18 @@ const InboundPanelContent = () => {
           <span>{money(serviceSubtotal)}</span>
         </FieldRow>
         <FieldRow label="Tax">
-          {inline(
-            <>
-              <NumberField
-                label="Service tax"
-                hideLabel
-                size="small"
-                value={serviceTax()}
-                min={0}
-                max={100}
-                decimalLimit={2}
-                endAdornment="%"
-                onChange={value => setServiceTax(value ?? 0)}
-              />
-              <span>{money(serviceTaxAmount())}</span>
-            </>
-          )}
+          <NumberField
+            label="Service tax"
+            hideLabel
+            size="small"
+            value={serviceTax()}
+            min={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            helperText={money(serviceTaxAmount())}
+            onChange={value => setServiceTax(value ?? 0)}
+          />
         </FieldRow>
         <FieldRow label="Total">
           <span>{money(serviceTotal())}</span>
@@ -471,19 +505,17 @@ const OutboundPanelContent = () => {
           <Text variant="body">{money(itemsSubtotal)}</Text>
         </FieldRow>
         <FieldRow label={`Tax (${stockTax().toFixed(2)}%)`}>
-          <HStack gap="sm">
-            <NumberField
-              label="Tax"
-              hideLabel
-              size="small"
-              min={0}
-              max={100}
-              decimalLimit={2}
-              value={stockTax()}
-              onChange={value => setStockTax(value ?? 0)}
-            />
-            <Text variant="body">{money(itemsTaxAmount())}</Text>
-          </HStack>
+          <NumberField
+            label="Tax"
+            hideLabel
+            size="small"
+            min={0}
+            max={100}
+            decimalLimit={2}
+            value={stockTax()}
+            helperText={money(itemsTaxAmount())}
+            onChange={value => setStockTax(value ?? 0)}
+          />
         </FieldRow>
         <FieldRow label="Total">
           <Text variant="body">{money(itemsTotal())}</Text>
@@ -608,6 +640,7 @@ export const SidePanelShowcase = () => {
         component={() => (
           <ContentContainer size="form" align="start">
             <Stack gap="lg">
+              <SectionTOC page={sidePanelMetadata} />
               <DashboardCard
                 id="side-panel-inbound"
                 title="Inbound shipment — detail panel"
@@ -666,6 +699,96 @@ export const SidePanelShowcase = () => {
                       : 'Open outbound panel'}
                   </Button>
                 </Row>
+              </DashboardCard>
+
+              {/* The dev cheat sheet — anatomy + what each block is. The
+                  binding rules (which block to reach for, input sizing,
+                  helper-text figures, action placement) live in the
+                  composition contract: src/ui/docs/SIDE_PANEL.md. */}
+              <DashboardCard
+                id="side-panel-anatomy"
+                title="Anatomy — how the parts nest"
+              >
+                <Lead>
+                  A panel is a stack of <code>&lt;SidePanelSection&gt;</code>s
+                  inside a <code>&lt;SidePanel&gt;</code>; each section holds{' '}
+                  <code>&lt;FieldRow&gt;</code>s, optionally grouped under a{' '}
+                  <code>&lt;SidePanelSubheading&gt;</code>, and the last section
+                  pins the record actions to the foot. The panel's own CSS owns
+                  the look (alignment, spacing, sub-heading rule, helper-text
+                  colour) — you compose the parts, you don't style them.
+                </Lead>
+                <AnatomyTree nodes={ANATOMY} />
+              </DashboardCard>
+
+              <DashboardCard
+                id="side-panel-building-blocks"
+                title="Building blocks"
+              >
+                <Lead>
+                  What each part is and the one job it owns — the two panels
+                  above are the live reference. For the <em>rules</em> (which
+                  block to use where, input sizing, calculated figures, action
+                  placement) follow the binding contract in{' '}
+                  <code>src/ui/docs/SIDE_PANEL.md</code>.
+                </Lead>
+                <dl class={styles.blocks}>
+                  <dt>
+                    <code>&lt;SidePanel&gt;</code>
+                  </dt>
+                  <dd>
+                    The docked <code>&lt;aside&gt;</code>. Pure layout with no
+                    state of its own — takes a <code>label</code> (its heading +
+                    accessible name) and an <code>onClose</code>; the page owns
+                    the open/close boolean and composes the sections inside.
+                  </dd>
+                  <dt>
+                    <code>&lt;SidePanelSection&gt;</code>
+                  </dt>
+                  <dd>
+                    One titled group, rendered as an <code>&lt;h2&gt;</code>.
+                    Needs a semantic <code>value</code> (kebab-case, stamped as
+                    the <code>panel-section-*</code> testid) and a{' '}
+                    <code>title</code>; add <code>collapsible</code> to make the
+                    heading a disclosure. The final section (
+                    <code>value="actions"</code>) is pinned to the panel foot.
+                  </dd>
+                  <dt>
+                    <code>&lt;SidePanelSubheading&gt;</code>
+                  </dt>
+                  <dd>
+                    A bold ruled <code>&lt;h3&gt;</code> that groups a set of
+                    rows within a section (the pricing groups above). Optional{' '}
+                    <code>action</code> slot pins a group-level control (an edit
+                    button) to the inline-end.
+                  </dd>
+                  <dt>
+                    <code>&lt;FieldRow&gt;</code>
+                  </dt>
+                  <dd>
+                    A <code>label</code> : value/control row (from{' '}
+                    <code>ui/elements/inputs</code>, not panel-specific). Inside
+                    a panel every row shares one aligned label column and tight
+                    rhythm — values line up whatever the label length.
+                  </dd>
+                  <dt>
+                    <code>&lt;SidePanelActions&gt;</code>
+                  </dt>
+                  <dd>
+                    The record-action cluster for the last section: labelled
+                    buttons stacked one per row, inline-start (Delete · Make a
+                    copy · Copy to clipboard). The one place labelled buttons
+                    belong — everywhere else an inline action is a small
+                    icon-only button.
+                  </dd>
+                </dl>
+                <Note>
+                  Everything visual — value alignment, row spacing, the
+                  sub-heading rule, non-muted helper text, popover weight — is
+                  enforced by <code>SidePanel.module.css</code>, so a panel
+                  can't drift on the look. The contract only has to police the
+                  handful of composition choices CSS can't make.
+                </Note>
               </DashboardCard>
             </Stack>
 
