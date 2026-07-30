@@ -10,7 +10,10 @@ import {
   DialogSaveButton,
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
-import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import { EmptyState } from '../../../../ui/elements/feedback/EmptyState';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
@@ -57,6 +60,13 @@ export interface ReturnItemsModalProps {
   mode: ReturnItemsMode;
   /** UPDATE mode: the item to open on (from the clicked row). */
   initialItemId?: string;
+  /**
+   * UPDATE mode: the clicked row's LINE id — the batch to focus once the item's
+   * rows load. An item can hold several batches, so the item id alone doesn't
+   * say which row the user meant. Unused for "Add item", and after a
+   * "Save & next" advance (which focuses the new item's first row).
+   */
+  initialLineId?: string;
   /** ADD mode: item ids already on the return, excluded from the search. */
   excludeItemIds: () => string[];
   /**
@@ -99,6 +109,7 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         returnId={props.returnId}
         mode={props.mode}
         initialItemId={props.mode === 'update' ? openKey : undefined}
+        initialLineId={props.initialLineId}
         excludeItemIds={props.excludeItemIds}
         nextItem={props.nextItem}
         itemById={props.itemById}
@@ -134,11 +145,24 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     tableId: 'supplier-return-line-edit',
   });
 
+  // The item lookup — live only in add mode, where it is the editor's starting
+  // control (ui/utils/createFocusTarget).
+  const itemSearch = createFocusTarget();
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
+
   // Seed the draft for one item: the item's available stock lines plus any the
   // return already holds (via generateSupplierReturnLines' itemId + returnId —
   // contract § draft-line generation). No blank fallback — supplier-return
   // lines are existing stock lines only.
-  const seedItem = async (item: ReturnItem) => {
+  //
+  // `focusLineId` is the row the user clicked in the detail table, when the
+  // editor opened from one: focus lands on THAT batch's quantity field rather
+  // than the item's first, since a return with several batches of one item is
+  // otherwise ambiguous. Falls back to the first row.
+  const seedItem = async (item: ReturnItem, focusLineId?: string) => {
     setCurrentItem(item);
     setStep('quantity');
     setMessage(undefined);
@@ -158,19 +182,18 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     );
     setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
+    // Armed, not applied: the request lands when the grid attaches, so there is
+    // no load gate to coordinate here (ui/utils/createFocusTarget).
+    quantityFields.focus(focusLineId ?? seeded[0]?.id ?? '');
   };
 
-  // The item lookup — live only in add mode, where it is the editor's starting
-  // control (ui/utils/createFocusTarget).
-  const itemSearch = createFocusTarget();
-
-  // Seed on mount: a row open starts on its item; an add open starts in the
-  // empty search state, focusing the item selector.
+  // Seed on mount: a row open starts on its item — focusing the clicked batch;
+  // an add open starts in the empty search state, focusing the item selector.
   onMount(() => {
     if (props.mode === 'update' && props.initialItemId) {
       const item = props.itemById(props.initialItemId);
       if (!item) return props.onClose();
-      void seedItem(item);
+      void seedItem(item, props.initialLineId);
       return;
     }
     itemSearch.focus();
@@ -230,12 +253,24 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (!gateStep1()) return;
     // Nothing with quantity (the confirmed zero-delete path) → save directly;
     // otherwise on to reasons.
-    if (reasonStepLines(draft.slice()).length === 0) {
+    const carried = reasonStepLines(draft.slice());
+    if (carried.length === 0) {
       void onSave();
       return;
     }
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(carried[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const save = async (): Promise<boolean> => {
@@ -339,10 +374,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -455,7 +487,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           when={step() === 'reason'}
           fallback={
             <DataTable
-              columns={quantityColumns(update)}
+              columns={quantityColumns(update, quantityFields)}
               rows={draft.filter(() => true)}
               rowKey={line => line.id}
               loading={loadingLines()}
@@ -468,7 +500,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
-            columns={reasonColumns(update)}
+            columns={reasonColumns(update, reasonFields)}
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}

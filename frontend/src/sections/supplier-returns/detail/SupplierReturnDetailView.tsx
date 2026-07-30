@@ -125,8 +125,12 @@ const SupplierReturnDetailView: Component = () => {
   // footer's bulk-action bar (ui-surface S3 § footer).
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
+  // A row open carries BOTH ids: the item decides which drafts load, the line
+  // decides which of that item's batch rows takes focus.
   type EditState =
-    { mode: 'update'; itemId: string } | { mode: 'add' } | undefined;
+    | { mode: 'update'; itemId: string; lineId: string }
+    | { mode: 'add' }
+    | undefined;
   const [editState, setEditState] = createSignal<EditState>();
 
   const tableConfig = createTableConfig({ tableId: 'supplier-return-detail' });
@@ -348,7 +352,7 @@ const SupplierReturnDetailView: Component = () => {
     new Set(rows().map(line => line.id));
 
   const openRow = (line: Line) =>
-    setEditState({ mode: 'update', itemId: line.item.id });
+    setEditState({ mode: 'update', itemId: line.item.id, lineId: line.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
   // The page-level tab set (ui-surface S3 § tabs) — the strip renders in the
@@ -364,6 +368,10 @@ const SupplierReturnDetailView: Component = () => {
   const editItemId = () => {
     const state = editState();
     return state?.mode === 'update' ? state.itemId : undefined;
+  };
+  const editLineId = () => {
+    const state = editState();
+    return state?.mode === 'update' ? state.lineId : undefined;
   };
 
   const crumbs = (node: SupplierReturnInfoFragment) => [
@@ -690,6 +698,7 @@ const SupplierReturnDetailView: Component = () => {
                   returnId={node().id}
                   mode={editState()?.mode ?? 'update'}
                   initialItemId={editItemId()}
+                  initialLineId={editLineId()}
                   excludeItemIds={existingItemIds}
                   nextItem={nextItem}
                   itemById={itemById}
