@@ -74,6 +74,7 @@ import {
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
+import { SupplyRequestedAction } from './actions/SupplyRequestedAction';
 import {
   DeleteRequisitionLinesAction,
   type DeleteLinesBlock,
@@ -83,9 +84,10 @@ import { RequisitionLineEditModal } from './edit-modal/RequisitionLineEditModal'
 // The requisition detail view (spec/requisitions S2): view, header edits
 // (customer reference / comment / colour), the side panel (S5), the Documents
 // and Log tabs, Export/Print (reports S4), line selection + bulk delete
-// (AC-LD1–LD4), the master-list add (AC-ML1–ML2), and navigation/not-found.
-// The line editor (S4), the supply actions (auto-populate, Create shipment),
-// and the finalise action are later slices.
+// (AC-LD1–LD4), the master-list add (AC-ML1–ML2), the Supply requested
+// auto-populate (rules § auto-populating), and navigation/not-found. The line
+// editor (S4), Create shipment, and the finalise action live in their own
+// modules (edit-modal/, RequisitionStatusFooter).
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -846,8 +848,7 @@ const RequisitionDetailView: Component = () => {
                   {/* Add — a split of Add item (the line editor, S4) and Add
                       from master list (the shared S7 picker). The whole
                       control is disabled on a read-only, program, or
-                      transfer-linked requisition (spec S2 § page actions);
-                      Supply requested arrives with the supply slice. */}
+                      transfer-linked requisition (spec S2 § page actions). */}
                   <SplitButton
                     icon={<PlusCircleIcon />}
                     testId="add-item-button"
@@ -863,6 +864,19 @@ const RequisitionDetailView: Component = () => {
                         label: t('button.add-from-master-list'),
                       },
                     ]}
+                  />
+                  {/* Supply requested — the auto-populate (rules §
+                      auto-populating). Presents as Supply APPROVED when the
+                      requisition carries an approval status (the server
+                      writes the approved figures then); disabled while not
+                      editable. onApplied re-reads the line list (the new
+                      supply quantities). */}
+                  <SupplyRequestedAction
+                    storeId={params.storeId}
+                    requisitionId={node().id}
+                    toApproved={node().approvalStatus !== 'NONE'}
+                    disabled={!editable()}
+                    onApplied={() => void refetch()}
                   />
                   {/* Export/Print — a read, offered on every status. */}
                   <ExportPrintRequisitionAction requisitionId={node().id} />
