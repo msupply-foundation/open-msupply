@@ -247,26 +247,3 @@ mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {
     }
   }
 }
-
-# The order's activity trail (Log tab, spec S3 § Log tab) — keyed by recordId,
-# sorted client-side (oldest first, AC-AL1).
-query internalOrderLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        user {
-          username
-        }
-      }
-    }
-  }
-}
