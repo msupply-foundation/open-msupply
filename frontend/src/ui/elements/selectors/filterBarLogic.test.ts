@@ -5,7 +5,7 @@ import {
   anyClearable,
   availableFilters,
   isFilterActive,
-} from './filterBarState';
+} from './filterBarLogic';
 
 // A stocktake-detail-shaped filter: a default (alwaysOn) search plus an addable
 // location chip — the #735 arrangement.
