@@ -27,14 +27,13 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import {
   formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
-import { formatNumber } from '../../../intl/formatNumber';
 import { remToPx } from '../../../ui/utils/rem';
+import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
@@ -43,7 +42,6 @@ import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
-import { OutboundToolbar } from './OutboundToolbar';
 import {
   OutboundDetail,
   OutboundLines,
@@ -55,13 +53,14 @@ import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
 import type { OutboundLineFilter } from './outboundLineFilter';
 import { createNextItemWalk } from './nextItemWalk';
-import { outboundDetailFilters } from './outboundDetailFilters';
+import { OutboundLineFilters } from './OutboundLineFilters';
 import type { StatusPreflight } from './actions/StatusChangeAction';
 import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundShipmentPreferences } from '@/store/storeContext';
+import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
 import { OutboundSidePanel } from './OutboundSidePanel';
-import { LogTab } from './LogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   OutboundLineEditModal,
   type LineEditItem,
@@ -159,10 +158,11 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel: starts CLOSED at every width — the lines table is this
-  // screen's work surface, so the panel is opt-in via the app bar's More
-  // button rather than eating ~20 rem of it on a wide monitor (D82; diverges
-  // from the shared responsive default in ui-standards/layout.md).
+  // Side panel: starts CLOSED at every width, NOT on the shared responsive
+  // helper (D89) — the lines table is this screen's work surface and the widest
+  // table in the app, so the panel is opt-in via the app bar's More button
+  // rather than taking a column of it before the user asks. The choice lasts
+  // the visit and isn't persisted, so every arrival starts closed.
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
 
   // The line editor's open state (undefined = closed). The editor self-manages
@@ -345,10 +345,8 @@ const OutboundDetailView: Component = () => {
         // Code starts pinned left (spec S3 § line table: "item code, pinned
         // left") — the row anchor stays visible while the wide table scrolls.
         columnPinning: { left: ['itemCode'] },
-        // Name starts at twice the default column width (rem — the config
-        // layer's unit): item names routinely run to several words, and the
-        // primary column earns the room before the 2-line wrap truncates.
-        columnSizing: { itemName: 18.75 },
+        // Name's width comes from its `text` cell-type preset (the widest kind,
+        // and the flex-fill sink) — no per-table override needed.
         columnVisibility: {
           // The denser columns start hidden (spec S1's hidden-by-default idea
           // applied to the detail table); the user reveals them via column
@@ -516,11 +514,6 @@ const OutboundDetailView: Component = () => {
   const dosesOn = () => prefs().manageVaccinesInDoses;
   const vvmOn = () => prefs().manageVvmStatusForStock;
 
-  // Build the filter definitions ONCE (a component body runs once at mount).
-  // The location chip's render reads `locations` through the accessor, so the
-  // live list flows in without rebuilding the filter array.
-  const detailFilters = outboundDetailFilters(locations);
-
   const crumbs = (current: OutboundNode) => [
     { label: t('distribution') },
     {
@@ -554,6 +547,8 @@ const OutboundDetailView: Component = () => {
         sortKey: 'itemCode',
         header: () => t('label.code'),
         footer: () => t('label.total'),
+        // The `code` kind carries the monospace treatment the spec's line-table
+        // column 1 asks for ("text (mono)"), plus the shared code width.
         ...getCellDefinition('itemCode'),
       },
       {
@@ -575,11 +570,11 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
-        // The batch preset's cell + width floor, but WITHOUT the `code` kind's
-        // 7rem growth cap: this column doesn't only hold a code — an
-        // unallocated line renders the word "Placeholder", which fills the cap
-        // exactly, pinning the column at 7rem so it can't be dragged wider at
-        // all. Same reasoning (and the same fix) as the `locationCode` key's
+        // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
+        // kind's 7rem growth cap: this column doesn't only hold a code, it
+        // renders the word "Placeholder" for an unallocated line, which fills
+        // the cap exactly and pins the column there so it can't be dragged
+        // wider at all. Same reasoning (and fix) as the `locationCode` key's
         // "own size, NO cap" note in _globalColumnConfig (#601).
         ...uncapped(getCellDefinition<Line>('batch')),
       },
@@ -597,7 +592,7 @@ const OutboundDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: () => t('label.vvm-status'),
-              ...getCellDefinition<Line>('vvmStatus'),
+              ...getCellDefinition('vvmStatus'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -607,16 +602,12 @@ const OutboundDetailView: Component = () => {
         // near enough in practice (codes prefix names in this dataset).
         sortKey: 'locationName',
         header: () => t('label.location'),
-        // The `location` preset, not `locationCode`: the header here is
-        // "Location", which is what that width was measured against.
-        ...getCellDefinition('location'),
+        ...getCellDefinition('locationCode'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
         header: () => t('label.unit'),
-        // `unit`, not `unitName` — the latter's 2rem is narrower than the
-        // header word itself (the trap supplier-returns hit).
-        ...getCellDefinition('unit'),
+        ...getCellDefinition('unitName'),
       },
       {
         c: { key: 'packSize' },
@@ -633,7 +624,7 @@ const OutboundDetailView: Component = () => {
                 id: 'dosesPerUnit',
               },
               header: () => t('label.doses-per-unit'),
-              ...getCellDefinition<Line>('dosesPerUnit'),
+              ...getCellDefinition('dosesPerUnit'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -677,7 +668,7 @@ const OutboundDetailView: Component = () => {
                 id: 'doses',
               },
               header: () => t('label.doses'),
-              ...getCellDefinition<Line>('doses'),
+              ...getCellDefinition('doses'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -713,11 +704,9 @@ const OutboundDetailView: Component = () => {
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.
         footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
-        // A line-volume column (per-pack × packs) has no `CELL_DEF` key of its
-        // own, so it takes the number cell plus the width `volumePerPack` was
-        // measured at.
         ...getNumberCell(),
-        size: remToPx(7),
+        // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
+        size: remToPx(6),
       },
     ];
   };
@@ -817,14 +806,19 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
+                  {/* The header field cluster — never a hand-rolled <Toolbar>
+                      + FieldRow (ui/docs/PAGES.md § header field cluster). The
+                      line filters live in the DataTable's own toolbar below. */}
                   <HeaderToolbar>
-                    <OutboundToolbar
+                    <OutboundDetailToolbar
                       storeId={params.storeId}
                       node={current()}
                       disabled={!editable()}
                       edit={edit}
                       customerError={customerError()}
-                      onChangeCustomer={id => void changeCustomer(id)}
+                      onChangeCustomer={customerId =>
+                        void changeCustomer(customerId)
+                      }
                       onSaveCustomFields={patch =>
                         void saveField({ customFields: patch })
                       }
@@ -928,15 +922,15 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
-                  // Filters live in the table's own toolbar (ui-standards §
-                  // tables → filtering), never the page header; the item
-                  // search is the always-on chip (spec S3 § line-table
-                  // filters). State stays URL-backed here.
+                  // Filters live WITH the table, in its own toolbar — never the
+                  // page header (ui-standards § tables › toolbar, binding). The
+                  // item search is the permanent default chip; Location is
+                  // addable (OutboundLineFilters).
                   filters={
-                    <FilterBar
-                      filters={detailFilters}
+                    <OutboundLineFilters
                       filter={filter()}
-                      onChange={onFilterChange}
+                      onFilterChange={onFilterChange}
+                      locations={locations()}
                     />
                   }
                   // Non-suspending loading read — a between-page/filter/sort
@@ -1000,7 +994,17 @@ const OutboundDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <LogTab storeId={params.storeId} recordId={current().id} />
+                {/* The shared activity-log surface (domain/activityLog) — the
+                    same Date · Time · User · Event · Details table every other
+                    vertical's Log tab renders. Oldest-first, preserving this
+                    tab's existing order and matching the real OMS
+                    ActivityLogList (which sends no sort and takes the server's
+                    datetime-ascending default). */}
+                <ActivityLogPanel
+                  storeId={params.storeId}
+                  recordId={current().id}
+                  order="oldest-first"
+                />
               </TabPanel>
 
               <OutboundLineEditModal

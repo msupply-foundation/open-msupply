@@ -16,23 +16,26 @@ import type { OutboundLineFilter } from './outboundLineFilter';
 // the key and this map stops compiling until we decide expose-or-dismiss.
 //
 // The detail table is server-filtered (spec rules.md § server-paginated line
-// table), so the only filters offered are the ones the backend supports:
-// `itemCodeOrName` (the item search) and `locationId` (an exact-match location
-// picker, volume-blind — capacity is irrelevant to narrowing a line list), both
-// chips in the table toolbar's FilterBar — the search an ALWAYS-ON default
-// filter, Location addable from the filter menu. The filters a user might
-// expect from the old app but the server can't do yet — batch and
-// expiry-before — are backend gaps (spec contract § detail line table).
+// table), so the only filters offered are the ones the backend supports. Both
+// are chips in the table toolbar's FilterBar (ui-standards § tables ›
+// filtering): `itemCodeOrName` is the screen's DEFAULT filter — permanent, no
+// remove — and `locationId` is addable from the filter menu (exact-match
+// location picker, volume-blind — capacity is irrelevant to narrowing a line
+// list). The filters a user might expect from the old app but the server can't
+// do yet — batch and expiry-before — are backend gaps (spec contract § detail
+// line table).
 export const outboundDetailFilters = (
   locations: () => Location[]
 ): Filter<OutboundLineFilter>[] =>
   constructFilters<OutboundLineFilter>({
     // ─ user-facing chips, in display order ───────────────────────────────────
-    // Item name / code search (server itemCodeOrName.like, OMS-REG-DIST-03.30)
-    // — the screen's ALWAYS-ON filter, so it's on the bar regardless and can't
-    // be removed (spec S3 § line-table filters: "always-on toolbar search").
-    // Blank clears to null so stripEmpty drops it (a blank `like` would match
-    // everything).
+    // Item name / code search (server itemCodeOrName.like) — the screen's
+    // DEFAULT filter, as in the stocktake detail (#735): always visible,
+    // never removable, absent from the add-filter menu. Blank clears to null
+    // so stripEmpty drops it (a blank `like` would match everything).
+    //
+    // Labelled for what it MATCHES rather than one of the two fields — the
+    // same label + placeholder pair the reference vertical uses.
     itemCodeOrName: {
       alwaysOn: true,
       label: () => t('label.code-or-name'),
@@ -73,7 +76,7 @@ export const outboundDetailFilters = (
       ),
     },
 
-    // ─ dismissed (not addable chips) ─────────────────────────────────────────
+    // ─ dismissed (not user-facing) ───────────────────────────────────────────
     // Fixed scoping the VIEW merges into every query — never user-facing.
     id: null,
     storeId: null,

@@ -22,19 +22,27 @@ import {
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import styles from './OutboundLineEditModal.module.css';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import {
   DataTable,
+  type CardGroup,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
+import { Table } from '../../../../ui/elements/table/Table';
 import {
   getCellDefinition,
   getFlagCell,
+  getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
-import { Table } from '../../../../ui/elements/table/Table';
-import { HStack } from '../../../../ui/layout/Stack/HStack';
-import { Stack } from '../../../../ui/layout/Stack/Stack';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { CheckIcon, InfoIcon } from '../../../../ui/icons';
+import {
+  CheckIcon,
+  InfoIcon,
+  MessageSquareIcon,
+  StockIcon,
+} from '../../../../ui/icons';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -110,9 +118,10 @@ const VariantInfoTable = (props: {
     when={props.variants.length > 0}
     fallback={<p>{t('messages.no-item-variants')}</p>}
   >
-    {/* The library's static sub-table — the registry's role for a short, fixed
-        row set inside another surface (here, a popover's read-only block);
-        DataTable's toolbar chrome would outweigh three text columns. */}
+    {/* The registry's STATIC SUB-TABLE role: a short, fixed row set inside
+        another surface (this popover), where a DataTable's toolbar chrome would
+        outweigh the content. The shell owns the row look; cell treatment is its
+        data-attribute contract, not our own classes. */}
     <Table label={t('label.item-variant')}>
       <thead>
         <tr>
@@ -130,17 +139,21 @@ const VariantInfoTable = (props: {
             const selected = variant.id === props.selectedId;
             return (
               <tr aria-current={selected ? 'true' : undefined}>
-                <td data-check class={styles.variantMarker}>
+                <td data-check>
                   <Show when={selected}>
-                    <span role="img" aria-label={t('label.selected')}>
+                    <span
+                      role="img"
+                      aria-label={t('label.selected')}
+                      title={t('label.selected')}
+                    >
                       <CheckIcon />
                     </span>
                   </Show>
                 </td>
                 <td>{variant.name}</td>
-                <td>{variant.manufacturer?.name ?? ''}</td>
+                <td data-muted>{variant.manufacturer?.name ?? ''}</td>
                 <Show when={props.isVaccine}>
-                  <td>{variant.vvmType ?? ''}</td>
+                  <td data-muted>{variant.vvmType ?? ''}</td>
                 </Show>
               </tr>
             );
@@ -150,6 +163,37 @@ const VariantInfoTable = (props: {
     </Table>
   </Show>
 );
+
+// The batch grid presents as CARDS, not a table (the createTableConfig default
+// below) — the same shape as the inbound and stocktake line editors. Batch is
+// the card HEADER identity (meta.headerPosition), so it isn't itself a body
+// group; the issue quantity and the stock context it's judged against sit in the
+// always-shown batch panel, with pricing and ancillary detail behind
+// disclosures. Group keys/labels/icons match the sibling editors exactly, so one
+// card vocabulary reads the same across every line editor.
+type GroupKey = 'batch' | 'pricing' | 'other';
+const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
+  {
+    key: 'batch',
+    labelKey: 'label.batch',
+    icon: () => <StockIcon />,
+    panel: true,
+  },
+  {
+    key: 'pricing',
+    labelKey: 'label.pricing',
+    icon: () => <InfoIcon />,
+    panel: true,
+    disclosure: 'closed',
+  },
+  {
+    key: 'other',
+    labelKey: 'heading.other',
+    icon: () => <MessageSquareIcon />,
+    panel: true,
+    disclosure: 'closed',
+  },
+];
 
 export type LineEditItem = {
   id: string;
@@ -308,11 +352,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Manufacturer starts hidden (the old app's defaultHidden) — declared per
+    // Cards, not a table (as the inbound + stocktake line editors), and
+    // manufacturer starts hidden (the old app's defaultHidden) — declared per
     // band, since bands don't share; the Columns popover restores it.
     defaultConfig: {
-      base: { columnVisibility: { manufacturer: false } },
-      compact: { columnVisibility: { manufacturer: false } },
+      base: { viewMode: 'card', columnVisibility: { manufacturer: false } },
+      compact: { viewMode: 'card', columnVisibility: { manufacturer: false } },
     },
   });
   const prefs = () => outboundShipmentPreferences();
@@ -826,7 +871,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const updateMode = () => mode() === 'update';
 
-  const columns = (): Column<DraftLine, never>[] => [
+  const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       // "Will be used in auto-allocation": the AUTO-fillable predicate
       // (unconditional expired/VVM exclusion + pack-size match under the
@@ -841,12 +886,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // freezes at its first value.
       c: { id: 'canAllocate' },
       // getSize() is a min-width floor (auto layout) — without this the
-      // header-less tick column gets the 150px default and reads as a gap.
-      size: 36,
+      // header-less tick column gets the default and reads as a gap. Authored
+      // in rem like the shared column config, converted for TanStack.
+      size: remToPx(2.25),
       header: () => '',
       // Blank in the grid, but NAMED in the Columns popover (the old app's
-      // header-string / empty-Header split).
+      // header-string / empty-Header split). On a CARD it's a header badge, not
+      // a body field: a bare marker with no label of its own.
       meta: {
+        headerPosition: 'badge',
         columnSettingsLabel: () => t('description.used-in-auto-allocation'),
       },
       cell: info => (
@@ -865,13 +913,27 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity), so keep it out of the Columns popover. Read-only here, unlike
+      // the inbound editor's typed batch code: an outbound line issues from an
+      // EXISTING stock batch, so the code is the batch's, not the user's.
+      //
+      // The meta rides as getCellDefinition's second argument, NOT a sibling
+      // `meta:` key — the spread returns its own `meta` and would overwrite one
+      // declared beside it (which is exactly how this card lost its header).
+      ...getCellDefinition('batch', {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      }),
       // A batch backed by an ITEM VARIANT carries an info marker beside its
       // name — click reveals the item's variants with this batch's marked
       // (spec S4 § batch grid), matching the old app's variant-info icon.
       cell: info => {
         const line = info.row.original;
         return (
-          <HStack gap="sm">
+          <span class={styles.batchCell}>
             {line.batch ?? '—'}
             <Show when={line.itemVariantId}>
               {variantId => (
@@ -889,13 +951,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </Popover>
               )}
             </Show>
-          </HStack>
+          </span>
         );
       },
     },
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
+      cardGroup: 'batch',
       ...getCellDefinition('expiryDate'),
     },
     // Vaccine items only, under either VVM preference (spec § S4 batch grid;
@@ -910,7 +973,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
-            size: 170,
+            cardGroup: 'batch',
+            // An editable picker, so wider than the read-only vvmStatus preset.
+            size: remToPx(10.625),
             cell: info => {
               const line = info.row.original;
               return (
@@ -924,7 +989,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 />
               );
             },
-          } satisfies Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
@@ -933,12 +998,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'campaign',
       },
       // Wide enough that the two-word header doesn't wrap mid-word.
-      size: 200,
+      size: remToPx(12.5),
       header: () => t('label.campaign'),
+      cardGroup: 'other',
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       header: () => t('label.location'),
+      cardGroup: 'batch',
+      ...getCellDefinition('location'),
     },
     ...(prefs().allowTrackingOfStockByDonor
       ? [
@@ -948,7 +1016,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               id: 'donor',
             },
             header: () => t('label.donor'),
-          } satisfies Column<DraftLine, never>,
+            cardGroup: 'other',
+            // No CELL_DEF key — a donor name is free text like a manufacturer.
+            ...getCellDefinition('manufacturer'),
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
@@ -957,10 +1028,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'manufacturer',
       },
       header: () => t('label.manufacturer'),
+      cardGroup: 'other',
+      ...getCellDefinition('manufacturer'),
     },
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
+      cardGroup: 'pricing',
       ...getCellDefinition('sellPricePerPack'),
     },
     // Foreign-currency pack price (old-app parity): external customers under
@@ -977,6 +1051,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               id: 'foreignCurrencySellPricePerPack',
             },
             header: () => t('label.fc-sell-price'),
+            cardGroup: 'pricing',
             meta: { align: 'right' },
             cell: info =>
               props.currencyCode
@@ -991,12 +1066,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     maximumFractionDigits: 2,
                   })
                 : '',
-          } satisfies Column<DraftLine, never>,
+            size: remToPx(9),
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
+      cardGroup: 'batch',
       ...getCellDefinition('packSize'),
     },
     // Doses-per-unit context, under the DOSES lens only (the old app's
@@ -1007,8 +1084,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit-name', { unit: unitName() }),
-            ...getCellDefinition<DraftLine>('dosesPerUnit'),
-          } satisfies Column<DraftLine, never>,
+            cardGroup: 'batch',
+            ...getCellDefinition('dosesPerUnit'),
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
@@ -1025,10 +1103,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
       header: () =>
         dosesView() ? t('label.in-store-doses') : t('label.in-store'),
-      // The lens swaps this column's header between "In store" and "In store
-      // doses", so it takes the wider `availablePacks` room rather than the
-      // bare number default.
-      ...getCellDefinition('availablePacks'),
+      cardGroup: 'batch',
+      ...getNumberCell(),
+      // No CELL_DEF key — "In store (doses)" is the binding constraint.
+      size: remToPx(7),
     },
     {
       // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
@@ -1051,6 +1129,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         dosesView()
           ? t('label.available-doses')
           : t('label.available-in-packs'),
+      cardGroup: 'batch',
       ...getCellDefinition('availablePacks'),
     },
     {
@@ -1060,7 +1139,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       c: { key: 'numberOfPacks' },
       header: () =>
         dosesView() ? t('label.doses-issued') : t('label.pack-quantity-issued'),
-      meta: { align: 'right' },
+      cardGroup: 'batch',
+      // The preset's width + right alignment; the editable cell overrides its
+      // renderer below. "Pack quantity issued" needs more than the key's width.
+      ...getCellDefinition('numberOfPacks'),
+      size: remToPx(8),
       cell: info => {
         const line = info.row.original;
         const label = dosesView()
@@ -1106,7 +1189,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         dosesView()
           ? t('label.pack-quantity-issued')
           : t('label.units-issued', { unit: getPlural(unitName(), 2) }),
+      cardGroup: 'batch',
       meta: { align: 'right' },
+      // No CELL_DEF key — the "{unit} issued" header is the binding constraint.
+      size: remToPx(8),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1131,8 +1217,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'receivedNumberOfPacks' },
             header: () => t('label.packs-received'),
-            ...getCellDefinition<DraftLine>('receivedNumberOfPacks'),
-            meta: { align: 'right' },
+            cardGroup: 'other',
+            ...getCellDefinition('receivedNumberOfPacks'),
             cell: info => {
               const line = info.row.original;
               return (
@@ -1148,11 +1234,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 />
               );
             },
-          } satisfies Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never, GroupKey>,
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
-            meta: { align: 'right' },
+            cardGroup: 'other',
+            ...getCellDefinition('difference'),
             cell: info => {
               const line = info.row.original;
               return (
@@ -1168,7 +1255,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </>
               );
             },
-          } satisfies Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]),
     {
       // Volume this batch's issue occupies (old-app parity): volume-per-pack
@@ -1176,7 +1263,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // in place (see the canAllocate note above).
       c: { id: 'volume' },
       header: () => t('label.volume'),
+      cardGroup: 'other',
       meta: { align: 'right' },
+      // No CELL_DEF key — the "Volume (m³)" header is the binding constraint.
+      size: remToPx(6),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1197,7 +1287,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'onHold',
       },
       header: () => t('label.on-hold'),
-      ...getFlagCell(t('label.on-hold')),
+      // A row-level status flag — the card's badge slot, like the inbound
+      // editor's own status badge.
+      ...getFlagCell(t('label.on-hold'), { headerPosition: 'badge' }),
     },
   ];
 
@@ -1299,7 +1391,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {/* Issue + Allocate-in wrap as a unit. Both controls at the default
               height — NumberField's "small" (2.25rem) and Select's "sm"
               (1.75rem — the Pagination scale) don't align with each other. */}
-          <HStack align="end" gap="lg" class={styles.issueGroup}>
+          <div class={styles.issueGroup}>
             <NumberField
               label={t('label.issue')}
               min={0}
@@ -1336,7 +1428,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 switchLensTo(next);
               }}
             />
-          </HStack>
+          </div>
           {/* Placeholder notice (info) — fills the rest of the header row,
               matching the old app; shown when a shortfall became a placeholder. */}
           <Show when={placeholderUnits() > 0}>
@@ -1365,6 +1457,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             rows={draftRows()}
             rowKey={line => line.id}
             loading={loadingLines()}
+            cardGroups={CARD_GROUPS}
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             emptyMessage={t('messages.no-stock-available')}
@@ -1373,38 +1466,38 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           />
         </div>
 
-        {/* Grid footer: placeholder + running total (spec S4). */}
-        <HStack justify="end" gap="lg" class={styles.gridFooter}>
-          <span>
-            {t('label.placeholder')}: {formatNumber(placeholderUnits())}
-          </span>
-          <span>
-            {t('label.total-units')}:{' '}
-            {formatNumber(issuedUnits() + placeholderUnits())}
-          </span>
-        </HStack>
+        {/* Everything below the grid shares one vertical rhythm — the Stack's
+            gap replaces the per-block margins. */}
+        <Stack gap="sm">
+          {/* Grid footer: placeholder + running total (spec S4). */}
+          <HStack gap="md" justify="end">
+            <span>
+              {t('label.placeholder')}: {formatNumber(placeholderUnits())}
+            </span>
+            <span>
+              {t('label.total-units')}:{' '}
+              {formatNumber(issuedUnits() + placeholderUnits())}
+            </span>
+          </HStack>
 
-        {/* Stacked warning banners (spec S4 § warnings). */}
-        <Show when={warnings().length > 0}>
-          <Stack gap="sm" class={styles.warnings}>
-            <For each={warnings()}>
-              {message => <Alert severity="warning">{message}</Alert>}
-            </For>
-          </Stack>
-        </Show>
+          {/* Stacked warning banners (spec S4 § warnings). */}
+          <For each={warnings()}>
+            {message => <Alert severity="warning">{message}</Alert>}
+          </For>
 
-        {/* Zero-allocation second confirmation (spec S4 § save). */}
-        <Show when={zeroConfirm()}>
-          <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
-        </Show>
+          {/* Zero-allocation second confirmation (spec S4 § save). */}
+          <Show when={zeroConfirm()}>
+            <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
+          </Show>
 
-        {/* A zero-packs line's VVM change won't survive the save — its own
-            distinct confirmation, taking precedence (spec S4 § save). */}
-        <Show when={vvmConfirm()}>
-          <Alert severity="warning">
-            {t('messages.unsaved-outbound-vvm-status')}
-          </Alert>
-        </Show>
+          {/* A zero-packs line's VVM change won't survive the save — its own
+              distinct confirmation, taking precedence (spec S4 § save). */}
+          <Show when={vvmConfirm()}>
+            <Alert severity="warning">
+              {t('messages.unsaved-outbound-vvm-status')}
+            </Alert>
+          </Show>
+        </Stack>
       </Show>
     </Dialog>
   );

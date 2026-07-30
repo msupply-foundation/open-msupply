@@ -83,18 +83,26 @@ export const SupplierReturnStatusFooter: Component<
         />
       </ContentFooterActions>
 
-      {/* Hold confirm: message flips with direction (the reversible pause). */}
-      <ConfirmDialog
-        open={holdConfirm()}
-        onClose={() => setHoldConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={
-          holding()
-            ? t('messages.off-hold-confirmation')
-            : t('messages.on-hold-confirmation')
-        }
-        onConfirm={() => props.onSetHold(!holding())}
-      />
+      {/* Hold confirm: message flips with direction (the reversible pause).
+
+          Mounted only while open (kdd/action-modal). A closed <dialog> is still
+          in the document, just hidden, so a permanently-mounted one keeps its
+          `confirmation-modal` + footer ids matchable — three of them coexist on
+          this screen, which is what forced the e2e suite's `.last()` workaround
+          (e2e/TESTIDS.md). */}
+      <Show when={holdConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setHoldConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={
+            holding()
+              ? t('messages.off-hold-confirmation')
+              : t('messages.on-hold-confirmation')
+          }
+          onConfirm={() => props.onSetHold(!holding())}
+        />
+      </Show>
     </ContentFooter>
   );
 };

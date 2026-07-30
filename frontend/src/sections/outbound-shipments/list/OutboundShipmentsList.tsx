@@ -7,9 +7,9 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { HStack } from '../../../ui/layout/Stack/HStack';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
 import {
   DataTable,
@@ -17,8 +17,8 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../../api/createTableConfig';
 import { remToPx } from '../../../ui/utils/rem';
+import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
   ColourTagDot,
@@ -241,10 +241,10 @@ const OutboundShipmentsList: Component = () => {
           />
         );
       },
+      // Status has no cell-type preset (CELL_TYPES § Status is page-rendered),
+      // so the width lives here — the same pair the inbound list uses, so the
+      // two invoice lists' Status columns line up.
       meta: { headerPosition: 'badge' },
-      // Status is a page-rendered cell type (no preset — it needs a
-      // status→colour map), so the column carries its own width
-      // (ui/docs/CELL_TYPES.md § cell-type inventory).
       size: remToPx(7.5),
       maxSize: remToPx(9.375),
     },
@@ -357,8 +357,9 @@ const OutboundShipmentsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
-        // Filters live in the table's own toolbar (ui-standards § tables →
-        // filtering), never the page header; state stays URL-backed here.
+        // Filters live WITH the table, in its own toolbar — never the page
+        // header (ui-standards § tables › toolbar, binding). State stays
+        // page-owned and URL-backed; only the placement is the table's.
         filters={
           <FilterBar
             filters={filterFields()}

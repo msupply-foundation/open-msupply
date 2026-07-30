@@ -105,11 +105,10 @@ export const OutboundStatusFooter: Component<
         preflight={props.preflight}
         onSaved={props.onSaved}
         closeButton={
-          // The pre-composed CloseButton — a footer action reads as a verb
-          // beside the status control, so it is LABELLED, not an icon-only
-          // glyph (the design owner's ruling, 2026-07-30; the treatment four
-          // of the six detail footers use). It sheds its label to the icon on
-          // phones by itself.
+          // The standard action-footer close (registry § buttons & status):
+          // secondary, close glyph, and LABELLED — a footer action is read as a
+          // verb. It sheds its label to the icon on phones by default, so the
+          // dense case is a width outcome, not a per-vertical choice.
           <CloseButton data-testid="close-button" onClick={props.onClose} />
         }
       />

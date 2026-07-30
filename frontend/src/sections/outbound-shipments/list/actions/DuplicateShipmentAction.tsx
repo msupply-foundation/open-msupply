@@ -160,6 +160,8 @@ export const DuplicateShipmentAction: Component<
                     onClick={close}
                   />
                 </Show>
+                {/* A confirm, not a save — D55 keeps OkButton for exactly this
+                    case (icon-less either way). */}
                 <OkButton
                   data-testid="confirmation-modal-ok"
                   loading={phase() === 'working'}
