@@ -42,7 +42,7 @@ export const availableFilters = <G extends object>(
  * user adds, so a default (`alwaysOn`) filter never raises it, even holding a
  * value (Aimee, 2026-07-30) — its value is emptied by typing over it.
  */
-export const anyClearable = <G extends object>(
+export const showsClearAll = <G extends object>(
   filters: Filter<G>[],
   filter: G
 ): boolean => activeFilters(filters, filter).some(f => !f.alwaysOn);

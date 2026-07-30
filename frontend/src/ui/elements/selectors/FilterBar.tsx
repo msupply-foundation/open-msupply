@@ -26,7 +26,7 @@ import { DateTimeField } from '../inputs/DateTimeField';
 import { Combobox } from './Combobox';
 import {
   activeFilters,
-  anyClearable,
+  showsClearAll,
   availableFilters,
 } from './filterBarLogic';
 import styles from './FilterBar.module.css';
@@ -166,8 +166,8 @@ interface FilterBarProps<
 interface GroupOps<G extends object> {
   active: () => Filter<G>[];
   available: () => Filter<G>[];
-  /** Is there anything for "Clear all" to clear in this group? */
-  clearable: () => boolean;
+  /** Does this group put the bar's "Clear all" on screen? */
+  showsClearAll: () => boolean;
   add: (f: Filter<G>) => void;
   remove: (f: Filter<G>) => void;
   reset: () => void;
@@ -193,7 +193,7 @@ const groupOps = <G extends object>(
   return {
     active: () => activeFilters(filters(), filter()),
     available: () => availableFilters(filters(), filter()),
-    clearable: () => anyClearable(filters(), filter()),
+    showsClearAll: () => showsClearAll(filters(), filter()),
     add: f => onChange({ ...filter(), [f.key]: null }),
     remove: f => onChange(without(f.key)),
     // Drops every key, alwaysOn included: that clears an always-on filter's
@@ -320,10 +320,6 @@ export const FilterBar = <
     return items;
   };
 
-  // Shown only while a user-added chip is on the bar — see anyClearable.
-  const anyClearableFilter = () =>
-    main.clearable() || (extraOps()?.clearable() ?? false);
-
   const resetAll = () => {
     main.reset();
     extraOps()?.reset();
@@ -371,8 +367,9 @@ export const FilterBar = <
       </Show>
 
       {/* Bar-level "Clear all" (ui-standards § tables → filtering) — a plain
-          text button, shown only while either group has something to clear. */}
-      <Show when={anyClearableFilter()}>
+          text button, on screen only while either group holds a user-added
+          chip; a default filter never puts it there (showsClearAll). */}
+      <Show when={main.showsClearAll() || extraOps()?.showsClearAll()}>
         <button type="button" class={styles.clearAll} onClick={resetAll}>
           {t('label.clear-all-filters')}
         </button>
