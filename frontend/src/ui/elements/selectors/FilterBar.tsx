@@ -28,7 +28,7 @@ import {
   activeFilters,
   anyClearable,
   availableFilters,
-} from './filterBarState';
+} from './filterBarLogic';
 import styles from './FilterBar.module.css';
 
 /*
@@ -226,7 +226,7 @@ const groupOps = <G extends object>(
  * state, in GraphQL-native shape. A chip is shown iff its key is PRESENT on
  * the filter (present-as-`null` = added but empty) — or the filter is
  * `alwaysOn`, a default filter, which is on the bar regardless and can't be
- * removed at all (filterBarState.ts holds these rules). Adding writes `null`,
+ * removed at all (filterBarLogic.ts holds these rules). Adding writes `null`,
  * removing deletes the key, editing goes through the field's own control via
  * setPartialFilter. Chip visibility therefore lives in the (URL-backed)
  * filter, so a restored state re-opens its chips — no local presentation

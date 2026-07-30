@@ -1,9 +1,10 @@
 import type { Filter } from './FilterBar';
 
 /*
- * FilterBar's chip bookkeeping — one rule per function, over (definitions,
- * filter object). Pure and outside the component so the rules are testable
- * without a DOM; FilterBar's groupOps is the only caller.
+ * FilterBar's chip rules — one per function, derived from (definitions, the
+ * caller's filter object); nothing is stored here, the filter object IS the
+ * state. Pure and outside the component so the rules are testable without a
+ * DOM (as numberFieldLogic is for NumberField); groupOps is the only caller.
  */
 
 /**
