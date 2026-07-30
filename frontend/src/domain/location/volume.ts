@@ -7,8 +7,9 @@ import type { LocationWithVolume } from './locationResource';
 //
 // Undefined (no percentage shown) when:
 //   - capacity is 0 (nothing to be a proportion of), or
-//   - the location holds stock but volumeUsed is 0 — i.e. its stock lines carry
-// no volume data, so a "0% used" reading would be misleading rather than true.
+//   - the location holds stock but volumeUsed is 0 — i.e. its stock lines
+//     carry no volume data, so a "0% used" reading would be misleading rather
+//     than true.
 export const getVolumeUsedPercentage = (
   location: Pick<LocationWithVolume, 'volume' | 'volumeUsed' | 'stock'>
 ): number | undefined => {

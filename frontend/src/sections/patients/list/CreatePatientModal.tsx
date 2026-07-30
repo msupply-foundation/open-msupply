@@ -331,19 +331,23 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           event.stopPropagation();
           openMatch(row);
         };
-        return <>{row.kind === 'central' ? (
-          <IconButton
-            icon={<DownloadIcon />}
-            label={t('messages.click-to-fetch')}
-            onClick={open}
-          />
-        ) : (
-          <IconButton
-            icon={<HomeIcon />}
-            label={t('label.details')}
-            onClick={open}
-          />
-        )}</>;
+        return (
+          <>
+            {row.kind === 'central' ? (
+              <IconButton
+                icon={<DownloadIcon />}
+                label={t('messages.click-to-fetch')}
+                onClick={open}
+              />
+            ) : (
+              <IconButton
+                icon={<HomeIcon />}
+                label={t('label.details')}
+                onClick={open}
+              />
+            )}
+          </>
+        );
       },
     },
   ];

@@ -123,13 +123,17 @@ const HelpDocumentsManagement: Component = () => {
       cell: info => {
         const doc = info.row.original;
         const file = fileOf(doc);
-        return <Show when={file}><a
-            href={syncFileUrl(TABLE_NAME, doc.id, file.id)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {file.fileName}
-          </a></Show>;
+        return (
+          <Show when={file}>
+            <a
+              href={syncFileUrl(TABLE_NAME, doc.id, file.id)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {file.fileName}
+            </a>
+          </Show>
+        );
       },
     },
     {

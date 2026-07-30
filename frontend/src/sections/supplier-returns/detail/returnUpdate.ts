@@ -25,12 +25,13 @@ import {
 // Return-LEVEL mutations, split by how their errors are handled (the
 // customer-returns / stocktakeUpdate convention):
 //
-// - saveReturnFields — header saves (reference / transport reference / comment
-// / colour / hold / custom fields). UpdateSupplierReturnResponse is a
-// single-member union (InvoiceNode) — there is NO typed error to display; an
-// editable return produces none the user must act on, so anything unexpected is
-// promoted to the global modal (default graphqlFetch routing). Changing the
-// supplier is a SEPARATE, typed mutation (changeSupplier, below).
+// - saveReturnFields — header saves (reference / transport reference /
+//   comment / colour / hold / custom fields). UpdateSupplierReturnResponse is
+//   a single-member union (InvoiceNode) — there is NO typed error to display;
+//   an editable return produces none the user must act on, so anything
+//   unexpected is promoted to the global modal (default graphqlFetch routing).
+//   Changing the supplier is a SEPARATE, typed mutation (changeSupplier,
+//   below).
 //
 // - changeSupplier — updateSupplierReturnOtherParty. The service
 //   delete-and-recreates the return under a NEW id (contract § changing the
@@ -38,16 +39,16 @@ import {
 //   rejections come back for inline display on the supplier lookup.
 //
 // - advanceReturnStatus — the action with user-facing rejections. Every one is
-// a NON-typed GraphQL error (contract § advancing status): we opt in via
-// returnGraphqlErrors and map extensions.details to translated copy.
+//   a NON-typed GraphQL error (contract § advancing status): we opt in via
+//   returnGraphqlErrors and map extensions.details to translated copy.
 //
 // - saveReturnLines — the one line-save call. Its response union has NO error
 //   member (contract wire trap): every rejection is a non-typed GraphQL error,
 //   surfaced as a message in the modal.
 //
 // - deleteReturn — all rejections non-typed (the three declared typed members
-// are dead schema — contract § deletion). Forbidden routes to the global
-// modal.
+//   are dead schema — contract § deletion). Forbidden routes to the global
+//   modal.
 
 // --- Header save (no typed error) ------------------------------------------
 
@@ -75,8 +76,8 @@ const OTHER_PARTY_ERROR_KEYS: Record<string, LocaleKey> = {
 };
 
 export type ChangeSupplierResult =
-  // The new return's id — the UI navigates to it (the old id no longer
-  // resolves).
+  // The new return's id — the UI navigates to it (the old id no
+  // longer resolves).
   | { kind: 'saved'; node: SupplierReturnInfoFragment }
   | { kind: 'error'; typename: string; message: string }
   | { kind: 'failed' };

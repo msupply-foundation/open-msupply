@@ -48,9 +48,8 @@ import styles from '../Settings.module.css';
  *    fields, even in USB mode (OMS-REG-SET-05.21); the USB preference is
  *    device-local and never saved to the server (OMS-REG-SET-05.22).
  *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic
- *  surface over
- *    local-device state; it never decides which screen accepts a scan (owned
- *    by spec/android).
+ *    surface over local-device state; it never decides which screen accepts a
+ *    scan (owned by spec/android).
  */
 export const DevicesSection = () => {
   const params = useParams<{ storeId: string }>();
