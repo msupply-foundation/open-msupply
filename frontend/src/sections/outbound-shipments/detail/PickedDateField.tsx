@@ -2,6 +2,7 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -154,43 +155,35 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
 
   return (
     <>
-      <span
-        style={{
-          display: 'inline-flex',
-          'align-items': 'center',
-          gap: 'var(--space-2)',
-        }}
-      >
-        {/* Fixed 8rem footprint (the same width the field had as a native
-            date input): left free, the field fills the panel row's whole
-            control column — clipping at the panel edge and leaving no room
-            for the disabled-reason bubble beside it. Grid so the field
-            stretches to the cell and shrinks (its input has min-width 0). */}
-        <span style={{ display: 'grid', width: '8rem' }}>
-          <DateField
-            label={t('label.picked-date')}
-            hideLabel
-            // The shared calendar-date input (ui-standards/inputs § dates &
-            // times — typed entry or the picker, never a native date input).
-            // `required`: a picked date always has an effective day — blanking
-            // the text reverts rather than clearing.
-            required
-            // Numeric day-first display/parse (27/07/2026) — matches the
-            // panel's localisedDate renderings (created date etc.).
-            format="dd/MM/yyyy"
-            testId="picked-date-field"
-            value={shown()}
-            min={enabled() ? bounds().min : undefined}
-            max={enabled() ? bounds().max : undefined}
-            disabled={!enabled()}
-            onChange={value => {
-              // OMS-REG-DIST-04.23 re-check as defence in depth — DateField
-              // already reverts typed out-of-range entries against min/max.
-              if (!value || !withinBackdateBounds(bounds(), value)) return;
-              void onPick(value);
-            }}
-          />
-        </span>
+      <HStack gap="sm">
+        {/* `width="compact"` caps the field (a date is a short value —
+            ui/docs/SIDE_PANEL.md rule 2). Left free it fills the panel row's
+            whole control column, clipping at the panel edge and leaving no
+            room for the disabled-reason bubble beside it. */}
+        <DateField
+          label={t('label.picked-date')}
+          hideLabel
+          width="compact"
+          // The shared calendar-date input (ui-standards/inputs § dates &
+          // times — typed entry or the picker, never a native date input).
+          // `required`: a picked date always has an effective day — blanking
+          // the text reverts rather than clearing.
+          required
+          // Numeric day-first display/parse (27/07/2026) — matches the
+          // panel's localisedDate renderings (created date etc.).
+          format="dd/MM/yyyy"
+          testId="picked-date-field"
+          value={shown()}
+          min={enabled() ? bounds().min : undefined}
+          max={enabled() ? bounds().max : undefined}
+          disabled={!enabled()}
+          onChange={value => {
+            // OMS-REG-DIST-04.23 re-check as defence in depth — DateField
+            // already reverts typed out-of-range entries against min/max.
+            if (!value || !withinBackdateBounds(bounds(), value)) return;
+            void onPick(value);
+          }}
+        />
         {/* When a backdating gate disables the field (pref off / past NEW), an
             info popover explains why on hover / focus / tap — disable-with-
             reason (spec S3), reusing the ported reason messages. */}
@@ -203,7 +196,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
             />
           )}
         </Show>
-      </span>
+      </HStack>
       <ConfirmDialog
         open={pending() != null}
         title={t('heading.are-you-sure')}

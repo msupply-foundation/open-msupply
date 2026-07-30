@@ -6,9 +6,11 @@ import { formatNumber } from '../../../intl/formatNumber';
 import {
   SidePanelActions,
   SidePanelSection,
+  SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
@@ -35,6 +37,7 @@ import {
   type OutboundLineFragment,
 } from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
+import styles from './OutboundSidePanel.module.css';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
 // Additional info · Related documents · Invoice details · Transport details,
@@ -113,20 +116,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
   const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
-  // Group headings sit a weight above the FieldRow labels' medium, so the
-  // pricing groups read as groups.
-  const groupHeading = (label: string, info: string): JSX.Element => (
-    <span
-      style={{
-        display: 'inline-flex',
-        'align-items': 'center',
-        gap: 'var(--space-1)',
-        'font-weight': 'var(--weight-bold)',
-      }}
-    >
-      <InfoTooltip text={info} label={label} placement="bottom-start" />
-      {label}
-    </span>
+  // A pricing group's heading (ui/docs/SIDE_PANEL.md rule 1): the panel's ruled
+  // <h3>, never a FieldRow with a bold label. The info gloss is the tooltip
+  // AFTER the text, per that doc's recipe, and an optional group-level edit
+  // action rides the heading's inline-end.
+  const groupHeading = (
+    label: string,
+    info: string,
+    action?: JSX.Element
+  ): JSX.Element => (
+    <SidePanelSubheading action={action}>
+      <span class={styles.groupHeading}>
+        {label}
+        <InfoTooltip text={info} label={label} placement="bottom-start" />
+      </span>
+    </SidePanelSubheading>
   );
 
   // The WHOLE shipment — header + every line, unpaginated — for the side
@@ -202,7 +206,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Show>
         </FieldRow>
         <FieldRow label={t('label.comment')}>
-          <TextField
+          {/* Multi-line, per spec S3 ("comment (multi-line)") and
+              ui/docs/SIDE_PANEL.md rule 2 — a comment is a TextArea. */}
+          <TextArea
             label={t('label.comment')}
             hideLabel
             width="full"
@@ -280,12 +286,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         {/* Service charges: info bubble + the S5 edit action (dimmed once
             read-only); one row per service line, then sub total / effective
             tax / total. Service tax is edited per line in S5. */}
-        <FieldRow
-          label={groupHeading(
-            t('heading.service-charges'),
-            t('messages.service-charges-description')
-          )}
-        >
+        {groupHeading(
+          t('heading.service-charges'),
+          t('messages.service-charges-description'),
           <IconButton
             bordered
             size="small"
@@ -295,7 +298,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             disabled={props.disabled}
             onClick={props.onEditServiceCharges}
           />
-        </FieldRow>
+        )}
         <For each={serviceLines()}>
           {line => (
             <FieldRow label={line.itemName}>
@@ -331,54 +334,52 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             shipment tax (OMS-REG-DIST-02.24 — the save cascades to every stock line
             server-side; disabled while read-only or while the stock total is
             zero) / total. */}
-        <FieldRow
-          label={groupHeading(
-            t('heading.item-sell-price'),
-            t('messages.stock-charges-description')
-          )}
-        >
-          <span />
-        </FieldRow>
+        {groupHeading(
+          t('heading.item-sell-price'),
+          t('messages.stock-charges-description')
+        )}
         <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
-          <HStack gap="sm">
-            <NumberField
-              label={t('label.tax')}
-              hideLabel
-              size="small"
-              min={0}
-              max={100}
-              decimalLimit={2}
-              disabled={
-                props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
-              }
-              value={pricing().taxPercentage ?? undefined}
-              onChange={value =>
-                props.onSaveField({ tax: { percentage: value ?? null } })
-              }
-            />
-            <Text variant="body">
-              {money(
-                taxAmount(
-                  pricing().stockTotalBeforeTax,
-                  pricing().stockTotalAfterTax
-                )
-              )}
-            </Text>
-          </HStack>
+          {/* The tax AMOUNT is the rate input's helperText, not a value floated
+              beside it (ui/docs/SIDE_PANEL.md rule 3) — a figure calculated
+              from an input belongs under it, so the panel's value column stays
+              aligned. `compact` is the short-value width (rule 2). */}
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            width="compact"
+            min={0}
+            max={100}
+            decimalLimit={2}
+            disabled={
+              props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
+            }
+            value={pricing().taxPercentage ?? undefined}
+            helperText={money(
+              taxAmount(
+                pricing().stockTotalBeforeTax,
+                pricing().stockTotalAfterTax
+              )
+            )}
+            onChange={value =>
+              props.onSaveField({ tax: { percentage: value ?? null } })
+            }
+          />
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
         <FieldRow
-          // Bold like the group headings — the shipment-level summary row.
+          // The shipment-level summary row. Its emphasis rides the label only —
+          // the treatment SIDE_PANEL.md § Known open items leaves unsettled, so
+          // this migration moved the style into a class and changed nothing
+          // else.
           label={
-            <span style={{ 'font-weight': 'var(--weight-bold)' }}>
-              {t('heading.grand-total')}
-            </span>
+            <span class={styles.totalLabel}>{t('heading.grand-total')}</span>
           }
         >
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>

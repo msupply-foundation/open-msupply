@@ -1,11 +1,10 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { IconButton } from '../../../ui/elements/buttons/IconButton';
+import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { CloseIcon } from '../../../ui/icons';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
@@ -106,14 +105,12 @@ export const OutboundStatusFooter: Component<
         preflight={props.preflight}
         onSaved={props.onSaved}
         closeButton={
-          // Plain (unbordered) icon button — the same close the inbound
-          // status footer renders.
-          <IconButton
-            icon={<CloseIcon />}
-            label={t('button.close')}
-            data-testid="close-button"
-            onClick={props.onClose}
-          />
+          // The pre-composed CloseButton — a footer action reads as a verb
+          // beside the status control, so it is LABELLED, not an icon-only
+          // glyph (the design owner's ruling, 2026-07-30; the treatment four
+          // of the six detail footers use). It sheds its label to the icon on
+          // phones by itself.
+          <CloseButton data-testid="close-button" onClick={props.onClose} />
         }
       />
 

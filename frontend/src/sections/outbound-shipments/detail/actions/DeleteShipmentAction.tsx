@@ -3,9 +3,10 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteOutboundShipment } from '../outboundDetail.generated';
 
 export interface DeleteShipmentActionProps {
@@ -57,7 +58,7 @@ export const DeleteShipmentAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-shipment-button"
         disabled={props.disabled}
@@ -84,34 +85,22 @@ export const DeleteShipmentAction: Component<
           actions={
             <Show
               when={phase() !== 'error'}
-              fallback={
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
-              }
+              fallback={<CancelButton onClick={close} />}
             >
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
+              {/* Destructive confirm: `danger` tone, no icon (D55). */}
               <Button
-                variant="secondary"
-                icon={<CheckIcon />}
+                variant="danger"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('label.delete')}
               </Button>
             </Show>
           }

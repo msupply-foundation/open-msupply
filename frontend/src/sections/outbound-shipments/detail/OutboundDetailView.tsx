@@ -15,47 +15,35 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  FilterBar,
-  FilterTextInput,
-} from '../../../ui/elements/selectors/FilterBar';
+import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import {
   formatCurrencyCell,
-  getCurrencyCell,
-  getExpiryDateCell,
+  getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { formatNumber } from '../../../intl/formatNumber';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import {
-  CheckIcon,
-  InfoIcon,
-  MinusCircleIcon,
-  PlusCircleIcon,
-} from '../../../ui/icons';
-import { NameSearch } from '../../../domain/name';
+import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
-import {
-  CustomFieldsEditTab,
-  CustomFieldsToolbar,
-} from '../../../domain/customFields';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
+import { OutboundToolbar } from './OutboundToolbar';
 import {
   OutboundDetail,
   OutboundLines,
@@ -556,12 +544,16 @@ const OutboundDetailView: Component = () => {
         sortKey: 'itemCode',
         header: () => t('label.code'),
         footer: () => t('label.total'),
+        ...getCellDefinition('itemCode'),
       },
       {
         c: { key: 'itemName' },
         sortKey: 'itemName',
         header: () => t('label.name'),
-        meta: { headerPosition: 'primary', wrapLines: 2 },
+        ...getCellDefinition('itemName', {
+          headerPosition: 'primary',
+          wrapLines: 2,
+        }),
       },
       {
         c: {
@@ -573,12 +565,13 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
+        ...getCellDefinition('batch'),
       },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry-date'),
-        ...getExpiryDateCell(),
+        ...getCellDefinition('expiryDate'),
       },
       ...(vvmOn()
         ? [
@@ -588,7 +581,8 @@ const OutboundDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: () => t('label.vvm-status'),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition<Line>('vvmStatus'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
@@ -597,16 +591,22 @@ const OutboundDetailView: Component = () => {
         // near enough in practice (codes prefix names in this dataset).
         sortKey: 'locationName',
         header: () => t('label.location'),
+        // The `location` preset, not `locationCode`: the header here is
+        // "Location", which is what that width was measured against.
+        ...getCellDefinition('location'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
         header: () => t('label.unit'),
+        // `unit`, not `unitName` — the latter's 2rem is narrower than the
+        // header word itself (the trap supplier-returns hit).
+        ...getCellDefinition('unit'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: () => t('label.pack-size'),
-        ...getNumberCell(),
+        ...getCellDefinition('packSize'),
       },
       ...(dosesOn()
         ? [
@@ -617,19 +617,19 @@ const OutboundDetailView: Component = () => {
                 id: 'dosesPerUnit',
               },
               header: () => t('label.doses-per-unit'),
-              ...getNumberCell(),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition<Line>('dosesPerUnit'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
         header: () => t('label.pack-quantity'),
-        ...getNumberCell(),
+        ...getCellDefinition('numberOfPacks'),
       },
       {
         c: { key: 'receivedNumberOfPacks' },
         header: () => t('label.packs-received'),
-        ...getNumberCell(),
+        ...getCellDefinition('receivedNumberOfPacks'),
       },
       {
         c: {
@@ -640,7 +640,7 @@ const OutboundDetailView: Component = () => {
           id: 'difference',
         },
         header: () => t('label.difference'),
-        ...getNumberCell(),
+        ...getCellDefinition('difference'),
       },
       {
         c: {
@@ -648,7 +648,7 @@ const OutboundDetailView: Component = () => {
           id: 'unitQuantity',
         },
         header: () => t('label.unit-quantity'),
-        ...getNumberCell(),
+        ...getCellDefinition('unitQuantity'),
       },
       ...(dosesOn()
         ? [
@@ -661,14 +661,14 @@ const OutboundDetailView: Component = () => {
                 id: 'doses',
               },
               header: () => t('label.doses'),
-              ...getNumberCell(),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition<Line>('doses'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'sellPricePerPack' },
         header: () => t('label.unit-sell-price'),
-        ...getCurrencyCell(),
+        ...getCellDefinition('sellPricePerPack'),
       },
       {
         // Pack sell price × packs, BEFORE tax (spec § line table col 16) —
@@ -682,7 +682,7 @@ const OutboundDetailView: Component = () => {
         },
         header: () => t('label.total'),
         footer: () => formatCurrencyCell(totals.price),
-        ...getCurrencyCell(),
+        ...getCellDefinition('total'),
       },
       {
         // Line volume — volume per pack × packs (the old app's volume column),
@@ -697,7 +697,11 @@ const OutboundDetailView: Component = () => {
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.
         footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
+        // A line-volume column (per-pack × packs) has no `CELL_DEF` key of its
+        // own, so it takes the number cell plus the width `volumePerPack` was
+        // measured at.
         ...getNumberCell(),
+        size: remToPx(7),
       },
     ];
   };
@@ -720,18 +724,14 @@ const OutboundDetailView: Component = () => {
               title={t('heading.not-found')}
               description={t('error.shipment-not-found')}
               actions={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                <OkButton
                   data-testid="dialog-button-ok"
                   onClick={() =>
                     navigate(
                       `/${params.storeId}/distribution/outbound-shipment`
                     )
                   }
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               }
             />
           </Show>
@@ -801,81 +801,19 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
-                    {/* Inline label: control pairs on one row (FieldRow, the
-                        current app's toolbar layout — the controls hide their
-                        own labels, the rows carry them). Customer lookup:
-                        disabled when not editable or when the shipment came
-                        from a requisition (OMS-REG-DIST-02.19). */}
-                    <FieldRow label={t('label.customer-name')}>
-                      <NameSearch
-                        label={t('label.customer-name')}
-                        hideLabel
-                        storeId={params.storeId}
-                        role="customer"
-                        // Seed the record's current customer so the selection's
-                        // label resolves before (or regardless of) its page.
-                        selected={{
-                          id: current().otherParty.id,
-                          name: current().otherParty.name,
-                          code: current().otherParty.code,
-                          isOnHold: current().otherParty.isOnHold,
-                          isStore: current().otherParty.store != null,
-                          isSupplier: false,
-                          isDonor: false,
-                        }}
-                        disabled={!editable() || current().requisition != null}
-                        error={customerError()}
-                        clearable={false}
-                        onSelect={customer => {
-                          if (customer) void changeCustomer(customer.id);
-                        }}
-                      />
-                    </FieldRow>
-                    <FieldRow label={t('label.customer-ref')}>
-                      <TextField
-                        label={t('label.customer-ref')}
-                        hideLabel
-                        size="small"
-                        data-testid="customer-reference-field"
-                        value={edit.state.theirReference}
-                        disabled={!editable()}
-                        onInput={e =>
-                          edit.setField('theirReference', e.currentTarget.value)
-                        }
-                        onBlur={() => edit.flush()}
-                      />
-                    </FieldRow>
-                    {/* PROMINENT custom fields — stay in the toolbar even when
-                        the shipment is read-only (past PICKED), just disabled. */}
-                    <CustomFieldsToolbar
-                      scope="outbound_shipment"
-                      recordId={current().id}
-                      values={current().customFields}
+                  <HeaderToolbar>
+                    <OutboundToolbar
+                      storeId={params.storeId}
+                      node={current()}
                       disabled={!editable()}
-                      onSave={patch => void saveField({ customFields: patch })}
-                    />
-                    {/* Always-on item search — name OR code (server
-                        itemCodeOrName.like, OMS-REG-DIST-03.30), like the stocktakes
-                        detail. Blank clears to null so stripEmpty drops it (a
-                        blank `like` would match everything). */}
-                    <FilterTextInput
-                      label={t('placeholder.filter-items')}
-                      placeholder={t('placeholder.filter-items')}
-                      value={filter().itemCodeOrName?.like ?? ''}
-                      onInput={value =>
-                        onFilterChange({
-                          ...filter(),
-                          itemCodeOrName: value ? { like: value } : null,
-                        })
+                      edit={edit}
+                      customerError={customerError()}
+                      onChangeCustomer={id => void changeCustomer(id)}
+                      onSaveCustomFields={patch =>
+                        void saveField({ customFields: patch })
                       }
                     />
-                    <FilterBar
-                      filters={detailFilters}
-                      filter={filter()}
-                      onChange={onFilterChange}
-                    />
-                  </Toolbar>
+                  </HeaderToolbar>
                   <TabList
                     tabs={[
                       {
@@ -974,6 +912,17 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header; the item
+                  // search is the always-on chip (spec S3 § line-table
+                  // filters). State stays URL-backed here.
+                  filters={
+                    <FilterBar
+                      filters={detailFilters}
+                      filter={filter()}
+                      onChange={onFilterChange}
+                    />
+                  }
                   // Non-suspending loading read — a between-page/filter/sort
                   // refetch keeps rows + shows the refreshing bar; a post-save
                   // refetch is silent (tableLoading gates it out). Initial
@@ -1083,13 +1032,7 @@ const OutboundDetailView: Component = () => {
                   title={t('button.return-lines')}
                   description={t('messages.cant-return-shipment')}
                   actions={
-                    <Button
-                      variant="secondary"
-                      icon={<CheckIcon />}
-                      onClick={() => setReturnNoticeOpen(false)}
-                    >
-                      {t('button.ok')}
-                    </Button>
+                    <OkButton onClick={() => setReturnNoticeOpen(false)} />
                   }
                 />
               </Show>

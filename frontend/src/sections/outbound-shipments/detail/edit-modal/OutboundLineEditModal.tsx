@@ -27,11 +27,12 @@ import {
   type Column,
 } from '../../../../ui/elements/table/DataTable';
 import {
-  getExpiryDateCell,
+  getCellDefinition,
   getFlagCell,
-  getNumberCell,
-  getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
+import { Table } from '../../../../ui/elements/table/Table';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { CheckIcon, InfoIcon } from '../../../../ui/icons';
 import {
@@ -109,10 +110,13 @@ const VariantInfoTable = (props: {
     when={props.variants.length > 0}
     fallback={<p>{t('messages.no-item-variants')}</p>}
   >
-    <table class={styles.variantTable}>
+    {/* The library's static sub-table — the registry's role for a short, fixed
+        row set inside another surface (here, a popover's read-only block);
+        DataTable's toolbar chrome would outweigh three text columns. */}
+    <Table label={t('label.item-variant')}>
       <thead>
         <tr>
-          <th />
+          <th data-check aria-label={t('label.selected')} />
           <th>{t('label.name')}</th>
           <th>{t('label.manufacturer')}</th>
           <Show when={props.isVaccine}>
@@ -126,13 +130,9 @@ const VariantInfoTable = (props: {
             const selected = variant.id === props.selectedId;
             return (
               <tr aria-current={selected ? 'true' : undefined}>
-                <td class={styles.variantMarker}>
+                <td data-check class={styles.variantMarker}>
                   <Show when={selected}>
-                    <span
-                      role="img"
-                      aria-label={t('label.selected')}
-                      title={t('label.selected')}
-                    >
+                    <span role="img" aria-label={t('label.selected')}>
                       <CheckIcon />
                     </span>
                   </Show>
@@ -147,7 +147,7 @@ const VariantInfoTable = (props: {
           }}
         </For>
       </tbody>
-    </table>
+    </Table>
   </Show>
 );
 
@@ -871,7 +871,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       cell: info => {
         const line = info.row.original;
         return (
-          <span class={styles.batchCell}>
+          <HStack gap="sm">
             {line.batch ?? '—'}
             <Show when={line.itemVariantId}>
               {variantId => (
@@ -889,14 +889,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </Popover>
               )}
             </Show>
-          </span>
+          </HStack>
         );
       },
     },
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
-      ...getExpiryDateCell(),
+      ...getCellDefinition('expiryDate'),
     },
     // Vaccine items only, under either VVM preference (spec § S4 batch grid;
     // only vaccine stock carries a VVM status). An EDITABLE status picker —
@@ -924,7 +924,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 />
               );
             },
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never>,
         ]
       : []),
     {
@@ -948,7 +948,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               id: 'donor',
             },
             header: () => t('label.donor'),
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never>,
         ]
       : []),
     {
@@ -961,7 +961,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('sellPricePerPack'),
     },
     // Foreign-currency pack price (old-app parity): external customers under
     // the issue-in-foreign-currency store preference — the home price
@@ -991,13 +991,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     maximumFractionDigits: 2,
                   })
                 : '',
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never>,
         ]
       : []),
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
-      ...getNumberCell(),
+      ...getCellDefinition('packSize'),
     },
     // Doses-per-unit context, under the DOSES lens only (the old app's
     // includeColumn: dosesView — the preference alone previously showed it
@@ -1007,8 +1007,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit-name', { unit: unitName() }),
-            ...getNumberCell(),
-          } as Column<DraftLine, never>,
+            ...getCellDefinition<DraftLine>('dosesPerUnit'),
+          } satisfies Column<DraftLine, never>,
         ]
       : []),
     {
@@ -1025,7 +1025,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
       header: () =>
         dosesView() ? t('label.in-store-doses') : t('label.in-store'),
-      ...getNumberCell(),
+      // The lens swaps this column's header between "In store" and "In store
+      // doses", so it takes the wider `availablePacks` room rather than the
+      // bare number default.
+      ...getCellDefinition('availablePacks'),
     },
     {
       // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
@@ -1048,7 +1051,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         dosesView()
           ? t('label.available-doses')
           : t('label.available-in-packs'),
-      ...getNumberCell(),
+      ...getCellDefinition('availablePacks'),
     },
     {
       // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available —
@@ -1128,6 +1131,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'receivedNumberOfPacks' },
             header: () => t('label.packs-received'),
+            ...getCellDefinition<DraftLine>('receivedNumberOfPacks'),
             meta: { align: 'right' },
             cell: info => {
               const line = info.row.original;
@@ -1144,7 +1148,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 />
               );
             },
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never>,
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
@@ -1164,7 +1168,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </>
               );
             },
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never>,
         ]),
     {
       // Volume this batch's issue occupies (old-app parity): volume-per-pack
@@ -1295,7 +1299,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {/* Issue + Allocate-in wrap as a unit. Both controls at the default
               height — NumberField's "small" (2.25rem) and Select's "sm"
               (1.75rem — the Pagination scale) don't align with each other. */}
-          <div class={styles.issueGroup}>
+          <HStack align="end" gap="lg" class={styles.issueGroup}>
             <NumberField
               label={t('label.issue')}
               min={0}
@@ -1332,7 +1336,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 switchLensTo(next);
               }}
             />
-          </div>
+          </HStack>
           {/* Placeholder notice (info) — fills the rest of the header row,
               matching the old app; shown when a shortfall became a placeholder. */}
           <Show when={placeholderUnits() > 0}>
@@ -1370,14 +1374,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </div>
 
         {/* Grid footer: placeholder + running total (spec S4). */}
-        <div
-          style={{
-            display: 'flex',
-            'justify-content': 'end',
-            gap: 'var(--space-4)',
-            'margin-block-start': 'var(--space-2)',
-          }}
-        >
+        <HStack justify="end" gap="lg" class={styles.gridFooter}>
           <span>
             {t('label.placeholder')}: {formatNumber(placeholderUnits())}
           </span>
@@ -1385,22 +1382,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {t('label.total-units')}:{' '}
             {formatNumber(issuedUnits() + placeholderUnits())}
           </span>
-        </div>
+        </HStack>
 
         {/* Stacked warning banners (spec S4 § warnings). */}
         <Show when={warnings().length > 0}>
-          <div
-            style={{
-              display: 'flex',
-              'flex-direction': 'column',
-              gap: 'var(--space-2)',
-              'margin-block-start': 'var(--space-2)',
-            }}
-          >
+          <Stack gap="sm" class={styles.warnings}>
             <For each={warnings()}>
               {message => <Alert severity="warning">{message}</Alert>}
             </For>
-          </div>
+          </Stack>
         </Show>
 
         {/* Zero-allocation second confirmation (spec S4 § save). */}
