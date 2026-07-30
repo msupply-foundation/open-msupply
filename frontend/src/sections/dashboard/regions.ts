@@ -18,6 +18,7 @@
 // as plain data.
 
 import type { Component } from 'solid-js';
+import { anchorMerge } from '../../plugins/anchorMerge';
 
 // ── Published ids (ui-surface § S3) ──────────────────────────────────────────
 // Every built-in piece has a stable published id — the public API a
@@ -130,12 +131,6 @@ export interface MergedRegion {
   diagnostics: RegionDiagnostic[];
 }
 
-// The base position a contribution resolves to, as a fractional index into the
-// rendered built-ins: `before X` sits just before X's index, `after X` just
-// after, the container end past the last. Fractions keep contributions between
-// the right built-ins when the whole list is sorted.
-const END = Number.POSITIVE_INFINITY;
-
 /**
  * Merge plugin contributions into a region's built-ins (OMS-REG-DB-02.2–.8).
  *
@@ -156,70 +151,37 @@ export const mergeRegion = (
   contributions: readonly RegionContribution[],
   suppressed: ReadonlySet<string>
 ): MergedRegion => {
-  const diagnostics: RegionDiagnostic[] = [];
-
-  // Rendered built-ins: not suppressed, not gate-hidden. Their index is the
-  // anchor coordinate space; a hidden/suppressed id therefore has no position.
-  const rendered = builtIns.filter(b => !suppressed.has(b.id) && !b.hidden);
-  const positionOf = new Map(rendered.map((b, index) => [b.id, index]));
-
-  const basePosition = (c: RegionContribution): number => {
-    if (!c.anchor) return END;
-    const target = positionOf.get(c.anchor.id);
-    if (target === undefined) {
-      // Anchor id absent, gate-hidden, or suppressed — fall through to the end.
-      diagnostics.push({
-        contributionId: c.id,
-        message: `anchor "${c.anchor.id}" not found in region — placed at container end`,
-      });
-      return END;
-    }
-    // before → just ahead of the target; after → just behind it.
-    return c.anchor.position === 'before' ? target - 0.5 : target + 0.5;
-  };
-
-  // Sortable rows: built-ins keep their integer index and sort ahead of any
-  // contribution sharing that coordinate (tier 0 < 1); contributions sort by
-  // base position, then order (unset last), then id — a total, load-order-
-  // independent ordering (ids are unique within a region).
-  type Row = {
-    primary: number;
-    tier: 0 | 1;
-    order: number;
-    id: string;
-    entry: MergedEntry;
-  };
-  const rows: Row[] = [];
-
-  rendered.forEach((b, index) => {
-    rows.push({
-      primary: index,
-      tier: 0,
-      order: 0,
+  // The ORDERING is the shared one (src/plugins/anchorMerge.ts) — the same
+  // anchor → order → id sort the internal-order line table's columns use, so
+  // authors meet one placement contract at every surface. What stays the
+  // dashboard's is the vocabulary either side of it: suppression collapses into
+  // "this built-in has no rendered position" on the way in, and the merged
+  // entries come back out as the region's own builtin/plugin union.
+  const merged = anchorMerge(
+    builtIns.map(b => ({
       id: b.id,
-      entry: { kind: 'builtin', id: b.id },
-    });
-  });
-
-  for (const c of contributions) {
-    rows.push({
-      primary: basePosition(c),
-      tier: 1,
-      order: c.order ?? END,
+      hidden: b.hidden === true || suppressed.has(b.id),
+    })),
+    contributions.map(c => ({
       id: c.id,
-      entry: { kind: 'plugin', id: c.id, Component: c.Component },
-    });
-  }
-
-  rows.sort(
-    (a, b) =>
-      a.primary - b.primary ||
-      a.tier - b.tier ||
-      a.order - b.order ||
-      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+      order: c.order,
+      anchor: c.anchor
+        ? c.anchor.position === 'before'
+          ? { before: c.anchor.id }
+          : { after: c.anchor.id }
+        : undefined,
+      Component: c.Component,
+    }))
   );
 
-  return { entries: rows.map(r => r.entry), diagnostics };
+  return {
+    entries: merged.entries.map((entry): MergedEntry =>
+      entry.kind === 'host'
+        ? { kind: 'builtin', id: entry.item.id }
+        : { kind: 'plugin', id: entry.item.id, Component: entry.item.Component }
+    ),
+    diagnostics: merged.diagnostics,
+  };
 };
 
 /** Every published id, flattened — the id-stability surface (ui-surface § S3). */

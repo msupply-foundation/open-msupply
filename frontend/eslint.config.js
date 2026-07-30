@@ -69,9 +69,11 @@ export default tseslint.config(
 
   // Application source — browser environment + Solid JSX. compat flags Web
   // APIs unsupported by the minimum browser (browserslist in package.json —
-  // Chromium 138, the newest WebView installable on Android 9).
+  // Chromium 138, the newest WebView installable on Android 9). The example
+  // plugins (examples/) are the same: ordinary Solid components running in the
+  // host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -115,7 +117,12 @@ export default tseslint.config(
   // Comment line-length cap (all linted files). Warn + auto-fix; see options
   // above.
   {
-    files: ['src/**/*.{ts,tsx}', '*.config.{ts,js}', 'scripts/**/*.mjs'],
+    files: [
+      'src/**/*.{ts,tsx}',
+      'examples/**/*.{ts,tsx}',
+      '*.config.{ts,js}',
+      'scripts/**/*.mjs',
+    ],
     plugins: { 'comment-length': commentLength },
     rules: {
       'comment-length/limit-single-line-comments': [
