@@ -44,9 +44,6 @@ export interface InternalOrderToolbarProps {
    */
   hideOverMin: boolean;
   onHideOverMinChange: (value: boolean) => void;
-  /** Item filter — a client-side line filter, same interim as hideOverMin. */
-  itemFilter: string;
-  onItemFilterChange: (value: string) => void;
 }
 
 // The MOS selects offer 1…6 months (label.number-months); the threshold also
@@ -239,8 +236,9 @@ export const InternalOrderToolbar: Component<
           </Stack>
         </FormColumn>
 
-        {/* Right column — MOS thresholds, then the hide-over-min switch + item
-            filter on their own row. */}
+        {/* Right column — MOS thresholds, then the hide-over-min switch on its
+            own row. The item filter lives in the line table's own toolbar
+            (ui-standards § tables → filtering), not here. */}
         <FormColumn>
           <Stack gap="sm">
             <FieldRow label={t('label.min-months-of-stock')}>
@@ -266,20 +264,15 @@ export const InternalOrderToolbar: Component<
               />
             </FieldRow>
             <FormRow>
+              {/* Empty first slot: the switch sits in the row's SECOND half —
+                  the slot the item filter held before it moved to the line
+                  table's toolbar — keeping it under the MOS selects. */}
+              <span aria-hidden="true" />
               <ToggleSwitch
                 label={t('label.hide-stock-over-minimum')}
                 checked={props.hideOverMin}
                 onChange={props.onHideOverMinChange}
                 testId="hide-over-minimum-switch"
-              />
-              <TextField
-                label={t('placeholder.filter-items')}
-                hideLabel
-                width="full"
-                placeholder={t('placeholder.filter-items')}
-                data-testid="filter-items-field"
-                value={props.itemFilter}
-                onInput={e => props.onItemFilterChange(e.currentTarget.value)}
               />
             </FormRow>
           </Stack>

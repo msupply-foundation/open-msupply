@@ -55,7 +55,7 @@ export const ClinicianSelect = (props: ClinicianSelectProps): JSX.Element => {
   const [createOpen, setCreateOpen] = createSignal(false);
 
   // Hidden rather than disabled for a session that cannot insert: a form whose
-  // Save can only fail is a blocked affordance (D86, ui-standards › controls).
+  // Save can only fail is a blocked affordance (D89, ui-standards › controls).
   // A missing storeId withholds it too, so the affordance is never offered
   // without somewhere to create into.
   const canCreate = () =>
