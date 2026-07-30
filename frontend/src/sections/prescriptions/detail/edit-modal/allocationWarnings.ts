@@ -1,4 +1,4 @@
-import type { BarReason, IssueWarning } from '../../../../domain/allocation';
+import { round9, type BarReason, type IssueWarning } from '@/domain/allocation';
 
 // The prescription line editor's inline warning banners, as message
 // descriptors the editor resolves via t()/formatNumber — the prescriptions
@@ -44,11 +44,6 @@ const skipReasonLabel = (reason: BarReason): SkipReasonLabel => {
       return 'label.unusable-vvm-status';
   }
 };
-
-// Kill float dust before a figure surfaces to the user (0.7 packs of 10 must
-// read as exactly 3 units short of whole packs — as in distributeIssue).
-// Exported for the editor's own user-facing figures (the issue-field snap).
-export const round9 = (value: number): number => Math.round(value * 1e9) / 1e9;
 
 /**
  * Map a distribution's derived warnings to banner messages: every skipped
