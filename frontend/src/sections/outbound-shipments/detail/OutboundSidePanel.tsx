@@ -119,16 +119,19 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   // A pricing group's heading (SIDE_PANEL.md rule 1 — never a FieldRow with a
   // bold label), with its gloss as an info tooltip AFTER the text (the doc's
   // info-icon-after-heading recipe) and an optional group-level edit action.
+  // The text+tooltip row is an inline-level SPAN, not an HStack: these children
+  // land inside SidePanelSubheading's <h3>, which takes phrasing content, and
+  // HStack renders a <div>.
   const groupHeading = (
     label: string,
     info: string,
     action?: JSX.Element
   ): JSX.Element => (
     <SidePanelSubheading action={action}>
-      <HStack gap="sm">
+      <span class={styles.groupHeading}>
         {label}
         <InfoTooltip text={info} label={label} placement="bottom-start" />
-      </HStack>
+      </span>
     </SidePanelSubheading>
   );
 
