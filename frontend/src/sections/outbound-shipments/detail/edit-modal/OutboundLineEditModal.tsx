@@ -61,6 +61,8 @@ import {
   fillOrderCompare,
   lensToUnits,
   unitsToLens,
+  packsToDoses,
+  dosesToPacks,
   type AllocateUnit,
   type AllocationPreferences,
   type IssueWarning,
@@ -551,11 +553,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // switch to dose quantities, the helper column flips to packs, and
   // Doses-per-unit context appears.
   const dosesView = () => allocateIn().kind === 'doses';
-  // The old app's QuantityUtils.packsToDoses: doses = packs × pack size × the
-  // LINE's own doses-per-unit (a batch's variant may override the item's),
-  // rounded to whole doses.
-  const packsToDoses = (packs: number, line: DraftLine): number =>
-    Math.round(packs * line.packSize * (line.dosesPerUnit || 1));
+  // Per-batch doses ⇔ packs uses the LINE's own pack size / doses-per-unit (a
+  // variant may override the item's), so the grid converts row by row via the
+  // shared domain helpers (packsToDoses / dosesToPacks).
 
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
@@ -649,11 +649,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const inDoses = dosesView();
     const requestedPacks =
       inDoses && value != null
-        ? value / (line.packSize * (line.dosesPerUnit || 1))
+        ? dosesToPacks(value, line.packSize, line.dosesPerUnit)
         : value;
     const applied = clampManualPacks(requestedPacks, line.availablePacks);
     setDraft(index, 'numberOfPacks', applied);
-    const appliedQuantity = inDoses ? packsToDoses(applied, line) : applied;
+    const appliedQuantity = inDoses
+      ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
+      : applied;
     setWarnings(
       value != null && appliedQuantity !== value
         ? [
@@ -1017,7 +1019,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       c: {
         accessor: line =>
           dosesView()
-            ? packsToDoses(line.inStorePacks, line)
+            ? packsToDoses(line.inStorePacks, line.packSize, line.dosesPerUnit)
             : line.inStorePacks,
         id: 'inStorePacks',
       },
@@ -1033,7 +1035,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         accessor: line => {
           if (line.stockLineOnHold || line.location?.onHold) return 0;
           return dosesView()
-            ? packsToDoses(line.availablePacks, line)
+            ? packsToDoses(
+                line.availablePacks,
+                line.packSize,
+                line.dosesPerUnit
+              )
             : line.availablePacks;
         },
         id: 'availablePacks',
@@ -1066,14 +1072,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             min={0}
             max={
               dosesView()
-                ? packsToDoses(line.availablePacks, line)
+                ? packsToDoses(
+                    line.availablePacks,
+                    line.packSize,
+                    line.dosesPerUnit
+                  )
                 : line.availablePacks
             }
             decimalLimit={2}
             disabled={rowDisabled(line)}
             value={
               (dosesView()
-                ? packsToDoses(line.numberOfPacks, line)
+                ? packsToDoses(
+                    line.numberOfPacks,
+                    line.packSize,
+                    line.dosesPerUnit
+                  )
                 : line.numberOfPacks) || undefined
             }
             onChange={value => setPacks(line.id, value ?? null)}
