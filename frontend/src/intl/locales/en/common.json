@@ -1576,6 +1576,7 @@
   "label.months_other": "months",
   "label.more": "More...",
   "label.more-information": "More information",
+  "label.more-information-about": "More information about {{name}}",
   "label.moving-average": "Mov. Avg. (3mo)",
   "label.multi-device": "Multi device",
   "label.multiple": "Multiple",
