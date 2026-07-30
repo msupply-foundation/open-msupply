@@ -14,15 +14,17 @@ import {
   findLeafByPath,
   lowerNav,
   upperNav,
-  type NavItem,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
-import { hasPermission, isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
+import { gateNav } from './navGates';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
 import { resolveStorePath } from '../store/StoreGuardLayout';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import { KeyboardHost } from '../keyboard/KeyboardHost';
+import { t } from '../intl';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
 // not with the shell (each vertical is its own lazy chunk).
@@ -63,27 +65,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const onNavigate = (leaf: NavLeaf) =>
     navigate(`/${params.storeId}/${leaf.to}`);
 
-  // Nav visibility gates — reactive, because they read runtime signals the
-  // static nav model can't. Two concerns, one pass:
-  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only in
-  //    dispensary mode; the patients route guard blocks direct-URL entry to match.
-  //  • Central-only destinations (spec/help S2): a `central`-flagged entry
-  //    (Manage › Help documents) shows only on a central server to a server
-  //    admin; the help section's route guard blocks direct-URL entry to match.
+  // Nav visibility gates live in src/nav/navGates.ts, shared with the command
+  // palette so the menu and the palette can never disagree about where the user
+  // can go (spec/keyboard AC-KB4).
   // Memoised so the gated arrays — and the section objects rebuilt when a child
   // is dropped — keep stable references; otherwise MenuBar's <For> would remount
   // nav sections on every shell re-render (kdd/solid-reactivity-pitfalls).
-  const centralAdmin = () => isCentralServer() && hasPermission('SERVER_ADMIN');
-  const visible = (n: { central?: boolean }) => !n.central || centralAdmin();
-  const gateNav = (items: NavItem[]): NavItem[] =>
-    items
-      .filter(item => item.id !== 'dispensary' || isDispensary())
-      .filter(visible)
-      .map(item =>
-        item.children?.some(child => child.central) && !centralAdmin()
-          ? { ...item, children: item.children.filter(visible) }
-          : item
-      );
   const menuUpper = createMemo(() => gateNav(upperNav));
   const menuLower = createMemo(() => gateNav(lowerNav));
 
@@ -112,6 +99,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setSyncOpen(true);
   };
 
+  // Logout confirms first (spec/keyboard AC-KB5: "Alt+Shift+L — Logout, asks to
+  // confirm first"). Owned here, and used by BOTH paths — the user menu and the
+  // shortcut — so there is one logout behaviour rather than two. The catalog
+  // already carries heading.logout-confirm / messages.logout-confirm.
+  const [logoutConfirm, setLogoutConfirm] = createSignal(false);
+
   return (
     <>
       <AppShell
@@ -125,14 +118,25 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         storeName={storeName()}
         onStoreClick={() => navigate(resolveStorePath)}
         username={username()}
-        onLogout={() => void logout()}
+        onLogout={() => setLogoutConfirm(true)}
         isCentralServer={isCentralServer()}
       >
+        <KeyboardHost
+          onSyncOpen={openSync}
+          onLogoutRequest={() => setLogoutConfirm(true)}
+        />
         {props.children}
       </AppShell>
       <Show when={syncEverOpened()}>
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
       </Show>
+      <ConfirmDialog
+        open={logoutConfirm()}
+        onClose={() => setLogoutConfirm(false)}
+        title={t('heading.logout-confirm')}
+        message={t('messages.logout-confirm')}
+        onConfirm={() => void logout()}
+      />
     </>
   );
 };

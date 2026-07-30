@@ -1,0 +1,70 @@
+/*
+ * The command palette's panel (spec/keyboard ui-surface S1 § Layout): "Centred
+ * overlay above a dimmed page. Vertical order: search field, then the results
+ * list directly beneath it, the two reading as one panel. The list scrolls
+ * within a fixed height; the panel does not grow to the page."
+ *
+ * The centring, the dimmed page and the top layer all come from <Dialog> (the
+ * native <dialog> + showModal()); this file owns only the two-region stack.
+ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/*
+ * A FIXED height, not a max-height: the list keeps one size whatever the term
+ * matches, so the panel does not resize under the user's hands as they type —
+ * the same reasoning as the Dialog's own minBodyHeightRem.
+ */
+.results {
+  height: 18rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: var(--text-body);
+  font-size: var(--text-md);
+  line-height: var(--line-body);
+}
+
+/*
+ * The highlighted row (KB-P5). Driven by aria-selected so the visual state and
+ * the state assistive technology reads cannot diverge — there is no second
+ * "highlighted" flag to keep in step.
+ */
+.option[aria-selected='true'] {
+  background: var(--drawer-selected-bg);
+}
+
+.option:hover {
+  background: var(--drawer-hover-bg);
+}
+
+/* The platform-spelled keys following the action's name (KB-P4). */
+.keys {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.empty {
+  /* Fills the fixed-height list so the panel geometry is identical whether or
+     not the term matched. */
+  height: 100%;
+}

@@ -1,6 +1,8 @@
 import { children, Show, splitProps, type JSX } from 'solid-js';
 import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
+import { ShortcutBadge } from '../keyboard/ShortcutBadge';
+import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
 import styles from './Button.module.css';
 
 /*
@@ -46,6 +48,20 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * out even if that default flips.
    */
   collapsible?: boolean;
+  /**
+   * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
+   * drives both the accessible name of the binding (`aria-keyshortcuts`) and the
+   * hint badge revealed while Alt or Ctrl is held, so the two can never drift
+   * apart (AC-KB15).
+   *
+   * The button does NOT dispatch the key — the screen registers the action
+   * (`createAction` / `createAddAction`) and the dispatcher runs it. That split
+   * is deliberate: a screen may render two controls for one action (the inbound
+   * and internal-order details each have a header SplitButton AND a ghost button
+   * in the table's empty slot), and the action's `run` is often broader than one
+   * button's click (kdd/keyboard-layer).
+   */
+  shortcut?: Shortcut;
 }
 
 /*
@@ -67,6 +83,7 @@ export const Button = (props: ButtonProps) => {
     'type',
     'disabled',
     'onPointerDown',
+    'shortcut',
   ]);
   const ripple = createRipple();
   // JSX-element props are lazy getters: each is read twice below (the <Show>
@@ -87,6 +104,15 @@ export const Button = (props: ButtonProps) => {
       }
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
+      // The ARIA grammar, not the platform spelling — the badge renders the
+      // human form from the same value (KB-M1, AC-KB15).
+      aria-keyshortcuts={
+        local.shortcut ? ariaKeyshortcuts(local.shortcut) : undefined
+      }
+      // The badge positions itself against this button; `.button` is already
+      // `position: relative` for the ripple, so it is already the positioning
+      // context. It is also `overflow: hidden` for the same reason, which is why
+      // the badge sits just INSIDE the corner rather than outside it.
       onPointerDown={event => {
         if (local.loading) return;
         ripple.onPointerDown(event);
@@ -108,6 +134,9 @@ export const Button = (props: ButtonProps) => {
       </Show>
       <Show when={label()}>
         <span class={styles.label}>{label()}</span>
+      </Show>
+      <Show when={local.shortcut}>
+        {shortcut => <ShortcutBadge shortcut={shortcut()} />}
       </Show>
       <Ripple ripples={ripple.ripples()} onDone={ripple.dismiss} />
     </button>
