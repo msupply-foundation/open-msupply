@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { searchForWorkspaceRoot, type Plugin } from 'vite';
@@ -22,11 +22,16 @@ import { searchForWorkspaceRoot, type Plugin } from 'vite';
  * Dynamic imports (not static), so a plugin that fails to evaluate is that
  * plugin's failure — the loader still registers its siblings (AC-PLUG-L3).
  *
- * Discovery is exactly `scripts/build-plugins.mjs`'s: every `examples/*` plus
- * every directory named by OMS_PLUGIN_DIRS, each identified by a package.json
- * declaring `omSupplyPlugin.target === 'frontend'`, with the entry module the
- * first of ENTRY_CANDIDATES that exists. Same rule for both, so what `pnpm dev`
- * loads from source is what `pnpm build:plugins` packs.
+ * Dev plugins are OPT-IN: only the directories named by OMS_PLUGIN_DIRS load
+ * (absolute, or relative to the repo root — `OMS_PLUGIN_DIRS=plugins/civ` for
+ * an in-repo plugin, `../civ-plugins/frontend/latest` for a checkout).
+ * Deliberately nothing by default: the in-repo country plugins target
+ * overlapping slots, so an all-of-`plugins/*` dev session would render every
+ * deployment's contributions at once. Each named directory is identified by a
+ * package.json declaring `omSupplyPlugin.target === 'frontend'`, with the
+ * entry module the first of ENTRY_CANDIDATES that exists — the same rule
+ * `scripts/build-plugins.mjs` uses (that one DOES walk `examples/*` and
+ * `plugins/*`: building everything is packaging, not a dev session).
  *
  * The discovery/codegen half is pure and injected-fs, so it is unit-testable
  * (devPlugins.test.ts); only `devPluginsPlugin` touches the disk.
@@ -52,8 +57,6 @@ export const ENTRY_CANDIDATES: readonly string[] = [
 
 /** The disk reads discovery needs — faked in tests. */
 export interface DevPluginFs {
-  /** Subdirectory names of `dir`; empty when `dir` does not exist. */
-  readDirectories: (dir: string) => readonly string[];
   /** Parsed JSON, or undefined when the file does not exist / is unreadable. */
   readJson: (file: string) => unknown;
   exists: (file: string) => boolean;
@@ -157,18 +160,13 @@ const readPlugin = (
 };
 
 /**
- * Enumerate the plugins to serve from source: every `examples/*` and
- * `plugins/*` that is a frontend plugin (the reference plugins and the in-repo
- * country plugins — kdd/plugin-loading § addendum), then every directory named
- * by OMS_PLUGIN_DIRS.
+ * Enumerate the plugins to serve from source: exactly the directories named by
+ * OMS_PLUGIN_DIRS, nothing by default (see the module comment — the in-repo
+ * plugins are opted into the same way, by relative path).
  *
- * An `examples/*` / `plugins/*` subdirectory that is not a plugin is skipped
- * silently (the directory is ours, not a request); a directory the author
- * explicitly named and that cannot be used is reported, because silently
- * loading nothing is the failure mode that wastes an afternoon.
- *
- * Later entries win on a code collision, so naming a directory overrides an
- * in-repo plugin of the same code.
+ * Every named directory that cannot be used is reported, because silently
+ * loading nothing is the failure mode that wastes an afternoon. Later entries
+ * win on a code collision.
  */
 export const discoverDevPlugins = (
   root: string,
@@ -177,15 +175,6 @@ export const discoverDevPlugins = (
 ): DevPluginDiscovery => {
   const problems: string[] = [];
   const found = new Map<string, DevPluginEntry>();
-
-  for (const inRepo of ['examples', 'plugins']) {
-    const parent = join(root, inRepo);
-    for (const name of fs.readDirectories(parent)) {
-      const result = readPlugin(join(parent, name), fs);
-      if ('problem' in result) continue;
-      found.set(result.code, result);
-    }
-  }
 
   for (const dir of parsePluginDirs(pluginDirs, root)) {
     const result = readPlugin(dir, fs);
@@ -214,12 +203,6 @@ export const renderDevPluginsModule = (
   ].join('\n');
 
 const nodeFs: DevPluginFs = {
-  readDirectories: dir =>
-    existsSync(dir)
-      ? readdirSync(dir, { withFileTypes: true })
-          .filter(entry => entry.isDirectory())
-          .map(entry => entry.name)
-      : [],
   readJson: file => {
     if (!existsSync(file)) return undefined;
     try {
