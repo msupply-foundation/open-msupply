@@ -2,6 +2,7 @@ import type {
   HtmlTagDescriptor,
   IndexHtmlTransformContext,
   Plugin,
+  UserConfig,
 } from 'vite';
 
 /*
@@ -114,11 +115,23 @@ const entryCssFiles = (
   return [...css];
 };
 
+/**
+ * The HTML entry this build is for: index.html for the app, showcase.html for
+ * the standalone showcase (vite.showcase.config.ts). Read back off the config
+ * rather than hardcoded, because a `config` hook's result is merged OVER the
+ * user config — hardcoding index.html here silently discards any other page
+ * the config asked for, and builds the app in its place.
+ */
+const hostPage = (config: UserConfig): string => {
+  const input = config.build?.rollupOptions?.input;
+  return typeof input === 'string' ? input : 'index.html';
+};
+
 export const sharedModulesPlugin = (): Plugin => {
   let base = '/';
   return {
     name: 'oms:shared-modules',
-    config: () => ({
+    config: config => ({
       build: {
         rollupOptions: {
           // 'exports-only' keeps each facade's re-exports intact without
@@ -126,7 +139,7 @@ export const sharedModulesPlugin = (): Plugin => {
           // laxer setting would let Rollup drop the re-exports entirely).
           preserveEntrySignatures: 'exports-only',
           input: {
-            index: 'index.html',
+            index: hostPage(config),
             ...Object.fromEntries(SHARED_MODULES.map(m => [m.entry, m.source])),
           },
         },
