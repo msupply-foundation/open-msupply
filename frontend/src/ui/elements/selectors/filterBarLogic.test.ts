@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Filter } from './FilterBar';
 import {
   activeFilters,
-  anyClearable,
+  showsClearAll,
   availableFilters,
   isFilterActive,
 } from './filterBarLogic';
@@ -66,19 +66,19 @@ describe('availableFilters', () => {
   });
 });
 
-describe('anyClearable', () => {
+describe('showsClearAll', () => {
   it('never offers "Clear all" for default filters — empty OR valued', () => {
-    expect(anyClearable(filters, {})).toBe(false);
-    expect(anyClearable(filters, { itemCodeOrName: null })).toBe(false);
-    expect(anyClearable(filters, { itemCodeOrName: { like: 'amox' } })).toBe(
+    expect(showsClearAll(filters, {})).toBe(false);
+    expect(showsClearAll(filters, { itemCodeOrName: null })).toBe(false);
+    expect(showsClearAll(filters, { itemCodeOrName: { like: 'amox' } })).toBe(
       false
     );
   });
 
   it('offers it as soon as a user-added chip exists, valued or not', () => {
-    expect(anyClearable(filters, { locationId: null })).toBe(true);
+    expect(showsClearAll(filters, { locationId: null })).toBe(true);
     expect(
-      anyClearable(filters, {
+      showsClearAll(filters, {
         itemCodeOrName: { like: 'amox' },
         locationId: { equalTo: 'a' },
       })
