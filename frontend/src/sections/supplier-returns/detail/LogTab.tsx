@@ -3,6 +3,11 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import {
   SupplierReturnLog,
@@ -72,19 +77,24 @@ export const LogTab: Component<{
     {
       c: { accessor: row => localisedDate(row.datetime), id: 'date' },
       header: () => t('label.date'),
+      ...getCellDefinition('date'),
     },
     {
       c: { accessor: row => localisedTime(row.datetime), id: 'time' },
       header: () => t('label.time'),
+      ...getCellDefinition('time'),
     },
     {
       c: { accessor: row => row.user?.username ?? '', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
     {
       c: { accessor: eventLabel, id: 'event' },
       header: () => t('label.event'),
-      meta: { wrapLines: 2 },
+      // No CELL_DEF key — the event phrase is the row's widest text.
+      ...getTextCell({ wrapLines: 2 }),
+      size: remToPx(12),
     },
   ];
 

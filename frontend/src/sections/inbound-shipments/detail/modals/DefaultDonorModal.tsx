@@ -2,14 +2,13 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { RadioGroup } from '../../../../ui/elements/inputs/RadioGroup';
 import { NameSearch, type NameOption } from '../../../../domain/name';
-import { XCircleIcon } from '../../../../ui/icons';
-import {
-  isExternalShipment,
-  updateInboundShipment,
-} from '../inboundShipmentUpdate';
+import { updateInboundShipment } from '../inboundShipmentUpdate';
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
 export interface DefaultDonorModalProps {
@@ -17,6 +16,8 @@ export interface DefaultDonorModalProps {
   onClose: () => void;
   storeId: string;
   node: InboundInfoFragment;
+  /** Which update twin to write through — the scope the route carries. */
+  isExternal: boolean;
   onSaved: (node: InboundInfoFragment) => void;
 }
 
@@ -58,7 +59,7 @@ const Body: Component<DefaultDonorModalProps> = props => {
     setErrorMessage(undefined);
     const result = await updateInboundShipment(
       props.storeId,
-      isExternalShipment(props.node),
+      props.isExternal,
       {
         id: props.node.id,
         defaultDonor: {
@@ -89,21 +90,17 @@ const Body: Component<DefaultDonorModalProps> = props => {
         </Show>
       }
       actions={
+        // Cancel · Save (spec S5 layout), icon-less (D55).
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
+          />
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving()}
             onClick={() => void save()}
-          >
-            {t('button.ok')}
-          </Button>
+          />
         </>
       }
     >

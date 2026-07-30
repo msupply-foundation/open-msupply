@@ -1,6 +1,8 @@
 /* One stat: a [value][label] row, plus (when alerting) a status chip beneath.
    The value sits in a right-aligned fixed-min column so the labels line up down
-   the panel (current app). The whole thing is a link into the list it counts. */
+   the panel (current app). With an href the whole row is a link into the list it
+   counts; without one it is a plain <div>, so the link affordances below are
+   scoped to `a.stat` — a non-interactive row must not hint at a click. */
 .stat {
   display: flex;
   flex-direction: column;
@@ -45,11 +47,11 @@
   margin-inline-start: calc(2.7rem + var(--space-3));
 }
 
-.stat:hover .label {
+a.stat:hover .label {
   text-decoration: underline;
 }
 
-.stat:focus-visible {
+a.stat:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }

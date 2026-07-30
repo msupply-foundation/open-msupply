@@ -57,6 +57,7 @@ const store = (
   monthlyConsumptionLookBackPeriod: 0,
   monthsLeadTime: 0,
   editPrescribedQuantityOnPrescription: false,
+  useConsumptionAndStockFromCustomersForInternalOrders: false,
   ...overrides,
 });
 

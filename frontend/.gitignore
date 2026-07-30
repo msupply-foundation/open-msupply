@@ -41,3 +41,4 @@ e2e/playwright-report
 
 # Per-developer Claude Code notes
 CLAUDE.local.md
+__pycache__/

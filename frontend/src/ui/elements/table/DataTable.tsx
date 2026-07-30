@@ -291,6 +291,14 @@ export function DataTable<T, K extends string, G extends string = never>(
       ? shellFullScreen.setFullScreen(value)
       : setLocalFullScreen(value);
 
+  // The page's filter bar, resolved ONCE. `filters` is a JSX prop, i.e. a lazy
+  // getter that re-instantiates its subtree on every read — and the toolbar
+  // reads it twice (once to test for presence, once to render), so without this
+  // a whole FilterBar is built and thrown away on every read, taking its
+  // signals, focus targets and debounce timers with it
+  // (kdd/solid-reactivity-pitfalls §3).
+  const filters = children(() => props.filters);
+
   // --- Sort (manual: the page provides ordered rows and owns the sort state)
   // --- Controlled: the SortingState mirrors the page's props.sort, and a
   // header click notifies the page via onSort. The page speaks sortKey (the
