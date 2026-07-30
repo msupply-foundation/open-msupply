@@ -1,135 +1,145 @@
-/*
- * The contribution registry's invariants (spec/plugins/rules.md §
- * contributions, and the invariants summary):
- *
- * · "Where several contributions share a slot, their order is deterministic —
- *   stable across reloads and INDEPENDENT OF LOAD TIMING."
- * · "A contribution is uniquely identified within its (plugin, slot) pair."
- * · "No contribution renders outside a defined slot."
- *
- * Load-order independence is the one worth a test: it is invisible in
- * development (one plugin, or two that always load in the same order) and
- * reproduces as "the columns swapped around" only in the field.
- *
- * Visibility (`when`) is deliberately NOT exercised here — the registry does
- * not apply it; the slot region gates each contribution individually so a gate
- * flipping cannot remount siblings (see PrescriptionPaymentSlot).
- */
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { JSX } from 'solid-js';
+import { PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
+import { definePlugin } from '../plugin-sdk/definePlugin';
+import type { AnyContribution, PluginDefinition } from '../plugin-sdk/types';
 import {
   clearPlugins,
   contributionsFor,
+  loadedPlugins,
   registerPlugin,
-  registeredPlugins,
+  suppressedPieces,
 } from './registry';
-import { SLOTS, type SlotContribution } from './sdk/types';
 
-const noop = (): JSX.Element => null;
+const Component = () => null;
 
-const contribution = (id: string, order?: number): SlotContribution => ({
-  slot: SLOTS.prescriptionPaymentForm,
-  id,
-  order,
-  Component: noop,
-});
-
-const plugin = (code: string, ...contributions: SlotContribution[]) => ({
+const plugin = (
+  code: string,
+  extra: Omit<PluginDefinition, 'manifest'> = {}
+) => ({
   code,
-  version: '1.0.0',
-  contributions,
+  module: definePlugin({
+    manifest: { code, version: '1.0.0', pluginApiVersion: PLUGIN_API_VERSION },
+    ...extra,
+  }),
 });
 
-const keys = () =>
-  contributionsFor(SLOTS.prescriptionPaymentForm).map(entry => entry.key);
-
-beforeEach(() => {
-  clearPlugins();
+const stat = (
+  id: string,
+  order?: number,
+  panel = 'replenishment.internal-order'
+): AnyContribution => ({
+  slot: 'dashboard.stat',
+  id,
+  panel,
+  order,
+  Component,
 });
 
-describe('registry — with nothing registered', () => {
-  it('reports no plugins and no contributions', () => {
-    expect(registeredPlugins()).toEqual([]);
-    expect(keys()).toEqual([]);
+beforeEach(clearPlugins);
+
+describe('registerPlugin', () => {
+  it('collects loaded plugins', () => {
+    registerPlugin(plugin('alpha'));
+    registerPlugin(plugin('beta'));
+    expect(loadedPlugins().map(p => p.code)).toEqual(['alpha', 'beta']);
+  });
+
+  it('replaces a re-registered code rather than duplicating it', () => {
+    registerPlugin(plugin('alpha'));
+    registerPlugin(plugin('alpha'));
+    expect(loadedPlugins()).toHaveLength(1);
   });
 });
 
-describe('registry — identity', () => {
-  it('keys a contribution by plugin code and contribution id', () => {
-    registerPlugin(plugin('civ_plugins', contribution('payment-capture')));
-    expect(keys()).toEqual(['civ_plugins.payment-capture']);
-  });
-
-  it('lets two plugins use the same contribution id', () => {
-    registerPlugin(plugin('a_plugins', contribution('payment')));
-    registerPlugin(plugin('b_plugins', contribution('payment')));
-    expect(keys()).toEqual(['a_plugins.payment', 'b_plugins.payment']);
-  });
-
-  it('replaces a plugin re-registered under the same code', () => {
-    registerPlugin(plugin('civ_plugins', contribution('first')));
-    registerPlugin(plugin('civ_plugins', contribution('second')));
-    expect(registeredPlugins()).toHaveLength(1);
-    expect(keys()).toEqual(['civ_plugins.second']);
-  });
-});
-
-describe('registry — deterministic order', () => {
-  it('orders by `order`, ascending', () => {
+describe('contributionsFor', () => {
+  it('returns only the requested slot, tagged with the plugin code', () => {
     registerPlugin(
-      plugin(
-        'civ_plugins',
-        contribution('late', 10),
-        contribution('early', 1),
-        contribution('middle', 5)
-      )
+      plugin('alpha', {
+        contributions: [
+          stat('a'),
+          { slot: 'dashboard.widget', id: 'w', Component },
+        ],
+      })
     );
-    expect(keys()).toEqual([
-      'civ_plugins.early',
-      'civ_plugins.middle',
-      'civ_plugins.late',
+    const stats = contributionsFor('dashboard.stat')();
+    expect(stats).toHaveLength(1);
+    expect(stats[0]?.id).toBe('a');
+    expect(stats[0]?.pluginCode).toBe('alpha');
+    expect(contributionsFor('dashboard.panel')()).toEqual([]);
+  });
+
+  it('orders by order, then plugin code, then id — independent of load order', () => {
+    // Registered deliberately out of every sorting dimension.
+    registerPlugin(
+      plugin('zebra', { contributions: [stat('b'), stat('a'), stat('z', 1)] })
+    );
+    registerPlugin(
+      plugin('alpha', { contributions: [stat('m'), stat('y', 1)] })
+    );
+    expect(
+      contributionsFor('dashboard.stat')().map(c => `${c.pluginCode}.${c.id}`)
+    ).toEqual([
+      // order 1 first…
+      'alpha.y',
+      'zebra.z',
+      // …then unset order (Infinity), by plugin code, then id.
+      'alpha.m',
+      'zebra.a',
+      'zebra.b',
     ]);
   });
 
-  it('treats a missing `order` as 0', () => {
-    registerPlugin(
-      plugin('civ_plugins', contribution('ordered', 1), contribution('bare'))
-    );
-    expect(keys()).toEqual(['civ_plugins.bare', 'civ_plugins.ordered']);
-  });
-
-  it('breaks an `order` tie by plugin code, then contribution id', () => {
-    registerPlugin(plugin('zzz_plugins', contribution('a')));
-    registerPlugin(plugin('aaa_plugins', contribution('z'), contribution('b')));
-    expect(keys()).toEqual(['aaa_plugins.b', 'aaa_plugins.z', 'zzz_plugins.a']);
-  });
-
-  it('is independent of load order', () => {
-    // The same set registered in the opposite sequence must render identically:
-    // plugins load over the network, so arrival order is not reproducible.
-    registerPlugin(plugin('civ_plugins', contribution('one')));
-    registerPlugin(plugin('haiti_plugins', contribution('two')));
-    const forwards = keys();
-
+  it('is the same order whichever plugin registered first', () => {
+    registerPlugin(plugin('alpha', { contributions: [stat('m')] }));
+    registerPlugin(plugin('zebra', { contributions: [stat('a')] }));
+    const forward = contributionsFor('dashboard.stat')().map(c => c.pluginCode);
     clearPlugins();
-    registerPlugin(plugin('haiti_plugins', contribution('two')));
-    registerPlugin(plugin('civ_plugins', contribution('one')));
+    registerPlugin(plugin('zebra', { contributions: [stat('a')] }));
+    registerPlugin(plugin('alpha', { contributions: [stat('m')] }));
+    expect(contributionsFor('dashboard.stat')().map(c => c.pluginCode)).toEqual(
+      forward
+    );
+  });
 
-    expect(keys()).toEqual(forwards);
+  it('reads through to the registry, so a late plugin appears', () => {
+    const stats = contributionsFor('dashboard.stat');
+    expect(stats()).toEqual([]);
+    registerPlugin(plugin('alpha', { contributions: [stat('a')] }));
+    expect(stats()).toHaveLength(1);
+  });
+
+  it('carries the contribution`s own when gate through untouched', () => {
+    // The registry does not evaluate `when` — the slot does, at render time, so
+    // a gate can read a context that has not resolved yet.
+    const when = () => false;
+    registerPlugin(
+      plugin('alpha', { contributions: [{ ...stat('a'), when }] })
+    );
+    expect(contributionsFor('dashboard.stat')()[0]?.when).toBe(when);
   });
 });
 
-describe('registry — slot scoping', () => {
-  it('returns nothing for a slot no contribution targets', () => {
-    registerPlugin(plugin('civ_plugins', contribution('payment-capture')));
-    // The tagged union has one member today, so an unknown slot id can only be
-    // reached by asking for one — which is the point: nothing leaks across
-    // slots.
-    expect(contributionsFor(SLOTS.prescriptionPaymentForm)).toHaveLength(1);
-    expect(
-      contributionsFor(SLOTS.prescriptionPaymentForm).every(
-        entry => entry.contribution.slot === SLOTS.prescriptionPaymentForm
-      )
-    ).toBe(true);
+describe('suppressedPieces', () => {
+  it('is empty with no plugins', () => {
+    expect(suppressedPieces().size).toBe(0);
+  });
+
+  it('unions the suppression lists of every loaded plugin', () => {
+    registerPlugin(plugin('alpha', { suppress: ['replenishment.inbound'] }));
+    registerPlugin(
+      plugin('beta', {
+        suppress: ['replenishment.inbound', 'inventory.stock-levels.at-risk'],
+      })
+    );
+    expect([...suppressedPieces()].sort()).toEqual([
+      'inventory.stock-levels.at-risk',
+      'replenishment.inbound',
+    ]);
+  });
+
+  it('drops with the plugin that asked for it', () => {
+    registerPlugin(plugin('alpha', { suppress: ['replenishment.inbound'] }));
+    clearPlugins();
+    expect(suppressedPieces().size).toBe(0);
   });
 });

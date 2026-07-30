@@ -1,111 +1,125 @@
-/*
- * The contribution registry (spec/plugins/rules.md § contributions). The
- * loader registers each plugin it successfully evaluated; host slot regions ask
- * for the contributions targeting them.
- *
- * Contributions arriving as DATA (a component + a slot id) is the one sanctioned
- * exception to explicit composition (kdd/explicit-composition, whose guardrail
- * otherwise resists exactly this shape). It is sanctioned because the
- * contributions come from out-of-tree bundles — there is no call site to click
- * through to, so the indirection IS the product feature rather than a way of
- * avoiding one. The precedent is recorded in
- * `src/ui/elements/plugins/PluginRegionOutlet.tsx`, which takes the same
- * exception for the dashboard's regions.
- *
- * The price is paid down the same way it is there: everything around it stays
- * direct — the loader calls `registerPlugin`, a slot calls `contributionsFor`,
- * both traceable by grep — and the ordering logic is pure and unit-tested.
- *
- * Registry state is a module-level signal (kdd/state-management): plugins load
- * once during startup, so a slot that mounts later reads a settled list, and a
- * slot already on screen when a plugin registers picks it up reactively.
- */
 import { createSignal } from 'solid-js';
-import type { SlotContribution, SlotId } from './sdk/types';
+import type {
+  AnyContribution,
+  DashboardPieceId,
+  PluginModule,
+  SlotId,
+} from '../plugin-sdk/types';
 
-/** A plugin the loader accepted, with the code its rows and namespace use. */
-export interface RegisteredPlugin {
+/*
+ * The loaded-plugin registry (spec/plugins/rules.md § contributions).
+ *
+ * ONE signal of loaded plugins is the whole state model — the codebase's
+ * resource-signal style (kdd/state-management), not a cache keyed by anything.
+ * Everything else here is a derived accessor over it, so a plugin that loads
+ * late (or not at all) is just a value change every reader already tracks.
+ *
+ * The registry holds only what LOADED: a refused plugin never reaches it, so no
+ * reader has to know about compatibility gates or validation.
+ */
+
+/**
+ * A plugin that passed validation, paired with the code it was discovered as.
+ */
+export interface LoadedPlugin {
   code: string;
-  version: string;
-  contributions: SlotContribution[];
+  module: PluginModule;
 }
 
-/** The contributions that target one slot id, narrowed off the tagged union. */
-export type ContributionOf<S extends SlotId> = Extract<
-  SlotContribution,
+/**
+ * A validated contribution narrowed to one slot (its props and placement
+ * fields).
+ */
+export type SlotContribution<S extends SlotId> = Extract<
+  AnyContribution,
   { slot: S }
 >;
 
 /**
- * One contribution ready for a slot region: the plugin's own contribution plus
- * the globally-unique render key the outlet needs. `key` is
- * `<pluginCode>.<contributionId>` — unique because a contribution id is unique
- * within its (plugin, slot) pair and a plugin code is unique per server.
- *
- * Narrowed by slot, so a slot region's outlet gets a `Component` typed to
- * exactly that slot's prop DTO and nothing else.
+ * A contribution as the host renders it: the plugin's own declaration plus the
+ * code that supplied it. The code is what makes a contribution's identity
+ * global — `${pluginCode}.${id}` is the published id two plugins can never
+ * collide on.
  */
-export interface ResolvedContribution<S extends SlotId> {
-  key: string;
+export type RegisteredContribution<S extends SlotId> = SlotContribution<S> & {
   pluginCode: string;
-  contribution: ContributionOf<S>;
-}
+};
 
-const [registered, setRegistered] = createSignal<RegisteredPlugin[]>([]);
+const [plugins, setPlugins] = createSignal<readonly LoadedPlugin[]>([]);
 
-/** Every plugin currently registered — for diagnostics and the showcase. */
-export const registeredPlugins = registered;
+/** Every loaded plugin, in load-completion order. Reactive. */
+export const loadedPlugins = plugins;
 
 /**
- * Register a loaded plugin. Re-registering the same code REPLACES the previous
- * entry rather than duplicating it, so a dev-time hot reload of a plugin module
- * doesn't render its contributions twice.
+ * Add a validated plugin to the registry. Called once per plugin by the loader;
+ * a second registration of the same code replaces the first, so a dev-mode
+ * hot reload cannot double-register.
  */
-export const registerPlugin = (plugin: RegisteredPlugin): void => {
-  setRegistered(previous => [
-    ...previous.filter(entry => entry.code !== plugin.code),
+export const registerPlugin = (plugin: LoadedPlugin): void => {
+  setPlugins(current => [
+    ...current.filter(existing => existing.code !== plugin.code),
     plugin,
   ]);
 };
 
-/** Drop everything — tests, and a store/session teardown. */
+/** Drop every registration. Tests and the dev loader only. */
 export const clearPlugins = (): void => {
-  setRegistered([]);
+  setPlugins([]);
 };
 
 /**
- * The contributions targeting `slot`, in final render order.
+ * The contributions for one slot, in final deterministic order — a plain
+ * accessor, so callers compose it into their own single `createMemo` (the value
+ * is a fresh array each read; reading it straight into a `<For>` would tear the
+ * region down on every unrelated update — kdd/solid-reactivity-pitfalls).
  *
- * Order is deterministic and independent of LOAD timing (the rule): `order`
- * ascending, then plugin code, then contribution id — all three from the
- * contribution's own data, never from the sequence plugins happened to arrive
- * in. Two plugins contributing to one slot therefore render the same way on
- * every reload.
- *
- * Visibility (`when`) is deliberately NOT applied here: filtering a reactive
- * gate at this level would rebuild the array and remount every sibling when one
- * contribution appears. The slot region gates each contribution individually
- * (see PluginSlot).
+ * Order is `order` (unset last), then plugin code, then contribution id:
+ * total, independent of which bundle happened to finish loading first, and
+ * identical on every reload (rules § contributions). Where a host region
+ * publishes anchors, the region's own merge re-places these against its
+ * built-ins; this ordering is what breaks ties inside that.
  */
-export const contributionsFor = <S extends SlotId>(
-  slot: S
-): ResolvedContribution<S>[] =>
-  registered()
-    .flatMap(plugin =>
-      plugin.contributions
-        .filter(
-          (contribution): contribution is ContributionOf<S> =>
-            contribution.slot === slot
-        )
-        .map(contribution => ({
-          key: `${plugin.code}.${contribution.id}`,
-          pluginCode: plugin.code,
-          contribution,
-        }))
-    )
-    .sort(
+export const contributionsFor =
+  <S extends SlotId>(slot: S) =>
+  // Returning an accessor IS the contract here: the reactivity is the caller's
+  // to track, inside its own memo.
+  // eslint-disable-next-line solid/reactivity
+  (): readonly RegisteredContribution<S>[] => {
+    const found: RegisteredContribution<S>[] = [];
+    for (const plugin of plugins()) {
+      for (const contribution of plugin.module.contributions ?? []) {
+        if (contribution.slot === slot) {
+          found.push({
+            ...(contribution as SlotContribution<S>),
+            pluginCode: plugin.code,
+          });
+        }
+      }
+    }
+    return found.sort(
       (a, b) =>
-        (a.contribution.order ?? 0) - (b.contribution.order ?? 0) ||
-        a.pluginCode.localeCompare(b.pluginCode) ||
-        a.contribution.id.localeCompare(b.contribution.id)
+        (a.order ?? Number.POSITIVE_INFINITY) -
+          (b.order ?? Number.POSITIVE_INFINITY) ||
+        (a.pluginCode < b.pluginCode
+          ? -1
+          : a.pluginCode > b.pluginCode
+            ? 1
+            : 0) ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
     );
+  };
+
+/**
+ * The built-in dashboard pieces the loaded plugins ask to hide, by published id
+ * (spec/plugins/sdk-contract.md § the dashboard region slot). Suppression is
+ * additive across plugins and applies to built-ins only — a plugin can never
+ * suppress another plugin's contribution, so nothing here is matched against a
+ * contribution id.
+ */
+export const suppressedPieces = (): ReadonlySet<DashboardPieceId> => {
+  const suppressed = new Set<DashboardPieceId>();
+  for (const plugin of plugins()) {
+    for (const id of plugin.module.suppress ?? []) suppressed.add(id);
+  }
+  return suppressed;
+};

@@ -26,7 +26,7 @@ import type {
   FieldValidity,
   FormParticipation,
   SaveContext,
-} from './sdk/types';
+} from '../plugin-sdk/types';
 
 type BeforeHandler = () => void | Promise<void>;
 type AfterHandler = (context: SaveContext) => void | Promise<void>;

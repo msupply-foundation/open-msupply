@@ -70,9 +70,11 @@ export default tseslint.config(
 
   // Application source — browser environment + Solid JSX. compat flags Web
   // APIs unsupported by the minimum browser (browserslist in package.json —
-  // Chromium 138, the newest WebView installable on Android 9).
+  // Chromium 138, the newest WebView installable on Android 9). The example
+  // plugins (examples/) are the same: ordinary Solid components running in the
+  // host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -107,8 +109,9 @@ export default tseslint.config(
    * they are Solid components in the host's runtime, so the reactivity and
    * browser-compat rules apply identically — plus the import boundary
    * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
-   * and solid-js. tsconfig.plugins.json and vite.plugin.config.ts already make a
-   * reach into host source unresolvable; this makes the failure say why.
+   * and solid-js. tsconfig.plugins.json and the plugin build preset
+   * (vite/pluginBuild.ts) already make a reach into host source unresolvable;
+   * this makes the failure say why.
    */
   {
     files: ['plugins/*/src/**/*.{ts,tsx}'],
@@ -127,7 +130,7 @@ export default tseslint.config(
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
       /*
        * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
-       * vite.plugin.config.ts both omit it), but a RELATIVE reach —
+       * the plugin build preset both omit it), but a RELATIVE reach —
        * `../../../src/intl` — resolves fine at both type-check and build time.
        * Only lint closes that, so these patterns are load-bearing rather than
        * belt-and-braces: without them a plugin could silently bundle a frozen
@@ -170,6 +173,7 @@ export default tseslint.config(
     files: [
       'src/**/*.{ts,tsx}',
       'plugins/*/src/**/*.{ts,tsx}',
+      'examples/**/*.{ts,tsx}',
       '*.config.{ts,js}',
       'scripts/**/*.mjs',
     ],

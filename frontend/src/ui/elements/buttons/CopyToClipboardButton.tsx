@@ -1,6 +1,7 @@
-import { createSignal, onCleanup, splitProps } from 'solid-js';
+import { createSignal, splitProps } from 'solid-js';
 import { t } from '../../../intl';
 import { CheckIcon, CopyIcon } from '../../icons';
+import { createFlash } from '../../utils/createFlash';
 import { Button, type ButtonProps } from './Button';
 
 /*
@@ -23,8 +24,6 @@ import { Button, type ButtonProps } from './Button';
  * routing) — the button reverts silently rather than claiming a copy.
  */
 
-const FEEDBACK_MS = 2000;
-
 export interface CopyToClipboardButtonProps extends Omit<
   ButtonProps,
   'variant' | 'icon' | 'children' | 'loading'
@@ -43,17 +42,11 @@ export interface CopyToClipboardButtonProps extends Omit<
 export const CopyToClipboardButton = (props: CopyToClipboardButtonProps) => {
   const [local, rest] = splitProps(props, ['load', 'indent']);
 
-  // busy while `load` is in flight; feedback for a moment after the write
-  // settles (drives the label/icon swap).
+  // busy while `load` is in flight; the outcome flashes for a moment after the
+  // write settles (drives the label/icon swap), then reverts on its own.
   const [busy, setBusy] = createSignal(false);
-  const [feedback, setFeedback] = createSignal<'copied' | 'failed'>();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(timer));
-  const flash = (kind: 'copied' | 'failed') => {
-    setFeedback(kind);
-    clearTimeout(timer);
-    timer = setTimeout(() => setFeedback(undefined), FEEDBACK_MS);
-  };
+  const feedback = createFlash<'copied' | 'failed'>();
+  const flash = feedback.show;
 
   const run = async () => {
     if (busy()) return; // re-entry guard
@@ -93,15 +86,15 @@ export const CopyToClipboardButton = (props: CopyToClipboardButtonProps) => {
     <Button
       variant="secondary"
       aria-live="polite"
-      icon={feedback() === 'copied' ? <CheckIcon /> : <CopyIcon />}
+      icon={feedback.value() === 'copied' ? <CheckIcon /> : <CopyIcon />}
       loading={busy()}
       data-testid="copy-to-clipboard-button"
       {...rest}
       onClick={() => void run()}
     >
-      {feedback() === 'copied'
+      {feedback.value() === 'copied'
         ? t('message.copy-success')
-        : feedback() === 'failed'
+        : feedback.value() === 'failed'
           ? t('message.copy-failed')
           : t('link.copy-to-clipboard')}
     </Button>

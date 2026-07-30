@@ -1,241 +1,226 @@
-/*
- * The plugin loader (spec/plugins/rules.md § discovery & loading, lifecycle;
- * kdd/plugin-loading).
- *
- * Two load paths, one registry:
- *
- * 1. **Dev-link** — in-repo plugin sources under `plugins/<dir>/`, imported
- *    straight into the host module graph when `DEV_PLUGINS` names them. One
- *    `solid-js`, one SDK, real HMR, no build step: this is what "working on a
- *    plugin" means day to day (`DEV_PLUGINS=civ pnpm dev`).
- *    Dead-code-eliminated from production builds — `DEV_PLUGINS` is defined as
- *    `''` there, so the branch and everything it imports drops out (the same
- *    technique the dev-only showcase uses, kdd/showcase-harness).
- *
- * 2. **Installed** — the production path: discover the installed bundles, fetch
- *    each at its content-hash URL, evaluate it as a native ES module, gate on
- *    the plugin-API version, register. ⚠️ This path is implemented but NOT yet
- *    proven end-to-end: a bundle's bare `import 'solid-js'` / `'@openmsupply/
- *    plugin-sdk'` specifiers still need the host to serve
- *    import-map-addressable module URLs (kdd/bundling's R2 externalisation
- *    spike (#770)). `publishHostModules` below is the always-on rendezvous those shim
- *    modules read; the import map itself is the remaining piece.
- *
- * A plugin that fails at any step is SKIPPED: the app continues without it,
- * other plugins are unaffected, and the reason is recorded — never silently
- * swallowed.
- */
 import { graphqlFetch } from '../api/graphql';
-import { currentStoreId, storeContext } from '../store/storeContext';
-import { acceptBundle } from './acceptBundle';
-import { createPluginDataStore } from './pluginData';
-import { FrontendPluginMetadata } from './pluginApi.generated';
-import { registerPlugin } from './registry';
-import type { PluginRuntime } from './sdk/pluginRuntime';
+import { registerPluginTranslations } from '../intl';
+import { PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
+import { pluginBundleUrl } from './bundleUrl';
+import {
+  pluginDiagnostics,
+  recordPluginDiagnostic,
+  type PluginDiagnostic,
+} from './diagnostics';
+import { FrontendPluginMetadata } from './frontendPluginMetadata.generated';
+import { loadedPlugins, registerPlugin, type LoadedPlugin } from './registry';
+import { validateLoadedModule } from './validate';
 
-/** Why a plugin was skipped — administrator/support-facing (ui-surface S3). */
-export interface PluginDiagnostic {
+/*
+ * The plugin loader (spec/plugins/rules.md § discovery & loading).
+ *
+ * Discovery → import → validate → register translations → register
+ * contributions, per plugin, with EVERY step of every plugin inside its own
+ * try/catch. That is the whole design: a plugin cannot fail the app, and it
+ * cannot fail a sibling (AC-PLUG-L3). `Promise.allSettled` over the per-plugin
+ * pipeline means a rejected import is a data point, not a control-flow event.
+ *
+ * `loadPlugins` takes every effect it performs as a dependency so the pipeline
+ * is testable in node with no network, no DOM, and no real bundle;
+ * `ensurePluginsLoaded` is the app's one-line entry point that supplies the
+ * real ones exactly once.
+ */
+
+/** One discovered plugin, as the metadata query reports it. */
+export interface PluginMetadataEntry {
   code: string;
-  reason: string;
+  path: string;
+  hash: string;
 }
 
-const diagnostics: PluginDiagnostic[] = [];
+/** What registering ONE already-evaluated module needs. */
+export interface RegisterModuleDeps {
+  registerTranslations: typeof registerPluginTranslations;
+  register: (plugin: LoadedPlugin) => void;
+  recordDiagnostic: (diagnostic: PluginDiagnostic) => void;
+}
 
-/** Everything that went wrong during loading, in the order it happened. */
-export const pluginDiagnostics = (): readonly PluginDiagnostic[] => diagnostics;
+export interface LoadPluginsDeps extends RegisterModuleDeps {
+  /**
+   * Discovery. Resolves to `undefined` when it failed — the app then runs
+   * plugin-less rather than not running.
+   */
+  fetchMetadata: () => Promise<readonly PluginMetadataEntry[] | undefined>;
+  /** Evaluate a bundle at a URL (the real one is a dynamic `import()`). */
+  importBundle: (url: string) => Promise<unknown>;
+}
 
-const skip = (code: string, reason: string): void => {
-  diagnostics.push({ code, reason });
-  console.error(`Plugin "${code}" skipped: ${reason}`);
-};
-
-// ── The session context a contribution's `when` gate reads ───────────────────
-
-/*
- * Built fresh per read so it tracks `storeContext()` — a gate that depends on a
- * store preference re-evaluates when the context lands or the store changes,
- * without the loader knowing anything about gates.
- *
- * `hasPermission` is re-derived here over the raw permission names rather than
- * reusing the store's typed accessor: the SDK's own signature takes a `string`
- * (a plugin can't be compiled against the host's permission union), and
- * widening through a cast would put an `as` in a boundary that doesn't need
- * one.
- */
-const slotContext = () => ({
-  get storeId() {
-    return currentStoreId() ?? '';
-  },
-  hasPermission: (permission: string): boolean => {
-    const me = storeContext()?.me;
-    if (!me || me.__typename !== 'UserNode') return false;
-    return me.permissions.nodes.some(node =>
-      node.permissions.some(held => held === permission)
-    );
-  },
-  get storePreferences(): Readonly<Record<string, unknown>> {
-    const context = storeContext();
-    return { ...context?.storePreferences, ...context?.preferences };
-  },
-});
-
-/*
- * The per-plugin runtime handed to each of its contributions. Cached per code
- * so a plugin's data store is one object for the app's lifetime — its identity
- * is `(code, entered store)`, and the store id is read through an accessor, so
- * a store switch reaches it without rebuilding anything.
- */
-const runtimes = new Map<string, PluginRuntime>();
-
-export const pluginRuntimeFor = (code: string): PluginRuntime => {
-  const existing = runtimes.get(code);
-  if (existing) return existing;
-  const runtime: PluginRuntime = {
-    code,
-    data: createPluginDataStore(code, () => currentStoreId() ?? ''),
-    context: slotContext(),
-  };
-  runtimes.set(code, runtime);
-  return runtime;
-};
-
-// ── Accepting a plugin ───────────────────────────────────────────────────────
+export const describeError = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 /**
- * Put a loaded module through the acceptance decision (`acceptBundle`, pure and
- * unit-tested) and either register it or record why it was skipped.
+ * Validate an evaluated module namespace and register it under `code`:
+ * everything after the import, and the ONLY path into the registry.
  *
- * `label` names the plugin in diagnostics — the installed code, or the dev-link
- * directory. `installedAs` is the code the server reported, when there is one.
+ * Exported because the dev-only author loop (src/plugins/devPlugins.ts) imports
+ * plugin sources itself and must come through exactly this gate — a plugin
+ * loaded from source is validated, version-checked, and namespaced identically
+ * to an installed bundle, so the dev loop cannot make an invalid plugin appear
+ * to work.
+ *
+ * Returns whether the plugin was registered; every refusal is recorded, so a
+ * caller needs the boolean only to report success.
  */
-const register = (
-  label: string,
-  module: unknown,
-  installedAs?: string
-): void => {
-  const verdict = acceptBundle(module, installedAs);
-  if (verdict.kind === 'skipped') return skip(label, verdict.reason);
-  registerPlugin(verdict.plugin);
-};
-
-// ── Path 1: dev-linked in-repo plugins ──────────────────────────────────────
-
-/*
- * The glob is eager: false and the whole call site is behind `DEV_PLUGINS`, so
- * a production build (where DEV_PLUGINS is the empty string) never reaches it
- * and Rollup drops the plugin sources entirely.
- * `scripts/check-plugin-bundle.mjs` asserts that, per build, rather than
- * trusting it.
- */
-const devPluginModules = (): Record<string, () => Promise<unknown>> =>
-  import.meta.glob('/plugins/*/src/plugin.tsx');
-
-const loadDevPlugins = async (directories: string[]): Promise<void> => {
-  const modules = devPluginModules();
-  for (const directory of directories) {
-    const path = `/plugins/${directory}/src/plugin.tsx`;
-    const load = modules[path];
-    if (!load) {
-      skip(directory, `no dev-linked plugin source at ${path}`);
-      continue;
-    }
-    try {
-      register(directory, await load());
-    } catch (error) {
-      skip(directory, `failed to evaluate: ${String(error)}`);
-    }
+export const acceptPluginModule = (
+  code: string,
+  imported: unknown,
+  deps: RegisterModuleDeps
+): boolean => {
+  const verdict = validateLoadedModule(code, imported);
+  if (verdict.kind === 'refused') {
+    deps.recordDiagnostic({
+      level: 'error',
+      pluginCode: code,
+      message: `not loaded — ${verdict.message}`,
+    });
+    return false;
   }
+  for (const warning of verdict.warnings) {
+    deps.recordDiagnostic({
+      level: 'warning',
+      pluginCode: code,
+      message: warning,
+    });
+  }
+
+  // Translations first: a contribution can render the moment it is registered,
+  // and a registered contribution whose catalogue had not arrived would flash
+  // its raw namespaced keys.
+  try {
+    deps.registerTranslations(code, verdict.module.translations);
+  } catch (error) {
+    deps.recordDiagnostic({
+      level: 'error',
+      pluginCode: code,
+      message: `not loaded — translations could not be registered: ${describeError(error)}`,
+    });
+    return false;
+  }
+
+  try {
+    deps.register({ code, module: verdict.module });
+  } catch (error) {
+    deps.recordDiagnostic({
+      level: 'error',
+      pluginCode: code,
+      message: `not loaded — registration failed: ${describeError(error)}`,
+    });
+    return false;
+  }
+  return true;
 };
 
-// ── Path 2: installed bundles ───────────────────────────────────────────────
+const loadOne = async (
+  entry: PluginMetadataEntry,
+  deps: LoadPluginsDeps
+): Promise<void> => {
+  const { code } = entry;
+  let imported: unknown;
+  try {
+    imported = await deps.importBundle(pluginBundleUrl(entry.path, entry.hash));
+  } catch (error) {
+    deps.recordDiagnostic({
+      level: 'error',
+      pluginCode: code,
+      message: `bundle failed to load: ${describeError(error)}`,
+    });
+    return;
+  }
+  acceptPluginModule(code, imported, deps);
+};
+
+/**
+ * Load every discovered plugin. Never rejects: discovery failure and each
+ * plugin's own failures are recorded and skipped.
+ */
+export const loadPlugins = async (deps: LoadPluginsDeps): Promise<void> => {
+  let metadata: readonly PluginMetadataEntry[] | undefined;
+  try {
+    metadata = await deps.fetchMetadata();
+  } catch (error) {
+    metadata = undefined;
+    deps.recordDiagnostic({
+      level: 'error',
+      message: `plugin discovery threw: ${describeError(error)}`,
+    });
+  }
+  if (!metadata) {
+    deps.recordDiagnostic({
+      level: 'warning',
+      message: 'plugin discovery failed — continuing without plugins',
+    });
+    return;
+  }
+  // allSettled, not all: loadOne already contains its own failures, and this
+  // guarantees the gate opens even if one ever escapes.
+  await Promise.allSettled(metadata.map(entry => loadOne(entry, deps)));
+};
 
 /*
- * Where the server serves plugin files:
- * `/frontend_plugins/{plugin_code}/{filename}` (its actix route). The dev server
- * proxies this prefix to the backend (vite.config.ts), so the production load
- * path can be exercised locally.
+ * The app's real dependencies.
+ *
+ * Discovery is unauthenticated and store-agnostic on the server, so it needs
+ * nothing but a reachable backend; a non-success result is a plugin-less app,
+ * not an error screen (graphqlFetch has already routed infra failures to the
+ * global surfaces).
  */
-const FRONTEND_PLUGINS_ROUTE = '/frontend_plugins';
+const appDeps: LoadPluginsDeps = {
+  fetchMetadata: async () => {
+    const result = await graphqlFetch(FrontendPluginMetadata, {});
+    return result.kind === 'success'
+      ? result.data.frontendPluginMetadata
+      : undefined;
+  },
+  // @vite-ignore: the URL is discovered at runtime, so Vite must not try to
+  // resolve or pre-bundle it. Shared specifiers inside the bundle
+  // (`solid-js`, `@openmsupply/plugin-sdk`) resolve through the host's import
+  // map to the host's own live instances (kdd/plugin-loading).
+  importBundle: url => import(/* @vite-ignore */ url),
+  registerTranslations: registerPluginTranslations,
+  register: registerPlugin,
+  recordDiagnostic: recordPluginDiagnostic,
+};
 
-const loadInstalledPlugins = async (): Promise<void> => {
-  const result = await graphqlFetch(
-    FrontendPluginMetadata,
-    {},
-    {
-      // Discovery failing must not trip the global unexpected-error modal: a
-      // server without the plugin surface, or a transient failure, means "no
-      // plugins" — the app is fine, it just isn't extended.
-      background: true,
-    }
-  );
-  if (result.kind !== 'success') return;
-  const installed = result.data.frontendPluginMetadata;
-  if (installed.length === 0) return;
+let started: Promise<void> | undefined;
 
-  // The host's singletons must be at the rendezvous BEFORE any bundle
-  // evaluates: an installed bundle's bare `solid-js` specifier resolves through
-  // it. Lazy, so a deployment with no plugins never loads it (see hostModules).
-  const { publishHostModules } = await import('./hostModules');
-  publishHostModules();
-
-  for (const entry of installed) {
+/**
+ * Load plugins once per app lifetime, whoever asks first (the boot gate).
+ * Idempotent by holding the promise, so a remount cannot re-import bundles; and
+ * it never rejects, so the gate can always open.
+ */
+export const ensurePluginsLoaded = (): Promise<void> => {
+  started ??= (async () => {
+    // Published before the load, not after: a walk or a support session can
+    // read the handle even when discovery itself fails. Accessors, not
+    // snapshots, so the handle stays live (rules § discovery & loading —
+    // failures visible in diagnostics; the on-screen surface is still
+    // deferred).
+    globalThis.__oms__ = {
+      PLUGIN_API_VERSION,
+      plugins: loadedPlugins,
+      diagnostics: pluginDiagnostics,
+    };
+    await loadPlugins(appDeps);
     /*
-     * `path` is `{code}/{entry_point}` — RELATIVE, with no leading slash and no
-     * route prefix (the server builds it as `format!("{code}/{entry_point}")`).
-     * It must be prefixed with the serve route, and rooted: passed through bare,
-     * `import()` would resolve it against the importing chunk's own URL
-     * (`/assets/civ_plugins/…`) and 404.
+     * The author dev loop, AFTER the installed set: a dev plugin whose code
+     * collides with an installed one replaces it (that is the point of the
+     * override), and the registry's own replace-by-code makes the ordering the
+     * whole mechanism.
      *
-     * The content hash is the cache token: unchanged bytes are an immutable
-     * cache hit, changed bytes are a new URL (rules § caching & updates).
+     * The dynamic import sits inside a statically-false branch in production
+     * (import.meta.env.DEV → false), so devPlugins.ts and the generated
+     * virtual module are dead-code-eliminated — no dev-loop bytes ship, the
+     * same pattern the showcase uses in src/index.tsx.
      */
-    const url = `${FRONTEND_PLUGINS_ROUTE}/${entry.path}?v=${entry.hash}`;
-    try {
-      register(entry.code, await import(/* @vite-ignore */ url), entry.code);
-    } catch (error) {
-      skip(entry.code, `failed to load ${url}: ${String(error)}`);
+    if (import.meta.env.DEV) {
+      const { loadDevPluginsForApp } = await import('./devPlugins');
+      await loadDevPluginsForApp();
     }
-  }
-};
-
-// ── Entry ───────────────────────────────────────────────────────────────────
-
-/*
- * Once per session. Held as the promise, not a boolean, so a second caller
- * during the first load awaits the same work instead of starting a second one.
- */
-let loading: Promise<void> | undefined;
-
-/**
- * Load every plugin available to this client. Called from the store guard, once
- * the session and store context are established (a plugin's `when` gates read
- * store preferences, and its data is store-scoped, so neither is meaningful
- * before then).
- *
- * ⚠️ Boot order — the spec's open decision (rules § lifecycle) resolved here
- * as: **fired after store entry, NOT awaited before the first screen
- * renders.** The rule's intent is that contributions don't pop into an
- * already-rendered screen; blocking on it would put a discovery round-trip
- * plus N bundle fetches in front of every screen for every user — including
- * the overwhelmingly common case of a server with no plugins at all.
- * Registration is a signal, so a contribution that arrives late renders as
- * soon as it lands, and in practice plugins are registered long before a user
- * reaches a slot. Worth confirming with a reviewer; if pop-in proves real for
- * a slot, that slot's screen can await `pluginsLoaded()` rather than the whole
- * app paying for it.
- *
- * Never rejects: a plugin failure is a diagnostic, not an app failure.
- */
-export const loadPlugins = (): Promise<void> => {
-  loading ??= (async () => {
-    if (import.meta.env.DEV && DEV_PLUGINS)
-      await loadDevPlugins(DEV_PLUGINS.split(',').filter(Boolean));
-    await loadInstalledPlugins();
   })();
-  return loading;
+  return started;
 };
-
-/**
- * Resolves when the session's one load attempt has finished (or immediately).
- */
-export const pluginsLoaded = (): Promise<void> => loading ?? Promise.resolve();

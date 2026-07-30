@@ -85,7 +85,7 @@ import {
   saveOutboundServiceCharges,
 } from './service-charges/outboundServiceCharges';
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
-// the returns vertical — AC-V3 hands over to it). Lazy so the returns graph it
+// the returns vertical — OMS-REG-DIST-04.21 hands over to it). Lazy so the returns graph it
 // pulls in stays out of this section's eager chunk, loading only when a return
 // is actually started.
 const ReturnFromShipmentModal = lazy(() =>
@@ -103,12 +103,12 @@ import {
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
 // header (customer + customer reference + line search/filters), Details/Log
 // tabs, the flat read-only SERVER-paginated line table (row click opens the
-// line editor S4 on that row's item AND batch — AC-V1/AC-V6), the side panel
+// line editor S4 on that row's item AND batch — OMS-REG-DIST-03.27/OMS-REG-DIST-03.31), the side panel
 // (S3 § side panel), and the persistent status footer (hold / crumbs / status
-// split button — AC-V2), replaced by the bulk line-action bar on selection.
+// split button — OMS-REG-DIST-04.20), replaced by the bulk line-action bar on selection.
 // Line quantities are entered ONLY in the line editor.
 //
-// TWO independent queries (rules.md § server-paginated line table, AC-V4):
+// TWO independent queries (rules.md § server-paginated line table, OMS-REG-DIST-03.28):
 // `info` (outboundDetail — header/footer/side-panel fields, NOT the lines)
 // and `lines` (outboundLines — one server-filtered/sorted page). An entity-
 // LEVEL save mutates `info` in place; a LINE-level change refetches the lines
@@ -129,7 +129,7 @@ const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is
-// shareable and survives reload + back-nav (AC-V4). All three conform to the
+// shareable and survives reload + back-nav (OMS-REG-DIST-03.28). All three conform to the
 // generated outboundLines variables (no remapping — kdd/type-safety).
 // Selection and the side-panel open state stay local (transient UI). Mirrors
 // the stocktakes detail.
@@ -170,7 +170,7 @@ const OutboundDetailView: Component = () => {
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
-  // WHICH item (and clicked batch, for scroll/focus — AC-V6) to open on:
+  // WHICH item (and clicked batch, for scroll/focus — OMS-REG-DIST-03.31) to open on:
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
   type EditState = { item?: LineEditItem; lineId?: string } | undefined;
@@ -180,7 +180,7 @@ const OutboundDetailView: Component = () => {
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
   // "Return selected lines": at SHIPPED+ opens the customer-return create flow
-  // (returnModalOpen, AC-V3); before that the explanatory notice instead.
+  // (returnModalOpen, OMS-REG-DIST-04.21); before that the explanatory notice instead.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
   const [returnModalOpen, setReturnModalOpen] = createSignal(false);
 
@@ -190,7 +190,7 @@ const OutboundDetailView: Component = () => {
       // A not-found NodeError is NOT routed to the global error modal (which
       // would offer a useless reload of the same bad id, and shadow the local
       // notice); it falls through to `undefined` here and the view shows the
-      // AC-L5 "not found" blocking notice → back to list.
+      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list.
       const result = await graphqlFetch(OutboundDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
@@ -207,7 +207,7 @@ const OutboundDetailView: Component = () => {
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
   const node = (): OutboundNode | undefined => data.latest;
 
-  // The lines PAGE — a separate, server-filtered/sorted/paged query (AC-V4).
+  // The lines PAGE — a separate, server-filtered/sorted/paged query (OMS-REG-DIST-03.28).
   // Keyed on the SERIALISED variables (a stable string) so identical query
   // content doesn't refetch (kdd/solid-reactivity-pitfalls). stripEmpty drops
   // added-but-empty filter chips; the fixed invoiceId + non-service scoping is
@@ -297,7 +297,7 @@ const OutboundDetailView: Component = () => {
     return current ? isEditable(current.status) : false;
   };
 
-  // Status pre-flight (AC-S5/AC-S6) — whole-shipment answers the current page
+  // Status pre-flight (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16) — whole-shipment answers the current page
   // can't give (rules.md § server-paginated line table): three sequential
   // count/name probes run when the user invokes the status change, not
   // reactive derivations. A failed probe returns undefined (graphqlFetch has
@@ -408,9 +408,9 @@ const OutboundDetailView: Component = () => {
     return false;
   };
 
-  // Customer change (AC-N1): reissues under a NEW identity — renavigate to the
+  // Customer change (OMS-REG-DIST-02.20): reissues under a NEW identity — renavigate to the
   // returned id. Blocked (UI) when the shipment came from a requisition
-  // (AC-N2 — the lookup is disabled then, this is the backstop).
+  // (OMS-REG-DIST-02.19 — the lookup is disabled then, this is the backstop).
   const changeCustomer = async (customerId: string) => {
     const current = node();
     if (!current || customerId === current.otherParty.id) return;
@@ -440,7 +440,7 @@ const OutboundDetailView: Component = () => {
 
   // Header click: TanStack computed the next direction; record it as the
   // GraphQL sort array, reset to the first page, and clear the selection
-  // (AC-V9 — the gates below classify by the rows in view).
+  // (OMS-REG-DIST-03.34 — the gates below classify by the rows in view).
   const onSort = (key: SortKey, desc: boolean) => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
     setSelectedIds([]);
@@ -451,10 +451,10 @@ const OutboundDetailView: Component = () => {
     setSelectedIds([]);
   };
 
-  // Row click → the line editor for that row's ITEM (AC-V1), carrying the
-  // clicked line so the editor scrolls to / focuses that batch (AC-V6);
+  // Row click → the line editor for that row's ITEM (OMS-REG-DIST-03.27), carrying the
+  // clicked line so the editor scrolls to / focuses that batch (OMS-REG-DIST-03.31);
   // disabled rows (read-only shipment) get no handler at all. The editor
-  // advances through the list itself via "OK & next" (AC-V7).
+  // advances through the list itself via "OK & next" (OMS-REG-DIST-03.32).
   const openRow = (line: Line) =>
     setEditState({
       item: {
@@ -475,7 +475,7 @@ const OutboundDetailView: Component = () => {
   // table forward — the same as the user paging (rules.md § Save & next).
   // The paging logic lives in ./nextItemWalk (unit-tested); this wires its
   // deps: direct page fetches (race-free — never the reactive resource),
-  // page advance = setQuery + selection clear (AC-V9), abort = the editor
+  // page advance = setQuery + selection clear (OMS-REG-DIST-03.34), abort = the editor
   // closed (a cancel mid-walk must not keep paging the table).
   const walk = createNextItemWalk({
     fetchPage: async (offset, first) => {
@@ -535,10 +535,13 @@ const OutboundDetailView: Component = () => {
   const columns = (): Column<Line, SortKey>[] => {
     // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
     // off the entity's pricing stats — never a sum over the loaded rows, which
-    // would silently become a page total under server pagination (AC-V4).
+    // would silently become a page total under server pagination (OMS-REG-DIST-03.28).
     const pricing = node()?.pricing;
+    // Price footer = stockTotalBeforeTax (contract § detail line table): it
+    // sums the Total column (pack sell price × packs, before tax) — the
+    // after-tax figure belongs to the side panel's stock-charges Total.
     const totals = {
-      price: pricing?.stockTotalAfterTax ?? 0,
+      price: pricing?.stockTotalBeforeTax ?? 0,
       volume: pricing?.totalVolume ?? 0,
     };
     return [
@@ -662,7 +665,15 @@ const OutboundDetailView: Component = () => {
         ...getCurrencyCell(),
       },
       {
-        c: { key: 'totalAfterTax' },
+        // Pack sell price × packs, BEFORE tax (spec § line table col 16) —
+        // not the line's totalAfterTax.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack * line.numberOfPacks,
+          id: 'total',
+        },
         header: () => t('label.total'),
         footer: () => formatCurrencyCell(totals.price),
         ...getCurrencyCell(),
@@ -741,7 +752,7 @@ const OutboundDetailView: Component = () => {
                   onSaveField={async patch => {
                     await saveField(patch);
                     // A backdate DELETES the shipment's lines server-side
-                    // (AC-B2) — the visible page must follow, like any other
+                    // (OMS-REG-DIST-04.24) — the visible page must follow, like any other
                     // line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
@@ -789,7 +800,7 @@ const OutboundDetailView: Component = () => {
                         current app's toolbar layout — the controls hide their
                         own labels, the rows carry them). Customer lookup:
                         disabled when not editable or when the shipment came
-                        from a requisition (AC-N2). */}
+                        from a requisition (OMS-REG-DIST-02.19). */}
                     <FieldRow label={t('label.customer-name')}>
                       <NameSearch
                         label={t('label.customer-name')}
@@ -839,7 +850,7 @@ const OutboundDetailView: Component = () => {
                       onSave={patch => void saveField({ customFields: patch })}
                     />
                     {/* Always-on item search — name OR code (server
-                        itemCodeOrName.like, AC-V5), like the stocktakes
+                        itemCodeOrName.like, OMS-REG-DIST-03.30), like the stocktakes
                         detail. Blank clears to null so stripEmpty drops it (a
                         blank `like` would match everything). */}
                     <FilterTextInput
@@ -922,7 +933,7 @@ const OutboundDetailView: Component = () => {
                         onCommitted={onLineOpsCommitted}
                       />
                     </Show>
-                    {/* Return selected lines (AC-V3): shown at EVERY status (not
+                    {/* Return selected lines (OMS-REG-DIST-04.21): shown at EVERY status (not
                         hidden, not disabled). At SHIPPED / DELIVERED / VERIFIED
                         it opens the customer-return create flow (owned by the
                         returns vertical, over this shipment); any other status
@@ -987,7 +998,7 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (AC-V9): the bulk-
+                  // Page navigation clears the selection (OMS-REG-DIST-03.34): the bulk-
                   // action gates classify by rows in view, so a selection must
                   // never carry ids the user can no longer see.
                   pagination={{
@@ -1054,7 +1065,7 @@ const OutboundDetailView: Component = () => {
                   return result;
                 }}
               />
-              {/* Returns need a shipped shipment (AC-V3) — an info-only
+              {/* Returns need a shipped shipment (OMS-REG-DIST-04.21) — an info-only
                   notice; the return flow is the returns vertical's. */}
               <Show when={returnNoticeOpen()}>
                 <Dialog
@@ -1074,7 +1085,7 @@ const OutboundDetailView: Component = () => {
                   }
                 />
               </Show>
-              {/* From-shipment customer-return flow (AC-V3 → customer-returns
+              {/* From-shipment customer-return flow (OMS-REG-DIST-04.21 → customer-returns
                   S4): seeded from the selected STOCK lines (placeholder and
                   service lines can't be returned, so they're excluded); the
                   return is created born VERIFIED and linked to this shipment,

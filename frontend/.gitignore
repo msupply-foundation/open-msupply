@@ -39,11 +39,6 @@ e2e/playwright-report
 # Local git worktrees (multi-worktree dev flow)
 /.worktrees/
 
-# Built country-plugin bundles (`pnpm build:plugin <dir>`). `dist` above already
-# covers plugins/<dir>/dist; bundle.json is the base64 installable, reproducible
-# from source and regenerated per release — the civ-plugins repo commits its own
-# because it has no build pipeline, this one does.
-plugins/*/bundle.json
-
 # Per-developer Claude Code notes
 CLAUDE.local.md
+__pycache__/
