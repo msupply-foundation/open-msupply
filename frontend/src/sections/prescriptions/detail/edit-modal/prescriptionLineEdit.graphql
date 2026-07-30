@@ -33,6 +33,7 @@ query prescriptionEditLines(
         id
         description
         unusable
+        priority
       }
     }
   }
