@@ -1,0 +1,27 @@
+# Store-context reads gating the requisition detail's conditional surfaces
+# (spec/requisitions › store-context gates). Fetched once per store, read
+# non-suspending; each defaults OFF while unresolved so a gated column/field
+# never flashes in before its gate is known.
+#
+# - preferences.manageVaccinesInDoses → the Doses-per-unit column + the dose
+#   annotations on unit-quantity columns.
+# - preferences.showIndicativePriceInRequisitions → the two indicative-price
+#   columns + the side panel's Pricing section.
+# - preferences.warningForExcessRequest → the excess-request cue on Requested.
+# - storePreferences.responseRequisitionRequiresAuthorisation (with a non-NONE
+#   approval status) → the toolbar's approval row + the approved-quantity /
+#   approval-comment columns.
+# - storePreferences.extraFieldsInRequisition (with a program requisition) →
+#   the extended consumption columns + the Reason column; the customer-stock
+#   column shows on non-program rows regardless.
+query requisitionDetailContext($storeId: String!) {
+  preferences(storeId: $storeId) {
+    manageVaccinesInDoses
+    showIndicativePriceInRequisitions
+    warningForExcessRequest
+  }
+  storePreferences(storeId: $storeId) {
+    responseRequisitionRequiresAuthorisation
+    extraFieldsInRequisition
+  }
+}

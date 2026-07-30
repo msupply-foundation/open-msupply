@@ -1,0 +1,7 @@
+/* The related-document links in the side panel (fulfilling outbound
+   shipments). Medium weight in the primary tone — the kind is already named by
+   the row label, so colour is a redundant cue. */
+.link {
+  font-weight: var(--weight-medium);
+  color: var(--primary-main);
+}
