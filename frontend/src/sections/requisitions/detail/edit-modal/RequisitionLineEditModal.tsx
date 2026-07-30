@@ -281,6 +281,9 @@ const LineEditContent = (
 
   // The reason is offered only at a variance (rules › line editing): at
   // equality the control disables and the stored reason clears on save.
+  // Unlike the rest of the demand side it stays editable on a TRANSFERRED
+  // line (D86) — the reason guard rejects every save of an unreasoned
+  // variance line, so the supplying store must be able to satisfy it.
   const variance = () => requestedUnits() !== suggested();
   const excess = () =>
     props.showExcess && requestedUnits() - suggested() >= 1;
@@ -304,12 +307,11 @@ const LineEditContent = (
 
   // The draft's reason on the wire: where the editor offers the reason
   // control, the chosen id at a variance and null (clear) at equality; where
-  // it does not (non-extended, or the transferred lock), the STORED id is
-  // resent verbatim — an omitted or null optionId clears the stored reason
-  // (contract › line editing).
+  // it does not (non-extended), the STORED id is resent verbatim — an
+  // omitted or null optionId clears the stored reason (contract › line
+  // editing).
   const draftOptionId = (): string | null => {
-    const reasonEditable =
-      props.showExtended && !props.transferred && props.editable;
+    const reasonEditable = props.showExtended && props.editable;
     if (reasonEditable) return variance() ? (draft()?.reasonId ?? null) : null;
     return line()?.reasonId ?? null;
   };
@@ -499,7 +501,7 @@ const LineEditContent = (
             kind="requisition"
             label={t('label.reason')}
             hideLabel
-            disabled={demandDisabled() || !variance()}
+            disabled={disabled() || !variance()}
             error={
               reasonFlagged()
                 ? t('error.provide-reason-requisition')
