@@ -173,6 +173,7 @@ export const SupplierReturnSidePanel: Component<
                   neutral reference), as the customer-returns twin renders the
                   mirror-image link. */}
               <RecordLink
+                testId="originating-shipment-link"
                 href={inboundShipmentHref(
                   params.storeId,
                   shipment().id,
