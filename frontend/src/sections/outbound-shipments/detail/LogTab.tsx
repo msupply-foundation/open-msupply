@@ -1,7 +1,6 @@
 import { createResource, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
@@ -64,7 +63,10 @@ export const LogTab: Component<{
       ...getCellDefinition('date'),
     },
     {
-      c: { accessor: row => localisedTime(row.datetime), id: 'time' },
+      // The RAW datetime, not a pre-formatted string: the `time` preset's cell
+      // calls localisedTime itself, so formatting here too would hand it a
+      // clock string and throw "Invalid time value".
+      c: { accessor: row => row.datetime, id: 'time' },
       header: () => t('label.time'),
       ...getCellDefinition('time'),
     },
