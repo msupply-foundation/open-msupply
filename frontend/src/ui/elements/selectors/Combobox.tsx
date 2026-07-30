@@ -172,11 +172,22 @@ interface ComboboxProps<T> {
    */
   labelInfo?: JSX.Element;
   /**
+   * An interactive control at the inline-end of the field — TextField's
+   * `endAction` contract, mirrored here (ui-standards sanctions a trailing
+   * icon-button in a field). It sits beside the clear and toggle buttons, at
+   * control height, so unlike `labelInfo` it costs the LABEL row nothing: a
+   * field cluster laying its members out on one row (HeaderToolbar's FormRow,
+   * which top-aligns them) keeps every control on the same line, where extra
+   * label-row content would wrap the label at narrow widths and drop this one
+   * field's control below its siblings.
+   */
+  endAction?: JSX.Element;
+  /**
    * Content pinned at the TOP of the open listbox popup, above the options — a
    * sticky in-dropdown header for controls that scope the list (e.g. the
-   * location picker's fullness filter). Interacting with it keeps the popup open
-   * (it lives inside the popup's own content, so the outside-dismiss guard
-   * ignores it). Omit for a plain combobox.
+   * location picker's fullness filter). Interacting with it keeps the popup
+   * open (it lives inside the popup's own content, so the outside-dismiss
+   * guard ignores it). Omit for a plain combobox.
    */
   listboxHeader?: JSX.Element;
   /**
@@ -211,8 +222,8 @@ interface ComboboxProps<T> {
   class?: string;
   /**
    * De-box the control (no border / background) for embedding in a filter chip
-   * / pill (FilterBar's FilterCombobox), so it reads on the tinted pill like the
-   * other chip editors rather than as a nested input box.
+   * / pill (FilterBar's FilterCombobox), so it reads on the tinted pill like
+   * the other chip editors rather than as a nested input box.
    */
   borderless?: boolean;
 }
@@ -238,6 +249,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
   let contentEl: HTMLElement | undefined;
+  // Whether the mouseup now in flight is the one that focused the input — see
+  // the Input's onMouseDown/onMouseUp.
+  let selectOnMouseUp = false;
 
   // Server mode: the caller drives filtering via onInputChange (it refetches
   // `items`), so we disable Kobalte's client-side filter and let it show every
@@ -246,38 +260,61 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
 
   const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
 
-  // Controlled selection: keep the internal `selected` item in sync with
-  // `value` (resolve the key against the current items). `value === undefined`
-  // means "no selection" → clear `selected` (so a caller that resets its value
-  // — e.g. after saving, or when its bound field is cleared — empties the
-  // input, rather than the input keeping the stale item). When the key isn't in
-  // `items` (a server-fed selection from outside the current result page), fall
-  // back to `selectedItem` if the caller supplied it. Guarded by
-  // `on([value, items], ...)` so it only reacts to those two, not the user's
-  // own pick — tracking `items` too (not just `value`) matters for a
-  // non-suspending resource: a picker that mounts with `value` already set
-  // (e.g. a detail screen loaded with a clinician already attached) resolves
-  // against an empty `items` on the first run, and without `items` in the
-  // dependency list the lookup would never re-run once the resource's fetch
-  // actually lands — leaving the field permanently blank.
+  // Controlled selection: `value` OWNS the selection — `items` only resolves it
+  // to an item so the field can show a label. So `value === undefined` means
+  // "no selection" → clear `selected` (a caller that resets its value — after
+  // saving, or when its bound field is cleared — empties the input rather than
+  // keeping the stale item), and a key is resolved against, in order: the
+  // current `items`, the caller's `selectedItem` (a server-fed selection from
+  // outside the current result page), then the selection ALREADY resolved.
   //
-  // Async/server pickers whose current selection may not be in the loaded page
-  // keep it visible by seeding it into `items` themselves (see AsyncCombobox) —
-  // the resolution here is a plain lookup against whatever `items` holds.
+  // That last fallback is what keeps a seeded lookup typeable. In server mode
+  // `items` holds the rows matching what the user is TYPING, which the current
+  // selection usually is not — so resolving against `items` alone dropped the
+  // selection on the first keystroke, and Kobalte answers a cleared selection
+  // by resetting the input text (resetInputValue → setInputValue('')). That
+  // empty value came back as onInputChange(''), which reset the query, which
+  // re-seeded the selection, which reset the input to the selection's label:
+  // every keystroke bounced back to the record's current party and no other
+  // party could ever be searched for (exploratory 2026-07-30, CRN-F2).
+  //
+  // The comparison is by KEY, never by object identity, and the set is GUARDED
+  // by it: re-setting `selected` to the selection it already holds is not a
+  // no-op. Kobalte owns the input's text and resyncs it from its selection
+  // whenever its selectedKeys signal RE-EMITS (its
+  // `on(selectedKeys, resetInputValue)`), so a redundant re-set mid-typing
+  // wrote the selected item's label back over the keystroke — a field holding a
+  // selection could not be retyped over at all (you could not change a
+  // prescription's patient — #801). Callers legitimately mint the seed inline
+  // (`selected={{ id, name }}`) or from a getter, so a FRESH object arrives on
+  // every reactive read and an identity test would re-set on every pass. Same
+  // key means same selection: the label is keyed too, and a dropdown row always
+  // comes from `items`, so holding on to the object we already have goes
+  // nowhere stale.
+  //
+  // Guarded by `on([value, items], ...)` so it only reacts to those two, not
+  // the user's own pick — tracking `items` too matters for a non-suspending
+  // resource: a picker that mounts with `value` already set (e.g. a detail
+  // screen loaded with a clinician already attached) resolves against an empty
+  // `items` on the first run, and without `items` in the dependency list the
+  // lookup would never re-run once the resource's fetch lands — leaving the
+  // field permanently blank.
   createEffect(
     on([() => props.value, () => props.items], ([value, items]) => {
-      const inItems =
+      const current = selected();
+      const resolved =
         value === undefined
-          ? null
-          : (items.find(item => keyOf(item) === value) ?? null);
-      const fallback =
-        value !== undefined &&
-        props.selectedItem &&
-        keyOf(props.selectedItem) === value
-          ? props.selectedItem
-          : null;
-      const match = inItems ?? fallback;
-      if (match !== selected()) setSelected(() => match);
+          ? undefined
+          : (items.find(item => keyOf(item) === value) ??
+            (props.selectedItem && keyOf(props.selectedItem) === value
+              ? props.selectedItem
+              : undefined) ??
+            (current && keyOf(current) === value ? current : undefined));
+      if (!resolved) {
+        if (current !== null) setSelected(null);
+      } else if (!current || keyOf(current) !== value) {
+        setSelected(() => resolved);
+      }
     })
   );
   // Inside a Dialog, mount the listbox into the dialog element (top layer +
@@ -332,19 +369,35 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     props.onChange?.(item);
   };
 
-  // The options Kobalte sees. Kobalte can only DISPLAY a selected value that is
-  // present in its options collection, so when `selectedItem` is the current
-  // value but isn't in `items` (a selection from outside the loaded page), we
-  // prepend it — otherwise the field would show blank. While loading we show no
-  // options EXCEPT that pinned selected item (so the label survives a refetch).
+  // The pinned selection. Kobalte resolves a selected value against its options
+  // collection — that's where it reads the label from, and a key missing from
+  // it blanks the input — so whenever `items` doesn't hold the resolved
+  // selection we put it in the collection ourselves: a selection from outside
+  // the loaded page, or (server mode) one that simply isn't a match for what
+  // the user is typing.
+  //
+  // A pin is in the collection for RESOLUTION, not for display: in server mode
+  // it is filtered back out of the listbox (see defaultFilter), so searching
+  // for a different party is never masked by the current one sitting above the
+  // real matches (#549).
+  const pinned = createMemo<T | undefined>(() => {
+    const sel = selected();
+    if (!sel) return undefined;
+    const base = props.loading ? [] : props.items;
+    return base.some(item => keyOf(item) === keyOf(sel)) ? undefined : sel;
+  });
+  const pinnedKey = () => {
+    const pin = pinned();
+    return pin ? keyOf(pin) : undefined;
+  };
+
+  // The options Kobalte sees: the caller's rows plus the pin above. While
+  // loading we show no options EXCEPT that pin (so the label survives a
+  // refetch).
   const options = createMemo<T[]>(() => {
     const base = props.loading ? [] : props.items;
-    const sel = props.selectedItem;
-    if (sel && props.value !== undefined && keyOf(sel) === props.value) {
-      const present = base.some(item => keyOf(item) === props.value);
-      if (!present) return [sel, ...base];
-    }
-    return base;
+    const pin = pinned();
+    return pin ? [pin, ...base] : base;
   });
 
   // Server-mode infinite scroll: when the listbox is scrolled near its bottom,
@@ -365,6 +418,11 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
   // one JSX node across both would try to mount it in two places. As
   // TextField.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
+  const endAction = children(() => props.endAction);
+  const listboxHeader = children(() => props.listboxHeader);
   const Label = () => (
     <KCombobox.Label class={styles.label}>
       {props.label}
@@ -389,10 +447,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       optionDisabled={
         props.itemDisabled ? item => props.itemDisabled!(item as T) : undefined
       }
-      // Server mode disables the client filter (the caller refetches `items`);
-      // client mode keeps the local substring/predicate filter.
+      // Server mode disables the client filter (the caller refetches `items`) —
+      // except for the pin, which is in the collection only so the selection
+      // resolves and must not show up among the typed query's results (see
+      // `pinned`). Client mode keeps the local substring/predicate filter.
       defaultFilter={
-        serverMode() ? () => true : item => matches(item as T, filterText())
+        serverMode()
+          ? item => keyOf(item as T) !== pinnedKey()
+          : item => matches(item as T, filterText())
       }
       value={selected()}
       onChange={handleChange}
@@ -422,13 +484,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           the label the surrounding layout (a FieldRow) already shows (a hidden
           twin trips strict text-locator matches in the shared e2e suites). */}
       <Show when={!props.hideLabel}>
-        <Show when={props.labelInfo} fallback={<Label />}>
+        <Show when={labelInfo()} fallback={<Label />}>
           {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in
               it its accessible name would leak into the input's (the
               name-from-label computation concatenates descendant controls). */}
           <span class={styles.labelRow}>
             <Label />
-            {props.labelInfo}
+            {labelInfo()}
           </span>
         </Show>
       </Show>
@@ -451,6 +513,34 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           aria-label={props.hideLabel ? props.label : undefined}
           aria-invalid={props.error ? 'true' : undefined}
           aria-required={props.required ? 'true' : undefined}
+          // Focusing a field that already shows a committed selection SELECTS
+          // its text, so the first keystroke REPLACES the old value instead of
+          // being appended to it — the platform autocomplete behaviour (and the
+          // current app's, via MUI's selectOnFocus). Without it, changing a
+          // committed value means manually clearing the text first, which on a
+          // field with no clear affordance (e.g. a prescription's patient —
+          // always present, never emptied) reads as "I can't change this".
+          onFocus={(
+            event: FocusEvent & { currentTarget: HTMLInputElement }
+          ) => {
+            if (selected() !== null) event.currentTarget.select();
+          }}
+          // The FOCUSING click needs the same treatment: a mouse press lands
+          // its own caret after focus runs, collapsing the selection the
+          // handler above just made. So re-select on the mouseup that focused
+          // the field — and only that one, judged before focus moves. A click
+          // in an ALREADY-focused field keeps its natural caret placement, so
+          // editing part of the text by hand still works.
+          onMouseDown={() => {
+            selectOnMouseUp = document.activeElement !== inputEl;
+          }}
+          onMouseUp={(
+            event: MouseEvent & { currentTarget: HTMLInputElement }
+          ) => {
+            if (selectOnMouseUp && selected() !== null)
+              event.currentTarget.select();
+            selectOnMouseUp = false;
+          }}
         />
         <Show when={(props.clearable ?? true) && selected() !== null}>
           <button
@@ -471,6 +561,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <ChevronDownIcon />
           </KCombobox.Icon>
         </KCombobox.Trigger>
+        <Show when={endAction()}>
+          <span class={styles.endAction}>{endAction()}</span>
+        </Show>
       </KCombobox.Control>
       {/* Error message (with an alert icon) takes precedence over helperText — mirrors
           TextField. Nothing is conveyed by colour alone (icon + text). */}
@@ -510,8 +603,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           {/* Sticky in-dropdown header (e.g. the location fullness filter). Sits
               above the options and stays put while the list scrolls. Rendered
               inside the popup content so interacting with it doesn't dismiss. */}
-          <Show when={props.listboxHeader}>
-            <div class={styles.listboxHeader}>{props.listboxHeader}</div>
+          <Show when={listboxHeader()}>
+            <div class={styles.listboxHeader}>{listboxHeader()}</div>
           </Show>
           <Show when={props.loading}>
             <div class={styles.status}>Loading…</div>

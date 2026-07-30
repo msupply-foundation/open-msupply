@@ -95,8 +95,8 @@ import {
   ExportPrintAction,
 } from './actions';
 // "Return selected lines" → the supplier-return from-shipment create flow. The
-// entry point is owned here (inbound detail); the flow is the returns vertical's
-// (mirrors outbound-shipments → customer-returns).
+// entry point is owned here (inbound detail); the flow is the returns
+// vertical's (mirrors outbound-shipments → customer-returns).
 import { ReturnFromInboundAction } from '../../supplier-returns/detail/edit-modal/ReturnFromInboundAction';
 
 // The inbound-shipment detail view (spec S3). Mirrors the stocktake detail
@@ -118,9 +118,9 @@ type DetailUrlState = {
   offset: number;
   first: number;
 };
-// The columns spec S3's line table marks "hidden by default (narrow)" — keyed by
-// column ID (not accessor key). The compact band starts from this whole set; the
-// base band hides the four a desktop still keeps out of the way.
+// The columns spec S3's line table marks "hidden by default (narrow)" — keyed
+// by column ID (not accessor key). The compact band starts from this whole set;
+// the base band hides the four a desktop still keeps out of the way.
 const NARROW_HIDDEN: Record<string, boolean> = {
   comment: false,
   vvmStatus: false,
@@ -682,7 +682,7 @@ const InboundShipmentDetailView: Component = () => {
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
-        header: () => t('label.pack-size'),
+        header: () => t('label.received-pack-size'),
         ...getCellDefinition('packSize'),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
@@ -704,7 +704,7 @@ const InboundShipmentDetailView: Component = () => {
         : []),
       {
         c: { key: 'numberOfPacks' },
-        header: () => t('label.pack-quantity'),
+        header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
       // Difference (H6) — supplier-shipped packs minus received packs; blank

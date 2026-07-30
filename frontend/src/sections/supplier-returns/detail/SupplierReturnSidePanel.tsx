@@ -45,7 +45,9 @@ import type { ReturnFieldEdit } from './returnEdit';
 export interface SupplierReturnSidePanelProps {
   node: SupplierReturnInfoFragment;
   disabled: boolean;
-  /** The shared return edit buffer — reads/writes comment + transportReference. */
+  /**
+   * The shared return edit buffer — reads/writes comment + transportReference.
+   */
   edit: ReturnFieldEdit;
   /** Colour save (header-level, in place). */
   onSetColour: (colour: string) => void;
@@ -195,6 +197,7 @@ export const SupplierReturnSidePanel: Component<
           <TextField
             label={t('label.reference')}
             hideLabel
+            size="small"
             width="full"
             data-testid="transport-reference-field"
             value={props.edit.state.transportReference}

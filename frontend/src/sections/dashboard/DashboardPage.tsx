@@ -158,11 +158,11 @@ const createCountResource = <TResult, TVariables>(
   };
 };
 
-// S1 — the dashboard screen (spec/dashboard/ui-surface.md): three widgets in the
-// card grid (Replenishment, Distribution, Inventory Management), each a
+// S1 — the dashboard screen (spec/dashboard/ui-surface.md): three widgets in
+// the card grid (Replenishment, Distribution, Inventory Management), each a
 // DashboardCard of StatsPanels with a footer create shortcut. Read-only and
-// store-scoped (OMS-REG-DB-01.21/.24) — the only actions are the stat links
-// and the three permission-gated create shortcuts (OMS-REG-DB-01.56).
+// store-scoped (OMS-REG-DB-01.21/.24) — the only actions are the stat links and
+// the three permission-gated create shortcuts (OMS-REG-DB-01.56).
 //
 // Every widget / panel / stat is a built-in with a stable published id
 // (ui-surface § S3); the `id:` markers below name the published-id registry
@@ -170,13 +170,13 @@ const createCountResource = <TResult, TVariables>(
 // The dashboard OWNS the plugin-region merge / suppression semantics in
 // `regions.ts` (published-id tree + `mergeRegion`, unit-tested against an empty
 // contribution set — OMS-REG-DB-01.58 + OMS-REG-DB-02.2–.8); the render
-// integration is the `PluginRegion` at each container's tail plus the `shows(id)`
-// guard on each built-in. Built-ins stay explicit composition — the page renders
-// them directly, gated by their preference gates and their suppression guard —
-// so no count update can remount anything (the risk BUILD_REPORT § plugin-region
-// flagged); only contributions come from a merged list, behind one memo.
-// Suppressing a widget or panel drops its whole subtree for free, because the
-// built-ins nest.
+// integration is the `PluginRegion` at each container's tail plus the
+// `shows(id)` guard on each built-in. Built-ins stay explicit composition — the
+// page renders them directly, gated by their preference gates and their
+// suppression guard — so no count update can remount anything (the risk
+// BUILD_REPORT § plugin-region flagged); only contributions come from a merged
+// list, behind one memo. Suppressing a widget or panel drops its whole subtree
+// for free, because the built-ins nest.
 const DashboardPage: Component = () => {
   // storeId is guaranteed by StoreGuardLayout; counts re-key on it, so a store
   // switch re-fetches every panel (ui-surface § cross-cutting).
@@ -272,10 +272,11 @@ const DashboardPage: Component = () => {
 
   const num = (n: number | undefined) => formatNumber(n ?? 0);
 
-  // Suppression at render (OMS-REG-DB-02.6–.8): a built-in a loaded plugin names
-  // by published id is absent, not disabled. Reactive, so a plugin loading after
-  // the page mounts removes its pieces in place; and because built-ins nest,
-  // suppressing a widget or a panel takes its whole subtree with it.
+  // Suppression at render (OMS-REG-DB-02.6–.8): a built-in a loaded plugin
+  // names by published id is absent, not disabled. Reactive, so a plugin
+  // loading after the page mounts removes its pieces in place; and because
+  // built-ins nest, suppressing a widget or a panel takes its whole subtree
+  // with it.
   const shows = (id: string) => !suppressedPieces().has(id);
 
   return (

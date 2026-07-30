@@ -99,8 +99,8 @@ export const isDraftValid = (draft: PatientDraft): boolean =>
   draft.firstName.trim() !== '' &&
   draft.lastName.trim() !== '';
 
-// Structural equality of two drafts (dirty check). Both are plain field bags, so
-// a stable stringify is exact and cheap.
+// Structural equality of two drafts (dirty check). Both are plain field bags,
+// so a stable stringify is exact and cheap.
 export const draftEquals = (a: PatientDraft, b: PatientDraft): boolean =>
   JSON.stringify(a) === JSON.stringify(b);
 

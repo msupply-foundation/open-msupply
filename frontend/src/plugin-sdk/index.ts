@@ -60,6 +60,15 @@ export type {
   ColumnContribution,
 } from './types';
 
+// ── Slot API — the prescription payment-form slot ───────────────────────────
+export type {
+  FieldValidity,
+  FormParticipation,
+  SaveContext,
+  PrescriptionPaymentView,
+  PrescriptionPaymentFormProps,
+} from './types';
+
 // ── UI kit ──────────────────────────────────────────────────────────────────
 /*
  * The host component library, re-exported so a contribution's markup IS host
@@ -77,6 +86,15 @@ export { Table } from '../ui/elements/table/Table';
 export type { TableProps } from '../ui/elements/table/Table';
 export { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 export type { InfoTooltipProps } from '../ui/elements/feedback/InfoTooltip';
+// The form set, added with the payment-form slot — the union of what the
+// audited country plugins' FORM surfaces use
+// (kdd/plugin-loading/evidence/interface-audits/).
+export { CurrencyField } from '../ui/elements/inputs/CurrencyField';
+export { FieldRow } from '../ui/elements/inputs/FieldRow';
+export { Select } from '../ui/elements/selectors/Select';
+export type { SelectOption } from '../ui/elements/selectors/Select';
+export { FormColumn } from '../ui/layout/Form/FormColumn';
+export { FormColumns } from '../ui/layout/Form/FormColumns';
 
 // ── Intl ────────────────────────────────────────────────────────────────────
 export {
@@ -85,6 +103,8 @@ export {
   isRtl,
   formatNumber,
   round,
+  roundTo,
+  currencyDecimals,
   localisedDate,
   localisedTime,
   localisedDateTime,
@@ -106,6 +126,10 @@ export type { PluginBridge, PluginQuery } from './bridge';
 
 // ── Data access — the plugin-data store ─────────────────────────────────────
 export { pluginData, CONFIGURATION_IDENTIFIER } from './pluginData';
+// A plugin-data insert carries a client-minted row id; `crypto.randomUUID` is
+// secure-context-only (crashes on plain-HTTP LAN origins, #499), so the host's
+// generator is the sanctioned way for a plugin to mint one.
+export { generateUUID } from '../uuid';
 export type {
   PluginDataApi,
   PluginDataRecord,
