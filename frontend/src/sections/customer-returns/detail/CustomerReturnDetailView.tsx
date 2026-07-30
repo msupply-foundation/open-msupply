@@ -67,7 +67,7 @@ import { ExportPrintAction } from './actions/ExportPrintAction';
 // read-only line table grouped by item (row click → the return-items modal),
 // the Additional-info side panel, and the status footer (hold / lifecycle /
 // close / advance). Every edit affordance shares the one editability gate
-// (rules § editability; AC-E7): a VERIFIED return — or a transfer return still
+// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return still
 // in the sender's hands — is read-only.
 
 type Line = CustomerReturnLineFragment;
@@ -189,7 +189,7 @@ const CustomerReturnDetailView: Component = () => {
   };
 
   // A customer change re-runs the customer checks; its typed rejections show
-  // inline on the lookup (AC-C2 / AC-E6).
+  // inline on the lookup (OMS-REG-DIST-07.17 / .24).
   const changeCustomer = async (customerId: string) => {
     setCustomerError(undefined);
     const result = await saveField({ otherPartyId: customerId });
@@ -408,7 +408,7 @@ const CustomerReturnDetailView: Component = () => {
                         rides the row's end and drops to its own line when the
                         row can't hold it: manual returns don't track delivery
                         automatically; a transfer return explains why editing
-                        waits until it is received (AC-T1). */}
+                        waits until it is received (OMS-REG-DIST-07.43). */}
                     <HeaderToolbar
                       alert={
                         <Alert severity="info" compact>

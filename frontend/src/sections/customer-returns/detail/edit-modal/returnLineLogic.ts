@@ -6,7 +6,7 @@ import type {
 
 // Pure draft logic for the return-items modal (spec/customer-returns/rules.md
 // § line rules + ui-surface.md S4). Component-free so the AC-citing tests
-// (acceptance.md AC-E1–E3, AC-E5) exercise the semantics directly.
+// (cases OMS-REG-DIST-07.27–.29, .31) exercise the semantics directly.
 
 // The wire line input — the generated shape, never remapped (kdd/type-safety).
 export type ReturnLineInput =
@@ -34,7 +34,7 @@ export const seedDrafts = (
 
 // The quantity cap: returned ≤ issued where issued is known — a UI-ONLY cap
 // (the server accepts more; contract § line rules wire trap). Quantity is
-// never negative. AC-E5.
+// never negative. OMS-REG-DIST-07.31.
 export const clampQuantity = (
   value: number,
   issued: number | null | undefined
@@ -43,7 +43,8 @@ export const clampQuantity = (
   return issued != null ? Math.min(floored, issued) : floored;
 };
 
-// Step-1 gating (ui-surface S4; the zero-quantity notices — AC-E2, AC-C6's
+// Step-1 gating (ui-surface S4; the zero-quantity notices —
+// OMS-REG-DIST-07.28, .21's
 // UI guard):
 // - 'no-quantity'    — nothing to return. Create mode blocks outright; edit
 //                      mode warns that existing lines will be removed and
@@ -64,7 +65,8 @@ export const validateStep1 = (drafts: DraftReturnLine[]): Step1Verdict => {
 // of them server-side (rules § line rules). The UI warns before applying this,
 // whether or not OTHER lines in the set still carry quantity: the destructive
 // save must be confirmed even in the mixed case, where a zeroed existing line
-// would otherwise never reach the reason step and be removed silently (AC-E2).
+// would otherwise never reach the reason step and be removed silently
+// (OMS-REG-DIST-07.28).
 // New lines at zero are simply dropped, so they never count here.
 export const existingLinesBeingRemoved = (
   drafts: DraftReturnLine[]

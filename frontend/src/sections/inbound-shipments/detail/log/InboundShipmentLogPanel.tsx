@@ -9,7 +9,12 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
 import {
   InboundShipmentLog,
   type InboundLogFragment,
@@ -86,17 +91,7 @@ const changeDetails = (from: string | null, to: string | null): JSX.Element => {
         );
       }
     }
-    return (
-      <span
-        style={{
-          display: 'inline-flex',
-          'flex-direction': 'column',
-          gap: '0.25rem',
-        }}
-      >
-        {changes}
-      </span>
-    );
+    return <Stack gap="sm">{changes}</Stack>;
   }
 
   if (from && to)
@@ -130,23 +125,35 @@ export const InboundShipmentLogPanel: Component<{
   const rows = (): Log[] => logData.latest?.nodes ?? [];
 
   const columns = (): Column<Log, never>[] => [
-    { c: { key: 'datetime' }, header: () => t('label.date'), ...getDateCell() },
+    {
+      c: { key: 'datetime' },
+      header: () => t('label.date'),
+      ...getCellDefinition('date'),
+    },
     {
       c: { accessor: log => localisedTime(log.datetime), id: 'time' },
       header: () => t('label.time'),
-      meta: { align: 'right' },
+      ...getCellDefinition('time'),
     },
     {
       c: { accessor: log => log.user?.username ?? '', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
+    // Event / details have no CELL_DEF key: the event name is a sentence-ish
+    // label and details is the run of changed fields, so both size here — with
+    // details the widest, as the table's sink column.
     {
       c: { accessor: log => eventLabel(log.type), id: 'event' },
       header: () => t('label.event'),
+      ...getTextCell(),
+      size: remToPx(12),
     },
     {
       c: { id: 'details' },
       header: () => t('label.details'),
+      ...getTextCell({ wrapLines: 3 }),
+      size: remToPx(20),
       cell: info => changeDetails(info.row.original.from, info.row.original.to),
     },
   ];

@@ -16,7 +16,7 @@ import type { ReturnFieldEdit } from './returnEdit';
 // The customer is changeable only while the return is editable AND manual
 // (a transfer return's customer is the sending store); a change re-runs the
 // customer checks and its typed rejections surface inline on the lookup
-// (AC-C2 / AC-E6).
+// (OMS-REG-DIST-07.17 / .24).
 
 export interface CustomerReturnToolbarProps {
   storeId: string;
