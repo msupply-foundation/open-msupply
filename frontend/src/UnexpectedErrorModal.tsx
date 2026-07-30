@@ -16,8 +16,8 @@ import { AlertCircleIcon, LockIcon } from './ui/icons';
 // The flow that hit the error stays in its loading phase either way.
 //
 // - Unexpected error: the description, and up to two recovery actions that are
-//   each a full-page navigation (reload in place, or go to the root/dashboard) —
-//   the app restarts from a clean state, so the modal is not otherwise
+//   each a full-page navigation (reload in place, or go to the root/dashboard)
+//   — the app restarts from a clean state, so the modal is not otherwise
 //   dismissable. The Dashboard action only appears once the user is
 //   authenticated and operational (authUser is set): during startup, on the
 //   initialisation screen, and on the login screen there is no dashboard to

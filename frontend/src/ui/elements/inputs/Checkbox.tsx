@@ -1,4 +1,4 @@
-import { createUniqueId, Show, type JSX } from 'solid-js';
+import { children, createUniqueId, Show, type JSX } from 'solid-js';
 import { AlertTriangleIcon } from '../../icons';
 import { BareCheckbox } from './BareCheckbox';
 import type { FocusTarget } from '../../utils/createFocusTarget';
@@ -47,6 +47,9 @@ export const Checkbox = (props: CheckboxProps) => {
   // The <label> that wraps the box + its text. A local component so it renders
   // fresh in either branch (bare, or beside labelInfo) — reusing one JSX node
   // across both would try to mount it in two places. As TextField.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <label class={styles.root} data-disabled={props.disabled ? '' : undefined}>
       <BareCheckbox
@@ -67,10 +70,10 @@ export const Checkbox = (props: CheckboxProps) => {
 
   return (
     <div class={props.class ? `${styles.field} ${props.class}` : styles.field}>
-      <Show when={props.labelInfo} fallback={<Label />}>
+      <Show when={labelInfo()} fallback={<Label />}>
         <span class={styles.labelRow}>
           <Label />
-          {props.labelInfo}
+          {labelInfo()}
         </span>
       </Show>
       <Show when={props.error}>

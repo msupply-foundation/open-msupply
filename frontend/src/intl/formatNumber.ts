@@ -51,6 +51,23 @@ export const round = (value: number | undefined | null, dp = 0): string => {
 };
 
 /**
+ * Round to `decimals` places and return a NUMBER — for arithmetic, where
+ * `round` above returns a formatted string for display.
+ *
+ * Needed wherever a derived money figure is stored or compared rather than just
+ * shown: binary floats make `1.56 - 2` land on 0.43999999999999995, and storing
+ * that (or testing it for equality) is a defect the display layer hides.
+ * `Math.round` is half-away-from-zero, matching the reference client's NumUtils.
+ */
+export const roundTo = (value: number, decimals: number): number => {
+  const factor = 10 ** Math.max(0, Math.min(decimals, MAX_FRACTION_DIGITS));
+  const rounded = Math.round(value * factor) / factor;
+  // Normalise negative zero: rounding a tiny negative residue yields -0, which
+  // stores as "-0" and formats as "-0.00".
+  return rounded === 0 ? 0 : rounded;
+};
+
+/**
  * The characters a locale uses to write a number — what NumberField (and the
  * coming Currency field) needs to gate keystrokes and parse user text. Derived
  * from formatToParts rather than hard-coded per locale, so adding a locale to

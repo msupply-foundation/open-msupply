@@ -39,7 +39,9 @@ export interface SlotStorePreferences {
  * not.
  */
 export interface SlotContext {
-  /** The store the user has entered; undefined before the store guard resolves. */
+  /**
+   * The store the user has entered; undefined before the store guard resolves.
+   */
   storeId: string | undefined;
   /**
    * The user's permissions in the entered store, as the server's PascalCase
@@ -95,7 +97,10 @@ export type PluginLocaleKey = string;
 // `internalOrderLine.infoPanel` join the maps below as their host surfaces
 // land — a new slot is an additive change, a rename is an API-version bump.
 
-/** A published host id — `<widget>` / `<widget>.<panel>` / `<widget>.<panel>.<stat>`. */
+/**
+ * A published host id — `<widget>` / `<widget>.<panel>` /
+ * `<widget>.<panel>.<stat>`.
+ */
 export type DashboardWidgetId = string;
 export type DashboardPanelId = string;
 export type DashboardStatId = string;
@@ -210,7 +215,9 @@ export interface ColumnDeclaration<Row, Data = unknown> {
   anchor?: ColumnAnchor;
   /** Logical, so RTL-safe; `'end'` for numeric columns. */
   align?: 'start' | 'end';
-  /** A resting width in `rem` or `px` (e.g. `'8rem'`); else the host default. */
+  /**
+   * A resting width in `rem` or `px` (e.g. `'8rem'`); else the host default.
+   */
   width?: string;
   /**
    * A batched side-fetch, run ONCE per rendered page of rows (and on refetch),
@@ -299,6 +306,87 @@ export type InternalOrderLineInfoPanelProps = {
   readonly order: InternalOrderView;
 };
 
+// ── Form participation ──────────────────────────────────────────────────────
+// The dirty/validity/veto/after-save handshake between a contribution and the
+// editable host form it sits in (sdk-contract § form participation). Save
+// order: every `onBeforeSave` (a throw ABORTS the save and surfaces its
+// message) → the host persists → every `onAfterSave` is awaited before the
+// save is reported complete.
+
+/** A contribution's verdict on one of its own fields. */
+export interface FieldValidity {
+  valid: boolean;
+  /** Shown by the host when invalid; a translated string, never a key. */
+  message?: string;
+}
+
+/** What an after-save handler learns about the save that just happened. */
+export interface SaveContext {
+  /** The host record the form saved, by id — the natural `relatedRecordId`. */
+  recordId: string;
+}
+
+/**
+ * A contribution's own view of its host form's save cycle. Handlers registered
+ * here bind to the calling component's Solid owner and are released with it, so
+ * a contribution that leaves the screen can no longer affect a save
+ * (rules § form participation).
+ */
+export interface FormParticipation {
+  /** Mark the host form dirty (enables its save affordance). */
+  setDirty: (dirty: boolean) => void;
+  /** Gate the host's save on one of the contribution's own fields. */
+  setValidity: (key: string, validity: FieldValidity) => void;
+  /** Veto hook: throw to abort the save; the Error's message is surfaced. */
+  onBeforeSave: (handler: () => void | Promise<void>) => void;
+  /** Post-persist hook (e.g. write the contribution's own plugin data). */
+  onAfterSave: (
+    handler: (context: SaveContext) => void | Promise<void>
+  ) => void;
+}
+
+// ── The prescription payment-form slot ──────────────────────────────────────
+// The prescription payment window's form region (prescriptions ui-surface §
+// S5: "A plugin slot may extend this form") — the first EDITABLE slot, so the
+// first whose props carry `FormParticipation`.
+
+/**
+ * The prescription the payment window is settling, as the SDK publishes it —
+ * an SDK-OWNED view DTO mapped from host data at the slot boundary
+ * (sdk-contract § SDK surface). The money figures are the host's own rounded
+ * derivation from invoice pricing and the selected insurance policy, so every
+ * contribution sees the same numbers the host shows. Read-only; additive-only
+ * within a `PLUGIN_API_VERSION` major.
+ */
+export interface PrescriptionPaymentView {
+  /** The prescription (invoice) id — the natural `relatedRecordId` for a row. */
+  readonly id: string;
+  /** The prescription's human-facing number. */
+  readonly invoiceNumber: number;
+  /** Total after tax — the whole charge, before any insurance split. */
+  readonly total: number;
+  /** What the selected insurance policy covers; 0 when none is selected. */
+  readonly totalToBePaidByInsurance: number;
+  /** What the patient owes: `total` − `totalToBePaidByInsurance`. */
+  readonly totalToBePaidByPatient: number;
+}
+
+/**
+ * The props a `prescription.paymentForm` contribution receives: the
+ * prescription being settled, and the contribution's own participation in the
+ * window's save. `prescription` updates IN PLACE as the host recomputes the
+ * split, so a contribution MUST read it through `props` on every render (the
+ * info-panel props carry the same rule); `form` is one stable object per
+ * contribution.
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type PrescriptionPaymentFormProps = {
+  readonly prescription: PrescriptionPaymentView;
+  readonly form: FormParticipation;
+};
+
 // ── The slot catalogue ──────────────────────────────────────────────────────
 
 /** Every slot id, and the props its contributions receive. */
@@ -308,6 +396,7 @@ export interface SlotPropsMap {
   'dashboard.stat': DashboardSlotProps;
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
   'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
+  'prescription.paymentForm': PrescriptionPaymentFormProps;
 }
 
 export type SlotId = keyof SlotPropsMap;
@@ -343,6 +432,7 @@ export interface SlotPlacement {
   };
   'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
   'internalOrderLine.infoPanel': NoPlacement;
+  'prescription.paymentForm': NoPlacement;
 }
 
 /**
@@ -358,6 +448,9 @@ export interface SlotRender {
   'internalOrderLine.column': ColumnRender<InternalOrderLineView>;
   'internalOrderLine.infoPanel': {
     Component: Component<InternalOrderLineInfoPanelProps>;
+  };
+  'prescription.paymentForm': {
+    Component: Component<PrescriptionPaymentFormProps>;
   };
 }
 
@@ -386,7 +479,10 @@ export type PluginMessages = Readonly<Record<string, string>>;
 export interface PluginDefinition {
   manifest: PluginManifest;
   contributions?: readonly AnyContribution[];
-  /** Registered under namespace = the plugin's code, layered under server overrides. */
+  /**
+   * Registered under namespace = the plugin's code, layered under server
+   * overrides.
+   */
   translations?: Partial<Record<SupportedLocale, PluginMessages>>;
   /** Built-in dashboard pieces to hide by published id (built-ins only). */
   suppress?: readonly DashboardPieceId[];

@@ -10,21 +10,8 @@ import {
 
 const ROOT = '/repo';
 
-/**
- * A fake disk: `dirs` maps a directory to its subdirectory names, `files` maps
- * a path to its contents (JSON files as objects).
- */
+/** A fake disk: a map of path → contents (JSON files as objects). */
 const fakeFs = (tree: Record<string, unknown>): DevPluginFs => ({
-  readDirectories: dir => {
-    const prefix = `${dir}/`;
-    const names = new Set<string>();
-    for (const path of Object.keys(tree)) {
-      if (!path.startsWith(prefix)) continue;
-      const rest = path.slice(prefix.length);
-      if (rest.includes('/')) names.add(rest.slice(0, rest.indexOf('/')));
-    }
-    return [...names];
-  },
   readJson: file => tree[file],
   exists: file => file in tree,
 });
@@ -117,42 +104,39 @@ describe('discoverDevPlugins', () => {
     '/repo/examples/api_too_new/plugin.tsx': '',
   };
 
-  it('finds every examples/* plugin at its entry module', () => {
-    const { plugins, problems } = discoverDevPlugins(
-      ROOT,
-      undefined,
-      fakeFs(examples)
-    );
-    expect(problems).toEqual([]);
-    expect(plugins).toEqual([
-      {
-        code: 'hello_world',
-        dir: '/repo/examples/hello_world',
-        entry: '/repo/examples/hello_world/plugin.tsx',
-      },
-      {
-        code: 'api_too_new',
-        dir: '/repo/examples/api_too_new',
-        entry: '/repo/examples/api_too_new/plugin.tsx',
-      },
-    ]);
-  });
-
-  it('skips an examples/* directory that is not a frontend plugin', () => {
-    // Not a request — the directory is ours, so no complaint either.
+  it('loads NOTHING when OMS_PLUGIN_DIRS is unset — in-repo plugins are opt-in', () => {
     const { plugins, problems } = discoverDevPlugins(
       ROOT,
       undefined,
       fakeFs({
         ...examples,
-        '/repo/examples/notes/README.md': '',
-        '/repo/examples/backend_only/package.json': plugin('backend_only', {
-          omSupplyPlugin: { target: 'backend' },
-        }),
+        '/repo/plugins/civ/package.json': plugin('civ_plugins'),
+        '/repo/plugins/civ/src/plugin.tsx': '',
       })
     );
-    expect(plugins.map(p => p.code)).toEqual(['hello_world', 'api_too_new']);
+    expect(plugins).toEqual([]);
     expect(problems).toEqual([]);
+  });
+
+  it('loads an in-repo plugin named by repo-relative path', () => {
+    const { plugins, problems } = discoverDevPlugins(
+      ROOT,
+      'plugins/civ',
+      fakeFs({
+        ...examples,
+        '/repo/plugins/civ/package.json': plugin('civ_plugins'),
+        '/repo/plugins/civ/src/plugin.tsx': '',
+      })
+    );
+    expect(problems).toEqual([]);
+    // Only the named directory — the unnamed examples stay out.
+    expect(plugins).toEqual([
+      {
+        code: 'civ_plugins',
+        dir: '/repo/plugins/civ',
+        entry: '/repo/plugins/civ/src/plugin.tsx',
+      },
+    ]);
   });
 
   it('prefers src/plugin.tsx only when no root entry exists', () => {
@@ -200,20 +184,17 @@ describe('discoverDevPlugins', () => {
     ]);
   });
 
-  it('lets a named directory override an example of the same code', () => {
+  it('lets a later entry override an earlier one of the same code', () => {
     const { plugins } = discoverDevPlugins(
       ROOT,
-      '/work/hello_world',
+      'examples/hello_world:/work/hello_world',
       fakeFs({
         ...examples,
         '/work/hello_world/package.json': plugin('hello_world'),
         '/work/hello_world/plugin.tsx': '',
       })
     );
-    expect(plugins.map(p => p.entry)).toEqual([
-      '/work/hello_world/plugin.tsx',
-      '/repo/examples/api_too_new/plugin.tsx',
-    ]);
+    expect(plugins.map(p => p.entry)).toEqual(['/work/hello_world/plugin.tsx']);
   });
 });
 

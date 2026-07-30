@@ -17,11 +17,11 @@ import styles from './ColumnSettings.module.css';
 // then a row per column — an eye / eye-off visibility toggle + name (the
 // clickable label), with Move up/down and Pin left/right control groups
 // trailing (column WIDTH is set by dragging the header edge, not here). It's a
-// thin renderer over TanStack's own per-column getters/handlers (kdd/table-state
-// — the brains are TanStack's; we only draw the UI): getIsVisible/getCanHide,
-// getCanPin/getIsPinned/pin. Table-wide actions (density, Reset table to
-// default, save-as-global-default) live in the separate Settings popover — see
-// TableSettings.
+// thin renderer over TanStack's own per-column getters/handlers
+// (kdd/table-state — the brains are TanStack's; we only draw the UI):
+// getIsVisible/getCanHide, getCanPin/getIsPinned/pin. Table-wide actions
+// (density, Reset table to default, save-as-global-default) live in the
+// separate Settings popover — see TableSettings.
 //
 // Writes go through setConfig (the same controlled path DataTable uses), so
 // persistence + layering still apply.
@@ -88,7 +88,12 @@ export function ColumnSettings<T>(props: {
   // flexRender — none of our headers read the context argument, so an empty
   // one is safe here. Falls back to the column id if a column has no header.
   const label = (id: string): JSX.Element => {
-    const header = props.table.getColumn(id)?.columnDef.header;
+    const def = props.table.getColumn(id)?.columnDef;
+    // A column whose grid header renders empty/iconic names itself here via
+    // meta.columnSettingsLabel (e.g. the line editor's auto-allocation tick).
+    const settingsLabel = def?.meta?.columnSettingsLabel;
+    if (settingsLabel) return settingsLabel();
+    const header = def?.header;
     if (typeof header !== 'function') return id;
     return header({} as HeaderContext<T, unknown>);
   };

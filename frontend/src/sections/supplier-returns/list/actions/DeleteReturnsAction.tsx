@@ -40,8 +40,8 @@ export const DeleteReturnsAction: Component<
   const [blockedOpen, setBlockedOpen] = createSignal(false);
 
   const onClick = () => {
-    // Pre-check: every selected return must still be editable (NEW or PICKED) or
-    // the whole batch is refused with an explanatory notice in place of the
+    // Pre-check: every selected return must still be editable (NEW or PICKED)
+    // or the whole batch is refused with an explanatory notice in place of the
     // confirmation (the running app's client-side gate; skips Shipped rows).
     if (
       props

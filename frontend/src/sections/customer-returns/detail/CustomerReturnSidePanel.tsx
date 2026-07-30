@@ -28,14 +28,15 @@ import {
   type CustomerReturnInfoFragment,
 } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
+import { returnKind } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/customer-returns/ui-surface.md S3 § side panel):
 // Additional info (edited-by / colour / comment) and Related documents (the
 // originating outbound shipment, when there is one) are collapsible info
 // sections (open by default); the record actions — Delete (offered only while
-// NEW — rules § deletion, OMS-REG-DIST-07.42) and Copy to clipboard — are pinned at the
-// panel's end, below them.
+// NEW — rules § deletion, OMS-REG-DIST-07.42) and Copy to clipboard — are
+// pinned at the panel's end, below them.
 
 export interface CustomerReturnSidePanelProps {
   node: CustomerReturnInfoFragment;
@@ -179,6 +180,23 @@ export const CustomerReturnSidePanel: Component<
           )}
         </Show>
       </SidePanelSection>
+
+      {/* Transport details — transfer returns only (ui-surface S3 § side panel),
+          read-only: the transport reference is written by the transfer-creation
+          process and no return surface edits it. Same section as the shipment
+          verticals'; a return carries no shipping method or expected-delivery
+          date, so the reference is the whole section. */}
+      <Show when={returnKind(props.node) === 'transfer'}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+          collapsible
+        >
+          <FieldRow label={t('label.transport-reference')}>
+            <span>{props.node.transportReference ?? '—'}</span>
+          </FieldRow>
+        </SidePanelSection>
+      </Show>
 
       {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
           return, danger tone — Delete buttons are danger app-wide, Carl

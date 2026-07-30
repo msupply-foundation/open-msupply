@@ -5,10 +5,10 @@ import {
   type StockLocationsResult,
 } from './stockLocations.generated';
 
-// The store's locations with their type, for the stock location pickers (S2/S3).
-// A location can be restricted to a type by the item; the picker offers only
-// matching locations when a restriction is set (spec/stock S2/S3), and the
-// server enforces IncorrectLocationType regardless.
+// The store's locations with their type, for the stock location pickers
+// (S2/S3). A location can be restricted to a type by the item; the picker
+// offers only matching locations when a restriction is set (spec/stock S2/S3),
+// and the server enforces IncorrectLocationType regardless.
 
 export type StockLocation = Extract<
   StockLocationsResult['locations'],

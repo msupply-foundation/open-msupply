@@ -8,7 +8,10 @@ import type { ItemVariantRow } from './itemVariantEdit';
 export type DraftBundledItem = {
   /** The chosen item; '' = none picked yet (step 1, ui-surface S4). */
   itemId: string;
-  /** The chosen variant of that item; '' = none picked (step 2, shown once itemId is set). */
+  /**
+   * The chosen variant of that item; '' = none picked (step 2, shown once
+   * itemId is set).
+   */
   variantId: string;
   /** Pre-filled 1 (ui-surface S4); undefined = blank. */
   ratio: number | undefined;

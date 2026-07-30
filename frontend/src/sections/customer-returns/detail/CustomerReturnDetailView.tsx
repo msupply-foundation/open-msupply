@@ -8,12 +8,14 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
+import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -24,11 +26,16 @@ import {
   TabPanel,
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
-import { PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
+import {
+  MinusCircleIcon,
+  PlusCircleIcon,
+  SidebarIcon,
+} from '../../../ui/icons';
 import {
   DataTable,
   type CardGroup,
   type Column,
+  type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
@@ -36,6 +43,7 @@ import {
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
+import { useUrlQueryState } from '../../../list/urlQueryState';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -43,8 +51,10 @@ import {
 } from '../../../domain/customFields';
 import {
   CustomerReturnDetail,
+  CustomerReturnLines,
   type CustomerReturnInfoFragment,
   type CustomerReturnLineFragment,
+  type CustomerReturnLinesVariables,
   type UpdateCustomerReturnVariables,
 } from './customerReturnDetail.generated';
 import { CustomerReturnPreferences } from '../preferences.generated';
@@ -55,22 +65,57 @@ import { LogTab } from './LogTab';
 import {
   ReturnItemsModal,
   type ReturnItem,
-  type ReturnLinesSaved,
 } from './edit-modal/ReturnItemsModal';
 import { isReturnDisabled, returnKind } from './returnStatus';
 import { saveReturnFields } from './returnUpdate';
 import type { ReturnEditFields } from './returnEdit';
 import { ExportPrintAction } from './actions/ExportPrintAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
 
 // The customer-return detail view (spec/customer-returns/ui-surface.md S3):
 // toolbar (customer / reference / kind banner), Details | Log tabs, the
-// read-only line table grouped by item (row click → the return-items modal),
-// the Additional-info side panel, and the status footer (hold / lifecycle /
-// close / advance). Every edit affordance shares the one editability gate
-// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return still
-// in the sender's hands — is read-only.
+// read-only line table (row click → the return-items modal), the
+// Additional-info side panel, and the status footer (hold / lifecycle / close /
+// advance). Every edit affordance shares the one editability gate (rules §
+// editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return
+// still in the sender's hands — is read-only.
+//
+// TWO independent resources, mirroring the stocktake/inbound reference (spec
+// rules § server-paginated line table, OMS-REG-DIST-07.47): `info` (the header
+// node — a single record, spliced in place from each return-level save) and
+// `lines` (ONE server-sorted, server-paginated page, refetched after any line
+// change). The browser never holds the whole line set, so anything that needs
+// every line reads a server count instead (`totalCount`).
 
 type Line = CustomerReturnLineFragment;
+
+// The server sort-field union, straight from codegen — a column can only ever
+// name a real server sort key (kdd/type-safety). The columns the server has no
+// key for (Unit, Number of packs, Pack sell price) and the two client-computed
+// ones (Total quantity, Line total) simply omit `sortKey` (spec contract §
+// backend gaps).
+type SortKey = NonNullable<CustomerReturnLinesVariables['sort']>[number]['key'];
+
+const DEFAULT_PAGE_SIZE = 20;
+
+// The URL-backed view state (kdd/url-structure): sort + pagination in the one
+// `?query=` JSON param, so a sorted/paged table is shareable and survives a
+// reload or back-nav. Conforms to the generated customerReturnLines variables
+// (no remapping). Selection and the side-panel open state stay local (transient
+// UI). The detail table offers no filter of its own — the invoiceId + type
+// filter is pinned by the query, not the user (spec contract § backend gaps).
+type DetailUrlState = {
+  sort: NonNullable<CustomerReturnLinesVariables['sort']>;
+  offset: number;
+  first: number;
+};
+
+const DEFAULT_URL_STATE: DetailUrlState = {
+  // Default sort: item name ascending (ui-surface S3 § line table).
+  sort: [{ key: 'itemName', desc: false }],
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
+};
 
 // Card view (below 600px): the item name is the card title (headerPosition
 // 'primary') and the packs returned its badge; Code / Batch / Expiry / Unit
@@ -84,11 +129,18 @@ const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
 const CustomerReturnDetailView: Component = () => {
   const params = useParams<{ storeId: string; returnId: string }>();
   const navigate = useNavigate();
+  // Sort + pagination are URL-backed in one `?query=` param (spec rules §
+  // server-paginated line table).
+  const { query, setQuery } =
+    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
   // The shared side-panel open state: responsive default (open on a wide
   // viewport) with the user's explicit choice persisted — the same helper every
   // other detail screen uses.
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [customerError, setCustomerError] = createSignal<string | undefined>();
+  // Line selection (transient UI, like every other detail screen's): drives the
+  // footer's bulk-action bar (ui-surface S3 § footer).
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
   type EditState =
     { mode: 'update'; itemId: string } | { mode: 'add' } | undefined;
@@ -103,9 +155,10 @@ const CustomerReturnDetailView: Component = () => {
     },
   });
 
-  // Fetch the return. A NodeError (bad id) is promoted to the global
-  // unexpected-error modal; a non-return invoice id is treated the same. The
-  // resource IS the local state: every save writes back with `mutate`
+  // Fetch the return's HEADER (no lines — they are their own query below). A
+  // NodeError (bad id) is promoted to the global unexpected-error modal; a
+  // non-return invoice id is treated the same. The resource IS the local state
+  // for the header: every return-level save writes back with `mutate`
   // (kdd/state-management).
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, id: params.returnId }),
@@ -124,8 +177,79 @@ const CustomerReturnDetailView: Component = () => {
   );
 
   const info = (): CustomerReturnInfoFragment | undefined => data();
-  const rows = (): Line[] => data()?.lines.nodes ?? [];
-  const hasLines = () => rows().length > 0;
+
+  // ONE server-sorted, server-paginated page of the return's lines. invoiceId +
+  // type are pinned (a customer return's lines are STOCK_IN); sort and page
+  // come from the URL. Keyed on the SERIALISED variables (a stable string) so
+  // identical query content never refetches (kdd/solid-reactivity-pitfalls).
+  const linesVariables = createMemo<CustomerReturnLinesVariables>(() => ({
+    storeId: params.storeId,
+    filter: {
+      invoiceId: { equalTo: params.returnId },
+      type: { equalTo: 'STOCK_IN' },
+    },
+    sort: query().sort,
+    page: { first: query().first, offset: query().offset },
+  }));
+  const [linesData, { refetch: refetchLines }] = createResource(
+    () => JSON.stringify(linesVariables()),
+    async serialised => {
+      const result = await graphqlFetch(
+        CustomerReturnLines,
+        JSON.parse(serialised) as CustomerReturnLinesVariables
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+        ? result.data.invoiceLines
+        : undefined;
+    }
+  );
+  // NON-suspending reads (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction): a line save, a bulk delete, and every "Save & next" page
+  // advance refetch this while the return-items modal is OPEN. A suspending
+  // read would tear down the page's Suspense boundary and detach the <dialog>
+  // (backdrop gone, focus lost). The `.state` gate keeps the current page on
+  // screen while the fresh one lands.
+  const linesReady = () =>
+    linesData.state === 'ready' || linesData.state === 'refreshing';
+  const rows = (): Line[] =>
+    linesReady() ? (linesData.latest?.nodes ?? []) : [];
+  // The return's WHOLE line count, not the held page's — the pager reads it,
+  // and so does the no-lines status precondition (OMS-REG-DIST-07.38): a page
+  // can be empty while later pages hold lines.
+  const totalCount = () =>
+    linesReady() ? (linesData.latest?.totalCount ?? 0) : 0;
+  const hasLines = () => totalCount() > 0;
+  // Selection is per page (the deferred multi-page selection pattern —
+  // spec/customer-returns README § known gaps), so the selected rows are always
+  // resolvable from the held page.
+  const selectedLines = (): Line[] =>
+    rows().filter(line => selectedIds().includes(line.id));
+
+  // A save-triggered refetch is SILENT: the table keeps its rows while the
+  // fresh page swaps in, so a "Save & next" walk doesn't flash a loading
+  // treatment behind the open modal. A user fetch (sort/page) shows it.
+  const [silentRefetching, setSilentRefetching] = createSignal(false);
+  const refetchAfterSave = async () => {
+    setSilentRefetching(true);
+    try {
+      await refetchLines();
+    } finally {
+      setSilentRefetching(false);
+    }
+  };
+  const tableLoading = () => linesData.loading && !silentRefetching();
+
+  const currentSort = (): SortState<SortKey> | undefined => {
+    const s = query().sort[0];
+    return s ? { key: s.key, desc: s.desc ?? false } : undefined;
+  };
+  // Header click: the table computed the next direction; record it as the
+  // GraphQL sort array and go back to the first page.
+  const onSort = (key: SortKey, desc: boolean) => {
+    setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
+    setSelectedIds([]);
+  };
 
   // The store preferences the status controls key off (rules § preference
   // gates). `.latest` — never suspends; empty = no restriction while loading.
@@ -196,9 +320,17 @@ const CustomerReturnDetailView: Component = () => {
     if (result?.kind === 'error') setCustomerError(result.message);
   };
 
-  // A line save returns the whole invoice with its refreshed line set —
-  // replace the node wholesale (no splicing needed).
-  const onLinesSaved = (node: ReturnLinesSaved) => mutate(() => node);
+  // A line-level change committed (the return-items modal, or the bulk delete).
+  // The table is server-paginated, so we REFETCH its current page rather than
+  // splice the mutation's line set into a held list (spec rules § server-
+  // paginated line table; issue #428). The selection is dropped with it: a save
+  // can remove lines (a zeroed quantity deletes — rules § line rules), so
+  // keeping ids the user can no longer see would leave the bulk-action bar
+  // acting on nothing.
+  const onLinesChanged = () => {
+    setSelectedIds([]);
+    void refetchAfterSave();
+  };
 
   const onAdvanced = (saved: CustomerReturnInfoFragment) =>
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
@@ -210,29 +342,78 @@ const CustomerReturnDetailView: Component = () => {
     return line ? { id, code: line.item.code, name: line.itemName } : undefined;
   };
 
-  // The distinct item AFTER currentId in the current row order ("OK & next").
-  const nextItem = (currentId: string): ReturnItem | undefined => {
-    const seen = new Set<string>();
-    let past = false;
-    for (const line of rows()) {
-      const id = line.item.id;
-      if (id === currentId) {
-        past = true;
-        seen.add(id);
-        continue;
-      }
-      if (past && !seen.has(id))
+  // "Save & next" asks the PARENT for the next item to edit, because the line
+  // table is server-paginated: the next item may sit on a later page, and
+  // finding it means paging the visible table forward — exactly as the user
+  // would (spec rules § line rules, OMS-REG-DIST-07.49). Mirrors the stocktake
+  // and inbound reference implementations.
+  //
+  //   1. Scan the CURRENT page's rows after the current item for the next
+  //      distinct item not in `covered` (an item spans several batch rows).
+  //   2. None left on this page → advance a page (offset += first, so the table
+  //      VISIBLY moves), fetch it, and rescan from its top.
+  //   3. Every page exhausted → undefined; the modal then drops into add mode
+  //      and the table is left on the page the walk reached.
+  //
+  // `covered` is the modal's this-run set (every item stepped through, the
+  // current one included), so a re-appearing item is never offered twice —
+  // across pages too.
+  //
+  // Later pages are fetched DIRECTLY rather than through the reactive resource,
+  // so the walk is race-free; setQuery still moves the URL-backed offset so the
+  // visible table follows along.
+  const nextItem = async (
+    currentId: string,
+    covered: Set<string>
+  ): Promise<ReturnItem | undefined> => {
+    // On the CURRENT page start AFTER the current item's rows (`fromStart`
+    // false): items before it are uncovered but already behind the user, so a
+    // `past` gate walks past the current item first. Later pages are all
+    // "after", so `fromStart` is true.
+    const pick = (
+      pageRows: Line[],
+      fromStart: boolean
+    ): ReturnItem | undefined => {
+      let past = fromStart;
+      for (const line of pageRows) {
+        const id = line.item.id;
+        if (id === currentId) {
+          past = true;
+          continue;
+        }
+        if (!past || covered.has(id)) continue;
         return { id, code: line.item.code, name: line.itemName };
-      seen.add(id);
-    }
-    return undefined;
-  };
+      }
+      return undefined;
+    };
 
-  const existingItemIds = (): string[] => [
-    ...new Set(rows().map(line => line.item.id)),
-  ];
-  const existingLineIds = (): ReadonlySet<string> =>
-    new Set(rows().map(line => line.id));
+    const onThisPage = pick(rows(), false);
+    if (onThisPage) return onThisPage;
+
+    let offset = query().offset;
+    const first = query().first;
+    for (;;) {
+      offset += first;
+      if (offset >= totalCount()) return undefined; // no further pages
+      setQuery({ ...query(), offset });
+      const result = await graphqlFetch(CustomerReturnLines, {
+        storeId: params.storeId,
+        filter: {
+          invoiceId: { equalTo: params.returnId },
+          type: { equalTo: 'STOCK_IN' },
+        },
+        sort: query().sort,
+        page: { first, offset },
+      });
+      if (
+        result.kind !== 'success' ||
+        result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
+      )
+        return undefined;
+      const found = pick(result.data.invoiceLines.nodes, true);
+      if (found) return found;
+    }
+  };
 
   const openRow = (line: Line) =>
     setEditState({ mode: 'update', itemId: line.item.id });
@@ -262,14 +443,22 @@ const CustomerReturnDetailView: Component = () => {
   // also gain the monospace treatment the spec's column table names. Code /
   // Batch / Expiry / Unit stay in the card's default group; the rest fold into
   // the collapsed "More details" disclosure (CARD_GROUPS above).
-  const columns = (): Column<Line, never, GroupKey>[] => [
+  //
+  // `sortKey` appears ONLY where InvoiceLineSortFieldInput has a key, since all
+  // sorting is server-side (spec ui-surface § line table, contract § backend
+  // gaps): Code / Name / Batch / Expiry / Pack size sort; Unit, Number of packs
+  // and Pack sell price have no server key, and Total quantity / Line total are
+  // client arithmetic over two fields.
+  const columns = (): Column<Line, SortKey, GroupKey>[] => [
     {
       c: { accessor: line => line.item.code, id: 'item.code' },
+      sortKey: 'itemCode',
       header: () => t('label.code'),
       ...getCellDefinition('code'),
     },
     {
       c: { key: 'itemName' },
+      sortKey: 'itemName',
       header: () => t('label.name'),
       ...getCellDefinition('itemName', {
         headerPosition: 'primary',
@@ -278,11 +467,13 @@ const CustomerReturnDetailView: Component = () => {
     },
     {
       c: { key: 'batch' },
+      sortKey: 'batch',
       header: () => t('label.batch'),
       ...getCellDefinition('batch'),
     },
     {
       c: { key: 'expiryDate' },
+      sortKey: 'expiryDate',
       header: () => t('label.expiry'),
       // The expiry preset, not the plain date cell: it carries the near-expiry
       // emphasis the spec's column 4 names.
@@ -295,6 +486,7 @@ const CustomerReturnDetailView: Component = () => {
     },
     {
       c: { key: 'packSize' },
+      sortKey: 'packSize',
       header: () => t('label.pack-size'),
       ...getCellDefinition('packSize'),
       cardGroup: 'more',
@@ -457,15 +649,46 @@ const CustomerReturnDetailView: Component = () => {
                   </Header>
                 }
                 contentFooter={
-                  <CustomerReturnStatusFooter
-                    storeId={params.storeId}
-                    node={node()}
-                    disabled={disabled()}
-                    hasLines={hasLines()}
-                    statusOptions={statusOptions()}
-                    onSetHold={setHold}
-                    onAdvanced={onAdvanced}
-                  />
+                  // On selection the bulk-action bar REPLACES the status row
+                  // (ui-surface S3 § footer) — count · Delete · clear.
+                  // Selection is offered only while the return is editable (see
+                  // the table below), so the bar can't appear on a read-only
+                  // return.
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <CustomerReturnStatusFooter
+                        storeId={params.storeId}
+                        node={node()}
+                        disabled={disabled()}
+                        hasLines={hasLines()}
+                        statusOptions={statusOptions()}
+                        onSetHold={setHold}
+                        onAdvanced={onAdvanced}
+                      />
+                    }
+                  >
+                    <ContentFooter testId="actions-footer">
+                      <strong data-testid="selected-rows-count">
+                        {tPlural('label.items-selected', selectedIds().length)}
+                      </strong>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        returnId={node().id}
+                        selectedLines={selectedLines}
+                        onDeleted={onLinesChanged}
+                      />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<MinusCircleIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
                 }
               >
                 <TabPanel value="details">
@@ -474,8 +697,17 @@ const CustomerReturnDetailView: Component = () => {
                     cardGroups={CARD_GROUPS}
                     rows={rows()}
                     rowKey={line => line.id}
-                    loading={data.loading}
+                    loading={tableLoading()}
+                    sort={currentSort()}
+                    onSort={onSort}
                     onRowClick={disabled() ? undefined : openRow}
+                    // Selection exists only to delete lines, so it follows the
+                    // one editability gate: a read-only return offers no
+                    // checkboxes at all rather than a selection whose only
+                    // action would refuse (blocked affordances, D39).
+                    enableSelection={!disabled()}
+                    selectedIds={selectedIds()}
+                    onSelectionChange={setSelectedIds}
                     emptyMessage={t('error.no-customer-return-items')}
                     empty={
                       disabled() ? undefined : (
@@ -498,6 +730,22 @@ const CustomerReturnDetailView: Component = () => {
                         ? tableConfig.saveGlobalTableConfig
                         : undefined
                     }
+                    // Server-side paging: the page the table shows is the page
+                    // the server returned (spec rules § server-paginated line
+                    // table). A page-size change resets to the first page.
+                    pagination={{
+                      offset: query().offset,
+                      pageSize: query().first,
+                      total: totalCount(),
+                      onOffsetChange: offset => {
+                        setQuery({ ...query(), offset });
+                        setSelectedIds([]);
+                      },
+                      onPageSizeChange: first => {
+                        setQuery({ ...query(), first, offset: 0 });
+                        setSelectedIds([]);
+                      },
+                    }}
                   />
                 </TabPanel>
                 <TabPanel value="custom-fields">
@@ -526,11 +774,9 @@ const CustomerReturnDetailView: Component = () => {
                       ? (editState() as { itemId: string }).itemId
                       : undefined
                   }
-                  excludeItemIds={existingItemIds}
                   nextItem={nextItem}
                   itemById={itemById}
-                  onSaved={onLinesSaved}
-                  existingLineIds={existingLineIds}
+                  onSaved={onLinesChanged}
                   returnFromName={node().otherPartyName}
                   edit={edit}
                 />

@@ -80,7 +80,8 @@ export const SyncSection = () => {
     setOutcome(undefined);
     // `background` keeps a plain network failure out of the global
     // unexpected-error modal: this form owns its failure surface (the
-    // previous settings remain in effect either way — OMS-REG-SET-02.9's fallback).
+    // previous settings remain in effect either way — OMS-REG-SET-02.9's
+    // fallback).
     const result = await graphqlFetch(
       UpdateSyncSettings,
       { input: buildSyncInput(form()) },

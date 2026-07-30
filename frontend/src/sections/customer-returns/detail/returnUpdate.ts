@@ -80,7 +80,7 @@ export const saveReturnFields = async (
 // still resolves).
 const ADVANCE_ERROR_KEYS: Record<string, LocaleKey> = {
   CannotIssueCustomerReturnWithNoLines: 'messages.no-lines',
-  CannotChangeStatusOfInvoiceOnHold: 'messages.on-hold-description',
+  CannotChangeStatusOfInvoiceOnHold: 'messages.status-blocked-on-hold',
   ReturnIsNotEditable: 'error.not-editable',
   CannotReverseInvoiceStatus: 'error.not-editable',
 };
@@ -117,7 +117,8 @@ export const advanceReturnStatus = async (
   if (result.kind === 'graphqlError') {
     // A server-rejected write (e.g. missing mutate permission) surfaces through
     // the global permission-denied modal, not inline in the confirm dialog
-    // (D38); returnGraphqlErrors suppressed the default routing, so route it here.
+    // (D38); returnGraphqlErrors suppressed the default routing, so route it
+    // here.
     if (isForbidden(result.errors)) {
       reportPermissionDenied(missingPermissions(result.errors));
       return { kind: 'failed' };
@@ -210,15 +211,16 @@ export const deleteReturn = async (
 // --- Create from an originating shipment ------------------------------------
 
 // The from-shipment creation path (rules § creation — from an originating
-// outbound shipment; OMS-REG-DIST-07.19–.22): insertCustomerReturn with outboundShipmentId
-// set. The server records the originating shipment (InvoiceNode.originalShipment)
-// and auto-advances the return to VERIFIED in the same transaction, so the
-// response node is already terminal with its stock introduced (contract
-// § creation — auto-verify). The two typed insert errors are the customer pair,
-// which can't fire here (the customer comes from the shipment); every other
-// rejection (cannot-return-unshipped, the all-zero whole-creation failure, …)
-// is non-typed and surfaces in the modal — except Forbidden, which routes to
-// the global permission-denied modal (D38), exactly as deleteReturn above.
+// outbound shipment; OMS-REG-DIST-07.19–.22): insertCustomerReturn with
+// outboundShipmentId set. The server records the originating shipment
+// (InvoiceNode.originalShipment) and auto-advances the return to VERIFIED in
+// the same transaction, so the response node is already terminal with its stock
+// introduced (contract § creation — auto-verify). The two typed insert errors
+// are the customer pair, which can't fire here (the customer comes from the
+// shipment); every other rejection (cannot-return-unshipped, the all-zero
+// whole-creation failure, …) is non-typed and surfaces in the modal — except
+// Forbidden, which routes to the global permission-denied modal (D38), exactly
+// as deleteReturn above.
 export type CreateReturnResult =
   | { kind: 'created'; id: string }
   | { kind: 'forbidden' }

@@ -43,9 +43,9 @@ import {
 // (all packs) offers navigation to the new line. Export/Print generates the
 // repack report for the selected/saved repack (owned by reporting).
 //
-// The "created by a repack" source-batch note (spec/stock S5 header) is omitted:
-// finding the repack that CREATED this line is not directly queryable (the
-// history lists repacks FROM a line, not the one that produced it).
+// The "created by a repack" source-batch note (spec/stock S5 header) is
+// omitted: finding the repack that CREATED this line is not directly queryable
+// (the history lists repacks FROM a line, not the one that produced it).
 
 type RepackNode =
   RepacksByStockLineResult['repacksByStockLine']['nodes'][number];

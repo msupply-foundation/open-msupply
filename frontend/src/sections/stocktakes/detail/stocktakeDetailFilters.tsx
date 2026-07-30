@@ -19,8 +19,8 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 // The detail table is server-filtered now (kdd/stocktake-line-editing), so the
 // only filters we can offer are the ones the backend supports: `itemCodeOrName`
 // (the item name/code search) and `locationId` (an exact-match location
-// picker), both addable chips in the table toolbar's FilterBar — the same
-// filter-chip model as the list, no separate always-on search field. The
+// picker), both chips in the table toolbar's FilterBar — the search a DEFAULT
+// filter, Location addable from the filter menu. The
 // filters the OLD client-side filter offered but the server can't do yet —
 // batch (no field), expiry-before (no field), and the "show error lines"
 // filter — are TODOs below.
@@ -33,14 +33,25 @@ export const stocktakeDetailFilters = (
   locations: () => Location[]
 ): Filter<StocktakeLineFilter>[] =>
   constructFilters<StocktakeLineFilter>({
-    // ─ user-facing (addable chips), in display order ─────────────────────────
-    // Item name / code search (server itemCodeOrName.like). Blank clears to
-    // null so stripEmpty drops it (a blank `like` would match everything).
+    // ─ user-facing chips, in display order ───────────────────────────────────
+    // Item name / code search (server itemCodeOrName.like), the screen's
+    // DEFAULT filter — the counting search, as in the current app, whose
+    // Stocktake DetailView marks this same filter `isDefault: true` (#735).
+    // Blank clears to null so stripEmpty drops it (a blank `like` would
+    // match everything).
+    //
+    // Labelled for what it MATCHES rather than one of the two fields: the same
+    // label + placeholder pair the current app uses here and
+    // spec/items/ui-surface.md records for the items list's search.
     itemCodeOrName: {
-      label: () => t('label.name'),
+      alwaysOn: true,
+      label: () => t('label.code-or-name'),
       render: props => (
         <FilterTextInput
-          label={t('label.name')}
+          label={t('label.code-or-name')}
+          // A permanent chip starts empty and shrink-wrapped, so the
+          // placeholder is what makes it read as a search box.
+          placeholder={t('placeholder.enter-an-item-code-or-name')}
           testId={props.testId}
           value={props.filter().itemCodeOrName?.like ?? ''}
           onInput={value =>
@@ -77,11 +88,11 @@ export const stocktakeDetailFilters = (
     // ─ dismissed (not addable chips) ─────────────────────────────────────────
     // TODO: batch filter. The old client filter offered it, but
     // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
-    // TODO: expiry-before filter. No expiry field on the server filter — needs a
-    // backend addition.
-    // TODO: "show error lines" filter. The error dialog used to switch a
-    // client-only id set; server-side this would be `id.equalAny` (or
-    // stockLineId) with the failed ids. Errors still flag inline on the row.
+    // TODO: expiry-before filter. No expiry field on the server filter — needs
+    // a backend addition. TODO: "show error lines" filter. The error dialog
+    // used to switch a client-only id set; server-side this would be
+    // `id.equalAny` (or stockLineId) with the failed ids. Errors still flag
+    // inline on the row.
     id: null,
     stocktakeId: null,
     itemId: null,

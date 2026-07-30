@@ -41,15 +41,17 @@
 /* The details-panel slot. The panel stays MOUNTED whether open or closed — it
    parks off-frame rather than unmounting — so form state survives open/close
    with no remount and the shared e2e suites can assert on panel content before
-   opening it. Width is 20rem, matching SidePanel's own `.panel`. Two modes,
-   split at the navOverlay breakpoint (mirroring the nav drawer, on the opposite
-   edge — spec ui-standards/layout.md → page regions, D27). */
+   opening it. Width comes from the shared `--side-panel-width` token, the same
+   one SidePanel's own `.panel` sizes from, so the slot and the panel it holds
+   can't drift out of sync. Two modes, split at the navOverlay breakpoint
+   (mirroring the nav drawer, on the opposite edge — spec ui-standards/layout.md
+   → page regions, D27). */
 .panelSlot {
   position: relative; /* stack the drop shadow over the body, incl. the table's sticky header (z 3) */
   z-index: 4;
   display: flex;
   min-block-size: 0;
-  inline-size: 20rem;
+  inline-size: var(--side-panel-width);
 }
 
 .panelSlot > * {
@@ -154,8 +156,8 @@
 }
 
 /* Really narrow (< compact): the drawer takes the whole page region, like a
-   modal — a 20rem panel would leave only a sliver of content behind it. 599 =
-   the compact breakpoint minus 1. */
+   modal — a fixed-width panel would leave only a sliver of content behind it.
+   599 = the compact breakpoint minus 1. */
 @media (max-width: 599px) {
   .panelSlot {
     inset-inline-start: 0;

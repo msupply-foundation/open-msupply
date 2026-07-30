@@ -30,8 +30,8 @@ export interface StatusChangeActionProps {
 }
 
 // The status-advance action (spec/supplier-returns/ui-surface.md S3 § actions):
-// the footer's "Confirm {status}" split button + confirm → working → success |
-// error dialog, plus the blocked-advance explainers. The dropdown offers the
+// the footer's "Confirm {status}" split button + confirm → working → error
+// dialog, plus the blocked-advance explainers. The dropdown offers the
 // forward statuses (rules § status lifecycle — PICKED / SHIPPED, forward-only),
 // filtered by the invoice-status-options preference; hidden when the return
 // offers no advance (terminal). While ON HOLD (or with no lines) the button
@@ -39,9 +39,15 @@ export interface StatusChangeActionProps {
 // (D39). The on-hold block is ACTIONABLE: it offers to release the hold and
 // advance in one save (onHold:false — rules § advancing status; D59).
 //
-// Every rejection is NON-typed (contract § advancing status): advanceReturnStatus
-// maps extensions.details to translated copy shown in the dialog's error phase.
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+// There is NO success phase: a successful advance CLOSES the dialog — closure
+// is the confirmation, and the flipped status chip / lifecycle indicator /
+// button label behind it are the visible result (spec/ui-standards/controls.md
+// § dialogs, D22; § action feedback, D21).
+//
+// Every rejection is NON-typed (contract § advancing status):
+// advanceReturnStatus maps extensions.details to translated copy shown in the
+// dialog's error phase.
+type Phase = 'confirm' | 'working' | 'error';
 
 export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const [pending, setPending] = createSignal<AdvanceTarget | undefined>();
@@ -81,13 +87,14 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       props.storeId,
       props.node.id,
       status,
-      // Release the hold in the same request when we opened on the release path.
+      // Release the hold in the same request when we opened on the release
+      // path.
       releaseHold() ? false : undefined
     );
     if (result.kind === 'failed') return close(); // global modal showed it
     if (result.kind === 'saved') {
       props.onApplied(result.node);
-      return setPhase('success');
+      return close(); // success closes — the advanced status IS the confirmation
     }
     setErrorMessage(result.message);
     setPhase('error');
@@ -131,16 +138,27 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         onClose={close}
         icon={<ArrowRightIcon />}
         testId="confirmation-modal"
-        title={t('heading.are-you-sure')}
+        // The error phase is no longer a question, so the heading stops asking
+        // one (it would otherwise read "Are you sure?" over a rejection).
+        title={
+          phase() === 'error'
+            ? t('heading.cannot-do-that')
+            : t('heading.are-you-sure')
+        }
         description={
           <Switch
-            fallback={t('messages.confirm-status-as', {
-              status: statusLabel(pending() ?? 'PICKED'),
-            })}
+            fallback={
+              // On hold, the prompt says what the one save will do; otherwise
+              // the plain status confirmation.
+              releaseHold()
+                ? t('messages.confirm-release-hold-and-status-as', {
+                    status: statusLabel(pending() ?? 'PICKED'),
+                  })
+                : t('messages.confirm-status-as', {
+                    status: statusLabel(pending() ?? 'PICKED'),
+                  })
+            }
           >
-            <Match when={phase() === 'success'}>
-              {t('messages.return-saved')}
-            </Match>
             <Match when={phase() === 'error'}>
               <Alert severity="error">{errorMessage()}</Alert>
             </Match>
@@ -169,7 +187,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               </>
             }
           >
-            <Match when={phase() === 'success' || phase() === 'error'}>
+            <Match when={phase() === 'error'}>
               <OkButton data-testid="dialog-button-ok" onClick={close} />
             </Match>
           </Switch>

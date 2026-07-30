@@ -22,18 +22,18 @@ import {
 } from './backdating';
 
 // The picked-date backdating control (spec/outbound-shipments rules.md §
-// backdating; S3 side panel — OMS-REG-DIST-04.23..27). Enabled only while NEW with the
-// backdating preference on; otherwise DISABLED WITH THE REASON (pref off /
-// past NEW). Picking an earlier day confirms first — the line-removal warning
-// (OMS-REG-DIST-04.24) and, when a stocktake was counted on or after that day, the
-// stocktake-conflict warning (OMS-REG-DIST-04.27) — before setting backdatedDatetime; the
-// parent's field save then re-issues against historical availability and
-// stamps future statuses at the backdated time (server-side). The picker is
-// bounded to [today − (maxDays − 1), today] — maxDays 0/unset = unbounded
-// past (backdating.ts) — so a future or over-limit day can't be
-// chosen (the remaining OMS-REG-DIST-04.23 rejections). The pure gate/date/warning logic
-// lives in ./backdating (unit-tested); this component wires it to the UI + the
-// stocktake-conflict query.
+// backdating; S3 side panel — OMS-REG-DIST-04.23..27). Enabled only while NEW
+// with the backdating preference on; otherwise DISABLED WITH THE REASON (pref
+// off / past NEW). Picking an earlier day confirms first — the line-removal
+// warning (OMS-REG-DIST-04.24) and, when a stocktake was counted on or after
+// that day, the stocktake-conflict warning (OMS-REG-DIST-04.27) — before
+// setting backdatedDatetime; the parent's field save then re-issues against
+// historical availability and stamps future statuses at the backdated time
+// (server-side). The picker is bounded to [today − (maxDays − 1), today] —
+// maxDays 0/unset = unbounded past (backdating.ts) — so a future or over-limit
+// day can't be chosen (the remaining OMS-REG-DIST-04.23 rejections). The pure
+// gate/date/warning logic lives in ./backdating (unit-tested); this component
+// wires it to the UI + the stocktake-conflict query.
 
 export interface PickedDateFieldProps {
   storeId: string;
@@ -91,10 +91,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     }
     setDraft(day);
     const backdatedDatetime = backdatedDatetimeFor(new Date(), day);
-    // Stocktake-conflict check (OMS-REG-DIST-04.27): any stocktake counted on or after the
-    // chosen day. A non-success is UNKNOWN, not "no conflict" — fail closed:
-    // revert the pick and let the global unexpected-error modal (already
-    // raised by graphqlFetch) explain, rather than backdating unconfirmed.
+    // Stocktake-conflict check (OMS-REG-DIST-04.27): any stocktake counted on
+    // or after the chosen day. A non-success is UNKNOWN, not "no conflict" —
+    // fail closed: revert the pick and let the global unexpected-error modal
+    // (already raised by graphqlFetch) explain, rather than backdating
+    // unconfirmed.
     const result = await graphqlFetch(OutboundStocktakeConflict, {
       storeId: props.storeId,
       onOrAfter: day,
@@ -131,11 +132,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     setPending({ backdatedDatetime, warningKeys });
   };
 
-  // The confirmation body: the applicable warnings (OMS-REG-DIST-04.24/.27), each resolved
-  // with the chosen date (spec S6 § confirmation dialog). Each warning sits on
-  // its own block (both ported sentences end in "Are you sure…?", so joined
-  // into one line they read as a run-on); <br/> not <p> — the Dialog already
-  // renders the description inside a <p>.
+  // The confirmation body: the applicable warnings (OMS-REG-DIST-04.24/.27),
+  // each resolved with the chosen date (spec S6 § confirmation dialog). Each
+  // warning sits on its own block (both ported sentences end in "Are you
+  // sure…?", so joined into one line they read as a run-on); <br/> not <p> —
+  // the Dialog already renders the description inside a <p>.
   const confirmMessage = () => {
     const info = pending();
     if (!info) return '';
@@ -183,8 +184,8 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
             max={enabled() ? bounds().max : undefined}
             disabled={!enabled()}
             onChange={value => {
-              // OMS-REG-DIST-04.23 re-check as defence in depth — DateField already reverts
-              // typed out-of-range entries against min/max.
+              // OMS-REG-DIST-04.23 re-check as defence in depth — DateField
+              // already reverts typed out-of-range entries against min/max.
               if (!value || !withinBackdateBounds(bounds(), value)) return;
               void onPick(value);
             }}

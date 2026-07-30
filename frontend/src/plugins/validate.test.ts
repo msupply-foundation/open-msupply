@@ -193,6 +193,7 @@ describe('validateLoadedModule', () => {
       'dashboard.widget',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
+      'prescription.paymentForm',
     ]);
   });
 

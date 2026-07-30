@@ -6,7 +6,8 @@ import {
 import { createStoreScopedResource } from '../../api/storeScopedResource';
 import { currentStoreId } from '../../store/storeContext';
 
-// One VVM-status node (id + code + description + priority) — what a picker needs.
+// One VVM-status node (id + code + description + priority) — what a picker
+// needs.
 export type VvmStatus =
   ActiveVvmStatusesResult['activeVvmStatuses']['nodes'][number];
 
