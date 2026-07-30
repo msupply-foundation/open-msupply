@@ -34,7 +34,12 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
-import { AlertTriangleIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
+import {
+  AlertTriangleIcon,
+  PlusCircleIcon,
+  SidebarIcon,
+  TruckIcon,
+} from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
@@ -54,6 +59,7 @@ import { RequisitionLogTab } from './RequisitionLogTab';
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
+import { RequisitionLineEditModal } from './edit-modal/RequisitionLineEditModal';
 
 // The requisition detail view (spec/requisitions S2): view, header edits
 // (customer reference / comment / colour), the side panel (S5), the Documents
@@ -147,7 +153,7 @@ const RequisitionDetailView: Component = () => {
   // with `mutate` (no refetch → no remount). `info()` reads `.latest`
   // NON-suspending so later refetches never re-suspend the <Suspense> and
   // remount the subtree (kdd/solid-reactivity-pitfalls § no remounts).
-  const [data, { mutate }] = createResource(
+  const [data, { mutate, refetch }] = createResource(
     () => ({ storeId: params.storeId, id: params.requisitionId }),
     async (variables): Promise<RequisitionInfoFragment | undefined> => {
       const result = await graphqlFetch(RequisitionDetail, variables);
@@ -190,6 +196,45 @@ const RequisitionDetailView: Component = () => {
     const node = info();
     return node ? isRequisitionEditable(node) : false;
   };
+  // Adding a line (rules › line editing): an editable, non-program (a program
+  // requisition's lines are fixed to its master list), non-transferred (the
+  // customer's demand is not added to here) requisition.
+  const canAdd = () =>
+    editable() && !isProgram() && !info()?.linkedRequisition;
+  // The editor's Approved figure (spec S4 § read-only figures): the
+  // authorisation preference with an Approved status.
+  const showApprovedFigure = () =>
+    (storePrefs()?.responseRequisitionRequiresAuthorisation ?? false) &&
+    info()?.approvalStatus === 'APPROVED';
+  const showForecast = () =>
+    prefs()?.displayPopulationBasedForecasting ?? false;
+
+  // The line editor (S4): closed, open in add mode, or open on an existing
+  // line. One signal drives both.
+  const [editorLine, setEditorLine] = createSignal<
+    { mode: 'add' } | { mode: 'edit'; line: Line }
+  >();
+
+  // Save & next's walk (AC-LE5): the next line after the current one in the
+  // table's current sort/filter order, skipping ones already visited this
+  // run. The client-side table holds every line (the server-paginated walk
+  // collapses to a plain scan here — see the interim note above), so no page
+  // advance is needed.
+  const resolveNextLine = (
+    currentLineId: string,
+    covered: Set<string>
+  ): Line | undefined => {
+    const ordered = rows();
+    const start = ordered.findIndex(line => line.id === currentLineId);
+    for (let index = start + 1; index < ordered.length; index++)
+      if (!covered.has(ordered[index]!.id)) return ordered[index];
+    return ordered.find(line => !covered.has(line.id));
+  };
+
+  // The requisition's existing line for an item (add mode loads it rather
+  // than duplicating — D74, AC-LE3).
+  const findLineForItem = (itemId: string): Line | undefined =>
+    info()?.lines.nodes.find(line => line.itemId === itemId);
 
   // ONE debounced buffer for the as-you-type reference (comment rides the
   // same buffer for the side panel).
@@ -684,9 +729,19 @@ const RequisitionDetailView: Component = () => {
               <Header>
                 <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
                 <HeaderButtons>
-                  {/* The Add split button (line editor / master-list add) and
-                      Supply requested arrive with their slices (S4 / the
-                      supply slice). */}
+                  {/* Add item — the line editor in add mode (S4). Disabled on
+                      a read-only, program, or transfer-linked requisition
+                      (spec S2 § page actions). It becomes the Add SPLIT
+                      button (· Add from master list) with the master-list
+                      slice; Supply requested arrives with the supply slice. */}
+                  <Button
+                    icon={<PlusCircleIcon />}
+                    data-testid="add-item-button"
+                    disabled={!canAdd()}
+                    onClick={() => setEditorLine({ mode: 'add' })}
+                  >
+                    {t('button.add-item')}
+                  </Button>
                   {/* Export/Print — a read, offered on every status. */}
                   <ExportPrintRequisitionAction requisitionId={node().id} />
                   {/* More — reopens the side panel; shown only while closed. */}
@@ -745,12 +800,29 @@ const RequisitionDetailView: Component = () => {
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
+                  // A row click opens the line editor on that line (AC-LE1);
+                  // on a read-only requisition it opens all-disabled (AC-LE9).
+                  onRowClick={line => setEditorLine({ mode: 'edit', line })}
                   // Rows with a ZERO supply quantity read in the info tone —
                   // visually de-emphasised as placeholders (AC-V4).
                   rowTone={line =>
                     line.supplyQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={t('error.no-requisition-items')}
+                  // The empty line table offers the single-item add inline
+                  // (AC-V7) — withheld when a line can't be added (read-only,
+                  // program, or transfer-linked).
+                  empty={
+                    canAdd() ? (
+                      <Button
+                        variant="ghost"
+                        data-testid="empty-add-item-button"
+                        onClick={() => setEditorLine({ mode: 'add' })}
+                      >
+                        {t('button.add-item')}
+                      </Button>
+                    ) : undefined
+                  }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
                 />
@@ -765,6 +837,37 @@ const RequisitionDetailView: Component = () => {
                 />
               </TabPanel>
             </Tabs>
+
+            {/* The line editor (S4): add mode from the Add action / empty
+                state, edit mode from a row click. */}
+            <RequisitionLineEditModal
+              open={!!editorLine()}
+              onClose={() => setEditorLine(undefined)}
+              storeId={params.storeId}
+              requisitionId={node().id}
+              editable={editable()}
+              canAdd={canAdd()}
+              transferred={!!node().linkedRequisition}
+              showExtended={showExtended()}
+              showApproved={showApprovedFigure()}
+              showDoses={showDoses()}
+              showForecast={showForecast()}
+              showExcess={showExcess()}
+              initialLine={
+                editorLine()?.mode === 'edit'
+                  ? (editorLine() as { mode: 'edit'; line: Line }).line
+                  : undefined
+              }
+              nextLine={resolveNextLine}
+              findLineForItem={findLineForItem}
+              onCommitted={() => {
+                // A line edit may have supplied a missing reason — drop the
+                // header save's stale flags, then re-read the line list
+                // (rules › drafts: the list is re-read, never patched).
+                setReasonFlaggedIds(new Set<string>());
+                void refetch();
+              }}
+            />
           </Page>
         )}
       </Show>
