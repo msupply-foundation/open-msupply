@@ -74,6 +74,12 @@ export const PrescriptionToolbar: Component<
         storeId={props.storeId}
         selected={patientOption()}
         disabled={props.disabled}
+        // The picker's view-patient affordance (spec/patients S4 allow-edit),
+        // available whatever the prescription's own editability — it opens the
+        // patient, not the prescription (ui-surface S3 § header fields).
+        viewHref={patientId =>
+          `/${props.storeId}/dispensary/patients/${patientId}`
+        }
         // A prescription always has a patient: the picker never clears
         // (null selections are ignored), it only swaps (AC-N1).
         onSelect={patient => patient && props.onSave({ patientId: patient.id })}

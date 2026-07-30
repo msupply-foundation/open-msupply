@@ -1,0 +1,13 @@
+/*
+ * PatientSearch — the view-patient link riding the field's label row (see
+ * PatientSearch.tsx). The label row is a flex row shared with the InfoTooltip
+ * slot, which carries its own spacing; a text link has none of its own, so it
+ * asks for the gap here rather than in the shared Combobox (where a gap would
+ * shift every existing tooltip).
+ */
+
+.viewLink {
+  margin-inline-start: 0.375rem;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
