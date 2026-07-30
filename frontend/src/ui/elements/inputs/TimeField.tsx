@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { AlertTriangleIcon } from '../../icons';
 import { hhmmToTime, timeToHhmm, type TimeValue } from './dateTimeConvert';
@@ -6,7 +6,9 @@ import styles from './DateTimeFields.module.css';
 
 export interface TimeFieldProps {
   label: string;
-  /** Wall-clock time of day, `HH:mm` (24-hour), or null/undefined when empty. */
+  /**
+   * Wall-clock time of day, `HH:mm` (24-hour), or null/undefined when empty.
+   */
   value?: string | null;
   /** Fired with the new `HH:mm` time, or null when cleared. */
   onChange?: (value: string | null) => void;
@@ -29,21 +31,25 @@ export interface TimeFieldProps {
 
 /*
  * Time-of-day input (spec: ui-standards/inputs.md § Dates & times). Our markup
- * + tokens over Kobalte's headless TimeField — segmented spin-button hour/minute
- * fields (type digits or arrow to step; can't hold an invalid time), the same
- * "buy the behaviour, own the look" bargain as our other Kobalte widgets, and
- * no new dependency (Kobalte is already in). Renders identically everywhere.
+ * + tokens over Kobalte's headless TimeField — segmented spin-button
+ * hour/minute fields (type digits or arrow to step; can't hold an invalid
+ * time), the same "buy the behaviour, own the look" bargain as our other
+ * Kobalte widgets, and no new dependency (Kobalte is already in). Renders
+ * identically everywhere.
  *
  * The value is a plain 24-hour `HH:mm` string with no date and no timezone —
  * there is no GraphQL `Time` scalar, so it passes straight through; clearing
- * emits null. (Kobalte carries the time as `{ hour, minute }`; we convert at the
- * edge.) The 12-/24-hour display follows the device locale.
+ * emits null. (Kobalte carries the time as `{ hour, minute }`; we convert at
+ * the edge.) The 12-/24-hour display follows the device locale.
  */
 export const TimeField = (props: TimeFieldProps) => {
   // The label element itself (text + required asterisk). A local component so
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
   // one JSX node across both would try to mount it in two places. As
   // TextField / FieldShell.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <KTimeField.Label
       class={props.hideLabel ? styles.labelHidden : styles.label}
@@ -72,13 +78,13 @@ export const TimeField = (props: TimeFieldProps) => {
           e.target.blur();
       }}
     >
-      <Show when={props.labelInfo && !props.hideLabel} fallback={<Label />}>
+      <Show when={labelInfo() && !props.hideLabel} fallback={<Label />}>
         {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in it
           its accessible name would leak into the control's (the
           name-from-label computation concatenates descendant controls). */}
         <span class={styles.labelRow}>
           <Label />
-          {props.labelInfo}
+          {labelInfo()}
         </span>
       </Show>
       <div

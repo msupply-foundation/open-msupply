@@ -10,9 +10,9 @@ import {
 
 afterEach(() => setMockScannerEnabled(false));
 
-// rules § Devices — barcode scanner: the mock scanner is a testing aid: enabling it simulates a
-// connected scanner with no real hardware; everything derives locally from
-// the toggle.
+// rules § Devices — barcode scanner: the mock scanner is a testing aid:
+// enabling it simulates a connected scanner with no real hardware; everything
+// derives locally from the toggle.
 describe('mock scanner simulates a connected scanner locally (rules § Devices — barcode scanner)', () => {
   it('reports no scanning capability with the mock off (web build has no hardware plugin)', () => {
     expect(scanningEnabled()).toBe(false);
@@ -28,9 +28,10 @@ describe('mock scanner simulates a connected scanner locally (rules § Devices �
   });
 });
 
-// rules § Devices — barcode scanner: Test scanner records nothing server-side: a triggered scan is a
-// purely local value (this module makes no request of any kind — it has no
-// network imports; the returned result is data for the screen's local list).
+// rules § Devices — barcode scanner: Test scanner records nothing server-side:
+// a triggered scan is a purely local value (this module makes no request of any
+// kind — it has no network imports; the returned result is data for the
+// screen's local list).
 describe('scans are produced locally (rules § Devices — barcode scanner)', () => {
   it('produces a barcode result with a stable shape', () => {
     const result = triggerMockScan();

@@ -1,9 +1,9 @@
 // A count family's fetch outcome → its panel's display state (spec/dashboard
-// ui-surface S2, OMS-REG-DB-01.22/.23): each panel owns its own loading / error state; a
-// family the user cannot read errors IN the panel (naming the permission
-// problem) rather than tripping the global permission modal, so sibling panels
-// are unaffected. Pure — the page resolves the message key through t() at
-// render.
+// ui-surface S2, OMS-REG-DB-01.22/.23): each panel owns its own loading /
+// error state; a family the user cannot read errors IN the panel (naming the
+// permission problem) rather than tripping the global permission modal, so
+// sibling panels are unaffected. Pure — the page resolves the message key
+// through t() at render.
 
 export type CountValue<T> =
   { kind: 'ready'; data: T } | { kind: 'forbidden' } | { kind: 'error' };

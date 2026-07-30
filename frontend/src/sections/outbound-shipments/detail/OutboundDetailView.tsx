@@ -85,9 +85,9 @@ import {
   saveOutboundServiceCharges,
 } from './service-charges/outboundServiceCharges';
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
-// the returns vertical — OMS-REG-DIST-04.21 hands over to it). Lazy so the returns graph it
-// pulls in stays out of this section's eager chunk, loading only when a return
-// is actually started.
+// the returns vertical — OMS-REG-DIST-04.21 hands over to it). Lazy so the
+// returns graph it pulls in stays out of this section's eager chunk, loading
+// only when a return is actually started.
 const ReturnFromShipmentModal = lazy(() =>
   import('../../customer-returns/detail/edit-modal/ReturnFromShipmentModal').then(
     module => ({ default: module.ReturnFromShipmentModal })
@@ -103,19 +103,20 @@ import {
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
 // header (customer + customer reference + line search/filters), Details/Log
 // tabs, the flat read-only SERVER-paginated line table (row click opens the
-// line editor S4 on that row's item AND batch — OMS-REG-DIST-03.27/OMS-REG-DIST-03.31), the side panel
-// (S3 § side panel), and the persistent status footer (hold / crumbs / status
-// split button — OMS-REG-DIST-04.20), replaced by the bulk line-action bar on selection.
-// Line quantities are entered ONLY in the line editor.
+// line editor S4 on that row's item AND batch —
+// OMS-REG-DIST-03.27/OMS-REG-DIST-03.31), the side panel (S3 § side panel), and
+// the persistent status footer (hold / crumbs / status split button —
+// OMS-REG-DIST-04.20), replaced by the bulk line-action bar on selection. Line
+// quantities are entered ONLY in the line editor.
 //
-// TWO independent queries (rules.md § server-paginated line table, OMS-REG-DIST-03.28):
-// `info` (outboundDetail — header/footer/side-panel fields, NOT the lines)
-// and `lines` (outboundLines — one server-filtered/sorted page). An entity-
-// LEVEL save mutates `info` in place; a LINE-level change refetches the lines
-// page AND the entity (the footer totals are its server-side pricing
-// aggregates — D45; placeholders and trims move server-side too —
-// kdd/state-management: refresh by direct call). Service lines are their own
-// small read (the S5 editor + side-panel rows).
+// TWO independent queries (rules.md § server-paginated line table,
+// OMS-REG-DIST-03.28): `info` (outboundDetail — header/footer/side-panel
+// fields, NOT the lines) and `lines` (outboundLines — one
+// server-filtered/sorted page). An entity-LEVEL save mutates `info` in place;
+// a LINE-level change refetches the lines page AND the entity (the footer
+// totals are its server-side pricing aggregates — D45; placeholders and trims
+// move server-side too — kdd/state-management: refresh by direct call). Service
+// lines are their own small read (the S5 editor + side-panel rows).
 
 type Line = OutboundLineFragment;
 
@@ -129,10 +130,10 @@ const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is
-// shareable and survives reload + back-nav (OMS-REG-DIST-03.28). All three conform to the
-// generated outboundLines variables (no remapping — kdd/type-safety).
-// Selection and the side-panel open state stay local (transient UI). Mirrors
-// the stocktakes detail.
+// shareable and survives reload + back-nav (OMS-REG-DIST-03.28). All three
+// conform to the generated outboundLines variables (no remapping —
+// kdd/type-safety). Selection and the side-panel open state stay local
+// (transient UI). Mirrors the stocktakes detail.
 type DetailUrlState = {
   filter: OutboundLineFilter;
   sort: NonNullable<OutboundLinesVariables['sort']>;
@@ -170,7 +171,8 @@ const OutboundDetailView: Component = () => {
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
-  // WHICH item (and clicked batch, for scroll/focus — OMS-REG-DIST-03.31) to open on:
+  // WHICH item (and clicked batch, for scroll/focus — OMS-REG-DIST-03.31) to
+  // open on:
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
   type EditState = { item?: LineEditItem; lineId?: string } | undefined;
@@ -180,7 +182,8 @@ const OutboundDetailView: Component = () => {
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
   // "Return selected lines": at SHIPPED+ opens the customer-return create flow
-  // (returnModalOpen, OMS-REG-DIST-04.21); before that the explanatory notice instead.
+  // (returnModalOpen, OMS-REG-DIST-04.21); before that the explanatory notice
+  // instead.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
   const [returnModalOpen, setReturnModalOpen] = createSignal(false);
 
@@ -207,11 +210,12 @@ const OutboundDetailView: Component = () => {
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
   const node = (): OutboundNode | undefined => data.latest;
 
-  // The lines PAGE — a separate, server-filtered/sorted/paged query (OMS-REG-DIST-03.28).
-  // Keyed on the SERIALISED variables (a stable string) so identical query
-  // content doesn't refetch (kdd/solid-reactivity-pitfalls). stripEmpty drops
-  // added-but-empty filter chips; the fixed invoiceId + non-service scoping is
-  // merged here (never URL state). Service lines are a separate read below.
+  // The lines PAGE — a separate, server-filtered/sorted/paged query
+  // (OMS-REG-DIST-03.28). Keyed on the SERIALISED variables (a stable string)
+  // so identical query content doesn't refetch (kdd/solid-reactivity-pitfalls).
+  // stripEmpty drops added-but-empty filter chips; the fixed invoiceId +
+  // non-service scoping is merged here (never URL state). Service lines are a
+  // separate read below.
   const linesVariables = createMemo<OutboundLinesVariables>(() => ({
     storeId: params.storeId,
     filter: {
@@ -297,11 +301,12 @@ const OutboundDetailView: Component = () => {
     return current ? isEditable(current.status) : false;
   };
 
-  // Status pre-flight (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16) — whole-shipment answers the current page
-  // can't give (rules.md § server-paginated line table): three sequential
-  // count/name probes run when the user invokes the status change, not
-  // reactive derivations. A failed probe returns undefined (graphqlFetch has
-  // already routed the error to the global modal) and the action aborts.
+  // Status pre-flight (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16) — whole-shipment
+  // answers the current page can't give (rules.md § server-paginated line
+  // table): three sequential count/name probes run when the user invokes the
+  // status change, not reactive derivations. A failed probe returns undefined
+  // (graphqlFetch has already routed the error to the global modal) and the
+  // action aborts.
   const preflight = async (): Promise<StatusPreflight | undefined> => {
     const invoiceId = { equalTo: params.invoiceId };
     const nonService = await graphqlFetch(OutboundLines, {
@@ -408,9 +413,10 @@ const OutboundDetailView: Component = () => {
     return false;
   };
 
-  // Customer change (OMS-REG-DIST-02.20): reissues under a NEW identity — renavigate to the
-  // returned id. Blocked (UI) when the shipment came from a requisition
-  // (OMS-REG-DIST-02.19 — the lookup is disabled then, this is the backstop).
+  // Customer change (OMS-REG-DIST-02.20): reissues under a NEW identity —
+  // renavigate to the returned id. Blocked (UI) when the shipment came from a
+  // requisition (OMS-REG-DIST-02.19 — the lookup is disabled then, this is the
+  // backstop).
   const changeCustomer = async (customerId: string) => {
     const current = node();
     if (!current || customerId === current.otherParty.id) return;
@@ -451,10 +457,11 @@ const OutboundDetailView: Component = () => {
     setSelectedIds([]);
   };
 
-  // Row click → the line editor for that row's ITEM (OMS-REG-DIST-03.27), carrying the
-  // clicked line so the editor scrolls to / focuses that batch (OMS-REG-DIST-03.31);
-  // disabled rows (read-only shipment) get no handler at all. The editor
-  // advances through the list itself via "OK & next" (OMS-REG-DIST-03.32).
+  // Row click → the line editor for that row's ITEM (OMS-REG-DIST-03.27),
+  // carrying the clicked line so the editor scrolls to / focuses that batch
+  // (OMS-REG-DIST-03.31); disabled rows (read-only shipment) get no handler at
+  // all. The editor advances through the list itself via "OK & next"
+  // (OMS-REG-DIST-03.32).
   const openRow = (line: Line) =>
     setEditState({
       item: {
@@ -475,8 +482,8 @@ const OutboundDetailView: Component = () => {
   // table forward — the same as the user paging (rules.md § Save & next).
   // The paging logic lives in ./nextItemWalk (unit-tested); this wires its
   // deps: direct page fetches (race-free — never the reactive resource),
-  // page advance = setQuery + selection clear (OMS-REG-DIST-03.34), abort = the editor
-  // closed (a cancel mid-walk must not keep paging the table).
+  // page advance = setQuery + selection clear (OMS-REG-DIST-03.34), abort =
+  // the editor closed (a cancel mid-walk must not keep paging the table).
   const walk = createNextItemWalk({
     fetchPage: async (offset, first) => {
       const result = await graphqlFetch(OutboundLines, {
@@ -504,8 +511,8 @@ const OutboundDetailView: Component = () => {
 
   const selectedLines = () =>
     rows().filter(line => selectedIds().includes(line.id));
-  // Bulk-action visibility (spec S3 § bulk line actions matrix): state-disallowed
-  // actions are HIDDEN, not disabled.
+  // Bulk-action visibility (spec S3 § bulk line actions matrix):
+  // state-disallowed actions are HIDDEN, not disabled.
   const hasSelectedPlaceholder = () =>
     selectedLines().some(line => line.type === 'UNALLOCATED_STOCK');
 
@@ -535,7 +542,8 @@ const OutboundDetailView: Component = () => {
   const columns = (): Column<Line, SortKey>[] => {
     // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
     // off the entity's pricing stats — never a sum over the loaded rows, which
-    // would silently become a page total under server pagination (OMS-REG-DIST-03.28).
+    // would silently become a page total under server pagination
+    // (OMS-REG-DIST-03.28).
     const pricing = node()?.pricing;
     // Price footer = stockTotalBeforeTax (contract § detail line table): it
     // sums the Total column (pack sell price × packs, before tax) — the
@@ -752,8 +760,8 @@ const OutboundDetailView: Component = () => {
                   onSaveField={async patch => {
                     await saveField(patch);
                     // A backdate DELETES the shipment's lines server-side
-                    // (OMS-REG-DIST-04.24) — the visible page must follow, like any other
-                    // line-level change.
+                    // (OMS-REG-DIST-04.24) — the visible page must follow,
+                    // like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
                   onEditServiceCharges={() => setServiceOpen(true)}
@@ -998,9 +1006,9 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (OMS-REG-DIST-03.34): the bulk-
-                  // action gates classify by rows in view, so a selection must
-                  // never carry ids the user can no longer see.
+                  // Page navigation clears the selection (OMS-REG-DIST-03.34):
+                  // the bulk-action gates classify by rows in view, so a
+                  // selection must never carry ids the user can no longer see.
                   pagination={{
                     offset: query().offset,
                     pageSize: query().first,
@@ -1039,6 +1047,8 @@ const OutboundDetailView: Component = () => {
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
                 customerIsStore={current().otherParty.store != null}
+                currencyCode={current().currency?.code}
+                currencyRate={current().currencyRate}
                 initialItem={editState()?.item}
                 initialLineId={editState()?.lineId}
                 nextItem={nextItem}

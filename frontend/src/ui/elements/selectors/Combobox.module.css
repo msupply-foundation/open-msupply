@@ -158,6 +158,17 @@
   transition: transform 150ms ease;
 }
 
+/* A caller's trailing action (see the endAction prop) — same shape as
+   TextField's slot: control height, never shrinking, inside the field frame so
+   it rides the control row rather than the label's. */
+.endAction {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  flex-shrink: 0;
+  padding-inline-end: var(--space-1);
+}
+
 /* Kobalte marks the icon with data-expanded while the menu is open. */
 .toggleIcon[data-expanded] {
   transform: rotate(180deg);

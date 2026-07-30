@@ -22,8 +22,8 @@ import {
 // its own line with its LABEL ABOVE the control (matching the patient/stock
 // detail forms) — over a local draft, with an EXPLICIT Save and a
 // discard-on-leave guard. The mutation itself is the vertical's — `onSave`
-// receives the tab's keys patch-merged server-side — so this component owns only
-// the draft + save lifecycle, never a GraphQL call (kdd/state-management).
+// receives the tab's keys patch-merged server-side — so this component owns
+// only the draft + save lifecycle, never a GraphQL call (kdd/state-management).
 //
 // `promoteToToolbar`: when the detail has a toolbar hosting PROMINENT fields
 // (the invoice verticals), the tab shows only the non-prominent fields; without

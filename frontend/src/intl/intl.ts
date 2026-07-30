@@ -37,18 +37,18 @@ const [dictionaries, setDictionaries] = createSignal<
 // own namespace (`${code}:${key}` — src/intl/pluginTranslations.ts). Order is
 // plugin-English → plugin-locale → host-English → host-locale, which gives the
 // plugin rules two behaviours for free: a plugin key missing from the active
-// locale falls back to the plugin's English string and then to the namespaced key
-// itself (AC-PLUG-I1), and a server custom translation for a namespaced key —
-// which arrives in the HOST dictionary — overrides the plugin's bundled string
-// (AC-PLUG-I2). Keeping the layer separate is also what makes it survive
+// locale falls back to the plugin's English string and then to the namespaced
+// key itself (AC-PLUG-I1), and a server custom translation for a namespaced key
+// — which arrives in the HOST dictionary — overrides the plugin's bundled
+// string (AC-PLUG-I2). Keeping the layer separate is also what makes it survive
 // loadDictionary replacing a whole locale's dictionary.
 //
 // The translator calls this on EVERY t() lookup (a hot path), so the merge is
-// cached and rebuilt only when its inputs actually change — keyed on the current
-// locale plus the `dictionaries` AND `pluginDictionaries` object identities (each
-// a fresh reference on every set). A plain identity cache, not createMemo:
-// t() is also called ownerless (tests, and outside any reactive root), where a
-// memo would have no owner to track.
+// cached and rebuilt only when its inputs actually change — keyed on the
+// current locale plus the `dictionaries` AND `pluginDictionaries` object
+// identities (each a fresh reference on every set). A plain identity cache, not
+// createMemo: t() is also called ownerless (tests, and outside any reactive
+// root), where a memo would have no owner to track.
 let cache: {
   locale: SupportedLocale;
   dicts: object;

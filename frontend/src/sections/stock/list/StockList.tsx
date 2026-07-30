@@ -125,8 +125,8 @@ const StockList: Component = () => {
   };
 
   // Clicking a sortable header: the DataTable (TanStack) computes the next
-  // direction and hands back key + desc; we record it as the GraphQL sort array,
-  // resetting to the first page.
+  // direction and hands back key + desc; we record it as the GraphQL sort
+  // array, resetting to the first page.
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
@@ -137,8 +137,8 @@ const StockList: Component = () => {
     navigate(`/${params.storeId}/inventory/stock/${id}`);
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
-  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the items
-  // list's dose display (no bespoke styling).
+  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the
+  // items list's dose display (no bespoke styling).
   const unitsText = (
     units: number,
     isVaccine: boolean,
@@ -148,23 +148,23 @@ const StockList: Component = () => {
       ? `${formatNumber(units)} (${formatNumber(units * doses)} ${t('label.doses-short')})`
       : formatNumber(units);
 
-  // Every column is shown by default; the user hides / reorders / pins them from
-  // the Columns control (spec/stock S1). No default columnVisibility overrides —
-  // the card view renders only VISIBLE columns, so a lean default table would
-  // strip the card of its fields.
+  // Every column is shown by default; the user hides / reorders / pins them
+  // from the Columns control (spec/stock S1). No default columnVisibility
+  // overrides — the card view renders only VISIBLE columns, so a lean default
+  // table would strip the card of its fields.
   const tableConfig = createTableConfig({ tableId: 'stock-list' });
 
   // Column order follows the current open-mSupply Stock ListView (Code · Name ·
   // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
-  // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost ·
-  // Sell · Total · Manufacturer · Supplier). Each column also declares its card
-  // slot per spec/stock S1 › card view.
+  // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost
+  // · Sell · Total · Manufacturer · Supplier). Each column also declares its
+  // card slot per spec/stock S1 › card view.
   //
-  // The card HEADER is Name-then-Code (the split for this screen), but the TABLE
-  // keeps OMS's Code-first order — the one place the two views want a different
-  // order (issue #551). So Code is TWO faces: a real table column (Code first,
-  // sortable, hidden on the card) and a card-only primary placed AFTER Name.
-  // Every other column is a single def serving both views.
+  // The card HEADER is Name-then-Code (the split for this screen), but the
+  // TABLE keeps OMS's Code-first order — the one place the two views want a
+  // different order (issue #551). So Code is TWO faces: a real table column
+  // (Code first, sortable, hidden on the card) and a card-only primary placed
+  // AFTER Name. Every other column is a single def serving both views.
   const columns = (): Column<Row, SortKey, GroupKey>[] => [
     {
       // Code — table face (OMS position 1): sortable, hidden on the card.
