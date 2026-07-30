@@ -80,7 +80,7 @@ export const saveReturnFields = async (
 // still resolves).
 const ADVANCE_ERROR_KEYS: Record<string, LocaleKey> = {
   CannotIssueCustomerReturnWithNoLines: 'messages.no-lines',
-  CannotChangeStatusOfInvoiceOnHold: 'messages.on-hold-description',
+  CannotChangeStatusOfInvoiceOnHold: 'messages.status-blocked-on-hold',
   ReturnIsNotEditable: 'error.not-editable',
   CannotReverseInvoiceStatus: 'error.not-editable',
 };
