@@ -182,6 +182,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       itemId: id,
       invoiceId: props.invoiceId,
     });
+    // The item changed again mid-flight (add mode re-pick): this response is
+    // stale — landing its grid would leave `lines` from one item under
+    // another's itemId, and a save would dispense the wrong item's stock.
+    if (id !== itemId()) return undefined;
     if (result.kind !== 'success') return undefined;
     const draft = result.data.draftStockOutLines;
     const item = result.data.items.nodes[0];
@@ -217,8 +221,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       issueQuantityFocus.focus();
     }
     // A distribution still pending from the previous item must not land on
-    // this one's freshly-seeded grid.
-    allocate.cancel();
+    // this one's freshly-seeded grid (also cancelled at pick time — this
+    // covers a keystroke that raced the fetch).
+    cancelAllocate();
     return result.data;
   });
 
@@ -250,6 +255,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const allocatedUnits = () => draftIssuedUnits(lines);
   const availableUnits = () => draftAvailableUnits(lines);
 
+  // Who owns the distribution waiting behind the debounce. Clearing a field
+  // drops only ITS OWN pending call — never the sibling's (the two fields sit
+  // on one row and are edited in quick succession) — while a manual row edit
+  // or an item switch supersedes any pending call outright.
+  let pendingAllocator: 'issue' | 'prescribed' | undefined;
+
   // Distribute FEFO with partial packs (AC-A1); callers hand in UNITS — the
   // lens converts at the field boundary (AC-AL7/.63). Runs DEBOUNCED behind
   // both quantity fields (the current app's AutoAllocate fields — their
@@ -259,6 +270,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // allocated 10, not the typed 20 (.62); the shortfall banner carries the
   // full request.
   const runAllocation = (requestedUnits: number) => {
+    pendingAllocator = undefined;
     const {
       packsById,
       shortfallUnits,
@@ -285,17 +297,31 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   };
   const allocate = createDebounced(runAllocation, 500);
 
+  const scheduleAllocate = (owner: 'issue' | 'prescribed', units: number) => {
+    pendingAllocator = owner;
+    allocate(units);
+  };
+  /** No owner = unconditional; an owner drops only its own pending call. */
+  const cancelAllocate = (owner?: 'issue' | 'prescribed') => {
+    if (owner != null && pendingAllocator !== owner) return;
+    pendingAllocator = undefined;
+    allocate.cancel();
+  };
+
   // The issue field: echo the entry immediately (normalised to units),
-  // distribute when it settles.
+  // distribute when it settles. Dirty lands with the keystroke, not the
+  // debounce — OK must not read as dead while the distribution settles
+  // (save() flushes it before reading the draft).
   const onIssueChange = (value: number | undefined) => {
+    setDirty(true);
     if (value == null) {
       setIssueUnits(undefined);
-      allocate.cancel();
+      cancelAllocate('issue');
       return;
     }
     const units = lensToUnits(value);
     setIssueUnits(units);
-    allocate(units);
+    scheduleAllocate('issue', units);
   };
 
   // The prescribed quantity drives allocation of the same quantity, capped
@@ -306,8 +332,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     const units = value == null ? undefined : lensToUnits(value);
     setPrescribedQuantity(units);
     setDirty(true);
-    if (units != null) allocate(units);
-    else allocate.cancel();
+    if (units != null) scheduleAllocate('prescribed', units);
+    else cancelAllocate('prescribed');
   };
 
   // A manual per-row entry, clamped 0…available (AC-I5 — the client is the
@@ -318,8 +344,15 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const setRowPacks = (id: string, value: number | undefined) => {
     const index = lines.findIndex(line => line.id === id);
     if (index < 0) return;
+    // The manual entry supersedes a distribution still settling behind the
+    // debounce — left pending, it would fire (or be flushed by save) and
+    // silently rewrite this row with the auto-pick.
+    cancelAllocate();
     const applied = clampPacks(value, lines[index].availablePacks);
     setLines(index, 'numberOfPacks', applied);
+    // The issue field mirrors the actual total after a row edit (the current
+    // app derives it from the rows, so it can never disagree).
+    setIssueUnits(round9(draftIssuedUnits(lines)));
     setShortfall(0);
     setWarnings(manualEntryMessages(applied, lines[index].packSize));
     setDirty(true);
@@ -335,6 +368,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     enteredUnits: number,
     appliedUnits: number
   ) => {
+    // Fires even when the applied value didn't change (no onChange, so
+    // setRowPacks' cancel didn't run) — the manual intent still supersedes
+    // any pending distribution.
+    cancelAllocate();
     setShortfall(0);
     setWarnings(
       manualEntryMessages(
@@ -440,7 +477,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // OK & next (add mode): the same save, then a fresh item for rapid entry.
   const onOkNext = async () => {
     if (!(await save())) return;
-    allocate.cancel();
+    cancelAllocate();
     setItemId(undefined);
     setItemInfo(undefined);
     setLines(reconcile([]));
@@ -620,6 +657,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           onSelect={item => {
             if (!item) return;
             setItemId(item.id);
+            // A quantity typed for the previous item must not distribute
+            // over this one's grid while its fetch is still in flight.
+            cancelAllocate();
             // The prescribed quantity is the first entry point once the item
             // is chosen (.61); the handle lands when the field mounts.
             if (prefs().editPrescribedQuantity) prescribedQuantityFocus.focus();
