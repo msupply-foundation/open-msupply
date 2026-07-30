@@ -65,8 +65,11 @@ import {
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
-import { StoreOwnName, InternalOrderIndicators } from './indicators.generated';
-import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
+import { StoreOwnName } from './indicators.generated';
+import {
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
 import {
   saveInternalOrderFields,
   addInternalOrderFromMasterList,
@@ -284,7 +287,7 @@ const InternalOrderDetailView: Component = () => {
 
   const [indicators] = createResource(indicatorVariables, async serialised => {
     const result = await graphqlFetch(
-      InternalOrderIndicators,
+      ProgramIndicatorValues,
       JSON.parse(serialised)
     );
     if (result.kind !== 'success') return undefined;
@@ -1187,7 +1190,7 @@ const InternalOrderDetailView: Component = () => {
               </TabPanel>
               <Show when={showIndicators()}>
                 <TabPanel value="indicators">
-                  <InternalOrderIndicatorsTab
+                  <ProgramIndicatorsTab
                     storeId={params.storeId}
                     nodes={indicatorNodes()}
                     editable={editable()}
