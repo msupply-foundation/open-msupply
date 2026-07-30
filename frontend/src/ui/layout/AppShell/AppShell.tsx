@@ -12,7 +12,11 @@ import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
 import { UserMenu } from './UserMenu';
-import { ShellNavContext, ShellFullScreenContext } from './shellContext';
+import {
+  ShellNavContext,
+  ShellFullScreenContext,
+  ShellOverlayContext,
+} from './shellContext';
 import {
   upperNav,
   lowerNav,
@@ -138,6 +142,10 @@ export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false);
   const [overlayOpen, setOverlayOpen] = createSignal(false);
   const [fullScreen, setFullScreen] = createSignal(false);
+  // A page's slide-over panel is covering the viewport (KB-X2). Set by Page
+  // through ShellOverlayContext, because the regions that must go inert live
+  // here, outside the Page.
+  const [panelOverlay, setPanelOverlay] = createSignal(false);
   const isOverlay = useIsNavOverlay();
 
   // Menu nav model — the app's own navModel by default; a host (the showcase)
@@ -176,77 +184,87 @@ export const AppShell = (props: AppShellProps) => {
 
   return (
     <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
-      <ShellFullScreenContext.Provider
-        value={{ isFullScreen: fullScreen, setFullScreen }}
-      >
-        <div class={styles.shell}>
-          {/* Full-screen (Open mSupply's host-level mode): the menu bar and the orange
+      <ShellOverlayContext.Provider value={{ setPanelOverlay }}>
+        <ShellFullScreenContext.Provider
+          value={{ isFullScreen: fullScreen, setFullScreen }}
+        >
+          <div class={styles.shell}>
+            {/* Full-screen (Open mSupply's host-level mode): the menu bar and the orange
               app footer hide so the page content fills the viewport. The page's own
               header hides too (see Page); its content + footer stay. */}
-          <Show when={!fullScreen()}>
-            <MenuBar
-              nav={nav}
-              isOverlay={isOverlay()}
-              upper={menuUpper()}
-              lower={menuLower()}
-              selectedId={props.selected.id}
-              // The Sync entry opens the modal in place — never navigates
-              // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it applies only
-              // when the host wired onSyncOpen: one that didn't (the showcase)
-              // may use the same id as an ordinary destination.
-              onSelect={leaf => {
-                const openSync =
-                  leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
-                if (openSync) openSync();
-                else props.onNavigate(leaf);
-              }}
-              syncBadge={props.syncBadge}
-              syncIconDimmed={props.syncIconDimmed}
-            />
-          </Show>
-          <div class={styles.main}>
-            <div class={styles.content}>{props.children}</div>
+            {/* Inert while a page's slide-over covers the viewport (KB-X2/
+              AC-KB17) — these regions sit OUTSIDE the Page, so the panel cannot
+              reach them itself. */}
+            <Show when={!fullScreen()}>
+              <MenuBar
+                inert={panelOverlay()}
+                nav={nav}
+                isOverlay={isOverlay()}
+                upper={menuUpper()}
+                lower={menuLower()}
+                selectedId={props.selected.id}
+                // The Sync entry opens the modal in place — never navigates
+                // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it applies only
+                // when the host wired onSyncOpen: one that didn't (the showcase)
+                // may use the same id as an ordinary destination.
+                onSelect={leaf => {
+                  const openSync =
+                    leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
+                  if (openSync) openSync();
+                  else props.onNavigate(leaf);
+                }}
+                syncBadge={props.syncBadge}
+                syncIconDimmed={props.syncIconDimmed}
+              />
+            </Show>
+            <div class={styles.main}>
+              <div class={styles.content}>{props.children}</div>
 
-            {/* Bottom bar (spec chrome › bottom bar), left to right: the store
+              {/* Bottom bar (spec chrome › bottom bar), left to right: the store
                 selector (routes to the store-selection screen), a spacer, the
                 signed-in user (menu: logout), then the language selector. The
                 store name is shown as text, so the store colour is never the
                 sole active-store indicator (colour independence / D14). Hidden in
                 full-screen mode, like the menu bar. */}
-            <Show when={!fullScreen()}>
-              <footer
-                class={styles.footer}
-                data-testid="app-footer"
-                data-central={props.isCentralServer ? '' : undefined}
-              >
-                <FooterCell
-                  icon={HomeIcon}
-                  label={props.storeName}
-                  onClick={props.onStoreClick}
-                  testId="store-selector-trigger"
-                />
-                <span class={styles.footerSpacer} aria-hidden="true" />
-                <UserMenu username={props.username} onLogout={props.onLogout} />
-                <span class={styles.footerDivider} aria-hidden="true" />
-                <LanguageSelector
-                  language={locale()}
-                  onSelect={v => void changeLanguage(v)}
-                  testId="language-selector"
-                />
-                {/* Central-server cell: only on a central server (its divider
-                    goes with it, so nothing dangles on a remote site). */}
-                <Show when={props.isCentralServer}>
-                  <span class={styles.footerDivider} aria-hidden="true" />
+              <Show when={!fullScreen()}>
+                <footer
+                  class={styles.footer}
+                  inert={panelOverlay()}
+                  data-testid="app-footer"
+                  data-central={props.isCentralServer ? '' : undefined}
+                >
                   <FooterCell
-                    icon={CentralIcon}
-                    label={t('label.central-server')}
+                    icon={HomeIcon}
+                    label={props.storeName}
+                    onClick={props.onStoreClick}
+                    testId="store-selector-trigger"
                   />
-                </Show>
-              </footer>
-            </Show>
+                  <span class={styles.footerSpacer} aria-hidden="true" />
+                  <UserMenu
+                    username={props.username}
+                    onLogout={props.onLogout}
+                  />
+                  <span class={styles.footerDivider} aria-hidden="true" />
+                  <LanguageSelector
+                    language={locale()}
+                    onSelect={v => void changeLanguage(v)}
+                    testId="language-selector"
+                  />
+                  {/* Central-server cell: only on a central server (its divider
+                    goes with it, so nothing dangles on a remote site). */}
+                  <Show when={props.isCentralServer}>
+                    <span class={styles.footerDivider} aria-hidden="true" />
+                    <FooterCell
+                      icon={CentralIcon}
+                      label={t('label.central-server')}
+                    />
+                  </Show>
+                </footer>
+              </Show>
+            </div>
           </div>
-        </div>
-      </ShellFullScreenContext.Provider>
+        </ShellFullScreenContext.Provider>
+      </ShellOverlayContext.Provider>
     </ShellNavContext.Provider>
   );
 };

@@ -229,6 +229,7 @@ export const FilterBar = <
   const chipEditor = (key: string): FocusTarget => ({
     ref: chipEditors.ref(key),
     focus: () => chipEditors.focus(key),
+    seed: () => chipEditors.seed(key),
     cancel: chipEditors.cancel,
   });
 

@@ -156,6 +156,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
               <Button
                 variant="danger"
                 loading={phase() === 'working'}
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
@@ -167,6 +168,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
           <Match when={phase() === 'success'}>
             <Button
               variant="secondary"
+              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={props.onClose}
             >

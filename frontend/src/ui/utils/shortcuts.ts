@@ -18,9 +18,10 @@ import { t } from '../../intl';
  * Three things a naive { alt, ctrl, shift, meta, key } record cannot express,
  * each of which is a real break rather than a nicety:
  *
- *  - LETTERS AND DIGITS MATCH `code`, NOT `key`. On macOS Option+M delivers
- *    key === 'µ' and Option+N a dead key; Ctrl+1 on AZERTY delivers key ===
- *    '&'. `code` stays 'KeyM' / 'Digit1'. Named keys and punctuation ('Escape',
+ *  - LETTERS MATCH `code`, NOT `key`. On macOS Option+M delivers key === 'µ' and
+ *    Option+N a dead key, while `code` stays 'KeyM' / 'KeyN'. (The same holds for
+ *    digits on AZERTY, where Ctrl+1 arrives as '&' — no digit binding survives,
+ *    see the note above the palette key.) Named keys and punctuation ('Escape',
  *    '+') match `key`, because a BARE character binding is layout-dependent by
  *    intent (KB-L2: a surface may claim '+' only where '+' isn't valid input).
  *  - `mod`, NOT `meta`. KB-P1 makes the palette Cmd+K on macOS and Ctrl+K
@@ -43,7 +44,7 @@ export type ShortcutTier =
   | 'global'
   /**
    * Fires anywhere within its surface, INCLUDING inside a text field — a
-   * dialog's Alt+S and Escape (KB-1's dialog tier), a tab's Ctrl+1 (KB-L1). A
+   * dialog's Alt+S and Escape (KB-1's dialog tier), the palette's key. A
    * user who has just typed a value must be able to save without leaving the
    * field.
    */
@@ -156,12 +157,15 @@ export const ALT_S = shortcut({ alt: true, code: 'KeyS', tier: 'surface' });
 /** Open the command palette (KB-P1): Cmd+K on macOS, Ctrl+K elsewhere. */
 export const MOD_K = shortcut({ mod: true, code: 'KeyK', tier: 'surface' });
 
-/** Stocktake line editor: the Batch tab (KB-L1). — Tabs */
-export const CTRL_1 = shortcut({ ctrl: true, code: 'Digit1', tier: 'surface' });
-/** Stocktake line editor: the Pricing tab (KB-L1). — Tabs */
-export const CTRL_2 = shortcut({ ctrl: true, code: 'Digit2', tier: 'surface' });
-/** Stocktake line editor: the Other tab (KB-L1). — Tabs */
-export const CTRL_3 = shortcut({ ctrl: true, code: 'Digit3', tier: 'surface' });
+/*
+ * No tab-switching bindings. The spec's `Ctrl+1` / `Ctrl+2` / `Ctrl+3` bind the
+ * stocktake line editor's Batch / Pricing / Other TABS, and this app has no
+ * tabbed tables — a line editor groups its fields into card-group panels, so
+ * there is nothing to switch between (spec DIVERGENCES D76). Leaving the consts
+ * here unused would be exactly the drift the binding table exists to prevent, and
+ * the keys go back to the browser, where they switch its own tabs.
+ */
+
 /**
  * Stocktake line editor: Add batch (KB-L1/L2). A bare character, so `always` —
  * '+' is not valid input to any of that surface's quantity, price or date
@@ -228,14 +232,13 @@ export const matches = (s: Shortcut, event: KeyboardEvent): boolean => {
  * single label function would emit invalid ARIA.
  */
 
-// 'KeyD' → 'D', 'Digit1' → '1'. A `key`-matched binding renders its key as-is
-// ('Escape', '+').
+// 'KeyD' → 'D'. A `key`-matched binding renders its key as-is ('Escape', '+').
+// Every code-matched binding in the table is a letter; a digit binding would add
+// a `Digit` branch here, and its test alongside (see D76 on why none remain).
 const keyName = (s: Shortcut): string => {
   if (s.key !== undefined) return s.key;
   const code = s.code ?? '';
-  if (code.startsWith('Key')) return code.slice(3);
-  if (code.startsWith('Digit')) return code.slice(5);
-  return code;
+  return code.startsWith('Key') ? code.slice(3) : code;
 };
 
 /**

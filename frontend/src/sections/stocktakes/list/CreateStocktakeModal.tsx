@@ -356,6 +356,7 @@ export const CreateStocktakeModal = (props: {
           </Show>
           <Button
             variant="primary"
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={creating()}
             onClick={() => void create()}

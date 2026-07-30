@@ -37,6 +37,9 @@ import {
 } from './columnTypes';
 import { HeaderCell } from './HeaderCell';
 import { TableRow } from './TableRow';
+import { createRowFocus } from './createRowFocus';
+import { InTableCellContext } from './inTableCell';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import { CardView } from './CardView';
 import {
   CONFIG_KEYS,
@@ -152,6 +155,25 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * edit
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
+  /**
+   * Enable keyboard row navigation (spec/keyboard KB-N1): arrows move a focused
+   * row (clamped), `Enter` opens it, `Escape` clears the focus. Needs
+   * `onRowClick` to have anything to open.
+   *
+   * Opt-in, because it only makes sense on a LIST table — a table whose rows are
+   * records the user navigates into. A line editor's grid is a form: there, `Tab`
+   * walks the inputs (KB-T2) and arrows belong to the fields (KB-N2), so it must
+   * NOT claim them.
+   */
+  rowNavigation?: boolean;
+  /**
+   * Where the keyboard lands when this table's screen arrives (KB-F1: "a list
+   * screen seeds its table, making arrow-key row navigation available
+   * immediately"). Bind a `createFocusTarget()` and call its `seed()` when the
+   * data lands — `seed`, not `focus`, so an arrival never steals the caret from a
+   * search field the user is already typing in (AC-KB29).
+   */
+  focusTarget?: FocusTarget;
   /**
    * Semantic row state (ui-standards § tables row states), derived by the
    * page from the record's own facts — 'disabled' from the vertical's
@@ -424,6 +446,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // Carl 2026-07-24: keyed to the existing breakpoint, not the spec's 1280
   // band). An explicit user choice (config) wins at any width; Reset clears
   // it and the responsive default resumes.
+  // Keyboard row focus (KB-N1). Table-owned, unlike sort/selection which the page
+  // owns — row focus is ephemeral keyboard position, not URL state
+  // (kdd/table-state). `Enter` opens the focused row through the same
+  // `onRowClick` a mouse uses, so the two paths cannot diverge (KB-E5).
+  const rowFocus = createRowFocus({
+    onOpenRow: key => {
+      const row = table
+        .getRowModel()
+        .rows.find(candidate => candidate.id === key);
+      if (row) props.onRowClick?.(row.original);
+    },
+  });
+
   const isNarrow = useIsNavOverlay();
   const viewDensity = () =>
     props.config?.viewDensity ?? (isNarrow() ? 'spacious' : 'comfortable');
@@ -800,221 +835,263 @@ export function DataTable<T, K extends string, G extends string = never>(
   };
 
   return (
-    // data-datatable: a stable, un-hashed styling hook so a fill-body page can
-    // full-bleed the table from its own CSS module (Page.module.css) — a
-    // descendant selector can't name this .root class across CSS Modules.
-    <div
-      class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
-      data-datatable
-      style={
-        props.minBodyRem != null
-          ? { 'min-block-size': `${props.minBodyRem}rem` }
-          : undefined
-      }
-    >
-      {/* The table toolbar (ui-standards § tables): one bar above the scroll
+    // Everything this table renders is "inside a table cell" as far as KB-S2 is
+    // concerned: a numeric field in a cell moves the caret with the arrows rather
+    // than stepping its value. Provided ONCE here, not per <td> — see
+    // inTableCell.ts. <Dialog> resets it, so a line editor opened from a row does
+    // not inherit it.
+    <InTableCellContext.Provider value={true}>
+      {/* data-datatable: a stable, un-hashed styling hook so a fill-body page can
+        full-bleed the table from its own CSS module (Page.module.css) — a
+        descendant selector can't name this .root class across CSS Modules. */}
+      <div
+        class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
+        data-datatable
+        style={
+          props.minBodyRem != null
+            ? { 'min-block-size': `${props.minBodyRem}rem` }
+            : undefined
+        }
+      >
+        {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
           inline-end. Outside the scroll region, so it never scrolls with the
           table content and doesn't collide with the scroll box's rounded
           border. */}
-      <div class={styles.toolbar}>
-        {/* Filter bar slot — the page's <FilterBar>, living WITH the table
+        <div class={styles.toolbar}>
+          {/* Filter bar slot — the page's <FilterBar>, living WITH the table
             (ui-standards § tables → filtering), not in the page header. Pure
             placement: filter state stays page-owned. */}
-        <Show when={filters()}>
-          <div class={styles.toolbarFilters}>{filters()}</div>
-        </Show>
-        {/* The control cluster — the toolbar's controls, held at the inline-end
+          <Show when={filters()}>
+            <div class={styles.toolbarFilters}>{filters()}</div>
+          </Show>
+          {/* The control cluster — the toolbar's controls, held at the inline-end
             by its own auto margin. Wraps to its own line under the filters at
             narrow widths (.toolbar is flex-wrap). */}
-        <div class={styles.toolbarControls}>
-          {/* Loading indicator — a small inline spinner just to the LEFT of the
+          <div class={styles.toolbarControls}>
+            {/* Loading indicator — a small inline spinner just to the LEFT of the
               icon controls while a fetch runs AND rows are already showing (a
               refetch on filter/sort/page — keepPreviousData keeps the rows
               put). Signals "updating" without blanking or remounting the table
               (#160/#196). Initial load (no rows yet) uses the centred spinner
               below instead, so the two never show together. */}
-          <Show when={props.loading && table.getRowModel().rows.length > 0}>
-            <span class={styles.toolbarLoading}>
-              <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
-            </span>
-          </Show>
-          {/* Sort control — card view only (no clickable headers there): a
+            <Show when={props.loading && table.getRowModel().rows.length > 0}>
+              <span class={styles.toolbarLoading}>
+                <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
+              </span>
+            </Show>
+            {/* Sort control — card view only (no clickable headers there): a
               labelled popover showing the active sort field + direction, listing
               the sortable columns. Calls the same onSort as a header click. */}
-          <Show when={showSortControl()}>
-            <Popover
-              placement="bottom-end"
-              triggerClass={styles.sortTrigger}
-              triggerTestId="table-sort"
-              triggerLabel={t('table.sort')}
-              closeOnClickInside
-              class={styles.controlPopover}
-              trigger={
-                <>
-                  <span class={styles.sortTriggerLabel}>
-                    {activeSortColumn()
-                      ? columnLabel(activeSortColumn()!)
-                      : t('table.sort')}
-                  </span>
-                  {/* Same direction glyph as the table header's sort indicator
+            <Show when={showSortControl()}>
+              <Popover
+                placement="bottom-end"
+                triggerClass={styles.sortTrigger}
+                triggerTestId="table-sort"
+                triggerLabel={t('table.sort')}
+                closeOnClickInside
+                class={styles.controlPopover}
+                trigger={
+                  <>
+                    <span class={styles.sortTriggerLabel}>
+                      {activeSortColumn()
+                        ? columnLabel(activeSortColumn()!)
+                        : t('table.sort')}
+                    </span>
+                    {/* Same direction glyph as the table header's sort indicator
                       (↓ desc / ↑ asc, .sortIndicator), pushed to the pill's
                       trailing edge (justify-content) regardless of label width. */}
-                  <Show when={props.sort}>
-                    <span class={styles.sortIndicator} aria-hidden="true">
-                      {props.sort!.desc ? '↓' : '↑'}
-                    </span>
-                  </Show>
-                </>
-              }
-            >
-              <div class={styles.sortMenu}>
-                <For each={sortableColumns()}>
-                  {col => (
-                    <button
-                      type="button"
-                      class={styles.sortMenuItem}
-                      data-testid={`table-sort-${col.sortKey}`}
-                      data-active={
-                        props.sort?.key === col.sortKey ? '' : undefined
-                      }
-                      onClick={() => chooseSort(col.sortKey!)}
-                    >
-                      <span>{columnLabel(col)}</span>
-                      <Show when={props.sort?.key === col.sortKey}>
-                        <span class={styles.sortIndicator} aria-hidden="true">
-                          {props.sort!.desc ? '↓' : '↑'}
-                        </span>
-                      </Show>
-                    </button>
-                  )}
-                </For>
-              </div>
-            </Popover>
-          </Show>
-          {/* View toggle — a single Card-view control matching the other icon
+                    <Show when={props.sort}>
+                      <span class={styles.sortIndicator} aria-hidden="true">
+                        {props.sort!.desc ? '↓' : '↑'}
+                      </span>
+                    </Show>
+                  </>
+                }
+              >
+                <div class={styles.sortMenu}>
+                  <For each={sortableColumns()}>
+                    {col => (
+                      <button
+                        type="button"
+                        class={styles.sortMenuItem}
+                        data-testid={`table-sort-${col.sortKey}`}
+                        data-active={
+                          props.sort?.key === col.sortKey ? '' : undefined
+                        }
+                        onClick={() => chooseSort(col.sortKey!)}
+                      >
+                        <span>{columnLabel(col)}</span>
+                        <Show when={props.sort?.key === col.sortKey}>
+                          <span class={styles.sortIndicator} aria-hidden="true">
+                            {props.sort!.desc ? '↓' : '↑'}
+                          </span>
+                        </Show>
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </Popover>
+            </Show>
+            {/* View toggle — a single Card-view control matching the other icon
               controls (no border): grey when in table view, blue when card view
               is active; clicking flips between the two. Above the compact
               breakpoint only (below it the table is always card, so it's
               hidden). Opt-in per table (showCardToggle) and needs setConfig to
               persist the choice. */}
-          <Show when={props.showCardToggle && !isCompact() && props.setConfig}>
-            <button
-              type="button"
-              class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
-              data-testid="table-view-toggle"
-              aria-pressed={viewMode() === 'card'}
-              aria-label={t('table.view-cards')}
-              title={t('table.view-cards')}
-              onClick={() =>
-                props.setConfig?.(
-                  'viewMode',
-                  viewMode() === 'card' ? 'table' : 'card'
-                )
-              }
+            <Show
+              when={props.showCardToggle && !isCompact() && props.setConfig}
             >
-              <CardViewIcon />
-            </button>
-          </Show>
-          {/* Columns — the per-column panel (show / move / pin;
+              <button
+                type="button"
+                class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
+                data-testid="table-view-toggle"
+                aria-pressed={viewMode() === 'card'}
+                aria-label={t('table.view-cards')}
+                title={t('table.view-cards')}
+                onClick={() =>
+                  props.setConfig?.(
+                    'viewMode',
+                    viewMode() === 'card' ? 'table' : 'card'
+                  )
+                }
+              >
+                <CardViewIcon />
+              </button>
+            </Show>
+            {/* Columns — the per-column panel (show / move / pin;
               ui-standards § tables → column management: one predictable place,
               headers stay clean). Only when the page wired config controls
               (setConfig present); otherwise there's nothing to configure. */}
-          <Show when={props.setConfig}>
-            <Popover
-              placement="bottom-end"
-              trigger={<Columns3CogIcon />}
-              triggerLabel={t('table.edit-columns')}
-              triggerProps={{ title: t('table.edit-columns') }}
-              triggerClass={styles.controlButton}
-              class={styles.controlPopover}
-            >
-              <ColumnSettings
-                table={table}
-                setConfig={props.setConfig}
-                viewMode={viewMode()}
-              />
-            </Popover>
-          </Show>
-          {/* Settings — table-wide settings (the Density radio, Reset table to
+            <Show when={props.setConfig}>
+              <Popover
+                placement="bottom-end"
+                trigger={<Columns3CogIcon />}
+                triggerLabel={t('table.edit-columns')}
+                triggerProps={{ title: t('table.edit-columns') }}
+                triggerClass={styles.controlButton}
+                class={styles.controlPopover}
+              >
+                <ColumnSettings
+                  table={table}
+                  setConfig={props.setConfig}
+                  viewMode={viewMode()}
+                />
+              </Popover>
+            </Show>
+            {/* Settings — table-wide settings (the Density radio, Reset table to
               default, save-as-global-default), split from the per-column panel
               per the spec's two-control toolbar. */}
-          <Show when={props.setConfig}>
-            <Popover
-              placement="bottom-end"
-              trigger={<SettingsIcon />}
-              triggerLabel={t('table.settings')}
-              triggerProps={{ title: t('table.settings') }}
-              triggerClass={styles.controlButton}
-              class={styles.controlPopover}
-            >
-              <TableSettings
-                table={table}
-                config={props.config}
-                density={viewDensity()}
-                setConfig={props.setConfig}
-                onReset={resetConfig}
-                resetDisabled={props.configIsDefault}
-                orderChanged={columnOrderChanged()}
-                anyColumnHidden={anyColumnHidden()}
-                anyColumnSized={anyColumnSized()}
-                anyColumnPinned={anyColumnPinned()}
-                onSaveGlobalDefault={props.onSaveGlobalDefault}
-              />
-            </Popover>
-          </Show>
-          {/* Full-screen — a shell-level mode (hides menu/footer). Not every host can host it
+            <Show when={props.setConfig}>
+              <Popover
+                placement="bottom-end"
+                trigger={<SettingsIcon />}
+                triggerLabel={t('table.settings')}
+                triggerProps={{ title: t('table.settings') }}
+                triggerClass={styles.controlButton}
+                class={styles.controlPopover}
+              >
+                <TableSettings
+                  table={table}
+                  config={props.config}
+                  density={viewDensity()}
+                  setConfig={props.setConfig}
+                  onReset={resetConfig}
+                  resetDisabled={props.configIsDefault}
+                  orderChanged={columnOrderChanged()}
+                  anyColumnHidden={anyColumnHidden()}
+                  anyColumnSized={anyColumnSized()}
+                  anyColumnPinned={anyColumnPinned()}
+                  onSaveGlobalDefault={props.onSaveGlobalDefault}
+                />
+              </Popover>
+            </Show>
+            {/* Full-screen — a shell-level mode (hides menu/footer). Not every host can host it
               (e.g. a table inside a modal), so a caller opts out with showFullScreen={false};
               the card-switch + columns/settings controls above still render. */}
-          <Show when={props.showFullScreen !== false}>
-            <button
-              type="button"
-              class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
-              aria-label={t('table.toggle-full-screen')}
-              data-testid="table-fullscreen"
-              title={t('table.toggle-full-screen')}
-              onClick={() => setFullScreen(!fullScreen())}
-            >
-              {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
-            </button>
-          </Show>
+            <Show when={props.showFullScreen !== false}>
+              <button
+                type="button"
+                class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
+                aria-label={t('table.toggle-full-screen')}
+                data-testid="table-fullscreen"
+                title={t('table.toggle-full-screen')}
+                onClick={() => setFullScreen(!fullScreen())}
+              >
+                {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
+              </button>
+            </Show>
+          </div>
         </div>
-      </div>
-      {/* tableArea fills the remaining height between the toolbar and the
+        {/* tableArea fills the remaining height between the toolbar and the
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
-      <div class={styles.tableArea}>
-        <div
-          class={styles.tableScroll}
-          ref={scrollBox}
-          data-view={viewMode()}
-          data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
-          data-hidden-left={hiddenLeft() ? '' : undefined}
-          data-hidden-right={hiddenRight() ? '' : undefined}
-          onScroll={syncHiddenEdges}
-        >
-          {/* One <table> for BOTH views — card view is now rows in the SAME
+        <div class={styles.tableArea}>
+          <div
+            class={styles.tableScroll}
+            ref={scrollBox}
+            data-view={viewMode()}
+            data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
+            data-hidden-left={hiddenLeft() ? '' : undefined}
+            data-hidden-right={hiddenRight() ? '' : undefined}
+            onScroll={syncHiddenEdges}
+          >
+            {/* One <table> for BOTH views — card view is now rows in the SAME
               table (each card is a full-width <tr>), so columns/scroll/selection
               are shared. The header row is table-view only (hidden in card view:
               a card's fields carry their own labels via LabelledValue). The table
               renders even with NO rows so the column headers stay visible — the
               empty state / spinner sits BELOW it (matching the current app). */}
-          <table class={styles.table} data-density={viewDensity()}>
-            <Show when={viewMode() === 'table'}>
-              <thead>
-                <For each={table.getHeaderGroups()}>
-                  {headerGroup => (
-                    <tr>
-                      <Show when={props.enableSelection}>
-                        <th
-                          class={`${styles.th} ${styles.selectCell}`}
-                          data-pinned="left"
-                          data-frozen-edge={
-                            leadingIsFrozenEdge() ? 'left' : undefined
-                          }
-                          style={leadingPinnedStyle(0)}
-                        >
-                          {/* Partial selection (some rows on this page, not
+            <table
+              ref={el => props.focusTarget?.ref(el)}
+              class={styles.table}
+              data-density={viewDensity()}
+              /*
+               * Programmatically focusable so a screen arriving can seed the table
+               * itself (KB-F1: "a list screen seeds its table, making arrow-key row
+               * navigation available immediately"). -1, never 0: the table is not
+               * its own tab stop — the roving row index is (KB-T1 permits only 0
+               * and -1). From here ArrowDown moves to the first row.
+               */
+              tabindex={props.rowNavigation ? -1 : undefined}
+              /*
+               * KB-N1's rung. `on:keydown` (a real listener on this element), not
+               * the delegated `onKeyDown`: Solid delegates keydown at `document`,
+               * so a delegated handler runs after the event already reached there
+               * and could not stop the window-level Escape tail.
+               *
+               * Consumes with preventDefault AND stopPropagation, because
+               * stopPropagation alone does not CONSUME Escape — and without the
+               * preventDefault, clearing row focus inside a line-edit modal would
+               * ALSO let the UA close request through and shut the modal, losing
+               * the draft.
+               */
+              on:keydown={
+                props.rowNavigation
+                  ? event => {
+                      const keys = table.getRowModel().rows.map(row => row.id);
+                      if (!rowFocus.handleKey(event, keys)) return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }
+                  : undefined
+              }
+            >
+              <Show when={viewMode() === 'table'}>
+                <thead>
+                  <For each={table.getHeaderGroups()}>
+                    {headerGroup => (
+                      <tr>
+                        <Show when={props.enableSelection}>
+                          <th
+                            class={`${styles.th} ${styles.selectCell}`}
+                            data-pinned="left"
+                            data-frozen-edge={
+                              leadingIsFrozenEdge() ? 'left' : undefined
+                            }
+                            style={leadingPinnedStyle(0)}
+                          >
+                            {/* Partial selection (some rows on this page, not
                               all) shows the indeterminate dash (ui-standards
                               § tables → row selection). From indeterminate the
                               next click clears (→ select none), not select-all:
@@ -1023,156 +1100,176 @@ export function DataTable<T, K extends string, G extends string = never>(
                               TanStack's default handler, which keys off the
                               native box's post-click checked value and so goes
                               indeterminate → all. */}
-                          <BareCheckbox
-                            class={styles.selectBox}
-                            aria-label={t('table.select-all')}
-                            data-testid="select-all-rows-checkbox"
-                            disabled={props.selectionDisabled}
-                            checked={table.getIsAllRowsSelected()}
-                            indeterminate={table.getIsSomeRowsSelected()}
-                            onChange={e => {
-                              const anySelected =
-                                table.getIsAllRowsSelected() ||
-                                table.getIsSomeRowsSelected();
-                              table.toggleAllRowsSelected(!anySelected);
-                              // The native click already flipped the DOM box to
-                              // checked; toggling OFF from indeterminate leaves
-                              // the controlled `checked` value false→false, so
-                              // Solid's binding never re-runs to undo it. Sync
-                              // the box to the state we just set.
-                              e.currentTarget.checked = !anySelected;
-                            }}
-                          />
-                        </th>
-                      </Show>
-                      {/* Skip a card-only column's header cell (meta.hideOnTable);
-                          TanStack still holds every column — see showInTableView. */}
-                      <For each={headerGroup.headers}>
-                        {header => (
-                          <Show when={showInTableView(header.column.columnDef)}>
-                            <HeaderCell
-                              header={header}
-                              pinnedStyle={pinnedStyle}
-                              frozenEdge={frozenEdge}
+                            <BareCheckbox
+                              class={styles.selectBox}
+                              aria-label={t('table.select-all')}
+                              data-testid="select-all-rows-checkbox"
+                              disabled={props.selectionDisabled}
+                              checked={table.getIsAllRowsSelected()}
+                              indeterminate={table.getIsSomeRowsSelected()}
+                              onChange={e => {
+                                const anySelected =
+                                  table.getIsAllRowsSelected() ||
+                                  table.getIsSomeRowsSelected();
+                                table.toggleAllRowsSelected(!anySelected);
+                                // The native click already flipped the DOM box to
+                                // checked; toggling OFF from indeterminate leaves
+                                // the controlled `checked` value false→false, so
+                                // Solid's binding never re-runs to undo it. Sync
+                                // the box to the state we just set.
+                                e.currentTarget.checked = !anySelected;
+                              }}
                             />
-                          </Show>
-                        )}
-                      </For>
-                    </tr>
-                  )}
-                </For>
-              </thead>
-            </Show>
-            <tbody>
-              {/* Rows only when populated; the empty/loading state renders
+                          </th>
+                        </Show>
+                        {/* Skip a card-only column's header cell (meta.hideOnTable);
+                          TanStack still holds every column — see showInTableView. */}
+                        <For each={headerGroup.headers}>
+                          {header => (
+                            <Show
+                              when={showInTableView(header.column.columnDef)}
+                            >
+                              <HeaderCell
+                                header={header}
+                                pinnedStyle={pinnedStyle}
+                                frozenEdge={frozenEdge}
+                              />
+                            </Show>
+                          )}
+                        </For>
+                      </tr>
+                    )}
+                  </For>
+                </thead>
+              </Show>
+              <tbody>
+                {/* Rows only when populated; the empty/loading state renders
                   below the table so the headers stay visible. Table view → one
                   <TableRow> per row; card view → one full-width card <tr> per row
                   (CardView), so both live in the same <table>. */}
-              <Show when={table.getRowModel().rows.length > 0}>
-                <Switch>
-                  <Match when={viewMode() === 'card'}>
-                    <CardView
-                      table={table}
-                      cardGroups={props.cardGroups}
-                      enableSelection={props.enableSelection ?? false}
-                      selectionDisabled={props.selectionDisabled ?? false}
-                      onRowClick={props.onRowClick}
-                    />
-                  </Match>
-                  <Match when={viewMode() === 'table'}>
-                    <For each={table.getRowModel().rows}>
-                      {row => (
-                        <TableRow
-                          row={row}
-                          enableSelection={props.enableSelection ?? false}
-                          selectionDisabled={props.selectionDisabled ?? false}
-                          onRowClick={props.onRowClick}
-                          rowState={props.rowState}
-                          rowTone={props.rowTone}
-                          pinnedStyle={pinnedStyle}
-                          leadingPinnedStyle={leadingPinnedStyle}
-                          frozenEdge={frozenEdge}
-                          leadingIsFrozenEdge={leadingIsFrozenEdge()}
-                          cellVisible={cell =>
-                            showInTableView(cell.column.columnDef)
-                          }
-                        />
-                      )}
-                    </For>
-                  </Match>
-                </Switch>
-              </Show>
-            </tbody>
-            {/* Footer band (table view only) — rendered iff a column declares
+                <Show when={table.getRowModel().rows.length > 0}>
+                  <Switch>
+                    <Match when={viewMode() === 'card'}>
+                      <CardView
+                        table={table}
+                        cardGroups={props.cardGroups}
+                        enableSelection={props.enableSelection ?? false}
+                        selectionDisabled={props.selectionDisabled ?? false}
+                        onRowClick={props.onRowClick}
+                      />
+                    </Match>
+                    <Match when={viewMode() === 'table'}>
+                      <For each={table.getRowModel().rows}>
+                        {(row, index) => (
+                          <TableRow
+                            row={row}
+                            rowFocus={
+                              props.rowNavigation
+                                ? {
+                                    // LAZY. Reading the signals as this object is
+                                    // built makes Solid memoize the whole prop
+                                    // expression, and the row's own onFocus then
+                                    // reads it from a bare native listener with no
+                                    // owner in scope. See TableRow's prop doc.
+                                    isTabStop: () =>
+                                      rowFocus.isTabStop(row.id, index() === 0),
+                                    focused: () =>
+                                      rowFocus.focusedKey() === row.id,
+                                    onFocus: () => rowFocus.setFocused(row.id),
+                                  }
+                                : undefined
+                            }
+                            enableSelection={props.enableSelection ?? false}
+                            selectionDisabled={props.selectionDisabled ?? false}
+                            onRowClick={props.onRowClick}
+                            rowState={props.rowState}
+                            rowTone={props.rowTone}
+                            pinnedStyle={pinnedStyle}
+                            leadingPinnedStyle={leadingPinnedStyle}
+                            frozenEdge={frozenEdge}
+                            leadingIsFrozenEdge={leadingIsFrozenEdge()}
+                            cellVisible={cell =>
+                              showInTableView(cell.column.columnDef)
+                            }
+                          />
+                        )}
+                      </For>
+                    </Match>
+                  </Switch>
+                </Show>
+              </tbody>
+              {/* Footer band (table view only) — rendered iff a column declares
                   a `footer` (e.g. a summed total, see the inbound Financial
                   tab). Mirrors the header row's structure: a leading blank cell
                   under the selection column, then one cell per active-tab
                   column carrying its own align. The `footer` render fn owns the
                   content (a string, or flexRender of a component). */}
-            <Show
-              when={
-                viewMode() === 'table' &&
-                hasFooter() &&
-                table.getRowModel().rows.length > 0
-              }
-            >
-              <tfoot>
-                <For each={table.getFooterGroups()}>
-                  {footerGroup => (
-                    <tr>
-                      <Show when={props.enableSelection}>
-                        <td
-                          class={`${styles.tf} ${styles.selectCell}`}
-                          aria-hidden="true"
-                        />
-                      </Show>
-                      <For each={footerGroup.headers}>
-                        {header => (
-                          <Show when={showInTableView(header.column.columnDef)}>
-                            <td
-                              class={styles.tf}
-                              data-align={header.column.columnDef.meta?.align}
-                              data-testid={`footer-${header.column.id}`}
+              <Show
+                when={
+                  viewMode() === 'table' &&
+                  hasFooter() &&
+                  table.getRowModel().rows.length > 0
+                }
+              >
+                <tfoot>
+                  <For each={table.getFooterGroups()}>
+                    {footerGroup => (
+                      <tr>
+                        <Show when={props.enableSelection}>
+                          <td
+                            class={`${styles.tf} ${styles.selectCell}`}
+                            aria-hidden="true"
+                          />
+                        </Show>
+                        <For each={footerGroup.headers}>
+                          {header => (
+                            <Show
+                              when={showInTableView(header.column.columnDef)}
                             >
-                              {flexRender(
-                                header.column.columnDef.footer,
-                                header.getContext()
-                              )}
-                            </td>
-                          </Show>
-                        )}
-                      </For>
-                    </tr>
-                  )}
-                </For>
-              </tfoot>
-            </Show>
-          </table>
-          {/* Empty / initial-loading state — a sibling BELOW the table so the
+                              <td
+                                class={styles.tf}
+                                data-align={header.column.columnDef.meta?.align}
+                                data-testid={`footer-${header.column.id}`}
+                              >
+                                {flexRender(
+                                  header.column.columnDef.footer,
+                                  header.getContext()
+                                )}
+                              </td>
+                            </Show>
+                          )}
+                        </For>
+                      </tr>
+                    )}
+                  </For>
+                </tfoot>
+              </Show>
+            </table>
+            {/* Empty / initial-loading state — a sibling BELOW the table so the
                 column headers above stay visible (matching the current app). The
                 bordered box is dropped while empty (data-empty on tableScroll).
                 Loading with no rows shows the spinner; a settled empty list shows
                 the "nothing here" empty state. */}
-          <Show when={table.getRowModel().rows.length === 0}>
-            <div class={styles.emptyBody}>
-              <Show
-                when={props.loading}
-                fallback={
-                  <EmptyState
-                    data-testid="nothing-here"
-                    message={props.emptyMessage ?? t('table.no-results')}
-                  >
-                    {props.empty}
-                  </EmptyState>
-                }
-              >
-                <Spinner center data-testid="table-loading" />
-              </Show>
-            </div>
-          </Show>
+            <Show when={table.getRowModel().rows.length === 0}>
+              <div class={styles.emptyBody}>
+                <Show
+                  when={props.loading}
+                  fallback={
+                    <EmptyState
+                      data-testid="nothing-here"
+                      message={props.emptyMessage ?? t('table.no-results')}
+                    >
+                      {props.empty}
+                    </EmptyState>
+                  }
+                >
+                  <Spinner center data-testid="table-loading" />
+                </Show>
+              </div>
+            </Show>
+          </div>
         </div>
-      </div>
-      {/* TableFooter — ONE footer bar owned by the table (ui-standards §
+        {/* TableFooter — ONE footer bar owned by the table (ui-standards §
           tables → pagination: pagination and the selection zone share a single
           footer pinned to the bottom of the table area; nothing floats over
           the rows). Reuses the ContentFooter layout bar, a flex-shrink:0 child
@@ -1185,41 +1282,42 @@ export function DataTable<T, K extends string, G extends string = never>(
           State stays page-owned (kdd/table-state) — only the controls render
           here. Pages not yet migrated (no selectionActions) keep their own
           Page-level selection footer and this bar just shows the pager. */}
-      <Show when={props.pagination || selectionBarActive()}>
-        <ContentFooter
-          class={styles.tableFooter}
-          testId={selectionBarActive() ? 'actions-footer' : 'table-footer'}
-        >
-          <Show
-            when={selectionBarActive()}
-            fallback={
-              <Show when={props.pagination}>
-                {/* Spread the LIVE prop object (not a <Show>-accessor
+        <Show when={props.pagination || selectionBarActive()}>
+          <ContentFooter
+            class={styles.tableFooter}
+            testId={selectionBarActive() ? 'actions-footer' : 'table-footer'}
+          >
+            <Show
+              when={selectionBarActive()}
+              fallback={
+                <Show when={props.pagination}>
+                  {/* Spread the LIVE prop object (not a <Show>-accessor
                     snapshot): the page recreates props.pagination whenever
                     offset/total change, and a JSX spread of props.pagination
                     stays reactive so Pagination sees the new offset/total. A
                     `{...accessor()}` snapshot would freeze the pager on its
                     first values (offset never advances). */}
-                <Pagination {...props.pagination!} />
-              </Show>
-            }
-          >
-            <strong data-testid="selected-rows-count">
-              {selectedCount()} {t('label.selected')}
-            </strong>
-            {props.selectionActions}
-            <ContentFooterActions>
-              <Button
-                variant="secondary"
-                icon={<CloseIcon />}
-                onClick={() => props.onSelectionChange?.([])}
-              >
-                {t('label.clear-selection')}
-              </Button>
-            </ContentFooterActions>
-          </Show>
-        </ContentFooter>
-      </Show>
-    </div>
+                  <Pagination {...props.pagination!} />
+                </Show>
+              }
+            >
+              <strong data-testid="selected-rows-count">
+                {selectedCount()} {t('label.selected')}
+              </strong>
+              {props.selectionActions}
+              <ContentFooterActions>
+                <Button
+                  variant="secondary"
+                  icon={<CloseIcon />}
+                  onClick={() => props.onSelectionChange?.([])}
+                >
+                  {t('label.clear-selection')}
+                </Button>
+              </ContentFooterActions>
+            </Show>
+          </ContentFooter>
+        </Show>
+      </div>
+    </InTableCellContext.Provider>
   );
 }

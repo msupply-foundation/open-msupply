@@ -40,6 +40,13 @@ interface MenuBarProps {
   syncBadge?: NavBadge;
   /** Dim the Sync entry's icon while the latest run is errored. */
   syncIconDimmed?: boolean;
+  /**
+   * Unreachable by keyboard and assistive tech while a page's slide-over panel
+   * has taken over the viewport (spec/keyboard KB-X2/AC-KB17). The shell sets
+   * it; the menu bar renders outside the `Page` that owns the panel, so the
+   * panel cannot mark it inert itself.
+   */
+  inert?: boolean;
 }
 
 /*
@@ -270,6 +277,7 @@ export const MenuBar = (props: MenuBarProps) => {
       fallback={
         <nav
           class={styles.menuBar}
+          inert={props.inert}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
           data-testid="drawer"
           aria-expanded={!props.nav.railCollapsed()}
@@ -310,6 +318,7 @@ export const MenuBar = (props: MenuBarProps) => {
       />
       <nav
         class={styles.overlayPanel}
+        inert={props.inert}
         data-open={props.nav.overlayOpen() ? 'true' : 'false'}
         aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}

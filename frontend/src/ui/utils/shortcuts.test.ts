@@ -5,7 +5,6 @@ import {
   ALT_N,
   ALT_S,
   ALT_SHIFT_M,
-  CTRL_1,
   CTRL_S,
   ESCAPE,
   MOD_K,
@@ -28,7 +27,8 @@ setLocale('en');
 //
 //   1. macOS Option+letter delivers a composed character or a dead key in
 //      `event.key`, so letters must match `event.code`;
-//   2. AZERTY Ctrl+1 delivers `key === '&'`, same reason;
+//      (the same argument covers digits on AZERTY, where Ctrl+1 arrives as '&' —
+//      no digit binding survives, see spec DIVERGENCES D76);
 //   3. Cmd+K on macOS and Ctrl+K elsewhere is ONE binding (`mod`), and Ctrl+K
 //      on a Mac must NOT fire it;
 //   4. a bare-character binding ('+') arrives WITH shiftKey on most layouts, so
@@ -75,14 +75,6 @@ describe('matches', () => {
     // Option+N is a dead key for the tilde; `key` is 'Dead', not 'n'.
     expect(
       matches(ALT_N, press({ code: 'KeyN', key: 'Dead', alt: true }))
-    ).toBe(true);
-  });
-
-  it('matches a digit by code, so AZERTY Ctrl+1 still fires', () => {
-    onWindows();
-    // AZERTY delivers '&' for the unshifted Digit1 key.
-    expect(
-      matches(CTRL_1, press({ code: 'Digit1', key: '&', ctrl: true }))
     ).toBe(true);
   });
 
@@ -164,7 +156,6 @@ describe('ariaKeyshortcuts', () => {
     expect(ariaKeyshortcuts(ALT_SHIFT_M)).toBe('Alt+Shift+M');
     expect(ariaKeyshortcuts(CTRL_S)).toBe('Control+S');
     expect(ariaKeyshortcuts(ESCAPE)).toBe('Escape');
-    expect(ariaKeyshortcuts(CTRL_1)).toBe('Control+1');
     expect(ariaKeyshortcuts(MOD_K)).toBe('Meta+K');
 
     onWindows();

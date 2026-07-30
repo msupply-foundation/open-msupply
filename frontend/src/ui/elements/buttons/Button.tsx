@@ -2,7 +2,14 @@ import { children, Show, splitProps, type JSX } from 'solid-js';
 import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
 import { ShortcutBadge } from '../keyboard/ShortcutBadge';
-import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
+import {
+  ALT_S,
+  ESCAPE,
+  ariaKeyshortcuts,
+  type Shortcut,
+} from '../../utils/shortcuts';
+import { createConfirmClaim } from './createConfirmClaim';
+import type { ConfirmRole } from '../feedback/dialogConfirm';
 import styles from './Button.module.css';
 
 /*
@@ -62,6 +69,20 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * button's click (kdd/keyboard-layer).
    */
   shortcut?: Shortcut;
+  /**
+   * This button's role in a surrounding `<Dialog>`'s footer, which is how the
+   * dialog knows what `Enter` should activate (spec/keyboard KB-E2) and what to
+   * contribute to the command palette while it is open.
+   *
+   * The four `StandardButtons` set this for you — prefer those. Set it by hand
+   * only for a confirm with a BESPOKE LABEL, which D55 says must stay a plain
+   * `<Button>` rather than become a mislabelled standard one: _Create_,
+   * _Delete lines_, _Apply_, _Next step_.
+   *
+   * Read once at setup: a button does not change its footer role at runtime.
+   * Outside a `<Dialog>` it does nothing.
+   */
+  confirms?: ConfirmRole;
 }
 
 /*
@@ -84,7 +105,36 @@ export const Button = (props: ButtonProps) => {
     'disabled',
     'onPointerDown',
     'shortcut',
+    'confirms',
+    // Applied explicitly below: Solid only compiles `ref` specially when it is a
+    // STATIC attribute, so a ref arriving through `{...rest}` would be silently
+    // dropped. The dialog confirm-claim depends on getting the element.
+    'ref',
   ]);
+  // The footer-role claim, if this button declares one. Registers on mount and
+  // releases on cleanup, so a <Show>-gated Save & next hands its role back when
+  // the gate closes.
+  const claimRef = createConfirmClaim(() => local.confirms, props);
+
+  /*
+   * The binding this button advertises. Derived from the claimed ROLE where the
+   * role implies one, so claiming the role IS declaring the binding and there is
+   * no second prop to forget:
+   *
+   *   plain  → Alt+S, the dialog tier's Save (KB-1). The <Dialog> registers that
+   *            binding against whichever button holds this role, so a bespoke
+   *            confirm (_Create_, _Delete lines_) advertises it too.
+   *   cancel → Escape, which the UA's close request already performs.
+   *
+   * An explicit `shortcut` still wins, for a control whose binding is nothing to
+   * do with a dialog footer (the shared add control's Alt+N).
+   */
+  const shortcut = (): Shortcut | undefined => {
+    if (local.shortcut) return local.shortcut;
+    if (local.confirms === 'plain') return ALT_S;
+    if (local.confirms === 'cancel') return ESCAPE;
+    return undefined;
+  };
   const ripple = createRipple();
   // JSX-element props are lazy getters: each is read twice below (the <Show>
   // test + the insertion), and raw reads would create the passed element twice
@@ -94,6 +144,11 @@ export const Button = (props: ButtonProps) => {
 
   return (
     <button
+      ref={el => {
+        claimRef(el);
+        if (typeof local.ref === 'function')
+          (local.ref as (e: HTMLButtonElement) => void)(el);
+      }}
       type={local.type ?? 'button'}
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
       data-variant={local.variant ?? 'primary'}
@@ -106,9 +161,7 @@ export const Button = (props: ButtonProps) => {
       aria-busy={local.loading || undefined}
       // The ARIA grammar, not the platform spelling — the badge renders the
       // human form from the same value (KB-M1, AC-KB15).
-      aria-keyshortcuts={
-        local.shortcut ? ariaKeyshortcuts(local.shortcut) : undefined
-      }
+      aria-keyshortcuts={shortcut() ? ariaKeyshortcuts(shortcut()!) : undefined}
       // The badge positions itself against this button; `.button` is already
       // `position: relative` for the ripple, so it is already the positioning
       // context. It is also `overflow: hidden` for the same reason, which is why
@@ -135,7 +188,7 @@ export const Button = (props: ButtonProps) => {
       <Show when={label()}>
         <span class={styles.label}>{label()}</span>
       </Show>
-      <Show when={local.shortcut}>
+      <Show when={shortcut()}>
         {shortcut => <ShortcutBadge shortcut={shortcut()} />}
       </Show>
       <Ripple ripples={ripple.ripples()} onDone={ripple.dismiss} />

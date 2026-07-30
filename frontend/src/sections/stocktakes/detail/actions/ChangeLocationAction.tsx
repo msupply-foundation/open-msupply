@@ -154,6 +154,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
               <Button
                 variant="primary"
                 loading={phase() === 'working'}
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
@@ -165,6 +166,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
           <Match when={phase() === 'success'}>
             <Button
               variant="secondary"
+              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
