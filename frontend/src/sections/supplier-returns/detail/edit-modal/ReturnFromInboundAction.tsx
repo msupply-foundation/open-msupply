@@ -2,8 +2,9 @@ import { createSignal, lazy, Show, Suspense, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { t } from '../../../../intl';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { InfoIcon, CheckIcon } from '../../../../ui/icons';
+import { InfoIcon } from '../../../../ui/icons';
 
 // The inbound-shipment detail's "Return selected lines" entry point into the
 // supplier-return from-shipment flow (spec/supplier-returns/rules.md § from an
@@ -69,13 +70,10 @@ export const ReturnFromInboundAction: Component<
         title={t('heading.cannot-do-that')}
         description={t('messages.cant-return-inbound')}
         actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
+          <OkButton
+            data-testid="dialog-button-ok"
             onClick={() => setNoticeOpen(false)}
-          >
-            {t('button.ok')}
-          </Button>
+          />
         }
       />
 

@@ -97,7 +97,8 @@ const HelpPage: Component = () => {
       setEmail('');
       setMessage('');
     } else {
-      // OMS-REG-HLP-01.27: failure in the form's own surface, draft preserved (D21/D22).
+      // OMS-REG-HLP-01.27: failure in the form's own surface, draft preserved
+      // (D21/D22).
       setOutcome({ severity: 'error', text: t('messages.message-not-sent') });
     }
   };

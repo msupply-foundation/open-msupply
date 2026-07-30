@@ -233,7 +233,8 @@ export const FilterBar = <
   });
 
   // Read props live inside accessors so a chip's control tracks its own value
-  // and <For> reuses chip rows across edits (kdd/state-management: no remounts).
+  // and <For> reuses chip rows across edits (kdd/state-management: no
+  // remounts).
   const main = groupOps<F>(
     () => props.filters,
     () => props.filter,
@@ -502,9 +503,15 @@ export const FilterTextInput = (props: {
   onInput: (value: string) => void;
   placeholder?: string;
   label: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
-  /** Delay before onInput fires (default 300ms); 0 = every keystroke (client-side sets). */
+  /**
+   * Delay before onInput fires (default 300ms); 0 = every keystroke
+   * (client-side sets).
+   */
   debounceMs?: number;
 }) => {
   const chipFocus = useChipFocus();
@@ -578,7 +585,10 @@ export const FilterNumberInput = (props: {
   onChange: (value: number | undefined) => void;
   placeholder?: string;
   label: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
   /** Max decimal places; 0 (default) = integers only. */
   decimalLimit?: number;
@@ -626,7 +636,10 @@ export const FilterSelect = <V extends string>(props: {
   options: readonly { value: V | ''; label: string }[];
   onChange: (value: V | '') => void;
   label: string;
-  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the trigger (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
 }) => {
   const chipFocus = useChipFocus();
@@ -693,7 +706,10 @@ export const FilterCombobox = <T,>(props: {
   onChange: (item: T | null) => void;
   label: string;
   placeholder?: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
   /** Focus handle for the just-added chip (FilterBar's render supplies it). */
   focusTarget?: FocusTarget;
@@ -738,7 +754,10 @@ export const FilterMultiSelect = <V extends string>(props: {
    * Called only when something is selected.
    */
   summary?: () => string;
-  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the trigger (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
 }) => {
   const chipFocus = useChipFocus();
@@ -944,7 +963,10 @@ export const FilterDate = (props: {
   value: string;
   onInput: (value: string) => void;
   label: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
 }) => {
   const chipFocus = useChipFocus();

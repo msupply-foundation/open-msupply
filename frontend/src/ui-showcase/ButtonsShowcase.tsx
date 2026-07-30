@@ -9,6 +9,7 @@ import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import {
   OkButton,
   CancelButton,
+  CloseButton,
   SaveButton,
   DialogSaveButton,
   SaveAndNextButton,
@@ -128,7 +129,7 @@ export const ButtonsShowcase = () => {
             The handful of actions that recur in nearly every dialog and form,
             wrapped once so you don't re-decide the tone or label each time:{' '}
             <code>&lt;OkButton&gt;</code>, <code>&lt;CancelButton&gt;</code>,{' '}
-            <code>&lt;SaveButton&gt;</code>,{' '}
+            <code>&lt;CloseButton&gt;</code>, <code>&lt;SaveButton&gt;</code>,{' '}
             <code>&lt;DialogSaveButton&gt;</code>, and{' '}
             <code>&lt;SaveAndNextButton&gt;</code>. Each fixes its own{' '}
             <strong>variant + label</strong> (labels come from the shared intl
@@ -136,15 +137,19 @@ export const ButtonsShowcase = () => {
             takes — <code>onClick</code>, <code>disabled</code>,{' '}
             <code>loading</code>, <code>size</code> — passes through. Reach for
             these first; drop to the raw variants below only when you need a
-            different label or tone. <code>Save</code> carries the icon and{' '}
-            <strong>collapses to icon-only on phones</strong> — resize below
-            768px to see it; <code>DialogSaveButton</code>/
+            different label or tone. <code>Save</code> and <code>Close</code>{' '}
+            carry an icon and <strong>collapse to icon-only on phones</strong> —
+            resize below 768px to see it; <code>DialogSaveButton</code>/
             <code>SaveAndNextButton</code> are the icon-less dialog-footer forms
-            (ui-standards › controls § dialogs).
+            (ui-standards › controls § dialogs). <code>Close</code> is the{' '}
+            <strong>action-footer</strong> dismiss — leaving a record screen
+            beside its status control, where <code>Cancel</code> is the dialog
+            one.
           </Lead>
           <Row>
             <OkButton onClick={() => setLastStandard('OK')} />
             <CancelButton onClick={() => setLastStandard('Cancel')} />
+            <CloseButton onClick={() => setLastStandard('Close')} />
             <SaveButton onClick={() => setLastStandard('Save')} />
             <DialogSaveButton
               onClick={() => setLastStandard('Save (dialog footer)')}

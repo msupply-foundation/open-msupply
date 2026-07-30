@@ -6,9 +6,9 @@ import {
 } from './nextItemWalk';
 
 // The Save & next walk (rules.md § Save & next and the next-item walk;
-// OMS-REG-DIST-03.32/.33): current-page hit, cross-page advance, covered-set skip across a
-// page boundary, exhaustion, fetch failure, abort mid-walk, and the
-// remembered-page behaviour that keeps the scan off the reactive (possibly
+// OMS-REG-DIST-03.32/.33): current-page hit, cross-page advance, covered-set
+// skip across a page boundary, exhaustion, fetch failure, abort mid-walk, and
+// the remembered-page behaviour that keeps the scan off the reactive (possibly
 // stale) resource.
 
 const row = (itemId: string): WalkRow => ({

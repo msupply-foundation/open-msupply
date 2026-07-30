@@ -1,3 +1,4 @@
+import { Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { t } from '../../../intl';
 import styles from './Spinner.module.css';
@@ -42,11 +43,11 @@ export const Spinner = (props: SpinnerProps): JSX.Element => {
       data-testid={props.center ? undefined : props['data-testid']}
     />
   );
-  return props.center ? (
-    <div class={styles.center} data-testid={props['data-testid']}>
-      {ring}
-    </div>
-  ) : (
-    ring
+  return (
+    <Show when={props.center} fallback={ring}>
+      <div class={styles.center} data-testid={props['data-testid']}>
+        {ring}
+      </div>
+    </Show>
   );
 };

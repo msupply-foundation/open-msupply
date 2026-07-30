@@ -28,8 +28,8 @@ describe('AC-N26 Purchase Orders tab — status label mapping', () => {
   });
 
   it('falls back to the NEW label for an unmapped status (getStatusTranslator ?? New)', () => {
-    // A value outside the known enum (e.g. a status added server-side before the
-    // client knows it) resolves to the NEW label rather than throwing.
+    // A value outside the known enum (e.g. a status added server-side before
+    // the client knows it) resolves to the NEW label rather than throwing.
     expect(poStatusLabelKey('SOMETHING_NEW' as PurchaseOrderStatus)).toBe(
       'label.new'
     );

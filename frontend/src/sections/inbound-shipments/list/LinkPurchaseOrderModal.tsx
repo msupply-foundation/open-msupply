@@ -20,7 +20,8 @@ import type { LinkPurchaseOrderRowFragment } from './createInboundShipment.gener
 // disabled until a row is selected; the only choice they offer is whether to
 // seed the shipment with the order's lines. The supplier is taken from the
 // chosen order (no separate supplier step). Presentational — the parent owns
-// the data + the create mutation and acts on onSelect(purchaseOrderId, addLines).
+// the data + the create mutation and acts on onSelect(purchaseOrderId,
+// addLines).
 
 const PAGE_SIZE = 20;
 
