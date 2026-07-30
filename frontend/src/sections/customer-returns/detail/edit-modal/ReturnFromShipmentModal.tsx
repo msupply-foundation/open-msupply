@@ -32,7 +32,8 @@ import styles from './ReturnItemsModal.module.css';
 
 // S4, from-shipment mode — the return-items modal launched from an outbound
 // shipment's "Return selected lines" (spec/customer-returns/ui-surface.md S4;
-// rules § creation — from an originating outbound shipment; FL5 / AC-C4–C7).
+// rules § creation — from an originating outbound shipment; the from-shipment
+// flow, OMS-REG-DIST-07.19–.22).
 //
 // Distinct from the per-item ReturnItemsModal: the draft set comes from the
 // SELECTED shipment lines (across items) via generateCustomerReturnLines, with
@@ -142,7 +143,7 @@ const Body = (props: BodyProps): JSX.Element => {
 
   onMount(() => void loadDrafts());
 
-  // Step-1 gating (create mode; ui-surface S4, AC-C6/AC-E3's UI half): a
+  // Step-1 gating (create mode; ui-surface S4, OMS-REG-DIST-07.21/.29's UI half): a
   // returned line's pack size below one blocks; nothing to return blocks with
   // the add-quantities notice. There is no existing-line-removal path here —
   // nothing is persisted yet, so a zeroed line is just dropped (no warning).
