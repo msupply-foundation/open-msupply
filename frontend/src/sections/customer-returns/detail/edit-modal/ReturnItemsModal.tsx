@@ -128,8 +128,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   const [message, setMessage] = createSignal<
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
-  // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.28): proceeding at zero quantity
-  // warns once; the next OK applies the removal.
+  // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.28): proceeding at
+  // zero quantity warns once; the next OK applies the removal.
   const [zeroConfirmed, setZeroConfirmed] = createSignal(false);
   const [currentItem, setCurrentItem] = createSignal<ReturnItem>();
 
