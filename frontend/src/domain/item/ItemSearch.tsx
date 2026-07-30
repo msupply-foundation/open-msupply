@@ -24,17 +24,20 @@ export interface ItemSearchProps {
    */
   value?: string;
   /**
-   * The selected item's label fields, for when `value` is an item that ISN'T in
-   * the search's own paginated results (e.g. an item the stocktake editor opened
-   * from a row, not from a search). Without it the combobox can't resolve the id
-   * to a label and shows blank. Only code/name are needed to render the label.
+   * The selected item's label fields, for when `value` is an item that ISN'T
+   * in the search's own paginated results (e.g. an item the stocktake editor
+   * opened from a row, not from a search). Without it the combobox can't
+   * resolve the id to a label and shows blank. Only code/name are needed to
+   * render the label.
    */
   selectedItem?: { id: string; code: string; name: string };
   /** The picked item, or null when the selection is cleared. */
   onSelect: (item: ItemOption | null) => void;
   placeholder?: string;
   hideLabel?: boolean;
-  /** Read-only: show the selected item but don't allow searching/changing it. */
+  /**
+   * Read-only: show the selected item but don't allow searching/changing it.
+   */
   disabled?: boolean;
   error?: string;
   /** Marks the field required — passed through to the combobox's label. */
@@ -95,8 +98,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     if (p && props.value === p.id) return p;
     if (!props.selectedItem) return undefined;
     // Label-only fallback for a row-click / walk-advance open (no pick this
-    // session — the picker is read-only there, so these zeros never surface in a
-    // reopened dropdown). Only code/name feed the label.
+    // session — the picker is read-only there, so these zeros never surface in
+    // a reopened dropdown). Only code/name feed the label.
     return {
       id: props.selectedItem.id,
       code: props.selectedItem.code,

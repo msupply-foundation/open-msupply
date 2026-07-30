@@ -45,7 +45,10 @@ export interface PaginatedSearch<T> {
    * applied (stale responses are discarded and don't settle it).
    */
   pending: () => boolean;
-  /** A subsequent page is in flight (append a spinner row, don't blank the list). */
+  /**
+   * A subsequent page is in flight (append a spinner row, don't blank the
+   * list).
+   */
   loadingMore: () => boolean;
   /** More pages exist for the current search (accumulated < totalCount). */
   hasMore: () => boolean;

@@ -28,6 +28,7 @@ const user: UserInfoFragment = {
       {
         id: 's1',
         code: 'S1',
+        nameId: 'n1',
         name: 'Store 1',
         storeMode: 'STORE',
         homeCurrencyCode: 'USD',

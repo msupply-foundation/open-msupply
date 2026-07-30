@@ -34,6 +34,14 @@ const SyncModal = lazy(() =>
   }))
 );
 
+// The store editor is the settings vertical's chunk (spec/settings § S5) —
+// loaded on first open from the footer's Edit cell, not with the shell.
+const StoreEditorModal = lazy(() =>
+  import('../sections/settings/store-editor/StoreEditorModal').then(m => ({
+    default: m.StoreEditorModal,
+  }))
+);
+
 // The routed app shell: one <AppShell> for the whole in-store app, with the
 // page swapping inside it (props.children — the matched section route). This is
 // the "router stand-in" role the shell's own doc calls out, now filled by a
@@ -67,14 +75,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Nav visibility gates — reactive, because they read runtime signals the
   // static nav model can't. Two concerns, one pass:
-  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only in
-  //    dispensary mode; the patients route guard blocks direct-URL entry to match.
+  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only
+  //    in dispensary mode; the patients route guard blocks direct-URL entry
+  //    to match.
   //  • Central-only destinations (spec/help S2): a `central`-flagged entry
   //    (Manage › Help documents) shows only on a central server to a server
   //    admin; the help section's route guard blocks direct-URL entry to match.
-  // Memoised so the gated arrays — and the section objects rebuilt when a child
-  // is dropped — keep stable references; otherwise MenuBar's <For> would remount
-  // nav sections on every shell re-render (kdd/solid-reactivity-pitfalls).
+  // Memoised so the gated arrays — and the section objects rebuilt when a
+  // child is dropped — keep stable references; otherwise MenuBar's <For> would
+  // remount nav sections on every shell re-render
+  // (kdd/solid-reactivity-pitfalls).
   const centralAdmin = () => isCentralServer() && hasPermission('SERVER_ADMIN');
   const visible = (n: { central?: boolean }) => !n.central || centralAdmin();
   const gateNav = (items: NavItem[]): NavItem[] =>
@@ -92,8 +102,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
   // the one named by the URL. Activating the store selector routes to the
-  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs out (spec:
-  // explicit logout).
+  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs
+  // out (spec: explicit logout).
   const activeStore = () =>
     authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
@@ -120,6 +130,18 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setSyncOpen(true);
   };
 
+  // The store editor (spec/settings § S5, OMS-REG-SET-05.17/.18): the footer's
+  // Edit cell opens it on its Properties tab, on every screen and for every
+  // signed-in user — no permission gates OPENING it; permissions govern what is
+  // editable inside. Mounted only once opened, like the sync modal above, so
+  // its chunk (and its two queries) cost nothing until asked for.
+  const [storeEditOpen, setStoreEditOpen] = createSignal(false);
+  const [storeEditEverOpened, setStoreEditEverOpened] = createSignal(false);
+  const openStoreEdit = () => {
+    setStoreEditEverOpened(true);
+    setStoreEditOpen(true);
+  };
+
   return (
     <>
       <AppShell
@@ -132,6 +154,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
         onStoreClick={() => navigate(resolveStorePath)}
+        onStoreEdit={openStoreEdit}
         username={username()}
         displayName={userDisplayName()}
         email={authUser()?.email}
@@ -150,6 +173,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         message={t('messages.logout-confirm')}
         onConfirm={() => void logout()}
       />
+      <Show when={storeEditEverOpened()}>
+        <StoreEditorModal
+          open={storeEditOpen()}
+          storeId={params.storeId}
+          // The store's FACILITY record — the row the editor reads and writes.
+          // Rides the me/login response's store list (UserStoreNode.nameId).
+          nameId={activeStore()?.nameId ?? ''}
+          onClose={() => setStoreEditOpen(false)}
+        />
+      </Show>
     </>
   );
 };

@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import { AlertTriangleIcon } from '../../icons';
 import styles from './DateTimeFields.module.css';
 
@@ -59,6 +59,9 @@ export const FieldShell = (props: FieldShellProps) => {
   // The <label for> itself (text + required asterisk). A local component so it
   // renders fresh in either branch (bare, or beside labelInfo) — reusing one
   // JSX node across both would try to mount it in two places. As TextField.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <label
       class={props.hideLabel ? styles.labelHidden : styles.label}
@@ -75,13 +78,13 @@ export const FieldShell = (props: FieldShellProps) => {
 
   return (
     <div class={styles.field} data-width={props.width}>
-      <Show when={props.labelInfo && !props.hideLabel} fallback={<Label />}>
+      <Show when={labelInfo() && !props.hideLabel} fallback={<Label />}>
         {/* labelInfo sits OUTSIDE the <label for>, as a sibling: nested in the
             label its accessible name would leak into the control's (the
             name-from-label computation concatenates descendant controls). */}
         <span class={styles.labelRow}>
           <Label />
-          {props.labelInfo}
+          {labelInfo()}
         </span>
       </Show>
       {control}

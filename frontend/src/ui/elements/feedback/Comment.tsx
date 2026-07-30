@@ -5,7 +5,9 @@ import { Popover, type PopoverPlacement } from './Popover';
 import styles from './Comment.module.css';
 
 export interface CommentProps {
-  /** The comment text. When empty/nullish the whole component renders nothing. */
+  /**
+   * The comment text. When empty/nullish the whole component renders nothing.
+   */
   comment?: string | null;
   /** Popover heading and the trigger's accessible name. Defaults to the
       localised "Comment". */

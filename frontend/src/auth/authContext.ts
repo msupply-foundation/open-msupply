@@ -48,10 +48,10 @@ export const currentUserId = (): string | undefined => user()?.userId;
 // letting a reload bypass the re-login just demanded. We mirror the requirement
 // into sessionStorage (per-tab, cleared when the tab closes) so it survives a
 // reload; checkAuth re-arms the signal from it after startup re-establishes the
-// user. Cross-tab sharing is deliberately NOT done here (deferred — issue #646).
-// Access is guarded: sessionStorage is absent in the node test environment and
-// can throw (private-mode / disabled storage), and its loss only weakens the
-// reload guard — never break auth over it.
+// user. Cross-tab sharing is deliberately NOT done here (deferred — issue
+// #646). Access is guarded: sessionStorage is absent in the node test
+// environment and can throw (private-mode / disabled storage), and its loss
+// only weakens the reload guard — never break auth over it.
 const RELOGIN_STORAGE_KEY = 'oms.reLoginRequired';
 const persistReLoginRequired = (required: boolean): void => {
   try {
@@ -166,7 +166,8 @@ export const logout = async (): Promise<void> => {
   await graphqlFetch(Logout, {});
   clearUnauthenticated();
   setInactivityExpired(false);
-  // An explicit logout ends the session — nothing is owed on the next load (D69).
+  // An explicit logout ends the session — nothing is owed on the next load
+  // (D69).
   persistReLoginRequired(false);
   refetchStoreContext(undefined);
   setUser(undefined);
