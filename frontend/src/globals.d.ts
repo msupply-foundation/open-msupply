@@ -6,18 +6,18 @@
 // checkout-less build (tarball/export) falls back to the bare package version.
 declare const APP_VERSION: string;
 
-// Also injected by vite.config.ts: the comma-separated `plugins/<dir>` names to
-// dev-link into the host module graph (`DEV_PLUGINS=civ pnpm dev` —
-// src/plugins/loader.ts). Always the empty string in a production build, so the
-// dev-link branch and every plugin source it would import are eliminated.
-declare const DEV_PLUGINS: string;
-
-// The host's live singletons, published on `globalThis` before any INSTALLED
-// plugin bundle evaluates: the rendezvous the SDK / solid-js shim modules read
-// so a separately-built bundle shares the host's one reactivity graph
-// (kdd/plugin-loading). Deliberately typed loosely — it is a bag of module
-// namespaces whose only consumers are the shims.
-declare namespace globalThis {
-  // eslint-disable-next-line no-var
-  var __oms__: Record<string, unknown> | undefined;
-}
+// The plugin system's diagnostics handle, published by the loader
+// (src/plugins/loader.ts) once per app lifetime. NOT a module-identity
+// mechanism — shared singletons reach plugins through the import map
+// (kdd/plugin-loading) — just a live read-only window for a support session, a
+// production-path walk, or an e2e assertion: which plugins loaded, what was
+// refused and why, and which plugin API this build provides. Absent until the
+// boot gate runs, so every read must tolerate `undefined`.
+// eslint-disable-next-line no-var -- a mutable global must be declared with `var`.
+declare var __oms__:
+  | {
+      PLUGIN_API_VERSION: number;
+      plugins: () => readonly import('./plugins/registry').LoadedPlugin[];
+      diagnostics: () => readonly import('./plugins/diagnostics').PluginDiagnostic[];
+    }
+  | undefined;

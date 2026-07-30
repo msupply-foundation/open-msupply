@@ -1,9 +1,10 @@
-import { createResource } from 'solid-js';
+import { createResource, createSignal } from 'solid-js';
 import { MemoryRouter, Route } from '@solidjs/router';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatsPanel } from '../ui/elements/dashboard/StatsPanel';
 import { PluginRegionOutlet } from '../ui/elements/plugins/PluginRegionOutlet';
+import { PluginSlotOutlet } from '../ui/elements/plugins/PluginSlotOutlet';
 import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
 import { Button } from '../ui/elements/buttons/Button';
@@ -32,11 +33,7 @@ import styles from './StatisticsShowcase.module.css';
 const ReplenishmentCard = () => (
   <DashboardCard
     title="Replenishment"
-    footer={
-      <Button variant="secondary" icon={<PlusCircleIcon />}>
-        New inbound shipment
-      </Button>
-    }
+    footer={<Button icon={<PlusCircleIcon />}>New inbound shipment</Button>}
   >
     <StatsPanel
       title="Inbound Shipments"
@@ -61,11 +58,7 @@ const ReplenishmentCard = () => (
 const DistributionCard = () => (
   <DashboardCard
     title="Distribution"
-    footer={
-      <Button variant="secondary" icon={<PlusCircleIcon />}>
-        New outbound shipment
-      </Button>
-    }
+    footer={<Button icon={<PlusCircleIcon />}>New outbound shipment</Button>}
   >
     <StatsPanel
       title="Outbound Shipments"
@@ -95,11 +88,7 @@ const DistributionCard = () => (
 const InventoryCard = () => (
   <DashboardCard
     title="Inventory Management"
-    footer={
-      <Button variant="secondary" icon={<PlusCircleIcon />}>
-        Order more
-      </Button>
-    }
+    footer={<Button icon={<PlusCircleIcon />}>Order more</Button>}
   >
     <StatsPanel
       title="Expiring stock"
@@ -208,6 +197,55 @@ const PluginOutletCard = () => {
 };
 
 /*
+ * The props-carrying sibling (PluginSlotOutlet). Same contribution-as-data
+ * shape, plus the guarantee a changing record needs: switching records here
+ * must move the facts WITHOUT moving the contribution's own mount number or
+ * resetting its click count.
+ */
+const RECORDS = [
+  { code: '030062', name: 'Acetylsalicylic Acid 300mg tabs', amc: 120 },
+  { code: '201116', name: 'Bandage W.O.W. 15cm x 5m', amc: 8 },
+];
+
+const PluginSlotOutletCard = () => {
+  const [index, setIndex] = createSignal(0);
+  const record = () => RECORDS[index() % RECORDS.length]!;
+  const [demoPlugin] = createResource(() => import('./demoPlugin'));
+  // Non-suspending (`.state`-gated): the section mounts on a menu interaction.
+  const contributions = () =>
+    demoPlugin.state === 'ready'
+      ? demoPlugin.latest.demoPluginPanelContributions
+      : [];
+  return (
+    <DashboardCard
+      id="statistics-plugin-slot-outlet"
+      title="PluginSlotOutlet — a contribution that receives props"
+    >
+      <Lead>
+        The same mount point for a slot whose contributions take{' '}
+        <em>props</em> — the internal-order line editor's info panel (plugins
+        sdk-contract § the info-panel slot). Identical rules: what it is given,
+        in that order, <em>no wrapper element</em>, one error boundary each (the
+        second contribution throws, so only its own place shows the fallback).
+        What it adds is the walk's guarantee: the slot props arrive as an{' '}
+        <strong>accessor</strong> and are delivered per key, so a new record
+        reaches a <em>live</em> contribution. Press <em>Next record</em>: the
+        facts change while the contribution's mount number and click count stay
+        put — a remount would reset both (AC-PLUG-N2).
+      </Lead>
+      <Button variant="secondary" onClick={() => setIndex(n => n + 1)}>
+        Next record
+      </Button>
+      <PluginSlotOutlet
+        contributions={contributions()}
+        slotProps={() => ({ record: record() })}
+        errorFallback="A plugin contribution failed to load"
+      />
+    </DashboardCard>
+  );
+};
+
+/*
  * The component cards read best at the form measure, but the closing
  * composition demo needs the whole panel so its CardGrid has room to wrap —
  * so the measure wraps only the component cards, and the composition card
@@ -244,7 +282,7 @@ const Demo = () => (
           </div>
         </DashboardCard>
 
-        <DashboardCard title="Statistic — value, label, link (+ alert / info)">
+        <DashboardCard title="Statistic — value, label, optional link (+ alert / info)">
           <Lead>
             Hand-rolled over a semantic router <code>&lt;A&gt;</code>, so the
             link role and accessible name (value + label) come for free — no
@@ -255,6 +293,13 @@ const Demo = () => (
             marker — the meaning is carried by the chip's text and the marker,{' '}
             <em>never by colour alone</em> (accessibility § colour
             independence).
+          </Lead>
+          <Lead>
+            <code>href</code> is <em>optional</em>. A metric with no drill-down
+            omits it and renders as plain text (the last row below): hover it
+            and the label doesn't underline, and it takes no tab stop. Never
+            point a stat at the page it already sits on — that ships an element
+            announced as a link that leads nowhere.
           </Lead>
           <div class={styles.statList}>
             <Statistic label="Not delivered" value="15" href="/demo" />
@@ -276,6 +321,9 @@ const Demo = () => (
               value="128"
               href="/demo"
             />
+            {/* No href — the no-drill-down form (e.g. the item detail's
+                average-monthly-consumption stat). */}
+            <Statistic label="Months of stock (no drill-down)" value="4.75" />
           </div>
         </DashboardCard>
 
@@ -318,6 +366,8 @@ const Demo = () => (
         </DashboardCard>
 
         <PluginOutletCard />
+
+        <PluginSlotOutletCard />
 
         <DashboardCard title="DashboardCard — titled card of panels + footer action">
           <Lead>
@@ -381,6 +431,11 @@ export const statisticsMetadata: PageMetadata = {
       id: 'statistics-plugin-outlet',
       title: 'Plugin outlet',
       searchTerms: ['plugin', 'region', 'contribution', 'mount point'],
+    },
+    {
+      id: 'statistics-plugin-slot-outlet',
+      title: 'Plugin slot outlet',
+      searchTerms: ['plugin', 'slot', 'props', 'info panel', 'no remount'],
     },
     {
       id: 'statistics-composition',

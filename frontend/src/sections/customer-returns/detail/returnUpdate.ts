@@ -106,7 +106,7 @@ export const advanceReturnStatus = async (
   id: string,
   status: 'RECEIVED' | 'VERIFIED',
   // Advancing may release the hold in the same change (rules § advancing
-  // status — the same-request release; AC-S6).
+  // status — the same-request release; OMS-REG-DIST-07.34).
   onHold?: boolean
 ): Promise<AdvanceReturnResult> => {
   const result = await graphqlFetch(
@@ -115,6 +115,13 @@ export const advanceReturnStatus = async (
     { returnGraphqlErrors: true }
   );
   if (result.kind === 'graphqlError') {
+    // A server-rejected write (e.g. missing mutate permission) surfaces through
+    // the global permission-denied modal, not inline in the confirm dialog
+    // (D38); returnGraphqlErrors suppressed the default routing, so route it here.
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'failed' };
+    }
     const key = matchDetails(result.errors);
     return { kind: 'error', message: key ? t(key) : result.message };
   }
@@ -148,8 +155,17 @@ export const saveReturnLines = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
+  if (result.kind === 'graphqlError') {
+    // returnGraphqlErrors is on (to surface the non-typed line faults), which
+    // suppresses the default Forbidden→modal routing — so route it here, like
+    // delete/create below (a server-rejected write surfaces through the global
+    // modal, never inline — D38).
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'failed' };
+    }
     return { kind: 'error', message: result.message };
+  }
   if (result.kind !== 'success') return { kind: 'failed' };
   return { kind: 'saved', node: result.data.updateCustomerReturnLines };
 };
@@ -194,7 +210,7 @@ export const deleteReturn = async (
 // --- Create from an originating shipment ------------------------------------
 
 // The from-shipment creation path (rules § creation — from an originating
-// outbound shipment; AC-C4–C7): insertCustomerReturn with outboundShipmentId
+// outbound shipment; OMS-REG-DIST-07.19–.22): insertCustomerReturn with outboundShipmentId
 // set. The server records the originating shipment (InvoiceNode.originalShipment)
 // and auto-advances the return to VERIFIED in the same transaction, so the
 // response node is already terminal with its stock introduced (contract

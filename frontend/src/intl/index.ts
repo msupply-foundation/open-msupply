@@ -12,6 +12,8 @@ export {
 
 // Loading / caching / server overrides
 export { loadDictionary, invalidateCustomTranslations } from './loadDictionary';
+// Installed plugins' catalogues — a layer beneath the host dictionaries.
+export { registerPluginTranslations } from './pluginTranslations';
 
 // Detection / switching
 export { detectLocale, getUserLocale } from './detectLocale';

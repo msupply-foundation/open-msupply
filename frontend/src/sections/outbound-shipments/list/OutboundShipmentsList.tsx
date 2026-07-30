@@ -163,7 +163,7 @@ const OutboundShipmentsList: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Single-key server sort (AC-L2 — the resolver honours only the last key, so
+  // Single-key server sort (OMS-REG-DIST-01.16 — the resolver honours only the last key, so
   // exactly one is ever sent).
   const onSort = (key: SortKey, desc: boolean) => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
@@ -370,7 +370,7 @@ const OutboundShipmentsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // Read-only rows (SHIPPED+) take the disabled state (AC-L3); they
+        // Read-only rows (SHIPPED+) take the disabled state (OMS-REG-DIST-01.17); they
         // stay clickable — row click still opens the detail.
         rowState={row => (!isEditable(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-outbound-shipments')}

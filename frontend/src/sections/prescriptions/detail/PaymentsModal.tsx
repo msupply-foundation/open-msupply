@@ -24,7 +24,7 @@ import { Text } from '../../../ui/elements/typography/Text';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { createSaveCoordinator } from '../../../plugins/formParticipation';
 import { PrescriptionPaymentSlot } from '../../../plugins/PrescriptionPaymentSlot';
-import type { SaveContext } from '../../../plugins/sdk/types';
+import type { SaveContext } from '../../../plugin-sdk/types';
 import { paymentSplit } from './paymentSplit';
 import {
   InsurancePolicies,

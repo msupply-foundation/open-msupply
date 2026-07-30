@@ -1,29 +1,51 @@
 {
   /*
-   * The in-repo country plugins, type-checked by `tsc -b` alongside the app —
-   * the point of co-locating them (spec/plugins/sdk-contract.md's conformance
-   * checklist becomes a build error rather than a review note).
-   *
-   * Two deliberate differences from tsconfig.app.json:
-   *
-   * · NO "@/*" path. A plugin must not import host application source; dropping
-   *   the alias makes `@/ui/...` unresolvable at type-check time, matching what
-   *   vite.plugin.config.ts does at build time.
-   * · "@openmsupply/plugin-sdk" resolves to the host's SDK module — the same
-   *   alias vite.config.ts declares for the dev link. Keep the three in sync
-   *   (here, vite.config.ts, vite.plugin.config.ts's `external` list).
+   * The in-repo plugins — the reference plugins (examples/*) and the country
+   * plugins (plugins/*) — typechecked exactly as an out-of-tree plugin would
+   * be: the SDK resolved from source through the `@openmsupply/plugin-sdk`
+   * path mapping (what civ-plugins does with a submodule/sibling checkout),
+   * and NO `@/*` mapping — a plugin reaching into host source must not
+   * compile. Compiler options mirror tsconfig.app.json so a plugin sees the
+   * host's strictness and JSX runtime.
    */
-  "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.plugins.tsbuildinfo",
-    "paths": {
-      "@openmsupply/plugin-sdk": ["./src/plugins/sdk/index.ts"]
-    }
+    "target": "es2023",
+    "module": "esnext",
+    "lib": ["ES2023", "DOM"],
+    "types": ["vite/client"],
+    "allowArbitraryExtensions": true,
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "paths": { "@openmsupply/plugin-sdk": ["./src/plugin-sdk/index.ts"] },
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
   },
   /*
-   * The host's ambient declarations (APP_VERSION, LANG_VERSION, DEV_PLUGINS,
-   * globalThis.__oms__) come with the SDK's transitive imports into src/, so this
-   * project needs them even though it owns none of src/.
+   * The globals the SDK's own graph relies on (Vite `define` injections). They
+   * are ambient declarations, so they must be listed: `include` here is
+   * plugins-only, and the SDK arrives through the path mapping rather than
+   * through the file list.
    */
-  "include": ["plugins/*/src", "src/globals.d.ts", "src/intl/globals.d.ts"]
+  "include": [
+    "examples/**/*.ts",
+    "examples/**/*.tsx",
+    "plugins/*/src/**/*.ts",
+    "plugins/*/src/**/*.tsx",
+    "src/globals.d.ts",
+    "src/intl/globals.d.ts"
+  ]
 }

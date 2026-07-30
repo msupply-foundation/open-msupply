@@ -1,4 +1,5 @@
 import {
+  children,
   createEffect,
   createMemo,
   createSignal,
@@ -289,6 +290,14 @@ export function DataTable<T, K extends string, G extends string = never>(
     shellFullScreen
       ? shellFullScreen.setFullScreen(value)
       : setLocalFullScreen(value);
+
+  // The page's filter bar, resolved ONCE. `filters` is a JSX prop, i.e. a lazy
+  // getter that re-instantiates its subtree on every read — and the toolbar
+  // reads it twice (once to test for presence, once to render), so without this
+  // a whole FilterBar is built and thrown away on every read, taking its
+  // signals, focus targets and debounce timers with it
+  // (kdd/solid-reactivity-pitfalls §3).
+  const filters = children(() => props.filters);
 
   // --- Sort (manual: the page provides ordered rows and owns the sort state)
   // --- Controlled: the SortingState mirrors the page's props.sort, and a
@@ -812,8 +821,8 @@ export function DataTable<T, K extends string, G extends string = never>(
         {/* Filter bar slot — the page's <FilterBar>, living WITH the table
             (ui-standards § tables → filtering), not in the page header. Pure
             placement: filter state stays page-owned. */}
-        <Show when={props.filters}>
-          <div class={styles.toolbarFilters}>{props.filters}</div>
+        <Show when={filters()}>
+          <div class={styles.toolbarFilters}>{filters()}</div>
         </Show>
         {/* The control cluster — the toolbar's controls, held at the inline-end
             by its own auto margin. Wraps to its own line under the filters at

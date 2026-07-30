@@ -6,13 +6,17 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
 import { createReturnFromShipment } from '../returnUpdate';
 import {
@@ -27,12 +31,11 @@ import {
   reasonColumns,
   type UpdateLine,
 } from './returnLineColumns';
-// The shared wizard context-row layout (stacks below the compact breakpoint).
-import styles from './ReturnItemsModal.module.css';
 
 // S4, from-shipment mode — the return-items modal launched from an outbound
 // shipment's "Return selected lines" (spec/customer-returns/ui-surface.md S4;
-// rules § creation — from an originating outbound shipment; FL5 / AC-C4–C7).
+// rules § creation — from an originating outbound shipment; the from-shipment
+// flow, OMS-REG-DIST-07.19–.22).
 //
 // Distinct from the per-item ReturnItemsModal: the draft set comes from the
 // SELECTED shipment lines (across items) via generateCustomerReturnLines, with
@@ -112,10 +115,10 @@ const Body = (props: BodyProps): JSX.Element => {
   };
 
   // Seed the draft from the selected outbound-shipment lines
-  // (generateCustomerReturnLines' outboundShipmentLineIds — contract § draft-line
-  // generation): fresh ids, quantity returned zero, packs issued carried. None
-  // are "existing" (no return persisted yet), so a zeroed line is simply dropped
-  // at save — never a delete (rules § line rules).
+  // (generateCustomerReturnLines' outboundShipmentLineIds — contract §
+  // draft-line generation): fresh ids, quantity returned zero, packs issued
+  // carried. None are "existing" (no return persisted yet), so a zeroed line is
+  // simply dropped at save — never a delete (rules § line rules).
   const loadDrafts = async () => {
     const result = await graphqlFetch(GenerateCustomerReturnLines, {
       storeId: props.storeId,
@@ -142,7 +145,7 @@ const Body = (props: BodyProps): JSX.Element => {
 
   onMount(() => void loadDrafts());
 
-  // Step-1 gating (create mode; ui-surface S4, AC-C6/AC-E3's UI half): a
+  // Step-1 gating (create mode; ui-surface S4, OMS-REG-DIST-07.21/.29's UI half): a
   // returned line's pack size below one blocks; nothing to return blocks with
   // the add-quantities notice. There is no existing-line-removal path here —
   // nothing is persisted yet, so a zeroed line is just dropped (no warning).
@@ -216,24 +219,23 @@ const Body = (props: BodyProps): JSX.Element => {
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
         </Show>
       }
+      // The footer (ui-surface S4 § layout): Cancel (step 1) / Back (step 2) ·
+      // Next step / Save — the standard, icon-less dialog buttons (D55). Back
+      // and Next step carry their own labels, so they stay plain icon-less
+      // Buttons; there is no Save & next in the from-shipment flow.
       actions={
         <>
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
               data-testid="dialog-button-cancel"
               onClick={() => {
                 setStep('quantity');
@@ -247,7 +249,7 @@ const Body = (props: BodyProps): JSX.Element => {
             when={step() === 'reason'}
             fallback={
               <Button
-                icon={<ArrowRightIcon />}
+                variant="primary"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}
@@ -256,54 +258,57 @@ const Body = (props: BodyProps): JSX.Element => {
               </Button>
             }
           >
-            <Button
-              icon={<CheckIcon />}
+            <DialogSaveButton
               loading={saving()}
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           </Show>
         </>
       }
     >
       {/* The wizard's step indicator — the shared determinate progress list;
             reaching the reason step completes "Select quantity" (ui-surface
-            S4 § layout). */}
-      <ProgressList
-        variant="secondary"
-        steps={[
-          {
-            label: t('label.select-quantity'),
-            started: true,
-            finished: step() === 'reason',
-          },
-          {
-            label: t('label.select-reason'),
-            started: step() === 'reason',
-            finished: false,
-          },
-        ]}
-      />
-      {/* Context row: who the goods come back from (read-only) and the
-            return's customer reference, pre-filled "From outbound shipment #N"
-            (rules § creation — a UI default). One field per row below the
-            compact breakpoint — the ReturnItemsModal's shared contextRow. */}
-      <div class={styles.contextRow}>
-        <FieldRow label={t('label.return-from')}>
-          <Text variant="body">{props.customerName}</Text>
-        </FieldRow>
-        <FieldRow label={t('label.customer-ref')}>
-          <TextField
-            label={t('label.customer-ref')}
-            hideLabel
-            size="small"
-            value={reference()}
-            onInput={e => setReference(e.currentTarget.value)}
-          />
-        </FieldRow>
-      </div>
+            S4 § layout). Capped to a reading measure, as in the per-item modal:
+            the list divides its width between steps, so full-bleed in a
+            workbench-width dialog the markers fly to opposite edges. */}
+      <ContentContainer size="form">
+        <ProgressList
+          variant="secondary"
+          steps={[
+            {
+              label: t('label.select-quantity'),
+              started: true,
+              finished: step() === 'reason',
+            },
+            {
+              label: t('label.select-reason'),
+              started: step() === 'reason',
+              finished: false,
+            },
+          ]}
+        />
+      </ContentContainer>
+      {/* Context row: who the goods come back from and the return's customer
+            reference, pre-filled "From outbound shipment #N" (rules § creation —
+            a UI default). The per-item modal's field cluster, same shape: label
+            above control, each field sized to itself, hugging the inline-start
+            and wrapping when the dialog goes full-screen. */}
+      <HStack gap="lg" align="start" wrap>
+        <LabelledValue
+          label={t('label.return-from')}
+          variant="field"
+          size="small"
+        >
+          {props.customerName}
+        </LabelledValue>
+        <TextField
+          label={t('label.customer-ref')}
+          size="small"
+          value={reference()}
+          onInput={e => setReference(e.currentTarget.value)}
+        />
+      </HStack>
       <Show
         when={step() === 'reason'}
         fallback={
