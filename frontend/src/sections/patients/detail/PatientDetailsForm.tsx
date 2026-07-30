@@ -178,10 +178,10 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
                 value={props.draft.dateOfBirth}
                 disabled={props.disabled}
                 // The Show goes INSIDE the slot, so labelInfo is always present
-                // and only the tooltip mounts/unmounts. Toggling the slot itself
-                // between an element and undefined would also swap the label
-                // between FieldShell's bare and label-row branches on every
-                // keystroke that starts or clears an age.
+                // and only the tooltip mounts/unmounts. Toggling the slot
+                // itself between an element and undefined would also swap the
+                // label between FieldShell's bare and label-row branches on
+                // every keystroke that starts or clears an age.
                 labelInfo={
                   <Show when={showEstimatedHint()}>
                     <InfoTooltip

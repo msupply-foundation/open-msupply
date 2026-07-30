@@ -4,9 +4,9 @@ import type {
 } from '../supplierReturnDetail.generated';
 
 // Pure draft logic for the return-items modal (spec/supplier-returns/rules.md
-// § line rules + ui-surface.md S4). Component-free so the behaviour-citing tests
-// (OMS-FUN-SRN-001 .2/.7/.9, OMS-REG-REPL-06 .29/.31/.32) exercise the semantics
-// directly.
+// § line rules + ui-surface.md S4). Component-free so the behaviour-citing
+// tests (OMS-FUN-SRN-001 .2/.7/.9, OMS-REG-REPL-06 .29/.31/.32) exercise the
+// semantics directly.
 
 // The wire line input — the generated shape, never remapped (kdd/type-safety).
 export type ReturnLineInput =
@@ -18,11 +18,11 @@ type GeneratedConnector = Extract<
 >;
 export type GeneratedLine = GeneratedConnector['nodes'][number];
 
-// A draft row: the generated line plus client-only bookkeeping. `existing` marks
-// a line already persisted on the return — the upsert semantics key off it (an
-// existing line saved at zero is a delete the user must confirm; a new line at
-// zero simply never persists — rules § line rules). A supplier-return line is
-// ALWAYS an existing stock line, so there is no blank/add-batch draft
+// A draft row: the generated line plus client-only bookkeeping. `existing`
+// marks a line already persisted on the return — the upsert semantics key off
+// it (an existing line saved at zero is a delete the user must confirm; a new
+// line at zero simply never persists — rules § line rules). A supplier-return
+// line is ALWAYS an existing stock line, so there is no blank/add-batch draft
 // (ui-surface S4 — "no Add-batch action").
 export type DraftReturnLine = GeneratedLine & {
   existing: boolean;
@@ -57,12 +57,12 @@ export type Step1Verdict = 'ok' | 'no-quantity';
 export const validateStep1 = (drafts: DraftReturnLine[]): Step1Verdict =>
   drafts.some(d => d.numberOfPacksToReturn > 0) ? 'ok' : 'no-quantity';
 
-// Existing (persisted) lines whose quantity is now zero — saving deletes each of
-// them server-side (rules § line rules). The UI warns before applying this,
+// Existing (persisted) lines whose quantity is now zero — saving deletes each
+// of them server-side (rules § line rules). The UI warns before applying this,
 // whether or not OTHER lines in the set still carry quantity: the destructive
 // save must be confirmed even in the mixed case, where a zeroed existing line
-// would otherwise never reach the reason step and be removed silently
-// (REPL-06 .32). New lines at zero are simply dropped, so they never count here.
+// would otherwise never reach the reason step and be removed silently (REPL-06
+// .32). New lines at zero are simply dropped, so they never count here.
 export const existingLinesBeingRemoved = (
   drafts: DraftReturnLine[]
 ): DraftReturnLine[] =>

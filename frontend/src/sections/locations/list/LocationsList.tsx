@@ -53,8 +53,9 @@ type SortKey = NonNullable<LocationsListVariables['sort']>[number]['key'];
 
 // The fullness display (OMS-REG-INV-01.31): the proportion used ÷ capacity as a
 // percentage, via the SAME undefined-safe helper the volume-aware picker uses
-// (OMS-REG-INV-01.30 — one rule, domain/location/volume). No figure when capacity is 0, or
-// when stock is present but volumeUsed is 0 (misleading "0%").
+// (OMS-REG-INV-01.30 — one rule, domain/location/volume). No figure when
+// capacity is 0, or when stock is present but volumeUsed is 0 (misleading
+// "0%").
 const fullnessLabel = (row: LocationRow): string => {
   const pct = getVolumeUsedPercentage(row);
   return pct === undefined
@@ -88,8 +89,8 @@ const LocationsList: Component = () => {
   });
 
   // GraphQL variables, derived straight from URL state + the store in the
-  // path (listState.ts — OMS-REG-INV-01.36/OMS-REG-INV-01.19; stripEmpty drops added-but-empty filter
-  // chips so the query carries only live filters).
+  // path (listState.ts — OMS-REG-INV-01.36/OMS-REG-INV-01.19; stripEmpty drops
+  // added-but-empty filter chips so the query carries only live filters).
   const variables = createMemo<LocationsListVariables>(() =>
     buildListVariables(query(), params.storeId)
   );
@@ -185,10 +186,10 @@ const LocationsList: Component = () => {
       size: remToPx(7),
     },
     {
-      // Fullness, read-only (OMS-REG-INV-01.30): used ÷ capacity, no figure when capacity
-      // is 0 (OMS-REG-INV-01.31). Registry gap: the proportion-BAR role has no
-      // built component (a ⛔ row in the registry), so this renders the
-      // percentage text as the documented interim.
+      // Fullness, read-only (OMS-REG-INV-01.30): used ÷ capacity, no figure
+      // when capacity is 0 (OMS-REG-INV-01.31). Registry gap: the
+      // proportion-BAR role has no built component (a ⛔ row in the registry),
+      // so this renders the percentage text as the documented interim.
       c: { accessor: fullnessLabel, id: 'volumeUsed' },
       header: () => t('label.volume-used'),
       ...getNumberCell(),

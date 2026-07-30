@@ -145,10 +145,11 @@ const Body = (props: BodyProps): JSX.Element => {
 
   onMount(() => void loadDrafts());
 
-  // Step-1 gating (create mode; ui-surface S4, OMS-REG-DIST-07.21/.29's UI half): a
-  // returned line's pack size below one blocks; nothing to return blocks with
-  // the add-quantities notice. There is no existing-line-removal path here —
-  // nothing is persisted yet, so a zeroed line is just dropped (no warning).
+  // Step-1 gating (create mode; ui-surface S4, OMS-REG-DIST-07.21/.29's UI
+  // half): a returned line's pack size below one blocks; nothing to return
+  // blocks with the add-quantities notice. There is no existing-line-removal
+  // path here — nothing is persisted yet, so a zeroed line is just dropped (no
+  // warning).
   const gateStep1 = (): boolean => {
     const verdict = validateStep1(draft.slice());
     if (verdict === 'invalid-pack-size') {

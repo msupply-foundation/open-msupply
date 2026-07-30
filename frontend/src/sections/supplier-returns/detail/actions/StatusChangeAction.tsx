@@ -39,8 +39,9 @@ export interface StatusChangeActionProps {
 // (D39). The on-hold block is ACTIONABLE: it offers to release the hold and
 // advance in one save (onHold:false — rules § advancing status; D59).
 //
-// Every rejection is NON-typed (contract § advancing status): advanceReturnStatus
-// maps extensions.details to translated copy shown in the dialog's error phase.
+// Every rejection is NON-typed (contract § advancing status):
+// advanceReturnStatus maps extensions.details to translated copy shown in the
+// dialog's error phase.
 type Phase = 'confirm' | 'working' | 'success' | 'error';
 
 export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
@@ -81,7 +82,8 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       props.storeId,
       props.node.id,
       status,
-      // Release the hold in the same request when we opened on the release path.
+      // Release the hold in the same request when we opened on the release
+      // path.
       releaseHold() ? false : undefined
     );
     if (result.kind === 'failed') return close(); // global modal showed it

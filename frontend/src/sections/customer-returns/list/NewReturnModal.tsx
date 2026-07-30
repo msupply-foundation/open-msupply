@@ -13,9 +13,10 @@ import { InsertCustomerReturn } from './customerReturns.generated';
 // S2 — customer selection (spec/customer-returns/ui-surface.md): a modal over
 // the list holding a single customer lookup. Choosing a customer IMMEDIATELY
 // creates an empty NEW return and navigates to its detail — no second confirm
-// step (OMS-REG-DIST-07.16). The two typed rejections (customer not visible / not a
-// customer) surface inline and the modal stays open with the lookup preserved
-// (OMS-REG-DIST-07.17); anything non-typed went through the generic error path already.
+// step (OMS-REG-DIST-07.16). The two typed rejections (customer not visible /
+// not a customer) surface inline and the modal stays open with the lookup
+// preserved (OMS-REG-DIST-07.17); anything non-typed went through the generic
+// error path already.
 
 export interface NewReturnModalProps {
   open: boolean;

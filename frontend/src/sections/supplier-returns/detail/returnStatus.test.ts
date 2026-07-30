@@ -13,8 +13,8 @@ import {
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
 
 // Status/editability logic for supplier returns (spec/supplier-returns/rules.md
-// § status lifecycle, § editability, § preference gates; behaviour IDs cited per
-// test).
+// § status lifecycle, § editability, § preference gates; behaviour IDs cited
+// per test).
 
 const node = (
   over: Partial<SupplierReturnInfoFragment> = {}
