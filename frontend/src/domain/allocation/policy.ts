@@ -20,8 +20,9 @@ export interface AllocationPreferences {
   expiredStockIssueThreshold: number;
   manageVvmStatusForStock: boolean;
   /** Ordering variant (rules.md § ordering): usable VVM status before expiry.
-   *  Optional — a consumer that doesn't read the pref (prescriptions) omits
-   *  it, which behaves as off (plain FEFO). */
+   *  Optional only for callers with no VVM concept — both issue verticals
+   *  (outbound, prescriptions) resolve and pass it; omitted behaves as off
+   *  (plain FEFO). */
   sortByVvmStatusThenExpiry?: boolean;
 }
 

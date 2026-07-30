@@ -1,4 +1,5 @@
 import {
+  children,
   createContext,
   Show,
   useContext,
@@ -129,6 +130,10 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
   const testId = value
     ? `accordion-trigger-${value.toLowerCase().replace(/\s+/g, '-')}`
     : undefined;
+  // Resolved once — a JSX prop read twice builds two element trees, and this
+  // one is typically reactive (a live stock total), so the discarded copy
+  // would rebuild on every change (kdd/solid-reactivity-pitfalls §3).
+  const end = children(() => props.end);
   return (
     <KAccordion.Header as={props.as ?? 'h3'} class={styles.header}>
       <KAccordion.Trigger
@@ -138,8 +143,8 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         data-testid={testId}
       >
         <span class={styles.label}>{props.children}</span>
-        <Show when={props.end}>
-          <span class={styles.endMeta}>{props.end}</span>
+        <Show when={end()}>
+          <span class={styles.endMeta}>{end()}</span>
         </Show>
         <ChevronDownIcon class={styles.chevron} aria-hidden="true" />
       </KAccordion.Trigger>

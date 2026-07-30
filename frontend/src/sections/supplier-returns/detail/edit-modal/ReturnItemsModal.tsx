@@ -5,8 +5,14 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { FormRow } from '../../../../ui/layout/Form/FormRow';
 import { Text } from '../../../../ui/elements/typography/Text';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -290,15 +296,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
+            {/* Back is a non-standard verb, so a plain (icon-less) Button. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -322,13 +326,11 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 </Button>
               </Match>
               <Match when={step() === 'reason'}>
-                <Button
+                <DialogSaveButton
                   loading={saving()}
                   data-testid="dialog-button-ok"
                   onClick={() => void onSave()}
-                >
-                  {t('button.save')}
-                </Button>
+                />
               </Match>
             </Switch>
             {/* Save & next is actionable only on the reason step with a next
@@ -336,13 +338,11 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 in-context, so it's HIDDEN, not disabled — the blocked-
                 affordances ladder (D39). */}
             <Show when={step() === 'reason' && hasNext()}>
-              <Button
+              <SaveAndNextButton
                 loading={saving()}
                 data-testid="dialog-button-next-and-ok"
                 onClick={() => void onSaveNext()}
-              >
-                {t('button.save-and-next')}
-              </Button>
+              />
             </Show>
           </Show>
         </>
@@ -368,9 +368,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       <Show
         when={!noItemYet()}
         fallback={
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <Text variant="body" class={styles.hint}>
             {t('placeholder.enter-an-item-code-or-name')}
-          </p>
+          </Text>
         }
       >
         {/* The wizard's step indicator — the shared determinate progress list:
@@ -393,8 +393,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         />
         {/* Context row: who the goods go back to (read-only) and the return's
             supplier reference — edited through the shared debounced buffer, the
-            same save path as the detail toolbar. */}
-        <div class={styles.contextRow}>
+            same save path as the detail toolbar. The two-up row stacks
+            intrinsically when the dialog is squeezed. */}
+        <FormRow>
           <FieldRow label={t('label.return-to')}>
             <Text variant="body">{props.returnToName}</Text>
           </FieldRow>
@@ -410,7 +411,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               onBlur={() => props.edit.flush()}
             />
           </FieldRow>
-        </div>
+        </FormRow>
         {/* No Add-batch action — supplier-return lines are existing stock lines,
             not invented batches (ui-surface S4). */}
         <Show

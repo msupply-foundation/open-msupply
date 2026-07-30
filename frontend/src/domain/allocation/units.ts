@@ -14,26 +14,38 @@ export type AllocateUnit =
   | { kind: 'doses'; dosesPerUnit: number };
 
 /**
+ * Kill float dust before a figure reaches state or the user (0.7 packs of 10
+ * must read as exactly 3 units short of whole packs). Applied by the lens
+ * conversions below and distributeIssue's reported gap; consumers use it on
+ * their own pack×size sums.
+ */
+export const round9 = (value: number): number => Math.round(value * 1e9) / 1e9;
+
+/**
  * Convert a lens-entered quantity to units (negative or non-finite —
  * NaN/Infinity from unparsed input — → undefined: AC-AL6). A dose entry
  * divides by the item's doses-per-unit (a zero/missing rate falls back to 1,
  * the old app's `dosesPerUnit || 1`); the policy always distributes in units
- * (AC-AL7 — "lens converts, policy stays in units").
+ * (AC-AL7 — "lens converts, policy stays in units"). Rounded (round9) — the
+ * ÷/× otherwise leaves IEEE dust in figures that surface to the user.
  */
 export const lensToUnits = (
   value: number | null | undefined,
   lens: AllocateUnit
 ): number | undefined => {
   if (value == null || !Number.isFinite(value) || value < 0) return undefined;
-  if (lens.kind === 'packs') return value * lens.size;
-  if (lens.kind === 'doses') return value / (lens.dosesPerUnit || 1);
+  if (lens.kind === 'packs') return round9(value * lens.size);
+  if (lens.kind === 'doses') return round9(value / (lens.dosesPerUnit || 1));
   return value;
 };
 
-/** Units re-expressed in a lens — the display face of lensToUnits. */
+/**
+ * Units re-expressed in a lens — the display face of lensToUnits (rounded, as
+ * above).
+ */
 export const unitsToLens = (units: number, lens: AllocateUnit): number => {
-  if (lens.kind === 'packs') return units / lens.size;
-  if (lens.kind === 'doses') return units * (lens.dosesPerUnit || 1);
+  if (lens.kind === 'packs') return round9(units / lens.size);
+  if (lens.kind === 'doses') return round9(units * (lens.dosesPerUnit || 1));
   return units;
 };
 
@@ -50,7 +62,11 @@ export const clampManualPacks = (
   options?: { partialPacks?: boolean }
 ): number => {
   if (value == null || !Number.isFinite(value) || value < 0) return 0;
-  if (options?.partialPacks) return Math.min(value, availablePacks);
+  // Floored at 0: a server-computed negative availability (over-reserved
+  // stock) must not round-trip a negative entry (rules.md § whole-pack
+  // arithmetic — a negative quantity is never produced client-side).
+  if (options?.partialPacks)
+    return Math.max(0, Math.min(value, availablePacks));
   const wholePacks = Math.ceil(value);
   return wholePacks > availablePacks
     ? Math.max(0, Math.floor(availablePacks))

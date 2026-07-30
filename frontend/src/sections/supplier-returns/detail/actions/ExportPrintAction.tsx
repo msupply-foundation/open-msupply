@@ -20,7 +20,7 @@ export const ExportPrintAction: Component<ExportPrintActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="primary"
         icon={<PrinterIcon />}
         data-testid="export-print-button"
         onClick={() => setOpen(true)}

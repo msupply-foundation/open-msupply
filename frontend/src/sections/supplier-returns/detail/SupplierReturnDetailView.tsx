@@ -13,18 +13,19 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
-import { CheckIcon, InfoIcon, PlusCircleIcon } from '../../../ui/icons';
+import { InfoIcon, PlusCircleIcon } from '../../../ui/icons';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
-  getCurrencyCell,
-  getDateCell,
+  getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
@@ -206,6 +207,13 @@ const SupplierReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
+  // The item the modal opens on — narrowed off the union ONCE (re-reading the
+  // accessor inside the JSX would lose the narrowing and need a cast).
+  const editItemId = () => {
+    const state = editState();
+    return state?.mode === 'update' ? state.itemId : undefined;
+  };
+
   const crumbs = (node: SupplierReturnInfoFragment) => [
     { label: t('replenishment') },
     {
@@ -222,35 +230,45 @@ const SupplierReturnDetailView: Component = () => {
     {
       c: { accessor: line => line.item.code, id: 'item.code' },
       header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: 'itemName' },
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
+      ...getCellDefinition('batch'),
     },
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
-      ...getDateCell(),
+      ...getCellDefinition('expiryDate'),
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
       header: () => t('label.unit'),
+      // The `unit` preset, not `unitName`: same cell type, but a width that
+      // allows for the "Unit" header (the `unitName` preset's 2rem is narrower
+      // than the header word — see LIB-4 in the migration report). Matches the
+      // items / stock lists and the inbound Financial tab, which head this
+      // column the same way.
+      ...getCellDefinition('unit'),
     },
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
-      ...getNumberCell(),
+      ...getCellDefinition('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
       header: () => t('label.num-packs'),
-      ...getNumberCell(),
-      meta: { headerPosition: 'badge' },
+      ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
     },
     {
       c: {
@@ -258,12 +276,14 @@ const SupplierReturnDetailView: Component = () => {
         id: 'totalQuantity',
       },
       header: () => t('label.total-quantity'),
+      // No CELL_DEF key — the width accounts for the "Total quantity" header.
       ...getNumberCell(),
+      size: remToPx(7),
     },
     {
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('costPricePerPack'),
     },
     {
       c: {
@@ -271,7 +291,7 @@ const SupplierReturnDetailView: Component = () => {
         id: 'lineTotal',
       },
       header: () => t('label.line-total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('lineTotal'),
     },
   ];
 
@@ -292,15 +312,12 @@ const SupplierReturnDetailView: Component = () => {
               navigate(`/${params.storeId}/replenishment/supplier-return`)
             }
             actions={
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
+              <OkButton
+                data-testid="dialog-button-ok"
                 onClick={() =>
                   navigate(`/${params.storeId}/replenishment/supplier-return`)
                 }
-              >
-                {t('button.ok')}
-              </Button>
+              />
             }
           />
         }
@@ -346,7 +363,11 @@ const SupplierReturnDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
+                  {/* The header field cluster (ui-standards → HeaderToolbar):
+                      each field labelled above its control, equal shares
+                      wrapping as a unit. There is no standing-context banner —
+                      a supplier return has one forward-only lifecycle. */}
+                  <HeaderToolbar>
                     <SupplierReturnToolbar
                       storeId={params.storeId}
                       node={node()}
@@ -356,15 +377,17 @@ const SupplierReturnDetailView: Component = () => {
                       supplierError={supplierError()}
                     />
                     {/* PROMINENT custom fields — stay in the toolbar even when
-                        read-only, just disabled. */}
+                        read-only, just disabled. They wear their own labels
+                        like the fields above (the cluster's `field` layout). */}
                     <CustomFieldsToolbar
                       scope="supplier_return"
                       recordId={node().id}
                       values={node().customFields}
                       disabled={disabled()}
+                      layout="field"
                       onSave={patch => void saveField({ customFields: patch })}
                     />
-                  </Toolbar>
+                  </HeaderToolbar>
                 </Header>
               }
               contentFooter={
@@ -433,11 +456,7 @@ const SupplierReturnDetailView: Component = () => {
                 storeId={params.storeId}
                 returnId={node().id}
                 mode={editState()?.mode ?? 'update'}
-                initialItemId={
-                  editState()?.mode === 'update'
-                    ? (editState() as { itemId: string }).itemId
-                    : undefined
-                }
+                initialItemId={editItemId()}
                 excludeItemIds={existingItemIds}
                 nextItem={nextItem}
                 itemById={itemById}

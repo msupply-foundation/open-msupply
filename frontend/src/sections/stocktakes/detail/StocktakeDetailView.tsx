@@ -348,11 +348,12 @@ const StocktakeDetailView: Component = () => {
     )
   );
 
-  // A stocktake can be finalised only when it has at least one counted line
-  // (OMS no-lines guard). Best-effort over the CURRENT page — a fuller guard
-  // would need a server count; the finalise mutation is the source of truth.
-  const canFinalise = () =>
-    rows().some(line => line.countedNumberOfPacks != null);
+  // No client-side "has counted lines" guard. The old best-effort check only
+  // saw the CURRENT page (rows()), so a stocktake with placeholder lines on the
+  // first page but counted lines further in was wrongly blocked from finalising
+  // (issue #791). Finalise now always reaches the server, which is the source
+  // of truth: it accepts an all-uncounted stocktake (a no-op) and rejects a
+  // truly-empty one with NoLines, surfaced in the finalise-rejection dialog.
 
   // Header click: TanStack computed the next direction; record it as the
   // GraphQL sort array and reset to the first page.
@@ -872,7 +873,6 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled(node())}
-                      canFinalise={canFinalise()}
                       onSetHold={setHold}
                       onFinalised={onFinalised}
                       onError={lineIds =>
