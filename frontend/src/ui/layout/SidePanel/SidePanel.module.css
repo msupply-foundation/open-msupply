@@ -49,6 +49,10 @@
      so a fixed track keeps all values aligned in one column — long labels wrap
      within it rather than shoving their value right (see FieldRow's note). */
   --field-row-label: 8rem;
+  /* The input helper text in this panel carries a CALCULATED figure (a tax
+     amount below its %-input), not a hint — so it reads as a value, not muted
+     (the row-gap gives the space a value-to-the-right used to occupy). */
+  --field-helper-color: var(--text-body);
 }
 
 .section + .section {
@@ -94,9 +98,27 @@
 /* Tighter line-height inside the panel's field rows: a wrapped label's two
    lines then hug, and single-line rows sit closer together, keeping the dense
    panel compact. Scoped to FieldRow via its stable data-label-width hook (its
-   own class is module-scoped, so it can't be named from here). */
+   own class is module-scoped, so it can't be named from here). Labels stay
+   centred against their control (FieldRow's default). */
 .section [data-label-width] {
   line-height: 1.25;
+}
+
+/* Exception — a row whose input carries a helper line (the calculated tax
+   amount below its %-input): centring the label against the whole input+helper
+   block drops it too low. Instead top-align the row and box the label to the
+   INPUT's own height, centred within it — so the label lines up with the input
+   and the helper simply hangs below. Helper rows are detected by the field's
+   message paragraph (`[data-width]` is the field root; the label is FieldRow's
+   first-child span). */
+.section [data-label-width]:has([data-width] p) {
+  align-items: start;
+}
+
+.section [data-label-width]:has([data-width] p) > span:first-child {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--input-height-sm);
 }
 
 /* Sub-heading grouping fields within a section (Charges → "Stock charges" /
@@ -156,8 +178,12 @@
   overflow-wrap: anywhere;
 }
 
-/* Free-text content (comments, empty-section notes). */
-.section p {
+/* Free-text content (comments, empty-section notes) — a section's OWN body
+   paragraph, matched as a direct child only. NOT paragraphs nested inside an
+   embedded control (a field's helper/error text, a popover's body), which own
+   their own colour — a descendant `.section p` would wrongly mute those. */
+.section > p,
+.section .sectionContent > p {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);

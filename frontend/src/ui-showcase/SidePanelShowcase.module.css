@@ -49,3 +49,21 @@
     display: none;
   }
 }
+
+/* The building-blocks cheat sheet: a definition list of the panel's parts.
+   Explanatory documentation chrome (like the common/ helpers' own CSS), NOT
+   styling of the demoed SidePanel surface. */
+.blocks {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.blocks dt {
+  margin-block-end: var(--space-1);
+}
+
+.blocks dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
