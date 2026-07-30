@@ -74,31 +74,9 @@
   color: var(--primary-main);
 }
 
-/* The variant-info popover: the item's variants as a compact read-only table,
-   this batch's row marked. Wider than the popover default — three text
-   columns. */
+/* The variant-info popover: the item's variants as a compact read-only table
+   (the shared static sub-table shell, which owns the row look), this batch's row
+   marked. Wider than the popover default — three text columns. */
 .variantPanel {
   max-width: 40rem;
-}
-
-.variantTable {
-  border-collapse: collapse;
-  inline-size: 100%;
-}
-
-.variantTable th {
-  text-align: start;
-  font-weight: 600;
-  padding: var(--space-1) var(--space-3);
-}
-
-.variantTable td {
-  padding: var(--space-1) var(--space-3);
-  border-block-start: 1px solid var(--color-border-value);
-}
-
-/* The marker column hugs its check. */
-.variantMarker {
-  inline-size: 1.5rem;
-  color: var(--primary-main);
 }

@@ -74,9 +74,12 @@ const readManifest = dir => {
 
 const discoverPlugins = () => {
   const dirs = [];
-  if (existsSync('examples')) {
-    for (const entry of readdirSync('examples', { withFileTypes: true })) {
-      if (entry.isDirectory()) dirs.push(join('examples', entry.name));
+  // The reference plugins and the in-repo country plugins — the same pair the
+  // dev loop walks (vite/devPlugins.ts).
+  for (const inRepo of ['examples', 'plugins']) {
+    if (!existsSync(inRepo)) continue;
+    for (const entry of readdirSync(inRepo, { withFileTypes: true })) {
+      if (entry.isDirectory()) dirs.push(join(inRepo, entry.name));
     }
   }
   // Out-of-tree plugin checkouts (the civ-plugins dev loop), comma- or

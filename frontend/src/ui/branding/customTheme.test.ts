@@ -14,7 +14,7 @@ import { compileTheme, contrastRatio, parseColour } from './customTheme';
  */
 
 const TOKENS_CSS = 'src/ui/styles/tokens.css';
-const EXAMPLE = 'src/ui/docs/system-theme.example.json';
+const EXAMPLE = 'src/ui/docs/custom_themes/system-theme.example.json';
 
 // --- reference colour maths -------------------------------------------
 

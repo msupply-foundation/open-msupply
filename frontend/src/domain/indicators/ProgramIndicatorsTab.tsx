@@ -7,21 +7,23 @@ import {
   type Component,
 } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
-import { t, localisedDate } from '../../../intl';
-import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { NumberField } from '../../../ui/elements/inputs/NumberField';
+import { t, localisedDate } from '../../intl';
+import { EmptyState } from '../../ui/elements/feedback/EmptyState';
+import { Button } from '../../ui/elements/buttons/Button';
+import { FieldRow } from '../../ui/elements/inputs/FieldRow';
+import { TextField } from '../../ui/elements/inputs/TextField';
+import { NumberField } from '../../ui/elements/inputs/NumberField';
 import {
   mergeIndicatorLines,
   saveIndicatorValue,
   type IndicatorCell,
   type IndicatorNode,
 } from './indicators';
-import styles from './InternalOrderIndicatorsTab.module.css';
+import styles from './ProgramIndicatorsTab.module.css';
 
-// The Indicators tab (spec/internal-orders S3 § Indicators tab, AC-I4–I11).
+// The shared Indicators tab (spec/internal-orders S3 § Indicators tab,
+// AC-I4–I11, owns the surface; spec/requisitions § indicator values consumes
+// it with no customer breakdown and the requisition's editability).
 // Left: the merged line list (one entry per code), selection URL-persisted.
 // Right: a labelled input per displayed cell (autosaving as typed), an
 // inactive-line caption, the gated customer breakdown, and Previous/Next.
@@ -86,13 +88,14 @@ const IndicatorCellInput: Component<{
   );
 };
 
-export const InternalOrderIndicatorsTab: Component<{
+export const ProgramIndicatorsTab: Component<{
   storeId: string;
   /** The programIndicators nodes (definitions + this period's values). */
   nodes: readonly IndicatorNode[];
-  /** Draft + supplier-store enabled — read-only disables every cell (AC-I8). */
+  /** The record's editability — read-only disables every cell (AC-I8). */
   editable: boolean;
-  /** Both customer-statistics prefs on → the customer breakdown (AC-I10). */
+  /** Both customer-statistics prefs on → the customer breakdown (AC-I10);
+   *  always false on the response side (no breakdown on any config). */
   showCustomerBreakdown: boolean;
 }> = props => {
   const entries = createMemo(() => mergeIndicatorLines(props.nodes));

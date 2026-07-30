@@ -32,6 +32,7 @@ import type { NamesFilter } from './namesListLogic';
 const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
   // ─ user-facing
   codeOrName: {
+    alwaysOn: true,
     label: () => t('name.filter.search'),
     render: props => (
       <FilterTextInput
