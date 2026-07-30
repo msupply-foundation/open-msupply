@@ -1,7 +1,7 @@
 import { createResource, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDateTime } from '../../../intl/formatDateTime';
+import { localisedTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
@@ -54,13 +54,19 @@ export const LogTab: Component<{
   };
 
   const columns = (): Column<LogRow, never>[] => [
+    // Date and Time are SEPARATE columns — the treatment every other log
+    // surface in the app uses (the shared domain/activityLog panel, inbound,
+    // stocktakes, internal orders, both returns) and the one the current app's
+    // ActivityLogList renders.
     {
       c: { key: 'datetime' },
-      header: () => t('label.date-time'),
-      cell: info => localisedDateTime(info.getValue<string>()),
-      // One column carrying date AND time, so neither the `date` nor the `time`
-      // preset fits — it takes their combined room instead.
-      size: remToPx(11),
+      header: () => t('label.date'),
+      ...getCellDefinition('date'),
+    },
+    {
+      c: { accessor: row => localisedTime(row.datetime), id: 'time' },
+      header: () => t('label.time'),
+      ...getCellDefinition('time'),
     },
     {
       c: { accessor: row => row.user?.username ?? '—', id: 'user' },
