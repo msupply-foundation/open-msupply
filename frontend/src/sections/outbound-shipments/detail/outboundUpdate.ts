@@ -80,8 +80,8 @@ export type StatusChangeResult =
   // A structured rejection with a translated message; `unallocatedItems`
   // carries the offending placeholder items when the rejection is the
   // unallocated-lines guard (OMS-REG-DIST-03.9); `heldShipment` marks the
-  // on-hold rejection (OMS-REG-DIST-02.10) so the notice can offer the one-save
-  // release-and- advance retry (OMS-REG-DIST-02.27).
+  // on-hold rejection (OMS-REG-DIST-02.10) so the notice can offer the
+  // one-save release-and-advance retry (OMS-REG-DIST-02.27).
   | {
       kind: 'error';
       message: string;

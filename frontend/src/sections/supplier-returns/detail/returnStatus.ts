@@ -64,8 +64,8 @@ export const nextStatuses = (status: ReturnStatus): AdvanceTarget[] => {
 // Standing editability (rules § editability): header fields, lines, hold
 // toggle, status advance, and delete are available while the return is NEW or
 // PICKED; SHIPPED is terminal for this store (everything disabled). The
-// disabled- supplier-store gate is server-enforced only (not derivable from the
-// node).
+// disabled-supplier-store gate is server-enforced only (not derivable from
+// the node).
 export const isReturnDisabled = (node: { status: ReturnStatus }): boolean =>
   node.status !== 'NEW' && node.status !== 'PICKED';
 

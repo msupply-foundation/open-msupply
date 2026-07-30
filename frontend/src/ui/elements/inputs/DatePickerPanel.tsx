@@ -293,29 +293,33 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     </div>
   );
 
-  return <>{props.mode === 'range' ? (
-    <Calendar
-      mode="range"
-      value={props.value}
-      onValueChange={range => props.onSelect(range)}
-      month={month()}
-      onMonthChange={setMonth}
-      disabled={disabled}
-      required={props.required}
-    >
-      {ctx => body(ctx)}
-    </Calendar>
-  ) : (
-    <Calendar
-      mode="single"
-      value={props.value}
-      onValueChange={date => props.onSelect(date)}
-      month={month()}
-      onMonthChange={setMonth}
-      disabled={disabled}
-      required={props.required}
-    >
-      {ctx => body(ctx)}
-    </Calendar>
-  )}</>;
+  return (
+    <>
+      {props.mode === 'range' ? (
+        <Calendar
+          mode="range"
+          value={props.value}
+          onValueChange={range => props.onSelect(range)}
+          month={month()}
+          onMonthChange={setMonth}
+          disabled={disabled}
+          required={props.required}
+        >
+          {ctx => body(ctx)}
+        </Calendar>
+      ) : (
+        <Calendar
+          mode="single"
+          value={props.value}
+          onValueChange={date => props.onSelect(date)}
+          month={month()}
+          onMonthChange={setMonth}
+          disabled={disabled}
+          required={props.required}
+        >
+          {ctx => body(ctx)}
+        </Calendar>
+      )}
+    </>
+  );
 };

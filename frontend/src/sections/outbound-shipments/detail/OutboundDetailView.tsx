@@ -112,7 +112,7 @@ import {
 // TWO independent queries (rules.md § server-paginated line table,
 // OMS-REG-DIST-03.28): `info` (outboundDetail — header/footer/side-panel
 // fields, NOT the lines) and `lines` (outboundLines — one
-// server-filtered/sorted page). An entity- LEVEL save mutates `info` in place;
+// server-filtered/sorted page). An entity-LEVEL save mutates `info` in place;
 // a LINE-level change refetches the lines page AND the entity (the footer
 // totals are its server-side pricing aggregates — D45; placeholders and trims
 // move server-side too — kdd/state-management: refresh by direct call). Service
@@ -172,8 +172,9 @@ const OutboundDetailView: Component = () => {
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
   // WHICH item (and clicked batch, for scroll/focus — OMS-REG-DIST-03.31) to
-  // open on: - { item, lineId }: opened from a ROW click — update mode. - {}:
-  // opened from "Add item" — add mode (item search focused).
+  // open on:
+  // - { item, lineId }: opened from a ROW click — update mode.
+  // - {}: opened from "Add item" — add mode (item search focused).
   type EditState = { item?: LineEditItem; lineId?: string } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
   const [serviceOpen, setServiceOpen] = createSignal(false);
@@ -1006,7 +1007,7 @@ const OutboundDetailView: Component = () => {
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
                   // Page navigation clears the selection (OMS-REG-DIST-03.34):
-                  // the bulk- action gates classify by rows in view, so a
+                  // the bulk-action gates classify by rows in view, so a
                   // selection must never carry ids the user can no longer see.
                   pagination={{
                     offset: query().offset,

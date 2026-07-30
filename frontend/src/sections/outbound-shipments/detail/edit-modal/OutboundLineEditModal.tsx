@@ -184,8 +184,8 @@ interface OutboundLineEditModalProps {
    * The clicked LINE id for a row-click open — the editor scrolls its batch
    * into view and focuses its packs input (OMS-REG-DIST-03.31; draft rows
    * built from existing lines keep the invoice-line id). Omitted for "Add
-   * item"; a
-   * clicked placeholder row has no batch row, so the Issue field is focused.
+   * item"; a clicked placeholder row has no batch row, so the Issue field is
+   * focused.
    */
   initialLineId?: string;
   /**
@@ -729,17 +729,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   // OK & next (spec S4, OMS-REG-DIST-03.32): save, then continue rapid entry —
   // never a dead end (matching the stocktake / inbound editors, so never
-  // disabled): - UPDATE mode: ask the parent for the next item in its
-  // sorted/paginated order (the covered set guards repeats) and seed it in
-  // place; when the walk is exhausted, drop into add mode (empty, picker
-  // focused). An unchanged item pages on WITHOUT a redundant save (outbound
-  // gates saves on a real change). - ADD mode: reopen empty for rapid entry of
-  // the next item. A failed save aborts the advance with the editor unchanged.
-  // A walk advance in flight: gates the button (a double-click must not start
-  // two concurrent walks — overlapping page advances and covered-set writes)
-  // and survives in the button's loading face. `disposed` stops the tail of an
-  // advance whose modal was closed mid-walk (the parent's walk also aborts its
-  // own paging via its `aborted` dep).
+  // disabled):
+  // - UPDATE mode: ask the parent for the next item in its sorted/paginated
+  //   order (the covered set guards repeats) and seed it in place; when the
+  //   walk is exhausted, drop into add mode (empty, picker focused). An
+  //   unchanged item pages on WITHOUT a redundant save (outbound gates saves
+  //   on a real change).
+  // - ADD mode: reopen empty for rapid entry of the next item.
+  // A failed save aborts the advance with the editor unchanged.
+  // A walk advance in flight: gates the button (a double-click must not
+  // start two concurrent walks — overlapping page advances and covered-set
+  // writes) and survives in the button's loading face. `disposed` stops the
+  // tail of an advance whose modal was closed mid-walk (the parent's walk
+  // also aborts its own paging via its `aborted` dep).
   const [advancing, setAdvancing] = createSignal(false);
   let disposed = false;
   onCleanup(() => (disposed = true));
@@ -1224,9 +1226,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               'margin-block-start': 'var(--space-2)',
             }}
           >
-            <For each={warnings()}>{message => (
-              <Alert severity="warning">{message}</Alert>
-            )}</For>
+            <For each={warnings()}>
+              {message => <Alert severity="warning">{message}</Alert>}
+            </For>
           </div>
         </Show>
 

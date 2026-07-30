@@ -4,16 +4,15 @@
  * For each discovered plugin (in-repo `examples/*`, plus anything named by
  * OMS_PLUGIN_DIRS) this:
  *   1. builds it to a single-file ES module
- *   `dist/frontend_plugins/{code}/{code}.js`
+ *      `dist/frontend_plugins/{code}/{code}.js`
  *      through the shared preset (vite/pluginBuild.ts) — shared specifiers stay
  *      bare, resolved at runtime by the host's import map;
  *   2. packs every plugin into `dist/bundle.json` — the installable server
  *      artifact, byte-for-byte in the format `remote_server_cli
  *      generate-plugin-bundle` produces;
  *   3. writes `dist/frontend_plugins/metadata.json`, the
- *   `frontendPluginMetadata`
- *      discovery response, so the built app can load them through its
- *      production path without a server.
+ *      `frontendPluginMetadata` discovery response, so the built app can load
+ *      them through its production path without a server.
  *
  * Faithfulness rules, mirrored from server/cli/src/plugins.rs and
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
