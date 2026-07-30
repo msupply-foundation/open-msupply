@@ -171,6 +171,20 @@ Dimension 5: "button-variant semantics (delete = `danger`)"; registry `ConfirmDi
 
 **Fixed:** two columns on the `date` and `time` presets. The Event column keeps folding the log's `to` value into its label; adding the **Details** column that four of the seven carry would be a genuine content change, so it is left for a spec-owner ruling.
 
+**F16 then broke the tab, and the operator found it.** Copying inbound's line verbatim gave `accessor: row => localisedTime(row.datetime)` **plus** `getCellDefinition('time')` — and [`getTimeCell`](../../ui/elements/table/tableHelpers.tsx#L127) calls `localisedTime` on the cell value itself, so it formatted an already-formatted clock string and threw `RangeError: Invalid time value`, killing the table body and leaving an endless spinner. Fixed by handing the cell the **raw** `datetime` and letting the preset format it.
+
+Three patterns are in use across the app's time columns; only two work:
+
+| Pattern                                                        | Verdict                                                                                      |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| raw accessor + `getCellDefinition('time')`                     | ✅ the cell formats once — customer-returns, items ledger, stock ledger, repack, VVM history |
+| pre-formatted accessor + `meta: { align: 'right' }`, no preset | ✅ the string renders as-is — stocktakes, internal orders, the shared panel                  |
+| pre-formatted accessor **+** `getCellDefinition('time')`       | 💥 double format → `Invalid time value`                                                      |
+
+**Two siblings are in the broken combination on `main` today** and their Log tabs will spinner the same way: [`InboundShipmentLogPanel.tsx:134`](../inbound-shipments/detail/log/InboundShipmentLogPanel.tsx#L134) and [`supplier-returns/detail/LogTab.tsx:83`](../supplier-returns/detail/LogTab.tsx#L83). Not fixed here — outside this vertical — and raised with the operator. → **LIB-7**.
+
+**The verification lesson:** the live pass drove the list, the detail header, the filter chip and the side panel, but never clicked the Log tab, so a crash in the one tab I had just rewritten went out the door. Changing a surface means rendering _that_ surface, not just the ones the change was about.
+
 **The process lesson:** the audit's sibling sweep stopped at the first two agreeing verticals — the exact failure mode [supplier-returns' F10](../supplier-returns/ui-migration-report.md) recorded ("a cross-vertical check that stops at the first agreeing pair isn't a majority"). Repeating it here says the sweep has to be exhaustive by default.
 
 **Also noted, not changed:** six verticals hand-roll a log surface rather than consuming the shared panel, each with its own query — a consolidation task well beyond this migration, flagged as **LIB-6**.
@@ -248,6 +262,7 @@ Run over the diff per the [`check-reactivity`](../../../.claude/skills/check-rea
 - **LIB-2 — `InfoTooltip` has no custom `trigger`.** Its trigger is a fixed `InfoIcon`, so a "gloss on a word" must drop to raw `Popover`.
 - **LIB-3 — no inline-level `HStack`.** `HStack`/`Stack` are block-level `<div>`s, so a row inside a heading or other phrasing context needs a local class (`.groupHeading` here). An `as` prop, or an inline variant, would close it.
 - **LIB-4 — `HStack` can't express a two-axis gap or per-child flex basis.** That is what keeps `.headerRow` a CSS module.
+- **LIB-7 — two verticals' Log tabs crash on `main`.** `InboundShipmentLogPanel.tsx:134` and `supplier-returns/detail/LogTab.tsx:83` both pre-format their time accessor **and** apply `getCellDefinition('time')`, which double-formats and throws `Invalid time value` — an endless spinner instead of the log. One-line fix each (hand the cell the raw `datetime`); worth a guard so the preset can't be handed a formatted string. Found via F16.
 - **LIB-6 — six verticals hand-roll a log surface** (outbound, inbound, stocktakes, internal orders, both returns) instead of consuming the shared `domain/activityLog/ActivityLogPanel` that items, patients, prescriptions and stock use — six near-identical queries and column sets. Surfaced by F16; a consolidation task, not a migration one.
 - **LIB-5 — inherited, already filed by siblings:** the icon-tone class (inbound's LIB-3, used here by `.variantInfoTrigger`) and a native `title` on a disabled button not rendering in Chromium (inbound's LIB-5, which Duplicate relies on).
 
