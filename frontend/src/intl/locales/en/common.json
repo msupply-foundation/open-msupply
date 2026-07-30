@@ -2849,6 +2849,7 @@
   "messages.select-from-location": "Select a location to view and move or repack its stock.",
   "messages.select-item-to-count": "Select an item to count its stock lines.",
   "messages.select-item-to-receive": "Select an item to add to the shipment.",
+  "messages.select-item-to-return": "Select an item to enter what is coming back.",
   "messages.select-rows-to-approve": "Select rows to approve them",
   "messages.select-rows-to-delete": "Select rows to delete them",
   "messages.select-rows-to-delete-them": "Select rows to delete them",

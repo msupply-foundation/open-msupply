@@ -1,11 +1,14 @@
 import { t } from '../../../../intl';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { type Column } from '../../../../ui/elements/table/DataTable';
 import {
-  getDateCell,
+  getCellDefinition,
   getNumberCell,
+  getTextCell,
 } from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { clampQuantity, type DraftReturnLine } from './returnLineLogic';
 
@@ -24,6 +27,9 @@ export type UpdateLine = <F extends keyof DraftReturnLine>(
   value: DraftReturnLine[F]
 ) => void;
 
+// Each column takes its cell-type width preset (docs/CELL_TYPES.md) — spread
+// BEFORE any editable `cell` override, so the preset supplies the width and
+// alignment while the override supplies the control (the documented order).
 // ---- Step 1: the quantity grid (ui-surface S4 § step 1) ----
 export const quantityColumns = (
   update: UpdateLine
@@ -31,15 +37,20 @@ export const quantityColumns = (
   {
     c: { key: 'itemCode' },
     header: () => t('label.code'),
+    ...getCellDefinition('itemCode'),
   },
   {
     c: { key: 'itemName' },
     header: () => t('label.name'),
-    meta: { headerPosition: 'primary', wrapLines: 2 },
+    ...getCellDefinition('itemName', {
+      headerPosition: 'primary',
+      wrapLines: 2,
+    }),
   },
   {
     c: { key: 'batch' },
     header: () => t('label.batch'),
+    ...getCellDefinition('batch'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -56,18 +67,19 @@ export const quantityColumns = (
   {
     c: { key: 'expiryDate' },
     header: () => t('label.expiry'),
+    ...getCellDefinition('expiryDate'),
+    // DateField, never a native date input (ui-standards § inputs → dates &
+    // times): typed or picked, app-formatted, over the same plain ISO
+    // YYYY-MM-DD the draft holds.
     cell: info => {
       const line = info.row.original;
       return (
-        <TextField
+        <DateField
           label={t('label.expiry')}
           hideLabel
           size="small"
-          type="date"
-          value={line.expiryDate ?? ''}
-          onInput={e =>
-            update(line.id, 'expiryDate', e.currentTarget.value || null)
-          }
+          value={line.expiryDate}
+          onChange={value => update(line.id, 'expiryDate', value || null)}
         />
       );
     },
@@ -75,15 +87,17 @@ export const quantityColumns = (
   {
     // Packs issued: context from the originating shipment line — present on
     // from-shipment drafts only (contract § draft-line generation); blank on
-    // per-item drafts. Read-only.
+    // per-item drafts. Read-only. No CELL_DEF key — the explicit helper plus a
+    // call-site width, since "Pack quantity issued" is the binding constraint.
     c: { key: 'numberOfPacksIssued' },
     header: () => t('label.pack-quantity-issued'),
     ...getNumberCell(),
+    size: remToPx(8),
   },
   {
     c: { key: 'packSize' },
     header: () => t('label.pack-size'),
-    ...getNumberCell(),
+    ...getCellDefinition('packSize'),
     // NumberField (not a raw controlled input): it clamps to min/max and
     // repairs the DOM when a keystroke is rejected — the §13 pitfall
     // (kdd/solid-reactivity-pitfalls) a plain value= binding would hit.
@@ -108,6 +122,8 @@ export const quantityColumns = (
     c: { key: 'numberOfPacksReturned' },
     header: () => t('label.quantity-returned'),
     ...getNumberCell(),
+    // No CELL_DEF key; "Quantity returned" is the binding constraint.
+    size: remToPx(8),
     cell: info => {
       const line = info.row.original;
       return (
@@ -133,7 +149,7 @@ export const quantityColumns = (
   {
     c: { key: 'volumePerPack' },
     header: () => t('label.volume-per-pack'),
-    ...getNumberCell(),
+    ...getCellDefinition('volumePerPack'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -157,24 +173,39 @@ export const quantityColumns = (
 export const reasonColumns = (
   update: UpdateLine
 ): Column<DraftReturnLine, never>[] => [
-  { c: { key: 'itemCode' }, header: () => t('label.code') },
+  {
+    c: { key: 'itemCode' },
+    header: () => t('label.code'),
+    ...getCellDefinition('itemCode'),
+  },
   {
     c: { key: 'itemName' },
     header: () => t('label.name'),
-    meta: { headerPosition: 'primary', wrapLines: 2 },
+    ...getCellDefinition('itemName', {
+      headerPosition: 'primary',
+      wrapLines: 2,
+    }),
   },
-  { c: { key: 'batch' }, header: () => t('label.batch') },
+  {
+    c: { key: 'batch' },
+    header: () => t('label.batch'),
+    ...getCellDefinition('batch'),
+  },
   {
     // Expiry, read-only here (edited in the quantity step) — matches the
     // current app's reason-step table (ReturnReasonsTable: batch · expiry ·
-    // reason · comment; no quantity column).
+    // reason · comment; no quantity column). The expiry preset carries the
+    // near-expiry emphasis as well as the width.
     c: { key: 'expiryDate' },
     header: () => t('label.expiry'),
-    ...getDateCell(),
+    ...getCellDefinition('expiryDate'),
   },
   {
     c: { id: 'returnReasonInput' },
     header: () => t('label.reason'),
+    // No CELL_DEF key — a width wide enough for the reason picker.
+    ...getTextCell(),
+    size: remToPx(12),
     cell: info => {
       const line = info.row.original;
       return (
@@ -191,6 +222,7 @@ export const reasonColumns = (
   {
     c: { key: 'note' },
     header: () => t('label.comment'),
+    ...getCellDefinition('note'),
     cell: info => {
       const line = info.row.original;
       return (
