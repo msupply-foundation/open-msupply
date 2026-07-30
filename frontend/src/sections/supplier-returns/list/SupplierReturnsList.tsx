@@ -8,20 +8,18 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getDateCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
@@ -30,7 +28,7 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CheckIcon, CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import {
@@ -252,17 +250,14 @@ const SupplierReturnsList: Component = () => {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('otherPartyName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             {/* Swatch editable only while the row is editable (rules
                 § editability — the same standing gate as everything else);
                 read-only (Shipped) rows show the dot alone. */}
@@ -272,11 +267,12 @@ const SupplierReturnsList: Component = () => {
             >
               <ColourTagPicker
                 colour={row.colour ?? null}
+                variant="row"
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -288,30 +284,35 @@ const SupplierReturnsList: Component = () => {
         <StatusChip {...statusMeta(info.getValue<ReturnRow['status']>())} />
       ),
       meta: { headerPosition: 'badge' },
+      // Status is a page-rendered cell type (no preset — it needs a
+      // status→colour map), so the column carries its own width
+      // (ui/docs/CELL_TYPES.md § cell-type inventory).
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: () => t('label.number'),
-      ...getNumberCell(),
+      ...getCellDefinition('invoiceNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       c: { key: 'theirReference' },
       header: () => t('label.reference'),
-      meta: { wrapLines: 2 },
+      ...getCellDefinition('theirReference', { wrapLines: 2 }),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.
     ...customFieldColumns<ReturnRow, SortKey>(
@@ -346,18 +347,6 @@ const SupplierReturnsList: Component = () => {
               filter={() => variables().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filters}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -393,6 +382,21 @@ const SupplierReturnsList: Component = () => {
         rows={rows()}
         rowKey={r => r.id}
         loading={data.loading}
+        // The filter bar lives in the TABLE's own toolbar, never the page
+        // header (ui-standards/tables.md § toolbar — binding for every table).
+        // Filter state stays page-owned / URL-backed; the table only places it.
+        filters={
+          <FilterBar
+            filters={filters}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
@@ -437,13 +441,10 @@ const SupplierReturnsList: Component = () => {
         title={t('button.new-return')}
         description={t('messages.manual-returns-preferences-disabled')}
         actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
+          <OkButton
+            data-testid="dialog-button-ok"
             onClick={() => setDisabledNoticeOpen(false)}
-          >
-            {t('button.ok')}
-          </Button>
+          />
         }
       />
     </Page>
