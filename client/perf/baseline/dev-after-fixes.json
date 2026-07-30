@@ -1,0 +1,1188 @@
+{
+  "build": "dev",
+  "buildEvidence": {
+    "scriptBytes": 28599757,
+    "scriptCount": 6
+  },
+  "throttle": 6,
+  "baseUrl": "http://localhost:3003",
+  "createdAt": "2026-07-30T12:40:27.828Z",
+  "scenarios": [
+    {
+      "name": "list-header-menu",
+      "budget": "instant",
+      "budgetMs": 100,
+      "runs": 6,
+      "interactionMedian": 124,
+      "interactionP95": 128,
+      "settleMedian": 186.25000005960464,
+      "settleP95": 193.80000007152557,
+      "blockingMedian": 38,
+      "gqlCount": 0,
+      "gqlWaves": 0,
+      "gqlSlowestMs": 0,
+      "gqlOps": [],
+      "samples": [
+        {
+          "interactionMs": 128,
+          "settleMs": 186.40000009536743,
+          "blockingMs": 39,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 120,
+          "settleMs": 193.70000004768372,
+          "blockingMs": 37,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 128,
+          "settleMs": 177.79999995231628,
+          "blockingMs": 39,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 128,
+          "settleMs": 193.80000007152557,
+          "blockingMs": 38,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 120,
+          "settleMs": 182.10000002384186,
+          "blockingMs": 34,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 120,
+          "settleMs": 186.10000002384186,
+          "blockingMs": 38,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        }
+      ]
+    },
+    {
+      "name": "list-sort",
+      "budget": "responsive",
+      "budgetMs": 500,
+      "runs": 6,
+      "interactionMedian": 916,
+      "interactionP95": 936,
+      "settleMedian": 1749.1000000238419,
+      "settleP95": 1798,
+      "blockingMedian": 1480.5,
+      "gqlCount": 3,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 84,
+      "gqlOps": [
+        "invoices",
+        "syncInfo",
+        "lastSuccessfulUserSync"
+      ],
+      "samples": [
+        {
+          "interactionMs": 888,
+          "settleMs": 1705.3999999761581,
+          "blockingMs": 1434,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 80.29999995231628,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 920,
+          "settleMs": 1763.5,
+          "blockingMs": 1487,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 89.10000002384186,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 920,
+          "settleMs": 1737.1000000238419,
+          "blockingMs": 1474,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 79.69999992847443,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 936,
+          "settleMs": 1761.1000000238419,
+          "blockingMs": 1489,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 88.5,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 912,
+          "settleMs": 1733.1000000238419,
+          "blockingMs": 1468,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 77.90000009536743,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 912,
+          "settleMs": 1798,
+          "blockingMs": 1501,
+          "longTasks": 3,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 97.10000002384186,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "list-filter-open",
+      "budget": "instant",
+      "budgetMs": 100,
+      "runs": 6,
+      "interactionMedian": 112,
+      "interactionP95": 120,
+      "settleMedian": 166.60000002384186,
+      "settleP95": 177.29999995231628,
+      "blockingMedian": 28.5,
+      "gqlCount": 0,
+      "gqlWaves": 0,
+      "gqlSlowestMs": 0,
+      "gqlOps": [],
+      "samples": [
+        {
+          "interactionMs": 120,
+          "settleMs": 177.29999995231628,
+          "blockingMs": 32,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 112,
+          "settleMs": 162.5,
+          "blockingMs": 27,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 104,
+          "settleMs": 162.30000007152557,
+          "blockingMs": 25,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 112,
+          "settleMs": 176.60000002384186,
+          "blockingMs": 31,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 112,
+          "settleMs": 161.60000002384186,
+          "blockingMs": 28,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 112,
+          "settleMs": 170.70000004768372,
+          "blockingMs": 29,
+          "longTasks": 1,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        }
+      ]
+    },
+    {
+      "name": "list-filter-keystroke",
+      "budget": "instant",
+      "budgetMs": 100,
+      "runs": 6,
+      "interactionMedian": 64,
+      "interactionP95": 64,
+      "settleMedian": 54.450000047683716,
+      "settleP95": 62.60000002384186,
+      "blockingMedian": 0,
+      "gqlCount": 0,
+      "gqlWaves": 0,
+      "gqlSlowestMs": 0,
+      "gqlOps": [
+        "syncInfo",
+        "lastSuccessfulUserSync"
+      ],
+      "samples": [
+        {
+          "interactionMs": 64,
+          "settleMs": 58.700000047683716,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": null,
+          "settleMs": 47.299999952316284,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 56,
+          "settleMs": 60.200000047683716,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 29.90000009536743,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 56,
+          "settleMs": 50.10000002384186,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 32.89999997615814,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 64,
+          "settleMs": 50.200000047683716,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 64,
+          "settleMs": 62.60000002384186,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        }
+      ]
+    },
+    {
+      "name": "list-filter-apply",
+      "budget": "responsive",
+      "budgetMs": 500,
+      "runs": 6,
+      "interactionMedian": 56,
+      "interactionP95": 64,
+      "settleMedian": 1266.5499999523163,
+      "settleP95": 1311.1000000238419,
+      "blockingMedian": 916.5,
+      "gqlCount": 3,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 43,
+      "gqlOps": [
+        "syncInfo",
+        "lastSuccessfulUserSync",
+        "invoices"
+      ],
+      "samples": [
+        {
+          "interactionMs": 48,
+          "settleMs": 1274.6000000238419,
+          "blockingMs": 927,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 43.60000002384186,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "invoices"
+          ]
+        },
+        {
+          "interactionMs": 64,
+          "settleMs": 1269.6999999284744,
+          "blockingMs": 918,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 42.799999952316284,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "invoices"
+          ]
+        },
+        {
+          "interactionMs": 56,
+          "settleMs": 1263.3999999761581,
+          "blockingMs": 915,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 41.89999997615814,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "invoices"
+          ]
+        },
+        {
+          "interactionMs": 64,
+          "settleMs": 1311.1000000238419,
+          "blockingMs": 960,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 56.299999952316284,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "invoices"
+          ]
+        },
+        {
+          "interactionMs": 56,
+          "settleMs": 1236.2000000476837,
+          "blockingMs": 886,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 42.5,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "invoices"
+          ]
+        },
+        {
+          "interactionMs": 56,
+          "settleMs": 1249.3999999761581,
+          "blockingMs": 899,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 44.39999997615814,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "invoices"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "list-page-next",
+      "budget": "responsive",
+      "budgetMs": 500,
+      "runs": 6,
+      "interactionMedian": 908,
+      "interactionP95": 936,
+      "settleMedian": 1700.1500000357628,
+      "settleP95": 1722.0999999046326,
+      "blockingMedian": 1455.5,
+      "gqlCount": 3,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 63,
+      "gqlOps": [
+        "invoices",
+        "syncInfo",
+        "lastSuccessfulUserSync"
+      ],
+      "samples": [
+        {
+          "interactionMs": 912,
+          "settleMs": 1713.9000000953674,
+          "blockingMs": 1469,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 63.5,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 904,
+          "settleMs": 1709.3000000715256,
+          "blockingMs": 1467,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 63.299999952316284,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 520,
+          "settleMs": 1320.5,
+          "blockingMs": 1080,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 61.5,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 936,
+          "settleMs": 1722.0999999046326,
+          "blockingMs": 1482,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 61.10000002384186,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 880,
+          "settleMs": 1665.3999999761581,
+          "blockingMs": 1422,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 62.5,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 912,
+          "settleMs": 1691,
+          "blockingMs": 1444,
+          "longTasks": 2,
+          "gqlCount": 3,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 63.200000047683716,
+          "gqlOps": [
+            "invoices",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "list-open-detail",
+      "budget": "navigational",
+      "budgetMs": 1000,
+      "runs": 6,
+      "interactionMedian": 348,
+      "interactionP95": 352,
+      "settleMedian": 1539.9999999403954,
+      "settleP95": 1575.2999999523163,
+      "blockingMedian": 1363,
+      "gqlCount": 4,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 950,
+      "gqlOps": [
+        "invoice",
+        "initialisationStatus",
+        "reports",
+        "names",
+        "shippingMethods"
+      ],
+      "samples": [
+        {
+          "interactionMs": 352,
+          "settleMs": 1572.5,
+          "blockingMs": 1394,
+          "longTasks": 2,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 979.5,
+          "gqlOps": [
+            "invoice",
+            "initialisationStatus"
+          ]
+        },
+        {
+          "interactionMs": 224,
+          "settleMs": 1188.0999999046326,
+          "blockingMs": 1010,
+          "longTasks": 2,
+          "gqlCount": 5,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 817.8000000715256,
+          "gqlOps": [
+            "invoice",
+            "initialisationStatus",
+            "reports",
+            "names",
+            "shippingMethods"
+          ]
+        },
+        {
+          "interactionMs": 232,
+          "settleMs": 1221.5,
+          "blockingMs": 1033,
+          "longTasks": 2,
+          "gqlCount": 5,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 834.6000000238419,
+          "gqlOps": [
+            "invoice",
+            "initialisationStatus",
+            "reports",
+            "names",
+            "shippingMethods"
+          ]
+        },
+        {
+          "interactionMs": 352,
+          "settleMs": 1532.5999999046326,
+          "blockingMs": 1356,
+          "longTasks": 2,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 946.6000000238419,
+          "gqlOps": [
+            "invoice",
+            "initialisationStatus"
+          ]
+        },
+        {
+          "interactionMs": 344,
+          "settleMs": 1547.3999999761581,
+          "blockingMs": 1370,
+          "longTasks": 2,
+          "gqlCount": 5,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 954.2000000476837,
+          "gqlOps": [
+            "invoice",
+            "initialisationStatus",
+            "reports",
+            "names",
+            "shippingMethods"
+          ]
+        },
+        {
+          "interactionMs": 352,
+          "settleMs": 1575.2999999523163,
+          "blockingMs": 1374,
+          "longTasks": 2,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 956.1000000238419,
+          "gqlOps": [
+            "invoice",
+            "initialisationStatus"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "detail-sort-lines",
+      "budget": "responsive",
+      "budgetMs": 500,
+      "runs": 6,
+      "interactionMedian": 956,
+      "interactionP95": 984,
+      "settleMedian": 1036.0000000596046,
+      "settleP95": 1056.3999999761581,
+      "blockingMedian": 832,
+      "gqlCount": 2,
+      "gqlWaves": 1,
+      "gqlSlowestMs": 11,
+      "gqlOps": [
+        "syncInfo",
+        "lastSuccessfulUserSync"
+      ],
+      "samples": [
+        {
+          "interactionMs": 944,
+          "settleMs": 1018.3000000715256,
+          "blockingMs": 832,
+          "longTasks": 1,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 10.199999928474426,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 952,
+          "settleMs": 1035.7000000476837,
+          "blockingMs": 832,
+          "longTasks": 1,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 8.5,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 936,
+          "settleMs": 1014.2999999523163,
+          "blockingMs": 819,
+          "longTasks": 1,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 12.600000023841858,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 984,
+          "settleMs": 1056.3999999761581,
+          "blockingMs": 857,
+          "longTasks": 1,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 11.100000023841858,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 960,
+          "settleMs": 1039.8999999761581,
+          "blockingMs": 839,
+          "longTasks": 1,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 8,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 960,
+          "settleMs": 1036.3000000715256,
+          "blockingMs": 832,
+          "longTasks": 1,
+          "gqlCount": 2,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 18,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "detail-tab-log",
+      "budget": "instant",
+      "budgetMs": 100,
+      "runs": 6,
+      "interactionMedian": 956,
+      "interactionP95": 984,
+      "settleMedian": 1064.0000000596046,
+      "settleP95": 1087,
+      "blockingMedian": 880,
+      "gqlCount": 4,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 615,
+      "gqlOps": [
+        "syncInfo",
+        "lastSuccessfulUserSync",
+        "activityLogs",
+        "initialisationStatus"
+      ],
+      "samples": [
+        {
+          "interactionMs": 944,
+          "settleMs": 1054.8000000715256,
+          "blockingMs": 876,
+          "longTasks": 1,
+          "gqlCount": 4,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 603.2999999523163,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "activityLogs",
+            "initialisationStatus"
+          ]
+        },
+        {
+          "interactionMs": 960,
+          "settleMs": 1073.2000000476837,
+          "blockingMs": 896,
+          "longTasks": 1,
+          "gqlCount": 4,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 621.7999999523163,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "activityLogs",
+            "initialisationStatus"
+          ]
+        },
+        {
+          "interactionMs": 984,
+          "settleMs": 1087,
+          "blockingMs": 906,
+          "longTasks": 1,
+          "gqlCount": 4,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 966.6000000238419,
+          "gqlOps": [
+            "syncInfo",
+            "activityLogs",
+            "initialisationStatus",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 960,
+          "settleMs": 1059.8999999761581,
+          "blockingMs": 881,
+          "longTasks": 1,
+          "gqlCount": 4,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 616.6999999284744,
+          "gqlOps": [
+            "activityLogs",
+            "initialisationStatus",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 952,
+          "settleMs": 1067.6000000238419,
+          "blockingMs": 879,
+          "longTasks": 1,
+          "gqlCount": 4,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 608.1999999284744,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "activityLogs",
+            "initialisationStatus"
+          ]
+        },
+        {
+          "interactionMs": 952,
+          "settleMs": 1060.4000000953674,
+          "blockingMs": 879,
+          "longTasks": 1,
+          "gqlCount": 4,
+          "gqlWaves": 1,
+          "gqlSlowestMs": 614.2000000476837,
+          "gqlOps": [
+            "activityLogs",
+            "initialisationStatus",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "line-edit-open",
+      "budget": "responsive",
+      "budgetMs": 500,
+      "runs": 6,
+      "interactionMedian": 448,
+      "interactionP95": 456,
+      "settleMedian": 2707.050000011921,
+      "settleP95": 2730.6999999284744,
+      "blockingMedian": 2332.5,
+      "gqlCount": 7,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 1417,
+      "gqlOps": [
+        "syncInfo",
+        "lastSuccessfulUserSync",
+        "itemStockOnHand",
+        "itemById",
+        "initialisationStatus",
+        "getOutboundEditLines"
+      ],
+      "samples": [
+        {
+          "interactionMs": 440,
+          "settleMs": 2690.5999999046326,
+          "blockingMs": 2306,
+          "longTasks": 4,
+          "gqlCount": 7,
+          "gqlWaves": 3,
+          "gqlSlowestMs": 1421.2000000476837,
+          "gqlOps": [
+            "syncInfo",
+            "lastSuccessfulUserSync",
+            "itemStockOnHand",
+            "itemById",
+            "initialisationStatus",
+            "getOutboundEditLines"
+          ]
+        },
+        {
+          "interactionMs": 448,
+          "settleMs": 2712.600000023842,
+          "blockingMs": 2341,
+          "longTasks": 4,
+          "gqlCount": 7,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1423.3000000715256,
+          "gqlOps": [
+            "itemStockOnHand",
+            "itemById",
+            "initialisationStatus",
+            "getOutboundEditLines",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 448,
+          "settleMs": 2688.3000000715256,
+          "blockingMs": 2319,
+          "longTasks": 4,
+          "gqlCount": 7,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1410.2000000476837,
+          "gqlOps": [
+            "itemStockOnHand",
+            "itemById",
+            "initialisationStatus",
+            "getOutboundEditLines",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 456,
+          "settleMs": 2712.2999999523163,
+          "blockingMs": 2333,
+          "longTasks": 4,
+          "gqlCount": 7,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1413.2000000476837,
+          "gqlOps": [
+            "itemStockOnHand",
+            "itemById",
+            "initialisationStatus",
+            "getOutboundEditLines",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 440,
+          "settleMs": 2701.8000000715256,
+          "blockingMs": 2332,
+          "longTasks": 4,
+          "gqlCount": 7,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1403.5,
+          "gqlOps": [
+            "itemStockOnHand",
+            "itemById",
+            "initialisationStatus",
+            "getOutboundEditLines",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        },
+        {
+          "interactionMs": 448,
+          "settleMs": 2730.6999999284744,
+          "blockingMs": 2361,
+          "longTasks": 4,
+          "gqlCount": 7,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1468.5,
+          "gqlOps": [
+            "itemStockOnHand",
+            "itemById",
+            "initialisationStatus",
+            "getOutboundEditLines",
+            "syncInfo",
+            "lastSuccessfulUserSync"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "line-edit-type",
+      "budget": "instant",
+      "budgetMs": 100,
+      "runs": 6,
+      "interactionMedian": 56,
+      "interactionP95": 56,
+      "settleMedian": 48.89999997615814,
+      "settleP95": 53,
+      "blockingMedian": 0,
+      "gqlCount": 0,
+      "gqlWaves": 0,
+      "gqlSlowestMs": 0,
+      "gqlOps": [],
+      "samples": [
+        {
+          "interactionMs": null,
+          "settleMs": 48.10000002384186,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": null,
+          "settleMs": 50.699999928474426,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": null,
+          "settleMs": 44.60000002384186,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": null,
+          "settleMs": 37.300000071525574,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": null,
+          "settleMs": 49.699999928474426,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        },
+        {
+          "interactionMs": 56,
+          "settleMs": 53,
+          "blockingMs": 0,
+          "longTasks": 0,
+          "gqlCount": 0,
+          "gqlWaves": 0,
+          "gqlSlowestMs": 0,
+          "gqlOps": []
+        }
+      ]
+    },
+    {
+      "name": "line-edit-save",
+      "budget": "responsive",
+      "budgetMs": 500,
+      "runs": 6,
+      "interactionMedian": 80,
+      "interactionP95": 88,
+      "settleMedian": 1308.949999988079,
+      "settleP95": 1362.2999999523163,
+      "blockingMedian": 1038,
+      "gqlCount": 2,
+      "gqlWaves": 2,
+      "gqlSlowestMs": 1012,
+      "gqlOps": [
+        "saveOutboundShipmentItemLines",
+        "invoice"
+      ],
+      "samples": [
+        {
+          "interactionMs": 72,
+          "settleMs": 1306.1000000238419,
+          "blockingMs": 1026,
+          "longTasks": 4,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1010.8999999761581,
+          "gqlOps": [
+            "saveOutboundShipmentItemLines",
+            "invoice"
+          ]
+        },
+        {
+          "interactionMs": 88,
+          "settleMs": 1362.2999999523163,
+          "blockingMs": 1099,
+          "longTasks": 5,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1020,
+          "gqlOps": [
+            "saveOutboundShipmentItemLines",
+            "invoice"
+          ]
+        },
+        {
+          "interactionMs": 80,
+          "settleMs": 1309.2999999523163,
+          "blockingMs": 1050,
+          "longTasks": 5,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 987.2000000476837,
+          "gqlOps": [
+            "saveOutboundShipmentItemLines",
+            "invoice"
+          ]
+        },
+        {
+          "interactionMs": 80,
+          "settleMs": 1347.3999999761581,
+          "blockingMs": 1064,
+          "longTasks": 5,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1012.3999999761581,
+          "gqlOps": [
+            "saveOutboundShipmentItemLines",
+            "invoice"
+          ]
+        },
+        {
+          "interactionMs": 80,
+          "settleMs": 1308.6000000238419,
+          "blockingMs": 1025,
+          "longTasks": 4,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 1012.3999999761581,
+          "gqlOps": [
+            "saveOutboundShipmentItemLines",
+            "invoice"
+          ]
+        },
+        {
+          "interactionMs": 72,
+          "settleMs": 1265.5,
+          "blockingMs": 1016,
+          "longTasks": 3,
+          "gqlCount": 2,
+          "gqlWaves": 2,
+          "gqlSlowestMs": 984.0999999046326,
+          "gqlOps": [
+            "saveOutboundShipmentItemLines",
+            "invoice"
+          ]
+        }
+      ]
+    }
+  ]
+}

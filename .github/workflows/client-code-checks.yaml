@@ -2,6 +2,10 @@ on:
   pull_request:
     paths:
       - 'client/**'
+      # client/perf is the perf harness: not a workspace, not imported by product
+      # code, and excluded from tsc, jest and eslint. No check here covers it, so
+      # harness-only changes should not trigger client CI.
+      - '!client/perf/**'
   merge_group:
     branches:
       - develop
