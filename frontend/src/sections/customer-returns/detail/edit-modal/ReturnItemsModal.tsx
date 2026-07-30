@@ -5,22 +5,23 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { EmptyState } from '../../../../ui/elements/feedback/EmptyState';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+import { PlusCircleIcon } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
-import styles from './ReturnItemsModal.module.css';
 import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
@@ -166,7 +167,12 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       reconcile(
         seeded.length > 0
           ? seeded
-          : [blankDraft({ id: item.id, code: item.code, unitName: null })],
+          : [
+              blankDraft(
+                { id: item.id, code: item.code, unitName: null },
+                item.name
+              ),
+            ],
         { key: 'id' }
       )
     );
@@ -214,7 +220,10 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setDraft(
       produce(lines =>
         lines.unshift(
-          blankDraft({ id: item.id, code: item.code, unitName: null })
+          blankDraft(
+            { id: item.id, code: item.code, unitName: null },
+            item.name
+          )
         )
       )
     );
@@ -323,30 +332,73 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={t('heading.return-items')}
+      // Title: JUST the item lookup (the line-editor pattern — the reference
+      // stocktake line editor and the inbound one). It costs the body no row of
+      // its own, and the heading text would be redundant on a surface the user
+      // reached by clicking Add item / a line. DISABLED in update mode, where
+      // it simply names the item being edited (and a disabled input can't steal
+      // the dialog's initial focus).
+      title={
+        <ItemSearch
+          label={t('label.item')}
+          hideLabel
+          storeId={props.storeId}
+          focusTarget={itemSearch}
+          excludeItemIds={props.excludeItemIds()}
+          value={currentItem()?.id}
+          selectedItem={currentItem()}
+          disabled={props.mode !== 'add'}
+          onSelect={item =>
+            item
+              ? void seedItem({
+                  id: item.id,
+                  code: item.code,
+                  name: item.name,
+                })
+              : backToSearch()
+          }
+          placeholder={t('placeholder.enter-an-item-code-or-name')}
+        />
+      }
+      ariaLabel={t('heading.return-items')}
+      // Add batch rides the header row's inline-end (the same line as the item
+      // lookup) rather than taking a body row of its own: shown once an item is
+      // picked, actionable only while entering quantities (ui-surface S4).
+      headerActions={
+        <Show when={!noItemYet()}>
+          <Button
+            icon={<PlusCircleIcon />}
+            data-testid="add-batch-button"
+            disabled={step() !== 'quantity'}
+            onClick={addBatch}
+          >
+            {t('label.add-batch')}
+          </Button>
+        </Show>
+      }
       actionsLead={
         <Show when={message()}>
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
         </Show>
       }
+      // The footer (ui-surface S4 § layout): Cancel (step 1) / Back (step 2) ·
+      // Next step / Save · Save & next — the standard, icon-less dialog buttons
+      // (D55): never OK / OK & next for a save, never an icon. Back and Next
+      // step carry their own labels (outside "standard territory"), so they
+      // stay plain icon-less Buttons.
       actions={
         <>
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
               data-testid="dialog-button-cancel"
               onClick={() => {
                 setStep('quantity');
@@ -360,7 +412,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Switch>
               <Match when={step() === 'quantity'}>
                 <Button
-                  icon={<ArrowRightIcon />}
+                  variant="primary"
                   loading={saving()}
                   data-testid="dialog-button-ok"
                   onClick={onNextStep}
@@ -369,14 +421,11 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 </Button>
               </Match>
               <Match when={step() === 'reason'}>
-                <Button
-                  icon={<CheckIcon />}
+                <DialogSaveButton
                   loading={saving()}
                   data-testid="dialog-button-ok"
                   onClick={() => void onOk()}
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               </Match>
             </Switch>
             {/* OK & next is actionable only on the reason step with a next
@@ -385,111 +434,84 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 last item has nowhere to advance to), so it's HIDDEN, not
                 disabled — the blocked-affordances ladder (D39). */}
             <Show when={step() === 'reason' && hasNext()}>
-              <Button
-                icon={<ArrowRightIcon />}
+              <SaveAndNextButton
                 loading={saving()}
                 data-testid="dialog-button-next-and-ok"
                 onClick={() => void onOkNext()}
-              >
-                {t('button.ok-and-next')}
-              </Button>
+              />
             </Show>
           </Show>
         </>
       }
     >
-      {/* Item row under the plain "Return items" title (the current app's
-          layout, and the outbound line editor's pattern): the labelled
-          catalogue lookup — live in add mode, locked to the row's item in
-          update mode. */}
-      <ItemSearch
-        label={t('label.item')}
-        storeId={props.storeId}
-        focusTarget={itemSearch}
-        excludeItemIds={props.excludeItemIds()}
-        value={currentItem()?.id}
-        selectedItem={currentItem()}
-        disabled={props.mode !== 'add'}
-        onSelect={item =>
-          item
-            ? void seedItem({
-                id: item.id,
-                code: item.code,
-                name: item.name,
-              })
-            : backToSearch()
-        }
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
-      />
+      {/* Before an item is picked (the lookup lives in the dialog title): the
+          shared centred prompt in place of the grid — the reference line
+          editor's treatment. */}
       <Show
         when={!noItemYet()}
         fallback={
-          <p style={{ color: 'var(--text-secondary)' }}>
-            {t('placeholder.enter-an-item-code-or-name')}
-          </p>
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-return')}
+          />
         }
       >
-        {/* The wizard's step indicator — the shared determinate progress list
-            (the sync stepper), which the two-step flow maps onto directly:
-            reaching the reason step completes "Select quantity" and starts
-            "Select reason" (ui-surface S4 § layout). */}
-        <ProgressList
-          variant="secondary"
-          steps={[
-            {
-              label: t('label.select-quantity'),
-              started: true,
-              finished: step() === 'reason',
-            },
-            {
-              label: t('label.select-reason'),
-              started: step() === 'reason',
-              finished: false,
-            },
-          ]}
-        />
-        {/* Under the stepper (the current app's ReturnSteps row): who the
-            goods come back from (read-only) and the return's customer
-            reference — edited through the shared debounced buffer, the same
-            save path as the detail toolbar. One field per row below the
-            compact breakpoint (where the modal is full-screen) — module CSS. */}
-        <div class={styles.contextRow}>
-          <FieldRow label={t('label.return-from')}>
-            <Text variant="body">{props.returnFromName}</Text>
-          </FieldRow>
-          <FieldRow label={t('label.customer-ref')}>
-            <TextField
-              label={t('label.customer-ref')}
-              hideLabel
-              size="small"
-              value={props.edit.state.theirReference}
-              onInput={e =>
-                props.edit.setField('theirReference', e.currentTarget.value)
-              }
-              onBlur={() => props.edit.flush()}
-            />
-          </FieldRow>
-        </div>
-        {/* Add batch on its own row, inline-end aligned (the current app's
-            AddBatchButton row): present on both steps, actionable only while
-            entering quantities in per-item mode. Default (primary) tone —
-            brand icon, dark label. */}
-        <div
-          style={{
-            display: 'flex',
-            'justify-content': 'flex-end',
-            'margin-block-end': 'var(--space-2)',
-          }}
-        >
-          <Button
-            icon={<PlusCircleIcon />}
-            data-testid="add-batch-button"
-            disabled={step() !== 'quantity'}
-            onClick={addBatch}
+        {/* The wizard's step indicator — the shared determinate progress list,
+            which the two-step flow maps onto directly: reaching the reason step
+            completes "Select quantity" and starts "Select reason" (ui-surface S4
+            § layout). Capped to a reading measure (the content-measure role): the
+            list divides its width between steps, so left full-bleed in this
+            workbench-width dialog the two markers fly to opposite edges with a
+            metre of connector between them. */}
+        <ContentContainer size="form">
+          <ProgressList
+            variant="secondary"
+            steps={[
+              {
+                label: t('label.select-quantity'),
+                started: true,
+                finished: step() === 'reason',
+              },
+              {
+                label: t('label.select-reason'),
+                started: step() === 'reason',
+                finished: false,
+              },
+            ]}
+          />
+        </ContentContainer>
+        {/* Under the stepper (the current app's ReturnSteps row): who the goods
+            come back from and the return's customer reference — a header FIELD
+            CLUSTER, each field labelled above its control, with the read-only
+            fact as a `field`-variant LabelledValue so it sits flush beside the
+            editable one.
+
+            A generic HStack, NOT the two-up FormRow the page-header cluster
+            (`HeaderToolbar`) uses: that shares the row equally between its
+            fields, which is right for a page header spanning the viewport but
+            stretches a short reference field across a workbench-width dialog.
+            Here the fields size to themselves (the TextField keeps its own
+            `short` cap) and the pair hugs the inline-start, wrapping when the
+            dialog goes full-screen. The reference edits through the shared
+            debounced buffer, the same save path as the detail toolbar. */}
+        <HStack gap="lg" align="start" wrap>
+          <LabelledValue
+            label={t('label.return-from')}
+            variant="field"
+            size="small"
           >
-            {t('label.add-batch')}
-          </Button>
-        </div>
+            {props.returnFromName}
+          </LabelledValue>
+          <TextField
+            label={t('label.customer-ref')}
+            size="small"
+            value={props.edit.state.theirReference}
+            onInput={e =>
+              props.edit.setField('theirReference', e.currentTarget.value)
+            }
+            onBlur={() => props.edit.flush()}
+          />
+        </HStack>
         <Show
           when={step() === 'reason'}
           fallback={

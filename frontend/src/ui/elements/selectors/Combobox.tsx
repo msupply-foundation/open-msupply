@@ -395,6 +395,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
   // one JSX node across both would try to mount it in two places. As
   // TextField.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
+  const listboxHeader = children(() => props.listboxHeader);
   const Label = () => (
     <KCombobox.Label class={styles.label}>
       {props.label}
@@ -452,13 +456,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           the label the surrounding layout (a FieldRow) already shows (a hidden
           twin trips strict text-locator matches in the shared e2e suites). */}
       <Show when={!props.hideLabel}>
-        <Show when={props.labelInfo} fallback={<Label />}>
+        <Show when={labelInfo()} fallback={<Label />}>
           {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in
               it its accessible name would leak into the input's (the
               name-from-label computation concatenates descendant controls). */}
           <span class={styles.labelRow}>
             <Label />
-            {props.labelInfo}
+            {labelInfo()}
           </span>
         </Show>
       </Show>
@@ -571,8 +575,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           {/* Sticky in-dropdown header (e.g. the location fullness filter). Sits
               above the options and stays put while the list scrolls. Rendered
               inside the popup content so interacting with it doesn't dismiss. */}
-          <Show when={props.listboxHeader}>
-            <div class={styles.listboxHeader}>{props.listboxHeader}</div>
+          <Show when={listboxHeader()}>
+            <div class={styles.listboxHeader}>{listboxHeader()}</div>
           </Show>
           <Show when={props.loading}>
             <div class={styles.status}>Loading…</div>

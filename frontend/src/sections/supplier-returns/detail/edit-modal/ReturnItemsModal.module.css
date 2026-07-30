@@ -1,29 +1,6 @@
-/* The context row under the stepper: who the goods go back to (Return to) + the
-   supplier reference (the current app's ReturnSteps row). Stacks one field per
-   row below the compact breakpoint (599px = breakpoints.compact − 1, the same
-   cutoff where the hosting size="large" Dialog goes full-screen) — the outbound
-   line editor's issue-row pattern. */
-.contextRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  margin-block: var(--space-2);
-}
-
-@media (max-width: 599px) {
-  /* Stacked: one field per row, and the two FieldRows share ONE label-column
-     width (subgrid) so both values start on the same vertical — the label
-     columns would otherwise each size to their own text. */
-  .contextRow {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-2) var(--space-3);
-  }
-
-  .contextRow > div {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: subgrid;
-  }
+/* The "pick an item" hint standing in for the wizard body before an item is
+   chosen. Muted secondary text: Text carries size/weight only and never
+   colour, so the tone lives here (the house pattern for a muted line). */
+.hint {
+  color: var(--text-secondary);
 }
