@@ -1,6 +1,7 @@
 import { graphqlFetch } from '../../../api/graphql';
 import { t, tPlural } from '../../../intl';
 import {
+  CreateShipmentFromRequisition,
   UpdateRequisition,
   type RequisitionInfoFragment,
   type UpdateRequisitionVariables,
@@ -64,4 +65,42 @@ export const saveRequisitionFields = async (
       ? error.errors.map(e => e.requisitionLine.id)
       : [];
   return { kind: 'error', message: mapError(error), reasonLineIds };
+};
+
+// Raising a shipment (rules › raising a shipment): the outstanding remainder
+// becomes a new outbound shipment, permanently linked. The footer pre-checks
+// permission and nothing-remaining without a call; the typed rejections here
+// are the server's own (contract › raising a shipment) — cannot-edit once
+// Finalised, and the nothing-remaining backstop behind the pre-check.
+export type CreateShipmentResult =
+  | { kind: 'created'; invoiceId: string }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const createShipmentFromRequisition = async (
+  storeId: string,
+  responseRequisitionId: string
+): Promise<CreateShipmentResult> => {
+  const result = await graphqlFetch(CreateShipmentFromRequisition, {
+    storeId,
+    input: { responseRequisitionId },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.createRequisitionShipment;
+  if (response.__typename === 'InvoiceNode')
+    return { kind: 'created', invoiceId: response.id };
+  switch (response.error.__typename) {
+    case 'CannotEditRequisition':
+      return { kind: 'error', message: t('error.cannot-edit-requisition') };
+    case 'NothingRemainingToSupply':
+      // Normally caught by the client pre-check; the server backstop.
+      return {
+        kind: 'error',
+        message: t('message.all-lines-have-been-fulfilled'),
+      };
+    case 'RecordNotFound':
+      return { kind: 'error', message: t('messages.record-not-found') };
+    default:
+      return { kind: 'error', message: response.error.description };
+  }
 };
