@@ -72,12 +72,12 @@ export const LogTab: Component<{
     return [...nodes].sort((a, b) => (a.datetime < b.datetime ? 1 : -1));
   };
 
+  // Date / time / user take their cell-type presets (rendering AND width —
+  // docs/CELL_TYPES.md): the accessors hand over the raw instant and the
+  // presets localise it, so the columns hold the value rather than a
+  // pre-formatted string.
   const columns = (): Column<LogRow, never>[] => [
     {
-      // Both columns take the RAW datetime: the `date` and `time` presets
-      // format it themselves, so formatting here as well would hand them an
-      // already-formatted string and throw "Invalid time value" (date-fns
-      // `format` on an unparseable value).
       c: { accessor: row => row.datetime, id: 'date' },
       header: () => t('label.date'),
       ...getCellDefinition('date'),
@@ -93,11 +93,12 @@ export const LogTab: Component<{
       ...getCellDefinition('user'),
     },
     {
+      // No CELL_DEF key for an event description — the explicit text helper
+      // plus a call-site width, wrapping to two lines.
       c: { accessor: eventLabel, id: 'event' },
       header: () => t('label.event'),
-      // No CELL_DEF key — the event phrase is the row's widest text.
       ...getTextCell({ wrapLines: 2 }),
-      size: remToPx(12),
+      size: remToPx(18.75),
     },
   ];
 
@@ -110,6 +111,14 @@ export const LogTab: Component<{
       emptyMessage={t('messages.no-log-entries')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
+      // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+      // the install-wide default.
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
     />
   );
 };
