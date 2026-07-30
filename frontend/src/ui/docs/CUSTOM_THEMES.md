@@ -11,7 +11,7 @@ So we need our own theme document format, and it should not be "a JSON file full
 ### Scope
 
 - **Colours only.** Spacing, sizing, typography, radii, layout dimensions and the four input heights are _not_ themable, by construction: they live below the `@theme-contract` markers in `tokens.css` and no theme role reaches them. A custom theme cannot break the layout, the density system, or the touch-target floor.
-- Within colours, the composite values that are _made of_ colours — the two hero gradients, the shadow ladder, the focus rings, the scrim — are themable, but as **recipes** (fixed geometry, themed colour), never as raw CSS the author has to write.
+- Within colours, the composite values that are _made of_ colours — the two hero gradients, the focus rings — follow their role as **recipes** (fixed geometry, themed colour), never as raw CSS the author has to write. The shadow ladder and the scrim are reachable only through the `tokens` escape hatch (no `shadow` role — see below).
 - Two tokens that look colour-ish are deliberately **not** themable and stay outside the contract: `--qr-foreground` / `--qr-background` (a QR code must stay dark-on-light in both themes or scanners stop reading it).
 
 ## Design goals
@@ -21,7 +21,7 @@ So we need our own theme document format, and it should not be "a JSON file full
 3. **Plain-English keys.** Roles named for what they mean (`brand`, `surface`, `text`, `danger`), never token names. Token names appear only in the one deliberate escape hatch.
 4. **Light + dark in one document,** with the single-theme case being the short one.
 5. **Nothing an author writes can break the app.** Worst case is ugly; recovery is one toggle.
-6. **Honest validation.** Say what's wrong (and what's low-contrast) instead of silently ignoring it — the reference app's shallow `JSON.parse` check is the whole reason spec/settings/rules.md carries a ⚠️ VERIFY about valid-JSON-but-wrong-shape themes.
+6. **Honest validation.** Say what's wrong (and what's low-contrast) instead of silently ignoring it — the reference app's shallow `JSON.parse` check is the whole reason spec/settings/rules.md carries a ⚠️ VERIFY about valid-JSON-but-wrong-shape themes. But keep the format's own forgiveness: a document is applied as far as it is understood (see [Validation](#validation-and-error-reporting)).
 
 ## The format
 
@@ -41,23 +41,24 @@ JSON (the field is a string, the existing editor and spec already validate JSON,
 
 Mixing the two forms (top-level roles _and_ a `light`/`dark` key) is an error rather than a merge, so there is never a question of which wins.
 
-### Theme blocks: eleven roles
+### Theme blocks: ten roles
 
 Every role is optional. Each colour role takes **either a colour string or an object** — the string form is shorthand for `{ "base": … }` (or `{ "page": … }` for `surface`, `{ "body": … }` for `text`) and everything else in the group is derived from it. Any member given explicitly is used verbatim instead of derived.
 
-| Role      | String form sets | Object members (all optional)                                                                          | Drives                                                                                                  |
-| --------- | ---------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `brand`   | `base`           | `base`, `light`, `dark`, `on`, `gradient`                                                              | primary palette, the Login hero gradient, brand-tinted chrome                                           |
-| `accent`  | `base`           | `base`, `light`, `dark`, `gradient`                                                                    | the action blue: dialog primary buttons, info, focus ring, icon tints, the Initialisation hero gradient |
-| `danger`  | `base`           | `base`, `background`                                                                                   | errors, invalid-field ring, cancelled status                                                            |
-| `warning` | `base`           | `base`                                                                                                 | warning alerts, amber statuses                                                                          |
-| `success` | `base`           | `base`                                                                                                 | success alerts, verified/finalised statuses                                                             |
-| `surface` | `page`           | `page`, `chrome`, `nav`, `navSelected`, `header`, `raised`, `sunken`, `input`, `disabled`, `login`     | every background: content, drawer, menus, toolbars, rows, group bands, cards, inputs                    |
-| `text`    | `body`           | `body`, `muted`, `label`, `button`, `disabled`, `onGradient`                                           | all ink, plus the derived grey scale                                                                    |
-| `border`  | `base`           | `base`, `divider`, `input`, `strong`                                                                   | hairlines, field edges, header edge, control outlines                                                   |
-| `status`  | — (object only)  | `new`, `allocated`, `picked`, `shipped`, `delivered`, `received`, `verified`, `cancelled`, `finalised` | status chips + dots                                                                                     |
-| `shadow`  | `color`          | `color`, `scrim`                                                                                       | the elevation ladder, the frozen-column shadow, the modal/nav scrim                                     |
-| `tokens`  | — (object only)  | any themable token name → CSS value                                                                    | the escape hatch (below)                                                                                |
+| Role      | String form sets | Object members (all optional)                                                                          | Drives                                                                                                                                                 |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `brand`   | `base`           | `base`, `light`, `dark`, `on`, `gradient`                                                              | primary palette, the Login hero gradient, brand-tinted chrome                                                                                          |
+| `accent`  | `base`           | `base`, `light`, `dark`, `gradient`                                                                    | the action blue: dialog primary buttons, info, focus ring, icon tints, the Initialisation hero gradient                                                |
+| `danger`  | `base`           | `base`, `background`                                                                                   | errors, invalid-field ring, cancelled status                                                                                                           |
+| `warning` | `base`           | `base`, `alert`                                                                                        | `base`: inline caution — field warning text, warning row tints, amber statuses. `alert`: the warning severity panel (Alert, Badge); defaults to `base` |
+| `success` | `base`           | `base`                                                                                                 | success alerts, verified/finalised statuses                                                                                                            |
+| `surface` | `page`           | `page`, `chrome`, `nav`, `navSelected`, `header`, `raised`, `sunken`, `input`, `disabled`, `login`     | every background: content, drawer, menus, toolbars, rows, group bands, cards, inputs                                                                   |
+| `text`    | `body`           | `body`, `muted`, `label`, `button`, `disabled`, `onGradient`                                           | all ink, plus the derived grey scale                                                                                                                   |
+| `border`  | `base`           | `base`, `divider`, `input`, `strong`                                                                   | hairlines, field edges, header edge, control outlines                                                                                                  |
+| `status`  | — (object only)  | `new`, `allocated`, `picked`, `shipped`, `delivered`, `received`, `verified`, `cancelled`, `finalised` | status chips + dots                                                                                                                                    |
+| `tokens`  | — (object only)  | any themable token name → CSS value                                                                    | the escape hatch (below)                                                                                                                               |
+
+There is deliberately **no `shadow` role** (Carl, 2026-07-30): the elevation ladder, the frozen-column shadow and the scrim are the least-asked-for and the fiddliest to get right, and a site that needs them can reach them through `tokens`. Shadows therefore stay stock in every custom theme unless named token-by-token.
 
 Colours are **hex (`#rgb`, `#rrggbb`, `#rrggbbaa`), `rgb()`/`rgba()` or `hsl()`/`hsla()`**. That keeps the validator a small pure function (it needs real channel values to compute contrast) and covers what people actually paste. Other CSS colour syntaxes (`oklch()`, named colours, `color-mix()`) are accepted only in `tokens`, where nothing is derived from them.
 
@@ -96,7 +97,19 @@ Escape hatch — one token, exactly:
 { "tokens": { "--status-shipped": "#1fb6b6" } }
 ```
 
-`tokens` accepts only names inside the theme contract that the role map classifies as themable; anything else (a spacing token, `--qr-foreground`, a typo) is a validation error naming the offending key. It exists so a one-off need never forces a format change, and it is documented as the last resort.
+**The worked example: [system-theme.example.json](./system-theme.example.json)**, annotated for site administrators in **[CUSTOM_THEME_EXAMPLE.md](./CUSTOM_THEME_EXAMPLE.md)** (the user-facing half of this documentation), is today's `tokens.css` written in this format — both modes, shorthand wherever the derivation reproduces the stock value. It doubles as the fidelity test's fixture, and what it _couldn't_ say in shorthand is the honest measure of the format's reach:
+
+- `surface`, `warning`, `success` are bare strings in both modes — one colour each regenerates every background, and the whole neutral scale falls out of `surface` + `text`. `border` is absent entirely: the stock borders derive from `surface`/`text` to within 2/255, so nothing needs saying.
+- `text` needs the object form (`body` + `muted`) — see the two-anchor finding above.
+- `brand.dark` and `accent.light` are pinned in light mode: the stock `-dark`/`-light` variants are saturating darkens rather than plain black/white mixes, and the ladder misses `--primary-dark` `#c43c11` by 17/255 (it lands on `#b34522`, visibly duller). Everything else in both ladders derives to Δ≤3.
+- Both `gradient`s are given explicitly, because the stock hero gradients are deliberately _not_ brand ladders — `--gradient-primary` runs orange → red across two hues neither of which is `--primary-main`.
+- `danger.background` is pinned: `--error-bg` is a hand-picked pink/maroon, not a page↔danger mix (Δ6 light, Δ15 dark).
+- `status` carries the five that aren't aliases (`shipped`, `delivered`, `received`, and `verified`/`finalised`, whose green differs from `--success-main`). The other four — `new`, `allocated`, `picked`, `cancelled` — are omitted because they alias roles already set.
+- `warning` needs its object form, because the palette carries two ambers with **disjoint consumers**: `--color-warning` `#f2a001` is inline caution — field warning text (TextField, TextArea, Checkbox, Combobox), the DataTable selected+warning row tint, `--status-picked` — while `--warning-main` `#ed6c02` is the warning _severity panel_ and nothing else (Alert, Badge). That's a real distinction, so it's `warning.alert`, not an escape-hatch entry (Carl asked; consumers checked 2026-07-30). It is nonetheless the palette's only role split of its kind — `danger` serves both panel and inline from one `--error-main`, and `info` just aliases the accent — so **whether `--warning-main` should exist at all is an open design-system question**, noted in DESIGN_STANDARDS. It is MUI's untouched default (see the Alert row in UI_ELEMENTS), whereas `--color-warning` is the amber the brand standards were reconciled against. If the two are unified in `tokens.css`, `warning.alert` becomes redundant and the role goes back to a bare string; the format doesn't force that decision either way.
+
+That is 12 pinned values across ~65 tokens, and no `tokens` entries at all — the escape hatch turned out to be unnecessary for the hardest possible case. A site theme would pin far fewer: every one of those pins is a place the design system deliberately broke its own pattern.
+
+`tokens` honours only names inside the theme contract that the role map classifies as themable; anything else (a spacing token, `--qr-foreground`, a typo) is warned about and ignored, like any other unrecognised key. It exists so a one-off need never forces a format change, and it is documented as the last resort.
 
 ## Rules
 
@@ -111,7 +124,7 @@ Within a mentioned group, explicit members win and the rest derive from the grou
 A single-block theme (top-level roles, or only `light`) is a **light** theme. In dark mode:
 
 - the **hue** roles carry over — `brand`, `accent`, `danger`, `warning`, `success`, `status` — with their light/dark variants derived using the dark-mode recipes, so a ministry's blue is still the ministry's blue in dark mode;
-- the **neutral** roles do **not** — `surface`, `text`, `border`, `shadow` keep the stock dark values. A `page: "#ffffff"` written for light mode must not be applied to dark mode, and dark mode's surface/ink pairs are hand-tuned for contrast (see the `--color-divider` note in `tokens.css`).
+- the **neutral** roles do **not** — `surface`, `text`, `border` keep the stock dark values. A `page: "#ffffff"` written for light mode must not be applied to dark mode, and dark mode's surface/ink pairs are hand-tuned for contrast (see the `--color-divider` note in `tokens.css`).
 
 To control dark surfaces, add a `dark` block. This rule is stated in the Settings UI help text, not just here.
 
@@ -124,17 +137,19 @@ To control dark surfaces, add a `dark` block. This rule is stated in the Setting
 Each themable token has one **recipe row** per mode:
 
 ```
-token          light                                   dark
---bg-drawer    mix(page, ink, 6%)                      mix(page, black, 24%)
---text-secondary  mix(page, body, 25%)                 mix(page, body, 24%)
---primary-light   mix(base, white, 20%) [oklab]        mix(base, white, 30%) [oklab]
---focus-ring   0 0 0 0.1875rem mix(accent, transparent, 25%)   …45%
+token             light                                  dark
+--bg-drawer       mix(page, body, 5%)                    mix(page, black, 24%)
+--gray-main       mix(page, muted, 65%)                  mix(page, muted, 91%)
+--primary-light   mix(base, white, 17%) [oklab]          mix(base, white, 30%) [oklab]
+--primary-dark    mix(base, black, 18%) [oklab]          mix(base, white, 19%) [oklab]
+--focus-ring      0 0 0 0.1875rem mix(accent, transparent, 25%)   …45%
 ```
 
-Two properties make this safe rather than clever:
+Three properties make this safe rather than clever:
 
-1. **The amounts are fitted to the stock palette, not invented.** Feeding the stock inputs back in reproduces today's values — e.g. `surface.page: "#fff"` + `text.body: "#1c1c28"` regenerates `--bg-toolbar` `#fafafc` (98%), `--bg-drawer` `#f2f2f5` (94%), `--bg-group-dark` `#e2e2e9` (87%), `--color-border-value` `#e4e4eb` (88%), `--input-border` `#c0c0c4` (72%), `--gray-main` `#8f90a6` (51%), `--text-disabled` `#7a7b90` (41%). The composite recipes fit exactly: the stock light `--focus-ring` _is_ `--secondary-main` at 25%, and `--focus-ring-error` _is_ `--error-main` at 20%. A unit test asserts this round-trip within 2/255 per channel for every neutral token, in both modes — so the derivation table can't drift from the design system it was fitted to.
-2. **Recipes compile to CSS, not to computed hex.** The emitted declaration is `--bg-drawer: color-mix(in srgb, var(--bg-white) 94%, var(--text-body));`. It reads correctly in devtools, it resolves against whatever the author set (or the stock value, if they set neither), and it needs no colour maths at runtime. Perceptual mixes (the hue ladders) use `in oklab`; neutral mixes use `in srgb`, which is what the fitted percentages were measured in. `color-mix` is unconditionally fine — the enforced Chromium floor is 138 (`scripts/check-min-browser.mjs`).
+1. **Neutrals derive from _two_ ink anchors, not one.** Surfaces (`--bg-*`) sit on the page → `text.body` line; the greys, borders and disabled ink (`--gray-*`, `--color-border-value`, `--header-border`, `--input-border`, `--text-disabled`) sit on the page → `text.muted` line, which in the stock palette is a distinctly bluer navy. Anchoring everything on `body` — the obvious single-anchor design — misses the grey family by 7–9/255 per channel and the borders by 3; re-anchoring them on `muted` brings the greys to 1–5 and the borders to 1–2. `text.muted` is therefore a real derivation input, not a convenience member: a theme that sets `text` as a bare string gets a `muted` derived from `body`, and its greys shift a shade. Measured while writing [system-theme.example.json](./system-theme.example.json).
+2. **The amounts are fitted to the stock palette, not invented.** Feeding the stock inputs back in reproduces today's values — `surface.page: "#fff"` + `text.body: "#1c1c28"` + `text.muted: "#555770"` regenerates `--bg-toolbar` `#fafafc` (98%, Δ1), `--bg-drawer` `#f2f2f5` (95%, Δ1), `--table-card-surface` `#f4f5f7` (96%, Δ1), `--input-border` `#c0c0c4` (72%, Δ0), `--color-border-value` `#e4e4eb` (84%, Δ2), `--gray-main` `#8f90a6` (35%, Δ3), `--text-disabled` `#7a7b90` (21%, Δ1). Dark is tighter still — the four chrome surfaces (`--bg-drawer`, `--bg-toolbar`, `--header-bg`, `--table-card-surface`) come back **exact** from page → black. The composite recipes fit exactly too: the stock light `--focus-ring` _is_ `--secondary-main` at 25%, and `--focus-ring-error` _is_ `--error-main` at 20%. A unit test asserts the round-trip **within 5/255 per channel** for every neutral token in both modes, using that example file as its fixture — so the derivation table can't drift from the design system it was fitted to. Hue ladders are looser by nature (see the example file's notes) and are asserted only where they fit: `--primary-light` Δ3, `--secondary-dark` Δ2, dark `--primary-light`/`--primary-dark` Δ3/Δ2.
+3. **Recipes compile to CSS, not to computed hex.** The emitted declaration is `--bg-drawer: color-mix(in srgb, var(--bg-white) 94%, var(--text-body));`. It reads correctly in devtools, it resolves against whatever the author set (or the stock value, if they set neither), and it needs no colour maths at runtime. Perceptual mixes (the hue ladders) use `in oklab`; neutral mixes use `in srgb`, which is what the fitted percentages were measured in. `color-mix` is unconditionally fine — the enforced Chromium floor is 138 (`scripts/check-min-browser.mjs`).
 
 JavaScript colour maths is needed in exactly two places, both about contrast rather than tinting: choosing `brand.on` / `text.onGradient` (white vs. dark ink) when the author doesn't supply it, and computing the contrast **warnings**. Hence the hex/rgb/hsl-only rule for role colours.
 
@@ -142,19 +157,19 @@ JavaScript colour maths is needed in exactly two places, both about contrast rat
 
 Complete, so that adding a colour token to the contract forces a themability decision (enforced — see [Tooling](#tooling-and-enforcement)).
 
-| Role         | Tokens                                                                                                                                                                                                                                                               |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `brand`      | `--primary-main` `--primary-light` `--primary-dark` `--primary-contrast` `--gradient-primary`                                                                                                                                                                        |
-| `accent`     | `--secondary-main` `--secondary-light` `--secondary-dark` `--info-main` `--focus-ring` `--bg-icon` `--gray-pale` `--gradient-secondary` `--status-allocated`                                                                                                         |
-| `danger`     | `--error-main` `--error-bg` `--focus-ring-error` `--status-cancelled`                                                                                                                                                                                                |
-| `warning`    | `--warning-main` `--color-warning` `--status-picked`                                                                                                                                                                                                                 |
-| `success`    | `--success-main` `--status-verified` `--status-finalised`                                                                                                                                                                                                            |
-| `surface`    | `--bg-white` `--surface-raised` `--table-card-surface` `--bg-drawer` `--bg-menu` `--bg-toolbar` `--bg-row` `--bg-group-light` `--bg-group-main` `--bg-group-dark` `--bg-input` `--bg-disabled` `--header-bg` `--drawer-selected-bg` `--drawer-hover-bg` `--bg-login` |
-| `text`       | `--text-body` `--text-secondary` `--text-label` `--button-text` `--text-disabled` `--gray-main` `--gray-light` `--gray-dark` `--login-hero-text`                                                                                                                     |
-| `border`     | `--color-border-value` `--color-divider` `--input-border` `--header-border` `--outline-main`                                                                                                                                                                         |
-| `status`     | the nine `--status-*`                                                                                                                                                                                                                                                |
-| `shadow`     | `--shadow-1`…`--shadow-4` `--shadow-drawer` `--shadow-frozen-col` `--overlay-scrim`                                                                                                                                                                                  |
-| not themable | `--qr-foreground` `--qr-background` (scanner reliability), `--disabled-opacity` (not a colour), everything below the `@theme-contract` markers                                                                                                                       |
+| Role          | Tokens                                                                                                                                                                                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brand`       | `--primary-main` `--primary-light` `--primary-dark` `--primary-contrast` `--gradient-primary`                                                                                                                                                                        |
+| `accent`      | `--secondary-main` `--secondary-light` `--secondary-dark` `--info-main` `--focus-ring` `--bg-icon` `--gray-pale` `--gradient-secondary` `--status-allocated`                                                                                                         |
+| `danger`      | `--error-main` `--error-bg` `--focus-ring-error` `--status-cancelled`                                                                                                                                                                                                |
+| `warning`     | `--warning-main` `--color-warning` `--status-picked`                                                                                                                                                                                                                 |
+| `success`     | `--success-main` `--status-verified` `--status-finalised`                                                                                                                                                                                                            |
+| `surface`     | `--bg-white` `--surface-raised` `--table-card-surface` `--bg-drawer` `--bg-menu` `--bg-toolbar` `--bg-row` `--bg-group-light` `--bg-group-main` `--bg-group-dark` `--bg-input` `--bg-disabled` `--header-bg` `--drawer-selected-bg` `--drawer-hover-bg` `--bg-login` |
+| `text`        | `--text-body` `--text-secondary` `--text-label` `--button-text` `--text-disabled` `--gray-main` `--gray-light` `--gray-dark` `--login-hero-text`                                                                                                                     |
+| `border`      | `--color-border-value` `--color-divider` `--input-border` `--header-border` `--outline-main`                                                                                                                                                                         |
+| `status`      | the nine `--status-*`                                                                                                                                                                                                                                                |
+| `tokens` only | `--shadow-1`…`--shadow-4` `--shadow-drawer` `--shadow-frozen-col` `--overlay-scrim` — themable, but no role reaches them (no `shadow` role); a `tokens` entry carries the whole `box-shadow` value                                                                   |
+| not themable  | `--qr-foreground` `--qr-background` (scanner reliability), `--disabled-opacity` (not a colour), everything below the `@theme-contract` markers                                                                                                                       |
 
 Note `--warning-main` (alert orange) and `--color-warning` (the CCE amber) are distinct tokens today but both come from `warning.base`; a site that genuinely wants them different uses `tokens`.
 
@@ -191,13 +206,23 @@ Lifecycle:
 - **On save** in Settings: compile first, refuse the save on errors, then persist, cache, and reload the app (the behaviour spec/settings/rules.md already requires).
 - **On clear** (toggle off): drop the cache and remove the style element in place — immediate, no reload.
 
-**Failure is inert.** An invalid declaration is dropped by the CSS parser, so a bad theme cannot white-screen the app or block the Settings page that removes it. That is the answer to the ⚠️ VERIFY in spec/settings/rules.md: valid-JSON-but-wrong-shape is now refused at save time, and anything that slips through degrades cosmetically with a working recovery path.
+**Failure is inert.** An invalid declaration is dropped by the CSS parser, so a bad theme cannot white-screen the app or block the Settings page that removes it. That is the answer to the ⚠️ VERIFY in spec/settings/rules.md: a valid-JSON-but-wrong-shape document is now either refused at save time (nothing recognised) or applied as far as it is understood with the rest warned about — and anything that still slips through degrades cosmetically, with the toggle as a working recovery path.
 
 ## Validation and error reporting
 
-**Errors** (save refused, all reported at once rather than first-only): malformed JSON, with line/column; unknown role or member key, with a "did you mean" for near misses; wrong type for a role or member; unparseable colour, naming the value; top-level roles mixed with `light`/`dark`; a `tokens` key that isn't a themable token.
+Everything reportable is reported at once, never first-only, and the two severities are drawn along one line: **an error means we couldn't apply the document; a warning means we applied what we understood and skipped the rest.**
 
-**Warnings** (saved, listed under the editor): text-on-surface pairs below WCAG AA 4.5:1 (`text.body` and `text.muted` against `surface.page`, `surface.nav`, `surface.input`), `brand.on` against `brand.base`, status/severity hues below 3:1 against their surface, and a `brand`/`accent` base too close to `surface.page` to be visible. Accessibility is the baseline here (`src/ui/CLAUDE.md` #9), and a theme is the one place a site can break AA everywhere at once — but a warning, not a veto: the author may have a reason, and we shouldn't be the last word on their brand.
+**Errors** (save refused) — only three:
+
+- malformed JSON, with line/column;
+- top-level roles mixed with a `light`/`dark` key (ambiguous, so nothing is applied);
+- **nothing in the document was recognised** — zero declarations would be emitted. This is the guard that keeps "unknown keys are warnings" from turning a wholly wrong document into a silent no-op: a legacy MUI theme, a theme for some other product, or `{}` with a typo'd role name would otherwise save cleanly and change nothing. The message names the closest match it can find, and the MUI shape gets its own wording (see [Legacy themes](#legacy-themes)).
+
+**Warnings** (saved and applied, listed under the editor):
+
+- unknown role, member or `tokens` key — ignored, with a "did you mean" for near misses (Carl, 2026-07-30). A theme is server-persisted and travels across app versions, so an unrecognised key is as likely to be a key this build doesn't have yet as a typo; refusing the whole document over one line is the worse failure. The did-you-mean plus the nothing-recognised error above cover the typo case.
+- wrong type for a role or member, and unparseable colours — that member is skipped, the rest of the group still applies.
+- contrast: text-on-surface pairs below WCAG AA 4.5:1 (`text.body` and `text.muted` against `surface.page`, `surface.nav`, `surface.input`), `brand.on` against `brand.base`, status/severity hues below 3:1 against their surface, and a `brand`/`accent` base too close to `surface.page` to be visible. Accessibility is the baseline here (`src/ui/CLAUDE.md` #9) and a theme is the one place a site can break AA everywhere at once — but a warning, not a veto: the author may have a reason, and we shouldn't be the last word on their brand.
 
 Warnings are computed per mode, and are the reason validation lives in a pure module rather than in the Settings component: they're worth unit-testing directly.
 
@@ -206,12 +231,13 @@ Warnings are computed per mode, and are the reason validation lives in a pure mo
 The existing `EditorToggleRow` in [DisplaySettingsSection.tsx](../../sections/settings/display/DisplaySettingsSection.tsx) stays as-is — toggle on reveals the editor, save is explicit, toggle off clears immediately. Three changes:
 
 1. `parseThemeJson` in [displayLogic.ts](../../sections/settings/display/displayLogic.ts) becomes `compileTheme`, so the save gate is shape-aware; the single `Alert` becomes a list of errors and, separately, warnings.
-2. The empty seed becomes a commented-out-free minimal document (`{ "brand": "#0b6e99" }` shaped) rather than `{}`, plus an `InfoTooltip` linking the role list — the logo row already has this shape.
-3. **Preview** button beside Save: injects the compiled CSS without persisting, so an author sees the theme before committing a reload. Reverts on navigate-away or on Cancel.
+2. The empty seed becomes a minimal real document (`{ "brand": "#0b6e99" }`) rather than `{}`, plus an `InfoTooltip` naming the roles — the logo row already has this shape.
+
+There is deliberately **no Preview** (Carl, 2026-07-30): saving already applies the theme via the app reload, and the toggle reverts it, so "install it and look" is the preview. That also keeps the Settings behaviour a reconciliation of the reference app rather than an addition to it.
 
 New locale keys go in `src/intl/locales/en/` only. The validation list gets a testid (`custom-theme-problems`) per `e2e/TESTIDS.md`.
 
-A dev-only showcase page (`#/showcase/theming`) is the natural authoring surface: the role table, a paste-a-document box, live preview, and the contrast report. Worth doing, but it is not on the critical path.
+A dev-only showcase page (`#/showcase/theming`) is the natural authoring surface: the role table, a paste-a-document box, live preview, and the contrast report. Worth doing, but it is not on the critical path — and being dev-only, it is dead-code-eliminated from production builds, so it costs the app nothing.
 
 ## Tooling and enforcement
 
@@ -229,27 +255,46 @@ A dev-only showcase page (`#/showcase/theming`) is the natural authoring surface
 - **Auto-lift a too-dark brand colour in dark mode** to clear 3:1 against the dark surface. Real accessibility need, but silently altering the site's brand colour is worse than telling the author. Warn instead; revisit if warnings get ignored in practice.
 - **YAML/TOML for friendlier authoring** — needs a parser dependency for a document edited a handful of times per site.
 - **Themable typography/spacing** — the fastest route to a broken layout, and no site has asked. The contract markers already draw this line.
+- **Unknown keys as errors** — catches typos harder, but a server-persisted document that a newer build extends would then fail wholesale on an older build, and one stale line would throw away a whole valid theme. Warn-and-ignore, backstopped by the nothing-recognised error (Carl, 2026-07-30).
+- **A `shadow` role** — least-demanded, most delicate; `tokens` covers it until a site actually asks (Carl, 2026-07-30).
+- **A Preview button in Settings** — the install/revert loop is already the preview, and it keeps this a reconciliation rather than a spec addition (Carl, 2026-07-30).
+- **An in-app legacy-theme converter** — bundle cost for a migration aid with a shelf life; a standalone script does the same job with no app footprint (Carl, 2026-07-30). See [Legacy themes](#legacy-themes).
 
 ## Legacy themes
 
-A store upgrading from the reference app may already have a MUI-shaped theme saved server-side, which this format will reject. The compiler detects the shape (top-level `palette` / `typography` / `mixins` / `components`) and reports it specifically — "this is a theme from the previous app version" — rather than as a pile of unknown-key errors. A **Convert** action next to the error is cheap and worth it: `palette.primary.main` → `brand`, `palette.secondary.main` → `accent`, `palette.error.main` → `danger`, `palette.background.*` → `surface`, listing what it dropped. The author reviews and saves.
+A store upgrading from the reference app may already have a MUI-shaped theme saved server-side. It won't apply here — every key is unrecognised, so the nothing-recognised error fires — and the app's only job is to say so in those words: the compiler detects the shape (top-level `palette` / `typography` / `mixins` / `components`) and reports "this is a theme from the previous app version, convert it first" instead of a generic message. Five lines.
+
+**Conversion is a standalone dev utility, not app code** (Carl, 2026-07-30): `scripts/convert-legacy-theme.mjs`, run as `node scripts/convert-legacy-theme.mjs old.json > new.json`, printing what it dropped to stderr. It is never imported by the app, so it costs zero bundle for something that goes obsolete as sites migrate, and support can convert a JSON blob without running the app at all.
+
+It's easy because the reference app deep-merges the saved document over its own `themeOptions` (`client/packages/common/src/styles/theme.ts`), so a real saved theme is a subset of that tree holding **literal colour values** — the conversion is a table of dotted paths, with no colour maths:
+
+| Legacy path                                                                                                                   | Role member                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `palette.primary.main` / `.light` / `.dark` / `.contrastText`                                                                 | `brand.base` / `.light` / `.dark` / `.on`                                |
+| `palette.secondary.*`, `palette.info.main`                                                                                    | `accent.*`                                                               |
+| `palette.error.main` / `.background`                                                                                          | `danger.base` / `.background`                                            |
+| `palette.background.white` / `.drawer` / `.menu` / `.toolbar` / `.row` / `.group.*` / `.input.*` / `.login` / `.icon`         | the matching `surface` members                                           |
+| `palette.gray.*`, `palette.form.field` / `.label`, `typography.body1.color`, `typography.login.color`                         | `text.*` (`gray.pale` → `accent`-tinted)                                 |
+| `palette.border`, `palette.divider`, `palette.outline.main`, `mixins.header.borderBottom`                                     | `border.base` / `.divider` / `.strong` / `.input`                        |
+| `mixins.gradient.primary` / `.secondary`                                                                                      | `brand.gradient` / `accent.gradient`                                     |
+| `mixins.drawer.selectedBackgroundColor` / `.hoverBackgroundColor`, `mixins.header.backgroundColor`, `mixins.button.textColor` | `surface.navSelected` / `surface.nav` / `surface.header` / `text.button` |
+
+~35 rows. The only fiddly one is `mixins.header.borderBottom`, where the colour has to be picked out of a `1px solid #cbced4` shorthand. Reported as dropped, with a reason: `components` style overrides (arbitrary MUI CSS), everything sized (`zIndex`, `breakpoints`, `mixins.table`, `icon`, `footer` — not themable here by design), and the palette groups with no counterpart in our tokens yet (`chart.*` incl. `chart.lines`, `cceStatus.*`, `invoiceLineStatus.*`, `vaccinationStatus.*`, `programs.*`).
 
 ## Implementation plan
 
 1. `src/ui/styles/customTheme.ts` — types, colour parser, recipe table, `compileTheme`, contrast checks; colocated tests incl. the stock round-trip.
 2. `src/ui/styles/applyCustomTheme.ts` — style-element injection + `localStorage` cache; pre-paint snippet in `index.html` / `showcase.html`.
 3. Boot wiring — fetch `displaySettings` with the stored hash after login, compile, cache, apply.
-4. Settings — `compileTheme` gate, problem list, seed, tooltip, Preview.
+4. Settings — `compileTheme` gate, problem list (errors + warnings), seed, tooltip.
 5. `scripts/check-theme-tokens.mjs` coverage check.
 6. Docs — this doc becomes the format reference; `kdd/custom-themes` records the decision; pointers added to `src/ui/CLAUDE.md` and `src/ui/docs/STYLING.md`.
-7. Spec — spec/settings/rules.md § Display settings (validation is now shape-aware, Preview exists, ⚠️ VERIFY resolved) and a DIVERGENCES entry alongside D52, via spec/PROCESS.md.
-8. Optional — `#/showcase/theming` authoring page; legacy MUI **Convert**.
+7. Spec — spec/settings/rules.md § Display settings (validation is now shape-aware; ⚠️ VERIFY resolved) and a DIVERGENCES entry alongside D52, via spec/PROCESS.md.
+8. `scripts/convert-legacy-theme.mjs` — the standalone MUI converter (no app code).
+9. Optional — `#/showcase/theming` authoring page.
 
-Steps 1–5 are the shippable unit; 6–7 land with them.
+Steps 1–5 are the shippable unit; 6–7 land with them. 8 is independent and can follow.
 
-## Open decisions
+## Decisions taken
 
-1. **Unknown role/member keys: error or warning?** Proposed **error** (with a suggestion), because a silent typo means an invisible no-op. The cost is that a document written for a newer app version fails wholesale on an older one — rare, since a theme is saved per site against a known app version.
-2. **`shadow` role at all?** It's the least-asked-for role and shadows are the fiddliest to get right. Could ship as `tokens`-only and add the role later.
-3. **Preview in phase 1?** It's the single biggest authoring-quality win and is ~20 lines given the compiler, but it is a spec addition (the reference app has no preview) rather than a reconciliation.
-4. **Legacy MUI Convert in phase 1, or just the specific error message?**
+All four open questions from the review are settled (Carl, 2026-07-30) and folded into the sections above: unknown keys **warn and are ignored** (backstopped by the nothing-recognised error); **no `shadow` role** — `tokens` only; **no Preview** — install and revert is the preview; **conversion is a standalone script**, with only the "this is a previous-version theme" message living in the app.
