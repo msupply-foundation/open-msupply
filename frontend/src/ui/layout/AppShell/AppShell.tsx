@@ -8,6 +8,7 @@ import {
 import { Dynamic } from 'solid-js/web';
 import { HomeIcon, CentralIcon, type IconProps } from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
 import { UserMenu } from './UserMenu';
@@ -153,6 +154,15 @@ export const AppShell = (props: AppShellProps) => {
     openOverlay: () => setOverlayOpen(true),
     closeOverlay: () => setOverlayOpen(false),
   };
+
+  // "Navigation show/hide" in the command palette (spec/keyboard ui-surface S1 §
+  // Commands, `cmdk.drawer-toggle`) — name-only, no shortcut.
+  //
+  // Registered HERE rather than passed in, because the shell owns the rail's
+  // collapsed state. Same structural rule as createSidePanelOpen owning Alt+M
+  // (KB-R2): an action is created where the thing it acts on lives, so it cannot
+  // be registered for a screen that has no such thing.
+  createAction({ name: 'cmdk.drawer-toggle', run: nav.toggleRail });
 
   // Leaving overlay mode (e.g. widening the window) shouldn't strand an open
   // off-canvas panel — close it so the docked rail shows cleanly.
