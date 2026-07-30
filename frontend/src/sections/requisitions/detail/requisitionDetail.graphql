@@ -88,6 +88,11 @@ fragment RequisitionInfo on RequisitionNode {
     name
   }
   programName
+  # The program id threads the Indicators tab's definitions read; the period
+  # id scopes its cell values (contract › indicator values).
+  program {
+    id
+  }
   orderType
   period {
     id
