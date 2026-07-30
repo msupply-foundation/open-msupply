@@ -1,0 +1,135 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { createRoot } from 'solid-js';
+import {
+  createAction,
+  createAddAction,
+  registeredActions,
+  resolveShortcut,
+} from './keyActions';
+import { ALT_D, ALT_N, ALT_M } from './shortcuts';
+
+// The contract here is LIFETIME, because that is the whole reason this is a
+// registry rather than a static list (kdd/keyboard-layer):
+//
+//   1. registration lasts exactly as long as the owner, so KB-R1's "registered
+//      only while it is actually available" needs no discipline at a call site;
+//   2. a disabled action neither fires nor lists (one field, AC-KB24);
+//   3. LAST REGISTERED WINS, so a line editor's "New item" shadows the detail
+//      screen's "Add item" while open and hands Alt+N back on close (KB-R2);
+//   4. an unlisted action fires without being browsable (AC-KB11).
+
+const press = (code: string, alt = true): KeyboardEvent =>
+  ({
+    code,
+    key: '',
+    altKey: alt,
+    ctrlKey: false,
+    shiftKey: false,
+    metaKey: false,
+  }) as KeyboardEvent;
+
+afterEach(() => {
+  // Any action a test leaked (created ownerless without disposing) would be
+  // visible to the next test — the registry is module scope by design.
+  for (const action of registeredActions()) action.dispose();
+  vi.unstubAllGlobals();
+});
+
+describe('createAction lifetime', () => {
+  it('registers on creation and unregisters when its owner disposes', () => {
+    expect(registeredActions()).toHaveLength(0);
+    createRoot(dispose => {
+      createAction({ name: 'button.save', shortcut: ALT_D, run: () => {} });
+      expect(registeredActions()).toHaveLength(1);
+      dispose();
+      // This is KB-R1 as a mechanism: availability IS owner lifetime.
+      expect(registeredActions()).toHaveLength(0);
+    });
+  });
+
+  it('leaves an ownerless action for the caller to dispose', () => {
+    const action = createAction({
+      name: 'button.save',
+      shortcut: ALT_D,
+      run: () => {},
+    });
+    expect(registeredActions()).toHaveLength(1);
+    action.dispose();
+    expect(registeredActions()).toHaveLength(0);
+  });
+});
+
+describe('resolveShortcut', () => {
+  it('finds the action whose shortcut matches', () => {
+    const run = vi.fn();
+    createAction({ name: 'button.save', shortcut: ALT_D, run });
+    resolveShortcut(press('KeyD'))?.run();
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it('returns nothing when no binding matches', () => {
+    createAction({ name: 'button.save', shortcut: ALT_D, run: () => {} });
+    expect(resolveShortcut(press('KeyX'))).toBeUndefined();
+  });
+
+  it('skips a disabled action', () => {
+    let finalised = false;
+    createAction({
+      name: 'button.save',
+      shortcut: ALT_D,
+      run: () => {},
+      disabled: () => finalised,
+    });
+    expect(resolveShortcut(press('KeyD'))).toBeDefined();
+    finalised = true;
+    // Read at keypress time, so no re-registration is needed when it flips.
+    expect(resolveShortcut(press('KeyD'))).toBeUndefined();
+  });
+
+  it('gives the binding to the last registered action, so a nested surface shadows the screen', () => {
+    const screen = vi.fn();
+    const editor = vi.fn();
+    createAction({ name: 'button.add-item', shortcut: ALT_N, run: screen });
+    createRoot(dispose => {
+      createAction({ name: 'label.new-item', shortcut: ALT_N, run: editor });
+      resolveShortcut(press('KeyN'))?.run();
+      expect(editor).toHaveBeenCalledOnce();
+      expect(screen).not.toHaveBeenCalled();
+      dispose();
+    });
+    // The editor closed; Alt+N belongs to the screen again.
+    resolveShortcut(press('KeyN'))?.run();
+    expect(screen).toHaveBeenCalledOnce();
+  });
+
+  it('ignores an action that carries no shortcut', () => {
+    createAction({ name: 'cmdk.goto-dashboard', run: () => {} });
+    expect(resolveShortcut(press('KeyD'))).toBeUndefined();
+    expect(registeredActions()).toHaveLength(1);
+  });
+});
+
+describe('listing', () => {
+  it('lists a named action and fires an unlisted one without listing it', () => {
+    const navigateUp = vi.fn();
+    createAction({ name: 'button.save', shortcut: ALT_D, run: () => {} });
+    createAction({ unlisted: true, shortcut: ALT_M, run: navigateUp });
+
+    // AC-KB11: the nameless entry owns its binding but is browsable nowhere.
+    const listed = registeredActions().filter(a => a.name !== undefined);
+    expect(listed).toHaveLength(1);
+    resolveShortcut(press('KeyM'))?.run();
+    expect(navigateUp).toHaveBeenCalledOnce();
+  });
+});
+
+describe('createAddAction', () => {
+  it('fixes the binding to Alt+N and names the entry after its control', () => {
+    const run = vi.fn();
+    const action = createAddAction({ name: 'button.add-item', run });
+    expect(action.shortcut).toBe(ALT_N);
+    expect(action.name).toBe('button.add-item');
+    resolveShortcut(press('KeyN'))?.run();
+    expect(run).toHaveBeenCalledOnce();
+  });
+});
