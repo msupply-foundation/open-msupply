@@ -124,6 +124,30 @@ export const SidePanelSection = (props: SidePanelSectionProps) => {
   );
 };
 
+export interface SidePanelSubheadingProps {
+  /** The sub-heading text — an `<h3>` within the section's `<h2>`. */
+  children: JSX.Element;
+  /**
+   * An optional control pinned to the heading's inline-end — a group action
+   * such as an Edit button (e.g. the Charges panel's Service-charges editor).
+   */
+  action?: JSX.Element;
+}
+
+/**
+ * A sub-heading grouping fields within a SidePanelSection — the pricing-group
+ * headings inside a shipment's Charges panel ("Stock charges", "Service
+ * charges"). A bold `<h3>` under the section's `<h2>`, with a gap below
+ * separating it from its group's rows; an optional `action` pins to the
+ * inline-end (centred against the heading).
+ */
+export const SidePanelSubheading = (props: SidePanelSubheadingProps) => (
+  <div class={styles.subheading}>
+    <h3 class={styles.subheadingTitle}>{props.children}</h3>
+    {props.action}
+  </div>
+);
+
 /**
  * The record-actions cluster inside a panel section (the registry's
  * record-actions section): one action per row, aligned inline-start, each

@@ -2879,6 +2879,7 @@
   "messages.stock-movement-fractional-packs": "Some lines would result in a fractional number of packs. Adjust the packs to move or the to pack size so each results in a whole number.",
   "messages.stock-movement-saved": "Stock movement saved",
   "messages.stock-on-hold": "Some stock lines are on hold and cannot be allocated.",
+  "messages.stock-unusable-vvm": "Some stock lines have an unusable VVM status and will not be auto-allocated.",
   "messages.stocktake-after-backdate-warning": "Stocktake(s) have been recorded after {{date}}. Adding a new shipment may result in stocktake counts that don't align with the ledger. Are you sure you want to continue with this date?",
   "messages.stocktake-errors-explanation": "The stocktake could not be finalised because of the following lines. Review each and resolve the issue (for example by deleting the line or adjusting the affected stock).",
   "messages.stopping-scanner": "Stopping scanner...",
