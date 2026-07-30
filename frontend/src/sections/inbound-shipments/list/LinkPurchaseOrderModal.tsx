@@ -3,12 +3,13 @@ import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import type { LinkPurchaseOrderRowFragment } from './createInboundShipment.generated';
 
 // The from-a-purchase-order create step (spec S2 → Link purchase order modal),
@@ -53,17 +54,24 @@ export const LinkPurchaseOrderModal: Component<
     {
       c: { accessor: row => row.supplier?.name ?? '', id: 'supplier' },
       header: () => t('label.supplier'),
+      ...getCellDefinition('supplierName'),
     },
     {
       c: { key: 'number' },
       header: () => t('label.purchase-order-number'),
+      // No CELL_DEF key; "PO number" is the binding constraint, not the digits.
       ...getNumberCell(),
+      size: remToPx(7),
     },
-    { c: { key: 'reference' }, header: () => t('label.reference') },
+    {
+      c: { key: 'reference' },
+      header: () => t('label.reference'),
+      ...getCellDefinition('reference'),
+    },
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
   ];
 
@@ -82,16 +90,13 @@ export const LinkPurchaseOrderModal: Component<
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           {/* Linking a PO is mandatory — both disabled until a row is picked;
-              the choice is only whether to seed the shipment's lines. */}
+              the choice is only whether to seed the shipment's lines. Their own
+              verbs, so plain Buttons rather than the standard dialog three. */}
           <Button
             variant="secondary"
             data-testid="dialog-button-add-no-lines"

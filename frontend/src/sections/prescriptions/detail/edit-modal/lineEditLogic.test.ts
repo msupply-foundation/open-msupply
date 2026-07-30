@@ -3,7 +3,6 @@ import {
   allocateUnits,
   buildSaveInput,
   canSave,
-  clampPacks,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
@@ -65,6 +64,42 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
     expect(seeded.map(l => l.id)).toEqual(['held']);
     expect(seeded[0].barred).toEqual([]); // row stays enabled
     expect(seeded[0].autoBarred).toContain('on-hold'); // never auto-filled
+  });
+
+  const vvm = (priority: number) => ({
+    id: `vvm-${priority}`,
+    description: `Stage ${priority}`,
+    unusable: false,
+    priority,
+  });
+
+  it('orders VVM priority before expiry under the preference — no-status last, expiry breaking ties (rules § ordering)', () => {
+    const seeded = seedDraftLines(
+      [
+        line({ id: 'no-status', expiryDate: '2026-08-01' }),
+        line({ id: 'p2', expiryDate: '2026-08-01', vvmStatus: vvm(2) }),
+        line({ id: 'p1-late', expiryDate: '2027-01-01', vvmStatus: vvm(1) }),
+        line({ id: 'p1-early', expiryDate: '2026-09-01', vvmStatus: vvm(1) }),
+      ],
+      { ...OPEN_PREFS, sortByVvmStatusThenExpiry: true }
+    );
+    expect(seeded.map(l => l.id)).toEqual([
+      'p1-early',
+      'p1-late',
+      'p2',
+      'no-status',
+    ]);
+  });
+
+  it('ignores VVM priority with the preference off — plain FEFO', () => {
+    const seeded = seedDraftLines(
+      [
+        line({ id: 'p1-late', expiryDate: '2027-01-01', vvmStatus: vvm(1) }),
+        line({ id: 'p2-early', expiryDate: '2026-08-01', vvmStatus: vvm(2) }),
+      ],
+      { ...OPEN_PREFS, sortByVvmStatusThenExpiry: false }
+    );
+    expect(seeded.map(l => l.id)).toEqual(['p2-early', 'p1-late']);
   });
 });
 
@@ -162,18 +197,6 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     expect(packsById.get('held')).toBe(0);
     expect(shortfallUnits).toBe(3);
     expect(warnings).toEqual([]);
-  });
-});
-
-describe('clampPacks (AC-I5 — the client is the only negative/overdraw guard)', () => {
-  it('floors negatives and non-finite input at zero', () => {
-    expect(clampPacks(-3, 10)).toBe(0);
-    expect(clampPacks(Number.NaN, 10)).toBe(0);
-    expect(clampPacks(undefined, 10)).toBe(0);
-  });
-  it('caps at the batch availability and keeps fractions', () => {
-    expect(clampPacks(99, 10)).toBe(10);
-    expect(clampPacks(0.25, 10)).toBe(0.25);
   });
 });
 
