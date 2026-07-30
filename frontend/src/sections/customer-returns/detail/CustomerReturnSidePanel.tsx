@@ -24,7 +24,7 @@ import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  CustomerReturnDetail,
+  CustomerReturnForCopy,
   type CustomerReturnInfoFragment,
 } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
@@ -79,13 +79,15 @@ export const CustomerReturnSidePanel: Component<
   };
 
   // The WHOLE return — header, every line, and the linked records — for the
-  // copy action (controls § copy to clipboard). This panel is handed the info
-  // node alone, so copy re-reads the detail query, whose nested `lines`
-  // connector takes no page argument and so carries the complete line set. A
+  // copy action (controls § copy to clipboard). Its OWN operation, not the
+  // screen's: customerReturnDetail is header-only and the line table holds one
+  // server-paginated page, and the standard requires copy to make an
+  // unpaginated read rather than serialise the page on screen. The nested
+  // `lines` connector takes no page argument, so it carries the complete set. A
   // fetch failure routes to the global error modal; a NodeError (not expected
   // from a screen showing the record) copies nothing.
   const loadFullReturn = async () => {
-    const result = await graphqlFetch(CustomerReturnDetail, {
+    const result = await graphqlFetch(CustomerReturnForCopy, {
       storeId: params.storeId,
       id: props.node.id,
     });

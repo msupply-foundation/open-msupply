@@ -25,7 +25,7 @@ import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  SupplierReturnDetail,
+  SupplierReturnForCopy,
   type SupplierReturnInfoFragment,
 } from './supplierReturnDetail.generated';
 import {
@@ -81,16 +81,19 @@ export const SupplierReturnSidePanel: Component<
   };
 
   // The WHOLE return — header, every line, and the linked records — for the
-  // copy action (controls § copy to clipboard). This panel is handed the info
-  // node alone, so copy re-reads the detail query, whose nested `lines`
-  // connector carries the complete line set.
+  // copy action (controls § copy to clipboard). Its OWN operation, not the
+  // screen's: supplierReturnDetail is header-only and the line table holds one
+  // server-paginated page, and the standard requires copy to make an
+  // unpaginated read rather than serialise the page on screen. The nested
+  // `lines` connector takes no page argument, so it carries the complete set.
   const loadFullReturn = async () => {
-    const result = await graphqlFetch(SupplierReturnDetail, {
+    const result = await graphqlFetch(SupplierReturnForCopy, {
       storeId: params.storeId,
       id: props.node.id,
     });
     if (result.kind !== 'success') return undefined;
     if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
     return result.data.invoice;
   };
 
