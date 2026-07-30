@@ -4,15 +4,26 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInboundShipments } from '../inboundShipments.generated';
 
 export interface DeleteInboundShipmentsActionProps {
   storeId: string;
   selectedIds: () => string[];
   onDeleted: () => void;
-  /** Shown disabled (with a reason tooltip on the wrapper) when true. */
+  /** Shown disabled when true — an actionable block (change the selection). */
   disabled?: boolean;
+  /**
+   * The reason it's disabled, as the trigger's hover text (ui-standards
+   * controls.md § blocked affordances → "actionable block": stay rendered and
+   * disabled, reason perceivable in place). Goes on the Button itself, not a
+   * wrapper element.
+   */
+  title?: string;
 }
 
 // The inbound-shipments-list bulk delete (spec AC-L3): footer button + a
@@ -36,6 +47,7 @@ export const DeleteInboundShipmentsAction: Component<
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         disabled={props.disabled}
+        title={props.title}
         onClick={() => setOpen(true)}
       >
         {t('button.delete')}
@@ -102,43 +114,33 @@ const Body = (
       actions={
         <Switch
           fallback={
+            // confirm / deleting: Cancel (hidden while deleting) + the loading
+            // Delete. Icon-less verbs, delete in the danger tone (D55).
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.delete')}
               </Button>
             </>
           }
         >
+          {/* Success: an acknowledgement of the count, not a save — the D55
+              case where OK stays the right word. */}
           <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
+            <OkButton data-testid="dialog-button-ok" onClick={props.onClose} />
           </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              onClick={props.onClose}
-            >
+            <Button variant="secondary" onClick={props.onClose}>
               {t('button.close')}
             </Button>
           </Match>

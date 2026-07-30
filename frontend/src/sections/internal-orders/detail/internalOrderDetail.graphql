@@ -101,6 +101,7 @@ fragment InternalOrderInfo on RequisitionNode {
       id
       invoiceNumber
       createdDatetime
+      purchaseOrderId
       user {
         username
       }

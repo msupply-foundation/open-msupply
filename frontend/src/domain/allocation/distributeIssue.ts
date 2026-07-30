@@ -30,6 +30,7 @@
 // asks for, not stock passed over).
 
 import type { BarReason } from './policy';
+import { round9 } from './units';
 
 export type DistributableLine = {
   id: string;
@@ -99,6 +100,10 @@ export const distributeIssue = (
   // Pass 1 — front-to-back, whole packs rounded DOWN (exact fraction under
   // partialPacks). Whole-pack mode also floors the batch's own availability:
   // residual fractional packs (dust) are never issued by distribution.
+  // `remaining` is re-rounded after every take: the ÷/× round-trip of a
+  // fractional take leaves IEEE dust (±1e-15) that otherwise becomes a
+  // phantom shortfall — or a phantom micro-allocation on the NEXT batch,
+  // which would surface as a drawn batch and go into the save.
   for (const line of fillable) {
     if (remaining <= 0) break;
     const allocatablePacks = options?.partialPacks
@@ -109,7 +114,7 @@ export const distributeIssue = (
       ? takeUnits / line.packSize
       : Math.floor(takeUnits / line.packSize);
     packsById.set(line.id, packs);
-    remaining -= packs * line.packSize;
+    remaining = round9(remaining - packs * line.packSize);
   }
 
   // Pass 2 — still short: front-to-back again, rounding the take UP within
@@ -123,15 +128,17 @@ export const distributeIssue = (
       const takeUnits = Math.min(remaining, headroomPacks * line.packSize);
       const packs = Math.ceil(takeUnits / line.packSize);
       packsById.set(line.id, already + packs);
-      remaining -= packs * line.packSize;
+      remaining = round9(remaining - packs * line.packSize);
     }
   }
 
   // Pass 3 — over-allocated: trim whole packs walking BACKWARDS (latest
   // stock trimmed first), skipping batches whose pack size exceeds the
   // excess — the old app's reduce step. What cannot be trimmed remains as
-  // the reported over-allocation.
-  if (remaining < 0) {
+  // the reported over-allocation. Whole-pack mode only: partial-pack fills
+  // take exact fractions, so they can never over-allocate (the header's
+  // "passes 2–3 never run").
+  if (remaining < 0 && !options?.partialPacks) {
     let excess = -remaining;
     for (let i = fillable.length - 1; i >= 0 && excess > 0; i--) {
       const line = fillable[i]!;
@@ -155,7 +162,7 @@ export const distributeIssue = (
       const packs = packsById.get(line.id) ?? 0;
       wholePackGapUnits += (Math.ceil(packs) - packs) * line.packSize;
     }
-    wholePackGapUnits = Math.round(wholePackGapUnits * 1e9) / 1e9;
+    wholePackGapUnits = round9(wholePackGapUnits);
   }
 
   return {

@@ -42,19 +42,24 @@ import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
 import { formatNumber, round } from '../../../../intl';
 import {
+  clampManualPacks,
+  issuedUnits,
+  lensToUnits,
+  round9,
+  unitsToLens,
+  type AllocateUnit,
+} from '@/domain/allocation';
+import {
   allocateUnits,
   buildSaveInput,
   canSave,
-  clampPacks,
   draftAvailableUnits,
-  draftIssuedUnits,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
 import {
   issueWarningMessages,
   manualEntryMessages,
-  round9,
   type PrescriptionWarningMessage,
 } from './allocationWarnings';
 import { expandAbbreviations } from './directions';
@@ -182,18 +187,30 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       itemId: id,
       invoiceId: props.invoiceId,
     });
+    // The item changed again mid-flight (add mode re-pick): this response is
+    // stale — landing its grid would leave `lines` from one item under
+    // another's itemId, and a save would dispense the wrong item's stock.
+    if (id !== itemId()) return undefined;
     if (result.kind !== 'success') return undefined;
     const draft = result.data.draftStockOutLines;
     const item = result.data.items.nodes[0];
     setItemInfo(item);
+    // A vaccine under the doses preference opens in the doses lens (.63);
+    // everything else in units. State stays unit-denominated either way —
+    // the lens only shapes the fields' entry/display.
+    setLens(
+      (item?.isVaccine ?? false) && prefs().manageVaccinesInDoses
+        ? 'doses'
+        : 'units'
+    );
     const seeded = seedDraftLines(draft.draftLines, prefs(), new Date());
     setLines(reconcile(seeded, { key: 'id' }));
     setPrescribedQuantity(draft.prescribedQuantity ?? undefined);
     setNote(draft.note ?? '');
     // Re-opening a dispensed line shows its saved state: the issue field
-    // seeds to the existing allocation's total (the lens is units on open).
-    // A fresh item has nothing allocated, so it stays empty (.32).
-    const existingUnits = draftIssuedUnits(seeded);
+    // seeds to the existing allocation's unit total (displayed through the
+    // lens). A fresh item has nothing allocated, so it stays empty (.32).
+    const existingUnits = issuedUnits(seeded);
     setIssueUnits(existingUnits > 0 ? round9(existingUnits) : undefined);
     setShortfall(0);
     setWarnings([]);
@@ -202,15 +219,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     // field. Armed here rather than gated on a load flag — Issue is inert
     // while the fetch is in flight, and the handle's frame runs after this
     // promise settles and Solid has re-rendered the enabled field.
-    
+
     if (prefs().editPrescribedQuantity) {
       prescribedQuantityFocus.focus();
     } else {
       issueQuantityFocus.focus();
     }
     // A distribution still pending from the previous item must not land on
-    // this one's freshly-seeded grid.
-    allocate.cancel();
+    // this one's freshly-seeded grid (also cancelled at pick time — this
+    // covers a keystroke that raced the fetch).
+    cancelAllocate();
     return result.data;
   });
 
@@ -227,18 +245,37 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const showDosesLens = () =>
     (itemInfo()?.isVaccine ?? false) && prefs().manageVaccinesInDoses;
 
-  const allocatedUnits = () => draftIssuedUnits(lines);
+  // The lens boundary (.63, rules § prescribed quantity): state and the wire
+  // are ALWAYS units — both quantity fields enter and display through the
+  // shared allocate-in lens (domain/allocation lensToUnits/unitsToLens), so
+  // flipping it rescales the figures without touching the allocation.
+  // Prescriptions has no packs lens; the shape is units or doses.
+  const allocateLens = (): AllocateUnit =>
+    dosesMode()
+      ? { kind: 'doses', dosesPerUnit: dosesPerUnit() }
+      : { kind: 'units' };
+  const lensValue = (units: number | undefined): number | undefined =>
+    units == null ? undefined : unitsToLens(units, allocateLens());
+
+  const allocatedUnits = () => issuedUnits(lines);
   const availableUnits = () => draftAvailableUnits(lines);
 
-  // Distribute FEFO with partial packs (AC-A1); the doses lens converts
-  // before distributing (AC-AL7). Runs DEBOUNCED behind both quantity fields
-  // (the current app's AutoAllocate fields — their #2727/#3532: distributing
-  // per keystroke rewrites the entry under the user's fingers). Once the
-  // entry settles, the issue field snaps to what was ACTUALLY allocated — a
-  // request stock can't cover reads as the allocated 10, not the typed 20
-  // (.62); the shortfall banner carries the full request.
-  const runAllocation = (value: number) => {
-    const requestedUnits = dosesMode() ? value / dosesPerUnit() : value;
+  // Who owns the distribution waiting behind the debounce. Clearing a field
+  // drops only ITS OWN pending call — never the sibling's (the two fields sit
+  // on one row and are edited in quick succession) — while a manual row edit
+  // or an item switch supersedes any pending call outright.
+  let pendingAllocator: 'issue' | 'prescribed' | undefined;
+
+  // Distribute FEFO with partial packs (AC-A1); callers hand in UNITS — the
+  // lens converts at the field boundary (AC-AL7/.63). Runs DEBOUNCED behind
+  // both quantity fields (the current app's AutoAllocate fields — their
+  // #2727/#3532: distributing per keystroke rewrites the entry under the
+  // user's fingers). Once the entry settles, the issue field snaps to what
+  // was ACTUALLY allocated — a request stock can't cover reads as the
+  // allocated 10, not the typed 20 (.62); the shortfall banner carries the
+  // full request.
+  const runAllocation = (requestedUnits: number) => {
+    pendingAllocator = undefined;
     const {
       packsById,
       shortfallUnits,
@@ -260,27 +297,48 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         dosesPerUnit: dosesPerUnit(),
       })
     );
-    const allocated = draftIssuedUnits(lines);
-    setIssueUnits(round9(dosesMode() ? allocated * dosesPerUnit() : allocated));
+    setIssueUnits(round9(issuedUnits(lines)));
     setDirty(true);
   };
   const allocate = createDebounced(runAllocation, 500);
 
-  // The issue field: echo the entry immediately, distribute when it settles.
+  const scheduleAllocate = (owner: 'issue' | 'prescribed', units: number) => {
+    pendingAllocator = owner;
+    allocate(units);
+  };
+  /** No owner = unconditional; an owner drops only its own pending call. */
+  const cancelAllocate = (owner?: 'issue' | 'prescribed') => {
+    if (owner != null && pendingAllocator !== owner) return;
+    pendingAllocator = undefined;
+    allocate.cancel();
+  };
+
+  // The issue field: echo the entry immediately (normalised to units),
+  // distribute when it settles. Dirty lands with the keystroke, not the
+  // debounce — OK must not read as dead while the distribution settles
+  // (save() flushes it before reading the draft).
   const onIssueChange = (value: number | undefined) => {
-    setIssueUnits(value);
-    if (value != null) allocate(value);
-    else allocate.cancel();
+    setDirty(true);
+    const units = lensToUnits(value, allocateLens());
+    if (units == null) {
+      setIssueUnits(undefined);
+      cancelAllocate('issue');
+      return;
+    }
+    setIssueUnits(units);
+    scheduleAllocate('issue', units);
   };
 
   // The prescribed quantity drives allocation of the same quantity, capped
   // by the distribution (.62); the prescribed value itself keeps the full
   // request — it's the demand record (AC-Q1–Q3), not the issue figure.
+  // Entered through the lens, held and saved as units (.63).
   const onPrescribedChange = (value: number | undefined) => {
-    setPrescribedQuantity(value);
+    const units = lensToUnits(value, allocateLens());
+    setPrescribedQuantity(units);
     setDirty(true);
-    if (value != null) allocate(value);
-    else allocate.cancel();
+    if (units != null) scheduleAllocate('prescribed', units);
+    else cancelAllocate('prescribed');
   };
 
   // A manual per-row entry, clamped 0…available (AC-I5 — the client is the
@@ -291,8 +349,19 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const setRowPacks = (id: string, value: number | undefined) => {
     const index = lines.findIndex(line => line.id === id);
     if (index < 0) return;
-    const applied = clampPacks(value, lines[index].availablePacks);
+    // The manual entry supersedes a distribution still settling behind the
+    // debounce — left pending, it would fire (or be flushed by save) and
+    // silently rewrite this row with the auto-pick.
+    cancelAllocate();
+    // Bounded 0…available, keeping the exact fraction — prescriptions is the
+    // partial-pack consumer (rules § allocation).
+    const applied = clampManualPacks(value, lines[index].availablePacks, {
+      partialPacks: true,
+    });
     setLines(index, 'numberOfPacks', applied);
+    // The issue field mirrors the actual total after a row edit (the current
+    // app derives it from the rows, so it can never disagree).
+    setIssueUnits(round9(issuedUnits(lines)));
     setShortfall(0);
     setWarnings(manualEntryMessages(applied, lines[index].packSize));
     setDirty(true);
@@ -308,6 +377,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     enteredUnits: number,
     appliedUnits: number
   ) => {
+    // Fires even when the applied value didn't change (no onChange, so
+    // setRowPacks' cancel didn't run) — the manual intent still supersedes
+    // any pending distribution.
+    cancelAllocate();
     setShortfall(0);
     setWarnings(
       manualEntryMessages(
@@ -413,7 +486,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // OK & next (add mode): the same save, then a fresh item for rapid entry.
   const onOkNext = async () => {
     if (!(await save())) return;
-    allocate.cancel();
+    cancelAllocate();
     setItemId(undefined);
     setItemInfo(undefined);
     setLines(reconcile([]));
@@ -593,6 +666,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           onSelect={item => {
             if (!item) return;
             setItemId(item.id);
+            // A quantity typed for the previous item must not distribute
+            // over this one's grid while its fetch is still in flight.
+            cancelAllocate();
             // The prescribed quantity is the first entry point once the item
             // is chosen (.61); the handle lands when the field mounts.
             if (prefs().editPrescribedQuantity) prescribedQuantityFocus.focus();
@@ -612,7 +688,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               class={styles.quantityField}
               data-testid="prescribed-quantity-field"
               ref={prescribedQuantityFocus.ref}
-              value={prescribedQuantity()}
+              value={lensValue(prescribedQuantity())}
               min={0}
               decimalLimit={0}
               onChange={onPrescribedChange}
@@ -623,7 +699,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             class={styles.quantityField}
             data-testid="issue-field"
             ref={issueQuantityFocus.ref}
-            value={issueUnits()}
+            value={lensValue(issueUnits())}
             min={0}
             decimalLimit={0}
             disabled={gridData.loading}
@@ -660,18 +736,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 : 'warning.cannot-create-placeholder-units',
               {
                 allocatedQuantity: formatNumber(
-                  round9(
-                    dosesMode()
-                      ? allocatedUnits() * dosesPerUnit()
-                      : allocatedUnits()
-                  )
+                  unitsToLens(allocatedUnits(), allocateLens())
                 ),
                 requestedQuantity: formatNumber(
-                  round9(
-                    dosesMode()
-                      ? (allocatedUnits() + shortfall()) * dosesPerUnit()
-                      : allocatedUnits() + shortfall()
-                  )
+                  unitsToLens(allocatedUnits() + shortfall(), allocateLens())
                 ),
               }
             )}
@@ -684,11 +752,13 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             an adjusted manual entry (.19). */}
         <Show when={warnings().length > 0}>
           <div class={styles.warningStack}>
-            <For each={warnings()}>{message => (
-              <Alert severity="warning" testId={warningTestId(message)}>
-                {warningText(message)}
-              </Alert>
-            )}</For>
+            <For each={warnings()}>
+              {message => (
+                <Alert severity="warning" testId={warningTestId(message)}>
+                  {warningText(message)}
+                </Alert>
+              )}
+            </For>
           </div>
         </Show>
         <Show
@@ -715,11 +785,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   <>
                     {t('label.available')}:{' '}
                     {formatNumber(
-                      round9(
-                        dosesMode()
-                          ? availableUnits() * dosesPerUnit()
-                          : availableUnits()
-                      )
+                      unitsToLens(availableUnits(), allocateLens())
                     )}{' '}
                     {dosesMode() ? t('label.doses') : unitName()}
                   </>

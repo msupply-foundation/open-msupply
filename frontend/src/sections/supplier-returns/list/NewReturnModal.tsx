@@ -5,8 +5,7 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { NameSearch } from '../../../domain/name';
 import { InsertSupplierReturn } from './supplierReturns.generated';
 
@@ -77,14 +76,10 @@ const Body: Component<{ onClose: () => void }> = props => {
       testId="supplier-search-modal"
       title={t('label.supplier-name')}
       actions={
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        <CancelButton
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
+        />
       }
     >
       <NameSearch
