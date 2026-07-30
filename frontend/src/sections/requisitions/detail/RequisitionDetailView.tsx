@@ -50,7 +50,7 @@ import {
   type HeaderEditFields,
 } from './RequisitionToolbar';
 import { RequisitionStatusFooter } from './RequisitionStatusFooter';
-import { RequisitionLogTab } from './RequisitionLogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
@@ -759,9 +759,12 @@ const RequisitionDetailView: Component = () => {
                 <RequisitionDocumentsTab node={node()} />
               </TabPanel>
               <TabPanel value="log">
-                <RequisitionLogTab
+                {/* The shared activity-log surface; oldest first per AC-LG1
+                    (spec S2 § Log tab). */}
+                <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
+                  order="oldest-first"
                 />
               </TabPanel>
             </Tabs>

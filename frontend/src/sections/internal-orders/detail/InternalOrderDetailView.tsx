@@ -77,7 +77,7 @@ import {
   type HeaderEditFields,
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
-import { InternalOrderLogTab } from './InternalOrderLogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
@@ -1177,9 +1177,12 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InternalOrderLogTab
+                {/* The shared activity-log surface; oldest first per AC-AL1
+                    (spec S3 § Log tab). */}
+                <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
+                  order="oldest-first"
                 />
               </TabPanel>
               <Show when={showIndicators()}>

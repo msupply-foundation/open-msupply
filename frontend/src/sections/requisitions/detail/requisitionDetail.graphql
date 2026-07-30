@@ -176,28 +176,3 @@ mutation updateRequisition(
     }
   }
 }
-
-# The Log tab (spec S2 › Log tab): the requisition's activity trail, read from
-# the shared activity log keyed by this record's id. No sort — rows arrive
-# datetime ascending and render as returned (contract › activity log).
-query requisitionLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        to
-        user {
-          username
-        }
-      }
-    }
-  }
-}
