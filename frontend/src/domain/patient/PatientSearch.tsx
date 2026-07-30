@@ -25,6 +25,8 @@ export interface PatientSearchProps {
   hideLabel?: boolean;
   /** Control size — `small` for a header field cluster's compact row. */
   size?: 'default' | 'small';
+  /** Width cap — `full` to fill the slot a layout hands it (header clusters). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
@@ -92,6 +94,7 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     label={props.label}
     hideLabel={props.hideLabel}
     size={props.size}
+    width={props.width}
     class={props.class}
     disabled={props.disabled}
     error={props.error}
