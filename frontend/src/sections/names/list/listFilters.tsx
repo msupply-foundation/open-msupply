@@ -31,6 +31,9 @@ import type { NamesFilter } from './namesListLogic';
 const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
   // ─ user-facing
   codeOrName: {
+    // The list's DEFAULT filter — the always-present search AC-N13 and
+    // DIVERGENCES D25 call for (#735).
+    alwaysOn: true,
     label: () => t('name.filter.search'),
     render: props => (
       <FilterTextInput
