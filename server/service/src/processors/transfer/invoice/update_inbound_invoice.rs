@@ -178,11 +178,12 @@ mod test {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_name_a, mock_name_b, mock_outbound_shipment_a, mock_store_a, mock_store_b,
-            MockData, MockDataInserts,
+            mock_item_a, mock_name_a, mock_name_b, mock_outbound_shipment_a, mock_store_a,
+            mock_store_b, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, PreferenceRow, StorageConnection,
+        EqualFilter, Invoice, InvoiceFilter, InvoiceLineRow, InvoiceLineType, InvoiceRepository,
+        PreferenceRow, StorageConnection,
     };
 
     #[actix_rt::test]
@@ -220,6 +221,19 @@ mod test {
             store_row: mock_store_a(),
             clinician_row: None,
         };
+        // Shipments need lines, an empty shipment can't be received or verified
+        let outbound_line = InvoiceLineRow {
+            id: "picked_first_half_line".to_string(),
+            invoice_id: first_half_row.id.clone(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            r#type: InvoiceLineType::StockOut,
+            pack_size: 1.0,
+            number_of_packs: 10.0,
+            ..Default::default()
+        };
+
         let mut processor_input = InvoiceTransferProcessorRecord {
             operation: Operation::Upsert {
                 invoice: first_half.clone(),
@@ -233,9 +247,10 @@ mod test {
         // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_update_inbound_invoice_auto_finalise_off",
-            MockDataInserts::none().stores(),
+            MockDataInserts::none().names().stores().units().items(),
             MockData {
                 invoices: vec![first_half_row.clone(), second_half_row.clone()],
+                invoice_lines: vec![outbound_line.clone()],
                 ..Default::default()
             },
         )
@@ -291,9 +306,10 @@ mod test {
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_update_inbound_invoice_auto_finalise_on",
-            MockDataInserts::none().stores(),
+            MockDataInserts::none().names().stores().units().items(),
             MockData {
                 invoices: vec![first_half_row.clone(), second_half_row.clone()],
+                invoice_lines: vec![outbound_line.clone()],
                 preferences: vec![preference],
                 ..Default::default()
             },

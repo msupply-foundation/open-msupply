@@ -230,6 +230,7 @@ pub enum UpdateInboundShipmentError {
     CannotMoveReceivedDateForward,
     ExceedsMaximumBackdatingDays,
     CannotReceiveWithPendingLines,
+    CannotReceiveWithNoLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
     /// A customFields patch key is not a visible inbound shipment property.
@@ -1412,6 +1413,164 @@ mod test {
             ),
             Err(ServiceError::CannotReceiveWithPendingLines)
         );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cannot_receive_with_no_lines() {
+        fn empty_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_no_lines".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                ..Default::default()
+            }
+        }
+
+        fn placeholder_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_placeholders".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        /// Nothing received and nothing shipped, this line receives no stock
+        fn placeholder_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "placeholder_line".to_string(),
+                invoice_id: placeholder_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: None,
+                ..Default::default()
+            }
+        }
+
+        fn nothing_received_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_nothing_received".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        /// The supplier said they sent 5 packs but none arrived, this is a real record of a
+        /// discrepancy and must still be receivable
+        fn nothing_received_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "nothing_received_line".to_string(),
+                invoice_id: nothing_received_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: Some(5.0),
+                ..Default::default()
+            }
+        }
+
+        fn service_line_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_service_line".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        fn service_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "freight_charge_line".to_string(),
+                invoice_id: service_line_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::Service,
+                total_before_tax: 10.0,
+                total_after_tax: 10.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_inbound_cannot_receive_no_lines",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![
+                    empty_invoice(),
+                    placeholder_invoice(),
+                    nothing_received_invoice(),
+                    service_line_invoice(),
+                ],
+                invoice_lines: vec![placeholder_line(), nothing_received_line(), service_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        fn receive(id: String) -> UpdateInboundShipment {
+            UpdateInboundShipment {
+                id,
+                status: Some(UpdateInboundShipmentStatus::Received),
+                ..Default::default()
+            }
+        }
+
+        // An invoice with no lines at all can't be received
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                receive(empty_invoice().id),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // Nor can it be verified
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: empty_invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // An invoice whose only lines are placeholders receives no stock, so it's empty too
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                receive(placeholder_invoice().id),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // Recording that nothing arrived of what was shipped is a valid receipt
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                receive(nothing_received_invoice().id),
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
+
+        // A shipment of only service lines (freight and the like) is valid
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                receive(service_line_invoice().id),
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
     }
 
     #[actix_rt::test]
