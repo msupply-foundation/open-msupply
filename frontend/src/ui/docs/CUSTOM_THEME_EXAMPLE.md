@@ -2,7 +2,7 @@
 
 This is the theme Open mSupply ships with, written out in the custom-theme format, with notes on what each colour controls. It's a starting point: **copy it, change what you want, and delete every line you don't** — anything you leave out keeps the built-in value.
 
-For the full role list and the rules, see [CUSTOM_THEMES.md](./CUSTOM_THEMES.md). For the same document without the commentary — ready to paste — see [system-theme.example.json](./system-theme.example.json).
+For the full role list and the rules, see [CUSTOM_THEMES.md](./CUSTOM_THEMES.md). For the same document without the commentary — ready to paste — see [system-theme.example.json](./custom_themes/system-theme.example.json).
 
 > **JSON has no comments.** The blocks below are annotated for reading only. Paste the plain file, or strip the `//` lines first, or the theme won't save.
 

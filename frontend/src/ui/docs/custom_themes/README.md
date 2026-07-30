@@ -20,4 +20,4 @@ Related:
 
 - [`../CUSTOM_THEMES.md`](../CUSTOM_THEMES.md) — the format reference (every role, every rule).
 - [`../CUSTOM_THEME_EXAMPLE.md`](../CUSTOM_THEME_EXAMPLE.md) — an annotated theme, for whoever is writing one.
-- [`../system-theme.example.json`](../system-theme.example.json) — the **built-in** palette written in this format. Pasting it should leave the app looking exactly as it did; it is also the fixture behind the fidelity test.
+- [`./system-theme.example.json`](./system-theme.example.json) — the **built-in** palette written in this format. Pasting it should leave the app looking exactly as it did; it is also the fixture behind the fidelity test.

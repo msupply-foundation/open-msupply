@@ -34,6 +34,7 @@ const node = (
   verifiedDatetime: null,
   otherPartyId: 'c1',
   otherPartyName: 'Customer',
+  transportReference: null,
   user: null,
   linkedShipment: null,
   originalShipment: null,

@@ -103,12 +103,12 @@ const FILTERS: Filter<InboundListFilter>[] =
   constructFilters<InboundListFilter>({
     // ─ user-facing, in display order ────────────────────────────────────────
     otherPartyName: {
-      label: () => t('label.name'),
+      label: () => t('label.supplier'),
       render: props => (
         <FilterTextInput
-          label={t('label.name')}
+          label={t('label.supplier')}
           testId={props.testId}
-          placeholder={t('label.name')}
+          placeholder={t('label.supplier')}
           value={props.filter().otherPartyName?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({

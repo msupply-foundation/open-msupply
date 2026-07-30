@@ -25,6 +25,7 @@ export type { CurrencyInfo, CurrencyDisplay } from './currency';
 export {
   formatNumber,
   round,
+  roundTo,
   parseNumber,
   intlNumberFormat,
 } from './formatNumber';

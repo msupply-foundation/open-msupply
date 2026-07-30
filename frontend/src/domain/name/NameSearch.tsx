@@ -57,6 +57,12 @@ export interface NameSearchProps {
    * excludes the chosen supplier (spec/internal-orders › header fields).
    */
   excludeId?: string;
+  /**
+   * Empty-dropdown text override — for a caller whose spec names its own copy
+   * (e.g. the requisition create modal's "Not configured", spec/requisitions
+   * S3a). Defaults to the combobox's standard no-results message.
+   */
+  noResultsMessage?: string;
   class?: string;
 }
 
@@ -109,6 +115,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     inputTestId={props.inputTestId ?? 'name-search-input'}
     focusTarget={props.focusTarget}
     clearable={props.clearable}
+    noResultsMessage={props.noResultsMessage}
     fetchPage={namePageFetcher(
       props.storeId,
       props.role ?? 'supplier',

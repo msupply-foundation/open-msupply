@@ -6,7 +6,11 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
   CustomerMasterLists,
@@ -106,19 +110,15 @@ export const AddFromMasterListAction: Component<
         minBodyHeightRem={20}
         actions={
           <>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               disabled={adding()}
               onClick={() => setOpen(false)}
-            >
-              {t('button.cancel')}
-            </Button>
-            {/* OK commits the bulk add — disabled until a list is chosen, and
-                showing a spinner (loading) until the add resolves (D46). */}
-            <Button
-              icon={<CheckIcon />}
+            />
+            {/* Save commits the bulk add directly (spec S3 Layout, D46) —
+                disabled until a list is chosen, and showing a spinner until the
+                add resolves. No separate "add all items?" confirmation. */}
+            <DialogSaveButton
               data-testid="dialog-button-ok"
               disabled={!selected()}
               loading={adding()}
@@ -126,9 +126,7 @@ export const AddFromMasterListAction: Component<
                 const chosen = selected();
                 if (chosen) void add(chosen);
               }}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           </>
         }
       >
