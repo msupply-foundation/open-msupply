@@ -99,7 +99,15 @@ export const toLineInputs = (drafts: DraftReturnLine[]): ReturnLineInput[] =>
 
 // A blank draft row for "Add batch" (per-item mode) — quantity zero (won't
 // persist unless filled in), pack size 1 (the minimum valid).
-export const blankDraft = (item: GeneratedLine['item']): DraftReturnLine => ({
+export const blankDraft = (
+  item: GeneratedLine['item'],
+  /**
+   * The item's display name — carried separately because the generated line's
+   * `item` fragment holds only id/code/unitName, and the grid's Name column
+   * reads `itemName` (blank would leave a just-added batch row nameless).
+   */
+  itemName = ''
+): DraftReturnLine => ({
   id: generateUUID(),
   existing: false,
   batch: null,
@@ -112,6 +120,6 @@ export const blankDraft = (item: GeneratedLine['item']): DraftReturnLine => ({
   itemVariantId: null,
   volumePerPack: 0,
   itemCode: item.code,
-  itemName: '',
+  itemName,
   item,
 });

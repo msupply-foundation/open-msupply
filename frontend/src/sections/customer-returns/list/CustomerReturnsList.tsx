@@ -8,20 +8,18 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getDateCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
@@ -30,7 +28,7 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CheckIcon, CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import {
@@ -72,7 +70,10 @@ type SortKey = NonNullable<CustomerReturnsVariables['sort']>[number]['key'];
 
 type ReturnsListState = {
   filter: ReturnsFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: CustomerReturnsVariables['sort'];
   offset: number;
@@ -88,8 +89,10 @@ const DEFAULT_STATE: ReturnsListState = {
 };
 
 // Status → chip colour token (tokens.css --status-*); label via the shared
-// translated map. Text + style, never colour alone.
-const STATUS_COLOURS: Record<string, string> = {
+// translated map. Text + style, never colour alone. Keyed by the GENERATED
+// status union (partial: the union also carries statuses a customer return
+// never reaches), so a typo'd or dropped key is a compile error.
+const STATUS_COLOURS: Partial<Record<ReturnRow['status'], string>> = {
   NEW: 'var(--status-new)',
   PICKED: 'var(--status-picked)',
   SHIPPED: 'var(--status-shipped)',
@@ -180,18 +183,31 @@ const CustomerReturnsList: Component = () => {
       return result.data.preferences;
     }
   );
+  // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction): the status chip reads the options lazily as it renders, so a
+  // still-pending preference must never suspend this screen's boundary —
+  // `.latest` alone would, on its first pending read, tearing down the open
+  // chip. Unresolved = no restriction (and manual returns ENABLED — the common
+  // case; flashing the notice would be the wrong direction).
+  const loadedPrefs = () =>
+    prefs.state === 'ready' || prefs.state === 'refreshing'
+      ? prefs.latest
+      : undefined;
   const manualReturnsDisabled = () =>
-    prefs.latest?.disableManualReturns ?? false;
+    loadedPrefs()?.disableManualReturns ?? false;
 
   // Built once per mount (stable identity — FilterBar never remounts a chip);
   // the accessor is read lazily per render, so the status options narrow in
   // place when the invoice-status-options preference resolves (rules
   // § preference gates).
-  const filters = createFilters(() => prefs.latest?.invoiceStatusOptions ?? []);
+  const filters = createFilters(
+    () => loadedPrefs()?.invoiceStatusOptions ?? []
+  );
 
   const onNewReturn = () => {
-    // Preference gate first (rules § preference & permission gates): with manual
-    // returns disabled the notice shows even to a user lacking the permission.
+    // Preference gate first (rules § preference & permission gates): with
+    // manual returns disabled the notice shows even to a user lacking the
+    // permission.
     if (manualReturnsDisabled()) {
       setDisabledNoticeOpen(true);
       return;
@@ -199,7 +215,8 @@ const CustomerReturnsList: Component = () => {
     // Then the standing permission mirror (validation § permission gating):
     // creating requires CUSTOMER_RETURN_MUTATE. Lacking it, the global
     // permission-denied modal shows at once — never a toast, and no customer
-    // picker opens. The server enforces the same resource on the write regardless.
+    // picker opens. The server enforces the same resource on the write
+    // regardless.
     if (!hasPermission('CUSTOMER_RETURN_MUTATE')) {
       reportPermissionDenied(['CustomerReturnMutate']);
       return;
@@ -257,17 +274,17 @@ const CustomerReturnsList: Component = () => {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      // The text sink column's width preset (docs/CELL_TYPES.md), keeping the
+      // card title + 2-line wrap; spread FIRST because the `cell` below
+      // overrides the preset's renderer (the documented override order).
+      ...getCellDefinition('otherPartyName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             {/* Swatch editable only while the row is editable (rules
                 § editability — the same standing gate as everything else);
                 read-only rows show the dot alone. */}
@@ -281,7 +298,7 @@ const CustomerReturnsList: Component = () => {
               />
             </Show>
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -293,30 +310,34 @@ const CustomerReturnsList: Component = () => {
         <StatusChip {...statusMeta(info.getValue<ReturnRow['status']>())} />
       ),
       meta: { headerPosition: 'badge' },
+      // No Status cell preset exists yet (docs/CELL_TYPES.md § Status is
+      // page-rendered), so the chip column sets the documented width itself.
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: () => t('label.number'),
-      ...getNumberCell(),
+      ...getCellDefinition('invoiceNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       c: { key: 'theirReference' },
       header: () => t('label.reference'),
-      meta: { wrapLines: 2 },
+      ...getCellDefinition('theirReference', { wrapLines: 2 }),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.
     ...customFieldColumns<ReturnRow, SortKey>(
@@ -351,18 +372,6 @@ const CustomerReturnsList: Component = () => {
               filter={() => variables().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filters}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -398,6 +407,23 @@ const CustomerReturnsList: Component = () => {
         rows={rows()}
         rowKey={r => r.id}
         loading={data.loading}
+        // Filters live in the table's OWN toolbar, never the page header
+        // (ui-standards § tables → filtering, binding); the state stays
+        // URL-backed here. One filter menu: the name/status chips plus the
+        // scope's configured custom-field filters as the bar's second group, so
+        // they share the one menu + chip row.
+        filters={
+          <FilterBar
+            filters={filters}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
@@ -419,6 +445,14 @@ const CustomerReturnsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+        // the install-wide default; everyone else gets no action.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         // Pagination renders as an overlay INSIDE the table, not in a page
         // footer band — consistent with the stocktakes list (kdd/table-state).
         // State stays page-owned / URL-backed.
@@ -441,15 +475,9 @@ const CustomerReturnsList: Component = () => {
         onClose={() => setDisabledNoticeOpen(false)}
         title={t('button.new-return')}
         description={t('messages.manual-returns-preferences-disabled')}
-        actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
-            onClick={() => setDisabledNoticeOpen(false)}
-          >
-            {t('button.ok')}
-          </Button>
-        }
+        // The standard, icon-less dialog acknowledgement (D55) — this notice
+        // confirms nothing and saves nothing, so OK is the right label.
+        actions={<OkButton onClick={() => setDisabledNoticeOpen(false)} />}
       />
     </Page>
   );

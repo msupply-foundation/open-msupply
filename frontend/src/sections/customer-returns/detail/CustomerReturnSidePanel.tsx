@@ -8,9 +8,11 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
-import { TextField } from '../../../ui/elements/inputs/TextField';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { Text } from '../../../ui/elements/typography/Text';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
@@ -19,7 +21,7 @@ import {
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
-import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
+import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
   CustomerReturnDetail,
@@ -99,13 +101,7 @@ export const CustomerReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Text variant="body" as="span">
               {props.node.user?.username ?? '—'}
             </Text>
@@ -114,7 +110,7 @@ export const CustomerReturnSidePanel: Component<
             <Show when={props.node.user?.email}>
               {email => <InfoTooltip text={email()} label={email()} />}
             </Show>
-          </span>
+          </HStack>
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show
@@ -129,7 +125,9 @@ export const CustomerReturnSidePanel: Component<
           </Show>
         </FieldRow>
         <FieldRow label={t('heading.comment')}>
-          <TextField
+          {/* Multi-line, in-place (ui-surface S3 § side panel) — the multi-line
+              input role, not a single-line field. */}
+          <TextArea
             label={t('heading.comment')}
             hideLabel
             width="full"
@@ -159,14 +157,7 @@ export const CustomerReturnSidePanel: Component<
           {shipment => (
             // The current app's arrangement: the dated, attributed description
             // inline-start, the #N link pinned inline-end.
-            <span
-              style={{
-                display: 'flex',
-                'align-items': 'center',
-                'justify-content': 'space-between',
-                gap: 'var(--space-3)',
-              }}
-            >
+            <HStack gap="md" justify="between">
               <Text variant="body">
                 {t('messages.outbound-shipment-created-on', {
                   date: localisedDate(shipment().createdDatetime),
@@ -183,7 +174,7 @@ export const CustomerReturnSidePanel: Component<
               >
                 #{shipment().invoiceNumber}
               </RecordLink>
-            </span>
+            </HStack>
           )}
         </Show>
       </SidePanelSection>
@@ -228,15 +219,8 @@ export const CustomerReturnSidePanel: Component<
           icon={<InfoIcon />}
           title={t('error.something-wrong')}
           description={deleteError()}
-          actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={() => setDeleteError(undefined)}
-            >
-              {t('button.ok')}
-            </Button>
-          }
+          // The standard, icon-less acknowledgement (D55).
+          actions={<OkButton onClick={() => setDeleteError(undefined)} />}
         />
       </Show>
     </>
