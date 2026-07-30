@@ -40,7 +40,6 @@ import {
 } from '../../../ui/elements/table/tableHelpers';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
-import { createMediaQuery } from '../../../ui/utils/createMediaQuery';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import {
   CheckIcon,
@@ -162,12 +161,11 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel: auto-open on wide viewports, closed below (the responsive
-  // detail-panel behaviour the shared e2e suites drive); the More button and
-  // the panel's close re-take control until the breakpoint next flips.
-  const isWide = createMediaQuery('(min-width: 1536px)');
+  // Side panel: starts CLOSED at every width — the lines table is this
+  // screen's work surface, so the panel is opt-in via the app bar's More
+  // button rather than eating ~20 rem of it on a wide monitor (D82; diverges
+  // from the shared responsive default in ui-standards/layout.md).
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
-  createEffect(() => setSidePanelOpen(isWide()));
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
