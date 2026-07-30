@@ -61,10 +61,12 @@ pub fn check_lines_locked_by_authorisation(
 
 pub fn should_update_stock(invoice: &InvoiceRow) -> bool {
     match invoice.status {
-        InvoiceStatus::New | InvoiceStatus::Delivered => false,
+        // Shipped means the goods are still in transit, so they must not exist as stock yet.
+        // Stock is created when the invoice transitions to Received or Verified, see
+        // `crate::invoice::stock_effect::stock_effects`.
+        InvoiceStatus::New | InvoiceStatus::Shipped | InvoiceStatus::Delivered => false,
         InvoiceStatus::Allocated
         | InvoiceStatus::Picked
-        | InvoiceStatus::Shipped
         | InvoiceStatus::Cancelled
         | InvoiceStatus::Received
         | InvoiceStatus::Verified => true,

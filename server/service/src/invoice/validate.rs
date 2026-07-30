@@ -86,6 +86,29 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     false
 }
 
+/// Stricter than [`check_invoice_is_editable`], for editing invoice *lines* rather than the
+/// invoice itself.
+///
+/// Transfer-created inbound shipments and customer returns arrive already in Shipped status and
+/// must still accept status changes (so the receiving store can move them to Delivered), but
+/// their lines are the sending store's record of what was despatched and must not be edited
+/// until the goods are delivered.
+///
+/// Externally-sourced (purchase order) inbounds have no linked invoice and stay editable at
+/// Shipped, so the user can record what the supplier despatched.
+pub fn check_invoice_lines_are_editable(invoice: &InvoiceRow) -> bool {
+    if !check_invoice_is_editable(invoice) {
+        return false;
+    }
+
+    match &invoice.r#type {
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
+            !(invoice.status == InvoiceStatus::Shipped && invoice.linked_invoice_id.is_some())
+        }
+        _ => true,
+    }
+}
+
 pub enum InvoiceRowStatusError {
     CannotChangeStatusOfInvoiceOnHold,
     CannotReverseInvoiceStatus,
@@ -123,11 +146,31 @@ pub fn check_invoice_exists(
 mod test {
     use repository::{InvoiceRow, InvoiceStatus, InvoiceType};
 
-    use super::check_invoice_is_editable;
+    use super::{check_invoice_is_editable, check_invoice_lines_are_editable};
 
     fn outbound(status: InvoiceStatus) -> InvoiceRow {
         InvoiceRow {
             r#type: InvoiceType::OutboundShipment,
+            status,
+            ..Default::default()
+        }
+    }
+
+    /// An inbound shipment created by a transfer from another store's outbound shipment
+    fn transferred_inbound(status: InvoiceStatus) -> InvoiceRow {
+        InvoiceRow {
+            r#type: InvoiceType::InboundShipment,
+            linked_invoice_id: Some("outbound_shipment_id".to_string()),
+            status,
+            ..Default::default()
+        }
+    }
+
+    /// An inbound shipment raised against a purchase order to an external supplier
+    fn external_inbound(status: InvoiceStatus) -> InvoiceRow {
+        InvoiceRow {
+            r#type: InvoiceType::InboundShipment,
+            purchase_order_id: Some("purchase_order_id".to_string()),
             status,
             ..Default::default()
         }
@@ -152,6 +195,80 @@ mod test {
             assert!(
                 !check_invoice_is_editable(&outbound(status.clone())),
                 "outbound should not be editable at status {:?}",
+                status
+            );
+        }
+    }
+
+    #[test]
+    fn transferred_inbound_lines_are_locked_while_shipped() {
+        // The invoice itself stays editable at Shipped, otherwise the receiving store could
+        // never move the transfer on to Delivered
+        assert!(check_invoice_is_editable(&transferred_inbound(
+            InvoiceStatus::Shipped
+        )));
+        assert!(!check_invoice_lines_are_editable(&transferred_inbound(
+            InvoiceStatus::Shipped
+        )));
+
+        for status in [
+            InvoiceStatus::New,
+            InvoiceStatus::Delivered,
+            InvoiceStatus::Received,
+        ] {
+            assert!(
+                check_invoice_lines_are_editable(&transferred_inbound(status.clone())),
+                "transferred inbound lines should be editable at status {:?}",
+                status
+            );
+        }
+
+        for status in [InvoiceStatus::Verified, InvoiceStatus::Cancelled] {
+            assert!(
+                !check_invoice_lines_are_editable(&transferred_inbound(status.clone())),
+                "transferred inbound lines should not be editable at status {:?}",
+                status
+            );
+        }
+    }
+
+    #[test]
+    fn external_inbound_lines_stay_editable_while_shipped() {
+        // An external inbound has no linked invoice, the user records what the supplier
+        // despatched while the goods are in transit
+        for status in [
+            InvoiceStatus::New,
+            InvoiceStatus::Shipped,
+            InvoiceStatus::Delivered,
+            InvoiceStatus::Received,
+        ] {
+            assert!(
+                check_invoice_lines_are_editable(&external_inbound(status.clone())),
+                "external inbound lines should be editable at status {:?}",
+                status
+            );
+        }
+
+        assert!(!check_invoice_lines_are_editable(&external_inbound(
+            InvoiceStatus::Verified
+        )));
+    }
+
+    #[test]
+    fn outbound_line_editability_matches_invoice_editability() {
+        // The extra Shipped rule is inbound only, outbound is unchanged
+        for status in [
+            InvoiceStatus::New,
+            InvoiceStatus::Allocated,
+            InvoiceStatus::Picked,
+            InvoiceStatus::Shipped,
+            InvoiceStatus::Verified,
+        ] {
+            let invoice = outbound(status.clone());
+            assert_eq!(
+                check_invoice_lines_are_editable(&invoice),
+                check_invoice_is_editable(&invoice),
+                "outbound line editability should match invoice editability at status {:?}",
                 status
             );
         }
