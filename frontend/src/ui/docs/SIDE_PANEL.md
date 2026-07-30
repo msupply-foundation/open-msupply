@@ -20,7 +20,7 @@ Compose `SidePanelSection` + `FieldRow` + `SidePanelSubheading` + `SidePanelActi
 ## The rules (the choices that are yours)
 
 1. **Group headings use `SidePanelSubheading`** — never a `FieldRow` with a bold label. Pass an `action` for a group-level edit; use the info-tooltip-after-heading pattern (below) when the group needs a gloss.
-2. **Single-line inputs are `size="small" width="compact"`.** Multi-line text (a comment) is a `TextArea` (default width, no size). Never leave a single-line input at default height/width in a panel.
+2. **Single-line inputs are `size="small"`; the width splits by content.** A **short-value** input (a percentage, a date, a code, an id) is `width="compact"` — the narrowest cap. A **free-text** input (a name, a reference, a note) is `width="full"` so it can hold a longer value; `compact` would clip it. Multi-line text (a comment) is a `TextArea` (`width="full"`, no size). Never leave a single-line input at default height, or a free-text field at `compact`.
 3. **A calculated figure that belongs to an input is its `helperText`** (sits below the input), never a value floated to the right of the row — that breaks the value-alignment column.
 4. **Inline edit affordances are small icon-only** `IconButton`s (`bordered size="small"`), pinned to the row's inline-end. Never a text `Button` with an "Edit" label inside a row.
 5. **Record actions go in the last section** (`value="actions"`, `title={t('heading.actions')}`) inside `SidePanelActions` — labelled buttons, one per row, Delete first. This cluster is the one place labelled buttons belong.
@@ -140,7 +140,7 @@ SidePanel label=… onClose=…                       ← <aside>, sticky header
 Before considering a panel done, confirm every item — this is the contract:
 
 - [ ] Group headings are `SidePanelSubheading`, not a `FieldRow` with a bold label (rule 1).
-- [ ] Every single-line input is `size="small" width="compact"`; comments are `TextArea` (rule 2).
+- [ ] Every single-line input is `size="small"` — `width="compact"` for a short value (%, date, code), `width="full"` for free text (name, reference, note); comments are `TextArea` (rule 2).
 - [ ] Any figure calculated from an input is that input's `helperText`, not a value to its right (rule 3).
 - [ ] Inline edit affordances are small icon-only `IconButton`s, inline-end (rule 4).
 - [ ] Record actions are labelled buttons in the last `value="actions"` section (rule 5).
