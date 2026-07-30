@@ -77,9 +77,9 @@
   font-weight: var(--weight-medium);
 }
 
-/* A default (alwaysOn) filter's pill: no remove button, so the trailing gutter
-   that button's own box supplied comes back as padding. */
-.chipFixed {
+/* A pill with no remove button (a default filter): the trailing gutter that
+   button's own box supplied comes back as padding. */
+.chip:not(:has(> .remove)) {
   padding-inline-end: var(--space-3);
 }
 
