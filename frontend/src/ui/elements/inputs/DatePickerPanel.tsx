@@ -45,7 +45,9 @@ export type DatePickerPanelProps = {
     }
 );
 
-/** The corvu render-prop fields this panel reads (single and range share them). */
+/**
+ * The corvu render-prop fields this panel reads (single and range share them).
+ */
 interface CalendarCtx {
   month: Date;
   setMonth: (month: Date) => void;
@@ -291,7 +293,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     </div>
   );
 
-  return props.mode === 'range' ? (
+  return <>{props.mode === 'range' ? (
     <Calendar
       mode="range"
       value={props.value}
@@ -315,5 +317,5 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     >
       {ctx => body(ctx)}
     </Calendar>
-  );
+  )}</>;
 };

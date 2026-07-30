@@ -13,7 +13,9 @@ export interface LineActionProps {
   isExternal: boolean;
   selectedIds: () => string[];
   disabled: boolean;
-  /** A commit happened — the view refetches the lines page + clears selection. */
+  /**
+   * A commit happened — the view refetches the lines page + clears selection.
+   */
   onChanged: () => void;
   /** Per-line failures — stamped inline in the table. */
   onError: (errors: InboundLineErrors) => void;

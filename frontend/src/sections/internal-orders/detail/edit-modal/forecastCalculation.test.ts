@@ -5,13 +5,14 @@ import {
   type VaccineCourse,
 } from './internalOrderLineEdit';
 
-// The population-forecast calculation display's arithmetic (spec/internal-orders
-// S4 § Population-based forecasting, AC-PF7). The forecast itself is captured
-// server-side (behavioural acceptance lives in the e2e/ suites); these cover the
-// client-side parse of the stored vaccineCourses JSON and the per-course figure
-// substitution the editor walks step by step. The fixtures are the exact JSON
-// the demo General store's Vaccine1 line carries (population 10 000, supply
-// interval 3, buffer 2, doses-per-unit 2), covered by two Measles courses.
+// The population-forecast calculation display's arithmetic
+// (spec/internal-orders S4 § Population-based forecasting, AC-PF7). The
+// forecast itself is captured server-side (behavioural acceptance lives in the
+// e2e/ suites); these cover the client-side parse of the stored vaccineCourses
+// JSON and the per-course figure substitution the editor walks step by step.
+// The fixtures are the exact JSON the demo General store's Vaccine1 line
+// carries (population 10 000, supply interval 3, buffer 2, doses-per-unit 2),
+// covered by two Measles courses.
 
 // Measles (General Population): 2 doses, 60% coverage, 50% wastage → loss 2.0.
 const generalPopulation: VaccineCourse = {
@@ -94,7 +95,8 @@ describe('AC-PF7 — the three calculation steps substitute the stored figures',
     const [annual, , units] = forecastSteps(booster);
     // Loss factor 1.0 shows without spurious decimals.
     expect(annual.substitution).toBe('10,000 × 1 × (100 / 100) × 1');
-    // forecast doses 4,166.67 ÷ 2 doses-per-unit = 2,083.33 units → ceil → 2,084.
+    // forecast doses 4,166.67 ÷ 2 doses-per-unit = 2,083.33 units → ceil →
+    // 2,084.
     expect(units.substitution).toBe('4,166.67 / 2');
     expect(units.result).toContain('= 2,084');
   });

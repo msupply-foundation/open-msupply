@@ -4,10 +4,11 @@ import { hasPermission, type UserPermission } from '../../store/storeContext';
 // › contract → permissions). Every read's `type` argument is BOTH a node filter
 // and the permission selector, and the two scopes are disjoint buckets split
 // purely by whether a shipment carries a `purchaseOrderId`:
-//   - INBOUND_SHIPMENT          — plain scope: manual + transfer (purchaseOrderId IS NULL)
-//   - INBOUND_SHIPMENT_EXTERNAL — external scope: PO-linked (purchaseOrderId IS NOT NULL)
-// ⚠️ "external" here means PO-LINKED, not "external supplier": a manual shipment
-// against an external (non-store) supplier is in the PLAIN scope.
+// - INBOUND_SHIPMENT          — plain scope: manual + transfer
+// (purchaseOrderId IS NULL) - INBOUND_SHIPMENT_EXTERNAL — external scope:
+// PO-linked (purchaseOrderId IS NOT NULL) ⚠️ "external" here means PO-LINKED,
+// not "external supplier": a manual shipment against an external (non-store)
+// supplier is in the PLAIN scope.
 export type InboundScope = 'INBOUND_SHIPMENT' | 'INBOUND_SHIPMENT_EXTERNAL';
 
 // The query scopes the current user actually holds. The list requests exactly

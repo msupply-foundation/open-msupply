@@ -27,13 +27,13 @@ export interface SidePanelProps {
 /*
  * Details panel — the detail-view right-hand panel (the current app's
  * DetailPanel): additional info, related documents, comments. Pinned to the
- * inline-end edge of the Page's middle region; the Page frame owns how it docks
- * (a column that slides in and pushes the body at navOverlay and above, an
- * off-canvas drawer + scrim below it, with a drop shadow — see Page.module.css).
- * Pure layout + look, no open state of its own: the page composes
- * <SidePanelSection>s, hands the panel to Page's `sidePanel` slot, and passes
- * `onClose` (→ the close button, top inline-end). Scrolls independently of the
- * body.
+ * inline-end edge of the Page's middle region; the Page frame owns how it
+ * docks (a column that slides in and pushes the body at navOverlay and above,
+ * an off-canvas drawer + scrim below it, with a drop shadow — see
+ * Page.module.css). Pure layout + look, no open state of its own: the page
+ * composes <SidePanelSection>s, hands the panel to Page's `sidePanel` slot,
+ * and passes `onClose` (→ the close button, top inline-end). Scrolls
+ * independently of the body.
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside

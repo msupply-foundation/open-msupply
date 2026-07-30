@@ -44,10 +44,11 @@ import styles from '../Settings.module.css';
  * Devices (spec/settings/ui-surface.md § Devices).
  *  - Label printer: visible and usable by ANY signed-in user — deliberately
  *    no Server Admin requirement, unlike every other write in this vertical
- *    (OMS-REG-SET-05.20). Test and Save both require all four network/label fields,
- *    even in USB mode (OMS-REG-SET-05.21); the USB preference is device-local and never
- *    saved to the server (OMS-REG-SET-05.22).
- *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic surface over
+ *    (OMS-REG-SET-05.20). Test and Save both require all four network/label
+ *    fields, even in USB mode (OMS-REG-SET-05.21); the USB preference is
+ *    device-local and never saved to the server (OMS-REG-SET-05.22).
+ *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic
+ *  surface over
  *    local-device state; it never decides which screen accepts a scan (owned
  *    by spec/android).
  */

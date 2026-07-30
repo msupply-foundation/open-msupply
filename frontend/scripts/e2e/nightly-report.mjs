@@ -24,15 +24,15 @@
 // backend, or datafile.
 //
 // Usage: node scripts/e2e/nightly-report.mjs
-//   RESULTS_DIR     (default .e2e-results)  — <dir>/e2e-report-<leg>/results.json
-//   BASELINE_DIR    (default .e2e-baseline) — same layout, previous nightly
-//   BASELINE_RUN_ID (env, optional)         — links the header to that run
-// Both runs' when/at-what-commit provenance comes from the reports
-// themselves (stats.startTime + the config.metadata.commit stamped by
-// e2e/playwright.config.ts).
-//   Missing baseline files → that leg's failures listed unclassified, exit 0.
-//   Missing leg report     → infra failure (stack never produced one), exit 1.
-//   Otherwise exit 1 iff regressions were found on either leg.
+// RESULTS_DIR     (default .e2e-results)  —
+// <dir>/e2e-report-<leg>/results.json BASELINE_DIR    (default .e2e-baseline) —
+// same layout, previous nightly BASELINE_RUN_ID (env, optional)         — links
+// the header to that run Both runs' when/at-what-commit provenance comes from
+// the reports themselves (stats.startTime + the config.metadata.commit stamped
+// by e2e/playwright.config.ts). Missing baseline files → that leg's failures
+// listed unclassified, exit 0. Missing leg report     → infra failure (stack
+// never produced one), exit 1. Otherwise exit 1 iff regressions were found on
+// either leg.
 
 import * as fs from 'fs';
 

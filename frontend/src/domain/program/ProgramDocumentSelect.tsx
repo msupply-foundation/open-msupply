@@ -20,10 +20,10 @@ export interface ProgramDocumentSelectProps {
 
 /*
  * The program-ENROLMENT-DOCUMENT picker — a Combobox pre-wired to the
- * store-scoped program-enrolment registries resource (kdd/domain-modules). Options are the
- * registries the user may see, labelled by name; the reported value is the
- * program's CONTEXT id — what report data queries filter by — never the
- * registry's own id (spec/reports contract "Arguments", AC-R10).
+ * store-scoped program-enrolment registries resource (kdd/domain-modules).
+ * Options are the registries the user may see, labelled by name; the reported
+ * value is the program's CONTEXT id — what report data queries filter by —
+ * never the registry's own id (spec/reports contract "Arguments", AC-R10).
  */
 export const ProgramDocumentSelect = (props: ProgramDocumentSelectProps): JSX.Element => {
   const items = () => programRegistriesResource.noSuspense();

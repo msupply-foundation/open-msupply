@@ -20,9 +20,13 @@ export interface SupplierReturnToolbarProps {
   storeId: string;
   node: SupplierReturnInfoFragment;
   disabled: boolean;
-  /** The shared return edit buffer — this toolbar reads/writes theirReference. */
+  /**
+   * The shared return edit buffer — this toolbar reads/writes theirReference.
+   */
   edit: ReturnFieldEdit;
-  /** A supplier change: re-checked server-side; typed errors come back inline. */
+  /**
+   * A supplier change: re-checked server-side; typed errors come back inline.
+   */
   onChangeSupplier: (supplierId: string) => void;
   /** The last supplier-change rejection, shown on the lookup. */
   supplierError?: string;
@@ -33,7 +37,8 @@ export const SupplierReturnToolbar: Component<
 > = props => {
   return (
     // Supplier name with the reference on its own row below (not inline beside
-    // it) — one Stack, so the wrapping Toolbar treats the pair as a single block.
+    // it) — one Stack, so the wrapping Toolbar treats the pair as a single
+    // block.
     <Stack gap="sm">
       <FieldRow label={t('label.supplier-name')}>
         <NameSearch

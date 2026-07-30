@@ -88,9 +88,9 @@ type ProgressPart =
   | null
   | undefined;
 
-// SYNC-03.19: a count only where there is something to count — a phase with total
-// zero or unreported (e.g. a push with no records) shows none; a known total
-// with no done yet reads as 0 / N.
+// SYNC-03.19: a count only where there is something to count — a phase with
+// total zero or unreported (e.g. a push with no records) shows none; a known
+// total with no done yet reads as 0 / N.
 const step = (
   label: LocaleKey,
   kind: SyncStepKind,
@@ -225,8 +225,8 @@ export const syncDurationParts = (
 export type DurationUnit = { key: LocaleKey; count: number };
 
 // The ordered unit list the notice composes: hours and minutes only when
-// non-zero, seconds ALWAYS present (SYNC-03.21). Each unit is a plural key + count;
-// the notice resolves them with tPlural at render.
+// non-zero, seconds ALWAYS present (SYNC-03.21). Each unit is a plural key +
+// count; the notice resolves them with tPlural at render.
 export const durationUnits = (parts: {
   hours: number;
   minutes: number;
@@ -240,8 +240,8 @@ export const durationUnits = (parts: {
   return units;
 };
 
-// SYNC-03.25: the Sync-now busy state holds from the click, through the gap before
-// the run's first status frame — a STALE pre-run tick carries the SAME
+// SYNC-03.25: the Sync-now busy state holds from the click, through the gap
+// before the run's first status frame — a STALE pre-run tick carries the SAME
 // signature and must not release it — until the run ends. A run has ended once
 // a NOT-syncing status arrives whose signature differs from the one captured at
 // the click: a new run always carries a fresh `summary.started`, so this

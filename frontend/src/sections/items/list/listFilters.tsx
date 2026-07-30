@@ -10,18 +10,18 @@ import type { ItemsListFilter } from './itemFilter';
 
 export type MasterListOption = { id: string; name: string };
 
-// The list's filter chips (spec/items S1 › Filters). Per-definition custom-field
-// filters ride the shared domain/customFields group (FilterBar `extra`), a
-// separate state slice — not part of this ItemsListFilter map.
+// The list's filter chips (spec/items S1 › Filters). Per-definition
+// custom-field filters ride the shared domain/customFields group (FilterBar
+// `extra`), a separate state slice — not part of this ItemsListFilter map.
 //
 // The code-or-name SEARCH is one of these chips, not a field beside the bar:
-// ui-surface asks for an always-present dedicated search FIELD, but that role is
-// ⛔ not built (components.md › inputs: "Free-text search / filter"), so it is
-// substituted by the built FilterBar text filter — the registry's sanctioned
-// fallback ("the filter-menu case is covered by FilterBar"). "Always-present" is
-// honoured by SEEDING its key in the list's DEFAULT_STATE, so the chip is there
-// on arrival with no menu step (the same shape the names lists use). It is
-// listed first, so it leads both the chip row and the add-a-filter menu.
+// ui-surface asks for an always-present dedicated search FIELD, but that role
+// is ⛔ not built (components.md › inputs: "Free-text search / filter"), so it
+// is substituted by the built FilterBar text filter — the registry's sanctioned
+// fallback ("the filter-menu case is covered by FilterBar"). "Always-present"
+// is honoured by SEEDING its key in the list's DEFAULT_STATE, so the chip is
+// there on arrival with no menu step (the same shape the names lists use). It
+// is listed first, so it leads both the chip row and the add-a-filter menu.
 //
 // `masterLists` / `showAtRisk` are accessors: the master-list options stay
 // fresh without rebuilding the array, and the two conditional chips
@@ -38,7 +38,8 @@ export const buildItemsFilters = (
         <FilterTextInput
           label={t('label.code-or-name')}
           placeholder={t('placeholder.enter-an-item-code-or-name')}
-          // e2e hook: FilterBar supplies `filter-input-codeOrName` (TESTIDS.md).
+          // e2e hook: FilterBar supplies `filter-input-codeOrName`
+          // (TESTIDS.md).
           testId={props.testId}
           value={props.filter().codeOrName ?? ''}
           // Blank box → null, FilterBar's "added but empty" marker;

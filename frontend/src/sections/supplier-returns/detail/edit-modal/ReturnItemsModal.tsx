@@ -81,8 +81,8 @@ export interface ReturnItemsModalProps {
   edit: ReturnFieldEdit;
 }
 
-// Mount-while-open wrapper (the reference modal shape): the content mounts fresh
-// per open; within one open it advances items itself.
+// Mount-while-open wrapper (the reference modal shape): the content mounts
+// fresh per open; within one open it advances items itself.
 export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
   <Show
     when={props.open && (props.mode === 'add' ? 'add' : props.initialItemId)}
@@ -132,8 +132,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
 
   // Seed the draft for one item: the item's available stock lines plus any the
   // return already holds (via generateSupplierReturnLines' itemId + returnId —
-  // contract § draft-line generation). No blank fallback — supplier-return lines
-  // are existing stock lines only.
+  // contract § draft-line generation). No blank fallback — supplier-return
+  // lines are existing stock lines only.
   const seedItem = async (item: ReturnItem) => {
     setCurrentItem(item);
     setStep('quantity');
@@ -145,7 +145,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       input: { stockLineIds: [], itemId: item.id, returnId: props.returnId },
     });
     // The response union's only member is the connector, so any failure here is
-    // the global unexpected-error modal's — stay in the loading phase behind it.
+    // the global unexpected-error modal's — stay in the loading phase behind
+    // it.
     if (result.kind !== 'success') return;
     const seeded = seedDrafts(
       result.data.generateSupplierReturnLines.nodes,

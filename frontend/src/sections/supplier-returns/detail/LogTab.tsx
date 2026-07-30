@@ -47,8 +47,8 @@ export const LogTab: Component<{
   // This tab mounts fresh when selected (inactive TabPanels unmount), so this
   // resource FIRST fetches on an interaction — it MUST be read non-suspending
   // via the `.state` gate, never `resource()` or `.latest` alone, or it
-  // suspends the detail screen's Suspense and remounts it (kdd/solid-reactivity-
-  // pitfalls › No remounts on interaction).
+  // suspends the detail screen's Suspense and remounts it
+  // (kdd/solid-reactivity- pitfalls › No remounts on interaction).
   const [data] = createResource(
     () => ({ storeId: props.storeId, recordId: props.recordId }),
     async variables => {
