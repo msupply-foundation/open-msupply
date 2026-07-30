@@ -159,7 +159,7 @@ const OutboundDetailView: Component = () => {
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Side panel: starts CLOSED at every width, NOT on the shared responsive
-  // helper (D89) — the lines table is this screen's work surface and the widest
+  // helper (D90) — the lines table is this screen's work surface and the widest
   // table in the app, so the panel is opt-in via the app bar's More button
   // rather than taking a column of it before the user asks. The choice lasts
   // the visit and isn't persisted, so every arrival starts closed.
