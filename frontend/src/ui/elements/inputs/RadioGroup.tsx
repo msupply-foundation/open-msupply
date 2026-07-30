@@ -7,7 +7,10 @@ export interface RadioOption {
   /** Optional muted second line under the label. */
   description?: string;
   disabled?: boolean;
-  /** `data-testid` for the radio input (locale-stable test hook, e2e/TESTIDS.md). */
+  /**
+   * `data-testid` for the radio input (locale-stable test hook,
+   * e2e/TESTIDS.md).
+   */
   testId?: string;
 }
 

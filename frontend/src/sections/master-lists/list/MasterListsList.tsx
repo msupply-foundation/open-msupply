@@ -21,10 +21,10 @@ import {
 import { ExportMasterListsAction } from './ExportMasterListsAction';
 
 // S1 — master-lists list (spec/master-lists). Read-only: no create/edit/delete,
-// no selection, no filter controls at all (captured as-is). Rows navigate to the
-// detail; the Export split button downloads the loaded page. Store scoping is
-// the client sending existsForStoreId (storeId itself doesn't scope). Default
-// sort name-ascending; only Name is sortable.
+// no selection, no filter controls at all (captured as-is). Rows navigate to
+// the detail; the Export split button downloads the loaded page. Store scoping
+// is the client sending existsForStoreId (storeId itself doesn't scope).
+// Default sort name-ascending; only Name is sortable.
 
 const DEFAULT_PAGE_SIZE = 20;
 type MasterListRow = MasterListsResult['masterLists']['nodes'][number];

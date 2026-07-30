@@ -233,7 +233,8 @@ export const Popover = (props: PopoverProps) => {
         type="button"
         // Click toggles via the platform for a plain popover; in hover mode the
         // toggle is dropped (see hoverHandlers) so click stays open-only, and
-        // aria-controls/-expanded are wired by hand instead of by popovertarget.
+        // aria-controls/-expanded are wired by hand instead of by
+        // popovertarget.
         popovertarget={props.openOnHover ? undefined : panelId}
         aria-controls={panelId}
         aria-expanded={props.openOnHover ? false : undefined}

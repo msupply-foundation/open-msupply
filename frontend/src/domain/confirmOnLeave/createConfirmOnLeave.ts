@@ -55,7 +55,9 @@ export interface ConfirmOnLeaveOptions {
 export interface ConfirmOnLeave {
   /** Whether the discard prompt should show. Bind to the dialog's `open`. */
   open: Accessor<boolean>;
-  /** Confirm the discard: run `onDiscard`, then replay the blocked navigation. */
+  /**
+   * Confirm the discard: run `onDiscard`, then replay the blocked navigation.
+   */
   confirm: () => void;
   /** Dismiss the prompt and stay put, keeping the edits. */
   cancel: () => void;

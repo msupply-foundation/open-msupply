@@ -100,8 +100,9 @@ export const isReturnDisabled = (node: {
 
 // The status button's own gate (rules § advancing status — preconditions):
 // hold blocks ONLY status changes; no-lines blocks the advance (both also
-// server-enforced — OMS-REG-DIST-07.38 / .7). The button stays clickable on no-lines so
-// the click explains itself (messages.no-lines dialog) rather than dead-ending.
+// server-enforced — OMS-REG-DIST-07.38 / .7). The button stays clickable on
+// no-lines so the click explains itself (messages.no-lines dialog) rather than
+// dead-ending.
 export const advanceBlockedByHold = (node: { onHold: boolean }): boolean =>
   node.onHold;
 

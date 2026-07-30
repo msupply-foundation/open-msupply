@@ -14,11 +14,13 @@ import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generate
 // The return-level footer (spec/supplier-returns/ui-surface.md S3 § layout —
 // footer): Hold toggle · lifecycle indicator (New · Picked · Shipped · Received
 // · Verified — Received/Verified for display only, filtered by the invoice-
-// status-options preference) · spacer · Close · the status-advance split button.
+// status-options preference) · spacer · Close · the status-advance split
+// button.
 //
 // Hold is a soft pause on status change only (rules § header rules): the toggle
 // stays available while the return is editable, confirms before flipping, and
-// the messages flip with direction. It hides once the return is read-only (D39).
+// the messages flip with direction. It hides once the return is read-only
+// (D39).
 
 export interface SupplierReturnStatusFooterProps {
   storeId: string;

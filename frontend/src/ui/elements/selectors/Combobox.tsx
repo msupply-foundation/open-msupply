@@ -174,9 +174,9 @@ interface ComboboxProps<T> {
   /**
    * Content pinned at the TOP of the open listbox popup, above the options — a
    * sticky in-dropdown header for controls that scope the list (e.g. the
-   * location picker's fullness filter). Interacting with it keeps the popup open
-   * (it lives inside the popup's own content, so the outside-dismiss guard
-   * ignores it). Omit for a plain combobox.
+   * location picker's fullness filter). Interacting with it keeps the popup
+   * open (it lives inside the popup's own content, so the outside-dismiss
+   * guard ignores it). Omit for a plain combobox.
    */
   listboxHeader?: JSX.Element;
   /**
@@ -211,8 +211,8 @@ interface ComboboxProps<T> {
   class?: string;
   /**
    * De-box the control (no border / background) for embedding in a filter chip
-   * / pill (FilterBar's FilterCombobox), so it reads on the tinted pill like the
-   * other chip editors rather than as a nested input box.
+   * / pill (FilterBar's FilterCombobox), so it reads on the tinted pill like
+   * the other chip editors rather than as a nested input box.
    */
   borderless?: boolean;
 }

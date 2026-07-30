@@ -80,7 +80,10 @@ type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
   filter: InboundListFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;

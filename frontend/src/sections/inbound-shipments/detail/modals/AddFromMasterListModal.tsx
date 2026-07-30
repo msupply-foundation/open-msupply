@@ -49,8 +49,8 @@ const Body: Component<AddFromMasterListModalProps> = props => {
     }
   };
 
-  // The master-list picker is this dialog's only control, so the dialog opens on it
-  // (ui-standards › accessibility › keyboard).
+  // The master-list picker is this dialog's only control, so the dialog opens
+  // on it (ui-standards › accessibility › keyboard).
   const picker = createFocusTarget();
 
   return (
