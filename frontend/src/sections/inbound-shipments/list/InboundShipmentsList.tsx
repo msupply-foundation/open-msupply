@@ -238,7 +238,7 @@ const InboundShipmentsList: Component = () => {
       // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: () => t('label.name'),
+      header: () => t('label.supplier'),
       ...getCellDefinition('otherPartyName', {
         headerPosition: 'primary',
         wrapLines: 2,

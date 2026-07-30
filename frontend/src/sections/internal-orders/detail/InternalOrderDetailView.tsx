@@ -35,6 +35,12 @@ import {
   getCurrencyCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  FilterBar,
+  FilterTextInput,
+  constructFilters,
+  type Filter,
+} from '../../../ui/elements/selectors/FilterBar';
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -59,8 +65,11 @@ import {
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
-import { StoreOwnName, InternalOrderIndicators } from './indicators.generated';
-import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
+import { StoreOwnName } from './indicators.generated';
+import {
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
 import {
   saveInternalOrderFields,
   addInternalOrderFromMasterList,
@@ -71,7 +80,7 @@ import {
   type HeaderEditFields,
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
-import { InternalOrderLogTab } from './InternalOrderLogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
@@ -116,10 +125,40 @@ type SortKey =
   | 'suggested'
   | 'requested';
 
+// The line filter, shaped like the wire filter the server-paginated lines
+// read will take (itemCodeOrName.like — see the interim note above), so the
+// client-side match swaps to the server filter without a state change.
+type LineFilter = { itemCodeOrName?: { like: string } | null };
+
+// The line table's filters (ui-standards § tables → filtering): the item
+// code/name search as the screen's default (always-on) filter — the same chip
+// the stocktake detail table keeps to hand. Client-side for now, so no
+// debounce.
+const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
+  itemCodeOrName: {
+    alwaysOn: true,
+    label: () => t('label.code-or-name'),
+    render: props => (
+      <FilterTextInput
+        label={t('label.code-or-name')}
+        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        testId={props.testId}
+        debounceMs={0}
+        value={props.filter().itemCodeOrName?.like ?? ''}
+        onInput={value =>
+          props.setPartialFilter({
+            itemCodeOrName: value ? { like: value } : null,
+          })
+        }
+      />
+    ),
+  },
+});
+
 const InternalOrderDetailView: Component = () => {
   const params = useParams<{ storeId: string; orderId: string }>();
   const navigate = useNavigate();
-  const [itemFilter, setItemFilter] = createSignal('');
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({});
   const [hideOverMin, setHideOverMin] = createSignal(false);
   // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar.
@@ -248,7 +287,7 @@ const InternalOrderDetailView: Component = () => {
 
   const [indicators] = createResource(indicatorVariables, async serialised => {
     const result = await graphqlFetch(
-      InternalOrderIndicators,
+      ProgramIndicatorValues,
       JSON.parse(serialised)
     );
     if (result.kind !== 'success') return undefined;
@@ -426,7 +465,7 @@ const InternalOrderDetailView: Component = () => {
     const node = info();
     if (!node) return [];
     let lines = node.lines.nodes;
-    const f = itemFilter().trim().toLowerCase();
+    const f = (lineFilter().itemCodeOrName?.like ?? '').trim().toLowerCase();
     if (f)
       lines = lines.filter(
         l =>
@@ -996,8 +1035,6 @@ const InternalOrderDetailView: Component = () => {
                     onChangeTarget={changeTarget}
                     hideOverMin={hideOverMin()}
                     onHideOverMinChange={setHideOverMin}
-                    itemFilter={itemFilter()}
-                    onItemFilterChange={setItemFilter}
                   />
                   {/* The ancillary banner claims its own full-width row beneath
                       the toolbar block (spec S3 § toolbar). */}
@@ -1079,6 +1116,15 @@ const InternalOrderDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={lineFilters}
+                      filter={lineFilter()}
+                      onChange={setLineFilter}
+                    />
+                  }
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
@@ -1092,7 +1138,7 @@ const InternalOrderDetailView: Component = () => {
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={
-                    itemFilter().trim()
+                    (lineFilter().itemCodeOrName?.like ?? '').trim()
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
@@ -1134,14 +1180,17 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InternalOrderLogTab
+                {/* The shared activity-log surface; oldest first per AC-AL1
+                    (spec S3 § Log tab). */}
+                <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
+                  order="oldest-first"
                 />
               </TabPanel>
               <Show when={showIndicators()}>
                 <TabPanel value="indicators">
-                  <InternalOrderIndicatorsTab
+                  <ProgramIndicatorsTab
                     storeId={params.storeId}
                     nodes={indicatorNodes()}
                     editable={editable()}

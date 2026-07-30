@@ -1,0 +1,83 @@
+# The New-requisition modal (spec/requisitions S3a / rules › creating a
+# requisition). Two create mutations — general and program — plus the
+# per-customer program-settings read that feeds the Program tab's cascade. A
+# requisition is a RESPONSE requisition, created on a customer's behalf.
+
+# The chosen customer's program settings (OMS-FUN-DIS-03.12): each setting is a
+# program master list with its order types, the periods already windowed (five
+# historic + five future) and pruned of exhausted ones server-side. Fetched
+# when the Program tab's customer is chosen; empty → "No programs available
+# for this customer". (The Program TAB's gate is the list's
+# hasCustomerProgramRequisitionSettings read — listContext.graphql.)
+query customerProgramSettings($storeId: String!, $customerNameId: String!) {
+  programRequisitionSettingsByCustomer(
+    storeId: $storeId
+    customerNameId: $customerNameId
+  ) {
+    customerNameId
+    programSettings {
+      masterListId
+      masterListName
+      masterListNameTagName
+      orderTypes {
+        id
+        name
+        isEmergency
+        availablePeriods {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+# General create (OMS-FUN-DIS-03.1/.9): the modal sends only id + otherPartyId
+# and hard-codes the reference client's default months-of-stock bounds (max 1
+# / min 0 — a client default, not a server one; contract › creating a
+# requisition). No lines are created. On success the new requisition's id is
+# used to navigate to its detail; the typed customer errors are unreachable
+# from the customer picker (it offers only visible customers).
+mutation insertRequisition(
+  $storeId: String!
+  $input: InsertResponseRequisitionInput!
+) {
+  insertResponseRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertResponseRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Program create (OMS-FUN-DIS-03.12/.13): the modal sends id + otherPartyId +
+# programOrderTypeId + periodId; the resolver reads the program identity,
+# emergency flag, and months-of-stock bounds from the order type and
+# pre-populates one line per program master-list item (all quantities zero),
+# seeding indicator defaults for a non-emergency program of a store-backed
+# customer. The one typed rejection (MaxOrdersReachedForPeriod) — or any other
+# failure — keeps the dialog open with the error; navigation happens only on
+# the RequisitionNode branch.
+mutation insertProgramRequisition(
+  $storeId: String!
+  $input: InsertProgramResponseRequisitionInput!
+) {
+  insertProgramResponseRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertProgramResponseRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

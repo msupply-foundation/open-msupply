@@ -50,6 +50,8 @@ import {
   DeleteRequisitionsAction,
   ExportRequisitionsAction,
 } from './actions';
+import { CreateRequisitionModal } from './create/CreateRequisitionModal';
+import { CreateOrderAction } from './create/CreateOrderAction';
 
 // The requisitions list view (spec/requisitions S1). A requisition is a
 // RESPONSE requisition — an incoming customer order this store fulfils;
@@ -95,6 +97,7 @@ const RequisitionsList: Component = () => {
   const navigate = useNavigate();
   const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  const [createOpen, setCreateOpen] = createSignal(false);
 
   // Column config (order/sizing/pinning/visibility), resolved default →
   // global → user and by breakpoint band (kdd/table-state). On compact
@@ -164,6 +167,7 @@ const RequisitionsList: Component = () => {
         : undefined;
       return {
         storePreferences: result.data.storePreferences,
+        preferences: result.data.preferences,
         hasCustomerPrograms:
           gate?.kind === 'success'
             ? gate.data.hasCustomerProgramRequisitionSettings
@@ -177,14 +181,19 @@ const RequisitionsList: Component = () => {
   const programsModule = () =>
     context.latest?.storePreferences.omProgramModule ?? false;
   const hasPrograms = () => context.latest?.hasCustomerPrograms ?? false;
+  const canCreateOrder = () =>
+    context.latest?.preferences.canCreateInternalOrderFromARequisition ??
+    false;
 
-  // New requisition (spec S1 page actions / OMS-REG-DIST-05.26): the create
-  // modal (S3) is not built in this cut, so the action navigates into the
-  // section's detail space and falls through to the app's not-found entry
-  // page until it lands — the same interim the internal-orders list shipped
-  // with.
-  const startCreate = () =>
-    navigate(`/${params.storeId}/distribution/customer-requisition/new`);
+  // New requisition (spec S1 page actions / OMS-FUN-DIS-03): opens the create
+  // modal (S3a). The button waits for the context read — the modal's
+  // Program-tab gate (programCapable) must be known before it can open.
+  const startCreate = () => setCreateOpen(true);
+
+  const onCreated = (id: string) => {
+    setCreateOpen(false);
+    navigate(`/${params.storeId}/distribution/customer-requisition/${id}`);
+  };
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -362,10 +371,25 @@ const RequisitionsList: Component = () => {
             <Button
               icon={<PlusCircleIcon />}
               data-testid="new-requisition-button"
+              // Disabled until the store context resolves: the modal's
+              // Program-tab gate must be decided before it can open.
+              disabled={context.loading}
               onClick={startCreate}
             >
               {t('button.new-requisition')}
             </Button>
+            {/* Create order — raise an internal order from a requisition;
+                only under its store preference (OMS-FUN-DIS-03.16). */}
+            <Show when={canCreateOrder()}>
+              <CreateOrderAction
+                storeId={params.storeId}
+                onCreated={id =>
+                  navigate(
+                    `/${params.storeId}/replenishment/internal-order/${id}`
+                  )
+                }
+              />
+            </Show>
             <ExportRequisitionsAction
               storeId={params.storeId}
               filter={() => query().filter}
@@ -375,6 +399,13 @@ const RequisitionsList: Component = () => {
         </Header>
       }
     >
+      <CreateRequisitionModal
+        storeId={params.storeId}
+        open={createOpen()}
+        programCapable={hasPrograms()}
+        onClose={() => setCreateOpen(false)}
+        onCreated={onCreated}
+      />
       <DataTable
         columns={columns()}
         rows={rows()}
@@ -407,6 +438,7 @@ const RequisitionsList: Component = () => {
           <Button
             variant="ghost"
             data-testid="nothing-here-create-button"
+            disabled={context.loading}
             onClick={startCreate}
           >
             {t('button.new-requisition')}

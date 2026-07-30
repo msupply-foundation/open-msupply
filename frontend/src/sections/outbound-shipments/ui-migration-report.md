@@ -4,7 +4,7 @@ Audit of the **whole** `outbound-shipments` vertical against the eleven dimensio
 
 **Status: migrated and verified — `pnpm check` green, `pnpm test` green (1147 tests, 121 files). The operator's visual pass is outstanding.**
 
-Net **−115 lines** across 19 edited files, 2 new files. The three [spec edits](#spec-edits--sign-off-required) are signed off and made. The **side panel was brought into scope** on the operator's instruction (2026-07-30): the settled pattern is [`SIDE_PANEL.md`](../../ui/docs/SIDE_PANEL.md) itself, so its whole contract was applied — F8, F9, F10, F11 and F12 are all fixed, and [Decision 1](#decisions-needed) is closed.
+The three [spec edits](#spec-edits--signed-off-and-made) are signed off and made. The **side panel was brought into scope** on the operator's instruction (2026-07-30): the settled pattern is [`SIDE_PANEL.md`](../../ui/docs/SIDE_PANEL.md) itself, so its whole contract was applied — F8, F9, F10, F11 and F12 are all fixed, and [Decision 1](#decisions--resolved) is closed. Merged onto `main` before the PR, which superseded one finding ([F7](#f7--the-log-tab-was-a-bespoke-table-where-a-shared-surface-exists-dim-3-1-11)) with a better shared-component answer.
 
 Eight siblings have already been migrated (`dashboard`, `inbound-shipments`, `items`, `locations`, `master-lists`, `names`, `stocktakes`, `supplier-returns`), so most of what follows is a straggler carrying findings its siblings have already fixed, with the fix shape settled. Two things make this vertical's audit distinctive:
 
@@ -29,14 +29,14 @@ All findings are fixed, so the table below is the **end state**; the audit's ori
 | **D4** Side panel                   | ✅ (2)  | ✅     | —       | ✅ (2) | ✅ (5) | ✅ (2) | ✅      | ✅     | ✅     | ✅     | ✅ (2)  |
 | **D5** Picked-date field            | ✅ (1)  | ✅     | —       | ✅ (1) | ✅ (1) | ✅ (1) | ✅      | ✅     | ✅     | ✅     | ✅      |
 | **D6** Status footer                | ✅ (1)  | ✅     | —       | ✅     | ✅ (1) | ✅     | ✅      | ✅     | ✅ (1) | ✅     | ✅ (1)  |
-| **D7** Log tab                      | ✅ (1)  | ✅     | ✅ (2)  | ✅     | ✅     | ✅     | ✅      | ✅     | ✅     | ✅     | ✅      |
+| **D7** Log tab                      | ✅ (1)  | ✅     | ✅ (2)  | ✅     | ✅     | ✅     | ✅      | ✅     | ✅     | ✅     | ✅ (1)  |
 | **D8** Line-edit modal              | ✅ (4†) | ✅     | ✅ (3†) | ✅     | ✅     | ✅ (3) | ✅      | ✅ (1) | ✅     | ✅     | ✅      |
 | **D9** Detail actions (×6)          | ✅ (3)  | ✅     | —       | ✅     | ✅ (3) | ✅     | ✅      | ✅     | ✅     | ✅     | ✅      |
 | **D10** Service-charges editor (S5) | ✅      | ✅     | ✅      | ✅     | ✅     | ✅     | ✅      | ✅     | ✅     | ✅     | ✅      |
 
 `—` = the dimension has no surface on that piece. Bracketed numbers are finding **occurrences**, so one finding (e.g. F4) counts on several rows. **D10** is the shared `domain/invoice` `ServiceChargesModal` — owned by the domain module, already conforming, and only wired here.
 
-**No dimension was clean across the whole vertical.** The first pass claimed dimension 7 (reactivity) was, on the strength of the vertical's **resource** discipline — every `createResource` reads non-suspending and says why: `data.latest` with the no-remounts rationale at [OutboundDetailView.tsx](detail/OutboundDetailView.tsx), the serialised-source pattern on both paginated queries, the `.state`-gated read in [LogTab.tsx](detail/LogTab.tsx), the `[...draft]` shape-tracking memo in [the line editor](detail/edit-modal/OutboundLineEditModal.tsx). That part holds. But auditing the resources is not auditing the dimension: the vertical also had a plain `createEffect` writing a derivable signal (**F22**), which is pitfall §7 and was the cause of a real user-visible defect. The claim was wrong, and the lesson is that a dimension is only clean once every item in its checklist has been run — not once its most prominent pattern has.
+**No dimension was clean across the whole vertical.** The first pass claimed dimension 7 (reactivity) was, on the strength of the vertical's **resource** discipline — every `createResource` reads non-suspending and says why: `data.latest` with the no-remounts rationale at [OutboundDetailView.tsx](detail/OutboundDetailView.tsx), the serialised-source pattern on both paginated queries, the `.state`-gated read in the (since-deleted) bespoke Log tab, the `[...draft]` shape-tracking memo in [the line editor](detail/edit-modal/OutboundLineEditModal.tsx). That part holds. But auditing the resources is not auditing the dimension: the vertical also had a plain `createEffect` writing a derivable signal (**F22**), which is pitfall §7 and was the cause of a real user-visible defect. The claim was wrong, and the lesson is that a dimension is only clean once every item in its checklist has been run — not once its most prominent pattern has.
 
 ## Findings
 
@@ -121,7 +121,21 @@ Two riders:
 - **Dim 11 lands here too.** `ui-surface.md` S3 specifies line-table columns 1 (Code) and 3 (Batch) as "text (**mono**)". Only `getCellDefinition('itemCode')` / `('batch')` deliver that — both resolve to kind `code`, which sets `mono: true`. The spec is right and the implementation is wrong: **no spec edit, fix the code.**
 - **Columns with no `CELL_DEF` key** keep their explicit helper plus a rem-authored size. The sibling's answer is `size: remToPx(8)` with a comment naming the binding constraint ([InboundShipmentDetailView.tsx:52](../inbound-shipments/detail/InboundShipmentDetailView.tsx)); apply the same to the batch grid's raw px literals (`size: 36` [:845](detail/edit-modal/OutboundLineEditModal.tsx#L845), `170` [:913](detail/edit-modal/OutboundLineEditModal.tsx#L913), `200` [:936](detail/edit-modal/OutboundLineEditModal.tsx#L936)) and to `unitsIssued` / `volume` / `campaign` / `location` / `donor` / `manufacturer` / `onHold` / `canAllocate`. `columnSizing: { itemName: 18.75 }` in [the detail's table config](detail/OutboundDetailView.tsx#L355) becomes redundant once `getCellDefinition('itemName')` supplies the same 18.75rem — drop it.
 
-### F7 — The Log tab isn't the house Date + Time log table (dim 3, 1)
+### F7 — The Log tab was a bespoke table where a shared surface exists (dim 3, 1, 11)
+
+**Superseded by `main` mid-migration, and the better answer won.** The fix below (splitting outbound's own hand-rolled table into the house Date + Time pair) was correct when written, but merging `origin/main` brought in [`domain/activityLog/ActivityLogPanel`](../../domain/activityLog/ActivityLogPanel.tsx) — a shared record-Log surface whose doc says "consumed by any record's detail", with six consumers already. [`d0bd91a8`](https://github.com/msupply-foundation/open-msupply-frontend/commit/d0bd91a8) had just folded the requisition and internal-order tabs onto it, deleting both bespoke tabs and their duplicate queries.
+
+So outbound's `LogTab.tsx` is **deleted** and the tab renders `<ActivityLogPanel storeId recordId order="oldest-first" />`. That is strictly better than my fix:
+
+- The panel renders Date · Time · User · Event · **Details** — a superset; outbound never had Details.
+- Its event labels resolve through `log.<kebab>` locale keys. Outbound's hand-rolled `type.toLowerCase().replaceAll('_', ' ')` produced **unlocalised English** in every locale — a defect my audit didn't even flag.
+- `order="oldest-first"` preserves the tab's existing order and matches the real OMS `ActivityLogList` (no sort sent → server datetime-ascending).
+
+The duplicate `outboundActivityLogs` query is gone from both `outboundDetail.graphql` and its `.generated.ts` (a pure removal, hand-reconciled — codegen introspects a live backend), mirroring what the sibling commit did.
+
+The original finding, for the record:
+
+#### F7 (as originally fixed) — not the house Date + Time log table (dim 3, 1)
 
 [LogTab.tsx:54-70](detail/LogTab.tsx#L54) renders one "Date-time" column with a hand-written `localisedDateTime` cell; `user` and `event` are bare columns.
 
@@ -129,7 +143,7 @@ Two riders:
 
 **Seven sibling tables already do it** — `customer-returns/detail/LogTab.tsx:92`, `supplier-returns/detail/LogTab.tsx:85`, `inbound-shipments/detail/log/InboundShipmentLogPanel.tsx:136`, `items/detail/ItemLedgerPanel.tsx:329`, `stock/detail/LedgerPanel.tsx:91`, `stock/detail/VvmHistoryPanel.tsx:50`, `stock/detail/RepackModal.tsx:220`. Outbound is the only log table left hand-rolling it.
 
-**Fix:** split into `getCellDefinition('datetime')` + `getCellDefinition('time')` over the same instant, and `getCellDefinition('user')`. **This changes the visible column set** (one column becomes two) — flagged for your visual pass, but it is the settled house shape and `ui-surface.md` L76 specifies only "status changes, who, when", so there's no spec conflict.
+**Fix (now superseded — see above):** split into `getCellDefinition('datetime')` + `getCellDefinition('time')` over the same instant, and `getCellDefinition('user')`. The shared panel does the same split and more, so the vertical no longer owns any of this code.
 
 ### F8 — Side panel: group headings are `FieldRow`s with a fake bold label (dim 5, 1, 6, 11)
 
@@ -335,6 +349,11 @@ One commit-sized change per screen, in the order below; `pnpm check` and `pnpm t
 
 **Two follow-up fixes after the operator's review** (F21, F22): the line editor's batch grid onto the **card model** — `viewMode: 'card'` default plus the siblings' `batch`/`pricing`/`other` `CardGroup[]`, Batch as the card's primary identity, the auto-allocate tick and On-hold flag as header badges — and the detail view's side-panel state onto the shared **`createSidePanelOpen()`**, replacing a hand-rolled `createEffect` that ignored the persisted choice and reopened the panel on every breakpoint re-evaluation.
 
+**Rebased onto `main` (38 commits) before the PR**, which changed two things:
+
+- `DeleteShipmentsAction` — main removed the dialog's `success` phase (a clean delete now closes; D21/D22). One conflict, in exactly that region. Main's **behaviour** wins and my **composition** change (`CancelButton` / `danger` confirm) applies on top of its new shape — migration changes composition, never behaviour.
+- The Log tab — folded onto the new shared `ActivityLogPanel`, superseding this migration's own F7 fix. See [F7](#f7--the-log-tab-was-a-bespoke-table-where-a-shared-surface-exists-dim-3-1-11).
+
 **One file outside `src/sections/`:** `ShippingMethodSelect` (a domain module) gained a `size` passthrough to its `Combobox`. Rule 2 requires `size="small"` on every single-line side-panel input, and the sibling `VvmStatusSelect` already forwards exactly this prop — so this was a missing passthrough on one of three domain selectors, not a shared-library change. Called out here because it touches a file another vertical could consume.
 
 ### Reactivity
@@ -372,7 +391,7 @@ Static checks can't catch "compiles clean but looks wrong", and **no dev server 
 | ------------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/:storeId/distribution/outbound-shipment` | `#/showcase/table`; `StocktakesList`                                           | chips now in the table toolbar (shrink-to-content, one clear affordance); **column widths + drag-resize** on all six converted columns; the name cell's swatch–name gap; empty state                                                                                                                                                                                                   |
 | `.../outbound-shipment/:id` — Details tab  | `#/showcase/header`, `#/showcase/page-layout`; the stocktake + inbound details | the header now labels-above (`HeaderToolbar`) and wraps as a unit; the item search as a permanent chip; **17 column widths**; the mono Code/Batch columns                                                                                                                                                                                                                              |
-| `.../outbound-shipment/:id` — Log tab      | `supplier-returns` / `customer-returns` Log tabs                               | the new **two**-column Date + Time pair, right-aligned time                                                                                                                                                                                                                                                                                                                            |
+| `.../outbound-shipment/:id` — Log tab      | any `ActivityLogPanel` consumer (internal orders, requisitions, stock)         | it is now the **shared** panel — Date · Time · User · Event · **Details**, oldest-first, with localised event names in place of the old hand-humanised enum                                                                                                                                                                                                                            |
 | `.../outbound-shipment/:id` — side panel   | `#/showcase/side-panel`; `SIDE_PANEL.md` sign-off checklist                    | field/row **rhythm**; the comment now multi-line; input heights consistent; the picked-date field's width beside its reason bubble                                                                                                                                                                                                                                                     |
 | `.../outbound-shipment/:id` — footer       | `SupplierReturnStatusFooter`                                                   | the labelled **Close**, and its phone-width collapse                                                                                                                                                                                                                                                                                                                                   |
 | Line editor (row click, and Add item)      | the **inbound + stocktake line editors**, side by side                         | the batch grid is now **cards** — each card's header must show a captioned **Batch** value (it rendered empty on the first attempt) plus the tick/On-hold badges, with Pricing + Other collapsed; that the Packs-issued input is still the obvious focus; then that the table-view toggle still works. Plus: grid-footer alignment, warning-banner rhythm, the variant popover's table |
