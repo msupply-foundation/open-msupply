@@ -376,15 +376,15 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
-        {/* The shipment-level summary row. Its label is bold at BODY size — the
-            treatment it had before the migration, held still on purpose: a
-            standard side-panel totals row is still open across panels
-            (SIDE_PANEL.md § known open items), and `variant="subtitle"` would
-            settle it by accident (smaller text, semibold) rather than by
-            design. Scoped class, never an inline style. */}
+        {/* The shipment-level summary row. Its label is emphasised via the
+            shared type primitive — never an inline style. (A standard
+            side-panel totals-row treatment is still open across panels:
+            SIDE_PANEL.md § known open items.) */}
         <FieldRow
           label={
-            <span class={styles.totalLabel}>{t('heading.grand-total')}</span>
+            <Text variant="subtitle" as="span">
+              {t('heading.grand-total')}
+            </Text>
           }
         >
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
