@@ -183,6 +183,7 @@ export const CustomerReturnEditModal = ({
 
   return (
     <Modal
+      testId="return-items-modal"
       title={t('heading.return-items')}
       cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
       // zeroQuantityAlert === warning implies all lines are 0 and user has
