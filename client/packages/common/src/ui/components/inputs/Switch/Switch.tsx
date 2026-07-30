@@ -117,7 +117,7 @@ export const Switch = ({
       size={size}
       sx={{ ...switchStyle, ...switchSx }}
       focusVisibleClassName=".Mui-focusVisibles"
-      inputProps={testId ? { 'data-testid': testId } : undefined}
+      slotProps={{ input: { ...(testId ? { 'data-testid': testId } : {}) } }}
     />
   );
   return (
