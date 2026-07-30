@@ -88,7 +88,7 @@ import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrd
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
 import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
-import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
+import { MasterListPickerModal } from '../../../domain/masterList';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 

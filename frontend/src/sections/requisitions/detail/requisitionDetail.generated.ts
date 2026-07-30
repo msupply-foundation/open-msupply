@@ -200,3 +200,56 @@ export type UpdateRequisitionResult = {
 export const UpdateRequisition = {
   query: "mutation updateRequisition($storeId: String!, $input: UpdateResponseRequisitionInput!) {\n  updateResponseRequisition(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionNode {\n      ...RequisitionInfo\n    }\n    ... on UpdateResponseRequisitionError {\n      error {\n        __typename\n        description\n        ... on OrderingTooManyItems {\n          maxItemsInEmergencyOrder\n        }\n        ... on RequisitionReasonsNotProvided {\n          errors {\n            requisitionLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment RequisitionInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  programName\n  program {\n    id\n  }\n  orderType\n  period {\n    id\n    name\n  }\n  approvalStatus\n  linkedRequisition {\n    id\n  }\n  isEmergency\n  createdDatetime\n  finalisedDatetime\n  user {\n    username\n    email\n  }\n  linesRemainingToSupply {\n    totalCount\n  }\n  shipments {\n    totalCount\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      recordId\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...RequisitionDetailLine\n    }\n  }\n}\n\nfragment RequisitionDetailLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  itemStats {\n    stockOnHand\n  }\n  availableStockOnHand\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  averageMonthlyConsumption\n  optionId\n  reason {\n    reason\n  }\n  forecastTotalUnits\n  forecastTotalDoses\n  vaccineCourses\n  availableVolumeAtLocationType {\n    locationType {\n      name\n    }\n    availableVolume\n    itemVolumePerUnit\n  }\n  suggestedQuantity\n  requestedQuantity\n  approvedQuantity\n  approvalComment\n  supplyQuantity\n  alreadyIssued\n  remainingQuantityToSupply\n  pricePerUnit\n}",
 } as TypedDocument<UpdateRequisitionResult, UpdateRequisitionVariables>;
+
+export type AddRequisitionFromMasterListVariables = {
+  storeId: string;
+  input: {
+    responseRequisitionId: string;
+    masterListId: string;
+  };
+};
+
+export type AddRequisitionFromMasterListResult = {
+  responseAddFromMasterList: ({
+  __typename: "RequisitionLineConnector";
+} & {
+  totalCount: number;
+}) | ({
+  __typename: "ResponseAddFromMasterListError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const AddRequisitionFromMasterList = {
+  query: "mutation addRequisitionFromMasterList($storeId: String!, $input: ResponseAddFromMasterListInput!) {\n  responseAddFromMasterList(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineConnector {\n      __typename\n      totalCount\n    }\n    ... on ResponseAddFromMasterListError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<AddRequisitionFromMasterListResult, AddRequisitionFromMasterListVariables>;
+
+export type SupplyRequestedQuantityVariables = {
+  storeId: string;
+  input: {
+    responseRequisitionId: string;
+  };
+};
+
+export type SupplyRequestedQuantityResult = {
+  supplyRequestedQuantity: ({
+  __typename: "RequisitionLineConnector";
+} & {
+  totalCount: number;
+}) | ({
+  __typename: "SupplyRequestedQuantityError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const SupplyRequestedQuantity = {
+  query: "mutation supplyRequestedQuantity($storeId: String!, $input: SupplyRequestedQuantityInput!) {\n  supplyRequestedQuantity(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineConnector {\n      __typename\n      totalCount\n    }\n    ... on SupplyRequestedQuantityError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<SupplyRequestedQuantityResult, SupplyRequestedQuantityVariables>;

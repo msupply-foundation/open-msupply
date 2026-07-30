@@ -1,7 +1,9 @@
 import { graphqlFetch } from '../../../api/graphql';
 import { t, tPlural } from '../../../intl';
 import {
+  AddRequisitionFromMasterList,
   CreateShipmentFromRequisition,
+  SupplyRequestedQuantity,
   UpdateRequisition,
   type RequisitionInfoFragment,
   type UpdateRequisitionVariables,
@@ -65,6 +67,75 @@ export const saveRequisitionFields = async (
       ? error.errors.map(e => e.requisitionLine.id)
       : [];
   return { kind: 'error', message: mapError(error), reasonLineIds };
+};
+
+// --- Add from master list (spec S2 § page actions, AC-ML1/ML2) --------------
+
+// The confirmed bulk add: one line per stock item on the chosen list not
+// already on the requisition. Idempotent (a re-run adds nothing). The caller
+// refetches the line list on success; a rejection surfaces with fixed copy
+// (spec S2): the not-found member under its own message, anything else under
+// the generic cannot-add copy.
+export type AddFromMasterListResult =
+  | { kind: 'done' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const addRequisitionFromMasterList = async (
+  storeId: string,
+  responseRequisitionId: string,
+  masterListId: string
+): Promise<AddFromMasterListResult> => {
+  const result = await graphqlFetch(AddRequisitionFromMasterList, {
+    storeId,
+    input: { responseRequisitionId, masterListId },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.responseAddFromMasterList;
+  if (response.__typename === 'RequisitionLineConnector')
+    return { kind: 'done' };
+  return {
+    kind: 'error',
+    message:
+      response.error.__typename === 'MasterListNotFoundForThisStore'
+        ? t('error.master-list-not-found-for-this-store')
+        : t('error.cannot-add-items-to-requisition'),
+  };
+};
+
+// --- Supply requested / approved (rules § auto-populating) -------------------
+
+// The auto-populate: one call fills every line's supply quantity with its
+// requested quantity — or its APPROVED quantity when the requisition carries
+// an approval status (the server picks; the action only mirrors the choice in
+// its labels). The caller refetches the line list on success. The typed
+// cannot-edit rejection is normally unreachable (the button is disabled while
+// the requisition is not editable) — the server backstop for a race.
+export type SupplyRequestedResult =
+  | { kind: 'done' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const supplyRequestedQuantities = async (
+  storeId: string,
+  responseRequisitionId: string
+): Promise<SupplyRequestedResult> => {
+  const result = await graphqlFetch(SupplyRequestedQuantity, {
+    storeId,
+    input: { responseRequisitionId },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.supplyRequestedQuantity;
+  if (response.__typename === 'RequisitionLineConnector')
+    return { kind: 'done' };
+  switch (response.error.__typename) {
+    case 'CannotEditRequisition':
+      return { kind: 'error', message: t('error.cannot-edit-requisition') };
+    case 'RecordNotFound':
+      return { kind: 'error', message: t('messages.record-not-found') };
+    default:
+      return { kind: 'error', message: response.error.description };
+  }
 };
 
 // Raising a shipment (rules › raising a shipment): the outstanding remainder

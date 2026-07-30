@@ -127,3 +127,34 @@ export type UpdateRequisitionLineResult = {
 export const UpdateRequisitionLine = {
   query: "mutation updateRequisitionLine($storeId: String!, $input: UpdateResponseRequisitionLineInput!) {\n  updateResponseRequisitionLine(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineNode {\n      id\n    }\n    ... on UpdateResponseRequisitionLineError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdateRequisitionLineResult, UpdateRequisitionLineVariables>;
+
+export type DeleteRequisitionLinesVariables = {
+  storeId: string;
+  ids: Array<{
+    id: string;
+  }>;
+};
+
+export type DeleteRequisitionLinesResult = {
+  batchResponseRequisition: {
+  deleteResponseRequisitionLines: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteResponseRequisitionLineError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+}> | null;
+};
+};
+
+export const DeleteRequisitionLines = {
+  query: "mutation deleteRequisitionLines($storeId: String!, $ids: [DeleteResponseRequisitionLineInput!]!) {\n  batchResponseRequisition(\n    storeId: $storeId\n    input: {deleteResponseRequisitionLines: $ids}\n  ) {\n    deleteResponseRequisitionLines {\n      id\n      response {\n        ... on DeleteResponse {\n          __typename\n          id\n        }\n        ... on DeleteResponseRequisitionLineError {\n          __typename\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteRequisitionLinesResult, DeleteRequisitionLinesVariables>;
