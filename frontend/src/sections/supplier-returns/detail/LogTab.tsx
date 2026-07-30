@@ -1,7 +1,6 @@
 import { createResource, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
@@ -75,12 +74,16 @@ export const LogTab: Component<{
 
   const columns = (): Column<LogRow, never>[] => [
     {
-      c: { accessor: row => localisedDate(row.datetime), id: 'date' },
+      // Both columns take the RAW datetime: the `date` and `time` presets
+      // format it themselves, so formatting here as well would hand them an
+      // already-formatted string and throw "Invalid time value" (date-fns
+      // `format` on an unparseable value).
+      c: { accessor: row => row.datetime, id: 'date' },
       header: () => t('label.date'),
       ...getCellDefinition('date'),
     },
     {
-      c: { accessor: row => localisedTime(row.datetime), id: 'time' },
+      c: { accessor: row => row.datetime, id: 'time' },
       header: () => t('label.time'),
       ...getCellDefinition('time'),
     },
