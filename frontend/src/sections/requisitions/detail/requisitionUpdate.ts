@@ -1,6 +1,7 @@
 import { graphqlFetch } from '../../../api/graphql';
 import { t, tPlural } from '../../../intl';
 import {
+  AddRequisitionFromMasterList,
   CreateShipmentFromRequisition,
   UpdateRequisition,
   type RequisitionInfoFragment,
@@ -65,6 +66,40 @@ export const saveRequisitionFields = async (
       ? error.errors.map(e => e.requisitionLine.id)
       : [];
   return { kind: 'error', message: mapError(error), reasonLineIds };
+};
+
+// --- Add from master list (spec S2 § page actions, AC-ML1/ML2) --------------
+
+// The confirmed bulk add: one line per stock item on the chosen list not
+// already on the requisition. Idempotent (a re-run adds nothing). The caller
+// refetches the line list on success; a rejection surfaces with fixed copy
+// (spec S2): the not-found member under its own message, anything else under
+// the generic cannot-add copy.
+export type AddFromMasterListResult =
+  | { kind: 'done' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+export const addRequisitionFromMasterList = async (
+  storeId: string,
+  responseRequisitionId: string,
+  masterListId: string
+): Promise<AddFromMasterListResult> => {
+  const result = await graphqlFetch(AddRequisitionFromMasterList, {
+    storeId,
+    input: { responseRequisitionId, masterListId },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.responseAddFromMasterList;
+  if (response.__typename === 'RequisitionLineConnector')
+    return { kind: 'done' };
+  return {
+    kind: 'error',
+    message:
+      response.error.__typename === 'MasterListNotFoundForThisStore'
+        ? t('error.master-list-not-found-for-this-store')
+        : t('error.cannot-add-items-to-requisition'),
+  };
 };
 
 // Raising a shipment (rules › raising a shipment): the outstanding remainder
