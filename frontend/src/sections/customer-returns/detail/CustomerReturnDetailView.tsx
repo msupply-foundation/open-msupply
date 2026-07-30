@@ -8,12 +8,14 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
+import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -24,7 +26,11 @@ import {
   TabPanel,
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
-import { PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
+import {
+  MinusCircleIcon,
+  PlusCircleIcon,
+  SidebarIcon,
+} from '../../../ui/icons';
 import {
   DataTable,
   type CardGroup,
@@ -61,14 +67,15 @@ import { isReturnDisabled, returnKind } from './returnStatus';
 import { saveReturnFields } from './returnUpdate';
 import type { ReturnEditFields } from './returnEdit';
 import { ExportPrintAction } from './actions/ExportPrintAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
 
 // The customer-return detail view (spec/customer-returns/ui-surface.md S3):
 // toolbar (customer / reference / kind banner), Details | Log tabs, the
 // read-only line table grouped by item (row click → the return-items modal),
 // the Additional-info side panel, and the status footer (hold / lifecycle /
 // close / advance). Every edit affordance shares the one editability gate
-// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer return still
-// in the sender's hands — is read-only.
+// (rules § editability; OMS-REG-DIST-07.26): a VERIFIED return — or a transfer
+// return still in the sender's hands — is read-only.
 
 type Line = CustomerReturnLineFragment;
 
@@ -89,6 +96,9 @@ const CustomerReturnDetailView: Component = () => {
   // other detail screen uses.
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [customerError, setCustomerError] = createSignal<string | undefined>();
+  // Line selection (transient UI, like every other detail screen's): drives the
+  // footer's bulk-action bar (ui-surface S3 § footer).
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
   type EditState =
     { mode: 'update'; itemId: string } | { mode: 'add' } | undefined;
@@ -126,6 +136,8 @@ const CustomerReturnDetailView: Component = () => {
   const info = (): CustomerReturnInfoFragment | undefined => data();
   const rows = (): Line[] => data()?.lines.nodes ?? [];
   const hasLines = () => rows().length > 0;
+  const selectedLines = (): Line[] =>
+    rows().filter(line => selectedIds().includes(line.id));
 
   // The store preferences the status controls key off (rules § preference
   // gates). `.latest` — never suspends; empty = no restriction while loading.
@@ -197,8 +209,14 @@ const CustomerReturnDetailView: Component = () => {
   };
 
   // A line save returns the whole invoice with its refreshed line set —
-  // replace the node wholesale (no splicing needed).
-  const onLinesSaved = (node: ReturnLinesSaved) => mutate(() => node);
+  // replace the node wholesale (no splicing needed). The selection is dropped
+  // with it: a save can remove lines (a zeroed quantity deletes — rules § line
+  // rules), so keeping ids the user can no longer see would leave the
+  // bulk-action bar acting on nothing.
+  const onLinesSaved = (node: ReturnLinesSaved) => {
+    mutate(() => node);
+    setSelectedIds([]);
+  };
 
   const onAdvanced = (saved: CustomerReturnInfoFragment) =>
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
@@ -457,15 +475,46 @@ const CustomerReturnDetailView: Component = () => {
                   </Header>
                 }
                 contentFooter={
-                  <CustomerReturnStatusFooter
-                    storeId={params.storeId}
-                    node={node()}
-                    disabled={disabled()}
-                    hasLines={hasLines()}
-                    statusOptions={statusOptions()}
-                    onSetHold={setHold}
-                    onAdvanced={onAdvanced}
-                  />
+                  // On selection the bulk-action bar REPLACES the status row
+                  // (ui-surface S3 § footer) — count · Delete · clear.
+                  // Selection is offered only while the return is editable (see
+                  // the table below), so the bar can't appear on a read-only
+                  // return.
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <CustomerReturnStatusFooter
+                        storeId={params.storeId}
+                        node={node()}
+                        disabled={disabled()}
+                        hasLines={hasLines()}
+                        statusOptions={statusOptions()}
+                        onSetHold={setHold}
+                        onAdvanced={onAdvanced}
+                      />
+                    }
+                  >
+                    <ContentFooter testId="actions-footer">
+                      <strong data-testid="selected-rows-count">
+                        {tPlural('label.items-selected', selectedIds().length)}
+                      </strong>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        returnId={node().id}
+                        selectedLines={selectedLines}
+                        onDeleted={onLinesSaved}
+                      />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<MinusCircleIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
                 }
               >
                 <TabPanel value="details">
@@ -476,6 +525,13 @@ const CustomerReturnDetailView: Component = () => {
                     rowKey={line => line.id}
                     loading={data.loading}
                     onRowClick={disabled() ? undefined : openRow}
+                    // Selection exists only to delete lines, so it follows the
+                    // one editability gate: a read-only return offers no
+                    // checkboxes at all rather than a selection whose only
+                    // action would refuse (blocked affordances, D39).
+                    enableSelection={!disabled()}
+                    selectedIds={selectedIds()}
+                    onSelectionChange={setSelectedIds}
                     emptyMessage={t('error.no-customer-return-items')}
                     empty={
                       disabled() ? undefined : (
