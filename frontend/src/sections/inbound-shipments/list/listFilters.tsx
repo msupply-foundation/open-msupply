@@ -156,9 +156,10 @@ const FILTERS: Filter<InboundListFilter>[] =
           label={t('label.status')}
           testId={props.testId}
           placeholder={t('label.any')}
-          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the chosen
-          // statuses). The generated element type is the InvoiceNodeStatus union,
-          // so the string values narrow at the boundary.
+          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the
+          // chosen statuses). The generated element type is the
+          // InvoiceNodeStatus union, so the string values narrow at the
+          // boundary.
           values={props.filter().status?.equalAny ?? []}
           options={STATUS_OPTIONS}
           onChange={values =>
@@ -239,9 +240,10 @@ const FILTERS: Filter<InboundListFilter>[] =
       ),
     },
 
-    // ─ dismissed (not user-facing) ────────────────────────────────────────────
-    // Identity / relational / programmatic filters — the store scope and type are
-    // forced by the query, never a user filter.
+    // ─ dismissed (not user-facing)
+    // ──────────────────────────────────────────── Identity / relational /
+    // programmatic filters — the store scope and type are forced by the query,
+    // never a user filter.
     id: null,
     nameId: null,
     invoiceNumberOrStatus: null,

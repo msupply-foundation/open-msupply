@@ -153,9 +153,13 @@ export type ParsedField =
       label: string;
       nullable: boolean;
       required: boolean;
-      /** uiSchema `options.programType === 'immunisation'` — filter the list. */
+      /**
+       * uiSchema `options.programType === 'immunisation'` — filter the list.
+       */
       immunisationOnly: boolean;
-      /** uiSchema `options.allProgramsOption` — append the All-programs entry. */
+      /**
+       * uiSchema `options.allProgramsOption` — append the All-programs entry.
+       */
       allPrograms: boolean;
       /** uiSchema `options.clearable` (default false). */
       clearable: boolean;
@@ -608,13 +612,13 @@ export const seedDefaults = (
 };
 
 /**
- * Map a date-range field's editing shape (`{ start, end }`, each a 'yyyy-mm-dd'
- * calendar date or '') to the wire shape the server binds it to: a GraphQL
- * `DatetimeFilterInput` — `{ afterOrEqualTo, beforeOrEqualTo }` of RFC3339
- * datetimes (spec/reports contract "arguments — DateRange"). Confirmed live
- * against the Pending Encounters report: the uiSchema `DateRange` control scopes
- * ONE property, whose value is this object, passed verbatim into the report's
- * `startDatetime: DatetimeFilterInput` query variable.
+ * Map a date-range field's editing shape (`{ start, end }`, each a
+ * 'yyyy-mm-dd' calendar date or '') to the wire shape the server binds it to:
+ * a GraphQL `DatetimeFilterInput` — `{ afterOrEqualTo, beforeOrEqualTo }` of
+ * RFC3339 datetimes (spec/reports contract "arguments — DateRange"). Confirmed
+ * live against the Pending Encounters report: the uiSchema `DateRange` control
+ * scopes ONE property, whose value is this object, passed verbatim into the
+ * report's `startDatetime: DatetimeFilterInput` query variable.
  *
  * Each calendar date is widened to a full instant in the viewer's local zone —
  * start at 00:00:00, end at 23:59:59.999 (an inclusive day, matching the real

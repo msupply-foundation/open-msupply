@@ -8,7 +8,8 @@ import styles from './Button.module.css';
  * widths (≤767px, ui-standards #btn-icons) WITHOUT an explicit `collapsible`
  * prop. Off for now — collapsing is opt-in per button. This is the single
  * switch to make collapse the app-wide default later: flip it to `true` and
- * every labelled button collapses on phones unless it passes `collapsible={false}`.
+ * every labelled button collapses on phones unless it passes
+ * `collapsible={false}`.
  */
 const COLLAPSIBLE_BY_DEFAULT = false;
 

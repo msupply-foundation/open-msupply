@@ -24,6 +24,11 @@ import {
 } from '../inputs/dateTimeConvert';
 import { DateTimeField } from '../inputs/DateTimeField';
 import { Combobox } from './Combobox';
+import {
+  activeFilters,
+  availableFilters,
+  showsClearAll,
+} from './filterBarLogic';
 import styles from './FilterBar.module.css';
 
 /*
@@ -49,6 +54,17 @@ import styles from './FilterBar.module.css';
  */
 export type Filter<F> = {
   key: keyof F & string;
+  /**
+   * A DEFAULT filter (the current app's `FilterDefinition.isDefault`) — the one
+   * search a screen keeps to hand, e.g. the stocktake detail's item code/name
+   * search (#735). Always visible and permanent: no remove (×), absent from the
+   * add-filter menu, and it never raises "Clear all" (a "Clear all" raised by
+   * another chip does clear its value, but never its chip).
+   *
+   * An invariant of the definition, not a seeded value — so no URL state can
+   * suppress it, and a page needs no default-filter bookkeeping of its own.
+   */
+  alwaysOn?: boolean;
   /**
    * Chip / menu label. An ACCESSOR, not a string, so the filter array can be a
    * stable module const (built once, identities never churn — <For> reuses
@@ -150,6 +166,8 @@ interface FilterBarProps<
 interface GroupOps<G extends object> {
   active: () => Filter<G>[];
   available: () => Filter<G>[];
+  /** Does this group put the bar's "Clear all" on screen? */
+  showsClearAll: () => boolean;
   add: (f: Filter<G>) => void;
   remove: (f: Filter<G>) => void;
   reset: () => void;
@@ -168,16 +186,18 @@ const groupOps = <G extends object>(
   onChange: (g: G) => void,
   focusTarget: (key: string) => FocusTarget
 ): GroupOps<G> => {
-  const isActive = (f: Filter<G>) => f.key in filter();
   const without = (key: keyof G & string): G => {
     const { [key]: _omit, ...rest } = filter();
     return rest as G; // erase the omitted optional key; the value is a filter object
   };
   return {
-    active: () => filters().filter(isActive),
-    available: () => filters().filter(f => !isActive(f)),
+    active: () => activeFilters(filters(), filter()),
+    available: () => availableFilters(filters(), filter()),
+    showsClearAll: () => showsClearAll(filters(), filter()),
     add: f => onChange({ ...filter(), [f.key]: null }),
     remove: f => onChange(without(f.key)),
+    // Drops every key, alwaysOn included: that clears an always-on filter's
+    // value, while isFilterActive keeps its chip on the bar.
     reset: () => {
       let next = filter();
       for (const f of filters()) {
@@ -204,7 +224,9 @@ const groupOps = <G extends object>(
  *
  * State model (see kdd/page-composition): the caller's filter object IS the
  * state, in GraphQL-native shape. A chip is shown iff its key is PRESENT on
- * the filter (present-as-`null` = added but empty). Adding writes `null`,
+ * the filter (present-as-`null` = added but empty) — or the filter is
+ * `alwaysOn`, a default filter, which is on the bar regardless and can't be
+ * removed at all (filterBarLogic.ts holds these rules). Adding writes `null`,
  * removing deletes the key, editing goes through the field's own control via
  * setPartialFilter. Chip visibility therefore lives in the (URL-backed)
  * filter, so a restored state re-opens its chips — no local presentation
@@ -233,7 +255,8 @@ export const FilterBar = <
   });
 
   // Read props live inside accessors so a chip's control tracks its own value
-  // and <For> reuses chip rows across edits (kdd/state-management: no remounts).
+  // and <For> reuses chip rows across edits (kdd/state-management: no
+  // remounts).
   const main = groupOps<F>(
     () => props.filters,
     () => props.filter,
@@ -297,9 +320,6 @@ export const FilterBar = <
     return items;
   };
 
-  const anyActive = () =>
-    main.active().length > 0 || (extraOps()?.active().length ?? 0) > 0;
-
   const resetAll = () => {
     main.reset();
     extraOps()?.reset();
@@ -313,7 +333,7 @@ export const FilterBar = <
         {f => (
           <FilterChip
             label={f.label()}
-            onRemove={() => main.remove(f)}
+            onRemove={f.alwaysOn ? undefined : () => main.remove(f)}
             focusTarget={chipEditor(f.key)}
           >
             {f.render(main.renderProps(f))}
@@ -335,7 +355,7 @@ export const FilterBar = <
               {f => (
                 <FilterChip
                   label={f.label()}
-                  onRemove={() => ex.remove(f)}
+                  onRemove={f.alwaysOn ? undefined : () => ex.remove(f)}
                   focusTarget={chipEditor(f.key)}
                 >
                   {f.render(ex.renderProps(f))}
@@ -347,8 +367,9 @@ export const FilterBar = <
       </Show>
 
       {/* Bar-level "Clear all" (ui-standards § tables → filtering) — a plain
-          text button, shown only while any filter (either group) is active. */}
-      <Show when={anyActive()}>
+          text button, on screen only while either group holds a user-added
+          chip; a default filter never puts it there (showsClearAll). */}
+      <Show when={main.showsClearAll() || extraOps()?.showsClearAll()}>
         <button type="button" class={styles.clearAll} onClick={resetAll}>
           {t('label.clear-all-filters')}
         </button>
@@ -390,10 +411,13 @@ export const NotChipEditor = (props: { children: JSX.Element }) => (
   </ChipFocusContext.Provider>
 );
 
-// Chip chrome: label + the field's control + a remove button.
+// Chip chrome: label + the field's control + the remove ×. The ✕ is the pill's
+// one affordance and it means REMOVE (DESIGN_STANDARDS unit 9), so an alwaysOn
+// chip — which can't be removed — passes no `onRemove` and closes up the
+// trailing gutter that button held.
 const FilterChip = (props: {
   label: string;
-  onRemove: () => void;
+  onRemove?: () => void;
   focusTarget: FocusTarget;
   children: JSX.Element;
 }) => (
@@ -404,14 +428,16 @@ const FilterChip = (props: {
     <ChipFocusContext.Provider value={props.focusTarget}>
       {props.children}
     </ChipFocusContext.Provider>
-    <button
-      type="button"
-      class={styles.remove}
-      aria-label={t('label.clear-filter-detail', { name: props.label })}
-      onClick={props.onRemove}
-    >
-      <CloseIcon />
-    </button>
+    <Show when={props.onRemove}>
+      <button
+        type="button"
+        class={styles.remove}
+        aria-label={t('label.clear-filter-detail', { name: props.label })}
+        onClick={() => props.onRemove?.()}
+      >
+        <CloseIcon />
+      </button>
+    </Show>
   </div>
 );
 
@@ -502,9 +528,15 @@ export const FilterTextInput = (props: {
   onInput: (value: string) => void;
   placeholder?: string;
   label: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
-  /** Delay before onInput fires (default 300ms); 0 = every keystroke (client-side sets). */
+  /**
+   * Delay before onInput fires (default 300ms); 0 = every keystroke
+   * (client-side sets).
+   */
   debounceMs?: number;
 }) => {
   const chipFocus = useChipFocus();
@@ -578,7 +610,10 @@ export const FilterNumberInput = (props: {
   onChange: (value: number | undefined) => void;
   placeholder?: string;
   label: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
   /** Max decimal places; 0 (default) = integers only. */
   decimalLimit?: number;
@@ -626,7 +661,10 @@ export const FilterSelect = <V extends string>(props: {
   options: readonly { value: V | ''; label: string }[];
   onChange: (value: V | '') => void;
   label: string;
-  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the trigger (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
 }) => {
   const chipFocus = useChipFocus();
@@ -693,7 +731,10 @@ export const FilterCombobox = <T,>(props: {
   onChange: (item: T | null) => void;
   label: string;
   placeholder?: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
   /** Focus handle for the just-added chip (FilterBar's render supplies it). */
   focusTarget?: FocusTarget;
@@ -738,7 +779,10 @@ export const FilterMultiSelect = <V extends string>(props: {
    * Called only when something is selected.
    */
   summary?: () => string;
-  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the trigger (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
 }) => {
   const chipFocus = useChipFocus();
@@ -944,7 +988,10 @@ export const FilterDate = (props: {
   value: string;
   onInput: (value: string) => void;
   label: string;
-  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  /**
+   * `data-testid` for the input (FilterBar's render supplies
+   * `filter-input-<key>`).
+   */
   testId?: string;
 }) => {
   const chipFocus = useChipFocus();

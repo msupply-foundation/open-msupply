@@ -77,8 +77,8 @@ describe('validateStep1 — the quantity-step gates', () => {
     expect(validateStep1([draft(), draft({ id: 'l2' })])).toBe('no-quantity');
   });
 
-  // OMS-REG-DIST-07.29's UI half — pack size ≥ 1 for RETURNED lines only; a zeroed line's
-  // pack size never blocks (it won't persist).
+  // OMS-REG-DIST-07.29's UI half — pack size ≥ 1 for RETURNED lines only; a
+  // zeroed line's pack size never blocks (it won't persist).
   it('rejects a returned line with pack size below one', () => {
     expect(
       validateStep1([draft({ numberOfPacksReturned: 1, packSize: 0 })])

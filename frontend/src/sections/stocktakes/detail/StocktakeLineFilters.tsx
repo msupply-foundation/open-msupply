@@ -5,9 +5,9 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import type { LocationWithVolume } from '@/domain/location';
 
 // The detail line table's filters, rendered in the DataTable's own toolbar
-// (ui-standards → tables › filtering): the addable filter chips — the item
-// name/code search and the location picker (no separate always-on search
-// field; the search is one of the chips, matching the list).
+// (ui-standards → tables › filtering): the item code/name search as the
+// screen's default filter, plus an addable Location chip. Which is which lives
+// in the definitions (stocktakeDetailFilters).
 
 export interface StocktakeLineFiltersProps {
   filter: StocktakeLineFilter;
