@@ -16,6 +16,7 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
@@ -36,10 +37,13 @@ import {
 } from '../../../ui/elements/selectors/FilterBar';
 import {
   AlertTriangleIcon,
+  MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
   TruckIcon,
 } from '../../../ui/icons';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
@@ -48,7 +52,11 @@ import {
   type RequisitionDetailLineFragment,
 } from './requisitionDetail.generated';
 import { RequisitionDetailContext } from './detailContext.generated';
-import { saveRequisitionFields } from './requisitionUpdate';
+import {
+  addRequisitionFromMasterList,
+  saveRequisitionFields,
+} from './requisitionUpdate';
+import { MasterListPickerModal } from '../../../domain/masterList';
 import {
   isApprovalBlocked,
   isRequisitionEditable,
@@ -66,14 +74,20 @@ import {
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
+import { SupplyRequestedAction } from './actions/SupplyRequestedAction';
+import {
+  DeleteRequisitionLinesAction,
+  type DeleteLinesBlock,
+} from './actions/DeleteRequisitionLinesAction';
 import { RequisitionLineEditModal } from './edit-modal/RequisitionLineEditModal';
 
 // The requisition detail view (spec/requisitions S2): view, header edits
 // (customer reference / comment / colour), the side panel (S5), the Documents
-// and Log tabs, Export/Print (reports S4), and navigation/not-found. The line
-// editor (S4), the supply actions (auto-populate, Create shipment), the
-// finalise action, line selection/deletion, the master-list add, and the
-// Indicators tab are later slices.
+// and Log tabs, Export/Print (reports S4), line selection + bulk delete
+// (AC-LD1–LD4), the master-list add (AC-ML1–ML2), the Supply requested
+// auto-populate (rules § auto-populating), and navigation/not-found. The line
+// editor (S4), Create shipment, and the finalise action live in their own
+// modules (edit-modal/, RequisitionStatusFooter).
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -267,6 +281,55 @@ const RequisitionDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+
+  // Add from master list (spec S2 § page actions, AC-ML1): the S7 picker, a
+  // pending choice awaiting its are-you-sure confirmation, and a rejection's
+  // fixed-copy notice.
+  const [addChoice, setAddChoice] = createSignal('item');
+  const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
+  const [pendingMasterList, setPendingMasterList] = createSignal<{
+    id: string;
+    name: string;
+  }>();
+  const [masterListError, setMasterListError] = createSignal<string>();
+
+  // The Add split button's action: Add item opens the line editor, Add from
+  // master list opens the shared picker.
+  const onAddAction = (choice: string) => {
+    if (choice === 'master-list') setMasterListPickerOpen(true);
+    else setEditorLine({ mode: 'add' });
+  };
+
+  // The confirmed bulk add (AC-ML1): add, then re-read the line list so the
+  // table reflects it; a rejection replaces the confirmation with its fixed
+  // copy (AC-ML2).
+  const confirmAddFromMasterList = async () => {
+    const list = pendingMasterList();
+    const node = info();
+    if (!list || !node) return;
+    setPendingMasterList(undefined);
+    const result = await addRequisitionFromMasterList(
+      params.storeId,
+      node.id,
+      list.id
+    );
+    if (result.kind === 'done') void refetch();
+    else if (result.kind === 'error') setMasterListError(result.message);
+  };
+
+  // Line-table row selection (AC-LD1). Owned by the page (like sort/filter);
+  // a non-empty selection swaps the status footer for the bulk-action bar
+  // (spec S2 § footer). Checkboxes are always offered — on a blocked
+  // requisition the Delete click explains instead (AC-LD2).
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // The standing states the UI mirrors without a server call (rules ›
+  // deleting lines): not editable-by-status first, then transfer-linked.
+  const deleteBlock = (): DeleteLinesBlock | undefined =>
+    !editable()
+      ? 'not-editable'
+      : info()?.linkedRequisition
+        ? 'transferred'
+        : undefined;
 
   // Save & next's walk (AC-LE5): the next line after the current one in the
   // table's current sort/filter order, skipping ones already visited this
@@ -782,19 +845,39 @@ const RequisitionDetailView: Component = () => {
               <Header>
                 <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
                 <HeaderButtons>
-                  {/* Add item — the line editor in add mode (S4). Disabled on
-                      a read-only, program, or transfer-linked requisition
-                      (spec S2 § page actions). It becomes the Add SPLIT
-                      button (· Add from master list) with the master-list
-                      slice; Supply requested arrives with the supply slice. */}
-                  <Button
+                  {/* Add — a split of Add item (the line editor, S4) and Add
+                      from master list (the shared S7 picker). The whole
+                      control is disabled on a read-only, program, or
+                      transfer-linked requisition (spec S2 § page actions). */}
+                  <SplitButton
                     icon={<PlusCircleIcon />}
-                    data-testid="add-item-button"
+                    testId="add-item-button"
                     disabled={!canAdd()}
-                    onClick={() => setEditorLine({ mode: 'add' })}
-                  >
-                    {t('button.add-item')}
-                  </Button>
+                    disabledTitle={t('error.cannot-add-items-to-requisition')}
+                    value={addChoice()}
+                    onValueChange={setAddChoice}
+                    onAction={onAddAction}
+                    options={[
+                      { value: 'item', label: t('button.add-item') },
+                      {
+                        value: 'master-list',
+                        label: t('button.add-from-master-list'),
+                      },
+                    ]}
+                  />
+                  {/* Supply requested — the auto-populate (rules §
+                      auto-populating). Presents as Supply APPROVED when the
+                      requisition carries an approval status (the server
+                      writes the approved figures then); disabled while not
+                      editable. onApplied re-reads the line list (the new
+                      supply quantities). */}
+                  <SupplyRequestedAction
+                    storeId={params.storeId}
+                    requisitionId={node().id}
+                    toApproved={node().approvalStatus !== 'NONE'}
+                    disabled={!editable()}
+                    onApplied={() => void refetch()}
+                  />
                   {/* Export/Print — a read, offered on every status. */}
                   <ExportPrintRequisitionAction requisitionId={node().id} />
                   {/* More — reopens the side panel; shown only while closed. */}
@@ -822,25 +905,62 @@ const RequisitionDetailView: Component = () => {
               </Header>
             }
             contentFooter={
-              <RequisitionStatusFooter
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                // ONLY approval blocking → the status button shows disabled
-                // instead of hiding (spec S2 § footer).
-                approvalBlocked={
-                  node().status === 'NEW' &&
-                  !node().otherParty.store?.isDisabled &&
-                  isApprovalBlocked(node())
+              // Bulk-action bar while lines are selected (spec S2 § footer);
+              // otherwise the requisition's status footer — clearing the
+              // selection restores it.
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <RequisitionStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    editable={editable()}
+                    // ONLY approval blocking → the status button shows disabled
+                    // instead of hiding (spec S2 § footer).
+                    approvalBlocked={
+                      node().status === 'NEW' &&
+                      !node().otherParty.store?.isDisabled &&
+                      isApprovalBlocked(node())
+                    }
+                    // A finalise is an order-level save: splice the returned
+                    // node back (the indicator advances, the whole screen
+                    // re-renders read-only through the shared editability
+                    // gate).
+                    onSaved={saved => mutate(() => saved)}
+                    onReasonsNotProvided={ids =>
+                      setReasonFlaggedIds(new Set(ids))
+                    }
+                  />
                 }
-                // A finalise is an order-level save: splice the returned node
-                // back (the indicator advances, the whole screen re-renders
-                // read-only through the shared editability gate).
-                onSaved={saved => mutate(() => saved)}
-                onReasonsNotProvided={ids =>
-                  setReasonFlaggedIds(new Set(ids))
-                }
-              />
+              >
+                <ContentFooter>
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  {/* On a read-only or transfer-linked requisition the click
+                      explains why it can't proceed rather than confirming
+                      (AC-LD2). onDeleted clears the selection (unmounting this
+                      bar) and re-reads the line list (AC-LD1). */}
+                  <DeleteRequisitionLinesAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
+                    blocked={deleteBlock}
+                    onDeleted={() => {
+                      setSelectedIds([]);
+                      void refetch();
+                    }}
+                  />
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<MinusCircleIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
             }
           >
             {/* Details | Documents | Log | (gated) Indicators (spec S2 §
@@ -914,6 +1034,14 @@ const RequisitionDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Leading-checkbox row selection for the bulk line delete
+                  // (spec S2 § line table): checkbox-only — the row click
+                  // stays bound to the editor. Always offered, on every
+                  // standing state: a blocked delete explains on click
+                  // (AC-LD2) rather than withholding the affordance.
+                  enableSelection
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
                 />
               </TabPanel>
               <TabPanel value="documents">
@@ -974,6 +1102,41 @@ const RequisitionDetailView: Component = () => {
                 void refetch();
               }}
             />
+
+            {/* Add from master list (S2 § page actions): the shared picker,
+                then an are-you-sure confirmation — only on OK are the lines
+                added (AC-ML1) — then the bulk add. */}
+            <MasterListPickerModal
+              open={masterListPickerOpen()}
+              onClose={() => setMasterListPickerOpen(false)}
+              storeId={params.storeId}
+              onSelect={list => {
+                setMasterListPickerOpen(false);
+                setPendingMasterList(list);
+              }}
+            />
+            <Show when={pendingMasterList()}>
+              <ConfirmDialog
+                open
+                title={t('heading.are-you-sure')}
+                message={t('messages.confirm-add-from-master-list')}
+                onConfirm={() => void confirmAddFromMasterList()}
+                onClose={() => setPendingMasterList(undefined)}
+              />
+            </Show>
+            {/* A rejection's fixed copy (AC-ML2): not-found under its own
+                message, anything else under the generic cannot-add copy. */}
+            <Show when={masterListError()}>
+              {message => (
+                <ConfirmDialog
+                  open
+                  title={t('error.something-wrong')}
+                  message={message()}
+                  onConfirm={() => setMasterListError(undefined)}
+                  onClose={() => setMasterListError(undefined)}
+                />
+              )}
+            </Show>
           </Page>
         )}
       </Show>

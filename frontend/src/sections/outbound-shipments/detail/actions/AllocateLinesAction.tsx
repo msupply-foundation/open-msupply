@@ -11,7 +11,11 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { CheckIcon, XCircleIcon, ZapIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ZapIcon } from '../../../../ui/icons';
 import { AllocateOutboundLine } from '../outboundDetail.generated';
 import type { OutboundLineFragment } from '../outboundDetail.generated';
 
@@ -235,35 +239,21 @@ export const AllocateLinesAction: Component<
             <Show
               when={phase() !== 'report'}
               fallback={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
-                  data-testid="dialog-button-ok"
-                  onClick={close}
-                >
-                  {t('button.ok')}
-                </Button>
+                <OkButton data-testid="dialog-button-ok" onClick={close} />
               }
             >
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
+              {/* A confirm, not a save — D55 keeps OkButton for this case. */}
+              <OkButton
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
-              >
-                {t('button.ok')}
-              </Button>
+              />
             </Show>
           }
         />
