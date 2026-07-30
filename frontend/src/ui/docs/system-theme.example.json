@@ -8,7 +8,6 @@
     },
     "accent": {
       "base": "#3e7bfa",
-      "light": "#5b8def",
       "gradient": ["#78a3fc", "#3e7bfa"]
     },
     "danger": { "base": "#e63535", "background": "#ffcdce" },

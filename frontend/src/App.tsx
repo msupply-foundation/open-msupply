@@ -14,6 +14,7 @@ import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
 import { fetchServerInfo } from './api/serverInfo';
+import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
@@ -91,9 +92,12 @@ export const App: Component = () => {
     // Server role resolves alongside the status check so the phase-visibility
     // matrix (spec/sync-modal) is answerable before either surface renders;
     // re-running startup re-reads it (initialising as central changes it).
+    // Site branding rides along for the same reason: the login and
+    // initialisation screens are themed, so it must land before they render.
     const [status] = await Promise.all([
       graphqlFetch(InitialisationStatus, {}),
       fetchServerInfo(),
+      fetchDisplaySettings(),
     ]);
     if (status.kind !== 'success') return;
     if (status.data.initialisationStatus.status !== 'INITIALISED') {

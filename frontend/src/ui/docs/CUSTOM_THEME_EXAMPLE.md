@@ -24,8 +24,9 @@ For the full role list and the rules, see [CUSTOM_THEMES.md](./CUSTOM_THEMES.md)
       "base": "#e95c30",
 
       // Hover/pressed shade of anything filled with the brand colour.
-      // Derived from "base" if you leave it out — pinned here only because
-      // the built-in orange is hand-picked rather than a plain darkening.
+      // Normally derived from "base" — pinned here only because the built-in
+      // orange was hand-picked rather than stepped, so the derived shade
+      // lands a fraction off it.
       "dark": "#c43c11",
 
       // The hero panel on the login page: [start, end], drawn top-left to
@@ -39,9 +40,6 @@ For the full role list and the rules, see [CUSTOM_THEMES.md](./CUSTOM_THEMES.md)
       // around the field you're typing in, info messages, and the
       // "Allocated" status.
       "base": "#3e7bfa",
-
-      // Lighter variant, used for hover states. Derived if omitted.
-      "light": "#5b8def",
 
       // The hero panel on the initialisation screen (first-run setup),
       // which is deliberately a different colour from the login screen.
