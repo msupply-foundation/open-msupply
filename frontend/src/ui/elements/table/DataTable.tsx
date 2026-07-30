@@ -486,6 +486,9 @@ export function DataTable<T, K extends string, G extends string = never>(
   // breaks that: the mapped array is only rebuilt when the caller's columns
   // actually change.
   const columnDefs = createMemo(() => props.columns.map(toColumnDef));
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const filters = children(() => props.filters);
   const table = createSolidTable<T>({
     get data() {
       return props.rows;

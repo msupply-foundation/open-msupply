@@ -6,8 +6,7 @@ import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { NameSearch } from '../../../domain/name';
 import { InsertCustomerReturn } from './customerReturns.generated';
 
@@ -82,15 +81,12 @@ const Body: Component<{ onClose: () => void }> = props => {
       dismissable={!creating()}
       testId="customer-search-modal"
       title={t('label.customer-name')}
+      // The standard, icon-less dialog dismiss (D55).
       actions={
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        <CancelButton
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
+        />
       }
     >
       <NameSearch

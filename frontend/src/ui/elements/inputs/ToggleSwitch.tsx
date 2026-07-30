@@ -1,4 +1,4 @@
-import { createUniqueId, Show, type JSX } from 'solid-js';
+import { children, createUniqueId, Show, type JSX } from 'solid-js';
 import styles from './ToggleSwitch.module.css';
 
 export interface ToggleSwitchProps {
@@ -49,10 +49,13 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
   // JSX node across both would try to mount it in two places. As TextField.
   // `class` stays on whichever element is the root, so a caller's layout class
   // always lands on the outermost box.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <label
       class={
-        props.class && !props.labelInfo
+        props.class && !labelInfo()
           ? `${styles.root} ${props.class}`
           : styles.root
       }
@@ -77,14 +80,14 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
   );
 
   return (
-    <Show when={props.labelInfo} fallback={<Label />}>
+    <Show when={labelInfo()} fallback={<Label />}>
       <span
         class={
           props.class ? `${styles.labelRow} ${props.class}` : styles.labelRow
         }
       >
         <Label />
-        {props.labelInfo}
+        {labelInfo()}
       </span>
     </Show>
   );

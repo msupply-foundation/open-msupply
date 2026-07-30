@@ -4,11 +4,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
-  CheckIcon,
-  InfoIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { InfoIcon, TrashIcon } from '../../../../ui/icons';
 import { deleteReturn } from '../../detail/returnUpdate';
 
 export interface DeleteReturnsActionProps {
@@ -75,15 +74,8 @@ export const DeleteReturnsAction: Component<
           description={
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
-          actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={() => setBlockedOpen(false)}
-            >
-              {t('button.ok')}
-            </Button>
-          }
+          // The standard, icon-less acknowledgement (D55).
+          actions={<OkButton onClick={() => setBlockedOpen(false)} />}
         />
       </Show>
     </>
@@ -144,22 +136,18 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           </Match>
         </Switch>
       }
+      // Dialog-footer identity (D55): icon-less throughout, Cancel secondary,
+      // and the destructive confirm in the danger tone — a confirmation is
+      // never a pair of equal-weight buttons.
       actions={
         <Switch
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={finish}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={finish} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -170,9 +158,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <Button variant="secondary" icon={<CheckIcon />} onClick={finish}>
-              {t('button.ok')}
-            </Button>
+            <OkButton onClick={finish} />
           </Match>
         </Switch>
       }

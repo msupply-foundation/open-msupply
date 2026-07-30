@@ -34,6 +34,14 @@ const SyncModal = lazy(() =>
   }))
 );
 
+// The store editor is the settings vertical's chunk (spec/settings § S5) —
+// loaded on first open from the footer's Edit cell, not with the shell.
+const StoreEditorModal = lazy(() =>
+  import('../sections/settings/store-editor/StoreEditorModal').then(m => ({
+    default: m.StoreEditorModal,
+  }))
+);
+
 // The routed app shell: one <AppShell> for the whole in-store app, with the
 // page swapping inside it (props.children — the matched section route). This is
 // the "router stand-in" role the shell's own doc calls out, now filled by a
@@ -120,6 +128,18 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setSyncOpen(true);
   };
 
+  // The store editor (spec/settings § S5, OMS-REG-SET-05.17/.18): the footer's
+  // Edit cell opens it on its Properties tab, on every screen and for every
+  // signed-in user — no permission gates OPENING it; permissions govern what is
+  // editable inside. Mounted only once opened, like the sync modal above, so
+  // its chunk (and its two queries) cost nothing until asked for.
+  const [storeEditOpen, setStoreEditOpen] = createSignal(false);
+  const [storeEditEverOpened, setStoreEditEverOpened] = createSignal(false);
+  const openStoreEdit = () => {
+    setStoreEditEverOpened(true);
+    setStoreEditOpen(true);
+  };
+
   return (
     <>
       <AppShell
@@ -132,6 +152,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
         onStoreClick={() => navigate(resolveStorePath)}
+        onStoreEdit={openStoreEdit}
         username={username()}
         displayName={userDisplayName()}
         email={authUser()?.email}
@@ -150,6 +171,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         message={t('messages.logout-confirm')}
         onConfirm={() => void logout()}
       />
+      <Show when={storeEditEverOpened()}>
+        <StoreEditorModal
+          open={storeEditOpen()}
+          storeId={params.storeId}
+          // The store's FACILITY record — the row the editor reads and writes.
+          // Rides the me/login response's store list (UserStoreNode.nameId).
+          nameId={activeStore()?.nameId ?? ''}
+          onClose={() => setStoreEditOpen(false)}
+        />
+      </Show>
     </>
   );
 };

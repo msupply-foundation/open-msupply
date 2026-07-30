@@ -41,6 +41,34 @@ Spec: [`spec/settings/`](../../../spec/settings/) (reverse spec). Replaces the c
 | AC-CN5 supply-levels permission pre-check    | **verified live**: this dev admin lacks `EDIT_CENTRAL_DATA` → `error.no-supply-level-permission` shown inline and the editor never opens, no request                                                                                        |
 | AC-CN6 in-use values not removable, no dupes | `propertySets.test.ts` (`supplyLevelsInUse` JSON parsing, trim/dedupe, `addSupplyLevel` duplicate rejection); S4 disables the remove control for in-use values                                                                              |
 
+## Follow-up build — S5 store editor (issue #760)
+
+Added after this report's original scope: `store-editor/` (the footer Edit cell's
+modal, [ui-surface § S5](../../../spec/settings/ui-surface.md#s5--store-editor)),
+wired from `src/nav/ShellLayout.tsx` through the `onStoreEdit` prop `AppShell`
+already carried. Zero locale keys added; `nameId` added to the `UserInfo`
+fragment (`UserStoreNode.nameId`) so the facility row is known before the editor
+opens — the editor reads/writes the **name** row, and `names(filter: { id: {
+equalTo } })` is the only way to fetch one. Behaviours `.28`–`.32` are unit-covered in
+`storeEditorLogic.test.ts`; the whole flow (open → pre-filled values → edit →
+save → reopen → restore) was driven live against `localhost:8000`.
+
+- **Preferences tab deliberately absent** — the spec captures it at gating level
+  only ([README § Status](../../../spec/settings/README.md#status)), so the tab
+  group renders Properties alone rather than guessing a 23-field inventory.
+- **One departure from the reference client:** its geolocation read is unbounded,
+  so a permission prompt the user never answers leaves the GPS block in its
+  "fetching" state permanently, coordinates hidden behind it. This build bounds
+  the read (30 s), which is also what makes the spec's already-captured
+  `error.timeout` reason reachable instead of dead copy. Verified live (the
+  automated browser can't answer the prompt — the block recovers and shows the
+  timed-out reason).
+- **The row-alignment decision below recurs here** and is left alone the same
+  way: the store editor's definition labels vary widely in length ("Facility
+  Type" vs "Supply Interval (Months between deliveries)"), so `FieldRow`'s
+  per-row grid leaves the controls ragged where the reference app fixes a 250px
+  label column. Still a spec/registry decision, still not improvised.
+
 ## Styling pass (vs. the reference app at runtime)
 
 Compared side-by-side against the running reference open-mSupply settings page and aligned within this app's own tokens/components: the section stack width-capped at `--measure-form` and **start-aligned** like the reference column (plain section CSS — deliberately not `ContentContainer`, whose centring the reference layout doesn't have and which no other in-tree screen uses); section headings given a leading intent icon (`SunIcon` added to `src/ui/icons`, the others existing) with the accordion's own neutral trigger treatment — the reference's accent-coloured headings deliberately not copied (component appearance is the library's; a consumer class override was tried and backed out); the Synchronisation form converted from stacked labelled inputs to `FieldRow` rows — which is also what ui-surface § Layout mandates; form action clusters (Test/Save, Save) inline-end aligned. A follow-up composition audit against `src/ui/docs/PAGES.md` + `kdd/form-layout` then replaced hand-rolled pieces with the defined vocabulary: sub-groups (Devices' two halves, S2's three groups) are now `FormSection` titled field groups — **neutral** headings per the library's own rule, deliberately not the reference's accent colour; the heading outline is corrected (breadcrumb h1 → `AccordionTrigger as="h2"` → `FormSection` h3); and S3's log viewer is a `readonly TextArea` (the registry's multi-line role, which ui-surface cites) instead of a bespoke `<pre>` — a C3 fix. Deliberately NOT copied: the reference's bordered card surface around the section list (our flat hairline-divider accordion is the library's established look), its right-flushed input column (FieldRow's grid geometry is the library's), and MUI colour values (tokens only).

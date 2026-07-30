@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { AlertTriangleIcon } from '../../icons';
 import { hhmmToTime, timeToHhmm, type TimeValue } from './dateTimeConvert';
@@ -44,6 +44,9 @@ export const TimeField = (props: TimeFieldProps) => {
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
   // one JSX node across both would try to mount it in two places. As
   // TextField / FieldShell.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <KTimeField.Label
       class={props.hideLabel ? styles.labelHidden : styles.label}
@@ -72,13 +75,13 @@ export const TimeField = (props: TimeFieldProps) => {
           e.target.blur();
       }}
     >
-      <Show when={props.labelInfo && !props.hideLabel} fallback={<Label />}>
+      <Show when={labelInfo() && !props.hideLabel} fallback={<Label />}>
         {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in it
           its accessible name would leak into the control's (the
           name-from-label computation concatenates descendant controls). */}
         <span class={styles.labelRow}>
           <Label />
-          {props.labelInfo}
+          {labelInfo()}
         </span>
       </Show>
       <div
