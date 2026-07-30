@@ -1,30 +1,18 @@
-import { createSignal, Show } from 'solid-js';
+import { Show } from 'solid-js';
 import { t } from '../../../intl';
+import { colourScheme, toggleColourScheme } from '../../styles/colourScheme';
 import styles from './ThemeToggle.module.css';
 
-const THEME_KEY = 'oms-theme';
-
 /*
- * Flips `data-theme` on <html> and persists the choice. The pre-paint script
- * in index.html reads the same key so a dark user never sees a light flash.
- * Components never know a theme exists — the [data-theme='dark'] token
+ * The icon-button form of the light/dark switch. The scheme itself — the
+ * `data-theme` attribute, the persisted key, the shared signal — belongs to
+ * styles/colourScheme, so this button and the Settings › Display switch always
+ * agree. Components never know a theme exists: the [data-theme='dark'] token
  * override block in styles/tokens.css recolours everything via the cascade.
  */
 export const ThemeToggle = () => {
-  const [theme, setTheme] = createSignal<'light' | 'dark'>(
-    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
-  );
-
-  const toggle = () => {
-    const next = theme() === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    document.documentElement.dataset.theme = next;
-    try {
-      localStorage.setItem(THEME_KEY, next);
-    } catch {
-      // storage unavailable (private mode) — theme still applies this session
-    }
-  };
+  const theme = colourScheme;
+  const toggle = toggleColourScheme;
 
   return (
     <button
