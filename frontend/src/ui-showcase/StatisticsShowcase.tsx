@@ -239,10 +239,18 @@ const Demo = () => (
             library. A big value sits in a right-aligned column so labels line
             up down a panel, matching the current app. <code>alert</code> raises
             a red "needs attention" <code>StatusChip</code> beneath (the value
-            stays normal), and <code>info</code> adds a brand-toned tooltip
-            marker — the meaning is carried by the chip's text and the marker,{' '}
+            stays normal) — the meaning is carried by the chip's text,{' '}
             <em>never by colour alone</em> (accessibility § colour
             independence).
+          </Lead>
+          <Lead>
+            <code>info</code> hangs an <code>InfoTooltip</code> beside the
+            label: a real focusable trigger that opens on hover, keyboard focus{' '}
+            <em>and</em> tap, named after the stat it explains. It sits{' '}
+            <em>outside</em> the row's <code>&lt;A&gt;</code> — a{' '}
+            <code>&lt;button&gt;</code> may not nest inside an anchor — so the
+            stat is a wrapper holding the link and the marker side by side, in
+            both the linked and unlinked forms.
           </Lead>
           <Lead>
             <code>href</code> is <em>optional</em>. A metric with no drill-down
@@ -272,8 +280,13 @@ const Demo = () => (
               href="/demo"
             />
             {/* No href — the no-drill-down form (e.g. the item detail's
-                average-monthly-consumption stat). */}
-            <Statistic label="Months of stock (no drill-down)" value="4.75" />
+                average-monthly-consumption stat), here carrying an info marker
+                too: the tooltip is reachable on a row that is not a link. */}
+            <Statistic
+              label="Months of stock (no drill-down)"
+              value="4.75"
+              info="Stock on hand divided by average monthly consumption."
+            />
           </div>
         </DashboardCard>
 
