@@ -25,9 +25,12 @@ export interface DeleteShipmentsActionProps {
 // batch is refused when ANY selected shipment is not deletable — a UI pre-check
 // with a blocking notice instead of the confirmation, no server call (rules.md
 // § the list; controls › action feedback); per-row enforcement remains
-// server-side. Same confirm → deleting → success | error dialog shape as the
-// stocktakes delete action (kdd/action-modal).
-type Phase = 'confirm' | 'deleting' | 'success' | 'error';
+// server-side. Same confirm → deleting → error dialog shape as the stocktakes
+// delete action (kdd/action-modal). No success phase: a clean delete CLOSES the
+// dialog — closure is the confirmation and the shorter list behind it is the
+// visible result (spec/ui-standards/controls.md § dialogs, D22; § action
+// feedback, D21).
+type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteShipmentsAction: Component<
   DeleteShipmentsActionProps
@@ -110,10 +113,11 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
       setPhase('error');
       return;
     }
-    // Success: hand back to the list (clear selection + re-query behind the
-    // dialog), then report in the dialog itself (controls › dialogs).
+    // Success: close first, then hand back to the list — onDeleted clears the
+    // selection, which unmounts the selection-gated footer this dialog lives
+    // in.
+    props.onClose();
     props.onDeleted();
-    setPhase('success');
   };
 
   return (
@@ -123,14 +127,17 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The error phase is no longer a question, so the heading stops asking
+      // one (it would otherwise read "Are you sure?" over a rejection).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-shipments', count)}>
           <Match when={phase() === 'error'}>
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
-          </Match>
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-shipments', count)}
           </Match>
         </Switch>
       }
@@ -159,15 +166,6 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
