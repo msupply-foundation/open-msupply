@@ -77,6 +77,12 @@
   font-weight: var(--weight-medium);
 }
 
+/* A default (alwaysOn) filter's pill: no remove button, so the trailing gutter
+   that button's own box supplied comes back as padding. */
+.chipFixed {
+  padding-inline-end: var(--space-3);
+}
+
 .chipLabel {
   white-space: nowrap;
 }
