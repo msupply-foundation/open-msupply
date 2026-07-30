@@ -391,14 +391,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           setVariants(variantsResult.data.items.nodes[0]?.variants ?? []);
       });
     }
-    // Land ready to type. Update mode: the clicked batch's packs input (draft
-    // rows from existing lines keep the invoice-line id), or the first row on
-    // an advance. A clicked PLACEHOLDER has no batch row of its own, and an
-    // add-mode pick has no clicked row at all — both land on the Issue field
-    // (OMS-REG-DIST-03.31).
-    const rowId =
-      mode() === 'update' ? (focusLineId ?? sorted[0]?.id) : undefined;
-    if (rowId) batchFields.focus(rowId);
+    // Land ready to type (OMS-REG-DIST-03.31). Update mode: the clicked batch's packs
+    // input (draft rows from existing lines keep the invoice-line id), or the
+    // first row on an advance (nothing was clicked). A clicked PLACEHOLDER row
+    // has no batch row of its own — its line id is absent from the draft, so
+    // the id must be MATCHED, not merely present — and an add-mode pick has no
+    // clicked row at all: both land on the Issue field.
+    const rowId = () => {
+      if (mode() !== 'update') return undefined;
+      if (focusLineId == null) return sorted[0]?.id;
+      return sorted.some(line => line.id === focusLineId)
+        ? focusLineId
+        : undefined;
+    };
+    const focusRow = rowId();
+    if (focusRow) batchFields.focus(focusRow);
     else issueField.focus();
     setLoadingLines(false);
 
