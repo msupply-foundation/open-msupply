@@ -2,12 +2,11 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { XCircleIcon } from '../../../ui/icons';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, returnKind, statusSteps } from './returnStatus';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
@@ -69,16 +68,12 @@ export const CustomerReturnStatusFooter: Component<
       {/* One inline-end cluster (the current app's footer): Close sits right
           beside the Confirm-status split button. */}
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        <CloseButton
           data-testid="close-button"
           onClick={() =>
             navigate(`/${params.storeId}/distribution/customer-return`)
           }
-        >
-          {t('button.close')}
-        </Button>
+        />
         <StatusChangeAction
           storeId={props.storeId}
           node={props.node}
@@ -90,18 +85,26 @@ export const CustomerReturnStatusFooter: Component<
 
       {/* Hold confirm: message flips with direction (the reversible pause,
           OMS-REG-DIST-07.32;
-          the copy is the current app's on/off-hold confirmations). */}
-      <ConfirmDialog
-        open={holdConfirm()}
-        onClose={() => setHoldConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={
-          holding()
-            ? t('messages.off-hold-confirmation')
-            : t('messages.on-hold-confirmation')
-        }
-        onConfirm={() => props.onSetHold(!holding())}
-      />
+          the copy is the current app's on/off-hold confirmations).
+
+          Mounted only while open (kdd/action-modal). A closed <dialog> is still
+          in the document, just hidden, so a permanently-mounted one keeps its
+          `confirmation-modal` + footer ids matchable — three of them coexist on
+          this screen, which is what forced the e2e suite's `.last()` workaround
+          (e2e/TESTIDS.md). */}
+      <Show when={holdConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setHoldConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={
+            holding()
+              ? t('messages.off-hold-confirmation')
+              : t('messages.on-hold-confirmation')
+          }
+          onConfirm={() => props.onSetHold(!holding())}
+        />
+      </Show>
     </ContentFooter>
   );
 };

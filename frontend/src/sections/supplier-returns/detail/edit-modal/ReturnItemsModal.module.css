@@ -1,6 +1,0 @@
-/* The "pick an item" hint standing in for the wizard body before an item is
-   chosen. Muted secondary text: Text carries size/weight only and never
-   colour, so the tone lives here (the house pattern for a muted line). */
-.hint {
-  color: var(--text-secondary);
-}
