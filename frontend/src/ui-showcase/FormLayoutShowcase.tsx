@@ -6,7 +6,9 @@ import { FormColumns } from '../ui/layout/Form/FormColumns';
 import { FormColumn } from '../ui/layout/Form/FormColumn';
 import { FormSection } from '../ui/layout/Form/FormSection';
 import { FormRow } from '../ui/layout/Form/FormRow';
+import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { DateField } from '../ui/elements/inputs/DateField';
 import {
   AnatomyTree,
   FormPreview,
@@ -58,6 +60,12 @@ const ANATOMY: AnatomyNode[] = [
                           {
                             name: 'FormRow',
                             note: 'the two-up rows — opt-in pairing',
+                            children: [
+                              {
+                                name: 'FormRowItem',
+                                note: 'a weighted slot — opt-in, one item',
+                              },
+                            ],
                           },
                         ],
                       },
@@ -106,6 +114,18 @@ export const formLayoutMetadata: PageMetadata = {
       id: 'form-layout-row',
       title: 'FormRow',
       searchTerms: ['row', 'two up', 'inline', 'pair'],
+    },
+    {
+      id: 'form-layout-row-item',
+      title: 'FormRowItem',
+      searchTerms: [
+        'form row item',
+        'weight',
+        'fr',
+        'share',
+        'min width',
+        'pinned',
+      ],
     },
   ],
 };
@@ -220,6 +240,9 @@ export const FormLayoutShowcase = () => (
           (default <code>10rem</code>, so a pair stacks near 21rem of available
           width) the row wraps to stacked — resize to watch. Pure arrangement:
           the controls keep their own look and fill the slot the row hands them.
+          An item whose data needs more (or less) room than its neighbours' opts
+          into a share of its own by wrapping in <code>FormRowItem</code> (next
+          card); equal shares stay the default.
         </Lead>
         <FormPreview>
           <FormSection title="Pricing">
@@ -227,6 +250,53 @@ export const FormLayoutShowcase = () => (
             <FormRow>
               <TextField label="Cost price" width="full" />
               <TextField label="Sell price" width="full" />
+            </FormRow>
+          </FormSection>
+        </FormPreview>
+      </DashboardCard>
+
+      <DashboardCard
+        id="form-layout-row-item"
+        title="FormRowItem — the opt-in weighted slot"
+      >
+        <Lead>
+          One item of a <code>FormRow</code>, wrapped to declare its own share:
+          a field's width follows its <em>data</em>, never the field count, so
+          equal shares only hold while the fields carry comparably long data.{' '}
+          <code>weight</code> is that share of the whole row — the design
+          standard's <code>fr</code>, because the slot's flex basis is{' '}
+          <code>0</code> and the row's <em>entire</em> width distributes in
+          proportion, not just what's left once every item has taken a basis.{' '}
+          <code>1</code> is the equal share; below, Manufacturer at{' '}
+          <code>2</code> takes twice Batch number's <code>1</code>, and Expiry
+          is <code>{'weight={0}'}</code> — pinned to its floor, handing every
+          spare pixel to its siblings, which is what a fixed-format value that
+          can never use more room wants. <code>minWidth</code> is that floor
+          (overriding <code>minItemWidth</code> for this slot alone), and it
+          also decides who gives up width as the row narrows, and the floors'
+          sum is the wrap point: keep a row's
+          floors summing to no more than the unweighted row's would —{' '}
+          <code>10rem</code> inherited + <code>7rem</code> + <code>9rem</code> ={' '}
+          <code>26rem</code> here, against three × <code>10rem</code> — or the
+          row wraps <em>earlier</em> than it used to and the form grows a line.
+          Opt-in per item, as <code>FormRow</code> is per row: anything left
+          unwrapped keeps the equal share, and most rows want exactly that. The
+          header field cluster — a patient name beside a formatted date — is
+          where a weight earns its keep, demoed on the{' '}
+          <a href="#/showcase/header">Header page</a>.
+        </Lead>
+        <FormPreview>
+          <FormSection title="Batch & Expiry">
+            <FormRow>
+              <FormRowItem weight={2}>
+                <TextField label="Manufacturer" width="full" />
+              </FormRowItem>
+              <FormRowItem weight={1} minWidth="7rem">
+                <TextField label="Batch number" width="full" />
+              </FormRowItem>
+              <FormRowItem weight={0} minWidth="9rem">
+                <DateField label="Expiry" width="full" value="2027-03-31" />
+              </FormRowItem>
             </FormRow>
           </FormSection>
         </FormPreview>

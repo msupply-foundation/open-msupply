@@ -16,6 +16,8 @@ export interface ClinicianSelectProps {
   hideLabel?: boolean;
   /** Control size — `small` for a header field cluster's compact row. */
   size?: 'default' | 'small';
+  /** Width cap — `full` to fill the slot a layout hands it (header clusters). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   disabled?: boolean;
   error?: string;
   placeholder?: string;
@@ -35,6 +37,7 @@ export const ClinicianSelect = (props: ClinicianSelectProps): JSX.Element => (
     label={props.label}
     hideLabel={props.hideLabel}
     size={props.size}
+    width={props.width}
     items={cliniciansResource.noSuspense()}
     loading={cliniciansResource.loading()}
     itemToString={clinicianName}
