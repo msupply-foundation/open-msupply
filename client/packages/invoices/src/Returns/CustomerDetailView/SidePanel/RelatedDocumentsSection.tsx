@@ -32,13 +32,11 @@ export const RelatedDocumentsSectionComponent = () => {
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid flexDirection="column" gap={0.5}>
         {!originalShipment ? (
-          <PanelLabel data-testid="no-related-documents">
-            {t('messages.no-related-documents')}
-          </PanelLabel>
+          <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
           <Grid>
             <PanelRow>
-              <PanelLabel data-testid="originating-shipment-label">
+              <PanelLabel>
                 {getLabel(
                   originalShipment.createdDatetime,
                   originalShipment.user?.username ?? UNDEFINED_STRING_VALUE
