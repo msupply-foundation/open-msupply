@@ -28,11 +28,12 @@ import {
 /*
  * Display settings (spec/settings/ui-surface.md § Display settings).
  *  - Language: the shared chrome language selector, reused — switching is
- *    immediate, no save step (OMS-REG-SET-01.15; the switch itself is owned by i18n).
+ *    immediate, no save step (OMS-REG-SET-01.15; the switch itself is owned by
+ *    i18n).
  *  - Custom theme / Custom logo (Server Admin only): the asymmetric
- *    on-requires-Save / off-is-immediate pattern (OMS-REG-SET-01.16–01.18); the theme save
- *    gates on a shallow JSON parse (OMS-REG-SET-01.13), the logo has no validation at
- *    all (OMS-REG-SET-01.18).
+ *    on-requires-Save / off-is-immediate pattern (OMS-REG-SET-01.16–01.18);
+ *    the theme save gates on a shallow JSON parse (OMS-REG-SET-01.13), the
+ *    logo has no validation at all (OMS-REG-SET-01.18).
  */
 
 // One editor row (theme or logo) — same shell, different validation/effects.
@@ -162,8 +163,9 @@ export const DisplaySettingsSection = () => {
     return undefined;
   };
 
-  // Theme: refuse invalid JSON client-side with the parse error (OMS-REG-SET-01.13);
-  // a successful save applies the theme by reloading the whole app (OMS-REG-SET-01.16).
+  // Theme: refuse invalid JSON client-side with the parse error
+  // (OMS-REG-SET-01.13); a successful save applies the theme by reloading the
+  // whole app (OMS-REG-SET-01.16).
   const saveTheme = async (text: string): Promise<string | undefined> => {
     const parsed = parseThemeJson(text);
     if (!parsed.ok) return `${t('error.something-wrong')} ${parsed.message}`;
@@ -177,7 +179,8 @@ export const DisplaySettingsSection = () => {
     await update(themeClearInput());
   };
 
-  // Logo: no content validation at all (OMS-REG-SET-01.18); no reload either way.
+  // Logo: no content validation at all (OMS-REG-SET-01.18); no reload either
+  // way.
   const saveLogo = (text: string) => update(logoSaveInput(text));
   const clearLogo = async () => {
     await update(logoClearInput());

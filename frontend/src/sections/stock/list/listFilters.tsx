@@ -20,10 +20,11 @@ export type StockFilter = NonNullable<StockLinesVariables['filter']>;
 // key of StockLineFilterInput: a key maps to a definition to expose it, or
 // `null` to dismiss it. Being a Record over all keys, it stops compiling when
 // the schema grows a filter — forcing an expose-or-dismiss decision. The map's
-// key order IS the toolbar's display order. Each exposed field reads its one key
-// for the control value and writes it back in the GraphQL-native operator shape;
-// an empty choice writes `null` (FilterBar's "added but empty" marker), which
-// stripEmpty drops before the query (so an empty chip doesn't reflash the list).
+// key order IS the toolbar's display order. Each exposed field reads its one
+// key for the control value and writes it back in the GraphQL-native operator
+// shape; an empty choice writes `null` (FilterBar's "added but empty" marker),
+// which stripEmpty drops before the query (so an empty chip doesn't reflash the
+// list).
 const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
   // ─ user-facing, in display order ────────────────────────────────────────
   // Free-text search: matches item code, item name, OR batch (one server OR

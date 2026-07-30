@@ -3,7 +3,7 @@
 // surface DISPLAYS (the phase-visibility matrix, the status-line precedence,
 // the duration decomposition, the indicator badge) is this vertical's job
 // (spec/sync-modal/contract.md § Substrate). No framework/UI here, so every
-// rule below is unit-testable (spec/sync-modal/acceptance.md).
+// rule below is unit-testable (spec/sync-modal/cases/ — OMS-REG-SYNC-03).
 
 import type { SyncStatusFragment } from '../../api/initialisation.generated';
 import type { LocaleKey } from '../../intl';
@@ -88,9 +88,9 @@ type ProgressPart =
   | null
   | undefined;
 
-// AC-S2: a count only where there is something to count — a phase with total
-// zero or unreported (e.g. a push with no records) shows none; a known total
-// with no done yet reads as 0 / N.
+// SYNC-03.19: a count only where there is something to count — a phase with
+// total zero or unreported (e.g. a push with no records) shows none; a known
+// total with no done yet reads as 0 / N.
 const step = (
   label: LocaleKey,
   kind: SyncStepKind,
@@ -186,7 +186,7 @@ export const toSyncOverview = (
   };
 };
 
-// AC-S1: one status line by precedence — syncing, then a non-zero
+// SYNC-03.18: one status line by precedence — syncing, then a non-zero
 // records-to-push count, then nothing-to-push. 'waiting' covers the first open
 // before any status has arrived.
 export type StatusLineKind =
@@ -202,7 +202,7 @@ export const statusLineKind = (
   return 'nothing-to-push';
 };
 
-// AC-S3: the last-successful duration lists its non-zero hours and minutes
+// SYNC-03.21: the last-successful duration lists its non-zero hours and minutes
 // followed by EXACT seconds — never approximated. This is the decomposition;
 // the notice composes the localised unit strings.
 export const syncDurationParts = (
@@ -225,8 +225,8 @@ export const syncDurationParts = (
 export type DurationUnit = { key: LocaleKey; count: number };
 
 // The ordered unit list the notice composes: hours and minutes only when
-// non-zero, seconds ALWAYS present (AC-S3). Each unit is a plural key + count;
-// the notice resolves them with tPlural at render.
+// non-zero, seconds ALWAYS present (SYNC-03.21). Each unit is a plural key +
+// count; the notice resolves them with tPlural at render.
 export const durationUnits = (parts: {
   hours: number;
   minutes: number;
@@ -240,8 +240,8 @@ export const durationUnits = (parts: {
   return units;
 };
 
-// AC-T1: the Sync-now busy state holds from the click, through the gap before
-// the run's first status frame — a STALE pre-run tick carries the SAME
+// SYNC-03.25: the Sync-now busy state holds from the click, through the gap
+// before the run's first status frame — a STALE pre-run tick carries the SAME
 // signature and must not release it — until the run ends. A run has ended once
 // a NOT-syncing status arrives whose signature differs from the one captured at
 // the click: a new run always carries a fresh `summary.started`, so this

@@ -1,5 +1,4 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { A } from '@solidjs/router';
 import { t } from '../../../intl';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
@@ -11,6 +10,8 @@ import {
 } from '../../../ui/elements/inputs/dateTimeConvert';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
+import { poLabel } from '../linkedOrder';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
@@ -147,9 +148,10 @@ export const InboundShipmentDetailToolbar: Component<
           S3 header fields). Never-editable facts, so they're read-only
           LabelledValues sitting flush among the inputs (variant="field") —
           read-only reads from the absence of a box, not a greyed-out one. The
-          link targets the purchase-order detail route exactly as the side
-          panel's Related-documents link does — a DEAD link for now: this app
-          mounts only the inbound-shipment vertical (App.tsx), so
+          link is the shared kind-toned RecordLink, identical to the side
+          panel's Related-documents entry (same route, same PO-xxx label, so a
+          reader learns the kind by tone app-wide) — a DEAD link for now: this
+          app mounts only the inbound-shipment vertical (App.tsx), so
           /replenishment/purchase-order has no component yet. It resolves the
           day someone implements the purchase-order vertical; kept in step with
           the side panel so both light up together. */}
@@ -161,11 +163,12 @@ export const InboundShipmentDetailToolbar: Component<
               variant="field"
               size="small"
             >
-              <A
+              <RecordLink
                 href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
+                kind="po"
               >
-                #{po().number}
-              </A>
+                {poLabel(po().number)}
+              </RecordLink>
             </LabelledValue>
             <Show when={po().reference}>
               <LabelledValue

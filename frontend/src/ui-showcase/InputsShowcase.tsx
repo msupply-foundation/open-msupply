@@ -831,8 +831,8 @@ export const InputsShowcase = () => {
                 indentRem={0.2}
                 options={[
                   { value: 'soh', label: 'Items with stock on hand' },
-                  // Disabled to show the per-option disabled state (as the modal
-                  // greys "All items").
+                  // Disabled to show the per-option disabled state (as the
+                  // modal greys "All items").
                   {
                     value: 'all',
                     label: 'All items',

@@ -12,6 +12,8 @@ export {
 
 // Loading / caching / server overrides
 export { loadDictionary, invalidateCustomTranslations } from './loadDictionary';
+// Installed plugins' catalogues — a layer beneath the host dictionaries.
+export { registerPluginTranslations } from './pluginTranslations';
 
 // Detection / switching
 export { detectLocale, getUserLocale } from './detectLocale';
@@ -23,6 +25,7 @@ export type { CurrencyInfo, CurrencyDisplay } from './currency';
 export {
   formatNumber,
   round,
+  roundTo,
   parseNumber,
   intlNumberFormat,
 } from './formatNumber';

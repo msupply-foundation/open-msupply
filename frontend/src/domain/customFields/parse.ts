@@ -68,8 +68,9 @@ export const optionAndDescendantIds = (
 };
 
 // The id's ancestor chain (its parent, grandparent, …), nearest first. Used
-// when deselecting: removing a node also deselects its ancestors, since a parent
-// is only "fully selected" while every descendant is (spec › option fields).
+// when deselecting: removing a node also deselects its ancestors, since a
+// parent is only "fully selected" while every descendant is (spec › option
+// fields).
 export const ancestorIds = (
   options: CustomFieldOption[],
   id: string
@@ -136,9 +137,9 @@ export const shownCustomFields = (
 ): CustomFieldDef[] => (defs ?? []).filter(isShown);
 
 // Split shown fields by where they render: VISIBLE → the tab; PROMINENT →
-// promoted to the detail toolbar and NOT repeated in the tab (spec › placement).
-// A read-only surface has no toolbar, so it passes `promote: false` to show
-// every shown field in the tab.
+// promoted to the detail toolbar and NOT repeated in the tab (spec ›
+// placement). A read-only surface has no toolbar, so it passes `promote: false`
+// to show every shown field in the tab.
 export interface PartitionedCustomFields {
   tab: CustomFieldDef[];
   prominent: CustomFieldDef[];
@@ -156,8 +157,8 @@ export const partitionCustomFields = (
 };
 
 // The single JSON-scalar boundary: `customFields` is typed `unknown` by codegen
-// (honest for arbitrary JSON). At runtime the server sends a JSON object (a JSON
-// string is also accepted). Narrow it to a plain record here, once.
+// (honest for arbitrary JSON). At runtime the server sends a JSON object (a
+// JSON string is also accepted). Narrow it to a plain record here, once.
 export const parseCustomFields = (raw: unknown): Record<string, unknown> => {
   if (raw == null) return {};
   if (typeof raw === 'object') return raw as Record<string, unknown>;

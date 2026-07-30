@@ -30,7 +30,9 @@ import { createSignal, getOwner, onCleanup, type Accessor } from 'solid-js';
 export interface Flash<T> {
   /** The current outcome, or `undefined` once it has reverted. */
   value: Accessor<T | undefined>;
-  /** Show `value`, reverting after the flash duration. Supersedes any pending. */
+  /**
+   * Show `value`, reverting after the flash duration. Supersedes any pending.
+   */
   show: (value: T) => void;
   /** Revert now. */
   clear: () => void;
