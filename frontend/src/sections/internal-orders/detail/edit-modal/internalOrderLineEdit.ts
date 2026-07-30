@@ -21,7 +21,10 @@ export type EntryMode = 'units' | 'packs' | 'doses';
 // (contract › Population-based forecasting), consumed by the editor's
 // calculation display (AC-PF7). The client parses this; it never writes it.
 export type VaccineCourse = {
-  /** Pre-formatted "<course> (<demographic>)"; empty parens for a demographic-less course. */
+  /**
+   * Pre-formatted "<course> (<demographic>)"; empty parens for a
+   * demographic-less course.
+   */
   courseTitle: string;
   numberOfDoses: number;
   coverageRate: number;
@@ -61,7 +64,8 @@ export const forecastSteps = (
   course: VaccineCourse
 ): [ForecastStep, ForecastStep, ForecastStep] => [
   {
-    // 1. Annual target doses = target population × doses × (coverage/100) × loss factor.
+    // 1. Annual target doses = target population × doses × (coverage/100) ×
+    // loss factor.
     substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
     result: `= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`,
   },
@@ -82,7 +86,10 @@ export const forecastSteps = (
 // current figures + a client-previewed suggestion). Statistics are all in
 // UNITS; the entry mode re-expresses them at display time.
 export type EditorLine = {
-  /** Existing line id (edit) or the client-generated id that will create it (add). */
+  /**
+   * Existing line id (edit) or the client-generated id that will create it
+   * (add).
+   */
   lineId: string;
   itemId: string;
   itemCode: string;
@@ -98,7 +105,10 @@ export type EditorLine = {
   suggestedQuantity: number;
   forecastTotalUnits: number | null;
   forecastTotalDoses: number | null;
-  /** The forecast's per-course breakdown (AC-PF7); empty on a forecast-less line. */
+  /**
+   * The forecast's per-course breakdown (AC-PF7); empty on a forecast-less
+   * line.
+   */
   vaccineCourses: VaccineCourse[];
   pricePerUnit: number | null;
   // Extended movements (edit mode on a customer-statistics program order).

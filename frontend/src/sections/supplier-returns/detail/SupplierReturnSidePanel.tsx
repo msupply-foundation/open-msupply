@@ -45,7 +45,9 @@ import type { ReturnFieldEdit } from './returnEdit';
 export interface SupplierReturnSidePanelProps {
   node: SupplierReturnInfoFragment;
   disabled: boolean;
-  /** The shared return edit buffer — reads/writes comment + transportReference. */
+  /**
+   * The shared return edit buffer — reads/writes comment + transportReference.
+   */
   edit: ReturnFieldEdit;
   /** Colour save (header-level, in place). */
   onSetColour: (colour: string) => void;

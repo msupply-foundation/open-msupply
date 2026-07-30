@@ -201,7 +201,8 @@ describe('inventory links', () => {
     });
   });
 
-  // OMS-REG-DB-01.55/.50 — high stock: months of stock ≥ the overstock threshold.
+  // OMS-REG-DB-01.55/.50 — high stock: months of stock ≥ the overstock
+  // threshold.
   it('OMS-REG-DB-01.55/.50: high stock → minMonthsOfStock = overstock months', () => {
     expect(filterOf(itemsHighStockHref('s1', 6))).toEqual({
       minMonthsOfStock: 6,

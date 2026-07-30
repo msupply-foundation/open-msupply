@@ -8,10 +8,10 @@
 // consume a scan is owned by spec/android, not here). So the only scanner this
 // diagnostic surface can ever see is the MOCK one: enabling the mock simulates
 // a connected scanner for testing without real hardware, and MUST NOT be
-// relied on for normal store operation (rules § Devices — barcode scanner). The toggle is remembered on
-// this device (rules § Devices — barcode scanner), persisted via appData like
-// the label printer's USB preference; a module-level signal carries it across
-// the Settings ↔ Test-scanner navigation.
+// relied on for normal store operation (rules § Devices — barcode scanner).
+// The toggle is remembered on this device (rules § Devices — barcode scanner),
+// persisted via appData like the label printer's USB preference; a module-level
+// signal carries it across the Settings ↔ Test-scanner navigation.
 
 import { generateUUID } from '../../../uuid';
 import { createSignal } from 'solid-js';
@@ -56,8 +56,8 @@ export type ScanResult = {
 };
 
 // One simulated scan — a canned GS1-style barcode, generated locally with no
-// server round-trip (rules § Devices — barcode scanner). Content varies per scan so the results list
-// visibly accumulates distinct entries.
+// server round-trip (rules § Devices — barcode scanner). Content varies per
+// scan so the results list visibly accumulates distinct entries.
 let mockScanCounter = 0;
 export const triggerMockScan = (): ScanResult => {
   mockScanCounter += 1;

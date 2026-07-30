@@ -48,7 +48,10 @@ export interface OutboundSidePanelProps {
    * query no longer carries lines), for the Service-charges block's rows.
    */
   serviceLines: OutboundLineFragment[];
-  /** For the backdating control's stocktake-conflict check (OMS-REG-DIST-04.27). */
+  /**
+   * For the backdating control's stocktake-conflict check
+   * (OMS-REG-DIST-04.27).
+   */
   storeId: string;
   disabled: boolean;
   /**
