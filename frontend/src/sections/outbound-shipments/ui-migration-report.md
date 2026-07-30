@@ -189,6 +189,25 @@ Three patterns are in use across the app's time columns; only two work:
 
 **Also noted, not changed:** six verticals hand-roll a log surface rather than consuming the shared panel, each with its own query — a consolidation task well beyond this migration, flagged as **LIB-6**.
 
+### F17 — F5 pinned the detail Batch column at the `code` kind's growth cap (dim 3)
+
+Reported by the operator after F5 landed: Batch in the outbound detail table couldn't be dragged wider, while inbound's could.
+
+**Measured, both tables at 1600×950:** outbound Batch renders at **112px**, which is exactly the `code` kind's `maxSize: 7rem` — a **hard** cap, so the column sits on the wall with nowhere to go. Inbound Batch renders at **80px** (`size: 5rem`), 32px clear of the same cap. Both use `getCellDefinition('batch')`, so the preset isn't the difference — the **content** is: outbound's accessor renders the word **"Placeholder"** for an unallocated line ([OutboundDetailView.tsx](detail/OutboundDetailView.tsx)), and auto-layout grows the column to fit it, straight into the cap. Inbound's cell holds a batch code only.
+
+The repo had already recorded this failure mode for a sibling key: `locationCode` carries "Own size, NO cap" precisely because "the kind's 7rem growth cap would stop a user widening it to fit on one line (#601)".
+
+**Fixed** at the call site, as `_globalColumnConfig`'s own header instructs ("for a one-off tweak in one table, override size/maxSize inline on that column def"): a local `uncapped()` helper drops the preset's `maxSize` while keeping its cell and width floor. Verified by re-measuring — the column now renders **118px**, past the former ceiling, so the cap is genuinely gone.
+
+**Not fixed, needs a ruling — this is a shared-config question.** The `code` kind's cap is commented "a real cap, per the batch case", i.e. it was chosen _for_ batch columns. Two consequences:
+
+- **Inbound will hit the same wall** as soon as a batch code is long enough to push its column to 7rem; it is merely 32px further from it today. Every `code` column in every vertical shares this.
+- Outbound's **Item code** column is at 94px against the same 112px cap — 18px of drag room, which will read as "barely resizable" too.
+
+So either the cap is right and outbound's Batch is the exception (what I've implemented), or the cap is too tight for code columns generally and belongs at `maxSize: null` in the shared config. That is a library change touching eight-plus tables → **LIB-8**.
+
+**Caveat on the verification.** I could not drive the drag end-to-end: synthetic mouse drags on the resize handle moved nothing in _either_ table, including on uncapped control columns (Expiry, Pack size), so the harness — not the app — is what failed there. The cap evidence above is measurement, not a simulated drag. **Confirm by hand** that Batch now drags freely.
+
 ## Dimensions that are already clean
 
 **7 — Reactivity.** The two resources that first fetch on an **interaction** — the Log tab ([LogTab.tsx:39](detail/LogTab.tsx#L39)) and the master-list picker ([AddFromMasterListAction.tsx:63](detail/actions/AddFromMasterListAction.tsx#L63)) — both use the `.state === 'ready' || 'refreshing'` gate the root `CLAUDE.md` requires. The `.latest`-alone reads (detail node, lines, service lines, locations; list rows) all belong to resources whose first fetch coincides with the screen's own first load, which is the sanctioned boundary, and each carries a comment saying so. The post-fix [`check-reactivity`](../../../.claude/skills/check-reactivity/SKILL.md) run over the diff found nothing — see [Reactivity re-check](#reactivity-re-check).
@@ -262,6 +281,7 @@ Run over the diff per the [`check-reactivity`](../../../.claude/skills/check-rea
 - **LIB-2 — `InfoTooltip` has no custom `trigger`.** Its trigger is a fixed `InfoIcon`, so a "gloss on a word" must drop to raw `Popover`.
 - **LIB-3 — no inline-level `HStack`.** `HStack`/`Stack` are block-level `<div>`s, so a row inside a heading or other phrasing context needs a local class (`.groupHeading` here). An `as` prop, or an inline variant, would close it.
 - **LIB-4 — `HStack` can't express a two-axis gap or per-child flex basis.** That is what keeps `.headerRow` a CSS module.
+- **LIB-8 — the `code` kind's 7rem growth cap may be too tight for code columns generally.** It is a HARD cap, so any code column whose content reaches it becomes undraggable — outbound's Batch was pinned there (F17), its Item code has 18px left, and inbound's Batch is 32px away. Either the cap stays and each over-wide column overrides it locally, or `batch`/`itemCode` get `maxSize: null` in the shared config. A decision for the library owner, not a migration.
 - **LIB-7 — two verticals' Log tabs crash on `main`.** `InboundShipmentLogPanel.tsx:134` and `supplier-returns/detail/LogTab.tsx:83` both pre-format their time accessor **and** apply `getCellDefinition('time')`, which double-formats and throws `Invalid time value` — an endless spinner instead of the log. One-line fix each (hand the cell the raw `datetime`); worth a guard so the preset can't be handed a formatted string. Found via F16.
 - **LIB-6 — six verticals hand-roll a log surface** (outbound, inbound, stocktakes, internal orders, both returns) instead of consuming the shared `domain/activityLog/ActivityLogPanel` that items, patients, prescriptions and stock use — six near-identical queries and column sets. Surfaced by F16; a consolidation task, not a migration one.
 - **LIB-5 — inherited, already filed by siblings:** the icon-tone class (inbound's LIB-3, used here by `.variantInfoTrigger`) and a native `title` on a disabled button not rendering in Chromium (inbound's LIB-5, which Duplicate relies on).
