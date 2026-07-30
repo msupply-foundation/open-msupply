@@ -51,10 +51,10 @@ export const buildItemsFilters = (
       ),
     },
     lens: {
-      label: () => t('label.in-stock'),
+      label: () => t('label.stock-level'),
       render: props => (
         <FilterSelect
-          label={t('label.in-stock')}
+          label={t('label.stock-level')}
           testId={props.testId}
           value={props.filter().lens ?? ''}
           options={[

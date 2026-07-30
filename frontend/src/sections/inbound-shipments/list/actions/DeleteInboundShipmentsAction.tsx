@@ -4,10 +4,7 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import {
-  CancelButton,
-  OkButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInboundShipments } from '../inboundShipments.generated';
 
@@ -27,14 +24,17 @@ export interface DeleteInboundShipmentsActionProps {
 }
 
 // The inbound-shipments-list bulk delete (spec AC-L3): footer button + a
-// confirm → deleting → success | error dialog. Mirrors DeleteStocktakesAction.
-// The server is the source of truth (the list only OFFERS delete when every
-// selected row is New — a UI narrowing). The batch is atomic (AC-BA1): if any
-// row can't be deleted the whole batch fails and nothing is removed, so on
-// error we show the server's reason (a per-line lock can surface here too, per
-// rules → deletion). Success reports the count; the list clears selection +
-// re-queries.
-type Phase = 'confirm' | 'deleting' | 'success' | 'error';
+// confirm → deleting → error dialog. Mirrors DeleteStocktakesAction. The server
+// is the source of truth (the list only OFFERS delete when every selected row
+// is New — a UI narrowing). The batch is atomic (AC-BA1): if any row can't be
+// deleted the whole batch fails and nothing is removed, so on error we show the
+// server's reason (a per-line lock can surface here too, per rules → deletion).
+//
+// No success phase: a clean delete CLOSES the dialog — closure is the
+// confirmation and the shorter list behind it is the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21). The
+// list clears selection + re-queries via onDeleted.
+type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteInboundShipmentsAction: Component<
   DeleteInboundShipmentsActionProps
@@ -89,8 +89,10 @@ const Body = (
       setPhase('error');
       return;
     }
+    // Close first, then hand back to the list: onDeleted clears the selection,
+    // which unmounts the selection-gated footer this dialog lives in.
+    props.onClose();
     props.onDeleted();
-    setPhase('success');
   };
 
   return (
@@ -100,14 +102,17 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The error phase is no longer a question, so the heading stops asking
+      // one (it would otherwise read "Are you sure?" over a rejection).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-shipments', count)}>
           <Match when={phase() === 'error'}>
             <Alert severity="error">{errorMessage()}</Alert>
-          </Match>
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-shipments', count)}
           </Match>
         </Switch>
       }
@@ -134,11 +139,6 @@ const Body = (
             </>
           }
         >
-          {/* Success: an acknowledgement of the count, not a save — the D55
-              case where OK stays the right word. */}
-          <Match when={phase() === 'success'}>
-            <OkButton data-testid="dialog-button-ok" onClick={props.onClose} />
-          </Match>
           <Match when={phase() === 'error'}>
             <Button variant="secondary" onClick={props.onClose}>
               {t('button.close')}

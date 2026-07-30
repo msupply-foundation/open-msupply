@@ -1,18 +1,10 @@
-/* The shipment-level summary row's label ("Grand total"): heavier than the
-   FieldRow labels around it, so the row reads as the section's bottom line.
-   A scoped class rather than an inline style, and deliberately NOT promoted to
-   a shared total-row treatment — ui/docs/SIDE_PANEL.md § Known open items has
-   that treatment still unsettled (inbound bolds label + value, outbound only
-   the label), and picking it is a design decision, not a migration's. */
+/* The shipment-level summary row's label ("Grand total"): bold at BODY size —
+   deliberately the weight and size the row had before the UI migration, because
+   SIDE_PANEL.md § Known open items leaves the standard totals-row treatment
+   unpicked ("inbound bolds label + value, outbound only the label — pick one
+   and, if it recurs, promote it"). Choosing a look here would settle that by
+   accident, so this row's appearance is held still until the side-panel design
+   spec settles it. A scoped class rather than an inline style. */
 .totalLabel {
   font-weight: var(--weight-bold);
-}
-
-/* A group heading's text + its info gloss, inside SidePanelSubheading's <h3>.
-   An HStack would be a <div> inside a heading (h3 takes phrasing content), so
-   this is the inline-level equivalent — the one thing no component covers. */
-.groupHeading {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
 }

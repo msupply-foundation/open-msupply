@@ -2,14 +2,14 @@ import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import {
-  CancelButton,
-  OkButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { PlusCircleIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
@@ -115,9 +115,10 @@ export const AddFromMasterListAction: Component<
               disabled={adding()}
               onClick={() => setOpen(false)}
             />
-            {/* OK commits the bulk add — disabled until a list is chosen, and
-                showing a spinner (loading) until the add resolves (D46). */}
-            <OkButton
+            {/* Save commits the bulk add directly (spec S3 Layout, D46) —
+                disabled until a list is chosen, and showing a spinner until the
+                add resolves. No separate "add all items?" confirmation. */}
+            <DialogSaveButton
               data-testid="dialog-button-ok"
               disabled={!selected()}
               loading={adding()}

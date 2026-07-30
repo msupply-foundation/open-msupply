@@ -1,6 +1,7 @@
 import { Show } from 'solid-js';
 import { A } from '@solidjs/router';
-import { InfoIcon } from '../../icons';
+import { t } from '../../../intl';
+import { InfoTooltip } from '../feedback/InfoTooltip';
 import { StatusChip } from '../feedback/StatusChip';
 import styles from './Statistic.module.css';
 
@@ -32,16 +33,22 @@ export interface StatisticProps {
 /*
  * A single dashboard statistic (ui-standards § Dashboard): a big value beside
  * its label (one row of a panel's vertical list; the value sits in a right-
- * aligned column so rows line up). With an `href` the whole row is a link into
- * the list it counts — hand-rolled, pure CSS + a semantic <a> (the router's
- * <A>), so it carries a real link role and accessible name for free. WITHOUT
- * one it renders as plain text: a metric with no drill-down must not ship an
- * interactive element that does nothing (a self-link would announce as a link
- * and lead nowhere — accessibility § assistive-tech parity), so the link
+ * aligned column so rows line up). With an `href` the value+label pair is a
+ * link into the list it counts — hand-rolled, pure CSS + a semantic <a> (the
+ * router's <A>), so it carries a real link role and accessible name for free.
+ * WITHOUT one it renders as plain text: a metric with no drill-down must not
+ * ship an interactive element that does nothing (a self-link would announce as
+ * a link and lead nowhere — accessibility § assistive-tech parity), so the link
  * affordances (hover underline, focus ring, pointer) are scoped to the anchor.
  * When `alert` is set a red "needs attention" StatusChip appears beneath —
  * matching the current app, whose value stays normal and whose emphasis is the
- * chip. `info` adds a small tooltip marker in the brand tone.
+ * chip.
+ *
+ * `info` renders an InfoTooltip (primary tone — the app's standing brand-toned
+ * mark). Its trigger is a <button>, which may not nest inside an <a>, so the
+ * marker is a SIBLING of the link and the stat itself is the wrapper — which is
+ * what carries the testid, keeping the published hook around value + label +
+ * link + marker.
  */
 export const Statistic = (props: StatisticProps) => {
   // One body, rendered inside whichever container the href decides. A function
@@ -49,49 +56,52 @@ export const Statistic = (props: StatisticProps) => {
   // mounts (kdd/solid-reactivity-pitfalls §3: never reuse a JSX value twice).
   const body = () => (
     <>
-      <span class={styles.main}>
-        <span class={styles.value}>{props.value}</span>
-        <span class={styles.label}>
-          {props.label}
-          <Show when={props.info}>
-            <span class={styles.info} title={props.info} aria-hidden="true">
-              <InfoIcon />
-            </span>
-          </Show>
-        </span>
-      </span>
+      <span class={styles.value}>{props.value}</span>
+      <span class={styles.label}>{props.label}</span>
+    </>
+  );
+
+  return (
+    <div class={styles.stat} data-testid={props.testId}>
+      <div class={styles.row}>
+        <Show
+          when={props.href}
+          fallback={
+            // No drill-down: plain text. No aria-label either — it exists to
+            // give the LINK its accessible name; on a non-interactive row the
+            // value and label are already read in order.
+            <div class={styles.main}>{body()}</div>
+          }
+        >
+          {href => (
+            <A
+              href={href()}
+              class={styles.main}
+              aria-label={`${props.value} ${props.label}${
+                props.alert && props.alertLabel ? `, ${props.alertLabel}` : ''
+              }`}
+            >
+              {body()}
+            </A>
+          )}
+        </Show>
+        {/* Named after the stat: a panel of markers all called "More
+            information" names none of them. */}
+        <Show when={props.info}>
+          {info => (
+            <InfoTooltip
+              text={info()}
+              tone="primary"
+              label={t('label.more-information-about', { name: props.label })}
+            />
+          )}
+        </Show>
+      </div>
       <Show when={props.alert && props.alertLabel}>
         <span class={styles.alert}>
           <StatusChip label={props.alertLabel!} colour="var(--error-main)" />
         </span>
       </Show>
-    </>
-  );
-
-  return (
-    <Show
-      when={props.href}
-      fallback={
-        // No drill-down: plain text. No aria-label either — it exists to give
-        // the LINK its accessible name; on a non-interactive row the value and
-        // label are already read in order.
-        <div class={styles.stat} data-testid={props.testId}>
-          {body()}
-        </div>
-      }
-    >
-      {href => (
-        <A
-          href={href()}
-          class={styles.stat}
-          data-testid={props.testId}
-          aria-label={`${props.value} ${props.label}${
-            props.alert && props.alertLabel ? `, ${props.alertLabel}` : ''
-          }`}
-        >
-          {body()}
-        </A>
-      )}
-    </Show>
+    </div>
   );
 };

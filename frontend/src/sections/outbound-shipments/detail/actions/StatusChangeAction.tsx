@@ -7,14 +7,14 @@ import {
 } from 'solid-js';
 import { t } from '../../../../intl';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import {
-  CancelButton,
-  OkButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
 import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   CLIENT_SETTABLE,
@@ -288,10 +288,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               <OkButton disabled={releasing()} onClick={closeNotice} />
               <Show when={holdRetryStatus()}>
                 {retry => (
-                  // A non-standard verb, so a plain Button — icon-less, like
-                  // every other dialog footer action (D55).
                   <Button
                     variant="primary"
+                    icon={<ArrowRightIcon />}
                     data-testid="release-hold-and-confirm-button"
                     loading={releasing()}
                     onClick={() => void releaseAndConfirm()}

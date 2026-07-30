@@ -9,12 +9,12 @@ import {
 import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../../ui/elements/feedback/Alert';
 import {
   CancelButton,
   OkButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ZapIcon } from '../../../../ui/icons';
 import { AllocateOutboundLine } from '../outboundDetail.generated';
 import type { OutboundLineFragment } from '../outboundDetail.generated';
@@ -248,6 +248,7 @@ export const AllocateLinesAction: Component<
                   onClick={close}
                 />
               </Show>
+              {/* A confirm, not a save — D55 keeps OkButton for this case. */}
               <OkButton
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}

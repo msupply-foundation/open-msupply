@@ -3,9 +3,9 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '../../../../ui/icons';
 import { DeleteOutboundShipment } from '../outboundDetail.generated';
 
@@ -93,7 +93,7 @@ export const DeleteShipmentAction: Component<
                   onClick={close}
                 />
               </Show>
-              {/* Destructive confirm: `danger` tone, no icon (D55). */}
+              {/* Destructive confirm — danger tone, named for what it does. */}
               <Button
                 variant="danger"
                 data-testid="confirmation-modal-ok"

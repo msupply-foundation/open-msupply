@@ -17,7 +17,7 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { SelectReportModal } from '../../../domain/reports';
 import {
   PlusCircleIcon,
@@ -428,13 +428,26 @@ const RepackContent = (props: {
                   />
                 </FieldRow>
                 <FieldRow label={t('label.new-location')}>
-                  <LocationSelect
+                  <LocationVolumeSelect
                     label={t('label.new-location')}
                     hideLabel
                     locations={locations()}
                     loading={allLocations.loading}
                     value={newLocation()?.id}
                     placeholder={t('label.none')}
+                    // A repack conserves volume across the split, so what the
+                    // new location must hold is the volume LEAVING the original
+                    // line: its volume per pack × the packs being repacked
+                    // (spec/stock/rules.md › location fields).
+                    requiredVolume={
+                      (props.line.volumePerPack ?? 0) * (numberToRepack() ?? 0)
+                    }
+                    // This field is a DESTINATION, distinct from where the
+                    // stock sits now, so the origin needs naming explicitly —
+                    // repacking back into it is valid (a same-location repack
+                    // is a pure relocation, AC-R7) and its headroom already
+                    // accounts for this volume.
+                    originalLocationId={props.line.location?.id}
                     onChange={l =>
                       setNewLocation(
                         l ? { id: l.id, code: l.code, name: l.name } : null

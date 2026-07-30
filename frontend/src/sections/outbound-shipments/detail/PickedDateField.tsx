@@ -156,13 +156,13 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   return (
     <>
       <HStack gap="sm">
-        {/* `width="compact"` caps the field (a date is a short value —
-            ui/docs/SIDE_PANEL.md rule 2). Left free it fills the panel row's
-            whole control column, clipping at the panel edge and leaving no
-            room for the disabled-reason bubble beside it. */}
         <DateField
           label={t('label.picked-date')}
           hideLabel
+          // A date is a short value, so the field is compact (SIDE_PANEL.md
+          // rule 2) — which is also what keeps it from filling the panel row's
+          // whole control column and crowding out the reason bubble beside it.
+          size="small"
           width="compact"
           // The shared calendar-date input (ui-standards/inputs § dates &
           // times — typed entry or the picker, never a native date input).
