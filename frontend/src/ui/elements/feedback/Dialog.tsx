@@ -181,6 +181,9 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
           class={styles.close}
           aria-label={t('button.close')}
           onClick={() => c.onClose()}
+          // Derived from the dialog's own id (`<testId>-close`), the way
+          // PasswordField derives its visibility toggle — one id to pass.
+          data-testid={c.testId ? `${c.testId}-close` : undefined}
         >
           <CloseIcon />
         </button>
