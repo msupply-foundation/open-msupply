@@ -22,7 +22,7 @@ import { ItemSearch } from '../../../../domain/item';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
 import { PlusCircleIcon } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
-import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
+import { saveReturnLines } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
   blankDraft,
@@ -51,14 +51,6 @@ type Step = 'quantity' | 'reason';
 
 export type ReturnItem = { id: string; code: string; name: string };
 
-// What a successful save hands back: the whole return with its refreshed line
-// set (updateCustomerReturnLines returns the full invoice — the view replaces
-// its node wholesale, no refetch).
-export type ReturnLinesSaved = Extract<
-  SaveReturnLinesResult,
-  { kind: 'saved' }
->['node'];
-
 export interface ReturnItemsModalProps {
   open: boolean;
   onClose: () => void;
@@ -67,19 +59,22 @@ export interface ReturnItemsModalProps {
   mode: ReturnItemsMode;
   /** UPDATE mode: the item to open on (from the clicked row). */
   initialItemId?: string;
-  /** ADD mode: item ids already on the return, excluded from the search. */
-  excludeItemIds: () => string[];
   /**
-   * UPDATE mode: the item AFTER this one in the current on-screen order —
-   * drives "OK & next". undefined = last item (OK only).
+   * "Save & next": resolve the next item to edit. Owned by the PARENT detail
+   * view, because the line table is server-paginated — the next item may sit on
+   * a later page, and finding it pages the visible table forward (spec rules §
+   * line rules, OMS-REG-DIST-07.49). `covered` is every item stepped through
+   * this run, so a re-appearing item is never offered twice. undefined = the
+   * walk is exhausted, and the editor drops into add mode.
    */
-  nextItem: (currentItemId: string) => ReturnItem | undefined;
+  nextItem: (
+    currentItemId: string,
+    covered: Set<string>
+  ) => Promise<ReturnItem | undefined>;
   /** Resolve an item's descriptor from the current rows (update mode). */
   itemById: (id: string) => ReturnItem | undefined;
-  /** A save landed — the view replaces its node with the returned one. */
-  onSaved: (node: ReturnLinesSaved) => void;
-  /** Existing line ids on the return, per item (seeds the drafts). */
-  existingLineIds: () => ReadonlySet<string>;
+  /** A save landed — the view refetches the line table's current page. */
+  onSaved: () => void;
   /** "Return from" — the customer the goods come back from (read-only). */
   returnFromName: string;
   /**
@@ -104,11 +99,9 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         returnId={props.returnId}
         mode={props.mode}
         initialItemId={props.mode === 'update' ? openKey : undefined}
-        excludeItemIds={props.excludeItemIds}
         nextItem={props.nextItem}
         itemById={props.itemById}
         onSaved={props.onSaved}
-        existingLineIds={props.existingLineIds}
         returnFromName={props.returnFromName}
         edit={props.edit}
       />
@@ -128,12 +121,24 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   const [message, setMessage] = createSignal<
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
-  // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.28): proceeding at zero quantity
-  // warns once; the next OK applies the removal.
+  // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.28): proceeding at
+  // zero quantity warns once; the next OK applies the removal.
   const [zeroConfirmed, setZeroConfirmed] = createSignal(false);
   const [currentItem, setCurrentItem] = createSignal<ReturnItem>();
+  // The editor's OWN add/update state, seeded from how it was opened (an item
+  // to open on = update) but not pinned to it: an update-mode "Save & next"
+  // walk that runs out of items drops into add mode rather than closing (spec
+  // rules § line rules, OMS-REG-DIST-07.49). It only ever flips update → add.
+  // Every mode read below goes through this signal.
+  const [mode, setMode] = createSignal<ReturnItemsMode>(
+    props.initialItemId ? 'update' : 'add'
+  );
+  // Items stepped through this "Save & next" run, the current one included —
+  // handed to the parent's walk so a re-appearing item is never offered twice,
+  // across pages too.
+  const coveredItemIds = new Set<string>();
 
-  const noItemYet = () => props.mode === 'add' && currentItem() === undefined;
+  const noItemYet = () => mode() === 'add' && currentItem() === undefined;
 
   const tableConfig = createTableConfig({
     tableId: 'customer-return-line-edit',
@@ -141,9 +146,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
 
   // Seed the draft for one item: the return's existing lines for it (via
   // generateCustomerReturnLines' existingLinesInput — contract § draft-line
-  // generation), or one blank row when it has none yet.
+  // generation), or one blank row when it has none yet. This is the ONE path
+  // into an item, whether it came from a row click, the item search, or a
+  // "Save & next" advance — so picking an item already on the return loads its
+  // existing batch set instead of starting a duplicate (OMS-REG-DIST-07.48).
   const seedItem = async (item: ReturnItem) => {
     setCurrentItem(item);
+    coveredItemIds.add(item.id);
     setStep('quantity');
     setMessage(undefined);
     setZeroConfirmed(false);
@@ -159,10 +168,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     // is the global unexpected-error modal's (spec: Unexpected API Errors) —
     // stay in the loading phase behind it rather than seeding a blank row.
     if (result.kind !== 'success') return;
-    const seeded = seedDrafts(
-      result.data.generateCustomerReturnLines.nodes,
-      props.existingLineIds()
-    );
+    const generated = result.data.generateCustomerReturnLines.nodes;
+    // EVERY line existingLinesInput returns is already on the return (contract
+    // § draft-line generation), so the whole seed is `existing` — which is what
+    // decides that zeroing one deletes it rather than dropping it. We can't ask
+    // the detail table instead: it holds one server page, not the return's
+    // whole line set (spec contract § server-paginated line table).
+    const seeded = seedDrafts(generated, new Set(generated.map(l => l.id)));
     setDraft(
       reconcile(
         seeded.length > 0
@@ -183,22 +195,27 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   // control (ui/utils/createFocusTarget).
   const itemSearch = createFocusTarget();
 
+  // Seed on mount: a row open starts on its item; an add open starts in the
+  // empty search state, focusing the item selector.
   onMount(() => {
-    if (props.mode === 'add') itemSearch.focus();
-    if (props.mode === 'update' && props.initialItemId) {
-      const item = props.itemById(props.initialItemId);
-      if (!item) return props.onClose();
-      void seedItem(item);
-    }
+    const id = props.initialItemId;
+    if (!id) return itemSearch.focus();
+    const item = props.itemById(id);
+    if (!item) return props.onClose();
+    void seedItem(item);
   });
 
+  // Back to the empty item-search state. Reached by clearing the selection, by
+  // "Save & next" in add mode, and when an update walk runs out of items — so
+  // it always lands in ADD mode from here on.
   const backToSearch = () => {
-    itemSearch.focus();
+    setMode('add');
     setCurrentItem(undefined);
     setStep('quantity');
     setMessage(undefined);
     setZeroConfirmed(false);
     setDraft(reconcile([], { key: 'id' }));
+    itemSearch.focus();
   };
 
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
@@ -292,7 +309,10 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       setMessage({ severity: 'error', text: result.message });
       return false;
     }
-    props.onSaved(result.node);
+    // The parent refetches the line table's current page; the mutation's own
+    // line set is never spliced into a held list (spec rules § server-paginated
+    // line table).
+    props.onSaved();
     return true;
   };
 
@@ -300,24 +320,25 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (await save()) props.onClose();
   };
 
-  // OK & next: save, then advance without closing — update mode steps to the
-  // next item; add mode returns to the search (the saved item drops out via
-  // the live excludeItemIds).
+  // "Save & next": save, then — on success only — advance without closing. A
+  // failed save stays put.
+  // - ADD: back to the empty item search for another item.
+  // - UPDATE: ask the PARENT for the next item (it pages the detail table
+  //   forward as needed, guarding repeats with the covered set). Got one → seed
+  //   it in place, no remount. None left → the walk is exhausted, so drop into
+  //   add mode rather than closing (OMS-REG-DIST-07.49).
   const onOkNext = async () => {
     if (!(await save())) return;
-    if (props.mode === 'add') {
+    if (mode() === 'add') {
       backToSearch();
       return;
     }
     const current = currentItem();
-    const next = current && props.nextItem(current.id);
+    const next = current
+      ? await props.nextItem(current.id, coveredItemIds)
+      : undefined;
     if (next) await seedItem(next);
-    else props.onClose();
-  };
-
-  const hasNext = () => {
-    const current = currentItem();
-    return props.mode === 'add' || (current && props.nextItem(current.id));
+    else backToSearch(); // exhausted → add mode
   };
 
   // Step-1 (quantity) and step-2 (reason) grids come from the shared column
@@ -337,17 +358,23 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       // its own, and the heading text would be redundant on a surface the user
       // reached by clicking Add item / a line. DISABLED in update mode, where
       // it simply names the item being edited (and a disabled input can't steal
-      // the dialog's initial focus).
+      // the dialog's initial focus) — keyed off mode(), so an exhausted walk's
+      // drop into add mode makes it live.
+      //
+      // NO excludeItemIds: the search offers the whole addable catalogue,
+      // including items already on the return (issue #428, decided at review —
+      // spec rules § line rules, OMS-REG-DIST-07.48). Picking one goes through
+      // seedItem like any other, which loads that item's existing batch set, so
+      // a second visit edits rather than duplicating.
       title={
         <ItemSearch
           label={t('label.item')}
           hideLabel
           storeId={props.storeId}
           focusTarget={itemSearch}
-          excludeItemIds={props.excludeItemIds()}
           value={currentItem()?.id}
           selectedItem={currentItem()}
-          disabled={props.mode !== 'add'}
+          disabled={mode() !== 'add'}
           onSelect={item =>
             item
               ? void seedItem({
@@ -428,12 +455,14 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 />
               </Match>
             </Switch>
-            {/* OK & next is actionable only on the reason step with a next
-                item to advance to; anywhere else the action is permanently
-                dead in-context (the quantity step can't save-and-advance, the
-                last item has nowhere to advance to), so it's HIDDEN, not
-                disabled — the blocked-affordances ladder (D39). */}
-            <Show when={step() === 'reason' && hasNext()}>
+            {/* Save & next lives on the REASON step only — the quantity step
+                can't save-and-advance, so the action is permanently dead there
+                and is HIDDEN rather than disabled (blocked-affordances ladder,
+                D39). It is NOT gated on there being a next item: the walk is a
+                cross-page one the parent resolves asynchronously, and running
+                out is a legitimate outcome — the editor drops into add mode
+                (OMS-REG-DIST-07.49). */}
+            <Show when={step() === 'reason'}>
               <SaveAndNextButton
                 loading={saving()}
                 data-testid="dialog-button-next-and-ok"

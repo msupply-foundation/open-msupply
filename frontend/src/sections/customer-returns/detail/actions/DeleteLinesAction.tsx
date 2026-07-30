@@ -5,7 +5,6 @@ import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
 import { TrashIcon } from '../../../../ui/icons';
 import type { CustomerReturnLineFragment } from '../customerReturnDetail.generated';
 import { saveReturnLines } from '../returnUpdate';
-import type { ReturnLinesSaved } from '../edit-modal/ReturnItemsModal';
 
 export interface DeleteLinesActionProps {
   storeId: string;
@@ -13,10 +12,11 @@ export interface DeleteLinesActionProps {
   /** The selected line rows (OMS-REG-DIST-07.8). */
   selectedLines: () => CustomerReturnLineFragment[];
   /**
-   * The refreshed return — the view replaces its node and clears the
-   * selection.
+   * The delete landed — the view refetches the line table's current page and
+   * clears the selection (the table is server-paginated, so the mutation's own
+   * line set is never spliced in; spec rules § server-paginated line table).
    */
-  onDeleted: (node: ReturnLinesSaved) => void;
+  onDeleted: () => void;
 }
 
 // Bulk line delete from the detail's line table (ui-surface S3 § footer — the
@@ -46,7 +46,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
     });
     // A rejection is already showing — saveReturnLines routes Forbidden to the
     // global permission modal and anything else to the unexpected-error one.
-    if (result.kind === 'saved') props.onDeleted(result.node);
+    if (result.kind === 'saved') props.onDeleted();
   };
 
   return (
