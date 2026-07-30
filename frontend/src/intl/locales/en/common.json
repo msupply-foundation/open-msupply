@@ -443,6 +443,7 @@
   "error.failed-to-initialise-standalone-central": "Failed to initialise as central server",
   "error.failed-to-save-bundled-item": "Failed to save bundled item",
   "error.failed-to-save-contact-trace": "Failed to save contact trace",
+  "error.failed-to-save-clinician": "Failed to save clinician",
   "error.failed-to-save-custom-fields": "Failed to save custom fields",
   "error.failed-to-save-donor-charges": "Failed to save donor",
   "error.failed-to-save-encounter": "Failed to save encounter",
