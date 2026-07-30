@@ -7,7 +7,11 @@
 #   annotations on unit-quantity columns.
 # - preferences.showIndicativePriceInRequisitions → the two indicative-price
 #   columns + the side panel's Pricing section.
-# - preferences.warningForExcessRequest → the excess-request cue on Requested.
+# - preferences.warningForExcessRequest → the excess-request cue on Requested
+#   and the line editor's exceeds-suggested warning.
+# - preferences.displayPopulationBasedForecasting (with a forecast-carrying
+#   line) → the line editor's Target stock (population) row (rules › forecast
+#   context).
 # - storePreferences.responseRequisitionRequiresAuthorisation (with a non-NONE
 #   approval status) → the toolbar's approval row + the approved-quantity /
 #   approval-comment columns.
@@ -19,6 +23,7 @@ query requisitionDetailContext($storeId: String!) {
     manageVaccinesInDoses
     showIndicativePriceInRequisitions
     warningForExcessRequest
+    displayPopulationBasedForecasting
   }
   storePreferences(storeId: $storeId) {
     responseRequisitionRequiresAuthorisation

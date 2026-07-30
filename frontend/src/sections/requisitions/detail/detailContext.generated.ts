@@ -11,6 +11,7 @@ export type RequisitionDetailContextResult = {
   manageVaccinesInDoses: boolean;
   showIndicativePriceInRequisitions: boolean;
   warningForExcessRequest: boolean;
+  displayPopulationBasedForecasting: boolean;
 };
   storePreferences: {
   responseRequisitionRequiresAuthorisation: boolean;
@@ -19,5 +20,5 @@ export type RequisitionDetailContextResult = {
 };
 
 export const RequisitionDetailContext = {
-  query: "query requisitionDetailContext($storeId: String!) {\n  preferences(storeId: $storeId) {\n    manageVaccinesInDoses\n    showIndicativePriceInRequisitions\n    warningForExcessRequest\n  }\n  storePreferences(storeId: $storeId) {\n    responseRequisitionRequiresAuthorisation\n    extraFieldsInRequisition\n  }\n}",
+  query: "query requisitionDetailContext($storeId: String!) {\n  preferences(storeId: $storeId) {\n    manageVaccinesInDoses\n    showIndicativePriceInRequisitions\n    warningForExcessRequest\n    displayPopulationBasedForecasting\n  }\n  storePreferences(storeId: $storeId) {\n    responseRequisitionRequiresAuthorisation\n    extraFieldsInRequisition\n  }\n}",
 } as TypedDocument<RequisitionDetailContextResult, RequisitionDetailContextVariables>;

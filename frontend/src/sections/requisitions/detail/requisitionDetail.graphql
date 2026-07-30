@@ -21,6 +21,7 @@ fragment RequisitionDetailLine on RequisitionLineNode {
   item {
     code
     unitName
+    defaultPackSize
     doses
     isVaccine
   }
@@ -42,9 +43,18 @@ fragment RequisitionDetailLine on RequisitionLineNode {
   expiringUnits
   daysOutOfStock
   averageMonthlyConsumption
+  # The stored variance reason: optionId is what the editor writes back (and
+  # must RESEND with every save — an omitted optionId clears the stored reason,
+  # contract › line editing); reason.reason is the table's display text.
+  optionId
   reason {
     reason
   }
+  # The customer's population forecast, copied by the transfer (context only —
+  # never written from this side; rules › forecast context). Gated client-side
+  # on displayPopulationBasedForecasting + a non-null, non-zero total.
+  forecastTotalUnits
+  forecastTotalDoses
   suggestedQuantity
   requestedQuantity
   approvedQuantity
