@@ -124,7 +124,7 @@ Run `bash .github/scripts/cleanup-docker-tags.sh --help` for all options.
 ### Requirements
 
 - Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
-- The `ORG_WORKFLOW_TOKEN` secret is needed for triggering downstream plugin tests
+- The tmf-ci-bot GitHub App credentials (`TMF_CI_BOT_APP_ID` variable and `TMF_CI_BOT_PRIVATE_KEY` secret) are needed for triggering downstream plugin tests
 
 ### Testing the workflow
 

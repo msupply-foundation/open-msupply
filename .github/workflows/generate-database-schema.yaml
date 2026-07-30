@@ -3,9 +3,10 @@ name: Generate Database Schema
 # Generates static database schema documentation using SchemaSpy and publishes
 # it to the open-msupply-database-schema repository (GitHub Pages).
 #
-# Required secret: DATABASE_SCHEMA_REPO_TOKEN
-#   A GitHub Personal Access Token (PAT) with write access to
-#   msupply-foundation/open-msupply-database-schema.
+# Auth: a short-lived token is minted from the tmf-ci-bot GitHub App
+# (vars.TMF_CI_BOT_APP_ID / secrets.TMF_CI_BOT_PRIVATE_KEY), which must be
+# installed on msupply-foundation/open-msupply-database-schema with
+# contents write.
 #
 # The published schema is accessible at:
 #   https://msupply-foundation.github.io/open-msupply-database-schema/<version>/
@@ -104,11 +105,20 @@ jobs:
             -v "$PWD/schemaspy.properties:/schemaspy.properties" \
             schemaspy/schemaspy:latest
 
+      - name: Mint tmf-ci-bot token for the schema repo
+        uses: actions/create-github-app-token@v3
+        id: bot-token
+        with:
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-database-schema
+
       - name: Publish schema to open-msupply-database-schema
         env:
-          DATABASE_SCHEMA_REPO_TOKEN: ${{ secrets.DATABASE_SCHEMA_REPO_TOKEN }}
+          SCHEMA_REPO_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: |
-          git clone https://x-access-token:${DATABASE_SCHEMA_REPO_TOKEN}@github.com/msupply-foundation/open-msupply-database-schema.git /tmp/schema-repo
+          git clone https://x-access-token:${SCHEMA_REPO_TOKEN}@github.com/msupply-foundation/open-msupply-database-schema.git /tmp/schema-repo
           mkdir -p /tmp/schema-repo/docs/${VERSION}
           cp -r schemaspy/output/. /tmp/schema-repo/docs/${VERSION}/
           cd /tmp/schema-repo

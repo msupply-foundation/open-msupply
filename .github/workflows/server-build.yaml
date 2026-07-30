@@ -20,8 +20,8 @@ jobs:
         uses: actions/create-github-app-token@v3
         id: fe-token
         with:
-          client-id: ${{ vars.FE_APP_ID }}
-          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
           owner: msupply-foundation
           repositories: open-msupply-frontend
       - name: Build
