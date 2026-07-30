@@ -11,7 +11,7 @@
 
 .panel {
   flex-shrink: 0;
-  inline-size: 20rem;
+  inline-size: 24rem;
   max-inline-size: 100%;
   display: flex;
   flex-direction: column;
@@ -44,6 +44,11 @@
 
 .section {
   padding: var(--space-4);
+  /* A FIXED label track for every FieldRow in the panel (the var hook in
+     FieldRow.module.css): the panel stacks many rows with mixed-length labels,
+     so a fixed track keeps all values aligned in one column — long labels wrap
+     within it rather than shoving their value right (see FieldRow's note). */
+  --field-row-label: 8rem;
 }
 
 .section + .section {
@@ -64,12 +69,69 @@
    .section so they beat the Accordion module's single-class rules regardless
    of bundle order. */
 .section .sectionTrigger {
-  margin-block-end: var(--space-3);
   padding: 0;
+}
+
+/* The heading→content gap belongs only to an OPEN section: apply it when
+   Kobalte flags the trigger data-expanded, so a collapsed section's heading
+   sits flush against the section's own bottom padding instead of dangling an
+   extra space-3 of dead space beneath it. */
+.section .sectionTrigger[data-expanded] {
+  margin-block-end: var(--space-3);
 }
 
 .section .sectionContent {
   padding: 0;
+  /* Row spacing lives HERE, not in line-height: a flex column with a fixed
+     gap between the section's rows (and sub-headings), so the tight in-row
+     line-height (below) governs a wrapped label's own two lines while this
+     gap governs the space BETWEEN rows — the two no longer fight. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Tighter line-height inside the panel's field rows: a wrapped label's two
+   lines then hug, and single-line rows sit closer together, keeping the dense
+   panel compact. Scoped to FieldRow via its stable data-label-width hook (its
+   own class is module-scoped, so it can't be named from here). */
+.section [data-label-width] {
+  line-height: 1.25;
+}
+
+/* Sub-heading grouping fields within a section (Charges → "Stock charges" /
+   "Service charges"): a bold <h3> under the section's <h2>, with a gap below
+   separating it from its group's rows. Laid out as a row so an optional group
+   action (an Edit button) pins to the inline-end, centred against the
+   heading. */
+.subheading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  /* Trial: a wide underline spanning the whole row (like FormSection's ruled
+     heading) — the rule sits under both the heading text and its action. The
+     rule hugs the text (small padding above it); an equal bottom margin hands
+     the reclaimed space to BELOW the rule (on top of the column gap), keeping
+     the heading's overall footprint unchanged. */
+  padding-block-end: var(--space-1);
+  margin-block-end: var(--space-1);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+.subheadingTitle {
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+/* A second (or later) sub-heading in the same section starts a NEW group after
+   the previous group's rows, so it needs a break above to read as a fresh
+   group. The first sub-heading is the section's first child — flush to the
+   heading/accordion trigger already, so it takes no top margin. */
+.subheading:not(:first-child) {
+  margin-block-start: var(--space-3);
 }
 
 /* Field rows: a <dl> of dt/dd pairs — label inline-start, value inline-end. */

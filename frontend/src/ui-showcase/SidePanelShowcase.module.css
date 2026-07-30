@@ -3,7 +3,7 @@
  * inline-end edge, full height, that the panel slides out of over the page —
  * the MenuBar overlay-panel pattern, mirrored (translateX from +100%, RTL
  * flips the sign via the --hide-x custom property). The holder shrink-wraps
- * the panel's own 17.5rem width; the delayed visibility flip keeps the
+ * the panel's own width (the panel owns it); the delayed visibility flip keeps the
  * closed panel out of the tab order and the accessibility tree.
  */
 .panelHolder {
