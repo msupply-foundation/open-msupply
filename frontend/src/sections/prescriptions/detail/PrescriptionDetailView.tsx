@@ -19,6 +19,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
@@ -37,6 +38,8 @@ import {
 } from '../../../ui/elements/tabs/Tabs';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import {
+  AlertCircleIcon,
+  CheckIcon,
   CloseIcon,
   InfoIcon,
   PlusCircleIcon,
@@ -44,6 +47,7 @@ import {
   SidebarIcon,
   TrashIcon,
 } from '../../../ui/icons';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
@@ -99,6 +103,18 @@ const PrescriptionDetailView: Component = () => {
   const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
   const [printerMissing, setPrinterMissing] = createSignal(false);
   const [printingLabels, setPrintingLabels] = createSignal(false);
+  // The print outcome reported ON the control that started it (D73 — a label
+  // leaves the app, so nothing on screen would otherwise distinguish printed
+  // from not). Both print controls can be on screen at once, so the flash
+  // carries which one to label: the app bar's must not report an outcome the
+  // bulk bar's button earned. It reverts on its own timer; the failure detail
+  // is held separately so its dialog stays open until the user closes it.
+  type PrintSource = 'header' | 'bulk';
+  const printFlash = createFlash<{
+    source: PrintSource;
+    outcome: 'done' | 'failed';
+  }>();
+  const [printError, setPrintError] = createSignal<string>();
 
   // The prescription — header, side panel, AND lines in one read (a
   // prescription's line set is small; no server paging needed). A NodeError
@@ -251,8 +267,10 @@ const PrescriptionDetailView: Component = () => {
 
   // Print labels (AC-E2): gated on a configured label printer; one label per
   // dispensed item — the whole prescription from the app bar, the selection
-  // from the bulk bar.
-  const runPrintLabels = async (lineIds?: string[]) => {
+  // from the bulk bar. The endpoint's answer is reported either way (.64): the
+  // printer is off-screen hardware, so a rejected print reaches the user only
+  // through this control.
+  const runPrintLabels = async (source: PrintSource, lineIds?: string[]) => {
     const node = info();
     if (!node || printingLabels()) return;
     setPrintingLabels(true);
@@ -268,11 +286,40 @@ const PrescriptionDetailView: Component = () => {
       const lines = lineIds
         ? rows().filter(line => lineIds.includes(line.id))
         : rows();
-      await printLabels(buildLabels(node, storeNameOf(params.storeId), lines));
+      const outcome = await printLabels(
+        buildLabels(node, storeNameOf(params.storeId), lines)
+      );
+      if (outcome.ok) {
+        printFlash.show({ source, outcome: 'done' });
+        return;
+      }
+      printFlash.show({ source, outcome: 'failed' });
+      setPrintError(outcome.detail);
     } finally {
       setPrintingLabels(false);
     }
   };
+
+  // What a given print control is reporting — nothing unless it was the one
+  // pressed. Resting (undefined) leaves each control its own label and icon.
+  const printOutcomeOf = (source: PrintSource) => {
+    const flash = printFlash.value();
+    return flash?.source === source ? flash.outcome : undefined;
+  };
+  const printIcon = (outcome?: 'done' | 'failed') =>
+    outcome === 'done' ? (
+      <CheckIcon />
+    ) : outcome === 'failed' ? (
+      <AlertCircleIcon />
+    ) : (
+      <PrinterIcon />
+    );
+  const printText = (outcome?: 'done' | 'failed') =>
+    outcome === 'done'
+      ? t('message.print-success')
+      : outcome === 'failed'
+        ? t('message.print-failed')
+        : undefined;
 
   const openRow = (line: Line) => {
     if (!disabled())
@@ -439,9 +486,10 @@ const PrescriptionDetailView: Component = () => {
                     </Button>
                   </Show>
                   {/* Print: labels primary, the report selector as the
-                      option — both at every status (AC-E1/E2). */}
+                      option — both at every status (AC-E1/E2). Labels report
+                      their outcome here (.64): busy, then printed / failed. */}
                   <SplitButton
-                    icon={<PrinterIcon />}
+                    icon={printIcon(printOutcomeOf('header'))}
                     testId="print-button"
                     options={[
                       {
@@ -454,11 +502,17 @@ const PrescriptionDetailView: Component = () => {
                       },
                     ]}
                     defaultValue="labels"
-                    onAction={value =>
-                      value === 'labels'
-                        ? void runPrintLabels()
-                        : setReportOpen(true)
-                    }
+                    loading={printingLabels()}
+                    mainLabel={printText(printOutcomeOf('header'))}
+                    onAction={value => {
+                      if (value === 'labels')
+                        return void runPrintLabels('header');
+                      // Picking an option also re-targets the main button, so a
+                      // lingering "Printed" would now label Export or print —
+                      // drop it (createFlash § clear).
+                      printFlash.clear();
+                      setReportOpen(true);
+                    }}
                   />
                   <Button
                     variant="secondary"
@@ -562,11 +616,13 @@ const PrescriptionDetailView: Component = () => {
                   </Show>
                   <Button
                     variant="secondary"
-                    icon={<PrinterIcon />}
+                    icon={printIcon(printOutcomeOf('bulk'))}
                     loading={printingLabels()}
-                    onClick={() => void runPrintLabels(selectedIds())}
+                    data-testid="print-labels-button"
+                    onClick={() => void runPrintLabels('bulk', selectedIds())}
                   >
-                    {t('button.print-prescription-label')}
+                    {printText(printOutcomeOf('bulk')) ??
+                      t('button.print-prescription-label')}
                   </Button>
                   <ContentFooterActions>
                     <Button
@@ -684,6 +740,36 @@ const PrescriptionDetailView: Component = () => {
               {t('error.label-printer-not-configured')}
             </Alert>
           </Dialog>
+
+          {/* The print was attempted and the server refused it (.64). Distinct
+              from the notice above: that one is a configuration warning caught
+              before any request, this carries the endpoint's own message — its
+              plain-text body, the only detail there is. */}
+          <Show when={printError()}>
+            {detail => (
+              <Dialog
+                open
+                onClose={() => setPrintError(undefined)}
+                icon={<AlertCircleIcon />}
+                testId="print-error-modal"
+                title={t('heading.unable-to-print')}
+                actions={
+                  <Button
+                    variant="secondary"
+                    data-testid="print-error-modal-close"
+                    onClick={() => setPrintError(undefined)}
+                  >
+                    {t('button.close')}
+                  </Button>
+                }
+              >
+                <Alert severity="error">
+                  {t('error.printing-label')}
+                  <ErrorDetails detail={detail()} />
+                </Alert>
+              </Dialog>
+            )}
+          </Show>
         </Tabs>
       )}
     </Show>
