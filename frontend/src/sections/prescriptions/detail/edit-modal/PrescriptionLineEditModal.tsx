@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { t, tPlural } from '../../../../intl';
+import { getPlural, t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -104,37 +104,54 @@ export const PrescriptionLineEditModal: Component<
   <Body {...props} />
 );
 
-// Resolve the pure warning descriptors (./allocationWarnings) to banner
-// strings and per-category testids — mirroring the outbound editor's mapping
-// of the same shared vocabulary.
-const warningText = (message: PrescriptionWarningMessage): string => {
+// Resolve a pure report descriptor (./allocationWarnings) to the banner the
+// editor renders: its text, its testid, and its severity.
+//
+// Severity follows whether the user must act (spec/stock-allocation
+// § the allocation editor body): INFO where allocation handled the situation
+// and is explaining itself — stock it declined to draw from — and WARNING
+// where the outcome differs from what was asked and only the user can resolve
+// it (a broken pack, an adjusted entry).
+const banner = (
+  message: PrescriptionWarningMessage
+): { text: string; testId: string; severity: 'info' | 'warning' } => {
   switch (message.key) {
-    case 'messages.allocated-lines-skipped-line-reasons':
-      return t(message.key, {
-        reasons: message.reasons.map(reason => t(reason)).join(', '),
-      });
+    case 'messages.stock-on-hold':
+      return {
+        text: t(message.key),
+        testId: 'prescription-skipped-stock-warning-on-hold',
+        severity: 'info',
+      };
+    case 'messages.stock-expired':
+      return {
+        text: t(message.key),
+        testId: 'prescription-skipped-stock-warning-expired',
+        severity: 'info',
+      };
+    case 'messages.stock-unusable-vvm':
+      return {
+        text: t(message.key),
+        testId: 'prescription-skipped-stock-warning-unusable-vvm',
+        severity: 'info',
+      };
     case 'messages.over-allocated-line':
-      return t(message.key, {
-        quantity: formatNumber(message.quantity),
-        issueQuantity: formatNumber(message.issueQuantity),
-      });
+      return {
+        text: t(message.key, {
+          quantity: formatNumber(message.quantity),
+          issueQuantity: formatNumber(message.issueQuantity),
+        }),
+        testId: 'prescription-adjusted-entry-warning',
+        severity: 'warning',
+      };
     case 'messages.partial-pack-warning-units':
     case 'messages.partial-pack-warning-doses':
-      return t(message.key, {
-        nearestAbove: formatNumber(message.nearestAbove),
-      });
-  }
-};
-
-const warningTestId = (message: PrescriptionWarningMessage): string => {
-  switch (message.key) {
-    case 'messages.allocated-lines-skipped-line-reasons':
-      return 'prescription-skipped-stock-warning';
-    case 'messages.over-allocated-line':
-      return 'prescription-adjusted-entry-warning';
-    case 'messages.partial-pack-warning-units':
-    case 'messages.partial-pack-warning-doses':
-      return 'prescription-partial-pack-warning';
+      return {
+        text: t(message.key, {
+          nearestAbove: formatNumber(message.nearestAbove),
+        }),
+        testId: 'prescription-partial-pack-warning',
+        severity: 'warning',
+      };
   }
 };
 
@@ -259,6 +276,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   const allocatedUnits = () => issuedUnits(lines);
   const availableUnits = () => draftAvailableUnits(lines);
+  /** The available total AS DISPLAYED — read twice (figure + unit name). */
+  const availableInLens = () => unitsToLens(availableUnits(), allocateLens());
 
   // Who owns the distribution waiting behind the debounce. Clearing a field
   // drops only ITS OWN pending call — never the sibling's (the two fields sit
@@ -403,22 +422,31 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   // The collapsed Batches trigger's allocation summary (OMS-REG-DIS-03.57):
   // each drawn batch and its quantity, the unit named once at the end —
-  // `RS-A · 1,014, RS-B · 6` — folding to a count + total beyond three
+  // `RS-A : 1,014, RS-B : 6 tablets` — folding to a count + total beyond three
   // batches. Quantities display-rounded (allocation math carries float
   // noise). Hidden while expanded: the grid then shows the figures per row.
+  //
+  // ALWAYS unit-denominated, whatever the allocate-in lens is (ui-surface S4 —
+  // the batch grid is unit-denominated too, so the summary matches the rows it
+  // stands in for). Hence the unit is named in BOTH branches: bare figures
+  // sitting beside a doses-lens available total would read as doses.
   const BatchSummary = () => {
     const expanded = useAccordionItemExpanded();
     const drawn = () => lines.filter(line => line.numberOfPacks > 0);
     const summary = () => {
       const batches = drawn();
+      const total = batches.reduce(
+        (sum, line) => sum + line.numberOfPacks * line.packSize,
+        0
+      );
+      // Pluralised on the TOTAL: the name labels the whole summary, not just
+      // the entry it trails.
+      const unit = getPlural(unitName(), total);
       if (batches.length > 3)
         return `${tPlural('label.batch-count', batches.length)} · ${round(
-          batches.reduce(
-            (sum, line) => sum + line.numberOfPacks * line.packSize,
-            0
-          ),
+          total,
           2
-        )} ${unitName()}`;
+        )} ${unit}`;
       const entries = batches.map(
         line =>
           `${line.batch ?? t('label.no-batch')} : ${round(
@@ -426,7 +454,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             2
           )}`
       );
-      return `${entries.join(', ')}`;
+      return `${entries.join(', ')} ${unit}`;
     };
     return (
       <Show when={!expanded() && drawn().length > 0}>
@@ -746,18 +774,21 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           </Alert>
         </Show>
 
-        {/* …and the remaining reported categories, stacked one banner each:
-            barred stock skipped — expired / unusable VVM; held stock is
-            hidden, not reported (.59/.60) — the split-pack warning (.58),
-            an adjusted manual entry (.19). */}
+        {/* …and the remaining reported categories, stacked one banner each —
+            one per skipped category, each its own sentence at info (expired /
+            unusable VVM; held stock is hidden, not reported — .59/.60) — the
+            split-pack warning (.58), an adjusted manual entry (.19). */}
         <Show when={warnings().length > 0}>
           <div class={styles.warningStack}>
             <For each={warnings()}>
-              {message => (
-                <Alert severity="warning" testId={warningTestId(message)}>
-                  {warningText(message)}
-                </Alert>
-              )}
+              {message => {
+                const { text, testId, severity } = banner(message);
+                return (
+                  <Alert severity={severity} testId={testId}>
+                    {text}
+                  </Alert>
+                );
+              }}
             </For>
           </div>
         </Show>
@@ -780,14 +811,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               <AccordionTrigger
                 // The available total rides the trigger's end (rather than
                 // its own line above the fields) — always visible, no
-                // vertical cost.
+                // vertical cost. UNLIKE the batch summary beside it this
+                // follows the allocate-in lens (it's the Issue field's
+                // headroom); the unit name is pluralised so the two agree.
+                // `label.doses` is already plural.
                 end={
                   <>
-                    {t('label.available')}:{' '}
-                    {formatNumber(
-                      unitsToLens(availableUnits(), allocateLens())
-                    )}{' '}
-                    {dosesMode() ? t('label.doses') : unitName()}
+                    {t('label.available')}: {formatNumber(availableInLens())}{' '}
+                    {dosesMode()
+                      ? t('label.doses')
+                      : getPlural(unitName(), availableInLens())}
                   </>
                 }
               >
