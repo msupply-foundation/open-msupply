@@ -232,3 +232,30 @@ mutation updateRequisition(
     }
   }
 }
+
+# The master-list bulk add (AC-ML1; spec S2 § page actions → the shared
+# domain/masterList picker): one line per stock item on the chosen list not
+# already on the requisition, all quantities zero — idempotent, skip-by-item.
+# Success returns the requisition's ENTIRE line set (the client refetches
+# regardless, so only the outcome is needed here). The only typed rejection is
+# MasterListNotFoundForThisStore (AC-ML2 — also fires for another store's or a
+# program list); cannot-edit arrives as a plain GraphQL error on this mutation
+# (contract wire trap), surfacing through the global failure modal.
+mutation addRequisitionFromMasterList(
+  $storeId: String!
+  $input: ResponseAddFromMasterListInput!
+) {
+  responseAddFromMasterList(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on ResponseAddFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

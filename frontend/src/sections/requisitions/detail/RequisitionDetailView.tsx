@@ -16,6 +16,7 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
@@ -51,7 +52,11 @@ import {
   type RequisitionDetailLineFragment,
 } from './requisitionDetail.generated';
 import { RequisitionDetailContext } from './detailContext.generated';
-import { saveRequisitionFields } from './requisitionUpdate';
+import {
+  addRequisitionFromMasterList,
+  saveRequisitionFields,
+} from './requisitionUpdate';
+import { MasterListPickerModal } from '../../../domain/masterList';
 import {
   isApprovalBlocked,
   isRequisitionEditable,
@@ -78,9 +83,9 @@ import { RequisitionLineEditModal } from './edit-modal/RequisitionLineEditModal'
 // The requisition detail view (spec/requisitions S2): view, header edits
 // (customer reference / comment / colour), the side panel (S5), the Documents
 // and Log tabs, Export/Print (reports S4), line selection + bulk delete
-// (AC-LD1–LD4), and navigation/not-found. The line editor (S4), the supply
-// actions (auto-populate, Create shipment), the finalise action, and the
-// master-list add are later slices.
+// (AC-LD1–LD4), the master-list add (AC-ML1–ML2), and navigation/not-found.
+// The line editor (S4), the supply actions (auto-populate, Create shipment),
+// and the finalise action are later slices.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -274,6 +279,41 @@ const RequisitionDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+
+  // Add from master list (spec S2 § page actions, AC-ML1): the S7 picker, a
+  // pending choice awaiting its are-you-sure confirmation, and a rejection's
+  // fixed-copy notice.
+  const [addChoice, setAddChoice] = createSignal('item');
+  const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
+  const [pendingMasterList, setPendingMasterList] = createSignal<{
+    id: string;
+    name: string;
+  }>();
+  const [masterListError, setMasterListError] = createSignal<string>();
+
+  // The Add split button's action: Add item opens the line editor, Add from
+  // master list opens the shared picker.
+  const onAddAction = (choice: string) => {
+    if (choice === 'master-list') setMasterListPickerOpen(true);
+    else setEditorLine({ mode: 'add' });
+  };
+
+  // The confirmed bulk add (AC-ML1): add, then re-read the line list so the
+  // table reflects it; a rejection replaces the confirmation with its fixed
+  // copy (AC-ML2).
+  const confirmAddFromMasterList = async () => {
+    const list = pendingMasterList();
+    const node = info();
+    if (!list || !node) return;
+    setPendingMasterList(undefined);
+    const result = await addRequisitionFromMasterList(
+      params.storeId,
+      node.id,
+      list.id
+    );
+    if (result.kind === 'done') void refetch();
+    else if (result.kind === 'error') setMasterListError(result.message);
+  };
 
   // Line-table row selection (AC-LD1). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar
@@ -803,19 +843,27 @@ const RequisitionDetailView: Component = () => {
               <Header>
                 <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
                 <HeaderButtons>
-                  {/* Add item — the line editor in add mode (S4). Disabled on
-                      a read-only, program, or transfer-linked requisition
-                      (spec S2 § page actions). It becomes the Add SPLIT
-                      button (· Add from master list) with the master-list
-                      slice; Supply requested arrives with the supply slice. */}
-                  <Button
+                  {/* Add — a split of Add item (the line editor, S4) and Add
+                      from master list (the shared S7 picker). The whole
+                      control is disabled on a read-only, program, or
+                      transfer-linked requisition (spec S2 § page actions);
+                      Supply requested arrives with the supply slice. */}
+                  <SplitButton
                     icon={<PlusCircleIcon />}
-                    data-testid="add-item-button"
+                    testId="add-item-button"
                     disabled={!canAdd()}
-                    onClick={() => setEditorLine({ mode: 'add' })}
-                  >
-                    {t('button.add-item')}
-                  </Button>
+                    disabledTitle={t('error.cannot-add-items-to-requisition')}
+                    value={addChoice()}
+                    onValueChange={setAddChoice}
+                    onAction={onAddAction}
+                    options={[
+                      { value: 'item', label: t('button.add-item') },
+                      {
+                        value: 'master-list',
+                        label: t('button.add-from-master-list'),
+                      },
+                    ]}
+                  />
                   {/* Export/Print — a read, offered on every status. */}
                   <ExportPrintRequisitionAction requisitionId={node().id} />
                   {/* More — reopens the side panel; shown only while closed. */}
@@ -1040,6 +1088,41 @@ const RequisitionDetailView: Component = () => {
                 void refetch();
               }}
             />
+
+            {/* Add from master list (S2 § page actions): the shared picker,
+                then an are-you-sure confirmation — only on OK are the lines
+                added (AC-ML1) — then the bulk add. */}
+            <MasterListPickerModal
+              open={masterListPickerOpen()}
+              onClose={() => setMasterListPickerOpen(false)}
+              storeId={params.storeId}
+              onSelect={list => {
+                setMasterListPickerOpen(false);
+                setPendingMasterList(list);
+              }}
+            />
+            <Show when={pendingMasterList()}>
+              <ConfirmDialog
+                open
+                title={t('heading.are-you-sure')}
+                message={t('messages.confirm-add-from-master-list')}
+                onConfirm={() => void confirmAddFromMasterList()}
+                onClose={() => setPendingMasterList(undefined)}
+              />
+            </Show>
+            {/* A rejection's fixed copy (AC-ML2): not-found under its own
+                message, anything else under the generic cannot-add copy. */}
+            <Show when={masterListError()}>
+              {message => (
+                <ConfirmDialog
+                  open
+                  title={t('error.something-wrong')}
+                  message={message()}
+                  onConfirm={() => setMasterListError(undefined)}
+                  onClose={() => setMasterListError(undefined)}
+                />
+              )}
+            </Show>
           </Page>
         )}
       </Show>
