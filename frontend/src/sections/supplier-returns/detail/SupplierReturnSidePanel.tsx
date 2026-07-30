@@ -231,14 +231,19 @@ export const SupplierReturnSidePanel: Component<
         </SidePanelActions>
       </SidePanelSection>
 
-      <ConfirmDialog
-        open={deleteConfirm()}
-        onClose={() => setDeleteConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural('messages.confirm-delete-returns', 1)}
-        confirmVariant="danger"
-        onConfirm={() => void runDelete()}
-      />
+      {/* Mounted only while open (kdd/action-modal) — see the status footer's
+          hold confirm: a closed dialog keeps its `confirmation-modal` + footer
+          ids matchable. */}
+      <Show when={deleteConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setDeleteConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={tPlural('messages.confirm-delete-returns', 1)}
+          confirmVariant="danger"
+          onConfirm={() => void runDelete()}
+        />
+      </Show>
 
       {/* An unexpected delete rejection (not a permission block, which routes to
           the global modal) — surfaced here rather than swallowed. */}
