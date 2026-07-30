@@ -26,8 +26,8 @@ import { DateTimeField } from '../inputs/DateTimeField';
 import { Combobox } from './Combobox';
 import {
   activeFilters,
-  showsClearAll,
   availableFilters,
+  showsClearAll,
 } from './filterBarLogic';
 import styles from './FilterBar.module.css';
 
@@ -421,7 +421,7 @@ const FilterChip = (props: {
   focusTarget: FocusTarget;
   children: JSX.Element;
 }) => (
-  <div class={`${styles.chip} ${props.onRemove ? '' : styles.chipFixed}`}>
+  <div class={styles.chip}>
     <span class={styles.chipLabel}>{props.label}:</span>
     {/* props.children is a getter compiled from the caller's JSX, so the
         control is CONSTRUCTED here — under the provider — not at the <For>. */}
