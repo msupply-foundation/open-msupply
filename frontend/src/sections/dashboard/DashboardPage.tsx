@@ -36,6 +36,8 @@ import { DASHBOARD_IDS } from './regions';
 import { PluginRegion } from './PluginRegion';
 import {
   customerRequisitionListHref,
+  customerRequisitionNewHref,
+  customerRequisitionEmergencyHref,
   DAYS_TILL_EXPIRED,
   expiredHref,
   expiringBetweenThresholdsHref,
@@ -526,7 +528,7 @@ const DashboardPage: Component = () => {
                     value={num(
                       requisitions.data()?.requisitionCounts.response.new
                     )}
-                    href={customerRequisitionListHref(params.storeId)}
+                    href={customerRequisitionNewHref(params.storeId)}
                   />
                 </Show>
                 {/* id: distribution.customer-requisition.emergency — program-module
@@ -545,7 +547,7 @@ const DashboardPage: Component = () => {
                     value={num(
                       requisitions.data()?.requisitionCounts.emergency.new
                     )}
-                    href={customerRequisitionListHref(params.storeId)}
+                    href={customerRequisitionEmergencyHref(params.storeId)}
                     alert={
                       (requisitions.data()?.requisitionCounts.emergency.new ??
                         0) > 0

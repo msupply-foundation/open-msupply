@@ -359,7 +359,14 @@ export const FilterBar = <
           text button, on screen while either group holds ANY chip, and taking
           them all off (showsClearAll / reset). */}
       <Show when={main.showsClearAll() || extraOps()?.showsClearAll()}>
-        <button type="button" class={styles.clearAll} onClick={resetAll}>
+        <button
+          type="button"
+          class={styles.clearAll}
+          // As on a chip's ✕: taking the caret out of an editor shrinks it and
+          // shifts this button mid-press, losing the click.
+          onMouseDown={e => e.preventDefault()}
+          onClick={resetAll}
+        >
           {t('label.clear-all-filters')}
         </button>
       </Show>
@@ -420,6 +427,11 @@ const FilterChip = (props: {
       type="button"
       class={styles.remove}
       aria-label={t('label.clear-filter-detail', { name: props.label })}
+      // Keep the caret where it is while the button is pressed: the editor
+      // shrinks to its text when it loses the caret, which slides this button
+      // out from under the pointer, and the release then lands elsewhere — no
+      // click, so the chip just seemed to collapse instead of going (#563).
+      onMouseDown={e => e.preventDefault()}
       onClick={() => props.onRemove()}
     >
       <CloseIcon />
