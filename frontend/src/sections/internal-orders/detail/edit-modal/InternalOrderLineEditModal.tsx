@@ -308,15 +308,20 @@ const LineEditContent = (
   const variance = () => requestedUnits() !== suggested();
   const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
-  // A statistic (units) rendered in the active mode with its measure word.
-  const stat = (units: number, roundUp = false): string =>
-    `${formatNumber(statInMode(units, entryMode(), packSize(), doses(), roundUp))} ${modeWord(entryMode(), current()?.unitName ?? null)}`;
+  // A statistic (units) rendered in the active mode with its measure word,
+  // inflected for the figure it suffixes ("1 pack" / "61 packs").
+  const stat = (units: number, roundUp = false): string => {
+    const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
+    return `${formatNumber(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
   // doses is the active mode, the dose equivalent otherwise — rounded whole.
   const otherMeasure = (units: number): string => {
-    if (entryMode() === 'doses')
-      return `${formatNumber(Math.round(units))} ${current()?.unitName ?? t('label.unit')}`;
+    if (entryMode() === 'doses') {
+      const unitCount = Math.round(units);
+      return `${formatNumber(unitCount)} ${current()?.unitName ?? tPlural('label.units-plural', unitCount)}`;
+    }
     const doseCount = Math.round(units * doses());
     return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
