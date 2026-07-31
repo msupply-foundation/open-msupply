@@ -145,7 +145,10 @@ type DetailUrlState = {
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  filter: {},
+  // The item search is the screen's default filter (ui-standards § tables →
+  // filtering): seeded present-as-null so its chip is on the bar from the
+  // start; stripEmpty keeps it out of the query until typed.
+  filter: { itemCodeOrName: null },
   // Default sort: item name ascending (matches OMS's default line order).
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,

@@ -138,8 +138,11 @@ type DetailUrlState = {
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  // Default sort: item name ascending (spec S3 § line table).
-  filter: {},
+  // Default sort: item name ascending (spec S3 § line table). The item search
+  // is the screen's default filter (ui-surface § line-table filters; D91):
+  // seeded present-as-null so its chip is on the bar from the start; stripEmpty
+  // keeps it out of the query until typed.
+  filter: { itemCodeOrName: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
