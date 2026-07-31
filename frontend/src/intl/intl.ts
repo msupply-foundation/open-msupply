@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js';
 import * as i18n from '@solid-primitives/i18n';
 import {
   DEFAULT_LOCALE,
+  LOCALE_META,
   type FlatDict,
   type LocaleKey,
   type SupportedLocale,
@@ -24,14 +25,19 @@ const [dictionaries, setDictionaries] = createSignal<
 // (tests).
 //
 // Missing-key fallback ladder (spec/i18n/behaviours.md → translating text):
-// active-locale string → the English (DEFAULT_LOCALE) string → the raw key.
-// A non-English catalog is partial (e.g. Arabic lacks ~1400 keys), so we layer
-// the active locale OVER the English base rather than reading it alone — a key
-// absent from the active locale then resolves to its English string instead of
-// leaking the raw key into the UI. English keys still absent everywhere fall
-// through to the key itself (t()'s `?? key`), keeping a truly-missing key
-// visible, never blank. When the active locale IS English, the merge is a
-// harmless self-merge.
+// active-locale string → its base locale's string, if it has one → the English
+// (DEFAULT_LOCALE) string → the raw key. A non-English catalog is partial (e.g.
+// Arabic lacks ~1400 keys), so we layer the active locale OVER the English base
+// rather than reading it alone — a key absent from the active locale then
+// resolves to its English string instead of leaking the raw key into the UI.
+// English keys still absent everywhere fall through to the key itself (t()'s
+// `?? key`), keeping a truly-missing key visible, never blank. When the active
+// locale IS English, the merge is a harmless self-merge.
+//
+// A regional variant (LOCALE_META `base` — `fr-DJ` over `fr`) ships only the
+// handful of strings it changes, so its base's catalog goes in between: French
+// (Djibouti) reads as French everywhere it doesn't deliberately differ, rather
+// than falling all the way back to English.
 //
 // Installed plugins' catalogues form a layer BENEATH the host's, keyed in their
 // own namespace (`${code}:${key}` — src/intl/pluginTranslations.ts). Order is
@@ -66,10 +72,13 @@ const activeDict = (): FlatDict => {
     cache.pluginDicts === pluginDicts
   )
     return cache.merged;
+  const base = LOCALE_META[current].base;
   const merged: FlatDict = {
     ...(pluginDicts[DEFAULT_LOCALE] ?? {}),
+    ...(base ? (pluginDicts[base] ?? {}) : {}),
     ...(pluginDicts[current] ?? {}),
     ...(dicts[DEFAULT_LOCALE] ?? {}),
+    ...(base ? (dicts[base] ?? {}) : {}),
     ...(dicts[current] ?? {}),
   };
   cache = { locale: current, dicts, pluginDicts, merged };

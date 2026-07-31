@@ -12,6 +12,13 @@ describe('formatNumber', () => {
     expect(out).toMatch(/[٠-٩]/); // contains Arabic-Indic digits
   });
 
+  it('renders extended-Arabic digits for Dari and Pashto', () => {
+    // ICU pins `ps` to Latin digits, so both format through fa-AF
+    // (LOCALE_META) — the assertion that keeps that override honest.
+    expect(intlNumberFormat('prs', {}).format(123)).toMatch(/[۰-۹]/);
+    expect(intlNumberFormat('ps', {}).format(123)).toMatch(/[۰-۹]/);
+  });
+
   it('returns empty string for nullish', () => {
     expect(formatNumber(undefined, { locale: 'en' })).toBe('');
     expect(formatNumber(null, { locale: 'en' })).toBe('');
@@ -36,6 +43,12 @@ describe('parseNumber', () => {
 
   it('parses Arabic-Indic digits back to a Number', () => {
     expect(parseNumber('١٢٣')).toBe(123);
+  });
+
+  it('parses extended-Arabic digits back to a Number', () => {
+    // What Dari/Pashto number fields hand back — a different code block from
+    // the Arabic-Indic set above.
+    expect(parseNumber('۱۲۳')).toBe(123);
   });
 
   it('returns NaN for empty input', () => {
