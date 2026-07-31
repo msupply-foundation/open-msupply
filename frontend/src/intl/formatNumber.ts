@@ -100,18 +100,28 @@ export const getNumberSymbols = (locale: SupportedLocale): NumberSymbols => {
 };
 
 // Parse a locale-formatted number string back to a Number. Strips grouping
-// separators, normalises the decimal char, converts Arabic-Indic digits to
-// Latin, and drops anything else. Returns NaN on empty input.
+// separators, normalises the decimal char, converts non-Latin digits to Latin,
+// and drops anything else. Returns NaN on empty input.
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
+// The extended (Eastern) set Dari and Pashto render — a different code block
+// from the Arabic-Indic digits above, so both need converting.
+const EXTENDED_ARABIC_INDIC = '۰۱۲۳۴۵۶۷۸۹';
 const toLatinDigits = (s: string): string =>
-  s.replace(/[٠-٩]/g, d => String(ARABIC_INDIC.indexOf(d)));
+  s
+    .replace(/[٠-٩]/g, d => String(ARABIC_INDIC.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String(EXTENDED_ARABIC_INDIC.indexOf(d)));
 
 export const parseNumber = (
   numberString: string,
   decimalChar = '.'
 ): number => {
   const negative = numberString.trimStart().startsWith('-') ? -1 : 1;
-  const cleaned = toLatinDigits(numberString)
+  const latin = toLatinDigits(numberString);
+  // Where the locale's decimal separator isn't `.`, a `.` can only be a
+  // grouping separator (Spanish and Portuguese group with it) — drop it before
+  // normalising, or "1.234,5" parses as NaN.
+  const grouped = decimalChar === '.' ? latin : latin.split('.').join('');
+  const cleaned = grouped
     .replace(new RegExp(`\\${decimalChar}`, 'g'), '.')
     .replace(/[^\d.]/g, '');
   if (cleaned === '') return NaN;

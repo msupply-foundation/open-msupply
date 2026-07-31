@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { t, tPlural, setLocale, setDictionaries } from './intl';
 import commonEn from './locales/en/common.json';
 import commonAr from './locales/ar/common.json';
+import commonFr from './locales/fr/common.json';
+import commonFrDj from './locales/fr-DJ/common.json';
 
 // Seed the dictionaries signal directly (the loading pipeline is tested
 // separately) so we exercise the translator + plural selection
 // deterministically.
-setDictionaries({ en: commonEn, ar: commonAr });
+setDictionaries({
+  en: commonEn,
+  ar: commonAr,
+  fr: commonFr,
+  'fr-DJ': commonFrDj,
+});
 
 describe('t', () => {
   it('translates a key in the active locale', () => {
@@ -37,6 +44,24 @@ describe('t', () => {
     // English is the base; a key missing there too stays visible as itself.
     setLocale('ar');
     expect(t('does.not.exist' as never)).toBe('does.not.exist');
+  });
+
+  it('resolves a regional variant through its base locale, then English', () => {
+    // fr-DJ is a thin overlay on fr: it restates `app.login`, leaves
+    // `app.loading` to French, and `button.add-line` is in neither — which then
+    // resolves to English rather than the raw key (spec/i18n → translating
+    // text, AC-TR20).
+    setLocale('fr-DJ');
+    expect(t('app.login')).toBe(commonFrDj['app.login']);
+    expect(t('app.login')).not.toBe(commonFr['app.login']);
+    expect((commonFrDj as Record<string, string>)['app.loading']).toBe(
+      undefined
+    );
+    expect(t('app.loading')).toBe(commonFr['app.loading']);
+    expect((commonFr as Record<string, string>)['button.add-line']).toBe(
+      undefined
+    );
+    expect(t('button.add-line')).toBe(commonEn['button.add-line']);
   });
 
   it('interpolates an already-translated string into {{ tokens }}', () => {
