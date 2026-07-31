@@ -219,25 +219,25 @@ describe('inventory links', () => {
 
   // OMS-REG-DB-01.55, OMS-REG-DB-01.49 — low stock: months of stock ≤ the
   // understock threshold.
-  it('OMS-REG-DB-01.55/.49: low stock → maxMonthsOfStock = understock months', () => {
+  it('OMS-REG-DB-01.55/.49: low stock → months-of-stock "to" = understock months', () => {
     expect(filterOf(itemsLowStockHref('s1', 3))).toEqual({
-      maxMonthsOfStock: 3,
+      monthsOfStock: { to: 3 },
     });
   });
 
   // OMS-REG-DB-01.55/.50 — high stock: months of stock ≥ the overstock
   // threshold.
-  it('OMS-REG-DB-01.55/.50: high stock → minMonthsOfStock = overstock months', () => {
+  it('OMS-REG-DB-01.55/.50: high stock → months-of-stock "from" = overstock months', () => {
     expect(filterOf(itemsHighStockHref('s1', 6))).toEqual({
-      minMonthsOfStock: 6,
+      monthsOfStock: { from: 6 },
     });
   });
 
   // OMS-REG-DB-01.55/.52 — overstocked uses the over-stock-ALERT threshold, a
   // different knob from high stock (rules § stock levels).
-  it('OMS-REG-DB-01.55/.52: overstocked → minMonthsOfStock = over-stock-alert months', () => {
+  it('OMS-REG-DB-01.55/.52: overstocked → months-of-stock "from" = over-stock-alert months', () => {
     expect(filterOf(itemsOverstockedHref('s1', 9))).toEqual({
-      minMonthsOfStock: 9,
+      monthsOfStock: { from: 9 },
     });
   });
 
