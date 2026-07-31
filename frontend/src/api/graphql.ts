@@ -42,15 +42,17 @@ export type GraphqlFailure =
   | { kind: 'unauthenticated' }
   // Spec (Permission denied): authenticated but lacking the permission for the
   // request. Sets the global forbidden signal (the same modal as unexpected
-  // errors, but a permission-denied variant with a single OK). Consumers treat
-  // this as a continuation of their loading phase, exactly like
-  // unexpectedError.
+  // errors, but a permission-denied variant with a single OK). Consumers show
+  // no error of their own, exactly like unexpectedError — and, since that OK is
+  // a dismiss that returns the user to their screen, releasing the busy state
+  // matters most here.
   | { kind: 'forbidden' }
   // Anything the flow does not handle itself: connection failures, unusable
   // responses, and — unless returnGraphqlErrors is set — GraphQL errors. Also
-  // sets the global unexpected-error signal (modal); consumers treat this as a
-  // continuation of their loading phase. The error description lives on the
-  // global signal, not on the result.
+  // sets the global unexpected-error signal (modal). The error description
+  // lives on the global signal, not on the result: consumers add no error of
+  // their own, but MUST release the busy state they entered for the call,
+  // values preserved (spec, Unexpected API errors).
   | { kind: 'unexpectedError' }
   // GraphQL errors from the response, returned only when the caller opts in via
   // returnGraphqlErrors to handle them itself.

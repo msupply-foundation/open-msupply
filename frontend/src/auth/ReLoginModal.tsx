@@ -1,6 +1,7 @@
 import { createSignal, createUniqueId, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
+import { submitStateAfter, type SubmitState } from './submitState';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
@@ -8,11 +9,6 @@ import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
-
-type SubmitState =
-  | { kind: 'idle' }
-  | { kind: 'submitting' }
-  | { kind: 'error'; message: string };
 
 // Spec (Authentication Logic): re-login modal on top of everything else,
 // username prefilled but editable — the re-login may be as a different user.
@@ -60,10 +56,11 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(values().username, values().password);
-    if (result.kind === 'error')
-      setSubmitState({ kind: 'error', message: result.message });
-    // 'success' closes the modal reactively; 'pending' is globally handled —
-    // stay in the loading phase.
+    // Success closes the modal reactively (this component unmounts); a rejected
+    // login shows inline; a globally-handled failure just releases the
+    // submitting state — otherwise the only control out of a non-dismissable
+    // modal stays disabled on "Logging in…" for good.
+    setSubmitState(submitStateAfter(result));
   };
 
   return (
