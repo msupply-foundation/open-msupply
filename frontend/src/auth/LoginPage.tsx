@@ -6,7 +6,8 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
+import { ArrowRightIcon } from '../ui/icons';
+import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import styles from '../ui/styles/LoginInitLayout.module.css';
@@ -74,7 +75,7 @@ export const LoginPage: Component = () => {
             aria-label={t('button.login')}
             onSubmit={submit}
           >
-            <MSupplyGuyLogo class={styles.logo} />
+            <AppLogo class={styles.logo} />
             <TextField
               label={t('heading.username')}
               width="full"

@@ -51,8 +51,10 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
 
   return (
     <>
+      {/* Destructive tone (ui-standards: delete = danger), matching the
+          confirm below and the list's bulk delete. */}
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => setConfirmOpen(true)}
