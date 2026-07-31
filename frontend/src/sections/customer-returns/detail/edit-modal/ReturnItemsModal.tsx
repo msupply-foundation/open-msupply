@@ -345,7 +345,11 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (result.kind === 'error') {
       // Every rejection is non-typed (contract wire trap) — show the server's
       // message in the modal.
-      setMessage({ severity: 'error', kind: 'save-error', text: result.message });
+      setMessage({
+        severity: 'error',
+        kind: 'save-error',
+        text: result.message,
+      });
       return false;
     }
     // The parent refetches the line table's current page; the mutation's own
@@ -448,7 +452,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Alert
               severity={m().severity}
               testId={
-                m().kind === 'save-error' ? 'save-error-alert' : `${m().kind}-alert`
+                m().kind === 'save-error'
+                  ? 'save-error-alert'
+                  : `${m().kind}-alert`
               }
             >
               {m().text}
@@ -472,6 +478,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               />
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -486,6 +494,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 <Button
                   variant="primary"
                   loading={saving()}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={onNextStep}
                 >

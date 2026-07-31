@@ -184,6 +184,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   <Button
                     variant="primary"
                     loading={phase() === 'working'}
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     onClick={() => void run()}
                   >
