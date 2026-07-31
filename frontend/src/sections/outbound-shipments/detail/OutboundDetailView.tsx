@@ -35,7 +35,6 @@ import {
 import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
-import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
@@ -107,6 +106,16 @@ import {
 
 type Line = OutboundLineFragment;
 
+// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
+// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
+// config expresses this as a per-key `maxSize: null`; at a call site the key has
+// to be removed outright — an explicit `maxSize: undefined` would override
+// TanStack's own default rather than fall back to it.
+const uncapped = <T,>({
+  maxSize: _cap,
+  ...rest
+}: ReturnType<typeof getCellDefinition<T>>) => rest;
+
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
 // sort on (VVM, unit, doses, quantities, prices, received/difference, volume —
@@ -149,13 +158,12 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel open state — the SHARED helper (registry § side/detail panel):
-  // the wide-viewport default is a DERIVATION (`choice() ?? wide()`), so a
-  // user's explicit open/close wins over it and persists across reloads
-  // (spec S3 § side panel). Never an effect writing the signal from the
-  // breakpoint: that both ignores the stored choice and re-forces the panel
-  // open every time the media query re-evaluates.
-  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  // Side panel: starts CLOSED at every width, NOT on the shared responsive
+  // helper (D90) — the lines table is this screen's work surface and the widest
+  // table in the app, so the panel is opt-in via the app bar's More button
+  // rather than taking a column of it before the user asks. The choice lasts
+  // the visit and isn't persisted, so every arrival starts closed.
+  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
@@ -561,8 +569,13 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
-        // Mono, per the spec's line-table column 3.
-        ...getCellDefinition('batch'),
+        // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
+        // kind's 7rem growth cap: this column doesn't only hold a code, it
+        // renders the word "Placeholder" for an unallocated line, which fills
+        // the cap exactly and pins the column there so it can't be dragged
+        // wider at all. Same reasoning (and fix) as the `locationCode` key's
+        // "own size, NO cap" note in _globalColumnConfig (#601).
+        ...uncapped(getCellDefinition<Line>('batch')),
       },
       {
         c: { key: 'expiryDate' },
