@@ -10,27 +10,35 @@ import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import { t } from '../intl';
 import {
   findLeafByPath,
   lowerNav,
   upperNav,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
-import { authUser, logout } from '../auth/authContext';
+import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { isCentralServer } from '../api/serverInfo';
 import { gateNav } from './navGates';
+import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
 import { resolveStorePath } from '../store/StoreGuardLayout';
-import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
-import { KeyboardHost } from '../keyboard/KeyboardHost';
-import { t } from '../intl';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
 // not with the shell (each vertical is its own lazy chunk).
 const SyncModal = lazy(() =>
   import('../sections/sync-modal/SyncModal').then(m => ({
     default: m.SyncModal,
+  }))
+);
+
+// The store editor is the settings vertical's chunk (spec/settings § S5) —
+// loaded on first open from the footer's Edit cell, not with the shell.
+const StoreEditorModal = lazy(() =>
+  import('../sections/settings/store-editor/StoreEditorModal').then(m => ({
+    default: m.StoreEditorModal,
   }))
 );
 
@@ -68,21 +76,28 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
   // can go (spec/keyboard AC-KB4).
-  // Memoised so the gated arrays — and the section objects rebuilt when a child
-  // is dropped — keep stable references; otherwise MenuBar's <For> would remount
-  // nav sections on every shell re-render (kdd/solid-reactivity-pitfalls).
+  // Memoised so the gated arrays — and the section objects rebuilt when a
+  // child is dropped — keep stable references; otherwise MenuBar's <For> would
+  // remount nav sections on every shell re-render
+  // (kdd/solid-reactivity-pitfalls).
   const menuUpper = createMemo(() => gateNav(upperNav));
   const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
   // the one named by the URL. Activating the store selector routes to the
-  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs out (spec:
-  // explicit logout).
+  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs
+  // out (spec: explicit logout).
   const activeStore = () =>
     authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
   const username = () => authUser()?.username ?? '';
+
+  // Spec OMS-REG-FTR-01.9/.10: Logout is gated by a confirmation modal, and
+  // confirming ends the session — clearing the user swaps the whole shell for
+  // the login screen (App's <Show when={authUser()}>), so nothing here
+  // navigates.
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = createSignal(false);
 
   // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
   // opens the modal; the shared sync watch (substrate) runs for the whole
@@ -99,11 +114,17 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setSyncOpen(true);
   };
 
-  // Logout confirms first (spec/keyboard AC-KB5: "Alt+Shift+L — Logout, asks to
-  // confirm first"). Owned here, and used by BOTH paths — the user menu and the
-  // shortcut — so there is one logout behaviour rather than two. The catalog
-  // already carries heading.logout-confirm / messages.logout-confirm.
-  const [logoutConfirm, setLogoutConfirm] = createSignal(false);
+  // The store editor (spec/settings § S5, OMS-REG-SET-05.17/.18): the footer's
+  // Edit cell opens it on its Properties tab, on every screen and for every
+  // signed-in user — no permission gates OPENING it; permissions govern what is
+  // editable inside. Mounted only once opened, like the sync modal above, so
+  // its chunk (and its two queries) cost nothing until asked for.
+  const [storeEditOpen, setStoreEditOpen] = createSignal(false);
+  const [storeEditEverOpened, setStoreEditEverOpened] = createSignal(false);
+  const openStoreEdit = () => {
+    setStoreEditEverOpened(true);
+    setStoreEditOpen(true);
+  };
 
   return (
     <>
@@ -117,13 +138,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
         onStoreClick={() => navigate(resolveStorePath)}
+        onStoreEdit={openStoreEdit}
         username={username()}
-        onLogout={() => setLogoutConfirm(true)}
+        displayName={userDisplayName()}
+        email={authUser()?.email}
+        onLogout={() => setLogoutConfirmOpen(true)}
         isCentralServer={isCentralServer()}
       >
         <KeyboardHost
           onSyncOpen={openSync}
-          onLogoutRequest={() => setLogoutConfirm(true)}
+          onLogoutRequest={() => setLogoutConfirmOpen(true)}
         />
         {props.children}
       </AppShell>
@@ -131,12 +155,22 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
       </Show>
       <ConfirmDialog
-        open={logoutConfirm()}
-        onClose={() => setLogoutConfirm(false)}
+        open={logoutConfirmOpen()}
+        onClose={() => setLogoutConfirmOpen(false)}
         title={t('heading.logout-confirm')}
         message={t('messages.logout-confirm')}
         onConfirm={() => void logout()}
       />
+      <Show when={storeEditEverOpened()}>
+        <StoreEditorModal
+          open={storeEditOpen()}
+          storeId={params.storeId}
+          // The store's FACILITY record — the row the editor reads and writes.
+          // Rides the me/login response's store list (UserStoreNode.nameId).
+          nameId={activeStore()?.nameId ?? ''}
+          onClose={() => setStoreEditOpen(false)}
+        />
+      </Show>
     </>
   );
 };

@@ -12,18 +12,26 @@
 
 .heading {
   margin: 0;
-  padding-block-end: var(--space-2);
-  border-block-end: 1px solid var(--color-divider);
-  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
   line-height: var(--line-tight);
   color: var(--text-body);
 }
 
-/* A nested sub-group heading (headingLevel="h3") sits quieter under its parent
-   section: smaller, no rule — so it reads as a sub-heading, not a peer group. */
-h3.heading {
-  padding-block-end: 0;
-  border-block-end: none;
+/* The two treatments key off the section's data-heading, NOT the heading's
+   element name: rank is a semantic fact and the treatment a visual one, and a
+   section nested in a surface that already owns the h2 (a variant card, a
+   dialog) can still be a top-level group of that surface. Coupling them made
+   such a group render quieter than the field labels beneath it. */
+
+/* A top-level group: the ruled group heading. */
+.section[data-heading='group'] .heading {
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+  font-size: var(--text-md);
+}
+
+/* A nested sub-group sits quieter under its parent section: smaller, no rule —
+   so it reads as a sub-heading, not a peer group. */
+.section[data-heading='subgroup'] .heading {
   font-size: var(--text-sm);
 }

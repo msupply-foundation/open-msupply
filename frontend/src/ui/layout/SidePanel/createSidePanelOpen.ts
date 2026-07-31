@@ -26,26 +26,47 @@ const KEY = 'side-panel-open';
  * bindings, and nobody can gate them on the store's mode or the vertical,
  * because neither is in scope here. That is a structural guarantee where a
  * per-screen `createAction` call would have been a convention to remember.
+ *
+ * `responsive: false` (D90, outbound shipments) drops BOTH the wide-viewport
+ * default and the persisted choice: the panel starts closed at every width and
+ * every arrival, opt-in via the app bar's More button, because that screen's
+ * lines table is the widest work surface in the app. The bindings stay — which
+ * is the point of making this a parameter rather than letting the screen hold
+ * its own `createSignal`.
  */
-export const createSidePanelOpen = (): [
-  () => boolean,
-  (open: boolean) => void,
-] => {
+export interface SidePanelOpenOptions {
+  /**
+   * Whether a very wide viewport opens the panel by default and the user's
+   * choice persists across reloads. Default true; `false` is D90's opt-out.
+   */
+  responsive?: boolean;
+}
+
+export const createSidePanelOpen = (
+  options?: SidePanelOpenOptions
+): [() => boolean, (open: boolean) => void] => {
+  const responsive = options?.responsive ?? true;
+
   let stored: boolean | null = null;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw === 'true' || raw === 'false') stored = raw === 'true';
-  } catch {
-    // Storage unavailable (private mode) — fall through to the responsive
-    // default.
+  if (responsive) {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw === 'true' || raw === 'false') stored = raw === 'true';
+    } catch {
+      // Storage unavailable (private mode) — fall through to the responsive
+      // default.
+    }
   }
 
-  const wide = createMediaQuery(mediaQuery.sidePanelWide);
+  const wide = responsive
+    ? createMediaQuery(mediaQuery.sidePanelWide)
+    : () => false;
   const [choice, setChoice] = createSignal<boolean | null>(stored);
 
   const open = () => choice() ?? wide();
   const setOpen = (next: boolean) => {
     setChoice(next);
+    if (!responsive) return; // session-only: the choice lasts the visit
     try {
       localStorage.setItem(KEY, String(next));
     } catch {

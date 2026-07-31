@@ -11,9 +11,10 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
-import { EditIcon, XCircleIcon } from '../../../../ui/icons';
+import { EditIcon } from '../../../../ui/icons';
 import {
   InboundCampaigns,
   InboundPrograms,
@@ -111,21 +112,18 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         <Switch
           fallback={
             <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                confirms="cancel"
+              <CancelButton
+                data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
               <Button
+                variant="primary"
                 confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.apply')}
               </Button>
             </>
           }

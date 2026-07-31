@@ -21,12 +21,13 @@ import { InsertStocktake } from '../createStocktake.generated';
 // isInitialStocktake: true (the ONLY place we set it).
 //
 // Controlled open/onClose like CreateStocktakeModal (the list owns the toggle).
-// On success it navigates to the new stocktake's detail, so there's no in-dialog
-// success phase — the page changes. A failed create is surfaced by the global
-// unexpected-error modal (graphqlFetch); we drop back to confirm so the dialog
-// isn't stuck loading. The once-per-store rejection (InitialStocktakeAlreadyExists)
-// can't happen from here — the button is only shown when the store has none —
-// so it needs no bespoke handling (it would fall through to the global modal).
+// On success it navigates to the new stocktake's detail, so there's no
+// in-dialog success phase — the page changes. A failed create is surfaced by
+// the global unexpected-error modal (graphqlFetch); we drop back to confirm so
+// the dialog isn't stuck loading. The once-per-store rejection
+// (InitialStocktakeAlreadyExists) can't happen from here — the button is only
+// shown when the store has none — so it needs no bespoke handling (it would
+// fall through to the global modal).
 export const CreateInitialStocktakeAction = (props: {
   open: boolean;
   onClose: () => void;

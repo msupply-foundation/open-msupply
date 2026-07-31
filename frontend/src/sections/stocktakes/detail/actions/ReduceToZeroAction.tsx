@@ -70,7 +70,10 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
   );
 };
 
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+// No success phase: a clean apply CLOSES the dialog — closure is the
+// confirmation and the zeroed rows behind it are the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
+type Phase = 'confirm' | 'working' | 'error';
 
 const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
   const [reasonId, setReasonId] = createSignal<string | null>(null);
@@ -91,7 +94,8 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
     // showed it); just close.
     if (!outcome) return props.onClose();
     props.onCommit(outcome.commit);
-    if (outcome.errors.size === 0) return setPhase('success');
+    // Clean apply: close — the rows already read zero.
+    if (outcome.errors.size === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
     setErrorCount(outcome.errors.size);
     setPhase('error');
@@ -131,9 +135,6 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.reduced-to-zero', props.selectedIds().length)}
-          </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
               {tPlural('messages.line-errors', errorCount())}
@@ -165,16 +166,6 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              confirms="plain"
-              data-testid="dialog-button-ok"
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           <Match when={phase() === 'error'}>
             <CancelButton
               data-testid="dialog-button-cancel"

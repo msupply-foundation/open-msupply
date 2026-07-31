@@ -127,6 +127,9 @@ interface InvoiceFilter {
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
+    // A DEFAULT filter — deliberately NOT seeded into the filter signal below,
+    // so the demo shows the flag alone carrying the chip.
+    alwaysOn: true,
     label: () => 'Name',
     render: props => (
       <FilterTextInput
@@ -583,6 +586,14 @@ export const SelectorsShowcase = () => {
             in GraphQL-native shape — destined for URL query params once routing
             lands, so filtered views become shareable.
           </Lead>
+          <Note>
+            <strong>Name</strong> is a <em>default filter</em> (
+            <code>alwaysOn</code>) — the search this screen always keeps to
+            hand: always visible and permanent, with no ✕.{' '}
+            <strong>Clear all</strong> is reserved for the filters a user adds,
+            so this chip never raises it; when another chip does, its value
+            clears and the chip stays.
+          </Note>
           <FilterBar
             filters={DEMO_FILTERS}
             filter={filters()}

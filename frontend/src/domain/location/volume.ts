@@ -7,8 +7,9 @@ import type { LocationWithVolume } from './locationResource';
 //
 // Undefined (no percentage shown) when:
 //   - capacity is 0 (nothing to be a proportion of), or
-//   - the location holds stock but volumeUsed is 0 — i.e. its stock lines carry
-//     no volume data, so a "0% used" reading would be misleading rather than true.
+//   - the location holds stock but volumeUsed is 0 — i.e. its stock lines
+//     carry no volume data, so a "0% used" reading would be misleading rather
+//     than true.
 export const getVolumeUsedPercentage = (
   location: Pick<LocationWithVolume, 'volume' | 'volumeUsed' | 'stock'>
 ): number | undefined => {
@@ -48,4 +49,50 @@ export const isAvailable = (
     location.volumeUsed < location.volume &&
     availableVolume(location) >= requiredVolume
   );
+};
+
+// The three fullness-filter modes behind the picker's tabs.
+export type Fullness = 'all' | 'empty' | 'available';
+
+export interface FullnessContext {
+  /** The location currently chosen in the field, if any. */
+  selectedId?: string;
+  /**
+   * The location the stock being placed is **already in**, where that differs
+   * from the field's own value — a repack's origin line, say. Its `volumeUsed`
+   * already counts the volume being moved, so it always has room for it.
+   */
+  originalLocationId?: string;
+  /** The volume being placed (volumePerPack × packs). */
+  requiredVolume?: number;
+}
+
+/*
+ * Whether a location survives the picker's fullness filter. Pure, so the two
+ * exemptions below are unit-testable away from the widget — both are invisible
+ * when wrong (a location merely goes missing from a list) and so are exactly
+ * what a test has to hold.
+ *
+ *   1. The **selected** location always survives, under every mode, so a line
+ *      can be re-saved unchanged even where it no longer "fits".
+ *   2. Under "Available", the location the stock is **already in** survives:
+ *      its volumeUsed already includes the volume being placed, so measuring
+ *      that volume against its remaining headroom double-counts and would hide
+ *      the one location the stock is guaranteed to fit in. (Mirrors the current
+ *      app's `originalSelectedLocation`.) It is NOT exempt from "Empty" — it
+ *      holds this stock, so it is genuinely not empty.
+ */
+export const passesFullness = (
+  location: Pick<
+    LocationWithVolume,
+    'id' | 'volume' | 'volumeUsed' | 'onHold' | 'stock'
+  >,
+  mode: Fullness,
+  context: FullnessContext = {}
+): boolean => {
+  if (mode === 'all') return true;
+  if (location.id === context.selectedId) return true;
+  if (mode === 'empty') return isEmpty(location);
+  if (location.id === context.originalLocationId) return true;
+  return isAvailable(location, context.requiredVolume);
 };

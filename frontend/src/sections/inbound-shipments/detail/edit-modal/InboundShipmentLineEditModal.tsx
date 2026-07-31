@@ -6,6 +6,11 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
@@ -27,7 +32,6 @@ import {
   PlusCircleIcon,
   StockIcon,
   TrashIcon,
-  XCircleIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
@@ -52,6 +56,7 @@ import {
   type PurchaseOrderLinesResult,
 } from '../inboundShipmentLookups.generated';
 import { runInboundBatch } from '../inboundShipmentUpdate';
+import styles from './InboundShipmentLineEditModal.module.css';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
 // from the generated result, not restated).
@@ -163,27 +168,20 @@ type DraftBatch = {
 // The three authorisation states a line can hold (the fragment's non-null set).
 type AuthStatus = NonNullable<DraftBatch['status']>;
 
-// Each auth state's dot colour (spec col 16), tokens only: amber awaiting,
-// green approved, red rejected. A leading dot lets the state read at a glance,
-// the way the invoice-status Select does.
-const AUTH_STATUS_COLOUR: Record<AuthStatus, string> = {
-  PENDING: 'var(--color-warning)',
-  PASSED: 'var(--success-main)',
-  REJECTED: 'var(--error-main)',
+// Each auth state's dot class (spec col 16): amber awaiting, green approved,
+// red rejected — the colours live in the CSS module, one class per state.
+const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
+  PENDING: styles.statusPending,
+  PASSED: styles.statusPassed,
+  REJECTED: styles.statusRejected,
 };
 
-// A small coloured status dot for a Select option adornment — rem-sized, token
-// colour (mirrors the showcase's invoice-status dot).
-const StatusDot = (props: { colour: string }) => (
+// A small coloured status dot for a Select option adornment. Decorative — the
+// option's own text names the state (see the CSS module's note).
+const StatusDot = (props: { status: AuthStatus }) => (
   <span
     aria-hidden="true"
-    style={{
-      display: 'inline-block',
-      width: '0.5rem',
-      height: '0.5rem',
-      'border-radius': '50%',
-      background: props.colour,
-    }}
+    class={`${styles.statusDot} ${AUTH_STATUS_CLASS[props.status]}`}
   />
 );
 
@@ -765,7 +763,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'numberOfPacks' },
-      header: () => t('label.pack-quantity'),
+      header: () => t('label.packs-received'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
@@ -773,7 +771,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         return (
           <NumberField
             ref={batchFields.ref(b.id)}
-            label={t('label.pack-quantity')}
+            label={t('label.packs-received')}
             hideLabel
             size="small"
             value={b.numberOfPacks}
@@ -789,14 +787,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     {
       c: { key: 'packSize' },
-      header: () => t('label.pack-size'),
+      header: () => t('label.received-pack-size'),
       cardGroup: 'batch',
       ...getNumberCell(),
       cell: info => {
         const b = info.row.original;
         return (
           <NumberField
-            label={t('label.pack-size')}
+            label={t('label.received-pack-size')}
             hideLabel
             size="small"
             value={b.packSize}
@@ -919,23 +917,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     {
                       value: 'PENDING',
                       label: t('label.pending'),
-                      adornment: (
-                        <StatusDot colour={AUTH_STATUS_COLOUR.PENDING} />
-                      ),
+                      adornment: <StatusDot status="PENDING" />,
                     },
                     {
                       value: 'PASSED',
                       label: t('label.passed'),
-                      adornment: (
-                        <StatusDot colour={AUTH_STATUS_COLOUR.PASSED} />
-                      ),
+                      adornment: <StatusDot status="PASSED" />,
                     },
                     {
                       value: 'REJECTED',
                       label: t('label.rejected'),
-                      adornment: (
-                        <StatusDot colour={AUTH_STATUS_COLOUR.REJECTED} />
-                      ),
+                      adornment: <StatusDot status="REJECTED" />,
                     },
                   ]}
                   // Fixed 3-option list ⇒ the string out is one of the union.
@@ -1333,36 +1325,24 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </Show>
       }
       actions={
+        // The standard dialog three, in spec S4's order: Cancel · Save ·
+        // Save & next. Icon-less verbs (D55) — never OK / OK & next.
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            confirms="cancel"
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           <Show when={!noItemYet()}>
-            <Button
-              variant="secondary"
-              // The CONTINUING confirm: while present and enabled, Enter
-              // activates it in preference to plain OK (KB-E2, AC-KB23).
-              confirms="continuing"
-              data-testid="dialog-button-next-and-ok"
-              loading={saving()}
-              onClick={() => void onOkNext()}
-            >
-              {t('button.ok-and-next')}
-            </Button>
-            <Button
-              confirms="plain"
+            <DialogSaveButton
               data-testid="dialog-button-ok"
               loading={saving()}
               onClick={() => void onOk()}
-            >
-              {t('button.ok')}
-            </Button>
+            />
+            <SaveAndNextButton
+              data-testid="dialog-button-next-and-ok"
+              loading={saving()}
+              onClick={() => void onOkNext()}
+            />
           </Show>
         </>
       }

@@ -43,7 +43,7 @@ import { syncErrorSummary } from './syncErrors';
 import { syncStepIcon } from './syncStepIcons';
 import styles from './SyncModal.module.css';
 
-// Time-of-day if the run finished today, otherwise the date (AC-S3).
+// Time-of-day if the run finished today, otherwise the date (SYNC-03.21).
 const isSameLocalDay = (a: Date, b: Date): boolean =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -56,9 +56,9 @@ const isSameLocalDay = (a: Date, b: Date): boolean =>
  * (contract.md § Substrate); its own lazy chunk.
  *
  * Reads the shared substrate store for status/count/liveness and adds only its
- * two residual obligations (AC-S4): one immediate poll on open when NO status
- * is cached (the subscription sends no initial frame), and the fast fallback
- * poll while open AND the live channel is down. The live channel, its
+ * two residual obligations (SYNC-03.22): one immediate poll on open when NO
+ * status is cached (the subscription sends no initial frame), and the fast
+ * fallback poll while open AND the live channel is down. The live channel, its
  * transport-ack liveness, reconnection, poll supersession, the fire-and-forget
  * trigger, and the post-run app refresh all live in the substrate.
  */
@@ -77,25 +77,26 @@ export const SyncModal: Component<{
   );
   const statusKind = () => statusLineKind(overview(), pushQueueCount());
 
-  // AC-S4: fetch once on open when nothing is cached (no initial subscription
-  // frame — contract.md § Records to push). Fires exactly once per open while
-  // uncached; a landed status flips the guard.
+  // SYNC-03.22: fetch once on open when nothing is cached (no initial
+  // subscription frame — contract.md § Records to push). Fires exactly once per
+  // open while uncached; a landed status flips the guard.
   createEffect(() => {
     if (props.open && syncStatus() == null) void pollSyncStatus();
   });
 
-  // AC-S4: the fast fallback interval, only while open and the live channel is
-  // down (the substrate store drops a stale poll once live data resumes).
+  // SYNC-03.22: the fast fallback interval, only while open and the live
+  // channel is down (the substrate store drops a stale poll once live data
+  // resumes).
   createEffect(() => {
     if (!props.open || liveConnected()) return;
     const id = setInterval(() => void pollSyncStatus(), SYNC_POLL_INTERVAL_MS);
     onCleanup(() => clearInterval(id));
   });
 
-  // AC-T1: Sync-now busy state — held from the click, through the pre-run gap,
-  // until the run ends. Keyed on the run-status signature (not the isSyncing
-  // transition), so a run that errors before any in-progress frame is observed
-  // still releases the button for a retry.
+  // SYNC-03.25: Sync-now busy state — held from the click, through the pre-run
+  // gap, until the run ends. Keyed on the run-status signature (not the
+  // isSyncing transition), so a run that errors before any in-progress frame is
+  // observed still releases the button for a retry.
   const [trigger, setTrigger] = createSignal<TriggerState>(IDLE_TRIGGER);
   createEffect(() => {
     const status = syncStatus();
@@ -145,8 +146,8 @@ export const SyncModal: Component<{
     })) ?? [];
 
   // The run's backfill descriptions (V7 only; empty for an ordinary run). Shown
-  // under a "Special syncs" disclosure below the phase list, the same expandable
-  // pattern as the error panel's "More information".
+  // under a "Special syncs" disclosure below the phase list, the same
+  // expandable pattern as the error panel's "More information".
   const backfills = (): SyncBackfill[] => overview()?.backfills ?? [];
   const backfillLabel = (b: SyncBackfill): string =>
     b.kind === 'all-store-data'
@@ -207,7 +208,7 @@ export const SyncModal: Component<{
           </Show>
         </div>
 
-        {/* Error panel — only when the latest run errored (AC-E1). */}
+        {/* Error panel — only when the latest run errored (SYNC-03.28). */}
         <Show when={overview()?.error}>
           {err => {
             const errorSummary = () => syncErrorSummary(err().variant);
@@ -224,7 +225,7 @@ export const SyncModal: Component<{
           }}
         </Show>
 
-        {/* Last-successful notice — only when idle and error-free (AC-S3). The
+        {/* Last-successful notice — only when idle and error-free (SYNC-03.21). The
             banner is neutral; the check icon overrides the glyph and the
             message text carries the success tint. */}
         <Show

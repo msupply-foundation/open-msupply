@@ -263,9 +263,10 @@ const PatientDetailView: Component = () => {
   // opens the confirmation prompt (AC-E1).
   //
   // The duplicate-code check is the one rule that needs the server, so it runs
-  // here rather than in patientFieldErrors — borrowing the `saving` window so the
-  // Save button shows it working and a second click can't start a second check.
-  // A clash leaves the prompt closed and the error on the field (DIS-02 `.57`).
+  // here rather than in patientFieldErrors — borrowing the `saving` window so
+  // the Save button shows it working and a second click can't start a second
+  // check. A clash leaves the prompt closed and the error on the field (DIS-02
+  // `.57`).
   const attemptSave = async () => {
     validation.arm();
     if (!validation.valid() || saving()) return;

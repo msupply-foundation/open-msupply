@@ -5,11 +5,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
-  CheckIcon,
-  InfoIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { InfoIcon, TrashIcon } from '../../../../ui/icons';
 import { isDeletable } from '../../outboundStatus';
 import { DeleteOutboundShipments } from '../outboundShipments.generated';
 
@@ -21,13 +20,16 @@ export interface DeleteShipmentsActionProps {
   onDeleted: () => void;
 }
 
-// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.21): the whole batch is
-// refused when ANY selected shipment is not deletable — a UI pre-check with a
-// blocking notice instead of the confirmation, no server call (rules.md § the
-// list; controls › action feedback); per-row enforcement remains server-side.
-// Same confirm → deleting → success | error dialog shape as the stocktakes
-// delete action (kdd/action-modal).
-type Phase = 'confirm' | 'deleting' | 'success' | 'error';
+// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.21): the whole
+// batch is refused when ANY selected shipment is not deletable — a UI pre-check
+// with a blocking notice instead of the confirmation, no server call (rules.md
+// § the list; controls › action feedback); per-row enforcement remains
+// server-side. Same confirm → deleting → error dialog shape as the stocktakes
+// delete action (kdd/action-modal). No success phase: a clean delete CLOSES the
+// dialog — closure is the confirmation and the shorter list behind it is the
+// visible result (spec/ui-standards/controls.md § dialogs, D22; § action
+// feedback, D21).
+type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteShipmentsAction: Component<
   DeleteShipmentsActionProps
@@ -49,7 +51,7 @@ export const DeleteShipmentsAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={onClick}
@@ -69,16 +71,7 @@ export const DeleteShipmentsAction: Component<
           description={
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
-          actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              confirms="plain"
-              onClick={() => setBlockedOpen(false)}
-            >
-              {t('button.ok')}
-            </Button>
-          }
+          actions={<OkButton onClick={() => setBlockedOpen(false)} />}
         />
       </Show>
     </>
@@ -111,10 +104,11 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
       setPhase('error');
       return;
     }
-    // Success: hand back to the list (clear selection + re-query behind the
-    // dialog), then report in the dialog itself (controls › dialogs).
+    // Success: close first, then hand back to the list — onDeleted clears the
+    // selection, which unmounts the selection-gated footer this dialog lives
+    // in.
+    props.onClose();
     props.onDeleted();
-    setPhase('success');
   };
 
   return (
@@ -124,14 +118,17 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The error phase is no longer a question, so the heading stops asking
+      // one (it would otherwise read "Are you sure?" over a rejection).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-shipments', count)}>
           <Match when={phase() === 'error'}>
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
-          </Match>
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-shipments', count)}
           </Match>
         </Switch>
       }
@@ -140,18 +137,10 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
@@ -162,25 +151,8 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              confirms="plain"
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              confirms="cancel"
-              onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            <CancelButton onClick={props.onClose} />
           </Match>
         </Switch>
       }

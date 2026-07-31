@@ -9,7 +9,8 @@ describe('itemFilter — list population & filters (spec/items S1)', () => {
     expect(f.isActive).toBe(true);
     expect(f.type).toEqual({ equalTo: 'STOCK' });
     expect(f.isVisibleOrOnHand).toBe(true);
-    // non-stock types never appear; the client never sends a NON_STOCK/SERVICE type
+    // non-stock types never appear; the client never sends a NON_STOCK/SERVICE
+    // type
     expect(f.type?.equalTo).toBe('STOCK');
   });
 

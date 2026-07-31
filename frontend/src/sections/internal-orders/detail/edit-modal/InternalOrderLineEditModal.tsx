@@ -31,6 +31,15 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
+import {
+  PluginSlotOutlet,
+  type PluginSlotContribution,
+} from '../../../../ui/elements/plugins/PluginSlotOutlet';
+import type {
+  InternalOrderLineInfoPanelProps,
+  InternalOrderView,
+} from '../../../../plugin-sdk/types';
+import { toLineViewFromEditor } from '../pluginViews';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { RequisitionLineChart } from './lineChart.generated';
@@ -48,7 +57,7 @@ import {
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
-import { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
+import { ForecastCalculationDisplay } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
@@ -82,7 +91,9 @@ export interface InternalOrderLineEditModalProps {
   showPricing: boolean;
   showForecast: boolean;
   showExcess: boolean;
-  /** Customer-statistics program order → the movements panel + reason (AC-R1). */
+  /**
+   * Customer-statistics program order → the movements panel + reason (AC-R1).
+   */
   showExtended: boolean;
   orderInPacks: boolean;
   /** An existing line → edit mode; omitted → add mode. */
@@ -104,6 +115,19 @@ export interface InternalOrderLineEditModalProps {
   findLineForItem: (itemId: string) => InternalOrderLineFragment | undefined;
   /** A save committed — the parent refetches the line table (AC-LN21). */
   onCommitted: () => void;
+  /**
+   * The order this line belongs to, as the SDK's published view — half of the
+   * info-panel slot's props (ui-surface § S8 › editor region).
+   */
+  order: InternalOrderView;
+  /**
+   * The info-panel contributions to render, already `when`-filtered and ordered
+   * by the caller (the detail view composes them exactly as it composes the
+   * line table's column contributions). An ACCESSOR, so the modal stays
+   * presentational: it never reads the plugin registry, and a test can inject
+   * fixtures.
+   */
+  infoPanelContributions: () => readonly PluginSlotContribution<InternalOrderLineInfoPanelProps>[];
 }
 
 // Mount the content only while open, keyed on the OPEN identity (the line id,
@@ -365,6 +389,20 @@ const LineEditContent = (
     })();
   };
 
+  // The plugin info-panel slot's props (ui-surface § S8 › editor region): the
+  // line being edited and its order, as the SDK's published DTOs. ONE memo, so
+  // the pair's identity changes only when the line or the order does — and
+  // never a remount: advancing with Save & next writes the `line` signal, so
+  // the mounted contributions read a new DTO in place (AC-PLUG-N2).
+  const infoPanelSlotProps = createMemo<
+    InternalOrderLineInfoPanelProps | undefined
+  >(() => {
+    const editorLine = current();
+    return editorLine
+      ? { line: toLineViewFromEditor(editorLine), order: props.order }
+      : undefined;
+  });
+
   const entryOptions = createMemo(() => {
     const unit = current()?.unitName ?? t('label.unit');
     const options = [{ value: 'units', label: unit }];
@@ -512,9 +550,7 @@ const LineEditContent = (
                       : t('label.amc/amd')
                   }
                   value={stat(editorLine().averageMonthlyConsumption, true)}
-                  caption={statCaption(
-                    editorLine().averageMonthlyConsumption
-                  )}
+                  caption={statCaption(editorLine().averageMonthlyConsumption)}
                 />
                 <StatRow
                   label={t('label.months-of-stock')}
@@ -677,6 +713,24 @@ const LineEditContent = (
                 </FieldRow>
               </InsetPanel>
             </div>
+
+            {/* The plugin info-panel region (internal-orders ui-surface § S8 ›
+              editor region): read-only decoration between the record panels
+              above and the charts below. No wrapper, no heading, no border — an
+              invisible seam, so with nothing contributing the editor is
+              byte-identical to one built without it (spec/plugins § S1,
+              AC-PLUG-N1). The non-keyed Show hands the outlet the props pair as
+              an ACCESSOR: a new line flows into the live contributions rather
+              than replacing them (AC-PLUG-N2). */}
+            <Show when={infoPanelSlotProps()}>
+              {slotProps => (
+                <PluginSlotOutlet
+                  contributions={props.infoPanelContributions()}
+                  slotProps={slotProps}
+                  errorFallback={t('error.plugin-unavailable')}
+                />
+              )}
+            </Show>
 
             {/* Below — where the store shows population-based forecasting and
               this line carries a forecast, the calculation display stands in

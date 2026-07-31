@@ -10,16 +10,24 @@ import styles from './PluginRegionOutlet.module.css';
  * Dashboard).
  */
 export interface PluginRegionContribution {
-  /** Unique within the region (plugin code + contribution id) — the render key. */
+  /**
+   * Unique within the region (plugin code + contribution id) — the render key.
+   */
   id: string;
   /** The contribution's component, already bound to its slot props. */
   Component: Component;
 }
 
 export interface PluginRegionOutletProps {
-  /** The region's contributions, in final render order (ordering is the caller's). */
+  /**
+   * The region's contributions, in final render order (ordering is the
+   * caller's).
+   */
   contributions: PluginRegionContribution[];
-  /** Fallback text shown in a contribution's own slot when it throws, already translated. */
+  /**
+   * Fallback text shown in a contribution's own slot when it throws, already
+   * translated.
+   */
   errorFallback: string;
 }
 

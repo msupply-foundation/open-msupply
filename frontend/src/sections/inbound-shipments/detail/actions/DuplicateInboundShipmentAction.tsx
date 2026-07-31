@@ -5,8 +5,13 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, CopyIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { CopyIcon } from '../../../../ui/icons';
 import { DuplicateInboundShipment } from '../../list/createInboundShipment.generated';
+import { inboundShipmentHref } from '../../inboundShipmentScope';
 
 export interface DuplicateInboundShipmentActionProps {
   invoiceId: string;
@@ -14,6 +19,12 @@ export interface DuplicateInboundShipmentActionProps {
   number: () => number;
   supplierName: () => string;
   disabled?: boolean;
+  /**
+   * The reason it's disabled, as the trigger's hover text (ui-standards
+   * controls.md § blocked affordances → "actionable block"). Goes on the Button
+   * itself, not a wrapper element.
+   */
+  title?: string;
 }
 
 // "Make a copy" (spec AC-DUP1/DUP2, rules → duplicating a shipment). Shared by
@@ -34,6 +45,7 @@ export const DuplicateInboundShipmentAction: Component<
         variant="secondary"
         icon={<CopyIcon />}
         disabled={props.disabled}
+        title={props.title}
         data-testid="duplicate-shipment-button"
         onClick={() => setOpen(true)}
       >
@@ -64,10 +76,14 @@ const Body = (props: {
   const [skipped, setSkipped] = createSignal(0);
   const [newId, setNewId] = createSignal<string>();
 
+  // The copy is always a plain New draft — no purchase-order link carries over
+  // (rules → duplicating a shipment) — so it opens in the plain scope whatever
+  // the source's was.
   const goToCopy = () => {
     const id = newId();
     props.onClose();
-    if (id) navigate(`/${params.storeId}/replenishment/inbound-shipment/${id}`);
+    if (id)
+      navigate(inboundShipmentHref(params.storeId, id, 'INBOUND_SHIPMENT'));
   };
 
   const run = async () => {
@@ -125,35 +141,31 @@ const Body = (props: {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
+                <CancelButton
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
+                variant="primary"
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.make-a-copy')}
               </Button>
             </>
           }
         >
+          {/* Skipped: an acknowledgement of the notice, not a save — OK is the
+              right word here, and D55 keeps OkButton for exactly this case. */}
           <Match when={phase() === 'skipped'}>
-            <Button icon={<CheckIcon />} confirms="plain" onClick={goToCopy}>
-              {t('button.ok')}
-            </Button>
+            <OkButton data-testid="dialog-button-ok" onClick={goToCopy} />
           </Match>
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
               confirms="plain"
               onClick={props.onClose}
             >

@@ -218,7 +218,8 @@ const printViaHiddenFrame = (html: string): void => {
     }
     frameWindow.addEventListener('afterprint', cleanup);
     // Fallback: some browsers never fire afterprint (or the user dismisses the
-    // dialog without it). Tear the frame down after a generous delay regardless.
+    // dialog without it). Tear the frame down after a generous delay
+    // regardless.
     window.setTimeout(cleanup, 60_000);
     frameWindow.focus();
     frameWindow.print();

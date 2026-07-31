@@ -16,8 +16,8 @@ import {
 
 // The shared "Log" tab surface: the activity-log entries recorded against ONE
 // record, scoped by recordId. A read-only, non-paginated table — Date · Time ·
-// User · Event · Details — mirroring the real OMS ActivityLogList. Its own query
-// (kdd/state-management), independent of the record's other resources, so
+// User · Event · Details — mirroring the real OMS ActivityLogList. Its own
+// query (kdd/state-management), independent of the record's other resources, so
 // switching to the tab fetches it once. The log is append-only and short per
 // record, so — like OMS — we pull a generous single page and don't paginate.
 //
@@ -120,6 +120,13 @@ const changeDetails = (from: string | null, to: string | null): JSX.Element => {
 export const ActivityLogPanel: Component<{
   storeId: string;
   recordId: string;
+  /**
+   * Row order. The consuming vertical's spec decides: items/patients mandate
+   * most-recent-first (the default), requisitions/internal-orders mandate
+   * oldest-first (AC-LG1 / AC-AL1 — matching the real OMS ActivityLogList,
+   * which sends no sort and gets the server's datetime-ascending default).
+   */
+  order?: 'newest-first' | 'oldest-first';
 }> = props => {
   // Column config (order/sizing/pinning/visibility/density), resolved default →
   // global → user (kdd/table-state). It is also what puts the Columns and
@@ -134,13 +141,14 @@ export const ActivityLogPanel: Component<{
   const tableConfig = createTableConfig({ tableId: 'activity-log' });
 
   // Keyed on serialised variables (stable string) so identical content doesn't
-  // refetch (kdd/solid-reactivity-pitfalls). Sorted by id descending = most
-  // recent first (activity-log ids are monotonic; OMS orders the same way).
+  // refetch (kdd/solid-reactivity-pitfalls). Sorted by id (activity-log ids
+  // are monotonic): descending = most recent first (the default), ascending
+  // when the consumer asks for oldest-first — see the `order` prop.
   const variables = (): ActivityLogVariables => ({
     storeId: props.storeId,
     recordId: props.recordId,
     page: { first: LOG_PAGE_SIZE, offset: 0 },
-    sort: [{ key: 'id', desc: true }],
+    sort: [{ key: 'id', desc: props.order !== 'oldest-first' }],
   });
   const [logData] = createResource(
     () => JSON.stringify(variables()),

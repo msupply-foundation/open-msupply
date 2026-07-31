@@ -153,14 +153,14 @@ No **behaviour/content/gating** conflicts were found: the modal's field order, r
 
 ## Boutique / uncovered elements
 
-- **The fullness (proportion) bar** — the only element in the vertical that does not map to a library component. **Tag (b): a registry role awaiting a build** (once SE2 adds the row), and **tag (a): a candidate new library component** — a `getCellDefinition`-family fragment rendering a value ÷ capacity fill with an accessible text equivalent, which the volume-aware location picker could share. Filed as [#740](https://github.com/msupply-foundation/open-msupply-frontend/issues/740) with the [`ADDING_A_COMPONENT.md`](../../ui/docs/ADDING_A_COMPONENT.md) checklist; **deliberately not built here** — a migration doesn't smuggle in library components. Interim: the existing percentage text (`t('label.percent-used')`), which is accessible — though **when** it shows is itself unresolved, see F7.
+- **The fullness (proportion) bar** — the only element in the vertical that does not map to a library component. **Tag (b): a registry role awaiting a build** (once SE2 adds the row), and **tag (a): a candidate new library component** — a `getCellDefinition`-family fragment rendering a value ÷ capacity fill with an accessible text equivalent, which the volume-aware location picker could share. Filed as [#740](https://github.com/msupply-foundation/open-msupply-frontend/issues/740) with the [`ADDING_A_COMPONENT.md`](../../ui/docs/ADDING_A_COMPONENT.md) checklist; **deliberately not built here** — a migration doesn't smuggle in library components. Interim: the existing percentage text (`t('label.percent-used')`), which is accessible — though **when** it shows is itself unresolved, see F7. _Since built as `ProportionCell` (#740) and adopted by the column; the interim text is gone, F7 still open._
 
 ## Library findings surfaced
 
 Nothing behavioural — the vertical exercises `DataTable`, `FilterBar`, `Combobox`, `Dialog`, and `CheckboxButton` in contexts they were built for. Two **gaps** (both additive, both out of this migration's scope):
 
-- **`CELL_DEF` has no `volume` / `volumeUsed` keys** (R4) — worth adding when a second vertical needs them; page-level `size` is the sanctioned interim.
-- **No proportion-bar cell** — filed as [#740](https://github.com/msupply-foundation/open-msupply-frontend/issues/740).
+- **`CELL_DEF` has no `volume` / `volumeUsed` keys** (R4) — worth adding when a second vertical needs them; page-level `size` is the sanctioned interim. _Since resolved for `volumeUsed`_ (it carries the new `proportion` cell kind — #740); `volume` still sets its `size` at the call site.
+- **No proportion-bar cell** — filed as [#740](https://github.com/msupply-foundation/open-msupply-frontend/issues/740). _Since built_: `ProportionCell` + `getProportionCell`, adopted by the Volume used column, so the percentage-text interim below is gone. F7 is untouched — the cell renders the proportion the vertical's shared helper derives, suppression rule included.
 
 ## Benign / consistency / optional (noted, not fixed unless you say so)
 

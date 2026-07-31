@@ -12,11 +12,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  InfoIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   CLIENT_SETTABLE,
   STATUS_LABELS,
@@ -33,16 +32,17 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // allowed next status with earlier ones disabled; hidden entirely when
 // read-only. ONE client pre-flight guard (ui-standards/validation.md — the
 // sanctioned lineless server gap): no lines / only placeholder lines →
-// notice, no server call (OMS-REG-DIST-04.16). The pre-flight answers are whole-shipment
-// SERVER probes supplied by the view (the lines are server-paginated — the
-// loaded page can't answer for the shipment), run sequentially when the
-// button is invoked. Everything else submits and surfaces the server's
-// verdict inline in the confirmation dialog — on-hold (OMS-REG-DIST-02.10) and
-// unallocated-placeholder (OMS-REG-DIST-03.9) rejections land in the error phase; the
-// confirmation itself carries the zero-quantity removal warning (OMS-REG-DIST-04.15).
-// The on-hold notice is ACTIONABLE (D59): it offers "Release hold and
-// confirm ‹status›" — one save carrying both the release and the advance
-// (rules.md § on hold, OMS-REG-DIST-02.27) — instead of the old app's dead-end toast.
+// notice, no server call (OMS-REG-DIST-04.16). The pre-flight answers are
+// whole-shipment SERVER probes supplied by the view (the lines are
+// server-paginated — the loaded page can't answer for the shipment), run
+// sequentially when the button is invoked. Everything else submits and surfaces
+// the server's verdict inline in the confirmation dialog — on-hold
+// (OMS-REG-DIST-02.10) and unallocated-placeholder (OMS-REG-DIST-03.9)
+// rejections land in the error phase; the confirmation itself carries the
+// zero-quantity removal warning (OMS-REG-DIST-04.15). The on-hold notice is
+// ACTIONABLE (D59): it offers "Release hold and confirm ‹status›" — one save
+// carrying both the release and the advance (rules.md § on hold,
+// OMS-REG-DIST-02.27) — instead of the old app's dead-end toast.
 
 /** Whole-shipment pre-flight answers (probed at action time, never derived
  * from the loaded page). */
@@ -75,7 +75,8 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   // Set when the notice is the ON-HOLD rejection: the status the user tried
   // to reach, offered as "Release hold and confirm ‹status›" — one save that
-  // both releases and advances (OMS-REG-DIST-02.27, D59). Cleared with the notice.
+  // both releases and advances (OMS-REG-DIST-02.27, D59). Cleared with the
+  // notice.
   const [holdRetryStatus, setHoldRetryStatus] = createSignal<
     SettableStatus | undefined
   >();
@@ -128,9 +129,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     if (!editable() || probing()) return;
     // The one sanctioned pre-flight (validation.md): no lines (or only
     // placeholders) — the server would ACCEPT a lineless confirmation
-    // (captured server gap, OMS-REG-DIST-04.16), so the notice is the only guard. Probed
-    // whole-shipment at click time; a failed probe already raised the global
-    // error modal, so just abort.
+    // (captured server gap, OMS-REG-DIST-04.16), so the notice is the only
+    // guard. Probed whole-shipment at click time; a failed probe already raised
+    // the global error modal, so just abort.
     setProbing(true);
     const flight = await props.preflight();
     setProbing(false);
@@ -181,8 +182,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     setHoldRetryStatus(undefined);
   };
 
-  // The on-hold notice's action (OMS-REG-DIST-02.27, D59): retry the SAME status change
-  // with the hold released in one save — {id, status, onHold: false}.
+  // The on-hold notice's action (OMS-REG-DIST-02.27, D59): retry the SAME
+  // status change with the hold released in one save — {id, status, onHold:
+  // false}.
   const releaseAndConfirm = async () => {
     const status = holdRetryStatus();
     if (!status || releasing()) return;
@@ -257,25 +259,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           actions={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
-                  onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={close} />
               </Show>
-              <Button
-                variant="primary"
-                icon={<ArrowRightIcon />}
-                confirms="plain"
+              <OkButton
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
-              >
-                {t('button.ok')}
-              </Button>
+              />
             </>
           }
         />
@@ -295,24 +285,17 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           description={infoMessage()}
           actions={
             <>
-              {/* OK dismisses the notice, which is what Escape does too, so it
-                  claims the cancel role; the release-and-retry below is the
-                  action this dialog offers and takes the confirm. */}
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                confirms="cancel"
-                disabled={releasing()}
-                onClick={closeNotice}
-              >
-                {t('button.ok')}
-              </Button>
+              <OkButton disabled={releasing()} onClick={closeNotice} />
               <Show when={holdRetryStatus()}>
                 {retry => (
+                  /* The actionable retry claims NO confirm role: OK holds
+                     `plain`, so Enter dismisses the notice rather than releasing
+                     a hold the user has not looked at (Brian, 2026-07-31). Two
+                     `plain` claims in one dialog would silently overwrite each
+                     other — the slots are role-keyed. */
                   <Button
                     variant="primary"
                     icon={<ArrowRightIcon />}
-                    confirms="plain"
                     data-testid="release-hold-and-confirm-button"
                     loading={releasing()}
                     onClick={() => void releaseAndConfirm()}

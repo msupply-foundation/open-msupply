@@ -44,7 +44,7 @@ import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
@@ -78,8 +78,9 @@ import { VvmStatusEntryModal } from './VvmStatusEntryModal';
 // text: the item-catalogue detail route is owned elsewhere and not wired here.
 
 // The fetched detail node — the StockLineDetail fragment plus its VVM history
-// (the byId query selects vvmStatusLogs). A superset of StockLineDetailFragment,
-// so it passes straight to the adjust/repack/VVM modals that take the fragment.
+// (the byId query selects vvmStatusLogs). A superset of
+// StockLineDetailFragment, so it passes straight to the adjust/repack/VVM
+// modals that take the fragment.
 type Line = StockLineByIdResult['stockLines']['nodes'][number];
 
 // The locally-buffered editable attributes. Read-only quantities are read from
@@ -180,8 +181,9 @@ const StockLineDetailView: Component = () => {
 
   // Seed the editable draft from a line: sets the draft and records the seeded
   // id. Called on load / line-id change (the effect below) and after a save
-  // (re-seed to clear the dirty state) — a refetch on the same id never re-seeds,
-  // so an in-progress edit isn't clobbered by an adjust/repack refresh.
+  // (re-seed to clear the dirty state) — a refetch on the same id never
+  // re-seeds, so an in-progress edit isn't clobbered by an adjust/repack
+  // refresh.
   const seedFor = (node: StockLineDetailFragment) => {
     setEdit(seedEdit(node));
     setSeededId(node.id);
@@ -201,7 +203,7 @@ const StockLineDetailView: Component = () => {
   // this view's boundary and tear the rendered form down again — and the same
   // read runs after an adjust/repack refetch, with a modal potentially open
   // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `loading`
-  // below still gives LocationSelect its spinner.
+  // below still gives LocationVolumeSelect its spinner.
   const locations = () =>
     locationsForItem(
       allLocations.state === 'ready' || allLocations.state === 'refreshing'
@@ -220,10 +222,10 @@ const StockLineDetailView: Component = () => {
     return l ? l.totalNumberOfPacks * l.packSize : 0;
   };
 
-  // Dose context for vaccine items when manageVaccinesInDoses is on (spec AC-P2)
-  // — the read-only quantity fields (pack qty, available packs, SOH, available
-  // stock) append the dose equivalent (units × the item's doses-per-unit) as a
-  // muted note beside the value.
+  // Dose context for vaccine items when manageVaccinesInDoses is on (spec
+  // AC-P2) — the read-only quantity fields (pack qty, available packs, SOH,
+  // available stock) append the dose equivalent (units × the item's
+  // doses-per-unit) as a muted note beside the value.
   const showDoses = () =>
     prefs().manageVaccinesInDoses && !!line()?.item.isVaccine;
   // The value node for a read-only quantity field: the number, plus the dose
@@ -384,13 +386,12 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('inventory') },
     { label: t('stock'), onClick: onCancelOrClose },
     { label: l.itemName },
   ];
 
-  // The invalid-location warning (spec/stock AC-D4): the item is restricted to a
-  // location type and the current location is of another type.
+  // The invalid-location warning (spec/stock AC-D4): the item is restricted to
+  // a location type and the current location is of another type.
   const invalidLocation = (l: Line) =>
     !!l.item.restrictedLocationTypeId &&
     !!l.location &&
@@ -612,12 +613,24 @@ const StockLineDetailView: Component = () => {
 
                       <FormColumn>
                         <FormSection title={t('heading.storage-and-pack')}>
-                          <LocationSelect
+                          <LocationVolumeSelect
                             label={t('label.location')}
                             locations={locations()}
                             loading={allLocations.loading}
                             value={edit.location?.id}
                             placeholder={t('label.none')}
+                            // This field PLACES stock, so "Available" is
+                            // measured against what's being placed — the DRAFT
+                            // volume per pack (what the user is editing), not
+                            // the saved figure (spec/stock/rules.md › location
+                            // fields).
+                            requiredVolume={
+                              (edit.volumePerPack ?? 0) * l().totalNumberOfPacks
+                            }
+                            // The SAVED location, not the draft one: once the
+                            // user picks elsewhere, where the stock actually
+                            // still sits must stay offered under "Available".
+                            originalLocationId={l().location?.id}
                             onChange={loc =>
                               setEdit(
                                 'location',

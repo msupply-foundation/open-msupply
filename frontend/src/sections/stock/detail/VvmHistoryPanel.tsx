@@ -17,8 +17,8 @@ import type { StockLineVvmLogFragment } from './stockLine.generated';
 // The line's VVM status entries: date, time, VVM status, distribution priority,
 // entered by, comment. A "New status entry" action (opens S6); selecting an
 // entry opens S6 to edit its comment. Gated to vaccine items with
-// manageVvmStatusForStock on (the tab is only mounted then). Recording / editing
-// requires the VVM permission; viewing needs only stock-view.
+// manageVvmStatusForStock on (the tab is only mounted then). Recording /
+// editing requires the VVM permission; viewing needs only stock-view.
 
 type Log = StockLineVvmLogFragment;
 

@@ -44,7 +44,9 @@ export interface AdjustModalProps {
   storeId: string;
   line: StockLineDetailFragment;
   onClose: () => void;
-  /** Fired after a successful adjustment so the detail view refetches the line. */
+  /**
+   * Fired after a successful adjustment so the detail view refetches the line.
+   */
   onAdjusted: () => void;
 }
 
@@ -82,7 +84,8 @@ const AdjustContent = (props: {
     return maxDays <= 0 ? undefined : localIsoDaysAgo(maxDays);
   };
 
-  // A chosen date earlier than today means "backdated"; today (or unset) is not.
+  // A chosen date earlier than today means "backdated"; today (or unset) is
+  // not.
   const isBackdated = () => !!date() && date() !== today;
 
   // The backdated instant: a reduction is stamped at the day's end, an addition

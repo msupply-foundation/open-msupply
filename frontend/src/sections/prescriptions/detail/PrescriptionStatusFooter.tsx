@@ -122,26 +122,48 @@ export const PrescriptionStatusFooter: Component<
     setPendingStatus(next);
   };
 
-  const run = async (next: ForwardStatus, extra?: Partial<UpdateInput>) => {
+  const run = async (
+    next: ForwardStatus,
+    extra?: Partial<UpdateInput>,
+    // The payment window's plugin after-save step (spec/plugins/rules.md § form
+    // participation): awaited AFTER the status change has succeeded and before
+    // the save is reported complete. It resolves to a message when a plugin's
+    // own write failed — the window stays open showing it, because the
+    // prescription IS saved but the plugin's record is not, and that must not
+    // vanish silently.
+    afterSave?: (context: { recordId: string }) => Promise<string | undefined>
+  ) => {
     setWorking(true);
+    // A retry must not show the previous attempt's verdict.
+    setRejection(undefined);
     const outcome = await savePrescription(props.storeId, {
       id: props.node.id,
       status: next,
       ...extra,
     });
-    setWorking(false);
     if (outcome.kind === 'saved') {
+      const failure = await afterSave?.({ recordId: props.node.id });
+      setWorking(false);
+      if (failure) {
+        // The payment window surfaces the failure itself; leave it open and
+        // still merge the saved node, since the status change did land.
+        props.onSaved(outcome.node);
+        return;
+      }
       closeDialogs();
       props.onSaved(outcome.node);
       return;
     }
+    setWorking(false);
     if (outcome.kind === 'rejected') {
-      // The server's verdict replaces the confirmation with a blocking
-      // notice (never a toast — D21). The payment window closes too: it held
-      // derived values only.
-      setPaymentStatus(undefined);
-      setPendingStatus(next);
+      // The server's verdict shows as a blocking notice in the surface that
+      // initiated the save — never a toast (D21). When that surface is the
+      // PAYMENT WINDOW it stays open and shows the notice there: it now carries
+      // a plugin contribution's own draft (amount tendered, payment method), so
+      // swapping it for the plain confirmation would throw away the user's input
+      // over a server error they can fix.
       setRejection(outcome.description);
+      if (!paymentStatus()) setPendingStatus(next);
       return;
     }
     closeDialogs(); // transport — the global modal has it
@@ -274,8 +296,9 @@ export const PrescriptionStatusFooter: Component<
             storeId={props.storeId}
             node={props.node}
             working={working()}
+            rejection={rejection()}
             onClose={closeDialogs}
-            onConfirm={extra => void run(next(), extra)}
+            onConfirm={(extra, afterSave) => void run(next(), extra, afterSave)}
           />
         )}
       </Show>

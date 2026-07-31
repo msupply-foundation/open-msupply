@@ -6,8 +6,11 @@ import styles from './HeaderToolbar.module.css';
 export interface HeaderToolbarProps {
   /**
    * The header's field cluster — inputs and read-only LabelledValues. Each is
-   * an equal share of the row (a FormRow) at `minFieldWidth`, growing to fill
-   * and wrapping intrinsically as a unit.
+   * an equal share of the row (a FormRow) at `minFieldWidth` by default, growing
+   * to fill and wrapping intrinsically as a unit. A field whose data doesn't fit
+   * an equal share — a person's name beside a formatted date — declares its own
+   * by wrapping in a `<FormRowItem weight={…}>` (ui/docs/PAGES.md § header field
+   * cluster); weight the whole cluster or none of it, and never the `alert`.
    */
   children?: JSX.Element;
   /**
@@ -30,8 +33,9 @@ export interface HeaderToolbarProps {
  * HeaderToolbar — the page-header field cluster (Carl 2026-07-27). A thin
  * specialisation of <Toolbar> that ENFORCES the header field-row layout so
  * pages don't hand-roll it: children flow into a FormRow (equal shares at a min
- * width, growing to fill), wrapped in a grow container so the row fills the
- * toolbar and packs as-many-fields-per-row-as-fit; an optional compact Alert
+ * width by default, or the share a FormRowItem declares, growing to fill),
+ * wrapped in a grow container so the row fills the toolbar and packs
+ * as-many-fields-per-row-as-fit; an optional compact Alert
  * hugs its content and bottom-aligns. The generic <Toolbar> stays layout-only
  * for its other uses (a list FilterBar, a stub); this composes it for the
  * detail/header field case. Demoed on the Header showcase (the Detail-table

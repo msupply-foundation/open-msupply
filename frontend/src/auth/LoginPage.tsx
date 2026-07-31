@@ -6,7 +6,8 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
+import { ArrowRightIcon } from '../ui/icons';
+import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import styles from '../ui/styles/LoginInitLayout.module.css';
@@ -52,8 +53,12 @@ export const LoginPage: Component = () => {
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
-    if (result.kind === 'error')
+    if (result.kind === 'error') {
+      // Clear the password on a failed login (finding F6 — align with the
+      // current app; a wrong password is re-entered, not left in the field).
+      setPassword('');
       setSubmitState({ kind: 'error', message: result.message });
+    }
   };
 
   return (
@@ -70,7 +75,7 @@ export const LoginPage: Component = () => {
             aria-label={t('button.login')}
             onSubmit={submit}
           >
-            <MSupplyGuyLogo class={styles.logo} />
+            <AppLogo class={styles.logo} />
             <TextField
               label={t('heading.username')}
               width="full"
@@ -98,7 +103,9 @@ export const LoginPage: Component = () => {
               disabled={submitting()}
             />
             <Show when={submitError()}>
-              <Alert severity="error">{submitError()}</Alert>
+              <Alert severity="error" testId="login-error">
+                {submitError()}
+              </Alert>
             </Show>
             <div class={styles.buttonRow}>
               <Button
@@ -128,7 +135,7 @@ export const LoginPage: Component = () => {
           >
             {t('login.switch-to-old-ui')}
           </a>
-          <p class={styles.version}>
+          <p class={styles.version} data-testid="login-version">
             <strong>{t('label.app-version')}</strong> {APP_VERSION}
           </p>
           {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has

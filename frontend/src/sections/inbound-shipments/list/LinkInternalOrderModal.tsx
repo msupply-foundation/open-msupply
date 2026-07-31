@@ -3,13 +3,15 @@ import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
+import { Text } from '../../../ui/elements/typography/Text';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
-  getDateCell,
+  getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
+import styles from './LinkInternalOrderModal.module.css';
 import type { LinkInternalOrderRowFragment } from '../detail/inboundShipmentLookups.generated';
 
 // The create-flow "Link internal order" step (spec S2 → Link internal order
@@ -53,26 +55,36 @@ export const LinkInternalOrderModal: Component<
     {
       c: { key: 'requisitionNumber' },
       header: () => t('label.number'),
+      // No CELL_DEF key for a requisition number; take the shared record-number
+      // width so it lines up with the other "#" columns.
       ...getNumberCell(),
+      size: remToPx(3.5),
     },
     {
       c: { key: 'createdDatetime' },
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       c: { accessor: row => row.user?.username ?? '', id: 'enteredBy' },
       header: () => t('label.entered-by'),
+      // The acting user's username — the shared short-text width.
+      ...getCellDefinition('user'),
     },
     {
       c: { accessor: row => row.program?.name ?? '', id: 'program' },
       header: () => t('label.program'),
+      ...getCellDefinition('name'),
     },
-    { c: { key: 'theirReference' }, header: () => t('label.reference') },
+    {
+      c: { key: 'theirReference' },
+      header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
+    },
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
   ];
 
@@ -91,18 +103,15 @@ export const LinkInternalOrderModal: Component<
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            confirms="cancel"
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           {/* Next creates the shipment WITHOUT a link — the optional-skip path
-              the instruction above describes. It is this dialog's confirming
-              action (picking an order from the list is the other route). */}
+              the instruction above describes. Its own verb, so a plain Button
+              rather than one of the standard dialog three — and it is this
+              dialog's confirming action (picking an order from the list is the
+              other route), so it claims the role by hand. */}
           <Button
             confirms="plain"
             data-testid="dialog-button-next"
@@ -116,9 +125,9 @@ export const LinkInternalOrderModal: Component<
     >
       {/* Load-bearing instruction: linking is optional, and this is the only
           cue that the step is skippable (via Next). */}
-      <p style={{ 'font-style': 'italic' }}>
+      <Text variant="body" class={styles.instruction}>
         {t('message.continue-to-make-inbound-shipment')}
-      </p>
+      </Text>
       <DataTable
         columns={columns()}
         rows={page()}

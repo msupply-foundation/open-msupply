@@ -24,7 +24,7 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
-import { MSupplyGuyLogo } from '../ui/icons';
+import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
   DEFAULT_SYNC_INTERVAL_SECONDS,
@@ -39,8 +39,9 @@ export const InitialisationPage: Component<{
   onComplete: () => void;
 }> = props => {
   const [values, setValues] = createSignal({
-    // Spec (issue #519.2): pre-fill the scheme so the user only types the host —
-    // the central server is always reached over https. Matches the current app.
+    // Spec (issue #519.2): pre-fill the scheme so the user only types the host
+    // — the central server is always reached over https. Matches the current
+    // app.
     url: 'https://',
     siteName: '',
     password: '',
@@ -148,10 +149,10 @@ export const InitialisationPage: Component<{
 
   // Spec (issue #519.3): validate the URL on the front end so a malformed one
   // (e.g. no scheme — "mysite.example.com") never reaches initialiseSite. The
-  // server rejects such a URL with an unstructured "Internal error", which would
-  // trip the global unexpected-error modal whose only recovery is a full reload,
-  // wiping everything the user typed. Caught here it is a plain inline field
-  // error and the form (and the other fields) stay put.
+  // server rejects such a URL with an unstructured "Internal error", which
+  // would trip the global unexpected-error modal whose only recovery is a full
+  // reload, wiping everything the user typed. Caught here it is a plain inline
+  // field error and the form (and the other fields) stay put.
   //
   // The URL must be the authority form — start with "http://" or "https://" and
   // carry a host. The scheme:// prefix check is deliberate: `new URL()` alone
@@ -159,7 +160,8 @@ export const InitialisationPage: Component<{
   // parses with host "dsfadsf"), which is never a real central-server address.
   // The bare default "https://" fails the host check, same as an empty field.
   // Whether the host actually resolves is the server's job — an unreachable but
-  // well-formed address comes back as a structured CONNECTION_ERROR shown inline.
+  // well-formed address comes back as a structured CONNECTION_ERROR shown
+  // inline.
   const urlError = (raw: string): string => {
     const value = raw.trim();
     if (value === '') return t('error.url-required');
@@ -212,8 +214,8 @@ export const InitialisationPage: Component<{
       setSyncStarted(true);
       watchProgress();
     } else {
-      // Spec (OMS-REG-LGN-03.11): initialisation never started, so the button stays
-      // Initialise (not Retry) and the fields unlock for correction.
+      // Spec (OMS-REG-LGN-03.11): initialisation never started, so the button
+      // stays Initialise (not Retry) and the fields unlock for correction.
       setSubmitting(false);
       setSyncError({
         variant:
@@ -238,7 +240,8 @@ export const InitialisationPage: Component<{
   // Spec: fields lock while the request is in flight, and stay locked for the
   // whole time sync has actually started (including a watched-sync error —
   // that's the Retry case). A sync error BEFORE syncStarted means
-  // initialisation never began, so fields unlock for correction (OMS-REG-LGN-03.11).
+  // initialisation never began, so fields unlock for correction
+  // (OMS-REG-LGN-03.11).
   const locked = () => submitting() || syncStarted();
   const busy = () => locked() && syncError() == null;
 
@@ -259,7 +262,7 @@ export const InitialisationPage: Component<{
             aria-label={t('button.initialise')}
             onSubmit={submit}
           >
-            <MSupplyGuyLogo class={styles.logo} />
+            <AppLogo class={styles.logo} />
             <TextField
               label={t('label.settings-url')}
               width="full"

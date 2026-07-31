@@ -221,7 +221,11 @@
   margin: 0;
   font-size: var(--text-xs);
   line-height: 1.3;
-  color: var(--text-secondary);
+  /* Muted by default; a host can override via the custom property (e.g. the
+     side panel, where the helper carries a calculated figure that should read
+     as a value, not a hint). Error text keeps its own colour — this var only
+     touches the helper. */
+  color: var(--field-helper-color, var(--text-secondary));
 }
 
 .error {

@@ -58,10 +58,10 @@ const currentStoreId = () => loaded()?.storeId;
 
 // The stocktake display-gate preferences (spec/stocktakes › store-preference
 // gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
-// the context is still unresolved — the safe default is OFF, so a gated column /
-// field never flashes in before the preference is known (mirrors the D7 rule for
-// the simplified layout: unresolved ⇒ render the plainer surface). Reactive, so
-// a post-sync refetch re-gates the affected surfaces in place.
+// the context is still unresolved — the safe default is OFF, so a gated column
+// / field never flashes in before the preference is known (mirrors the D7 rule
+// for the simplified layout: unresolved ⇒ render the plainer surface).
+// Reactive, so a post-sync refetch re-gates the affected surfaces in place.
 const stocktakePreferences = () => {
   const prefs = storeContext()?.preferences;
   return {
@@ -225,11 +225,11 @@ const isDispensary = (): boolean => {
 const hasVaccineModule = (): boolean =>
   storeContext()?.storePreferences?.vaccineModule ?? false;
 
-// The NAME of the store the user has currently entered — the prefix source for a
-// generated patient code (spec/patients § generating a code). Read off the
-// me/login response's store list, the same place `isDispensary` reads storeMode,
-// so it costs no query. Empty string while the store is unresolved; the one
-// caller treats that as "cannot generate yet".
+// The NAME of the store the user has currently entered — the prefix source for
+// a generated patient code (spec/patients § generating a code). Read off the
+// me/login response's store list, the same place `isDispensary` reads
+// storeMode, so it costs no query. Empty string while the store is unresolved;
+// the one caller treats that as "cannot generate yet".
 const currentStoreName = (): string => {
   const storeId = currentStoreId();
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';

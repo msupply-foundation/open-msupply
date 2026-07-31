@@ -94,8 +94,8 @@ export const DeleteStocktakeAction: Component<
       <Show when={open()}>
         <Dialog
           open
-          // Blocking while the mutation is in flight — no click-outside / Escape
-          // exit until it resolves.
+          // Blocking while the mutation is in flight — no click-outside /
+          // Escape exit until it resolves.
           dismissable={phase() !== 'deleting'}
           onClose={close}
           icon={<TrashIcon />}
