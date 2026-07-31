@@ -179,20 +179,24 @@ const Body = (
               <Button
                 variant="danger"
                 loading={phase() === 'deleting'}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.delete-lines')}
               </Button>
             </>
           }
         >
-          {/* Blocked / error: nothing to submit — a single dismiss. */}
+          {/* Blocked / error: nothing to submit — a single Close. */}
           <Match when={phase() === 'blocked' || phase() === 'error'}>
-            <CancelButton
-              data-testid="dialog-button-cancel"
+            <Button
+              variant="secondary"
+              confirms="plain"
               onClick={props.onClose}
-            />
+            >
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

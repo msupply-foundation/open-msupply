@@ -14,7 +14,7 @@
   max-width: 50rem;
   margin-inline: auto;
   padding: var(--space-4);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .section {

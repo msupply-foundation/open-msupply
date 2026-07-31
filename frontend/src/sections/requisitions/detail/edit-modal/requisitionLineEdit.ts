@@ -1,9 +1,9 @@
-import { graphqlFetch } from '../../../../api/graphql';
-import { getPlural, t, tPlural } from '../../../../intl';
+import { graphqlFetch } from '@/api/graphql';
+import { getPlural, t, tPlural } from '@/intl';
 import {
   parseVaccineCourses,
   type VaccineCourse,
-} from '../../../../domain/forecast';
+} from '@/domain/forecast';
 import {
   RequisitionItemStats,
   InsertRequisitionLine,

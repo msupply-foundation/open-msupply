@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 import {
   FilterTextInput,
   FilterNumberInput,
@@ -6,7 +6,7 @@ import {
   FilterDateRange,
   constructFilters,
   type Filter,
-} from '../../../ui/elements/selectors/FilterBar';
+} from '@/ui/elements/selectors/FilterBar';
 import type { RequisitionsVariables } from './requisitions.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety — no

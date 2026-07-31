@@ -6,21 +6,21 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { t, tPlural } from '../../../intl';
-import { hasPermission } from '../../../store/storeContext';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../ui/elements/feedback/Alert';
-import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { t, tPlural } from '@/intl';
+import { hasPermission } from '@/store/storeContext';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from '../../../ui/icons';
+  CancelButton,
+  CloseButton,
+  OkButton,
+} from '@/ui/elements/buttons/StandardButtons';
+import { SplitButton } from '@/ui/elements/buttons/SplitButton';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { ArrowRightIcon, PlusCircleIcon } from '@/ui/icons';
 import {
   createShipmentFromRequisition,
   saveRequisitionFields,
@@ -28,13 +28,14 @@ import {
 import { currentStatusStep, statusSteps } from './requisitionDetailStatus';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 
-// The detail footer (spec/requisitions S2 § footer): the lifecycle indicator
-// over New → Finalised, and the status/raise SPLIT button — Confirm New
-// (always disabled) · Create shipment · Confirm Finalised. The preselected
-// primary is Create shipment while any line remains unsupplied (or no line
-// has a supply quantity yet); Confirm Finalised once every line is fully
-// supplied. Hidden when the requisition is not editable — except when only
-// APPROVAL blocks editing, in which case it shows disabled (rules › raising a
+// The detail footer (spec/requisitions S2 § footer): the labelled Close back
+// to the list, the lifecycle indicator over New → Finalised, and the
+// status/raise SPLIT button — Create shipment · Confirm Finalised (forward
+// statuses only, per controls › split button / D40). The preselected primary
+// is Create shipment while any line remains unsupplied (or no line has a
+// supply quantity yet); Confirm Finalised once every line is fully supplied.
+// Hidden when the requisition is not editable — except when only APPROVAL
+// blocks editing, in which case it shows disabled (rules › raising a
 // shipment).
 //
 // Create shipment: missing permission → an explanatory notice, no call;
@@ -107,12 +108,10 @@ export const RequisitionStatusFooter: Component<
     remainingCount() > 0 || noSupplyYet() ? 'shipment' : 'finalised';
   const selected = () => choice() ?? defaultChoice();
 
+  // Forward statuses only (ui-standards › controls § split button, D40): the
+  // current status is never offered, so a New requisition's menu holds Create
+  // shipment and Confirm Finalised.
   const options = () => [
-    {
-      value: 'new',
-      label: t('button.save-and-confirm-status', { status: t('status.new') }),
-      disabled: true,
-    },
     { value: 'shipment', label: t('button.create-shipment') },
     {
       value: 'finalised',
@@ -205,6 +204,14 @@ export const RequisitionStatusFooter: Component<
         current={currentStatusStep(props.node.status)}
       />
       <ContentFooterActions>
+        {/* Leave without saving — the standard labelled footer close
+            (registry › action-footer close). */}
+        <CloseButton
+          data-testid="close-button"
+          onClick={() =>
+            navigate(`/${props.storeId}/distribution/customer-requisition`)
+          }
+        />
         {/* Hidden when not editable — except approval-only blocking, which
             shows it disabled (spec S2 § footer). */}
         <Show when={props.editable || props.approvalBlocked}>
@@ -272,28 +279,23 @@ export const RequisitionStatusFooter: Component<
           actions={
             <Switch
               fallback={
+                // confirm / creating: Cancel (hidden while creating) + the
+                // loading confirm — the standard icon-less dialog-footer pair
+                // (controls › dialogs, D55).
                 <>
                   <Show when={raisePhase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
-                      onClick={() => setRaiseOpen(false)}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    <CancelButton onClick={() => setRaiseOpen(false)} />
                   </Show>
-                  <Button
-                    icon={<CheckIcon />}
+                  <OkButton
                     data-testid="confirmation-modal-ok"
                     loading={raisePhase() === 'creating'}
                     onClick={() => void runRaise()}
-                  >
-                    {t('button.ok')}
-                  </Button>
+                  />
                 </>
               }
             >
-              {/* The refusals and the failure have nothing to submit. */}
+              {/* The refusals and the failure have nothing to submit — a
+                  single Close. */}
               <Match
                 when={
                   raisePhase() === 'permission' ||
@@ -303,7 +305,7 @@ export const RequisitionStatusFooter: Component<
               >
                 <Button
                   variant="secondary"
-                  icon={<XCircleIcon />}
+                  confirms="plain"
                   onClick={() => setRaiseOpen(false)}
                 >
                   {t('button.close')}
@@ -352,31 +354,24 @@ export const RequisitionStatusFooter: Component<
           actions={
             <Switch
               fallback={
+                // confirm / saving: the standard icon-less pair (D55).
                 <>
                   <Show when={finalisePhase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
-                      onClick={() => setFinaliseOpen(false)}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    <CancelButton onClick={() => setFinaliseOpen(false)} />
                   </Show>
-                  <Button
-                    icon={<CheckIcon />}
+                  <OkButton
                     data-testid="confirmation-modal-ok"
                     loading={finalisePhase() === 'saving'}
                     onClick={() => void runFinalise()}
-                  >
-                    {t('button.ok')}
-                  </Button>
+                  />
                 </>
               }
             >
+              {/* Failure: nothing to submit — a single Close. */}
               <Match when={finalisePhase() === 'error'}>
                 <Button
                   variant="secondary"
-                  icon={<XCircleIcon />}
+                  confirms="plain"
                   onClick={() => setFinaliseOpen(false)}
                 >
                   {t('button.close')}

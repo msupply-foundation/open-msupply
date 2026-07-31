@@ -1,6 +1,6 @@
 import { type Component } from 'solid-js';
-import { DocumentUploadPanel } from '../../../ui/elements/display/DocumentUploadPanel';
-import { syncFileUrl } from '../../../domain/syncFiles';
+import { DocumentUploadPanel } from '@/ui/elements/display/DocumentUploadPanel';
+import { syncFileUrl } from '@/domain/syncFiles';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 
 // The detail "Documents" tab (spec/requisitions S2 § Documents tab; AC-DT1/2):

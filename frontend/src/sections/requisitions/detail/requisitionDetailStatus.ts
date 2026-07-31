@@ -1,5 +1,5 @@
-import { t } from '../../../intl';
-import type { StatusStep } from '../../../ui/elements/feedback/StatusIndicator';
+import { t } from '@/intl';
+import type { StatusStep } from '@/ui/elements/feedback/StatusIndicator';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 
 // The detail-screen editability boundary (rules › lifecycle & editability): a

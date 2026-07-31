@@ -151,6 +151,7 @@ const Body = (
               </Show>
               <Button
                 variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -160,7 +161,10 @@ const Body = (
             </>
           }
         >
-          <CancelButton onClick={props.onClose} />
+          {/* Error: nothing to submit — a single Close. */}
+          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+            {t('button.close')}
+          </Button>
         </Show>
       }
     />

@@ -1,11 +1,12 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
-import { t } from '../../../../intl';
-import { formatNumber, round } from '../../../../intl/formatNumber';
-import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
+import { t } from '@/intl';
+import { formatNumber, round } from '@/intl/formatNumber';
+import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
+import { InfoIcon } from '@/ui/icons';
 import {
   ForecastCalculationDisplay,
   type VaccineCourse,
-} from '../../../../domain/forecast';
+} from '@/domain/forecast';
 import {
   figureInMode,
   modeWord,
@@ -83,7 +84,9 @@ export const RequisitionLineStats: Component<{
         when={total() > 0}
         fallback={
           <p class={styles.emptyNote} role="status">
-            <span aria-hidden="true">ⓘ</span> {p.emptyMessage}
+            {/* The shared info glyph (one icon set — registry § icons, D4);
+                decorative (aria-hidden by default) beside the message text. */}
+            <InfoIcon /> {p.emptyMessage}
           </p>
         }
       >

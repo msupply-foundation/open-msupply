@@ -4,23 +4,22 @@ import {
   Show,
   type Component,
 } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import { generateUUID } from '../../../../uuid';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
-import { DataTable, type Column } from '../../../../ui/elements/table/DataTable';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { generateUUID } from '@/uuid';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import {
-  getCommentCell,
-  getDateCell,
+  getCellDefinition,
   getNumberCell,
-} from '../../../../ui/elements/table/tableHelpers';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Stack } from '../../../../ui/layout/Stack/Stack';
-import { PlusCircleIcon } from '../../../../ui/icons';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+} from '@/ui/elements/table/tableHelpers';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { PlusCircleIcon } from '@/ui/icons';
+import { NameSearch, type NameOption } from '@/domain/name';
 import {
   CreateOrderRequisitions,
   InsertOrderFromRequisition,
@@ -80,7 +79,13 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
       return result.data.requisitions.nodes;
     }
   );
-  const rows = (): PickerRow[] => data.latest ?? [];
+  // Full .state gate — `.latest` alone suspends on the first pending read,
+  // and this resource first fetches mid-interaction inside the open step-2
+  // dialog (kdd/solid-reactivity-pitfalls › no remounts on interaction).
+  const rows = (): PickerRow[] =>
+    data.state === 'ready' || data.state === 'refreshing'
+      ? (data.latest ?? [])
+      : [];
 
   const onSupplier = (picked: NameOption | null) => {
     if (!picked) return;
@@ -117,6 +122,8 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
     // Transport / unexpected already surfaced globally; keep the modal open.
   };
 
+  // Column widths ride the shared presets (getCellDefinition) so the picker's
+  // columns size and resize like every other table's.
   const columns = (): Column<PickerRow, never>[] => [
     {
       c: { key: 'requisitionNumber' },
@@ -126,11 +133,12 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
     {
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       header: () => t('label.customer'),
+      ...getCellDefinition('otherPartyName'),
     },
     {
       c: { key: 'createdDatetime' },
       header: () => t('label.created-datetime'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       // Empty for a non-program requisition.
@@ -142,6 +150,7 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
       // (rules › origin) reads here.
       c: { accessor: row => row.theirReference ?? '', id: 'theirReference' },
       header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
     },
     {
       // The standard translated status text — the reference renders the raw
@@ -153,7 +162,7 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
   ];
 

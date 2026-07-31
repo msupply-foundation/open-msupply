@@ -8,20 +8,20 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
-import { Combobox } from '../../../../ui/elements/selectors/Combobox';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Stack } from '../../../../ui/layout/Stack/Stack';
-import { HStack } from '../../../../ui/layout/Stack/HStack';
-import { StatusMarker } from '../../../../ui/elements/feedback/StatusMarker';
-import { PlusCircleIcon, AlertTriangleIcon } from '../../../../ui/icons';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+import { t } from '@/intl';
+import { graphqlFetch } from '@/api/graphql';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { createFocusTarget } from '@/ui/utils/createFocusTarget';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
+import { Combobox } from '@/ui/elements/selectors/Combobox';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
+import { AlertTriangleIcon } from '@/ui/icons';
+import { NameSearch, type NameOption } from '@/domain/name';
 import { CustomerProgramSettings } from './createRequisition.generated';
 import {
   createGeneralRequisition,
@@ -335,8 +335,10 @@ export const CreateRequisitionModal: Component<
       // path creates on customer-select and has no footer button (spec S3a).
       actions={
         <Show when={activeTab() === 'program'}>
+          {/* Icon-less dialog-footer confirm (controls › dialogs, D55);
+              confirms="plain" wires Enter-to-confirm + the Alt+S badge. */}
           <Button
-            icon={<PlusCircleIcon />}
+            confirms="plain"
             data-testid="create-program-requisition-button"
             disabled={!createReady()}
             loading={submitting()}

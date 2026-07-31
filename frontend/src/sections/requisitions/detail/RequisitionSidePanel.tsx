@@ -1,24 +1,25 @@
 import { For, Show, type Component } from 'solid-js';
-import { A } from '@solidjs/router';
-import { t, localisedDate } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
-import { homeCurrency } from '../../../intl/currency';
+import { t, localisedDate } from '@/intl';
+import { formatNumber } from '@/intl/formatNumber';
+import { homeCurrency } from '@/intl/currency';
 import {
   SidePanelSection,
   SidePanelActions,
-} from '../../../ui/layout/SidePanel/SidePanel';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
-import { TextArea } from '../../../ui/elements/inputs/TextArea';
-import { UserLabel } from '../../../ui/elements/typography/UserLabel';
-import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
+} from '@/ui/layout/SidePanel/SidePanel';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { TextArea } from '@/ui/elements/inputs/TextArea';
+import { Text } from '@/ui/elements/typography/Text';
+import { UserLabel } from '@/ui/elements/typography/UserLabel';
+import { RecordLink } from '@/ui/elements/typography/RecordLink';
+import { Popover } from '@/ui/elements/feedback/Popover';
+import { CopyToClipboardButton } from '@/ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
   ColourTagPicker,
-} from '../../../ui/elements/selectors/ColourTag';
-import { type DebouncedEdit } from '../../../domain/debouncedEdit';
+} from '@/ui/elements/selectors/ColourTag';
+import { type DebouncedEdit } from '@/domain/debouncedEdit';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 import { type HeaderEditFields } from './RequisitionToolbar';
-import styles from './RequisitionSidePanel.module.css';
 
 // The requisition detail side panel (spec/requisitions S5). Sections, in
 // order: Program info (program requisitions only) · Additional info
@@ -121,6 +122,7 @@ export const RequisitionSidePanel: Component<
           >
             <ColourTagPicker
               colour={props.node.colour ?? null}
+              variant="field"
               onSelect={colour => props.onSaveField({ colour })}
             />
           </Show>
@@ -153,18 +155,31 @@ export const RequisitionSidePanel: Component<
         >
           <For each={props.node.shipments.nodes}>
             {shipment => (
-              <FieldRow label={t('label.shipment')}>
-                <A
+              <Text variant="body">
+                {/* The label is a hover popover carrying the created-on / by-
+                    whom annotation — a real popover, not a native `title`, so
+                    it also opens on keyboard focus. The label (not the entry)
+                    triggers it because the number is itself a link — nesting
+                    one interactive in another is invalid. */}
+                <Popover
+                  trigger={t('label.shipment')}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>
+                    {shipmentTooltip(
+                      shipment.createdDatetime,
+                      shipment.user?.username
+                    )}
+                  </p>
+                </Popover>{' '}
+                {/* A shipment reference is neutral — no `kind` tone. */}
+                <RecordLink
                   href={`/${props.storeId}/distribution/outbound-shipment/${shipment.id}`}
-                  class={styles.link}
-                  title={shipmentTooltip(
-                    shipment.createdDatetime,
-                    shipment.user?.username
-                  )}
                 >
                   {`#${shipment.invoiceNumber}`}
-                </A>
-              </FieldRow>
+                </RecordLink>
+              </Text>
             )}
           </For>
         </Show>

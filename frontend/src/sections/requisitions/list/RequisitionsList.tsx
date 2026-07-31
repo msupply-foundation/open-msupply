@@ -1,31 +1,33 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
-import { Page } from '../../../ui/layout/Page/Page';
-import { Header } from '../../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
   DataTable,
   type Column,
   type SortState,
-} from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
-import { remToPx } from '../../../ui/utils/rem';
-import { createTableConfig } from '../../../api/createTableConfig';
-import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
+} from '@/ui/elements/table/DataTable';
+import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import { remToPx } from '@/ui/utils/rem';
+import { createTableConfig } from '@/api/createTableConfig';
+import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import {
   ColourTagDot,
   ColourTagPicker,
-} from '../../../ui/elements/selectors/ColourTag';
-import { HStack } from '../../../ui/layout/Stack/HStack';
-import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { PlusCircleIcon, TruckIcon } from '../../../ui/icons';
-import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
+} from '@/ui/elements/selectors/ColourTag';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
+import { PlusCircleIcon, TruckIcon } from '@/ui/icons';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_N } from '@/ui/utils/shortcuts';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import { stripEmpty } from '@/typeHelpers';
 import {
   Requisitions,
   UpdateRequisitionColour,
@@ -188,6 +190,17 @@ const RequisitionsList: Component = () => {
   // Program-tab gate (programCapable) must be known before it can open.
   const startCreate = () => setCreateOpen(true);
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared
+  // by the SCREEN, once, for the two controls that trigger it (the header
+  // button and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action. Same inertness
+  // as both controls: the store context must resolve first.
+  createAddAction({
+    name: 'button.new-requisition',
+    run: startCreate,
+    disabled: () => context.loading,
+  });
+
   const onCreated = (id: string) => {
     setCreateOpen(false);
     navigate(`/${params.storeId}/distribution/customer-requisition/${id}`);
@@ -290,7 +303,9 @@ const RequisitionsList: Component = () => {
     {
       c: { key: 'requisitionNumber' },
       sortKey: 'requisitionNumber',
-      header: () => t('label.number'),
+      // The language-neutral '#', matching the internal-orders mirror and the
+      // stocktakes reference.
+      header: () => '#',
       ...getCellDefinition('requisitionNumber'),
     },
     {
@@ -370,6 +385,7 @@ const RequisitionsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-requisition-button"
               // Disabled until the store context resolves: the modal's
               // Program-tab gate must be decided before it can open.
@@ -437,11 +453,12 @@ const RequisitionsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             disabled={context.loading}
             onClick={startCreate}
           >
-            {t('button.new-requisition')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection
