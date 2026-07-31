@@ -644,6 +644,91 @@ export const FilterNumberInput = (props: {
   );
 };
 
+/** A number range as From/To bounds, either side optional — see
+ * FilterNumberRange. */
+export interface NumberRange {
+  from?: number;
+  to?: number;
+}
+
+/**
+ * A number-RANGE filter — FilterNumberInput's dual-box sibling: two
+ * NumberFields (From/To) on one chip pill, composed like FilterDateTimeRange
+ * (– separator; From takes the chip's focus target). The schema has no
+ * number-range operator, so the value is a plain `{ from, to }` pair each
+ * vertical maps onto its own wire keys (e.g. min/max months of stock).
+ *
+ * Commits are DEBOUNCED like FilterNumberInput, through ONE timer over a
+ * merged draft — so a From edit still pending when To is typed in rides into
+ * the same commit, not overwritten.
+ *
+ * An inverted pair never commits: the flush emits it ORDERED (swapped) —
+ * the range calendar's semantics (corvu swaps an earlier second pick), so
+ * entry order doesn't matter. Not NumberField min/max cross-bounds: a
+ * reactive bound re-runs its constraint reformat per keystroke, wiping
+ * mid-entry text.
+ */
+export const FilterNumberRange = (props: {
+  value: NumberRange;
+  onChange: (value: NumberRange) => void;
+  fromLabel: string;
+  toLabel: string;
+  /** `data-testid` stem for the two inputs (FilterBar supplies
+   *  `filter-input-<key>`), stamped as `<testId>-from` / `<testId>-to`. */
+  testId?: string;
+  /** Max decimal places; 0 (default) = integers only. */
+  decimalLimit?: number;
+  /** Lower bound (default 0). */
+  min?: number;
+  /** Upper bound. */
+  max?: number;
+}) => {
+  const chipFocus = useChipFocus();
+  // The uncommitted pair; undefined = nothing pending.
+  let draft: NumberRange | undefined;
+  const commit = createDebounced((value: NumberRange) => {
+    const { from, to } = value;
+    props.onChange(
+      from !== undefined && to !== undefined && from > to
+        ? { from: to, to: from }
+        : value
+    );
+    draft = undefined;
+  }, 300);
+  const update = (patch: NumberRange) => {
+    draft = { ...(draft ?? props.value), ...patch };
+    commit(draft);
+  };
+  return (
+    <span class={`${styles.bareField} ${styles.numberRange}`}>
+      <NumberField
+        label={props.fromLabel}
+        hideLabel
+        size="small"
+        data-testid={props.testId && `${props.testId}-from`}
+        ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
+        decimalLimit={props.decimalLimit}
+        min={props.min}
+        max={props.max}
+        value={props.value.from}
+        onChange={from => update({ from })}
+      />
+      <span aria-hidden="true">–</span>
+      <NumberField
+        label={props.toLabel}
+        hideLabel
+        size="small"
+        data-testid={props.testId && `${props.testId}-to`}
+        decimalLimit={props.decimalLimit}
+        min={props.min}
+        max={props.max}
+        value={props.value.to}
+        onChange={to => update({ to })}
+      />
+    </span>
+  );
+};
+
 /**
  * A single-select dropdown. Generic over its option-value union `V`, so
  * `onChange` hands back exactly one of the option values (recovered by

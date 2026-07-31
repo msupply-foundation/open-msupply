@@ -22,9 +22,11 @@ import {
   FilterDateRange,
   FilterMultiSelect,
   FilterNumberInput,
+  FilterNumberRange,
   FilterSelect,
   FilterTextInput,
   type Filter,
+  type NumberRange,
 } from '../ui/elements/selectors/FilterBar';
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
@@ -108,6 +110,9 @@ const itemFilter = (item: DemoItem, input: string) => {
 interface InvoiceFilter {
   otherPartyName?: string | null;
   invoiceNumber?: number | null;
+  // The UI pair, not a wire operator — a real vertical maps { from, to } onto
+  // its own scalar keys (see FilterNumberRange).
+  packCount?: NumberRange | null;
   theirReference?: string | null;
   item?: string | null;
   status?: string | null;
@@ -153,6 +158,24 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
         value={props.filter().invoiceNumber ?? undefined}
         onChange={value =>
           props.setPartialFilter({ invoiceNumber: value ?? null })
+        }
+      />
+    ),
+  },
+  {
+    key: 'packCount',
+    label: () => 'Pack count',
+    render: props => (
+      <FilterNumberRange
+        fromLabel="Pack count from"
+        toLabel="Pack count to"
+        testId={props.testId}
+        value={props.filter().packCount ?? {}}
+        onChange={value =>
+          props.setPartialFilter({
+            packCount:
+              value.from === undefined && value.to === undefined ? null : value,
+          })
         }
       />
     ),
