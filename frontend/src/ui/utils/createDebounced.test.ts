@@ -52,6 +52,37 @@ describe('createDebounced', () => {
     });
   });
 
+  // Once the owner is gone, nothing may run on its behalf — the case that bit a
+  // filter chip (#563): the chip's box loses focus BECAUSE the chip was removed,
+  // the browser reports that afterwards, and the flush wrote the removed
+  // filter's value straight back. Re-arming first is what makes it more than
+  // cancel-on-cleanup: the buffer the cleanup emptied is refilled.
+  it('runs nothing after its owner is disposed, even when flush re-arms it', () => {
+    const fn = vi.fn();
+    let d!: ReturnType<typeof createDebounced<[string]>>;
+    createRoot(dispose => {
+      d = createDebounced((v: string) => fn(v), 500);
+      dispose();
+    });
+
+    d('after'); // re-arms the buffer that cleanup emptied
+    d.flush();
+    vi.advanceTimersByTime(1000); // and the timer that arming scheduled
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('drops a call already pending when its owner is disposed', () => {
+    const fn = vi.fn();
+    createRoot(dispose => {
+      const d = createDebounced((v: string) => fn(v), 500);
+      d('pending');
+      dispose();
+      vi.advanceTimersByTime(1000);
+      d.flush();
+    });
+    expect(fn).not.toHaveBeenCalled();
+  });
+
   // The ownership guard: created OUTSIDE a reactive owner (no createRoot), it
   // must not throw and must still work; the caller owns disposal via cancel()
   // (there's no owner to auto-cancel).
