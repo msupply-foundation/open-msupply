@@ -49,6 +49,11 @@ export interface ItemSearchProps {
   focusTarget?: FocusTarget;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
+  /**
+   * Max-width cap, the shared input vocabulary — passed through to the
+   * combobox (`full` = fill the container, e.g. a line editor's item row).
+   */
+  width?: 'compact' | 'short' | 'long' | 'full';
 }
 
 // One option row: "code - name" at the inline-start, "{total} Units" at the
@@ -121,6 +126,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       error={props.error}
       required={props.required}
       class={props.class}
+      width={props.width}
       placeholder={props.placeholder}
       // Every ItemSearch IS the contract's item search — the fixed id is
       // stamped here (like ConfirmDialog's confirmation-modal), not per call

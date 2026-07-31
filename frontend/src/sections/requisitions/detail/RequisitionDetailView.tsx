@@ -25,6 +25,8 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
 import {
   FilterBar,
   FilterTextInput,
@@ -664,21 +666,18 @@ const RequisitionDetailView: Component = () => {
       cell: cellInfo => {
         const line = cellInfo.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          // justify="end" keeps the number at the cell's inline-end, where
+          // the preset's right alignment put it before the marker joined it.
+          <HStack gap="sm" justify="end">
             <Show when={isExcess(line)}>
-              <AlertTriangleIcon
-                style={{ color: 'var(--error-main)' }}
-                aria-label={t('label.customer-requested')}
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label={t('messages.requested-exceeds-suggested')}
               />
             </Show>
             {numWithDoses(line, line.requestedQuantity)}
-          </span>
+          </HStack>
         );
       },
     },
@@ -725,23 +724,18 @@ const RequisitionDetailView: Component = () => {
             cell: cellInfo => {
               const line = cellInfo.row.original;
               return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    'align-items': 'center',
-                    gap: 'var(--space-1)',
-                  }}
-                >
+                <HStack gap="sm">
                   <Show when={reasonFlaggedIds().has(line.id)}>
-                    <AlertTriangleIcon
-                      style={{ color: 'var(--error-main)' }}
-                      aria-label={t(
+                    <StatusMarker
+                      severity="error"
+                      icon={AlertTriangleIcon}
+                      label={t(
                         'error.reasons-not-provided-program-requisition'
                       )}
                     />
                   </Show>
                   {line.reason?.reason ?? ''}
-                </span>
+                </HStack>
               );
             },
           },

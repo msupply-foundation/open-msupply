@@ -75,10 +75,3 @@
   font-size: var(--text-sm);
 }
 
-/* The item picker fills the modal's full width (the combobox otherwise caps
-   at its long max-width). The doubled class outranks the component's own
-   max-width rule. */
-.itemField.itemField {
-  max-inline-size: 100%;
-  inline-size: 100%;
-}

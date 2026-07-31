@@ -29,6 +29,7 @@ import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -204,23 +205,20 @@ const PrescriptionsList: Component = () => {
       cell: info => {
         const row = info.row.original;
         return (
-          <Show
-            when={!isReadOnly(rowStatus(row))}
-            fallback={
-              <>
-                <ColourTagDot colour={row.colour ?? null} />
-                {row.otherPartyName}
-              </>
-            }
-          >
-            <ColourTagPicker
-              colour={row.colour ?? null}
-              variant="row"
-              label={t('label.color')}
-              onSelect={colour => void saveColour(row, colour)}
-            />
-            {row.otherPartyName}
-          </Show>
+          <HStack gap="sm">
+            <Show
+              when={!isReadOnly(rowStatus(row))}
+              fallback={<ColourTagDot colour={row.colour ?? null} />}
+            >
+              <ColourTagPicker
+                colour={row.colour ?? null}
+                variant="row"
+                label={t('label.color')}
+                onSelect={colour => void saveColour(row, colour)}
+              />
+            </Show>
+            <span>{row.otherPartyName}</span>
+          </HStack>
         );
       },
       meta: { headerPosition: 'primary' },
