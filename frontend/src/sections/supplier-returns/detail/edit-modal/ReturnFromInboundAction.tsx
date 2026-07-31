@@ -63,19 +63,24 @@ export const ReturnFromInboundAction: Component<
         {t('button.return-lines')}
       </Button>
 
-      <Dialog
-        open={noticeOpen()}
-        onClose={() => setNoticeOpen(false)}
-        icon={<InfoIcon />}
-        title={t('heading.cannot-do-that')}
-        description={t('messages.cant-return-inbound')}
-        actions={
-          <OkButton
-            data-testid="dialog-button-ok"
-            onClick={() => setNoticeOpen(false)}
-          />
-        }
-      />
+      {/* Mounted only while open, like the return modal below
+          (kdd/action-modal) — a closed-but-mounted Dialog leaves its footer
+          button, and so its shared `dialog-button-ok` id, in the DOM. */}
+      <Show when={noticeOpen()}>
+        <Dialog
+          open
+          onClose={() => setNoticeOpen(false)}
+          icon={<InfoIcon />}
+          title={t('heading.cannot-do-that')}
+          description={t('messages.cant-return-inbound')}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setNoticeOpen(false)}
+            />
+          }
+        />
+      </Show>
 
       <Show when={modalOpen()}>
         <Suspense>

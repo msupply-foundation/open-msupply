@@ -43,7 +43,7 @@ import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
@@ -202,7 +202,7 @@ const StockLineDetailView: Component = () => {
   // this view's boundary and tear the rendered form down again — and the same
   // read runs after an adjust/repack refetch, with a modal potentially open
   // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `loading`
-  // below still gives LocationSelect its spinner.
+  // below still gives LocationVolumeSelect its spinner.
   const locations = () =>
     locationsForItem(
       allLocations.state === 'ready' || allLocations.state === 'refreshing'
@@ -355,7 +355,6 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('inventory') },
     { label: t('stock'), onClick: onCancelOrClose },
     { label: l.itemName },
   ];
@@ -583,12 +582,24 @@ const StockLineDetailView: Component = () => {
 
                       <FormColumn>
                         <FormSection title={t('heading.storage-and-pack')}>
-                          <LocationSelect
+                          <LocationVolumeSelect
                             label={t('label.location')}
                             locations={locations()}
                             loading={allLocations.loading}
                             value={edit.location?.id}
                             placeholder={t('label.none')}
+                            // This field PLACES stock, so "Available" is
+                            // measured against what's being placed — the DRAFT
+                            // volume per pack (what the user is editing), not
+                            // the saved figure (spec/stock/rules.md › location
+                            // fields).
+                            requiredVolume={
+                              (edit.volumePerPack ?? 0) * l().totalNumberOfPacks
+                            }
+                            // The SAVED location, not the draft one: once the
+                            // user picks elsewhere, where the stock actually
+                            // still sits must stay offered under "Available".
+                            originalLocationId={l().location?.id}
                             onChange={loc =>
                               setEdit(
                                 'location',

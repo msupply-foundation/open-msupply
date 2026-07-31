@@ -14,6 +14,7 @@ import {
   FormPreview,
   Intro,
   Lead,
+  Note,
   SectionTOC,
   type AnatomyNode,
 } from './common';
@@ -209,12 +210,24 @@ export const FormLayoutShowcase = () => (
           A titled group of fields: a neutral bold heading with a hairline rule,
           then a vertical stack of its children. Fields sit directly inside the
           section, one per line at full width — that's the default; pairing is
-          opt-in via <code>FormRow</code> (next card). <code>headingLevel</code>{' '}
-          sets the heading <em>rank</em> only (<code>h2</code> default,{' '}
-          <code>h3</code> for a sub-group nested inside another section — like
-          Inventory adjustments inside Supply Chain on the{' '}
-          <a href="#/showcase/forms">Detail form page</a>); the size never
-          changes, the document outline does.
+          opt-in via <code>FormRow</code> (next card).
+        </Lead>
+        <Lead>
+          Rank and treatment are <strong>separate</strong> inputs.{' '}
+          <code>headingLevel</code> sets the document-outline <em>rank</em> (
+          <code>h2</code> default, <code>h3</code> when the surface around it
+          already owns the h2); <code>heading</code> picks the{' '}
+          <em>treatment</em> — <code>group</code> (ruled) or{' '}
+          <code>subgroup</code> (quieter: smaller, no rule). The treatment
+          defaults from the rank, so name both only where they diverge: a
+          section that is a top-level group of its surface but must take h3
+          because that surface's title holds the h2 wants{' '}
+          <code>headingLevel="h3" heading="group"</code> — the prescription line
+          editor's dialog does exactly this. A genuine sub-group nested inside
+          another section (Inventory adjustments inside Supply Chain on the{' '}
+          <a href="#/showcase/forms">Detail form page</a>) needs only{' '}
+          <code>headingLevel="h3"</code>, whose default treatment is already{' '}
+          <code>subgroup</code>.
         </Lead>
         <FormPreview>
           <FormSection title="Batch & Dates">
@@ -224,6 +237,29 @@ export const FormLayoutShowcase = () => (
               width="full"
               placeholder="Scan or enter barcode"
             />
+          </FormSection>
+        </FormPreview>
+        <Note>
+          The three treatments, so the difference is visible: a default{' '}
+          <code>h2</code> group, the same group forced to <code>h3</code> for
+          the outline while keeping the ruled treatment, and a genuine{' '}
+          <code>h3</code> sub-group. Note the third reads quieter than its own
+          field labels — correct for a sub-group, wrong for a group, which is
+          why the two inputs are separate.
+        </Note>
+        <FormPreview>
+          <FormSection title="Group (h2, default)">
+            <TextField label="Batch number" width="full" />
+          </FormSection>
+          <FormSection
+            title="Group at h3 (heading=group)"
+            headingLevel="h3"
+            heading="group"
+          >
+            <TextField label="Batch number" width="full" />
+          </FormSection>
+          <FormSection title="Sub-group (h3, default)" headingLevel="h3">
+            <TextField label="Batch number" width="full" />
           </FormSection>
         </FormPreview>
       </DashboardCard>

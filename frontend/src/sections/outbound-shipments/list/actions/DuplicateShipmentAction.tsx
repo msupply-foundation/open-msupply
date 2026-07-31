@@ -5,7 +5,11 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, CopyIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { CopyIcon } from '../../../../ui/icons';
 import { DuplicateOutboundShipment } from '../outboundShipments.generated';
 import { hasPermission } from '../../../../store/storeContext';
 
@@ -136,51 +140,33 @@ export const DuplicateShipmentAction: Component<
             <Show
               when={phase() !== 'skipped'}
               fallback={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                <OkButton
                   data-testid="dialog-button-ok"
                   onClick={() => {
                     const id = copyId();
                     close();
                     if (id) goToCopy(id);
                   }}
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               }
             >
               <Show
                 when={phase() !== 'error'}
-                fallback={
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
-                    onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
-                }
+                fallback={<CancelButton onClick={close} />}
               >
                 <Show when={phase() === 'confirm'}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
+                  <CancelButton
                     data-testid="dialog-button-cancel"
                     onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                {/* A confirm, not a save — D55 keeps OkButton for exactly this
+                    case (icon-less either way). */}
+                <OkButton
                   data-testid="confirmation-modal-ok"
                   loading={phase() === 'working'}
                   onClick={() => void run()}
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               </Show>
             </Show>
           }

@@ -6,9 +6,11 @@ import { formatNumber } from '../../../intl/formatNumber';
 import {
   SidePanelActions,
   SidePanelSection,
+  SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
@@ -35,6 +37,7 @@ import {
   type OutboundLineFragment,
 } from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
+import styles from './OutboundSidePanel.module.css';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
 // Additional info · Related documents · Invoice details · Transport details,
@@ -113,20 +116,23 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
   const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
-  // Group headings sit a weight above the FieldRow labels' medium, so the
-  // pricing groups read as groups.
-  const groupHeading = (label: string, info: string): JSX.Element => (
-    <span
-      style={{
-        display: 'inline-flex',
-        'align-items': 'center',
-        gap: 'var(--space-1)',
-        'font-weight': 'var(--weight-bold)',
-      }}
-    >
-      <InfoTooltip text={info} label={label} placement="bottom-start" />
-      {label}
-    </span>
+  // A pricing group's heading (SIDE_PANEL.md rule 1 — never a FieldRow with a
+  // bold label), with its gloss as an info tooltip AFTER the text (the doc's
+  // info-icon-after-heading recipe) and an optional group-level edit action.
+  // The text+tooltip row is an inline-level SPAN, not an HStack: these children
+  // land inside SidePanelSubheading's <h3>, which takes phrasing content, and
+  // HStack renders a <div>.
+  const groupHeading = (
+    label: string,
+    info: string,
+    action?: JSX.Element
+  ): JSX.Element => (
+    <SidePanelSubheading action={action}>
+      <span class={styles.groupHeading}>
+        {label}
+        <InfoTooltip text={info} label={label} placement="bottom-start" />
+      </span>
+    </SidePanelSubheading>
   );
 
   // The WHOLE shipment — header + every line, unpaginated — for the side
@@ -202,7 +208,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           </Show>
         </FieldRow>
         <FieldRow label={t('label.comment')}>
-          <TextField
+          {/* Multi-line (spec S3 § side panel; SIDE_PANEL.md rule 2 — a comment
+              is always a TextArea, never a single-line field). */}
+          <TextArea
             label={t('label.comment')}
             hideLabel
             width="full"
@@ -277,15 +285,13 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         title={t('heading.invoice-details')}
         collapsible
       >
-        {/* Service charges: info bubble + the S5 edit action (dimmed once
-            read-only); one row per service line, then sub total / effective
-            tax / total. Service tax is edited per line in S5. */}
-        <FieldRow
-          label={groupHeading(
-            t('heading.service-charges'),
-            t('messages.service-charges-description')
-          )}
-        >
+        {/* Service charges: a group heading carrying its info bubble and the S5
+            edit action (dimmed once read-only); one row per service line, then
+            sub total / effective tax / total. Service tax is edited per line in
+            S5. */}
+        {groupHeading(
+          t('heading.service-charges'),
+          t('messages.service-charges-description'),
           <IconButton
             bordered
             size="small"
@@ -295,7 +301,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             disabled={props.disabled}
             onClick={props.onEditServiceCharges}
           />
-        </FieldRow>
+        )}
         <For each={serviceLines()}>
           {line => (
             <FieldRow label={line.itemName}>
@@ -327,58 +333,58 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().serviceTotalAfterTax)}</Text>
         </FieldRow>
 
-        {/* Items sell price: info bubble; sub total / editable stored
-            shipment tax (OMS-REG-DIST-02.24 — the save cascades to every stock line
-            server-side; disabled while read-only or while the stock total is
-            zero) / total. */}
-        <FieldRow
-          label={groupHeading(
-            t('heading.item-sell-price'),
-            t('messages.stock-charges-description')
-          )}
-        >
-          <span />
-        </FieldRow>
+        {/* Items sell price: a group heading with its info bubble; sub total /
+            editable stored shipment tax (OMS-REG-DIST-02.24 — the save cascades
+            to every stock line server-side; disabled while read-only or while
+            the stock total is zero) / total. */}
+        {groupHeading(
+          t('heading.item-sell-price'),
+          t('messages.stock-charges-description')
+        )}
         <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
-          <HStack gap="sm">
-            <NumberField
-              label={t('label.tax')}
-              hideLabel
-              size="small"
-              min={0}
-              max={100}
-              decimalLimit={2}
-              disabled={
-                props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
-              }
-              value={pricing().taxPercentage ?? undefined}
-              onChange={value =>
-                props.onSaveField({ tax: { percentage: value ?? null } })
-              }
-            />
-            <Text variant="body">
-              {money(
-                taxAmount(
-                  pricing().stockTotalBeforeTax,
-                  pricing().stockTotalAfterTax
-                )
-              )}
-            </Text>
-          </HStack>
+          {/* The tax AMOUNT is the input's helperText, not a value floated to
+              its right (SIDE_PANEL.md rule 3 — a value beside the input breaks
+              the panel's value-alignment column). A percentage is a short
+              value, so the input is compact (rule 2). */}
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            width="compact"
+            min={0}
+            max={100}
+            decimalLimit={2}
+            disabled={
+              props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
+            }
+            value={pricing().taxPercentage ?? undefined}
+            helperText={money(
+              taxAmount(
+                pricing().stockTotalBeforeTax,
+                pricing().stockTotalAfterTax
+              )
+            )}
+            onChange={value =>
+              props.onSaveField({ tax: { percentage: value ?? null } })
+            }
+          />
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
+        {/* The shipment-level summary row. Its label is emphasised via the
+            shared type primitive — never an inline style. (A standard
+            side-panel totals-row treatment is still open across panels:
+            SIDE_PANEL.md § known open items.) */}
         <FieldRow
-          // Bold like the group headings — the shipment-level summary row.
           label={
-            <span style={{ 'font-weight': 'var(--weight-bold)' }}>
+            <Text variant="subtitle" as="span">
               {t('heading.grand-total')}
-            </span>
+            </Text>
           }
         >
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
@@ -386,22 +392,26 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
         {/* Foreign currency — always shown (rules.md § pricing): code · rate
             (a zero rate displays as 1) · total (dash until a real foreign
-            currency is set). The change-currency control (currency + rate in
-            one edit, ported from the inbound CurrencyModal) is gated by the
-            issue-in-foreign-currency preference and the customer not being a
-            store — by those gates ONLY, not by shipment status (spec S3 §
-            side panel). */}
-        <FieldRow label={t('heading.foreign-currency')}>
-          <IconButton
-            bordered
-            size="small"
-            icon={<EditIcon />}
-            label={t('label.currency')}
-            data-testid="change-currency-button"
-            disabled={!canChangeCurrency()}
-            onClick={() => setCurrencyOpen(true)}
-          />
-        </FieldRow>
+            currency is set). The change-currency control rides the group
+            heading (spec S3 § side panel: "an edit action on the group
+            heading"), gated by the issue-in-foreign-currency preference and the
+            customer not being a store — by those gates ONLY, not by shipment
+            status. */}
+        <SidePanelSubheading
+          action={
+            <IconButton
+              bordered
+              size="small"
+              icon={<EditIcon />}
+              label={t('label.currency')}
+              data-testid="change-currency-button"
+              disabled={!canChangeCurrency()}
+              onClick={() => setCurrencyOpen(true)}
+            />
+          }
+        >
+          {t('heading.foreign-currency')}
+        </SidePanelSubheading>
         <FieldRow label={t('label.code')}>
           <Text variant="body">{props.node.currency?.code ?? ''}</Text>
         </FieldRow>
@@ -432,6 +442,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <ShippingMethodSelect
             label={t('label.shipping-method')}
             hideLabel
+            size="small"
             disabled={props.disabled}
             value={props.node.shippingMethod?.id}
             placeholder={t('label.any')}
@@ -448,6 +459,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <DateField
             label={t('label.expected-delivery-date')}
             hideLabel
+            // A date is a short value (SIDE_PANEL.md rule 2).
+            size="small"
+            width="compact"
             // Numeric day-first display/parse (27/07/2026) — matches the
             // panel's localisedDate renderings (created date etc.).
             format="dd/MM/yyyy"
@@ -465,6 +479,8 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <TextField
             label={t('label.reference')}
             hideLabel
+            // Free text — full width, small height (SIDE_PANEL.md rule 2).
+            size="small"
             width="full"
             data-testid="transport-reference-field"
             value={props.edit.state.transportReference}

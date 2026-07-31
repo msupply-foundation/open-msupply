@@ -134,6 +134,10 @@ export const PrescriptionToolbar: Component<
           size="small"
           width="full"
           inputTestId="clinician-select"
+          // The create-clinician side flow (ui-surface S8), under this cluster's
+          // editability gate — the picker withholds it while disabled.
+          allowCreate
+          storeId={props.storeId}
           value={props.node.clinicianId ?? undefined}
           disabled={props.disabled}
           onChange={clinician =>

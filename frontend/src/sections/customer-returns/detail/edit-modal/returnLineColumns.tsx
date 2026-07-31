@@ -9,6 +9,10 @@ import {
   getTextCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
+import type {
+  FocusTarget,
+  KeyedFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { clampQuantity, type DraftReturnLine } from './returnLineLogic';
 
@@ -27,12 +31,30 @@ export type UpdateLine = <F extends keyof DraftReturnLine>(
   value: DraftReturnLine[F]
 ) => void;
 
+// One focus destination PER ROW, keyed by the row's own id — the same key the
+// draft store is keyed on (ui/utils/createFocusTarget). The host arms a request;
+// the grid binds it to the row's editable control, so "focus the row the user
+// clicked" never reaches for a test id or a selector.
+//
+// Each grid's target is the control a user came to that step to change: the
+// quantity field on step 1, the reason picker on step 2. Same rule the stocktake
+// and inbound line editors follow.
+
+// The keyed registry, adapted to the single-control shape a compound control
+// (Combobox, and so ReasonSelect) takes: the row's key selects WHICH ref.
+const targetFor = (targets: KeyedFocusTargets, key: string): FocusTarget => ({
+  ref: targets.ref(key),
+  focus: () => targets.focus(key),
+  cancel: targets.cancel,
+});
+
 // Each column takes its cell-type width preset (docs/CELL_TYPES.md) — spread
 // BEFORE any editable `cell` override, so the preset supplies the width and
 // alignment while the override supplies the control (the documented order).
 // ---- Step 1: the quantity grid (ui-surface S4 § step 1) ----
 export const quantityColumns = (
-  update: UpdateLine
+  update: UpdateLine,
+  quantityFields: KeyedFocusTargets
 ): Column<DraftReturnLine, never>[] => [
   {
     c: { key: 'itemCode' },
@@ -128,6 +150,7 @@ export const quantityColumns = (
       const line = info.row.original;
       return (
         <NumberField
+          ref={quantityFields.ref(line.id)}
           label={t('label.quantity-returned')}
           hideLabel
           size="small"
@@ -171,7 +194,8 @@ export const quantityColumns = (
 // step 2). Reason optional; options are the active RETURN reasons (rules §
 // line rules, OMS-REG-DIST-07.30). ----
 export const reasonColumns = (
-  update: UpdateLine
+  update: UpdateLine,
+  reasonFields: KeyedFocusTargets
 ): Column<DraftReturnLine, never>[] => [
   {
     c: { key: 'itemCode' },
@@ -213,6 +237,7 @@ export const reasonColumns = (
           kind="return"
           label={t('label.reason')}
           hideLabel
+          focusTarget={targetFor(reasonFields, line.id)}
           value={line.reasonId ?? undefined}
           onChange={reason => update(line.id, 'reasonId', reason?.id ?? null)}
         />

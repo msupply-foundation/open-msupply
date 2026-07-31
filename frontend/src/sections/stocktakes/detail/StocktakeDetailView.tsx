@@ -1,9 +1,7 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
-  on,
   Show,
   Suspense,
 } from 'solid-js';
@@ -137,6 +135,13 @@ type DetailUrlState = {
   sort: NonNullable<StocktakeLinesVariables['sort']>;
   offset: number;
   first: number;
+  // The "show error lines" filter (issue #791 follow-up): a BOOLEAN flag, not
+  // the ids. The offending line ids live in transient error state (lineErrors),
+  // not the URL — so a shared/reloaded link never carries a stale id list, and
+  // the flag resolves against whatever errors are currently stamped (none after
+  // a reload ⇒ the filter is simply absent). When on, the lines query injects
+  // `id.equalAny: [<error ids>]`.
+  showError: boolean;
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
@@ -145,6 +150,7 @@ const DEFAULT_URL_STATE: DetailUrlState = {
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
+  showError: false,
 };
 
 const StocktakeDetailView: Component = () => {
@@ -181,6 +187,12 @@ const StocktakeDetailView: Component = () => {
   // id → the error's __typename (the shared LineErrors shape, kept raw). The
   // Snapshot column renders it inline; cleared when a fresh page lands.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
+  // The stamped error line ids — what the "show error lines" filter (showError)
+  // resolves to at query time (id.equalAny). Empty when nothing is stamped, so
+  // the filter is treated as absent rather than sending an empty equalAny
+  // (which the server reads as "match nothing").
+  const errorLineIds = (): string[] => [...lineErrors().keys()];
+  const hasErrors = (): boolean => lineErrors().size > 0;
   // Column config (order/sizing/visibility) persists per user/store. The extra
   // editable columns start HIDDEN by default so the table isn't overwhelming —
   // the user reveals them via the column-visibility settings.
@@ -262,13 +274,24 @@ const StocktakeDetailView: Component = () => {
   // identical query content doesn't refetch (kdd/solid-reactivity-pitfalls).
   // stripEmpty drops added-but-empty filter chips so an empty chip doesn't
   // reflash the list.
-  const linesVariables = createMemo<StocktakeLinesVariables>(() => ({
-    storeId: params.storeId,
-    stocktakeId: params.stocktakeId,
-    filter: stripEmpty(query().filter),
-    sort: query().sort,
-    page: { first: query().first, offset: query().offset },
-  }));
+  const linesVariables = createMemo<StocktakeLinesVariables>(() => {
+    const base = stripEmpty(query().filter);
+    // "Show error lines": layer id.equalAny over the current wire filter from
+    // the transient error set. Only when the flag is on AND ids are stamped —
+    // an empty equalAny would match nothing, and after a reload (flag on, no
+    // ids) we want the full list, so the id key is simply omitted then.
+    const filter =
+      query().showError && errorLineIds().length > 0
+        ? { ...base, id: { equalAny: errorLineIds() } }
+        : base;
+    return {
+      storeId: params.storeId,
+      stocktakeId: params.stocktakeId,
+      filter,
+      sort: query().sort,
+      page: { first: query().first, offset: query().offset },
+    };
+  });
   const [linesData, { refetch: refetchLines }] = createResource(
     () => JSON.stringify(linesVariables()),
     async serialised => {
@@ -301,15 +324,17 @@ const StocktakeDetailView: Component = () => {
       );
   };
 
-  // Locations WITH capacity for this store, fetched HERE (not from a global
-  // cache) and passed down to the line editor + change-location picker, so
-  // their % used / fullness filter reflect current stock. `volumeUsed` is
-  // server-computed and shifts whenever a count commits stock into/out of a
-  // location, so this is REFETCHED after every line save (see
-  // refetchAfterSave). The detail location FILTER also reads it (code/name
-  // only). Non-suspending read via `.latest` so a refetch never trips the
-  // view's Suspense boundary.
-  const [locationsData, { refetch: refetchLocations }] = createResource(
+  // Locations WITH capacity for this store, fetched ONCE HERE (not from a
+  // global cache) and passed down to the line editor + change-location picker,
+  // so their % used / fullness filter reflect current stock. `volumeUsed` is
+  // the sum of each stock line's volume in the location; a NEW stocktake's line
+  // saves never move stock (stock movements happen only on finalise — verified
+  // against the OMS `get_volume_used` service + the stocktake_line update
+  // service, which upserts only the stocktake_line row). So capacity is static
+  // for the stocktake's editable life and this is NOT refetched on line save.
+  // The detail location FILTER also reads it (code/name only). Non-suspending
+  // read via `.latest` so a refetch never trips the view's Suspense boundary.
+  const [locationsData] = createResource(
     () => params.storeId,
     async storeId => {
       const result = await fetchLocationsWithVolume(storeId);
@@ -318,35 +343,27 @@ const StocktakeDetailView: Component = () => {
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
-  // A save-triggered refetch is SILENT — no refreshing bar (the table stays put
-  // while the fresh page swaps in). A user-navigation refetch
-  // (filter/sort/page) shows the bar as usual. `silentRefetching` is raised
-  // around a save refetch and drives the DataTable's `loading` gate below.
-  const [silentRefetching, setSilentRefetching] = createSignal(false);
-  const refetchAfterSave = async () => {
-    setSilentRefetching(true);
-    try {
-      // Refetch the lines page AND the location capacities together: a save may
-      // have moved stock between locations (changing volumeUsed) or edited a
-      // line's volume, so the picker's % used / fullness must be re-read.
-      await Promise.all([refetchLines(), refetchLocations()]);
-    } finally {
-      setSilentRefetching(false);
-    }
-  };
-  // Show the loading treatment only for a genuine (user-navigation) fetch — not
-  // a post-save refetch.
-  const tableLoading = () => linesData.loading && !silentRefetching();
+  // Refetch the current lines page after a save. Only the lines page: a line
+  // save changes the count/line rows, never the location capacities (see
+  // locationsData above).
+  const refetchAfterSave = () => refetchLines();
+  // Any in-flight lines fetch shows the loading treatment. Every refetch —
+  // filter/sort/page navigation AND a post-save refetch — surfaces it so the
+  // user always sees that something is happening (a slow network otherwise
+  // looks frozen). The rows stay put across a refetch (keepPreviousData), so
+  // with rows already showing this is the small toolbar spinner, not a blanked
+  // table; only the very first load (no rows yet) uses the centred spinner.
+  const tableLoading = () => linesData.loading;
 
-  // A fresh lines page clears stale per-line errors. lineErrors is
-  // independently stamped by save failures, so it stays its own signal — this
-  // effect only resets it when a new page lands.
-  createEffect(
-    on(
-      () => linesData.latest,
-      () => setLineErrors(new Map())
-    )
-  );
+  // Stale per-line errors are cleared ONLY when a successful line change
+  // resolves them (onLinesChanged) — not on sort, filter, paging, or any fresh
+  // page. Those navigations don't resolve an error, so the highlights and the
+  // "show error lines" filter (which the errors filter reads its id set from)
+  // survive them; a save is the one event that makes the errors stale. This
+  // also avoids a feedback loop: showError refetches off the very error set in
+  // lineErrors, so clearing on any page load would collapse the filter the
+  // instant it applied.
+  const clearLineErrors = () => setLineErrors(new Map());
 
   // No client-side "has counted lines" guard. The old best-effort check only
   // saw the CURRENT page (rows()), so a stocktake with placeholder lines on the
@@ -356,10 +373,16 @@ const StocktakeDetailView: Component = () => {
   // truly-empty one with NoLines, surfaced in the finalise-rejection dialog.
 
   // Header click: TanStack computed the next direction; record it as the
-  // GraphQL sort array and reset to the first page.
+  // GraphQL sort array and reset to the first page. Sorting resolves no error,
+  // so it keeps both the stamped errors and the errors filter — it just
+  // reorders the (possibly error-filtered) lines.
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
+  // A wire-filter change (item search / location) also keeps the errors and
+  // the errors filter: the id.equalAny set layers with the new wire filter
+  // (linesVariables merges them), so the two narrow together. Nothing is
+  // resolved here either, so lineErrors stays.
   const onFilterChange = (next: StocktakeLineFilter) => {
     setQuery({ ...query(), filter: next, offset: 0 });
     setSelectedIds([]);
@@ -450,8 +473,22 @@ const StocktakeDetailView: Component = () => {
   // A line-level change committed (line-edit modal OR a selection action). We
   // refetch the current page rather than splice; the fresh page also clears
   // stale rows. Selection is cleared so the footer returns to the status view.
+  //
+  // A successful commit resolves whatever the errors were about → drop the
+  // stale highlights and leave the errors view. Turning the errors filter off
+  // changes the lines-query key (id.equalAny disappears), which by itself
+  // triggers a reactive refetch to the now-unfiltered page — so on that path we
+  // must NOT also call the manual refetch, or the page would fetch twice. When
+  // the filter wasn't on, the key is unchanged and the manual refetch is the
+  // only refresh.
   const onLinesChanged = () => {
     setSelectedIds([]);
+    const wasFilteringErrors = query().showError && lineErrors().size > 0;
+    clearLineErrors();
+    if (wasFilteringErrors) {
+      setQuery({ ...query(), showError: false }); // reactive refetch does it
+      return;
+    }
     void refetchAfterSave();
   };
 
@@ -532,16 +569,19 @@ const StocktakeDetailView: Component = () => {
     }
   };
 
-  // "Show error lines" — TODO: the old client-side errors-only filter is gone
-  // (the server can't filter by an arbitrary id list yet — see
-  // stocktakeDetailFilters.tsx). For now this just clears the selection so the
-  // footer returns to the status view; the error lines already flag inline via
-  // stampErrors.
-  const showErrors = () => setSelectedIds([]);
+  // "Show error lines" (from a failed finalise / bulk action's error dialog):
+  // turn on the errors filter so the table narrows to just the stamped lines
+  // (server id.equalAny — see linesVariables). Reset to the first page and
+  // clear the selection so the footer returns to the status view. A no-op when
+  // nothing is stamped (the dialog only offers it when there are error lines).
+  const showErrors = () => {
+    setSelectedIds([]);
+    if (!hasErrors()) return;
+    setQuery({ ...query(), showError: true, offset: 0 });
+  };
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
-    { label: t('inventory') },
     {
       label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
@@ -952,12 +992,23 @@ const StocktakeDetailView: Component = () => {
                       filter={filter()}
                       onFilterChange={onFilterChange}
                       locations={locations()}
+                      showError={query().showError}
+                      errorCount={lineErrors().size}
+                      onShowErrorChange={on =>
+                        setQuery({
+                          ...query(),
+                          showError: on,
+                          offset: 0,
+                        })
+                      }
                     />
                   }
-                  // Non-suspending loading read — a between-page/filter/sort
-                  // refetch keeps rows + shows the refreshing bar; a post-save
-                  // refetch is silent (tableLoading gates it out). Initial load
-                  // → Suspense.
+                  // Non-suspending loading read — every refetch (filter/sort/
+                  // page navigation AND a post-save refetch) keeps the rows and
+                  // shows the DataTable's loading treatment, so a slow network
+                  // never looks frozen. With rows already showing that's the
+                  // small toolbar spinner; the first load (no rows yet) is the
+                  // centred spinner.
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
