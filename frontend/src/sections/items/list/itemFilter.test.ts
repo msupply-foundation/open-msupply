@@ -54,11 +54,13 @@ describe('itemFilter — list population & filters (spec/items S1)', () => {
   // OMS-REG-CAT-04.28 — months-of-stock bounds pass straight through (the
   // server applies them as strictly-exclusive, zero-AMC-excluding narrowings).
   it('min/max months of stock pass through, combining (CAT-04.28)', () => {
-    const f = buildItemFilter({ minMonthsOfStock: 1, maxMonthsOfStock: 6 });
+    const f = buildItemFilter({ monthsOfStock: { from: 1, to: 6 } });
     expect(f.minMonthsOfStock).toBe(1);
     expect(f.maxMonthsOfStock).toBe(6);
     // a zero bound is a real bound (0 is exclusive server-side), not "unset"
-    expect(buildItemFilter({ minMonthsOfStock: 0 }).minMonthsOfStock).toBe(0);
+    expect(
+      buildItemFilter({ monthsOfStock: { from: 0 } }).minMonthsOfStock
+    ).toBe(0);
   });
 
   // OMS-REG-CAT-04.29 — at-risk filter maps to the boolean (show-at-risk =
