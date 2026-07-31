@@ -348,10 +348,7 @@ const CustomerReturnsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('distribution') },
-    { label: t('customer-returns') },
-  ];
+  const crumbs = () => [{ label: t('customer-returns') }];
 
   return (
     <Page

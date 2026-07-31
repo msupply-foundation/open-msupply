@@ -507,7 +507,6 @@ const OutboundDetailView: Component = () => {
   const vvmOn = () => prefs().manageVvmStatusForStock;
 
   const crumbs = (current: OutboundNode) => [
-    { label: t('distribution') },
     {
       label: t('outbound-shipments'),
       onClick: () =>

@@ -280,7 +280,7 @@ const StocktakesList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('stocktakes') }];
+  const crumbs = () => [{ label: t('stocktakes') }];
 
   return (
     <Page

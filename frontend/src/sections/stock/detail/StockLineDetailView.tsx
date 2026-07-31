@@ -355,7 +355,6 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('inventory') },
     { label: t('stock'), onClick: onCancelOrClose },
     { label: l.itemName },
   ];
