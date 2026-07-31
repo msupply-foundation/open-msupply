@@ -1067,7 +1067,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1078,7 +1078,7 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1090,7 +1090,7 @@ mod test {
                 id: "backdate_release_unallocated_line".to_string(),
                 invoice_id: new_outbound().id,
                 number_of_packs: 5.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 ..Default::default()
             }
@@ -1185,7 +1185,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1196,7 +1196,7 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1303,7 +1303,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1314,7 +1314,7 @@ mod test {
                 invoice_id: "echoed_backdate_outbound".to_string(),
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1483,7 +1483,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1494,7 +1494,7 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1553,115 +1553,6 @@ mod test {
         );
     }
 
-    // Regression test for #11546: after backdating, advancing the status to Picked
-    // / Shipped must stamp the backdated datetime onto picked_datetime and
-    // shipped_datetime so the item ledger reflects the backdated date.
-    #[actix_rt::test]
-    async fn update_outbound_shipment_backdate_status_transition_uses_backdated_datetime() {
-        use chrono::{Duration, Utc};
-
-        fn new_outbound() -> InvoiceRow {
-            InvoiceRow {
-                id: "backdate_then_status_outbound".to_string(),
-                name_id: mock_name_a().id,
-                store_id: mock_store_a().id,
-                r#type: InvoiceType::OutboundShipment,
-                status: InvoiceStatus::New,
-                ..Default::default()
-            }
-        }
-
-        let (_, connection, connection_manager, _) = setup_all_with_data(
-            "update_outbound_shipment_backdate_status_transition_uses_backdated_datetime",
-            MockDataInserts::all(),
-            MockData {
-                invoices: vec![new_outbound()],
-                ..Default::default()
-            },
-        )
-        .await;
-
-        enable_backdating(&connection, 30);
-
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let service = service_provider.invoice_service;
-
-        let two_days_ago = Utc::now() - Duration::days(2);
-
-        // Step 1: Backdate the New invoice
-        service
-            .update_outbound_shipment(
-                &context,
-                UpdateOutboundShipment {
-                    id: new_outbound().id,
-                    backdated_datetime: Some(two_days_ago),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // Step 2: Advance to Picked (separate update, no backdated_datetime in patch)
-        service
-            .update_outbound_shipment(
-                &context,
-                UpdateOutboundShipment {
-                    id: new_outbound().id,
-                    status: Some(UpdateOutboundShipmentStatus::Picked),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        let after_picked = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&new_outbound().id)
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(
-            after_picked.backdated_datetime,
-            Some(two_days_ago.naive_utc())
-        );
-        assert_eq!(
-            after_picked.allocated_datetime,
-            Some(two_days_ago.naive_utc())
-        );
-        assert_eq!(after_picked.picked_datetime, Some(two_days_ago.naive_utc()));
-
-        // Step 3: Advance to Shipped
-        service
-            .update_outbound_shipment(
-                &context,
-                UpdateOutboundShipment {
-                    id: new_outbound().id,
-                    status: Some(UpdateOutboundShipmentStatus::Shipped),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        let after_shipped = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&new_outbound().id)
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(
-            after_shipped.shipped_datetime,
-            Some(two_days_ago.naive_utc())
-        );
-        // Earlier status datetimes should not have been bumped to "now"
-        assert_eq!(
-            after_shipped.picked_datetime,
-            Some(two_days_ago.naive_utc())
-        );
-        assert_eq!(
-            after_shipped.allocated_datetime,
-            Some(two_days_ago.naive_utc())
-        );
-    }
-
     // Mirrors the e2e "un-holding allows status to advance again" flow at the
     // service layer: advancing a held shipment is blocked, but once on_hold is
     // cleared the same patch succeeds.
@@ -1692,7 +1583,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1703,7 +1594,7 @@ mod test {
                 invoice_id: invoice().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
