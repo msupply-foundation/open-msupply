@@ -1703,6 +1703,8 @@
   "label.packs-of_one": "pack of",
   "label.packs-of_other": "packs of",
   "label.packs-on-hand": "Packs on hand",
+  "label.packs-plural_one": "pack",
+  "label.packs-plural_other": "packs",
   "label.packs-received": "Packs received",
   "label.packs-to-move": "Packs to move",
   "label.packs-to-repack": "Number of packs to repack",

@@ -15,11 +15,8 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getDateCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
@@ -272,7 +269,9 @@ const InternalOrdersList: Component = () => {
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary' },
+      // The text "sink" column: width floor + no growth cap, so it absorbs
+      // the slack the narrow columns leave behind.
+      ...getCellDefinition('otherPartyName', { headerPosition: 'primary' }),
       cell: info => {
         const row = info.row.original;
         return (
@@ -301,6 +300,7 @@ const InternalOrdersList: Component = () => {
       c: { accessor: row => row.theirReference ?? '', id: 'theirReference' },
       sortKey: 'theirReference',
       header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
     },
     {
       c: { key: 'status' },
@@ -317,26 +317,31 @@ const InternalOrdersList: Component = () => {
       },
       // Card view: the status chip is the top-right badge.
       meta: { headerPosition: 'badge' },
+      // Status has no cell-type preset (CELL_TYPES § Status is page-rendered),
+      // so the width lives here — the same pair the invoice lists use, so the
+      // lists' Status columns line up.
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'requisitionNumber' },
       sortKey: 'requisitionNumber',
       // Language-neutral '#' for the number column.
       header: () => '#',
-      ...getNumberCell(),
+      ...getCellDefinition('requisitionNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       // Number of rows — the order's line count (condensed-tablet only, hidden
       // on base by the table config). Not sortable.
       c: { accessor: row => row.lines.totalCount, id: 'countRows' },
       header: () => t('label.count-rows'),
-      ...getNumberCell(),
+      ...getCellDefinition('countRows'),
     },
     // Program / Order type / Period — only when the store has supplier programs
     // (AC-L8); empty for a non-program order.
@@ -362,7 +367,7 @@ const InternalOrdersList: Component = () => {
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     // Approval status — only when the store requires supplier authorisation
     // (AC-L9); read from the linked response requisition's copy, None fallback.
