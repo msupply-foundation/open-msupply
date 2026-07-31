@@ -127,9 +127,8 @@ interface InvoiceFilter {
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
-    // A DEFAULT filter — deliberately NOT seeded into the filter signal below,
-    // so the demo shows the flag alone carrying the chip.
-    alwaysOn: true,
+    // A DEFAULT filter — seeded present-as-null in the filter signal below;
+    // nothing on the definition says so (#563).
     label: () => 'Name',
     render: props => (
       <FilterTextInput
@@ -308,6 +307,9 @@ export const SelectorsShowcase = () => {
   // multi-select `statuses` both start present, so the bar shows both the
   // FilterSelect and FilterMultiSelect controls in their chip habitat on load.
   const [filters, setFilters] = createSignal<InvoiceFilter>({
+    // A DEFAULT filter is exactly this: a key seeded present-as-null, so its
+    // chip is on the bar from the start and is otherwise ordinary (#563).
+    otherPartyName: null,
     status: 'new',
     statuses: ['allocated', 'picked'],
   });
@@ -587,12 +589,10 @@ export const SelectorsShowcase = () => {
             lands, so filtered views become shareable.
           </Lead>
           <Note>
-            <strong>Name</strong> is a <em>default filter</em> (
-            <code>alwaysOn</code>) — the search this screen always keeps to
-            hand: always visible and permanent, with no ✕.{' '}
-            <strong>Clear all</strong> is reserved for the filters a user adds,
-            so this chip never raises it; when another chip does, its value
-            clears and the chip stays.
+            <strong>Name</strong> is a <em>default filter</em>: the page seeds
+            its key (present-as-<code>null</code>) in the filter it starts with,
+            so the chip is on the bar from the first render — and is an
+            ordinary, removable chip from there.
           </Note>
           <FilterBar
             filters={DEMO_FILTERS}

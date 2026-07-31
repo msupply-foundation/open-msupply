@@ -75,7 +75,11 @@ type StockListState = {
 };
 
 const DEFAULT_STATE: StockListState = {
-  filter: {},
+  // The search (batch or item code/name) is the list's default filter
+  // (ui-standards § tables → filtering): seeded present-as-null so its chip is
+  // on the bar from the start; stripEmpty keeps it out of the query until
+  // typed.
+  filter: { search: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,

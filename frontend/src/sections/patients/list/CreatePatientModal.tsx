@@ -578,7 +578,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               draft={draft}
               setField={setDraftField}
               errorFor={validation.errorFor}
-              creating
             />
             <FormErrorSummary
               errors={validation.visible()}

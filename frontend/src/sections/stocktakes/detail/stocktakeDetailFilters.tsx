@@ -19,8 +19,8 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 // The detail table is server-filtered now (kdd/stocktake-line-editing), so the
 // only filters we can offer are the ones the backend supports: `itemCodeOrName`
 // (the item name/code search) and `locationId` (an exact-match location
-// picker), both chips in the table toolbar's FilterBar — the search a DEFAULT
-// filter, Location addable from the filter menu. The
+// picker), both addable chips in the table toolbar's FilterBar — the same
+// filter-chip model as the list. The
 // filters the OLD client-side filter offered but the server can't do yet —
 // batch (no field), expiry-before (no field) — are TODOs below. The "show
 // error lines" filter IS built, but it doesn't belong here: it's a boolean
@@ -36,24 +36,18 @@ export const stocktakeDetailFilters = (
   locations: () => Location[]
 ): Filter<StocktakeLineFilter>[] =>
   constructFilters<StocktakeLineFilter>({
-    // ─ user-facing chips, in display order ───────────────────────────────────
-    // Item name / code search (server itemCodeOrName.like), the screen's
-    // DEFAULT filter — the counting search, as in the current app, whose
-    // Stocktake DetailView marks this same filter `isDefault: true` (#735).
-    // Blank clears to null so stripEmpty drops it (a blank `like` would
-    // match everything).
+    // ─ user-facing (addable chips), in display order ─────────────────────────
+    // Item name / code search (server itemCodeOrName.like). Blank clears to
+    // null so stripEmpty drops it (a blank `like` would match everything).
     //
     // Labelled for what it MATCHES rather than one of the two fields: the same
     // label + placeholder pair the current app uses here and
     // spec/items/ui-surface.md records for the items list's search.
     itemCodeOrName: {
-      alwaysOn: true,
       label: () => t('label.code-or-name'),
       render: props => (
         <FilterTextInput
           label={t('label.code-or-name')}
-          // A permanent chip starts empty and shrink-wrapped, so the
-          // placeholder is what makes it read as a search box.
           placeholder={t('placeholder.enter-an-item-code-or-name')}
           testId={props.testId}
           value={props.filter().itemCodeOrName?.like ?? ''}
