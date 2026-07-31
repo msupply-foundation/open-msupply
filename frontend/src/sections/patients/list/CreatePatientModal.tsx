@@ -3,7 +3,6 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  For,
   Show,
   Switch,
   Match,
@@ -21,6 +20,7 @@ import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { remToPx } from '../../../ui/utils/rem';
+import { ProgressList } from '../../../ui/sync/ProgressList';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -297,9 +297,10 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     navigate(`/${props.storeId}/dispensary/patients/${outcome.id}`);
   };
 
-  // Cell-type presets carry the rendering AND the width (ui/docs/CELL_TYPES.md).
-  // Deceased reads as a word here, not the list's flag: this table is scanned to
-  // judge whether a candidate IS the patient, and it holds a handful of rows.
+  // Cell-type presets carry the rendering AND the width
+  // (ui/docs/CELL_TYPES.md). Deceased reads as a word here, not the list's
+  // flag: this table is scanned to judge whether a candidate IS the patient,
+  // and it holds a handful of rows.
   const resultColumns = (): Column<MatchRow, never>[] => [
     {
       c: { key: 'code' },
@@ -378,13 +379,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     },
   ];
 
-  const stepTitle = () =>
-    step() === 1
-      ? t('label.create-patient')
-      : step() === 2
-        ? t('label.search-results')
-        : t('label.patient-details');
-
   const actions = () => (
     <Switch>
       <Match when={step() === 1}>
@@ -453,42 +447,41 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         icon={<PlusCircleIcon />}
         dismissable={!searching() && !saving()}
         onClose={props.onClose}
-        widthRem={step() === 2 ? 96 : step() === 3 ? 56 : 44}
+        // ONE width for every step — the shared form measure, so the dialog is
+        // a steady box the flow moves through rather than one that jumps wider
+        // on the results step and back again. The results table fits: its
+        // columns' width presets total ~51rem (Carl, 2026-07-31).
+        width="form"
         minBodyHeightRem={34}
         actions={actions()}
       >
-        {/* Section-local wizard stepper (registry-gap role — see flags). */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '1.5rem',
-            'margin-block-end': '1rem',
-          }}
-          aria-label={stepTitle()}
-        >
-          <For
-            each={
-              [
-                [1, t('label.create-patient')],
-                [2, t('label.search-results')],
-                [3, t('label.patient-details')],
-              ] as const
-            }
-          >
-            {([n, label]) => (
-              <span
-                aria-current={step() === n ? 'step' : undefined}
-                style={{
-                  'font-weight':
-                    step() === n ? 'var(--weight-bold)' : undefined,
-                  opacity: step() === n ? undefined : '0.6',
-                }}
-              >
-                {n}. {label}
-              </span>
-            )}
-          </For>
-        </div>
+        {/* The wizard's step rail — the shared determinate progress list, the
+            same role the reference app's WizardStepper fills with its one
+            horizontal stepper. A step is finished once the flow has moved past
+            it, so the step you are on reads as in-progress and the ones behind
+            it as done. It needs no measure wrapper (the customer-return wizards
+            cap theirs): this dialog is already the form measure, so the rail can
+            divide the body's full width between its three steps. */}
+        <ProgressList
+          variant="secondary"
+          steps={[
+            {
+              label: t('label.create-patient'),
+              started: true,
+              finished: step() > 1,
+            },
+            {
+              label: t('label.search-results'),
+              started: step() >= 2,
+              finished: step() > 2,
+            },
+            {
+              label: t('label.patient-details'),
+              started: step() >= 3,
+              finished: false,
+            },
+          ]}
+        />
 
         <Switch>
           <Match when={step() === 1}>
