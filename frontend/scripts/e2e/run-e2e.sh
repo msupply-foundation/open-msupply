@@ -68,11 +68,16 @@ LOG_ROOT="$FE_DIR/e2e/stack-logs"
 # server can't try to re-authenticate this throwaway site against a real
 # central on startup (which would panic or overwrite the restored settings).
 # All four must be set together or settings validation rejects the block.
-#
-# The server-role override is pinned for the same reason: it must NOT be
-# inherited from local.yaml. Left unpinned, the stack's sync topology depends
-# on whether the developer happens to set `server.override_is_central_server`
-# — and the two settings behave very differently:
+SYNC_OFF=(
+  APP__SYNC__URL=
+  APP__SYNC__USERNAME=
+  APP__SYNC__PASSWORD_SHA256=
+  APP__SYNC__INTERVAL_SECONDS=0
+)
+
+# The server ROLE is pinned for a related but distinct reason: it must not be
+# inherited from local.yaml either, and unlike the block above it changes what
+# the app renders. The two modes behave very differently:
 #
 #   pinned true (here)  the site is its own central, so a sync run is a local
 #                       no-op that SUCCEEDS instantly. Status, phase list,
@@ -83,15 +88,15 @@ LOG_ROOT="$FE_DIR/e2e/stack-logs"
 #                       isCentralServer flips to false (which changes the
 #                       phase-visibility row the modal displays).
 #
-# The sync-modal suite asserts triggering, so it needs runs to happen; every
-# other suite is indifferent. Pin it so local and CI agree.
-SYNC_OFF=(
-  APP__SYNC__URL=
-  APP__SYNC__USERNAME=
-  APP__SYNC__PASSWORD_SHA256=
-  APP__SYNC__INTERVAL_SECONDS=0
-  APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true
-)
+# The sync-modal suite asserts triggering, so it needs runs to happen. Pin it
+# so local and CI agree. NB the pin is stack-wide, so it reaches every suite:
+# a central server additively exposes its central-only affordances (this FE:
+# Manage › Help documents in the nav, the save-as-global-default action in the
+# table-settings popover — both SERVER_ADMIN-gated; the current app gates the
+# same way). No suite asserts an exhaustive nav or popover, which is why this
+# is safe today — a suite that starts to should scope its assertion rather
+# than assume a remote-site stack.
+SERVER_ROLE_PIN=(APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true)
 
 SERVER_PID=""
 FE_PID=""
@@ -180,7 +185,8 @@ mkdir -p "$LOG_DIR"
 echo "Restoring database from $SERVER_DIR/data/e2e"
 rm -f "$SERVER_DIR/$DB_NAME".sqlite*
 (cd "$SERVER_DIR" && env MSUPPLY_NO_TEST_DB_TEMPLATE=1 \
-  APP__DATABASE__DATABASE_NAME="$DB_NAME" "${SYNC_OFF[@]}" \
+  APP__DATABASE__DATABASE_NAME="$DB_NAME" \
+  "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
   "$BIN_DIR/remote_server_cli" initialise-from-export -n e2e -r \
   > "$LOG_DIR/e2e-init.log" 2>&1) || {
   echo "initialise-from-export failed:" >&2
@@ -194,7 +200,7 @@ echo "Starting server on :$SERVER_PORT"
   APP__SERVER__PORT="$SERVER_PORT" \
   APP__SERVER__BASE_DIR=app_data/"$DB_NAME" \
   APP__LOGGING__MODE=Console \
-  "${SYNC_OFF[@]}" \
+  "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
   "$BIN_DIR/remote_server" > "$LOG_DIR/e2e-server.log" 2>&1) &
 SERVER_PID=$!
 
