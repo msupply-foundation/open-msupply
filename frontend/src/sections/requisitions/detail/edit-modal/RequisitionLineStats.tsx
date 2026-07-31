@@ -62,9 +62,11 @@ export const RequisitionLineStats: Component<{
   // rounding as the figure rows, so a bar never disagrees with its figure).
   const q = (units: number) =>
     figureInMode(units, props.entryMode, props.packSize);
+  // The heading's measure word is a category (always plural); a legend value's
+  // inflects for the figure it suffixes.
   const measure = () => modeWord(props.entryMode, props.unitName);
   const legendValue = (value: number) =>
-    `${formatNumber(value)} ${measure()}`;
+    `${formatNumber(value)} ${modeWord(props.entryMode, props.unitName, value)}`;
 
   // One stats section: heading, the proportional stacked bar (sized against
   // the sibling section via `width`), and its legend — or the italic info

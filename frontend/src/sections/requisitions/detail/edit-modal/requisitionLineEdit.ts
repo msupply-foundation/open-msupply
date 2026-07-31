@@ -1,5 +1,5 @@
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { getPlural, t, tPlural } from '../../../../intl';
 import {
   parseVaccineCourses,
   type VaccineCourse,
@@ -96,9 +96,20 @@ export const figureInMode = (
 ): number => Math.ceil(unitsToMode(units, mode, packSize));
 
 // The active mode's measure word — the item's unit name (falling back to
-// "unit") or "packs".
-export const modeWord = (mode: EntryMode, unitName: string | null): string =>
-  mode === 'packs' ? t('label.packs') : (unitName ?? t('label.unit'));
+// "unit") or "pack", inflected for the count it suffixes (the same shape as
+// the internal-order editor's modeWord). An item's own unit name inflects via
+// getPlural (reference-app parity — English only; other languages pass
+// through unchanged).
+export const modeWord = (
+  mode: EntryMode,
+  unitName: string | null,
+  count = 2
+): string => {
+  if (mode === 'packs') return tPlural('label.packs-plural', count);
+  return unitName
+    ? getPlural(unitName, count)
+    : tPlural('label.units-plural', count);
+};
 
 // --- Add-mode item preview ----------------------------------------------------
 
