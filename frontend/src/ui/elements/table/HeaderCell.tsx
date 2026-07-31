@@ -1,10 +1,7 @@
 import { Show } from 'solid-js';
 import type { JSX } from 'solid-js';
-import {
-  flexRender,
-  type Column as TanColumn,
-  type Header,
-} from '@tanstack/solid-table';
+import { type Column as TanColumn, type Header } from '@tanstack/solid-table';
+import { renderTemplate } from './renderTemplate';
 import styles from './DataTable.module.css';
 
 // A header cell: a sortable label + a resize handle on the trailing edge.
@@ -92,7 +89,10 @@ export function HeaderCell<T>(props: {
         {/* Header text wraps up to 2 lines (.thText clamp); the sort indicator is a
             separate non-shrinking sibling so it stays visible when the text wraps. */}
         <span class={styles.thText}>
-          {flexRender(column().columnDef.header, props.header.getContext())}
+          {/* renderTemplate, not TanStack's flexRender — flexRender untracks the
+              header thunk, so `header: () => t('label.name')` never re-resolves
+              on a locale change (see renderTemplate.ts). */}
+          {renderTemplate(column().columnDef.header, props.header.getContext())}
         </span>
         {indicator()}
       </span>
