@@ -4,7 +4,8 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInternalOrders } from '../internalOrders.generated';
 
 export interface DeleteInternalOrdersActionProps {
@@ -143,18 +144,10 @@ const Body = (
             // Delete.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
@@ -167,12 +160,7 @@ const Body = (
         >
           {/* Blocked / error: nothing to submit — a single Close. */}
           <Match when={phase() === 'blocked' || phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              confirms="plain"
-              onClick={props.onClose}
-            >
+            <Button variant="secondary" confirms="plain" onClick={props.onClose}>
               {t('button.close')}
             </Button>
           </Match>

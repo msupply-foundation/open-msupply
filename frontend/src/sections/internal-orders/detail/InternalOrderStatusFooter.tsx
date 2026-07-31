@@ -3,12 +3,17 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { authUser, userDisplayName } from '../../../auth/authContext';
 import { Button } from '../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  CloseButton,
+  OkButton,
+} from '../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { CheckIcon, XCircleIcon } from '../../../ui/icons';
+import { CheckIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
 import { currentStatusStep, statusSteps } from './internalOrderDetailStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
@@ -144,16 +149,12 @@ export const InternalOrderStatusFooter: Component<
         current={currentStatusStep(props.node.status)}
       />
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        <CloseButton
           data-testid="close-button"
           onClick={() =>
             navigate(`/${params.storeId}/replenishment/internal-order`)
           }
-        >
-          {t('button.close')}
-        </Button>
+        />
         {/* Hidden on a read-only order (AC-S3). */}
         <Show when={props.editable}>
           <Button
@@ -205,24 +206,13 @@ export const InternalOrderStatusFooter: Component<
                 // loading confirm.
                 <>
                   <Show when={phase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
-                      confirms="cancel"
-                      onClick={() => setOpen(false)}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    <CancelButton onClick={() => setOpen(false)} />
                   </Show>
-                  <Button
-                    icon={<CheckIcon />}
-                    confirms="plain"
+                  <OkButton
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'sending'}
                     onClick={() => void run()}
-                  >
-                    {t('button.ok')}
-                  </Button>
+                  />
                 </>
               }
             >
@@ -230,7 +220,6 @@ export const InternalOrderStatusFooter: Component<
               <Match when={phase() === 'empty' || phase() === 'error'}>
                 <Button
                   variant="secondary"
-                  icon={<XCircleIcon />}
                   confirms="plain"
                   onClick={() => setOpen(false)}
                 >

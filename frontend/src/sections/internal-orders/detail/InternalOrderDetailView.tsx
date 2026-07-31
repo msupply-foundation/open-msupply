@@ -16,6 +16,11 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
@@ -180,6 +185,11 @@ const InternalOrderDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+  // Narrowed once, so the editor's initialLine needs no cast (kdd/type-safety).
+  const editorInitialLine = () => {
+    const entry = editorLine();
+    return entry?.mode === 'edit' ? entry.line : undefined;
+  };
   // The Add split button's remembered choice (its primary half reflects the
   // last-picked option, spec S3 § page actions).
   const [addChoice, setAddChoice] = createSignal('item');
@@ -564,13 +574,7 @@ const InternalOrderDetailView: Component = () => {
       cell: info => {
         const line = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          <HStack gap="sm">
             {line.itemName}
             <Show when={line.ancillaryParents.length > 0}>
               <InfoTooltip
@@ -580,7 +584,7 @@ const InternalOrderDetailView: Component = () => {
                   .join(', ')}`}
               />
             </Show>
-          </span>
+          </HStack>
         );
       },
     },
@@ -685,21 +689,18 @@ const InternalOrderDetailView: Component = () => {
       cell: info => {
         const line = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          // justify="end" keeps the number at the cell's inline-end, where the
+          // preset's right alignment put it before the marker joined it.
+          <HStack gap="sm" justify="end">
             <Show when={isExcess(line)}>
-              <AlertTriangleIcon
-                style={{ color: 'var(--error-main)' }}
-                aria-label={t('label.requested')}
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label={t('messages.requested-exceeds-suggested')}
               />
             </Show>
             {numWithDoses(line, line.requestedQuantity)}
-          </span>
+          </HStack>
         );
       },
     },
@@ -794,23 +795,18 @@ const InternalOrderDetailView: Component = () => {
             cell: info => {
               const line = info.row.original;
               return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    'align-items': 'center',
-                    gap: 'var(--space-1)',
-                  }}
-                >
+                <HStack gap="sm">
                   <Show when={reasonFlaggedIds().has(line.id)}>
-                    <AlertTriangleIcon
-                      style={{ color: 'var(--error-main)' }}
-                      aria-label={t(
+                    <StatusMarker
+                      severity="error"
+                      icon={AlertTriangleIcon}
+                      label={t(
                         'error.reasons-not-provided-program-requisition'
                       )}
                     />
                   </Show>
                   {line.reason?.reason ?? ''}
-                </span>
+                </HStack>
               );
             },
           },
@@ -1063,7 +1059,10 @@ const InternalOrderDetailView: Component = () => {
                     </Button>
                   </Show>
                 </HeaderButtons>
-                <Toolbar>
+                {/* The header field cluster (ui-standards → HeaderToolbar):
+                    each field labelled above its small control, sharing the
+                    row per its FormRowItem weight and wrapping as a unit. */}
+                <HeaderToolbar>
                   <InternalOrderToolbar
                     storeId={params.storeId}
                     node={node()}
@@ -1079,16 +1078,42 @@ const InternalOrderDetailView: Component = () => {
                     hideOverMin={hideOverMin()}
                     onHideOverMinChange={setHideOverMin}
                   />
-                  {/* The ancillary banner claims its own full-width row beneath
-                      the toolbar block (spec S3 § toolbar). */}
-                  <InternalOrderAncillaryBanner
-                    storeId={params.storeId}
-                    requisitionId={node().id}
-                    ancillary={node().ancillaryState}
-                    editable={editable()}
-                    onRefreshed={() => void refetch()}
-                  />
-                </Toolbar>
+                </HeaderToolbar>
+                {/* Read-only notices + the ancillary banner keep their own
+                    full-width row beneath the cluster (spec S3 § toolbar).
+                    Their eventual treatment — HeaderToolbar's compact alert
+                    chip vs this row — is an open operator decision
+                    (ui-migration-report.md § Decisions); this preserves the
+                    pre-migration placement without entrenching either. */}
+                <Show
+                  when={
+                    node().otherParty.store?.isDisabled ||
+                    isProgram() ||
+                    (editable() && node().ancillaryState.state !== 'NONE')
+                  }
+                >
+                  <Toolbar>
+                    <Stack gap="sm">
+                      <Show when={node().otherParty.store?.isDisabled}>
+                        <Alert severity="info">
+                          {t('info.cannot-edit-disabled-store')}
+                        </Alert>
+                      </Show>
+                      <Show when={isProgram()}>
+                        <Alert severity="info">
+                          {t('info.cannot-edit-program-requisition')}
+                        </Alert>
+                      </Show>
+                      <InternalOrderAncillaryBanner
+                        storeId={params.storeId}
+                        requisitionId={node().id}
+                        ancillary={node().ancillaryState}
+                        editable={editable()}
+                        onRefreshed={() => void refetch()}
+                      />
+                    </Stack>
+                  </Toolbar>
+                </Show>
               </Header>
             }
             contentFooter={
@@ -1261,11 +1286,7 @@ const InternalOrderDetailView: Component = () => {
               showExcess={showExcess()}
               showExtended={showExtended()}
               orderInPacks={orderInPacks()}
-              initialLine={
-                editorLine()?.mode === 'edit'
-                  ? (editorLine() as { mode: 'edit'; line: Line }).line
-                  : undefined
-              }
+              initialLine={editorInitialLine()}
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
               // The info-panel slot's other half (§ S8 › editor region): the

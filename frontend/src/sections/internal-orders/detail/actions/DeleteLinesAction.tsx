@@ -4,7 +4,8 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInternalOrderLines } from '../edit-modal/internalOrderLineEdit.generated';
 
 export interface DeleteLinesActionProps {
@@ -146,19 +147,13 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             // Delete.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 loading={phase() === 'deleting'}
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
@@ -173,7 +168,6 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
           <Match when={phase() === 'blocked' || phase() === 'error'}>
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
               confirms="plain"
               onClick={props.onClose}
             >

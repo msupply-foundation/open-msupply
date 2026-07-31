@@ -19,7 +19,9 @@ import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
-import { PlusCircleIcon, AlertTriangleIcon } from '../../../../ui/icons';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../../ui/elements/feedback/StatusMarker';
+import { AlertTriangleIcon } from '../../../../ui/icons';
 import { NameSearch, type NameOption } from '../../../../domain/name';
 import { InternalOrderProgramSettings } from './createInternalOrder.generated';
 import { createGeneralOrder, createProgramOrder } from './createInternalOrder';
@@ -120,7 +122,9 @@ export const CreateInternalOrderModal: Component<
   });
 
   // Program suppliers: deduped across every program setting, name-sorted;
-  // on-hold suppliers listed but not selectable (AC-P2 supplier picker).
+  // on-hold suppliers listed but not selectable (AC-P2 supplier picker) — and
+  // textually marked, so the block never reads from the dimming alone
+  // (ui-standards controls.md § blocked affordances).
   const suppliers = createMemo<CascadeOption[]>(() => {
     const seen = new Map<string, CascadeOption>();
     for (const setting of settingsList())
@@ -128,7 +132,9 @@ export const CreateInternalOrderModal: Component<
         if (!seen.has(supplier.id))
           seen.set(supplier.id, {
             id: supplier.id,
-            label: supplier.name,
+            label: supplier.isOnHold
+              ? `${supplier.name} (${t('label.on-hold')})`
+              : supplier.name,
             disabled: supplier.isOnHold,
           });
     return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
@@ -274,21 +280,16 @@ export const CreateInternalOrderModal: Component<
             setError();
           }}
           renderItem={option => (
-            <span
-              style={{
-                display: 'inline-flex',
-                'align-items': 'center',
-                gap: 'var(--space-2)',
-              }}
-            >
+            <HStack gap="sm">
               {option.label}
               <Show when={isEmergency(option.id)}>
-                <AlertTriangleIcon
-                  style={{ color: 'var(--error-main)' }}
-                  aria-label={t('label.emergency')}
+                <StatusMarker
+                  severity="error"
+                  icon={AlertTriangleIcon}
+                  label={t('label.emergency')}
                 />
               </Show>
-            </span>
+            </HStack>
           )}
           testId="create-program-order-type"
         />
@@ -329,7 +330,6 @@ export const CreateInternalOrderModal: Component<
       actions={
         <Show when={activeTab() === 'program'}>
           <Button
-            icon={<PlusCircleIcon />}
             confirms="plain"
             data-testid="create-program-order-button"
             disabled={!createReady()}

@@ -3,7 +3,8 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { deleteInternalOrder } from '../internalOrderUpdate';
 
 // The side-panel "Delete" action (spec S5 → S6, AC-D1): the button plus a
@@ -86,18 +87,10 @@ export const DeleteInternalOrderAction: Component<{
               fallback={
                 <>
                   <Show when={phase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
-                      confirms="cancel"
-                      onClick={close}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    <CancelButton onClick={close} />
                   </Show>
                   <Button
                     variant="danger"
-                    icon={<TrashIcon />}
                     confirms="plain"
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'deleting'}
@@ -109,12 +102,7 @@ export const DeleteInternalOrderAction: Component<{
               }
             >
               <Match when={phase() === 'error'}>
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
-                  confirms="plain"
-                  onClick={close}
-                >
+                <Button variant="secondary" confirms="plain" onClick={close}>
                   {t('button.close')}
                 </Button>
               </Match>

@@ -23,6 +23,7 @@ import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -275,24 +276,19 @@ const InternalOrdersList: Component = () => {
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Show
               when={isRowEditable(row)}
               fallback={<ColourTagDot colour={row.colour ?? null} />}
             >
               <ColourTagPicker
                 colour={row.colour ?? null}
+                variant="row"
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -455,6 +451,10 @@ const InternalOrdersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        // Restricted rows (Sent/Finalised, or a disabled supplier store) read
+        // as read-only via the disabled background tint (AC-L7) — the same
+        // rowState the other list views key off their editability gate.
+        rowState={row => (isRowEditable(row) ? undefined : 'disabled')}
         emptyMessage={t('error.no-internal-orders')}
         // Empty state offers create (AC-N2).
         empty={
