@@ -16,7 +16,6 @@ use self::transfer::{
 };
 use general_processor::{process_records, ProcessorError};
 
-mod add_central_patient_visibility;
 // Processor currently disabled (not constructed in ProcessorType::get_processors), see #12547
 #[allow(dead_code, unused_imports)]
 mod assign_prescription_number;
@@ -24,6 +23,7 @@ mod assign_requisition_number;
 mod contact_form;
 mod general_processor;
 mod load_plugin;
+mod merge_sync_message;
 mod plugin_processor;
 mod requisition_auto_finalise;
 mod support_upload_files;

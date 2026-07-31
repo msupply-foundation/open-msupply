@@ -122,7 +122,9 @@ async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bo
         Ok(value) => value,
         Err(error) => {
             // Don't panic the main loop on a transient DB error - skip and retry next interval.
-            log::error!("Ledger fix: skipping run, could not read last run (DB unavailable?): {error:?}");
+            log::error!(
+                "Ledger fix: skipping run, could not read last run (DB unavailable?): {error:?}"
+            );
             return false;
         }
     };

@@ -1,6 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, NameOmsFieldsRow, NameRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, NameOmsFieldsRow, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::name::NameTranslation;
@@ -32,11 +31,12 @@ impl SyncTranslation for NameOmsFieldsTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let upsert_record = PullTranslateResult::upsert(serde_json::from_str::<NameOmsFieldsRow>(
-            &sync_record.data,
-        )?);
+        let upsert_record = PullTranslateResult::upsert(
+            serde_json::from_value::<NameOmsFieldsRow>(sync_record.data.0.clone())?,
+        );
         Ok(upsert_record)
     }
 
@@ -58,21 +58,15 @@ impl SyncTranslation for NameOmsFieldsTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
+        _connection: &StorageConnection,
+        _changelog: &ChangelogRow,
+        _row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = NameRowRepository::new(connection)
-            .find_one_oms_fields_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name row ({}) not found for Name OMS Fields translation",
-                changelog.record_id
-            )))?;
-
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        // NameOmsFields is not represented in the `Row` enum (no
+        // standalone bare-row repository), so `query_with_data` cannot
+        // surface it on the push path. Until the table is added to
+        // `Row`, this translator is unreachable for push.
+        Ok(PushTranslateResult::NotMatched)
     }
 }
 
@@ -92,7 +86,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

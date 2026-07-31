@@ -21,7 +21,12 @@ export const ConfirmationModalLayout = ({
   buttons,
 }: ConfirmationModalLayoutProps) => {
   return (
-    <BasicModal width={400} height={200} open={isOpen}>
+    <BasicModal
+      width={400}
+      height={200}
+      open={isOpen}
+      data-testid="confirmation-modal"
+    >
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
           <Grid>

@@ -11,7 +11,7 @@ use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
+    RequisitionLineRepository, RequisitionLineRow, StorageConnection, StoreFilter, StoreRepository,
 };
 
 pub struct GenerateResult {
@@ -49,6 +49,14 @@ pub fn generate(
     let should_recalculate = update_threshold_months_of_stock != existing.min_months_of_stock
         || update_max_months_of_stock != existing.max_months_of_stock;
 
+    // If the other party changed, re-derive name_store_id from the new name's backing store
+    let updated_name_store_id = match &update_other_party_id {
+        Some(new_name_id) => StoreRepository::new(connection)
+            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(new_name_id.clone())))?
+            .map(|store| store.store_row.id),
+        None => existing.name_store_id.clone(),
+    };
+
     let updated_requisition_row = RequisitionRow {
         // Only sent status is available in UpdateRequestRequisitionStatus
         status: if update_status.is_some() {
@@ -67,6 +75,7 @@ pub fn generate(
         min_months_of_stock: update_threshold_months_of_stock,
         max_months_of_stock: update_max_months_of_stock,
         name_id: update_other_party_id.unwrap_or(existing.name_id.clone()),
+        name_store_id: updated_name_store_id,
         expected_delivery_date: update_expected_delivery_date.or(existing.expected_delivery_date),
         destination_customer_id: nullable_update(
             &destination_customer_id,

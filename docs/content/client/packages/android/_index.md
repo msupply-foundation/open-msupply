@@ -285,7 +285,26 @@ There is also a Github Action to build release apks, this is automated when a co
 
 Apart from usual local/packaged plugin setup for Capacitor, make sure to add plugin name to `onPageStarted` method in `ExtendedWebViewClient.java` (you can see what plugin names are available by using Android Studio debug and inspecting `bridge.plugins`). See point 2. in Capacitor Modifications (below).
 
-Example of expanding local native functionality (TODO)
+### Custom plugins
+
+Our own plugins are plain `@CapacitorPlugin` classes in `app/src/main/java/org/openmsupply/client/`, registered in `MainActivity.onCreate` before `super.onCreate`. Adding one means touching **two** places:
+
+1. `registerPlugin(YourPlugin.class)` in `MainActivity` — puts it on the bridge.
+2. Its `@CapacitorPlugin(name = ...)` in the `pluginNames` list in `ExtendedWebViewClient.generatePluginScript()` — puts it in `window.Capacitor.PluginHeaders` for the served page.
+
+Miss step 2 and the JS side's `registerPlugin('YourPlugin')` proxy throws `Unimplemented` on every call, because we inject the bridge ourselves from a hardcoded list rather than letting Capacitor proxy it (Capacitor Modification 2. below). Miss step 1 while listing the name and it's worse: `generatePluginScript()` bails out entirely, so the served UI gets no bridge at all.
+
+The current custom plugins:
+
+| Plugin            | Name           | Used by      | What it does                                                              |
+| ----------------- | -------------- | ------------ | ------------------------------------------------------------------------- |
+| `NativeApi`       | `NativeApi`    | old UI       | Server discovery, connection, log read, file save, database save          |
+| `HoneywellScanner`| `HoneywellScanner` | old UI  | Honeywell hardware barcode scanner                                        |
+| `SaveFilePlugin`  | `SaveFile`     | new front end | "Save as" through the SAF `ACTION_CREATE_DOCUMENT` picker                |
+| `PrintPlugin`     | `Print`        | new front end | Hands HTML to Android's `PrintManager` (the server can't render PDFs on a tablet — it drives headless Chrome) |
+| `ReadLogPlugin`   | `ReadLog`      | new front end | Reads `<filesDir>/logs/remote_server.log` for the pre-login "save log" affordance |
+
+The new front end (the `open-msupply-frontend` repo, fetched at its pinned version and bundled by `yarn stage-frontend` — see `server/README.md`, "Serving front-end") consumes these from its `src/platform/` modules, via `registerPlugin` against the page the embedded server serves. Its plugin needs are what drive this list, so check `src/platform/` there when bumping the frontend pin.
 
 ## Capacitor Modifications
 

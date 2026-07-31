@@ -118,3 +118,42 @@ pub fn check_invoice_exists(
 ) -> Result<Option<InvoiceRow>, RepositoryError> {
     InvoiceRowRepository::new(connection).find_one_by_id(id)
 }
+
+#[cfg(test)]
+mod test {
+    use repository::{InvoiceRow, InvoiceStatus, InvoiceType};
+
+    use super::check_invoice_is_editable;
+
+    fn outbound(status: InvoiceStatus) -> InvoiceRow {
+        InvoiceRow {
+            r#type: InvoiceType::OutboundShipment,
+            status,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn outbound_is_editable_only_before_shipped() {
+        for status in [InvoiceStatus::New, InvoiceStatus::Allocated, InvoiceStatus::Picked] {
+            assert!(
+                check_invoice_is_editable(&outbound(status.clone())),
+                "outbound should be editable at status {:?}",
+                status
+            );
+        }
+        for status in [
+            InvoiceStatus::Shipped,
+            InvoiceStatus::Delivered,
+            InvoiceStatus::Received,
+            InvoiceStatus::Verified,
+            InvoiceStatus::Cancelled,
+        ] {
+            assert!(
+                !check_invoice_is_editable(&outbound(status.clone())),
+                "outbound should not be editable at status {:?}",
+                status
+            );
+        }
+    }
+}

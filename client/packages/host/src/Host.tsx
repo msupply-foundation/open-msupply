@@ -14,7 +14,6 @@ import {
   IntlProvider,
   RandomLoader,
   ConfirmationModalProvider,
-  AuthProvider,
   AlertModalProvider,
   EnvUtils,
   LocalStorage,
@@ -28,7 +27,7 @@ import {
   useIsCentralServerApi,
   useInitialisationStatus,
   InitialisationStatusType,
-  useAuthContext,
+  clearAuthState,
 } from '@openmsupply-client/common';
 // import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -63,17 +62,17 @@ const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { logout } = useAuthContext();
   const data = useInitialisationStatus(false);
 
   // Query still loading — don't render children yet, but don't logout either
   if (!data?.data) return null;
 
-  if (data.data.status == InitialisationStatusType.Initialised)
-    return children;
+  if (data.data.status == InitialisationStatusType.Initialised) return children;
 
-  // Server is not initialised — clear token
-  logout();
+  // Server is not initialised — wipe locally cached auth so the route guard sends the user to
+  // /login. Skip the server-side logout: PreInit renders outside the Router (so useNavigate is
+  // unavailable) and the server isn't initialised anyway, so the request would just error.
+  clearAuthState();
 
   return null;
 };
@@ -119,6 +118,14 @@ EnvUtils.deviceInfo.then(info => {
   }
 });
 
+// Router base path derived from the build-time publicPath ('/' by default, so
+// no basename in the default build). React Router expects it without a trailing
+// slash, so strip it for anything other than the root.
+const basename =
+  Environment.PUBLIC_PATH === '/'
+    ? undefined
+    : Environment.PUBLIC_PATH.replace(/\/$/, '');
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
@@ -154,7 +161,8 @@ const router = createBrowserRouter(
         </ErrorBoundary>
       }
     />
-  )
+  ),
+  { basename }
 );
 
 initialiseI18n();
@@ -172,16 +180,14 @@ const Host = () => (
                   skipRequest={skipRequest}
                 >
                   <MigrationInfoProvider>
-                    <AuthProvider>
-                      <PreInit>
-                        <Init />
-                      </PreInit>
-                      <ConfirmationModalProvider>
-                        <AlertModalProvider>
-                          <RouterProvider router={router} />
-                        </AlertModalProvider>
-                      </ConfirmationModalProvider>
-                    </AuthProvider>
+                    <PreInit>
+                      <Init />
+                    </PreInit>
+                    <ConfirmationModalProvider>
+                      <AlertModalProvider>
+                        <RouterProvider router={router} />
+                      </AlertModalProvider>
+                    </ConfirmationModalProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen={false} /> */}
                 </GqlProvider>

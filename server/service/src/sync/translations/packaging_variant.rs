@@ -1,12 +1,11 @@
-use repository::item_variant::packaging_variant_row::{
-    PackagingVariantRow, PackagingVariantRowRepository,
-};
-use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
+use repository::item_variant::packaging_variant_row::PackagingVariantRow;
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item_variant::ItemVariantTranslation;
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -28,12 +27,20 @@ impl SyncTranslation for PackagingVariantTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            PackagingVariantRow,
-        >(&sync_record.data)?))
+        let row = serde_json::from_value::<PackagingVariantRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "packaging_variant", &row.id);
+
+        let result = PackagingVariantRow {
+            item_variant_id: check_fk(row.item_variant_id, "item_variant_id", FkField::ItemVariant)?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -56,15 +63,15 @@ impl SyncTranslation for PackagingVariantTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = PackagingVariantRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "PackagingVariant row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::PackagingVariant(packaging_variant_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = packaging_variant_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -77,7 +84,11 @@ impl SyncTranslation for PackagingVariantTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_item_variants, MockDataInserts},
+        test_db::setup_all,
+        ItemVariantRow, ItemVariantRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_packaging_variant_translation() {
@@ -86,14 +97,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_packaging_variant_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the item_variant parent the packaging variant's required FK points at.
+        ItemVariantRowRepository::new(&connection)
+            .upsert_one(&ItemVariantRow {
+                id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(),
+                ..mock_item_variants().into_iter().next().unwrap()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

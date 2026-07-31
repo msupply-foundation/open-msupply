@@ -31,7 +31,8 @@ export const SidePanel = () => {
   const { duplicateInbound } = useDuplicateInbound();
 
   const isTransfer = !!data?.linkedShipment?.id;
-  const canDelete = data?.status === InvoiceNodeStatus.New && hasMutatePermission;
+  const canDelete =
+    data?.status === InvoiceNodeStatus.New && hasMutatePermission;
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -71,17 +72,20 @@ export const SidePanel = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+            testId="delete-shipment-button"
           />
           <DetailPanelAction
             icon={<CopyIcon />}
             title={t('button.make-a-copy')}
             onClick={() => data && duplicateInbound(data)}
             disabled={!hasMutatePermission}
+            testId="duplicate-shipment-button"
           />
           <DetailPanelAction
             icon={<CopyIcon />}
             title={t('link.copy-to-clipboard')}
             onClick={copyToClipboard}
+            testId="copy-to-clipboard-button"
           />
         </>
       }

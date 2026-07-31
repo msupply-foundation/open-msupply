@@ -20,6 +20,7 @@ interface ButtonProps {
   shouldShrink?: boolean;
   shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
+  testId?: string;
 }
 
 const StyledButton = styled(MuiButton, {
@@ -51,6 +52,7 @@ export const FlatButton: React.FC<ButtonProps> = ({
   shouldShrink = false,
   shrinkThreshold = 'md',
   loading = false,
+  testId,
 }) => {
   const theme = useAppTheme();
   const isShrinkThreshold = useMediaQuery(
@@ -67,6 +69,7 @@ export const FlatButton: React.FC<ButtonProps> = ({
   return (
     <StyledButton
       shrink={shrink}
+      {...(testId ? { 'data-testid': testId } : {})}
       onClick={onClick}
       endIcon={endIcon}
       variant="text"

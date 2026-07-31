@@ -159,8 +159,8 @@ mod test {
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StockRelocationFilter,
-        StockRelocationRepository, StockRelocationRow, StockRelocationSort,
-        StockRelocationSortField, StockRelocationStatus, Upsert,
+        StockRelocationRepository, StockRelocationRow, StockRelocationRowRepository,
+        StockRelocationSort, StockRelocationSortField, StockRelocationStatus,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
@@ -184,7 +184,9 @@ mod test {
             setup_all("stock_relocation_query_repository", MockDataInserts::all()).await;
 
         let row = relocation("stock_relocation_1");
-        row.upsert(&connection).unwrap();
+        StockRelocationRowRepository::new(&connection)
+            .upsert_one(&row)
+            .unwrap();
 
         let repo = StockRelocationRepository::new(&connection);
 

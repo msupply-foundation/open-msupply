@@ -127,6 +127,7 @@ pub enum InsertStockInLineError {
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
     WrongInboundShipmentType,
+    CannotSetManufactureDateInFuture,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {

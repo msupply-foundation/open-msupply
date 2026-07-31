@@ -1,4 +1,6 @@
-# Server expect this folder to be there for rust_embed to work
+# `cap copy` populates this folder with the web bundle (client/packages/host/dist);
+# on app start FrontendAssets copies it to <filesDir>/frontend for the embedded
+# server to serve (server.frontend_dir)
 # This file allows commiting empty folder in git (and webpack clean: { keep: './gitignore' } allows for this file to be kept during build)
 
 # Ignore all except this file

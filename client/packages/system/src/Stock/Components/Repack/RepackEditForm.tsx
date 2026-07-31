@@ -43,6 +43,7 @@ export const RepackEditForm = ({
           {isNew && (
             <InputWithLabelRow
               label={t('label.packs-available')}
+              testId="repack-packs-available"
               labelWidth="100%"
               Input={
                 <NumericTextDisplay
@@ -54,6 +55,7 @@ export const RepackEditForm = ({
           )}
           <InputWithLabelRow
             label={t('label.packs-to-repack')}
+            testId="repack-number-of-packs"
             labelWidth="100%"
             Input={
               <NumericTextInput
@@ -102,6 +104,7 @@ export const RepackEditForm = ({
           {isNew && <Box height={24} />}
           <InputWithLabelRow
             label={t('label.new-num-packs')}
+            testId="repack-new-number-of-packs"
             labelWidth="100%"
             Input={
               <NumericTextDisplay
@@ -115,6 +118,7 @@ export const RepackEditForm = ({
           />
           <InputWithLabelRow
             label={t('label.new-pack-size')}
+            testId="repack-new-pack-size"
             labelWidth="100%"
             Input={
               <NumericTextInput
@@ -141,6 +145,7 @@ export const RepackEditForm = ({
             <InputWithLabelRow
               label={t('label.new-location')}
               labelWidth="100%"
+              testId="repack-new-location"
               Input={
                 <LocationSearchInput
                   autoFocus={false}

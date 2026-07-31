@@ -17,3 +17,13 @@ pub mod asset_row;
 pub mod asset_type;
 pub mod asset_type_row;
 pub mod types;
+
+pub use asset_catalogue_item_row::*;
+pub use asset_category_row::*;
+pub use asset_class_row::*;
+pub use asset_internal_location_row::*;
+pub use asset_log_reason_row::*;
+pub use asset_log_row::*;
+pub use asset_property_row::*;
+pub use asset_row::*;
+pub use asset_type_row::*;

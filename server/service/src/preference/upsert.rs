@@ -36,6 +36,7 @@ pub struct UpsertPreferences {
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingData>,
+    pub receive_payments_from_prescriptions: Option<bool>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
@@ -64,6 +65,7 @@ pub struct UpsertPreferences {
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
+    pub do_not_print_placeholder_line_labels: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -88,6 +90,7 @@ pub fn upsert_preferences(
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
         backdating: backdating_input,
+        receive_payments_from_prescriptions: receive_payments_from_prescriptions_input,
 
         // Store preferences
         blind_stocktake: blind_stocktake_input,
@@ -118,6 +121,7 @@ pub fn upsert_preferences(
         store_custom_colour: store_custom_colour_input,
         invoice_status_options: invoice_status_options_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
+        do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -139,6 +143,7 @@ pub fn upsert_preferences(
         display_population_based_forecasting,
         global_table_configs,
         backdating,
+        receive_payments_from_prescriptions,
 
         // Store preferences
         blind_stocktake,
@@ -164,6 +169,7 @@ pub fn upsert_preferences(
         invoice_status_options,
         external_inbound_shipment_lines_must_be_authorised,
         show_indicative_price_in_requisitions,
+        do_not_print_placeholder_line_labels,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -241,6 +247,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = backdating_input {
                 backdating.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = receive_payments_from_prescriptions_input {
+                receive_payments_from_prescriptions.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
@@ -362,6 +372,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_indicative_price_in_requisitions_input {
                 upsert_store_input(connection, show_indicative_price_in_requisitions, input)?;
+            }
+
+            if let Some(input) = do_not_print_placeholder_line_labels_input {
+                upsert_store_input(connection, do_not_print_placeholder_line_labels, input)?;
             }
 
             Ok(())

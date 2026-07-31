@@ -53,7 +53,7 @@ export const StocktakeLineEditTabs: FC<
       <TabContext value={currentTab}>
         <TabKeybindings
           tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
-          onAdd={onAddLine}
+          onAdd={isDisabled ? undefined : onAddLine}
           setCurrentTab={setCurrentTab}
         />
         <Box
@@ -69,16 +69,19 @@ export const StocktakeLineEditTabs: FC<
             onChange={(_, v) => setCurrentTab(v)}
           >
             <Tab
+              data-testid="tab-batch"
               aria-keyshortcuts="Control+1"
               value={Tabs.Batch}
               label={t('label.batch')}
             />
             <Tab
+              data-testid="tab-pricing"
               aria-keyshortcuts="Control+2"
               value={Tabs.Pricing}
               label={t('label.pricing')}
             />
             <Tab
+              data-testid="tab-other"
               aria-keyshortcuts="Control+3"
               value={Tabs.Other}
               label={t('heading.other')}
@@ -86,6 +89,7 @@ export const StocktakeLineEditTabs: FC<
           </TabList>
           <Box flex={1} justifyContent="flex-end" display="flex">
             <ButtonWithIcon
+              data-testid="add-batch-button"
               disabled={isDisabled}
               color="primary"
               variant="outlined"

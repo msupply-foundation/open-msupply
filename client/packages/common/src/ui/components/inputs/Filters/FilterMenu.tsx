@@ -13,6 +13,10 @@ import {
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
+import {
+  HierarchicalEnumFilter,
+  HierarchicalEnumFilterDefinition,
+} from './HierarchicalEnumFilter';
 import { DateFilterDefinition, DateFilter } from './DateFilter';
 import { NumberFilter, NumberFilterDefinition } from './NumberFilter';
 import { BooleanFilter, BooleanFilterDefinition } from './BooleanFilter';
@@ -21,17 +25,31 @@ export interface FilterDefinitionCommon {
   name: string;
   urlParameter: string;
   isDefault?: boolean;
+  /**
+   * Overrides the `filter-option-*` / `filter-input-*` test-id stem, which
+   * otherwise derives from `urlParameter` (or, for a group, its name).
+   *
+   * The cross-front-end e2e suites locate filters by these ids, so the id is a
+   * shared contract rather than an implementation detail. A nested filter's
+   * `urlParameter` carries its GraphQL path (`location.codeOrName`), which the
+   * other front end has no reason to match; set this to the filter's own name
+   * so both sides agree. See `e2e/TESTIDS.md` in open-msupply-frontend.
+   */
+  testId?: string;
 }
 
 export interface GroupFilterDefinition {
   type: 'group';
   name: string;
   elements: FilterDefinition[];
+  /** See `FilterDefinitionCommon.testId`. */
+  testId?: string;
 }
 
 export type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
+  | HierarchicalEnumFilterDefinition
   | DateFilterDefinition
   | NumberFilterDefinition
   | BooleanFilterDefinition;
@@ -117,7 +135,11 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
     >
       {/* 13px margin to make menu match the individual filter inputs */}
       {showFilterMenu && (
-        <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
+        <DropdownMenu
+          testId="filters-menu"
+          label={t('label.filters')}
+          sx={{ marginTop: '13px' }}
+        >
           {filterOptions.map(option => (
             <FilterMenuItem
               key={
@@ -125,6 +147,12 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
                   ? option.value.name
                   : option.value.urlParameter
               }
+              testId={`filter-option-${
+                option.value.testId ??
+                (option.value.type === 'group'
+                  ? option.value.name.toLowerCase().replace(/\s+/g, '-')
+                  : option.value.urlParameter)
+              }`}
               onClick={() => handleSelect(option.value)}
               label={option.label}
             />
@@ -146,11 +174,17 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
 const FilterMenuItem = ({
   onClick,
   label,
+  testId,
 }: {
   onClick: () => void;
   label: string;
+  testId?: string;
 }) => (
-  <DropdownMenuItem onClick={onClick} sx={{ fontSize: 14 }}>
+  <DropdownMenuItem
+    data-testid={testId}
+    onClick={onClick}
+    sx={{ fontSize: 14 }}
+  >
     {label}
   </DropdownMenuItem>
 );
@@ -219,11 +253,12 @@ const getFilterComponent = (
         />
       );
     case 'enum':
+      return <EnumFilter key={filter.urlParameter} filterDefinition={filter} />;
+    case 'hierarchicalEnum':
       return (
-        <EnumFilter
+        <HierarchicalEnumFilter
           key={filter.urlParameter}
           filterDefinition={filter}
-          remove={() => removeFilter(filter)}
         />
       );
     case 'date':

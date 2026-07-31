@@ -99,7 +99,7 @@ mod test {
     use repository::{
         mock::{mock_location_1, mock_location_on_hold, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, Upsert,
+        StockLineRow, StockLineRowRepository,
     };
     use util::uuid::uuid;
 
@@ -150,7 +150,9 @@ mod test {
     #[actix_rt::test]
     async fn upsert_stock_relocation_line_success() {
         let (service_provider, ctx) = setup("upsert_stock_relocation_line_success").await;
-        stock_line("held_sl", true).upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&stock_line("held_sl", true))
+            .unwrap();
 
         let movement_id = new_movement(&service_provider, &ctx);
 
@@ -192,7 +194,9 @@ mod test {
     #[actix_rt::test]
     async fn upsert_line_validation_errors() {
         let (service_provider, ctx) = setup("upsert_line_validation_errors").await;
-        stock_line("ok_sl", false).upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&stock_line("ok_sl", false))
+            .unwrap();
         let movement_id = new_movement(&service_provider, &ctx);
 
         let upsert = |number_of_packs: f64, destination: Option<String>| {

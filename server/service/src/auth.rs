@@ -9,12 +9,7 @@ use util::{
     uuid::uuid,
 };
 
-use crate::{
-    auth_data::AuthData,
-    service_provider::ServiceContext,
-    settings::is_develop,
-    token::{JWTValidationError, OmSupplyClaim, TokenService},
-};
+use crate::{auth_data::AuthData, service_provider::ServiceContext};
 
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
@@ -164,6 +159,9 @@ pub enum Resource {
     // Campaigns
     QueryCampaigns,
     MutateCampaigns,
+    // Custom fields (config)
+    QueryCustomFieldConfig,
+    MutateCustomFieldConfig,
     // Purchase Order
     QueryPurchaseOrder,
     MutatePurchaseOrder,
@@ -177,6 +175,8 @@ pub enum Resource {
     // Help documents
     QueryHelpDocuments,
     MutateHelpDocuments,
+
+    MutateSites,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -841,6 +841,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 
+    // Custom field config is a central-server admin screen — restricted to
+    // server admins (the client nav is gated the same way, see ManageNav).
+    map.insert(
+        Resource::QueryCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
     map.insert(
         Resource::QueryPurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
@@ -867,6 +878,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         ]),
     );
 
+    map.insert(
+        Resource::MutateSites,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+
     map
 }
 
@@ -888,24 +904,13 @@ pub enum AuthError {
 #[derive(Debug)]
 pub struct ValidatedUserAuth {
     pub user_id: String,
-    pub claims: OmSupplyClaim,
 }
 
-fn dummy_user_auth() -> ValidatedUserAuth {
-    let user_id = "dummy_user";
-    ValidatedUserAuth {
-        user_id: user_id.to_string(),
-        claims: OmSupplyClaim {
-            exp: 0,
-            aud: crate::token::Audience::Api,
-            iat: 0,
-            iss: "omSupply-debug".to_string(),
-            sub: user_id.to_string(),
-        },
-    }
-}
-
-/// Validates user is auth (no permissions checked)
+/// Validates user is auth (no permissions checked).
+///
+/// Looks up the opaque session token in [`SessionStore`] and slides its expiry forward on every
+/// successful call. There is no JWT to decode and no separate refresh token — the token is just
+/// a key into the in-memory session table.
 pub fn validate_auth(
     auth_data: &AuthData,
     auth_token: &Option<String>,
@@ -914,45 +919,26 @@ pub fn validate_auth(
         Some(token) => token,
         None => {
             if auth_data.debug_no_access_control {
-                return Ok(dummy_user_auth());
+                return Ok(ValidatedUserAuth {
+                    user_id: "dummy_user".to_string(),
+                });
             }
             return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
                 "Missing auth token".to_string(),
             )));
         }
     };
-    let service = TokenService::new(
-        &auth_data.token_bucket,
-        auth_data.auth_token_secret.as_bytes(),
-        !is_develop(),
-    );
-    let claims = match service.verify_token(auth_token, None) {
-        Ok(claims) => claims,
-        Err(err) => {
-            let e = match err {
-                JWTValidationError::ExpiredSignature => AuthError::Denied(
-                    AuthDeniedKind::NotAuthenticated("Expired signature".to_string()),
-                ),
-                JWTValidationError::NotAnApiToken => AuthError::Denied(
-                    AuthDeniedKind::NotAuthenticated("Not an api token".to_string()),
-                ),
-                JWTValidationError::InvalidToken(_) => AuthError::Denied(
-                    AuthDeniedKind::NotAuthenticated("Invalid token".to_string()),
-                ),
-                JWTValidationError::TokenInvalidated => {
-                    AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                        "Token has been invalided on the server".to_string(),
-                    ))
-                }
-                JWTValidationError::ConcurrencyLockError(_) => {
-                    AuthError::InternalError("Lock error".to_string())
-                }
-            };
-            return Err(e);
-        }
-    };
-    let user_id = claims.sub.to_owned();
-    Ok(ValidatedUserAuth { user_id, claims })
+    let mut session_store = auth_data.session_store.write().map_err(|e| {
+        AuthError::InternalError(format!("Session store lock poisoned: {e}"))
+    })?;
+    match session_store.validate_and_slide(auth_token) {
+        Some(session) => Ok(ValidatedUserAuth {
+            user_id: session.user_id,
+        }),
+        None => Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+            "Invalid or expired session".to_string(),
+        ))),
+    }
 }
 
 pub struct ValidatedUser {
@@ -973,6 +959,8 @@ pub struct ResourceAccessRequest {
     pub resource: Resource,
     /// The store id if specified
     pub store_id: Option<String>,
+    /// For endpoints that configure central data in mixed configurations.
+    pub require_central_standalone: bool,
 }
 
 fn validate_resource_permissions(
@@ -1233,6 +1221,7 @@ mod validate_resource_permissions_test {
         let resource_request = ResourceAccessRequest {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         };
         let required_permissions = PermissionDSL::HasPermission(PermissionType::ServerAdmin);
 
@@ -1475,7 +1464,7 @@ mod permission_validation_test {
     use std::sync::{Arc, RwLock};
 
     use super::*;
-    use crate::{service_provider::ServiceProvider, token_bucket::TokenBucket};
+    use crate::{service_provider::ServiceProvider, session_store::SessionStore};
     use repository::{
         mock::{mock_user_account_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
@@ -1485,19 +1474,17 @@ mod permission_validation_test {
     #[actix_rt::test]
     async fn test_basic_permission_validation() {
         let auth_data = AuthData {
-            auth_token_secret: "some secret".to_string(),
-            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
             no_ssl: true,
             debug_no_access_control: false,
         };
         let user_id = "test_user_id";
-        let password = "pass";
-        let mut service = TokenService::new(
-            &auth_data.token_bucket,
-            auth_data.auth_token_secret.as_bytes(),
-            true,
-        );
-        let token_pair = service.jwt_token(user_id, password, 60, 120).unwrap();
+        let token = auth_data
+            .session_store
+            .write()
+            .unwrap()
+            .create(user_id);
 
         let (_, _, connection_manager, _) = setup_all(
             "basic_permission_validation",
@@ -1519,11 +1506,12 @@ mod permission_validation_test {
             .validate(
                 &context,
                 &auth_data,
-                &Some(token_pair.token.to_owned()),
+                &Some(token.to_owned()),
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1541,11 +1529,12 @@ mod permission_validation_test {
             .validate(
                 &context,
                 &auth_data,
-                &Some(token_pair.token.to_owned()),
+                &Some(token.to_owned()),
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1564,11 +1553,12 @@ mod permission_validation_test {
             .validate(
                 &context,
                 &auth_data,
-                &Some(token_pair.token.to_owned()),
+                &Some(token.to_owned()),
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1587,11 +1577,12 @@ mod permission_validation_test {
             .validate(
                 &context,
                 &auth_data,
-                &Some(token_pair.token.to_owned()),
+                &Some(token.to_owned()),
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_b".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1601,11 +1592,12 @@ mod permission_validation_test {
             .validate(
                 &context,
                 &auth_data,
-                &Some(token_pair.token.to_owned()),
+                &Some(token.to_owned()),
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1679,23 +1671,19 @@ mod permission_validation_test {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
-        let password = "pass";
 
         let auth_data = AuthData {
-            auth_token_secret: "some secret".to_string(),
-            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
             no_ssl: true,
             debug_no_access_control: false,
         };
 
-        let token = TokenService::new(
-            &auth_data.token_bucket,
-            auth_data.auth_token_secret.as_bytes(),
-            true,
-        )
-        .jwt_token(&user().id, password, 60, 120)
-        .unwrap()
-        .token;
+        let token = auth_data
+            .session_store
+            .write()
+            .unwrap()
+            .create(&user().id);
 
         assert!(service_provider
             .validation_service
@@ -1706,19 +1694,17 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_ok());
 
-        let token = TokenService::new(
-            &auth_data.token_bucket,
-            auth_data.auth_token_secret.as_bytes(),
-            true,
-        )
-        .jwt_token(&user_without_permission().id, password, 60, 120)
-        .unwrap()
-        .token;
+        let token = auth_data
+            .session_store
+            .write()
+            .unwrap()
+            .create(&user_without_permission().id);
         assert!(service_provider
             .validation_service
             .validate(
@@ -1728,7 +1714,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_err());

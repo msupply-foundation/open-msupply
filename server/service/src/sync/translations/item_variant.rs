@@ -1,5 +1,5 @@
-use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
-use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
+use repository::item_variant::item_variant_row::ItemVariantRow;
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item::ItemTranslation;
 use crate::sync::translations::location_type::LocationTypeTranslation;
@@ -7,7 +7,7 @@ use crate::sync::translations::name::NameTranslation;
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK columns renamed during the entity-link abstraction. Central emits both the canonical
@@ -41,11 +41,43 @@ impl SyncTranslation for ItemVariantTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = from_renamed_keys_str::<ItemVariantRow>(&sync_record.data, RENAMED_KEYS)?;
-        Ok(PullTranslateResult::upsert(row))
+        let ItemVariantRow {
+            id,
+            name,
+            item_id,
+            location_type_id,
+            deleted_datetime,
+            vvm_type,
+            created_datetime,
+            created_by,
+            manufacturer_id,
+        } = from_renamed_keys_str::<ItemVariantRow>(
+            &sync_record.data.0.to_string(),
+            RENAMED_KEYS,
+        )?;
+
+        let fk_check = fk_checker.with_table(connection, "item_variant", &id);
+        let check_fk = fk_checker.with_table_required(connection, "item_variant", &id);
+
+        let result = ItemVariantRow {
+            id,
+            name,
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
+            location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
+            deleted_datetime,
+            vvm_type,
+            created_datetime,
+            created_by,
+            // manufacturer is a name id resolved to name_link on upsert; name_link.id == name.id by
+            // convention, so validating the name id against name_link is correct.
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -68,15 +100,15 @@ impl SyncTranslation for ItemVariantTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ItemVariantRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "ItemVariant row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::ItemVariant(item_variant_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = item_variant_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -89,7 +121,10 @@ impl SyncTranslation for ItemVariantTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, NameLinkRow,
+        NameLinkRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_item_variant_translation() {
@@ -97,12 +132,31 @@ mod tests {
         let translator = ItemVariantTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_item_variant_translation", MockDataInserts::none()).await;
+            setup_all("test_item_variant_translation", MockDataInserts::all()).await;
+
+        // Seed the item_link parent the variant's required FK points at,
+        // plus the name_link used as the (optional) manufacturer so it isn't cleared.
+        ItemLinkRowRepository::new(&connection)
+            .upsert_one(&ItemLinkRow {
+                id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "item_a".to_string(),
+            })
+            .unwrap();
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

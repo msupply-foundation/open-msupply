@@ -54,6 +54,7 @@ import { MenuDotsIcon } from './MenuDots';
 import { MessageSquareIcon } from './MessageSquare';
 import { MinimiseIcon } from './Minimise';
 import { MinusCircleIcon } from './MinusCircle';
+import { MonitorIcon } from './Monitor';
 import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
 import { PrinterIcon } from './Printer';
@@ -161,6 +162,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <MessageSquareIcon {...args} />, name: 'MessageSquare' },
     { icon: <MinimiseIcon {...args} />, name: 'Minimise' },
     { icon: <MinusCircleIcon {...args} />, name: 'MinusCircle' },
+    { icon: <MonitorIcon {...args} />, name: 'Monitor' },
     { icon: <PlusCircleIcon {...args} />, name: 'PlusCircle' },
     { icon: <PowerIcon {...args} />, name: 'Power' },
     { icon: <PrinterIcon {...args} />, name: 'Printer' },

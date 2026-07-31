@@ -204,6 +204,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       label={customLabel ?? t(labelKey)}
       tabIndex={variant === 'cancel' ? 1 : 0}
       type={type}
+      data-testid={`dialog-button-${variant}`}
       sx={
         disabled
           ? {

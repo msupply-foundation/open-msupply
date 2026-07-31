@@ -5,22 +5,20 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use chrono::Utc;
-use repository::SyncFileDirection;
+use repository::{SyncFileDirection, SyncFileStatus};
 use repository::{
-    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
-    SyncFileReferenceRowRepository, SyncFileStatus,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, QueryWithData,
+    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncVersions,
 };
 use util::format_error;
 
 use crate::{
-    processors::ProcessorType,
     service_provider::ServiceProvider,
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
         api::{validate_site_auth, CommonSyncRecord},
         api_v6::SiteStatusV6,
-        sync_buffer::SyncBufferSource,
         synchroniser::integrate_and_translate_sync_buffer,
         translations::ToSyncRecordTranslationType,
         CentralServerConfig,
@@ -33,7 +31,7 @@ use super::{
         SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
         SyncRecordV6, SyncUploadFileRequestV6,
     },
-    translations::translate_changelogs_to_sync_records,
+    translations::translate_rows_to_sync_records,
 };
 
 // See ../README.md for when to increment versions!
@@ -76,30 +74,33 @@ pub async fn pull(
     }
 
     let ctx = service_provider.basic_context()?;
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs = changelog_repo.outgoing_sync_records_from_central(
-        cursor,
-        batch_size,
+    let filter = ChangelogFilter::all_data_for_site(
         response.site_id,
-        is_initialised,
+        !is_initialised,
+        Some(SyncVersions {
+            is_v6: true,
+            is_v5: false,
+        }),
+    );
+
+    let QueryWithData {
+        rows,
+        remaining,
+        last_cursor_in_batch,
+        ..
+    } = ChangelogRepository::new(&ctx.connection).query_with_data(
+        filter,
+        CursorAndLimit {
+            cursor: adjust_v6_cursor(cursor),
+            limit: batch_size as i64,
+        },
     )?;
-    // A short batch means the changelog tail is exhausted (= last batch). Avoids a full count, which
-    // scans the changelog on every pull and exhausts the DB pool under concurrent multi-site init.
-    let num_changelogs = changelogs.len();
-    // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
-    // changelog cursor. The non-empty path is already safe because the query is clamped.
-    let max_cursor = changelog_repo.latest_cursor()?;
 
-    let end_cursor = changelogs
-        .last()
-        .map(|log| log.cursor as u64)
-        .unwrap_or(max_cursor);
-
-    let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+    let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
-        changelogs,
+        rows,
         vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -108,19 +109,18 @@ pub async fn pull(
     .collect();
 
     log::info!(
-        "Sending {} records to site {}",
+        "V6 pull site {} sending {} records, last_cursor_in_batch {} remaining {}",
+        response.site_id,
         records.len(),
-        response.site_id
+        last_cursor_in_batch,
+        remaining
     );
-    log::debug!("Sending records as central server: {records:#?}");
 
-    let is_last_batch = num_changelogs < batch_size as usize;
-    // Cheap progress-bar estimate (over-estimates, but monotonic and snaps to done on the last batch).
-    let total_records = max_cursor.saturating_sub(cursor);
+    let is_last_batch = remaining == 0;
 
     Ok(SyncBatchV6 {
-        total_records,
-        end_cursor,
+        total_records: remaining,
+        end_cursor: last_cursor_in_batch,
         records,
         is_last_batch,
     })
@@ -165,7 +165,6 @@ pub async fn push(
         batch.total_records,
         response.site_id
     );
-    log::debug!("Receiving records as central server: {batch:#?}");
 
     let SyncBatchV6 {
         records,
@@ -177,13 +176,11 @@ pub async fn push(
 
     let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
         records.into_iter().map(|r| r.record).collect(),
-        Some(response.site_id),
+        response.site_id,
     )?;
 
     ctx.connection
-        .transaction_sync(|t_con| {
-            SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
-        })
+        .transaction_sync(|t_con| SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows))
         .map_err(|e| e.to_inner_error())?;
 
     if is_last_batch {
@@ -231,29 +228,33 @@ pub async fn patient_pull(
     }
 
     let ctx = service_provider.basic_context()?;
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs = changelog_repo.outgoing_patient_sync_records_from_central(
-        cursor,
-        batch_size,
-        response.site_id,
-        fetch_patient_id.clone(),
+    let filter = ChangelogCondition::And(vec![
+        ChangelogFilter::patient_data_for_site(
+            response.site_id,
+            Some(SyncVersions {
+                is_v6: true,
+                is_v5: false,
+            }),
+        ),
+        ChangelogCondition::patient_id::matching(fetch_patient_id),
+    ]);
+    let QueryWithData {
+        rows,
+        last_cursor_in_batch,
+        remaining,
+        ..
+    } = ChangelogRepository::new(&ctx.connection).query_with_data(
+        filter,
+        CursorAndLimit {
+            cursor: adjust_v6_cursor(cursor),
+            limit: batch_size as i64,
+        },
     )?;
-    // See `pull`: short batch = last batch; avoids a full count and uses a cheap progress estimate.
-    let num_changelogs = changelogs.len();
-    // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
-    // changelog cursor. The non-empty path is already safe because the query is clamped.
-    let max_cursor = changelog_repo.latest_cursor()?;
-
-    let end_cursor = changelogs
-        .last()
-        .map(|log| log.cursor as u64)
-        .unwrap_or(max_cursor);
-
-    let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+    let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
-        changelogs,
+        rows,
         vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -266,14 +267,12 @@ pub async fn patient_pull(
         records.len(),
         response.site_id
     );
-    log::debug!("Patient Pull: Sending records as central server: {records:#?}");
 
-    let is_last_batch = num_changelogs < batch_size as usize;
-    let total_records = max_cursor.saturating_sub(cursor);
+    let is_last_batch = remaining == 0;
 
     Ok(SyncBatchV6 {
-        total_records,
-        end_cursor,
+        total_records: remaining,
+        end_cursor: last_cursor_in_batch,
         records,
         is_last_batch,
     })
@@ -322,12 +321,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
 
         set_integrating(site_id, true);
 
-        match integrate_and_translate_sync_buffer(
-            &ctx.connection,
-            None,
-            SyncBufferSource::Remote(site_id),
-            true,
-        ) {
+        match integrate_and_translate_sync_buffer(&ctx.connection, None, site_id, true) {
             Ok(_) => {
                 log::info!("Integration complete for site {site_id}");
             }
@@ -337,10 +331,6 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
         }
 
         set_integrating(site_id, false);
-
-        // After OMS Central has integrated received records, trigger processing
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::AddPatientVisibilityForCentral);
     });
 }
 
@@ -380,15 +370,12 @@ pub async fn download_file(
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let service = StaticFileService::new(&settings.server.base_dir)?;
-    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
-    let file_description = service
-        .find_file(&id, static_file_category.clone())?
+    let (named_file, file_description) = service
+        .open_sync_file(table_name, record_id, &id)?
         .ok_or(SyncParsedErrorV6::OtherServerError(
             "File not found".to_string(),
         ))?;
 
-    let named_file =
-        actix_files::NamedFile::open(&file_description.path).map_err(|e| Error::from_error(&e))?;
     Ok((named_file, file_description))
 }
 
@@ -515,4 +502,25 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
 
 fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
     MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
+}
+
+// V6 remotes store cursors as `last_seen + 1` (matching the old `>= cursor` query).
+// V7 queries use `> cursor`, so subtract 1 to keep the same window. Used both when
+// serving v6 sites from a v7 central server and when copying v6 cursors to v7 during
+// the upgrade.
+pub(crate) fn adjust_v6_cursor(v6_cursor: u64) -> i64 {
+    v6_cursor.saturating_sub(1) as i64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::adjust_v6_cursor;
+
+    #[test]
+    /// This test is simply to capture the intent. During automation tests ensure v6 cursors
+    /// are correctly translated to v7 cursors and no records are skipped
+    fn adjusts_v6_pull_cursor_for_greater_than_queries() {
+        assert_eq!(adjust_v6_cursor(200), 199);
+        assert_eq!(adjust_v6_cursor(0), 0);
+    }
 }

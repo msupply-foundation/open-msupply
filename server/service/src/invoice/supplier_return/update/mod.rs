@@ -31,6 +31,10 @@ pub struct UpdateSupplierReturn {
     pub on_hold: Option<bool>,
     pub their_reference: Option<String>,
     pub transport_reference: Option<String>,
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
+    /// (a JSON `null` deletes that key; keys absent from the patch are left
+    /// as-is). Keys must be visible for the "supplier_return" scope.
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -43,6 +47,7 @@ pub enum UpdateSupplierReturnError {
     CannotReverseInvoiceStatus,
     CannotIssueSupplierReturnWithNoLines,
     InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
+    UnknownPropertyKey(String),
     UpdatedReturnDoesNotExist,
     DatabaseError(RepositoryError),
 }

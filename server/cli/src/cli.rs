@@ -10,10 +10,11 @@ use report_builder::{
     Format,
 };
 use repository::{
-    get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
-    EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, StringFilter,
-    SyncBufferRowRepository,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
+    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
+    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -23,14 +24,17 @@ use service::{
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
+    session_store::SessionStore,
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-        synchroniser_driver::SynchroniserDriver,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
-    token_bucket::TokenBucket,
+    sync_v7::{
+        synchroniser::SynchroniserV7,
+        validate_translate_integrate::integrate_pending_sync_buffer_v7,
+    },
 };
 use std::{
     env::current_dir,
@@ -45,6 +49,9 @@ use tokio::task::spawn_blocking;
 mod backup;
 use backup::*;
 
+mod reintegrate_buffer;
+use reintegrate_buffer::reintegrate_buffer;
+
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
@@ -52,8 +59,8 @@ use cli::{
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
     install_plugin_bundle, list_installed_plugins, uninstall_plugin,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    ListInstalledPlugins, RefreshDatesRepository, ReportError, TestCredentials, TestData,
-    UninstallPlugin,
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData, UninstallPlugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -97,6 +104,21 @@ enum Action {
         /// Users to sync in format "username:password,username2:password2"
         #[clap(short, long)]
         users: String,
+        /// Prettify json output
+        #[clap(long, action = ArgAction::SetTrue)]
+        pretty: bool,
+    },
+    /// Initialise from OMS central server via sync v7 (uses configuration/.*yaml for sync credentials), drops existing database,
+    /// creates new database with latest schema and initialises (syncs) initial data from central server.
+    /// Unlike the v5/v6 variant no users are needed — user accounts, store joins and permissions sync as regular v7 records.
+    InitialiseFromCentralV7,
+    /// Export initialisation data pulled from OMS central server via sync v7 (uses configuration/.*yaml for sync credentials).
+    /// Unlike the v5/v6 variant no users are needed — user accounts sync as regular v7 records and end up in the exported sync buffer.
+    /// IMPORTANT: Should not be used on large data files
+    ExportInitialisationV7 {
+        /// Name for export of initialisation data (will be saved inside `data` folder)
+        #[clap(short, long)]
+        name: String,
         /// Prettify json output
         #[clap(long, action = ArgAction::SetTrue)]
         pretty: bool,
@@ -242,6 +264,10 @@ enum Action {
     },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
+    /// Aggregate sync_v7 push/pull throughput from a central server's log file(s) into a CSV,
+    /// bucketing records into fixed-width time windows (default 5 seconds). Works on any logs
+    /// captured at level Info (or lower) to file, not only on load test output.
+    SyncThroughputCsv(SyncThroughputCsv),
     GeneratePluginTypescriptTypes {
         /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
         #[clap(
@@ -254,13 +280,53 @@ enum Action {
         #[clap(long, short, default_value = "false")]
         skip_prettify: bool,
     },
+    /// Re-run sync buffer integration against the sync_buffer already in the database.
+    /// Resets the buffer's integration state, then re-runs translate + integrate.
+    /// Useful for re-processing already-pulled records after fixing a translator, or for
+    /// replaying a `sync_buffer` dump loaded into a database.
+    ReintegrateBuffer {
+        /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
+        #[clap(short, long, default_value = "1")]
+        source_site_id: i32,
+        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
+        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        #[clap(short, long)]
+        use_transaction: bool,
+        /// Run pending database migrations before reintegrating.
+        #[clap(short, long)]
+        migrate: bool,
+        /// Skip resetting the buffer's integration state — re-run integration against the
+        /// buffer as it already is (e.g. to only retry rows that are still pending).
+        #[clap(long)]
+        skip_buffer_reset: bool,
+        /// Only reintegrate records that previously errored: the buffer reset clears integration
+        /// state for rows with an integration_error (excluding deliberately-ignored rows) and
+        /// leaves successfully-integrated rows alone. Errored rows are integrated (not pending),
+        /// so this requires a reset — it conflicts with --skip-buffer-reset.
+        #[clap(short, long, conflicts_with = "skip_buffer_reset")]
+        errors_only: bool,
+        /// Restrict integration to these sync buffer tables (comma-separated, matched against
+        /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
+        /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
+        #[clap(long, value_delimiter = ',')]
+        tables: Vec<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
 struct InitialisationData {
     sync_buffer_rows: Vec<repository::SyncBufferRow>,
+    #[serde(default)]
     users: Vec<(LoginInput, LoginUserInfoV4)>,
     site_id: i32,
+    /// Which sync transport produced this export. Defaults to V5_V6 so that export files
+    /// created before this field existed keep loading.
+    #[serde(default)]
+    sync_version: SyncVersion,
+    /// The central server's site id — v7 buffer rows are stamped with it as `source_site_id`
+    /// and v7 integration filters on it. Only present in v7 exports.
+    #[serde(default)]
+    central_site_id: Option<i32>,
 }
 
 async fn initialise_from_central(
@@ -277,12 +343,13 @@ async fn initialise_from_central(
     let sync_settings = settings
         .clone()
         .sync
+        .filter(|s| s.has_core_sync_settings())
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
 
     let auth_data = AuthData {
-        auth_token_secret: "secret".to_string(),
-        token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+        session_store: Arc::new(RwLock::new(SessionStore::new())),
+        cookie_suffix: "cli".to_string(),
         no_ssl: true,
         debug_no_access_control: false,
     };
@@ -290,8 +357,8 @@ async fn initialise_from_central(
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
     service_provider
-        .site_info_service
-        .request_and_set_site_info(&service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
         .await?;
     service_provider
         .settings
@@ -300,7 +367,7 @@ async fn initialise_from_central(
     // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
     let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
     let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
-    sync_driver.sync(service_provider.clone(), None).await;
+    sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
     for user in users.split(',') {
@@ -314,6 +381,59 @@ async fn initialise_from_central(
             .await
             .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
+    info!("Initialisation finished");
+    Ok((service_provider, service_context))
+}
+
+/// V7 counterpart of [`initialise_from_central`]. No user syncing step: with v7, user
+/// accounts (including password hashes), store joins and permissions arrive with the
+/// initial pull like any other record.
+async fn initialise_from_central_v7(
+    settings: Settings,
+) -> anyhow::Result<(Arc<ServiceProvider>, ServiceContext)> {
+    info!("Reseting database");
+    test_db::setup(&settings.database).await;
+    info!("Finished database reset");
+
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+
+    let sync_settings = settings
+        .clone()
+        .sync
+        .filter(|s| s.has_core_sync_settings())
+        .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
+
+    let service_context = service_provider.basic_context()?;
+    // A fresh database defaults to the v5/v6 transport — select v7 before requesting site
+    // auth and syncing, both dispatch on the stored SyncVersion.
+    SyncVersion::set(&service_context.connection, SyncVersion::V7)?;
+
+    info!("Initialising from central (sync v7)");
+    service_provider
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
+        .await?;
+    service_provider
+        .settings
+        .update_sync_settings(&service_context, &sync_settings)?;
+
+    SynchroniserV7::new(sync_settings, service_provider.clone())
+        .sync()
+        .await
+        .map_err(|e| anyhow!("V7 sync failed: {e:?}"))?;
+
+    // The v7 synchroniser writes the sync log's 'done' (finished_datetime) itself on success —
+    // the server relies on that log to start as initialised, so verify rather than assume.
+    if !service_provider
+        .sync_status_service
+        .is_initialised(&service_context)?
+    {
+        return Err(anyhow!(
+            "V7 sync finished but site is not reported as initialised (no successful sync_log_v7 entry)"
+        ));
+    }
+
     info!("Initialisation finished");
     Ok((service_provider, service_context))
 }
@@ -339,9 +459,12 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                    .finish();
+            let schema = OperationalSchema::build(
+                Queries::new(),
+                Mutations::new(),
+                Subscriptions::default(),
+            )
+            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
                 schema.sdl(),
@@ -359,13 +482,86 @@ async fn main() -> anyhow::Result<()> {
             if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
-            migrate(&connection_manager.connection().unwrap(), None)
-                .expect("Failed to run DB migrations");
+            let migration_config = MigrationConfig {
+                changelog_partition: settings
+                    .changelog_partition
+                    .clone()
+                    .unwrap_or_default()
+                    .to_migration_config(),
+            };
+            migrate(
+                &connection_manager.connection().unwrap(),
+                None,
+                migration_config,
+            )
+            .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
         }
+        Action::ReintegrateBuffer {
+            source_site_id,
+            use_transaction,
+            migrate: should_migrate,
+            skip_buffer_reset,
+            errors_only,
+            tables,
+        } => {
+            reintegrate_buffer(
+                &settings,
+                source_site_id,
+                use_transaction,
+                should_migrate,
+                skip_buffer_reset,
+                errors_only,
+                // empty `--tables` means no scoping (integrate everything)
+                (!tables.is_empty()).then_some(tables),
+            )?;
+        }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
+        }
+        Action::InitialiseFromCentralV7 => {
+            initialise_from_central_v7(settings).await?;
+        }
+        Action::ExportInitialisationV7 { name, pretty } => {
+            let (service_provider, ctx) = initialise_from_central_v7(settings).await?;
+
+            let central_site_id = KeyValueStoreRepository::new(&ctx.connection)
+                .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+                .ok_or(anyhow!(
+                    "Central server site id not set after v7 initialisation"
+                ))?;
+
+            let data = InitialisationData {
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
+                // No users in a v7 export — user accounts sync as regular records and are
+                // already part of the sync buffer rows above.
+                users: Vec::new(),
+                site_id: service_provider
+                    .site_auth_service
+                    .get_site_id(&ctx)?
+                    .unwrap(),
+                sync_version: SyncVersion::V7,
+                central_site_id: Some(central_site_id),
+            };
+
+            let data_string = if pretty {
+                serde_json::to_string_pretty(&data)
+            } else {
+                serde_json::to_string(&data)
+            }?;
+
+            info!("Saving export");
+            let (folder, export_file, users_file) = export_paths(&name);
+            if fs::create_dir(&folder).is_err() {
+                info!("Export directory already exists, replacing {folder:#?}")
+            };
+            fs::write(export_file, data_string)?;
+            fs::write(
+                users_file,
+                "(v7 export — users sync as part of the data, log in with any user that has access to this site)",
+            )?;
+            info!("Export saved in {}", folder.to_str().unwrap());
         }
         Action::ExportInitialisation {
             name,
@@ -375,6 +571,7 @@ async fn main() -> anyhow::Result<()> {
             let url = settings
                 .sync
                 .clone()
+                .filter(|s| s.has_core_sync_settings())
                 .ok_or(anyhow!("sync settings not set in yaml configurations"))?
                 .url;
             let (service_provider, ctx) = initialise_from_central(settings, &users).await?;
@@ -398,12 +595,14 @@ async fn main() -> anyhow::Result<()> {
 
             let data = InitialisationData {
                 // Sync Buffer Rows
-                sync_buffer_rows: SyncBufferRowRepository::new(&ctx.connection).get_all()?,
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 users: synced_user_info_rows,
                 site_id: service_provider
-                    .site_info_service
+                    .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
+                sync_version: SyncVersion::V5V6,
+                central_site_id: None,
             };
 
             let data_string = if pretty {
@@ -438,29 +637,54 @@ async fn main() -> anyhow::Result<()> {
             // Need to set site_id before integration
             KeyValueStoreRepository::new(&ctx.connection)
                 .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
-            let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
-            let buffer_rows = data
+            let buffer_repo = SyncBufferRepository::new(&ctx.connection);
+            let buffer_rows: Vec<SyncBufferRowInsert> = data
                 .sync_buffer_rows
                 .into_iter()
                 .map(|mut r| {
+                    // Reset integration state — we want re-init to retry integration
+                    r.integration_started_datetime = None;
                     r.integration_datetime = None;
                     r.integration_error = None;
-                    r
+                    r.integration_result = None;
+                    SyncBufferRowInsert::from(r)
                 })
                 .collect();
-            buffer_repo.upsert_many(&buffer_rows)?;
+            buffer_repo.insert_many(&buffer_rows)?;
 
-            let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(
-                &ctx.connection,
-                Some(&mut logger),
-                SyncBufferSource::Central(0),
-                true,
-            )?;
+            match data.sync_version {
+                SyncVersion::V5V6 => {
+                    let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+                    integrate_and_translate_sync_buffer(
+                        &ctx.connection,
+                        Some(&mut logger),
+                        0,
+                        true,
+                    )?;
 
-            info!("Initialising users");
-            for (input, user_info) in data.users {
-                LoginService::update_user(&ctx, &input.password, user_info).unwrap();
+                    info!("Initialising users");
+                    for (input, user_info) in data.users {
+                        LoginService::update_user(&ctx, &input.password, user_info).unwrap();
+                    }
+                }
+                SyncVersion::V7 => {
+                    // Match the exporting site's transport — login and any future sync
+                    // dispatch on the stored SyncVersion.
+                    SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
+                    // v7 buffer rows are stamped with the central server's site id as
+                    // `source_site_id`, and integration filters on it.
+                    let central_site_id = data.central_site_id.ok_or(anyhow!(
+                        "v7 export is missing central_site_id — re-create it with export-initialisation-v7"
+                    ))?;
+                    KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                        KeyType::SettingsSyncCentralServerSiteId,
+                        Some(central_site_id),
+                    )?;
+
+                    integrate_pending_sync_buffer_v7(&ctx.connection, central_site_id)?;
+                    // No user initialisation step — user accounts (with password hashes)
+                    // came through the buffer like any other record.
+                }
             }
 
             if refresh {
@@ -834,29 +1058,11 @@ async fn main() -> anyhow::Result<()> {
             log::set_max_level(current_log_level);
         }
         #[cfg(feature = "integration_test")]
-        Action::LoadTest(LoadTest {
-            msupply_central_url,
-            oms_central_url,
-            base_port,
-            output_dir,
-            test_site_name,
-            test_site_pass,
-            sites,
-            lines,
-            duration,
-        }) => {
-            let load_test = LoadTest::new(
-                msupply_central_url,
-                oms_central_url,
-                base_port,
-                output_dir,
-                test_site_name,
-                test_site_pass,
-                sites,
-                lines,
-                duration,
-            );
+        Action::LoadTest(load_test) => {
             load_test.run().await?;
+        }
+        Action::SyncThroughputCsv(args) => {
+            args.run()?;
         }
     }
 

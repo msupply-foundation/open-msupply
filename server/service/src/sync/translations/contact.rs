@@ -1,4 +1,4 @@
-use crate::sync::translations::{name::NameTranslation, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{name::NameTranslation, FkField, PullTranslateResult, SyncTranslation};
 use repository::db_diesel::contact_row::ContactRowDelete;
 use repository::{ContactRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
@@ -49,13 +49,15 @@ impl SyncTranslation for ContactTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyContactRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyContactRow>()?;
+        let check_fk = fk_checker.with_table_required(connection, "contact", &data.ID);
         let result = ContactRow {
             id: data.ID,
-            name_id: data.name_ID,
+            name_id: check_fk(data.name_ID, "name_link_id", FkField::NameLink)?,
             first_name: data.first,
             position: data.position,
             comment: data.comment,
@@ -95,12 +97,16 @@ mod tests {
         let translator = ContactTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_contact_translation", MockDataInserts::none()).await;
+            setup_all("test_contact_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

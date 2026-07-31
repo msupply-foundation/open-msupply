@@ -1,5 +1,11 @@
 import React, { FC } from 'react';
 import { useUrlQuery } from '@common/hooks';
+import {
+  Checkbox,
+  ListItemText,
+  MenuItem,
+  SelectChangeEvent,
+} from '@mui/material';
 import { Select } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { FilterLabelSx } from './styleConstants';
@@ -7,18 +13,72 @@ import { FilterLabelSx } from './styleConstants';
 export interface EnumFilterDefinition extends FilterDefinitionCommon {
   type: 'enum';
   options: EnumOption[];
+  isMultiSelect?: boolean;
 }
 
 type EnumOption = { label: string; value: string };
 
 export const EnumFilter: FC<{
   filterDefinition: EnumFilterDefinition;
-  remove: () => void;
 }> = ({ filterDefinition }) => {
-  const { urlParameter, options, name } = filterDefinition;
+  const { urlParameter, options, name, isMultiSelect } = filterDefinition;
+  // The e2e test-id stem, which may be overridden away from urlParameter.
+  const testIdStem = filterDefinition.testId ?? urlParameter;
   const { urlQuery, updateQuery } = useUrlQuery();
 
-  const value = urlQuery[urlParameter] as string | undefined;
+  const rawValue = urlQuery[urlParameter] as string | undefined;
+
+  // Stamp each option with filter-option-<value> so e2e can pick a value.
+  // Test ids only, no behaviour change: Select's defaultRenderOption applies
+  // option.testId, and the multi-select renderOption reads the same field.
+  const optionsWithTestIds = options.map(option => ({
+    ...option,
+    testId: `filter-option-${option.value}`,
+  }));
+
+  if (isMultiSelect) {
+    const selectedValues = rawValue ? String(rawValue).split(',') : [];
+
+    const handleMultiChange = (event: SelectChangeEvent<unknown>) => {
+      const value = event.target.value as string | string[];
+      const newValues = typeof value === 'string' ? value.split(',') : value;
+      updateQuery({
+        [urlParameter]: newValues.join(',') || undefined,
+      });
+    };
+
+    return (
+      <Select
+        data-testid={`filter-input-${testIdStem}`}
+        options={optionsWithTestIds}
+        label={name}
+        value={selectedValues}
+        sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
+        renderOption={option => (
+          <MenuItem
+            key={option.value}
+            value={option.value}
+            data-testid={option.testId}
+          >
+            <Checkbox checked={selectedValues.includes(String(option.value))} />
+            <ListItemText primary={option.label} />
+          </MenuItem>
+        )}
+        slotProps={{
+          select: {
+            multiple: true,
+            onChange: handleMultiChange,
+            renderValue: (selected: unknown) => {
+              const values = selected as string[];
+              return values
+                .map(v => options.find(o => o.value === v)?.label ?? v)
+                .join(', ');
+            },
+          },
+        }}
+      />
+    );
+  }
 
   const handleChange = (selection: string) => {
     if (!selection) {
@@ -33,11 +93,12 @@ export const EnumFilter: FC<{
 
   return (
     <Select
-      options={options}
+      data-testid={`filter-input-${testIdStem}`}
+      options={optionsWithTestIds}
       placeholder={name}
       sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
       label={name}
-      value={value ?? ''}
+      value={rawValue ?? ''}
       onChange={e => handleChange(e.target.value)}
       clearable
     />
