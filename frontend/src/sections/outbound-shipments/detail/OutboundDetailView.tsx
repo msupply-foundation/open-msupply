@@ -813,6 +813,7 @@ const OutboundDetailView: Component = () => {
                       <NameSearch
                         label={t('label.customer-name')}
                         hideLabel
+                        inputTestId="customer-search-input"
                         storeId={params.storeId}
                         role="customer"
                         // Seed the record's current customer so the selection's
