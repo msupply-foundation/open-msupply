@@ -14,7 +14,6 @@ import {
 import type { JSX } from 'solid-js';
 import {
   createSolidTable,
-  flexRender,
   functionalUpdate,
   getCoreRowModel,
   type Column as TanColumn,
@@ -28,6 +27,7 @@ import {
   type VisibilityState,
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
+import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
 import {
   toColumnDef,
@@ -396,9 +396,9 @@ export function DataTable<T, K extends string, G extends string = never>(
   // locale change), so it must be CALLED — the old `typeof header === 'string'`
   // test never matched and every option fell back to the raw sortKey
   // ("itemCode", "costPricePerPack"). Same treatment as HeaderCell
-  // (flexRender), CardView.columnHeaderText and ColumnSettings.label; none of
-  // our headers read the context argument, so an empty one is safe. The sortKey
-  // stays the last resort for a column with no header at all.
+  // (renderTemplate), CardView.columnHeaderText and ColumnSettings.label; none
+  // of our headers read the context argument, so an empty one is safe. The
+  // sortKey stays the last resort for a column with no header at all.
   const columnLabel = (c: Column<T, K, G>): JSX.Element =>
     typeof c.header === 'function'
       ? c.header({} as HeaderContext<T, unknown>)
@@ -1109,7 +1109,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                   tab). Mirrors the header row's structure: a leading blank cell
                   under the selection column, then one cell per active-tab
                   column carrying its own align. The `footer` render fn owns the
-                  content (a string, or flexRender of a component). */}
+                  content (a string, or a rendered component). */}
             <Show
               when={
                 viewMode() === 'table' &&
@@ -1135,7 +1135,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                               data-align={header.column.columnDef.meta?.align}
                               data-testid={`footer-${header.column.id}`}
                             >
-                              {flexRender(
+                              {renderTemplate(
                                 header.column.columnDef.footer,
                                 header.getContext()
                               )}
