@@ -1,17 +1,31 @@
 import { setLocale } from './intl';
-import { DEFAULT_LOCALE, isSupported, type SupportedLocale } from './locales';
+import {
+  DEFAULT_LOCALE,
+  isSupported,
+  LOCALE_META,
+  type SupportedLocale,
+} from './locales';
 import { loadDictionary } from './loadDictionary';
+import { loadDateFnsLocale } from './formatDateTime';
 import { persistUserLocale, rememberLastLocale } from './detectLocale';
 
-// Load the target locale AND the English base together (spec/i18n → translating
-// text): a partial non-English catalog falls back through English, so English
-// must be resident for that fallback to resolve. When the target IS English
-// this is a single load. loadDictionary is cache-first and never throws, so the
-// extra load is cheap and safe.
-const loadWithEnglishBase = async (locale: SupportedLocale): Promise<void> => {
-  await (locale === DEFAULT_LOCALE
-    ? loadDictionary(locale)
-    : Promise.all([loadDictionary(DEFAULT_LOCALE), loadDictionary(locale)]));
+// Everything a locale needs resident before it goes active: its own dictionary,
+// its base locale's if it's a regional variant (`fr-DJ` → `fr`), and the
+// English base (spec/i18n → translating text) — a partial catalog falls back
+// through both, so both must be loaded for that fallback to resolve — plus the
+// language's date-fns locale, which is lazily chunked for the same reason the
+// catalogs are. When the target IS English this is a single dictionary load.
+// loadDictionary and loadDateFnsLocale are cache-first and never throw, so the
+// extra loads are cheap and safe.
+const loadLocaleAssets = async (locale: SupportedLocale): Promise<void> => {
+  const dictionaries = new Set<SupportedLocale>([DEFAULT_LOCALE, locale]);
+  const base = LOCALE_META[locale].base;
+  if (base) dictionaries.add(base);
+
+  await Promise.all([
+    ...[...dictionaries].map(loadDictionary),
+    loadDateFnsLocale(locale),
+  ]);
 };
 
 /**
@@ -27,7 +41,7 @@ export const changeLanguage = async (
   if (!isSupported(code)) return;
   const locale: SupportedLocale = code;
 
-  await loadWithEnglishBase(locale);
+  await loadLocaleAssets(locale);
   setLocale(locale);
 
   if (username) persistUserLocale(username, locale);
@@ -42,7 +56,7 @@ export const changeLanguage = async (
 export const initialiseLocale = async (
   locale: SupportedLocale
 ): Promise<void> => {
-  await loadWithEnglishBase(locale);
+  await loadLocaleAssets(locale);
   setLocale(locale);
   rememberLastLocale(locale);
 };
