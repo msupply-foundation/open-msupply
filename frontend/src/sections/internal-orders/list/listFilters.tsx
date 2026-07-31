@@ -44,7 +44,7 @@ const FILTERS: Filter<InternalOrderFilter>[] =
         <FilterTextInput
           label={t('label.name')}
           testId={props.testId}
-          placeholder={t('placeholder.search-by-name')}
+          placeholder={t('placeholder.search')}
           value={props.filter().otherPartyName?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -61,7 +61,7 @@ const FILTERS: Filter<InternalOrderFilter>[] =
         <FilterNumberInput
           label={t('label.requisition-number')}
           testId={props.testId}
-          placeholder={t('label.requisition-number')}
+          placeholder={t('placeholder.search')}
           value={props.filter().requisitionNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({

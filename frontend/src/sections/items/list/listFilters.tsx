@@ -37,7 +37,7 @@ export const buildItemsFilters = (
       render: props => (
         <FilterTextInput
           label={t('label.code-or-name')}
-          placeholder={t('placeholder.enter-an-item-code-or-name')}
+          placeholder={t('placeholder.search')}
           // e2e hook: FilterBar supplies `filter-input-codeOrName`
           // (TESTIDS.md).
           testId={props.testId}
