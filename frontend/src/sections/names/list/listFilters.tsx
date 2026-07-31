@@ -36,7 +36,7 @@ const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
     render: props => (
       <FilterTextInput
         label={t('name.filter.search')}
-        placeholder={t('name.filter.search-placeholder')}
+        placeholder={t('placeholder.search')}
         // e2e hook: FilterBar supplies `filter-input-codeOrName` (TESTIDS.md).
         testId={props.testId}
         value={props.filter().codeOrName?.like ?? ''}

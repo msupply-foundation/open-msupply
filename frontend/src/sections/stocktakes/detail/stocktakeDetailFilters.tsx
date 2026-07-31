@@ -40,15 +40,15 @@ export const stocktakeDetailFilters = (
     // Item name / code search (server itemCodeOrName.like). Blank clears to
     // null so stripEmpty drops it (a blank `like` would match everything).
     //
-    // Labelled for what it MATCHES rather than one of the two fields: the same
-    // label + placeholder pair the current app uses here and
-    // spec/items/ui-surface.md records for the items list's search.
+    // Labelled for what it MATCHES rather than one of the two fields: the
+    // label the current app uses here and spec/items/ui-surface.md records for
+    // the items list's search.
     itemCodeOrName: {
       label: () => t('label.code-or-name'),
       render: props => (
         <FilterTextInput
           label={t('label.code-or-name')}
-          placeholder={t('placeholder.enter-an-item-code-or-name')}
+          placeholder={t('placeholder.search')}
           testId={props.testId}
           value={props.filter().itemCodeOrName?.like ?? ''}
           onInput={value =>
@@ -70,7 +70,7 @@ export const stocktakeDetailFilters = (
           testId={props.testId}
           focusTarget={props.focusTarget}
           value={props.filter().locationId?.equalTo ?? undefined}
-          placeholder={t('label.location')}
+          placeholder={t('placeholder.search')}
           // Pick a location → filter by its id (server locationId.equalTo);
           // clear (×) → null so stripEmpty drops it (the chip stays).
           onChange={location =>
