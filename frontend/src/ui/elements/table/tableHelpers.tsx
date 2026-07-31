@@ -5,6 +5,7 @@ import { Comment } from '../feedback/Comment';
 import { CheckIcon } from '../../icons';
 import type { Column } from './columnTypes';
 import { getChipListCell } from './ChipListCell';
+import { getProportionCell } from './ProportionCell';
 import {
   CELL_DEF,
   KIND_WIDTH,
@@ -60,8 +61,8 @@ const sizing = (
 // sortKey/groups extension lets a fragment spread into a Column of ANY (K, G) —
 // including a groups-only edit table whose K is `never` — without a `sortKey?:
 // never` or identity clash. `cell` matches ColumnDefBase's own signature
-// exactly. Exported for ChipListCell (getChipListCell), which builds a fragment
-// too.
+// exactly. Exported for the cell COMPONENTS that build a fragment of their own
+// too — ChipListCell (getChipListCell), ProportionCell (getProportionCell).
 //
 // aggregationFn sets the DEFAULT grouped-parent value (row grouping — see
 // DataTable rowGroup): a number column sums its leaves; a date column shows the
@@ -153,7 +154,9 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
 });
 
 // Booleans live in their own cell component (dot / check / yes-no variants,
-// with the accessible-name treatment) — see BooleanCell + getBooleanCell.
+// with the accessible-name treatment) — see BooleanCell + getBooleanCell. So
+// does the proportion (fullness) bar — see ProportionCell + getProportionCell,
+// resolved by the `volumeUsed` key below.
 
 // Boolean flag (spec/ui-standards/components.md › "Boolean cell (flag in a
 // table)"): a centred marker when the value is set, blank otherwise — for a
@@ -257,6 +260,8 @@ const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
       return getCommentCell<T>(meta);
     case 'chipList':
       return getChipListCell<T>(meta);
+    case 'proportion':
+      return getProportionCell<T>(meta);
   }
 };
 

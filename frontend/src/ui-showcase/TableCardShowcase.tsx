@@ -338,6 +338,79 @@ const CellTypesTable = () => {
   );
 };
 
+// 3 — The proportion (fullness) cell: a value read against a CAPACITY rather
+// than on its own. Storage locations are its real consumer (the locations
+// list's Volume used column), so the demo rows are locations: a capacity in m³,
+// the volume of stock in them, and the proportion the cell draws. The
+// proportion is computed here the plain way — used ÷ capacity × 100 — including
+// for the row with NO capacity, whose division by zero reaches the cell as
+// Infinity and renders blank (there is nothing to be a proportion of).
+type StorageLocation = {
+  id: string;
+  code: string;
+  name: string;
+  volume: number;
+  volumeUsed: number;
+};
+
+const LOCATIONS: StorageLocation[] = [
+  {
+    id: 'l1',
+    code: 'CR-01',
+    name: 'Cold room 1',
+    volume: 1000,
+    volumeUsed: 250,
+  },
+  {
+    id: 'l2',
+    code: 'CR-02',
+    name: 'Cold room 2',
+    volume: 500,
+    volumeUsed: 430,
+  },
+  { id: 'l3', code: 'SH-A3', name: 'Shelf A3', volume: 20, volumeUsed: 26 },
+  { id: 'l4', code: 'SH-B1', name: 'Shelf B1', volume: 100, volumeUsed: 0 },
+  { id: 'l5', code: 'BULK', name: 'Bulk store', volume: 0, volumeUsed: 40 },
+];
+
+const ProportionTable = () => {
+  const columns: Column<StorageLocation, never>[] = [
+    {
+      c: { key: 'code' },
+      header: () => 'Code',
+      ...getCellDefinition<StorageLocation>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => 'Name',
+      ...getCellDefinition<StorageLocation>('name'),
+    },
+    {
+      c: { key: 'volume' },
+      header: () => 'Volume (m³)',
+      ...getNumberCell<StorageLocation>(),
+      size: remToPx(7),
+    },
+    {
+      c: { key: 'volumeUsed' },
+      header: () => 'Volume used (m³)',
+      ...getNumberCell<StorageLocation>(),
+      size: remToPx(9),
+    },
+    {
+      // The proportion cell: its VALUE is the proportion as a percentage, so
+      // the `volumeUsed` key resolves the bar + its width in one spread.
+      c: {
+        accessor: row => (row.volumeUsed / row.volume) * 100,
+        id: 'fullness',
+      },
+      header: () => 'Fullness',
+      ...getCellDefinition<StorageLocation>('volumeUsed'),
+    },
+  ];
+  return <DataTable columns={columns} rows={LOCATIONS} rowKey={r => r.id} />;
+};
+
 // The working table's filter, in the same shape a real list uses: a GraphQL-
 // native filter object whose keys the FilterBar adds/removes/edits (a key
 // present-as-null is an added-but-empty chip). The page reads it straight into
@@ -1305,6 +1378,18 @@ export const tableCardMetadata: PageMetadata = {
       searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
     },
     {
+      id: 'table-card-proportion',
+      title: 'Proportion (fullness) cell',
+      searchTerms: [
+        'bar',
+        'capacity',
+        'volume used',
+        'percentage',
+        'over capacity',
+        'progress',
+      ],
+    },
+    {
       id: 'table-card-pagination',
       title: 'Pagination',
       searchTerms: ['pager', 'page', 'rows per page', 'offset', 'footer'],
@@ -1372,6 +1457,28 @@ export const TableCardShowcase = () => (
             <code>size</code>. Drag a header edge to resize.
           </Lead>
           <CellTypesTable />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-proportion"
+          title="Table basics · Proportion (fullness) cell"
+        >
+          <Lead>
+            One cell type reads its value against a <strong>capacity</strong>:
+            the proportion cell (<code>getCellDefinition('volumeUsed')</code>,{' '}
+            <code>getProportionCell()</code>) draws a fill sized to used ÷
+            capacity. Its column value <em>is</em> that proportion as a
+            percentage — whether a proportion is meaningful at all is a domain
+            rule, so the vertical computes it and the cell renders what it is
+            handed. Above 80% the fill turns amber; over 100% it fills the
+            track, stripes, and keeps the true figure — and the tone never
+            carries the meaning alone, since the percentage is beside it and the
+            near-/ over-capacity state is in visually-hidden text. Row 4 shows a
+            real <code>0</code> (an empty bar — a genuine reading), and{' '}
+            <em>Bulk store</em>, which has no recorded capacity, divides by zero
+            and renders <strong>blank</strong>: nothing to be a proportion of.
+          </Lead>
+          <ProportionTable />
         </DashboardCard>
 
         <DashboardCard title="Table basics · A working table">
