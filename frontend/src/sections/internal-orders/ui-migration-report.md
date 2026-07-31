@@ -1,6 +1,6 @@
 # Internal orders — UI migration audit report
 
-**Status: MIGRATION COMPLETE (two decisions still open).** All approved fixes applied; spec drift reconciled (SE1–SE7 + the new D93); `pnpm check` green; `pnpm test` green (135 files, 1315 tests); the reactivity review of the working diff came back clean. **The visual pass is yours** — see [_Your visual pass_](#your-visual-pass-required--the-skill-cannot-sign-this-off). Decisions 1–2 remain open per your ruling; the code parks their surfaces at the pre-migration placement.
+**Status: MIGRATION COMPLETE — all decisions ruled.** All approved fixes applied; spec drift reconciled (SE1–SE7 + the new D93); the follow-up library pass landed (`StatusMarker`, `ItemSearch` width, cell normalisation); `pnpm check` green; `pnpm test` green (135 files, 1315 tests); reactivity reviews of every diff clean. **The visual pass is yours** — see [_Your visual pass_](#your-visual-pass-required--the-skill-cannot-sign-this-off).
 
 ## Outcome (fixes applied)
 
@@ -148,13 +148,11 @@ All pure-UI drift: the standards/registry win, the spec moves (`MIGRATING_A_VERT
 | SE6  | `ui-surface.md:237` (S7)              | Delete the stale "informational toast" sentence: the Add control is disabled on non-Draft orders (S3 + impl agree) so the path is unreachable, and Toast is a ⛔-reserved role that MUST NOT carry a user-initiated outcome. |
 | SE7  | `spec/ui-standards/components.md` "Modal-level tabs" row | Note update: 🔶 "not yet exercised in a modal" is stale — the create modal (here and requisitions) hosts `Tabs` inside `Dialog`.                                        |
 
-## Decisions needed (yours — blocking only the item named)
+## Decisions — all ruled (operator, 2026-07-31)
 
-**Operator ruling (2026-07-31): decisions 1–2 deferred until later.** The B1 fix therefore moves only the field cluster to `HeaderToolbar`; the ancillary banner and the info notices keep their current placement (their own full-width rows) so nothing is entrenched before the ruling.
-
-1. **[OPEN — deferred] Ancillary banner placement after the B1 `HeaderToolbar` move.** The banner carries **controls** (Details popover + Add/Update button + inline error), but `HeaderToolbar`'s `alert` slot is documented for a *compact content-hugging chip*. **Recommendation: keep it as its own full-width row beneath the header cluster** (cleaned per B2) — forcing it into the chip slot would be a compromise composition; a future action-bearing banner slot is an `ADDING_A_COMPONENT.md` task if wanted.
-2. **[OPEN — deferred] Two simultaneous header notices** (`cannot-edit-disabled-store` + `cannot-edit-program` can both show; the `alert` slot is designed around one chip). **Recommendation: stack both compact `Alert` chips in the slot if its API takes arbitrary JSX; otherwise show the more specific one.**
-3. **[RESOLVED by precedent — D33/D7]** DIVERGENCES entry for SE5: the app has decided this exact question before (stocktakes D33 records the reference app's simplified tablet layout — hidden Export, leaner columns — as deliberately not implemented; D7 states the full layout never hides an expected action; the requisitions spec carries no condensed-omission claim). SE5 proceeds as a spec rewrite + a new DIVERGENCES entry.
+1. **Ancillary banner → its own full-width row, PLUS a library task.** The banner carries controls (Details popover + Add/Update + inline error), which the `alert` chip slot may not hold — a compact alert is never actionable (the Alert ledger's own rule). It stays as its cleaned full-width row beneath the cluster, and the gap is registered: a ⛔ "App bar — action-bearing standing-context banner" role in the registry + an `ADDING_A_COMPONENT.md` follow-up, to be built when a second vertical needs one.
+2. **Read-only notices → compact chips in `HeaderToolbar`'s alert slot.** Both the disabled-store and program notices ride the cluster's end as compact `Alert` chips (the documented persistent-low-urgency case; the customer-returns kind-banner pattern); both can show, each wrapping when the row can't hold it. The two-chip case is on the visual-pass list.
+3. **DIVERGENCES entry for SE5 — resolved by precedent (D33/D7):** landed as D93.
 
 ## Boutique / sanctioned (no change)
 
