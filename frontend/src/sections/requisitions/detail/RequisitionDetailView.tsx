@@ -24,11 +24,7 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getCurrencyCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import {
   FilterBar,
   FilterTextInput,
@@ -161,8 +157,14 @@ const RequisitionDetailView: Component = () => {
   const tableConfig = createTableConfig({
     tableId: 'requisition-detail',
     defaultConfig: {
+      // Comment + code are pinned inline-start so the row stays identifiable
+      // (and its comment reachable) as the wide column set scrolls.
+      base: {
+        columnPinning: { left: ['comment', 'code'] },
+      },
       compact: {
         viewMode: 'card',
+        columnPinning: { left: ['comment', 'code'] },
         columnVisibility: {
           unit: false,
         },
@@ -473,22 +475,29 @@ const RequisitionDetailView: Component = () => {
       // Pinned first: an affordance revealing the line's full comment.
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       c: { accessor: line => line.item.code, id: 'code' },
       sortKey: 'code',
       header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'name',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      // The text "sink" column: its width floor plus no growth cap lets it
+      // absorb the slack the narrow numeric columns leave behind.
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unit' },
       header: () => t('label.unit'),
+      ...getCellDefinition('unitName'),
     },
     // Doses per unit — doses preference; a dash for non-vaccine items.
     ...(showDoses()
@@ -499,7 +508,7 @@ const RequisitionDetailView: Component = () => {
               id: 'dosesPerUnit',
             },
             header: () => t('label.doses-per-unit'),
-            ...getNumberCell(),
+            ...getCellDefinition('dosesPerUnit'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -513,7 +522,7 @@ const RequisitionDetailView: Component = () => {
       header: () => (
         <span title={t('description.our-soh')}>{t('label.our-soh')}</span>
       ),
-      ...getNumberCell(),
+      ...getCellDefinition('ourSoh'),
     },
     // Their avail. stock — the customer's available stock as requested;
     // NON-program requisitions only (the extended set replaces it).
@@ -530,7 +539,7 @@ const RequisitionDetailView: Component = () => {
                 {t('label.customer-soh')}
               </span>
             ),
-            ...getNumberCell(),
+            ...getCellDefinition('customerSoh'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -548,7 +557,7 @@ const RequisitionDetailView: Component = () => {
                 {t('label.initial-stock-on-hand')}
               </span>
             ),
-            ...getNumberCell(),
+            ...getCellDefinition('initialSoh'),
           },
           {
             c: {
@@ -556,7 +565,7 @@ const RequisitionDetailView: Component = () => {
               id: 'incoming',
             },
             header: () => t('label.incoming'),
-            ...getNumberCell(),
+            ...getCellDefinition('incoming'),
           },
           {
             c: {
@@ -564,7 +573,7 @@ const RequisitionDetailView: Component = () => {
               id: 'outgoing',
             },
             header: () => t('label.outgoing'),
-            ...getNumberCell(),
+            ...getCellDefinition('outgoing'),
           },
           {
             c: {
@@ -572,7 +581,7 @@ const RequisitionDetailView: Component = () => {
               id: 'losses',
             },
             header: () => t('label.losses'),
-            ...getNumberCell(),
+            ...getCellDefinition('losses'),
           },
           {
             c: {
@@ -580,7 +589,7 @@ const RequisitionDetailView: Component = () => {
               id: 'additions',
             },
             header: () => t('label.additions'),
-            ...getNumberCell(),
+            ...getCellDefinition('additions'),
           },
           {
             // Derived: initial + incoming + additions − losses − outgoing.
@@ -593,7 +602,7 @@ const RequisitionDetailView: Component = () => {
                 {t('label.available')}
               </span>
             ),
-            ...getNumberCell(),
+            ...getCellDefinition('available'),
           },
           {
             c: {
@@ -601,7 +610,7 @@ const RequisitionDetailView: Component = () => {
               id: 'shortExpiry',
             },
             header: () => t('label.short-expiry'),
-            ...getNumberCell(),
+            ...getCellDefinition('shortExpiry'),
           },
           {
             c: {
@@ -609,7 +618,7 @@ const RequisitionDetailView: Component = () => {
               id: 'daysOutOfStock',
             },
             header: () => t('label.days-out-of-stock'),
-            ...getNumberCell(),
+            ...getCellDefinition('daysOutOfStock'),
           },
           {
             // AMC displays rounded UP (spec S2 › columns).
@@ -619,13 +628,13 @@ const RequisitionDetailView: Component = () => {
               id: 'amc',
             },
             header: () => t('label.amc'),
-            ...getNumberCell(),
+            ...getCellDefinition('amc'),
           },
           {
             // MOS: available ÷ AMC, one decimal, zero without consumption.
             c: { accessor: l => mos(l).toFixed(1), id: 'mos' },
             header: () => t('label.months-of-stock'),
-            ...getNumberCell(),
+            ...getCellDefinition('mos'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -635,7 +644,7 @@ const RequisitionDetailView: Component = () => {
         id: 'suggested',
       },
       header: () => t('label.suggested'),
-      ...getNumberCell(),
+      ...getCellDefinition('suggested'),
     },
     {
       // Requested — what the customer asked for; under the excess-request
@@ -647,7 +656,9 @@ const RequisitionDetailView: Component = () => {
       },
       sortKey: 'requested',
       header: () => t('label.customer-requested'),
-      meta: { align: 'right' },
+      // The preset's width + right alignment; the custom cell below overrides
+      // its number formatting (the value is pre-formatted with a dose suffix).
+      ...getCellDefinition('requested'),
       cell: cellInfo => {
         const line = cellInfo.row.original;
         return (
@@ -679,7 +690,7 @@ const RequisitionDetailView: Component = () => {
             },
             sortKey: 'approved',
             header: () => t('label.approved-quantity'),
-            ...getNumberCell(),
+            ...getCellDefinition('approvedQuantity'),
           },
           {
             c: {
@@ -687,6 +698,7 @@ const RequisitionDetailView: Component = () => {
               id: 'approvalComment',
             },
             header: () => t('label.approval-comment'),
+            ...getCellDefinition('approvalComment'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -698,7 +710,7 @@ const RequisitionDetailView: Component = () => {
       },
       sortKey: 'supply',
       header: () => t('label.supply-quantity'),
-      ...getNumberCell(),
+      ...getCellDefinition('supplyQuantity'),
     },
     // Reason — the line's variance reason; extended gate. Flagged when a
     // header save was rejected for a missing reason (AC-H4).
@@ -707,6 +719,7 @@ const RequisitionDetailView: Component = () => {
           {
             c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
             header: () => t('label.reason'),
+            ...getCellDefinition('reason'),
             cell: cellInfo => {
               const line = cellInfo.row.original;
               return (
@@ -744,7 +757,7 @@ const RequisitionDetailView: Component = () => {
           {t('label.already-issued')}
         </span>
       ),
-      ...getNumberCell(),
+      ...getCellDefinition('alreadyIssued'),
     },
     {
       // Remaining — the ledger's remainder (never negative).
@@ -758,7 +771,7 @@ const RequisitionDetailView: Component = () => {
           {t('label.remaining-to-supply')}
         </span>
       ),
-      ...getNumberCell(),
+      ...getCellDefinition('remaining'),
     },
     // Indicative pricing — the preference. Per-unit shows a dash when
     // priceless; the line total is per-unit × UNITS TO SUPPLY (zero when
@@ -775,7 +788,7 @@ const RequisitionDetailView: Component = () => {
                 {t('label.indicative-price-per-unit')}
               </span>
             ),
-            ...getCurrencyCell(),
+            ...getCellDefinition('pricePerUnit'),
           },
           {
             c: {
@@ -788,7 +801,7 @@ const RequisitionDetailView: Component = () => {
                 {t('label.indicative-price')}
               </span>
             ),
-            ...getCurrencyCell(),
+            ...getCellDefinition('indicativePrice'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),

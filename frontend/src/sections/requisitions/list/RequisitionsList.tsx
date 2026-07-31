@@ -13,11 +13,8 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getDateCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
@@ -246,7 +243,9 @@ const RequisitionsList: Component = () => {
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary' },
+      // The text "sink" column: width floor + no growth cap, so it absorbs
+      // the slack the narrow columns leave behind.
+      ...getCellDefinition('otherPartyName', { headerPosition: 'primary' }),
       cell: info => {
         const row = info.row.original;
         return (
@@ -286,18 +285,23 @@ const RequisitionsList: Component = () => {
       },
       // Card view: the status chip is the top-right badge.
       meta: { headerPosition: 'badge' },
+      // Status has no cell-type preset (CELL_TYPES § Status is page-rendered),
+      // so the width lives here — the same pair the invoice lists use, so the
+      // lists' Status columns line up.
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'requisitionNumber' },
       sortKey: 'requisitionNumber',
       header: () => t('label.number'),
-      ...getNumberCell(),
+      ...getCellDefinition('requisitionNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       // Shipments — the count of shipments raised against the requisition
@@ -308,12 +312,12 @@ const RequisitionsList: Component = () => {
           {t('label.shipments')}
         </span>
       ),
-      ...getNumberCell(),
+      ...getCellDefinition('shipments'),
     },
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     // Program / Order type / Period — only when the store has customer
     // programs configured (OMS-REG-DIST-05.22, [D16]); empty for a

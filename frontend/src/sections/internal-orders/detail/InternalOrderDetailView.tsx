@@ -30,11 +30,7 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getCurrencyCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import {
   FilterBar,
   FilterTextInput,
@@ -194,8 +190,14 @@ const InternalOrderDetailView: Component = () => {
   const tableConfig = createTableConfig({
     tableId: 'internal-order-detail',
     defaultConfig: {
+      // Comment + code are pinned inline-start so the row stays identifiable
+      // (and its comment reachable) as the wide column set scrolls.
+      base: {
+        columnPinning: { left: [COL.comment, COL.code] },
+      },
       compact: {
         viewMode: 'card',
+        columnPinning: { left: [COL.comment, COL.code] },
         columnVisibility: {
           [COL.unit]: false,
           [COL.dps]: false,
@@ -512,18 +514,24 @@ const InternalOrderDetailView: Component = () => {
     {
       c: { key: COL.comment },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       c: { accessor: line => line.item.code, id: COL.code },
       sortKey: 'code',
       header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: COL.name },
       sortKey: 'name',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      // The text "sink" column: its width floor plus no growth cap lets it
+      // absorb the slack the narrow numeric columns leave behind.
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       // An ancillary line carries an "Ancillary of …" flag naming its
       // principal item(s) (AC-A8); a non-ancillary line shows a plain name.
       cell: info => {
@@ -552,6 +560,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: { accessor: line => line.item.unitName ?? '', id: COL.unit },
       header: () => t('label.unit'),
+      ...getCellDefinition('unitName'),
     },
     // Doses per unit — gated on the vaccine-doses preference; a dash for
     // non-vaccine items.
@@ -563,7 +572,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.dosesPerUnit,
             },
             header: () => t('label.doses-per-unit'),
-            ...getNumberCell(),
+            ...getCellDefinition('dosesPerUnit'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -571,7 +580,7 @@ const InternalOrderDetailView: Component = () => {
       c: { accessor: line => line.item.defaultPackSize, id: COL.dps },
       sortKey: 'dps',
       header: () => t('label.dps'),
-      ...getNumberCell(),
+      ...getCellDefinition('dps'),
     },
     {
       c: {
@@ -580,7 +589,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
-      ...getNumberCell(),
+      ...getCellDefinition('available'),
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
@@ -591,13 +600,13 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
-      ...getNumberCell(),
+      ...getCellDefinition('amc'),
     },
     {
       c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
-      ...getNumberCell(),
+      ...getCellDefinition('mos'),
     },
     {
       c: {
@@ -606,7 +615,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
-      ...getNumberCell(),
+      ...getCellDefinition('targetStock'),
     },
     // Target stock (population) — gated on the forecasting preference; the
     // stored forecast rounded up, zero on a forecast-less line.
@@ -619,7 +628,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.targetStockPopulation,
             },
             header: () => t('label.target-stock-population'),
-            ...getNumberCell(),
+            ...getCellDefinition('targetStockPopulation'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -631,7 +640,7 @@ const InternalOrderDetailView: Component = () => {
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
-      ...getNumberCell(),
+      ...getCellDefinition('suggested'),
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
@@ -643,7 +652,9 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
-      meta: { align: 'right' },
+      // The preset's width + right alignment; the custom cell below overrides
+      // its number formatting (the value is pre-formatted with a dose suffix).
+      ...getCellDefinition('requested'),
       cell: info => {
         const line = info.row.original;
         return (
@@ -674,7 +685,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.pricePerUnit,
             },
             header: () => t('label.indicative-price-per-unit'),
-            ...getCurrencyCell(),
+            ...getCellDefinition('pricePerUnit'),
           },
           {
             c: {
@@ -683,7 +694,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.indicativePrice,
             },
             header: () => t('label.indicative-price'),
-            ...getCurrencyCell(),
+            ...getCellDefinition('indicativePrice'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -697,7 +708,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.initialSoh,
             },
             header: () => t('label.initial-stock-on-hand'),
-            ...getNumberCell(),
+            ...getCellDefinition('initialSoh'),
           },
           {
             c: {
@@ -705,7 +716,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.incoming,
             },
             header: () => t('label.incoming'),
-            ...getNumberCell(),
+            ...getCellDefinition('incoming'),
           },
           {
             c: {
@@ -713,7 +724,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.outgoing,
             },
             header: () => t('label.outgoing'),
-            ...getNumberCell(),
+            ...getCellDefinition('outgoing'),
           },
           {
             c: {
@@ -721,7 +732,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.losses,
             },
             header: () => t('label.losses'),
-            ...getNumberCell(),
+            ...getCellDefinition('losses'),
           },
           {
             c: {
@@ -729,7 +740,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.additions,
             },
             header: () => t('label.additions'),
-            ...getNumberCell(),
+            ...getCellDefinition('additions'),
           },
           {
             c: {
@@ -737,7 +748,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.shortExpiry,
             },
             header: () => t('label.short-expiry'),
-            ...getNumberCell(),
+            ...getCellDefinition('shortExpiry'),
           },
           {
             c: {
@@ -745,11 +756,12 @@ const InternalOrderDetailView: Component = () => {
               id: COL.daysOutOfStock,
             },
             header: () => t('label.days-out-of-stock'),
-            ...getNumberCell(),
+            ...getCellDefinition('daysOutOfStock'),
           },
           {
             c: { accessor: l => l.reason?.reason ?? '', id: COL.reason },
             header: () => t('label.reason'),
+            ...getCellDefinition('reason'),
             // A send's reasons backstop flags every offending line's Reason
             // cell (AC-R3): a red alert beside the (usually empty) reason text.
             cell: info => {
@@ -786,7 +798,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.approvedPacks,
             },
             header: () => t('label.approved-packs'),
-            ...getNumberCell(),
+            ...getCellDefinition('approvedPacks'),
           },
           {
             c: {
@@ -794,6 +806,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.approvalComment,
             },
             header: () => t('label.approval-comment'),
+            ...getCellDefinition('approvalComment'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
