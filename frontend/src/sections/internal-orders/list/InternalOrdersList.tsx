@@ -8,6 +8,8 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -196,6 +198,21 @@ const InternalOrdersList: Component = () => {
     else setCreateOpen(true);
   };
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  //
+  // Same inertness as both controls: the store context has to resolve before
+  // the stocktake-warning gate can be decided, and a check already in flight
+  // must not be started twice (AC-KB26's "once activated, the control MUST stop
+  // accepting a second activation", which for a key means declining it).
+  createAddAction({
+    name: 'label.new-internal-order',
+    run: () => void startCreate(),
+    disabled: () => context.loading || checking(),
+  });
+
   const onCreated = (id: string) => {
     setCreateOpen(false);
     navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
@@ -374,6 +391,7 @@ const InternalOrdersList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-internal-order-button"
               // Disabled until the store context (and so the stocktake-warning
               // gate) is known; busy while the on-click stocktake check runs.
@@ -437,6 +455,7 @@ const InternalOrdersList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             disabled={context.loading || checking()}
             onClick={() => void startCreate()}

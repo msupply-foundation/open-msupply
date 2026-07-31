@@ -71,9 +71,15 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       testId="re-login-modal"
       title={t('heading.login-again')}
       actions={
+        // Enter already submits this form natively (KB-E3), which is why the
+        // form/submit shape is here at all. The claim adds what the form
+        // cannot: the Alt+S badge, the palette's Save entry, and one activation
+        // path — Dialog consumes Enter and clicks this button rather than
+        // letting the implicit submission also fire (KB-E4).
         <Button
           type="submit"
           form={formId}
+          confirms="plain"
           data-testid="re-login-button"
           disabled={submitting()}
         >

@@ -8,6 +8,7 @@ import {
 import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { ALT_N } from '../../../../ui/utils/shortcuts';
 import type { InsurancePolicyFragment } from './insurance.generated';
 
 type Policy = InsurancePolicyFragment;
@@ -82,6 +83,9 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
         props.disabled ? undefined : (
           <Button
             variant="ghost"
+            // The patient detail declares Alt+N for this action; this is one of
+            // the two controls that advertise it (ui-surface S2).
+            shortcut={ALT_N}
             data-testid="add-insurance-button"
             onClick={props.onAdd}
           >

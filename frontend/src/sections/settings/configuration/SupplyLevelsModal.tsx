@@ -132,6 +132,7 @@ export const SupplyLevelsModal = (props: {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               onClick={props.onClose}
               data-testid="dialog-button-cancel"
             >
@@ -140,6 +141,7 @@ export const SupplyLevelsModal = (props: {
           </Show>
           <Button
             icon={<SaveIcon />}
+            confirms="plain"
             loading={saving()}
             onClick={() => void save()}
             data-testid="dialog-button-ok"

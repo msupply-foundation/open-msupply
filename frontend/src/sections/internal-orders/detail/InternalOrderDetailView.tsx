@@ -17,6 +17,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
@@ -373,6 +375,28 @@ const InternalOrderDetailView: Component = () => {
     if (choice === 'master-list') setMasterListPickerOpen(true);
     else setEditorLine({ mode: 'add' });
   };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header SplitButton
+  // and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action.
+  //
+  // `run` is the single-item add, the split button's default option — not its
+  // current menu selection, which may be the master-list picker. Same gate as
+  // both controls (canAddLines), but reached through `.state` rather than
+  // `info()`: that one reads `data.latest`, which suspends on the first pending
+  // read, and the palette evaluates every action's `disabled()` in its own
+  // render (kdd/keyboard-layer § an action's `disabled` MUST NOT read a
+  // suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditorLine({ mode: 'add' }),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || !isOrderEditable(node) || !!node.program;
+    },
+  });
 
   // The confirmed master-list bulk add (AC-LN7/LN8): add, then refetch the
   // page; a rejection replaces the confirmation with a notice.
@@ -986,6 +1010,7 @@ const InternalOrderDetailView: Component = () => {
                     disabledTitle={t('error.cannot-add-items-to-requisition')}
                     value={addChoice()}
                     onValueChange={setAddChoice}
+                    shortcut={ALT_N}
                     onAction={onAddAction}
                     options={[
                       { value: 'item', label: t('button.add-item') },
@@ -1016,6 +1041,9 @@ const InternalOrderDetailView: Component = () => {
                       variant="secondary"
                       icon={<SidebarIcon />}
                       data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it (ui-surface S2).
+                      shortcut={ALT_M}
                       onClick={() => setSidePanelOpen(true)}
                     >
                       {t('button.more')}
@@ -1152,6 +1180,7 @@ const InternalOrderDetailView: Component = () => {
                     canAddLines() ? (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={() => setEditorLine({ mode: 'add' })}
                       >

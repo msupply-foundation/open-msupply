@@ -123,7 +123,9 @@ const Body = (
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={tPlural('messages.confirm-delete-internal-orders', count)}>
+        <Switch
+          fallback={tPlural('messages.confirm-delete-internal-orders', count)}
+        >
           {/* Blocked: a non-Draft (or disabled-store) order is in the selection
               — explain why, and never submit (AC-D3). */}
           <Match when={phase() === 'blocked'}>
@@ -144,6 +146,7 @@ const Body = (
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -152,6 +155,7 @@ const Body = (
               <Button
                 variant="secondary"
                 icon={<TrashIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -166,6 +170,7 @@ const Body = (
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="plain"
               onClick={props.onClose}
             >
               {t('button.close')}

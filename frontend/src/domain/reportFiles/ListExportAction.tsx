@@ -174,6 +174,7 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
             actions={
               <Button
                 variant="secondary"
+                confirms="plain"
                 data-testid="export-error-modal-close"
                 onClick={() => setErrorDetail(undefined)}
               >

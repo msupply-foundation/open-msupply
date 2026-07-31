@@ -149,6 +149,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
@@ -159,6 +160,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 variant="secondary"
                 icon={<TrashIcon />}
                 loading={phase() === 'deleting'}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >
@@ -172,6 +174,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="plain"
               onClick={props.onClose}
             >
               {t('button.close')}
