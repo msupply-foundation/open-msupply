@@ -142,7 +142,12 @@ const RequisitionDetailView: Component = () => {
   const navigate = useNavigate();
   // The active tab persists in the URL (spec S2 § tabs).
   const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-  const [lineFilter, setLineFilter] = createSignal<LineFilter>({});
+  // The item search is the screen's default filter (ui-standards § tables →
+  // filtering): seeded present-as-null so its chip is on the bar from the
+  // start; the client-side match ignores it until typed.
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({
+    itemCodeOrName: null,
+  });
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
