@@ -89,7 +89,11 @@ export interface DialogProps {
    * content.
    */
   footer?: JSX.Element;
-  /** Footer buttons (rendered inline-end). */
+  /**
+   * Footer buttons. Rendered (with `footer`) in a region pinned below the
+   * dialog's scroll area: over-tall content scrolls between the header and the
+   * buttons, which hold still on the dialog's bottom edge.
+   */
   actions?: JSX.Element;
   /**
    * Content pinned to the inline-START of the actions row — same row as the
@@ -246,26 +250,39 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
           <div class={styles.headerActions}>{headerActions()}</div>
         </Show>
       </header>
-      <Show when={description()}>
-        <p class={styles.description} id={local.descriptionId}>
-          {description()}
-        </p>
-      </Show>
-      {c.children}
-      <Show when={footer()}>
-        <div class={styles.footer}>{footer()}</div>
-      </Show>
-      <Show when={actions()}>
-        <div
-          class={styles.actions}
-          data-has-lead={actionsLead() ? '' : undefined}
-        >
-          {/* Lead content sits at the inline-start; the buttons group at the
-              inline-end. */}
-          <Show when={actionsLead()}>
-            <div class={styles.actionsLead}>{actionsLead()}</div>
+      {/* Only THIS region scrolls (see .scroll in the CSS). The header above
+          and the bottom region below sit outside the scroll container, so the
+          buttons hold perfectly still — no shift when a scrollbar appears, no
+          drift with overscroll — while over-tall content scrolls between
+          them. */}
+      <div class={styles.scroll}>
+        <Show when={description()}>
+          <p class={styles.description} id={local.descriptionId}>
+            {description()}
+          </p>
+        </Show>
+        {c.children}
+      </div>
+      {/* Footer + actions share one bottom region pinned under the scroll
+          area, so they stay on the dialog's bottom edge together. */}
+      <Show when={footer() || actions()}>
+        <div class={styles.bottom}>
+          <Show when={footer()}>
+            <div>{footer()}</div>
           </Show>
-          <div class={styles.actionsButtons}>{actions()}</div>
+          <Show when={actions()}>
+            <div
+              class={styles.actions}
+              data-has-lead={actionsLead() ? '' : undefined}
+            >
+              {/* Lead content sits at the inline-start; the buttons group at the
+                  inline-end. */}
+              <Show when={actionsLead()}>
+                <div class={styles.actionsLead}>{actionsLead()}</div>
+              </Show>
+              <div class={styles.actionsButtons}>{actions()}</div>
+            </div>
+          </Show>
         </div>
       </Show>
     </div>
