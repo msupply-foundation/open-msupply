@@ -1,12 +1,10 @@
-# The Indicators tab (spec/internal-orders S3 § Indicators tab, AC-I1–I11).
-# Program indicator figures for the order's period. The tab gate is a client
-# check (non-emergency program order, store-backed supplier, ≥1 indicator
-# defined); the figures are period-scoped, keyed to the store's OWN name as the
-# customer identity.
+# The Indicators tab's request-side identity read (spec/internal-orders S3 §
+# Indicators tab). The tab itself — the definitions/values query and the cell
+# edit — is the shared machinery at src/domain/indicators.
 
 # The active store's own name id — the "customer identity" own-store indicator
 # values are keyed to (the seeding uses the store's own name). Fed as
-# customerNameId into the value threading below.
+# customerNameId into the shared programIndicatorValues read.
 query storeOwnName($storeId: String!) {
   stores(filter: { id: { equalTo: $storeId } }) {
     ... on StoreConnector {
@@ -15,89 +13,6 @@ query storeOwnName($storeId: String!) {
         name(storeId: $storeId) {
           id
         }
-      }
-    }
-  }
-}
-
-# The program's indicator definitions + this period's own-store cell values +
-# the per-line customer breakdown. `value` is null for a cell with no stored
-# row (the client hides such columns and drops all-null lines). valueType is
-# the DECLARED type (renders the input); validation uses the effective type
-# server-side (contract wire trap).
-query internalOrderIndicators(
-  $storeId: String!
-  $programId: String!
-  $periodId: String!
-  $customerNameId: String!
-) {
-  programIndicators(
-    storeId: $storeId
-    filter: { programId: { equalTo: $programId } }
-  ) {
-    ... on ProgramIndicatorConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        code
-        lineAndColumns {
-          line {
-            id
-            code
-            name
-            lineNumber
-            valueType
-            isActive
-          }
-          columns {
-            id
-            name
-            columnNumber
-            valueType
-            value(
-              periodId: $periodId
-              storeId: $storeId
-              customerNameId: $customerNameId
-            ) {
-              id
-              value
-            }
-          }
-          customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
-            id
-            customer(storeId: $storeId) {
-              id
-              name
-            }
-            datetime
-            indicatorInformation {
-              columnId
-              value
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-# The in-place cell edit (AC-I5): saves as typed, no confirm. Typed errors
-# RecordNotFound / ValueTypeNotCorrect surface as field feedback.
-mutation updateIndicatorValue(
-  $storeId: String!
-  $input: UpdateIndicatorValueInput!
-) {
-  updateIndicatorValue(storeId: $storeId, input: $input) {
-    __typename
-    ... on IndicatorValueNode {
-      id
-      value
-    }
-    ... on UpdateIndicatorValueError {
-      error {
-        __typename
-        description
       }
     }
   }

@@ -73,7 +73,10 @@ type SortKey = NonNullable<PrescriptionsVariables['sort']>[number]['key'];
 
 type PrescriptionsListState = {
   filter: PrescriptionFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: PrescriptionsVariables['sort'];
   offset: number;
@@ -269,10 +272,7 @@ const PrescriptionsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('dispensary') },
-    { label: t('prescriptions') },
-  ];
+  const crumbs = () => [{ label: t('prescriptions') }];
 
   return (
     <Page

@@ -51,6 +51,23 @@ export const round = (value: number | undefined | null, dp = 0): string => {
 };
 
 /**
+ * Round to `decimals` places and return a NUMBER — for arithmetic, where
+ * `round` above returns a formatted string for display.
+ *
+ * Needed wherever a derived money figure is stored or compared rather than just
+ * shown: binary floats make `1.56 - 2` land on 0.43999999999999995, and storing
+ * that (or testing it for equality) is a defect the display layer hides.
+ * `Math.round` is half-away-from-zero, matching the reference client's NumUtils.
+ */
+export const roundTo = (value: number, decimals: number): number => {
+  const factor = 10 ** Math.max(0, Math.min(decimals, MAX_FRACTION_DIGITS));
+  const rounded = Math.round(value * factor) / factor;
+  // Normalise negative zero: rounding a tiny negative residue yields -0, which
+  // stores as "-0" and formats as "-0.00".
+  return rounded === 0 ? 0 : rounded;
+};
+
+/**
  * The characters a locale uses to write a number — what NumberField (and the
  * coming Currency field) needs to gate keystrokes and parse user text. Derived
  * from formatToParts rather than hard-coded per locale, so adding a locale to
@@ -83,18 +100,28 @@ export const getNumberSymbols = (locale: SupportedLocale): NumberSymbols => {
 };
 
 // Parse a locale-formatted number string back to a Number. Strips grouping
-// separators, normalises the decimal char, converts Arabic-Indic digits to
-// Latin, and drops anything else. Returns NaN on empty input.
+// separators, normalises the decimal char, converts non-Latin digits to Latin,
+// and drops anything else. Returns NaN on empty input.
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
+// The extended (Eastern) set Dari and Pashto render — a different code block
+// from the Arabic-Indic digits above, so both need converting.
+const EXTENDED_ARABIC_INDIC = '۰۱۲۳۴۵۶۷۸۹';
 const toLatinDigits = (s: string): string =>
-  s.replace(/[٠-٩]/g, d => String(ARABIC_INDIC.indexOf(d)));
+  s
+    .replace(/[٠-٩]/g, d => String(ARABIC_INDIC.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String(EXTENDED_ARABIC_INDIC.indexOf(d)));
 
 export const parseNumber = (
   numberString: string,
   decimalChar = '.'
 ): number => {
   const negative = numberString.trimStart().startsWith('-') ? -1 : 1;
-  const cleaned = toLatinDigits(numberString)
+  const latin = toLatinDigits(numberString);
+  // Where the locale's decimal separator isn't `.`, a `.` can only be a
+  // grouping separator (Spanish and Portuguese group with it) — drop it before
+  // normalising, or "1.234,5" parses as NaN.
+  const grouped = decimalChar === '.' ? latin : latin.split('.').join('');
+  const cleaned = grouped
     .replace(new RegExp(`\\${decimalChar}`, 'g'), '.')
     .replace(/[^\d.]/g, '');
   if (cleaned === '') return NaN;

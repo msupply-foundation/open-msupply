@@ -15,14 +15,15 @@ export type StoreOption = {
 /*
  * Store selector — the searchable store-picker panel, styled after the current
  * app's login store-selector (host/LoginStoreSelectorPanel): a search field, a
- * bordered scrollable list of selectable rows (with Default / Last-used chips),
- * and a Continue button. Presentational and dismiss-agnostic — it takes the
- * (already-ordered) stores and reports the chosen id via onConfirm; the host
- * decides where it lives (in the app it fills the store-selection Dialog) and
- * what confirming does. Selection is select-then-Continue (double-click a row
- * confirms directly; arrow keys move the highlighted row and Enter anywhere in
- * the panel confirms it — spec startup S3 › keyboard, OMS-REG-LGN-02.15–.18); the effective
- * selection falls back to default → last-used
+ * bordered scrollable list of selectable rows (with Default / Last-used
+ * chips), and a Continue button. Presentational and dismiss-agnostic — it
+ * takes the (already-ordered) stores and reports the chosen id via onConfirm;
+ * the host decides where it lives (in the app it fills the store-selection
+ * Dialog) and what confirming does. Selection is select-then-Continue
+ * (double-click a row confirms directly; arrow keys move the highlighted row
+ * and Enter anywhere in the panel confirms it — spec startup S3 › keyboard,
+ * OMS-REG-LGN-02.15–.18); the effective selection falls back to default →
+ * last-used
  * → first visible so Continue is always actionable.
  *
  * Colour independence: the Default / Last-used markers are StatusChips (dot +
@@ -119,6 +120,7 @@ export const StoreSelector = (props: {
       onKeyDown={handleKeyDown}
       onBeforeInput={handleBeforeInput}
     >
+      <h1 class={styles.title}>{t('heading.select-store')}</h1>
       <p class={styles.instructions}>
         {t('messages.select-store-instructions')}
       </p>
@@ -131,6 +133,7 @@ export const StoreSelector = (props: {
         value={query()}
         placeholder={t('placeholder.search-by-name-or-code')}
         onInput={e => setQuery(e.currentTarget.value)}
+        data-testid="store-selector-search"
       />
 
       <div class={styles.listPanel}>

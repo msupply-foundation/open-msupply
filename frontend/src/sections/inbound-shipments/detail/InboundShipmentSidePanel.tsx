@@ -1,4 +1,5 @@
 import {
+  createMemo,
   createResource,
   createSignal,
   For,
@@ -12,11 +13,12 @@ import { graphqlFetch } from '../../../api/graphql';
 import {
   SidePanelSection,
   SidePanelActions,
+  SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { EditIcon } from '../../../ui/icons';
@@ -32,7 +34,7 @@ import {
   updateInboundShipment,
 } from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
-import { scopeOf } from '../inboundShipmentScope';
+import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
@@ -47,9 +49,22 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 export interface InboundShipmentSidePanelProps {
   storeId: string;
   node: InboundInfoFragment;
+  /**
+   * Whether the details panel is actually SHOWING. The Page frame keeps panel
+   * content mounted and merely parks it off-frame while closed (so panel state
+   * survives open/close — kdd/state-management → no remounts), which means a
+   * resource created here would otherwise fetch on every detail load even for a
+   * panel nobody opened. The service-charge lines arm their fetch on this.
+   */
+  open: boolean;
   /** True once Verified (global edit lock). */
   disabled: boolean;
-  isExternal: boolean;
+  /**
+   * The shipment's permission scope, from the route (see
+   * inboundShipmentScope). Selects `type` on the whole-shipment copy read and
+   * the plain-vs-`...External` mutation twins below.
+   */
+  scope: InboundScope;
   edit: InboundFieldEdit;
   /** Store gates for the donor section + foreign-currency change. */
   donorTracking: boolean;
@@ -85,23 +100,48 @@ export const InboundShipmentSidePanel: Component<
   const [serviceOpen, setServiceOpen] = createSignal(false);
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
 
+  // Which mutation twin the scope's writes go through (plain vs `...External`).
+  const isExternal = () => isExternalScope(props.scope);
+
   // The itemised service lines feeding the Charges → Service charges block.
   // Re-read when the service-line modal saves or the service tax rate changes
   // (bump the version); pricing totals come from the node via onRefetch.
+  //
+  // Fetched on the FIRST open of the panel, then held (kdd/state-management →
+  // data needed only sometimes). The Page frame keeps this content mounted and
+  // merely parks it off-frame while closed, so without the latch every detail
+  // load would pay for a query nobody looked at. The latch never lowers:
+  // closing the panel is not a refresh gesture, and every edit that can change
+  // these lines already bumps the version below, so a re-read on reopen would
+  // buy nothing. `undefined` disables the fetch; `0` is a legitimate version.
   const [serviceVersion, setServiceVersion] = createSignal(0);
-  const [serviceLines] = createResource(serviceVersion, async () => {
-    const result = await graphqlFetch(InboundServiceLines, {
-      storeId: props.storeId,
-      filter: {
-        invoiceId: { equalTo: props.node.id },
-        type: { equalTo: 'SERVICE' },
-      },
-    });
-    return result.kind === 'success' &&
-      result.data.invoiceLines.__typename === 'InvoiceLineConnector'
-      ? result.data.invoiceLines.nodes
+  const everOpened = createMemo(prev => prev || props.open, false);
+  const [serviceLines] = createResource(
+    () => (everOpened() ? serviceVersion() : undefined),
+    async () => {
+      const result = await graphqlFetch(InboundServiceLines, {
+        storeId: props.storeId,
+        filter: {
+          invoiceId: { equalTo: props.node.id },
+          type: { equalTo: 'SERVICE' },
+        },
+      });
+      return result.kind === 'success' &&
+        result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+        ? result.data.invoiceLines.nodes
+        : [];
+    }
+  );
+  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
+  // pitfalls → No remounts on interaction). This refetches WHILE the screen
+  // stays open (a committed charges batch, and the tax cascade below fired from
+  // a focused field), and first-fetches on the interaction that opens the panel
+  // — a direct `serviceLines()` read would suspend the detail view's boundary
+  // each time, unmounting the panel's own focused tax input.
+  const serviceLineRows = () =>
+    serviceLines.state === 'ready' || serviceLines.state === 'refreshing'
+      ? (serviceLines.latest ?? [])
       : [];
-  });
   const refreshService = () => {
     setServiceVersion(v => v + 1);
     props.onRefetch();
@@ -111,9 +151,9 @@ export const InboundShipmentSidePanel: Component<
   // per-line tax cascade — the update input's TaxInput wrapper), mirroring the
   // stock-tax cascade on the invoice.
   const setServiceTax = (percentage: number) => {
-    const lines = serviceLines() ?? [];
+    const lines = serviceLineRows();
     if (lines.length === 0) return;
-    void runInboundBatch(props.storeId, props.isExternal, {
+    void runInboundBatch(props.storeId, isExternal(), {
       updateInboundShipmentServiceLines: lines.map(line => ({
         id: line.id,
         tax: { percentage },
@@ -132,15 +172,14 @@ export const InboundShipmentSidePanel: Component<
   // unpaginated — for the copy action (rules § copy to clipboard, case .34).
   // The detail's own lines read is server-paged and excludes SERVICE rows, so
   // this is its own one-shot fetch through the FullInboundShipment query;
-  // `type` is the shipment's own permission scope, taken from its
-  // purchaseOrderId rather than re-probing the held scopes. A fetch failure
-  // routes to the global error modal; a NodeError (not expected from a screen
-  // showing the record) copies nothing.
+  // `type` is the shipment's own permission scope, the one the route carries.
+  // A fetch failure routes to the global error modal; a NodeError (not expected
+  // from a screen showing the record) copies nothing.
   const loadFullShipment = async () => {
     const result = await graphqlFetch(FullInboundShipment, {
       storeId: props.storeId,
       id: props.node.id,
-      type: scopeOf(props.node.purchaseOrderId),
+      type: props.scope,
     });
     if (result.kind !== 'success') return undefined;
     if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
@@ -174,21 +213,23 @@ export const InboundShipmentSidePanel: Component<
           <FieldRow label={t('label.donor')}>
             <span
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 gap: 'var(--space-2)',
                 'align-items': 'center',
+                'justify-content': 'space-between',
+                'inline-size': '100%',
               }}
             >
               <span>{props.node.defaultDonor?.name ?? t('label.none')}</span>
-              <Button
-                variant="secondary"
+              <IconButton
+                bordered
+                size="small"
                 icon={<EditIcon />}
+                label={t('label.edit')}
                 disabled={props.disabled}
                 data-testid="edit-donor-button"
                 onClick={() => setDonorOpen(true)}
-              >
-                {t('label.edit')}
-              </Button>
+              />
             </span>
           </FieldRow>
         </Show>
@@ -264,39 +305,28 @@ export const InboundShipmentSidePanel: Component<
       >
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
-        <FieldRow label={t('heading.stock-charges')}>
-          <span />
-        </FieldRow>
+        <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
         <FieldRow label={t('label.sub-total')}>
           <span>{money(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              gap: 'var(--space-2)',
-              'align-items': 'center',
-            }}
-          >
-            <NumberField
-              label={t('label.tax')}
-              hideLabel
-              value={props.node.taxPercentage ?? 0}
-              min={0}
-              max={100}
-              decimalLimit={2}
-              endAdornment="%"
-              disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
-              onChange={value =>
-                props.onSaveField({ tax: { percentage: value ?? 0 } })
-              }
-            />
-            <span>
-              {money(
-                pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
-              )}
-            </span>
-          </span>
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            value={props.node.taxPercentage ?? 0}
+            min={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
+            helperText={money(
+              pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
+            )}
+            onChange={value =>
+              props.onSaveField({ tax: { percentage: value ?? 0 } })
+            }
+          />
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <span>{money(pricing().stockTotalAfterTax)}</span>
@@ -305,18 +335,22 @@ export const InboundShipmentSidePanel: Component<
         {/* Service charges: an edit action opens the service-line modal; an
             itemised list, then sub-total · tax (inline editor + amount) ·
             total (spec S3 charges → service charges). */}
-        <FieldRow label={t('heading.service-charges')}>
-          <Button
-            variant="secondary"
-            icon={<EditIcon />}
-            disabled={props.disabled}
-            data-testid="edit-service-charges-button"
-            onClick={() => setServiceOpen(true)}
-          >
-            {t('label.edit')}
-          </Button>
-        </FieldRow>
-        <For each={serviceLines() ?? []}>
+        <SidePanelSubheading
+          action={
+            <IconButton
+              bordered
+              size="small"
+              icon={<EditIcon />}
+              label={t('messages.edit-service-charges')}
+              disabled={props.disabled}
+              data-testid="edit-service-charges-button"
+              onClick={() => setServiceOpen(true)}
+            />
+          }
+        >
+          {t('heading.service-charges')}
+        </SidePanelSubheading>
+        <For each={serviceLineRows()}>
           {line => (
             <FieldRow label={line.itemName}>
               <span>{money(line.totalBeforeTax)}</span>
@@ -327,30 +361,21 @@ export const InboundShipmentSidePanel: Component<
           <span>{money(pricing().serviceTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              gap: 'var(--space-2)',
-              'align-items': 'center',
-            }}
-          >
-            <NumberField
-              label={t('label.tax')}
-              hideLabel
-              value={serviceRate()}
-              min={0}
-              max={100}
-              decimalLimit={2}
-              endAdornment="%"
-              disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
-              onChange={value => setServiceTax(value ?? 0)}
-            />
-            <span>
-              {money(
-                pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
-              )}
-            </span>
-          </span>
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            value={serviceRate()}
+            min={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
+            helperText={money(
+              pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
+            )}
+            onChange={value => setServiceTax(value ?? 0)}
+          />
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <span>{money(pricing().serviceTotalAfterTax)}</span>
@@ -361,9 +386,11 @@ export const InboundShipmentSidePanel: Component<
         <FieldRow label={t('label.currency')}>
           <span
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               gap: 'var(--space-2)',
               'align-items': 'center',
+              'justify-content': 'space-between',
+              'inline-size': '100%',
             }}
           >
             <span>
@@ -377,15 +404,15 @@ export const InboundShipmentSidePanel: Component<
                 @ {props.node.currencyRate}
               </Show>
             </span>
-            <Button
-              variant="secondary"
+            <IconButton
+              bordered
+              size="small"
               icon={<EditIcon />}
+              label={t('label.currency')}
               disabled={!canChangeCurrency()}
               data-testid="change-currency-button"
               onClick={() => setCurrencyOpen(true)}
-            >
-              {t('label.edit')}
-            </Button>
+            />
           </span>
         </FieldRow>
         <Show when={props.node.currency && !props.node.currency.isHomeCurrency}>
@@ -432,7 +459,7 @@ export const InboundShipmentSidePanel: Component<
             <DeleteInboundShipmentAction
               storeId={props.storeId}
               invoiceId={props.node.id}
-              isExternal={props.isExternal}
+              isExternal={isExternal()}
               number={() => props.node.invoiceNumber}
               disabled={false}
               onDeleted={props.onDeleted}
@@ -455,6 +482,7 @@ export const InboundShipmentSidePanel: Component<
         onClose={() => setDonorOpen(false)}
         storeId={props.storeId}
         node={props.node}
+        isExternal={isExternal()}
         onSaved={props.onSaved}
       />
       {/* The shared service-charges editor (spec S6) with inbound's wire
@@ -471,7 +499,7 @@ export const InboundShipmentSidePanel: Component<
         save={async batch => {
           const result = await saveInboundServiceCharges(
             props.storeId,
-            props.isExternal,
+            isExternal(),
             props.node.id,
             batch
           );
@@ -489,7 +517,7 @@ export const InboundShipmentSidePanel: Component<
         save={async input => {
           const result = await updateInboundShipment(
             props.storeId,
-            props.isExternal,
+            isExternal(),
             { id: props.node.id, ...input }
           );
           if (result.kind !== 'saved') return result;

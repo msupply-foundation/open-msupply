@@ -220,7 +220,31 @@ A detail page's **header fields** — a document's editable + read-only meta (su
 </HeaderToolbar>
 ```
 
-- **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and **`width="full"`** so it fills its share.
+- **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and **`width="full"`** — that's what makes the control fill the share the row hands it.
+- **Weight the fields whose data doesn't fit an equal share.** A field's column is sized by its data, never by its count, so equal shares are only right when every field holds comparably long data. Wrap the exceptions in a **`<FormRowItem>`** (`ui/layout/Form/FormRowItem`) — the row's `minmax(min, Nfr)`: `weight` is the item's **`fr` share of the whole row**, so `1.9` beside `0.9` takes a bit over twice the width (`1` everywhere is the equal-shares default, unchanged), and `minWidth` is the floor **that** item never shrinks below, overriding `minFieldWidth` for the one slot. A fixed-format scalar is pinned with **`weight={0}`**: a formatted date can never use more room, so it sits at its floor and hands every spare pixel to its siblings. **`maxWidth`** is the other half of the `minmax()` — a ceiling for a field that has no use for more width, which both keeps a wide screen's surplus flowing past it to the name fields and stops it filling a whole line to itself if it wraps (a lone flex item with any weight otherwise stretches the full width, which reads as the header promoting its least important field).
+- **The floors carry two jobs, so budget them.** They decide who gives up width as the row narrows — a field that reaches its floor stops shrinking and its siblings absorb the rest, so a real floor is what protects a name field — _and_ they set the wrap point (the row wraps when the floors + gaps stop fitting). Which fields drop to the next line is document order, not floor size: the trailing ones go first, so order the cluster identity-first. Keep the cluster's floors summing to **no more than the unweighted row's would** (`fields × minFieldWidth`), or the header gains a line on a narrower screen than it used to — which is the one thing this layout must never do. Weight the whole cluster or none of it: an unwrapped sibling keeps a `minFieldWidth` basis and an equal share of what's left, which reads oddly next to weighted ones.
+
+  ```tsx
+  {/* The prescription header (PrescriptionToolbar.tsx). Six equal shares gave
+      every field the same column, so "MOHAMED, DJIBRIL ABDULLAHI" truncated at
+      4 of its 26 characters while the date, which needs ~74px, held 126px of
+      value room. Floors: 11 + 10 + 9 + 10 + 9.5 + 9.5 = 59rem, under the
+      6 × 10rem the unweighted row already took, so the wrap point holds. */}
+  <FormRowItem weight={1.9} minWidth="11rem">
+    <PatientSearch label="Patient" size="small" width="full" … />
+  </FormRowItem>
+  {/* No minWidth: Clinician and Program keep the row's own 10rem floor. */}
+  <FormRowItem weight={1.55}>
+    <ClinicianSelect label="Clinician" size="small" width="full" … />
+  </FormRowItem>
+  <FormRowItem weight={0} minWidth="9rem">
+    <DateField label="Date" size="small" width="full" … />
+  </FormRowItem>
+  <FormRowItem weight={1.2}>
+    <ProgramNameSelect label="Program" size="small" width="full" … />
+  </FormRowItem>
+  ```
+
 - **The three field kinds:** an editable input; a conditionally-locked **disabled** input (a field editable only in some document states); and a never-editable fact as a read-only **`<LabelledValue>`** (`variant="field"`, `size="small"`).
 - The optional **`alert`** prop takes a compact **`<Alert>`** — a content-hugging chip pinned to the bottom baseline, so it rides the row when there's room and drops to its own line when not, while the field labels line up along the top. It must be `compact`: a full-width Alert takes an equal share of the row like a field. A non-Alert trailing chip (e.g. a `<ToggleSwitch>`) opts into the same bottom-hug with an inline `flex: 0 1 auto; align-self: flex-end`.
 - A **standing explanation** for a field (why it's disabled) belongs on its label as an `<InfoTooltip>` via the input's `labelInfo` slot — carried by every labelled input and selector, so the affordance is the same whatever the field is — not as `helperText`, which as a two- or three-line paragraph drags the whole strip taller than the field it explains. Keep `helperText` for text that must always be read.

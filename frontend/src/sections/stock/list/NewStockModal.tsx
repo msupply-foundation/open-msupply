@@ -21,7 +21,7 @@ import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '../../../domain/item';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
@@ -462,12 +462,18 @@ const NewStockContent = (props: {
 
               <FormColumn>
                 <FormSection title={t('heading.storage-and-pack')}>
-                  <LocationSelect
+                  <LocationVolumeSelect
                     label={t('label.location')}
                     locations={locations()}
                     loading={allLocations.loading}
                     value={draft.location?.id}
                     placeholder={t('label.none')}
+                    // The volume this new line will occupy, so "Available"
+                    // means "has room for it" (spec/stock/rules.md › location
+                    // fields).
+                    requiredVolume={
+                      (draft.volumePerPack ?? 0) * (draft.numberOfPacks ?? 0)
+                    }
                     onChange={l =>
                       setDraft(
                         'location',

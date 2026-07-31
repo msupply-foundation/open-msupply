@@ -105,11 +105,9 @@ const CliniciansList: Component = () => {
       fillBody
       header={
         <Header>
-          {/* Dispensary / Clinicians (ui-surface › layout). No page actions —
-              read-only vertical (OMS-FUN-DIS-004.23). */}
-          <Breadcrumb
-            crumbs={[{ label: t('dispensary') }, { label: t('clinicians') }]}
-          />
+          {/* Clinicians (ui-surface › layout). No page actions — read-only
+              vertical (OMS-FUN-DIS-004.23). */}
+          <Breadcrumb crumbs={[{ label: t('clinicians') }]} />
         </Header>
       }
     >

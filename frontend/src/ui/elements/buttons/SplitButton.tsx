@@ -78,7 +78,10 @@ interface SplitButtonProps {
    * cross-cutting).
    */
   disabled?: boolean;
-  /** Native tooltip shown while `disabled` — the reason the action is unavailable. */
+  /**
+   * Native tooltip shown while `disabled` — the reason the action is
+   * unavailable.
+   */
   disabledTitle?: string;
   /**
    * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main

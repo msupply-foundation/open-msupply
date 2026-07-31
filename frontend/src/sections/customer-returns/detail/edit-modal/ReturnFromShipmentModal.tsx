@@ -6,13 +6,18 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { createFocusTargets } from '../../../../ui/utils/createFocusTarget';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
 import { createReturnFromShipment } from '../returnUpdate';
 import {
@@ -27,12 +32,11 @@ import {
   reasonColumns,
   type UpdateLine,
 } from './returnLineColumns';
-// The shared wizard context-row layout (stacks below the compact breakpoint).
-import styles from './ReturnItemsModal.module.css';
 
 // S4, from-shipment mode — the return-items modal launched from an outbound
 // shipment's "Return selected lines" (spec/customer-returns/ui-surface.md S4;
-// rules § creation — from an originating outbound shipment; FL5 / AC-C4–C7).
+// rules § creation — from an originating outbound shipment; the from-shipment
+// flow, OMS-REG-DIST-07.19–.22).
 //
 // Distinct from the per-item ReturnItemsModal: the draft set comes from the
 // SELECTED shipment lines (across items) via generateCustomerReturnLines, with
@@ -96,12 +100,23 @@ const Body = (props: BodyProps): JSX.Element => {
     })
   );
   const [message, setMessage] = createSignal<
-    { severity: 'error' | 'warning'; text: string } | undefined
+    | {
+        severity: 'error' | 'warning';
+        text: string;
+        /** Test hook: which block this is (e2e/TESTIDS.md). */
+        kind: 'pack-size' | 'zero-quantity' | 'save-error';
+      }
+    | undefined
   >();
 
   const tableConfig = createTableConfig({
     tableId: 'customer-return-from-shipment-edit',
   });
+
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
 
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
   // step message.
@@ -112,10 +127,10 @@ const Body = (props: BodyProps): JSX.Element => {
   };
 
   // Seed the draft from the selected outbound-shipment lines
-  // (generateCustomerReturnLines' outboundShipmentLineIds — contract § draft-line
-  // generation): fresh ids, quantity returned zero, packs issued carried. None
-  // are "existing" (no return persisted yet), so a zeroed line is simply dropped
-  // at save — never a delete (rules § line rules).
+  // (generateCustomerReturnLines' outboundShipmentLineIds — contract §
+  // draft-line generation): fresh ids, quantity returned zero, packs issued
+  // carried. None are "existing" (no return persisted yet), so a zeroed line is
+  // simply dropped at save — never a delete (rules § line rules).
   const loadDrafts = async () => {
     const result = await graphqlFetch(GenerateCustomerReturnLines, {
       storeId: props.storeId,
@@ -128,29 +143,31 @@ const Body = (props: BodyProps): JSX.Element => {
     // is the global unexpected-error modal's (spec: Unexpected API Errors) —
     // stay in the loading phase behind it rather than showing an empty grid.
     if (result.kind !== 'success') return;
-    setDraft(
-      reconcile(
-        seedDrafts(
-          result.data.generateCustomerReturnLines.nodes,
-          new Set<string>()
-        ),
-        { key: 'id' }
-      )
+    const seeded = seedDrafts(
+      result.data.generateCustomerReturnLines.nodes,
+      new Set<string>()
     );
+    setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
+    // The first quantity field is what this dialog opens for. Armed, not
+    // applied: the request lands as the grid attaches
+    // (ui/utils/createFocusTarget).
+    quantityFields.focus(seeded[0]?.id ?? '');
   };
 
   onMount(() => void loadDrafts());
 
-  // Step-1 gating (create mode; ui-surface S4, AC-C6/AC-E3's UI half): a
-  // returned line's pack size below one blocks; nothing to return blocks with
-  // the add-quantities notice. There is no existing-line-removal path here —
-  // nothing is persisted yet, so a zeroed line is just dropped (no warning).
+  // Step-1 gating (create mode; ui-surface S4, OMS-REG-DIST-07.21/.29's UI
+  // half): a returned line's pack size below one blocks; nothing to return
+  // blocks with the add-quantities notice. There is no existing-line-removal
+  // path here — nothing is persisted yet, so a zeroed line is just dropped (no
+  // warning).
   const gateStep1 = (): boolean => {
     const verdict = validateStep1(draft.slice());
     if (verdict === 'invalid-pack-size') {
       setMessage({
         severity: 'error',
+        kind: 'pack-size',
         text: t('messages.alert-invalid-pack-size'),
       });
       return false;
@@ -158,6 +175,7 @@ const Body = (props: BodyProps): JSX.Element => {
     if (verdict === 'no-quantity') {
       setMessage({
         severity: 'error',
+        kind: 'zero-quantity',
         text: t('messages.alert-zero-return-quantity'),
       });
       return false;
@@ -169,6 +187,17 @@ const Body = (props: BodyProps): JSX.Element => {
     if (!gateStep1()) return;
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(reasonStepLines(draft.slice())[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const onOk = async () => {
@@ -193,7 +222,11 @@ const Body = (props: BodyProps): JSX.Element => {
     }
     if (result.kind === 'error') {
       setSaving(false);
-      setMessage({ severity: 'error', text: result.message });
+      setMessage({
+        severity: 'error',
+        kind: 'save-error',
+        text: result.message,
+      });
       return;
     }
     // Straight to the new return — OK keeps its spinner until the host
@@ -213,23 +246,33 @@ const Body = (props: BodyProps): JSX.Element => {
       title={t('heading.return-items')}
       actionsLead={
         <Show when={message()}>
-          {m => <Alert severity={m().severity}>{m().text}</Alert>}
+          {m => (
+            <Alert
+              severity={m().severity}
+              testId={
+                m().kind === 'save-error'
+                  ? 'save-error-alert'
+                  : `${m().kind}-alert`
+              }
+            >
+              {m().text}
+            </Alert>
+          )}
         </Show>
       }
+      // The footer (ui-surface S4 § layout): Cancel (step 1) / Back (step 2) ·
+      // Next step / Save — the standard, icon-less dialog buttons (D55). Back
+      // and Next step carry their own labels, so they stay plain icon-less
+      // Buttons; there is no Save & next in the from-shipment flow.
       actions={
         <>
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                confirms="cancel"
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
             {/* Back steps within the dialog, so it claims NO role: Escape must
@@ -237,12 +280,8 @@ const Body = (props: BodyProps): JSX.Element => {
                 palette's Cancel entry and the Escape badge point at. */}
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -251,7 +290,7 @@ const Body = (props: BodyProps): JSX.Element => {
             when={step() === 'reason'}
             fallback={
               <Button
-                icon={<ArrowRightIcon />}
+                variant="primary"
                 confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
@@ -261,60 +300,62 @@ const Body = (props: BodyProps): JSX.Element => {
               </Button>
             }
           >
-            <Button
-              icon={<CheckIcon />}
+            <DialogSaveButton
               loading={saving()}
-              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           </Show>
         </>
       }
     >
       {/* The wizard's step indicator — the shared determinate progress list;
             reaching the reason step completes "Select quantity" (ui-surface
-            S4 § layout). */}
-      <ProgressList
-        variant="secondary"
-        steps={[
-          {
-            label: t('label.select-quantity'),
-            started: true,
-            finished: step() === 'reason',
-          },
-          {
-            label: t('label.select-reason'),
-            started: step() === 'reason',
-            finished: false,
-          },
-        ]}
-      />
-      {/* Context row: who the goods come back from (read-only) and the
-            return's customer reference, pre-filled "From outbound shipment #N"
-            (rules § creation — a UI default). One field per row below the
-            compact breakpoint — the ReturnItemsModal's shared contextRow. */}
-      <div class={styles.contextRow}>
-        <FieldRow label={t('label.return-from')}>
-          <Text variant="body">{props.customerName}</Text>
-        </FieldRow>
-        <FieldRow label={t('label.customer-ref')}>
-          <TextField
-            label={t('label.customer-ref')}
-            hideLabel
-            size="small"
-            value={reference()}
-            onInput={e => setReference(e.currentTarget.value)}
-          />
-        </FieldRow>
-      </div>
+            S4 § layout). Capped to a reading measure, as in the per-item modal:
+            the list divides its width between steps, so full-bleed in a
+            workbench-width dialog the markers fly to opposite edges. */}
+      <ContentContainer size="form">
+        <ProgressList
+          variant="secondary"
+          steps={[
+            {
+              label: t('label.select-quantity'),
+              started: true,
+              finished: step() === 'reason',
+            },
+            {
+              label: t('label.select-reason'),
+              started: step() === 'reason',
+              finished: false,
+            },
+          ]}
+        />
+      </ContentContainer>
+      {/* Context row: who the goods come back from and the return's customer
+            reference, pre-filled "From outbound shipment #N" (rules § creation —
+            a UI default). The per-item modal's field cluster, same shape: label
+            above control, each field sized to itself, hugging the inline-start
+            and wrapping when the dialog goes full-screen. */}
+      <HStack gap="lg" align="start" wrap>
+        <LabelledValue
+          label={t('label.return-from')}
+          variant="field"
+          size="small"
+        >
+          {props.customerName}
+        </LabelledValue>
+        <TextField
+          label={t('label.customer-ref')}
+          size="small"
+          value={reference()}
+          onInput={e => setReference(e.currentTarget.value)}
+        />
+      </HStack>
       <Show
         when={step() === 'reason'}
         fallback={
           <DataTable
-            columns={quantityColumns(update)}
+            columns={quantityColumns(update, quantityFields)}
             rows={draft.filter(() => true)}
             rowKey={line => line.id}
             loading={loadingLines()}
@@ -327,7 +368,7 @@ const Body = (props: BodyProps): JSX.Element => {
         }
       >
         <DataTable
-          columns={reasonColumns(update)}
+          columns={reasonColumns(update, reasonFields)}
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}

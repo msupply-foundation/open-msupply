@@ -24,7 +24,8 @@ export type AtRisk = 'at-risk' | 'not-at-risk';
 // `null` members are allowed because FilterBar marks an added-but-empty chip
 // with null; buildItemFilter treats null and undefined identically (not
 // applied). Custom-field filters are a SEPARATE state slice on the list (the
-// shared domain/customFields group → dynamicFilter), not part of this UI filter.
+// shared domain/customFields group → dynamicFilter), not part of this UI
+// filter.
 export type ItemsListFilter = {
   codeOrName?: string | null;
   lens?: StockStatusLens | null;
@@ -56,7 +57,8 @@ export const expandLens = (lens: StockStatusLens): Partial<WireFilter> => {
 // population (active, stock-type). With no lens it adds isVisibleOrOnHand:true
 // (the default visible-or-on-hand population, OMS-REG-CAT-04.25); a lens
 // REPLACES that with its own expansion (.26). Search, master-list, MOS bounds,
-// at-risk and custom-field property filters all combine as AND (.27/.28/.29/.30, .37).
+// at-risk and custom-field property filters all combine as AND
+// (.27/.28/.29/.30, .37).
 export const buildItemFilter = (f: ItemsListFilter): WireFilter => {
   const filter: WireFilter = {
     isActive: true,

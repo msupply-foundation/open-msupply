@@ -57,12 +57,13 @@ import { createCodeTakenCheck } from '../patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
-// S2 — the create wizard (spec/patients FL2). A blocking modal with a three-step
-// flow: ① details + search → ② the mandatory local + central duplicate check →
-// ③ the full plain-path details form. A fresh patient identifier is minted when
-// the modal opens (AC-C5), so a duplicate-id rejection is unreachable. The step
-// rail is a section-local presentational stepper — the "wizard stepper" role is
-// not in the component registry (see the implementation flags).
+// S2 — the create wizard (spec/patients FL2). A blocking modal with a
+// three-step flow: ① details + search → ② the mandatory local + central
+// duplicate check → ③ the full plain-path details form. A fresh patient
+// identifier is minted when the modal opens (AC-C5), so a duplicate-id
+// rejection is unreachable. The step rail is a section-local presentational
+// stepper — the "wizard stepper" role is not in the component registry (see the
+// implementation flags).
 
 type Step = 1 | 2 | 3;
 
@@ -240,8 +241,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   };
 
   // What a match row DOES: a local match opens that patient, a central-only one
-  // opens the fetch modal. Bound to the whole row as well as its trailing icon —
-  // the step's own instruction (messages.patients-create) tells the user to
+  // opens the fetch modal. Bound to the whole row as well as its trailing icon
+  // — the step's own instruction (messages.patients-create) tells the user to
   // "click an existing patient below", so the row itself has to be the target.
   const openMatch = (row: MatchRow) =>
     row.kind === 'central' ? openFetch(row) : openExisting(row.id);
@@ -330,18 +331,22 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           event.stopPropagation();
           openMatch(row);
         };
-        return row.kind === 'central' ? (
-          <IconButton
-            icon={<DownloadIcon />}
-            label={t('messages.click-to-fetch')}
-            onClick={open}
-          />
-        ) : (
-          <IconButton
-            icon={<HomeIcon />}
-            label={t('label.details')}
-            onClick={open}
-          />
+        return (
+          <>
+            {row.kind === 'central' ? (
+              <IconButton
+                icon={<DownloadIcon />}
+                label={t('messages.click-to-fetch')}
+                onClick={open}
+              />
+            ) : (
+              <IconButton
+                icon={<HomeIcon />}
+                label={t('label.details')}
+                onClick={open}
+              />
+            )}
+          </>
         );
       },
     },

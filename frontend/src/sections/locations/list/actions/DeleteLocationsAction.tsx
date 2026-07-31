@@ -33,22 +33,23 @@ export interface DeleteLocationsActionProps {
 // confirm → deleting → report dialog, a peer of the reference vertical's
 // DeleteStocktakesAction. Differences are the spec's own: there is NO batch
 // mutation — the selection is N independent deleteLocation calls, each
-// succeeding or failing on its own (OMS-REG-INV-01.33, contract.md § deletion) — and a
-// failure is PER LOCATION: the typed LocationInUse rejection feeds the in-use
-// report (OMS-REG-INV-01.32), while untyped failures (movement history → plain Internal
-// error, OMS-REG-INV-01.35) are counted, not detailed. The per-call GraphQL errors are
-// taken via returnGraphqlErrors so one blocked location degrades to a line in
-// the report instead of tripping the global unexpected-error (reload) modal
-// mid-bulk — the outcome lands in the initiating surface (D21).
+// succeeding or failing on its own (OMS-REG-INV-01.33, contract.md § deletion)
+// — and a failure is PER LOCATION: the typed LocationInUse rejection feeds the
+// in-use report (OMS-REG-INV-01.32), while untyped failures (movement history →
+// plain Internal error, OMS-REG-INV-01.35) are counted, not detailed. The
+// per-call GraphQL errors are taken via returnGraphqlErrors so one blocked
+// location degrades to a line in the report instead of tripping the global
+// unexpected-error (reload) modal mid-bulk — the outcome lands in the
+// initiating surface (D21).
 //
-// Nothing is deleted until the confirmation is accepted (OMS-REG-INV-01.34). Full success
-// needs no announcement: the dialog closes, the rows leave the list, the
-// selection clears (ui-surface S3). Any blocked/failed member switches the
-// dialog to the report instead — the deleted ones are already gone behind it.
-// While the report is up the selection is deliberately KEPT: it gates the
-// footer this dialog is mounted in, so clearing it would dispose the dialog
-// before the report renders (issue #374; same disposal trap as the stocktakes
-// reference's error path). It clears when the report is dismissed.
+// Nothing is deleted until the confirmation is accepted (OMS-REG-INV-01.34).
+// Full success needs no announcement: the dialog closes, the rows leave the
+// list, the selection clears (ui-surface S3). Any blocked/failed member
+// switches the dialog to the report instead — the deleted ones are already gone
+// behind it. While the report is up the selection is deliberately KEPT: it
+// gates the footer this dialog is mounted in, so clearing it would dispose the
+// dialog before the report renders (issue #374; same disposal trap as the
+// stocktakes reference's error path). It clears when the report is dismissed.
 type Phase =
   | { kind: 'confirm' }
   | { kind: 'deleting' }
@@ -91,9 +92,10 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
     if (phase().kind !== 'confirm') return; // re-entry guard (OMS-REG-INV-01.34)
     setPhase({ kind: 'deleting' });
     // N independent calls, sequential: each location succeeds or fails on its
-    // own — an in-use member never blocks the rest (OMS-REG-INV-01.33). GraphQL errors are
-    // returned (not globally surfaced) so an untyped per-location failure
-    // (OMS-REG-INV-01.35) becomes a report line, not an app-level error.
+    // own — an in-use member never blocks the rest (OMS-REG-INV-01.33).
+    // GraphQL errors are returned (not globally surfaced) so an untyped
+    // per-location failure (OMS-REG-INV-01.35) becomes a report line, not an
+    // app-level error.
     const outcomes = [];
     for (const row of rows) {
       const result = await graphqlFetch(
@@ -114,9 +116,10 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       return;
     }
     // Some members were blocked/failed: the deleted ones are gone regardless
-    // (OMS-REG-INV-01.33) — re-query behind the dialog, but KEEP the selection: clearing
-    // it here would unmount the footer (and this dialog) before the report
-    // ever renders (issue #374). The selection clears on dismissal instead.
+    // (OMS-REG-INV-01.33) — re-query behind the dialog, but KEEP the
+    // selection: clearing it here would unmount the footer (and this dialog)
+    // before the report ever renders (issue #374). The selection clears on
+    // dismissal instead.
     props.refetchList();
     setPhase({ kind: 'report', summary });
   };

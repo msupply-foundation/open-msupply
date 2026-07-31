@@ -19,12 +19,12 @@ export type NavItem = {
   path: string;
   children?: NavItem[];
   /**
-   * Central-server-only destination: shown in the menu — and its route reached —
-   * only on a central server to a server admin (spec/help S2). Absent elsewhere;
-   * the section's own route guard blocks direct-URL entry to match. The gate
-   * reads runtime signals, so it lives in navGates; this flag just declares the
-   * intent in the one source of truth and is threaded through navModel to the
-   * presentation leaf.
+   * Central-server-only destination: shown in the menu — and its route reached
+   * — only on a central server to a server admin (spec/help S2). Absent
+   * elsewhere; the section's own route guard blocks direct-URL entry to match.
+   * The gate reads runtime signals, so it lives in navGates; this flag just
+   * declares the intent in the one source of truth and is threaded through
+   * navModel to the presentation leaf.
    */
   central?: boolean;
   /**

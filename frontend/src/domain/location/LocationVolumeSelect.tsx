@@ -5,12 +5,12 @@ import { Tabs, TabList, type TabDef } from '../../ui/elements/tabs/Tabs';
 import { t } from '../../intl';
 import { round } from '../../intl/formatNumber';
 import { type LocationWithVolume } from './locationResource';
-import { getVolumeUsedPercentage, isAvailable, isEmpty } from './volume';
+import {
+  getVolumeUsedPercentage,
+  passesFullness,
+  type Fullness,
+} from './volume';
 import styles from './LocationVolumeSelect.module.css';
-
-// The three fullness-filter modes (spec/ui-standards/components.md → Location
-// lookup — plain vs volume-aware), always offered as a tab strip in the dropdown.
-type Fullness = 'all' | 'empty' | 'available';
 
 export interface LocationVolumeSelectProps {
   /**
@@ -41,6 +41,15 @@ export interface LocationVolumeSelectProps {
    * specific volume applies — "Available" then means simply not-full.
    */
   requiredVolume?: number;
+  /**
+   * The location the stock being placed is **already in**, where that differs
+   * from this field's own value — a repack's origin line, say. It always passes
+   * the "Available" filter: its volumeUsed already counts the volume being
+   * moved, so measuring that volume against its headroom double-counts. Omit
+   * where the field's value IS the current location (the line editors), or
+   * where the stock isn't anywhere yet (new stock).
+   */
+  originalLocationId?: string;
 }
 
 /*
@@ -53,9 +62,11 @@ export interface LocationVolumeSelectProps {
  *      strip pinned inside the dropdown. "Empty" keeps locations holding no
  *      stock; "Available" keeps those that are not on hold and have room for
  *      the volume being placed (requiredVolume — not-full when none is given).
- *      The currently-selected location ALWAYS passes so an already-placed line
- *      can be re-saved unchanged. The filter is advisory only — it narrows
- *      what's shown, it never blocks a save.
+ *      Two locations are exempt so the filter can never hide a valid choice:
+ *      the currently-selected one (under every mode, so an already-placed line
+ *      can be re-saved unchanged) and, under "Available", the one the stock is
+ *      already in (originalLocationId) — see `passesFullness` in ./volume. The
+ *      filter is advisory only — it narrows what's shown, never blocks a save.
  *
  * Both the code and the name are shown (and searched): options and the input
  * read "CODE — Name". Owns no cache: the parent fetches the volume-bearing list
@@ -69,15 +80,15 @@ export const LocationVolumeSelect = (
   const filtered = createMemo<LocationWithVolume[]>(() => {
     const mode = fullness();
     if (mode === 'all') return props.locations;
-    const selectedId = props.value;
-    return props.locations.filter(l => {
-      // The already-selected location always survives the filter (so the line
-      // can be re-saved unchanged even where it no longer "fits").
-      if (l.id === selectedId) return true;
-      return mode === 'empty'
-        ? isEmpty(l)
-        : isAvailable(l, props.requiredVolume);
-    });
+    // The filter and both its exemptions are the pure `passesFullness`
+    // (./volume) so they can be unit-tested away from this widget.
+    return props.locations.filter(l =>
+      passesFullness(l, mode, {
+        selectedId: props.value,
+        originalLocationId: props.originalLocationId,
+        requiredVolume: props.requiredVolume,
+      })
+    );
   });
 
   const percentUsedLabel = (l: LocationWithVolume): string => {

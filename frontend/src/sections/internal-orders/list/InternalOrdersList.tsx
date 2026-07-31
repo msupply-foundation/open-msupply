@@ -380,10 +380,7 @@ const InternalOrdersList: Component = () => {
       : []),
   ];
 
-  const crumbs = () => [
-    { label: t('replenishment') },
-    { label: t('internal-order') },
-  ];
+  const crumbs = () => [{ label: t('internal-order') }];
 
   return (
     <Page

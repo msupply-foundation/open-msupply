@@ -4,7 +4,7 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
 import { DeleteInternalOrderLines } from '../edit-modal/internalOrderLineEdit.generated';
 
 export interface DeleteLinesActionProps {
@@ -27,15 +27,19 @@ export interface DeleteLinesActionProps {
 }
 
 // The internal-order detail line delete (spec AC-LN15/LN16): a footer button +
-// a blocked | confirm → deleting → success | error dialog. Mirrors the list's
+// a blocked | confirm → deleting → error dialog. Mirrors the list's
 // DeleteInternalOrdersAction (same atomic batch, same active-and-explaining
 // treatment of a blocked selection): on a read-only order the click opens the
 // dialog already explaining why it can't proceed (AC-LN16), never a silently
 // dead click; the server enforces the same guard regardless. The batch is
 // ATOMIC — any member error rolls the whole batch back and nothing is removed,
 // so on error we show the server's reason with just a Close, keeping the
-// selection. Success shows the count deleted, then hands back to the detail.
-type Phase = 'blocked' | 'confirm' | 'deleting' | 'success' | 'error';
+// selection.
+//
+// No success phase: a clean delete CLOSES the dialog — closure is the
+// confirmation and the rows gone behind it are the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
+type Phase = 'blocked' | 'confirm' | 'deleting' | 'error';
 
 export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   const [open, setOpen] = createSignal(false);
@@ -96,13 +100,9 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       setPhase('error');
       return;
     }
-    setPhase('success');
-  };
-
-  // Success dismissal: close first, then hand back to the detail. onDeleted
-  // clears the selection, which unmounts the selection-gated footer this dialog
-  // lives in — so it must come last, after the dialog is closed.
-  const finishSuccess = () => {
+    // Success: close first, then hand back to the detail. onDeleted clears the
+    // selection, which unmounts the selection-gated footer this dialog lives in
+    // — so it must come last, after the dialog is closed.
     props.onClose();
     props.onDeleted();
   };
@@ -116,7 +116,13 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // Blocked / error are no longer questions, so the heading stops asking
+      // one (it would otherwise read "Are you sure?" over an explanation).
+      title={
+        phase() === 'blocked' || phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           fallback={tPlural('messages.confirm-delete-requisition-lines', count)}
@@ -127,9 +133,6 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Alert severity="warning">
               {t('label.cant-delete-disabled-internal-order')}
             </Alert>
-          </Match>
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-lines', count)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">{errorMessage()}</Alert>
@@ -166,18 +169,6 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          {/* Success: a single OK that closes and refetches. */}
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              confirms="plain"
-              data-testid="dialog-button-ok"
-              onClick={finishSuccess}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           {/* Blocked / error: nothing to submit — a single Close. */}
           <Match when={phase() === 'blocked' || phase() === 'error'}>
             <Button

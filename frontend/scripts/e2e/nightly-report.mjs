@@ -24,9 +24,11 @@
 // backend, or datafile.
 //
 // Usage: node scripts/e2e/nightly-report.mjs
-//   RESULTS_DIR     (default .e2e-results)  — <dir>/e2e-report-<leg>/results.json
-//   BASELINE_DIR    (default .e2e-baseline) — same layout, previous nightly
+// Each dir holds one <dir>/e2e-report-<leg>/results.json per leg.
+//   RESULTS_DIR     (default .e2e-results)  — this nightly's reports
+//   BASELINE_DIR    (default .e2e-baseline) — the previous nightly's
 //   BASELINE_RUN_ID (env, optional)         — links the header to that run
+//
 // Both runs' when/at-what-commit provenance comes from the reports
 // themselves (stats.startTime + the config.metadata.commit stamped by
 // e2e/playwright.config.ts).

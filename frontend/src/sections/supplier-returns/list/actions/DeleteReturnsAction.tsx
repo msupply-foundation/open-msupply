@@ -4,11 +4,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
-  CheckIcon,
-  InfoIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { InfoIcon, TrashIcon } from '../../../../ui/icons';
 import { deleteReturn } from '../../detail/returnUpdate';
 
 export interface DeleteReturnsActionProps {
@@ -41,8 +40,8 @@ export const DeleteReturnsAction: Component<
   const [blockedOpen, setBlockedOpen] = createSignal(false);
 
   const onClick = () => {
-    // Pre-check: every selected return must still be editable (NEW or PICKED) or
-    // the whole batch is refused with an explanatory notice in place of the
+    // Pre-check: every selected return must still be editable (NEW or PICKED)
+    // or the whole batch is refused with an explanatory notice in place of the
     // confirmation (the running app's client-side gate; skips Shipped rows).
     if (
       props
@@ -57,8 +56,10 @@ export const DeleteReturnsAction: Component<
 
   return (
     <>
+      {/* Destructive tone (ui-standards: delete = danger), matching the
+          reference vertical's bulk delete. */}
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={onClick}
@@ -79,14 +80,10 @@ export const DeleteReturnsAction: Component<
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              confirms="plain"
+            <OkButton
+              data-testid="dialog-button-ok"
               onClick={() => setBlockedOpen(false)}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           }
         />
       </Show>
@@ -153,18 +150,13 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
+                <CancelButton
+                  data-testid="dialog-button-cancel"
                   onClick={finish}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
@@ -176,14 +168,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              confirms="plain"
-              onClick={finish}
-            >
-              {t('button.ok')}
-            </Button>
+            <OkButton data-testid="dialog-button-ok" onClick={finish} />
           </Match>
         </Switch>
       }

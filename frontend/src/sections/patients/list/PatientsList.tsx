@@ -44,8 +44,8 @@ import { ExportPatientsAction } from './actions';
 // The patient list view (spec/patients S1). Site-wide (NOT store-scoped despite
 // storeId — contract › visibility wire trap), server-paginated, default sort by
 // creation date descending. Composed from library components (Page / Header /
-// FilterBar / DataTable / Pagination), so the page owns no CSS. Row selection is
-// OFF — patients have no delete (spec/patients cross-cutting › no delete).
+// FilterBar / DataTable / Pagination), so the page owns no CSS. Row selection
+// is OFF — patients have no delete (spec/patients cross-cutting › no delete).
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -54,7 +54,9 @@ type SortKey = NonNullable<PatientsVariables['sort']>[number]['key'];
 
 type PatientsListState = {
   filter: PatientFilter;
-  /** Custom-field filter values (per key), converted to the dynamicFilter AST. */
+  /**
+   * Custom-field filter values (per key), converted to the dynamicFilter AST.
+   */
   cf?: CustomFieldFilterState;
   sort?: PatientsVariables['sort'];
   offset: number;

@@ -11,15 +11,18 @@ import {
   dateToIsoDate,
 } from '../../ui/elements/inputs/dateTimeConvert';
 
-/** The preference values that shape barring and ordering (consumer-resolved). */
+/**
+ * The preference values that shape barring and ordering (consumer-resolved).
+ */
 export interface AllocationPreferences {
   expiredStockPreventIssue: boolean;
   /** Days before expiry at which the expired-issue guard bars a batch. */
   expiredStockIssueThreshold: number;
   manageVvmStatusForStock: boolean;
   /** Ordering variant (rules.md § ordering): usable VVM status before expiry.
-   *  Optional — a consumer that doesn't read the pref (prescriptions) omits
-   *  it, which behaves as off (plain FEFO). */
+   *  Optional only for callers with no VVM concept — both issue verticals
+   *  (outbound, prescriptions) resolve and pass it; omitted behaves as off
+   *  (plain FEFO). */
   sortByVvmStatusThenExpiry?: boolean;
 }
 
@@ -47,7 +50,10 @@ export interface BarrableBatch {
    * no exception (on hold always bars).
    */
   numberOfPacks?: number;
-  /** Available packs — the on-hold exception also needs stock to adjust against. */
+  /**
+   * Available packs — the on-hold exception also needs stock to adjust
+   * against.
+   */
   availablePacks?: number;
   /**
    * Whether the batch's item is a vaccine — the manual unusable-VVM bar

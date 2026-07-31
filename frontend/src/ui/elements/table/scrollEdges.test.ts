@@ -33,8 +33,8 @@ describe('hiddenEdges', () => {
   });
 
   // RTL scrolls scrollLeft from 0 (fully right — the RTL "start") to -max. At 0
-  // the number is identical to LTR's rest position but means the opposite, which
-  // is why direction is an argument rather than inferred from the sign.
+  // the number is identical to LTR's rest position but means the opposite,
+  // which is why direction is an argument rather than inferred from the sign.
   describe('RTL (scrollLeft 0 → -max)', () => {
     it('hides only the LEFT edge at rest — the content sits off to the left', () => {
       expect(hiddenEdges(box(0), true)).toEqual({ left: true, right: false });

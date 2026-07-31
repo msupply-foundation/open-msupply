@@ -6,7 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { HomeIcon, CentralIcon, type IconProps } from '../../icons';
+import { HomeIcon, CentralIcon, EditIcon, type IconProps } from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
@@ -70,9 +70,24 @@ export interface AppShellProps {
    */
   onStoreClick: () => void;
   /**
+   * Activating the store Edit cell — opens the store editor on its Properties
+   * tab (spec/settings OMS-REG-SET-05.18). Optional: the editor doesn't exist
+   * yet, and a host that hasn't wired it gets the cell as static text (never a
+   * button that does nothing).
+   */
+  onStoreEdit?: () => void;
+  /**
    * The signed-in user's name, shown in the bottom bar (spec: signed-in user).
    */
   username: string;
+  /**
+   * The signed-in user's full display name, heading the user popup
+   * (OMS-REG-FTR-01.2).
+   */
+  displayName: string;
+  /** The signed-in user's email address, shown in the user popup
+   *  (OMS-REG-FTR-01.4). Absent when the user record records none. */
+  email?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
@@ -204,9 +219,9 @@ export const AppShell = (props: AppShellProps) => {
                 lower={menuLower()}
                 selectedId={props.selected.id}
                 // The Sync entry opens the modal in place — never navigates
-                // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it applies only
-                // when the host wired onSyncOpen: one that didn't (the showcase)
-                // may use the same id as an ordinary destination.
+                // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it
+                // applies only when the host wired onSyncOpen: one that didn't
+                // (the showcase) may use the same id as an ordinary destination.
                 onSelect={leaf => {
                   const openSync =
                     leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
@@ -221,11 +236,12 @@ export const AppShell = (props: AppShellProps) => {
               <div class={styles.content}>{props.children}</div>
 
               {/* Bottom bar (spec chrome › bottom bar), left to right: the store
-                selector (routes to the store-selection screen), a spacer, the
-                signed-in user (menu: logout), then the language selector. The
-                store name is shown as text, so the store colour is never the
-                sole active-store indicator (colour independence / D14). Hidden in
-                full-screen mode, like the menu bar. */}
+                selector (routes to the store-selection screen), the store Edit
+                cell, a spacer, the signed-in user (menu: logout), then the
+                language selector. The store name is shown as text, so the store
+                colour is never the sole active-store indicator (colour
+                independence / D14). Hidden in full-screen mode, like the menu
+                bar. */}
               <Show when={!fullScreen()}>
                 <footer
                   class={styles.footer}
@@ -239,9 +255,23 @@ export const AppShell = (props: AppShellProps) => {
                     onClick={props.onStoreClick}
                     testId="store-selector-trigger"
                   />
+                  {/* Store Edit, beside the store name (spec/settings
+                    OMS-REG-SET-05.17). Activating it opens the store editor on
+                    its Properties tab (.18) — that editor isn't built here yet,
+                    so until a host wires `onStoreEdit` the cell renders in
+                    FooterCell's static (non-interactive) form rather than as a
+                    button that does nothing. */}
+                  <FooterCell
+                    icon={EditIcon}
+                    label={t('label.edit')}
+                    onClick={props.onStoreEdit}
+                    testId="footer-store-edit"
+                  />
                   <span class={styles.footerSpacer} aria-hidden="true" />
                   <UserMenu
                     username={props.username}
+                    displayName={props.displayName}
+                    email={props.email}
                     onLogout={props.onLogout}
                   />
                   <span class={styles.footerDivider} aria-hidden="true" />

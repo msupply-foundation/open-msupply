@@ -1,8 +1,11 @@
 import {
+  createEffect,
+  createMemo,
   createResource,
   createSignal,
   Show,
   Suspense,
+  untrack,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
@@ -34,17 +37,41 @@ import {
   getCurrencyCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  FilterBar,
+  FilterTextInput,
+  constructFilters,
+  type Filter,
+} from '../../../ui/elements/selectors/FilterBar';
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import {
+  contributionId,
+  visibleContributions,
+} from '../../../plugins/PluginSlot';
+import {
+  INTERNAL_ORDER_LINE_COLUMNS as COL,
+  mergeLineColumns,
+  type LineColumnBatch,
+} from './lineColumns';
+import {
+  toLineView,
+  toInternalOrderView,
+  lineMonthsOfStock,
+} from './pluginViews';
 import {
   InternalOrderDetail,
   type InternalOrderInfoFragment,
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
-import { StoreOwnName, InternalOrderIndicators } from './indicators.generated';
-import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
+import { StoreOwnName } from './indicators.generated';
+import {
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
 import {
   saveInternalOrderFields,
   addInternalOrderFromMasterList,
@@ -55,7 +82,7 @@ import {
   type HeaderEditFields,
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
-import { InternalOrderLogTab } from './InternalOrderLogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
@@ -63,7 +90,7 @@ import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrd
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
 import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
-import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
+import { MasterListPickerModal } from '../../../domain/masterList';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
@@ -80,6 +107,14 @@ import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
 type Line = InternalOrderLineFragment;
 
+// One shared empty map, so the non-suspending batch read returns a STABLE value
+// while nothing is loaded — a fresh `new Map()` per read would make the columns
+// memo recompute on every unrelated update.
+const EMPTY_BATCH_DATA: ReadonlyMap<
+  string,
+  ReadonlyMap<string, unknown>
+> = new Map();
+
 // The client-side sort keys the read-only line table supports.
 type SortKey =
   | 'code'
@@ -92,10 +127,40 @@ type SortKey =
   | 'suggested'
   | 'requested';
 
+// The line filter, shaped like the wire filter the server-paginated lines
+// read will take (itemCodeOrName.like — see the interim note above), so the
+// client-side match swaps to the server filter without a state change.
+type LineFilter = { itemCodeOrName?: { like: string } | null };
+
+// The line table's filters (ui-standards § tables → filtering): the item
+// code/name search as the screen's default (always-on) filter — the same chip
+// the stocktake detail table keeps to hand. Client-side for now, so no
+// debounce.
+const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
+  itemCodeOrName: {
+    alwaysOn: true,
+    label: () => t('label.code-or-name'),
+    render: props => (
+      <FilterTextInput
+        label={t('label.code-or-name')}
+        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        testId={props.testId}
+        debounceMs={0}
+        value={props.filter().itemCodeOrName?.like ?? ''}
+        onInput={value =>
+          props.setPartialFilter({
+            itemCodeOrName: value ? { like: value } : null,
+          })
+        }
+      />
+    ),
+  },
+});
+
 const InternalOrderDetailView: Component = () => {
   const params = useParams<{ storeId: string; orderId: string }>();
   const navigate = useNavigate();
-  const [itemFilter, setItemFilter] = createSignal('');
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({});
   const [hideOverMin, setHideOverMin] = createSignal(false);
   // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar.
@@ -133,7 +198,11 @@ const InternalOrderDetailView: Component = () => {
     defaultConfig: {
       compact: {
         viewMode: 'card',
-        columnVisibility: { unitName: false, dps: false, targetStock: false },
+        columnVisibility: {
+          [COL.unit]: false,
+          [COL.dps]: false,
+          [COL.targetStock]: false,
+        },
       },
     },
   });
@@ -220,7 +289,7 @@ const InternalOrderDetailView: Component = () => {
 
   const [indicators] = createResource(indicatorVariables, async serialised => {
     const result = await graphqlFetch(
-      InternalOrderIndicators,
+      ProgramIndicatorValues,
       JSON.parse(serialised)
     );
     if (result.kind !== 'success') return undefined;
@@ -385,10 +454,9 @@ const InternalOrderDetailView: Component = () => {
   const monthsThreshold = (node: InternalOrderInfoFragment) =>
     node.minMonthsOfStock > 0 ? node.minMonthsOfStock : node.maxMonthsOfStock;
 
-  const mos = (line: Line) =>
-    line.averageMonthlyConsumption > 0
-      ? line.availableStockOnHand / line.averageMonthlyConsumption
-      : 0;
+  // The one MOS formula, shared with the SDK line view (pluginViews) so the
+  // figure a plugin reads is the figure this column shows.
+  const mos = (line: Line) => lineMonthsOfStock(line);
   const targetStock = (line: Line) =>
     line.averageMonthlyConsumption * (info()?.maxMonthsOfStock ?? 0);
   const isExcess = (line: Line) =>
@@ -421,7 +489,7 @@ const InternalOrderDetailView: Component = () => {
     const node = info();
     if (!node) return [];
     let lines = node.lines.nodes;
-    const f = itemFilter().trim().toLowerCase();
+    const f = (lineFilter().itemCodeOrName?.like ?? '').trim().toLowerCase();
     if (f)
       lines = lines.filter(
         l =>
@@ -456,7 +524,6 @@ const InternalOrderDetailView: Component = () => {
     `${Math.round(value)}${doseSuffix(line, value)}`;
 
   const crumbs = (node: InternalOrderInfoFragment) => [
-    { label: t('replenishment') },
     {
       label: t('internal-order'),
       onClick: () =>
@@ -465,19 +532,19 @@ const InternalOrderDetailView: Component = () => {
     { label: String(node.requisitionNumber) },
   ];
 
-  const columns = (): Column<Line, SortKey>[] => [
+  const hostColumns = (): Column<Line, SortKey>[] => [
     {
-      c: { key: 'comment' },
+      c: { key: COL.comment },
       header: () => t('label.comment'),
       ...getCommentCell(),
     },
     {
-      c: { accessor: line => line.item.code, id: 'code' },
+      c: { accessor: line => line.item.code, id: COL.code },
       sortKey: 'code',
       header: () => t('label.code'),
     },
     {
-      c: { key: 'itemName' },
+      c: { key: COL.name },
       sortKey: 'name',
       header: () => t('label.name'),
       meta: { headerPosition: 'primary', wrapLines: 2 },
@@ -507,7 +574,7 @@ const InternalOrderDetailView: Component = () => {
       },
     },
     {
-      c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
+      c: { accessor: line => line.item.unitName ?? '', id: COL.unit },
       header: () => t('label.unit'),
     },
     // Doses per unit — gated on the vaccine-doses preference; a dash for
@@ -517,7 +584,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: line => (line.item.isVaccine ? line.item.doses : '-'),
-              id: 'dosesPerUnit',
+              id: COL.dosesPerUnit,
             },
             header: () => t('label.doses-per-unit'),
             ...getNumberCell(),
@@ -525,7 +592,7 @@ const InternalOrderDetailView: Component = () => {
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
-      c: { accessor: line => line.item.defaultPackSize, id: 'dps' },
+      c: { accessor: line => line.item.defaultPackSize, id: COL.dps },
       sortKey: 'dps',
       header: () => t('label.dps'),
       ...getNumberCell(),
@@ -533,7 +600,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: {
         accessor: line => numWithDoses(line, line.availableStockOnHand),
-        id: 'available',
+        id: COL.available,
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
@@ -544,14 +611,14 @@ const InternalOrderDetailView: Component = () => {
       c: {
         accessor: line =>
           numWithDoses(line, Math.ceil(line.averageMonthlyConsumption)),
-        id: 'amc',
+        id: COL.amc,
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
       ...getNumberCell(),
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: 'mos' },
+      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
       ...getNumberCell(),
@@ -559,7 +626,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: {
         accessor: line => numWithDoses(line, targetStock(line)),
-        id: 'targetStock',
+        id: COL.targetStock,
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
@@ -573,7 +640,7 @@ const InternalOrderDetailView: Component = () => {
             c: {
               accessor: line =>
                 numWithDoses(line, Math.ceil(line.forecastTotalUnits ?? 0)),
-              id: 'targetStockPopulation',
+              id: COL.targetStockPopulation,
             },
             header: () => t('label.target-stock-population'),
             ...getNumberCell(),
@@ -583,7 +650,7 @@ const InternalOrderDetailView: Component = () => {
     {
       c: {
         accessor: line => numWithDoses(line, line.suggestedQuantity),
-        id: 'suggested',
+        id: COL.suggested,
       },
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
@@ -596,7 +663,7 @@ const InternalOrderDetailView: Component = () => {
       // counterpart of the editor banner).
       c: {
         accessor: line => numWithDoses(line, line.requestedQuantity),
-        id: 'requested',
+        id: COL.requested,
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
@@ -628,7 +695,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: line => line.pricePerUnit ?? '',
-              id: 'pricePerUnit',
+              id: COL.pricePerUnit,
             },
             header: () => t('label.indicative-price-per-unit'),
             ...getCurrencyCell(),
@@ -637,7 +704,7 @@ const InternalOrderDetailView: Component = () => {
             c: {
               accessor: line =>
                 (line.pricePerUnit ?? 0) * line.requestedQuantity,
-              id: 'indicativePrice',
+              id: COL.indicativePrice,
             },
             header: () => t('label.indicative-price'),
             ...getCurrencyCell(),
@@ -651,7 +718,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
-              id: 'initialSoh',
+              id: COL.initialSoh,
             },
             header: () => t('label.initial-stock-on-hand'),
             ...getNumberCell(),
@@ -659,7 +726,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => numWithDoses(l, l.incomingUnits),
-              id: 'incoming',
+              id: COL.incoming,
             },
             header: () => t('label.incoming'),
             ...getNumberCell(),
@@ -667,20 +734,23 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => numWithDoses(l, l.outgoingUnits),
-              id: 'outgoing',
+              id: COL.outgoing,
             },
             header: () => t('label.outgoing'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.lossInUnits), id: 'losses' },
+            c: {
+              accessor: l => numWithDoses(l, l.lossInUnits),
+              id: COL.losses,
+            },
             header: () => t('label.losses'),
             ...getNumberCell(),
           },
           {
             c: {
               accessor: l => numWithDoses(l, l.additionInUnits),
-              id: 'additions',
+              id: COL.additions,
             },
             header: () => t('label.additions'),
             ...getNumberCell(),
@@ -688,7 +758,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => numWithDoses(l, l.expiringUnits),
-              id: 'shortExpiry',
+              id: COL.shortExpiry,
             },
             header: () => t('label.short-expiry'),
             ...getNumberCell(),
@@ -696,13 +766,13 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => Math.round(l.daysOutOfStock),
-              id: 'daysOutOfStock',
+              id: COL.daysOutOfStock,
             },
             header: () => t('label.days-out-of-stock'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
+            c: { accessor: l => l.reason?.reason ?? '', id: COL.reason },
             header: () => t('label.reason'),
             // A send's reasons backstop flags every offending line's Reason
             // cell (AC-R3): a red alert beside the (usually empty) reason text.
@@ -737,7 +807,7 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => Math.round(l.approvedQuantity),
-              id: 'approvedPacks',
+              id: COL.approvedPacks,
             },
             header: () => t('label.approved-packs'),
             ...getNumberCell(),
@@ -745,13 +815,129 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: l => l.approvalComment ?? '',
-              id: 'approvalComment',
+              id: COL.approvalComment,
             },
             header: () => t('label.approval-comment'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
   ];
+
+  // --- The plugin column region (ui-surface § S8) ---
+  //
+  // ONE memo per reactive step, and the contributions read inside it: the
+  // registry hands back a fresh array on every read, so reading it anywhere a
+  // `<For>` or the table could see it directly would churn the table on every
+  // unrelated update (kdd/solid-reactivity-pitfalls). `visibleContributions`
+  // also applies each contribution's `when` gate, so a contribution hidden by
+  // the session context never reaches the merge — and therefore never gets a
+  // loader run (AC-PLUG-K3).
+  const lineColumnContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.column')
+  );
+
+  // The line editor's info-panel contributions (§ S8 › editor region), composed
+  // the same way and for the same reason: ONE memo, so the array the outlet
+  // `<For>`s over keeps its identity and the mounted panels are never torn down
+  // by an unrelated update. Mapped to the outlet's shape here, so the modal
+  // stays free of the registry.
+  const infoPanelContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.infoPanel').map(contribution => ({
+      id: contributionId(contribution),
+      Component: contribution.Component,
+    }))
+  );
+
+  // The lines a contributed column sees, as the SDK's published DTO.
+  const lineViews = createMemo(() => rows().map(toLineView));
+
+  // The batched per-page column data (AC-PLUG-K4): one loader call per
+  // contribution per rendered set of rows, never per cell. The resource key is
+  // the SERIALISED row-id list plus the contributing ids, so re-reading
+  // the same lines (a header save splicing the node back, a locale switch)
+  // does not refetch, while a filter/sort/refetch that changes it does.
+  const batchKey = () => {
+    const loaders = lineColumnContributions().filter(
+      contribution => contribution.loadData !== undefined
+    );
+    if (loaders.length === 0) return false;
+    return JSON.stringify({
+      rows: rows().map(line => line.id),
+      contributions: loaders.map(contributionId),
+    });
+  };
+
+  const [lineColumnData] = createResource(batchKey, async () => {
+    // The key drives the fetch; the inputs are read UNTRACKED so the fetcher
+    // never becomes a second, hidden dependency edge.
+    const { views, loaders } = untrack(() => ({
+      views: lineViews(),
+      loaders: lineColumnContributions().filter(
+        contribution => contribution.loadData !== undefined
+      ),
+    }));
+    const loaded = new Map<string, ReadonlyMap<string, unknown>>();
+    await Promise.all(
+      loaders.map(async contribution => {
+        try {
+          const entries = await contribution.loadData?.(views);
+          if (entries) loaded.set(contributionId(contribution), entries);
+        } catch (error) {
+          // One plugin's failed loader is that column's failure: it renders its
+          // empty state and every other column keeps working.
+          recordPluginDiagnostic({
+            level: 'error',
+            pluginCode: contribution.pluginCode,
+            message: `column "${contribution.id}" data loader failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+        }
+      })
+    );
+    return loaded;
+  });
+
+  // NON-suspending, `.state`-gated: the line editor is often open ABOVE this
+  // table, and a suspending read would remount the subtree and detach the open
+  // <dialog> from the top layer (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction). `.latest` alone is not safe — it suspends on the first
+  // pending read.
+  const lineColumnBatch = (): LineColumnBatch => ({
+    data:
+      lineColumnData.state === 'ready' || lineColumnData.state === 'refreshing'
+        ? (lineColumnData.latest ?? EMPTY_BATCH_DATA)
+        : EMPTY_BATCH_DATA,
+    loading: lineColumnData.loading,
+  });
+
+  const mergedColumns = createMemo(() =>
+    mergeLineColumns(
+      hostColumns(),
+      lineColumnContributions(),
+      toLineView,
+      lineColumnBatch()
+    )
+  );
+  const columns = () => mergedColumns().columns;
+
+  // Degradations are RECORDED here, not inside the merge: the merge runs in a
+  // memo, and recording is a write. Deduped per page instance so a re-merge (a
+  // preference gate resolving, the batch landing) cannot spam the same broken
+  // anchor.
+  const reportedDiagnostics = new Set<string>();
+  createEffect(() => {
+    for (const diagnostic of mergedColumns().diagnostics) {
+      const key = `${diagnostic.contributionId}:${diagnostic.message}`;
+      if (reportedDiagnostics.has(key)) continue;
+      reportedDiagnostics.add(key);
+      recordPluginDiagnostic({
+        level: 'warning',
+        pluginCode: diagnostic.contributionId.split('.')[0],
+        message: `internalOrderLine.column: ${diagnostic.contributionId} — ${diagnostic.message}`,
+      });
+    }
+  });
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -876,8 +1062,6 @@ const InternalOrderDetailView: Component = () => {
                     onChangeTarget={changeTarget}
                     hideOverMin={hideOverMin()}
                     onHideOverMinChange={setHideOverMin}
-                    itemFilter={itemFilter()}
-                    onItemFilterChange={setItemFilter}
                   />
                   {/* The ancillary banner claims its own full-width row beneath
                       the toolbar block (spec S3 § toolbar). */}
@@ -959,6 +1143,15 @@ const InternalOrderDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={lineFilters}
+                      filter={lineFilter()}
+                      onChange={setLineFilter}
+                    />
+                  }
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
@@ -966,13 +1159,13 @@ const InternalOrderDetailView: Component = () => {
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
                   // Placeholder lines (requested 0) read in the info tone —
-                  // whole-row blue text, de-emphasising them (ui-surface S3 line
-                  // table), matching outbound's placeholder lines.
+                  // whole-row blue text, de-emphasising them (ui-surface S3
+                  // line table), matching outbound's placeholder lines.
                   rowTone={line =>
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={
-                    itemFilter().trim()
+                    (lineFilter().itemCodeOrName?.like ?? '').trim()
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
@@ -1015,14 +1208,17 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InternalOrderLogTab
+                {/* The shared activity-log surface; oldest first per AC-AL1
+                    (spec S3 § Log tab). */}
+                <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
+                  order="oldest-first"
                 />
               </TabPanel>
               <Show when={showIndicators()}>
                 <TabPanel value="indicators">
-                  <InternalOrderIndicatorsTab
+                  <ProgramIndicatorsTab
                     storeId={params.storeId}
                     nodes={indicatorNodes()}
                     editable={editable()}
@@ -1056,6 +1252,11 @@ const InternalOrderDetailView: Component = () => {
               }
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
+              // The info-panel slot's other half (§ S8 › editor region): the
+              // order as the SDK's published view. A prop getter, so a header
+              // save or a status change reaches an open panel in place.
+              order={toInternalOrderView(node(), editable())}
+              infoPanelContributions={infoPanelContributions}
               onCommitted={() => {
                 // A line edit may have supplied a missing reason — drop the
                 // send-backstop flags so they don't linger stale (AC-R3).
