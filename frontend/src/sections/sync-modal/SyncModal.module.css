@@ -56,10 +56,3 @@
 .successText {
   color: var(--success-main);
 }
-
-/* Action row, centred. */
-.actions {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-3);
-}
