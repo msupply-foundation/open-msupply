@@ -7,7 +7,11 @@ import { IconButton } from '../ui/elements/buttons/IconButton';
 import { CloseIcon } from '../ui/icons';
 import { CommandPaletteView } from '../ui/elements/keyboard/CommandPaletteView';
 import { startKeyboardDispatcher } from '../keyboard/keyboardDispatcher';
-import { registeredActions } from '../ui/utils/keyActions';
+import {
+  createAction,
+  createAddAction,
+  registeredActions,
+} from '../ui/utils/keyActions';
 import { modifierHeld } from '../ui/utils/modifierHint';
 import {
   ALT_M,
@@ -71,10 +75,48 @@ const DEMO_ENTRIES = [
 
 export const KeyboardShowcase = () => {
   const [paletteOpen, setPaletteOpen] = createSignal(false);
+  // What the demo carriers below did when their key was last pressed — the page
+  // is otherwise a still life, and a badge you can't fire teaches half the
+  // rule.
+  const [lastRun, setLastRun] = createSignal<string>();
 
   onMount(() => {
     const stop = startKeyboardDispatcher();
     onCleanup(stop);
+  });
+
+  /*
+   * The badge demo's carriers declare REAL actions, for two reasons.
+   *
+   * The honest one: a control advertising a binding nothing answers is the
+   * drift AC-KB15 forbids, and `devWarnUnansweredShortcut` now says so in dev
+   * — a showcase exempt from the rule it documents would be the wrong kind of
+   * special case. The useful one: these are then live, so Alt+N here actually
+   * fires, and they populate the registry inspector below with something to
+   * look at on a page that mounts no shell.
+   *
+   * Component-body calls, never in an effect (kdd/keyboard-layer §
+   * consequences).
+   */
+  createAddAction({
+    // A LocaleKey, like any other action's name — the palette translates it.
+    name: 'button.add-item',
+    run: () => setLastRun('Alt+N — the add action ran'),
+  });
+  createAction({
+    name: 'cmdk.more-info-open',
+    shortcut: ALT_M,
+    run: () => setLastRun('Alt+M — show the more-info panel'),
+  });
+  createAction({
+    name: 'cmdk.more-info-close',
+    shortcut: ALT_SHIFT_M,
+    run: () => setLastRun('Alt+Shift+M — hide the more-info panel'),
+  });
+  createAction({
+    name: 'button.save',
+    shortcut: ALT_S,
+    run: () => setLastRun("Alt+S — a dialog's Save"),
   });
 
   return (
@@ -121,11 +163,24 @@ export const KeyboardShowcase = () => {
                 : ' No modifier is held right now.'}
             </Note>
             <Row>
-              <Button shortcut={ALT_N}>Add item</Button>
-              <Button variant="secondary" shortcut={ALT_M}>
+              <Button
+                shortcut={ALT_N}
+                onClick={() => setLastRun('Alt+N — the add action ran')}
+              >
+                Add item
+              </Button>
+              <Button
+                variant="secondary"
+                shortcut={ALT_M}
+                onClick={() => setLastRun('Alt+M — show the more-info panel')}
+              >
                 More info
               </Button>
-              <Button variant="primary" shortcut={ALT_S}>
+              <Button
+                variant="primary"
+                shortcut={ALT_S}
+                onClick={() => setLastRun("Alt+S — a dialog's Save")}
+              >
                 {t('button.save')}
               </Button>
               {/* An icon-only carrier takes the same prop; its badge drops
@@ -135,8 +190,19 @@ export const KeyboardShowcase = () => {
                 label={t('button.close')}
                 icon={<CloseIcon />}
                 shortcut={ALT_SHIFT_M}
+                onClick={() =>
+                  setLastRun('Alt+Shift+M — hide the more-info panel')
+                }
               />
             </Row>
+            {/* Each carrier's key is live on this page, so pressing it and
+                clicking it land in the same place — which is the point of the
+                split: the SCREEN declares the action, the control carries only
+                the shortcut. */}
+            <Note>
+              {lastRun() ??
+                'Press one of the keys above (or click a control) to see its action fire.'}
+            </Note>
             <Note>
               The badge alone, outside a control, for the two renderings of one
               value:
@@ -175,17 +241,16 @@ export const KeyboardShowcase = () => {
               whatever is mounted, so this is the reverse lookup a grep cannot
               give you: which entry a keypress resolves to, and in what order.
               Last registered wins, so a nested surface shadows the screen
-              beneath it.
+              beneath it. The showcase mounts no AppShell or KeyboardHost, so
+              the entries here are only the four this page declares for the
+              badge demo above — in the real app the same list carries the nav
+              destinations, the global commands and any open dialog's Save and
+              Cancel. In the running app, <code>__keyActions()</code> in the
+              console answers the same question on the screen in question.
             </Note>
             <Show
               when={registeredActions().length > 0}
-              fallback={
-                <Note>
-                  Nothing registered — the showcase mounts no AppShell or
-                  KeyboardHost, so only actions created by components on this
-                  page appear.
-                </Note>
-              }
+              fallback={<Note>Nothing registered.</Note>}
             >
               <table>
                 <thead>

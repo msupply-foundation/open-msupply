@@ -98,15 +98,16 @@ const registry = new Set<KeyAction>();
  */
 export const createAction = (spec: KeyActionSpec): KeyAction => {
   /*
-   * An action declared inside a surface that stays MOUNTED while hidden — dialog
-   * content — is available only while that surface is showing. `onCleanup` cannot
-   * express it, because nothing cleans up when a mounted dialog merely closes, so
-   * the surface's own flag folds into `disabled` here (see surfaceActive.ts).
+   * An action declared inside a surface that stays MOUNTED while hidden —
+   * dialog content — is available only while that surface is showing.
+   * `onCleanup` cannot express it, because nothing cleans up when a mounted
+   * dialog merely closes, so the surface's own flag folds into `disabled` here
+   * (see surfaceActive.ts).
    *
-   * Structural, not a rule to remember: an author who declares a binding inside a
-   * dialog gets the gate whether or not they knew they needed one. Without it a
-   * closed dialog answers its own keys, and an `always`-tier bare character
-   * (the line editor's `+`) fires on every screen in the app.
+   * Structural, not a rule to remember: an author who declares a binding
+   * inside a dialog gets the gate whether or not they knew they needed one.
+   * Without it a closed dialog answers its own keys, and an `always`-tier bare
+   * character (the line editor's `+`) fires on every screen in the app.
    */
   const surfaceActive = useSurfaceActive();
   const disabled =
@@ -180,12 +181,24 @@ export const bindingRegistered = (shortcut: Shortcut): boolean => {
   return false;
 };
 
+/**
+ * Every binding any registered action owns, disabled or not — for the dev-only
+ * carrier audit (`src/keyboard/devCarrierAudit.ts`).
+ *
+ * Ignoring `disabled` is the point, and the difference from
+ * `bindingRegistered` is deliberate: `disabled` is transient app state (a list
+ * still loading, a record read-only), while an advertised binding nothing owns
+ * is DRIFT. A control inert alongside its inert action is correct.
+ */
+export const declaredBindings = (): readonly Shortcut[] =>
+  [...registry].flatMap(action => (action.shortcut ? [action.shortcut] : []));
+
 /*
- * The reverse lookup, in dev only (kdd/keyboard-layer § the honest cost is a lost
- * reverse lookup). From a binding you can grep to its creation site; from a
- * KEYPRESS you cannot read off which entry wins, and the set is the union over
- * whatever is mounted. The showcase's inspector cannot answer it either — it
- * mounts no shell — so the answer has to be available in the running app:
+ * The reverse lookup, in dev only (kdd/keyboard-layer § the honest cost is a
+ * lost reverse lookup). From a binding you can grep to its creation site; from
+ * a KEYPRESS you cannot read off which entry wins, and the set is the union
+ * over whatever is mounted. The showcase's inspector cannot answer it either —
+ * it mounts no shell — so the answer has to be available in the running app:
  *
  *   __keyActions()   in the console, on the screen in question.
  *
