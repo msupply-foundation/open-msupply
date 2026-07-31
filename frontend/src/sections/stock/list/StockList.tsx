@@ -355,7 +355,7 @@ const StockList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('stock') }];
+  const crumbs = () => [{ label: t('stock') }];
 
   const emptyCreate = (): JSX.Element => (
     <Button

@@ -3,7 +3,10 @@ import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { EmptyState } from '../../../../ui/elements/feedback/EmptyState';
 import { Button } from '../../../../ui/elements/buttons/Button';
@@ -60,6 +63,13 @@ export interface ReturnItemsModalProps {
   /** UPDATE mode: the item to open on (from the clicked row). */
   initialItemId?: string;
   /**
+   * UPDATE mode: the clicked row's LINE id — the batch to focus once the item's
+   * rows load. An item can hold several batches, so the item id alone doesn't
+   * say which row the user meant. Unused for "Add item", and after a
+   * "Save & next" advance (which focuses the new item's first row).
+   */
+  initialLineId?: string;
+  /**
    * "Save & next": resolve the next item to edit. Owned by the PARENT detail
    * view, because the line table is server-paginated — the next item may sit on
    * a later page, and finding it pages the visible table forward (spec rules §
@@ -99,6 +109,7 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         returnId={props.returnId}
         mode={props.mode}
         initialItemId={props.mode === 'update' ? openKey : undefined}
+        initialLineId={props.initialLineId}
         nextItem={props.nextItem}
         itemById={props.itemById}
         onSaved={props.onSaved}
@@ -119,7 +130,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   const [saving, setSaving] = createSignal(false);
   const [loadingLines, setLoadingLines] = createSignal(true);
   const [message, setMessage] = createSignal<
-    { severity: 'error' | 'warning'; text: string } | undefined
+    | {
+        severity: 'error' | 'warning';
+        text: string;
+        /** Test hook: which block this is (e2e/TESTIDS.md). */
+        kind: 'pack-size' | 'zero-quantity' | 'save-error';
+      }
+    | undefined
   >();
   // Edit mode's confirm-to-remove path (OMS-REG-DIST-07.28): proceeding at
   // zero quantity warns once; the next OK applies the removal.
@@ -150,7 +167,12 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   // into an item, whether it came from a row click, the item search, or a
   // "Save & next" advance — so picking an item already on the return loads its
   // existing batch set instead of starting a duplicate (OMS-REG-DIST-07.48).
-  const seedItem = async (item: ReturnItem) => {
+  //
+  // `focusLineId` is the row the user clicked in the detail table, when the
+  // editor opened from one: focus lands on THAT batch's quantity field rather
+  // than the item's first, since a return with several batches of one item is
+  // otherwise ambiguous. Falls back to the first row.
+  const seedItem = async (item: ReturnItem, focusLineId?: string) => {
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setStep('quantity');
@@ -175,34 +197,38 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     // the detail table instead: it holds one server page, not the return's
     // whole line set (spec contract § server-paginated line table).
     const seeded = seedDrafts(generated, new Set(generated.map(l => l.id)));
-    setDraft(
-      reconcile(
-        seeded.length > 0
-          ? seeded
-          : [
-              blankDraft(
-                { id: item.id, code: item.code, unitName: null },
-                item.name
-              ),
-            ],
-        { key: 'id' }
-      )
-    );
+    const rows =
+      seeded.length > 0
+        ? seeded
+        : [
+            blankDraft(
+              { id: item.id, code: item.code, unitName: null },
+              item.name
+            ),
+          ];
+    setDraft(reconcile(rows, { key: 'id' }));
     setLoadingLines(false);
+    // Armed, not applied: the request lands when the grid attaches, so there is
+    // no load gate to coordinate here (ui/utils/createFocusTarget).
+    quantityFields.focus(focusLineId ?? rows[0]?.id ?? '');
   };
 
   // The item lookup — live only in add mode, where it is the editor's starting
   // control (ui/utils/createFocusTarget).
   const itemSearch = createFocusTarget();
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
 
-  // Seed on mount: a row open starts on its item; an add open starts in the
-  // empty search state, focusing the item selector.
+  // Seed on mount: a row open starts on its item — focusing the clicked batch;
+  // an add open starts in the empty search state, focusing the item selector.
   onMount(() => {
     const id = props.initialItemId;
     if (!id) return itemSearch.focus();
     const item = props.itemById(id);
     if (!item) return props.onClose();
-    void seedItem(item);
+    void seedItem(item, props.initialLineId);
   });
 
   // Back to the empty item-search state. Reached by clearing the selection, by
@@ -231,19 +257,17 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setZeroConfirmed(false);
   };
 
+  // Add batch: a blank row at the TOP of the grid, focused straight away — the
+  // whole point of the action is to type into it (the inbound editor's rule).
   const addBatch = () => {
     const item = currentItem();
     if (!item) return;
-    setDraft(
-      produce(lines =>
-        lines.unshift(
-          blankDraft(
-            { id: item.id, code: item.code, unitName: null },
-            item.name
-          )
-        )
-      )
+    const batch = blankDraft(
+      { id: item.id, code: item.code, unitName: null },
+      item.name
     );
+    setDraft(produce(lines => lines.unshift(batch)));
+    quantityFields.focus(batch.id);
   };
 
   // Step-1 gating (ui-surface S4; OMS-REG-DIST-07.28/.29's UI half):
@@ -258,6 +282,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (validateStep1(drafts) === 'invalid-pack-size') {
       setMessage({
         severity: 'error',
+        kind: 'pack-size',
         text: t('messages.alert-invalid-pack-size'),
       });
       return false;
@@ -267,6 +292,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (!returning && !removing) {
       setMessage({
         severity: 'error',
+        kind: 'zero-quantity',
         text: t('messages.alert-zero-return-quantity'),
       });
       return false;
@@ -274,6 +300,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (removing && !zeroConfirmed()) {
       setMessage({
         severity: 'warning',
+        kind: 'zero-quantity',
         text: t('messages.zero-return-quantity-will-delete-lines'),
       });
       setZeroConfirmed(true);
@@ -286,12 +313,24 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (!gateStep1()) return;
     // Nothing with quantity (the confirmed zero-delete path) → save directly;
     // otherwise on to reasons.
-    if (reasonStepLines(draft.slice()).length === 0) {
+    const carried = reasonStepLines(draft.slice());
+    if (carried.length === 0) {
       void onOk();
       return;
     }
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(carried[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const save = async (): Promise<boolean> => {
@@ -306,7 +345,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (result.kind === 'error') {
       // Every rejection is non-typed (contract wire trap) — show the server's
       // message in the modal.
-      setMessage({ severity: 'error', text: result.message });
+      setMessage({ severity: 'error', kind: 'save-error', text: result.message });
       return false;
     }
     // The parent refetches the line table's current page; the mutation's own
@@ -405,7 +444,16 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       }
       actionsLead={
         <Show when={message()}>
-          {m => <Alert severity={m().severity}>{m().text}</Alert>}
+          {m => (
+            <Alert
+              severity={m().severity}
+              testId={
+                m().kind === 'save-error' ? 'save-error-alert' : `${m().kind}-alert`
+              }
+            >
+              {m().text}
+            </Alert>
+          )}
         </Show>
       }
       // The footer (ui-surface S4 § layout): Cancel (step 1) / Back (step 2) ·
@@ -427,10 +475,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -545,7 +590,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           when={step() === 'reason'}
           fallback={
             <DataTable
-              columns={quantityColumns(update)}
+              columns={quantityColumns(update, quantityFields)}
               rows={draft.filter(() => true)}
               rowKey={line => line.id}
               loading={loadingLines()}
@@ -558,7 +603,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
-            columns={reasonColumns(update)}
+            columns={reasonColumns(update, reasonFields)}
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}

@@ -3,7 +3,6 @@ import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { round } from '@/intl/formatNumber';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -51,17 +50,11 @@ import { DeleteLocationsAction, ExportLocationsAction } from './actions';
 // code exist (OMS-REG-INV-01.17; kdd/type-safety).
 type SortKey = NonNullable<LocationsListVariables['sort']>[number]['key'];
 
-// The fullness display (OMS-REG-INV-01.31): the proportion used ÷ capacity as a
-// percentage, via the SAME undefined-safe helper the volume-aware picker uses
-// (OMS-REG-INV-01.30 — one rule, domain/location/volume). No figure when
-// capacity is 0, or when stock is present but volumeUsed is 0 (misleading
-// "0%").
-const fullnessLabel = (row: LocationRow): string => {
-  const pct = getVolumeUsedPercentage(row);
-  return pct === undefined
-    ? ''
-    : t('label.percent-used', { value: round(pct, 2) });
-};
+// The fullness column reads getVolumeUsedPercentage directly
+// (OMS-REG-INV-01.31) — the SAME undefined-safe helper the volume-aware picker
+// uses (one rule, domain/location/volume): no proportion when capacity is 0, or
+// when stock is present but volumeUsed is 0 (a misleading "0%"). The proportion
+// cell renders whatever it is handed, blank included.
 
 const LocationsList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -186,14 +179,14 @@ const LocationsList: Component = () => {
       size: remToPx(7),
     },
     {
-      // Fullness, read-only (OMS-REG-INV-01.30): used ÷ capacity, no figure
-      // when capacity is 0 (OMS-REG-INV-01.31). Registry gap: the
-      // proportion-BAR role has no built component (a ⛔ row in the registry),
-      // so this renders the percentage text as the documented interim.
-      c: { accessor: fullnessLabel, id: 'volumeUsed' },
+      // Fullness, read-only (OMS-REG-INV-01.30): the proportion bar cell
+      // (registry "proportion cell (fullness bar)") over the percentage this
+      // vertical's shared helper derives — blank where there is no proportion
+      // to show (OMS-REG-INV-01.31). The `volumeUsed` key carries the cell
+      // type + its width; the bar itself never suppresses anything.
+      c: { accessor: getVolumeUsedPercentage, id: 'volumeUsed' },
       header: () => t('label.volume-used'),
-      ...getNumberCell(),
-      size: remToPx(7.5),
+      ...getCellDefinition('volumeUsed'),
     },
     {
       // The boolean flag cell (registry "boolean cell in a table"): a centred
@@ -206,7 +199,7 @@ const LocationsList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('locations') }];
+  const crumbs = () => [{ label: t('locations') }];
 
   return (
     <Page
