@@ -1,9 +1,10 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
 import { getLastLoginUsername } from '../appData';
 import { serverVersion } from '../api/serverInfo';
+import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
@@ -29,6 +30,23 @@ export const LoginPage: Component = () => {
   const remembered = getLastLoginUsername();
   const [username, setUsername] = createSignal(remembered ?? '');
   const [password, setPassword] = createSignal('');
+  // Spec (S1): focus starts on whichever field still needs typing — the
+  // username when nothing is remembered, the password when the name is already
+  // filled in.
+  //
+  // Handles rather than native `autofocus` (kdd/focus-targets), because this
+  // page mounts a SECOND time: a logout clears authUser() and App.tsx swaps it
+  // back in, in the same document. Native `autofocus` is honoured at most once
+  // per document — the first mount sets the browser's autofocus-processed flag,
+  // and every later one is ignored — so the attribute would silently do nothing
+  // on exactly the path this exists for (log in, log out, come back to a
+  // remembered name with only the password left to type). Verified in Chrome: a
+  // remount's `autofocus` leaves focus on <body>.
+  const usernameField = createFocusTarget();
+  const passwordField = createFocusTarget();
+  onMount(() =>
+    (remembered === undefined ? usernameField : passwordField).focus()
+  );
   const [fieldErrors, setFieldErrors] = createSignal({
     username: '',
     password: '',
@@ -85,10 +103,7 @@ export const LoginPage: Component = () => {
               name="username"
               data-testid="login-username-input"
               autocomplete="username"
-              // Spec (S1): focus starts on whichever field still needs typing —
-              // the username when nothing is remembered, the password when the
-              // name is already filled in.
-              autofocus={remembered === undefined}
+              ref={usernameField.ref}
               value={username()}
               error={fieldErrors().username || undefined}
               onInput={e => setUsername(e.currentTarget.value)}
@@ -102,7 +117,7 @@ export const LoginPage: Component = () => {
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
-              autofocus={remembered !== undefined}
+              ref={passwordField.ref}
               value={password()}
               error={fieldErrors().password || undefined}
               onInput={e => setPassword(e.currentTarget.value)}
