@@ -336,6 +336,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               <Button
                 variant="secondary"
                 icon={<XCircleIcon />}
+                confirms="cancel"
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
               >
@@ -343,6 +344,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               </Button>
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog. */}
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
@@ -361,6 +364,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 <Button
                   icon={<ArrowRightIcon />}
                   loading={saving()}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={onNextStep}
                 >
@@ -371,6 +375,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 <Button
                   icon={<CheckIcon />}
                   loading={saving()}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={() => void onOk()}
                 >
@@ -387,6 +392,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               <Button
                 icon={<ArrowRightIcon />}
                 loading={saving()}
+                // The CONTINUING confirm: while it is present and enabled, Enter
+                // activates it in preference to plain OK (KB-E2, AC-KB23).
+                confirms="continuing"
                 data-testid="dialog-button-next-and-ok"
                 onClick={() => void onOkNext()}
               >

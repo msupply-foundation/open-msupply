@@ -82,6 +82,7 @@ export const DeleteReturnsAction: Component<
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              confirms="plain"
               onClick={() => setBlockedOpen(false)}
             >
               {t('button.ok')}
@@ -155,6 +156,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={finish}
                 >
                   {t('button.cancel')}
@@ -163,6 +165,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
               <Button
                 variant="secondary"
                 icon={<TrashIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -173,7 +176,12 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <Button variant="secondary" icon={<CheckIcon />} onClick={finish}>
+            <Button
+              variant="secondary"
+              icon={<CheckIcon />}
+              confirms="plain"
+              onClick={finish}
+            >
               {t('button.ok')}
             </Button>
           </Match>

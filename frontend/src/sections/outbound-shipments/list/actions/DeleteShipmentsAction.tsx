@@ -73,6 +73,7 @@ export const DeleteShipmentsAction: Component<
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              confirms="plain"
               onClick={() => setBlockedOpen(false)}
             >
               {t('button.ok')}
@@ -142,6 +143,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -150,6 +152,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
               <Button
                 variant="secondary"
                 icon={<TrashIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -163,6 +166,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              confirms="plain"
               onClick={props.onClose}
             >
               {t('button.ok')}
@@ -172,6 +176,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               onClick={props.onClose}
             >
               {t('button.cancel')}

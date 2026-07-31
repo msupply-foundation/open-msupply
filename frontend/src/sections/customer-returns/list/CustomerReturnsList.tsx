@@ -12,6 +12,8 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -199,13 +201,29 @@ const CustomerReturnsList: Component = () => {
     // Then the standing permission mirror (validation § permission gating):
     // creating requires CUSTOMER_RETURN_MUTATE. Lacking it, the global
     // permission-denied modal shows at once — never a toast, and no customer
-    // picker opens. The server enforces the same resource on the write regardless.
+    // picker opens. The server enforces the same resource on the write
+    // regardless.
     if (!hasPermission('CUSTOMER_RETURN_MUTATE')) {
       reportPermissionDenied(['CustomerReturnMutate']);
       return;
     }
     setCreateOpen(true);
   };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge.
+  //
+  // Never disabled, because the control never is: `onNewReturn` owns the
+  // preference and permission gates and reports each in its own way (a notice,
+  // or the global permission-denied modal). The key reaching the same handler
+  // is the point — a shortcut that silently did nothing where the button
+  // explains itself would be a worse answer than no shortcut.
+  createAddAction({
+    name: 'button.new-return',
+    run: onNewReturn,
+  });
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -339,6 +357,7 @@ const CustomerReturnsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-return-button"
               onClick={onNewReturn}
             >
@@ -408,6 +427,7 @@ const CustomerReturnsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={onNewReturn}
           >
@@ -445,6 +465,7 @@ const CustomerReturnsList: Component = () => {
           <Button
             variant="secondary"
             icon={<CheckIcon />}
+            confirms="plain"
             onClick={() => setDisabledNoticeOpen(false)}
           >
             {t('button.ok')}

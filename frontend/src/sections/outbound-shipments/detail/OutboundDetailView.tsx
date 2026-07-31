@@ -40,7 +40,9 @@ import {
 } from '../../../ui/elements/table/tableHelpers';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
-import { createMediaQuery } from '../../../ui/utils/createMediaQuery';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import {
   CheckIcon,
@@ -161,12 +163,13 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel: auto-open on wide viewports, closed below (the responsive
-  // detail-panel behaviour the shared e2e suites drive); the More button and
-  // the panel's close re-take control until the breakpoint next flips.
-  const isWide = createMediaQuery('(min-width: 1536px)');
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
-  createEffect(() => setSidePanelOpen(isWide()));
+  // Side panel: auto-open on wide viewports, closed below, with the user's
+  // explicit open/close choice winning over that default and persisting. The
+  // shared helper, which also registers Alt+M / Alt+Shift+M for this screen
+  // (spec/keyboard KB-R2 — "the screen has a more-info panel" IS "this helper was
+  // called"). A bare createSignal plus a breakpoint effect here left the panel
+  // answering neither binding, and re-took control from the user on every flip.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
@@ -469,6 +472,25 @@ const OutboundDetailView: Component = () => {
     });
   const openAdd = () => setEditState({});
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  //
+  // Gated on `.state`, NOT through `editable()` — that reads `data.latest`, which
+  // suspends on the first pending read, and the palette evaluates every action's
+  // `disabled()` inside its own render (kdd/keyboard-layer § an action's
+  // `disabled` MUST NOT read a suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const current = data.latest;
+      return !current || !isEditable(current.status);
+    },
+  });
+
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
   // item may be on a later PAGE, and finding it means advancing the detail
@@ -717,6 +739,7 @@ const OutboundDetailView: Component = () => {
                 <Button
                   variant="secondary"
                   icon={<CheckIcon />}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={() =>
                     navigate(
@@ -766,6 +789,7 @@ const OutboundDetailView: Component = () => {
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -789,6 +813,9 @@ const OutboundDetailView: Component = () => {
                         variant="secondary"
                         icon={<InfoIcon />}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -986,6 +1013,7 @@ const OutboundDetailView: Component = () => {
                     editable() ? (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
@@ -1078,6 +1106,7 @@ const OutboundDetailView: Component = () => {
                     <Button
                       variant="secondary"
                       icon={<CheckIcon />}
+                      confirms="plain"
                       onClick={() => setReturnNoticeOpen(false)}
                     >
                       {t('button.ok')}

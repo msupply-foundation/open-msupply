@@ -70,25 +70,10 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
     props.onClose();
   };
 
-  /*
-   * A bespoke verb or a bespoke tone drops the confirm to a plain <Button> (see
-   * the branch below), which claims no footer role and so answers no `Enter`
-   * (spec/keyboard KB-E2, kdd/keyboard-layer decision 8). Declared here rather
-   * than left implicit, because "this dialog deliberately has no submit key" and
-   * "somebody forgot `confirms`" are otherwise the same silent state — Dialog
-   * warns in dev about the second.
-   *
-   * Whether a DESTRUCTIVE confirm should answer `Enter` is an open spec question;
-   * this line is where that decision lands.
-   */
-  const bespokeConfirm = () =>
-    props.confirmLabel !== undefined || props.confirmVariant === 'danger';
-
   return (
     <Show when={props.open}>
       <Dialog
         open
-        enterConfirms={!bespokeConfirm()}
         onClose={props.onClose}
         icon={<HelpIcon />}
         testId="confirmation-modal"
@@ -108,6 +93,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
               {label => (
                 <Button
                   variant="secondary"
+                  confirms="cancel"
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
@@ -132,12 +118,20 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
                   a standard button owns both its label and its tone, so
                   neither can be overridden on one. When only the TONE is
                   bespoke the label still comes from the standard vocabulary,
-                  so a danger OK reads identically — just red. */}
+                  so a danger OK reads identically — just red.
+
+                  It claims `plain` like every other confirm, INCLUDING a danger
+                  one: KB-E2 makes Enter activate "the dialog's confirming
+                  action" with no exception for a destructive verb, and the
+                  reference vertical's danger confirms answer it. A
+                  ConfirmDialog-based delete and a hand-built one therefore
+                  behave alike. */}
               <Match
                 when={props.confirmLabel || props.confirmVariant === 'danger'}
               >
                 <Button
                   variant={props.confirmVariant ?? 'primary'}
+                  confirms="plain"
                   data-testid="confirmation-modal-ok"
                   onClick={confirm}
                 >

@@ -139,6 +139,7 @@ export const DuplicateShipmentAction: Component<
                 <Button
                   variant="secondary"
                   icon={<CheckIcon />}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={() => {
                     const id = copyId();
@@ -156,6 +157,7 @@ export const DuplicateShipmentAction: Component<
                   <Button
                     variant="secondary"
                     icon={<XCircleIcon />}
+                    confirms="cancel"
                     onClick={close}
                   >
                     {t('button.cancel')}
@@ -166,6 +168,7 @@ export const DuplicateShipmentAction: Component<
                   <Button
                     variant="secondary"
                     icon={<XCircleIcon />}
+                    confirms="cancel"
                     data-testid="dialog-button-cancel"
                     onClick={close}
                   >
@@ -175,6 +178,7 @@ export const DuplicateShipmentAction: Component<
                 <Button
                   variant="secondary"
                   icon={<CheckIcon />}
+                  confirms="plain"
                   data-testid="confirmation-modal-ok"
                   loading={phase() === 'working'}
                   onClick={() => void run()}

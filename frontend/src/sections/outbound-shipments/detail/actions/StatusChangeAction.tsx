@@ -260,6 +260,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={close}
                 >
                   {t('button.cancel')}
@@ -268,6 +269,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               <Button
                 variant="primary"
                 icon={<ArrowRightIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -293,9 +295,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           description={infoMessage()}
           actions={
             <>
+              {/* OK dismisses the notice, which is what Escape does too, so it
+                  claims the cancel role; the release-and-retry below is the
+                  action this dialog offers and takes the confirm. */}
               <Button
                 variant="secondary"
                 icon={<CheckIcon />}
+                confirms="cancel"
                 disabled={releasing()}
                 onClick={closeNotice}
               >
@@ -306,6 +312,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   <Button
                     variant="primary"
                     icon={<ArrowRightIcon />}
+                    confirms="plain"
                     data-testid="release-hold-and-confirm-button"
                     loading={releasing()}
                     onClick={() => void releaseAndConfirm()}

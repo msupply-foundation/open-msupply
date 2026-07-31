@@ -26,6 +26,8 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -171,6 +173,21 @@ const PatientDetailView: Component = () => {
   const [insuranceState, setInsuranceState] = createSignal<{
     policy?: InsurancePolicyFragment;
   }>();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the app-bar button and
+  // the ghost button in the Insurance panel's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge.
+  //
+  // Disabled — and so unlisted in the palette — except on the Insurance tab with
+  // the mutate permission, which is exactly when either control renders. KB-R2's
+  // "unclaimed only where the thing is absent": on the Details tab this screen has
+  // no add action, so nothing here answers the key.
+  createAddAction({
+    name: 'button.add-insurance',
+    run: () => setInsuranceState({}),
+    disabled: () => activeTab() !== 'insurance' || !canMutate(),
+  });
 
   const [policiesData, { refetch: refetchPolicies }] = createResource(
     () =>
@@ -343,6 +360,7 @@ const PatientDetailView: Component = () => {
                     <HeaderButtons>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-insurance-header-button"
                         onClick={() => setInsuranceState({})}
                       >

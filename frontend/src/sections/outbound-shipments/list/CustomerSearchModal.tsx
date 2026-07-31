@@ -84,9 +84,13 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
       // Room for the lookup's open listbox inside the dialog.
       minBodyHeightRem={24}
       actions={
+        // Cancel is the only footer action — choosing a customer from the list
+        // is this dialog's confirm, and Enter there belongs to the picker
+        // (KB-E1).
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >

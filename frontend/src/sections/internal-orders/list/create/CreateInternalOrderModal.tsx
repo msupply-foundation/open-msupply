@@ -330,6 +330,7 @@ export const CreateInternalOrderModal: Component<
         <Show when={activeTab() === 'program'}>
           <Button
             icon={<PlusCircleIcon />}
+            confirms="plain"
             data-testid="create-program-order-button"
             disabled={!createReady()}
             loading={submitting()}

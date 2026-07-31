@@ -12,6 +12,8 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -190,8 +192,9 @@ const SupplierReturnsList: Component = () => {
   const filters = createFilters(() => prefs.latest?.invoiceStatusOptions ?? []);
 
   const onNewReturn = () => {
-    // Preference gate first (rules § preference & permission gates): with manual
-    // returns disabled the notice shows even to a user lacking the permission.
+    // Preference gate first (rules § preference & permission gates): with
+    // manual returns disabled the notice shows even to a user lacking the
+    // permission.
     if (manualReturnsDisabled()) {
       setDisabledNoticeOpen(true);
       return;
@@ -199,13 +202,26 @@ const SupplierReturnsList: Component = () => {
     // Then the standing permission mirror (validation § permission gating):
     // creating requires SUPPLIER_RETURN_MUTATE. Lacking it, the global
     // permission-denied modal shows at once — never a toast, and no supplier
-    // picker opens. The server enforces the same resource on the write regardless.
+    // picker opens. The server enforces the same resource on the write
+    // regardless.
     if (!hasPermission('SUPPLIER_RETURN_MUTATE')) {
       reportPermissionDenied(['SupplierReturnMutate']);
       return;
     }
     setCreateOpen(true);
   };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it; each carries
+  // `shortcut={ALT_N}` for its badge.
+  //
+  // Never disabled, because the control never is: `onNewReturn` owns the
+  // preference and permission gates and reports each in its own way (a notice,
+  // or the global permission-denied modal).
+  createAddAction({
+    name: 'button.new-return',
+    run: onNewReturn,
+  });
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -334,6 +350,7 @@ const SupplierReturnsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-return-button"
               onClick={onNewReturn}
             >
@@ -403,6 +420,7 @@ const SupplierReturnsList: Component = () => {
         empty={
           <Button
             icon={<PlusCircleIcon />}
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={onNewReturn}
           >
@@ -440,6 +458,7 @@ const SupplierReturnsList: Component = () => {
           <Button
             variant="secondary"
             icon={<CheckIcon />}
+            confirms="plain"
             onClick={() => setDisabledNoticeOpen(false)}
           >
             {t('button.ok')}

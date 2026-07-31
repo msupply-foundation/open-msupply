@@ -110,12 +110,14 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={selectedIds().length === 0}

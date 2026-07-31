@@ -36,6 +36,8 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAction, createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_L, ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import {
   CloseIcon,
   InfoIcon,
@@ -274,6 +276,29 @@ const PrescriptionDetailView: Component = () => {
     }
   };
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
+  // declaration for the header button and the ghost button in the table's empty
+  // slot; each carries `shortcut={ALT_N}` for its badge. `info()` is the
+  // `.state`-gated read above, so this predicate never suspends the palette
+  // (kdd/keyboard-layer § an action's `disabled` MUST NOT read a suspending
+  // source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditState({}),
+    disabled: () => !info() || disabled(),
+  });
+
+  // Alt+L — print prescription labels (KB-R1's binding table, ui-surface S2). A
+  // SPECIFIC action, gated on this screen because this is the only place it
+  // exists (KB-R2's contrast). Available at every status (AC-E2); inert while a
+  // print is already in flight, mirroring the footer control's `loading`.
+  createAction({
+    name: 'button.print-prescription-label',
+    shortcut: ALT_L,
+    run: () => void runPrintLabels(),
+    disabled: () => !info() || printingLabels(),
+  });
+
   const openRow = (line: Line) => {
     if (!disabled())
       setEditState({
@@ -432,6 +457,7 @@ const PrescriptionDetailView: Component = () => {
                   <Show when={!disabled()}>
                     <Button
                       icon={<PlusCircleIcon />}
+                      shortcut={ALT_N}
                       data-testid="add-item-button"
                       onClick={() => setEditState({})}
                     >
@@ -454,6 +480,10 @@ const PrescriptionDetailView: Component = () => {
                       },
                     ]}
                     defaultValue="labels"
+                    // Alt+L is registered above and runs the labels action; it
+                    // lands on this control's MAIN half, whose default option is
+                    // labels (ui-surface S2).
+                    shortcut={ALT_L}
                     onAction={value =>
                       value === 'labels'
                         ? void runPrintLabels()
@@ -473,6 +503,9 @@ const PrescriptionDetailView: Component = () => {
                       variant="secondary"
                       icon={<SidebarIcon />}
                       data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it (ui-surface S2).
+                      shortcut={ALT_M}
                       onClick={() => setSidePanelOpen(true)}
                     >
                       {t('button.more')}
@@ -593,6 +626,7 @@ const PrescriptionDetailView: Component = () => {
                   <Show when={!disabled()}>
                     <Button
                       variant="ghost"
+                      shortcut={ALT_N}
                       data-testid="nothing-here-create-button"
                       onClick={() => setEditState({})}
                     >
@@ -673,6 +707,7 @@ const PrescriptionDetailView: Component = () => {
             title={t('heading.unable-to-print')}
             actions={
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={() => setPrinterMissing(false)}
               >

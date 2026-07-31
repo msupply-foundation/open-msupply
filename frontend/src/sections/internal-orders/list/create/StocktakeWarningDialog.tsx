@@ -32,9 +32,16 @@ export const StocktakeWarningDialog: Component<
     })}
     actions={
       <>
-        <Button variant="secondary" onClick={() => props.onCancel()}>
+        <Button
+          variant="secondary"
+          confirms="cancel"
+          onClick={() => props.onCancel()}
+        >
           {t('button.cancel')}
         </Button>
+        {/* Continuing anyway is the ALTERNATIVE, not the confirm: it claims no
+            role, so Enter cannot skip the warning the gate exists to give
+            (spec/keyboard KB-E2 — the confirm is the primary below). */}
         <Button
           variant="secondary"
           data-testid="continue-without-stocktake-button"
@@ -43,6 +50,7 @@ export const StocktakeWarningDialog: Component<
           {t('button.continue-without-stocktake')}
         </Button>
         <Button
+          confirms="plain"
           data-testid="go-to-stocktakes-button"
           onClick={() => props.onGoToStocktakes()}
         >

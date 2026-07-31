@@ -15,6 +15,9 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { InfoIcon, PlusCircleIcon } from '../../../ui/icons';
@@ -64,7 +67,11 @@ type Line = CustomerReturnLineFragment;
 const CustomerReturnDetailView: Component = () => {
   const params = useParams<{ storeId: string; returnId: string }>();
   const navigate = useNavigate();
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  // Details-panel open state: the shared helper, which also registers Alt+M /
+  // Alt+Shift+M for this screen (spec/keyboard KB-R2 — "the screen has a
+  // more-info panel" IS "this helper was called"). A bare createSignal here
+  // left the panel answering neither binding.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [customerError, setCustomerError] = createSignal<string | undefined>();
 
   type EditState =
@@ -208,6 +215,25 @@ const CustomerReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  //
+  // Gated on `.state`, NOT on `info()` — that reads `data()` and suspends, and
+  // the palette evaluates every action's `disabled()` inside its own render
+  // (kdd/keyboard-layer § an action's disabled MUST NOT read a suspending
+  // source).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || isReturnDisabled(node);
+    },
+  });
+
   const crumbs = (node: CustomerReturnInfoFragment) => [
     { label: t('distribution') },
     {
@@ -309,6 +335,7 @@ const CustomerReturnDetailView: Component = () => {
                     <Show when={!disabled()}>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -324,6 +351,9 @@ const CustomerReturnDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<InfoIcon />}
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -387,6 +417,7 @@ const CustomerReturnDetailView: Component = () => {
                       disabled() ? undefined : (
                         <Button
                           variant="ghost"
+                          shortcut={ALT_N}
                           data-testid="nothing-here-create-button"
                           onClick={openAdd}
                         >

@@ -94,14 +94,17 @@ export const LinkInternalOrderModal: Component<
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           {/* Next creates the shipment WITHOUT a link — the optional-skip path
-              the instruction above describes. */}
+              the instruction above describes. It is this dialog's confirming
+              action (picking an order from the list is the other route). */}
           <Button
+            confirms="plain"
             data-testid="dialog-button-next"
             loading={props.busy}
             onClick={props.onNext}

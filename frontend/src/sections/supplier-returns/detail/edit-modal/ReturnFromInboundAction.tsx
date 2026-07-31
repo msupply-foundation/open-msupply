@@ -72,6 +72,7 @@ export const ReturnFromInboundAction: Component<
           <Button
             variant="secondary"
             icon={<CheckIcon />}
+            confirms="plain"
             onClick={() => setNoticeOpen(false)}
           >
             {t('button.ok')}

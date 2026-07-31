@@ -114,11 +114,13 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
               <Button
                 variant="secondary"
                 icon={<XCircleIcon />}
+                confirms="cancel"
                 onClick={props.onClose}
               >
                 {t('button.cancel')}
               </Button>
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -129,7 +131,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

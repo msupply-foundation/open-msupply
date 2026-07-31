@@ -89,6 +89,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -97,6 +98,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
               <Button
                 variant="secondary"
                 icon={<TrashIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -107,7 +109,11 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <Button icon={<CheckIcon />} onClick={props.onClose}>
+            <Button
+              icon={<CheckIcon />}
+              confirms="plain"
+              onClick={props.onClose}
+            >
               {t('button.close')}
             </Button>
           </Match>

@@ -71,11 +71,13 @@ const Body: Component<AddFromMasterListModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={!masterListId()}

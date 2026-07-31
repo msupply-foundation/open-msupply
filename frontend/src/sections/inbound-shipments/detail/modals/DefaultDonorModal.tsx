@@ -93,11 +93,13 @@ const Body: Component<DefaultDonorModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             onClick={() => void save()}

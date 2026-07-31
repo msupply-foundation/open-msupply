@@ -291,6 +291,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             fallback={
               <Button
                 variant="secondary"
+                confirms="cancel"
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
               >
@@ -298,6 +299,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               </Button>
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -314,6 +317,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               <Match when={step() === 'quantity'}>
                 <Button
                   loading={saving()}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={onNextStep}
                 >
@@ -323,6 +327,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               <Match when={step() === 'reason'}>
                 <Button
                   loading={saving()}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={() => void onSave()}
                 >
@@ -337,6 +342,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Show when={step() === 'reason' && hasNext()}>
               <Button
                 loading={saving()}
+                // The CONTINUING confirm: while present and enabled, Enter
+                // activates it in preference to plain Save (KB-E2, AC-KB23).
+                confirms="continuing"
                 data-testid="dialog-button-next-and-ok"
                 onClick={() => void onSaveNext()}
               >

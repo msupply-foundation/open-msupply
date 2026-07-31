@@ -10,10 +10,7 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { CheckIcon, XCircleIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
-import {
-  currentStatusStep,
-  statusSteps,
-} from './internalOrderDetailStatus';
+import { currentStatusStep, statusSteps } from './internalOrderDetailStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
 // The detail footer (spec/internal-orders S3 § footer): the status trail
@@ -192,7 +189,9 @@ export const InternalOrderStatusFooter: Component<
               }
             >
               <Match when={phase() === 'empty'}>
-                <Alert severity="warning">{t('messages.cant-send-order')}</Alert>
+                <Alert severity="warning">
+                  {t('messages.cant-send-order')}
+                </Alert>
               </Match>
               <Match when={phase() === 'error'}>
                 <Alert severity="error">{errorMessage()}</Alert>
@@ -209,6 +208,7 @@ export const InternalOrderStatusFooter: Component<
                     <Button
                       variant="secondary"
                       icon={<XCircleIcon />}
+                      confirms="cancel"
                       onClick={() => setOpen(false)}
                     >
                       {t('button.cancel')}
@@ -216,6 +216,7 @@ export const InternalOrderStatusFooter: Component<
                   </Show>
                   <Button
                     icon={<CheckIcon />}
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'sending'}
                     onClick={() => void run()}
@@ -230,6 +231,7 @@ export const InternalOrderStatusFooter: Component<
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="plain"
                   onClick={() => setOpen(false)}
                 >
                   {t('button.close')}

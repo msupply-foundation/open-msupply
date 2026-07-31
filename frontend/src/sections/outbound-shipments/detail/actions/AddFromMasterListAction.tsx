@@ -109,6 +109,7 @@ export const AddFromMasterListAction: Component<
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               data-testid="dialog-button-cancel"
               disabled={adding()}
               onClick={() => setOpen(false)}
@@ -119,6 +120,7 @@ export const AddFromMasterListAction: Component<
                 showing a spinner (loading) until the add resolves (D46). */}
             <Button
               icon={<CheckIcon />}
+              confirms="plain"
               data-testid="dialog-button-ok"
               disabled={!selected()}
               loading={adding()}

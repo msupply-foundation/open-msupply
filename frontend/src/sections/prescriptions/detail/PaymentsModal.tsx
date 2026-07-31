@@ -95,10 +95,11 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
       testId="payments-modal"
       actions={
         <>
-          <Button variant="secondary" onClick={props.onClose}>
+          <Button variant="secondary" confirms="cancel" onClick={props.onClose}>
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={props.working}
             onClick={confirm}

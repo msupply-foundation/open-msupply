@@ -224,6 +224,7 @@ const Body = (props: BodyProps): JSX.Element => {
               <Button
                 variant="secondary"
                 icon={<XCircleIcon />}
+                confirms="cancel"
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
               >
@@ -231,6 +232,9 @@ const Body = (props: BodyProps): JSX.Element => {
               </Button>
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog, and the cancel claim is what the
+                palette's Cancel entry and the Escape badge point at. */}
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
@@ -248,6 +252,7 @@ const Body = (props: BodyProps): JSX.Element => {
             fallback={
               <Button
                 icon={<ArrowRightIcon />}
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}
@@ -259,6 +264,7 @@ const Body = (props: BodyProps): JSX.Element => {
             <Button
               icon={<CheckIcon />}
               loading={saving()}
+              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
             >

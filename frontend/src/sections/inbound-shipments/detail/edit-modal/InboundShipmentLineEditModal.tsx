@@ -1337,6 +1337,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
@@ -1345,6 +1346,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <Show when={!noItemYet()}>
             <Button
               variant="secondary"
+              // The CONTINUING confirm: while present and enabled, Enter
+              // activates it in preference to plain OK (KB-E2, AC-KB23).
+              confirms="continuing"
               data-testid="dialog-button-next-and-ok"
               loading={saving()}
               onClick={() => void onOkNext()}
@@ -1352,6 +1356,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               {t('button.ok-and-next')}
             </Button>
             <Button
+              confirms="plain"
               data-testid="dialog-button-ok"
               loading={saving()}
               onClick={() => void onOk()}

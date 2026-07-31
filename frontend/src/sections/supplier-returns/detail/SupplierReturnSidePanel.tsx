@@ -248,6 +248,7 @@ export const SupplierReturnSidePanel: Component<
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              confirms="plain"
               onClick={() => setDeleteError(undefined)}
             >
               {t('button.ok')}

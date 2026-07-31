@@ -89,6 +89,7 @@ export const DeleteInternalOrderAction: Component<{
                     <Button
                       variant="secondary"
                       icon={<XCircleIcon />}
+                      confirms="cancel"
                       onClick={close}
                     >
                       {t('button.cancel')}
@@ -97,6 +98,7 @@ export const DeleteInternalOrderAction: Component<{
                   <Button
                     variant="danger"
                     icon={<TrashIcon />}
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'deleting'}
                     onClick={() => void run()}
@@ -110,6 +112,7 @@ export const DeleteInternalOrderAction: Component<{
                 <Button
                   variant="secondary"
                   icon={<CheckIcon />}
+                  confirms="plain"
                   onClick={close}
                 >
                   {t('button.close')}
