@@ -131,12 +131,10 @@ type SortKey =
 type LineFilter = { itemCodeOrName?: { like: string } | null };
 
 // The line table's filters (ui-standards § tables → filtering): the item
-// code/name search as the screen's default (always-on) filter — the same chip
-// the stocktake detail table keeps to hand. Client-side for now, so no
-// debounce.
+// code/name search — the same chip the stocktake detail table keeps to hand.
+// Client-side for now, so no debounce.
 const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
   itemCodeOrName: {
-    alwaysOn: true,
     label: () => t('label.code-or-name'),
     render: props => (
       <FilterTextInput

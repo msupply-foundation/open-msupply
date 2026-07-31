@@ -29,21 +29,19 @@ export const outboundDetailFilters = (
 ): Filter<OutboundLineFilter>[] =>
   constructFilters<OutboundLineFilter>({
     // ─ user-facing chips, in display order ───────────────────────────────────
-    // Item name / code search (server itemCodeOrName.like) — the screen's
-    // DEFAULT filter, as in the stocktake detail (#735): always visible,
-    // never removable, absent from the add-filter menu. Blank clears to null
-    // so stripEmpty drops it (a blank `like` would match everything).
+    // Item name / code search (server itemCodeOrName.like), as in the stocktake
+    // detail. Blank clears to null so stripEmpty drops it (a blank `like` would
+    // match everything).
     //
     // Labelled for what it MATCHES rather than one of the two fields — the
     // same label + placeholder pair the reference vertical uses.
     itemCodeOrName: {
-      alwaysOn: true,
       label: () => t('label.code-or-name'),
       render: props => (
         <FilterTextInput
           label={t('label.code-or-name')}
-          // A permanent chip starts empty and shrink-wrapped, so the
-          // placeholder is what makes it read as a search box.
+          // The chip starts empty and shrink-wrapped, so the placeholder is
+          // what makes it read as a search box.
           placeholder={t('placeholder.enter-an-item-code-or-name')}
           testId={props.testId}
           value={props.filter().itemCodeOrName?.like ?? ''}
