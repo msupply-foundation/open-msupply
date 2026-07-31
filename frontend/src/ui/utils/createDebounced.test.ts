@@ -52,11 +52,11 @@ describe('createDebounced', () => {
     });
   });
 
-  // Once the owner is gone, nothing may run on its behalf — the case that bit a
-  // filter chip (#563): the chip's box loses focus BECAUSE the chip was removed,
-  // the browser reports that afterwards, and the flush wrote the removed
-  // filter's value straight back. Re-arming first is what makes it more than
-  // cancel-on-cleanup: the buffer the cleanup emptied is refilled.
+  // Once the owner is gone, nothing may run on its behalf — the case that bit
+  // a filter chip (#563): the chip's box loses focus BECAUSE the chip was
+  // removed, the browser reports that afterwards, and the flush wrote the
+  // removed filter's value straight back. Re-arming first is what makes this
+  // more than cancel-on-cleanup: the buffer the cleanup emptied is refilled.
   it('runs nothing after its owner is disposed, even when flush re-arms it', () => {
     const fn = vi.fn();
     let d!: ReturnType<typeof createDebounced<[string]>>;
