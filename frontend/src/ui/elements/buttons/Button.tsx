@@ -17,7 +17,8 @@ import styles from './Button.module.css';
  * widths (≤767px, ui-standards #btn-icons) WITHOUT an explicit `collapsible`
  * prop. Off for now — collapsing is opt-in per button. This is the single
  * switch to make collapse the app-wide default later: flip it to `true` and
- * every labelled button collapses on phones unless it passes `collapsible={false}`.
+ * every labelled button collapses on phones unless it passes
+ * `collapsible={false}`.
  */
 const COLLAPSIBLE_BY_DEFAULT = false;
 
@@ -57,16 +58,16 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
   collapsible?: boolean;
   /**
    * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
-   * drives both the accessible name of the binding (`aria-keyshortcuts`) and the
-   * hint badge revealed while Alt or Ctrl is held, so the two can never drift
-   * apart (AC-KB15).
+   * drives both the accessible name of the binding (`aria-keyshortcuts`) and
+   * the hint badge revealed while Alt or Ctrl is held, so the two can never
+   * drift apart (AC-KB15).
    *
    * The button does NOT dispatch the key — the screen registers the action
-   * (`createAction` / `createAddAction`) and the dispatcher runs it. That split
-   * is deliberate: a screen may render two controls for one action (the inbound
-   * and internal-order details each have a header SplitButton AND a ghost button
-   * in the table's empty slot), and the action's `run` is often broader than one
-   * button's click (kdd/keyboard-layer).
+   * (`createAction` / `createAddAction`) and the dispatcher runs it. That
+   * split is deliberate: a screen may render two controls for one action (the
+   * inbound and internal-order details each have a header SplitButton AND a
+   * ghost button in the table's empty slot), and the action's `run` is often
+   * broader than one button's click (kdd/keyboard-layer).
    */
   shortcut?: Shortcut;
   /**
@@ -106,9 +107,10 @@ export const Button = (props: ButtonProps) => {
     'onPointerDown',
     'shortcut',
     'confirms',
-    // Applied explicitly below: Solid only compiles `ref` specially when it is a
-    // STATIC attribute, so a ref arriving through `{...rest}` would be silently
-    // dropped. The dialog confirm-claim depends on getting the element.
+    // Applied explicitly below: Solid only compiles `ref` specially when it is
+    // a STATIC attribute, so a ref arriving through `{...rest}` would be
+    // silently dropped. The dialog confirm-claim depends on getting the
+    // element.
     'ref',
   ]);
   // The footer-role claim, if this button declares one. Registers on mount and
@@ -117,23 +119,24 @@ export const Button = (props: ButtonProps) => {
   const confirmClaim = createConfirmClaim(() => local.confirms, props);
 
   /*
-   * The binding this button advertises. Derived from the claimed ROLE where the
-   * role implies one, so claiming the role IS declaring the binding and there is
-   * no second prop to forget:
+   * The binding this button advertises. Derived from the claimed ROLE where
+   * the role implies one, so claiming the role IS declaring the binding and
+   * there is no second prop to forget:
    *
-   *   plain  → Alt+S, the dialog tier's Save (KB-1). The <Dialog> registers that
+   *   plain  → Alt+S, the dialog tier's Save (KB-1). The <Dialog> registers
+   *   that
    *            binding against whichever button holds this role, so a bespoke
    *            confirm (_Create_, _Delete lines_) advertises it too.
    *   cancel → Escape, which the UA's close request already performs.
    *
-   * An explicit `shortcut` still wins, for a control whose binding is nothing to
-   * do with a dialog footer (the shared add control's Alt+N).
+   * An explicit `shortcut` still wins, for a control whose binding is nothing
+   * to do with a dialog footer (the shared add control's Alt+N).
    *
-   * Only when the role was actually CLAIMED, which needs a surrounding <Dialog>.
-   * A CancelButton in a page form declares `confirms="cancel"` like every other
-   * one, but nothing there answers Escape — advertising it on the badge and in
-   * `aria-keyshortcuts` would be telling the user, and assistive technology, about
-   * a key that does nothing.
+   * Only when the role was actually CLAIMED, which needs a surrounding
+   * <Dialog>. A CancelButton in a page form declares `confirms="cancel"` like
+   * every other one, but nothing there answers Escape — advertising it on the
+   * badge and in `aria-keyshortcuts` would be telling the user, and assistive
+   * technology, about a key that does nothing.
    */
   const shortcut = (): Shortcut | undefined => {
     if (local.shortcut) return local.shortcut;
@@ -171,8 +174,8 @@ export const Button = (props: ButtonProps) => {
       aria-keyshortcuts={shortcut() ? ariaKeyshortcuts(shortcut()!) : undefined}
       // The badge positions itself against this button; `.button` is already
       // `position: relative` for the ripple, so it is already the positioning
-      // context. It is also `overflow: hidden` for the same reason, which is why
-      // the badge sits just INSIDE the corner rather than outside it.
+      // context. It is also `overflow: hidden` for the same reason, which is
+      // why the badge sits just INSIDE the corner rather than outside it.
       onPointerDown={event => {
         if (local.loading) return;
         ripple.onPointerDown(event);

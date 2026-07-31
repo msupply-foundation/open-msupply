@@ -105,17 +105,39 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
   });
 
   /*
-   * The palette evaluates every registered action's `disabled()` when it opens,
-   * and those predicates are app code: one that reads a resource's `.latest`
-   * while that resource is still pending SUSPENDS the computation doing the
-   * reading. Without a boundary here that computation's nearest <Suspense> is the
-   * shell's, so one careless `disabled` on one screen would blank the whole app
-   * behind the palette.
+   * The KB-R2 defect checked from the control's end: a carrier advertising a
+   * binding no action owns (see devCarrierAudit). Dev only, and reached
+   * through a DYNAMIC import inside this branch so the module never enters the
+   * production chunk graph — a static import from a component would, and the
+   * per-carrier version of this check cost +632 B gzip in prod for exactly
+   * that reason.
+   */
+  if (import.meta.env.DEV) {
+    onMount(() => {
+      let stop: (() => void) | undefined;
+      let cancelled = false;
+      void import('./devCarrierAudit').then(({ startCarrierAudit }) => {
+        if (!cancelled) stop = startCarrierAudit();
+      });
+      onCleanup(() => {
+        cancelled = true;
+        stop?.();
+      });
+    });
+  }
+
+  /*
+   * The palette evaluates every registered action's `disabled()` when it
+   * opens, and those predicates are app code: one that reads a resource's
+   * `.latest` while that resource is still pending SUSPENDS the computation
+   * doing the reading. Without a boundary here that computation's nearest
+   * <Suspense> is the shell's, so one careless `disabled` on one screen would
+   * blank the whole app behind the palette.
    *
    * An action's `disabled` must still gate on `.state` rather than read a
-   * suspending source (kdd/keyboard-layer, kdd/solid-reactivity-pitfalls) — this
-   * boundary is what makes forgetting cost an empty palette for a frame instead
-   * of the screen the user was working on.
+   * suspending source (kdd/keyboard-layer, kdd/solid-reactivity-pitfalls) —
+   * this boundary is what makes forgetting cost an empty palette for a frame
+   * instead of the screen the user was working on.
    */
   return (
     <Suspense>
