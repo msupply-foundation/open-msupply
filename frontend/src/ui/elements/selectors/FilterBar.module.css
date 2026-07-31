@@ -195,6 +195,17 @@
   min-inline-size: 3.5rem;
 }
 
+/* Number-range boxes: the 3.5rem floor above is sized for dates and reads as
+   dead space beside a one-digit bound, so tighten it — and align each bound
+   toward the dash (From keeps NumberField's end-align; To starts after it). */
+.numberRange input {
+  min-inline-size: 2rem;
+}
+
+.numberRange > :last-child input {
+  text-align: start;
+}
+
 /* TextField's chrome lives on the <input> itself (.input:focus recolours
    it with a literal token) — same out-specify trick as the div frames. */
 .bareField input:focus {
