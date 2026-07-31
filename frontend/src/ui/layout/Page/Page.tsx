@@ -1,7 +1,16 @@
-import { children, createEffect, onCleanup, Show, type JSX } from 'solid-js';
+import {
+  children,
+  createEffect,
+  onCleanup,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
 import { useFullScreen, useShellOverlay } from '../AppShell/shellContext';
 import { createFocusTarget } from '../../utils/createFocusTarget';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { bindingRegistered } from '../../utils/keyActions';
+import { ALT_M } from '../../utils/shortcuts';
 import { SidePanel } from '../SidePanel/SidePanel';
 import styles from './Page.module.css';
 
@@ -115,6 +124,28 @@ export const Page = (props: PageProps) => {
   createEffect(() => {
     if (overlayActive()) panelFocus.focus();
   });
+
+  /*
+   * KB-R2's defect, asserted where it is visible: "a screen offering it and not
+   * answering the key is a defect in that screen, not a narrower binding". A
+   * screen acquires Alt+M / Alt+Shift+M by owning its panel boolean through
+   * `createSidePanelOpen`, which registers them — so a panel-bearing screen with
+   * no Alt+M registered is one that rolled its own signal instead, and quietly
+   * stopped answering a binding the user learned on the screen next door.
+   *
+   * Dev-only, and deferred a microtask so a panel behind a <Show> or a pending
+   * load has rendered before it is judged.
+   */
+  if (import.meta.env.DEV) {
+    onMount(() =>
+      queueMicrotask(() => {
+        if (!panelContent() || bindingRegistered(ALT_M)) return;
+        console.warn(
+          'Page: this screen renders a more-info panel but nothing answers Alt+M. Own the panel boolean with createSidePanelOpen(), which registers show/hide for you (spec/keyboard KB-R2).'
+        );
+      })
+    );
+  }
 
   return (
     // Top level is a ROW: the main column (header / body / footer) beside the

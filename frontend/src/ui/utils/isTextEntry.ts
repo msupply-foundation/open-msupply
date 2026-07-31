@@ -1,16 +1,19 @@
 /*
  * "Is focus somewhere a keystroke means TEXT, not a command?"
  *
- * ONE predicate, four consumers, because they are four readings of the same
- * question and four inline copies is how the tiers drift (kdd/keyboard-layer):
+ * ONE predicate, three consumers, because they are three readings of the same
+ * question and three inline copies is how the tiers drift (kdd/keyboard-layer):
  *
  *  - KB-1     the global tier is suppressed while a text field holds focus, so
  *             a shortcut letter typed into a field is text, not a command.
  *  - KB-X5    navigate-up is suppressed for the same reason.
- *  - KB-N2    arrow keys inside a table's input/select/textarea belong to the
- *             field, not to row navigation.
  *  - KB-E2    Enter-to-confirm fires only FROM a form field (used as the core
  *             of the whitelist, never as a blacklist).
+ *
+ * A fourth reading — KB-N2, "arrow keys inside a table's input/select/textarea
+ * belong to the field, not to row navigation" — arrives with list-table row
+ * navigation, which is not built (kdd/keyboard-layer). `SELECT` is already
+ * covered below because KB-N2 is the rule that names it.
  *
  * `type` matters: a checkbox, radio, button or file input is an <input> that
  * swallows nothing, so Alt+N pressed on a checked box must still fire.

@@ -114,7 +114,7 @@ export const Button = (props: ButtonProps) => {
   // The footer-role claim, if this button declares one. Registers on mount and
   // releases on cleanup, so a <Show>-gated Save & next hands its role back when
   // the gate closes.
-  const claimRef = createConfirmClaim(() => local.confirms, props);
+  const confirmClaim = createConfirmClaim(() => local.confirms, props);
 
   /*
    * The binding this button advertises. Derived from the claimed ROLE where the
@@ -128,9 +128,16 @@ export const Button = (props: ButtonProps) => {
    *
    * An explicit `shortcut` still wins, for a control whose binding is nothing to
    * do with a dialog footer (the shared add control's Alt+N).
+   *
+   * Only when the role was actually CLAIMED, which needs a surrounding <Dialog>.
+   * A CancelButton in a page form declares `confirms="cancel"` like every other
+   * one, but nothing there answers Escape — advertising it on the badge and in
+   * `aria-keyshortcuts` would be telling the user, and assistive technology, about
+   * a key that does nothing.
    */
   const shortcut = (): Shortcut | undefined => {
     if (local.shortcut) return local.shortcut;
+    if (!confirmClaim.claimed) return undefined;
     if (local.confirms === 'plain') return ALT_S;
     if (local.confirms === 'cancel') return ESCAPE;
     return undefined;
@@ -145,7 +152,7 @@ export const Button = (props: ButtonProps) => {
   return (
     <button
       ref={el => {
-        claimRef(el);
+        confirmClaim.ref(el);
         if (typeof local.ref === 'function')
           (local.ref as (e: HTMLButtonElement) => void)(el);
       }}

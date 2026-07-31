@@ -1,6 +1,7 @@
 import { getOwner, onCleanup } from 'solid-js';
 import type { LocaleKey } from '../../intl';
 import { ALT_N, matches, type Shortcut } from './shortcuts';
+import { useSurfaceActive } from './surfaceActive';
 
 /*
  * The action registry (spec/keyboard KB-R1, kdd/keyboard-layer).
@@ -96,11 +97,28 @@ const registry = new Set<KeyAction>();
  * double-register (kdd/keyboard-layer § consequences).
  */
 export const createAction = (spec: KeyActionSpec): KeyAction => {
+  /*
+   * An action declared inside a surface that stays MOUNTED while hidden — dialog
+   * content — is available only while that surface is showing. `onCleanup` cannot
+   * express it, because nothing cleans up when a mounted dialog merely closes, so
+   * the surface's own flag folds into `disabled` here (see surfaceActive.ts).
+   *
+   * Structural, not a rule to remember: an author who declares a binding inside a
+   * dialog gets the gate whether or not they knew they needed one. Without it a
+   * closed dialog answers its own keys, and an `always`-tier bare character
+   * (the line editor's `+`) fires on every screen in the app.
+   */
+  const surfaceActive = useSurfaceActive();
+  const disabled =
+    surfaceActive === undefined
+      ? spec.disabled
+      : () => !surfaceActive() || spec.disabled?.() === true;
+
   const action: KeyAction = {
     ...(spec.name !== undefined ? { name: spec.name } : {}),
     ...(spec.keywords !== undefined ? { keywords: spec.keywords } : {}),
     ...(spec.shortcut !== undefined ? { shortcut: spec.shortcut } : {}),
-    ...(spec.disabled !== undefined ? { disabled: spec.disabled } : {}),
+    ...(disabled !== undefined ? { disabled } : {}),
     run: spec.run,
     dispose: () => registry.delete(action),
   };
@@ -136,11 +154,54 @@ export const resolveShortcut = (
   for (let i = all.length - 1; i >= 0; i--) {
     const action = all[i];
     if (!action?.shortcut) continue;
+    // MATCH FIRST, then ask whether it is available. Every keystroke in every
+    // text field runs this loop, and a `disabled` predicate is arbitrary
+    // app code (it reads store state, resource state, a draft's contents) —
+    // evaluating one per registered binding per character typed is work nobody
+    // asked for. Order is otherwise identical: a disabled action still declines
+    // the binding and the search continues to the rung beneath it.
+    if (!matches(action.shortcut, event)) continue;
     if (action.disabled?.() === true) continue;
-    if (matches(action.shortcut, event)) return action;
+    return action;
   }
   return undefined;
 };
+
+/**
+ * Is any registered action currently answering this binding? For a dev-only
+ * assertion — a screen that offers a thing but not its generic binding is the
+ * KB-R2 defect ("a defect in that screen, not a narrower binding").
+ */
+export const bindingRegistered = (shortcut: Shortcut): boolean => {
+  for (const action of registry) {
+    if (action.shortcut === shortcut && action.disabled?.() !== true)
+      return true;
+  }
+  return false;
+};
+
+/*
+ * The reverse lookup, in dev only (kdd/keyboard-layer § the honest cost is a lost
+ * reverse lookup). From a binding you can grep to its creation site; from a
+ * KEYPRESS you cannot read off which entry wins, and the set is the union over
+ * whatever is mounted. The showcase's inspector cannot answer it either — it
+ * mounts no shell — so the answer has to be available in the running app:
+ *
+ *   __keyActions()   in the console, on the screen in question.
+ *
+ * Listed last-registered-first, the order resolveShortcut walks.
+ */
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (
+    window as unknown as { __keyActions?: () => readonly unknown[] }
+  ).__keyActions = () =>
+    [...registry].reverse().map(action => ({
+      name: action.name ?? '(unlisted)',
+      shortcut: action.shortcut,
+      disabled: action.disabled?.() === true,
+      run: action.run,
+    }));
+}
 
 /*
  * ─── One creation site per generic binding ──────────────────────────────────

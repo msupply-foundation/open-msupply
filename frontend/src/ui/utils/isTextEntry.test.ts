@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { isTextEntry } from './isTextEntry';
 
 // This predicate is the ONE answer to "does a keystroke here mean text, not a
-// command?", read by four rules (KB-1, KB-X5, KB-N2, KB-E2). The distinction
+// command?", read by three rules (KB-1, KB-X5, KB-E2) — and by KB-N2 when
+// list-table row navigation lands. The distinction
 // that carries the weight: a checkbox, radio or button is an <input> that
 // swallows nothing, so Alt+N pressed on a checked box MUST still fire.
 //

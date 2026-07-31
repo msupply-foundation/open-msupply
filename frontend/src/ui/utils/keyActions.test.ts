@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { createRoot } from 'solid-js';
+import { createRoot, createSignal } from 'solid-js';
+import { SurfaceActiveContext } from './surfaceActive';
 import {
   createAction,
   createAddAction,
@@ -57,6 +58,68 @@ describe('createAction lifetime', () => {
     action.dispose();
     expect(registeredActions()).toHaveLength(0);
   });
+});
+
+/*
+ * An action declared inside a surface that stays MOUNTED while hidden — dialog
+ * content — must stop answering its keys when the surface closes. `onCleanup`
+ * cannot carry it, because nothing cleans up when a mounted dialog merely closes,
+ * so `createAction` folds the surface's own flag into `disabled`
+ * (utils/surfaceActive.ts). Left to a call site this fails silently, and for an
+ * `always`-tier bare character (the line editor's `+`) it fails app-wide: the key
+ * fires on every screen, inside every text field, for a dialog nobody can see.
+ */
+describe('a surface that is not showing', () => {
+  const inSurface = <T>(open: () => boolean, body: () => T): T => {
+    let result!: T;
+    SurfaceActiveContext.Provider({
+      value: open,
+      get children() {
+        result = body();
+        return null;
+      },
+    });
+    return result;
+  };
+
+  it('neither fires nor lists an action declared inside it', () =>
+    createRoot(dispose => {
+      const [open, setOpen] = createSignal(false);
+      const run = vi.fn();
+      inSurface(open, () =>
+        createAction({ name: 'button.save', shortcut: ALT_M, run })
+      );
+
+      expect(resolveShortcut(press('KeyM'))).toBeUndefined();
+      expect(registeredActions()[0]?.disabled?.()).toBe(true);
+
+      setOpen(true);
+      expect(resolveShortcut(press('KeyM'))).toBeDefined();
+      expect(registeredActions()[0]?.disabled?.()).toBe(false);
+
+      dispose();
+    }));
+
+  it("keeps the action's own disabled gate on top of the surface's", () =>
+    createRoot(dispose => {
+      const [enabled, setEnabled] = createSignal(false);
+      inSurface(
+        () => true,
+        () =>
+          createAction({
+            name: 'button.save',
+            shortcut: ALT_M,
+            run: () => {},
+            disabled: () => !enabled(),
+          })
+      );
+
+      expect(resolveShortcut(press('KeyM'))).toBeUndefined();
+      setEnabled(true);
+      expect(resolveShortcut(press('KeyM'))).toBeDefined();
+
+      dispose();
+    }));
 });
 
 describe('resolveShortcut', () => {

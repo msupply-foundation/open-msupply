@@ -1,10 +1,4 @@
-import {
-  createEffect,
-  createMemo,
-  createResource,
-  createSignal,
-  Show,
-} from 'solid-js';
+import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
@@ -17,7 +11,6 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
 import { createAddAction } from '@/ui/utils/keyActions';
-import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import {
   DataTable,
@@ -193,24 +186,6 @@ const StocktakesList: Component = () => {
   // `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
   const rows = () => data.latest?.nodes ?? [];
 
-  /*
-   * KB-F1: "A list screen seeds its table, making arrow-key row navigation
-   * available immediately… It MUST NOT steal focus from a text field that already
-   * holds it — an arrival that races a search field or a just-dismissed palette
-   * yields to the field" (AC-KB28/AC-KB29).
-   *
-   * `seed()`, not `focus()`, is what expresses that yielding. Fired once the
-   * first rows land rather than on mount, because there is nothing to navigate
-   * until then; the handle arms the request and lands it when the table attaches,
-   * so no load gate is needed here.
-   */
-  const tableFocus = createFocusTarget();
-  let seeded = false;
-  createEffect(() => {
-    if (seeded || rows().length === 0) return;
-    seeded = true;
-    tableFocus.seed();
-  });
   const totalCount = () => data.latest?.totalCount ?? 0;
 
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
@@ -376,9 +351,6 @@ const StocktakesList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
-        // Arrow-key row navigation, Enter to open, Escape to clear (KB-N1/KB-E5).
-        rowNavigation
-        focusTarget={tableFocus}
         // Filters live in the table's own toolbar (ui-standards § tables →
         // filtering), never the page header; state stays URL-backed here.
         filters={

@@ -33,7 +33,17 @@ export interface ConfirmClaimProps {
 export const createConfirmClaim = (
   role: () => ConfirmRole | undefined,
   props: ConfirmClaimProps
-): ((el: HTMLButtonElement) => void) => {
+): {
+  ref: (el: HTMLButtonElement) => void;
+  /**
+   * Whether this button actually holds a footer role — a role WAS declared and
+   * there is a `<Dialog>` to hold it. The button's derived binding hangs off
+   * this: a CancelButton in a page toolbar must not tell assistive technology
+   * `aria-keyshortcuts="Escape"`, or show an Escape badge, for a key that
+   * cancels nothing there.
+   */
+  claimed: boolean;
+} => {
   const slots = useDialogConfirm();
   const declared = role();
   let element: HTMLButtonElement | undefined;
@@ -49,12 +59,16 @@ export const createConfirmClaim = (
     disabled: () => props.disabled === true || props.loading === true,
   };
 
-  if (slots && declared !== undefined) {
+  const claimed = slots !== undefined && declared !== undefined;
+  if (slots !== undefined && declared !== undefined) {
     onMount(() => slots.claim(declared, claim));
     onCleanup(() => slots.release(declared, claim));
   }
 
-  return el => {
-    element = el;
+  return {
+    ref: el => {
+      element = el;
+    },
+    claimed,
   };
 };
