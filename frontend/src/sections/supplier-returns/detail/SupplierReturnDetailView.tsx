@@ -380,7 +380,6 @@ const SupplierReturnDetailView: Component = () => {
   };
 
   const crumbs = (node: SupplierReturnInfoFragment) => [
-    { label: t('replenishment') },
     {
       label: t('supplier-return'),
       onClick: () =>

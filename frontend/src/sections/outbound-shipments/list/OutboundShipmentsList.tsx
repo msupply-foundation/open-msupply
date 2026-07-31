@@ -289,10 +289,7 @@ const OutboundShipmentsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('distribution') },
-    { label: t('outbound-shipments') },
-  ];
+  const crumbs = () => [{ label: t('outbound-shipments') }];
 
   return (
     <Page

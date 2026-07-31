@@ -443,7 +443,6 @@ const CustomerReturnDetailView: Component = () => {
   ];
 
   const crumbs = (node: CustomerReturnInfoFragment) => [
-    { label: t('distribution') },
     {
       label: t('customer-returns'),
       onClick: () =>

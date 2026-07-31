@@ -261,10 +261,7 @@ const PrescriptionsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('dispensary') },
-    { label: t('prescriptions') },
-  ];
+  const crumbs = () => [{ label: t('prescriptions') }];
 
   return (
     <Page

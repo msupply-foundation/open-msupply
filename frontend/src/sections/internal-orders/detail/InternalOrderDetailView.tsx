@@ -500,7 +500,6 @@ const InternalOrderDetailView: Component = () => {
     `${Math.round(value)}${doseSuffix(line, value)}`;
 
   const crumbs = (node: InternalOrderInfoFragment) => [
-    { label: t('replenishment') },
     {
       label: t('internal-order'),
       onClick: () =>

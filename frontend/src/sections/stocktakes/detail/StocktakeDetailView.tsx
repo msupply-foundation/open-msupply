@@ -582,7 +582,6 @@ const StocktakeDetailView: Component = () => {
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
-    { label: t('inventory') },
     {
       label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),

@@ -206,7 +206,7 @@ const LocationsList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('locations') }];
+  const crumbs = () => [{ label: t('locations') }];
 
   return (
     <Page
