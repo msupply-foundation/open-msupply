@@ -1,4 +1,4 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createResource, createSignal, For, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
@@ -11,11 +11,18 @@ import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { LanguageSelector } from '../../../ui/layout/AppShell/LanguageSelector';
 import { SaveIcon } from '../../../ui/icons';
+import {
+  applyCustomLogo,
+  applyCustomTheme,
+  clearCustomLogo,
+  clearCustomTheme,
+} from '../../../ui/branding/applyBranding';
+import { isDarkMode, setColourScheme } from '../../../ui/styles/colourScheme';
 import { changeLanguage, locale, t } from '../../../intl';
 import {
+  checkTheme,
   logoClearInput,
   logoSaveInput,
-  parseThemeJson,
   themeClearInput,
   themeSaveInput,
 } from './displayLogic';
@@ -23,18 +30,22 @@ import {
   DisplaySettings,
   UpdateDisplaySettings,
   type UpdateDisplaySettingsVariables,
-} from './displaySettings.generated';
+} from '../../../api/displaySettings.generated';
 
 /*
  * Display settings (spec/settings/ui-surface.md § Display settings).
  *  - Language: the shared chrome language selector, reused — switching is
- *    immediate, no save step (OMS-REG-SET-01.15; the switch itself is owned by
- *    i18n).
+ *    immediate, no save step (OMS-REG-SET-01.15; the switch itself is owned
+ *    by i18n).
  *  - Custom theme / Custom logo (Server Admin only): the asymmetric
  *    on-requires-Save / off-is-immediate pattern (OMS-REG-SET-01.16–01.18);
- *    the theme save gates on a shallow JSON parse (OMS-REG-SET-01.13), the
- *    logo has no validation at all (OMS-REG-SET-01.18).
+ *    the theme save gates on compiling the document (OMS-REG-SET-01.13),
+ *    the logo has no validation at all (OMS-REG-SET-01.18).
  */
+
+/** What a save attempt reported back (see displayLogic.checkTheme). */
+type Problems = { errors: string[]; warnings: string[] };
+const NO_PROBLEMS: Problems = { errors: [], warnings: [] };
 
 // One editor row (theme or logo) — same shell, different validation/effects.
 const EditorToggleRow = (props: {
@@ -44,8 +55,14 @@ const EditorToggleRow = (props: {
   saved: string | undefined;
   /** Editor seed when toggled on with nothing saved. */
   emptySeed: string;
-  onSave: (text: string) => Promise<string | undefined>;
+  onSave: (text: string) => Promise<Problems>;
   onClear: () => Promise<void>;
+  /*
+   * Warnings for the text as it stands, shown while editing. A successful
+   * save reloads the app, so anything only reported afterwards would never be
+   * seen — the theme row's warnings have to be live to be readable at all.
+   */
+  liveWarnings?: (text: string) => string[];
   testId: string;
 }) => {
   // Toggle and editor text each follow the server value until the user
@@ -54,7 +71,7 @@ const EditorToggleRow = (props: {
   // never clobbered when the shared resource re-fetches.
   const [override, setOverride] = createSignal<boolean>();
   const [draft, setDraft] = createSignal<string>();
-  const [error, setError] = createSignal<string>();
+  const [problems, setProblems] = createSignal<Problems>(NO_PROBLEMS);
   const [busy, setBusy] = createSignal(false);
 
   const enabled = () => override() ?? Boolean(props.saved);
@@ -63,8 +80,12 @@ const EditorToggleRow = (props: {
   // (OMS-REG-SET-01.16/.18).
   const text = () => draft() ?? props.saved ?? '';
 
+  // Errors are only meaningful after a save attempt (half-typed JSON is not an
+  // error yet); warnings describe the current text, so they are always live.
+  const warnings = () => props.liveWarnings?.(text()) ?? problems().warnings;
+
   const toggle = (checked: boolean) => {
-    setError(undefined);
+    setProblems(NO_PROBLEMS);
     if (checked) {
       // Toggling ON reveals the editor pre-filled with what's in effect —
       // saving is a separate, explicit step (rules § Display settings).
@@ -83,7 +104,7 @@ const EditorToggleRow = (props: {
 
   const save = async () => {
     setBusy(true);
-    setError(await props.onSave(text()));
+    setProblems(await props.onSave(text()));
     setBusy(false);
   };
 
@@ -118,8 +139,15 @@ const EditorToggleRow = (props: {
           disabled={busy()}
           data-testid={`${props.testId}-editor`}
         />
-        <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+        <Show when={problems().errors.length > 0 || warnings().length > 0}>
+          <Stack gap="sm" data-testid={`${props.testId}-problems`}>
+            <For each={problems().errors}>
+              {message => <Alert severity="error">{message}</Alert>}
+            </For>
+            <For each={warnings()}>
+              {message => <Alert severity="warning">{message}</Alert>}
+            </For>
+          </Stack>
         </Show>
         <HStack justify="end" gap="md">
           <Button
@@ -151,39 +179,55 @@ export const DisplaySettingsSection = () => {
       ? settingsData.latest
       : undefined;
 
+  /** The new hash on success, so the caller can cache what it just saved. */
   const update = async (
     input: UpdateDisplaySettingsVariables['input']
-  ): Promise<string | undefined> => {
+  ): Promise<{ errors: string[]; hash?: string }> => {
     const result = await graphqlFetch(UpdateDisplaySettings, { input });
-    if (result.kind !== 'success') return undefined; // handled globally
+    if (result.kind !== 'success') return { errors: [] }; // handled globally
     const payload = result.data.updateDisplaySettings;
     if (payload.__typename === 'UpdateDisplaySettingsError')
-      return payload.error;
+      return { errors: [payload.error] };
     await refetch();
-    return undefined;
+    return {
+      errors: [],
+      hash:
+        (input.customTheme !== undefined ? payload.theme : payload.logo) ?? '',
+    };
   };
 
-  // Theme: refuse invalid JSON client-side with the parse error
-  // (OMS-REG-SET-01.13); a successful save applies the theme by reloading the
-  // whole app (OMS-REG-SET-01.16).
-  const saveTheme = async (text: string): Promise<string | undefined> => {
-    const parsed = parseThemeJson(text);
-    if (!parsed.ok) return `${t('error.something-wrong')} ${parsed.message}`;
-    const error = await update(themeSaveInput(text));
-    if (error === undefined) location.reload();
-    return error;
+  /*
+   * Theme: refuse a document that cannot be applied, reporting every reason
+   * (OMS-REG-SET-01.13); a successful save applies it by reloading the whole
+   * app (OMS-REG-SET-01.16). The compiled CSS is cached before the reload so
+   * the new theme is already there at first paint.
+   */
+  const saveTheme = async (text: string): Promise<Problems> => {
+    const check = checkTheme(text);
+    if (!check.ok) return { errors: check.errors, warnings: check.warnings };
+    const { errors, hash } = await update(themeSaveInput(text));
+    if (errors.length > 0) return { errors, warnings: check.warnings };
+    applyCustomTheme(text, hash ?? '');
+    location.reload();
+    return NO_PROBLEMS;
   };
 
-  // Clearing does not itself reload the app (OMS-REG-SET-01.17).
+  // Clearing reverts in place — no reload needed (OMS-REG-SET-01.17).
   const clearTheme = async () => {
     await update(themeClearInput());
+    clearCustomTheme();
   };
 
   // Logo: no content validation at all (OMS-REG-SET-01.18); no reload either
-  // way.
-  const saveLogo = (text: string) => update(logoSaveInput(text));
+  // way — the logo is a signal, so every place it renders updates live.
+  const saveLogo = async (text: string): Promise<Problems> => {
+    const { errors, hash } = await update(logoSaveInput(text));
+    if (errors.length === 0) applyCustomLogo(text, hash ?? '');
+    return { errors, warnings: [] };
+  };
   const clearLogo = async () => {
     await update(logoClearInput());
+    clearCustomLogo();
   };
 
   return (
@@ -198,12 +242,14 @@ export const DisplaySettingsSection = () => {
       <Show when={hasPermission('SERVER_ADMIN')}>
         <EditorToggleRow
           heading={t('heading.custom-theme')}
+          info={t('heading.custom-theme-info')}
           saved={settings()?.customTheme?.value ?? ''}
-          // Empty JSON object when nothing is saved (rules § Display
-          // settings, D52 — this app has no built-in theme document).
-          emptySeed={'{\n}\n'}
+          // A one-line theme when nothing is saved: the shortest document that
+          // does something, rather than an empty object to stare at.
+          emptySeed={'{\n  "brand": "#0b6e99"\n}\n'}
           onSave={saveTheme}
           onClear={clearTheme}
+          liveWarnings={text => checkTheme(text).warnings}
           testId="custom-theme"
         />
         <EditorToggleRow
@@ -216,6 +262,18 @@ export const DisplaySettingsSection = () => {
           testId="custom-logo"
         />
       </Show>
+      {/*
+        Outside the Server Admin gate on purpose: the colour scheme is a
+        personal display preference held on this device, like the language
+        above — not a store setting. It sits last so that, for an admin, it
+        reads as the third switch in the group.
+      */}
+      <ToggleSwitch
+        label={t('heading.dark-mode')}
+        checked={isDarkMode()}
+        onChange={checked => setColourScheme(checked ? 'dark' : 'light')}
+        testId="dark-mode-toggle"
+      />
     </Stack>
   );
 };

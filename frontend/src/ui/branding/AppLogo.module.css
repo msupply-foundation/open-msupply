@@ -1,0 +1,17 @@
+/*
+ * Wrapper for a site's custom logo. The caller's class sizes the box (the
+ * same class the stock MSupplyGuyLogo gets), so the inlined SVG just fills
+ * it — a saved logo and the stock one occupy identical space.
+ */
+.wrapper {
+  display: block;
+  overflow: hidden;
+}
+
+.wrapper > svg {
+  inline-size: 100%;
+  block-size: 100%;
+  /* Letterbox rather than distort: a site's logo is unlikely to share the
+     stock logo's aspect ratio. */
+  object-fit: contain;
+}

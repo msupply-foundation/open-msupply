@@ -12,11 +12,10 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  InfoIcon,
-  XCircleIcon,
-} from '../../../../ui/icons';
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
 import {
   CLIENT_SETTABLE,
   STATUS_LABELS,
@@ -260,23 +259,13 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           actions={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={close} />
               </Show>
-              <Button
-                variant="primary"
-                icon={<ArrowRightIcon />}
+              <OkButton
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
-              >
-                {t('button.ok')}
-              </Button>
+              />
             </>
           }
         />
@@ -296,14 +285,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           description={infoMessage()}
           actions={
             <>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                disabled={releasing()}
-                onClick={closeNotice}
-              >
-                {t('button.ok')}
-              </Button>
+              <OkButton disabled={releasing()} onClick={closeNotice} />
               <Show when={holdRetryStatus()}>
                 {retry => (
                   <Button

@@ -1,10 +1,7 @@
 import { For, Match, Show, Switch, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import {
-  MSupplyGuyLogo,
-  ChevronDownIcon,
-  AlertTriangleIcon,
-} from '../../icons';
+import { ChevronDownIcon, AlertTriangleIcon } from '../../icons';
+import { AppLogo } from '../../branding/AppLogo';
 import { Badge } from '../../elements/feedback/Badge';
 import { t } from '../../../intl';
 import {
@@ -288,7 +285,7 @@ export const MenuBar = (props: MenuBarProps) => {
               }
               aria-expanded={!props.nav.railCollapsed()}
             >
-              <MSupplyGuyLogo class={styles.logo} />
+              <AppLogo class={styles.logo} />
             </button>
           </div>
           <NavLists
@@ -315,7 +312,7 @@ export const MenuBar = (props: MenuBarProps) => {
         aria-hidden={!props.nav.overlayOpen()}
       >
         <div class={styles.logoArea}>
-          <MSupplyGuyLogo class={styles.logo} />
+          <AppLogo class={styles.logo} />
         </div>
         <NavLists
           upper={props.upper}

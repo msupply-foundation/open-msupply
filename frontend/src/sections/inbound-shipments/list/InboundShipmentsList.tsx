@@ -359,10 +359,7 @@ const InboundShipmentsList: Component = () => {
     ...customFieldColumns<Row, SortKey>(cfDefs(), row => row.customFields),
   ];
 
-  const crumbs = () => [
-    { label: t('replenishment') },
-    { label: t('inbound-shipment') },
-  ];
+  const crumbs = () => [{ label: t('inbound-shipment') }];
 
   return (
     <Page
