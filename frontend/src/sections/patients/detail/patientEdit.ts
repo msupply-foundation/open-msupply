@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { getDisplayAge, t } from '../../../intl';
 import { isoDateToDate } from '../../../ui/elements/inputs/dateTimeConvert';
 import type { FieldError } from '../../../ui/layout/Form/formValidation';
 import type { Gender } from '../../../domain/patient';
@@ -161,6 +161,21 @@ export const ageFromDob = (dob: string | null): number | undefined => {
     (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
   const age = beforeBirthday ? years - 1 : years;
   return age < 0 ? undefined : age;
+};
+
+/**
+ * The form's age readout for a date of birth under a year old — months and days
+ * ("5 months, 18 days", days alone under a month), the same string the summary
+ * header shows (spec/patients rules › age). Whole years cannot express an
+ * infant's age: `ageFromDob` completes no year and reads a bare `0`.
+ *
+ * Undefined at a year and over, and for a missing or future date of birth —
+ * those are the years entry box's business.
+ */
+export const ageMonthsAndDays = (dob: string | null): string | undefined => {
+  const years = ageFromDob(dob);
+  if (!dob || years === undefined || years >= 1) return undefined;
+  return getDisplayAge(dob) || undefined;
 };
 
 /**
