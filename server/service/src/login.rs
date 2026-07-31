@@ -438,12 +438,28 @@ impl LoginService {
         password: &str,
         user_info: LoginUserInfoV4,
     ) -> Result<(), UpdateUserError> {
+        // Keep the stored hash while the password is unchanged: bcrypt salts
+        // every hash, so re-hashing per login would make the user row always
+        // look changed and defeat upsert_user's delta detection (#12612).
+        // Central has already accepted `password` at this point.
+        let hashed_password = UserAccountRowRepository::new(&service_ctx.connection)
+            .find_one_by_id(&user_info.user.id)
+            .map_err(UpdateUserError::DatabaseError)?
+            .filter(|existing| {
+                bcrypt::verify(password, &existing.hashed_password).unwrap_or(false)
+            })
+            .map(|existing| existing.hashed_password);
+        let hashed_password = match hashed_password {
+            Some(existing_hash) => existing_hash,
+            None => UserAccountService::hash_password(password)
+                .map_err(UpdateUserError::PasswordHashError)?,
+        };
+
         // convert user_info to internal format
         let user = UserAccountRow {
             id: user_info.user.id,
             username: user_info.user.name.to_string(),
-            hashed_password: UserAccountService::hash_password(password)
-                .map_err(UpdateUserError::PasswordHashError)?,
+            hashed_password,
             email: user_info.user.e_mail,
             language: match user_info.user.language {
                 0 => LanguageType::English,
