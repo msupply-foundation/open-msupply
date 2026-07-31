@@ -12,6 +12,8 @@ import {
   internalOrderDraftHref,
   internalOrderListHref,
   customerRequisitionListHref,
+  customerRequisitionNewHref,
+  customerRequisitionEmergencyHref,
   itemCatalogueHref,
   itemsAtRiskHref,
   itemsHighStockHref,
@@ -121,9 +123,31 @@ describe('distribution links', () => {
     });
   });
 
-  it('OMS-REG-DB-01.57: customer-requisition link is the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.59 — the panel title is the only unfiltered requisition
+  // link: it opens the whole list (contract § navigation correspondence).
+  it('OMS-REG-DB-01.59: the customer-requisition panel title opens the list unfiltered', () => {
     expect(customerRequisitionListHref('s1')).toBe(
       '/s1/distribution/customer-requisition'
+    );
+  });
+
+  // OMS-REG-DB-01.59, .38 — new: response requisitions in New. `type` is the
+  // list's own pinned RESPONSE, never carried by the link.
+  it('OMS-REG-DB-01.59: customer-requisition new filters status to New', () => {
+    expect(filterOf(customerRequisitionNewHref('s1'))).toEqual({
+      status: { equalTo: 'NEW' },
+    });
+  });
+
+  // OMS-REG-DB-01.59, .39 — emergency is the New set narrowed to emergency, so
+  // its filter is the new stat's plus isEmergency (the counts' subset relation).
+  it('OMS-REG-DB-01.59: customer-requisition emergency filters New + emergency', () => {
+    expect(filterOf(customerRequisitionEmergencyHref('s1'))).toEqual({
+      status: { equalTo: 'NEW' },
+      isEmergency: true,
+    });
+    expect(filterOf(customerRequisitionEmergencyHref('s1'))).toMatchObject(
+      filterOf(customerRequisitionNewHref('s1'))
     );
   });
 });
