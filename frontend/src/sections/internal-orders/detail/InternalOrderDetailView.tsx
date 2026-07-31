@@ -18,7 +18,6 @@ import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
@@ -1061,8 +1060,28 @@ const InternalOrderDetailView: Component = () => {
                 </HeaderButtons>
                 {/* The header field cluster (ui-standards → HeaderToolbar):
                     each field labelled above its small control, sharing the
-                    row per its FormRowItem weight and wrapping as a unit. */}
-                <HeaderToolbar>
+                    row per its FormRowItem weight and wrapping as a unit. The
+                    read-only notices ride the cluster's end as compact chips —
+                    persistent low-urgency context that shouldn't cost a
+                    content row (Alert `compact`; the customer-returns kind
+                    banner's pattern). Both can show; each wraps to its own
+                    line when the row can't hold it. */}
+                <HeaderToolbar
+                  alert={
+                    <>
+                      <Show when={node().otherParty.store?.isDisabled}>
+                        <Alert severity="info" compact>
+                          {t('info.cannot-edit-disabled-store')}
+                        </Alert>
+                      </Show>
+                      <Show when={isProgram()}>
+                        <Alert severity="info" compact>
+                          {t('info.cannot-edit-program-requisition')}
+                        </Alert>
+                      </Show>
+                    </>
+                  }
+                >
                   <InternalOrderToolbar
                     storeId={params.storeId}
                     node={node()}
@@ -1079,39 +1098,20 @@ const InternalOrderDetailView: Component = () => {
                     onHideOverMinChange={setHideOverMin}
                   />
                 </HeaderToolbar>
-                {/* Read-only notices + the ancillary banner keep their own
-                    full-width row beneath the cluster (spec S3 § toolbar).
-                    Their eventual treatment — HeaderToolbar's compact alert
-                    chip vs this row — is an open operator decision
-                    (ui-migration-report.md § Decisions); this preserves the
-                    pre-migration placement without entrenching either. */}
-                <Show
-                  when={
-                    node().otherParty.store?.isDisabled ||
-                    isProgram() ||
-                    (editable() && node().ancillaryState.state !== 'NONE')
-                  }
-                >
+                {/* The ancillary banner keeps its own full-width row beneath
+                    the cluster (spec S3 § toolbar): it carries CONTROLS
+                    (Details popover + Add/Update + inline error), which the
+                    alert chip slot is not documented for — its final home is
+                    the one open operator decision (ui-migration-report.md). */}
+                <Show when={editable() && node().ancillaryState.state !== 'NONE'}>
                   <Toolbar>
-                    <Stack gap="sm">
-                      <Show when={node().otherParty.store?.isDisabled}>
-                        <Alert severity="info">
-                          {t('info.cannot-edit-disabled-store')}
-                        </Alert>
-                      </Show>
-                      <Show when={isProgram()}>
-                        <Alert severity="info">
-                          {t('info.cannot-edit-program-requisition')}
-                        </Alert>
-                      </Show>
-                      <InternalOrderAncillaryBanner
-                        storeId={params.storeId}
-                        requisitionId={node().id}
-                        ancillary={node().ancillaryState}
-                        editable={editable()}
-                        onRefreshed={() => void refetch()}
-                      />
-                    </Stack>
+                    <InternalOrderAncillaryBanner
+                      storeId={params.storeId}
+                      requisitionId={node().id}
+                      ancillary={node().ancillaryState}
+                      editable={editable()}
+                      onRefreshed={() => void refetch()}
+                    />
                   </Toolbar>
                 </Show>
               </Header>
