@@ -204,14 +204,14 @@ export const DialogShowcase = () => {
           title={'Large "workbench" dialog — size="large"'}
         >
           <Lead>
-            <code>size="large"</code> fills nearly the whole viewport — full
-            width and ~80% height — for content-heavy modals like the stock line
-            editor. The body becomes a flex column, so a single tall child (a
-            DataTable in the app) fills the space and{' '}
-            <em>scrolls internally</em> while the header, <code>footer</code>{' '}
-            and <code>actions</code> stay pinned to the edges. Add a line: the
-            box holds its size rather than growing. On phones (below the compact
-            breakpoint) a large dialog like this goes{' '}
+            <code>size="large"</code> is a centred card at the working width
+            (~56rem) whose height is elastic between ~60vh and ~80vh — for
+            content-heavy modals like the stock line editor. Short content makes
+            a short modal; past the height cap the body becomes a bounded flex
+            column, so a single tall child (a DataTable in the app) fills the
+            space and <em>scrolls internally</em> while the header,{' '}
+            <code>footer</code> and <code>actions</code> stay pinned to the
+            edges. On narrow viewports a large dialog like this goes{' '}
             <strong>full-screen</strong>, edge to edge with no radius — smaller
             dialogs stay centred cards.
           </Lead>

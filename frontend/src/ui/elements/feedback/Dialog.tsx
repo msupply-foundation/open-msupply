@@ -105,11 +105,12 @@ export interface DialogProps {
   minBodyHeightRem?: number;
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
-   * by widthRem + the viewport cap). `'large'`: a workbench modal that fills
-   * nearly the whole viewport — full width and ~80% height — for content-heavy
-   * modals like the line-edit table. In large mode widthRem is ignored (the
-   * dialog goes full-bleed) and the body flexes so a scrolling child (a
-   * DataTable) fills the tall space.
+   * by widthRem + the viewport cap). `'large'`: a workbench modal for
+   * content-heavy modals like the line-edit table — a centred card at the
+   * working width (~56rem, clamped to the viewport) whose height is elastic
+   * between ~60vh and ~80vh (#771). In large mode widthRem is ignored (the
+   * working width is fixed) and the body flexes so a scrolling child (a
+   * DataTable) fills the tall space once content passes the height cap.
    */
   size?: 'auto' | 'large';
   /**
@@ -320,8 +321,8 @@ export const Dialog = (props: DialogProps) => {
       data-testid={props.testId}
       data-fullscreen={fullscreen() && props.size === 'large' ? '' : undefined}
       style={{
-        // widthRem is ignored in large mode (it goes full-bleed via the .large
-        // class).
+        // widthRem is ignored in large mode (the .large class fixes the
+        // working width).
         ...(props.widthRem && props.size !== 'large'
           ? { '--dialog-width': `${props.widthRem}rem` }
           : {}),
