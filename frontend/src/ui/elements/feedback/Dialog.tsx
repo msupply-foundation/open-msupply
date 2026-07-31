@@ -130,8 +130,8 @@ export interface DialogProps {
    * nearly the whole viewport — full width and ~80% height — for content-heavy
    * modals like the line-edit table. In large mode widthRem is ignored (the
    * dialog goes full-bleed) and the body flexes so a scrolling child (a
-   * DataTable) fills the tall space. Like a `width` measure, it goes full-screen
-   * below the narrow-viewport line.
+   * DataTable) fills the tall space. Like a `width` measure, it goes
+   * full-screen below the narrow-viewport line.
    */
   size?: 'auto' | 'large';
   /**
