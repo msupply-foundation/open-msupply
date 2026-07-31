@@ -22,11 +22,22 @@ import styles from './ShortcutBadge.module.css';
 
 export interface ShortcutBadgeProps {
   shortcut: Shortcut;
+  /**
+   * A carrier-owned placement override — the badge's default corner does not
+   * suit every control (an icon-only button is narrower than a key legend, so
+   * IconButton moves it below the box). Scope it under the carrier's own class
+   * so it beats this module's single-class insets whichever order the two style
+   * sheets land in.
+   */
+  class?: string;
 }
 
 export const ShortcutBadge = (props: ShortcutBadgeProps) => (
   <Show when={modifierHeld()}>
-    <span class={styles.badge} aria-hidden="true">
+    <span
+      class={props.class ? `${styles.badge} ${props.class}` : styles.badge}
+      aria-hidden="true"
+    >
       {shortcutLabel(props.shortcut)}
     </span>
   </Show>
