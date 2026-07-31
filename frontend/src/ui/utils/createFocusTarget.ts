@@ -1,5 +1,4 @@
 import { getOwner, onCleanup } from 'solid-js';
-import { isTextEntry } from './isTextEntry';
 
 /*
  * A focus destination the owner holds a REFERENCE to: "this control is what the
@@ -75,20 +74,6 @@ export interface FocusTarget {
    * isn't mounted yet. Scrolls it into view either way.
    */
   focus: () => void;
-  /**
-   * Like `focus()`, but YIELDS to a text field the user is already typing in.
-   *
-   * This is what a screen ARRIVING uses (spec/keyboard KB-F1): a list screen
-   * seeds its table so arrow-key row navigation is live without a click, but
-   * "MUST NOT steal focus from a text field that already holds it — an arrival
-   * that races a search field or a just-dismissed palette yields to the field"
-   * (AC-KB29).
-   *
-   * A second verb rather than an option flag, because the two are different
-   * intents: `focus()` is "the user's action has a destination" and must always
-   * land; `seed()` is "nothing else has claimed the keyboard yet" and must not.
-   */
-  seed: () => void;
   /** Drop an armed request that hasn't landed. */
   cancel: () => void;
 }
@@ -105,9 +90,6 @@ export interface KeyedFocusTargets {
    * A key whose control never appears never lands.
    */
   focus: (key: string) => void;
-  /** `focus`, but yielding to a text field already holding focus — see
-   * FocusTarget.seed (KB-F1/AC-KB29). */
-  seed: (key: string) => void;
   /**
    * The attached element registered for `key`, for the rare caller that needs
    * more than focus (the filter bar dispatches a pointer event to open a chip's
@@ -124,8 +106,6 @@ const createRegistry = () => {
   const elements = new Map<string, HTMLElement>();
   // The key whose control is waiting to be focused, if any.
   let armed: string | undefined;
-  // Whether the armed request should yield to a focused text field (seed()).
-  let yielding = false;
   let frame: number | undefined;
 
   const attached = (key: string) => {
@@ -140,17 +120,7 @@ const createRegistry = () => {
     const el = attached(armed);
     // Not there yet — stay armed so the request lands when it attaches.
     if (!el) return;
-    // A seeding request yields to a text field that already holds focus, so a
-    // screen arriving never yanks the caret out of a search box the user is
-    // mid-word in (KB-F1/AC-KB29). Checked at LANDING, not when armed: the race
-    // this exists for is the field taking focus during the deferred frame.
-    if (yielding && isTextEntry(document.activeElement)) {
-      armed = undefined;
-      yielding = false;
-      return;
-    }
     armed = undefined;
-    yielding = false;
     el.scrollIntoView({ block: 'nearest' });
     el.focus({ preventScroll: true });
   };
@@ -168,7 +138,6 @@ const createRegistry = () => {
 
   const cancel = () => {
     armed = undefined;
-    yielding = false;
     if (frame !== undefined) {
       cancelAnimationFrame(frame);
       frame = undefined;
@@ -185,9 +154,8 @@ const createRegistry = () => {
       elements.set(key, el);
       if (armed === key) schedule();
     },
-    request: (key: string, yieldToField = false) => {
+    request: (key: string) => {
       armed = key;
-      yielding = yieldToField;
       schedule();
     },
     get: attached,
@@ -203,7 +171,6 @@ export const createFocusTarget = (): FocusTarget => {
   return {
     ref: el => registry.set(ONLY, el),
     focus: () => registry.request(ONLY),
-    seed: () => registry.request(ONLY, true),
     cancel: registry.cancel,
   };
 };
@@ -212,8 +179,7 @@ export const createFocusTargets = (): KeyedFocusTargets => {
   const registry = createRegistry();
   return {
     ref: key => el => registry.set(key, el),
-    focus: key => registry.request(key),
-    seed: key => registry.request(key, true),
+    focus: registry.request,
     get: registry.get,
     cancel: registry.cancel,
   };

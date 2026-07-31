@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount } from 'solid-js';
+import { createSignal, onCleanup, onMount, Suspense } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import { CommandPalette } from './CommandPalette';
 import { createGlobalActions } from './globalActions';
@@ -104,10 +104,25 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
     onCleanup(stop);
   });
 
+  /*
+   * The palette evaluates every registered action's `disabled()` when it opens,
+   * and those predicates are app code: one that reads a resource's `.latest`
+   * while that resource is still pending SUSPENDS the computation doing the
+   * reading. Without a boundary here that computation's nearest <Suspense> is the
+   * shell's, so one careless `disabled` on one screen would blank the whole app
+   * behind the palette.
+   *
+   * An action's `disabled` must still gate on `.state` rather than read a
+   * suspending source (kdd/keyboard-layer, kdd/solid-reactivity-pitfalls) — this
+   * boundary is what makes forgetting cost an empty palette for a frame instead
+   * of the screen the user was working on.
+   */
   return (
-    <CommandPalette
-      open={paletteOpen()}
-      onClose={() => setPaletteOpen(false)}
-    />
+    <Suspense>
+      <CommandPalette
+        open={paletteOpen()}
+        onClose={() => setPaletteOpen(false)}
+      />
+    </Suspense>
   );
 };

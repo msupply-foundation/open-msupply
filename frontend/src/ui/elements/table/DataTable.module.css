@@ -556,40 +556,6 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Keyboard row focus (spec/keyboard KB-N1/AC-KB37): "the focused row is
-   indicated by a background DISTINCT FROM ROW STRIPING… the indication is a
-   focus state, not a meaning".
-
-   TWO channels, because focus and selection are orthogonal states that must
-   both stay readable on the same row: a PRIMARY-tinted background (distinct
-   from striping and from the --secondary-main selection tint), plus an inset
-   ring. The ring is a DIFFERENT PROPERTY, so it never contends with the
-   selection background — a selected row that also holds keyboard focus keeps
-   showing where the keyboard is, which the background alone cannot do, since
-   the selection rules legitimately outrank this one (they carry an extra
-   :not()) and out-specifying them needed either a meaningless :not() or a
-   duplicated attribute. Lives here, before the density block, for the same
-   ascending-specificity reason as the disabled tint above.
-
-   Colour is never the only signal: the row is simultaneously the focused
-   element. The ring is on the CELLS, not an outline on the <tr>, because a
-   focus ring around a full-width row reads as a table border, not as focus. */
-tr[data-row-focused] > .td,
-tr[data-row-focused] > .selectCell {
-  background: color-mix(
-    in srgb,
-    var(--primary-main) 12%,
-    var(--surface-raised)
-  );
-  box-shadow:
-    inset 0 2px 0 0 var(--primary-main),
-    inset 0 -2px 0 0 var(--primary-main);
-}
-
-tr[data-row-focused]:focus {
-  outline: none;
-}
-
 /* Row density (ui-standards § tables → row heights), keyed off the
    data-density the DataTable stamps on the <table> (chosen in the Settings
    popover; comfortable is the spec's ⭐ default, and the default grows to

@@ -270,11 +270,11 @@ export const NumberField = (props: NumberFieldProps) => {
        * KB-S2: "A numeric field INSIDE A TABLE CELL instead lets arrow keys move
        * the text cursor, and MUST NOT step the value or move the row focus."
        *
-       * So in a cell we neither step nor preventDefault (the caret moves on the
-       * UA's own default action) — but we DO keep stopPropagation, which is what
-       * stops the table's row-navigation rung seeing the key. That second half is
-       * KB-N2 from the field's side: the table also checks `isTextEntry`, so the
-       * two guards agree, and either alone would be enough.
+       * So in a cell we neither step nor preventDefault: the caret moves on the
+       * UA's own default action. `stopPropagation` stays, which is KB-N2 from the
+       * field's side — "arrow keys inside a table's input belong to the field" —
+       * and is what will keep a row-navigation rung from seeing the key when one
+       * exists (it does not today; see kdd/keyboard-layer).
        */
       if (inTableCell) {
         e.stopPropagation();

@@ -112,7 +112,8 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
     const current = rows.findIndex(row => row.id === highlighted()?.id);
     // WRAPPING, not clamping: the palette is "an option list driven from a
     // search field above it", which is KB-N3's shape — and KB-N3 wraps at both
-    // ends, deliberately unlike a list table's clamped row focus (KB-N1).
+    // ends. KB-N1's list-table row focus clamps instead, which is why the two
+    // are separate rules; that one is not built (kdd/keyboard-layer).
     const next = rows[(current + delta + rows.length) % rows.length];
     if (next) setHighlightId(next.id);
   };

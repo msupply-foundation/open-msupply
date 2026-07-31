@@ -70,10 +70,25 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
     props.onClose();
   };
 
+  /*
+   * A bespoke verb or a bespoke tone drops the confirm to a plain <Button> (see
+   * the branch below), which claims no footer role and so answers no `Enter`
+   * (spec/keyboard KB-E2, kdd/keyboard-layer decision 8). Declared here rather
+   * than left implicit, because "this dialog deliberately has no submit key" and
+   * "somebody forgot `confirms`" are otherwise the same silent state — Dialog
+   * warns in dev about the second.
+   *
+   * Whether a DESTRUCTIVE confirm should answer `Enter` is an open spec question;
+   * this line is where that decision lands.
+   */
+  const bespokeConfirm = () =>
+    props.confirmLabel !== undefined || props.confirmVariant === 'danger';
+
   return (
     <Show when={props.open}>
       <Dialog
         open
+        enterConfirms={!bespokeConfirm()}
         onClose={props.onClose}
         icon={<HelpIcon />}
         testId="confirmation-modal"

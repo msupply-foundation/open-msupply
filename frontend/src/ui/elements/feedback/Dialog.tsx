@@ -15,6 +15,7 @@ import type { FocusTarget } from '../../utils/createFocusTarget';
 import { createAction } from '../../utils/keyActions';
 import { ALT_S, ESCAPE } from '../../utils/shortcuts';
 import { InTableCellContext } from '../table/inTableCell';
+import { SurfaceActiveContext } from '../../utils/surfaceActive';
 import {
   DialogConfirmContext,
   type ConfirmClaim,
@@ -345,7 +346,16 @@ export const Dialog = (props: DialogProps) => {
    */
   const claims = new Map<ConfirmRole, ConfirmClaim>();
   const confirmSlots: DialogConfirmSlots = {
-    claim: (role, claim) => claims.set(role, claim),
+    claim: (role, claim) => {
+      // Two buttons claiming one role means the footer has two confirms and only
+      // one of them answers Enter — an authoring mistake, not a state the spec
+      // has. Dev-only: in production the last claim simply wins.
+      if (import.meta.env.DEV && claims.has(role))
+        console.warn(
+          `Dialog: two footer buttons claim the "${role}" confirm role. Enter will activate only one of them (spec/keyboard KB-E2).`
+        );
+      claims.set(role, claim);
+    },
     // Identity-checked: a <Show> swap can mount the replacement before the old
     // one's cleanup runs, and an unchecked delete would clear the new claim.
     release: (role, claim) => {
@@ -353,6 +363,46 @@ export const Dialog = (props: DialogProps) => {
     },
     get: role => claims.get(role),
   };
+
+  /*
+   * A bespoke confirm that forgets `confirms` answers no Enter (KB-E2), fails
+   * silently, and is invisible until somebody tries the keyboard. Dev-only, this
+   * finds it — the enforcement the design otherwise leaves to review across ~57
+   * call sites.
+   *
+   * The test is UNCLAIMED FOOTER BUTTONS, not "no confirm claimed". Several
+   * dialogs legitimately show no confirm in some state — the line editor's
+   * item-search state offers only Cancel, and its Save appears once an item
+   * loads — so "the footer holds a button that declared no role" is the signal,
+   * and a dialog whose every button declares one is silent whatever the roles
+   * are. `enterConfirms={false}` opts out entirely.
+   *
+   * Deferred a microtask: the footer buttons claim in their own onMount, which is
+   * queued after this effect.
+   */
+  if (import.meta.env.DEV) {
+    let warned = false;
+    createEffect(() => {
+      if (!props.open || props.enterConfirms === false || warned) return;
+      // Presence check via `in`, never a read — reading the getter here would
+      // construct the actions outside the Provider (see the note on `title`).
+      if (!('actions' in props)) return;
+      queueMicrotask(() => {
+        if (warned || !props.open) return;
+        // Direct children only: a composite control (a SplitButton's pair) is
+        // nested in its own wrapper and is not a footer action, so it is not
+        // counted and cannot raise a false alarm.
+        const buttons = dialog.querySelectorAll(
+          `.${styles.actionsButtons ?? ''} > button`
+        ).length;
+        if (buttons <= claims.size) return;
+        warned = true;
+        console.warn(
+          `Dialog: ${buttons - claims.size} of ${buttons} footer button(s) declare no confirm role, so Enter cannot reach them. Use a StandardButton, or pass \`confirms="plain"\` on a bespoke confirm — or \`enterConfirms={false}\` if this dialog deliberately has no submit key (spec/keyboard KB-E2).`
+        );
+      });
+    });
+  }
 
   /*
    * KB-E2's choice: "where a continuing action (Save & next) is present and
@@ -572,14 +622,23 @@ export const Dialog = (props: DialogProps) => {
             the owner tree — without this every NumberField in the modal would
             believe it was in a cell and stop stepping on the arrows. */}
         <InTableCellContext.Provider value={false}>
-          <DialogConfirmContext.Provider value={confirmSlots}>
-            <DialogContent
-              content={props}
-              titleId={titleId}
-              descriptionId={descriptionId}
-              setTitleIsString={setTitleIsString}
-            />
-          </DialogConfirmContext.Provider>
+          {/* Dialog content stays MOUNTED while closed, so an action declared
+              inside it would keep answering its keys for a surface nobody can
+              see — and an `always`-tier bare character would fire app-wide.
+              createAction folds this flag into every such action's `disabled`
+              (see utils/surfaceActive.ts); Dialog's own two registrations are
+              created outside this Provider and carry their own `props.open`
+              gate. */}
+          <SurfaceActiveContext.Provider value={() => props.open}>
+            <DialogConfirmContext.Provider value={confirmSlots}>
+              <DialogContent
+                content={props}
+                titleId={titleId}
+                descriptionId={descriptionId}
+                setTitleIsString={setTitleIsString}
+              />
+            </DialogConfirmContext.Provider>
+          </SurfaceActiveContext.Provider>
         </InTableCellContext.Provider>
       </PortalMountContext.Provider>
     </dialog>
