@@ -1,6 +1,6 @@
 use repository::{
-    asset_row::{AssetRow, AssetRowDelete, AssetRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    asset_row::{AssetRow, AssetRowDelete},
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -10,7 +10,7 @@ use crate::sync::translations::{
 };
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -38,12 +38,71 @@ impl SyncTranslation for AssetTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(
-            serde_json::from_str::<AssetRow>(&sync_record.data)?,
-        ))
+        let AssetRow {
+            id,
+            notes,
+            asset_number,
+            asset_category_id,
+            asset_class_id,
+            asset_type_id,
+            store_id,
+            serial_number,
+            catalogue_item_id,
+            installation_date,
+            replacement_date,
+            created_datetime,
+            modified_datetime,
+            deleted_datetime,
+            properties,
+            donor_name_id,
+            warranty_start,
+            warranty_end,
+            needs_replacement,
+            locked_fields_json,
+        } = sync_record.deserialize::<AssetRow>()?;
+
+        let fk_check = fk_checker.with_table(connection, "asset", &id);
+
+        let result = AssetRow {
+            id,
+            notes,
+            asset_number,
+            asset_category_id: fk_check(
+                asset_category_id,
+                "asset_category_id",
+                FkField::AssetCategory,
+            )?,
+            asset_class_id: fk_check(asset_class_id, "asset_class_id", FkField::AssetClass)?,
+            asset_type_id: fk_check(
+                asset_type_id,
+                "asset_catalogue_type_id",
+                FkField::AssetCatalogueType,
+            )?,
+            store_id: fk_check(store_id, "store_id", FkField::Store)?,
+            serial_number,
+            catalogue_item_id: fk_check(
+                catalogue_item_id,
+                "asset_catalogue_item_id",
+                FkField::AssetCatalogueItem,
+            )?,
+            installation_date,
+            replacement_date,
+            created_datetime,
+            modified_datetime,
+            deleted_datetime,
+            properties,
+            donor_name_id: fk_check(donor_name_id, "donor_name_id", FkField::NameLink)?,
+            warranty_start,
+            warranty_end,
+            needs_replacement,
+            locked_fields_json,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -68,15 +127,15 @@ impl SyncTranslation for AssetTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Asset row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Asset(asset_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = asset_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -116,12 +175,16 @@ mod tests {
         let translator = AssetTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_asset_translation", MockDataInserts::none()).await;
+            setup_all("test_asset_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

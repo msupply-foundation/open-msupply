@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::define_linked_tables, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -49,24 +49,21 @@ impl<'a> AncillaryItemRowRepository<'a> {
         AncillaryItemRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &AncillaryItemRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &AncillaryItemRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
+        let changelog = AncillaryItemRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::AncillaryItem,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AncillaryItemRow>, RepositoryError> {
+        Ok(ancillary_item::table
+            .filter(ancillary_item::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn find_one_by_id(
@@ -80,7 +77,7 @@ impl<'a> AncillaryItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, ancillary_item_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, ancillary_item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(
             ancillary_item_with_links::table
                 .filter(ancillary_item_with_links::id.eq(ancillary_item_id)),
@@ -89,14 +86,36 @@ impl<'a> AncillaryItemRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(ancillary_item_id.to_string(), RowActionType::Upsert)
+        let changelog = AncillaryItemRow::generate_changelog(
+            ancillary_item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for AncillaryItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AncillaryItemRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        AncillaryItemRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

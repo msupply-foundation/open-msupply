@@ -3,4 +3,5 @@
 export type SyncMessageRowType =
   | 'RequestFieldChange'
   | 'SupportUpload'
+  | 'Merge'
   | string;

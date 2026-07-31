@@ -606,7 +606,12 @@ mod tests {
 
         setup_test_data(&connection);
 
-        crate::migrations::migrate(&connection, Some(version.clone())).unwrap();
+        crate::migrations::migrate(
+            &connection,
+            Some(version.clone()),
+            crate::migrations::MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(crate::migrations::get_database_version(&connection), version);
 
         let finalised = chrono::NaiveDate::from_ymd_opt(2026, 6, 1)

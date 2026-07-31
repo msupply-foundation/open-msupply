@@ -14,6 +14,7 @@ import {
   KBarPortal,
   PropsWithChildrenOnly,
   useAuthContext,
+  useLogout,
   StoreModeNodeType,
   useRegisterActions,
   useConfirmationModal,
@@ -88,13 +89,13 @@ const Actions = () => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation();
-  const { store, logout, user } = useAuthContext();
+  const { store, user } = useAuthContext();
+  const logout = useLogout();
   const showEasterEgg = useEasterEggModal();
   const showSync = useSyncModal();
   const confirmLogout = useConfirmationModal({
     onConfirm: () => {
       logout();
-      navigate(RouteBuilder.create(AppRoute.Login).build());
     },
     message: t('messages.logout-confirm'),
     title: t('heading.logout-confirm'),

@@ -101,6 +101,7 @@ pub fn update_vaccination(
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

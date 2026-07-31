@@ -102,6 +102,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryInvoice,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -116,6 +117,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -128,6 +130,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -140,6 +143,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -152,6 +156,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -166,6 +171,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::InvoiceCount,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -182,6 +188,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryInvoice,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -198,6 +205,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryItems,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -214,6 +222,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryLocation,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -230,6 +239,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QuerySensor,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -246,6 +256,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryMasterList,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -262,6 +273,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryName,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -277,6 +289,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::Report,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -293,6 +306,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::Report,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -305,6 +319,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::ServerAdmin,
                 store_id: None,
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -319,6 +334,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -333,6 +349,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -350,6 +367,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::RequisitionChart,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -366,6 +384,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -378,6 +397,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::StockCount,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -392,6 +412,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -406,6 +427,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -422,6 +444,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -438,6 +461,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryStore,
                 store_id: None,
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -454,6 +478,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::QueryStore,
                 store_id: None,
+                require_central_standalone: false,
             },
         },
     ]
@@ -475,6 +500,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -492,6 +518,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -506,6 +533,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -520,6 +548,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -534,6 +563,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -548,6 +578,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -562,6 +593,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::CreateOutboundShipmentFromRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -576,6 +608,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -590,6 +623,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -604,6 +638,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -618,6 +653,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -632,6 +668,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -646,6 +683,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateLocation,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -660,6 +698,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -674,6 +713,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -688,6 +728,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -702,6 +743,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -716,6 +758,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -730,6 +773,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -744,6 +788,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -758,6 +803,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -772,6 +818,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -786,6 +833,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -800,6 +848,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -814,6 +863,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -828,6 +878,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -843,6 +894,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateLocation,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -857,6 +909,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -871,6 +924,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -885,6 +939,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -899,6 +954,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -913,6 +969,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -927,6 +984,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -941,6 +999,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -955,6 +1014,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -971,6 +1031,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -985,6 +1046,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -999,6 +1061,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1013,6 +1076,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1027,6 +1091,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1041,6 +1106,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1056,6 +1122,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateLocation,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1071,6 +1138,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateSensor,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1085,6 +1153,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1099,6 +1168,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1113,6 +1183,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1127,6 +1198,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateOutboundShipment,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1141,6 +1213,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1155,6 +1228,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1169,6 +1243,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1183,6 +1258,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1195,6 +1271,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::ServerAdmin,
                 store_id: None,
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1209,6 +1286,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1223,6 +1301,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateStocktake,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
         TestData {
@@ -1239,6 +1318,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             expected: ResourceAccessRequest {
                 resource: Resource::MutateRequisition,
                 store_id: Some("some".to_string()),
+                require_central_standalone: false,
             },
         },
     ]

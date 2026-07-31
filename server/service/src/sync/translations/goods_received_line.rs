@@ -1,14 +1,12 @@
 use super::{
-    goods_received::{is_finalised, GoodsReceivedTranslation},
-    invoice_line::InvoiceLineTranslation,
-    item::ItemTranslation,
-    purchase_order_line::PurchaseOrderLineTranslation,
+    goods_received::GoodsReceivedTranslation, invoice_line::InvoiceLineTranslation,
+    item::ItemTranslation, purchase_order_line::PurchaseOrderLineTranslation, FkField,
     PullTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRowRepository,
+    ItemRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -39,45 +37,6 @@ struct LegacyGoodsReceivedLineRow {
     order_line_ID: Option<String>,
 }
 
-/// Helper to extract the status from a Goods_received sync buffer record
-#[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct GoodsReceivedStatus {
-    #[serde(default)]
-    status: String,
-}
-
-/// Helper to extract goods_received_lines_ID from a trans_line sync buffer record
-#[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct TransLineGoodsReceivedLineId {
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    goods_received_lines_ID: Option<String>,
-}
-
-/// Find the invoice_line ID (trans_line record_id) that was created from a GR line,
-/// by searching trans_line sync_buffer records for goods_received_lines_ID matching the GR line's ID.
-fn find_linked_invoice_line_id(
-    connection: &StorageConnection,
-    goods_received_line_id: &str,
-) -> Result<Option<String>, anyhow::Error> {
-    let pattern = format!("%\"goods_received_lines_ID\"%\"{goods_received_line_id}\"%");
-    let rows = SyncBufferRowRepository::new(connection)
-        .find_by_table_and_data_like("trans_line", &pattern)?;
-
-    // Verify the match by parsing JSON (LIKE can produce false positives)
-    for row in rows {
-        if let Ok(parsed) = serde_json::from_str::<TransLineGoodsReceivedLineId>(&row.data) {
-            if parsed.goods_received_lines_ID.as_deref() == Some(goods_received_line_id) {
-                return Ok(Some(row.record_id));
-            }
-        }
-    }
-
-    Ok(None)
-}
-
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(GoodsReceivedLineTranslation)
@@ -102,9 +61,10 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data: LegacyGoodsReceivedLineRow = serde_json::from_str(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyGoodsReceivedLineRow>()?;
 
         // Skip if an invoice_line with this ID already exists — the line may have been
         // created in OMS (from an earlier non-finalised import) and pushed back to central
@@ -121,29 +81,21 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             )));
         }
 
-        // Look up parent GR to check if finalized
-        let gr_sync_row = match SyncBufferRowRepository::new(connection)
-            .find_one_by_record_id(&data.goods_received_ID)?
-        {
-            Some(row) if row.table_name == GoodsReceivedTranslation.table_name() => row,
-            Some(_) => {
-                return Ok(PullTranslateResult::Ignored(format!(
-                    "sync_buffer record {} is not a Goods_received record",
-                    data.goods_received_ID
-                )))
-            }
-            None => {
-                return Ok(PullTranslateResult::Ignored(format!(
-                    "parent goods_received {} not found in sync_buffer",
-                    data.goods_received_ID
-                )))
-            }
-        };
+        // Decide finalised vs non-finalised by looking up the parent invoice.
+        // Non-finalised GR -> the GR translator created an invoice with id == goods_received_ID.
+        // Finalised GR     -> no such invoice; the real invoice lives under the transact id,
+        //                     linked via legacy_goods_received_id.
+        let parent_invoice =
+            InvoiceRowRepository::new(connection).find_one_by_id(&data.goods_received_ID)?;
 
-        let gr_status: GoodsReceivedStatus = serde_json::from_str(&gr_sync_row.data)?;
+        let check_required_fks =
+            fk_checker.with_table_required(connection, "invoice_line", &data.id);
+        let check_fks = fk_checker.with_table(connection, "invoice_line", &data.id);
 
-        // Finalized GR: update the existing invoice line with the PO line link
-        if is_finalised(&gr_status.status) {
+        // Finalised GR line: find the invoice_line that was spawned from this GR line
+        // via the `legacy_goods_received_line_id` column the invoice_line translator
+        // populated from `trans_line.goods_received_lines_ID`, and stamp the PO line link.
+        if parent_invoice.is_none() {
             let po_line_id = match &data.order_line_ID {
                 Some(id) => id.clone(),
                 None => {
@@ -154,23 +106,21 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
                 }
             };
 
-            let invoice_line_id = match find_linked_invoice_line_id(connection, &data.id)? {
-                Some(id) => id,
-                None => return Ok(PullTranslateResult::Ignored(format!(
-                    "no trans_line with goods_received_lines_ID found for goods_received_line {}",
-                    data.id
-                ))),
-            };
+            let linked_line = InvoiceLineRowRepository::new(connection)
+                .find_one_by_legacy_goods_received_line_id(&data.id)?;
 
-            return match InvoiceLineRowRepository::new(connection)
-                .find_one_by_id(&invoice_line_id)?
-            {
+            return match linked_line {
                 Some(mut line) => {
-                    line.purchase_order_line_id = Some(po_line_id);
+                    // The PO line link is unconfirmed legacy data — clear it if the line is missing.
+                    line.purchase_order_line_id = check_fks(
+                        Some(po_line_id),
+                        "purchase_order_line_id",
+                        FkField::PurchaseOrderLine,
+                    )?;
                     Ok(PullTranslateResult::upsert(line))
                 }
                 None => Ok(PullTranslateResult::Ignored(format!(
-                    "invoice_line {invoice_line_id} not found for goods_received_line {}",
+                    "no invoice_line with legacy_goods_received_line_id {} found",
                     data.id
                 ))),
             };
@@ -184,14 +134,24 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
         let total = data.cost_price * data.quantity_received;
 
+        // Validate the FKs sourced from the goods_received_line record itself.
+        // (invoice_id == goods_received_ID was confirmed present above as parent_invoice.)
+        let item_id = check_required_fks(data.item_ID, "item_link_id", FkField::ItemLink)?;
+        let location_id = check_fks(data.location_ID, "location_id", FkField::Location)?;
+        let purchase_order_line_id = check_fks(
+            data.order_line_ID,
+            "purchase_order_line_id",
+            FkField::PurchaseOrderLine,
+        )?;
+
         let line = InvoiceLineRow {
             id: data.id,
             invoice_id: data.goods_received_ID,
-            item_id: data.item_ID,
+            item_id,
             item_name: data.item_name,
             item_code,
             stock_line_id: None,
-            location_id: data.location_ID,
+            location_id,
             batch: data.batch_received,
             expiry_date: data.expiry_date,
             pack_size: data.pack_received,
@@ -216,11 +176,12 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             shipped_pack_size: None,
             status: None,
             manufacture_date: None,
-            purchase_order_line_id: data.order_line_ID,
+            purchase_order_line_id,
             donor_id: None,
             manufacturer_id: None,
             received_number_of_packs: None,
             linked_invoice_line_id: None,
+            legacy_goods_received_line_id: None,
         };
 
         Ok(PullTranslateResult::upsert(line))
@@ -230,7 +191,11 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_purchase_order_a_line_1, MockDataInserts},
+        test_db::setup_all,
+        PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_goods_received_line_translation() {
@@ -243,11 +208,24 @@ mod tests {
         )
         .await;
 
+        // The records link to purchase_order_line "po_line_1" (not part of the mock set);
+        // seed it so the now-validated purchase_order_line_id FK isn't cleared.
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&PurchaseOrderLineRow {
+                id: "po_line_1".to_string(),
+                ..mock_purchase_order_a_line_1()
+            })
+            .unwrap();
+
         for record in test_data::test_pull_upsert_records() {
             record.insert_extra_data(&connection).await;
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
             assert_eq!(translation_result, record.translated_record);
         }

@@ -457,6 +457,13 @@ mod report_to_excel_test {
             .unwrap_or_default()
     }
 
+    fn test_base_dir(test_name: &str) -> String {
+        std::env::temp_dir()
+            .join(format!("oms_convert_to_excel_{test_name}"))
+            .to_string_lossy()
+            .to_string()
+    }
+
     #[test]
     fn test_generate_excel_no_attributes() {
         let report: GeneratedReport = GeneratedReport {
@@ -750,13 +757,14 @@ mod report_to_excel_test {
     fn test_csv_to_excel() {
         let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
 
-        let result = csv_to_excel(".", csv_data, "test_csv_export", None);
+        let base_dir = test_base_dir("csv_export");
+        let result = csv_to_excel(&base_dir, csv_data, "test_csv_export", None);
         assert!(result.is_ok(), "CSV to Excel conversion should succeed");
 
         let file_id = result.unwrap();
         assert!(!file_id.is_empty(), "File ID should not be empty");
 
-        let file_service = StaticFileService::new(".").unwrap();
+        let file_service = StaticFileService::new(&base_dir).unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -790,8 +798,9 @@ mod report_to_excel_test {
 
     #[test]
     fn test_csv_to_excel_sets_sheet_name() {
+        let base_dir = test_base_dir("sheet_name");
         let read_sheet_name = |file_id: &str| {
-            let file_service = StaticFileService::new(".").unwrap();
+            let file_service = StaticFileService::new(&base_dir).unwrap();
             let generated_file = file_service
                 .find_file(file_id, StaticFileCategory::Temporary)
                 .unwrap()
@@ -802,7 +811,8 @@ mod report_to_excel_test {
 
         // sheet after the store code
         let csv_data = "Name,Status\nHarry Potter,Picked\n";
-        let file_id = csv_to_excel(".", csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
+        let file_id =
+            csv_to_excel(&base_dir, csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
         assert_eq!(read_sheet_name(&file_id), "fsmclinic");
 
         let export = |file_name: &str, store_code: Option<&str>| {
@@ -817,7 +827,7 @@ mod report_to_excel_test {
                 header: None,
                 footer: None,
             };
-            export_html_report_to_excel(".", report, file_name.to_string(), &None, store_code)
+            export_html_report_to_excel(&base_dir, report, file_name.to_string(), &None, store_code)
                 .unwrap()
         };
 
@@ -848,9 +858,11 @@ mod report_to_excel_test {
         // mSupply allows store codes with crazy characters — make sure they
         // can't escape the temp dir or break the path on disk.
         let csv_data = "Name\nHarry\n";
-        let file_id = csv_to_excel(".", csv_data, "../etc/passwd_stock", Some("any")).unwrap();
+        let base_dir = test_base_dir("sanitizes_filename");
+        let file_id =
+            csv_to_excel(&base_dir, csv_data, "../etc/passwd_stock", Some("any")).unwrap();
 
-        let file_service = StaticFileService::new(".").unwrap();
+        let file_service = StaticFileService::new(&base_dir).unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -939,8 +951,9 @@ mod report_to_excel_test {
 
         // Test the full export function with template. The store code must
         // NOT override the template's own sheet name
+        let base_dir = test_base_dir("with_template");
         let result = export_html_report_to_excel(
-            ".", // base_dir
+            &base_dir,
             report,
             "test_with_template".to_string(),
             &Some(template_bytes),
@@ -951,7 +964,7 @@ mod report_to_excel_test {
         let file_id = result.unwrap();
 
         // Read back the generated file to verify content
-        let file_service = StaticFileService::new(".").unwrap();
+        let file_service = StaticFileService::new(&base_dir).unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()

@@ -76,6 +76,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         </PanelLabel>
         <PanelField>
           <IconButton
+            testId="edit-service-charges-button"
             disabled={isDisabled}
             icon={<MenuDotsIcon style={{ fontSize: 16 }} />}
             label={t('messages.edit-service-charges')}

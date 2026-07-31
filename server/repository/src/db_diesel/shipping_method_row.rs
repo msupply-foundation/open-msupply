@@ -1,4 +1,7 @@
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
+};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -32,7 +35,7 @@ impl<'a> ShippingMethodRowRepository<'a> {
         ShippingMethodRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ShippingMethodRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ShippingMethodRow) -> Result<(), RepositoryError> {
         diesel::insert_into(shipping_method::table)
             .values(row)
             .on_conflict(shipping_method::id)
@@ -40,6 +43,17 @@ impl<'a> ShippingMethodRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &ShippingMethodRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ShippingMethodRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ShippingMethodRow>, RepositoryError> {
@@ -51,20 +65,43 @@ impl<'a> ShippingMethodRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = shipping_method::table
-            .filter(shipping_method::id.eq(lookup_id))
-            .select(shipping_method::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            shipping_method::table.filter(shipping_method::id.eq(lookup_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ShippingMethodRow>, RepositoryError> {
+        Ok(shipping_method::table
+            .filter(shipping_method::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for ShippingMethodRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ShippingMethodRowRepository::new(con).upsert_one(self)?;
-        // Not in changelog
-        Ok(None)
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ShippingMethodRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

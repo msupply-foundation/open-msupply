@@ -2,7 +2,7 @@ use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
     location_type_row::location_type, StorageConnection,
 };
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -93,6 +93,14 @@ impl<'a> ItemLinkRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            item_link::table.filter(item_link::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn delete(&self, item_link_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(item_link::table.filter(item_link::id.eq(item_link_id)))
             .execute(self.connection.lock().connection())?;
@@ -101,9 +109,9 @@ impl<'a> ItemLinkRowRepository<'a> {
 }
 
 impl Upsert for ItemLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ItemLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

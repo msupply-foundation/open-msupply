@@ -40,7 +40,6 @@ rustls-pemfile = "2.2.0"
 serde = { workspace = true }
 tokio = { workspace = true }
 clap = { workspace = true }
-rust-embed = "8.11.0"
 mime_guess = "2.0.5"
 futures = { workspace = true }
 simple-log = { workspace = true }
@@ -64,9 +63,9 @@ astro-dnssd = { version = "0.3.6" }
 
 [features]
 default = ["sqlite", "dep:machine-uid"]
-sqlite = ["repository/sqlite"]
-postgres = ["repository/postgres"]
-android = ["repository/sqlite"]
+sqlite = ["repository/sqlite", "graphql/sqlite"]
+postgres = ["repository/postgres", "graphql/postgres"]
+android = ["repository/sqlite", "graphql/sqlite"]
 
 [lints]
 workspace = true

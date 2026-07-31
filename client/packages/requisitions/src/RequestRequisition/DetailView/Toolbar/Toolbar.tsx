@@ -126,6 +126,7 @@ export const Toolbar = () => {
                   filterBy={{
                     type: { equalTo: NameNodeType.Store },
                   }}
+                  width={250}
                 />
               }
             />

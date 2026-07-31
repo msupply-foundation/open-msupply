@@ -72,6 +72,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     if let Some(date) = prescription_date {

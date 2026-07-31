@@ -46,6 +46,7 @@ pub fn delete_campaign(
         &ResourceAccessRequest {
             resource: Resource::MutateCampaigns,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

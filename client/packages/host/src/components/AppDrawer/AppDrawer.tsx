@@ -100,7 +100,8 @@ const closedMixin = (theme: Theme) => ({
 
 const StyledDrawer = styled(Box, {
   shouldForwardProp: prop => prop !== 'isOpen',
-})<{ isOpen: boolean }>(({ isOpen, theme }) => ({
+  // styled() loses Box's polymorphic `component` prop, so redeclare it
+})<{ isOpen: boolean; component?: React.ElementType }>(({ isOpen, theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
@@ -182,6 +183,11 @@ export const AppDrawer: React.FC = () => {
 
   return (
     <StyledDrawer
+      // A navigation landmark: the deterministic suites treat a visible nav
+      // as the post-login "landed" signal (open-msupply-frontend
+      // e2e/TESTIDS.md § non-testid hooks), and the app's primary menu
+      // should be one for assistive tech regardless.
+      component="nav"
       data-testid="drawer"
       aria-expanded={drawer.isOpen}
       isOpen={drawer.isOpen}
@@ -189,6 +195,7 @@ export const AppDrawer: React.FC = () => {
     >
       <ToolbarIconContainer>
         <IconButton
+          testId="drawer-toggle"
           label={
             drawer.isOpen
               ? t('button.close-the-menu')

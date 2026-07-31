@@ -3,8 +3,10 @@ use crate::types::CurrencyNode;
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    loader::CurrencyByIdLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    loader::{AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader},
+    simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use serde::Serialize;
@@ -142,6 +144,50 @@ impl NameNode {
             Some(properties) => properties.to_owned(),
             None => "{}".to_string(), // Empty JSON object
         }
+    }
+
+    /// Properties v2 values for this name. The raw `name.custom_fields` JSONB
+    /// blob is filtered server-side to keys that are (a) defined in
+    /// `custom_field` and not soft-deleted, (b) marked visible for one of this
+    /// name's table scopes via `custom_field_scope`. Stray keys never reach the
+    /// client.
+    ///
+    /// A name has no single scope: "customer"/"supplier" are independent role
+    /// flags (not mutually exclusive) and "patient" is a type, so the visible
+    /// set is the **union** over every scope the name qualifies for —
+    /// `"patient"` if it's a patient, `"customer"` if `is_customer`,
+    /// `"supplier"` if `is_supplier`. A name that matches none of these (e.g. a
+    /// manufacturer/donor/store-only name) has no scope and surfaces nothing.
+    pub async fn custom_fields(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
+            return Ok(None);
+        };
+
+        // Additive: a name can be several of these at once (a customer that is
+        // also a supplier, or — unusually — a patient with trading flags).
+        let mut scopes: Vec<String> = Vec::new();
+        if self.row().r#type == NameRowType::Patient {
+            scopes.push("patient".to_string());
+        }
+        if self.name.is_customer() {
+            scopes.push("customer".to_string());
+        }
+        if self.name.is_supplier() {
+            scopes.push("supplier".to_string());
+        }
+
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys: std::collections::HashSet<String> = loader
+            .load_many(scopes)
+            .await?
+            .into_values()
+            .flatten()
+            .collect();
+
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn hsh_code(&self) -> &Option<String> {

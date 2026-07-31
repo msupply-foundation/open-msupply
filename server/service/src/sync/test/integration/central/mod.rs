@@ -42,7 +42,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .await
             .expect("Problem deleting central data");
 
-        site_config.synchroniser.sync(None).await.unwrap();
+        site_config.synchroniser.sync().await.unwrap();
         check_integrated(
             &site_config.context.connection,
             &step_data.integration_records,
@@ -74,7 +74,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
 
         site_config = init_test_context(site_config.config, &inner_identifier).await;
 
-        site_config.synchroniser.sync(None).await.unwrap();
+        site_config.synchroniser.sync().await.unwrap();
 
         check_integrated(
             &site_config.context.connection,

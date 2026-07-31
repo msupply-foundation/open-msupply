@@ -13,6 +13,7 @@ import {
   UserStoreNodeFragment,
   getMostRecentCredentials,
   useAuthContext,
+  useSelectStore,
   useLocalStorage,
   useTranslation,
   useUserDetails,
@@ -46,6 +47,7 @@ const StoreRow = React.memo(function StoreRow({
       onClick={() => onSelect(store.id)}
       role="option"
       aria-selected={isActive}
+      data-testid={`store-select-option-${store.code}`}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -98,8 +100,9 @@ export const LoginStoreSelectorPanel = ({
     (storeId: string) => `${listboxId}-${storeId}`,
     [listboxId]
   );
-  const { token, store: currentStore, setStore } = useAuthContext();
-  const { data, isLoading } = useUserDetails(token);
+  const { store: currentStore } = useAuthContext();
+  const setStore = useSelectStore();
+  const { data, isLoading } = useUserDetails();
   const [skipPrefs, setSkipPrefs] = useLocalStorage(
     '/login/skip-store-selector',
     {}
@@ -287,6 +290,7 @@ export const LoginStoreSelectorPanel = ({
           placeholder={t('placeholder.search-by-name')}
           debounceTime={0}
           autoFocus
+          inputTestId="store-selector-search"
         />
       </Box>
 
@@ -366,6 +370,7 @@ export const LoginStoreSelectorPanel = ({
           disabled={!selectedId || isLoggingIn}
           onClick={() => void confirm(selectedId)}
           label={t('button.continue')}
+          data-testid="store-selector-continue"
         />
       </Box>
     </Box>

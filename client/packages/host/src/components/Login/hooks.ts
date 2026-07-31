@@ -6,9 +6,9 @@ import {
   InitialisationStatusType,
   LocalStorage,
   useAuthApi,
-  useAuthContext,
   useInitialisationStatus,
   useLocation,
+  useLogin,
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
@@ -45,7 +45,8 @@ export const useLoginForm = (
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
-  const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
+  const { login, isLoggingIn, mostRecentCredentials } = useLogin();
+  const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
   const queryClient = useQueryClient();
   const authApi = useAuthApi();
   const { password, setPassword, setUsername, username, error, setError } =
@@ -68,7 +69,7 @@ export const useLoginForm = (
 
     const userDetails = queryClient.getQueryData<{
       stores?: { nodes?: { id: string; isDisabled?: boolean }[] };
-    }>(authApi.keys.me(token));
+    }>(authApi.keys.me());
     const enabledStoreCount =
       userDetails?.stores?.nodes?.filter(s => !s.isDisabled).length ?? 0;
     const skipPrefs = LocalStorage.getItem('/login/skip-store-selector') ?? {};

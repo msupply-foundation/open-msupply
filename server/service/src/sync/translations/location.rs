@@ -1,6 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRow, LocationRowRepository, LocationTypeRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, LocationRow, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +7,7 @@ use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationRow {
@@ -54,6 +53,7 @@ impl SyncTranslation for LocationTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationRow {
@@ -64,25 +64,18 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
-        let location_type_id = clear_invalid_fk(
-            connection,
-            "location",
-            &id,
-            "location_type_id",
-            location_type_id,
-            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "location", &id);
+        let check_fk = fk_checker.with_table_required(connection, "location", &id);
 
         let result = LocationRow {
             id,
             name,
             code,
             on_hold,
-            store_id,
-            location_type_id,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
+            location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
             volume,
         };
 
@@ -91,9 +84,14 @@ impl SyncTranslation for LocationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Location(location_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let LocationRow {
             id,
             name,
@@ -102,12 +100,7 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = LocationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Location row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = location_row;
 
         let legacy_row = LegacyLocationRow {
             id: id.clone(),
@@ -152,7 +145,7 @@ mod tests {
         // FK validation requires the referenced location_type to exist
         let (_, connection, _, _) = setup_all_with_data(
             "test_location_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
             MockData {
                 location_types: vec![LocationTypeRow {
                     id: "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
@@ -167,7 +160,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

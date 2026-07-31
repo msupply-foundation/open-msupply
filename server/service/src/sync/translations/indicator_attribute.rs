@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, PartialEq)]
 enum LegacyAxis {
@@ -67,7 +67,8 @@ impl SyncTranslation for IndicatorAttribute {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyIndicatorAttribute {
@@ -81,7 +82,12 @@ impl SyncTranslation for IndicatorAttribute {
             axis,
             is_active,
             default_value,
-        } = serde_json::from_str::<LegacyIndicatorAttribute>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
+
+        let check_fk = fk_checker.with_table_required(connection, "indicator_attribute", &id);
+        let program_indicator_id =
+            check_fk(program_indicator_id, "program_indicator_id", FkField::ProgramIndicator)?;
+
         Ok(match axis {
             LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
                 id,
@@ -127,9 +133,11 @@ mod tests {
         use crate::sync::test::test_data::indicator_attribute;
         let translator = IndicatorAttribute;
 
+        // `all()` seeds program_indicator_a (+ its FK chain) so the new required-FK
+        // check on program_indicator_id passes for the test records.
         let (_, connection, _, _) = setup_all(
             "test_indicator_attribute_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 
@@ -138,7 +146,11 @@ mod tests {
             .for_each(|record| {
                 assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
                 let translation_result = translator
-                    .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                    .try_translate_from_upsert_sync_record(
+                        &connection,
+                        &crate::sync::translations::FkChecker::new(),
+                        &record.sync_buffer_row,
+                    )
                     .unwrap();
 
                 assert_eq!(translation_result, record.translated_record);

@@ -91,15 +91,30 @@ impl<'a> DocumentRegistryRepository<'a> {
             query = query.order(document_registry::id.asc())
         }
 
-        let result: Result<Vec<DocumentRegistry>, RepositoryError> = query
+        // A single registry with an invalid config or schema must not take down the
+        // whole list (which would, for example, blank the program picker in reports
+        // with no error shown to the user). Skip and log the offending row instead.
+        // See https://github.com/msupply-foundation/open-msupply/issues/8659
+        let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<DocumentRegistrySchemaJoin>(self.connection.lock().connection())?
             .into_iter()
-            .map(to_domain)
+            .filter_map(|join| {
+                let id = join.0.id.clone();
+                match to_domain(join) {
+                    Ok(registry) => Some(registry),
+                    Err(err) => {
+                        log::error!(
+                            "Skipping document registry '{id}' with invalid config/schema: {err:?}"
+                        );
+                        None
+                    }
+                }
+            })
             .collect();
 
-        result
+        Ok(result)
     }
 
     pub fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegistryQuery {

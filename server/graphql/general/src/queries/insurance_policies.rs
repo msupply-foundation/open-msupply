@@ -42,6 +42,7 @@ pub fn insurance_policy(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -79,6 +80,7 @@ pub fn insurance_policies(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

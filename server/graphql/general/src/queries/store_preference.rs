@@ -12,6 +12,7 @@ pub(crate) fn store_preferences(ctx: &Context<'_>, store_id: &str) -> Result<Sto
         &ResourceAccessRequest {
             resource: Resource::QueryStorePreferences,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

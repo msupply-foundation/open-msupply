@@ -25,6 +25,7 @@ pub async fn get_campaigns(
         &ResourceAccessRequest {
             resource: Resource::QueryCampaigns,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

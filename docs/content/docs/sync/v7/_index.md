@@ -762,6 +762,8 @@ Draft: Front end will know the status, if initialised or not, and can change syn
 
 When a store is moved to a remote site, we need to re-sync all of its data. This poses a challenge since we don’t want to re-sync data for other stores we have active on the site, so full re-initialisation is out of the question. Instead we ask the central server to filter by this store’s id (rather than all stores active on the site), pull those records, and integrate them — using a **temporary cursor that starts at 0** so we get the store’s full history, not just changes since the main cursor.
 
+The `data_for_store` filter covers three routes: store-scoped (`Remote`/`RemoteOwned`) records by `store_id`, `Transfer` records by `transfer_store_id`, and `Patient`-scoped records (patient `Name`, encounters, vaccinations, documents, etc.) for patients **visible at this store** (via `name_store_join`). The patient route is scoped to the store rather than the whole destination site, so only patients this store can actually see are re-pulled — without it a moved store would arrive missing its patient data.
+
 This is generalised into the **`sync_request`** mechanism: an *auxiliary* (a.k.a. special) sync run, parameterised by its own pull/push filter and cursor, that runs **after** the normal main sync each tick. Anything that needs to backfill a subset of records — a transferred store, a re-synced patient, or a newly-added table after a v7 migration (see [Re-sync after a v7 migration](#re-sync-after-v7-migration)) — is expressed as a `sync_request` row.
 
 **Mechanism**

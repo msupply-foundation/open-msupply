@@ -57,7 +57,18 @@ pub mod android {
                 base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
+                standalone_store_name: None,
+                standalone_admin_username: None,
+                standalone_admin_password: None,
                 workers: None,
+                inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                // The app shell copies its APK-bundled web UI here on startup,
+                // before starting the server (see MainActivity.copyFrontendAssets).
+                // The bundle nests the transition ("old UI") build under old-ui/,
+                // which the server serves at /old-ui/ by convention while the
+                // new FE is served at /.
+                frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
@@ -83,6 +94,8 @@ pub mod android {
             mail: None,
             // Feature flags won't work using tablet as a server. Run in client mode and connect to a desktop server instead
             features: None,
+            changelog_partition: None,
+            changelog_dedup: None,
         };
 
         logging_init(settings.logging.clone(), None);
@@ -102,7 +115,10 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: EnvUnowned, _: JClass) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
+        _: EnvUnowned,
+        _: JClass,
+    ) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();

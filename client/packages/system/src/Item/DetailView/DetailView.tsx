@@ -4,6 +4,7 @@ import {
   AlertModal,
   RouteBuilder,
   useNavigate,
+  useParams,
   useTranslation,
   Box,
   useBreadcrumbs,
@@ -20,6 +21,7 @@ import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 import { AncillarySupplies } from './Tabs/AncillarySupplies';
+import { CustomFieldsTab } from './Tabs/CustomFields';
 import { ActivityLogList } from '../../ActivityLog';
 
 export const ItemDetailView = () => {
@@ -27,9 +29,10 @@ export const ItemDetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isCentralServer = useIsCentralServerApi();
+  const { id: paramId } = useParams();
   const {
     byId: { data, isLoading },
-  } = useItem();
+  } = useItem(paramId);
 
   React.useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });
@@ -112,6 +115,11 @@ export const ItemDetailView = () => {
       value: t('title.ancillary-supplies'),
     },
   ];
+
+  tabs.push({
+    Component: <CustomFieldsTab item={data} />,
+    value: t('label.custom-fields'),
+  });
 
   isCentralServer &&
     tabs.push({

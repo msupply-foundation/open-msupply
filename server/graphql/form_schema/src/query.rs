@@ -55,6 +55,7 @@ pub fn form_schemas(
         &ResourceAccessRequest {
             resource: Resource::QueryJsonSchema,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

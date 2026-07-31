@@ -55,6 +55,7 @@ pub enum UpdateStocktakeLineError {
     StockLineReducedBelowZero(StockLine),
     IncorrectLocationType,
     VvmStatusDoesNotExist,
+    CannotSetManufactureDateInFuture,
 }
 
 pub fn update_stocktake_line(
@@ -90,7 +91,7 @@ mod stocktake_line_test {
         test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
         ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StocktakeLineRow, Upsert,
+        StocktakeLineRow, StocktakeLineRowRepository,
     };
 
     use crate::{
@@ -218,10 +219,10 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::AdjustmentReasonNotValid);
 
         ReasonOptionRowRepository::new(&context.connection)
-            .soft_delete(&positive_reason().id)
+            .mark_deleted(&positive_reason().id)
             .unwrap();
         ReasonOptionRowRepository::new(&context.connection)
-            .soft_delete(&negative_reason().id)
+            .mark_deleted(&negative_reason().id)
             .unwrap();
 
         // error: StocktakeLineDoesNotExist
@@ -267,6 +268,25 @@ mod stocktake_line_test {
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
 
+        // error: CannotSetManufactureDateInFuture
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    manufacture_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(9999, 1, 1),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            UpdateStocktakeLineError::CannotSetManufactureDateInFuture
+        );
+
         // error: VvmStatusDoesNotExist
         let stocktake_line_a = mock_stocktake_line_a();
         let error = service
@@ -307,7 +327,7 @@ mod stocktake_line_test {
             ..Default::default()
         };
 
-        stocktake_line.upsert(&context.connection).unwrap();
+        StocktakeLineRowRepository::new(&context.connection).upsert_one(&stocktake_line).unwrap();
 
         let error = service
             .update_stocktake_line(

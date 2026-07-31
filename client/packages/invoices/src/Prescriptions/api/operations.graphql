@@ -29,6 +29,7 @@ fragment Prescription on InvoiceNode {
   type
   status
   colour
+  customFields
   nameInsuranceJoinId
   insuranceDiscountAmount
   insuranceDiscountPercentage

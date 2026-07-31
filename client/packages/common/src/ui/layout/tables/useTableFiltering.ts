@@ -80,6 +80,12 @@ export const useTableFiltering = <T extends MRT_RowData>(
             };
             break;
 
+          case 'multi-select':
+            filterUpdaters[key] = (value: string[]) => {
+              updateQuery({ [key]: value.join(',') || undefined });
+            };
+            break;
+
           case 'select':
           case 'text':
           case undefined: // default to text
@@ -152,7 +158,12 @@ const getFilterState = <T extends MRT_RowData>(
       // Ignore sort params from URL
       .filter(([id]) => id !== 'sort' && id !== 'dir' && id !== 'tab')
       .map(([urlKey, val]) => {
-        const column = columns.find(col => col.filterKey === urlKey);
+        const column = columns.find(
+          col =>
+            col.filterKey === urlKey ||
+            col.id === urlKey ||
+            col.accessorKey === urlKey
+        );
         const id = column?.id || column?.accessorKey || urlKey;
 
         // Date range
@@ -170,6 +181,13 @@ const getFilterState = <T extends MRT_RowData>(
           return {
             id,
             value: String(val),
+          };
+
+        // Multi-select: split comma-separated values into array
+        if (column?.filterVariant === 'multi-select' && typeof val === 'string')
+          return {
+            id,
+            value: val.split(','),
           };
 
         // TO-DO: Implement filter state for other types

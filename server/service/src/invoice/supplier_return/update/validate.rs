@@ -2,7 +2,8 @@ use repository::{InvoiceLineRowRepository, InvoiceRow, InvoiceType, StorageConne
 
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceRowStatusError,
+    check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
+    InvoiceRowStatusError,
 };
 use crate::validate::check_other_party_store_is_disabled;
 
@@ -29,6 +30,14 @@ pub fn validate(
     }
     if !check_invoice_type(&return_row, InvoiceType::SupplierReturn) {
         return Err(NotAnSupplierReturn);
+    }
+
+    if let Some(properties) = &input.custom_fields {
+        if let Some(unknown) =
+            check_unknown_custom_fields_key(connection, &return_row.r#type, properties)?
+        {
+            return Err(UnknownPropertyKey(unknown));
+        }
     }
 
     // Status check

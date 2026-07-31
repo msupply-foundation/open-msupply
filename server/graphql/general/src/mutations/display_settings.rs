@@ -55,6 +55,7 @@ pub fn update_display_settings(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

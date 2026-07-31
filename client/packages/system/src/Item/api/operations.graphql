@@ -254,7 +254,9 @@ fragment Item on ItemNode {
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
     ignoreForOrders
+    margin
   }
+  customFields
 }
 
 query items(
@@ -314,6 +316,7 @@ fragment ItemsWithStats on ItemNode {
   defaultPackSize
   isVaccine
   doses
+  customFields
   availableStockOnHand(storeId: $storeId)
   masterLists(storeId: $storeId) {
     id
@@ -379,6 +382,16 @@ query itemById($storeId: String!, $itemId: String!) {
         }
       }
       totalCount
+    }
+  }
+}
+
+query itemPrice($storeId: String!, $itemId: String!) {
+  itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+    ... on ItemPriceNode {
+      __typename
+      itemId
+      defaultPricePerUnit
     }
   }
 }
@@ -584,6 +597,32 @@ query itemLedger(
         ...ItemLedger
       }
       totalCount
+    }
+  }
+}
+
+fragment CustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query itemCustomFields {
+  customFields(filter: { scope: { equalTo: "item" } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomField
+      }
     }
   }
 }

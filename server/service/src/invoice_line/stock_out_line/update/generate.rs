@@ -213,6 +213,7 @@ fn generate_line(
             .map(|u| u.value)
             .unwrap_or(existing_received_number_of_packs),
         linked_invoice_line_id: None,
+        legacy_goods_received_line_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

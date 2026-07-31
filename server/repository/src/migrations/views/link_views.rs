@@ -41,6 +41,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS item_store_join_view;
                 DROP VIEW IF EXISTS vaccine_course_item_view;
                 DROP VIEW IF EXISTS ancillary_item_view;
+                DROP VIEW IF EXISTS changelog_view;
             "#
         )?;
 
@@ -371,6 +372,15 @@ impl ViewMigrationFragment for ViewMigration {
                     item_link AS principal_link ON ancillary_item.item_link_id = principal_link.id
                 JOIN
                     item_link AS ancillary_link ON ancillary_item.ancillary_item_link_id = ancillary_link.id;
+
+                CREATE VIEW changelog_view AS
+                SELECT
+                    changelog.*,
+                    patient_link.name_id AS patient_id
+                FROM
+                    changelog
+                LEFT JOIN
+                    name_link AS patient_link ON changelog.patient_link_id = patient_link.id;
             "#
         )?;
 

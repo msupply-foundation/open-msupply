@@ -73,6 +73,7 @@ pub(crate) fn generate_inbound_lines(
                     manufacture_date,
                     purchase_order_line_id,
                     received_number_of_packs: _,
+                    legacy_goods_received_line_id: _,
                 },
                 ItemRow {
                     id: item_id,
@@ -159,6 +160,7 @@ pub(crate) fn generate_inbound_lines(
                     location_id: None,
                     status,
                     received_number_of_packs: None,
+                    legacy_goods_received_line_id: None,
                 }
             },
         )

@@ -52,6 +52,7 @@ pub fn insert_rnr_form(
         &ResourceAccessRequest {
             resource: Resource::MutateRnRForms,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

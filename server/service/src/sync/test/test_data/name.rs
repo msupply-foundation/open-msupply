@@ -154,6 +154,7 @@ fn name_1() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: None,
+            custom_fields: None,
         },
     )
 }
@@ -298,6 +299,7 @@ fn name_2() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            custom_fields: None,
         },
     )
 }
@@ -442,6 +444,7 @@ fn name_3() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            custom_fields: None,
         },
     )
 }
@@ -592,6 +595,11 @@ fn name_4() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            // The raw record carries `category1_ID`, imported as the
+            // `name_category_1` OPTION value (option id = category id).
+            custom_fields: Some(json!({
+                "name_category_1": "8C4DDF227AFB4FD6A09445C949079597"
+            })),
         },
     )
 }
@@ -637,6 +645,15 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             gender: Some(GenderType::Female),
             date_of_death: None,
             custom_data: None,
+            custom_1: None,
+            custom_2: None,
+            custom_3: None,
+            category1_id: None,
+            category2_id: None,
+            category3_id: None,
+            category4_id: None,
+            category5_id: None,
+            category6_id: None,
             hsh_code: Some("HSH001".to_string()),
             hsh_name: Some("HSH Name".to_string()),
             margin: Some(0.0),
@@ -687,6 +704,15 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             gender: Some(GenderType::Female),
             date_of_death: None,
             custom_data: None,
+            custom_1: None,
+            custom_2: None,
+            custom_3: None,
+            category1_id: None,
+            category2_id: None,
+            category3_id: None,
+            category4_id: None,
+            category5_id: None,
+            category6_id: None,
             hsh_code: None,
             hsh_name: None,
             margin: Some(0.0),
@@ -778,6 +804,7 @@ fn name_5_dob_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            custom_fields: None,
         },
     )
 }
@@ -823,6 +850,15 @@ fn name_push_record_5() -> TestSyncOutgoingRecord {
             gender: Some(GenderType::Female),
             date_of_death: None,
             custom_data: None,
+            custom_1: None,
+            custom_2: None,
+            custom_3: None,
+            category1_id: None,
+            category2_id: None,
+            category3_id: None,
+            category4_id: None,
+            category5_id: None,
+            category6_id: None,
             hsh_code: None,
             hsh_name: None,
             margin: None,
@@ -914,6 +950,7 @@ fn name_6_dob_no_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            custom_fields: None,
         },
     )
 }
@@ -959,6 +996,15 @@ fn name_push_record_6() -> TestSyncOutgoingRecord {
             gender: Some(GenderType::Female),
             date_of_death: None,
             custom_data: None,
+            custom_1: None,
+            custom_2: None,
+            custom_3: None,
+            category1_id: None,
+            category2_id: None,
+            category3_id: None,
+            category4_id: None,
+            category5_id: None,
+            category6_id: None,
             hsh_code: None,
             hsh_name: None,
             margin: None,
@@ -966,6 +1012,89 @@ fn name_push_record_6() -> TestSyncOutgoingRecord {
             currency_id: None,
         }),
     }
+}
+
+const NAME_7_LEGACY_PROPERTIES: (&str, &str) = (
+    "e1d5e1a2-7e1d-4a4f-9c5b-2f1e8b0e3d77",
+    r#"{
+    "ID": "e1d5e1a2-7e1d-4a4f-9c5b-2f1e8b0e3d77",
+    "name": "Custom Properties Patient",
+    "code": "CPP1",
+    "type": "patient",
+    "customer": false,
+    "supplier": false,
+    "supplying_store_id": "",
+    "first": "Custom",
+    "last": "Props",
+    "female": false,
+    "date_of_birth": "0000-00-00",
+    "phone": "",
+    "charge code": "",
+    "comment": "",
+    "country": "",
+    "bill_address1": "",
+    "bill_address2": "",
+    "email": "",
+    "url": "",
+    "manufacturer": false,
+    "donor": false,
+    "hold": false,
+    "NEXT_OF_KIN_ID": "",
+    "next_of_kin_relative": "",
+    "created_date": "0000-00-00",
+    "national_health_number": "",
+    "isDeceased": false,
+    "om_created_datetime": "",
+    "om_gender": "",
+    "custom1": "Red",
+    "custom2": "",
+    "custom3": "Blue"
+}"#,
+);
+
+fn name_7_legacy_properties() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        NAME_7_LEGACY_PROPERTIES,
+        NameRow {
+            id: NAME_7_LEGACY_PROPERTIES.0.to_string(),
+            name: "Custom Properties Patient".to_string(),
+            code: "CPP1".to_string(),
+            r#type: NameRowType::Patient,
+            is_customer: false,
+            is_supplier: false,
+            supplying_store_id: None,
+            first_name: Some("Custom".to_string()),
+            last_name: Some("Props".to_string()),
+            gender: Some(GenderType::Male),
+            date_of_birth: None,
+            phone: None,
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: None,
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
+            created_datetime: None,
+            is_deceased: false,
+            national_health_number: None,
+            date_of_death: None,
+            custom_data_string: None,
+            deleted_datetime: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
+            custom_fields: Some(json!({"custom_1": "Red", "custom_3": "Blue"})),
+        },
+    )
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
@@ -976,6 +1105,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         name_4(),
         name_5_dob_t_format_pull(),
         name_6_dob_no_t_format_pull(),
+        name_7_legacy_properties(),
     ]
 }
 

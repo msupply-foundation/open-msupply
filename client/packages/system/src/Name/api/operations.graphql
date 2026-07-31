@@ -5,6 +5,7 @@ fragment NameRow on NameNode {
   isSupplier
   isOnHold
   name
+  customFields
   store {
     id
     code
@@ -53,6 +54,7 @@ fragment Name on NameNode {
     isDisabled
   }
   properties
+  customFields
   hshCode
   hshName
   margin
@@ -69,6 +71,20 @@ fragment Property on PropertyNode {
   name
   allowedValues
   valueType
+}
+
+fragment CustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
 }
 
 query names(
@@ -142,6 +158,18 @@ query nameProperties {
         property {
           ...Property
         }
+      }
+    }
+  }
+}
+
+query nameCustomFields($scope: String!) {
+  customFields(filter: { scope: { equalTo: $scope } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomField
       }
     }
   }

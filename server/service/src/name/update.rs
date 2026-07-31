@@ -28,7 +28,8 @@ pub fn update_name_properties(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &input)?;
-            NameRowRepository::new(connection).update_properties(&input.id, &input.properties)?;
+            NameRowRepository::new(connection)
+                .update_properties(&input.id, &input.properties)?;
 
             NameRepository::new(connection)
                 .query_one(

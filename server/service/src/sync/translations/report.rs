@@ -1,11 +1,12 @@
 use crate::sync::translations::om_form_schema::OmFormSchemaTranslation;
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 use repository::{
-    ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete, ReportRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete, Row, StorageConnection,
+    SyncBufferRow,
 };
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -22,12 +23,24 @@ impl SyncTranslation for OmReportTranslator {
     }
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            ReportRow,
-        >(&sync_record.data)?))
+        let row = serde_json::from_value::<ReportRow>(sync_record.data.0.clone())?;
+
+        let fk_check = fk_checker.with_table(connection, "om_report", &row.id);
+
+        let result = ReportRow {
+            argument_schema_id: fk_check(
+                row.argument_schema_id,
+                "argument_schema_id",
+                FkField::FormSchema,
+            )?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
     fn change_log_type(&self) -> Option<ChangelogTableName> {
         Some(ChangelogTableName::Report)
@@ -47,15 +60,15 @@ impl SyncTranslation for OmReportTranslator {
     }
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ReportRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Om report row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Report(report_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = report_row;
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
@@ -86,7 +99,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
             assert_eq!(translation_result, record.translated_record);
         }

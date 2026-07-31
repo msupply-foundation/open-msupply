@@ -1,4 +1,6 @@
-# Server expect this folder to be there for rust_embed to work
+# Built web bundle. Served by the server from `server.frontend_dir` (packaging
+# copies this folder next to the server binary; debug server builds fall back
+# to serving it from here directly)
 # This file allows commiting empty folder in git (and webpack clean: { keep: './gitignore' } allows for this file to be kept during build)
 
 # Ignore all except this file

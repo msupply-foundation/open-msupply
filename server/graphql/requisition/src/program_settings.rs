@@ -56,6 +56,7 @@ pub fn get_supplier_program_requisition_settings(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -118,6 +119,7 @@ pub fn get_program_requisition_settings_by_customer(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -177,6 +179,7 @@ pub fn has_customer_program_requisition_settings(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

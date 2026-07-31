@@ -77,6 +77,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -213,6 +214,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
+        ServiceError::CannotSetManufactureDateInFuture => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };

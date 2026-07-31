@@ -403,9 +403,9 @@ mod test {
     };
     use repository::{
         mock::{MockData, MockDataInserts},
-        BackendPluginRow, BackendPluginRowRepository, ChangelogFilter, ChangelogRepository,
-        ChangelogTableName, FrontendPluginRow, FrontendPluginRowRepository, FrontendPluginTypes,
-        PluginType, PluginTypes, RowActionType,
+        BackendPluginRow, BackendPluginRowRepository, ChangelogCondition, ChangelogRepository,
+        ChangelogTableName, CursorAndLimit, FilterBuilder, FrontendPluginRow,
+        FrontendPluginRowRepository, FrontendPluginTypes, PluginType, PluginTypes, RowActionType,
     };
 
     use super::{InstalledPluginKind, UninstallPluginError};
@@ -594,8 +594,15 @@ mod test {
         // Cursor after the upserts so we only inspect changelog rows produced
         // by the uninstall_plugin calls below.
         let cursor_before_uninstall = changelog_repo
-            .changelogs(0, u32::MAX, None)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: i64::MAX,
+                },
+            )
             .unwrap()
+            .rows
             .last()
             .map(|r| r.cursor)
             .unwrap_or(0);
@@ -633,14 +640,15 @@ mod test {
         // Each uninstall must have produced exactly one Delete-action changelog
         // row (and no Upsert rows) for its table.
         let backend_changelogs = changelog_repo
-            .changelogs(
-                cursor_before_uninstall as u64,
-                u32::MAX,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::BackendPlugin.equal_to()),
-                ),
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::BackendPlugin),
+                CursorAndLimit {
+                    cursor: cursor_before_uninstall,
+                    limit: i64::MAX,
+                },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
         let backend_new: Vec<_> = backend_changelogs
             .into_iter()
             .filter(|c| c.cursor > cursor_before_uninstall && c.record_id == backend_row.id)
@@ -649,15 +657,15 @@ mod test {
         assert_eq!(backend_new[0].row_action, RowActionType::Delete);
 
         let frontend_changelogs = changelog_repo
-            .changelogs(
-                cursor_before_uninstall as u64,
-                u32::MAX,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::FrontendPlugin.equal_to()),
-                ),
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::FrontendPlugin),
+                CursorAndLimit {
+                    cursor: cursor_before_uninstall,
+                    limit: i64::MAX,
+                },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
         let frontend_new: Vec<_> = frontend_changelogs
             .into_iter()
             .filter(|c| c.cursor > cursor_before_uninstall && c.record_id == frontend_row.id)

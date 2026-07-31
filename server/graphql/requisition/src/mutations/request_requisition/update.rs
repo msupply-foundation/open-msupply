@@ -81,6 +81,7 @@ pub async fn update(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -90,6 +91,7 @@ pub async fn update(
             &ResourceAccessRequest {
                 resource: Resource::RequisitionSend,
                 store_id: Some(store_id.to_string()),
+                require_central_standalone: false,
             },
         )?;
     }

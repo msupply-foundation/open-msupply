@@ -1,7 +1,6 @@
 use repository::{
     mock::{MockData, MockDataInserts},
     InvoiceRow, InvoiceRowRepository, InvoiceType, KeyType, KeyValueStoreRow, NameRow, StoreRow,
-    Upsert,
 };
 use util::uuid::uuid;
 
@@ -76,8 +75,9 @@ async fn assigns_prescription_number_to_prescriptions() {
         ..Default::default()
     };
 
-    prescription.upsert(&ctx.connection).unwrap();
-    inbound_shipment.upsert(&ctx.connection).unwrap();
+    let invoice_repo = InvoiceRowRepository::new(&ctx.connection);
+    invoice_repo.upsert_one(&prescription).unwrap();
+    invoice_repo.upsert_one(&inbound_shipment).unwrap();
 
     // manually trigger because inserting the invoice doesn't trigger the processor
     ctx.processors_trigger

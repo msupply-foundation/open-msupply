@@ -61,6 +61,7 @@ pub fn insert_request_from_response_requisition(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -195,7 +196,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
-            "test_graphql_insert_request_from_response_requisition_structured_errors",
+            "test_graphql_insert_req_from_resp_requisition_structured_errors",
             MockDataInserts::all(),
         )
         .await;

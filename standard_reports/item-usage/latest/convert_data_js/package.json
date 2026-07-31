@@ -16,6 +16,7 @@
   "description": "",
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/import-types-preset": "^3.0.0",
     "@jest/globals": "^29.7.0",
     "@types/lodash": "^4.17.16",
     "graphql": "^16.10.0",
@@ -25,8 +26,7 @@
     "ts-loader": "^9.4.4",
     "typescript": "^5.0.2",
     "webpack": "^5.88.1",
-    "webpack-cli": "^5.0.1",
-    "@graphql-codegen/import-types-preset": "^3.0.0"
+    "webpack-cli": "^5.0.1"
   },
   "dependencies": {
     "lodash": "^4.17.21"

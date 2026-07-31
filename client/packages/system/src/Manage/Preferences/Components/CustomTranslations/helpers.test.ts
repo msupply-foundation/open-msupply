@@ -491,14 +491,14 @@ describe('custom translations helpers', () => {
       });
       it('keeps other namespaces when removing one', () => {
         const result = setNamespaceTranslations(sample(), 'fr', 'report', {});
-        expect(result.fr).toEqual({
+        expect(result['fr']).toEqual({
           common: { 'button.ok': 'Oui', 'button.cancel': 'Annuler' },
         });
       });
       it('does not mutate the input', () => {
         const start = sample();
         setNamespaceTranslations(start, 'fr', 'common', {});
-        expect(start.fr?.common).toBeDefined();
+        expect(start['fr']?.['common']).toBeDefined();
       });
     });
 
@@ -518,8 +518,8 @@ describe('custom translations helpers', () => {
           imported,
           'keep-existing'
         );
-        expect(result.fr?.common?.['button.ok']).toBe('Oui'); // kept
-        expect(result.fr?.common?.['button.new']).toBe('Nouveau'); // added
+        expect(result['fr']?.['common']?.['button.ok']).toBe('Oui'); // kept
+        expect(result['fr']?.['common']?.['button.new']).toBe('Nouveau'); // added
       });
       it('overwrite replaces overlapping keys and merges the rest', () => {
         const imported: CustomTranslationsV2 = {
@@ -527,10 +527,10 @@ describe('custom translations helpers', () => {
           es: { common: { hola: 'Hola' } },
         };
         const result = mergeNestedTranslations(sample(), imported, 'overwrite');
-        expect(result.fr?.common?.['button.ok']).toBe('CHANGED');
-        expect(result.fr?.common?.['button.cancel']).toBe('Annuler'); // untouched
-        expect(result.es?.common?.hola).toBe('Hola'); // new language
-        expect(result.en?.common?.['button.ok']).toBe('OK'); // untouched language
+        expect(result['fr']?.['common']?.['button.ok']).toBe('CHANGED');
+        expect(result['fr']?.['common']?.['button.cancel']).toBe('Annuler'); // untouched
+        expect(result['es']?.['common']?.['hola']).toBe('Hola'); // new language
+        expect(result['en']?.['common']?.['button.ok']).toBe('OK'); // untouched language
       });
     });
 

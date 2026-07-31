@@ -1,6 +1,6 @@
 use repository::{
-    property_row::{PropertyRow, PropertyRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    property_row::PropertyRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use super::{
@@ -27,9 +27,10 @@ impl SyncTranslation for PropertyTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sync_record.deserialize::<serde_json::Value>()?;
 
         // Properties are synced out from legacy mSupply central, but we only support Open mSupply properties
         if data.get("ID").is_some() {
@@ -38,9 +39,11 @@ impl SyncTranslation for PropertyTranslation {
             ));
         };
 
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             PropertyRow,
-        >(&sync_record.data)?))
+        >(
+            sync_record.data.0.clone()
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -63,15 +66,15 @@ impl SyncTranslation for PropertyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = PropertyRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Property row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Property(property_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = property_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -97,7 +100,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

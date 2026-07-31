@@ -7,7 +7,7 @@ use diesel::prelude::*;
 
 use crate::{repository_error::RepositoryError, StorageConnection};
 
-use super::changelog::changelog;
+use super::changelog::changelog_with_links;
 
 /// Per-`StorageConnectionManager` tracker of in-flight (uncommitted) changelog
 /// boundaries. Each `StorageConnection` registers a single entry on its first
@@ -51,8 +51,8 @@ impl ChangelogCursorTracker {
             return Ok(());
         }
 
-        let max_cursor = changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
+        let max_cursor = changelog_with_links::table
+            .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(connection.lock().connection())?
             .unwrap_or(0) as u64;
 
@@ -71,7 +71,7 @@ impl ChangelogCursorTracker {
     pub fn max_safe_cursor(connection: &StorageConnection) -> Option<u64> {
         let tracker = connection.changelog_cursor_tracker();
         let guard = tracker.inner.lock().unwrap();
-        guard.values().min().copied()
+        guard.values().min().map(|m| *m)
     }
 
     /// Remove the connection's entry. Called from the outermost

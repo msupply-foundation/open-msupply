@@ -6,13 +6,10 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
-    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
-    ItemRowRepository,
-    LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -21,8 +18,8 @@ use util::sync_serde::{
 };
 
 use super::{
-    is_active_record_on_site, utils::clear_invalid_fk, ActiveRecordCheck, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    is_active_record_on_site, ActiveRecordCheck, FkField, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -138,6 +135,14 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "manufacturer_ID")]
     #[serde(default)]
     pub manufacturer_id: Option<String>,
+    // Skip on serialise so push omits the key when None rather than emitting
+    // `"goods_received_lines_ID": null`. The internal-only column should never
+    // leak outward, and we don't want a None value to risk clobbering the
+    // legacy-side GR→line link.
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub goods_received_lines_ID: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -171,6 +176,7 @@ impl SyncTranslation for InvoiceLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyTransLineRow {
@@ -205,7 +211,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             volume_per_pack,
             shipped_pack_size,
             manufacturer_id,
-        } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
+            goods_received_lines_ID,
+        } = sync_record.deserialize()?;
 
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
@@ -241,7 +248,11 @@ impl SyncTranslation for InvoiceLineTranslation {
                 )
             }
             true => {
-                let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
+                // Use find_one_by_id (not find_active_by_id) here: this lookup only derives the
+                // item code for the legacy path, and an invoice line can legitimately reference an
+                // inactive item (e.g. an item deactivated by a merge). Gating on is_active caused
+                // integration to fail for lines linked to inactive items. See issue #12328.
+                let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(
@@ -287,43 +298,30 @@ impl SyncTranslation for InvoiceLineTranslation {
         // inbound shipment — omSupply should be generating the inbound with valid stock lines.
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign
         // key constraint violation, so we still need this for active-on-site records.
-        let stock_line_id = clear_invalid_fk(
+        let fk_check = fk_checker.with_table(connection, "invoice_line", &id);
+        let check_fk = fk_checker.with_table_required(connection, "invoice_line", &id);
+
+        let stock_line_id = fk_checker.clear_invalid(
             connection,
             "invoice_line",
             &id,
-            "stock_line_id",
             stock_line_id,
-            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            "stock_line_id",
+            FkField::StockLine,
             is_record_active_on_site,
         )?;
-        let location_id = clear_invalid_fk(
+        let location_id = fk_checker.clear_invalid(
             connection,
             "invoice_line",
             &id,
-            "location_id",
             location_id,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            "location_id",
+            FkField::Location,
             is_record_active_on_site,
         )?;
 
-        let item_variant_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "item_variant_id",
-            item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let vvm_status_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "vvm_status_id",
-            vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let item_variant_id = fk_check(item_variant_id, "item_variant_id", FkField::ItemVariant)?;
+        let vvm_status_id = fk_check(vvm_status_id, "vvm_status_id", FkField::VvmStatus)?;
 
         // "0" is a sentinel value used by OG for "no option set" — treat it as None before
         // the FK validation so we don't write a system_log entry for the sentinel.
@@ -334,15 +332,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                 Some(reason_option_id)
             }
         });
-        let reason_option_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "reason_option_id",
-            reason_option_id,
-            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let reason_option_id =
+            fk_check(reason_option_id, "reason_option_id", FkField::ReasonOption)?;
 
         let TransLineRowOmsFields {
             campaign_id,
@@ -353,29 +344,13 @@ impl SyncTranslation for InvoiceLineTranslation {
             received_number_of_packs,
         } = oms_fields.unwrap_or_default();
 
-        let campaign_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "campaign_id",
-            campaign_id,
-            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let program_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "program_id",
-            program_id,
-            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let campaign_id = fk_check(campaign_id, "campaign_id", FkField::Campaign)?;
+        let program_id = fk_check(program_id, "program_id", FkField::Program)?;
 
         let result = InvoiceLineRow {
             id,
-            invoice_id,
-            item_id: item_id,
+            invoice_id: check_fk(invoice_id, "invoice_id", FkField::Invoice)?,
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
             item_name,
             item_code,
             stock_line_id,
@@ -396,7 +371,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             linked_invoice_id,
             linked_invoice_line_id,
-            donor_id,
+            // donor/manufacturer are name ids resolved to name_link on upsert; name_link.id ==
+            // name.id by convention, so validating the name id against name_link is correct.
+            donor_id: fk_check(donor_id, "donor_link_id", FkField::NameLink)?,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -411,9 +388,14 @@ impl SyncTranslation for InvoiceLineTranslation {
                 _ => None,
             },
             manufacture_date,
-            purchase_order_line_id,
+            purchase_order_line_id: fk_check(
+                purchase_order_line_id,
+                "purchase_order_line_id",
+                FkField::PurchaseOrderLine,
+            )?,
             received_number_of_packs,
-            manufacturer_id,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
+            legacy_goods_received_line_id: goods_received_lines_ID,
         };
 
         let result = adjust_negative_values(result);
@@ -436,10 +418,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let Some(invoice_line) = InvoiceLineRepository::new(connection).query_one(
-            InvoiceLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
-        )?
+        let Row::InvoiceLine(invoice_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let Some(invoice_line) = InvoiceLineRepository::new(connection)
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(invoice_line_row.id)))?
         else {
             return Err(anyhow::anyhow!("invoice_line row not found"));
         };
@@ -483,6 +469,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     received_number_of_packs,
                     linked_invoice_line_id,
                     manufacturer_id,
+                    legacy_goods_received_line_id: _,
                 },
             item_row,
             ..
@@ -534,6 +521,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             volume_per_pack,
             shipped_pack_size,
             manufacturer_id,
+            goods_received_lines_ID: None,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -604,8 +592,8 @@ mod tests {
         mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, ContextRow, KeyType, KeyValueStoreRow, ProgramRow,
-        SyncAction,
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder, ItemRow,
+        KeyType, KeyValueStoreRow, ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -616,7 +604,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_line_translation",
-            MockDataInserts::none()
+            MockDataInserts::all()
                 .units()
                 .items()
                 .names()
@@ -668,7 +656,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -695,23 +687,27 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::InvoiceLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = InvoiceLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
@@ -756,7 +752,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "trans_line".to_string(),
             record_id: "TRANS_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "TRANS_LINE_FK_INVALID",
                 "transaction_ID": "outbound_shipment_a",
                 "item_ID": "item_a",
@@ -785,18 +783,27 @@ mod tests {
                     "campaign_id": "does_not_exist_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#
-            .to_string(),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
 
         let PullTranslateResult::IntegrationOperations(ops) = result else {
-            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
+            panic!(
+                "{}",
+                format!("expected IntegrationOperations, got {result:?}")
+            );
         };
         let debug = format!("{ops:?}");
         for (field, _id) in [
@@ -816,9 +823,7 @@ mod tests {
         }
 
         // One system_log entry per invalid FK
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
@@ -848,5 +853,101 @@ mod tests {
                 "expected message to mention the record id"
             );
         }
+    }
+
+    /// An invoice line can legitimately reference an inactive item (e.g. an item deactivated by a
+    /// merge). On the legacy path (empty `om_item_code`) the translator looks the item up to derive
+    /// its code; that lookup must NOT gate on is_active, otherwise integration fails. Regression
+    /// test for issue #12328.
+    #[actix_rt::test]
+    async fn test_invoice_line_integrates_inactive_item() {
+        let translator = InvoiceLineTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_line_integrates_inactive_item",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .currencies(),
+            MockData {
+                invoices: vec![mock_outbound_shipment_a()],
+                // Inactive item the invoice line will reference.
+                items: vec![ItemRow {
+                    id: "inactive_item".to_string(),
+                    name: "Inactive Item".to_string(),
+                    code: "INACTIVE_CODE".to_string(),
+                    is_active: false,
+                    ..Default::default()
+                }],
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_b().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // No `om_item_code` -> legacy path -> item is looked up to derive the code.
+        let sync_record = SyncBufferRow {
+            table_name: "trans_line".to_string(),
+            record_id: "TRANS_LINE_INACTIVE_ITEM".to_string(),
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
+                "ID": "TRANS_LINE_INACTIVE_ITEM",
+                "transaction_ID": "outbound_shipment_a",
+                "item_ID": "inactive_item",
+                "item_name": "Inactive Item",
+                "item_line_ID": "",
+                "batch": "",
+                "expiry_date": "0000-00-00",
+                "pack_size": 1,
+                "cost_price": 10,
+                "sell_price": 20,
+                "quantity": 1,
+                "type": "stock_out",
+                "location_ID": "",
+                "note": "",
+                "optionID": "0",
+                "vaccine_vial_monitor_status_ID": "",
+                "donor_id": "",
+                "linked_trans_line_ID": "",
+                "linked_transact_id": "",
+                "volume_per_pack": 0,
+                "foreign_currency_price": 0
+            }"#,
+                )
+                .unwrap(),
+            ),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+
+        let PullTranslateResult::IntegrationOperations(ops) = result else {
+            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
+        };
+        let debug = format!("{ops:?}");
+        // Code is derived from the inactive item, and the line still references it.
+        assert!(
+            debug.contains("INACTIVE_CODE"),
+            "{}",
+            format!("expected item code to be derived from inactive item; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("inactive_item"),
+            "{}",
+            format!("expected line to reference inactive item; got:\n{debug}")
+        );
     }
 }

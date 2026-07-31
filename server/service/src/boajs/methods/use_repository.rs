@@ -21,8 +21,8 @@ pub(crate) enum UseRepositoryInput {
 #[serde(tag = "t", content = "v")]
 pub(crate) enum UseRepositoryOutput {
     GetSyncMessageById(Option<SyncMessageRow>),
-    UpsertSyncMessage(i64),
-    UpsertPluginData(i64),
+    UpsertSyncMessage(()),
+    UpsertPluginData(()),
     GetDaysOutOfStock(Vec<DaysOutOfStockRow>),
 }
 

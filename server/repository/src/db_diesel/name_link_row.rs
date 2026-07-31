@@ -1,6 +1,6 @@
 use super::{name_link_row::name_link::dsl::*, name_row::name};
 
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -71,12 +71,20 @@ impl<'a> NameLinkRowRepository<'a> {
             .load::<NameLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            name_link::table.filter(name_link::id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for NameLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         NameLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

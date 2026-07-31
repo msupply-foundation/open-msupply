@@ -153,30 +153,20 @@ export type IsCentralServerQuery = {
   isCentralServer: boolean;
 };
 
-export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never }>;
+export type IsCentralStandaloneQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
 
-export type RefreshTokenQuery = {
+export type IsCentralStandaloneQuery = {
   __typename: 'Queries';
-  refreshToken:
-    | { __typename: 'RefreshToken'; token: string }
-    | {
-        __typename: 'RefreshTokenError';
-        error:
-          | {
-              __typename: 'DatabaseError';
-              description: string;
-              fullError: string;
-            }
-          | {
-              __typename: 'InternalError';
-              description: string;
-              fullError: string;
-            }
-          | { __typename: 'InvalidToken'; description: string }
-          | { __typename: 'NoRefreshTokenProvided'; description: string }
-          | { __typename: 'NotARefreshToken'; description: string }
-          | { __typename: 'TokenExpired'; description: string };
-      };
+  isCentralStandalone: boolean;
+};
+
+export type LogoutQueryVariables = Types.Exact<{ [key: string]: never }>;
+
+export type LogoutQuery = {
+  __typename: 'Queries';
+  logout: { __typename: 'Logout'; userId: string };
 };
 
 export type PermissionsQueryVariables = Types.Exact<{
@@ -197,38 +187,6 @@ export type PermissionsQuery = {
         storeId: string;
       }>;
     };
-  };
-};
-
-export type UpdateUserFragment = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: string | null;
-};
-
-export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never }>;
-
-export type UpdateUserMutation = {
-  __typename: 'Mutations';
-  updateUser:
-    | {
-        __typename: 'UpdateUserError';
-        error:
-          | { __typename: 'ConnectionError'; description: string }
-          | { __typename: 'InvalidCredentials'; description: string }
-          | { __typename: 'MissingCredentials'; description: string };
-      }
-    | { __typename: 'UpdateUserNode'; lastSuccessfulSync?: string | null };
-};
-
-export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{
-  [key: string]: never;
-}>;
-
-export type LastSuccessfulUserSyncQuery = {
-  __typename: 'Queries';
-  lastSuccessfulUserSync: {
-    __typename: 'UpdateUserNode';
-    lastSuccessfulSync?: string | null;
   };
 };
 
@@ -339,11 +297,6 @@ export const UserStoreNodeFragmentDoc = gql`
     isDisabled
   }
 `;
-export const UpdateUserFragmentDoc = gql`
-  fragment UpdateUser on UpdateUserNode {
-    lastSuccessfulSync
-  }
-`;
 export const AuthTokenDocument = gql`
   query authToken($username: String!, $password: String!) {
     authToken(password: $password, username: $username) {
@@ -410,44 +363,17 @@ export const IsCentralServerDocument = gql`
     isCentralServer
   }
 `;
-export const RefreshTokenDocument = gql`
-  query refreshToken {
-    refreshToken {
-      ... on RefreshToken {
+export const IsCentralStandaloneDocument = gql`
+  query isCentralStandalone {
+    isCentralStandalone
+  }
+`;
+export const LogoutDocument = gql`
+  query logout {
+    logout {
+      ... on Logout {
         __typename
-        token
-      }
-      ... on RefreshTokenError {
-        __typename
-        error {
-          description
-          ... on DatabaseError {
-            __typename
-            description
-            fullError
-          }
-          ... on TokenExpired {
-            __typename
-            description
-          }
-          ... on NotARefreshToken {
-            __typename
-            description
-          }
-          ... on NoRefreshTokenProvided {
-            __typename
-            description
-          }
-          ... on InvalidToken {
-            __typename
-            description
-          }
-          ... on InternalError {
-            __typename
-            description
-            fullError
-          }
-        }
+        userId
       }
     }
   }
@@ -468,43 +394,6 @@ export const PermissionsDocument = gql`
       }
     }
   }
-`;
-export const UpdateUserDocument = gql`
-  mutation updateUser {
-    updateUser {
-      __typename
-      ... on UpdateUserNode {
-        ...UpdateUser
-      }
-      ... on UpdateUserError {
-        __typename
-        error {
-          ... on InvalidCredentials {
-            __typename
-            description
-          }
-          ... on ConnectionError {
-            __typename
-            description
-          }
-          ... on MissingCredentials {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-  ${UpdateUserFragmentDoc}
-`;
-export const LastSuccessfulUserSyncDocument = gql`
-  query lastSuccessfulUserSync {
-    lastSuccessfulUserSync {
-      __typename
-      ...UpdateUser
-    }
-  }
-  ${UpdateUserFragmentDoc}
 `;
 export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
@@ -646,20 +535,38 @@ export function getSdk(
         variables
       );
     },
-    refreshToken(
-      variables?: RefreshTokenQueryVariables,
+    isCentralStandalone(
+      variables?: IsCentralStandaloneQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<RefreshTokenQuery> {
+    ): Promise<IsCentralStandaloneQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RefreshTokenQuery>({
-            document: RefreshTokenDocument,
+          client.request<IsCentralStandaloneQuery>({
+            document: IsCentralStandaloneDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'refreshToken',
+        'isCentralStandalone',
+        'query',
+        variables
+      );
+    },
+    logout(
+      variables?: LogoutQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<LogoutQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<LogoutQuery>({
+            document: LogoutDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'logout',
         'query',
         variables
       );
@@ -678,42 +585,6 @@ export function getSdk(
             signal,
           }),
         'permissions',
-        'query',
-        variables
-      );
-    },
-    updateUser(
-      variables?: UpdateUserMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<UpdateUserMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<UpdateUserMutation>({
-            document: UpdateUserDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'updateUser',
-        'mutation',
-        variables
-      );
-    },
-    lastSuccessfulUserSync(
-      variables?: LastSuccessfulUserSyncQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<LastSuccessfulUserSyncQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<LastSuccessfulUserSyncQuery>({
-            document: LastSuccessfulUserSyncDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'lastSuccessfulUserSync',
         'query',
         variables
       );

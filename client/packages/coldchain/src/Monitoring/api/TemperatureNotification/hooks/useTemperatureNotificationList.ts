@@ -6,6 +6,7 @@ import {
   useQuery,
   useTranslation,
   useAuthContext,
+  useLocalStorage,
   UserPermission,
 } from '@openmsupply-client/common';
 import { TEMPERATURE_NOTIFICATION } from './keys';
@@ -25,7 +26,8 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
   const { warning } = useNotification();
   const { temperatureNotificationApi, storeId } =
     useTemperatureNotificationGraphQL();
-  const { userHasPermission, error: authError } = useAuthContext();
+  const { userHasPermission } = useAuthContext();
+  const [authError] = useLocalStorage('/error/auth');
 
   const canViewSensorDetails = userHasPermission(UserPermission.SensorQuery);
   const queryKey = [TEMPERATURE_NOTIFICATION, storeId, LIST_KEY, queryParams];

@@ -1,10 +1,13 @@
 use super::{sensor_row::sensor, store_row::store, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
+};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use std::any::Any;
 
 table! {
     temperature_log (id) {
@@ -22,7 +25,15 @@ joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_log)]
@@ -35,7 +46,6 @@ pub struct TemperatureLogRow {
     pub datetime: NaiveDateTime,
     pub temperature_breach_id: Option<String>,
 }
-
 pub struct TemperatureLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -45,30 +55,24 @@ impl<'a> TemperatureLogRowRepository<'a> {
         TemperatureLogRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &TemperatureLogRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_log::table)
             .values(row)
             .on_conflict(temperature_log::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &TemperatureLogRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureLog,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn update_breach_id(
@@ -104,7 +108,12 @@ impl<'a> TemperatureLogRowRepository<'a> {
             .load::<TemperatureLogRow>(self.connection.lock().connection())?;
 
         for log in &logs {
-            self.insert_changelog(log, RowActionType::Upsert)?;
+            let changelog = log.generate_changelog(
+                self.connection,
+                RowActionType::Upsert,
+                SourceSiteId::CurrentSiteId,
+            )?;
+            ChangelogRepository::new(self.connection).insert(&changelog)?;
         }
 
         Ok(())
@@ -114,6 +123,24 @@ impl<'a> TemperatureLogRowRepository<'a> {
         let result = temperature_log::table
             .filter(temperature_log::id.eq(id))
             .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    /// Existence check on the natural key of a reading: a sensor cannot have two
+    /// readings at the same instant. Used to de-duplicate logs that arrive from
+    /// multiple devices reading the same FridgeTag (each device assigns its own
+    /// `id` to what is physically the same reading).
+    pub fn find_id_by_sensor_and_datetime(
+        &self,
+        sensor_id: &str,
+        datetime: NaiveDateTime,
+    ) -> Result<Option<String>, RepositoryError> {
+        let result = temperature_log::table
+            .filter(temperature_log::sensor_id.eq(sensor_id))
+            .filter(temperature_log::datetime.eq(datetime))
+            .select(temperature_log::id)
+            .first::<String>(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -129,9 +156,24 @@ impl<'a> TemperatureLogRowRepository<'a> {
 }
 
 impl Upsert for TemperatureLogRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = TemperatureLogRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        TemperatureLogRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -140,5 +182,9 @@ impl Upsert for TemperatureLogRow {
             TemperatureLogRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

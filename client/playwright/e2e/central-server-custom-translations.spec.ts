@@ -4,7 +4,6 @@ import * as path from 'path';
 
 // Note: right now this test primarily just takes screenshots, it doesn't correctly test functionality...
 
-
 const screenshotDir = path.join(__dirname, '../screenshots');
 
 // Ensure screenshot directory exists

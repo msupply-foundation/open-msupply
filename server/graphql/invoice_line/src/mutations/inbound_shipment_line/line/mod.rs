@@ -55,6 +55,7 @@ pub fn validate_line_edit_authorisation(
             &ResourceAccessRequest {
                 resource: Resource::AuthoriseInboundShipmentExternal,
                 store_id: Some(store_id.to_string()),
+                require_central_standalone: false,
             },
         )?;
     }

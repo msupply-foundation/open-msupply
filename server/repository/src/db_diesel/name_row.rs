@@ -1,15 +1,14 @@
 use super::{
     currency_row::currency, location_type_row::location_type,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
-    StorageConnection,
+    name_store_join::name_store_join, program_row::program, custom_fields_json::JsonValue,
+    store_row::store, NameType, StorageConnection,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
-    RowActionType,
+    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, Delete,
+    EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
 };
-use crate::{Delete, Upsert};
+use crate::{ChangelogSyncType, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -55,7 +54,8 @@ table! {
         hsh_name -> Nullable<Text>,
         margin -> Nullable<Double>,
         freight_factor -> Nullable<Double>,
-        currency_id -> Nullable<Text>
+        currency_id -> Nullable<Text>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
     }
 }
 
@@ -202,8 +202,9 @@ pub struct NameRow {
     pub margin: Option<f64>,
     pub freight_factor: Option<f64>,
     pub currency_id: Option<String>,
+    #[ts(skip)]
+    pub custom_fields: Option<JsonValue>,
 }
-
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
 )]
@@ -242,21 +243,37 @@ impl<'a> NameRowRepository<'a> {
             .do_update()
             .set(name_row)
             .execute(self.connection.lock().connection())?;
+        insert_or_ignore_name_link(self.connection, name_row)?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &NameRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        insert_or_ignore_name_link(self.connection, row)?;
-
-        self.insert_changelog(row.id.clone(), RowActionType::Upsert)
+        let changelog = NameRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
+    fn _mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         diesel::update(name::table.filter(name::id.eq(name_id)))
             .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(name_id.to_string(), RowActionType::Delete)
+        Ok(())
+    }
+
+    pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(name_id)?;
+        let changelog = NameRow::generate_changelog(
+            RowOrId::Id(name_id),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
@@ -301,44 +318,66 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_oms_fields_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<NameOmsFieldsRow>, RepositoryError> {
+        Ok(name_oms_fields::table
+            .filter(name_oms_fields::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn update_properties(
         &self,
         name_id: &str,
         properties: &Option<String>,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         diesel::update(name_oms_fields::table.find(name_id))
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog_oms_fields(name_id.to_string(), RowActionType::Upsert)
+        let changelog = NameOmsFieldsRow::generate_changelog(
+            name_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    fn insert_changelog(
+    /// Update the new-system `name.custom_fields` JSONB blob.
+    ///
+    /// Column-scoped (`UPDATE ... SET custom_fields`) rather than a whole-row
+    /// `_upsert_one`. This is a property of the *local* write only: it avoids a
+    /// read-modify-write race (writing the whole row back would revert any sibling
+    /// column a concurrent sync integrated meanwhile) and touches only this column.
+    /// It is NOT a sync-time guarantee — the `Name` changelog carries record_id and
+    /// the full current row is whole-row upserted at receiving sites, so
+    /// `custom_fields` is overwritten wholesale on integration. Owned legacy keys
+    /// (custom_1/2/3) clobbered by a stale remote push are healed by the central v5
+    /// merge-on-import (see `merge_legacy_custom_fields`); non-owned (OMS-authored)
+    /// keys are last-writer-wins like every other name column.
+    ///
+    /// Emits a `Name` changelog so the value rides the existing Name sync (Central +
+    /// Patient). Unlike the legacy [`update_properties`], this targets the
+    /// `name.custom_fields` column and the `Name` table rather than
+    /// `name_oms_fields.properties` / `NameOmsFields`.
+    pub fn update_custom_fields(
         &self,
-        record_id: String,
-        row_action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Name,
-            record_id,
-            row_action,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
+        name_id: &str,
+        custom_fields: &Option<JsonValue>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(name::table.find(name_id))
+            .set(name::custom_fields.eq(custom_fields))
+            .execute(self.connection.lock().connection())?;
 
-    fn insert_changelog_oms_fields(
-        &self,
-        record_id: String,
-        row_action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameOmsFields,
-            record_id,
-            row_action,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = NameRow::generate_changelog(
+            RowOrId::Id(name_id),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
@@ -367,27 +406,59 @@ impl From<NameRowType> for NameType {
 
 #[derive(Debug, Clone)]
 pub struct NameRowDelete(pub String);
-// TODO soft delete
 impl Delete for NameRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = NameRowRepository::new(con).mark_deleted(&self.0)?;
-        Ok(Some(change_log_id))
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => NameRow::generate_changelog(
+                RowOrId::Id(&self.0),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        NameRowRepository::new(con)._mark_deleted(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
+        assert!(matches!(
             NameRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
+            Ok(Some(NameRow {
+                deleted_datetime: Some(_),
+                ..
+            })) | Ok(None)
+        ));
     }
 }
 
 impl Upsert for NameRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = NameRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
-    }
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con)._upsert_one(self)?;
 
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -398,12 +469,28 @@ impl Upsert for NameRow {
 }
 
 impl Upsert for NameOmsFieldsRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id =
-            NameRowRepository::new(con).update_properties(&self.id, &self.properties)?;
-        Ok(Some(cursor_id))
-    }
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(name_oms_fields::table.find(&self.id))
+            .set(name_oms_fields::properties.eq(&self.properties))
+            .execute(con.lock().connection())?;
 
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -418,10 +505,14 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameFilter, NameRepository,
-        NameRow, NameRowRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        ChangelogTableName, CursorAndLimit, EqualFilter, FilterBuilder, KeyType,
+        KeyValueStoreRepository, NameFilter, NameRepository, NameRow, NameRowRepository,
+        NameRowType,
     };
 
+    // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
+    // not clobber values written via `update_properties()`.
     #[actix_rt::test]
     async fn name_sync_update_does_not_overwrite_properties() {
         let (_, connection, _, _) = setup_all(
@@ -445,7 +536,9 @@ mod test {
         let properties = Some("{\"key\": \"test\"}".to_string());
 
         // Add properties to name
-        row_repo.update_properties(&row.id, &properties).unwrap();
+        row_repo
+            .update_properties(&row.id, &properties)
+            .unwrap();
 
         let name_filter = NameFilter::new().id(EqualFilter::equal_to(row.id.to_string()));
         let name = name_repo
@@ -466,5 +559,83 @@ mod test {
 
         // Properties have not been overwritten
         assert_eq!(name.properties, properties);
+    }
+
+    // Round-trip the new custom fields JSONB column through NameRow on both
+    // PG (native Jsonb) and SQLite (TEXT Json). Verifies the CustomFieldsJson
+    // sql_type alias and serde_json::Value field wiring.
+    #[actix_rt::test]
+    async fn name_row_custom_fields_round_trip() {
+        let (_, connection, _, _) =
+            setup_all("name_row_custom_fields_round_trip", MockDataInserts::none()).await;
+
+        let row_repo = NameRowRepository::new(&connection);
+
+        let custom_fields = serde_json::json!({"foo": "bar", "n": 42, "nested": [1, 2, 3]});
+        let row = NameRow {
+            id: uuid(),
+            custom_fields: Some(custom_fields.clone()),
+            ..Default::default()
+        };
+
+        row_repo.upsert_one(&row).unwrap();
+
+        let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.custom_fields, Some(custom_fields));
+    }
+
+    // `update_custom_fields` writes the JSONB column and emits a `Name`
+    // changelog (so the value rides Name sync) stamped with this site's id.
+    #[actix_rt::test]
+    async fn name_custom_fields_update_generates_name_changelog() {
+        let (_, connection, _, _) = setup_all(
+            "name_custom_fields_update_generates_name_changelog",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // CurrentSiteId reads SettingsSyncSiteId; set it so the changelog gets a
+        // non-null source_site_id.
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(42))
+            .unwrap();
+
+        let row_repo = NameRowRepository::new(&connection);
+        let row = NameRow {
+            id: uuid(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        row_repo.upsert_one(&row).unwrap();
+
+        let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+        let custom_fields = serde_json::json!({"custom_1": "edited"});
+        row_repo
+            .update_custom_fields(&row.id, &Some(custom_fields.clone()))
+            .unwrap();
+
+        // Value persisted.
+        let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.custom_fields, Some(custom_fields));
+
+        // A Name changelog was emitted for this record with a non-null source_site_id.
+        let changelogs: Vec<_> = ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Name),
+                CursorAndLimit {
+                    cursor: cursor_before,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .filter(|c| c.record_id == row.id)
+            .collect();
+        assert_eq!(changelogs.len(), 1);
+        assert_eq!(changelogs[0].source_site_id, Some(42));
+        // Patient rows carry patient_id for Patient-style routing.
+        assert_eq!(changelogs[0].patient_id, Some(row.id));
     }
 }

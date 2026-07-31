@@ -15,6 +15,7 @@ import { useStores } from './useStores';
 import { useDonors } from './useDonors';
 import { useDonorsInfinite } from './useDonorsInfinite';
 import { useNameProperties } from './useNameProperties';
+import { useNameCustomFields } from './useNameCustomFields';
 import { useUpdateProperties } from './useUpdateProperties';
 import { useStoresAll } from './useStoresAll';
 
@@ -35,5 +36,6 @@ export const Document = {
   useDonors,
   useDonorsInfinite,
   useNameProperties,
+  useNameCustomFields,
   useStoresAll,
 };

@@ -30,6 +30,7 @@ fn validate_sync_auth(ctx: &Context<'_>) -> async_graphql::Result<()> {
         &ResourceAccessRequest {
             resource: Resource::SyncInfo,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     Ok(())

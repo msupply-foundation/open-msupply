@@ -16,6 +16,10 @@ class DummyWebpackPlugin {
 
 module.exports = env => {
   const isProduction = !!env.production;
+  // Base path the app is served from. Default '/' (unchanged); the dual-FE
+  // packaging builds the old UI with PUBLIC_PATH=/old-ui/. Normalised to always
+  // end with a single '/' so asset URLs and the router basename line up.
+  const publicPath = (process.env.PUBLIC_PATH || '/').replace(/\/*$/, '/');
   const bundleAnalyzerPlugin = !!env.stats
     ? new BundleAnalyzerPlugin({
         /**
@@ -55,7 +59,7 @@ module.exports = env => {
       conditionNames: ['require', '...'],
     },
     output: {
-      publicPath: '/',
+      publicPath,
       path: path.resolve(__dirname, 'dist'),
       filename: '[name].[contenthash].js',
       chunkFilename: '[contenthash].js',
@@ -76,9 +80,7 @@ module.exports = env => {
           loader: isProduction ? 'ts-loader' : 'swc-loader',
           exclude: /node_modules/,
           options: isProduction
-            ? {
-                /* ts-loader options */
-              }
+            ? {/* ts-loader options */}
             : {
                 /* swc-loader options */
                 jsc: {
@@ -112,6 +114,7 @@ module.exports = env => {
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
         API_HOST: JSON.stringify(env.API_HOST),
+        PUBLIC_PATH: JSON.stringify(publicPath),
         LOCAL_PLUGINS: JSON.stringify(require('./getLocalPlugins.js')),
         LANG_VERSION: Date.now(),
       }),

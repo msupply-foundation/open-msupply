@@ -10,7 +10,8 @@ import { useStocktakeApi } from '../utils/useStocktakeApi';
 export const useStocktakeFields = <
   KeyOfStocktake extends keyof StocktakeFragment,
 >(
-  keys: KeyOfStocktake | KeyOfStocktake[]
+  keys: KeyOfStocktake | KeyOfStocktake[],
+  timeout?: number
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
   const stocktakeId = useStocktakeId();
   const { mutateAsync } = useUpdateStocktake();
@@ -22,6 +23,7 @@ export const useStocktakeFields = <
     () => api.get.byId(stocktakeId),
     (patch: Partial<StocktakeFragment>) =>
       mutateAsync({ ...patch, id: data?.id ?? '' }),
-    keys
+    keys,
+    timeout
   );
 };

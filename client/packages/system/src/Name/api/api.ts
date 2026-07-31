@@ -219,6 +219,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
+      filterBy,
     }: ListParams): Promise<{
       nodes: NameRowFragment[];
       totalCount: number;
@@ -235,6 +236,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
+          ...filterBy,
           [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
         },
@@ -247,6 +249,14 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       if (result?.nameProperties?.__typename === 'NamePropertyConnector') {
         return result?.nameProperties?.nodes;
+      }
+      throw new Error('Unable to fetch properties');
+    },
+    customFields: async (scope: string) => {
+      const result = await sdk.nameCustomFields({ scope });
+
+      if (result?.customFields?.__typename === 'CustomFieldConnector') {
+        return result?.customFields?.nodes;
       }
       throw new Error('Unable to fetch properties');
     },

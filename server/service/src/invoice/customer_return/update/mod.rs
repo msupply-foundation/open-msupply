@@ -29,6 +29,10 @@ pub struct UpdateCustomerReturn {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub other_party_id: Option<String>,
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
+    /// (a JSON `null` deletes that key; keys absent from the patch are left
+    /// as-is). Keys must be visible for the "customer_return" scope.
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 type OutError = UpdateCustomerReturnError;
@@ -99,6 +103,7 @@ pub enum UpdateCustomerReturnError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotACustomer,
+    UnknownPropertyKey(String),
     // Internal
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,

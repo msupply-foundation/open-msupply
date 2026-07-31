@@ -2,7 +2,7 @@ use super::{
     clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
     program_row::program, store_row::store, StorageConnection,
 };
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -74,6 +74,14 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, clinician_link_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            clinician_link::table.filter(clinician_link::id.eq(clinician_link_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_id(
         &self,
         clinician_link_ids: &[String],
@@ -102,9 +110,9 @@ impl<'a> ClinicianLinkRowRepository<'a> {
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ClinicianLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

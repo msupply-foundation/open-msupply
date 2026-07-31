@@ -56,6 +56,7 @@ pub async fn link_patient_to_store(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

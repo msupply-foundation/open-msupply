@@ -1,5 +1,5 @@
 use super::{item_link, item_row::item, StorageConnection};
-use crate::{RepositoryError, Upsert};
+use crate::{RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -49,12 +49,20 @@ impl<'a> WarningRowRepository<'a> {
             .optional();
         result.map_err(RepositoryError::from)
     }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            warning::table.filter(warning::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for WarningRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         WarningRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

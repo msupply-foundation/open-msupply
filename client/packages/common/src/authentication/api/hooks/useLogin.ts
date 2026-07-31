@@ -1,4 +1,4 @@
-import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
+import { AuthError, AuthState, setAuthState } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
   AuthenticationCredentials,
@@ -34,6 +34,7 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
     case AuthError.NoStoreAssigned:
     case AuthError.Unauthenticated:
     case AuthError.Timeout:
+    case AuthError.ServerError:
       return true;
     default:
       return false;
@@ -81,9 +82,7 @@ export const getStore = async (
   return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
 };
 
-export const useLogin = (
-  setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
-) => {
+export const useLogin = () => {
   const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
   const { setSkipRequest } = useGql();
@@ -112,6 +111,8 @@ export const useLogin = (
   };
 
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
+    if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
+
     switch (true) {
       case isLoggedIn && hasValidStore: {
         removeError();
@@ -129,12 +130,16 @@ export const useLogin = (
   };
 
   const login = async (username: string, password: string) => {
+    // The session cookie is set by the server in the `Set-Cookie` response header — JS never
+    // touches the token. We only use the response's `token` field as a "did login succeed?"
+    // signal for legacy reasons.
     const { token, error } = await mutateAsync({ username, password });
-    if (!token) return { token, error };
+    const isLoggedIn = !!token;
+    if (!isLoggedIn) return { token, error };
 
     let userDetails;
     try {
-      userDetails = await getUserDetails(token);
+      userDetails = await getUserDetails();
     } catch (e) {
       return {
         token: '',
@@ -144,14 +149,14 @@ export const useLogin = (
         },
       };
     }
-    queryClient.setQueryData(api.keys.me(token), userDetails);
+    queryClient.setQueryData(api.keys.me(), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
-    const permissions = await getUserPermissions(token, store);
+    const permissions = await getUserPermissions(store);
     setSkipRequest(skipNoStoreRequests);
 
-    const authCookie = {
+    const next: AuthState = {
+      isAuthenticated: isLoggedIn,
       store,
-      token,
       user: {
         id: userDetails?.userId ?? '',
         name: username,
@@ -164,7 +169,7 @@ export const useLogin = (
       },
     };
 
-    if (token) {
+    if (isLoggedIn) {
       const userLocale = getUserLocale(username);
       if (userLocale === undefined) {
         changeLanguage(
@@ -172,10 +177,9 @@ export const useLogin = (
         );
       }
       upsertMostRecentCredential(username, store);
-      setAuthCookie(authCookie);
-      setCookie(authCookie);
+      setAuthState(next);
     }
-    setLoginError(!!token, !!store);
+    setLoginError(isLoggedIn, !!store);
     setSkipRequest(
       () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned
     );

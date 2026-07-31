@@ -74,6 +74,7 @@ pub fn get_purchase_order(
         &ResourceAccessRequest {
             resource: Resource::QueryPurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -110,6 +111,7 @@ pub fn get_purchase_orders(
         &ResourceAccessRequest {
             resource: Resource::QueryPurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

@@ -29,6 +29,7 @@ pub fn update_log_level(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
 
