@@ -1,5 +1,5 @@
 import { graphqlFetch } from '../../../../api/graphql';
-import { t, tPlural } from '../../../../intl';
+import { getPlural, t, tPlural } from '../../../../intl';
 import {
   InternalOrderItemStats,
   AddInternalOrderLine,
@@ -117,8 +117,9 @@ export const statInMode = (
 
 // The active mode's measure word — the item's unit name (falling back to
 // "unit") / "pack" / "dose", inflected for the count it suffixes (spec S4
-// — "e.g. 61 packs"). An item's own unit name is used as stored: arbitrary
-// nouns can't be auto-pluralised.
+// — "e.g. 61 packs"). An item's own unit name inflects via getPlural
+// (reference-app parity — English only; other languages pass through
+// unchanged).
 export const modeWord = (
   mode: EntryMode,
   unitName: string | null,
@@ -126,7 +127,9 @@ export const modeWord = (
 ): string => {
   if (mode === 'packs') return tPlural('label.packs-plural', count);
   if (mode === 'doses') return tPlural('label.doses-plural', count);
-  return unitName ?? tPlural('label.units-plural', count);
+  return unitName
+    ? getPlural(unitName, count)
+    : tPlural('label.units-plural', count);
 };
 
 // The store's default entry mode (AC-LN18): packs where the store orders in

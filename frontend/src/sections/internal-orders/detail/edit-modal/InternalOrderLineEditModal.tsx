@@ -320,7 +320,7 @@ const LineEditContent = (
   const otherMeasure = (units: number): string => {
     if (entryMode() === 'doses') {
       const unitCount = Math.round(units);
-      return `${formatNumber(unitCount)} ${current()?.unitName ?? tPlural('label.units-plural', unitCount)}`;
+      return `${formatNumber(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
     }
     const doseCount = Math.round(units * doses());
     return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
@@ -408,12 +408,16 @@ const LineEditContent = (
       : undefined;
   });
 
+  // Option labels inflect with the entered quantity (reference-app parity:
+  // singular at exactly 1, plural otherwise — spec S4's "tablets · packs").
   const entryOptions = createMemo(() => {
-    const unit = current()?.unitName ?? t('label.unit');
-    const options = [{ value: 'units', label: unit }];
+    const unitName = current()?.unitName ?? null;
+    const count = requestedDisplay() === 1 ? 1 : 2;
+    const options = [{ value: 'units', label: modeWord('units', unitName, count) }];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: t('label.pack') });
-    if (dosesApply()) options.push({ value: 'doses', label: t('label.dose') });
+      options.push({ value: 'packs', label: modeWord('packs', unitName, count) });
+    if (dosesApply())
+      options.push({ value: 'doses', label: modeWord('doses', unitName, count) });
     return options;
   });
 

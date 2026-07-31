@@ -2,8 +2,9 @@
  * AC-LN19 / AC-LN20 (spec/internal-orders § S4 line editor) — a stock figure
  * is suffixed with the active mode's measure word, INFLECTED for the figure
  * ("1 pack" / "61 packs"; the spec's own example). The item's stored unit
- * name passes through as-is — an arbitrary noun can't be auto-pluralised —
- * but the generic fallbacks (pack / dose / unit) each inflect.
+ * name inflects too, via getPlural (reference-app parity — English only,
+ * other languages pass through), as do the generic fallbacks (pack / dose /
+ * unit).
  */
 import { describe, expect, it } from 'vitest';
 import { setDictionaries, setLocale } from '../../../../intl/intl';
@@ -29,8 +30,9 @@ describe('modeWord', () => {
     expect(modeWord('units', null, 5)).toBe('units');
   });
 
-  it("uses the item's own unit name as stored, whatever the count", () => {
+  it("inflects the item's own unit name for the count", () => {
     expect(modeWord('units', 'tablet', 1)).toBe('tablet');
-    expect(modeWord('units', 'tablet', 5)).toBe('tablet');
+    expect(modeWord('units', 'tablet', 5)).toBe('tablets');
+    expect(modeWord('units', 'box', 3)).toBe('boxes');
   });
 });
