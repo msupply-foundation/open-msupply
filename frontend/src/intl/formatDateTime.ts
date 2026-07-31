@@ -63,6 +63,20 @@ const dateFnsLocale = (l?: SupportedLocale): Locale =>
 const toDate = (value: Date | string | number): Date =>
   value instanceof Date ? value : new Date(value);
 
+// A calendar date (`YYYY-MM-DD`) carries no zone, but parsing one as an INSTANT
+// puts it at UTC midnight: west of Greenwich that is the previous local day,
+// and east of it the local morning is still "before" the date. Ages of the very
+// young are what notice — a baby born today reads as a day old in New York, and
+// in Auckland the date of birth looks like the future and no age shows at all.
+// Split the fields and build a local date instead.
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+const toCalendarDate = (value: Date | string | number): Date => {
+  if (typeof value !== 'string' || !DATE_ONLY.test(value)) return toDate(value);
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
 // Locale-aware date/time formatting bound to the current locale. Plain
 // functions in the app's direct-call style; each reads locale() so use within
 // an effect stays reactive.
@@ -93,7 +107,7 @@ export const localisedDistanceToNow = (value: Date | string | number): string =>
 // for a missing or future date of birth, so callers fall back to the date.
 export const getDisplayAge = (dateOfBirth: Date | string | number): string => {
   const now = new Date();
-  const dob = toDate(dateOfBirth);
+  const dob = toCalendarDate(dateOfBirth);
   if (dob.getTime() > now.getTime()) return '';
   const years = differenceInYears(now, dob);
   if (years >= 1) return tPlural('label.age-years', years);
