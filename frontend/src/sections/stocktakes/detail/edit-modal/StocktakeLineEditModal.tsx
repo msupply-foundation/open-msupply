@@ -413,6 +413,17 @@ const StocktakeLineEditContent = (
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
 
+  // Working-size latch (#771): the dialog opens small in add mode (it reads as
+  // "pick an item", not an empty workbench) and grows ONCE, when the first item
+  // is picked. That growth is the only size change in the modal's life — the
+  // latch (a reducing memo) never resets, so clearing the item (×) or
+  // "OK & next" returning to the search leaves the box at the working size and
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || mode() === 'update' || !noItemYet(),
+    false
+  );
+
   // Card-only: default the view to card at every band (compact already forces
   // card; this extends it to desktop). No showCardToggle on the DataTable, so
   // there's no way to a table view — the batch grid is always cards.
@@ -1370,7 +1381,16 @@ const StocktakeLineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'large' : 'auto'}
+      // The pre-pick state is a command-palette-shaped card: the standard
+      // create-modal width (the CreateStocktake/CreateInternalOrder family),
+      // and a body tall enough to OWN the open suggestions list — the search
+      // takes initial focus and the combobox opens on focus, so the list is
+      // this state's resting face, and without the reserved height it would
+      // dangle past the card onto the scrim. The popup itself matches its
+      // trigger's width. Both are ignored once the latch flips to large.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
       // Title: JUST the item selector (no "Add"/"Edit" label — the modal is one
       // combined flow). A component title can't be the a11y name, so pass

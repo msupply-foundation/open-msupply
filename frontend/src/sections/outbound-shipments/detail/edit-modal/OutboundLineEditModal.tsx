@@ -871,6 +871,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const updateMode = () => mode() === 'update';
 
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "OK & next" returning to the search keeps the working size, so the
+  // add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || item() !== undefined,
+    false
+  );
+
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       // "Will be used in auto-allocation": the AUTO-fillable predicate
@@ -1298,7 +1307,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'large' : 'auto'}
+      // The pre-pick state is a command-palette-shaped card: the standard
+      // create-modal width (the CreateStocktake/CreateInternalOrder family),
+      // and a body tall enough to OWN the open suggestions list — the search
+      // takes initial focus and the combobox opens on focus, so the list is
+      // this state's resting face, and without the reserved height it would
+      // dangle past the card onto the scrim. The popup itself matches its
+      // trigger's width. Both are ignored once the latch flips to large.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
       actionsLead={

@@ -1,5 +1,11 @@
 import { generateUUID } from '../../../../uuid';
-import { createSignal, onMount, Show, type Component } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  onMount,
+  Show,
+  type Component,
+} from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -719,6 +725,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
 
   const noItemYet = () => !item();
 
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "OK & next" returning to the search keeps the working size, so the
+  // add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || mode() === 'update' || !noItemYet(),
+    false
+  );
+
   // Mismatch warning (spec S4): a manual shipment records what the supplier
   // reported shipping (shippedNumberOfPacks/shippedPackSize) alongside what was
   // received — warn when any batch's received differs from shipped. Not a
@@ -1269,7 +1284,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       open
       dismissable={!saving()}
       onClose={props.onClose}
-      size="large"
+      size={workingSize() ? 'large' : 'auto'}
+      // The pre-pick state is a command-palette-shaped card: the standard
+      // create-modal width (the CreateStocktake/CreateInternalOrder family),
+      // and a body tall enough to OWN the open suggestions list — the search
+      // takes initial focus and the combobox opens on focus, so the list is
+      // this state's resting face, and without the reserved height it would
+      // dangle past the card onto the scrim. The popup itself matches its
+      // trigger's width. Both are ignored once the latch flips to large.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
       title={
         // On a PO-linked shipment, add mode picks a purchase-order line; every
