@@ -8,6 +8,7 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
@@ -115,7 +116,14 @@ export const InternalOrderSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <span>{props.node.user?.username ?? '—'}</span>
+          {/* The recorded user's name, a dash when none, an info tooltip with
+              their email when known (spec S5). */}
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <span>{localisedDate(props.node.createdDatetime)}</span>
