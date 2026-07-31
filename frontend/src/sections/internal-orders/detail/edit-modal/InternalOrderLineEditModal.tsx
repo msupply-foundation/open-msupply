@@ -280,6 +280,16 @@ const LineEditContent = (
   const disabled = () => !props.editable;
 
   const current = () => line();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "Save & next" returning to the search keeps the working size, so
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || current() !== undefined,
+    false
+  );
+
   const packSize = () => current()?.defaultPackSize ?? 1;
   const doses = () => current()?.doses ?? 0;
   const suggested = () => current()?.suggestedQuantity ?? 0;
@@ -442,7 +452,16 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'large' : 'auto'}
+      // The pre-pick state is a command-palette-shaped card: the standard
+      // create-modal width (the CreateStocktake/CreateInternalOrder family),
+      // and a body tall enough to OWN the open suggestions list — the search
+      // takes initial focus and the combobox opens on focus, so the list is
+      // this state's resting face, and without the reserved height it would
+      // dangle past the card onto the scrim. The popup itself matches its
+      // trigger's width. Both are ignored once the latch flips to large.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"
       // Untitled per spec S4 — the title stays as the accessible name only.
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
