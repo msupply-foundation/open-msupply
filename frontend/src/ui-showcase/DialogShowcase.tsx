@@ -6,6 +6,9 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { Button } from '../ui/elements/buttons/Button';
+import { FormColumns } from '../ui/layout/Form/FormColumns';
+import { FormColumn } from '../ui/layout/Form/FormColumn';
+import { FormSection } from '../ui/layout/Form/FormSection';
 import { TextField } from '../ui/elements/inputs/TextField';
 import {
   StoreSelector,
@@ -64,6 +67,11 @@ export const dialogMetadata: PageMetadata = {
       searchTerms: ['content', 'footer', 'actions'],
     },
     {
+      id: 'dialog-widths',
+      title: 'Width presets',
+      searchTerms: ['measure', 'form width', 'prose', 'wide', 'width'],
+    },
+    {
       id: 'dialog-large',
       title: 'Large workbench dialog',
       searchTerms: ['wide', 'edit lines', 'size large'],
@@ -81,6 +89,8 @@ export const DialogShowcase = () => {
   const [dangerOpen, setDangerOpen] = createSignal(false);
   const [outcome, setOutcome] = createSignal('');
   const [dialogOpen, setDialogOpen] = createSignal(false);
+  // Which width preset the demo dialog is open at (undefined = closed).
+  const [widthDemo, setWidthDemo] = createSignal<'prose' | 'form' | 'wide'>();
   const [workbenchOpen, setWorkbenchOpen] = createSignal(false);
   const [lines, setLines] = createSignal(WORKBENCH_ROWS);
   const addLine = () =>
@@ -199,6 +209,69 @@ export const DialogShowcase = () => {
           </Dialog>
         </DashboardCard>
 
+        <DashboardCard id="dialog-widths" title="Width presets — the measures">
+          <Lead>
+            <code>width</code> takes one of the three shared content{' '}
+            <strong>measures</strong> — the same vocabulary{' '}
+            <code>ContentContainer</code>'s <code>size</code> uses, so a form in
+            a dialog is as wide as that form in a page: <code>prose</code>{' '}
+            (single-column text or a short form), <code>form</code> (a
+            comfortable two-column form) and <code>wide</code> (a dense form or
+            a result table). Open the three and watch only the frame change —
+            the two-column body below is the same markup each time. Prefer a
+            measure over <code>widthRem</code>, which is for a genuinely bespoke
+            width: a measure keeps a multi-step flow one steady box instead of a
+            dialog that jumps wider on the step with a table in it. And note
+            what a measure canNOT be replaced by — capping the <em>content</em>{' '}
+            with a <code>ContentContainer</code> inside leaves the frame, its
+            title row and its actions row at the old width with the body
+            floating in the middle. A measure also opts the dialog into the
+            shared <strong>full-screen</strong> treatment below the
+            narrow-viewport line — narrow the window past tablet portrait and
+            reopen one: a page-sized surface becomes a sheet rather than an
+            edge-to-edge card clinging to a 1rem margin.
+          </Lead>
+          <Row>
+            <For each={['prose', 'form', 'wide'] as const}>
+              {measure => (
+                <Button
+                  variant="secondary"
+                  onClick={() => setWidthDemo(measure)}
+                >
+                  width="{measure}"
+                </Button>
+              )}
+            </For>
+          </Row>
+          <Dialog
+            open={widthDemo() !== undefined}
+            onClose={() => setWidthDemo(undefined)}
+            title={`Patient details — width="${widthDemo() ?? ''}"`}
+            width={widthDemo()}
+            actions={
+              <>
+                <CancelButton onClick={() => setWidthDemo(undefined)} />
+                <DialogSaveButton onClick={() => setWidthDemo(undefined)} />
+              </>
+            }
+          >
+            <FormColumns>
+              <FormColumn>
+                <FormSection title="Patient details">
+                  <TextField label="First name" width="full" />
+                  <TextField label="Last name" width="full" />
+                </FormSection>
+              </FormColumn>
+              <FormColumn>
+                <FormSection title="Contact">
+                  <TextField label="Address" width="full" />
+                  <TextField label="Phone" width="full" />
+                </FormSection>
+              </FormColumn>
+            </FormColumns>
+          </Dialog>
+        </DashboardCard>
+
         <DashboardCard
           id="dialog-large"
           title={'Large "workbench" dialog — size="large"'}
@@ -210,10 +283,11 @@ export const DialogShowcase = () => {
             DataTable in the app) fills the space and{' '}
             <em>scrolls internally</em> while the header, <code>footer</code>{' '}
             and <code>actions</code> stay pinned to the edges. Add a line: the
-            box holds its size rather than growing. On phones (below the compact
-            breakpoint) a large dialog like this goes{' '}
-            <strong>full-screen</strong>, edge to edge with no radius — smaller
-            dialogs stay centred cards.
+            box holds its size rather than growing. Below the narrow-viewport
+            line (tablet portrait and phones) it goes{' '}
+            <strong>full-screen</strong>, edge to edge with no radius — as does
+            any dialog sized by a <code>width</code> measure. A default or{' '}
+            <code>widthRem</code> dialog stays a centred card at every width.
           </Lead>
           <Row>
             <Button
