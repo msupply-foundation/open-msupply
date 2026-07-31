@@ -133,7 +133,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterTextInput
         label="Name"
-        placeholder="Search by name"
+        placeholder="Search..."
         testId={props.testId}
         value={props.filter().otherPartyName ?? ''}
         onInput={value =>
@@ -148,7 +148,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterNumberInput
         label="Invoice number"
-        placeholder="Invoice number"
+        placeholder="Search..."
         testId={props.testId}
         value={props.filter().invoiceNumber ?? undefined}
         onChange={value =>
@@ -212,7 +212,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterCombobox
         label="Item"
-        placeholder="Item"
+        placeholder="Search..."
         items={ITEMS}
         itemToString={i => `${i.code} — ${i.name}`}
         itemToValue={i => i.code}

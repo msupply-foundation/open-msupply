@@ -139,7 +139,7 @@ const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
     render: props => (
       <FilterTextInput
         label={t('label.code-or-name')}
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        placeholder={t('placeholder.search')}
         testId={props.testId}
         debounceMs={0}
         value={props.filter().itemCodeOrName?.like ?? ''}
