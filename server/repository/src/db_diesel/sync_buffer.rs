@@ -237,6 +237,14 @@ pub struct PendingQuery<'a> {
     pub limit: i64,
 }
 
+/// One pending row's identity, as returned by [`SyncBufferRepository::pending_keys`].
+#[derive(Clone, Queryable, Debug, PartialEq)]
+pub struct PendingKey {
+    pub cursor: i32,
+    pub table_name: String,
+    pub record_id: String,
+}
+
 pub struct SyncBufferRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -335,6 +343,43 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(count)
     }
 
+    /// Key projection of pending rows, for the latest-wins pre-pass in v7
+    /// integration (#12610). Same predicate as `pending_ordered_by_cursor` /
+    /// `count_pending` (exact `reference_id` match, or IS NULL), restricted to
+    /// Upsert/Delete — Merge rows are never integrated by v7 and must neither
+    /// win nor lose supersession. `table_names` must be the set integration
+    /// will actually visit, so rows for unrecognised tables stay pending
+    /// untouched (they integrate after an upgrade — see #12361).
+    pub fn pending_keys(
+        &self,
+        source_site_id: i32,
+        sync_version: SyncVersion,
+        reference_id: Option<&str>,
+        table_names: &[&str],
+    ) -> Result<Vec<PendingKey>, RepositoryError> {
+        let table_names: Vec<String> = table_names.iter().map(|s| s.to_string()).collect();
+        let mut q = sync_buffer::table
+            .filter(sync_buffer::is_integrated.eq(false))
+            .filter(sync_buffer::sync_version.eq(sync_version))
+            .filter(sync_buffer::source_site_id.eq(source_site_id))
+            .filter(sync_buffer::action.eq_any(vec![SyncAction::Upsert, SyncAction::Delete]))
+            .filter(sync_buffer::table_name.eq_any(table_names))
+            .select((
+                sync_buffer::cursor,
+                sync_buffer::table_name,
+                sync_buffer::record_id,
+            ))
+            .into_boxed();
+
+        if let Some(reference_id) = reference_id {
+            q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
+        } else {
+            q = q.filter(sync_buffer::reference_id.is_null());
+        }
+
+        Ok(q.load(self.connection.lock().connection())?)
+    }
+
     /// Records the outcome of integrating a single buffer row.
     ///
     /// `started_datetime` is captured by the caller immediately before integration begins
@@ -358,6 +403,16 @@ impl<'a> SyncBufferRepository<'a> {
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    /// Point lookup by cursor (the PK). Used by tests to assert per-row
+    /// integration outcomes.
+    pub fn find_one_by_cursor(&self, cursor: i32) -> Result<Option<SyncBufferRow>, RepositoryError> {
+        let result = sync_buffer::table
+            .filter(sync_buffer::cursor.eq(cursor))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
     }
 
     /// Returns the most recent (highest cursor) row matching the record_id, across both
@@ -492,6 +547,106 @@ mod test {
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
         assert_eq!(ids, vec!["b1"]);
+    }
+
+    #[actix_rt::test]
+    async fn test_sync_buffer_pending_keys() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_sync_buffer_pending_keys", MockDataInserts::none()).await;
+
+        let repo = SyncBufferRepository::new(&connection);
+
+        repo.insert_many(&[
+            // Matches (upsert)
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                ..insert("u1", "unit")
+            },
+            // Matches (delete, same record)
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                action: SyncAction::Delete,
+                ..insert("u1", "unit")
+            },
+            // Excluded: Merge action
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                action: SyncAction::Merge,
+                ..insert("u2", "unit")
+            },
+            // Excluded: table not in the visited set
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                ..insert("x1", "table_from_the_future")
+            },
+            // Excluded: different source site
+            SyncBufferRowInsert {
+                source_site_id: 2,
+                sync_version: SyncVersion::V7,
+                ..insert("u3", "unit")
+            },
+            // Excluded: V5V6
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                ..insert("u4", "unit")
+            },
+            // Excluded: carries a reference_id
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                reference_id: Some("batch-x".to_string()),
+                ..insert("u5", "unit")
+            },
+            // Excluded below via set_integration_result
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                ..insert("u6", "unit")
+            },
+        ])
+        .unwrap();
+
+        // Mark the u6 row integrated so it drops out of pending.
+        let u6_cursor = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V7,
+                reference_id: None,
+                table_name: "unit",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Desc,
+                limit: 1,
+            })
+            .unwrap()
+            .pop()
+            .unwrap()
+            .cursor;
+        repo.set_integration_result(
+            u6_cursor,
+            Utc::now().naive_utc(),
+            IntegrationResult::Success,
+            None,
+        )
+        .unwrap();
+
+        let keys = repo
+            .pending_keys(1, SyncVersion::V7, None, &["unit", "item"])
+            .unwrap();
+        let mut ids: Vec<&str> = keys.iter().map(|k| k.record_id.as_str()).collect();
+        ids.sort();
+        assert_eq!(ids, vec!["u1", "u1"]);
+
+        // The reference-scoped row is visible only to its own reference.
+        let keys = repo
+            .pending_keys(1, SyncVersion::V7, Some("batch-x"), &["unit"])
+            .unwrap();
+        let ids: Vec<&str> = keys.iter().map(|k| k.record_id.as_str()).collect();
+        assert_eq!(ids, vec!["u5"]);
     }
 
     #[actix_rt::test]
