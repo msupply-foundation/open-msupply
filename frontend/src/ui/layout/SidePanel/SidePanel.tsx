@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../../elements/accordion/Accordion';
+import { ALT_SHIFT_M } from '../../utils/shortcuts';
 import styles from './SidePanel.module.css';
 
 export interface SidePanelProps {
@@ -33,13 +34,13 @@ export interface SidePanelProps {
 /*
  * Details panel — the detail-view right-hand panel (the current app's
  * DetailPanel): additional info, related documents, comments. Pinned to the
- * inline-end edge of the Page's middle region; the Page frame owns how it docks
- * (a column that slides in and pushes the body at navOverlay and above, an
- * off-canvas drawer + scrim below it, with a drop shadow — see Page.module.css).
- * Pure layout + look, no open state of its own: the page composes
- * <SidePanelSection>s, hands the panel to Page's `sidePanel` slot, and passes
- * `onClose` (→ the close button, top inline-end). Scrolls independently of the
- * body.
+ * inline-end edge of the Page's middle region; the Page frame owns how it
+ * docks (a column that slides in and pushes the body at navOverlay and above,
+ * an off-canvas drawer + scrim below it, with a drop shadow — see
+ * Page.module.css). Pure layout + look, no open state of its own: the page
+ * composes <SidePanelSection>s, hands the panel to Page's `sidePanel` slot,
+ * and passes `onClose` (→ the close button, top inline-end). Scrolls
+ * independently of the body.
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside
@@ -57,6 +58,11 @@ export const SidePanel = (props: SidePanelProps) => (
         <IconButton
           label={t('button.close')}
           icon={<CloseIcon />}
+          // createSidePanelOpen (beside this file) registers Alt+Shift+M as
+          // "hide the more-info panel"; this button is the control that
+          // advertises it, the mirror of the app bar's More carrying Alt+M
+          // (ui-surface S2 lists both sides of the pair).
+          shortcut={ALT_SHIFT_M}
           onClick={props.onClose}
         />
       )}

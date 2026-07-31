@@ -3,6 +3,8 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Button } from '../ui/elements/buttons/Button';
+import { IconButton } from '../ui/elements/buttons/IconButton';
+import { CloseIcon } from '../ui/icons';
 import { CommandPaletteView } from '../ui/elements/keyboard/CommandPaletteView';
 import { startKeyboardDispatcher } from '../keyboard/keyboardDispatcher';
 import { registeredActions } from '../ui/utils/keyActions';
@@ -126,6 +128,14 @@ export const KeyboardShowcase = () => {
               <Button variant="primary" shortcut={ALT_S}>
                 {t('button.save')}
               </Button>
+              {/* An icon-only carrier takes the same prop; its badge drops
+                  below the box, which a key legend is too wide to share with a
+                  2rem icon. This is the side panel's close button. */}
+              <IconButton
+                label={t('button.close')}
+                icon={<CloseIcon />}
+                shortcut={ALT_SHIFT_M}
+              />
             </Row>
             <Note>
               The badge alone, outside a control, for the two renderings of one
