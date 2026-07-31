@@ -99,6 +99,15 @@ impl<'a> UserStoreJoinRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_user_id(
+        &self,
+        user_id: &str,
+    ) -> Result<Vec<UserStoreJoinRow>, RepositoryError> {
+        Ok(user_store_join::table
+            .filter(user_store_join::user_id.eq(user_id))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for UserStoreJoinRow {
