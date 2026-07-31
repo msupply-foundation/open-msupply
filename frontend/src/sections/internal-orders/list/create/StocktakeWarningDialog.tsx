@@ -2,6 +2,7 @@ import { type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 
 // The recent-stocktake warning gate (spec/internal-orders S6, AC-C5). Shown
 // before the create modal opens when the store's warn preference is on and its
@@ -32,13 +33,7 @@ export const StocktakeWarningDialog: Component<
     })}
     actions={
       <>
-        <Button
-          variant="secondary"
-          confirms="cancel"
-          onClick={() => props.onCancel()}
-        >
-          {t('button.cancel')}
-        </Button>
+        <CancelButton onClick={() => props.onCancel()} />
         {/* Continuing anyway is the ALTERNATIVE, not the confirm: it claims no
             role, so Enter cannot skip the warning the gate exists to give
             (spec/keyboard KB-E2 — the confirm is the primary below). */}
