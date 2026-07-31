@@ -133,12 +133,10 @@ type SortKey =
 type LineFilter = { itemCodeOrName?: { like: string } | null };
 
 // The line table's filters (ui-standards § tables → filtering): the item
-// code/name search as the screen's default (always-on) filter — the same chip
-// the stocktake detail table keeps to hand. Client-side for now, so no
-// debounce.
+// code/name search — the same chip the stocktake detail table keeps to hand.
+// Client-side for now, so no debounce.
 const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
   itemCodeOrName: {
-    alwaysOn: true,
     label: () => t('label.code-or-name'),
     render: props => (
       <FilterTextInput
@@ -160,7 +158,12 @@ const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
 const InternalOrderDetailView: Component = () => {
   const params = useParams<{ storeId: string; orderId: string }>();
   const navigate = useNavigate();
-  const [lineFilter, setLineFilter] = createSignal<LineFilter>({});
+  // The item search is the screen's default filter (ui-standards § tables →
+  // filtering): seeded present-as-null so its chip is on the bar from the
+  // start; the client-side match ignores it until typed.
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({
+    itemCodeOrName: null,
+  });
   const [hideOverMin, setHideOverMin] = createSignal(false);
   // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar.

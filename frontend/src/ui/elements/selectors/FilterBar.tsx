@@ -55,17 +55,6 @@ import styles from './FilterBar.module.css';
 export type Filter<F> = {
   key: keyof F & string;
   /**
-   * A DEFAULT filter (the current app's `FilterDefinition.isDefault`) — the one
-   * search a screen keeps to hand, e.g. the stocktake detail's item code/name
-   * search (#735). Always visible and permanent: no remove (×), absent from the
-   * add-filter menu, and it never raises "Clear all" (a "Clear all" raised by
-   * another chip does clear its value, but never its chip).
-   *
-   * An invariant of the definition, not a seeded value — so no URL state can
-   * suppress it, and a page needs no default-filter bookkeeping of its own.
-   */
-  alwaysOn?: boolean;
-  /**
    * Chip / menu label. An ACCESSOR, not a string, so the filter array can be a
    * stable module const (built once, identities never churn — <For> reuses
    * rows) while the label still re-translates on a locale switch when read in
@@ -196,8 +185,8 @@ const groupOps = <G extends object>(
     showsClearAll: () => showsClearAll(filters(), filter()),
     add: f => onChange({ ...filter(), [f.key]: null }),
     remove: f => onChange(without(f.key)),
-    // Drops every key, alwaysOn included: that clears an always-on filter's
-    // value, while isFilterActive keeps its chip on the bar.
+    // Drops every key, a seeded default filter's included — "Clear all" takes
+    // every chip off the bar (#563), leaving just the add-filter trigger.
     reset: () => {
       let next = filter();
       for (const f of filters()) {
@@ -224,14 +213,14 @@ const groupOps = <G extends object>(
  *
  * State model (see kdd/page-composition): the caller's filter object IS the
  * state, in GraphQL-native shape. A chip is shown iff its key is PRESENT on
- * the filter (present-as-`null` = added but empty) — or the filter is
- * `alwaysOn`, a default filter, which is on the bar regardless and can't be
- * removed at all (filterBarLogic.ts holds these rules). Adding writes `null`,
- * removing deletes the key, editing goes through the field's own control via
- * setPartialFilter. Chip visibility therefore lives in the (URL-backed)
- * filter, so a restored state re-opens its chips — no local presentation
- * signal to seed. The page strips null/empty keys before querying
- * (stripEmpty).
+ * the filter (present-as-`null` = added but empty) — no exceptions, so a
+ * screen's DEFAULT filters are simply keys seeded present-as-null in its
+ * default state, and are removable and clearable like any other (#563;
+ * filterBarLogic.ts holds these rules). Adding writes `null`, removing deletes
+ * the key, editing goes through the field's own control via setPartialFilter.
+ * Chip visibility therefore lives in the (URL-backed) filter, so a restored
+ * state re-opens its chips — no local presentation signal to seed. The page
+ * strips null/empty keys before querying (stripEmpty).
  */
 // A menu entry, types erased at the render edge so one dropdown lists both
 // groups' addable filters.
@@ -333,7 +322,7 @@ export const FilterBar = <
         {f => (
           <FilterChip
             label={f.label()}
-            onRemove={f.alwaysOn ? undefined : () => main.remove(f)}
+            onRemove={() => main.remove(f)}
             focusTarget={chipEditor(f.key)}
           >
             {f.render(main.renderProps(f))}
@@ -355,7 +344,7 @@ export const FilterBar = <
               {f => (
                 <FilterChip
                   label={f.label()}
-                  onRemove={f.alwaysOn ? undefined : () => ex.remove(f)}
+                  onRemove={() => ex.remove(f)}
                   focusTarget={chipEditor(f.key)}
                 >
                   {f.render(ex.renderProps(f))}
@@ -367,10 +356,17 @@ export const FilterBar = <
       </Show>
 
       {/* Bar-level "Clear all" (ui-standards § tables → filtering) — a plain
-          text button, on screen only while either group holds a user-added
-          chip; a default filter never puts it there (showsClearAll). */}
+          text button, on screen while either group holds ANY chip, and taking
+          them all off (showsClearAll / reset). */}
       <Show when={main.showsClearAll() || extraOps()?.showsClearAll()}>
-        <button type="button" class={styles.clearAll} onClick={resetAll}>
+        <button
+          type="button"
+          class={styles.clearAll}
+          // As on a chip's ✕: taking the caret out of an editor shrinks it and
+          // shifts this button mid-press, losing the click.
+          onMouseDown={e => e.preventDefault()}
+          onClick={resetAll}
+        >
           {t('label.clear-all-filters')}
         </button>
       </Show>
@@ -412,12 +408,11 @@ export const NotChipEditor = (props: { children: JSX.Element }) => (
 );
 
 // Chip chrome: label + the field's control + the remove ×. The ✕ is the pill's
-// one affordance and it means REMOVE (DESIGN_STANDARDS unit 9), so an alwaysOn
-// chip — which can't be removed — passes no `onRemove` and closes up the
-// trailing gutter that button held.
+// one affordance and it means REMOVE (DESIGN_STANDARDS unit 9) — every chip
+// carries it, a seeded default filter's included (#563).
 const FilterChip = (props: {
   label: string;
-  onRemove?: () => void;
+  onRemove: () => void;
   focusTarget: FocusTarget;
   children: JSX.Element;
 }) => (
@@ -428,16 +423,19 @@ const FilterChip = (props: {
     <ChipFocusContext.Provider value={props.focusTarget}>
       {props.children}
     </ChipFocusContext.Provider>
-    <Show when={props.onRemove}>
-      <button
-        type="button"
-        class={styles.remove}
-        aria-label={t('label.clear-filter-detail', { name: props.label })}
-        onClick={() => props.onRemove?.()}
-      >
-        <CloseIcon />
-      </button>
-    </Show>
+    <button
+      type="button"
+      class={styles.remove}
+      aria-label={t('label.clear-filter-detail', { name: props.label })}
+      // Keep the caret where it is while the button is pressed: the editor
+      // shrinks to its text when it loses the caret, which slides this button
+      // out from under the pointer, and the release then lands elsewhere — no
+      // click, so the chip just seemed to collapse instead of going (#563).
+      onMouseDown={e => e.preventDefault()}
+      onClick={() => props.onRemove()}
+    >
+      <CloseIcon />
+    </button>
   </div>
 );
 

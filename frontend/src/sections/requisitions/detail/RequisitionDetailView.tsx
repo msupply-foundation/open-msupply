@@ -115,12 +115,10 @@ type SortKey =
 type LineFilter = { itemCodeOrName?: { like: string } | null };
 
 // The line table's filters (ui-standards § tables → filtering): the item
-// code/name search as the screen's default (always-on) filter — the same chip
-// the stocktake detail table keeps to hand. Client-side for now, so no
-// debounce.
+// code/name search — the same chip the stocktake detail table keeps to hand.
+// Client-side for now, so no debounce.
 const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
   itemCodeOrName: {
-    alwaysOn: true,
     label: () => t('label.code-or-name'),
     render: props => (
       <FilterTextInput
@@ -144,7 +142,12 @@ const RequisitionDetailView: Component = () => {
   const navigate = useNavigate();
   // The active tab persists in the URL (spec S2 § tabs).
   const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-  const [lineFilter, setLineFilter] = createSignal<LineFilter>({});
+  // The item search is the screen's default filter (ui-standards § tables →
+  // filtering): seeded present-as-null so its chip is on the bar from the
+  // start; the client-side match ignores it until typed.
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({
+    itemCodeOrName: null,
+  });
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
@@ -220,8 +223,7 @@ const RequisitionDetailView: Component = () => {
   // Adding a line (rules › line editing): an editable, non-program (a program
   // requisition's lines are fixed to its master list), non-transferred (the
   // customer's demand is not added to here) requisition.
-  const canAdd = () =>
-    editable() && !isProgram() && !info()?.linkedRequisition;
+  const canAdd = () => editable() && !isProgram() && !info()?.linkedRequisition;
   // The editor's Approved figure (spec S4 § read-only figures): the
   // authorisation preference with an Approved status.
   const showApprovedFigure = () =>
@@ -779,8 +781,7 @@ const RequisitionDetailView: Component = () => {
           },
           {
             c: {
-              accessor: line =>
-                (line.pricePerUnit ?? 0) * line.supplyQuantity,
+              accessor: line => (line.pricePerUnit ?? 0) * line.supplyQuantity,
               id: 'indicativePrice',
             },
             header: () => (

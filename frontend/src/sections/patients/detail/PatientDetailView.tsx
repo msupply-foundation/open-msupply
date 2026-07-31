@@ -132,12 +132,24 @@ const PatientDetailView: Component = () => {
   const validation = createFormValidation(() =>
     patientFieldErrors(edit, codeCheck.taken())
   );
+  // Validation timing at a (re)seed: quiet, as a pristine form should be —
+  // UNLESS the saved record itself already breaks a required rule, which a
+  // patient retrieved from central does when it arrives without a code
+  // (spec/patients rules § editing a patient). Then the form is armed from the
+  // start: the gap is the record's, not something the user has yet to type, and
+  // it has to be filled — typed or generated — before this patient can be saved
+  // again.
+  const armForSeed = (seed: PatientDraft) => {
+    if (isDraftValid(seed)) validation.reset();
+    else validation.arm();
+  };
   createEffect(
     on(node, n => {
       if (n && n.id !== seededId()) {
-        setEdit(seedDraft(n));
+        const seed = seedDraft(n);
+        setEdit(seed);
         setSeededId(n.id);
-        validation.reset();
+        armForSeed(seed);
       }
     })
   );
@@ -283,8 +295,9 @@ const PatientDetailView: Component = () => {
   const resetDraft = () => {
     const n = node();
     if (!n) return;
-    setEdit(seedDraft(n));
-    validation.reset();
+    const seed = seedDraft(n);
+    setEdit(seed);
+    armForSeed(seed);
   };
 
   // Discard prompt on any leave from a dirty form (spec § patient edit form):
@@ -384,7 +397,11 @@ const PatientDetailView: Component = () => {
                       variant="field"
                       size="small"
                     >
-                      {n().code}
+                      {/* A dash, never blank space: beside a label, blank reads
+                          as a rendering fault (ui-standards/detail-views §
+                          never-editable fields). A patient retrieved without a
+                          code is the case that gets here. */}
+                      {n().code || '—'}
                     </LabelledValue>
                     <LabelledValue
                       label={t('label.gender')}
