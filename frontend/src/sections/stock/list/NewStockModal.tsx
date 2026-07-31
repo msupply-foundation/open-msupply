@@ -282,6 +282,7 @@ const NewStockContent = (props: {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             disabled={saving()}
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
@@ -291,6 +292,7 @@ const NewStockContent = (props: {
           <Button
             icon={<CheckIcon />}
             loading={saving()}
+            confirms="plain"
             disabled={!canConfirm()}
             data-testid="dialog-button-ok"
             onClick={() => void onOk()}

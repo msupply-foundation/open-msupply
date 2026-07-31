@@ -83,9 +83,13 @@ const Body: Component<{ onClose: () => void }> = props => {
       testId="customer-search-modal"
       title={t('label.customer-name')}
       actions={
+        // Cancel is the only footer action — choosing a customer from the list
+        // is this dialog's confirm, and Enter there belongs to the picker
+        // (KB-E1). So nothing claims `plain` and Enter confirms nothing.
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >

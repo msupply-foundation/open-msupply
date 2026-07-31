@@ -85,6 +85,7 @@ export const UseSuggestedQuantitiesAction: Component<{
                     <Button
                       variant="secondary"
                       icon={<XCircleIcon />}
+                      confirms="cancel"
                       onClick={close}
                     >
                       {t('button.cancel')}
@@ -93,6 +94,7 @@ export const UseSuggestedQuantitiesAction: Component<{
                   <Button
                     variant="secondary"
                     icon={<ZapIcon />}
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'applying'}
                     onClick={() => void run()}
@@ -106,6 +108,7 @@ export const UseSuggestedQuantitiesAction: Component<{
                 <Button
                   variant="secondary"
                   icon={<CheckIcon />}
+                  confirms="plain"
                   onClick={close}
                 >
                   {t('button.close')}

@@ -219,6 +219,7 @@ const Body = (props: BodyProps): JSX.Element => {
             fallback={
               <Button
                 variant="secondary"
+                confirms="cancel"
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
               >
@@ -226,6 +227,8 @@ const Body = (props: BodyProps): JSX.Element => {
               </Button>
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -241,6 +244,7 @@ const Body = (props: BodyProps): JSX.Element => {
             when={step() === 'reason'}
             fallback={
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}
@@ -251,6 +255,7 @@ const Body = (props: BodyProps): JSX.Element => {
           >
             <Button
               loading={saving()}
+              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={() => void onSave()}
             >

@@ -174,11 +174,20 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
         icon={<PrinterIcon />}
         title={t('title.select-a-form')}
         widthRem={40}
+        /*
+         * No submit key (spec/keyboard KB-E2's opt-out). The footer offers
+         * three FORMATS, not a confirm and its alternatives — Excel, Print and
+         * PDF are equal choices, so there is no action Enter could mean.
+         * Cancel still claims its role below, for the Escape badge and the
+         * palette entry.
+         */
+        enterConfirms={false}
         actions={
           <>
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               disabled={busy()}
               onClick={props.onClose}
             >

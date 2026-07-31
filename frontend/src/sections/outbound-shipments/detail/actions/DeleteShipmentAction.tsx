@@ -87,6 +87,7 @@ export const DeleteShipmentAction: Component<
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={close}
                 >
                   {t('button.cancel')}
@@ -97,6 +98,7 @@ export const DeleteShipmentAction: Component<
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   data-testid="dialog-button-cancel"
                   onClick={close}
                 >
@@ -106,6 +108,7 @@ export const DeleteShipmentAction: Component<
               <Button
                 variant="secondary"
                 icon={<CheckIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}

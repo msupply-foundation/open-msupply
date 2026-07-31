@@ -79,6 +79,7 @@ export const CreateInitialStocktakeAction = (props: {
           <Button
             variant="primary"
             loading={creating()}
+            confirms="plain"
             onClick={() => void create()}
           >
             {t('button.create')}

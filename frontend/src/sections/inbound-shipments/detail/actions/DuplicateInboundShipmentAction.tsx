@@ -128,12 +128,14 @@ const Body = (props: {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
                 </Button>
               </Show>
               <Button
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -144,7 +146,7 @@ const Body = (props: {
           }
         >
           <Match when={phase() === 'skipped'}>
-            <Button icon={<CheckIcon />} onClick={goToCopy}>
+            <Button icon={<CheckIcon />} confirms="plain" onClick={goToCopy}>
               {t('button.ok')}
             </Button>
           </Match>
@@ -152,6 +154,7 @@ const Body = (props: {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="plain"
               onClick={props.onClose}
             >
               {t('button.close')}

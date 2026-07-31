@@ -360,13 +360,17 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
           {t('button.cancel')}
         </Button>
+        {/* Each step's forward action is that step's confirm, so Enter advances
+            the wizard from anywhere in its form (spec/keyboard KB-E2). */}
         <Button
           icon={<SearchIcon />}
+          confirms="plain"
           data-testid="dialog-button-ok"
           loading={searching()}
           disabled={!canSearch()}
@@ -379,6 +383,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
@@ -386,6 +391,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         </Button>
         <Button
           icon={<PlusCircleIcon />}
+          confirms="plain"
           data-testid="create-new-patient-button"
           onClick={advanceToDetails}
         >
@@ -396,6 +402,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
@@ -403,6 +410,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         </Button>
         <Button
           icon={<SaveIcon />}
+          confirms="plain"
           data-testid="dialog-button-ok"
           loading={saving()}
           onClick={() => void save()}

@@ -14,6 +14,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
@@ -41,10 +43,7 @@ import {
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
-import {
-  StoreOwnName,
-  InternalOrderIndicators,
-} from './indicators.generated';
+import { StoreOwnName, InternalOrderIndicators } from './indicators.generated';
 import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
 import {
   saveInternalOrderFields,
@@ -265,7 +264,8 @@ const InternalOrderDetailView: Component = () => {
     indicatorNodes().length > 0;
   const showCustomerBreakdown = () =>
     (storePrefs()?.useConsumptionAndStockFromCustomersForInternalOrders ??
-      false) && (storePrefs()?.extraFieldsInRequisition ?? false);
+      false) &&
+    (storePrefs()?.extraFieldsInRequisition ?? false);
 
   const editable = () => {
     const node = info();
@@ -304,6 +304,28 @@ const InternalOrderDetailView: Component = () => {
     else setEditorLine({ mode: 'add' });
   };
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header SplitButton
+  // and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action.
+  //
+  // `run` is the single-item add, the split button's default option — not its
+  // current menu selection, which may be the master-list picker. Same gate as
+  // both controls (canAddLines), but reached through `.state` rather than
+  // `info()`: that one reads `data.latest`, which suspends on the first pending
+  // read, and the palette evaluates every action's `disabled()` in its own
+  // render (kdd/keyboard-layer § an action's `disabled` MUST NOT read a
+  // suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditorLine({ mode: 'add' }),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || !isOrderEditable(node) || !!node.program;
+    },
+  });
+
   // The confirmed master-list bulk add (AC-LN7/LN8): add, then refetch the
   // page; a rejection replaces the confirmation with a notice.
   const confirmAddFromMasterList = async () => {
@@ -334,9 +356,7 @@ const InternalOrderDetailView: Component = () => {
   // Header-level save (updateRequestRequisition), spliced back wholesale — the
   // response carries the refreshed node (with recalculated suggestions after a
   // threshold change), so no refetch is needed.
-  const saveField = async (
-    patch: Record<string, unknown>
-  ): Promise<void> => {
+  const saveField = async (patch: Record<string, unknown>): Promise<void> => {
     const node = info();
     if (!node) return;
     const result = await saveInternalOrderFields(params.storeId, {
@@ -629,17 +649,26 @@ const InternalOrderDetailView: Component = () => {
     ...(showExtended()
       ? ([
           {
-            c: { accessor: l => numWithDoses(l, l.initialStockOnHandUnits), id: 'initialSoh' },
+            c: {
+              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              id: 'initialSoh',
+            },
             header: () => t('label.initial-stock-on-hand'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.incomingUnits), id: 'incoming' },
+            c: {
+              accessor: l => numWithDoses(l, l.incomingUnits),
+              id: 'incoming',
+            },
             header: () => t('label.incoming'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.outgoingUnits), id: 'outgoing' },
+            c: {
+              accessor: l => numWithDoses(l, l.outgoingUnits),
+              id: 'outgoing',
+            },
             header: () => t('label.outgoing'),
             ...getNumberCell(),
           },
@@ -649,17 +678,26 @@ const InternalOrderDetailView: Component = () => {
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.additionInUnits), id: 'additions' },
+            c: {
+              accessor: l => numWithDoses(l, l.additionInUnits),
+              id: 'additions',
+            },
             header: () => t('label.additions'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
+            c: {
+              accessor: l => numWithDoses(l, l.expiringUnits),
+              id: 'shortExpiry',
+            },
             header: () => t('label.short-expiry'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => Math.round(l.daysOutOfStock), id: 'daysOutOfStock' },
+            c: {
+              accessor: l => Math.round(l.daysOutOfStock),
+              id: 'daysOutOfStock',
+            },
             header: () => t('label.days-out-of-stock'),
             ...getNumberCell(),
           },
@@ -681,7 +719,9 @@ const InternalOrderDetailView: Component = () => {
                   <Show when={reasonFlaggedIds().has(line.id)}>
                     <AlertTriangleIcon
                       style={{ color: 'var(--error-main)' }}
-                      aria-label={t('error.reasons-not-provided-program-requisition')}
+                      aria-label={t(
+                        'error.reasons-not-provided-program-requisition'
+                      )}
                     />
                   </Show>
                   {line.reason?.reason ?? ''}
@@ -695,12 +735,18 @@ const InternalOrderDetailView: Component = () => {
     ...(showApproval()
       ? ([
           {
-            c: { accessor: l => Math.round(l.approvedQuantity), id: 'approvedPacks' },
+            c: {
+              accessor: l => Math.round(l.approvedQuantity),
+              id: 'approvedPacks',
+            },
             header: () => t('label.approved-packs'),
             ...getNumberCell(),
           },
           {
-            c: { accessor: l => l.approvalComment ?? '', id: 'approvalComment' },
+            c: {
+              accessor: l => l.approvalComment ?? '',
+              id: 'approvalComment',
+            },
             header: () => t('label.approval-comment'),
           },
         ] satisfies Column<Line, SortKey>[])
@@ -753,10 +799,9 @@ const InternalOrderDetailView: Component = () => {
                 edit={edit}
                 onSaveField={patch => void saveField(patch)}
                 onDeleted={() =>
-                  navigate(
-                    `/${params.storeId}/replenishment/internal-order`,
-                    { replace: true }
-                  )
+                  navigate(`/${params.storeId}/replenishment/internal-order`, {
+                    replace: true,
+                  })
                 }
               />
             }
@@ -776,6 +821,7 @@ const InternalOrderDetailView: Component = () => {
                     disabledTitle={t('error.cannot-add-items-to-requisition')}
                     value={addChoice()}
                     onValueChange={setAddChoice}
+                    shortcut={ALT_N}
                     onAction={onAddAction}
                     options={[
                       { value: 'item', label: t('button.add-item') },
@@ -806,6 +852,9 @@ const InternalOrderDetailView: Component = () => {
                       variant="secondary"
                       icon={<SidebarIcon />}
                       data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it (ui-surface S2).
+                      shortcut={ALT_M}
                       onClick={() => setSidePanelOpen(true)}
                     >
                       {t('button.more')}
@@ -935,6 +984,7 @@ const InternalOrderDetailView: Component = () => {
                     canAddLines() ? (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={() => setEditorLine({ mode: 'add' })}
                       >

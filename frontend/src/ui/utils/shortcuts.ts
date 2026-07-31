@@ -98,11 +98,12 @@ const shortcut = (init: ShortcutInit): Shortcut =>
  * spec/keyboard/behaviours.md § The global registry, in its order. Each const
  * names the ONE place that creates its action, so the click-through chain from
  * a binding to its behaviour starts here (kdd/keyboard-layer § the honest cost
- * is a lost reverse lookup). A const whose creation site does not exist yet says
- * so explicitly — the spec's binding table is the authority for what MAY be
- * here, and an unmarked const with no creator is the drift this file prevents.
- * In the running app, `__keyActions()` (dev only) answers the same question from
- * the other end: what is registered right now, in resolution order.
+ * is a lost reverse lookup). A const whose creation site does not exist yet
+ * says so explicitly — the spec's binding table is the authority for what MAY
+ * be here, and an unmarked const with no creator is the drift this file
+ * prevents. In the running app, `__keyActions()` (dev only) answers the same
+ * question from the other end: what is registered right now, in resolution
+ * order.
  */
 
 /** Go to Dashboard. Always available. — globalActions */
@@ -142,18 +143,18 @@ export const ALT_SHIFT_M = shortcut({
 /** The screen's add / new action (KB-R2). — createAddAction */
 export const ALT_N = shortcut({ alt: true, code: 'KeyN', tier: 'global' });
 /**
- * Print prescription labels. Prescription detail only. NOT YET REGISTERED — the
- * prescription detail declares it when that vertical adopts the layer.
+ * Print prescription labels. Prescription detail only. — PrescriptionDetailView
  */
 export const ALT_L = shortcut({ alt: true, code: 'KeyL', tier: 'global' });
 /**
- * Update status. Prescription detail only. NOT YET REGISTERED — see ALT_L.
+ * Update status. Prescription detail only — declared by the footer that owns
+ * the status control and its selection. — PrescriptionStatusFooter
  */
 export const ALT_V = shortcut({ alt: true, code: 'KeyV', tier: 'global' });
 /**
- * Scan a barcode. NOT YET REGISTERED — its creation site is the scanner control,
- * which does not exist yet; it belongs in the helper that owns that control, the
- * way createSidePanelOpen owns Alt+M (KB-R2).
+ * Scan a barcode. NOT YET REGISTERED — its creation site is the scanner
+ * control, which does not exist yet; it belongs in the helper that owns that
+ * control, the way createSidePanelOpen owns Alt+M (KB-R2).
  */
 export const CTRL_S = shortcut({ ctrl: true, code: 'KeyS', tier: 'global' });
 /**

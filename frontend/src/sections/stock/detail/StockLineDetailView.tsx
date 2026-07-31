@@ -32,6 +32,7 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -344,6 +345,36 @@ const StockLineDetailView: Component = () => {
   const showVvmField = () =>
     !!line()?.item.isVaccine &&
     (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry);
+
+  /*
+   * Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7): the VVM tab's
+   * New status entry, which is the only add this screen offers. The control lives
+   * in VvmHistoryPanel and carries `shortcut={ALT_N}` for its badge; the SCREEN
+   * declares the action, as everywhere else.
+   *
+   * Disabled — and so unlisted in the palette — unless the VVM tab is both offered
+   * and showing, with the permission the control itself requires. KB-R2's
+   * "unclaimed only where the thing is absent": on the Details, Log and Ledger tabs
+   * this screen has no add action.
+   *
+   * Gated on `.state` rather than through `showVvmTab()`, which reads
+   * `data.latest` and suspends on the first pending read — the palette evaluates
+   * every action's `disabled()` in its own render (kdd/keyboard-layer).
+   */
+  createAddAction({
+    name: 'button.new-status-entry',
+    run: () => setVvmEntry({}),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return (
+        activeTab() !== 'vvm' ||
+        !node?.item.isVaccine ||
+        !prefs().manageVvmStatusForStock ||
+        !hasPermission('VIEW_AND_EDIT_VVM_STATUS')
+      );
+    },
+  });
 
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },

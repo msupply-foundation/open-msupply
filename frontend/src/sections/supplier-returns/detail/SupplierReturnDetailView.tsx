@@ -15,6 +15,9 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
@@ -64,7 +67,10 @@ type Line = SupplierReturnLineFragment;
 const SupplierReturnDetailView: Component = () => {
   const params = useParams<{ storeId: string; returnId: string }>();
   const navigate = useNavigate();
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  // Details-panel open state: the shared helper, which also registers Alt+M /
+  // Alt+Shift+M for this screen (spec/keyboard KB-R2 — "the screen has a
+  // more-info panel" IS "this helper was called").
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [supplierError, setSupplierError] = createSignal<string | undefined>();
 
   type EditState =
@@ -205,6 +211,21 @@ const SupplierReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
+  // declaration for the two controls that trigger it; each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action. Gated on `.state`
+  // rather than on `info()`, which suspends (kdd/keyboard-layer — an action's
+  // `disabled` MUST NOT read a suspending source; the palette evaluates it).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || isReturnDisabled(node);
+    },
+  });
+
   const crumbs = (node: SupplierReturnInfoFragment) => [
     { label: t('replenishment') },
     {
@@ -294,6 +315,7 @@ const SupplierReturnDetailView: Component = () => {
               <Button
                 variant="secondary"
                 icon={<CheckIcon />}
+                confirms="plain"
                 onClick={() =>
                   navigate(`/${params.storeId}/replenishment/supplier-return`)
                 }
@@ -328,6 +350,7 @@ const SupplierReturnDetailView: Component = () => {
                     <Show when={!disabled()}>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -339,6 +362,9 @@ const SupplierReturnDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<InfoIcon />}
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -402,6 +428,7 @@ const SupplierReturnDetailView: Component = () => {
                       disabled() ? undefined : (
                         <Button
                           icon={<PlusCircleIcon />}
+                          shortcut={ALT_N}
                           data-testid="nothing-here-create-button"
                           onClick={openAdd}
                         >

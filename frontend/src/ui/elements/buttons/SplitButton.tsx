@@ -3,6 +3,8 @@ import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import { ChevronDownIcon } from '../../icons';
 import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
+import { ShortcutBadge } from '../keyboard/ShortcutBadge';
+import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
 import styles from './SplitButton.module.css';
 
 export interface SplitButtonOption {
@@ -84,6 +86,17 @@ interface SplitButtonProps {
    * on each menu item (e.g. `status-change-button`, `export-csv`).
    */
   testId?: string;
+  /**
+   * The key binding this control answers (spec/keyboard KB-H1, S2) — the same
+   * one prop `Button` takes, driving both `aria-keyshortcuts` and the hint badge
+   * so the two cannot drift (AC-KB15).
+   *
+   * It lands on the MAIN half, which is what the binding runs: the prescription
+   * detail's `Alt+L` prints labels (the main action) and `Alt+V` confirms the
+   * selected status, neither of which opens the caret menu. As with `Button`,
+   * this control does not dispatch the key — the screen registers the action.
+   */
+  shortcut?: Shortcut;
 }
 
 /*
@@ -138,6 +151,11 @@ export const SplitButton = (props: SplitButtonProps) => {
         disabled={inert()}
         aria-busy={props.loading || undefined}
         aria-live="polite"
+        // The ARIA grammar, not the platform spelling — the badge below renders
+        // the human form from the same value (KB-M1, AC-KB15).
+        aria-keyshortcuts={
+          props.shortcut ? ariaKeyshortcuts(props.shortcut) : undefined
+        }
         title={props.disabled ? props.disabledTitle : undefined}
         onClick={() => {
           if (!inert()) props.onAction?.(selectedValue());
@@ -162,6 +180,12 @@ export const SplitButton = (props: SplitButtonProps) => {
         <span class={styles.label}>
           {props.mainLabel ?? selectedOption()?.label}
         </span>
+        {/* The badge positions itself against this half, which is already
+            `position: relative` (and `overflow: hidden`) for its ripple — the
+            same positioning contract Button provides. */}
+        <Show when={props.shortcut}>
+          {shortcut => <ShortcutBadge shortcut={shortcut()} />}
+        </Show>
         <Ripple ripples={mainRipple.ripples()} onDone={mainRipple.dismiss} />
       </button>
 

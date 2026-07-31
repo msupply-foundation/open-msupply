@@ -235,6 +235,7 @@ export const AllocateLinesAction: Component<
                 <Button
                   variant="secondary"
                   icon={<CheckIcon />}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >
@@ -246,6 +247,7 @@ export const AllocateLinesAction: Component<
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   data-testid="dialog-button-cancel"
                   onClick={close}
                 >
@@ -255,6 +257,7 @@ export const AllocateLinesAction: Component<
               <Button
                 variant="secondary"
                 icon={<CheckIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}

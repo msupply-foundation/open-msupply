@@ -151,6 +151,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   <Button
                     variant="secondary"
                     icon={<XCircleIcon />}
+                    confirms="cancel"
                     data-testid="dialog-button-cancel"
                     onClick={close}
                   >
@@ -161,6 +162,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   variant="primary"
                   icon={<ArrowRightIcon />}
                   loading={phase() === 'working'}
+                  confirms="plain"
                   data-testid="confirmation-modal-ok"
                   onClick={() => void run()}
                 >
@@ -175,6 +177,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               <Button
                 variant="secondary"
                 icon={<CheckIcon />}
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={close}
               >
@@ -197,6 +200,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           <Button
             variant="secondary"
             icon={<CheckIcon />}
+            confirms="plain"
             onClick={() => setBlockedMessage(undefined)}
           >
             {t('button.ok')}

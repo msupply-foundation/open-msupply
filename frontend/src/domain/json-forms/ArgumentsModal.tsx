@@ -423,10 +423,16 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       widthRem={30}
       actions={
         <>
-          <Button variant="secondary" onClick={() => props.onClose()}>
+          <Button
+            variant="secondary"
+            confirms="cancel"
+            onClick={() => props.onClose()}
+          >
             {t('button.cancel')}
           </Button>
-          <Button onClick={submit}>{t('button.ok')}</Button>
+          <Button confirms="plain" onClick={submit}>
+            {t('button.ok')}
+          </Button>
         </>
       }
     >

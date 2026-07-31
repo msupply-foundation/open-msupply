@@ -102,11 +102,13 @@ const Body = (
               <Button
                 variant="secondary"
                 icon={<XCircleIcon />}
+                confirms="cancel"
                 onClick={props.onClose}
               >
                 {t('button.cancel')}
               </Button>
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -117,7 +119,9 @@ const Body = (
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

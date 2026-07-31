@@ -9,6 +9,7 @@ import {
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { hasPermission } from '../../../store/storeContext';
 import type { StockLineVvmLogFragment } from './stockLine.generated';
 
@@ -85,6 +86,9 @@ export const VvmHistoryPanel: Component<{
       <div style={{ display: 'flex', 'justify-content': 'flex-end' }}>
         <Button
           icon={<PlusCircleIcon />}
+          // The stock-line detail declares Alt+N for this action; this control
+          // advertises it (ui-surface S2).
+          shortcut={ALT_N}
           data-testid="new-vvm-status-button"
           disabled={!canEdit()}
           onClick={props.onNewEntry}
