@@ -51,9 +51,8 @@ export type NamesListState = {
   first: number;
 };
 
-// Default: sorted name ascending (rules › sorting), first page of 20, no filter
-// — the name/code search shows because its definition is a default filter
-// (`alwaysOn`, listFilters.tsx), not because a key is seeded here.
+// Default: sorted name ascending (rules › sorting), first page of 20, no
+// filter.
 export const DEFAULT_STATE: NamesListState = {
   filter: {},
   sort: [{ key: 'name', desc: false }],

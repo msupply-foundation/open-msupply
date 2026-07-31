@@ -115,12 +115,10 @@ type SortKey =
 type LineFilter = { itemCodeOrName?: { like: string } | null };
 
 // The line table's filters (ui-standards § tables → filtering): the item
-// code/name search as the screen's default (always-on) filter — the same chip
-// the stocktake detail table keeps to hand. Client-side for now, so no
-// debounce.
+// code/name search — the same chip the stocktake detail table keeps to hand.
+// Client-side for now, so no debounce.
 const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
   itemCodeOrName: {
-    alwaysOn: true,
     label: () => t('label.code-or-name'),
     render: props => (
       <FilterTextInput
@@ -220,8 +218,7 @@ const RequisitionDetailView: Component = () => {
   // Adding a line (rules › line editing): an editable, non-program (a program
   // requisition's lines are fixed to its master list), non-transferred (the
   // customer's demand is not added to here) requisition.
-  const canAdd = () =>
-    editable() && !isProgram() && !info()?.linkedRequisition;
+  const canAdd = () => editable() && !isProgram() && !info()?.linkedRequisition;
   // The editor's Approved figure (spec S4 § read-only figures): the
   // authorisation preference with an Approved status.
   const showApprovedFigure = () =>
@@ -779,8 +776,7 @@ const RequisitionDetailView: Component = () => {
           },
           {
             c: {
-              accessor: line =>
-                (line.pricePerUnit ?? 0) * line.supplyQuantity,
+              accessor: line => (line.pricePerUnit ?? 0) * line.supplyQuantity,
               id: 'indicativePrice',
             },
             header: () => (
