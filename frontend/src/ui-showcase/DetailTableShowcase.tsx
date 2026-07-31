@@ -644,8 +644,10 @@ export const DetailTableShowcase = () => {
               </Show>
             </HeaderButtons>
             {/* The header field cluster via HeaderToolbar (Carl 2026-07-27):
-                fields flow into its FormRow (equal shares at a 10rem min,
-                growing to fill and wrapping as a unit); the compact Alert goes
+                fields flow into its FormRow (equal shares at a 10rem min by
+                default — a field whose data needs a different share wraps in a
+                FormRowItem — growing to fill and wrapping as a unit); the
+                compact Alert goes
                 to the `alert` prop, rendered as a content-hugging chip pinned to
                 the bottom baseline. Fields take width="full" to fill the share. */}
             <HeaderToolbar
