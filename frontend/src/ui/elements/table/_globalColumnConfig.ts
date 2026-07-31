@@ -55,7 +55,12 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
   {
     text: { size: 18.75 },
     shortText: { size: 8 },
-    code: { size: 5, maxSize: 7 }, // ~9 chars (a real cap, per the batch case)
+    // ~9 chars. A real cap for a column that holds only a code — but a batch
+    // column that also renders a WORD outgrows it and then can't be dragged at
+    // all, so such a column drops the cap at its call site (the outbound detail
+    // table's Batch renders "Placeholder"; `locationCode` does the same via
+    // `maxSize: null`). Widen the cap here only with every code column in mind.
+    code: { size: 5, maxSize: 7 },
     // No maxSize on numbers/percentages/dates: `size` is a good default and the
     // user should be free to drag them as wide as they like (Carl 2026-07-24).
     number: { size: 4.5 },
