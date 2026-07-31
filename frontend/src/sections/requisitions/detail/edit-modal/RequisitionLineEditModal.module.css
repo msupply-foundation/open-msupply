@@ -38,13 +38,20 @@
 }
 
 /* The plain caption figures at the head of the first column (default pack
-   size, doses per unit) — not boxed rows. */
+   size, doses per unit) — not boxed rows. Typography only; the row itself is
+   the generic HStack. */
 .caption {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
   font-size: var(--text-sm);
   color: var(--text-secondary);
+}
+
+/* A never-editable figure's value — plain right-aligned text at the row's
+   inline-end, never a disabled input (ui-standards › detail-views §
+   never-editable fields; the internal-order editor's StatRow). */
+.statValue {
+  display: block;
+  text-align: end;
+  inline-size: 100%;
 }
 
 .captionValue {

@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { t } from '@/intl';
 import type { RequisitionRowFragment } from './requisitions.generated';
 
 // The requisition lifecycle as it reads on the list: NEW → FINALISED

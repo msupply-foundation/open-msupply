@@ -121,12 +121,11 @@ export const SupplyRequestedAction: Component<{
                 </>
               }
             >
-              {/* Error: nothing to submit — a single dismiss. */}
+              {/* Error: nothing to submit — a single Close. */}
               <Match when={phase() === 'error'}>
-                <CancelButton
-                  data-testid="dialog-button-cancel"
-                  onClick={close}
-                />
+                <Button variant="secondary" confirms="plain" onClick={close}>
+                  {t('button.close')}
+                </Button>
               </Match>
             </Switch>
           }

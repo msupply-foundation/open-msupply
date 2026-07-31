@@ -1,8 +1,8 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../../../intl';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { PrinterIcon } from '../../../../ui/icons';
-import { SelectReportModal } from '../../../../domain/reports';
+import { t } from '@/intl';
+import { Button } from '@/ui/elements/buttons/Button';
+import { PrinterIcon } from '@/ui/icons';
+import { SelectReportModal } from '@/domain/reports';
 
 // The requisition detail Export/Print action (spec S2 › page actions → reports
 // S4): the trigger button + the shared record-report selector (owned by the

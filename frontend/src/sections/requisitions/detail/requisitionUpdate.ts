@@ -1,5 +1,5 @@
-import { graphqlFetch } from '../../../api/graphql';
-import { t, tPlural } from '../../../intl';
+import { graphqlFetch } from '@/api/graphql';
+import { t, tPlural } from '@/intl';
 import {
   AddRequisitionFromMasterList,
   CreateShipmentFromRequisition,

@@ -1,4 +1,5 @@
 import {
+  createMemo,
   createResource,
   createSignal,
   Show,
@@ -6,44 +7,48 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
-import { Page } from '../../../ui/layout/Page/Page';
-import { Header } from '../../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
-import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
-import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
+import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
+import { Button } from '@/ui/elements/buttons/Button';
+import { SplitButton } from '@/ui/elements/buttons/SplitButton';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import {
   DataTable,
   type Column,
   type SortState,
-} from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
-import { HStack } from '../../../ui/layout/Stack/HStack';
-import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
+} from '@/ui/elements/table/DataTable';
+import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import {
   FilterBar,
   FilterTextInput,
   constructFilters,
   type Filter,
-} from '../../../ui/elements/selectors/FilterBar';
+} from '@/ui/elements/selectors/FilterBar';
 import {
   AlertTriangleIcon,
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
   TruckIcon,
-} from '../../../ui/icons';
-import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { createTableConfig } from '../../../api/createTableConfig';
-import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+} from '@/ui/icons';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { createTableConfig } from '@/api/createTableConfig';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
+import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import {
   RequisitionDetail,
   type RequisitionInfoFragment,
@@ -54,7 +59,7 @@ import {
   addRequisitionFromMasterList,
   saveRequisitionFields,
 } from './requisitionUpdate';
-import { MasterListPickerModal } from '../../../domain/masterList';
+import { MasterListPickerModal } from '@/domain/masterList';
 import {
   isApprovalBlocked,
   isRequisitionEditable,
@@ -64,11 +69,11 @@ import {
   type HeaderEditFields,
 } from './RequisitionToolbar';
 import { RequisitionStatusFooter } from './RequisitionStatusFooter';
-import { ActivityLogPanel } from '../../../domain/activityLog';
+import { ActivityLogPanel } from '@/domain/activityLog';
 import {
   ProgramIndicatorsTab,
   ProgramIndicatorValues,
-} from '../../../domain/indicators';
+} from '@/domain/indicators';
 import { RequisitionDocumentsTab } from './RequisitionDocumentsTab';
 import { RequisitionSidePanel } from './RequisitionSidePanel';
 import { ExportPrintRequisitionAction } from './actions/ExportPrintRequisitionAction';
@@ -287,6 +292,35 @@ const RequisitionDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+  // Narrowed once, so the editor's initialLine needs no cast (kdd/type-safety).
+  const editorInitialLine = () => {
+    const entry = editorLine();
+    return entry?.mode === 'edit' ? entry.line : undefined;
+  };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared
+  // by the SCREEN, once, because two controls trigger it: the header
+  // SplitButton and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action. `run` is the
+  // single-item add, the split button's default option. Same gate as both
+  // controls (canAdd), but reached through `.state` rather than `info()`:
+  // that reads `data.latest`, which suspends on the first pending read, and
+  // the palette evaluates every action's `disabled()` in its own render
+  // (kdd/keyboard-layer).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditorLine({ mode: 'add' }),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return (
+        !node ||
+        !isRequisitionEditable(node) ||
+        !!node.programName ||
+        !!node.linkedRequisition
+      );
+    },
+  });
 
   // Add from master list (spec S2 § page actions, AC-ML1): the S7 picker, a
   // pending choice awaiting its are-you-sure confirmation, and a rejection's
@@ -474,7 +508,12 @@ const RequisitionDetailView: Component = () => {
     { label: String(node.requisitionNumber) },
   ];
 
-  const columns = (): Column<Line, SortKey>[] => [
+  // Memoized: DataTable reads this prop from several independent computations,
+  // and TanStack keys its internal caches on the array's identity — a plain
+  // function would rebuild the ~30 columns once per reader on any gate/locale
+  // flip (kdd/solid-reactivity-pitfalls §14; both reference detail views
+  // memoize the same way).
+  const columns = createMemo((): Column<Line, SortKey>[] => [
     {
       // Pinned first: an affordance revealing the line's full comment.
       c: { key: 'comment' },
@@ -800,7 +839,7 @@ const RequisitionDetailView: Component = () => {
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
-  ];
+  ]);
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -864,6 +903,7 @@ const RequisitionDetailView: Component = () => {
                     disabledTitle={t('error.cannot-add-items-to-requisition')}
                     value={addChoice()}
                     onValueChange={setAddChoice}
+                    shortcut={ALT_N}
                     onAction={onAddAction}
                     options={[
                       { value: 'item', label: t('button.add-item') },
@@ -894,22 +934,47 @@ const RequisitionDetailView: Component = () => {
                       variant="secondary"
                       icon={<SidebarIcon />}
                       data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it.
+                      shortcut={ALT_M}
                       onClick={() => setSidePanelOpen(true)}
                     >
                       {t('button.more')}
                     </Button>
                   </Show>
                 </HeaderButtons>
-                <Toolbar>
+                {/* The header field cluster (ui-standards → HeaderToolbar):
+                    each field labelled above its small control, sharing the
+                    row per its FormRowItem weight and wrapping as a unit. The
+                    disabled-store notice rides the cluster's end as a compact
+                    chip (the internal-orders pattern — same locale key). */}
+                <HeaderToolbar
+                  alert={
+                    <Show when={node().otherParty.store?.isDisabled}>
+                      <Alert severity="info" compact>
+                        {t('info.cannot-edit-disabled-store')}
+                      </Alert>
+                    </Show>
+                  }
+                >
                   <RequisitionToolbar
-                    storeId={params.storeId}
                     node={node()}
                     editable={editable()}
                     showApproval={showApproval()}
                     edit={edit}
-                    headerError={headerError()}
                   />
-                </Toolbar>
+                </HeaderToolbar>
+                {/* A header save's whole-record rejection (reasons guard /
+                    emergency cap — rules › header edits) keeps its own
+                    full-width row beneath the cluster: it is record-level and
+                    transient, more than the compact alert chip slot is
+                    documented to hold (the internal-orders ancillary banner's
+                    row treatment — see ui-migration-report.md decision 1). */}
+                <Show when={headerError()}>
+                  <Toolbar>
+                    <Alert severity="error">{headerError()}</Alert>
+                  </Toolbar>
+                </Show>
               </Header>
             }
             contentFooter={
@@ -1025,7 +1090,11 @@ const RequisitionDetailView: Component = () => {
                   rowTone={line =>
                     line.supplyQuantity === 0 ? 'info' : undefined
                   }
-                  emptyMessage={t('error.no-requisition-items')}
+                  emptyMessage={
+                    (lineFilter().itemCodeOrName?.like ?? '').trim()
+                      ? t('error.no-items-filter-on')
+                      : t('error.no-requisition-items')
+                  }
                   // The empty line table offers the single-item add inline
                   // (AC-V7) — withheld when a line can't be added (read-only,
                   // program, or transfer-linked).
@@ -1033,7 +1102,8 @@ const RequisitionDetailView: Component = () => {
                     canAdd() ? (
                       <Button
                         variant="ghost"
-                        data-testid="empty-add-item-button"
+                        shortcut={ALT_N}
+                        data-testid="add-item-button"
                         onClick={() => setEditorLine({ mode: 'add' })}
                       >
                         {t('button.add-item')}
@@ -1095,11 +1165,7 @@ const RequisitionDetailView: Component = () => {
               showDoses={showDoses()}
               showForecast={showForecast()}
               showExcess={showExcess()}
-              initialLine={
-                editorLine()?.mode === 'edit'
-                  ? (editorLine() as { mode: 'edit'; line: Line }).line
-                  : undefined
-              }
+              initialLine={editorInitialLine()}
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
               onCommitted={() => {

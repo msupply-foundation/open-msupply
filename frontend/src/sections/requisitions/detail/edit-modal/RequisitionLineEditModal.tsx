@@ -1,4 +1,4 @@
-import { generateUUID } from '../../../../uuid';
+import { generateUUID } from '@/uuid';
 import {
   createMemo,
   createResource,
@@ -8,24 +8,25 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
-import { t, tPlural } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { NumberField } from '../../../../ui/elements/inputs/NumberField';
-import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { TextArea } from '../../../../ui/elements/inputs/TextArea';
-import { Select } from '../../../../ui/elements/selectors/Select';
+import { t, tPlural } from '@/intl';
+import { formatNumber } from '@/intl/formatNumber';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { NumberField } from '@/ui/elements/inputs/NumberField';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { TextArea } from '@/ui/elements/inputs/TextArea';
+import { Select } from '@/ui/elements/selectors/Select';
 import {
   CancelButton,
   DialogSaveButton,
   SaveAndNextButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
-import { ItemSearch } from '../../../../domain/item';
-import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
-import { ReasonSelect } from '../../../../domain/reasonOptions';
+} from '@/ui/elements/buttons/StandardButtons';
+import { ItemSearch } from '@/domain/item';
+import { createFocusTarget } from '@/ui/utils/createFocusTarget';
+import { ReasonSelect } from '@/domain/reasonOptions';
 import type { RequisitionDetailLineFragment } from '../requisitionDetail.generated';
 import {
   buildAddPreview,
@@ -426,7 +427,11 @@ const LineEditContent = (
     setAdvancing(true);
     void (async () => {
       const editorLine = current();
-      const ok = await save();
+      // Nothing to save — a read-only requisition, or a clean draft — and
+      // Save & next is purely the walk: it advances without saving (see
+      // ui-migration-report.md decision 3; spec S4 § layout › footer).
+      const needsSave = props.editable && dirty();
+      const ok = needsSave ? await save() : true;
       setAdvancing(false);
       if (!ok || !editorLine) return;
       if (mode() === 'add') backToSearch();
@@ -450,11 +455,16 @@ const LineEditContent = (
     return options;
   });
 
-  // A labelled figure row (spec S4 § layout): bold inline-start label, a
-  // same-width right-aligned figure box at the inline-end carrying the active
-  // representation's measure word. Editable rows show two decimals and commit
-  // back stored units; read-only rows render disabled, rounded UP. `fixed`
-  // marks a time quantity — no re-expression, its own suffix.
+  // A labelled figure row (spec S4 § layout): bold inline-start label, the
+  // figure at the inline-end carrying the active representation's measure
+  // word. A row WITH an onChange is an input — same-width right-aligned
+  // figure box, two decimals, committing back stored units; disabled marks it
+  // state-locked (read-only requisition / transferred demand). A row WITHOUT
+  // one is never editable on this screen, so it renders as plain right-
+  // aligned text, rounded UP — never a disabled input (ui-standards ›
+  // detail-views § never-editable fields; the internal-order editor's
+  // StatRow). `fixed` marks a time quantity — no re-expression, its own
+  // suffix.
   const FigureRow = (rowProps: {
     label: string;
     units: number;
@@ -475,7 +485,7 @@ const LineEditContent = (
     const shown = () => {
       if (rowProps.fixed)
         return Math.round(rowProps.units * 10) / 10;
-      if (editable()) {
+      if (rowProps.onChange) {
         const raw = unitsToMode(rowProps.units, entryMode(), packSize());
         return Math.round(raw * 100) / 100;
       }
@@ -483,47 +493,57 @@ const LineEditContent = (
     };
     return (
       <FieldRow label={rowProps.label}>
-        <div class={styles.figure}>
-          <NumberField
-            label={rowProps.label}
-            hideLabel
-            min={0}
-            decimalLimit={rowProps.fixed ? 1 : (rowProps.decimals ?? 2)}
-            endAdornment={suffix()}
-            data-testid={rowProps.testId}
-            ref={rowProps.ref}
-            disabled={!editable()}
-            value={shown()}
-            onChange={value => {
-              if (!rowProps.onChange) return;
-              const entered = value ?? 0;
-              rowProps.onChange(
-                rowProps.fixed
-                  ? entered
-                  : modeToUnits(entered, entryMode(), packSize())
-              );
-            }}
-          />
-        </div>
+        <Show
+          when={rowProps.onChange}
+          fallback={
+            <span class={styles.statValue} data-testid={rowProps.testId}>
+              {formatNumber(shown())} {suffix()}
+            </span>
+          }
+        >
+          <div class={styles.figure}>
+            <NumberField
+              label={rowProps.label}
+              hideLabel
+              min={0}
+              decimalLimit={rowProps.fixed ? 1 : (rowProps.decimals ?? 2)}
+              endAdornment={suffix()}
+              data-testid={rowProps.testId}
+              ref={rowProps.ref}
+              disabled={!editable()}
+              value={shown()}
+              onChange={value => {
+                if (!rowProps.onChange) return;
+                const entered = value ?? 0;
+                rowProps.onChange(
+                  rowProps.fixed
+                    ? entered
+                    : modeToUnits(entered, entryMode(), packSize())
+                );
+              }}
+            />
+          </div>
+        </Show>
       </FieldRow>
     );
   };
 
   // The plain caption figures at the head of the first column (spec S4 §
   // layout): default pack size, and doses per unit under the doses gate.
+  // The row is the generic HStack; the classes carry only typography.
   const Captions = (): JSX.Element => (
     <>
       <Show when={packSize() > 0}>
-        <div class={styles.caption}>
+        <HStack justify="between" gap="sm" class={styles.caption}>
           <span>{t('label.default-pack-size')}</span>
           <span class={styles.captionValue}>{formatNumber(packSize())}</span>
-        </div>
+        </HStack>
       </Show>
       <Show when={dosesApply()}>
-        <div class={styles.caption}>
+        <HStack justify="between" gap="sm" class={styles.caption}>
           <span>{t('label.doses-per-unit')}</span>
           <span class={styles.captionValue}>{formatNumber(doses())}</span>
-        </div>
+        </HStack>
       </Show>
     </>
   );
@@ -654,20 +674,18 @@ const LineEditContent = (
         />
       </Show>
       <Show when={showTargetPopulation()}>
+        {/* Never editable — plain text, not a disabled input (ui-standards ›
+            detail-views § never-editable fields). Rounds to NEAREST (spec S4
+            § read-only figures), so it bypasses FigureRow's ceil. */}
         <FieldRow label={t('label.target-stock-population')}>
-          <div class={styles.figure}>
-            <NumberField
-              label={t('label.target-stock-population')}
-              hideLabel
-              disabled
-              endAdornment={modeWord(
-                entryMode(),
-                current()?.unitName ?? null,
-                targetPopulationFigure()
-              )}
-              value={targetPopulationFigure()}
-            />
-          </div>
+          <span class={styles.statValue}>
+            {formatNumber(targetPopulationFigure())}{' '}
+            {modeWord(
+              entryMode(),
+              current()?.unitName ?? null,
+              targetPopulationFigure()
+            )}
+          </span>
         </FieldRow>
       </Show>
       <FieldRow label={t('label.comment')}>
@@ -705,8 +723,10 @@ const LineEditContent = (
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           />
-          {/* Save · Save & next — disabled on a read-only requisition and
-              while a save is in flight (spec S4 § layout › footer). */}
+          {/* Save — disabled while there is nothing to save (read-only, clean
+              draft) or a save is in flight. Save & next stays available on a
+              read-only requisition as the walk affordance: with nothing to
+              save it just advances (spec S4 § layout › footer). */}
           <DialogSaveButton
             data-testid="dialog-button-ok"
             disabled={!current() || !dirty() || saving() || !props.editable}
@@ -715,7 +735,7 @@ const LineEditContent = (
           />
           <SaveAndNextButton
             data-testid="dialog-button-next-and-ok"
-            disabled={!current() || saving() || !props.editable}
+            disabled={!current() || saving()}
             loading={saving() || advancing()}
             onClick={onOkNext}
           />
@@ -806,7 +826,7 @@ const LineEditContent = (
                 }
               />
               <FigureRow
-                label={t('label.incoming-stock')}
+                label={t('label.incoming')}
                 units={draft()?.incomingUnits ?? 0}
                 disabled={demandDisabled()}
                 onChange={units => patchDraft({ incomingUnits: units })}

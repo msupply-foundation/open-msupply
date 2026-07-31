@@ -1,6 +1,6 @@
-import { generateUUID } from '../../../../uuid';
-import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { generateUUID } from '@/uuid';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
 import {
   InsertRequisition,
   InsertProgramRequisition,

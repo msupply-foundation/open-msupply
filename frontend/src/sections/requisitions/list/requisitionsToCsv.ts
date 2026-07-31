@@ -1,6 +1,6 @@
-import { t } from '../../../intl';
-import { localisedDate } from '../../../intl';
-import { toCsv } from '../../../domain/reportFiles';
+import { t } from '@/intl';
+import { localisedDate } from '@/intl';
+import { toCsv } from '@/domain/reportFiles';
 import { statusLabel } from './requisitionStatus';
 import type { RequisitionRowFragment } from './requisitions.generated';
 
