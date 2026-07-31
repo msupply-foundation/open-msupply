@@ -1,6 +1,8 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
+import { submitStateAfter, type SubmitState } from './submitState';
+import { getLastLoginUsername } from '../appData';
 import { serverVersion } from '../api/serverInfo';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
@@ -12,11 +14,6 @@ import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 
-type SubmitState =
-  | { kind: 'idle' }
-  | { kind: 'submitting' }
-  | { kind: 'error'; message: string };
-
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see kdd/page-composition) composed with
 // the real auth flow (login()). The form controls are the library TextField /
@@ -25,7 +22,12 @@ type SubmitState =
 // signal and the app (App.tsx) reacts, continuing to the preserved destination
 // URL (spec, Startup Flow). Document dir/lang is owned once by App.tsx.
 export const LoginPage: Component = () => {
-  const [username, setUsername] = createSignal('');
+  // Spec (Authentication): prefilled from the device's remembered username, so
+  // the returning user only retypes the password. Read once as the signal's
+  // initial value — the page is remounted whenever authUser() clears, so it
+  // re-reads on every return to it, and nothing here needs to be reactive.
+  const remembered = getLastLoginUsername();
+  const [username, setUsername] = createSignal(remembered ?? '');
   const [password, setPassword] = createSignal('');
   const [fieldErrors, setFieldErrors] = createSignal({
     username: '',
@@ -53,12 +55,12 @@ export const LoginPage: Component = () => {
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
-    if (result.kind === 'error') {
-      // Clear the password on a failed login (finding F6 — align with the
-      // current app; a wrong password is re-entered, not left in the field).
-      setPassword('');
-      setSubmitState({ kind: 'error', message: result.message });
-    }
+    // Clear the password only on a rejected login (finding F6 — align with the
+    // current app; a wrong password is re-entered, not left in the field). A
+    // globally-handled failure reached no verdict on it, so it stays and the
+    // same submit can simply be repeated.
+    if (result.kind === 'error') setPassword('');
+    setSubmitState(submitStateAfter(result));
   };
 
   return (
@@ -83,7 +85,10 @@ export const LoginPage: Component = () => {
               name="username"
               data-testid="login-username-input"
               autocomplete="username"
-              autofocus
+              // Spec (S1): focus starts on whichever field still needs typing —
+              // the username when nothing is remembered, the password when the
+              // name is already filled in.
+              autofocus={remembered === undefined}
               value={username()}
               error={fieldErrors().username || undefined}
               onInput={e => setUsername(e.currentTarget.value)}
@@ -97,6 +102,7 @@ export const LoginPage: Component = () => {
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
+              autofocus={remembered !== undefined}
               value={password()}
               error={fieldErrors().password || undefined}
               onInput={e => setPassword(e.currentTarget.value)}

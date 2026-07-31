@@ -42,13 +42,21 @@ import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
+import { Alert } from './ui/elements/feedback/Alert';
+import { Button } from './ui/elements/buttons/Button';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
 import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
 import { PluginGate } from './plugins/PluginGate';
 import styles from './ui/styles/shared.module.css';
 
-type Phase = 'loading' | 'initialisation' | 'operational';
+// 'failed' is what the loading phase becomes once a startup pass cannot
+// complete (spec, Startup sequence): the loading state claims the app is
+// starting, and once it can't, saying so with a way to re-run is the only
+// honest thing left. Without it a failed pass sat on a bare "Loading…" for good
+// — reachable in practice by dismissing the permission-denied modal, whose OK
+// is a dismiss.
+type Phase = 'loading' | 'failed' | 'initialisation' | 'operational';
 
 // Nav destinations that have a real, implemented section
 // (kdd/explicit-composition: one traceable place to see which sections are
@@ -101,13 +109,20 @@ export const App: Component = () => {
       fetchServerInfo(),
       fetchDisplaySettings(),
     ]);
-    if (status.kind !== 'success') return;
+    // The failure itself is described by the global modal; this pass just can't
+    // continue, so it ends on the startup-failed surface offering to re-run.
+    if (status.kind !== 'success') {
+      setPhase('failed');
+      return;
+    }
     if (status.data.initialisationStatus.status !== 'INITIALISED') {
       setPhase('initialisation');
       return;
     }
-    // A failed check is handled globally; stay in the loading phase.
+    // checkAuth() is false only when the check neither settled nor came back
+    // unauthenticated — a globally handled failure, so the same dead end.
     if (await checkAuth()) setPhase('operational');
+    else setPhase('failed');
   };
 
   onMount(() => {
@@ -134,6 +149,24 @@ export const App: Component = () => {
         <Match when={phase() === 'loading'}>
           <div class={styles.page}>
             <p>{t('loading')}</p>
+          </div>
+        </Match>
+        {/* Spec S7: the error's description belongs to the global modal, so this
+            surface only states that startup failed and offers to re-run it — in
+            place, since there is no entered state to preserve with a reload. */}
+        <Match when={phase() === 'failed'}>
+          <div class={styles.page}>
+            <div class={styles.card}>
+              <Alert severity="error" testId="startup-failed">
+                {t('error.startup-failed')}
+              </Alert>
+              <Button
+                data-testid="startup-retry"
+                onClick={() => void runStartup()}
+              >
+                {t('button.retry')}
+              </Button>
+            </div>
           </div>
         </Match>
         <Match when={phase() === 'initialisation'}>
