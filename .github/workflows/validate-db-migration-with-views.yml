@@ -22,7 +22,7 @@ concurrency:
 jobs:
   test-migration-sqlite:
     name: Test Database Migration (SQLite)
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: /tmp/target/sqlite
@@ -51,7 +51,7 @@ jobs:
 
   test-migration-pg:
     name: Test Database Migration (Postgres)
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: /tmp/target/postgres
