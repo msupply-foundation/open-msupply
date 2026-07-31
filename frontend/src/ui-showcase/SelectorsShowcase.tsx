@@ -589,13 +589,10 @@ export const SelectorsShowcase = () => {
             lands, so filtered views become shareable.
           </Lead>
           <Note>
-            <strong>Name</strong> is a <em>default filter</em> — the search this
-            screen keeps to hand. Nothing on its definition marks it: the page
-            simply seeds its key (present-as-<code>null</code>) in the filter it
-            starts with, so its chip is on the bar from the first render and is
-            an ordinary chip from there — its ✕ removes it,{' '}
-            <strong>Clear all</strong> takes it off with the rest, and the
-            Filters menu offers it back.
+            <strong>Name</strong> is a <em>default filter</em>: the page seeds
+            its key (present-as-<code>null</code>) in the filter it starts with,
+            so the chip is on the bar from the first render — and is an
+            ordinary, removable chip from there.
           </Note>
           <FilterBar
             filters={DEMO_FILTERS}
