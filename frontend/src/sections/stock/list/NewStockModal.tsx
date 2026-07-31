@@ -268,7 +268,13 @@ const NewStockContent = (props: {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      // A form dialog, not a workbench (#771): fixed at the width the
+      // two-column form needs, growing downward as the sections reveal once an
+      // item is chosen. The body reserves enough height to OWN the item
+      // search's open suggestions list (the create/search-modal convention —
+      // CustomerSearchModal et al), which otherwise dangles past the card.
+      widthRem={56}
+      minBodyHeightRem={24}
       testId="new-stock-modal"
       initialFocus={itemSearch}
       title={t('heading.stock-line-details')}
