@@ -72,9 +72,26 @@ const freshModule = async () => {
   return import('./authContext');
 };
 
+// The same stand-in for localStorage, which app data (the remembered username)
+// uses — and which likewise survives a module reset, so a "reload" keeps it.
+const makeLocalStorage = () => {
+  const store = new Map<string, string>();
+  return {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, String(v)),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+    key: (i: number) => [...store.keys()][i] ?? null,
+    get length() {
+      return store.size;
+    },
+  } as Storage;
+};
+
 beforeEach(() => {
   graphqlFetch.mockReset();
   vi.stubGlobal('sessionStorage', makeSessionStorage());
+  vi.stubGlobal('localStorage', makeLocalStorage());
 });
 
 afterEach(() => {
@@ -174,5 +191,79 @@ describe('re-login requirement persists across a reload (D69, OMS-REG-LGN-01.16/
     // reportUnauthenticated still works in-memory despite the storage throw.
     expect(() => auth.reportUnauthenticated()).not.toThrow();
     expect(auth.reLoginRequired()).toBe(true);
+  });
+});
+
+describe('the device remembers the last username (OMS-REG-LGN-01.21/.22)', () => {
+  const rememberedUsername = async () =>
+    (await import('../appData')).getLastLoginUsername();
+
+  it('records the username on a successful login', async () => {
+    const auth = await freshModule();
+    expect(await rememberedUsername()).toBeUndefined();
+
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+    await auth.login('alice', 'pw');
+
+    expect(await rememberedUsername()).toBe('alice');
+  });
+
+  it('survives an explicit logout — logout ends the session, not the memory', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+    await auth.login('alice', 'pw');
+
+    graphqlFetch.mockResolvedValueOnce({ kind: 'success', data: {} });
+    await auth.logout();
+
+    expect(auth.authUser()).toBeUndefined();
+    expect(await rememberedUsername()).toBe('alice');
+  });
+
+  it('survives a reload', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+    await auth.login('alice', 'pw');
+
+    // Fresh module, same storage — the in-memory user is gone, the name is not.
+    const reloaded = await freshModule();
+    expect(reloaded.authUser()).toBeUndefined();
+    expect(await rememberedUsername()).toBe('alice');
+  });
+
+  it('does not record a rejected username', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce({
+      kind: 'success',
+      data: {
+        authToken: {
+          __typename: 'AuthTokenError',
+          error: { description: 'Invalid username or password' },
+        },
+      },
+    });
+    const result = await auth.login('mallory', 'pw');
+
+    expect(result.kind).toBe('error');
+    expect(await rememberedUsername()).toBeUndefined();
+  });
+
+  it('does not record when the call fails globally', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce({ kind: 'unexpectedError' });
+    const result = await auth.login('alice', 'pw');
+
+    expect(result.kind).toBe('pending');
+    expect(await rememberedUsername()).toBeUndefined();
+  });
+
+  it('replaces the name when a different user logs in', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+    await auth.login('alice', 'pw');
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+    await auth.login('bob', 'pw');
+
+    expect(await rememberedUsername()).toBe('bob');
   });
 });
