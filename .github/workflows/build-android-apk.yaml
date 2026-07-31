@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 name: Android Build
@@ -14,7 +14,7 @@ jobs:
     runs-on: [self-hosted, macOS]
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -23,15 +23,18 @@ jobs:
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install Dependencies
-        run: cd client && yarn install --immutable
+        run: yarn install --immutable
 
       - name: Get Properties
         id: properties
@@ -49,47 +52,69 @@ jobs:
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
           echo "RUSTUP_TOOLCHAIN=$CHANNEL" >> "$GITHUB_ENV"
       - name: Set Up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ steps.rust_toolchain.outputs.channel }}
-          override: false
-          default: false
-          targets: aarch64-linux-android
-            armv7-linux-androideabi
-        # Targets need to match in the config.toml of the self-hosted machine
+        run: rustup toolchain install "${{ steps.rust_toolchain.outputs.channel }}" --profile minimal --no-self-update
 
       - name: Add Android targets for pinned toolchain
         # The self-hosted runner pre-installs the Android targets for its default
         # (stable) toolchain only. Now that cargo runs under the pinned channel
         # (RUSTUP_TOOLCHAIN), those targets must be installed for it explicitly or
-        # the std crate can't be found (E0463). actions-rs/toolchain's `targets`
-        # input doesn't reliably cover the named channel on this runner.
+        # the std crate can't be found (E0463). Targets need to match those in the
+        # config.toml of the self-hosted machine.
         run: rustup target add aarch64-linux-android armv7-linux-androideabi --toolchain "${{ steps.rust_toolchain.outputs.channel }}"
 
       - name: Set Up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version-file: client/.java-version
 
-      - name: Build Android App
-        uses: borales/actions-yarn@v4
+      - name: Regenerate Capacitor plugin config
+        # capacitor.settings.gradle is a generated file that points each plugin
+        # at a node_modules path baked in for one specific Yarn hoist layout.
+        # The workspace root moved to the repo root, so packages now hoist to the
+        # repo-root node_modules and the committed paths no longer resolve
+        # (Gradle: "No variants exist"). `cap update` rewrites those paths to
+        # match wherever Yarn actually installed the plugins on this runner. It
+        # does not copy web assets, so it can run before the web bundle exists.
+        working-directory: ./client/packages/android
+        run: npx cap update android
+
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v3
+        id: fe-token
         with:
-          cmd: android:build:release
-          dir: 'client'
+          client-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
+
+      - name: Build Android App
+        working-directory: client
+        run: yarn android:build:release
         env:
           NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
-        # Update this version when upgrading the NDK version on the self-hosted machine
+          # Update this version when upgrading the NDK version on the self-hosted machine
+          # Transition APK ships the new FE at / and this repo's build as the old UI
+          # at /old-ui/. stage-transition-frontend.sh fetches the pinned new FE, which
+          # with a short-lived token minted above from the same GitHub App the e2e
+          # workflow uses to read the private open-msupply-frontend repo (GITHUB_TOKEN
+          # can't reach it; no PAT to expire or rotate). It fails loudly on the
+          # placeholder pin, so this build fails until the pin is real; set the
+          # FRONTEND_DIST_URL repo variable to a dist zip to unblock before then (empty
+          # vars are ignored).
+          FRONTEND_FETCH_TOKEN: ${{ steps.fe-token.outputs.token }}
+          FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
+          FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
 
       - name: Upload Universal APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Open_mSupply_Universal_Build
           path: ./client/packages/android/app/build/outputs/apk/universal/release/*.apk
           retention-days: 3
 
       - name: Upload Arm64 APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Open_mSupply_Arm64_Build
           path: ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk
@@ -99,7 +124,7 @@ jobs:
         env:
           SLACK_DEV_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
           SLACK_RC_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_RC_RELEASE_WEBHOOK_URL }}
-          NOTIFICATION_TYPE: 'android_build'
+          NOTIFICATION_TYPE: "android_build"
           BUILD_STATUS: ${{ job.status }}
           TAG_NAME: ${{ github.ref_name }}
           B2_APPLICATION_KEY_ID: ${{ secrets.B2_KEY_ID }}
@@ -115,12 +140,12 @@ jobs:
     if: ${{ always() && needs.create-android-build.result != 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Send build completion notification
         env:
           SLACK_DEV_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
           SLACK_RC_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_RC_RELEASE_WEBHOOK_URL }}
-          NOTIFICATION_TYPE: 'android_build'
+          NOTIFICATION_TYPE: "android_build"
           BUILD_STATUS: ${{ needs.create-android-build.result }}
           TAG_NAME: ${{ github.ref_name }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

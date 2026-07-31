@@ -23,6 +23,7 @@ pub fn insert_asset_catalogue_item(
         &ResourceAccessRequest {
             resource: Resource::MutateAssetCatalogueItem,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

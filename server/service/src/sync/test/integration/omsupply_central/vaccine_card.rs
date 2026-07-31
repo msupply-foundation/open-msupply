@@ -105,8 +105,8 @@ pub(super) async fn test_vaccine_card() {
         .expect("Problem inserting central data");
 
     // Sync both sites (only one needed here realy, to get central_server_url)
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     let CentralServerConfig::CentralServerUrl(central_server_url) = CentralServerConfig::get()
     else {
@@ -135,8 +135,8 @@ pub(super) async fn test_vaccine_card() {
     .await;
 
     // Sync all pre requisites
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     // TEST
 
@@ -178,7 +178,7 @@ pub(super) async fn test_vaccine_card() {
     )
     .unwrap();
 
-    site1.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
 
     // 2 - Link patient to sites 2, sync and test data from 1 is present
     let context = site2.context.service_provider.basic_context().unwrap();
@@ -191,11 +191,7 @@ pub(super) async fn test_vaccine_card() {
     .await
     .unwrap();
 
-    site2
-        .synchroniser
-        .sync(Some(patient_one.id.clone()))
-        .await
-        .unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     check_integrated(&site2.context.connection, &integrations_one);
 
@@ -213,8 +209,8 @@ pub(super) async fn test_vaccine_card() {
     let integrations_two =
         integrate_with_is_sync_reset(&site2.context.connection, integrations_two);
 
-    site2.synchroniser.sync(None).await.unwrap();
-    site1.synchroniser.sync(None).await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
 
     check_integrated(&site1.context.connection, &integrations_two);
 
@@ -223,8 +219,8 @@ pub(super) async fn test_vaccine_card() {
     let site1 = init_test_context(site1.config, "vaccine_card_site_1_reinit").await;
     let site2 = init_test_context(site2.config, "vaccine_card_site_2_reinit").await;
 
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     check_integrated(&site1.context.connection, &integrations_one);
     check_integrated(&site1.context.connection, &integrations_two);

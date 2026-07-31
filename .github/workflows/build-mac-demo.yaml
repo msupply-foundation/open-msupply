@@ -28,19 +28,35 @@ jobs:
     env:
       RUSTFLAGS: '--cfg recursion_limit_256'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: actions/checkout@v5
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Read .nvmrc
         run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v3
+        id: fe-token
+        with:
+          client-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
       - name: Build
         run: ./build/mac/build.sh ${{ inputs.architecture }} ${{ inputs.includeDemoData }}
+        env:
+          # build/mac/build.sh fetches the pinned new FE via build/fetch-frontend.js —
+          # see server/README.md 'Serving front-end'. Empty vars are ignored.
+          FRONTEND_FETCH_TOKEN: ${{ steps.fe-token.outputs.token }}
+          FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
+          FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
       # Upload artifact would remove +x (execute) permission and attributes from files when zipping
       # thus need to manually zip (unfortunately it would be double zipped)
       - name: Get Name and Zip
@@ -52,7 +68,7 @@ jobs:
           # Below would add it env.artifactName and env.zippedArtifactName, so it can be used in upload-artifact action
           echo "artifactName=${ARTIFACT_NAME}" >> $GITHUB_ENV
           echo "zippedArtifactName=${ZIPPED_ARTIFACT_NAME}" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifactName }}
           path: ${{ env.zippedArtifactName }}

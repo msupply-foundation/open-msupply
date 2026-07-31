@@ -346,11 +346,11 @@ server:
 
 # Serving front end
 
-Server will serve front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end.
+Server serves front end files from the directory set by `server.frontend_dir` in the configuration (default: `frontend`, relative to the working directory). The front end is no longer embedded in the binary at compile time — packaging (installers, docker image, Android app shell) ships the built web bundle alongside the server, so a front end update is a bundle swap rather than a server rebuild.
 
-You can build front end by running `yarn build` from `client` directory in the root of the project. After that if you run the server you can navigate to `http://localhost:port` to see this feature in action.
+In debug builds, if `frontend_dir` doesn't exist the server falls back to serving `client/packages/host/dist` directly, so `cargo run` works without configuration. You can build the front end by running `yarn build` from the `client` directory in the root of the project. After that if you run the server you can navigate to `http://localhost:port` to see this feature in action.
 
-When app is built in production mode (with build --release) static files will be embedded in the binary. To build, run `yarn build` command from the root of repository. This will build the client application and then build the release version of the server, bundling in the client so that it can be hosted.
+If no front end bundle can be found, the server returns an error message: Cannot find index.html, pointing at this section.
 
 # Cli
 
@@ -409,6 +409,8 @@ cargo run --bin test_connection
 or build and run the binary. Pass in `--features postgres` to run the postgres version.
 
 # [Backup and Restore](cli/src/backup/README.md)
+
+# [Replay Sync Buffer](cli/reintegrate_buffer/_index.md)
 
 # Discovery
 

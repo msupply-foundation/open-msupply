@@ -25,8 +25,16 @@ const Label: FC<PropsWithChildren> = ({ children }) => (
   </Typography>
 );
 
-const Value: FC<PropsWithChildren> = ({ children }) => (
-  <Typography color={'gray.main'} component="div" sx={{ display: 'flex' }}>
+const Value: FC<PropsWithChildren<{ testId?: string }>> = ({
+  children,
+  testId,
+}) => (
+  <Typography
+    color={'gray.main'}
+    component="div"
+    sx={{ display: 'flex' }}
+    data-testid={testId}
+  >
     {children}
   </Typography>
 );
@@ -54,9 +62,15 @@ const ServerInfoComponent = ({ siteName }: { siteName?: string | null }) => {
               vertical: 'bottom',
               horizontal: 'center',
             }}
-            Content={<QRCode value={serverUrl} size={256} />}
+            Content={
+              <span data-testid="server-qr-expanded">
+                <QRCode value={serverUrl} size={256} />
+              </span>
+            }
           >
-            <QRCode value={serverUrl} size={50} />
+            <span data-testid="server-qr">
+              <QRCode value={serverUrl} size={50} />
+            </span>
           </PaperPopover>
         </Box>
       </Tooltip>
@@ -68,9 +82,9 @@ const ServerInfoComponent = ({ siteName }: { siteName?: string | null }) => {
             <Label>{t('label.app-version')}</Label>
           </Box>
           <Box display="flex" flexDirection="column">
-            <Value>{serverUrl}</Value>
-            {siteName && <Value>{siteName}</Value>}
-            <Value>{appVersion}</Value>
+            <Value testId="server-url">{serverUrl}</Value>
+            {siteName && <Value testId="server-site-name">{siteName}</Value>}
+            <Value testId="app-version">{appVersion}</Value>
           </Box>
         </Box>
         {isCentralServer && <Label>{t('label.central-server')}</Label>}

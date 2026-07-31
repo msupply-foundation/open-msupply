@@ -156,6 +156,7 @@ export const StatusChangeButton = () => {
   return (
     <>
       <SplitButton
+        testId="status-change-button"
         label={isEmptyLines ? t('messages.no-lines') : ''}
         options={options}
         selectedOption={selectedOption}

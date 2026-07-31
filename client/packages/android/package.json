@@ -12,13 +12,15 @@
     "@capacitor/filesystem": "^8.0.0",
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/preferences": "^8.0.0",
-    "@capacitor/screen-orientation": "^8.0.0"
+    "@capacitor/screen-orientation": "^8.0.0",
+    "@capacitor/share": "^8.0.0"
   },
   "scripts": {
     "build:server": "./build_remote_server_libs.sh",
     "//": "assembleDebug and assembleRelease will build both arm64 and universal flavors in client/packages/android/app/build.gradle",
     "build:debug": "yarn build:server && yarn apply-config:debug && ./gradlew assembleDebug",
-    "build:release": "yarn build:server && yarn apply-config && ./gradlew assembleRelease",
+    "build:release": "yarn build:server && yarn stage-frontend && yarn apply-config && ./gradlew assembleRelease",
+    "stage-frontend": "./stage-transition-frontend.sh",
     "apply-config:debug": "DEBUG_BUILD=true yarn apply-config",
     "apply-config": "npx cap copy"
   },

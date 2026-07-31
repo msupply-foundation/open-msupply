@@ -28,6 +28,8 @@ pub enum KeyType {
     CentralSyncPullCursor,
     SyncPullCursorV6,
     SyncPushCursorV6,
+    SyncPullCursorV7,
+    SyncPushCursorV7,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
@@ -35,9 +37,10 @@ pub enum KeyType {
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
     AssignPrescriptionNumberProcessorCursor,
-    AddCentralPatientVisibilityProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
     SupportUploadFilesProcessorCursor,
+    MergeSyncMessageProcessorCursor,
+    ChangelogDedupCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 
@@ -45,11 +48,17 @@ pub enum KeyType {
     SettingsSyncUsername,
     SettingsSyncPasswordSha256,
     SettingsSyncIntervalSeconds,
+    SettingsSyncBatchSizeRemotePull,
+    SettingsSyncBatchSizeRemotePush,
+    SettingsSyncBatchSizeCentralPull,
     SettingsSyncCentralServerSiteId,
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
+    SettingsSyncV7Token,
+    SettingsSyncVersion,
     SettingsTokenSecret,
+    SettingsSyncSiteIsMultiDevice,
 
     DatabaseVersion,
 
@@ -64,6 +73,8 @@ pub enum KeyType {
     LogFileName,
 
     LastLedgerFixRun,
+
+    IsStandaloneCentral,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -219,6 +230,10 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn get_bool(&self, key: KeyType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
+    }
+
+    pub fn get_current_site_id(&self) -> Result<Option<i32>, RepositoryError> {
+        self.get_i32(KeyType::SettingsSyncSiteId)
     }
 }
 

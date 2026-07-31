@@ -8,6 +8,9 @@ export type SyncSettingsFragment = {
   intervalSeconds: number;
   url: string;
   username: string;
+  centralServerSiteId: number;
+  syncSiteId?: number | null;
+  batchSize?: number | null;
 };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -19,6 +22,9 @@ export type SyncSettingsQuery = {
     intervalSeconds: number;
     url: string;
     username: string;
+    centralServerSiteId: number;
+    syncSiteId?: number | null;
+    batchSize?: number | null;
   } | null;
 };
 
@@ -41,10 +47,18 @@ export type InitialiseSiteMutation = {
         fullError: string;
       }
     | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
+      }
+    | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
         url: string;
         username: string;
+        centralServerSiteId: number;
+        syncSiteId?: number | null;
+        batchSize?: number | null;
       };
 };
 
@@ -61,17 +75,24 @@ export type UpdateSyncSettingsMutation = {
         fullError: string;
       }
     | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
+      }
+    | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
         url: string;
         username: string;
+        centralServerSiteId: number;
+        syncSiteId?: number | null;
+        batchSize?: number | null;
       };
 };
 
 export type SyncStatusFragment = {
   __typename: 'SyncStatusNode';
   finished?: string | null;
-  durationInSeconds: number;
   started: string;
 };
 
@@ -83,8 +104,8 @@ export type SyncStatusWithProgressFragment = {
   total?: number | null;
 };
 
-export type FullSyncStatusFragment = {
-  __typename: 'FullSyncStatusNode';
+export type FullSyncStatusV5V6Fragment = {
+  __typename: 'FullSyncStatusV5V6Node';
   isSyncing: boolean;
   errorThreshold: number;
   warningThreshold: number;
@@ -103,7 +124,6 @@ export type FullSyncStatusFragment = {
   prepareInitial?: {
     __typename: 'SyncStatusNode';
     finished?: string | null;
-    durationInSeconds: number;
     started: string;
   } | null;
   pullCentral?: {
@@ -144,15 +164,85 @@ export type FullSyncStatusFragment = {
   summary: {
     __typename: 'SyncStatusNode';
     finished?: string | null;
-    durationInSeconds: number;
     started: string;
   };
   lastSuccessfulSync?: {
     __typename: 'SyncStatusNode';
     finished?: string | null;
-    durationInSeconds: number;
     started: string;
   } | null;
+};
+
+export type SyncErrorV7Fragment = {
+  __typename: 'SyncErrorV7Node';
+  fullError: string;
+  variantV7: Types.SyncErrorVariantV7;
+};
+
+export type SyncStatusV7Fragment = {
+  __typename: 'SyncStatusV7Node';
+  finished?: string | null;
+  started: string;
+};
+
+export type SyncStatusWithProgressV7Fragment = {
+  __typename: 'SyncStatusWithProgressV7Node';
+  finished?: string | null;
+  started: string;
+  done?: number | null;
+  total?: number | null;
+};
+
+export type FullSyncStatusV7Fragment = {
+  __typename: 'FullSyncStatusV7Node';
+  isSyncing: boolean;
+  errorThreshold: number;
+  warningThreshold: number;
+  error?: {
+    __typename: 'SyncErrorV7Node';
+    fullError: string;
+    variantV7: Types.SyncErrorVariantV7;
+  } | null;
+  integration?: {
+    __typename: 'SyncStatusWithProgressV7Node';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  push?: {
+    __typename: 'SyncStatusWithProgressV7Node';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  pull?: {
+    __typename: 'SyncStatusWithProgressV7Node';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  waitingForIntegration?: {
+    __typename: 'SyncStatusV7Node';
+    finished?: string | null;
+    started: string;
+  } | null;
+  summary: {
+    __typename: 'SyncStatusV7Node';
+    finished?: string | null;
+    started: string;
+  };
+  lastSuccessfulSync?: {
+    __typename: 'SyncStatusNode';
+    finished?: string | null;
+    started: string;
+  } | null;
+  linkedDescriptions: Array<
+    | { __typename: 'AllStoreDataDescription'; storeName: string }
+    | { __typename: 'TableNameDescription'; tableName: string }
+  >;
 };
 
 export type SyncInfoQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -160,154 +250,254 @@ export type SyncInfoQueryVariables = Types.Exact<{ [key: string]: never }>;
 export type SyncInfoQuery = {
   __typename: 'Queries';
   numberOfRecordsInPushQueue: number;
-  syncStatus?: {
-    __typename: 'FullSyncStatusNode';
-    isSyncing: boolean;
-    errorThreshold: number;
-    warningThreshold: number;
-    error?: {
-      __typename: 'SyncErrorNode';
-      variant: Types.SyncErrorVariant;
-      fullError: string;
-    } | null;
-    integration?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    prepareInitial?: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    } | null;
-    pullCentral?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pullRemote?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    push?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pullV6?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pushV6?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    summary: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    };
-    lastSuccessfulSync?: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    } | null;
-  } | null;
+  syncStatus?:
+    | {
+        __typename: 'FullSyncStatusV5V6Node';
+        isSyncing: boolean;
+        errorThreshold: number;
+        warningThreshold: number;
+        error?: {
+          __typename: 'SyncErrorNode';
+          variant: Types.SyncErrorVariant;
+          fullError: string;
+        } | null;
+        integration?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        prepareInitial?: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        } | null;
+        pullCentral?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pullRemote?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        push?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pullV6?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pushV6?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        summary: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        };
+        lastSuccessfulSync?: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        } | null;
+      }
+    | {
+        __typename: 'FullSyncStatusV7Node';
+        isSyncing: boolean;
+        errorThreshold: number;
+        warningThreshold: number;
+        error?: {
+          __typename: 'SyncErrorV7Node';
+          fullError: string;
+          variantV7: Types.SyncErrorVariantV7;
+        } | null;
+        integration?: {
+          __typename: 'SyncStatusWithProgressV7Node';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        push?: {
+          __typename: 'SyncStatusWithProgressV7Node';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pull?: {
+          __typename: 'SyncStatusWithProgressV7Node';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        waitingForIntegration?: {
+          __typename: 'SyncStatusV7Node';
+          finished?: string | null;
+          started: string;
+        } | null;
+        summary: {
+          __typename: 'SyncStatusV7Node';
+          finished?: string | null;
+          started: string;
+        };
+        lastSuccessfulSync?: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        } | null;
+        linkedDescriptions: Array<
+          | { __typename: 'AllStoreDataDescription'; storeName: string }
+          | { __typename: 'TableNameDescription'; tableName: string }
+        >;
+      }
+    | null;
 };
 
 export type SyncStatusQueryVariables = Types.Exact<{ [key: string]: never }>;
 
 export type SyncStatusQuery = {
   __typename: 'Queries';
-  syncStatus?: {
-    __typename: 'FullSyncStatusNode';
-    isSyncing: boolean;
-    errorThreshold: number;
-    warningThreshold: number;
-    error?: {
-      __typename: 'SyncErrorNode';
-      variant: Types.SyncErrorVariant;
-      fullError: string;
-    } | null;
-    integration?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    prepareInitial?: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    } | null;
-    pullCentral?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pullRemote?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    push?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pullV6?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pushV6?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    summary: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    };
-    lastSuccessfulSync?: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    } | null;
-  } | null;
+  syncStatus?:
+    | {
+        __typename: 'FullSyncStatusV5V6Node';
+        isSyncing: boolean;
+        errorThreshold: number;
+        warningThreshold: number;
+        error?: {
+          __typename: 'SyncErrorNode';
+          variant: Types.SyncErrorVariant;
+          fullError: string;
+        } | null;
+        integration?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        prepareInitial?: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        } | null;
+        pullCentral?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pullRemote?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        push?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pullV6?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pushV6?: {
+          __typename: 'SyncStatusWithProgressNode';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        summary: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        };
+        lastSuccessfulSync?: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        } | null;
+      }
+    | {
+        __typename: 'FullSyncStatusV7Node';
+        isSyncing: boolean;
+        errorThreshold: number;
+        warningThreshold: number;
+        error?: {
+          __typename: 'SyncErrorV7Node';
+          fullError: string;
+          variantV7: Types.SyncErrorVariantV7;
+        } | null;
+        integration?: {
+          __typename: 'SyncStatusWithProgressV7Node';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        push?: {
+          __typename: 'SyncStatusWithProgressV7Node';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        pull?: {
+          __typename: 'SyncStatusWithProgressV7Node';
+          finished?: string | null;
+          started: string;
+          done?: number | null;
+          total?: number | null;
+        } | null;
+        waitingForIntegration?: {
+          __typename: 'SyncStatusV7Node';
+          finished?: string | null;
+          started: string;
+        } | null;
+        summary: {
+          __typename: 'SyncStatusV7Node';
+          finished?: string | null;
+          started: string;
+        };
+        lastSuccessfulSync?: {
+          __typename: 'SyncStatusNode';
+          finished?: string | null;
+          started: string;
+        } | null;
+        linkedDescriptions: Array<
+          | { __typename: 'AllStoreDataDescription'; storeName: string }
+          | { __typename: 'TableNameDescription'; tableName: string }
+        >;
+      }
+    | null;
 };
 
 export type ManualSyncMutationVariables = Types.Exact<{
@@ -319,6 +509,26 @@ export type ManualSyncMutation = {
   manualSync: string;
 };
 
+export type InitialiseAsCentralServerMutationVariables = Types.Exact<{
+  input: Types.InitialiseAsCentralServerInputNode;
+}>;
+
+export type InitialiseAsCentralServerMutation = {
+  __typename: 'Mutations';
+  initialiseAsCentralServer:
+    | {
+        __typename: 'InitialiseAsCentralServerError';
+        error:
+          | { __typename: 'AdminPasswordRequired'; description: string }
+          | { __typename: 'AdminUserCreationFailed'; description: string }
+          | { __typename: 'AdminUsernameRequired'; description: string }
+          | { __typename: 'AlreadyInitialised'; description: string }
+          | { __typename: 'NotSupportedOnAndroid'; description: string }
+          | { __typename: 'StoreNameRequired'; description: string };
+      }
+    | { __typename: 'StandaloneCentralInitialisedNode'; success: boolean };
+};
+
 export type SyncInfoUpdatedSubscriptionVariables = Types.Exact<{
   [key: string]: never;
 }>;
@@ -328,77 +538,127 @@ export type SyncInfoUpdatedSubscription = {
   syncInfoUpdated: {
     __typename: 'SyncInfoUpdatedNode';
     numberOfRecordsInPushQueue: number;
-    syncStatus?: {
-      __typename: 'FullSyncStatusNode';
-      isSyncing: boolean;
-      errorThreshold: number;
-      warningThreshold: number;
-      error?: {
-        __typename: 'SyncErrorNode';
-        variant: Types.SyncErrorVariant;
-        fullError: string;
-      } | null;
-      integration?: {
-        __typename: 'SyncStatusWithProgressNode';
-        finished?: string | null;
-        started: string;
-        done?: number | null;
-        total?: number | null;
-      } | null;
-      prepareInitial?: {
-        __typename: 'SyncStatusNode';
-        finished?: string | null;
-        durationInSeconds: number;
-        started: string;
-      } | null;
-      pullCentral?: {
-        __typename: 'SyncStatusWithProgressNode';
-        finished?: string | null;
-        started: string;
-        done?: number | null;
-        total?: number | null;
-      } | null;
-      pullRemote?: {
-        __typename: 'SyncStatusWithProgressNode';
-        finished?: string | null;
-        started: string;
-        done?: number | null;
-        total?: number | null;
-      } | null;
-      push?: {
-        __typename: 'SyncStatusWithProgressNode';
-        finished?: string | null;
-        started: string;
-        done?: number | null;
-        total?: number | null;
-      } | null;
-      pullV6?: {
-        __typename: 'SyncStatusWithProgressNode';
-        finished?: string | null;
-        started: string;
-        done?: number | null;
-        total?: number | null;
-      } | null;
-      pushV6?: {
-        __typename: 'SyncStatusWithProgressNode';
-        finished?: string | null;
-        started: string;
-        done?: number | null;
-        total?: number | null;
-      } | null;
-      summary: {
-        __typename: 'SyncStatusNode';
-        finished?: string | null;
-        durationInSeconds: number;
-        started: string;
-      };
-      lastSuccessfulSync?: {
-        __typename: 'SyncStatusNode';
-        finished?: string | null;
-        durationInSeconds: number;
-        started: string;
-      } | null;
-    } | null;
+    syncStatus?:
+      | {
+          __typename: 'FullSyncStatusV5V6Node';
+          isSyncing: boolean;
+          errorThreshold: number;
+          warningThreshold: number;
+          error?: {
+            __typename: 'SyncErrorNode';
+            variant: Types.SyncErrorVariant;
+            fullError: string;
+          } | null;
+          integration?: {
+            __typename: 'SyncStatusWithProgressNode';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          prepareInitial?: {
+            __typename: 'SyncStatusNode';
+            finished?: string | null;
+            started: string;
+          } | null;
+          pullCentral?: {
+            __typename: 'SyncStatusWithProgressNode';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          pullRemote?: {
+            __typename: 'SyncStatusWithProgressNode';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          push?: {
+            __typename: 'SyncStatusWithProgressNode';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          pullV6?: {
+            __typename: 'SyncStatusWithProgressNode';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          pushV6?: {
+            __typename: 'SyncStatusWithProgressNode';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          summary: {
+            __typename: 'SyncStatusNode';
+            finished?: string | null;
+            started: string;
+          };
+          lastSuccessfulSync?: {
+            __typename: 'SyncStatusNode';
+            finished?: string | null;
+            started: string;
+          } | null;
+        }
+      | {
+          __typename: 'FullSyncStatusV7Node';
+          isSyncing: boolean;
+          errorThreshold: number;
+          warningThreshold: number;
+          error?: {
+            __typename: 'SyncErrorV7Node';
+            fullError: string;
+            variantV7: Types.SyncErrorVariantV7;
+          } | null;
+          integration?: {
+            __typename: 'SyncStatusWithProgressV7Node';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          push?: {
+            __typename: 'SyncStatusWithProgressV7Node';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          pull?: {
+            __typename: 'SyncStatusWithProgressV7Node';
+            finished?: string | null;
+            started: string;
+            done?: number | null;
+            total?: number | null;
+          } | null;
+          waitingForIntegration?: {
+            __typename: 'SyncStatusV7Node';
+            finished?: string | null;
+            started: string;
+          } | null;
+          summary: {
+            __typename: 'SyncStatusV7Node';
+            finished?: string | null;
+            started: string;
+          };
+          lastSuccessfulSync?: {
+            __typename: 'SyncStatusNode';
+            finished?: string | null;
+            started: string;
+          } | null;
+          linkedDescriptions: Array<
+            | { __typename: 'AllStoreDataDescription'; storeName: string }
+            | { __typename: 'TableNameDescription'; tableName: string }
+          >;
+        }
+      | null;
   };
 };
 
@@ -408,6 +668,9 @@ export const SyncSettingsFragmentDoc = gql`
     intervalSeconds
     url
     username
+    centralServerSiteId
+    syncSiteId
+    batchSize
   }
 `;
 export const SyncErrorFragmentDoc = gql`
@@ -430,12 +693,11 @@ export const SyncStatusFragmentDoc = gql`
   fragment SyncStatus on SyncStatusNode {
     __typename
     finished
-    durationInSeconds
     started
   }
 `;
-export const FullSyncStatusFragmentDoc = gql`
-  fragment FullSyncStatus on FullSyncStatusNode {
+export const FullSyncStatusV5V6FragmentDoc = gql`
+  fragment FullSyncStatusV5V6 on FullSyncStatusV5V6Node {
     __typename
     error {
       ...SyncError
@@ -475,6 +737,71 @@ export const FullSyncStatusFragmentDoc = gql`
   ${SyncStatusWithProgressFragmentDoc}
   ${SyncStatusFragmentDoc}
 `;
+export const SyncErrorV7FragmentDoc = gql`
+  fragment SyncErrorV7 on SyncErrorV7Node {
+    __typename
+    variantV7: variant
+    fullError
+  }
+`;
+export const SyncStatusWithProgressV7FragmentDoc = gql`
+  fragment SyncStatusWithProgressV7 on SyncStatusWithProgressV7Node {
+    __typename
+    finished
+    started
+    done
+    total
+  }
+`;
+export const SyncStatusV7FragmentDoc = gql`
+  fragment SyncStatusV7 on SyncStatusV7Node {
+    __typename
+    finished
+    started
+  }
+`;
+export const FullSyncStatusV7FragmentDoc = gql`
+  fragment FullSyncStatusV7 on FullSyncStatusV7Node {
+    __typename
+    error {
+      ...SyncErrorV7
+    }
+    integration {
+      ...SyncStatusWithProgressV7
+    }
+    isSyncing
+    push {
+      ...SyncStatusWithProgressV7
+    }
+    pull {
+      ...SyncStatusWithProgressV7
+    }
+    waitingForIntegration {
+      ...SyncStatusV7
+    }
+    summary {
+      ...SyncStatusV7
+    }
+    lastSuccessfulSync {
+      ...SyncStatus
+    }
+    errorThreshold
+    warningThreshold
+    linkedDescriptions {
+      __typename
+      ... on AllStoreDataDescription {
+        storeName
+      }
+      ... on TableNameDescription {
+        tableName
+      }
+    }
+  }
+  ${SyncErrorV7FragmentDoc}
+  ${SyncStatusWithProgressV7FragmentDoc}
+  ${SyncStatusV7FragmentDoc}
+  ${SyncStatusFragmentDoc}
+`;
 export const SyncSettingsDocument = gql`
   query syncSettings {
     syncSettings {
@@ -493,10 +820,14 @@ export const InitialiseSiteDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const UpdateSyncSettingsDocument = gql`
   mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
@@ -508,43 +839,86 @@ export const UpdateSyncSettingsDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const SyncInfoDocument = gql`
   query syncInfo {
     syncStatus: latestSyncStatus {
-      ...FullSyncStatus
+      __typename
+      ... on FullSyncStatusV5V6Node {
+        ...FullSyncStatusV5V6
+      }
+      ... on FullSyncStatusV7Node {
+        ...FullSyncStatusV7
+      }
     }
     numberOfRecordsInPushQueue
   }
-  ${FullSyncStatusFragmentDoc}
+  ${FullSyncStatusV5V6FragmentDoc}
+  ${FullSyncStatusV7FragmentDoc}
 `;
 export const SyncStatusDocument = gql`
   query syncStatus {
     syncStatus: latestSyncStatus {
-      ...FullSyncStatus
+      __typename
+      ... on FullSyncStatusV5V6Node {
+        ...FullSyncStatusV5V6
+      }
+      ... on FullSyncStatusV7Node {
+        ...FullSyncStatusV7
+      }
     }
   }
-  ${FullSyncStatusFragmentDoc}
+  ${FullSyncStatusV5V6FragmentDoc}
+  ${FullSyncStatusV7FragmentDoc}
 `;
 export const ManualSyncDocument = gql`
   mutation manualSync($fetchPatientId: String) {
     manualSync(fetchPatientId: $fetchPatientId)
   }
 `;
+export const InitialiseAsCentralServerDocument = gql`
+  mutation initialiseAsCentralServer(
+    $input: InitialiseAsCentralServerInputNode!
+  ) {
+    initialiseAsCentralServer(input: $input) {
+      __typename
+      ... on StandaloneCentralInitialisedNode {
+        success
+      }
+      ... on InitialiseAsCentralServerError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 export const SyncInfoUpdatedDocument = gql`
   subscription syncInfoUpdated {
     syncInfoUpdated {
       syncStatus {
-        ...FullSyncStatus
+        __typename
+        ... on FullSyncStatusV5V6Node {
+          ...FullSyncStatusV5V6
+        }
+        ... on FullSyncStatusV7Node {
+          ...FullSyncStatusV7
+        }
       }
       numberOfRecordsInPushQueue
     }
   }
-  ${FullSyncStatusFragmentDoc}
+  ${FullSyncStatusV5V6FragmentDoc}
+  ${FullSyncStatusV7FragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -670,6 +1044,24 @@ export function getSdk(
             signal,
           }),
         'manualSync',
+        'mutation',
+        variables
+      );
+    },
+    initialiseAsCentralServer(
+      variables: InitialiseAsCentralServerMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InitialiseAsCentralServerMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InitialiseAsCentralServerMutation>({
+            document: InitialiseAsCentralServerDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'initialiseAsCentralServer',
         'mutation',
         variables
       );

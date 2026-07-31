@@ -10,10 +10,12 @@ export const StyledInputRow = ({
   label,
   Input,
   labelWidth,
+  testId,
 }: InputWithLabelRowProps) => (
   <InputWithLabelRow
     label={label}
     Input={Input}
+    testId={testId}
     labelProps={{ sx: { textAlign: 'end' } }}
     labelWidth={labelWidth ?? '100px'}
     sx={{

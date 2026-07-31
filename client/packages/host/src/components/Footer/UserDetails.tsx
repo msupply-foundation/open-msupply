@@ -20,10 +20,10 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
 
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const { user, token } = useAuthContext();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
-  const { isLoading } = useUserDetails(token);
+  const { isLoading } = useUserDetails();
   const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
   const LABEL_WIDTH = 150;
@@ -40,6 +40,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   const logoutButton = (
     <FlatButton
+      testId="logout-button"
       startIcon={<PowerIcon fontSize="small" color="primary" />}
       label={t('logout')}
       onClick={async () => {
@@ -65,78 +66,84 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       anchorEl={popoverAnchor}
       onAnchorElChange={setPopoverAnchor}
       Content={
-        <PaperPopoverSection
-          label={getLocalisedFullName(user.firstName, user.lastName)}
-        >
-          {isLoading ? (
-            <CircularProgress size={12} />
-          ) : (
-            <Box
-              sx={{
-                overflowY: 'auto',
-                overflowX: 'auto',
-                maxHeight: 300,
-                margin: '.5rem',
-              }}
-            >
-              <TextWithLabelRow
-                label={t('heading.username')}
-                text={user.name}
-                textProps={{
-                  lineHeight: 1.5,
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
+        <Box data-testid="user-popup">
+          <PaperPopoverSection
+            label={getLocalisedFullName(user.firstName, user.lastName)}
+          >
+            {isLoading ? (
+              <CircularProgress size={12} />
+            ) : (
+              <Box
+                sx={{
+                  overflowY: 'auto',
+                  overflowX: 'auto',
+                  maxHeight: 300,
+                  margin: '.5rem',
                 }}
-                labelProps={{
-                  sx: {
-                    width: LABEL_WIDTH,
+              >
+                <Box data-testid="user-popup-username">
+                  <TextWithLabelRow
+                    label={t('heading.username')}
+                    text={user.name}
+                    textProps={{
+                      lineHeight: 1.5,
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    labelProps={{
+                      sx: {
+                        width: LABEL_WIDTH,
+                        lineHeight: 1.5,
+                      },
+                    }}
+                    showToolTip={true}
+                    sx={{ overflow: 'hidden' }}
+                  />
+                </Box>
+                <Box data-testid="user-popup-email">
+                  <TextWithLabelRow
+                    label={t('label.email')}
+                    text={user.email ?? UNDEFINED_STRING_VALUE}
+                    textProps={{
+                      lineHeight: 1.5,
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    labelProps={{
+                      sx: {
+                        width: LABEL_WIDTH,
+                        lineHeight: 1.5,
+                      },
+                    }}
+                    showToolTip={true}
+                    sx={{ overflow: 'hidden' }}
+                  />
+                </Box>
+                <TextWithLabelRow
+                  label={t('label.job-title')}
+                  text={user.jobTitle ?? UNDEFINED_STRING_VALUE}
+                  textProps={{
                     lineHeight: 1.5,
-                  },
-                }}
-                showToolTip={true}
-                sx={{ overflow: 'hidden' }}
-              />
-              <TextWithLabelRow
-                label={t('label.email')}
-                text={user.email ?? UNDEFINED_STRING_VALUE}
-                textProps={{
-                  lineHeight: 1.5,
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                }}
-                labelProps={{
-                  sx: {
-                    width: LABEL_WIDTH,
-                    lineHeight: 1.5,
-                  },
-                }}
-                showToolTip={true}
-                sx={{ overflow: 'hidden' }}
-              />
-              <TextWithLabelRow
-                label={t('label.job-title')}
-                text={user.jobTitle ?? UNDEFINED_STRING_VALUE}
-                textProps={{
-                  lineHeight: 1.5,
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                }}
-                labelProps={{
-                  sx: {
-                    width: LABEL_WIDTH,
-                    lineHeight: 1.5,
-                  },
-                }}
-                showToolTip={true}
-                sx={{ overflow: 'hidden' }}
-              />
-            </Box>
-          )}
-          {logoutButton}
-        </PaperPopoverSection>
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                  }}
+                  labelProps={{
+                    sx: {
+                      width: LABEL_WIDTH,
+                      lineHeight: 1.5,
+                    },
+                  }}
+                  showToolTip={true}
+                  sx={{ overflow: 'hidden' }}
+                />
+              </Box>
+            )}
+            {logoutButton}
+          </PaperPopoverSection>
+        </Box>
       }
     >
       {children}

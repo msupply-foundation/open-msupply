@@ -1,9 +1,10 @@
-use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
+use super::{backdated_datetime_change, UpdateOutboundShipment, UpdateOutboundShipmentError};
 use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceRowStatusError,
+    check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
+    InvoiceRowStatusError,
 };
 use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::{check_other_party_store_is_disabled, get_other_party};
@@ -39,6 +40,15 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
     }
+
+    if let Some(properties) = &patch.custom_fields {
+        if let Some(unknown) =
+            check_unknown_custom_fields_key(connection, &invoice.r#type, properties)?
+        {
+            return Err(UnknownPropertyKey(unknown));
+        }
+    }
+
     if patch.currency_id.is_some()
         && !check_can_issue_in_foreign_currency(connection, store_id)?
         && other_party.store_row.is_some()
@@ -56,7 +66,9 @@ pub fn validate(
     }
 
     // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days
-    if let Some(backdated_datetime) = patch.backdated_datetime {
+    // Only a *change* to the datetime counts - see backdated_datetime_change
+    if let Some(backdated_datetime) = backdated_datetime_change(patch.backdated_datetime, &invoice)
+    {
         let backdating = Backdating.load(connection, None)?;
         if !backdating.shipments_enabled {
             return Err(CantBackDate(

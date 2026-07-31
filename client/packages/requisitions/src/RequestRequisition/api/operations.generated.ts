@@ -858,6 +858,7 @@ export type SupplierProgramSettingsFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -897,6 +898,7 @@ export type SupplierProgramSettingsQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
+      customFields?: any | null;
       store?: {
         __typename: 'StoreNode';
         id: string;

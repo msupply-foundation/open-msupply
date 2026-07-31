@@ -15,6 +15,14 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data
+# New FE served at / from server.frontend_dir (default: frontend/ relative to cwd).
+# CI stages the pinned, checksum-verified dist into ./frontend-dist in the build
+# context (build/fetch-frontend.js, run host-side in the workflow — no network
+# fetch inside docker build).
+COPY frontend-dist frontend
+# Old UI served at /old-ui/ : this repo's client build (PUBLIC_PATH=/old-ui/).
+# The server serves frontend/old-ui at /old-ui/ by convention — no config needed.
+COPY client/packages/host/dist frontend/old-ui
 
 WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .
@@ -53,7 +61,6 @@ ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 FROM sqlite as dev
 WORKDIR /usr/src/omsupply
 COPY client/.nvmrc .nvmrc
-COPY client client
 
 RUN apt-get update && apt-get install -y curl rsync git && \
     NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
@@ -61,10 +68,13 @@ RUN apt-get update && apt-get install -y curl rsync git && \
     apt-get install -y nodejs && \
     corepack enable && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-COPY package.json .
 
-WORKDIR /usr/src/omsupply/client
-RUN yarn && yarn cache clean
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY client client
+COPY standard_reports standard_reports
+COPY standard_forms standard_forms
+
+RUN yarn install --immutable && yarn cache clean
 
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 

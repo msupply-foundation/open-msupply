@@ -6,7 +6,9 @@ export const useEncounterByDocName = (documentName: string | undefined) => {
 
   return useQuery({
     queryKey: api.keys.byDocName(documentName ?? ''),
-    queryFn: () => api.byDocName(documentName ?? ''),
+    // Coalesce to null: api.byDocName returns undefined when no encounter
+    // matches, which TanStack Query forbids and would crash the page.
+    queryFn: async () => (await api.byDocName(documentName ?? '')) ?? null,
     enabled: !!documentName
   });
 };

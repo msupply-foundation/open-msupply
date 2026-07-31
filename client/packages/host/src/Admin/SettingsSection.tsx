@@ -12,10 +12,12 @@ import React, { FC, PropsWithChildren } from 'react';
 interface SettingsSectionProps {
   children: React.ReactNode;
   expanded: boolean;
-  Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
+  Icon: (props: SvgIconProps & { stroke?: string }) => React.JSX.Element;
   onChange: () => void;
   titleKey: LocaleKey;
   visible: boolean;
+  /** Deterministic e2e hook on the section's expand/collapse header. */
+  testId?: string;
 }
 export const SettingsSubHeading = ({ title }: { title: string }) => (
   <Typography
@@ -38,12 +40,14 @@ export const SettingsSection: FC<PropsWithChildren<SettingsSectionProps>> = ({
   onChange,
   titleKey,
   visible,
+  testId,
 }) => {
   const t = useTranslation();
 
   return visible ? (
     <Accordion expanded={expanded} onChange={onChange}>
       <AccordionSummary
+        data-testid={testId}
         expandIcon={<ChevronDownIcon />}
         sx={{
           color: 'primary.main',

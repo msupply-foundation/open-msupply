@@ -38,6 +38,7 @@ use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, Se
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
+use graphql_general::custom_field::{CustomFieldConfigQueries, CustomFieldMutations};
 use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
@@ -60,6 +61,7 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -138,8 +140,16 @@ impl CentralServerMutationNode {
         HelpDocumentMutations
     }
 
+    async fn custom_field(&self) -> CustomFieldMutations {
+        CustomFieldMutations
+    }
+
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
+    }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
     }
 }
 
@@ -153,6 +163,14 @@ impl CentralServerQueryNode {
 
     async fn sync_message(&self) -> SyncMessageQueries {
         SyncMessageQueries
+    }
+
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
+    }
+
+    async fn custom_field(&self) -> CustomFieldConfigQueries {
+        CustomFieldConfigQueries
     }
 }
 
@@ -346,6 +364,9 @@ pub struct GraphqlSchema {
     migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     operational_status: Data<RwLock<OperationalStatus>>,
+    /// Copy of [`service::auth_data::AuthData::cookie_suffix`] so `auth_data_from_request` can
+    /// look up the right cookie name without reaching into the schema's data map.
+    cookie_suffix: String,
 }
 
 pub struct GraphSchemaData {
@@ -369,6 +390,7 @@ impl GraphqlSchema {
             validated_plugins,
             subscription_broadcast,
         } = data;
+        let cookie_suffix = auth.cookie_suffix.clone();
         let subscription_broadcast = Data::new(subscription_broadcast);
 
         // Self requester schema is a copy of operational schema, used for reports
@@ -426,6 +448,7 @@ impl GraphqlSchema {
             initialisation: initialisation_builder.finish(),
             migration: migration_builder.finish(),
             operational_status: operational_status_ref.clone(),
+            cookie_suffix,
         }
     }
 
@@ -444,7 +467,7 @@ impl GraphqlSchema {
         match &*self.operational_status.read().await {
             OperationalStatus::Operational => {
                 // auth_data is only available in schema in operational mode
-                let user_data = auth_data_from_request(&http_req);
+                let user_data = auth_data_from_request(&http_req, &self.cookie_suffix);
                 self.operational.execute(req.data(user_data)).await
             }
             OperationalStatus::MigratingDatabase => self.migration.execute(req).await,
@@ -484,18 +507,30 @@ async fn graphql_ws(
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let on_connection_init = |value: serde_json::Value| async move {
-        let mut data = async_graphql::Data::default();
-        // Client sends { "Authorization": "Bearer <token>" } in connectionParams
-        if let Some(token) = value.get("Authorization").and_then(|v| v.as_str()) {
-            let token = token.strip_prefix("Bearer ").unwrap_or(token);
-            data.insert(RequestUserData {
-                auth_token: Some(token.to_string()),
-                refresh_token: None,
-                override_user_id: None,
-            });
+    // Pull the session token out of the WS upgrade request once. The browser sends the HttpOnly
+    // session cookie on the upgrade (same as any HTTP request) but `on_connection_init` only
+    // sees the client-supplied connectionParams JSON — it has no access to the request. We
+    // capture the cookie value here so the closure can use it as the auth fallback.
+    let cookie_token = auth_data_from_request(&req, &schema.cookie_suffix).auth_token;
+    let on_connection_init = move |value: serde_json::Value| {
+        let cookie_token = cookie_token.clone();
+        async move {
+            let mut data = async_graphql::Data::default();
+            // Prefer the explicit Authorization in connectionParams (used by API integrations
+            // that aren't cookie-based); fall back to the cookie captured from the upgrade.
+            let auth_token = value
+                .get("Authorization")
+                .and_then(|v| v.as_str())
+                .map(|t| t.strip_prefix("Bearer ").unwrap_or(t).to_string())
+                .or(cookie_token);
+            if auth_token.is_some() {
+                data.insert(RequestUserData {
+                    auth_token,
+                    override_user_id: None,
+                });
+            }
+            Ok(data)
         }
-        Ok(data)
     };
 
     match &*schema.operational_status.read().await {
@@ -596,7 +631,6 @@ impl ExecuteGraphql for PluginExecuteGraphql {
             .data(RequestUserData {
                 override_user_id: Some(override_user_id.to_string()),
                 auth_token: None,
-                refresh_token: None,
             });
         let response = self.0.operational.execute(request).await;
         // Response is either success with data field populated or error with errors field populated

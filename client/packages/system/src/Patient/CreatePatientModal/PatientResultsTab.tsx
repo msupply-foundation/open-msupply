@@ -249,7 +249,13 @@ export const PatientResultsTab: FC<
           )}
           <Box display="flex" flexDirection="row" marginLeft="auto">
             {isCentralConnectionFailure ? (
-              <InfoTooltipIcon title={t('messages.failed-to-reach-central')} />
+              // data-testid: locale-stable e2e hook for the central-unreachable
+              // state — see open-msupply-frontend e2e/TESTIDS.md § Patients.
+              <Box data-testid="central-search-error">
+                <InfoTooltipIcon
+                  title={t('messages.failed-to-reach-central')}
+                />
+              </Box>
             ) : null}
             {isLoadingCentral || isCentralConnectionFailure ? (
               <LoadingButton

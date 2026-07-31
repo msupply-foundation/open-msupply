@@ -460,7 +460,13 @@ mod tests {
                 base_dir: base_dir.path().to_string_lossy().to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
+                standalone_store_name: None,
+                standalone_admin_username: None,
+                standalone_admin_password: None,
                 workers: None,
+                inactivity_timeout_seconds: crate::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                token_refresh_interval_seconds: crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                frontend_dir: "frontend".to_string(),
             },
             database: db_settings,
             sync: None,
@@ -468,6 +474,8 @@ mod tests {
             backup: None,
             mail: None,
             features: None,
+            changelog_partition: Default::default(),
+            changelog_dedup: None,
         };
         service_provider.settings = Box::new(SettingsService::new(Some(test_settings)));
 

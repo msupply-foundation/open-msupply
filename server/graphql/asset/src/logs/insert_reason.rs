@@ -22,6 +22,7 @@ pub fn insert_asset_log_reason(
         &ResourceAccessRequest {
             resource: Resource::EditAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

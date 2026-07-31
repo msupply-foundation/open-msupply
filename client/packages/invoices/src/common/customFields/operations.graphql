@@ -1,0 +1,30 @@
+fragment InvoiceCustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  displayMode
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+# Properties configured for one invoice type's scope (e.g. "inbound_shipment").
+# Each invoice type has its own scope and so its own visible set — see
+# the properties dev doc (transaction categories).
+query invoiceCustomFields($scope: String!) {
+  customFields(filter: { scope: { equalTo: $scope } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InvoiceCustomField
+      }
+    }
+  }
+}
+

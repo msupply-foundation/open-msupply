@@ -51,6 +51,7 @@ pub fn insert_repack(
         &ResourceAccessRequest {
             resource: Resource::CreateRepack,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

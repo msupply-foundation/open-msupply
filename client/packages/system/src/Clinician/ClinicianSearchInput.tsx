@@ -102,6 +102,7 @@ export const ClinicianSearchInput = ({
   return (
     <Box width={`${width}px`} display={'flex'} alignItems="center">
       <Autocomplete
+        inputTestId="clinician-select"
         value={clinicianValue ? asOption(clinicianValue) : null}
         isOptionEqualToValue={(option, value) =>
           option.value.id === value.value?.id
@@ -109,8 +110,8 @@ export const ClinicianSearchInput = ({
         onChange={(_, option) => {
           onChange(option);
         }}
-        options={clinicians.map(
-          (clinician): ClinicianAutocompleteOption => asOption(clinician)
+        options={clinicians.map((clinician): ClinicianAutocompleteOption =>
+          asOption(clinician)
         )}
         sx={{ width: '100%' }}
         renderOption={(props, option) => (

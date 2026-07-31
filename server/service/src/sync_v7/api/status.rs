@@ -1,0 +1,21 @@
+use serde::{Deserialize, Serialize};
+
+use super::{ApiResponse, SyncApiV7};
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Output {
+    pub site_id: i32,
+    pub central_site_id: i32,
+    pub is_multi_device_site: bool,
+}
+
+pub type Response = ApiResponse<Output>;
+pub type Input = ();
+static ROUTE: &str = "site_status";
+
+impl SyncApiV7 {
+    pub async fn site_status(&self, input: Input) -> Response {
+        self.op(ROUTE, input).await
+    }
+}

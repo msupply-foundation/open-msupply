@@ -1,6 +1,6 @@
 use repository::{
     sync_file_reference_row::{SyncFileReferenceRowRepository, SyncFileReferenceWire},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::asset::AssetTranslation;
@@ -29,11 +29,11 @@ impl SyncTranslation for SyncFileReferenceTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let wire: SyncFileReferenceWire = serde_json::from_str(&sync_record.data)?;
-        let existing =
-            SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
+        let wire: SyncFileReferenceWire = serde_json::from_value(sync_record.data.0.clone())?;
+        let existing = SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
 
         Ok(PullTranslateResult::upsert(wire.into_row(existing)))
     }
@@ -60,20 +60,18 @@ impl SyncTranslation for SyncFileReferenceTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = SyncFileReferenceRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "SyncFileReference row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::SyncFileReference(sync_file_reference_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(SyncFileReferenceWire::from_row(&row))?,
+            serde_json::to_value(SyncFileReferenceWire::from_row(&sync_file_reference_row))?,
         ))
     }
 }
@@ -105,7 +103,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

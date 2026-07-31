@@ -1,5 +1,4 @@
 use std::io::ErrorKind;
-use std::sync::Arc;
 
 use actix_files as fs;
 use actix_multipart::form::tempfile::TempFile;
@@ -14,11 +13,10 @@ use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse}
 use fs::NamedFile;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::{
-    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus,
-    RepositoryError,
-};
 use repository::SyncFileDirection;
+use repository::{
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
+};
 use serde::Deserialize;
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
@@ -28,11 +26,11 @@ use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
 use service::static_files::{StaticFileCategory, StaticFileService};
-use service::sync::file_sync_driver::get_sync_settings;
-use service::sync::file_synchroniser;
-use service::sync::file_synchroniser::FileSynchroniser;
+use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
+use service::sync::file_synchroniser::{self, FileSynchroniser};
 use service::sync::CentralServerConfig;
 use service::usize_to_i32;
+use std::sync::Arc;
 use thiserror::Error;
 use util::format_error;
 
@@ -101,9 +99,9 @@ fn check_purchase_order_document_editable(
         return Ok(());
     }
 
-    let connection = service_provider.connection().map_err(|err| {
-        InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR)
-    })?;
+    let connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
     let purchase_order = PurchaseOrderRepository::new(&connection)
         .query_by_filter(
@@ -302,9 +300,9 @@ async fn upload_sync_file_inner(
 async fn download_sync_file(
     req: HttpRequest,
     settings: Data<Settings>,
-    service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
     auth_data: Data<AuthData>,
+    service_provider: Data<ServiceProvider>,
 ) -> Result<HttpResponse, Error> {
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
@@ -332,14 +330,27 @@ async fn download_sync_file(
     };
 
     let error = match error {
-        DownloadFileError::NotFoundLocallyAndThisIsCentralServer => InternalError::new(
-            "File not found, it may not have been synced from the remote site yet...",
-            StatusCode::NOT_FOUND,
-        ),
-        _ => InternalError::new(
-            "Error downloading file, please see server logs",
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ),
+        DownloadFileError::NotFoundLocallyAndThisIsCentralServer
+        | DownloadFileError::ErrorDownloadingFile(
+            file_synchroniser::DownloadFileError::FileDoesNotExist(_)
+            | file_synchroniser::DownloadFileError::SyncApiV7Error(
+                repository::syncv7::SyncError::SyncFileNotFound(_),
+            ),
+        ) => {
+            // Expected while the origin site hasn't uploaded/synced yet — not an error state.
+            log::info!("Sync file not available yet: {}", format_error(&error));
+            InternalError::new(
+                "File not found, it may not have been synced from the remote site yet...",
+                StatusCode::NOT_FOUND,
+            )
+        }
+        _ => {
+            log::error!("Error downloading sync file: {}", format_error(&error));
+            InternalError::new(
+                "Error downloading file, please see server logs",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        }
     };
 
     Err(error.into())
@@ -351,7 +362,7 @@ enum DownloadFileError {
     DatabaseError(#[from] RepositoryError),
     #[error("File IO error")]
     FileIOError(#[from] std::io::Error),
-    #[error("File not found locally and it's central server")]
+    #[error("File not found locally and this is the central server")]
     NotFoundLocallyAndThisIsCentralServer,
     #[error("Error downloading file from central")]
     ErrorDownloadingFile(#[from] file_synchroniser::DownloadFileError),
@@ -371,12 +382,22 @@ async fn download_sync_file_inner(
         return Ok((NamedFile::open(file.path)?, file.name));
     }
 
-    let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() else {
-        // Not found locally and is central server
+    // Not on disk. Central *is* the source of file bytes — nothing to fall back to
+    // (the origin site hasn't uploaded the file yet).
+    if CentralServerConfig::is_central_server() {
         return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
+    }
+
+    // On a remote, fetch the bytes from central on demand and cache them locally, so a
+    // synced file reference is openable as soon as central holds the bytes.
+    let Some(url) = file_sync_central_url(&service_provider) else {
+        return Err(DownloadFileError::Other(anyhow::anyhow!(
+            "File not found locally and no central server URL is available to download it from"
+        )));
     };
 
-    // File not found locally, download from central
+    log::info!("Sync file {file_id} not found locally, downloading from central");
+
     let file_synchroniser = FileSynchroniser::new(
         &url,
         get_sync_settings(&service_provider),

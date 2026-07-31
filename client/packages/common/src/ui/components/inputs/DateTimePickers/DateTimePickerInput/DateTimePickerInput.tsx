@@ -53,6 +53,7 @@ export const DateTimePickerInput = ({
   errorText,
   required,
   textFieldSx: inputSx,
+  textFieldTestId,
   slotProps,
   formError,
   customError,
@@ -74,6 +75,9 @@ export const DateTimePickerInput = ({
   disableFuture?: boolean;
   required?: boolean;
   textFieldSx?: SxProps;
+  // Stamps data-testid on the underlying text input so e2e can locate the
+  // picker without depending on its translated label.
+  textFieldTestId?: string;
   formError?: FormErrorBinding;
   customError?: CustomErrorValue;
   validate?: (value: Date | null | undefined) => string | null;
@@ -202,6 +206,9 @@ export const DateTimePickerInput = ({
               width,
               minWidth: showTime ? 200 : undefined,
             },
+            ...(textFieldTestId
+              ? { inputProps: { 'data-testid': textFieldTestId } }
+              : {}),
           },
 
           tabs: {
