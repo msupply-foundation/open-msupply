@@ -43,7 +43,8 @@ export type CellKind =
   | 'time'
   | 'expiry'
   | 'comment'
-  | 'chipList';
+  | 'chipList'
+  | 'proportion';
 
 // Default column widths per cell type (docs/CELL_TYPES.md — the authoritative
 // inventory), in REM. `size` = the default = the min-width FLOOR, but a SOFT
@@ -67,6 +68,10 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
     expiry: { size: 8.125 },
     comment: { size: 5, maxSize: 8 }, // fixed — an icon, never grows
     chipList: { size: 12 },
+    // A fullness bar + its figure: the bar needs room to read as a proportion
+    // (its track flexes into whatever is left after the figure), so this is a
+    // floor, not a content measure. No maxSize — wider is a better bar.
+    proportion: { size: 8 },
   };
 
 // Each common column key → its cell `kind` (the rendering) plus optional
@@ -176,6 +181,10 @@ export const CELL_DEF = {
   comment: { kind: 'comment' },
   // Chip list.
   masterLists: { kind: 'chipList' },
+  // Proportion (fullness bar) — the locations list's Volume used column. The
+  // value is the proportion as a percentage; header "Volume used" is the
+  // binding constraint on the width, not the bar.
+  volumeUsed: { kind: 'proportion', size: 10 },
 } satisfies Record<string, CellSpec>;
 
 // The closed union of keys getCellDefinition accepts.
