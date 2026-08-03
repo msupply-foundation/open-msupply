@@ -2872,6 +2872,7 @@
   "messages.select-an-item": "Select an item to move or repack.",
   "messages.select-from-location": "Select a location to view and move or repack its stock.",
   "messages.select-item-to-count": "Select an item to count its stock lines.",
+  "messages.select-item-to-issue": "Select an item to see the stock available to issue.",
   "messages.select-item-to-receive": "Select an item to add to the shipment.",
   "messages.select-item-to-return": "Select an item to enter what is coming back.",
   "messages.select-rows-to-approve": "Select rows to approve them",
