@@ -2,13 +2,14 @@
    Allocate-in lens · placeholder notice, on ONE wrapping row (spec S4, D76) —
    each piece drops to its own row as space runs out, bottoming out at the
    fully stacked layout on narrow screens. Bottom-aligned so the Available
-   text and the labelled fields share a baseline. */
+   text and the labelled fields share a baseline. No bottom margin: the dialog's
+   scroll region already puts its own gap between this row and the batch grid,
+   and the two together left a visible dead band above the cards (#872). */
 .headerRow {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
   gap: var(--space-3) var(--space-4);
-  margin-block-end: var(--space-3);
 }
 
 /* The item picker: a bounded width (it holds "code - name" labels), NOT a

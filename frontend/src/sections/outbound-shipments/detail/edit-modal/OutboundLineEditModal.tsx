@@ -1302,7 +1302,26 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       testId="add-item-modal"
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
       actionsLead={
-        <Show when={errorMessage()}>
+        // The footer's message slot, sharing the buttons' row rather than
+        // spending one of its own. It states the consequence of Save — the
+        // running total and any placeholder — and yields to a save rejection
+        // while there is one, which is the more urgent thing to read (#872).
+        <Show
+          when={errorMessage()}
+          fallback={
+            <Show when={item()}>
+              <HStack gap="md">
+                <span>
+                  {t('label.placeholder')}: {formatNumber(placeholderUnits())}
+                </span>
+                <span>
+                  {t('label.total-units')}:{' '}
+                  {formatNumber(issuedUnits() + placeholderUnits())}
+                </span>
+              </HStack>
+            </Show>
+          }
+        >
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
       }
@@ -1467,19 +1486,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </div>
 
         {/* Everything below the grid shares one vertical rhythm — the Stack's
-            gap replaces the per-block margins. */}
+            gap replaces the per-block margins. The running total that used to
+            lead this stack now rides the footer's message slot. */}
         <Stack gap="sm">
-          {/* Grid footer: placeholder + running total (spec S4). */}
-          <HStack gap="md" justify="end">
-            <span>
-              {t('label.placeholder')}: {formatNumber(placeholderUnits())}
-            </span>
-            <span>
-              {t('label.total-units')}:{' '}
-              {formatNumber(issuedUnits() + placeholderUnits())}
-            </span>
-          </HStack>
-
           {/* Stacked warning banners (spec S4 § warnings). */}
           <For each={warnings()}>
             {message => <Alert severity="warning">{message}</Alert>}
