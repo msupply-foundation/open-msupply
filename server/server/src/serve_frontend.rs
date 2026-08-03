@@ -6,20 +6,37 @@ use actix_web::{
     HttpRequest, HttpResponse, Responder,
 };
 use mime_guess::{from_path, mime};
-use service::settings::Settings;
+use service::{frontend_bundle::ActiveFrontendBundle, settings::Settings};
 use std::path::{Path, PathBuf};
 
 const INDEX: &str = "index.html";
 const CACHE_MAX_AGE: u32 = 365 * 60 * 60 * 24; // 1 year
 
-/// Read a frontend asset from `server.frontend_dir`. The bundle is shipped
-/// alongside the server by packaging (or copied there by the Android app
-/// shell), so it can be swapped without rebuilding the server.
-fn get_asset(settings: &Settings, path: &str) -> Option<Vec<u8>> {
+/// Read a frontend asset, preferring a synced bundle over the packaged baseline.
+///
+/// The active bundle (if any) is the newest one this server can run whose bytes have
+/// arrived and verified — see `frontend_bundle::reconcile_active_bundle`. When there
+/// isn't one we serve `server.frontend_dir`, the bundle packaging shipped alongside the
+/// server (or that the Android app shell copied in).
+///
+/// Falling through to the baseline per *asset* rather than per *request* matters during a
+/// swap: a tab that loaded the previous bundle may still ask for one of its
+/// content-hashed assets, and the previous bundle's directory is retained precisely so
+/// that keeps working.
+fn get_asset(settings: &Settings, active: &ActiveFrontendBundle, path: &str) -> Option<Vec<u8>> {
+    if let Some(bundle) = active.get() {
+        if let Some(content) = read_asset(&bundle.root, path) {
+            return Some(content);
+        }
+    }
     read_asset(&frontend_root(settings)?, path)
 }
 
 /// Read an asset from the old UI bundle (served under `/old-ui/`).
+///
+/// Always from `frontend_dir`, never from a synced bundle: the old UI is built from this
+/// repo and ships with the installer, and `/old-ui/` is the escape hatch when the synced
+/// front end is broken. A synced bundle must not be able to affect it.
 fn get_old_ui_asset(settings: &Settings, path: &str) -> Option<Vec<u8>> {
     read_asset(&old_ui_frontend_root(settings)?, path)
 }
@@ -89,8 +106,8 @@ fn asset_response(path: &str, content: Vec<u8>) -> HttpResponse {
         .body(content)
 }
 
-fn serve_frontend(settings: &Settings, path: &str) -> HttpResponse {
-    match get_asset(settings, path) {
+fn serve_frontend(settings: &Settings, active: &ActiveFrontendBundle, path: &str) -> HttpResponse {
+    match get_asset(settings, active, path) {
         Some(content) => asset_response(path, content),
         None => HttpResponse::NotFound().body("file not found"),
     }
@@ -105,15 +122,19 @@ fn serve_old_ui_frontend(settings: &Settings, path: &str) -> HttpResponse {
 
 // Match file paths (ending  ($) with dot (\.) and at least one character (.+) )
 #[get(r#"/{filename:.*\..+$}"#)]
-async fn file(req: HttpRequest, settings: Data<Settings>) -> impl Responder {
+async fn file(
+    req: HttpRequest,
+    settings: Data<Settings>,
+    active: Data<ActiveFrontendBundle>,
+) -> impl Responder {
     let filename: String = req.match_info().query("filename").parse().unwrap();
-    serve_frontend(&settings, &filename)
+    serve_frontend(&settings, &active, &filename)
 }
 
 // Match all paths
 #[get("/{_:.*}")]
-async fn index(settings: Data<Settings>) -> impl Responder {
-    let result = serve_frontend(&settings, INDEX);
+async fn index(settings: Data<Settings>, active: Data<ActiveFrontendBundle>) -> impl Responder {
+    let result = serve_frontend(&settings, &active, INDEX);
 
     // If index not found the frontend bundle is missing from frontend_dir
     if result.status() == StatusCode::NOT_FOUND {
@@ -178,7 +199,11 @@ mod test {
     /// Build a `Settings` whose frontend dirs point at temp dirs. Each dir gets
     /// an `index.html` with distinguishable content and a nested `assets/x.js`.
     fn write_dist(dir: &Path, marker: &str) {
-        fs::write(dir.join("index.html"), format!("<html>{marker} index</html>")).unwrap();
+        fs::write(
+            dir.join("index.html"),
+            format!("<html>{marker} index</html>"),
+        )
+        .unwrap();
         fs::create_dir_all(dir.join("assets")).unwrap();
         fs::write(dir.join("assets/x.js"), format!("// {marker} js")).unwrap();
     }
@@ -203,6 +228,15 @@ mod test {
         settings
     }
 
+    /// Point the shared handle at an unpacked bundle, as activation does — including
+    /// canonicalising the root, which activation also does (see `unpacked_root`).
+    fn activate(active: &ActiveFrontendBundle, version: &str, root: &Path) {
+        active.set_for_test(service::frontend_bundle::ActiveBundle {
+            version: version.to_string(),
+            root: root.canonicalize().unwrap(),
+        });
+    }
+
     async fn body_string(resp: actix_web::dev::ServiceResponse) -> String {
         let bytes = test::read_body(resp).await;
         String::from_utf8(bytes.to_vec()).unwrap()
@@ -222,6 +256,7 @@ mod test {
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(settings))
+                .app_data(Data::new(ActiveFrontendBundle::new()))
                 .configure(config_serve_frontend),
         )
         .await;
@@ -252,7 +287,9 @@ mod test {
         // /old-ui SPA route -> old index
         let resp = test::call_service(
             &app,
-            test::TestRequest::get().uri("/old-ui/some/route").to_request(),
+            test::TestRequest::get()
+                .uri("/old-ui/some/route")
+                .to_request(),
         )
         .await;
         assert!(body_string(resp).await.contains("OLD index"));
@@ -260,7 +297,9 @@ mod test {
         // /old-ui asset -> old js with long cache header
         let resp = test::call_service(
             &app,
-            test::TestRequest::get().uri("/old-ui/assets/x.js").to_request(),
+            test::TestRequest::get()
+                .uri("/old-ui/assets/x.js")
+                .to_request(),
         )
         .await;
         let cache = resp
@@ -291,6 +330,7 @@ mod test {
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(settings))
+                .app_data(Data::new(ActiveFrontendBundle::new()))
                 .configure(config_serve_frontend),
         )
         .await;
@@ -303,12 +343,18 @@ mod test {
         // /old-ui/anything is graceful (plain-text hint, not a swallow of the new app)
         let resp = test::call_service(
             &app,
-            test::TestRequest::get().uri("/old-ui/anything").to_request(),
+            test::TestRequest::get()
+                .uri("/old-ui/anything")
+                .to_request(),
         )
         .await;
         assert!(resp.status().is_success());
         let body = body_string(resp).await;
-        assert!(body.contains("Cannot find index.html in old UI"), "got {}", body);
+        assert!(
+            body.contains("Cannot find index.html in old UI"),
+            "got {}",
+            body
+        );
         assert!(!body.contains("NEW index"));
     }
 
@@ -320,6 +366,7 @@ mod test {
         let app = test::init_service(
             App::new()
                 .app_data(Data::new(settings))
+                .app_data(Data::new(ActiveFrontendBundle::new()))
                 .configure(config_serve_frontend),
         )
         .await;
@@ -333,5 +380,99 @@ mod test {
             .unwrap()
             .to_string();
         assert!(cache.contains("no-cache"), "got {}", cache);
+    }
+
+    /// An active synced bundle is served in preference to the packaged baseline, while
+    /// `/old-ui/` stays on the baseline — it is the escape hatch and must not be
+    /// affected by anything that arrived over sync.
+    #[actix_web::test]
+    async fn active_bundle_is_preferred_and_old_ui_is_not() {
+        let baseline_dir = TempDir::new().unwrap();
+        write_dist(baseline_dir.path(), "BASELINE");
+        let old_dir = baseline_dir.path().join("old-ui");
+        fs::create_dir_all(&old_dir).unwrap();
+        write_dist(&old_dir, "OLD");
+
+        // A synced bundle, unpacked where activation puts it (outside frontend_dir).
+        let bundle_dir = TempDir::new().unwrap();
+        write_dist(bundle_dir.path(), "SYNCED");
+
+        let settings = settings_with(baseline_dir.path());
+        let active = ActiveFrontendBundle::new();
+        let app = test::init_service(
+            App::new()
+                .app_data(Data::new(settings))
+                .app_data(Data::new(active.clone()))
+                .configure(config_serve_frontend),
+        )
+        .await;
+
+        // With no active bundle, the baseline serves.
+        let resp = test::call_service(&app, test::TestRequest::get().uri("/").to_request()).await;
+        assert!(body_string(resp).await.contains("BASELINE index"));
+
+        activate(&active, "1.0.0", bundle_dir.path());
+
+        // Root and assets now come from the synced bundle.
+        let resp = test::call_service(&app, test::TestRequest::get().uri("/").to_request()).await;
+        assert!(body_string(resp).await.contains("SYNCED index"));
+        let resp = test::call_service(
+            &app,
+            test::TestRequest::get().uri("/assets/x.js").to_request(),
+        )
+        .await;
+        assert!(body_string(resp).await.contains("SYNCED js"));
+
+        // The old UI is untouched by the swap.
+        let resp =
+            test::call_service(&app, test::TestRequest::get().uri("/old-ui/").to_request()).await;
+        assert!(body_string(resp).await.contains("OLD index"));
+    }
+
+    /// A tab that loaded the previous bundle may ask for an asset the new one does not
+    /// have. Falling back per asset (rather than per request) is what keeps it working.
+    #[actix_web::test]
+    async fn assets_missing_from_the_bundle_fall_back_to_the_baseline() {
+        let baseline_dir = TempDir::new().unwrap();
+        write_dist(baseline_dir.path(), "BASELINE");
+        fs::write(
+            baseline_dir.path().join("assets/only-baseline.js"),
+            "// legacy",
+        )
+        .unwrap();
+
+        let bundle_dir = TempDir::new().unwrap();
+        write_dist(bundle_dir.path(), "SYNCED");
+
+        let settings = settings_with(baseline_dir.path());
+        let active = ActiveFrontendBundle::new();
+        activate(&active, "1.0.0", bundle_dir.path());
+
+        let app = test::init_service(
+            App::new()
+                .app_data(Data::new(settings))
+                .app_data(Data::new(active))
+                .configure(config_serve_frontend),
+        )
+        .await;
+
+        // Present in the bundle: bundle wins.
+        let resp = test::call_service(
+            &app,
+            test::TestRequest::get().uri("/assets/x.js").to_request(),
+        )
+        .await;
+        assert!(body_string(resp).await.contains("SYNCED js"));
+
+        // Absent from the bundle: the baseline still answers rather than 404ing.
+        let resp = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri("/assets/only-baseline.js")
+                .to_request(),
+        )
+        .await;
+        assert!(resp.status().is_success());
+        assert!(body_string(resp).await.contains("legacy"));
     }
 }

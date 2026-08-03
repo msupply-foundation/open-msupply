@@ -4,17 +4,10 @@
 extern crate machine_uid;
 
 use crate::{
-    central::config_central,
-    certs::Certificates,
-    cold_chain::config_cold_chain,
-    cors::cors_policy,
-    custom_translations::config_custom_translations,
-    middleware::central_server_only,
-    print::config_print,
-    serve_frontend::config_serve_frontend,
-    static_files::config_static_files,
-    support::config_support,
-    upload_fridge_tag::config_upload_fridge_tag,
+    central::config_central, certs::Certificates, cold_chain::config_cold_chain, cors::cors_policy,
+    custom_translations::config_custom_translations, middleware::central_server_only,
+    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -46,11 +39,11 @@ use service::{
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
+    session_store::SessionStore,
     settings::{is_develop, ServerSettings, Settings},
     standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
-    session_store::SessionStore,
     sync::{
         file_sync_driver::FileSyncDriver,
         sync_status::status::InitialisationStatus,
@@ -172,7 +165,9 @@ pub async fn start_server(
         .map(|s| s.relax_hardware_id_token_checks)
         .unwrap_or(false);
     if relax_hardware_id_token_checks {
-        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+        log::warn!(
+            "relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED"
+        );
     }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
@@ -239,6 +234,9 @@ pub async fn start_server(
 
     let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
     let validated_plugins = Data::new(Mutex::new(validated_plugins));
+    // Same handle the activation path writes to, so a swap is visible to serving
+    // immediately without a restart.
+    let active_frontend_bundle = Data::new(service_provider.active_frontend_bundle.clone());
 
     let (subscription_task_handle, subscription_broadcast) =
         subscription_worker.spawn(service_provider.clone().into_inner());
@@ -337,6 +335,7 @@ pub async fn start_server(
             .app_data(closure_service_provider.clone())
             .app_data(auth.clone())
             .app_data(validated_plugins.clone())
+            .app_data(active_frontend_bundle.clone())
             .app_data(get_default_directory(&closure_settings))
             .configure(attach_graphql_schema(closure_schema.clone()))
             .configure(config_static_files)
@@ -461,6 +460,22 @@ pub async fn start_server(
         }
     }
 
+    // Point serving at the best bundle already on disk (every site, central included —
+    // central serves the UI too). Anything downloaded while the server was down is
+    // verified and unpacked here, so a restart is enough to pick it up.
+    match frontend_bundle::reconcile_active_bundle(
+        &service_context,
+        &settings,
+        &service_provider.active_frontend_bundle,
+    ) {
+        Ok(None) => info!("Serving the packaged front-end (no synced bundle active)"),
+        Ok(Some(bundle)) => info!("Serving synced front-end bundle {}", bundle.version),
+        Err(e) => log::error!(
+            "Could not resolve the active front-end bundle: {}",
+            format_error(&e)
+        ),
+    }
+
     // Log the server starting message with the startup timestamp
     let status_log = StatusLog(&connection);
     status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
@@ -487,10 +502,7 @@ pub async fn start_server(
     // CHECK SYNC STATUS
     info!("Checking sync status..");
     // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
-    let yaml_sync_settings = settings
-        .sync
-        .clone()
-        .filter(|s| s.has_core_sync_settings());
+    let yaml_sync_settings = settings.sync.clone().filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)

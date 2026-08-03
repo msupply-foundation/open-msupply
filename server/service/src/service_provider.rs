@@ -10,6 +10,7 @@ use crate::{
     contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
+    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -24,6 +25,7 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
+    frontend_bundle::ActiveFrontendBundle,
     help_document::{HelpDocumentService, HelpDocumentServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
@@ -44,7 +46,6 @@ use crate::{
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
-    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
@@ -71,8 +72,8 @@ use crate::{
     site::{SiteService, SiteServiceTrait},
     standalone_central::{StandaloneCentralService, StandaloneCentralServiceTrait},
     standard_reports::StandardReports,
-    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
+    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -198,6 +199,10 @@ pub struct ServiceProvider {
     pub contact_form_service: Box<dyn ContactFormServiceTrait>,
     // Cache
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
+    /// The synced front-end bundle currently being served, if any. Read on every
+    /// asset request (cloned into the HTTP app data), so it is held here rather than
+    /// on `ServiceContext` — resolving it must never need a database connection.
+    pub active_frontend_bundle: ActiveFrontendBundle,
     // Preferences
     pub preference_service: Box<dyn PreferenceServiceTrait>,
     // VVM
@@ -345,6 +350,7 @@ impl ServiceProvider {
             insurance_provider_service: Box::new(InsuranceProviderService {}),
             printer_service: Box::new(PrinterService {}),
             frontend_plugins_cache: FrontendPluginCache::new(),
+            active_frontend_bundle: ActiveFrontendBundle::new(),
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
             campaign_service: Box::new(CampaignService),

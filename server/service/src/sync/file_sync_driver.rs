@@ -30,6 +30,8 @@ pub enum FileSyncMessage {
 pub struct FileSyncDriver {
     receiver: Receiver<FileSyncMessage>,
     static_file_service: Arc<StaticFileService>,
+    /// Needed to verify and unpack a downloaded front-end bundle once its bytes land.
+    settings: Settings,
     /// Pause is a *state* (currently paused or not), not an event — `FileSyncTrigger::pause` /
     /// `unpause` write to this watch synchronously so the transition takes effect immediately
     /// even while the driver is mid-file. The chunk loop in `SyncApiV6::upload_file` reads the
@@ -68,6 +70,7 @@ impl FileSyncDriver {
             FileSyncDriver {
                 receiver,
                 static_file_service,
+                settings: settings.clone(),
                 pause_rx,
             },
         )
@@ -152,6 +155,32 @@ impl FileSyncDriver {
         }
     }
 
+    /// Verify and unpack a newly downloaded front-end bundle, and point serving at it.
+    ///
+    /// Deliberately best-effort: a bundle that can't be activated (bad checksum, bad
+    /// archive) must not stop file sync or take down the UI — the previous bundle, or the
+    /// packaged baseline, keeps serving and the failure is logged.
+    fn reconcile_frontend_bundle(&self, service_provider: &Arc<ServiceProvider>) {
+        let ctx = match service_provider.basic_context() {
+            Ok(ctx) => ctx,
+            Err(error) => {
+                log::error!("Cannot open a context to activate a bundle: {error:#?}");
+                return;
+            }
+        };
+
+        if let Err(error) = crate::frontend_bundle::reconcile_active_bundle(
+            &ctx,
+            &self.settings,
+            &service_provider.active_frontend_bundle,
+        ) {
+            log::error!(
+                "Could not resolve the active front-end bundle: {}",
+                format_error(&error)
+            );
+        }
+    }
+
     /// Drain one file from the background download queue. Returns how many remain
     /// queued, which the loop above uses to choose its next delay.
     pub async fn download(
@@ -162,7 +191,7 @@ impl FileSyncDriver {
         let synchroniser = FileSynchroniser::new(
             sync_v6_url,
             get_sync_settings(&service_provider),
-            service_provider,
+            service_provider.clone(),
             self.static_file_service.clone(),
         );
 
@@ -179,6 +208,12 @@ impl FileSyncDriver {
                 if remaining > 0 {
                     log::info!("{remaining} files still queued for download");
                 }
+
+                // A download may have completed a front-end bundle. Reconciling is cheap
+                // and idempotent when it hasn't, and this is the only moment the bytes
+                // can newly be available without a restart.
+                self.reconcile_frontend_bundle(&service_provider);
+
                 remaining
             }
             Err(error) => {

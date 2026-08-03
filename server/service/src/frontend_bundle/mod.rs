@@ -23,7 +23,9 @@ use repository::{
     FrontendBundleRow, FrontendBundleRowRepository, RepositoryError, StorageConnection,
 };
 use thiserror::Error;
-use util::uuid::uuid;
+use util::{format_error, uuid::uuid};
+
+use crate::processors::frontend_bundle::best_usable_bundle;
 
 use crate::{
     service_provider::ServiceContext,
@@ -32,8 +34,10 @@ use crate::{
     usize_to_i32, UploadedFile, UploadedFileConversionError,
 };
 
+pub mod active;
 pub mod dist;
 
+pub use active::{ActiveBundle, ActiveFrontendBundle};
 pub use dist::sha256_of_file;
 
 /// `sync_file_reference.table_name` for a bundle's zip. The owning record's id is the
@@ -198,6 +202,98 @@ pub fn set_active(
     let updated = FrontendBundleRow { is_active, ..row };
     repo.upsert_one(&updated)?;
     Ok(updated)
+}
+
+/// Decide which bundle this server should be serving and make it so.
+///
+/// Run at startup and after a bundle download completes. Idempotent, and safe to call
+/// when there is nothing to do — which is the common case.
+///
+/// The rule (spec § Selection and serving): of the bundles that are active and whose
+/// `server_version` is compatible with this server, take the highest `version`; if its
+/// bytes are downloaded and verified, serve it; otherwise serve the installer-shipped
+/// baseline in `frontend_dir`.
+///
+/// A bundle that is the best candidate but not yet usable does **not** fall back to an
+/// older synced bundle: the older one keeps serving until the new one is genuinely ready,
+/// which is what makes activation a swap rather than a gap.
+pub fn reconcile_active_bundle(
+    ctx: &ServiceContext,
+    settings: &Settings,
+    active: &ActiveFrontendBundle,
+) -> Result<Option<ActiveBundle>, RepositoryError> {
+    let base_dir = &settings.server.base_dir;
+    let all = FrontendBundleRowRepository::new(&ctx.connection).all()?;
+    let previous = active.get();
+
+    let Some(best) = best_usable_bundle(&ctx.connection)? else {
+        // Nothing usable — serve the baseline. This is also the withdrawal path: central
+        // clears is_active and the site drops back.
+        if previous.is_some() {
+            log::info!("No usable front-end bundle; serving the packaged baseline");
+        }
+        active.set(None);
+        active::prune_unpacked(base_dir, None, &all);
+        return Ok(None);
+    };
+
+    // Already unpacked (e.g. from a previous run) — nothing to do but point at it.
+    let root = match active::unpacked_root(base_dir, &best.version) {
+        Some(root) => root,
+        None => {
+            let file_service = match StaticFileService::new(base_dir) {
+                Ok(service) => service,
+                Err(error) => {
+                    log::error!("Cannot access static files: {:#}", error);
+                    return Ok(previous);
+                }
+            };
+
+            match active::verify_and_unpack(&ctx.connection, &file_service, base_dir, &best) {
+                Ok(root) => root,
+                Err(active::ActivateBundleError::NotDownloaded { version }) => {
+                    // Expected: the record arrived before its bytes. The download queue
+                    // is working on it and this runs again when it lands.
+                    log::debug!("Front-end bundle {version} is not downloaded yet");
+                    return Ok(previous);
+                }
+                Err(error) => {
+                    // A checksum failure or a bad archive. Keep serving whatever we were
+                    // serving; a broken candidate must not take the UI down.
+                    log::error!(
+                        "Could not activate front-end bundle {}: {}",
+                        best.version,
+                        format_error(&error)
+                    );
+                    return Ok(previous);
+                }
+            }
+        }
+    };
+
+    let bundle = ActiveBundle {
+        version: best.version.clone(),
+        root,
+    };
+
+    if previous.as_ref() != Some(&bundle) {
+        log::info!(
+            "Serving front-end bundle {} (built for server {})",
+            bundle.version,
+            best.server_version
+        );
+    }
+    active.set(Some(bundle.clone()));
+
+    // Prune after activating, so the directory we just started serving is never a
+    // candidate for removal.
+    active::prune_unpacked(
+        base_dir,
+        bundle.root.file_name().and_then(|n| n.to_str()),
+        &all,
+    );
+
+    Ok(Some(bundle))
 }
 
 pub fn all_bundles(ctx: &ServiceContext) -> Result<Vec<FrontendBundleRow>, RepositoryError> {
@@ -558,6 +654,155 @@ mod test {
         .unwrap();
         assert!(matches!(again, PublishOutcome::AlreadyPublished(_)));
         assert_eq!(all_bundles(ctx).unwrap().len(), 1);
+    }
+
+    /// Publish → download → activate, then withdraw, in one pass.
+    ///
+    /// Publishing on central already leaves the zip on disk with a Done file reference,
+    /// which is exactly the state a remote is in once its background download finishes —
+    /// so this exercises the remote's activation path without a second server.
+    #[actix_rt::test]
+    async fn reconcile_activates_then_falls_back_on_withdrawal() {
+        let context = setup_all_and_service_provider(
+            "reconcile_activates_then_falls_back_on_withdrawal",
+            MockDataInserts::none(),
+        )
+        .await;
+        let ctx = &context.service_context;
+
+        let dist_dir = tempfile::tempdir().unwrap();
+        let base_dir = tempfile::tempdir().unwrap();
+        write_dist(dist_dir.path(), "v1.0.0");
+        let settings = settings_for(&context, dist_dir.path(), base_dir.path());
+        let active = ActiveFrontendBundle::new();
+
+        // Nothing published: serve the packaged baseline.
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &active).unwrap(),
+            None
+        );
+        assert_eq!(active.get(), None);
+
+        let first = publish_from_frontend_dir(ctx, &settings)
+            .unwrap()
+            .row()
+            .clone();
+
+        let activated = reconcile_active_bundle(ctx, &settings, &active)
+            .unwrap()
+            .expect("bundle should activate");
+        assert_eq!(activated.version, "v1.0.0");
+        assert_eq!(active.get(), Some(activated.clone()));
+        // Unpacked somewhere the Android app shell will not wipe on upgrade — under
+        // base_dir, never inside frontend_dir. Compared canonically, since the activated
+        // root is canonicalised (temp dirs sit behind a symlink on macOS).
+        assert!(activated
+            .root
+            .starts_with(base_dir.path().canonicalize().unwrap()));
+        assert!(!activated
+            .root
+            .starts_with(dist_dir.path().canonicalize().unwrap()));
+        assert_eq!(
+            std::fs::read_to_string(activated.root.join("index.html")).unwrap(),
+            "<html>app</html>"
+        );
+        // The old UI is never part of a bundle — it ships with the installer and is the
+        // escape hatch.
+        assert!(!activated.root.join("old-ui").exists());
+
+        // Idempotent: running again changes nothing.
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &active).unwrap(),
+            Some(activated.clone())
+        );
+
+        // A newer bundle wins once published.
+        write_dist(dist_dir.path(), "v1.1.0");
+        publish_from_frontend_dir(ctx, &settings).unwrap();
+        let newer = reconcile_active_bundle(ctx, &settings, &active)
+            .unwrap()
+            .unwrap();
+        assert_eq!(newer.version, "v1.1.0");
+        // The previous bundle's files survive the swap, so a tab still holding its
+        // content-hashed asset URLs keeps working until it reloads.
+        assert!(activated.root.join("index.html").is_file());
+
+        // Withdrawing the newest falls back to the older synced bundle, not the baseline.
+        set_active(ctx, &newer_id(ctx, "v1.1.0"), false).unwrap();
+        let fallen_back = reconcile_active_bundle(ctx, &settings, &active)
+            .unwrap()
+            .unwrap();
+        assert_eq!(fallen_back.version, "v1.0.0");
+
+        // Withdrawing them all falls back to the baseline.
+        set_active(ctx, &first.id, false).unwrap();
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &active).unwrap(),
+            None
+        );
+        assert_eq!(active.get(), None);
+    }
+
+    fn newer_id(ctx: &ServiceContext, version: &str) -> String {
+        all_bundles(ctx)
+            .unwrap()
+            .into_iter()
+            .find(|b| b.version == version)
+            .unwrap()
+            .id
+    }
+
+    /// Bytes that do not match the record's sha256 must never be served, and must not
+    /// wedge the site on a doomed retry loop.
+    #[actix_rt::test]
+    async fn reconcile_refuses_a_bundle_that_fails_its_checksum() {
+        let context = setup_all_and_service_provider(
+            "reconcile_refuses_a_bundle_that_fails_its_checksum",
+            MockDataInserts::none(),
+        )
+        .await;
+        let ctx = &context.service_context;
+
+        let dist_dir = tempfile::tempdir().unwrap();
+        let base_dir = tempfile::tempdir().unwrap();
+        write_dist(dist_dir.path(), "v1.0.0");
+        let settings = settings_for(&context, dist_dir.path(), base_dir.path());
+        let active = ActiveFrontendBundle::new();
+
+        let row = publish_from_frontend_dir(ctx, &settings)
+            .unwrap()
+            .row()
+            .clone();
+
+        // Corrupt the record's expectation, standing in for corrupt bytes on the wire.
+        FrontendBundleRowRepository::new(&ctx.connection)
+            .upsert_one(&FrontendBundleRow {
+                sha256: "0".repeat(64),
+                ..row.clone()
+            })
+            .unwrap();
+
+        // Serves the baseline rather than unverified bytes.
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &active).unwrap(),
+            None
+        );
+        assert_eq!(active.get(), None);
+        assert!(active::unpacked_root(&settings.server.base_dir, &row.version).is_none());
+
+        // The bad zip is discarded, so the download queue fetches it again rather than
+        // re-verifying the same corrupt file forever.
+        let references = SyncFileReferenceRowRepository::new(&ctx.connection)
+            .find_all_by_record_id(&row.id)
+            .unwrap();
+        let file_service = StaticFileService::new(&settings.server.base_dir).unwrap();
+        assert!(file_service
+            .find_file(
+                &references[0].id,
+                StaticFileCategory::SyncFile(FRONTEND_BUNDLE_TABLE.to_string(), row.id.clone())
+            )
+            .unwrap()
+            .is_none());
     }
 
     #[actix_rt::test]
