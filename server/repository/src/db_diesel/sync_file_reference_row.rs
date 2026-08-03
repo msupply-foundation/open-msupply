@@ -216,6 +216,19 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(())
     }
 
+    /// Every live reference belonging to one owning record — e.g. a front-end bundle's
+    /// dist zip, or an invoice's attachments. Excludes soft-deleted rows.
+    pub fn find_all_by_record_id(
+        &self,
+        owning_record_id: &str,
+    ) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+        let result = sync_file_reference
+            .filter(deleted_datetime.is_null())
+            .filter(record_id.eq(owning_record_id))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_all_to_upload(&self) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
         // NOTE: InProgress status here as the behaviour is a bit undefined. We should either upload a whole file or get an error.
         // It's included here in case the server is restarted with an Inprogress file, it will be re-tried.

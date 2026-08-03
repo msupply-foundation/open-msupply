@@ -67,6 +67,7 @@ pub mod name;
 pub mod name_property;
 pub mod number;
 pub mod permission;
+pub mod frontend_bundle;
 pub mod plugin;
 pub mod plugin_data;
 pub mod preference;

@@ -1,3 +1,4 @@
+pub mod frontend_bundle;
 pub mod login;
 mod plugin;
 

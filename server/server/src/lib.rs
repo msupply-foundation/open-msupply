@@ -41,6 +41,7 @@ use service::{
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    frontend_bundle,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
@@ -440,6 +441,25 @@ pub async fn start_server(
     }
 
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
+
+    // Publish the front-end bundle this server is serving, so remote sites can pick it
+    // up over sync (#12622). Central only — central is where bundles originate. Cheap
+    // and idempotent when the version hasn't changed, and deliberately non-fatal: a
+    // server that can't publish a bundle should still start and serve its own.
+    if CentralServerConfig::is_central_server() {
+        match frontend_bundle::publish_from_frontend_dir(&service_context, &settings) {
+            Ok(frontend_bundle::PublishOutcome::Published(row)) => {
+                info!("Published front-end bundle {} for sync", row.version)
+            }
+            Ok(frontend_bundle::PublishOutcome::AlreadyPublished(row)) => {
+                info!("Front-end bundle {} already published", row.version)
+            }
+            Err(e) => log::error!(
+                "Could not publish the front-end bundle for sync: {}",
+                format_error(&e)
+            ),
+        }
+    }
 
     // Log the server starting message with the startup timestamp
     let status_log = StatusLog(&connection);

@@ -408,6 +408,16 @@ impl GeneralQueries {
         frontend_plugin_metadata(ctx)
     }
 
+    /// Front-end bundles this site knows about. Available on remotes as well as
+    /// central: an administrator wants to see which bundles reached this site and
+    /// which is active, not only what central published.
+    pub async fn frontend_bundles(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<queries::frontend_bundle::FrontendBundleNode>> {
+        queries::frontend_bundle::frontend_bundles(ctx)
+    }
+
     pub async fn currencies(
         &self,
         ctx: &Context<'_>,
@@ -763,5 +773,31 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
+    }
+
+    /// Publish a front-end bundle from a zip uploaded via `POST /upload`. The hotfix
+    /// path — normally central publishes the dist it is serving, on startup.
+    ///
+    /// `server_version` says which server version the bundle was built against; an
+    /// uploaded zip carries no such claim, and it is what sites compare against their
+    /// own version. Defaults to this server's version.
+    pub async fn install_uploaded_frontend_bundle(
+        &self,
+        ctx: &Context<'_>,
+        file_id: String,
+        server_version: Option<String>,
+    ) -> Result<queries::frontend_bundle::PublishFrontendBundleNode> {
+        queries::frontend_bundle::install_uploaded_frontend_bundle(ctx, file_id, server_version)
+    }
+
+    /// Withdraw (or restore) a bundle. Withdrawing syncs to every site, which then
+    /// falls back to the next qualifying bundle or the installer-shipped baseline.
+    pub async fn set_frontend_bundle_active(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+        is_active: bool,
+    ) -> Result<queries::frontend_bundle::FrontendBundleNode> {
+        queries::frontend_bundle::set_frontend_bundle_active(ctx, id, is_active)
     }
 }

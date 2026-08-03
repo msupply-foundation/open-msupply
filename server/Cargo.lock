@@ -9615,6 +9615,7 @@ dependencies = [
  "util",
  "walkdir",
  "x509-parser",
+ "zip",
 ]
 
 [[package]]
