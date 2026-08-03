@@ -21,6 +21,7 @@ use general_processor::{process_records, ProcessorError};
 mod assign_prescription_number;
 mod assign_requisition_number;
 mod contact_form;
+mod frontend_bundle;
 mod general_processor;
 mod load_plugin;
 mod merge_sync_message;

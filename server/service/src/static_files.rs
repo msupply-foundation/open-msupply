@@ -1,14 +1,14 @@
 use actix_multipart::form::tempfile::TempFile;
 use anyhow::Context;
 use repository::sync_file_reference_row::SyncFileReferenceRow;
-use reqwest::Response;
+use reqwest::{Response, StatusCode};
 use serde::Serialize;
 use std::io::Error;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
-use tokio::fs::File;
+use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use util::uuid::uuid;
 use util::{move_file, sanitize_filename};
@@ -191,33 +191,83 @@ impl StaticFileService {
         Ok(Some((named_file, file)))
     }
 
-    pub async fn download_file_in_chunks(
-        &self,
-        sync_file: &SyncFileReferenceRow,
-        mut download_response: Response,
-    ) -> anyhow::Result<StaticFile> {
+    /// Where the on-disk partial download for this file has got to, in bytes. `0` when
+    /// there is nothing part-downloaded.
+    ///
+    /// Disk is the source of truth here, not `sync_file_reference.downloaded_bytes` —
+    /// the counter is best-effort bookkeeping written between attempts, while the
+    /// partial file's length is what a resumed request must actually continue from.
+    pub fn partial_download_offset(&self, sync_file: &SyncFileReferenceRow) -> u64 {
+        let Ok(path) = self.partial_path(sync_file) else {
+            return 0;
+        };
+        std::fs::metadata(path).map(|m| m.len()).unwrap_or(0)
+    }
+
+    fn partial_path(&self, sync_file: &SyncFileReferenceRow) -> anyhow::Result<PathBuf> {
         let category =
             StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
-
         let file =
             self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
-
-        // Stream into a `partial_`-prefixed name that find_file's `{id}_` prefix match can
-        // never surface, then rename into place once the stream completes — so an aborted
-        // download (dropped request, connection failure) is never served as a complete file.
-        // A stale partial file (e.g. this future dropped mid-await) is invisible to lookups
-        // and gets truncated by File::create on the next attempt.
         let final_path = PathBuf::from(&file.path);
-        let partial_path = final_path.with_file_name(format!(
+
+        // A `partial_`-prefixed name that find_file's `{id}_` prefix match can never
+        // surface, so a part-downloaded file is invisible to lookups and can never be
+        // served as if it were complete.
+        Ok(final_path.with_file_name(format!(
             "partial_{}",
             final_path
                 .file_name()
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_default()
-        ));
+        )))
+    }
+
+    /// Stream a download response into local static-file storage, renaming into place
+    /// only once the stream completes — so an aborted download is never served as a
+    /// complete file.
+    ///
+    /// `resume_from` is the offset the caller asked central to resume at (via a `Range`
+    /// header). A `206 Partial Content` response is appended to the existing partial
+    /// file; any other success status is treated as a whole-file response and truncates
+    /// it. Resuming is only sound because a synced file's bytes never change once
+    /// uploaded — replacing a file means a new id (see the file sync KDD) — so a partial
+    /// file and a later range of the same id always belong to the same bytes.
+    ///
+    /// On failure the partial file is deliberately **kept**, so the next attempt
+    /// continues rather than starting over. Returns the total size of the assembled
+    /// file.
+    pub async fn download_file_in_chunks(
+        &self,
+        sync_file: &SyncFileReferenceRow,
+        mut download_response: Response,
+        resume_from: u64,
+    ) -> anyhow::Result<(StaticFile, u64)> {
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
+
+        let file =
+            self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
+        let final_path = PathBuf::from(&file.path);
+        let partial_path = self.partial_path(sync_file)?;
+
+        // Central honours `Range` (its handler serves the file through actix's
+        // NamedFile), but a 200 means it sent the whole file anyway — so trust the
+        // status, not our own request, when deciding whether to append.
+        let is_partial_content = download_response.status() == StatusCode::PARTIAL_CONTENT;
+        let appending = is_partial_content && resume_from > 0;
 
         let download = async {
-            let mut file_handle = File::create(&partial_path).await?;
+            let mut file_handle = if appending {
+                OpenOptions::new()
+                    .append(true)
+                    .create(true)
+                    .open(&partial_path)
+                    .await?
+            } else {
+                File::create(&partial_path).await?
+            };
+
             loop {
                 let Some(bytes) = download_response.chunk().await? else {
                     break;
@@ -229,19 +279,34 @@ impl StaticFileService {
             Ok::<_, anyhow::Error>(())
         };
 
-        if let Err(error) = download.await {
-            let _ = std::fs::remove_file(&partial_path);
-            return Err(error);
-        }
+        // Keep the partial file on error: continuing from where a bad link cut out is
+        // the whole point, and a stale partial is invisible to lookups.
+        download.await?;
+
+        let total_bytes = std::fs::metadata(&partial_path)
+            .map(|m| m.len())
+            .unwrap_or(0);
 
         // Same directory, so the rename is atomic.
         std::fs::rename(&partial_path, &final_path)?;
 
-        Ok(StaticFile {
-            id: sync_file.id.clone(),
-            name: sync_file.file_name.clone(),
-            path: file.path.to_string(),
-        })
+        Ok((
+            StaticFile {
+                id: sync_file.id.clone(),
+                name: sync_file.file_name.clone(),
+                path: file.path.to_string(),
+            },
+            total_bytes,
+        ))
+    }
+
+    /// Discard a part-downloaded file so the next attempt starts from zero. For when a
+    /// resumed download cannot be trusted — e.g. the assembled bytes failed their
+    /// checksum, so the partial was corrupt and resuming would fail forever.
+    pub fn discard_partial_download(&self, sync_file: &SyncFileReferenceRow) {
+        if let Ok(path) = self.partial_path(sync_file) {
+            let _ = std::fs::remove_file(path);
+        }
     }
 }
 
@@ -415,15 +480,19 @@ mod test {
             .await
             .unwrap();
 
-        let file = service
-            .download_file_in_chunks(&sync_file, response)
+        let (file, bytes) = service
+            .download_file_in_chunks(&sync_file, response, 0)
             .await
             .unwrap();
 
         assert_eq!(fs::read_to_string(&file.path).unwrap(), "hello file bytes");
+        assert_eq!(bytes, "hello file bytes".len() as u64);
 
         // The completed file is served under its final name…
-        assert!(service.find_file("file1", category.clone()).unwrap().is_some());
+        assert!(service
+            .find_file("file1", category.clone())
+            .unwrap()
+            .is_some());
 
         // …and no partial_ working file remains in the directory.
         let dir = temp_dir.path().join(category.to_path_buf());
@@ -438,5 +507,180 @@ mod test {
             "partial files left behind: {:?}",
             leftovers
         );
+    }
+
+    /// A download cut off partway is resumed from where it stopped, not restarted.
+    ///
+    /// Restarting from zero is how a large file over a bad link never finishes, so this
+    /// asserts the whole cycle: interrupted attempt keeps its bytes, the retry asks for
+    /// the right range, and the assembled file is byte-correct.
+    #[actix_rt::test]
+    async fn interrupted_download_resumes_from_its_partial_file() {
+        use httpmock::{Method::GET, MockServer};
+        use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+        const WHOLE: &str = "hello file bytes";
+        let split_at = 6; // "hello " / "file bytes"
+
+        // First attempt: a one-shot TCP server that promises the whole file in
+        // Content-Length, sends only part of it, then closes. A mock HTTP server won't
+        // do this (hyper rejects a body that contradicts its own header), but it is
+        // exactly what a dropped connection looks like to the client.
+        let truncated = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let truncated_url = format!("http://{}/file", truncated.local_addr().unwrap());
+        let truncating_server = std::thread::spawn(move || {
+            use std::io::{Read, Write};
+            let (mut stream, _) = truncated.accept().unwrap();
+            // Read the request so the client isn't blocked writing it.
+            let mut buffer = [0u8; 1024];
+            let _ = stream.read(&mut buffer);
+            let head = format!("HTTP/1.1 200 OK\r\ncontent-length: {}\r\n\r\n", WHOLE.len());
+            stream.write_all(head.as_bytes()).unwrap();
+            stream.write_all(&WHOLE.as_bytes()[..split_at]).unwrap();
+            stream.flush().unwrap();
+            // Drop the stream: body ends early, client sees an incomplete message.
+        });
+
+        let mock_server = MockServer::start();
+        // Second attempt: the remainder, as central's NamedFile would answer a Range.
+        let second = mock_server.mock(|when, then| {
+            when.method(GET)
+                .path("/file")
+                .header("Range", format!("bytes={split_at}-"));
+            then.status(206)
+                .header(
+                    "content-range",
+                    format!("bytes {}-{}/{}", split_at, WHOLE.len() - 1, WHOLE.len()),
+                )
+                .body(&WHOLE[split_at..]);
+        });
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().to_path_buf();
+
+        let sync_file = SyncFileReferenceRow {
+            id: "resumable".to_string(),
+            table_name: "frontend_bundle".to_string(),
+            record_id: "bundle1".to_string(),
+            file_name: "frontend-dist.zip".to_string(),
+            total_bytes: WHOLE.len() as i32,
+            ..Default::default()
+        };
+        let category =
+            StaticFileCategory::SyncFile("frontend_bundle".to_string(), "bundle1".to_string());
+
+        // Nothing downloaded yet.
+        assert_eq!(service.partial_download_offset(&sync_file), 0);
+
+        // First attempt fails mid-stream.
+        let response = reqwest::get(&truncated_url).await.unwrap();
+        let result = service
+            .download_file_in_chunks(&sync_file, response, 0)
+            .await;
+        assert!(result.is_err(), "truncated body should not succeed");
+        truncating_server.join().unwrap();
+
+        // The bytes received so far are kept — that is what makes the retry cheap.
+        assert_eq!(service.partial_download_offset(&sync_file), split_at as u64);
+        // And the incomplete file is not discoverable as a finished one.
+        assert!(service
+            .find_file("resumable", category.clone())
+            .unwrap()
+            .is_none());
+
+        // Second attempt resumes: send the Range the offset implies.
+        let offset = service.partial_download_offset(&sync_file);
+        let response = reqwest::Client::new()
+            .get(format!("{}/file", mock_server.base_url()))
+            .header(reqwest::header::RANGE, format!("bytes={offset}-"))
+            .send()
+            .await
+            .unwrap();
+        let (file, bytes) = service
+            .download_file_in_chunks(&sync_file, response, offset)
+            .await
+            .unwrap();
+        second.assert();
+
+        // Appended, not overwritten — the whole file is intact.
+        assert_eq!(fs::read_to_string(&file.path).unwrap(), WHOLE);
+        assert_eq!(bytes, WHOLE.len() as u64);
+        assert!(service.find_file("resumable", category).unwrap().is_some());
+        assert_eq!(service.partial_download_offset(&sync_file), 0);
+    }
+
+    /// If central answers 200 rather than 206 (it ignored the Range), the partial must be
+    /// truncated rather than appended to — appending a whole file onto a partial one is
+    /// how you silently corrupt a download.
+    #[actix_rt::test]
+    async fn whole_file_response_replaces_a_partial_rather_than_appending() {
+        use httpmock::{Method::GET, MockServer};
+        use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+        const WHOLE: &str = "hello file bytes";
+
+        let mock_server = MockServer::start();
+        mock_server.mock(|when, then| {
+            when.method(GET).path("/file");
+            then.status(200).body(WHOLE);
+        });
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().to_path_buf();
+
+        let sync_file = SyncFileReferenceRow {
+            id: "ignored-range".to_string(),
+            table_name: "frontend_bundle".to_string(),
+            record_id: "bundle2".to_string(),
+            file_name: "frontend-dist.zip".to_string(),
+            ..Default::default()
+        };
+
+        // Pre-seed a partial file, as an earlier interrupted attempt would have left.
+        let partial_path = service.partial_path(&sync_file).unwrap();
+        fs::create_dir_all(partial_path.parent().unwrap()).unwrap();
+        fs::write(&partial_path, "hello ").unwrap();
+        assert_eq!(service.partial_download_offset(&sync_file), 6);
+
+        let response = reqwest::get(format!("{}/file", mock_server.base_url()))
+            .await
+            .unwrap();
+        let (file, bytes) = service
+            .download_file_in_chunks(&sync_file, response, 6)
+            .await
+            .unwrap();
+
+        // Exactly the whole file, not "hello " + the whole file.
+        assert_eq!(fs::read_to_string(&file.path).unwrap(), WHOLE);
+        assert_eq!(bytes, WHOLE.len() as u64);
+    }
+
+    #[actix_rt::test]
+    async fn discard_partial_download_forces_a_fresh_start() {
+        use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().to_path_buf();
+
+        let sync_file = SyncFileReferenceRow {
+            id: "discardable".to_string(),
+            table_name: "frontend_bundle".to_string(),
+            record_id: "bundle3".to_string(),
+            file_name: "frontend-dist.zip".to_string(),
+            ..Default::default()
+        };
+
+        let partial_path = service.partial_path(&sync_file).unwrap();
+        fs::create_dir_all(partial_path.parent().unwrap()).unwrap();
+        fs::write(&partial_path, "corrupt").unwrap();
+        assert_eq!(service.partial_download_offset(&sync_file), 7);
+
+        // Used when the assembled bytes fail their checksum: resuming from a corrupt
+        // partial would fail forever.
+        service.discard_partial_download(&sync_file);
+        assert_eq!(service.partial_download_offset(&sync_file), 0);
     }
 }

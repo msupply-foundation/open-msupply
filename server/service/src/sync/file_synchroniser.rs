@@ -15,8 +15,8 @@ use repository::{
 
 use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
-use crate::sync::api_v6::SyncApiV6;
 use crate::sync::api_v6::upload_file::UploadOutcome;
+use crate::sync::api_v6::SyncApiV6;
 use crate::sync::settings::SYNC_V5_VERSION;
 use crate::sync_v7::api::SyncApiV7;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
@@ -148,6 +148,92 @@ impl FileSynchroniser {
         sync_file_repo.upsert_without_changelog(&file_row_update)?;
 
         Ok(download_result?)
+    }
+
+    /// Download one queued file, returning how many are still queued (including the one
+    /// just attempted, if it failed).
+    ///
+    /// The mirror of [`Self::sync`] for the other direction: the queue is the set of
+    /// references this site has explicitly asked to hold
+    /// ([`SyncFileReferenceRowRepository::find_all_to_download`]), which is what keeps a
+    /// site from pulling every file reference it has ever been told about. Something else
+    /// decides *what* is worth having — for front-end bundles, the frontend_bundle
+    /// processor — and this only moves bytes.
+    pub(crate) async fn download(&self) -> Result<usize /* number of files */, FileSyncError> {
+        let ctx = self.service_provider.basic_context()?;
+        let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+
+        let queued = sync_file_repo.find_all_to_download()?;
+        let Some(sync_file_reference) = queued.first() else {
+            return Ok(0);
+        };
+
+        // Local-only progress flicker; no changelog (other sites don't care what this
+        // one is fetching).
+        sync_file_repo.upsert_without_changelog(&SyncFileReferenceRow {
+            status: SyncFileStatus::InProgress,
+            ..sync_file_reference.clone()
+        })?;
+
+        let result = self
+            .download_file_from_central(&sync_file_reference.id)
+            .await;
+
+        // download_file_from_central already records the terminal status and the error
+        // text. What it can't do is schedule the next attempt, because it also serves
+        // the on-demand path where a user is waiting and a retry schedule is
+        // meaningless. So the backoff belongs here, in the background queue.
+        if let Err(error) = &result {
+            // Re-read: the status write above and the one inside the download both
+            // touched this row.
+            let current = sync_file_repo
+                .find_one_by_id(&sync_file_reference.id)?
+                .unwrap_or_else(|| sync_file_reference.clone());
+
+            let update = if current.retries >= MAX_UPLOAD_ATTEMPTS {
+                SyncFileReferenceRow {
+                    status: SyncFileStatus::PermanentFailure,
+                    ..current
+                }
+            } else {
+                let retry_at = Utc::now().naive_utc()
+                    + Duration::minutes(cmp::min(
+                        RETRY_DELAY_MINUTES * i64::pow(2, current.retries as u32),
+                        MAX_RETRY_DELAY_MINUTES,
+                    ));
+                SyncFileReferenceRow {
+                    status: SyncFileStatus::Error,
+                    retries: current.retries + 1,
+                    retry_at: Some(retry_at),
+                    // Bytes already on disk are kept, so record how far we got — the
+                    // next attempt resumes from there.
+                    downloaded_bytes: self
+                        .static_file_service
+                        .partial_download_offset(sync_file_reference)
+                        as i32,
+                    ..current
+                }
+            };
+
+            // Retry counters and progress are local-only, so this needn't sync.
+            sync_file_repo.upsert_without_changelog(&update)?;
+
+            log::warn!(
+                "Failed to download sync file {}: {}",
+                sync_file_reference.id,
+                format_error(error)
+            );
+            return Ok(queued.len());
+        }
+
+        log::info!(
+            "Downloaded sync file {} for {}",
+            sync_file_reference.id,
+            sync_file_reference.table_name
+        );
+
+        // One fewer queued, since this one is now Done.
+        Ok(queued.len() - 1)
     }
 
     pub(crate) async fn sync(

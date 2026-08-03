@@ -409,6 +409,12 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::MergeSyncMessage);
+
+    // Newly arrived bundle records may mean this site should be holding a different
+    // front-end bundle. This only queues the download; the file sync driver moves the
+    // bytes afterwards, once this sync has released its pause.
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::FrontendBundle);
 }
 
 /// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.

@@ -21,8 +21,8 @@ use crate::{
 
 use super::{
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
-    load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
-    plugin_processor::PluginProcessor,
+    frontend_bundle::RequestFrontendBundleDownload, load_plugin::LoadPlugin,
+    merge_sync_message::MergeSyncMessageProcessor, plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
     support_upload_files::SupportUploadFilesProcessor,
 };
@@ -57,6 +57,7 @@ pub enum ProcessorType {
     Plugins,
     RequisitionAutoFinalise,
     MergeSyncMessage,
+    FrontendBundle,
 }
 
 impl ProcessorType {
@@ -80,6 +81,7 @@ impl ProcessorType {
                 vec![Box::new(SupportUploadFilesProcessor)]
             }
             ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
+            ProcessorType::FrontendBundle => vec![Box::new(RequestFrontendBundleDownload)],
         }
     }
 

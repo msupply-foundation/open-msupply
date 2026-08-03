@@ -27,14 +27,22 @@ impl SyncApiV6 {
             sync_v6_version: *sync_v6_version,
         };
 
-        let request = https_client().post(url.clone()).json(&request);
+        // Resume from an earlier partial download; see the v7 equivalent for why this
+        // needs nothing on the central side.
+        let resume_from = static_file_service.partial_download_offset(sync_file);
+
+        let mut request = https_client().post(url.clone()).json(&request);
+        if resume_from > 0 {
+            request = request.header(reqwest::header::RANGE, format!("bytes={resume_from}-"));
+        }
         let result = request.send().await;
 
         let downloaded_file = match download_response_or_err(result).await {
             Err(error) => Err(error),
             Ok(download_response) => static_file_service
-                .download_file_in_chunks(sync_file, download_response)
+                .download_file_in_chunks(sync_file, download_response, resume_from)
                 .await
+                .map(|(file, _bytes)| file)
                 .map_err(SyncApiErrorVariantV6::Other),
         }
         .map_err(|source| SyncApiErrorV6 {

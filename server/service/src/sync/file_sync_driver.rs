@@ -19,8 +19,8 @@ use tokio::{
 };
 use util::format_error;
 
-const FILE_SYNC_UPLOAD_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between uploading files
-const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to upload or there was an error, wait a longer before checking again
+const FILE_SYNC_TRANSFER_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between transferring files
+const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to transfer or there was an error, wait a longer before checking again
 
 pub enum FileSyncMessage {
     Start, // Start sync (could be manual trigger, or automatic on server startup)
@@ -85,6 +85,7 @@ impl FileSyncDriver {
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>) {
         let mut stopped = false;
         let mut files_to_upload = 0;
+        let mut files_to_download = 0;
 
         loop {
             // Need to check is_initialised from database on every iteration, since it could have been updated
@@ -108,12 +109,12 @@ impl FileSyncDriver {
                     // unobserved for up to FILE_SYNC_NO_FILES_DELAY. The match against Ok ignores
                     // sender-dropped errors (which only happen during shutdown).
                     Ok(()) = self.pause_rx.changed() => {},
-                    // OR wait between downloading files
+                    // OR wait between transferring files
                     _ = async {
-                        if files_to_upload == 0 {
+                        if files_to_upload == 0 && files_to_download == 0 {
                             tokio::time::sleep(FILE_SYNC_NO_FILES_DELAY).await;
                         } else {
-                            tokio::time::sleep(FILE_SYNC_UPLOAD_DELAY).await;
+                            tokio::time::sleep(FILE_SYNC_TRANSFER_DELAY).await;
                         }
                     } => {},
                     else => break,
@@ -131,14 +132,60 @@ impl FileSyncDriver {
             // across the await point and the whole `run` future becomes !Send.
             let paused = *self.pause_rx.borrow();
 
-            // If not stopped or paused and we have a central server URL to upload to
+            // If not stopped or paused and we have a central server URL to transfer with
             // (file bytes only ever transfer remote ↔ central, never on central itself)
             if !stopped && !paused {
                 if let Some(url) = file_sync_central_url(&service_provider) {
                     files_to_upload = self
                         .sync(&url, service_provider.clone(), self.pause_rx.clone())
                         .await;
+
+                    // Uploads first: a site's own data reaching central matters more
+                    // than this site catching up on files it has asked for. Both yield
+                    // to normal sync via the same pause signal, re-checked here because
+                    // the upload above may have taken a while.
+                    if !*self.pause_rx.borrow() {
+                        files_to_download = self.download(&url, service_provider.clone()).await;
+                    }
                 }
+            }
+        }
+    }
+
+    /// Drain one file from the background download queue. Returns how many remain
+    /// queued, which the loop above uses to choose its next delay.
+    pub async fn download(
+        &self,
+        sync_v6_url: &str,
+        service_provider: Arc<ServiceProvider>,
+    ) -> usize {
+        let synchroniser = FileSynchroniser::new(
+            sync_v6_url,
+            get_sync_settings(&service_provider),
+            service_provider,
+            self.static_file_service.clone(),
+        );
+
+        let synchroniser = match synchroniser {
+            Ok(synchroniser) => synchroniser,
+            Err(error) => {
+                log::error!("Problem creating file synchroniser {error:#?}");
+                return 0;
+            }
+        };
+
+        match synchroniser.download().await {
+            Ok(remaining) => {
+                if remaining > 0 {
+                    log::info!("{remaining} files still queued for download");
+                }
+                remaining
+            }
+            Err(error) => {
+                // Per-file failures are already recorded against the row (with a retry
+                // schedule); this is the "couldn't even look" case.
+                log::error!("Problem downloading files {}", format_error(&error));
+                0
             }
         }
     }

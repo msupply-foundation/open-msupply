@@ -31,14 +31,9 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Postgres stores changelog_table_name as an ENUM, so the value must exist
-        // before any changelog row can reference it. SQLite stores it as TEXT.
-        if cfg!(feature = "postgres") {
-            sql!(
-                connection,
-                r#"ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'frontend_bundle';"#
-            )?;
-        }
+        // No changelog enum change needed on PG: `changelog.table_name` is plain TEXT
+        // after `alter_changelog_table_for_sync_v7`, which drops the old
+        // `changelog_table_name` type. An `ALTER TYPE` here would fail on Postgres.
 
         Ok(())
     }

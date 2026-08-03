@@ -427,6 +427,8 @@ fn create_stopgap_row(
         direction: SyncFileDirection::Upload,
         created_datetime: Utc::now().naive_utc(),
         deleted_datetime: None,
+        // This is central receiving an upload; it never downloads the bytes.
+        download_requested_datetime: None,
     };
     SyncFileReferenceRowRepository::new(&ctx.connection)
         .upsert_without_changelog(&row)

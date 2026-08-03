@@ -15,6 +15,7 @@ mod add_site_multi_device;
 mod add_site_sync_metadata;
 mod add_site_sync_version;
 mod add_sync_batch_size_key_value_store;
+mod add_sync_file_download_request;
 mod add_sync_log_v7;
 mod add_sync_log_v7_reference;
 mod add_sync_request;
@@ -99,6 +100,7 @@ impl Migration for V3_00_00 {
             Box::new(add_site_sync_metadata::Migrate),
             Box::new(add_sync_batch_size_key_value_store::Migrate),
             Box::new(add_frontend_bundle_table::Migrate),
+            Box::new(add_sync_file_download_request::Migrate),
         ]
     }
 }

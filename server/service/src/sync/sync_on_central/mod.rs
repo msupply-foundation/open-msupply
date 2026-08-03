@@ -451,6 +451,8 @@ pub async fn upload_file(
                     direction: SyncFileDirection::Upload,
                     created_datetime: Utc::now().naive_utc(),
                     deleted_datetime: None,
+                    // Central holds the bytes already; it never downloads them.
+                    download_requested_datetime: None,
                 },
                 _ => {
                     return Err(Error::SyncFileNotFound(file_id.clone()));

@@ -38,11 +38,23 @@ impl SyncApiV7 {
         };
         let auth_headers = self.auth_headers.clone();
 
+        // Resume where a previous attempt left off. Central serves the file through
+        // actix's NamedFile, which honours `Range` and answers 206 — so resuming needs
+        // nothing on the central side. A central that ignored the header would answer
+        // 200 with the whole file, which download_file_in_chunks handles by starting
+        // over rather than corrupting the partial.
+        let resume_from = static_file_service.partial_download_offset(sync_file);
+        let range = (resume_from > 0).then(|| format!("bytes={resume_from}-"));
+
         let result = with_retries(RetrySeconds::default(), |client| {
-            client
+            let request = client
                 .post(url.clone())
                 .headers(auth_headers.clone())
-                .json(&input)
+                .json(&input);
+            match &range {
+                Some(range) => request.header(reqwest::header::RANGE, range),
+                None => request,
+            }
         })
         .await;
 
@@ -76,8 +88,9 @@ impl SyncApiV7 {
         }
 
         static_file_service
-            .download_file_in_chunks(sync_file, response)
+            .download_file_in_chunks(sync_file, response, resume_from)
             .await
+            .map(|(file, _bytes)| file)
             .map_err(|e| SyncError::Other(format!("Failed to store downloaded file: {e:#}")))
     }
 }

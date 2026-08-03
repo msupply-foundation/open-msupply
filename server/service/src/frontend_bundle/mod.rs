@@ -357,7 +357,7 @@ mod test {
         let outcome = publish_from_frontend_dir(&ctx, &settings).unwrap();
         let row = match &outcome {
             PublishOutcome::Published(row) => row.clone(),
-            other => panic!("expected Published, got {other:?}"),
+            other => panic!("expected Published, got {:?}", other),
         };
 
         assert_eq!(row.version, "v1.2.3");
@@ -520,7 +520,7 @@ mod test {
 
         let row = match &outcome {
             PublishOutcome::Published(row) => row.clone(),
-            other => panic!("expected Published, got {other:?}"),
+            other => panic!("expected Published, got {:?}", other),
         };
         assert_eq!(row.version, "v2.0.0");
         // The version read out of the zip, and the caller-supplied server version —

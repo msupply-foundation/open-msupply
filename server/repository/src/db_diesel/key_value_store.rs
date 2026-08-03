@@ -40,6 +40,7 @@ pub enum KeyType {
     RequisitionAutoFinaliseProcessorCursor,
     SupportUploadFilesProcessorCursor,
     MergeSyncMessageProcessorCursor,
+    FrontendBundleProcessorCursor,
     ChangelogDedupCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
