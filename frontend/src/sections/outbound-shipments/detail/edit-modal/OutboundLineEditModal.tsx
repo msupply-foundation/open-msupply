@@ -14,6 +14,7 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import {
   CancelButton,
   DialogSaveButton,
@@ -1447,8 +1448,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       </div>
 
       {/* The grid + footer + banners keep their own item gate — the header
-          row above renders its picker item-less in add mode. */}
-      <Show when={item()}>
+          row above renders its picker item-less in add mode. Before a pick, a
+          centred prompt says what the empty body is waiting for (as the
+          stocktake editor's, #884) rather than leaving the modal blank. */}
+      <Show
+        when={item()}
+        fallback={
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-issue')}
+          />
+        }
+      >
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
         <div class={styles.batchGrid}>
