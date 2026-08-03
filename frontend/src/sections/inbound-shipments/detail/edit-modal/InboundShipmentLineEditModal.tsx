@@ -339,9 +339,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (ui/utils/createFocusTarget).
   const topSelector = createFocusTarget();
 
-  // Card-only: default the view to card at every band (compact already forces
-  // card; this extends it to desktop). No showCardToggle on the DataTable, so
-  // there's no way to a table view — the batch grid is always cards.
+  // Cards by default at every band (compact already forces card; this extends
+  // it to desktop). Above the compact breakpoint the DataTable's showCardToggle
+  // offers the flip to a table for anyone who prefers it, and setConfig
+  // persists that choice per user (#886) — so this seed is only the default.
   const tableConfig = createTableConfig({
     tableId: 'inbound-line-edit',
     defaultConfig: { base: { viewMode: 'card' } },
@@ -1375,6 +1376,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               rows={rows()}
               rowKey={b => b.id}
               cardGroups={CARD_GROUPS}
+              showCardToggle
               showFullScreen={false}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
