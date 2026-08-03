@@ -116,6 +116,12 @@
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
+  /* Tighter inset than an `auto` dialog's even --space-6. A workbench modal's
+     content IS the screen — a line editor's batch cards, a picker's table — so
+     the block padding is the one part of its chrome that buys nothing, and at
+     --space-6 it spent 4rem of a ~90vh box on empty margin (#872). Inline stays
+     generous: the cards' own edges want room from the panel. */
+  padding: var(--space-4) var(--space-5);
 }
 
 /* No surface means no inset either — the children sit against the dialog box, so
@@ -240,7 +246,6 @@
   flex-wrap: wrap;
   justify-content: flex-end;
 }
-
 
 @media (prefers-reduced-motion: no-preference) {
   .dialog[open] {
