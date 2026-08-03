@@ -1333,6 +1333,23 @@ impl BackendPluginRow {
     }
 }
 
+impl FrontendBundleRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::FrontendBundle,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
 impl FrontendPluginRow {
     pub(crate) fn generate_changelog(
         record_id: String,

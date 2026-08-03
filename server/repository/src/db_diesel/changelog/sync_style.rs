@@ -307,6 +307,15 @@ impl ChangelogTableName {
                 transport: V6,
                 multi_device_site: true,
             },
+            // Published front-end bundles. The record reaches every site; the site
+            // decides locally whether it can run the bundle before downloading its
+            // bytes (which travel as a sync_file_reference, not in this row).
+            FrontendBundle => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V7_ONLY,
+                multi_device_site: true,
+            },
             FrontendPlugin => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],

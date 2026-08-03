@@ -57,6 +57,7 @@ pub enum Row {
     Campaign(CampaignRow),
     Demographic(DemographicRow),
     FormSchema(FormSchemaRow),
+    FrontendBundle(FrontendBundleRow),
     FrontendPlugin(FrontendPluginRow),
     HelpDocument(HelpDocumentRow),
     ItemVariant(ItemVariantRow),
@@ -470,6 +471,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::FormSchema => {
                 for r in FormSchemaRowRepository::new(connection).find_many_rows_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::FormSchema(r));
+                }
+            }
+            ChangelogTableName::FrontendBundle => {
+                for r in FrontendBundleRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::FrontendBundle(r));
                 }
             }
             ChangelogTableName::FrontendPlugin => {

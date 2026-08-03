@@ -90,6 +90,7 @@ diesel_string_enum! {
         DocumentRegistry,
         Encounter,
         FormSchema,
+        FrontendBundle,
         FrontendPlugin,
         HelpDocument,
         IndicatorColumn,
