@@ -3,7 +3,6 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import type { LocaleKey } from '../../../../intl/locales';
 import { dictionaries, locale } from '../../../../intl/intl';
-import { localisedTime } from '../../../../intl/formatDateTime';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import {
   DataTable,
@@ -131,7 +130,10 @@ export const InboundShipmentLogPanel: Component<{
       ...getCellDefinition('date'),
     },
     {
-      c: { accessor: log => localisedTime(log.datetime), id: 'time' },
+      // The RAW datetime: the `time` preset's cell formats it itself, so
+      // formatting here as well would hand it a clock string and throw
+      // "Invalid time value" (date-fns `format` on an unparseable value).
+      c: { accessor: log => log.datetime, id: 'time' },
       header: () => t('label.time'),
       ...getCellDefinition('time'),
     },

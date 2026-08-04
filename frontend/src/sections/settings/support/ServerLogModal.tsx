@@ -134,7 +134,13 @@ export const ServerLogModal = (props: {
           >
             {t('button.copy-to-clipboard')}
           </Button>
-          <Button onClick={close} data-testid="dialog-button-ok">
+          {/* Save-to-file and copy-to-clipboard are side actions on the log, not
+              this dialog's confirm, so they claim no role; OK is the way out. */}
+          <Button
+            confirms="plain"
+            onClick={close}
+            data-testid="dialog-button-ok"
+          >
             {t('button.ok')}
           </Button>
         </>

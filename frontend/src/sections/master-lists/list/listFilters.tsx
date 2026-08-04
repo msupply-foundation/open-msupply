@@ -35,7 +35,7 @@ const FILTERS: Filter<MasterListsFilter>[] =
       render: props => (
         <FilterTextInput
           label={t('label.name')}
-          placeholder={t('placeholder.search-by-master-list-name')}
+          placeholder={t('placeholder.search')}
           // e2e hook: FilterBar supplies `filter-input-name` (TESTIDS.md).
           testId={props.testId}
           value={props.filter().name?.like ?? ''}

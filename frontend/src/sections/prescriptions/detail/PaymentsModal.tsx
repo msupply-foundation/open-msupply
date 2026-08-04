@@ -243,13 +243,19 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
               window, which disposes any plugin contribution inside it and
               RELEASES its after-save handler — so a click landing between the
               host's mutation and the plugin's own write would silently drop
-              that write. */}
+              that write. Gating it also hands its cancel role back for the
+              duration (createConfirmClaim releases on unmount). */}
           <Show when={!busy()}>
-            <Button variant="secondary" onClick={props.onClose}>
+            <Button
+              variant="secondary"
+              confirms="cancel"
+              onClick={props.onClose}
+            >
               {t('button.cancel')}
             </Button>
           </Show>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={busy()}
             onClick={() => void confirm()}

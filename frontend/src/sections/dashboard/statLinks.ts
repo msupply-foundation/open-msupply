@@ -8,9 +8,10 @@
 // target lists' own filter types, so a drift in their contract stops compiling
 // here).
 //
-// Lists that don't exist yet (customer requisitions) get their registered
-// placeholder, unfiltered — they begin filtering once the list ships
-// (contract.md § navigation correspondence, OMS-REG-DB-01.57).
+// A list that doesn't exist yet gets its registered placeholder, unfiltered,
+// and begins filtering once the list ships (contract.md § navigation
+// correspondence, OMS-REG-DB-01.57) — no built-in stat is in that state now
+// that the requisitions list has shipped.
 //
 // Pure: `today` is injected so the window maths is unit-testable.
 
@@ -23,6 +24,7 @@ import {
 import type { InboundListFilter } from '@/sections/inbound-shipments/list/listFilters';
 import type { InternalOrderFilter } from '@/sections/internal-orders/list/listFilters';
 import type { OutboundFilter } from '@/sections/outbound-shipments/list/listFilters';
+import type { RequisitionFilter } from '@/sections/requisitions/list/listFilters';
 import type { StockFilter } from '@/sections/stock/list/listFilters';
 import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
@@ -136,9 +138,28 @@ export const outboundNotShippedHref = (storeId: string): string =>
     status: { equalAny: ['NEW', 'ALLOCATED', 'PICKED'] },
   } satisfies OutboundFilter);
 
-// Customer-requisition list: registered placeholder (vertical not built yet).
+// Customer requisitions — the requisitions list (response requisitions). Its
+// own filter contract, unremapped; `type` is pinned to RESPONSE by the list
+// itself, so no link carries it. The panel title opens the list unfiltered.
 export const customerRequisitionListHref = (storeId: string): string =>
   listHref(storeId, 'distribution/customer-requisition');
+
+// New = response requisitions in New (rules.md § customer requisitions;
+// OMS-REG-DB-01.38, .59) — the list's single-select status filter.
+export const customerRequisitionNewHref = (storeId: string): string =>
+  listHref(storeId, 'distribution/customer-requisition', {
+    status: { equalTo: 'NEW' },
+  } satisfies RequisitionFilter);
+
+// Emergency (new) = the New set narrowed to emergency — a subset of the stat
+// above (OMS-REG-DB-01.39, .59). Both the stat and the list's `isEmergency`
+// control are gated by the same program-module preference, so this link never
+// carries a filter the target list would hide.
+export const customerRequisitionEmergencyHref = (storeId: string): string =>
+  listHref(storeId, 'distribution/customer-requisition', {
+    status: { equalTo: 'NEW' },
+    isEmergency: true,
+  } satisfies RequisitionFilter);
 
 // ── Inventory ────────────────────────────────────────────────────────────────
 
@@ -227,7 +248,7 @@ export const itemsLowStockHref = (
   understockMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    maxMonthsOfStock: understockMonths,
+    monthsOfStock: { to: understockMonths },
   } satisfies ItemsListFilter);
 
 // High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50
@@ -237,7 +258,7 @@ export const itemsHighStockHref = (
   overstockMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    minMonthsOfStock: overstockMonths,
+    monthsOfStock: { from: overstockMonths },
   } satisfies ItemsListFilter);
 
 // Overstocked: months of stock above the over-stock-alert threshold
@@ -248,5 +269,5 @@ export const itemsOverstockedHref = (
   overstockAlertMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    minMonthsOfStock: overstockAlertMonths,
+    monthsOfStock: { from: overstockAlertMonths },
   } satisfies ItemsListFilter);

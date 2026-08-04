@@ -177,6 +177,19 @@
 .content {
   display: flex;
   flex-direction: column;
+  /* Match the trigger, which is what `sameWidth` (the default — see
+     matchTriggerWidth) promises. Kobalte writes BOTH `width: <trigger>px` and
+     `min-width: max-content` inline on the popper positioner, and the
+     max-content floor outranks the width on the same element — so the positioner
+     grew to its widest option row and the panel with it. A trigger-width
+     dropdown therefore rendered wider than its trigger, overhanging both sides
+     and, in an inset dialog, spilling past the panel edge into the scrim (#884).
+     Capping the panel caps the positioner's max-content in turn, which is what
+     lets its own `width` take effect — the inline floor can't be overridden from
+     here. Cap ONLY: the panel still fills the positioner it's given. */
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: var(--kb-popper-anchor-width, none);
   max-height: min(18rem, var(--kb-popper-content-available-height));
   padding: var(--space-2);
   background: var(--surface-raised);
@@ -190,11 +203,13 @@
 
 /* Size-to-content popup (matchTriggerWidth={false}): never narrower than the
    trigger, capped so long option text stays readable and never runs past the
-   viewport edge. Being absolutely positioned, the popup shrink-to-fits its
-   content between these bounds; over-long rows ellipsize within it. */
+   viewport edge. Kobalte leaves the positioner auto-width in this mode, so the
+   panel opts back out of filling it and shrink-to-fits its content between
+   these bounds; over-long rows ellipsize within it. */
 .contentGrow {
-  min-width: var(--kb-popper-anchor-width);
-  max-width: min(var(--kb-popper-content-available-width), 32rem);
+  inline-size: auto;
+  min-inline-size: var(--kb-popper-anchor-width);
+  max-inline-size: min(var(--kb-popper-content-available-width), 32rem);
 }
 
 /* Sticky in-dropdown header (e.g. the location fullness tabs): a non-shrinking

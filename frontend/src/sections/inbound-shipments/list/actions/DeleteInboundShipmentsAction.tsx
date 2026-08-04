@@ -130,6 +130,7 @@ const Body = (
               </Show>
               <Button
                 variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -140,7 +141,11 @@ const Body = (
           }
         >
           <Match when={phase() === 'error'}>
-            <Button variant="secondary" onClick={props.onClose}>
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={props.onClose}
+            >
               {t('button.close')}
             </Button>
           </Match>

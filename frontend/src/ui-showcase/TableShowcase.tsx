@@ -530,12 +530,7 @@ const TableShowcaseDemo = () => {
       fillBody
       header={
         <Header>
-          <Breadcrumb
-            crumbs={[
-              { label: t('replenishment') },
-              { label: t('inbound-shipment') },
-            ]}
-          />
+          <Breadcrumb crumbs={[{ label: t('inbound-shipment') }]} />
           <HeaderButtons>
             <Button icon={<PlusCircleIcon />} disabled title="Demo only">
               {t('button.new-shipment')}

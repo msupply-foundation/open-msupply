@@ -13,6 +13,7 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { createDebounced } from '../../../../ui/utils/createDebounced';
 import { FormRow } from '../../../../ui/layout/Form/FormRow';
+import { FormSection } from '../../../../ui/layout/Form/FormSection';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -647,12 +648,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         <>
           <Button
             variant="secondary"
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             disabled={!saveEnabled()}
             loading={saving()}
@@ -664,6 +667,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               outbound S4 footer matrix, reused by D53). */}
           <Show when={!isEdit && saveEnabled()}>
             <Button
+              // The CONTINUING confirm: while present and enabled, Enter
+              // activates it in preference to plain OK (KB-E2, AC-KB23).
+              confirms="continuing"
               data-testid="dialog-button-next-and-ok"
               loading={saving()}
               onClick={() => void onOkNext()}
@@ -674,245 +680,287 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         </>
       }
     >
-      <FieldRow label={t('label.item')}>
-        <ItemSearch
-          label={t('label.item')}
-          hideLabel
-          storeId={props.storeId}
-          focusTarget={itemSearch}
-          value={itemId()}
-          // Prefer the full item once the grid fetch lands; until then fall
-          // back to the row's own label so a re-opened line shows its item
-          // name immediately (not a blank locked box).
-          selectedItem={(() => {
-            const item = itemInfo();
-            if (item) return { id: item.id, code: item.code, name: item.name };
-            return props.initialItem;
-          })()}
-          excludeItemIds={props.existingItemIds}
-          disabled={isEdit}
-          onSelect={item => {
-            if (!item) return;
-            setItemId(item.id);
-            // A quantity typed for the previous item must not distribute
-            // over this one's grid while its fetch is still in flight.
-            cancelAllocate();
-            // The prescribed quantity is the first entry point once the item
-            // is chosen (.61); the handle lands when the field mounts.
-            if (prefs().editPrescribedQuantity) prescribedQuantityFocus.focus();
-          }}
-        />
-      </FieldRow>
+      {/* The body groups into titled sections — Item / Quantity / Directions
+          — the current app's three areas of this editor. Always open (no
+          disclosure): the dialog scrolls rather than folding, so nothing a
+          dispenser needs is a click away. Each is a top-level group of this
+          dialog, so it wears the ruled group heading, at h3 because the
+          dialog's own title holds the h2 (rank mirrors structure, never
+          size). */}
+      <FormSection title={t('label.item')} headingLevel="h3" heading="group">
+        <FieldRow label={t('label.item')}>
+          <ItemSearch
+            label={t('label.item')}
+            hideLabel
+            storeId={props.storeId}
+            focusTarget={itemSearch}
+            value={itemId()}
+            // Prefer the full item once the grid fetch lands; until then fall
+            // back to the row's own label so a re-opened line shows its item
+            // name immediately (not a blank locked box).
+            selectedItem={(() => {
+              const item = itemInfo();
+              if (item)
+                return { id: item.id, code: item.code, name: item.name };
+              return props.initialItem;
+            })()}
+            excludeItemIds={props.existingItemIds}
+            disabled={isEdit}
+            onSelect={item => {
+              if (!item) return;
+              setItemId(item.id);
+              // A quantity typed for the previous item must not distribute
+              // over this one's grid while its fetch is still in flight.
+              cancelAllocate();
+              // The prescribed quantity is the first entry point once the
+              // item is chosen (.61); the handle lands when the field mounts.
+              if (prefs().editPrescribedQuantity)
+                prescribedQuantityFocus.focus();
+            }}
+          />
+        </FieldRow>
+      </FormSection>
 
       <Show when={itemId()}>
-        {/* The quantity fields ride one wrapping row (the header field-
-            cluster pattern — equal shares, wrapping intrinsically when the
-            row can't hold them): prescribed quantity — when the preference
-            shows it — PRECEDES the issue field (.61). */}
-        <FormRow class={styles.quantityRow}>
-          <Show when={prefs().editPrescribedQuantity}>
+        <FormSection
+          title={t('label.quantity')}
+          headingLevel="h3"
+          heading="group"
+        >
+          {/* The quantity fields ride one wrapping row (the header field-
+              cluster pattern — equal shares, wrapping intrinsically when the
+              row can't hold them): prescribed quantity — when the preference
+              shows it — PRECEDES the issue field (.61). */}
+          <FormRow class={styles.quantityRow}>
+            <Show when={prefs().editPrescribedQuantity}>
+              <NumberField
+                label={t('label.prescribed-quantity')}
+                class={styles.quantityField}
+                data-testid="prescribed-quantity-field"
+                ref={prescribedQuantityFocus.ref}
+                value={lensValue(prescribedQuantity())}
+                min={0}
+                decimalLimit={0}
+                onChange={onPrescribedChange}
+              />
+            </Show>
             <NumberField
-              label={t('label.prescribed-quantity')}
+              label={t('label.issue')}
               class={styles.quantityField}
-              data-testid="prescribed-quantity-field"
-              ref={prescribedQuantityFocus.ref}
-              value={lensValue(prescribedQuantity())}
+              data-testid="issue-field"
+              ref={issueQuantityFocus.ref}
+              value={lensValue(issueUnits())}
               min={0}
               decimalLimit={0}
-              onChange={onPrescribedChange}
+              disabled={gridData.loading}
+              endAdornment={showDosesLens() ? undefined : unitName()}
+              onChange={onIssueChange}
             />
-          </Show>
-          <NumberField
-            label={t('label.issue')}
-            class={styles.quantityField}
-            data-testid="issue-field"
-            ref={issueQuantityFocus.ref}
-            value={lensValue(issueUnits())}
-            min={0}
-            decimalLimit={0}
-            disabled={gridData.loading}
-            endAdornment={showDosesLens() ? undefined : unitName()}
-            onChange={onIssueChange}
-          />
-          <Show when={showDosesLens()}>
-            <Select
-              label={t('label.unit')}
-              class={styles.quantityField}
-              value={lens()}
-              options={[
-                { value: 'units', label: t('label.units') },
-                { value: 'doses', label: t('label.doses') },
-              ]}
-              onValueChange={value =>
-                setLens(value === 'doses' ? 'doses' : 'units')
-              }
-            />
-          </Show>
-        </FormRow>
+            <Show when={showDosesLens()}>
+              <Select
+                label={t('label.unit')}
+                class={styles.quantityField}
+                value={lens()}
+                options={[
+                  { value: 'units', label: t('label.units') },
+                  { value: 'doses', label: t('label.doses') },
+                ]}
+                onValueChange={value =>
+                  setLens(value === 'doses' ? 'doses' : 'units')
+                }
+              />
+            </Show>
+          </FormRow>
 
-        {/* The warning banners sit between the quantity fields and the batch
+          {/* The warning banners sit between the quantity fields and the batch
             list (ui-surface S4 § layout). The shortfall banner (stock-
             allocation § reporting — nothing narrows silently; the
             prescription has no placeholder) carries the current app's own
             copy: "There is a total of X units available. Unable to allocate
             all Y units."… */}
-        <Show when={shortfall() > 0}>
-          <Alert severity="warning" testId="prescription-shortfall-warning">
-            {t(
-              dosesMode()
-                ? 'warning.cannot-create-placeholder-doses'
-                : 'warning.cannot-create-placeholder-units',
-              {
-                allocatedQuantity: formatNumber(
-                  unitsToLens(allocatedUnits(), allocateLens())
-                ),
-                requestedQuantity: formatNumber(
-                  unitsToLens(allocatedUnits() + shortfall(), allocateLens())
-                ),
-              }
-            )}
-          </Alert>
-        </Show>
+          <Show when={shortfall() > 0}>
+            <Alert severity="warning" testId="prescription-shortfall-warning">
+              {t(
+                dosesMode()
+                  ? 'warning.cannot-create-placeholder-doses'
+                  : 'warning.cannot-create-placeholder-units',
+                {
+                  allocatedQuantity: formatNumber(
+                    unitsToLens(allocatedUnits(), allocateLens())
+                  ),
+                  requestedQuantity: formatNumber(
+                    unitsToLens(allocatedUnits() + shortfall(), allocateLens())
+                  ),
+                }
+              )}
+            </Alert>
+          </Show>
 
-        {/* …and the remaining reported categories, stacked one banner each —
+          {/* …and the remaining reported categories, stacked one banner each —
             one per skipped category, each its own sentence at info (expired /
             unusable VVM; held stock is hidden, not reported — .59/.60) — the
             split-pack warning (.58), an adjusted manual entry (.19). */}
-        <Show when={warnings().length > 0}>
-          <div class={styles.warningStack}>
-            <For each={warnings()}>
-              {message => {
-                const { text, testId, severity } = banner(message);
-                return (
-                  <Alert severity={severity} testId={testId}>
-                    {text}
-                  </Alert>
-                );
-              }}
-            </For>
-          </div>
-        </Show>
-        <Show
-          when={lines.length > 0}
-          fallback={
-            <Show when={!gridData.loading}>
-              <Alert severity="info">{t('messages.no-stock-available')}</Alert>
-            </Show>
-          }
-        >
-          {/* The batch grid folds behind a Batches disclosure, closed on
+          <Show when={warnings().length > 0}>
+            <div class={styles.warningStack}>
+              <For each={warnings()}>
+                {message => {
+                  const { text, testId, severity } = banner(message);
+                  return (
+                    <Alert severity={severity} testId={testId}>
+                      {text}
+                    </Alert>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
+          <Show
+            when={lines.length > 0}
+            fallback={
+              <Show when={!gridData.loading}>
+                <Alert severity="info">
+                  {t('messages.no-stock-available')}
+                </Alert>
+              </Show>
+            }
+          >
+            {/* The batch grid folds behind a Batches disclosure, closed on
               open (OMS-REG-DIS-03.56) — issuing allocates without it; the
               user expands it for batch detail or per-batch entry. While
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
-          <Accordion collapsible variant="card">
-            <AccordionItem value="batches">
-              <AccordionTrigger
-                // The available total rides the trigger's end (rather than
-                // its own line above the fields) — always visible, no
-                // vertical cost. UNLIKE the batch summary beside it this
-                // follows the allocate-in lens (it's the Issue field's
-                // headroom); the unit name is pluralised so the two agree.
-                // `label.doses` is already plural.
-                end={
-                  <>
-                    {t('label.available')}: {formatNumber(availableInLens())}{' '}
-                    {dosesMode()
-                      ? t('label.doses')
-                      : getPlural(unitName(), availableInLens())}
-                  </>
-                }
-              >
-                {t('label.batches')}
-                {/* Real space so the accessible name doesn't concatenate
-                    the label into the summary. */}{' '}
-                <BatchSummary />
-              </AccordionTrigger>
-              <AccordionContent>
-                <DataTable
-                  columns={columns()}
-                  rows={[...lines]}
-                  rowKey={line => line.id}
-                  rowState={line =>
-                    line.barred.length > 0 ? 'disabled' : undefined
+            <Accordion collapsible variant="card">
+              <AccordionItem value="batches">
+                <AccordionTrigger
+                  // h4: this disclosure sits INSIDE the Quantity section,
+                  // whose heading is the h3 — the outline must say child, not
+                  // peer of Item / Quantity / Directions.
+                  as="h4"
+                  // The available total rides the trigger's end (rather than
+                  // its own line above the fields) — always visible, no
+                  // vertical cost. UNLIKE the batch summary beside it this
+                  // follows the allocate-in lens (it's the Issue field's
+                  // headroom); the unit name is pluralised so the two agree.
+                  // `label.doses` is already plural.
+                  end={
+                    <>
+                      {t('label.available')}: {formatNumber(availableInLens())}{' '}
+                      {dosesMode()
+                        ? t('label.doses')
+                        : getPlural(unitName(), availableInLens())}
+                    </>
                   }
-                  loading={gridData.loading}
-                  showFullScreen={false}
-                />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Show>
+                >
+                  {t('label.batches')}
+                  {/* Real space so the accessible name doesn't concatenate
+                    the label into the summary. */}{' '}
+                  <BatchSummary />
+                </AccordionTrigger>
+                <AccordionContent>
+                  <DataTable
+                    columns={columns()}
+                    rows={[...lines]}
+                    rowKey={line => line.id}
+                    rowState={line =>
+                      line.barred.length > 0 ? 'disabled' : undefined
+                    }
+                    loading={gridData.loading}
+                    showFullScreen={false}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </Show>
+        </FormSection>
 
-        {/* Directions (AC-R1–R3): unavailable until something is allocated. */}
-        <Show
-          when={!directionsDisabled()}
-          fallback={
-            <Text variant="bodySmall">
-              {t('messages.cannot-add-directions')}
-            </Text>
-          }
+        {/* Directions (AC-R1–R3): unavailable until something is allocated —
+            the section keeps its heading either way, so the block never
+            disappears without saying why. */}
+        <FormSection
+          title={t('label.directions')}
+          headingLevel="h3"
+          heading="group"
         >
-          <FieldRow label={t('label.abbreviation')}>
-            <TextField
-              label={t('label.abbreviation')}
-              hideLabel
-              data-testid="abbreviation-field"
-              value={abbrevEntry()}
-              onInput={e => setAbbrevEntry(e.currentTarget.value)}
-              onBlur={applyAbbreviation}
-              onKeyDown={e => {
-                if (e.key === 'Enter') applyAbbreviation();
-              }}
-            />
-          </FieldRow>
-          <FieldRow label={t('placeholder.item-directions')}>
-            <Select
-              label={t('placeholder.item-directions')}
-              hideLabel
-              value=""
-              options={(itemInfo()?.itemDirections ?? [])
-                .slice()
-                .sort((a, b) => a.priority - b.priority)
-                .map(direction => ({
-                  value: direction.id,
-                  label: direction.directions,
-                }))}
-              placeholder={
-                (itemInfo()?.itemDirections?.length ?? 0) === 0
-                  ? t('message.no-directions')
-                  : undefined
-              }
-              onValueChange={id => {
-                const chosen = itemInfo()?.itemDirections?.find(
-                  direction => direction.id === id
-                );
-                if (!chosen) return;
-                setNote(
-                  expandAbbreviations(
-                    chosen.directions,
-                    abbrevData.latest ?? []
-                  )
-                );
-                setDirty(true);
-              }}
-            />
-          </FieldRow>
-          <FieldRow label={t('label.directions')}>
-            <TextArea
-              label={t('label.directions')}
-              hideLabel
-              width="full"
-              rows={2}
-              value={note()}
-              onInput={e => {
-                setNote(e.currentTarget.value);
-                setDirty(true);
-              }}
-            />
-          </FieldRow>
-        </Show>
+          <Show
+            when={!directionsDisabled()}
+            fallback={
+              <Text variant="bodySmall">
+                {t('messages.cannot-add-directions')}
+              </Text>
+            }
+          >
+            {/* The abbreviation entry and the item-default-directions select
+              share one row (the current app's layout): the entry stays
+              compact — an abbreviation is a few characters — and the select
+              takes the remaining width, the pair wrapping intrinsically when
+              the row can't hold both. The row's own label is the
+              abbreviation's; the select names itself in its trigger. */}
+            <FieldRow label={t('label.abbreviation')}>
+              <FormRow class={styles.directionsEntryRow}>
+                <TextField
+                  label={t('label.abbreviation')}
+                  hideLabel
+                  width="compact"
+                  class={styles.abbreviationField}
+                  data-testid="abbreviation-field"
+                  value={abbrevEntry()}
+                  onInput={e => setAbbrevEntry(e.currentTarget.value)}
+                  onBlur={applyAbbreviation}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') applyAbbreviation();
+                  }}
+                />
+                <Select
+                  label={t('placeholder.item-directions')}
+                  hideLabel
+                  width="full"
+                  value=""
+                  options={(itemInfo()?.itemDirections ?? [])
+                    .slice()
+                    .sort((a, b) => a.priority - b.priority)
+                    .map(direction => ({
+                      value: direction.id,
+                      label: direction.directions,
+                    }))}
+                  // The trigger carries its own name, since the row's visible
+                  // label belongs to the abbreviation entry beside it.
+                  placeholder={
+                    (itemInfo()?.itemDirections?.length ?? 0) === 0
+                      ? t('message.no-directions')
+                      : t('placeholder.item-directions')
+                  }
+                  onValueChange={id => {
+                    const chosen = itemInfo()?.itemDirections?.find(
+                      direction => direction.id === id
+                    );
+                    if (!chosen) return;
+                    setNote(
+                      expandAbbreviations(
+                        chosen.directions,
+                        abbrevData.latest ?? []
+                      )
+                    );
+                    setDirty(true);
+                  }}
+                />
+              </FormRow>
+            </FieldRow>
+            <FieldRow label={t('label.directions')}>
+              <TextArea
+                label={t('label.directions')}
+                hideLabel
+                width="full"
+                rows={2}
+                value={note()}
+                onInput={e => {
+                  setNote(e.currentTarget.value);
+                  setDirty(true);
+                }}
+              />
+            </FieldRow>
+          </Show>
+        </FormSection>
       </Show>
     </Dialog>
   );

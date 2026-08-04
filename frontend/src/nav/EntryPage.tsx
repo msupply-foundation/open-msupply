@@ -24,12 +24,13 @@ export const EntryPage: Component<{ dest?: NavItem }> = props => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
 
-  // Section → destination, e.g. [Inventory, Stocktakes]. A not-found route has
-  // no destination, so its single crumb is the "Not found" leaf.
+  // The destination itself, e.g. Stocktakes — the nav group it sits under is
+  // never a crumb (ui-standards › layout, app bar). A not-found route has no
+  // destination, so its single crumb is the "Not found" leaf.
   const crumbs = () => {
     const trail = props.dest ? navTrail(props.dest.path) : [];
-    if (trail.length > 0)
-      return trail.map(item => ({ label: t(item.labelKey) }));
+    const leaf = trail[trail.length - 1];
+    if (leaf) return [{ label: t(leaf.labelKey) }];
     return [{ label: t(props.dest?.labelKey ?? 'heading.not-found') }];
   };
 

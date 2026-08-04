@@ -16,6 +16,7 @@ export type StocktakeInfoFragment = {
   createdDatetime: string;
   user: {
   username: string;
+  email: string | null;
 } | null;
   documents: {
   nodes: Array<{
@@ -101,7 +102,7 @@ export type StocktakeDetailResult = {
 };
 
 export const StocktakeDetail = {
-  query: "query stocktakeDetail($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}",
+  query: "query stocktakeDetail($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n    email\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}",
 } as TypedDocument<StocktakeDetailResult, StocktakeDetailVariables>;
 
 export type StocktakeLinesVariables = {
@@ -361,7 +362,7 @@ export type UpdateStocktakeResult = {
 };
 
 export const UpdateStocktake = {
-  query: "mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {\n  updateStocktake(storeId: $storeId, input: $input) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on UpdateStocktakeError {\n      error {\n        __typename\n        description\n        ... on SnapshotCountCurrentCountMismatch {\n          lines {\n            description\n            stocktakeLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}",
+  query: "mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {\n  updateStocktake(storeId: $storeId, input: $input) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on UpdateStocktakeError {\n      error {\n        __typename\n        description\n        ... on SnapshotCountCurrentCountMismatch {\n          lines {\n            description\n            stocktakeLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n    email\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}",
 } as TypedDocument<UpdateStocktakeResult, UpdateStocktakeVariables>;
 
 export type FullStocktakeVariables = {
@@ -388,7 +389,7 @@ export type FullStocktakeResult = {
 };
 
 export const FullStocktake = {
-  query: "query fullStocktake($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n      lines {\n        totalCount\n        nodes {\n          ...StocktakeLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n    unitName\n    isVaccine\n    doses\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n  vvmStatus {\n    id\n    code\n    description\n  }\n  donorId\n  donorName\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n}",
+  query: "query fullStocktake($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n      lines {\n        totalCount\n        nodes {\n          ...StocktakeLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n    email\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n    unitName\n    isVaccine\n    doses\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n  vvmStatus {\n    id\n    code\n    description\n  }\n  donorId\n  donorName\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n}",
 } as TypedDocument<FullStocktakeResult, FullStocktakeVariables>;
 
 export type DeleteStocktakeVariables = {

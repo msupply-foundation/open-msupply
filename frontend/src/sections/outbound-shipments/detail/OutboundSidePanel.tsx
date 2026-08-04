@@ -8,12 +8,12 @@ import {
   SidePanelSection,
   SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
-import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
@@ -37,6 +37,7 @@ import {
   type OutboundLineFragment,
 } from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
+import styles from './OutboundSidePanel.module.css';
 
 // The shipment side panel (spec S3 § side panel), sections top to bottom:
 // Additional info · Related documents · Invoice details · Transport details,
@@ -118,16 +119,19 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   // A pricing group's heading (SIDE_PANEL.md rule 1 — never a FieldRow with a
   // bold label), with its gloss as an info tooltip AFTER the text (the doc's
   // info-icon-after-heading recipe) and an optional group-level edit action.
+  // The text+tooltip row is an inline-level SPAN, not an HStack: these children
+  // land inside SidePanelSubheading's <h3>, which takes phrasing content, and
+  // HStack renders a <div>.
   const groupHeading = (
     label: string,
     info: string,
     action?: JSX.Element
   ): JSX.Element => (
     <SidePanelSubheading action={action}>
-      <HStack gap="sm">
+      <span class={styles.groupHeading}>
         {label}
         <InfoTooltip text={info} label={label} placement="bottom-start" />
-      </HStack>
+      </span>
     </SidePanelSubheading>
   );
 
@@ -159,16 +163,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <HStack gap="sm">
-            <Text variant="body" as="span">
-              {props.node.user?.username ?? '—'}
-            </Text>
-            {/* Info popover on hover — the user's email (the picked-date
-                reason bubble's pattern); no icon when there is no email. */}
-            <Show when={props.node.user?.email}>
-              {email => <InfoTooltip text={email()} label={email()} />}
-            </Show>
-          </HStack>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">

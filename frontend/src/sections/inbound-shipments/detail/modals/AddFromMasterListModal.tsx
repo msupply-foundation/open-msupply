@@ -75,6 +75,7 @@ const Body: Component<AddFromMasterListModalProps> = props => {
           {/* The action's own verb, not a save (D55) — it adds the list's items
               as lines. */}
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={!masterListId()}

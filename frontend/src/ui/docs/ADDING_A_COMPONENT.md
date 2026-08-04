@@ -29,6 +29,7 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 - **`BulkDeleteButton(mutation, label)`** — was `SelectionActionModal`, deliberately inlined (`kdd/action-modal`); a narrow wrapper could reclaim ~4–5 atomic-batch deletes.
 - **`ExportPrintButton` (4×) / `HoldToggle` (4×)** — trivial wrappers, borderline vs explicit-composition.
 - **Library `ErrorBoundary` / `GenericErrorFallback` / `DataError`** — reference-parity, low urgency; the app has an app-level `UnexpectedErrorModal` only.
+- **Action-bearing header banner slot** — a standing-context row beneath the `HeaderToolbar` field cluster that carries **controls** (details popover, an apply action, inline error), which the alert chip slot may not hold (a compact alert is never actionable). Registered as a ⛔ role in the registry (App bar — action-bearing standing-context banner); sole consumer meanwhile composes its own `Toolbar` row (the internal-orders ancillary banner). Build when a second vertical needs one (operator ruling, 2026-07-31).
 
 ### Reference-parity primitives — adopt when a real consumer appears, don't pre-build
 
