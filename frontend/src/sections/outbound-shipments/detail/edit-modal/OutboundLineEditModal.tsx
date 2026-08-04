@@ -353,9 +353,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Cards, not a table (as the inbound + stocktake line editors), and
-    // manufacturer starts hidden (the old app's defaultHidden) — declared per
-    // band, since bands don't share; the Columns popover restores it.
+    // Cards by DEFAULT (as the inbound + stocktake line editors) — the
+    // DataTable's showCardToggle offers the flip to a table above the compact
+    // breakpoint and setConfig persists it per user (#886). Manufacturer starts
+    // hidden (the old app's defaultHidden) — declared per band, since bands
+    // don't share; the Columns popover restores it.
     defaultConfig: {
       base: { viewMode: 'card', columnVisibility: { manufacturer: false } },
       compact: { viewMode: 'card', columnVisibility: { manufacturer: false } },
@@ -1469,6 +1471,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             rowKey={line => line.id}
             loading={loadingLines()}
             cardGroups={CARD_GROUPS}
+            showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             emptyMessage={t('messages.no-stock-available')}

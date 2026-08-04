@@ -41,7 +41,7 @@ Set on each column literal in your `columns()` array. Anything not about the car
 | Field                           | Type                   | Default       | Effect                                                                                                                                                                         |
 | ------------------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `c`                             | identity union         | —             | The column's identity (`{ key }` / `{ id }` / `{ accessor, id }`). Two columns must have **distinct** resolved ids. See [columnTypes.ts](../elements/table/columnTypes.ts).    |
-| `header`                        | `() => JSX.Element`    | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.            |
+| `header`                        | `() => JSX.Element`    | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.           |
 | `sortKey`                       | `K`                    | —             | Makes the column sortable. In card view it feeds the Sort control — read from **every** column regardless of view, so a table-only column can still supply a card sort option. |
 | `cardGroup`                     | `G`                    | default group | Which body group this column joins in card view (typed; a typo is a compile error). Omit → the default ungrouped group. Ignored for header cells.                              |
 | `meta.headerPosition`           | `'primary' \| 'badge'` | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                      |
@@ -207,9 +207,11 @@ When a value renders differently per view, split it into a table column and a ca
 
 Key points: **distinct ids** (both can't be `invoiceNumber`), the sortKey stays on **one** column (the card Sort control reads it across views), and both faces opt out of the Columns popover so the split is invisible to the user.
 
-### 4. A card-only screen (no table view)
+### 4. A cards-by-default screen (table available, not the default)
 
-A line-edit modal or similar that is cards at every width: seed `viewMode: 'card'` in the base band, omit `showCardToggle`, and lean on `panel` + `disclosure` groups. (See the inbound/stocktake line-edit modals and [LineEditModal.tsx](../../ui-showcase/LineEditModal.tsx).)
+A line-edit modal or similar whose natural presentation is cards: seed `viewMode: 'card'` in the base band and lean on `panel` + `disclosure` groups — then pass `showCardToggle` so anyone who prefers the dense table can flip to it above the compact band, `setConfig` persisting the choice per user (#886). (See the inbound / outbound / stocktake line-edit modals and [LineEditModal.tsx](../../ui-showcase/LineEditModal.tsx).)
+
+Omit `showCardToggle` only where the column set genuinely has no usable table face — that makes the screen card-**only**, and the user has no way back.
 
 ```ts
 type GroupKey = 'batch' | 'pricing' | 'other';
