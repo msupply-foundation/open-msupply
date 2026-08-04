@@ -65,9 +65,11 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // Backend plugin halves: BoaJS code built by the open-msupply client
-      // toolchain, plus its prebuilt shipped artifact — not this repo's lint
-      // domain (plugins/civ/backend/README.md).
+      // The COUNTRY plugins' backend halves: BoaJS code built by the
+      // open-msupply client toolchain, plus its prebuilt shipped artifact —
+      // vendored, so not this repo's lint domain
+      // (plugins/civ/backend/README.md). The reference backend plugin
+      // (examples/*/backend) is ours and IS linted, below.
       'plugins/*/backend/**',
     ],
   },
@@ -79,6 +81,9 @@ export default tseslint.config(
   // host's runtime, so they answer to the same rules.
   {
     files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
+    // The reference BACKEND plugin is not browser code — it has its own block
+    // below rather than Solid, DOM globals and browser-compat rules.
+    ignores: ['examples/*/backend/**'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -158,6 +163,28 @@ export default tseslint.config(
         },
       ],
     },
+  },
+
+  /*
+   * The reference BACKEND plugin (examples/<code>/backend) — the half that
+   * runs in the server's BoaJS engine. No Solid, no DOM, and deliberately NO
+   * `globals.browser`: the only globals it has are the host functions the
+   * engine binds, which the plugin declares ambiently (its `host.d.ts`), so an
+   * accidental `document` or `window` should be an undefined-variable error
+   * rather than something the config quietly permits. `no-console` is absent
+   * for the same reason — there is no console in the engine, so a stray
+   * `console.log` is already an error here, and `log()` is the way out.
+   *
+   * The country plugins' vendored backend halves are ignored above; this one
+   * is ours and builds in this repo, so it answers to the shared rules.
+   */
+  {
+    files: ['examples/*/backend/**/*.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+    },
+    rules: sharedRules,
   },
 
   // Build config + node scripts.
