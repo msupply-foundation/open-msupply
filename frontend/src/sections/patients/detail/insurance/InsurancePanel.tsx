@@ -5,7 +5,12 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getDateCell,
+  getPercentageCell,
+  getTextCell,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { ALT_N } from '../../../../ui/utils/shortcuts';
@@ -36,10 +41,19 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
     tableId: 'patient-insurance-list',
   });
 
+  // Cell-type presets carry the rendering AND the width
+  // (ui/docs/CELL_TYPES.md). None of these keys is in the shared CELL_DEF map,
+  // so each takes an explicit helper plus a call-site `size` — sized to the
+  // header label, which is the wider constraint on every column here. The
+  // expiry date is the PLAIN date cell, not the expiry preset: the near-expiry
+  // red tone is a stock-expiry signal, and this column is typed a date
+  // (spec/patients ui-surface › Insurance tab).
   const columns = (): Column<Policy, never>[] => [
     {
       c: { key: 'policyNumber' },
       header: () => t('label.policy-number'),
+      ...getTextCell(),
+      size: remToPx(10),
     },
     {
       c: {
@@ -47,20 +61,28 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
         id: 'providerName',
       },
       header: () => t('label.provider-name'),
+      ...getTextCell(),
+      size: remToPx(12),
     },
     {
       c: { accessor: p => policyTypeLabel(p.policyType), id: 'policyType' },
       header: () => t('label.policy-type'),
+      ...getTextCell(),
+      size: remToPx(8),
     },
     {
-      c: { accessor: p => `${p.discountPercentage}%`, id: 'discountRate' },
+      // The percentage cell formats the number (locale, `%` suffix) — the value
+      // is the bare rate, never a pre-formatted string.
+      c: { key: 'discountPercentage' },
       header: () => t('label.discount-rate'),
-      meta: { align: 'right' },
+      ...getPercentageCell(),
+      size: remToPx(7.5),
     },
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
       ...getDateCell(),
+      size: remToPx(8.125),
     },
     {
       c: {
@@ -68,6 +90,8 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
         id: 'status',
       },
       header: () => t('label.status'),
+      ...getTextCell(),
+      size: remToPx(6),
     },
   ];
 
@@ -95,6 +119,7 @@ export const InsurancePanel: Component<InsurancePanelProps> = props => {
       }
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
       onSaveGlobalDefault={
         tableConfig.canSaveGlobalDefault()
           ? tableConfig.saveGlobalTableConfig

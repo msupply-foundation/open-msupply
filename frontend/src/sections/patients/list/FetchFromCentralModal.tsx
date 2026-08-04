@@ -4,13 +4,15 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { Text } from '../../../ui/elements/typography/Text';
 import { DownloadIcon, XCircleIcon } from '../../../ui/icons';
 import {
   linkPatientToStore,
   type CentralPatient,
 } from '../../../domain/patient';
+import { EMPTY_FIELD_VALUE } from '../../../domain/customFields';
 
 // S2b — retrieve a central-only patient into the store (spec/patients FL3,
 // AC-S4/S5). Opened from a step-② download row. Confirms, links + syncs, then
@@ -128,22 +130,27 @@ export const FetchFromCentralModal: Component<
         {candidate => (
           <>
             <Show when={phase() === 'confirm'}>
-              <FieldRow label={t('label.patient-id')}>
-                <Text variant="body">{candidate().code}</Text>
-              </FieldRow>
-              <FieldRow label={t('label.first-name')}>
-                <Text variant="body">{candidate().firstName}</Text>
-              </FieldRow>
-              <FieldRow label={t('label.last-name')}>
-                <Text variant="body">{candidate().lastName}</Text>
-              </FieldRow>
-              <FieldRow label={t('label.date-of-birth')}>
-                <Text variant="body">
+              {/* The candidate's facts are never editable here, so each is a
+                  read-only labelled value — not a FieldRow, whose control
+                  hides its own label (ui-standards/components › typography).
+                  Their own Stack holds the block together: the dialog body's
+                  gap is the between-blocks rhythm, too airy between fields. */}
+              <Stack gap="md">
+                <LabelledValue variant="field" label={t('label.patient-id')}>
+                  {candidate().code}
+                </LabelledValue>
+                <LabelledValue variant="field" label={t('label.first-name')}>
+                  {candidate().firstName}
+                </LabelledValue>
+                <LabelledValue variant="field" label={t('label.last-name')}>
+                  {candidate().lastName}
+                </LabelledValue>
+                <LabelledValue variant="field" label={t('label.date-of-birth')}>
                   {candidate().dateOfBirth
                     ? localisedDate(candidate().dateOfBirth as string)
-                    : '—'}
-                </Text>
-              </FieldRow>
+                    : EMPTY_FIELD_VALUE}
+                </LabelledValue>
+              </Stack>
               <Alert severity="info">
                 {t('messages.confirm-patient-retrieval', { name: fullName() })}
               </Alert>

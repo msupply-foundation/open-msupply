@@ -103,12 +103,33 @@ export interface DialogProps {
    */
   actionsLead?: JSX.Element;
   /**
-   * Width, in rem — for wider forms (e.g. the stocktake create modal). The
-   * dialog sits at this fixed width (clamped down to the viewport on narrow
-   * screens), so its box stays a steady size regardless of content — a form
-   * switching modes doesn't change width. Overrides the default (30rem) via a
-   * custom property; the page passes a number, not CSS, so it owns no
-   * stylesheet (principle #10).
+   * Width as one of the shared content MEASURES — the same vocabulary
+   * `ContentContainer` uses, so a dialog and an in-page form of the same kind
+   * sit at the same width and neither restates the number:
+   *  - `prose` — single-column reading text or a short form (`--measure-prose`)
+   *  - `form` — a comfortable two-column form (`--measure-form`)
+   *  - `wide` — a dense form or a result table (`--measure-wide`)
+   *
+   * PREFER this over `widthRem`, which stays for a genuinely bespoke width. A
+   * measure keeps the box steady across a multi-step flow: the width belongs to
+   * the dialog frame, so capping the CONTENT with a `ContentContainer` inside
+   * would leave the frame (and its title + actions rows) at its old width with
+   * the body floating in the middle. Ignored in `size="large"`, which goes
+   * full-bleed. If both are passed the rem number wins — it sets the custom
+   * property inline, which beats the preset's rule.
+   *
+   * A measure also opts the dialog into the shared **full-screen** treatment
+   * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
+   * › navOverlay), since a measure describes a page-sized surface. `widthRem`
+   * does not: it stays a centred card at every width.
+   */
+  width?: 'prose' | 'form' | 'wide';
+  /**
+   * Width, in rem — a bespoke width no measure fits. The dialog sits at this
+   * fixed width (clamped down to the viewport on narrow screens), so its box
+   * stays a steady size regardless of content — a form switching modes doesn't
+   * change width. Overrides the default (30rem) via a custom property; the page
+   * passes a number, not CSS, so it owns no stylesheet (principle #10).
    */
   widthRem?: number;
   /**
@@ -123,7 +144,8 @@ export interface DialogProps {
    * nearly the whole viewport — full width and ~80% height — for content-heavy
    * modals like the line-edit table. In large mode widthRem is ignored (the
    * dialog goes full-bleed) and the body flexes so a scrolling child (a
-   * DataTable) fills the tall space.
+   * DataTable) fills the tall space. Like a `width` measure, it goes
+   * full-screen below the narrow-viewport line.
    */
   size?: 'auto' | 'large';
   /**
@@ -333,11 +355,21 @@ export const Dialog = (props: DialogProps) => {
   // open rather than once per read site — a JSX-element prop is a getter, so N
   // raw reads = N constructions, each firing its own initial fetch (#549).
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
-  // Large ("workbench") modals go full-screen on tablet portrait and phones —
-  // the same "narrow viewport" line as the nav overlay, so we reuse navOverlay
-  // (1024) rather than mint a fourth breakpoint. data-fullscreen drives the
-  // CSS; the cutoff lives once in breakpoints.ts (createMediaQuery).
-  const fullscreen = useIsNavOverlay();
+  // Modals whose width is a page-sized SURFACE go full-screen on tablet
+  // portrait and phones — the same "narrow viewport" line as the nav overlay, so
+  // we reuse navOverlay (1024) rather than mint a fourth breakpoint.
+  // data-fullscreen drives the CSS; the cutoff lives once in breakpoints.ts
+  // (createMediaQuery).
+  //
+  // That is `size="large"` (the workbench) and any `width` MEASURE: the widest
+  // measure is wider than the line itself, so below it a measure dialog would
+  // otherwise be an edge-to-edge card holding a 1rem margin — the in-between
+  // this rule exists to remove. A default or `widthRem` dialog stays a centred
+  // card: a confirmation has no business filling a tablet screen, and a caller
+  // who wants the sheet asks for the measure it is sized to.
+  const narrowViewport = useIsNavOverlay();
+  const fullscreen = () =>
+    narrowViewport() && (props.size === 'large' || props.width !== undefined);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us
@@ -537,7 +569,9 @@ export const Dialog = (props: DialogProps) => {
         [styles.chromeless ?? '']: props.chromeless === true,
       }}
       data-testid={props.testId}
-      data-fullscreen={fullscreen() && props.size === 'large' ? '' : undefined}
+      data-fullscreen={fullscreen() ? '' : undefined}
+      // The measure preset, like widthRem, has nothing to say in large mode.
+      data-width={props.size === 'large' ? undefined : props.width}
       style={{
         // widthRem is ignored in large mode (it goes full-bleed via the .large
         // class).

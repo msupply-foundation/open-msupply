@@ -33,6 +33,23 @@
   overflow: visible;
 }
 
+/* Width presets (Dialog width="prose|form|wide") — the shared content measures, so a
+   dialog's form sits at the same width as the same form in a page (ContentContainer's
+   `size` names the same three). A class+attribute selector, so it beats the default
+   above; an inline --dialog-width from widthRem still beats BOTH, which is the
+   documented precedence. */
+.dialog[data-width='prose'] {
+  --dialog-width: var(--measure-prose);
+}
+
+.dialog[data-width='form'] {
+  --dialog-width: var(--measure-form);
+}
+
+.dialog[data-width='wide'] {
+  --dialog-width: var(--measure-wide);
+}
+
 /* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
    line-edit table. Fills nearly the whole viewport: full width and ~80% height (a ~10%
    margin top/bottom). Overrides the fixed width; the body flex column (already bounded)
@@ -307,14 +324,16 @@
 }
 
 /* Full-screen on tablet portrait and phones — driven by data-fullscreen, which
-   Dialog.tsx sets on a size="large" dialog when useIsNavOverlay matches
-   (createMediaQuery reads the navOverlay breakpoint from breakpoints.ts, the
-   single source of truth — reused as the shared "narrow viewport" line). A
-   media query can't read a CSS var, so the cutoff stays in JS as the repo
-   prefers (CLAUDE.md #7); this is the CSS analogue of the "which layout"
-   createMediaQuery branches. Only large ("workbench") modals go full-screen —
-   smaller dialogs stay centred cards (their base width/height caps already fit
-   a tablet-portrait viewport).
+   Dialog.tsx sets on a size="large" dialog OR one sized by a width MEASURE
+   (width="prose|form|wide") when useIsNavOverlay matches (createMediaQuery reads
+   the navOverlay breakpoint from breakpoints.ts, the single source of truth —
+   reused as the shared "narrow viewport" line). A media query can't read a CSS
+   var, so the cutoff stays in JS as the repo prefers (CLAUDE.md #7); this is the
+   CSS analogue of the "which layout" createMediaQuery branches. A default or
+   widthRem dialog stays a centred card (its width cap already fits a
+   tablet-portrait viewport, and a confirmation shouldn't fill the screen) —
+   whereas the form and wide measures are wider than the line itself, so below it
+   they would be edge-to-edge cards clinging to a 1rem margin.
    Higher specificity than .large so these rules override its width/height.
    dvh/dvw track the visible viewport as the mobile browser chrome shows/hides;
    plain 100vh would tuck the actions behind the address bar. */
