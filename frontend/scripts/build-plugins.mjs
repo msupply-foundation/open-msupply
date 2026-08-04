@@ -42,8 +42,10 @@ import {
 import { join, resolve } from 'node:path';
 import { build } from 'vite';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
+import { backendPluginViteConfig } from '../vite/backendPluginBuild.ts';
 
 const OUT_DIR = 'dist/frontend_plugins';
+const BACKEND_OUT_DIR = 'dist/backend_plugins';
 const BUNDLE_DIR = 'dist/bundles';
 
 // Where a plugin's entry module may live, in preference order. `plugin.tsx` at
@@ -80,41 +82,79 @@ const readManifest = dir => {
 };
 
 /*
- * Backend halves: `plugins/<dir>/backend/package.json` declaring a backend
- * target, with the shipped artifact committed at `prebuilt/plugin.js`. The row
- * mirrors the Rust BackendPluginRow — `variant_type` comes from the manifest
- * (BOA_JS), and the id convention matches the server CLI's
+ * Backend halves: `<root>/<dir>/backend/package.json` declaring a backend
+ * target. The row mirrors the Rust BackendPluginRow — `variant_type` comes
+ * from the manifest (BOA_JS), and the id convention matches the server CLI's
  * `backend_{code}_{version}`.
+ *
+ * TWO SOURCES, and a committed build always wins:
+ *   - `prebuilt/plugin.js` — packed VERBATIM, never rebuilt or re-encoded.
+ *     This is how a deployed country plugin ships: CIV's is built by the
+ *     open-msupply client toolchain and moves only when that build runs, so
+ *     touching it here would break byte-identity with the field bundle.
+ *   - `src/plugin.ts` — built here (vite/backendPluginBuild.ts) for a plugin
+ *     whose source this repo owns, which today is the reference plugin. A
+ *     bundle built here is NOT byte-comparable with a webpack-built one; that
+ *     is exactly why a prebuilt takes precedence rather than being refreshed.
  */
+const BACKEND_ENTRY = 'src/plugin.ts';
+
 const readBackendManifest = dir => {
   const manifestPath = join(dir, 'package.json');
   if (!existsSync(manifestPath)) return undefined;
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   if (manifest.omSupplyPlugin?.target !== 'backend') return undefined;
   const prebuilt = join(dir, 'prebuilt/plugin.js');
-  if (!existsSync(prebuilt)) {
+  const entry = existsSync(join(dir, BACKEND_ENTRY))
+    ? BACKEND_ENTRY
+    : undefined;
+  if (!existsSync(prebuilt) && !entry) {
     throw new Error(
-      `${dir}: declares a backend plugin but has no prebuilt/plugin.js — ` +
-        'the backend half is packed verbatim from its committed build ' +
-        '(see plugins/civ/backend/README.md), never built here'
+      `${dir}: declares a backend plugin but has neither prebuilt/plugin.js ` +
+        `nor ${BACKEND_ENTRY} — ship a committed build (packed verbatim, see ` +
+        'plugins/civ/backend/README.md) or source to build from'
     );
   }
+  const code = manifest.name;
   return {
     dir,
-    prebuilt,
-    code: manifest.name,
+    code,
+    // A prebuilt is the shipped artifact; source is only built when there is
+    // none, so a plugin can carry its source without its bundle drifting.
+    prebuilt: existsSync(prebuilt) ? prebuilt : undefined,
+    entry: existsSync(prebuilt) ? undefined : entry,
+    outDir: resolve(BACKEND_OUT_DIR, code),
     version: manifest.version ?? '0.0.0',
     types: manifest.omSupplyPlugin.types ?? [],
     variantType: manifest.omSupplyPlugin.variant_type,
   };
 };
 
+/** The single file a backend plugin packs from, built or committed. */
+const backendBundlePath = plugin =>
+  plugin.prebuilt ?? join(plugin.outDir, 'plugin.js');
+
+const buildBackendPlugin = plugin =>
+  build(
+    backendPluginViteConfig({
+      code: plugin.code,
+      entry: plugin.entry,
+      outDir: plugin.outDir,
+      root: plugin.dir,
+    })
+  );
+
 const discoverBackendPlugins = () => {
   const found = [];
-  if (!existsSync('plugins')) return found;
-  for (const entry of readdirSync('plugins', { withFileTypes: true })) {
+  // Both roots, like the frontend walk: `examples/*` proves the mechanism,
+  // `plugins/*` holds the real country plugins.
+  for (const [root, entry] of ['examples', 'plugins'].flatMap(root =>
+    existsSync(root)
+      ? readdirSync(root, { withFileTypes: true }).map(e => [root, e])
+      : []
+  )) {
     if (!entry.isDirectory()) continue;
-    const dir = join('plugins', entry.name);
+    const dir = join(root, entry.name);
     const manifest = readBackendManifest(join(dir, 'backend'));
     if (!manifest) continue;
     /*
@@ -139,7 +179,7 @@ const discoverBackendPlugins = () => {
 };
 
 const packBackendPlugin = plugin => {
-  const bytes = readFileSync(plugin.prebuilt);
+  const bytes = readFileSync(backendBundlePath(plugin));
   /* eslint-disable camelcase -- the Rust BackendPluginRow's field names. */
   return {
     id: `backend_${plugin.code}_${plugin.version.replaceAll('.', '_')}`,
@@ -261,15 +301,21 @@ if (plugins.length === 0 && backendPlugins.length === 0) {
 }
 
 for (const plugin of plugins) await buildPlugin(plugin);
+// Only the ones with source and no committed build — a prebuilt is shipped as
+// it stands (readBackendManifest).
+for (const plugin of backendPlugins) {
+  if (plugin.entry) await buildBackendPlugin(plugin);
+}
 
 const packed = plugins.map(packPlugin);
 verifyRoundTrip(packed.map(p => p.row));
 
 // The same proof for the backend rows: each blob must decode back to the exact
-// committed prebuilt bytes — packing is transport, never transformation.
+// bytes on disk — packing is transport, never transformation. For a prebuilt
+// that is the committed artifact; for a built one, what the build just wrote.
 const backendRows = backendPlugins.map(packBackendPlugin);
 for (const [i, row] of backendRows.entries()) {
-  const onDisk = readFileSync(backendPlugins[i].prebuilt);
+  const onDisk = readFileSync(backendBundlePath(backendPlugins[i]));
   if (Buffer.compare(onDisk, Buffer.from(row.bundle_base64, 'base64')) !== 0) {
     throw new Error(`Round-trip mismatch for ${row.id}`);
   }
@@ -333,11 +379,15 @@ for (const { row, meta } of packed) {
       `${(bytes / 1024).toFixed(1)} KB  ${meta.hash.slice(0, 12)}`
   );
 }
-for (const row of backendRows) {
+for (const [i, row] of backendRows.entries()) {
   const bytes = Buffer.from(row.bundle_base64, 'base64').length;
+  // Which source it came from, named: a prebuilt shipping verbatim and a
+  // bundle this run produced are very different things to be looking at when
+  // a backend plugin misbehaves.
+  const origin = backendPlugins[i].prebuilt ? 'prebuilt, verbatim' : 'built';
   console.info(
-    `[build-plugins] ${row.id}  prebuilt ${row.variant_type}  ` +
-      `${(bytes / 1024).toFixed(1)} KB  verbatim  [${row.types.join(', ')}]`
+    `[build-plugins] ${row.id}  ${row.variant_type}  ` +
+      `${(bytes / 1024).toFixed(1)} KB  ${origin}  [${row.types.join(', ')}]`
   );
 }
 for (const [code, bundle] of bundles) {
