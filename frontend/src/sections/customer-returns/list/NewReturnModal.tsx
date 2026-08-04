@@ -84,6 +84,9 @@ const Body: Component<{ onClose: () => void }> = props => {
       title={t('label.customer-name')}
       // The standard, icon-less dialog dismiss (D55).
       actions={
+        // Cancel is the only footer action — choosing a customer from the list
+        // is this dialog's confirm, and Enter there belongs to the picker
+        // (KB-E1). So nothing claims `plain` and Enter confirms nothing.
         <CancelButton
           data-testid="dialog-button-cancel"
           onClick={props.onClose}

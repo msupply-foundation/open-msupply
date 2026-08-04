@@ -10,6 +10,8 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_N } from '@/ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -102,6 +104,15 @@ const StocktakesList: Component = () => {
   // it open. On a successful create it navigates away to the new stocktake's
   // detail page, so the list needs no refetch here.
   const [createOpen, setCreateOpen] = createSignal(false);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header button and the
+  // ghost button in the table's empty slot. Each carries `shortcut={ALT_N}` for
+  // its badge; neither owns the action.
+  createAddAction({
+    name: 'label.new-stocktake',
+    run: () => setCreateOpen(true),
+  });
   // The initial (opening-balance) create action — offered from the empty state
   // only when the store has NO stocktakes at all (see hasStocktake below). Like
   // createOpen, a successful create navigates away.
@@ -174,6 +185,7 @@ const StocktakesList: Component = () => {
   // Keeping the read non-suspending lets the DataTable mount immediately and
   // show its `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
   const rows = () => data.latest?.nodes ?? [];
+
   const totalCount = () => data.latest?.totalCount ?? 0;
 
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
@@ -280,7 +292,7 @@ const StocktakesList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('stocktakes') }];
+  const crumbs = () => [{ label: t('stocktakes') }];
 
   return (
     <Page
@@ -291,6 +303,7 @@ const StocktakesList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-stocktake-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -366,6 +379,7 @@ const StocktakesList: Component = () => {
           hasStocktake() ? (
             <Button
               variant="ghost"
+              shortcut={ALT_N}
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >

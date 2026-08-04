@@ -288,6 +288,11 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               <OkButton disabled={releasing()} onClick={closeNotice} />
               <Show when={holdRetryStatus()}>
                 {retry => (
+                  /* The actionable retry claims NO confirm role: OK holds
+                     `plain`, so Enter dismisses the notice rather than releasing
+                     a hold the user has not looked at (Brian, 2026-07-31). Two
+                     `plain` claims in one dialog would silently overwrite each
+                     other — the slots are role-keyed. */
                   <Button
                     variant="primary"
                     icon={<ArrowRightIcon />}

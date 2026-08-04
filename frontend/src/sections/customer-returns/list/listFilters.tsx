@@ -54,7 +54,7 @@ export const createFilters = (
         <FilterTextInput
           label={t('label.name')}
           testId={props.testId}
-          placeholder={t('placeholder.search-by-name')}
+          placeholder={t('placeholder.search')}
           value={props.filter().otherPartyName?.like ?? ''}
           // Blank box → null, never { like: '' } (an empty like would match as
           // a real substring).

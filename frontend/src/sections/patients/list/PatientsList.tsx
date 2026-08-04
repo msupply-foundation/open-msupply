@@ -8,6 +8,8 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -82,6 +84,18 @@ const PatientsList: Component = () => {
   // Create/edit affordances are gated on patient-mutate permission (AC-E1);
   // hidden when absent (spec/patients cross-cutting).
   const canMutate = () => hasPermission('PATIENT_MUTATE');
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge. Gated on the same permission that hides
+  // both, and on nothing else — KB-R2's "gated on the thing it acts on being
+  // present".
+  createAddAction({
+    name: 'button.new-patient',
+    run: () => setCreateOpen(true),
+    disabled: () => !canMutate(),
+  });
 
   const tableConfig = createTableConfig({
     tableId: 'patients',
@@ -261,6 +275,7 @@ const PatientsList: Component = () => {
             <Show when={canMutate()}>
               <Button
                 icon={<PlusCircleIcon />}
+                shortcut={ALT_N}
                 data-testid="new-patient-button"
                 onClick={() => setCreateOpen(true)}
               >
@@ -304,6 +319,7 @@ const PatientsList: Component = () => {
           <Show when={canMutate()}>
             <Button
               variant="ghost"
+              shortcut={ALT_N}
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >

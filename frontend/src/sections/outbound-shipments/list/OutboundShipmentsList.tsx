@@ -11,6 +11,8 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -90,6 +92,15 @@ const OutboundShipmentsList: Component = () => {
     useUrlQueryState<OutboundListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  createAddAction({
+    name: 'button.new-shipment',
+    run: () => setCreateOpen(true),
+  });
 
   // Column config per breakpoint (kdd/table-state). Narrow viewports default
   // to card view and hide the columns the spec marks hidden-by-default
@@ -289,10 +300,7 @@ const OutboundShipmentsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('distribution') },
-    { label: t('outbound-shipments') },
-  ];
+  const crumbs = () => [{ label: t('outbound-shipments') }];
 
   return (
     <Page
@@ -303,6 +311,7 @@ const OutboundShipmentsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-shipment-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -384,6 +393,7 @@ const OutboundShipmentsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={() => setCreateOpen(true)}
           >

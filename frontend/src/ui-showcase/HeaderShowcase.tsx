@@ -7,7 +7,9 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
+import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { Select } from '../ui/elements/selectors/Select';
+import { Combobox } from '../ui/elements/selectors/Combobox';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
@@ -21,8 +23,16 @@ import {
   PlusCircleIcon,
   DownloadIcon,
   PrinterIcon,
+  UserIcon,
 } from '../ui/icons';
-import { Lead, PageBody, PageFrame, SectionTOC, ToolbarStub } from './common';
+import {
+  Lead,
+  Note,
+  PageBody,
+  PageFrame,
+  SectionTOC,
+  ToolbarStub,
+} from './common';
 import type { PageMetadata } from './metadata';
 
 const EXPORT_OPTIONS = [
@@ -45,6 +55,23 @@ const CATEGORIES = [
   { value: 'emergency', label: 'Emergency' },
   { value: 'donation', label: 'Donation' },
 ];
+
+// Weighted variant: the prescription header's field mix — two person-name
+// pickers, a program and a prominent custom field around a fixed-format date —
+// the mix the weights exist for (#782): the date's text ("30 Jul 2026") asks
+// for ~74px and can never grow, while a 26-character patient name needs ~220px
+// of value room before it stops truncating. The pickers are the real header's
+// control — a Combobox, whose magnifier / clear / chevron chrome eats ~90px of
+// the slot before any name renders.
+const PATIENTS = [
+  'MOHAMED, DJIBRIL ABDULLAHI',
+  'ADAMS, Cerys',
+  'NDIAYE, Tomas',
+];
+const CLINICIANS = ['Dr Amina Garcia-Okonkwo', 'Dr Wei Liu'];
+const PROGRAMS = ['HIV Care', 'TB Programme', 'Immunisation'];
+// A prominent `option` custom field promoted into that same cluster.
+const PRIORITIES = ['Routine', 'Urgent', 'Follow-up'];
 
 // Internal-order variant: the locked supplier store + months-of-stock options
 // for the reorder-threshold / target selects.
@@ -78,6 +105,18 @@ export const headerMetadata: PageMetadata = {
       id: 'header-toolbar',
       title: 'Toolbar fields',
       searchTerms: ['toolbar', 'fields', 'filters', 'alert', 'form row'],
+    },
+    {
+      id: 'header-toolbar-weighted',
+      title: 'Toolbar fields · weighted',
+      searchTerms: [
+        'weight',
+        'form row item',
+        'fr',
+        'min width',
+        'shares',
+        'prescription',
+      ],
     },
     {
       id: 'header-toolbar-error',
@@ -115,6 +154,18 @@ export const HeaderShowcase = () => {
   // Interactive fields for the Toolbar field-cluster demo below.
   const [supplier, setSupplier] = createSignal('acme');
   const [reference, setReference] = createSignal('DEL-2231');
+  // The weighted variant's own fields (each demo owns its state, so editing one
+  // never moves another). The pickers are Comboboxes over plain strings, so a
+  // field's value IS its label; undefined is "nothing selected".
+  const [patient, setPatient] = createSignal<string | undefined>(PATIENTS[0]);
+  const [clinician, setClinician] = createSignal<string | undefined>(
+    CLINICIANS[0]
+  );
+  const [prescribed, setPrescribed] = createSignal<string | null>('2026-05-19');
+  const [program, setProgram] = createSignal<string | undefined>(PROGRAMS[0]);
+  const [priority, setPriority] = createSignal<string | undefined>(
+    PRIORITIES[0]
+  );
   // The error variant's own copies, so editing it doesn't move the demo above.
   // `received` starts on a date the (pretend) server refused, which is why the
   // field below opens showing its rejection.
@@ -192,7 +243,10 @@ export const HeaderShowcase = () => {
             input (Received), and a never-editable read-only{' '}
             <code>&lt;LabelledValue&gt;</code> (Status). It rides one row while
             it fits and wraps intrinsically when it doesn't — squeeze the window
-            to watch the Alert drop to its own line.
+            to watch the Alert drop to its own line. Its four fields carry data
+            of comparable length, so equal shares are right here; a cluster
+            whose data isn't — a person's name beside a formatted date —
+            declares its shares instead, the next card.
           </Lead>
           <PageFrame>
             <Header>
@@ -246,6 +300,135 @@ export const HeaderShowcase = () => {
             </Header>
             <PageBody />
           </PageFrame>
+        </DashboardCard>
+
+        <DashboardCard
+          id="header-toolbar-weighted"
+          title="Toolbar fields — weighted shares, sized by the data"
+        >
+          <Lead>
+            A prescription header, where the field mix makes the shares worth
+            declaring: two person-name pickers and a program around a
+            fixed-format date. A field's column is sized by its{' '}
+            <strong>data</strong>, never by its count — so the equal shares of
+            the card above only hold while every field carries comparably long
+            data.
+          </Lead>
+          <Lead>
+            <code>&lt;FormRowItem&gt;</code> wraps one item of the row and gives
+            it three numbers: <code>weight</code>, its share of the whole row
+            (the design standard's <code>fr</code>); <code>minWidth</code>, the
+            floor it never shrinks below; and <code>maxWidth</code>, the ceiling
+            it never grows past. A ceiling is for a field with no use for more
+            room — its surplus flows on to the name fields instead, and if it
+            wraps to a line of its own it stops stretching across the whole of
+            it.
+          </Lead>
+          <Lead>
+            The shipped numbers: Patient <code>1.9</code> from{' '}
+            <code>11rem</code> and Clinician <code>1.55</code> hold person names
+            (MOHAMED, DJIBRIL ABDULLAHI is 26 characters), Program{' '}
+            <code>1.2</code>, a prominent custom field of kind option / number /
+            date <code>0.9</code> between <code>9.5rem</code> and{' '}
+            <code>14rem</code>, and the Date <code>{'weight={0}'}</code> —
+            pinned to the <code>9rem</code> its fixed format can never outgrow,
+            so every spare pixel goes to its siblings. Anything left unwrapped
+            keeps the equal share; a compact <code>&lt;Alert&gt;</code> is never
+            wrapped, or it loses the bottom-hug it gets as a direct child of the
+            row.
+          </Lead>
+          <Lead>
+            Squeeze the panel: the row still wraps as a unit, at the same width
+            it wrapped unweighted. That's the floors' second job — they set the
+            wrap point as well as the shrink order, so a cluster's floors must
+            sum to no more than the unweighted row's would:{' '}
+            <code>11 + 10 + 9 + 10 + 9.5 = 49.5rem</code> against five ×{' '}
+            <code>10rem</code>.
+          </Lead>
+          <PageFrame>
+            <Header>
+              <Breadcrumb
+                icon={<UserIcon />}
+                crumbs={[{ label: 'Prescriptions' }, { label: 'P-000012' }]}
+              />
+              <HeaderButtons>
+                <Button icon={<PlusCircleIcon />}>Add item</Button>
+                <Button variant="secondary" icon={<PrinterIcon />}>
+                  Export/Print
+                </Button>
+              </HeaderButtons>
+              <HeaderToolbar>
+                <FormRowItem weight={1.9} minWidth="11rem">
+                  <Combobox<string>
+                    label="Patient"
+                    size="small"
+                    width="full"
+                    items={PATIENTS}
+                    itemToString={name => name}
+                    value={patient()}
+                    onChange={name => setPatient(name ?? undefined)}
+                  />
+                </FormRowItem>
+                {/* Clinician and Program name no floor, so they inherit the
+                    row's own 10rem. */}
+                <FormRowItem weight={1.55}>
+                  <Combobox<string>
+                    label="Clinician"
+                    size="small"
+                    width="full"
+                    items={CLINICIANS}
+                    itemToString={name => name}
+                    value={clinician()}
+                    onChange={name => setClinician(name ?? undefined)}
+                  />
+                </FormRowItem>
+                <FormRowItem weight={0} minWidth="9rem">
+                  <DateField
+                    label="Date"
+                    size="small"
+                    width="full"
+                    format="dd MMM yyyy"
+                    value={prescribed()}
+                    onChange={setPrescribed}
+                  />
+                </FormRowItem>
+                <FormRowItem weight={1.2}>
+                  <Combobox<string>
+                    label="Program"
+                    size="small"
+                    width="full"
+                    items={PROGRAMS}
+                    itemToString={name => name}
+                    value={program()}
+                    onChange={name => setProgram(name ?? undefined)}
+                  />
+                </FormRowItem>
+                {/* A prominent custom field, on the narrower share the cluster
+                    gives an option / number / date one — and the ceiling that
+                    keeps it from filling a line of its own once it wraps. */}
+                <FormRowItem weight={0.9} minWidth="9.5rem" maxWidth="14rem">
+                  <Combobox<string>
+                    label="Priority"
+                    size="small"
+                    width="full"
+                    items={PRIORITIES}
+                    itemToString={name => name}
+                    value={priority()}
+                    onChange={name => setPriority(name ?? undefined)}
+                  />
+                </FormRowItem>
+              </HeaderToolbar>
+            </Header>
+            <PageBody />
+          </PageFrame>
+          <Note>
+            Measured on the reference store's six-field header (#782): the
+            Patient field's value room goes 45 → 87px at a ~1366px window and 57
+            → 127px at ~1440px, and the full 26-character name fits from ~1680px
+            up — it never fitted before. The two option fields give up 89 →
+            66px, the trade the standard asks for, and the header's height and
+            wrap point are unchanged at every width.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

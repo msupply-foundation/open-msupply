@@ -9,6 +9,8 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type CardGroup,
@@ -73,7 +75,11 @@ type StockListState = {
 };
 
 const DEFAULT_STATE: StockListState = {
-  filter: {},
+  // The search (batch or item code/name) is the list's default filter
+  // (ui-standards § tables → filtering): seeded present-as-null so its chip is
+  // on the bar from the start; stripEmpty keeps it out of the query until
+  // typed.
+  filter: { search: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -91,6 +97,15 @@ const StockList: Component = () => {
   const { query, setQuery } = useUrlQueryState<StockListState>(DEFAULT_STATE);
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  createAddAction({
+    name: 'button.new-stock',
+    run: () => setCreateOpen(true),
+  });
 
   const variables = (): StockLinesVariables => ({
     storeId: params.storeId,
@@ -355,11 +370,12 @@ const StockList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('stock') }];
+  const crumbs = () => [{ label: t('stock') }];
 
   const emptyCreate = (): JSX.Element => (
     <Button
       variant="ghost"
+      shortcut={ALT_N}
       data-testid="nothing-here-create-button"
       onClick={() => setCreateOpen(true)}
     >
@@ -376,6 +392,7 @@ const StockList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-stock-button"
               onClick={() => setCreateOpen(true)}
             >

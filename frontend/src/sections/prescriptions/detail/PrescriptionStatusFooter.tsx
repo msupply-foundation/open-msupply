@@ -2,6 +2,8 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
+import { createAction } from '../../../ui/utils/keyActions';
+import { ALT_V } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
@@ -76,6 +78,32 @@ export const PrescriptionStatusFooter: Component<
   };
 
   const zeroCount = () => zeroQuantityLineCount(props.node.lines.nodes);
+
+  /*
+   * Alt+V — update status (spec/keyboard KB-R1's binding table, ui-surface
+   * S2). Declared HERE, not in the detail view, because this component owns
+   * the control and the selection the binding acts on: the split button's
+   * currently selected forward transition. That is the same "one creation site
+   * per binding, inside the thing that owns it" shape as createSidePanelOpen's
+   * Alt+M (kdd/keyboard-layer decision 4).
+   *
+   * A SPECIFIC action (KB-R2's contrast), so gating on this screen is correct —
+   * the prescription detail is the only place it exists. Registration lives
+   * exactly as long as this footer, and the footer itself is <Show>-gated away
+   * behind the bulk-selection bar, so the key stops answering when the control
+   * does with no further code.
+   */
+  createAction({
+    name: 'button.update-status',
+    shortcut: ALT_V,
+    run: () => {
+      const next = selectedStatus();
+      if (next) openConfirm(next);
+    },
+    // Same inertness as the control: hidden once read-only (D39), and nothing
+    // to confirm when no forward transition is offered.
+    disabled: () => isReadOnly(status()) || !selectedStatus(),
+  });
 
   const closeDialogs = () => {
     setPendingStatus(undefined);
@@ -170,6 +198,9 @@ export const PrescriptionStatusFooter: Component<
             }}
             menuSelectsOnly
             testId="status-change-button"
+            // Alt+V is registered above; this is the control that advertises it
+            // (ui-surface S2).
+            shortcut={ALT_V}
             onAction={value => {
               const next = nextStatuses(status()).find(s => s === value);
               if (next) openConfirm(next);
@@ -187,6 +218,7 @@ export const PrescriptionStatusFooter: Component<
         description={<Alert severity="info">{t('messages.no-lines')}</Alert>}
         actions={
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             onClick={() => setNoLinesOpen(false)}
           >
@@ -223,7 +255,11 @@ export const PrescriptionStatusFooter: Component<
               <Show
                 when={!rejection()}
                 fallback={
-                  <Button data-testid="dialog-button-ok" onClick={closeDialogs}>
+                  <Button
+                    confirms="plain"
+                    data-testid="dialog-button-ok"
+                    onClick={closeDialogs}
+                  >
                     {t('button.close')}
                   </Button>
                 }
@@ -232,12 +268,14 @@ export const PrescriptionStatusFooter: Component<
                   <Button
                     variant="secondary"
                     icon={<XCircleIcon />}
+                    confirms="cancel"
                     onClick={closeDialogs}
                   >
                     {t('button.cancel')}
                   </Button>
                 </Show>
                 <Button
+                  confirms="plain"
                   data-testid="confirmation-modal-ok"
                   loading={working()}
                   onClick={() => void run(next())}

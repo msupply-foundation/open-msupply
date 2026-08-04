@@ -73,6 +73,14 @@
   background: var(--overlay-scrim);
 }
 
+/* Chromeless (Dialog `chromeless`) — no panel surface, so the content floats
+   over the scrim on its children's own surfaces. The dialog element stays the
+   same box (width, height cap, top layer, ::backdrop): only the look goes. */
+.chromeless {
+  background: none;
+  box-shadow: none;
+}
+
 /* The page behind is inert but the UA still lets it scroll under the scrim. */
 :global(body:has(dialog:modal)) {
   overflow: hidden;
@@ -89,18 +97,37 @@
   /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
      size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
   min-block-size: var(--dialog-min-body-height);
-  /* Bounded so content can't push the dialog past the viewport: a flex-1 child (e.g. a
-     DataTable) scrolls INTERNALLY via its own scroll region, and any other over-tall content
-     falls back to scrolling the body itself. Header / footer / actions keep their natural
-     size. `auto` doesn't clip the Select/Combobox popups — those mount on the <dialog> (a
-     sibling of .body), which stays overflow:visible. */
+  /* Bounded so content can't push the dialog past the viewport. The body itself does NOT
+     scroll — only the .scroll region between the header and the bottom region does (it
+     shrinks and takes over when content is over-tall), so the header and the footer/actions
+     hold perfectly still: no shift when a scrollbar appears, no drift with overscroll. */
   max-block-size: calc(100vh - 2rem);
-  overflow: auto;
   padding: var(--space-6);
 }
 
-/* In large mode the body fills the dialog's fixed height, so its flex-1 child (the DataTable)
-   gets the full tall space and scrolls internally; header/footer/actions stay their size.
+/* The scrolling middle — description + children. The only scroll container in the dialog;
+   the header and bottom region are siblings outside it, so they never move. Grows to absorb
+   reserved slack (minBodyHeightRem) and, in large mode, the tall space (so a flex-1 child
+   like the DataTable fills it); shrinks (min-block-size: 0) and scrolls when content
+   exceeds the body's cap. The padding + equal negative margin cancel visually (content and
+   gap spacing sit exactly where they would without them) but keep a focused field's ring
+   (--focus-ring's 0.1875rem spread) inside the scrollport instead of clipped at its edge.
+   `auto` doesn't clip Select/Combobox popups — those mount on the <dialog>, which stays
+   overflow:visible. */
+.scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: auto;
+  padding: var(--space-2);
+  margin: calc(-1 * var(--space-2));
+}
+
+/* In large mode the body fills the dialog's fixed height, so the .scroll region (and a
+   flex-1 child inside it, e.g. the DataTable) gets the full tall space and scrolls
+   internally; header/footer/actions stay their size.
    Placed after .body to satisfy stylelint no-descending-specificity. */
 .large .body {
   flex: 1;
@@ -108,10 +135,33 @@
   max-block-size: none;
 }
 
+/* No surface means no inset either — the children sit against the dialog box, so
+   the only thing separating them is their own spacing.
+
+   Placed after .body to satisfy stylelint no-descending-specificity. */
+.chromeless .body {
+  padding: 0;
+}
+
+/* And the scroll region opts out of scrolling: with no body padding there is
+   nothing between a child and the edge, so `auto` would clip whatever a child
+   paints OUTSIDE its own box — a focused field's ring and the surfaces' shadows
+   (the ring-room padding/margin trick is dropped along with it, so the children
+   sit flush against the dialog box). A chromeless overlay's content owns its own
+   scroll region instead (the palette's fixed-height list does). */
+.chromeless .scroll {
+  overflow: visible;
+  padding: 0;
+  margin: 0;
+}
+
 .header {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  /* Sibling of the shrinkable .scroll region — the header keeps its size; over-tall
+     content squeezes the scroll region instead. */
+  flex-shrink: 0;
 }
 
 /* headerAlign="start": top-align the title + actions — for a title taller than
@@ -164,12 +214,17 @@
   color: var(--text-body);
 }
 
-/* The footer (bottom-pinned content, e.g. a status banner) sits at the bottom of the body:
-   `auto` sends the reserved slack ABOVE it. With no height reserved it collapses to nothing.
-   When a footer is present the actions follow it naturally; when absent, .actions carries the
-   same `auto` so it bottom-pins on its own. */
-.footer {
-  margin-block-start: auto;
+/* The bottom region — the footer slot (e.g. a status banner) + the actions row, grouped
+   under the scroll area so they pin to the dialog's bottom edge together and never scroll
+   away (the buttons stay reachable however tall the content is). No margin-block-start:auto
+   needed — .scroll's flex-grow absorbs any reserved slack (minBodyHeightRem), which is what
+   keeps this region on the bottom edge. flex-shrink: 0 so an over-tall body squeezes the
+   scroll region, never the buttons. */
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex-shrink: 0;
 }
 
 .actions {
@@ -178,9 +233,6 @@
   justify-content: center;
   align-items: center;
   gap: var(--space-3);
-  /* Bottom-pin the actions when there's no footer above them (see .footer). With a footer,
-     :not() drops the auto so the actions sit directly under it rather than adding a second gap. */
-  margin-block-start: auto;
   padding-block-start: var(--space-2);
   flex-wrap: wrap;
 }
@@ -206,11 +258,6 @@
   justify-content: flex-end;
 }
 
-/* When a footer precedes the actions, the footer already absorbed the slack — don't add a
-   second auto-gap between them. */
-.footer + .actions {
-  margin-block-start: 0;
-}
 
 @media (prefers-reduced-motion: no-preference) {
   .dialog[open] {

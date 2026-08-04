@@ -51,11 +51,12 @@ export type NamesListState = {
   first: number;
 };
 
-// Default: sorted name ascending (rules › sorting), first page of 20, no filter
-// — the name/code search shows because its definition is a default filter
-// (`alwaysOn`, listFilters.tsx), not because a key is seeded here.
+// Default: sorted name ascending (rules › sorting), first page of 20. The
+// name/code search is the list's default filter (D25's always-present search,
+// AC-N13): seeded present-as-null so its chip shows on a pristine list;
+// stripEmpty drops it from the query until the user types.
 export const DEFAULT_STATE: NamesListState = {
-  filter: {},
+  filter: { codeOrName: null },
   sort: [{ key: 'name', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,

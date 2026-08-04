@@ -18,8 +18,8 @@ import type { OutboundLineFilter } from './outboundLineFilter';
 // The detail table is server-filtered (spec rules.md § server-paginated line
 // table), so the only filters offered are the ones the backend supports. Both
 // are chips in the table toolbar's FilterBar (ui-standards § tables ›
-// filtering): `itemCodeOrName` is the screen's DEFAULT filter — permanent, no
-// remove — and `locationId` is addable from the filter menu (exact-match
+// filtering): `itemCodeOrName` is the screen's DEFAULT filter (seeded by the
+// view, D91) and `locationId` is addable from the filter menu (exact-match
 // location picker, volume-blind — capacity is irrelevant to narrowing a line
 // list). The filters a user might expect from the old app but the server can't
 // do yet — batch and expiry-before — are backend gaps (spec contract § detail
@@ -29,22 +29,20 @@ export const outboundDetailFilters = (
 ): Filter<OutboundLineFilter>[] =>
   constructFilters<OutboundLineFilter>({
     // ─ user-facing chips, in display order ───────────────────────────────────
-    // Item name / code search (server itemCodeOrName.like) — the screen's
-    // DEFAULT filter, as in the stocktake detail (#735): always visible,
-    // never removable, absent from the add-filter menu. Blank clears to null
-    // so stripEmpty drops it (a blank `like` would match everything).
+    // Item name / code search (server itemCodeOrName.like), as in the stocktake
+    // detail. Blank clears to null so stripEmpty drops it (a blank `like` would
+    // match everything).
     //
     // Labelled for what it MATCHES rather than one of the two fields — the
-    // same label + placeholder pair the reference vertical uses.
+    // same label the reference vertical uses.
     itemCodeOrName: {
-      alwaysOn: true,
       label: () => t('label.code-or-name'),
       render: props => (
         <FilterTextInput
           label={t('label.code-or-name')}
-          // A permanent chip starts empty and shrink-wrapped, so the
-          // placeholder is what makes it read as a search box.
-          placeholder={t('placeholder.enter-an-item-code-or-name')}
+          // The chip starts empty and shrink-wrapped, so the placeholder is
+          // what makes it read as a search box.
+          placeholder={t('placeholder.search')}
           testId={props.testId}
           value={props.filter().itemCodeOrName?.like ?? ''}
           onInput={value =>
@@ -64,7 +62,7 @@ export const outboundDetailFilters = (
           locations={locations()}
           focusTarget={props.focusTarget}
           value={props.filter().locationId?.equalTo ?? undefined}
-          placeholder={t('label.location')}
+          placeholder={t('placeholder.search')}
           // Pick a location → filter by its id (server locationId.equalTo);
           // clear (×) → null so stripEmpty drops it (the chip stays).
           onChange={location =>

@@ -109,8 +109,11 @@ export const LinkInternalOrderModal: Component<
           />
           {/* Next creates the shipment WITHOUT a link — the optional-skip path
               the instruction above describes. Its own verb, so a plain Button
-              rather than one of the standard dialog three. */}
+              rather than one of the standard dialog three — and it is this
+              dialog's confirming action (picking an order from the list is the
+              other route), so it claims the role by hand. */}
           <Button
+            confirms="plain"
             data-testid="dialog-button-next"
             loading={props.busy}
             onClick={props.onNext}

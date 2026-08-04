@@ -8,6 +8,7 @@ import {
   type UserInfoFragment,
 } from '../api/auth.generated';
 import { refetchStoreContext } from '../store/storeContext';
+import { recordLastLoginUsername } from '../appData';
 import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 
 // All authentication context lives here: the user, the unauthenticated and
@@ -130,8 +131,9 @@ export const checkAuth = async (): Promise<boolean> => {
 export type LoginResult =
   | { kind: 'success' }
   | { kind: 'error'; message: string }
-  // Globally handled failure (unexpected-error modal): the consumer stays in
-  // its loading phase.
+  // Globally handled failure (unexpected-error modal owns the description): the
+  // consumer shows no error of its own, but releases its submitting state so
+  // the form is usable again with what was typed (spec, Unexpected API errors).
   | { kind: 'pending' };
 
 export const login = async (
@@ -156,12 +158,18 @@ export const login = async (
   setInactivityExpired(false);
   // A successful re-login discharges the persisted requirement (D69).
   persistReLoginRequired(false);
+  // Spec (Authentication): the device remembers the last username to get in, so
+  // the login page can prefill it. Only on success — a rejected name is not
+  // worth offering back — and never the password.
+  recordLastLoginUsername(username);
   return { kind: 'success' };
 };
 
 // Spec (Authentication Logic, Explicit logout): the backend clears the session
 // cookie; clearing the user presents the login page. Unlike unexpected logout,
 // no re-login modal. The local session ends regardless of the server response.
+// The remembered username is deliberately NOT cleared — logout ends the
+// session, not the device's memory of who was here (spec § Authentication).
 export const logout = async (): Promise<void> => {
   await graphqlFetch(Logout, {});
   clearUnauthenticated();

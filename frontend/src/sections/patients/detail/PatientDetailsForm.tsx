@@ -21,7 +21,13 @@ import {
 } from '../../../domain/patient';
 import { currentStoreName, hasPermission } from '../../../store/storeContext';
 import { generatePatientCode } from '../patientCode';
-import { ageFromDob, dobFromAge, type PatientDraft } from './patientEdit';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import {
+  ageFromDob,
+  ageMonthsAndDays,
+  dobFromAge,
+  type PatientDraft,
+} from './patientEdit';
 import styles from './PatientDetailsForm.module.css';
 
 // Upper bound on a typed age, so a slip can't mint a nonsense birth year (the
@@ -43,19 +49,11 @@ export interface PatientDetailsFormProps {
    */
   errorFor?: (id: string) => string | undefined;
   /**
-   * The creation flow (the create wizard's details step) rather than editing a
-   * saved patient. ONLY then does the form note that a date of birth was
-   * estimated from a typed age: the flag is a live property of this editing
-   * session, not of the record (the wire input carries no such field), so on an
-   * existing patient there is nothing to know — the stored date says nothing
-   * about how it was captured, and a hint would be a guess.
-   */
-  creating?: boolean;
-  /**
-   * The patient being edited, when there is one. Only the code generator uses
-   * it — a patient's own code is not a collision when the generator checks
-   * whether a candidate code is already held (spec/patients § generating a
-   * code).
+   * The patient this form is editing — the minted id while creating. The
+   * code generator uses it (a patient's own code is not a collision when the
+   * generator checks whether a candidate code is already held, spec/patients §
+   * generating a code), and the estimated-date mark is scoped to it, so it
+   * cannot follow the form onto the next patient.
    */
   patientId?: string;
 }
@@ -69,19 +67,43 @@ export interface PatientDetailsFormProps {
 // date of birth and is EDITABLE in both directions: it derives from an entered
 // date of birth, and typing one back-fills a start-of-year date of birth
 // (spec/patients rules › age) — the two share the single dateOfBirth field, so
-// there is no second source of truth to keep in step. While CREATING, an age
-// entry also hangs an info tooltip off the date-of-birth label saying that date
-// is estimated — on the field whose value is the approximate one.
+// there is no second source of truth to keep in step. An age entry also hangs
+// an info tooltip off the date-of-birth label saying that date is estimated —
+// on the field whose value is the approximate one, on create and edit alike
+// (DIS-02 `.4`).
 export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
   const today = localTodayIso();
   const errorFor = (id: string) => props.errorFor?.(id);
   const age = () => ageFromDob(props.draft.dateOfBirth);
 
-  // Was the current date of birth typed as an age? Session-only, and only asked
-  // during creation (see `creating`) — set when an age is entered, cleared as
-  // soon as a real date replaces it or the age is emptied.
-  const [dobEstimated, setDobEstimated] = createSignal(false);
-  const showEstimatedHint = () => !!props.creating && dobEstimated();
+  // Which date of birth an age entry produced, and on which patient. The mark
+  // reports only while the form still holds THAT value for THAT patient (the
+  // createCodeTakenCheck pattern), so a discard, a re-seed onto another
+  // patient, or a date entered directly all drop it without being told — the
+  // value simply stops matching. Session-scoped by construction: nothing about
+  // it is saved, and the wire input carries no such field (spec/patients rules
+  // › age).
+  const [ageSource, setAgeSource] = createSignal<{
+    patientId?: string;
+    dob: string;
+  }>();
+
+  const dobFromAgeEntry = () => {
+    const source = ageSource();
+    return (
+      source !== undefined &&
+      source.dob === props.draft.dateOfBirth &&
+      source.patientId === props.patientId
+    );
+  };
+
+  // Under a year old the age is shown as months and days, and can only be READ
+  // — the years box has no way to take that value back (spec/patients rules ›
+  // age). Not while the age entry is the source of that date, though: swapping
+  // the control out from under an entry of `0` would take the focus with it,
+  // and leave no way back to the field short of clearing the date of birth.
+  const monthsAndDays = () =>
+    dobFromAgeEntry() ? undefined : ageMonthsAndDays(props.draft.dateOfBirth);
 
   // The code generator (spec/patients § generating a code). Gated on
   // DOCUMENT_MUTATE, NOT the patient-mutate permission gating the rest of the
@@ -183,7 +205,7 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
                 // label between FieldShell's bare and label-row branches on
                 // every keystroke that starts or clears an age.
                 labelInfo={
-                  <Show when={showEstimatedHint()}>
+                  <Show when={dobFromAgeEntry()}>
                     <InfoTooltip
                       text={t('messages.dob-estimated-from-age')}
                       triggerTestId="dob-estimated-info"
@@ -191,24 +213,38 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
                   </Show>
                 }
                 onChange={value => {
-                  setDobEstimated(false);
+                  setAgeSource(undefined);
                   props.setField('dateOfBirth', value);
                 }}
               />
-              <NumberField
-                label={t('label.age')}
-                width="full"
-                max={MAX_AGE}
-                value={age()}
-                disabled={props.disabled}
-                onChange={value => {
-                  setDobEstimated(value !== undefined);
-                  props.setField(
-                    'dateOfBirth',
-                    value === undefined ? null : dobFromAge(value)
-                  );
-                }}
-              />
+              <Show
+                when={monthsAndDays()}
+                fallback={
+                  <NumberField
+                    label={t('label.age')}
+                    width="full"
+                    max={MAX_AGE}
+                    value={age()}
+                    disabled={props.disabled}
+                    onChange={value => {
+                      const dob =
+                        value === undefined ? null : dobFromAge(value);
+                      setAgeSource(
+                        dob === null
+                          ? undefined
+                          : { patientId: props.patientId, dob }
+                      );
+                      props.setField('dateOfBirth', dob);
+                    }}
+                  />
+                }
+              >
+                {display => (
+                  <LabelledValue label={t('label.age')} variant="field">
+                    {display()}
+                  </LabelledValue>
+                )}
+              </Show>
             </FormRow>
             <Combobox<GenderOption>
               label={t('label.gender')}

@@ -157,6 +157,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
               </Show>
               <Button
                 variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}

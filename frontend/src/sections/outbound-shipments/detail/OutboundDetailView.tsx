@@ -36,6 +36,8 @@ import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
@@ -107,6 +109,16 @@ import {
 
 type Line = OutboundLineFragment;
 
+// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
+// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
+// config expresses this as a per-key `maxSize: null`; at a call site the key has
+// to be removed outright — an explicit `maxSize: undefined` would override
+// TanStack's own default rather than fall back to it.
+const uncapped = <T,>({
+  maxSize: _cap,
+  ...rest
+}: ReturnType<typeof getCellDefinition<T>>) => rest;
+
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
 // sort on (VVM, unit, doses, quantities, prices, received/difference, volume —
@@ -129,8 +141,11 @@ type DetailUrlState = {
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  // Default sort: item name ascending (spec S3 § line table).
-  filter: {},
+  // Default sort: item name ascending (spec S3 § line table). The item search
+  // is the screen's default filter (ui-surface § line-table filters; D91):
+  // seeded present-as-null so its chip is on the bar from the start; stripEmpty
+  // keeps it out of the query until typed.
+  filter: { itemCodeOrName: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -149,13 +164,19 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel open state — the SHARED helper (registry § side/detail panel):
-  // the wide-viewport default is a DERIVATION (`choice() ?? wide()`), so a
-  // user's explicit open/close wins over it and persists across reloads
-  // (spec S3 § side panel). Never an effect writing the signal from the
-  // breakpoint: that both ignores the stored choice and re-forces the panel
-  // open every time the media query re-evaluates.
-  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  // Side panel: starts CLOSED at every width (D90) — the lines table is this
+  // screen's work surface and the widest table in the app, so the panel is
+  // opt-in via the app bar's More button rather than taking a column of it
+  // before the user asks. The choice lasts the visit and isn't persisted, so
+  // every arrival starts closed.
+  //
+  // Still the shared helper, with the responsive default switched off, because
+  // it also registers Alt+M / Alt+Shift+M (spec/keyboard KB-R2 — "the screen has
+  // a more-info panel" IS "this helper was called"). A bare createSignal here
+  // left this the one panel answering neither binding.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen({
+    responsive: false,
+  });
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
@@ -462,6 +483,25 @@ const OutboundDetailView: Component = () => {
     });
   const openAdd = () => setEditState({});
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  //
+  // Gated on `.state`, NOT through `editable()` — that reads `data.latest`, which
+  // suspends on the first pending read, and the palette evaluates every action's
+  // `disabled()` inside its own render (kdd/keyboard-layer § an action's
+  // `disabled` MUST NOT read a suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const current = data.latest;
+      return !current || !isEditable(current.status);
+    },
+  });
+
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
   // item may be on a later PAGE, and finding it means advancing the detail
@@ -507,7 +547,6 @@ const OutboundDetailView: Component = () => {
   const vvmOn = () => prefs().manageVvmStatusForStock;
 
   const crumbs = (current: OutboundNode) => [
-    { label: t('distribution') },
     {
       label: t('outbound-shipments'),
       onClick: () =>
@@ -562,8 +601,13 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
-        // Mono, per the spec's line-table column 3.
-        ...getCellDefinition('batch'),
+        // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
+        // kind's 7rem growth cap: this column doesn't only hold a code, it
+        // renders the word "Placeholder" for an unallocated line, which fills
+        // the cap exactly and pins the column there so it can't be dragged
+        // wider at all. Same reasoning (and fix) as the `locationCode` key's
+        // "own size, NO cap" note in _globalColumnConfig (#601).
+        ...uncapped(getCellDefinition<Line>('batch')),
       },
       {
         c: { key: 'expiryDate' },
@@ -764,6 +808,7 @@ const OutboundDetailView: Component = () => {
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -787,6 +832,9 @@ const OutboundDetailView: Component = () => {
                         variant="secondary"
                         icon={<InfoIcon />}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -938,6 +986,7 @@ const OutboundDetailView: Component = () => {
                     editable() ? (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >

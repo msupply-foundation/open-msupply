@@ -35,7 +35,7 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       <FilterTextInput
         label={t('label.search')}
         testId={props.testId}
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().search?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ search: value ? { like: value } : null })
@@ -74,7 +74,7 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       <FilterTextInput
         label={t('label.location')}
         testId={props.testId}
-        placeholder={t('label.location')}
+        placeholder={t('placeholder.search')}
         value={props.filter().location?.codeOrName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
