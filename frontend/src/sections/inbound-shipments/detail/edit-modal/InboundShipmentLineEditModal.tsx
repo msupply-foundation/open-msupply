@@ -1288,14 +1288,25 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       dismissable={!saving()}
       onClose={props.onClose}
       size={workingSize() ? 'large' : 'auto'}
-      // The pre-pick state is a command-palette-shaped card: the standard
-      // create-modal width (the CreateStocktake/CreateInternalOrder family),
-      // and a body tall enough to OWN the open suggestions list — the search
-      // takes initial focus and the combobox opens on focus, so the list is
-      // this state's resting face, and without the reserved height it would
-      // dangle past the card onto the scrim. The popup itself matches its
-      // trigger's width. Both are ignored once the latch flips to large.
-      widthRem={44}
+      // Two widths on one prop, switched by the same latch as `size`:
+      //
+      // Pre-pick, a command-palette-shaped card: the standard create-modal
+      // width (the CreateStocktake/CreateInternalOrder family), and a body tall
+      // enough to OWN the open suggestions list — the search takes initial
+      // focus and the combobox opens on focus, so the list is this state's
+      // resting face, and without the reserved height it would dangle past the
+      // card onto the scrim. The popup itself matches its trigger's width.
+      //
+      // Working, 76rem rather than large's 56rem default: this line table is
+      // the app's widest at 21 columns, so #771's "~900px if the tables fit"
+      // does NOT fit — it would force horizontal scroll on a desktop table
+      // view. #771's own next clause ("wider if the column set forces it") is
+      // this. Recorded as a deliberate deviation in the DESIGN_STANDARDS
+      // ledger. Dialog clamps it to the viewport, so it stays a framed card.
+      //
+      // The reserved height is ignored once the latch flips to large — the
+      // body flexes to fill the tall box instead.
+      widthRem={workingSize() ? 76 : 44}
       minBodyHeightRem={28}
       testId="add-item-modal"
       title={

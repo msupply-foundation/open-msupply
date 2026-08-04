@@ -382,3 +382,23 @@ The Columns/Settings/Full-screen controls didn't match the current app's functio
 Reuses the OMS-carried `label.reset-column-order` / `label.reset-column-sizes` / `label.reset-pinned-columns` / `label.reset-table-defaults` / `label.show-all-columns` / `label.toggle-density` keys; new `table.edit-columns` / `table.reset-order` / `table.unpin-all`. Verified live (showcase table): tooltips, the columns-3-cog glyph, both popovers' contents, and the reset going grey→red as overrides appear. `pnpm check` green.
 
 The Settings popover also carries a bold **"Settings"** heading and a leading icon per row (matching the current app's `SettingsMenu`): `TransferHorizontal` (reset order), `Eye` (show all), `Reload`/`Refresh01` (reset sizes), `Pin` (reset pinned), `MenuLines`/`Menu01` (toggle density), `Save` (save default), `Refresh`/`Refresh03` (reset to defaults — inherits the row's red). Icons are 1rem, inherit `currentColor`. `table.settings` is now "Settings" (the button tooltip/label + the heading).
+
+### Workbench dialog width — deliberate deviation from the 900px modal standard _(issue #771, 2026-08-04)_
+
+**The standard's figure.** ui-standards gives a large modal ~900px. `Dialog size="large"` takes that as its default working width — `56rem` = 896px — replacing the old full-bleed `100vw - 4rem` that #771 was filed against ("lots of empty space").
+
+**Where it doesn't fit, and why we deviate.** #771 anticipated this in the same sentence that set the figure: _"a centred card at a fixed width (~900px if the tables fit, **wider if the stocktake column set forces it**)"_. Three line-edit tables are past that line:
+
+| Line editor                  | Columns            | Working width      |
+| ---------------------------- | ------------------ | ------------------ |
+| Inbound shipment             | 21                 | **76rem** (1216px) |
+| Outbound shipment            | 20                 | **76rem**          |
+| Stocktake                    | 20                 | **76rem**          |
+| Prescription                 | 9                  | 56rem (default)    |
+| Internal order / requisition | — (form, no table) | 56rem (default)    |
+
+At 896px a 20-column table horizontally scrolls on a desktop monitor that has the room — trading #771's complaint (empty space) for a worse one (hidden columns). Note the columns are only reachable via the card ⇄ table toggle (#886); all three default to **cards**, where the extra width buys a wider auto-fit card grid rather than fixing a scroll.
+
+**Mechanism.** `widthRem` now sets the working width in large mode instead of being ignored there, so the deviation is per-caller and visible at the call site rather than baked into the library. Each of the three passes `widthRem={workingSize() ? 76 : 44}` — one prop carrying both of the latch's two widths. `.large` reads `min(var(--dialog-width), 100vw - 4rem)`, so the clamp does the responsive work with no second breakpoint: 76rem is near-full-bleed on a laptop and still a framed card with visible scrim on a large monitor. Below the navOverlay line (1024px) `data-fullscreen` takes over as before and width is moot.
+
+**Open.** 76rem is a first cut, not a measured fit — 21 columns still won't all fit, so this narrows the scroll rather than removing it. If the table view proves to be the common case (setConfig persists the choice per user), the next step is a width that follows `viewMode` rather than a single number per modal; that was left out here because it resizes the box on toggle, which cuts against #771's "the growth on item-pick is the only size change in the modal's life".

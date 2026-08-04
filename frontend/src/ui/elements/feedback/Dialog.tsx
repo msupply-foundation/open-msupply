@@ -114,9 +114,11 @@ export interface DialogProps {
    * measure keeps the box steady across a multi-step flow: the width belongs to
    * the dialog frame, so capping the CONTENT with a `ContentContainer` inside
    * would leave the frame (and its title + actions rows) at its old width with
-   * the body floating in the middle. Ignored in `size="large"`, which fixes
-   * its own working width. If both are passed the rem number wins — it sets
-   * the custom property inline, which beats the preset's rule.
+   * the body floating in the middle. Ignored in `size="large"`, whose working
+   * width is a rem number (see `widthRem`) rather than a content measure — a
+   * workbench is sized by the table it holds, not by reading comfort. If both
+   * are passed the rem number wins — it sets the custom property inline, which
+   * beats the preset's rule.
    *
    * A measure also opts the dialog into the shared **full-screen** treatment
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
@@ -130,6 +132,15 @@ export interface DialogProps {
    * stays a steady size regardless of content — a form switching modes doesn't
    * change width. Overrides the default (30rem) via a custom property; the page
    * passes a number, not CSS, so it owns no stylesheet (principle #10).
+   *
+   * Also sets the WORKING WIDTH in `size="large"`, overriding its 56rem default
+   * (#771: "~900px if the tables fit, wider if the column set forces it"). A
+   * line editor whose table is column-heavy asks for more; one whose table fits
+   * passes nothing. Because the width is `min(widthRem, 100vw - 4rem)`, a
+   * generous number self-clamps: it reads as near-full-bleed on a laptop and
+   * still as a framed card on a large monitor. A modal that changes size with
+   * its state passes the matching number alongside `size` — see the line
+   * editors' `workingSize` latch.
    */
   widthRem?: number;
   /**
@@ -142,11 +153,11 @@ export interface DialogProps {
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
    * by widthRem + the viewport cap). `'large'`: a workbench modal for
    * content-heavy modals like the line-edit table — a centred card at the
-   * working width (~56rem, clamped to the viewport) whose height is elastic
-   * between ~60vh and ~80vh (#771). In large mode widthRem is ignored (the
-   * working width is fixed) and the body flexes so a scrolling child (a
-   * DataTable) fills the tall space once content passes the height cap. Like a
-   * `width` measure, it goes full-screen below the narrow-viewport line.
+   * working width (56rem by default, `widthRem` for a wider table, clamped to
+   * the viewport) whose height is elastic between ~60vh and ~80vh (#771). The
+   * body flexes so a scrolling child (a DataTable) fills the tall space once
+   * content passes the height cap. Like a `width` measure, it goes full-screen
+   * below the narrow-viewport line.
    */
   size?: 'auto' | 'large';
   /**
@@ -574,11 +585,9 @@ export const Dialog = (props: DialogProps) => {
       // The measure preset, like widthRem, has nothing to say in large mode.
       data-width={props.size === 'large' ? undefined : props.width}
       style={{
-        // widthRem is ignored in large mode (the .large class fixes the
-        // working width).
-        ...(props.widthRem && props.size !== 'large'
-          ? { '--dialog-width': `${props.widthRem}rem` }
-          : {}),
+        // Sets the width in BOTH modes — in large mode it overrides the .large
+        // class's 56rem working-width default (#771).
+        ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
           : {}),

@@ -277,8 +277,10 @@ export const DialogShowcase = () => {
           title={'Large "workbench" dialog — size="large"'}
         >
           <Lead>
-            <code>size="large"</code> is a centred card at the working width
-            (~56rem) whose height is elastic between ~60vh and ~80vh — for
+            <code>size="large"</code> is a centred card at its working width —
+            56rem by default, or <code>widthRem</code> where a column-heavy
+            table forces wider (the shipment and stocktake line editors take
+            76rem) — whose height is elastic between ~60vh and ~80vh, for
             content-heavy modals like the stock line editor. Short content makes
             a short modal; past the height cap the body becomes a bounded flex
             column, so a single tall child (a DataTable in the app) fills the
