@@ -5,6 +5,9 @@ fragment PrescriptionFields on InvoiceNode {
   id
   invoiceNumber
   status
+  # The cancellation mirror's marker: a reversal is VERIFIED like any confirmed
+  # prescription, so only this tells them apart (contract § cancellation).
+  isCancellation
   createdDatetime
   pickedDatetime
   verifiedDatetime
@@ -154,8 +157,14 @@ query diagnosesActive {
 # Bulk line delete (detail selection footer; also the date/program-change
 # clear-lines flow — spec/prescriptions AC-B2). Same all-or-nothing batch as
 # the list delete; the client only ever sends it on an editable prescription.
-mutation deletePrescriptionLines($storeId: String!, $ids: [DeletePrescriptionLineInput!]!) {
-  batchPrescription(storeId: $storeId, input: { deletePrescriptionLines: $ids }) {
+mutation deletePrescriptionLines(
+  $storeId: String!
+  $ids: [DeletePrescriptionLineInput!]!
+) {
+  batchPrescription(
+    storeId: $storeId
+    input: { deletePrescriptionLines: $ids }
+  ) {
     deletePrescriptionLines {
       id
       response {
