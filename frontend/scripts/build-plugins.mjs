@@ -1,15 +1,16 @@
 /*
  * Build + pack frontend plugins.
  *
- * For each discovered plugin (in-repo `examples/*`, plus anything named by
- * OMS_PLUGIN_DIRS) this:
+ * For each discovered plugin (in-repo `examples/*` and `plugins/*`, plus
+ * anything named by OMS_PLUGIN_DIRS) this:
  *   1. builds it to a single-file ES module
  *      `dist/frontend_plugins/{code}/{code}.js`
  *      through the shared preset (vite/pluginBuild.ts) — shared specifiers stay
  *      bare, resolved at runtime by the host's import map;
- *   2. packs every plugin into `dist/bundle.json` — the installable server
- *      artifact, byte-for-byte in the format `remote_server_cli
- *      generate-plugin-bundle` produces. A plugin's BACKEND half
+ *   2. packs it into `dist/bundles/{code}.json` — ONE BUNDLE PER PLUGIN, the
+ *      installable server artifact, byte-for-byte in the format
+ *      `remote_server_cli generate-plugin-bundle` produces. Both of a plugin's
+ *      halves go in its own bundle and nobody else's; a plugin's BACKEND half
  *      (`plugins/<dir>/backend`, a BoaJS bundle built by the open-msupply
  *      client toolchain) is packed VERBATIM from its committed
  *      `prebuilt/plugin.js` — never rebuilt, re-encoded or reformatted here,
@@ -43,6 +44,7 @@ import { build } from 'vite';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
 
 const OUT_DIR = 'dist/frontend_plugins';
+const BUNDLE_DIR = 'dist/bundles';
 
 // Where a plugin's entry module may live, in preference order. `plugin.tsx` at
 // the root is the examples' shape; `src/plugin.ts(x)` is the out-of-tree one.
@@ -257,17 +259,45 @@ for (const [i, row] of backendRows.entries()) {
   }
 }
 
-mkdirSync(OUT_DIR, { recursive: true });
+/*
+ * ONE BUNDLE PER PLUGIN, keyed by plugin code — never a shared one.
+ *
+ * A bundle is what gets installed on a central server, and a deployment
+ * installs the plugins it wants, not everything this repo happens to hold: a
+ * shared bundle would put `api_too_new` (which exists to be refused by the
+ * loader) on a CIV server. Installing is an additive per-row upsert
+ * (server/service/src/plugin/mod.rs § install_uploaded_plugin), so N bundles
+ * install exactly like one, and a bundle never removes a plugin absent from
+ * it.
+ *
+ * The code is also what pairs a plugin's two halves — `plugins/civ` and
+ * `plugins/civ/backend` both declare `civ_plugins` — so grouping by it puts
+ * both in one bundle, which is the unit that has to be installed together.
+ */
+const bundles = new Map();
 /* eslint-disable camelcase -- Rust PluginBundle's field names. */
-writeFileSync(
-  'dist/bundle.json',
-  JSON.stringify(
-    { backend_plugins: backendRows, frontend_plugins: packed.map(p => p.row) },
-    null,
-    2
-  )
-);
+const bundleFor = code => {
+  const existing = bundles.get(code);
+  if (existing) return existing;
+  const bundle = { backend_plugins: [], frontend_plugins: [] };
+  bundles.set(code, bundle);
+  return bundle;
+};
+for (const { row } of packed) bundleFor(row.code).frontend_plugins.push(row);
+for (const row of backendRows) bundleFor(row.code).backend_plugins.push(row);
 /* eslint-enable camelcase */
+
+mkdirSync(OUT_DIR, { recursive: true });
+mkdirSync(BUNDLE_DIR, { recursive: true });
+for (const [code, bundle] of bundles) {
+  writeFileSync(
+    join(BUNDLE_DIR, `${code}.json`),
+    JSON.stringify(bundle, null, 2)
+  );
+}
+// metadata.json stays whole-repo: it is the built app's own discovery response
+// (`frontendPluginMetadata`), so a `pnpm preview` build can load every plugin
+// it built. Loading is not installing — nothing here reaches a server.
 writeFileSync(
   join(OUT_DIR, 'metadata.json'),
   JSON.stringify(
@@ -291,8 +321,26 @@ for (const row of backendRows) {
       `${(bytes / 1024).toFixed(1)} KB  verbatim  [${row.types.join(', ')}]`
   );
 }
+for (const [code, bundle] of bundles) {
+  const halves = [
+    `${bundle.frontend_plugins.length} frontend`,
+    `${bundle.backend_plugins.length} backend`,
+  ].join(' + ');
+  console.info(
+    `[build-plugins] ${join(BUNDLE_DIR, `${code}.json`)}  ${halves}`
+  );
+  // A half with no partner means the two package.json `name`s disagree — the
+  // halves would install as unrelated plugins and the bridge would never
+  // route. Cheap to say here, invisible until runtime otherwise.
+  if (bundle.frontend_plugins.length === 0) {
+    console.warn(
+      `[build-plugins] ${code}: backend half with no frontend half — check ` +
+        'the two package.json `name`s match'
+    );
+  }
+}
 console.info(
   `[build-plugins] packed ${packed.length} frontend + ${backendRows.length} ` +
-    'backend; round-trip verified; wrote dist/bundle.json + ' +
-    'dist/frontend_plugins/metadata.json'
+    `backend into ${bundles.size} per-plugin bundle(s); round-trip verified; ` +
+    `wrote ${BUNDLE_DIR}/ + ${OUT_DIR}/metadata.json`
 );
