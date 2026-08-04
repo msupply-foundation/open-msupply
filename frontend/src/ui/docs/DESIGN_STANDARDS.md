@@ -385,20 +385,22 @@ The Settings popover also carries a bold **"Settings"** heading and a leading ic
 
 ### Workbench dialog width — deliberate deviation from the 900px modal standard _(issue #771, 2026-08-04)_
 
-**The standard's figure.** ui-standards gives a large modal ~900px. `Dialog size="large"` takes that as its default working width — `56rem` = 896px — replacing the old full-bleed `100vw - 4rem` that #771 was filed against ("lots of empty space").
+**The standard's figure.** ui-standards gives a large modal ~900px. `Dialog size="large"` takes that as its working width — `56rem` = 896px — replacing the old full-bleed `100vw - 4rem` that #771 was filed against ("lots of empty space").
 
-**Where it doesn't fit, and why we deviate.** #771 anticipated this in the same sentence that set the figure: _"a centred card at a fixed width (~900px if the tables fit, **wider if the stocktake column set forces it**)"_. Three line-edit tables are past that line:
+**Where it doesn't fit, and why we deviate.** #771 anticipated this in the same sentence that set the figure: _"a centred card at a fixed width (~900px if the tables fit, **wider if the stocktake column set forces it**)"_. Three line-edit tables are past that line — and far enough past it that no card width fits, so they take the new `size="full"` rather than a bigger number:
 
-| Line editor                  | Columns            | Working width      |
-| ---------------------------- | ------------------ | ------------------ |
-| Inbound shipment             | 21                 | **76rem** (1216px) |
-| Outbound shipment            | 20                 | **76rem**          |
-| Stocktake                    | 20                 | **76rem**          |
-| Prescription                 | 9                  | 56rem (default)    |
-| Internal order / requisition | — (form, no table) | 56rem (default)    |
+| Line editor                  | Columns            | Size                        |
+| ---------------------------- | ------------------ | --------------------------- |
+| Inbound shipment             | 21                 | **`full`** (`100vw - 4rem`) |
+| Outbound shipment            | 20                 | **`full`**                  |
+| Stocktake                    | 20                 | **`full`**                  |
+| Prescription                 | 9                  | `large` (56rem)             |
+| Internal order / requisition | — (form, no table) | `large` (56rem)             |
 
-At 896px a 20-column table horizontally scrolls on a desktop monitor that has the room — trading #771's complaint (empty space) for a worse one (hidden columns). Note the columns are only reachable via the card ⇄ table toggle (#886); all three default to **cards**, where the extra width buys a wider auto-fit card grid rather than fixing a scroll.
+The reasoning that settles it: **#771's empty space was VERTICAL.** Its screenshot is a nearly-empty modal in a full-viewport box, and the fix for that is the 60–80vh height band plus the small pre-pick card — both of which `full` keeps. Narrowing the _width_ never removed any of that emptiness on these three, because the table was never the empty part; at 896px a 20-column table simply hides columns on a desktop that has the room, trading #771's complaint for a worse one. An intermediate 76rem was tried first and read as a regression against the pre-#771 app (James, 2026-08-04, comparing the inbound editor on this branch against main side by side) — it is narrower than full-bleed by ~230px at 1512, so it loses columns without buying anything back.
 
-**Mechanism.** `widthRem` now sets the working width in large mode instead of being ignored there, so the deviation is per-caller and visible at the call site rather than baked into the library. Each of the three passes `widthRem={workingSize() ? 76 : 44}` — one prop carrying both of the latch's two widths. `.large` reads `min(var(--dialog-width), 100vw - 4rem)`, so the clamp does the responsive work with no second breakpoint: 76rem is near-full-bleed on a laptop and still a framed card with visible scrim on a large monitor. Below the navOverlay line (1024px) `data-fullscreen` takes over as before and width is moot.
+Note the columns are only reachable via the card ⇄ table toggle (#886); all three default to **cards**, where the width buys a wider auto-fit card grid rather than fixing a scroll.
 
-**Open.** 76rem is a first cut, not a measured fit — 21 columns still won't all fit, so this narrows the scroll rather than removing it. If the table view proves to be the common case (setConfig persists the choice per user), the next step is a width that follows `viewMode` rather than a single number per modal; that was left out here because it resizes the box on toggle, which cuts against #771's "the growth on item-pick is the only size change in the modal's life".
+**Mechanism.** `size` gains a third value. `full` is `large` plus a width override — Dialog puts both classes on the element, so the flex column, the height band and the body rules live once, and `.dialog.large.bleed` sets `width: calc(100vw - 4rem)` outright. Below the navOverlay line (1024px) `data-fullscreen` takes over for both, as before. `widthRem` also now sets the working width in `large` (it used to be ignored there), which is the knob for a table that wants a bigger card rather than the full viewport; it stays inert at `full`, where the three line editors use it for their pre-pick search card only.
+
+**Open.** This is a width decision, not a column-fit one — 21 columns still won't all fit at 1448px, so a desktop table view still scrolls horizontally. The lasting fix is fewer default columns in the table view, not a wider box.

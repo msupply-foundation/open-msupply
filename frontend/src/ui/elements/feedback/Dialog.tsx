@@ -151,15 +151,22 @@ export interface DialogProps {
   minBodyHeightRem?: number;
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
-   * by widthRem + the viewport cap). `'large'`: a workbench modal for
-   * content-heavy modals like the line-edit table — a centred card at the
-   * working width (56rem by default, `widthRem` for a wider table, clamped to
-   * the viewport) whose height is elastic between ~60vh and ~80vh (#771). The
-   * body flexes so a scrolling child (a DataTable) fills the tall space once
-   * content passes the height cap. Like a `width` measure, it goes full-screen
-   * below the narrow-viewport line.
+   * by widthRem + the viewport cap). The two WORKBENCH sizes are for
+   * content-heavy modals like the line-edit table; both give an elastic height
+   * between ~60vh and ~80vh (#771) and a body that flexes so a scrolling child
+   * (a DataTable) fills the tall space once content passes the height cap, and
+   * both go full-screen below the narrow-viewport line like a `width` measure.
+   * They differ only in width:
+   *  - `'large'` — a centred CARD, 56rem by default and `widthRem` for a wider
+   *    table. The default: #771 removed the old full-bleed because a modal with
+   *    little in it read as an empty workbench.
+   *  - `'full'` — fills the viewport bar a 2rem gutter. For a table too wide to
+   *    be a card at any sane number: the shipment and stocktake line editors
+   *    run to ~20 columns, where narrowing hides columns without removing any
+   *    empty space (the emptiness there is vertical, which the height band
+   *    already handles). `widthRem` is ignored.
    */
-  size?: 'auto' | 'large';
+  size?: 'auto' | 'large' | 'full';
   /**
    * Drops the dialog's panel surface — no background, no shadow, no padding —
    * so the content floats directly over the scrim. For an overlay whose own
@@ -367,21 +374,24 @@ export const Dialog = (props: DialogProps) => {
   // open rather than once per read site — a JSX-element prop is a getter, so N
   // raw reads = N constructions, each firing its own initial fetch (#549).
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
+  // Both workbench sizes share every rule except width, so almost everything
+  // that asks "is this large?" means this.
+  const workbench = () => props.size === 'large' || props.size === 'full';
   // Modals whose width is a page-sized SURFACE go full-screen on tablet
   // portrait and phones — the same "narrow viewport" line as the nav overlay, so
   // we reuse navOverlay (1024) rather than mint a fourth breakpoint.
   // data-fullscreen drives the CSS; the cutoff lives once in breakpoints.ts
   // (createMediaQuery).
   //
-  // That is `size="large"` (the workbench) and any `width` MEASURE: the widest
-  // measure is wider than the line itself, so below it a measure dialog would
-  // otherwise be an edge-to-edge card holding a 1rem margin — the in-between
-  // this rule exists to remove. A default or `widthRem` dialog stays a centred
-  // card: a confirmation has no business filling a tablet screen, and a caller
-  // who wants the sheet asks for the measure it is sized to.
+  // That is either workbench size (`large`/`full`) and any `width` MEASURE: the
+  // widest measure is wider than the line itself, so below it a measure dialog
+  // would otherwise be an edge-to-edge card holding a 1rem margin — the
+  // in-between this rule exists to remove. A default or `widthRem` dialog stays
+  // a centred card: a confirmation has no business filling a tablet screen, and
+  // a caller who wants the sheet asks for the measure it is sized to.
   const narrowViewport = useIsNavOverlay();
   const fullscreen = () =>
-    narrowViewport() && (props.size === 'large' || props.width !== undefined);
+    narrowViewport() && (workbench() || props.width !== undefined);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us
@@ -577,16 +587,20 @@ export const Dialog = (props: DialogProps) => {
       }}
       classList={{
         [styles.dialog ?? '']: true,
-        [styles.large ?? '']: props.size === 'large',
+        // `full` IS `large` plus a width override, so it takes both classes —
+        // the flex column, the height band and the body rules live once.
+        [styles.large ?? '']: workbench(),
+        [styles.bleed ?? '']: props.size === 'full',
         [styles.chromeless ?? '']: props.chromeless === true,
       }}
       data-testid={props.testId}
       data-fullscreen={fullscreen() ? '' : undefined}
-      // The measure preset, like widthRem, has nothing to say in large mode.
-      data-width={props.size === 'large' ? undefined : props.width}
+      // The measure preset has nothing to say at either workbench size.
+      data-width={workbench() ? undefined : props.width}
       style={{
-        // Sets the width in BOTH modes — in large mode it overrides the .large
-        // class's 56rem working-width default (#771).
+        // Sets the working width in `large` too, overriding the .large class's
+        // 56rem default (#771). In `full` it is inert: .bleed sets `width`
+        // outright rather than through this custom property.
         ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
