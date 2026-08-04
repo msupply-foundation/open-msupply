@@ -479,6 +479,10 @@ const LineEditContent = (
       // back in reach; the region's own max-inline-size + auto margins keep it
       // a centred block rather than letting it sprawl.
       //
+      // The PLUGIN SLOT below the form settles it independently: what a
+      // deployment contributes there is not ours to measure (CIV's panel is a
+      // six-column table), so no card width is safe for every site.
+      //
       // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
       // command-palette-shaped card at the standard create-modal width (the
       // CreateStocktake/CreateInternalOrder family), with a body tall enough to

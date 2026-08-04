@@ -700,14 +700,25 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size={workingSize() ? 'large' : 'auto'}
-      // The pre-pick state is a command-palette-shaped card: the standard
-      // create-modal width (the CreateStocktake/CreateInternalOrder family),
-      // and a body tall enough to OWN the open suggestions list — the search
-      // takes initial focus and the combobox opens on focus, so the list is
-      // this state's resting face, and without the reserved height it would
-      // dangle past the card onto the scrim. The popup itself matches its
-      // trigger's width. Both are ignored once the latch flips to large.
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large`: the figure grid is the constraint. `.column` is
+      // `flex: 1 1 16rem` and an extra-fields program requisition renders
+      // THREE of them, so the row's basis is ~50rem before gaps — inside a
+      // 56rem card's ~53rem body that leaves the columns pinned at their floor,
+      // with a labelled figure row and its measure word squeezed into 16rem.
+      // The stats block below caps at 50rem and would fit on its own; the grid
+      // is what doesn't. Same conclusion as the internal-order editor next
+      // door, reached from its own layout rather than a column count — see the
+      // DESIGN_STANDARDS ledger.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips.
       widthRem={44}
       minBodyHeightRem={28}
       testId="requisition-line-edit-modal"
