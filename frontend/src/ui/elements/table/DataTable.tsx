@@ -37,6 +37,7 @@ import {
 } from './columnTypes';
 import { HeaderCell } from './HeaderCell';
 import { TableRow } from './TableRow';
+import { InTableCellContext } from './inTableCell';
 import { CardView } from './CardView';
 import {
   CONFIG_KEYS,
@@ -1000,22 +1001,32 @@ export function DataTable<T, K extends string, G extends string = never>(
               a card's fields carry their own labels via LabelledValue). The table
               renders even with NO rows so the column headers stay visible — the
               empty state / spinner sits BELOW it (matching the current app). */}
-          <table class={styles.table} data-density={viewDensity()}>
-            <Show when={viewMode() === 'table'}>
-              <thead>
-                <For each={table.getHeaderGroups()}>
-                  {headerGroup => (
-                    <tr>
-                      <Show when={props.enableSelection}>
-                        <th
-                          class={`${styles.th} ${styles.selectCell}`}
-                          data-pinned="left"
-                          data-frozen-edge={
-                            leadingIsFrozenEdge() ? 'left' : undefined
-                          }
-                          style={leadingPinnedStyle(0)}
-                        >
-                          {/* Partial selection (some rows on this page, not
+          {/* KB-S2's "inside a table cell" fact, provided around the TABLE and
+              nothing else: a numeric field in a cell moves the caret with the
+              arrows instead of stepping its value. Scoped here rather than at the
+              root, because the root also holds page-supplied content that is NOT
+              in a cell — the FilterBar in the toolbar (whose numeric filter chips
+              are NumberFields), the selection bar's actions, the empty slot — and
+              those must keep stepping. Provided ONCE for the whole table, never
+              per <td> (see inTableCell.ts); <Dialog> resets it, so a line editor
+              opened from a row does not inherit it. */}
+          <InTableCellContext.Provider value={true}>
+            <table class={styles.table} data-density={viewDensity()}>
+              <Show when={viewMode() === 'table'}>
+                <thead>
+                  <For each={table.getHeaderGroups()}>
+                    {headerGroup => (
+                      <tr>
+                        <Show when={props.enableSelection}>
+                          <th
+                            class={`${styles.th} ${styles.selectCell}`}
+                            data-pinned="left"
+                            data-frozen-edge={
+                              leadingIsFrozenEdge() ? 'left' : undefined
+                            }
+                            style={leadingPinnedStyle(0)}
+                          >
+                            {/* Partial selection (some rows on this page, not
                               all) shows the indeterminate dash (ui-standards
                               § tables → row selection). From indeterminate the
                               next click clears (→ select none), not select-all:
@@ -1024,131 +1035,136 @@ export function DataTable<T, K extends string, G extends string = never>(
                               TanStack's default handler, which keys off the
                               native box's post-click checked value and so goes
                               indeterminate → all. */}
-                          <BareCheckbox
-                            class={styles.selectBox}
-                            aria-label={t('table.select-all')}
-                            data-testid="select-all-rows-checkbox"
-                            disabled={props.selectionDisabled}
-                            checked={table.getIsAllRowsSelected()}
-                            indeterminate={table.getIsSomeRowsSelected()}
-                            onChange={e => {
-                              const anySelected =
-                                table.getIsAllRowsSelected() ||
-                                table.getIsSomeRowsSelected();
-                              table.toggleAllRowsSelected(!anySelected);
-                              // The native click already flipped the DOM box to
-                              // checked; toggling OFF from indeterminate leaves
-                              // the controlled `checked` value false→false, so
-                              // Solid's binding never re-runs to undo it. Sync
-                              // the box to the state we just set.
-                              e.currentTarget.checked = !anySelected;
-                            }}
-                          />
-                        </th>
-                      </Show>
-                      {/* Skip a card-only column's header cell (meta.hideOnTable);
-                          TanStack still holds every column — see showInTableView. */}
-                      <For each={headerGroup.headers}>
-                        {header => (
-                          <Show when={showInTableView(header.column.columnDef)}>
-                            <HeaderCell
-                              header={header}
-                              pinnedStyle={pinnedStyle}
-                              frozenEdge={frozenEdge}
+                            <BareCheckbox
+                              class={styles.selectBox}
+                              aria-label={t('table.select-all')}
+                              data-testid="select-all-rows-checkbox"
+                              disabled={props.selectionDisabled}
+                              checked={table.getIsAllRowsSelected()}
+                              indeterminate={table.getIsSomeRowsSelected()}
+                              onChange={e => {
+                                const anySelected =
+                                  table.getIsAllRowsSelected() ||
+                                  table.getIsSomeRowsSelected();
+                                table.toggleAllRowsSelected(!anySelected);
+                                // The native click already flipped the DOM box to
+                                // checked; toggling OFF from indeterminate leaves
+                                // the controlled `checked` value false→false, so
+                                // Solid's binding never re-runs to undo it. Sync
+                                // the box to the state we just set.
+                                e.currentTarget.checked = !anySelected;
+                              }}
                             />
-                          </Show>
-                        )}
-                      </For>
-                    </tr>
-                  )}
-                </For>
-              </thead>
-            </Show>
-            <tbody>
-              {/* Rows only when populated; the empty/loading state renders
+                          </th>
+                        </Show>
+                        {/* Skip a card-only column's header cell (meta.hideOnTable);
+                          TanStack still holds every column — see showInTableView. */}
+                        <For each={headerGroup.headers}>
+                          {header => (
+                            <Show
+                              when={showInTableView(header.column.columnDef)}
+                            >
+                              <HeaderCell
+                                header={header}
+                                pinnedStyle={pinnedStyle}
+                                frozenEdge={frozenEdge}
+                              />
+                            </Show>
+                          )}
+                        </For>
+                      </tr>
+                    )}
+                  </For>
+                </thead>
+              </Show>
+              <tbody>
+                {/* Rows only when populated; the empty/loading state renders
                   below the table so the headers stay visible. Table view → one
                   <TableRow> per row; card view → one full-width card <tr> per row
                   (CardView), so both live in the same <table>. */}
-              <Show when={table.getRowModel().rows.length > 0}>
-                <Switch>
-                  <Match when={viewMode() === 'card'}>
-                    <CardView
-                      table={table}
-                      cardGroups={props.cardGroups}
-                      enableSelection={props.enableSelection ?? false}
-                      selectionDisabled={props.selectionDisabled ?? false}
-                      onRowClick={props.onRowClick}
-                    />
-                  </Match>
-                  <Match when={viewMode() === 'table'}>
-                    <For each={table.getRowModel().rows}>
-                      {row => (
-                        <TableRow
-                          row={row}
-                          enableSelection={props.enableSelection ?? false}
-                          selectionDisabled={props.selectionDisabled ?? false}
-                          onRowClick={props.onRowClick}
-                          rowState={props.rowState}
-                          rowTone={props.rowTone}
-                          pinnedStyle={pinnedStyle}
-                          leadingPinnedStyle={leadingPinnedStyle}
-                          frozenEdge={frozenEdge}
-                          leadingIsFrozenEdge={leadingIsFrozenEdge()}
-                          cellVisible={cell =>
-                            showInTableView(cell.column.columnDef)
-                          }
-                        />
-                      )}
-                    </For>
-                  </Match>
-                </Switch>
-              </Show>
-            </tbody>
-            {/* Footer band (table view only) — rendered iff a column declares
+                <Show when={table.getRowModel().rows.length > 0}>
+                  <Switch>
+                    <Match when={viewMode() === 'card'}>
+                      <CardView
+                        table={table}
+                        cardGroups={props.cardGroups}
+                        enableSelection={props.enableSelection ?? false}
+                        selectionDisabled={props.selectionDisabled ?? false}
+                        onRowClick={props.onRowClick}
+                      />
+                    </Match>
+                    <Match when={viewMode() === 'table'}>
+                      <For each={table.getRowModel().rows}>
+                        {row => (
+                          <TableRow
+                            row={row}
+                            enableSelection={props.enableSelection ?? false}
+                            selectionDisabled={props.selectionDisabled ?? false}
+                            onRowClick={props.onRowClick}
+                            rowState={props.rowState}
+                            rowTone={props.rowTone}
+                            pinnedStyle={pinnedStyle}
+                            leadingPinnedStyle={leadingPinnedStyle}
+                            frozenEdge={frozenEdge}
+                            leadingIsFrozenEdge={leadingIsFrozenEdge()}
+                            cellVisible={cell =>
+                              showInTableView(cell.column.columnDef)
+                            }
+                          />
+                        )}
+                      </For>
+                    </Match>
+                  </Switch>
+                </Show>
+              </tbody>
+              {/* Footer band (table view only) — rendered iff a column declares
                   a `footer` (e.g. a summed total, see the inbound Financial
                   tab). Mirrors the header row's structure: a leading blank cell
                   under the selection column, then one cell per active-tab
                   column carrying its own align. The `footer` render fn owns the
                   content (a string, or a rendered component). */}
-            <Show
-              when={
-                viewMode() === 'table' &&
-                hasFooter() &&
-                table.getRowModel().rows.length > 0
-              }
-            >
-              <tfoot>
-                <For each={table.getFooterGroups()}>
-                  {footerGroup => (
-                    <tr>
-                      <Show when={props.enableSelection}>
-                        <td
-                          class={`${styles.tf} ${styles.selectCell}`}
-                          aria-hidden="true"
-                        />
-                      </Show>
-                      <For each={footerGroup.headers}>
-                        {header => (
-                          <Show when={showInTableView(header.column.columnDef)}>
-                            <td
-                              class={styles.tf}
-                              data-align={header.column.columnDef.meta?.align}
-                              data-testid={`footer-${header.column.id}`}
+              <Show
+                when={
+                  viewMode() === 'table' &&
+                  hasFooter() &&
+                  table.getRowModel().rows.length > 0
+                }
+              >
+                <tfoot>
+                  <For each={table.getFooterGroups()}>
+                    {footerGroup => (
+                      <tr>
+                        <Show when={props.enableSelection}>
+                          <td
+                            class={`${styles.tf} ${styles.selectCell}`}
+                            aria-hidden="true"
+                          />
+                        </Show>
+                        <For each={footerGroup.headers}>
+                          {header => (
+                            <Show
+                              when={showInTableView(header.column.columnDef)}
                             >
-                              {renderTemplate(
-                                header.column.columnDef.footer,
-                                header.getContext()
-                              )}
-                            </td>
-                          </Show>
-                        )}
-                      </For>
-                    </tr>
-                  )}
-                </For>
-              </tfoot>
-            </Show>
-          </table>
+                              <td
+                                class={styles.tf}
+                                data-align={header.column.columnDef.meta?.align}
+                                data-testid={`footer-${header.column.id}`}
+                              >
+                                {renderTemplate(
+                                  header.column.columnDef.footer,
+                                  header.getContext()
+                                )}
+                              </td>
+                            </Show>
+                          )}
+                        </For>
+                      </tr>
+                    )}
+                  </For>
+                </tfoot>
+              </Show>
+            </table>
+          </InTableCellContext.Provider>
           {/* Empty / initial-loading state — a sibling BELOW the table so the
                 column headers above stay visible (matching the current app). The
                 bordered box is dropped while empty (data-empty on tableScroll).

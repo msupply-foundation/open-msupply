@@ -123,12 +123,14 @@ export const CreatePrescriptionModal: Component<
         <>
           <Button
             variant="secondary"
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={close}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             disabled={!patient()}
             loading={busy()}

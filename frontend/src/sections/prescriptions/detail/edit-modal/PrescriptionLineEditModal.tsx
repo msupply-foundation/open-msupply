@@ -666,12 +666,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         <>
           <Button
             variant="secondary"
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             disabled={!saveEnabled()}
             loading={saving()}
@@ -683,6 +685,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               outbound S4 footer matrix, reused by D53). */}
           <Show when={!isEdit && saveEnabled()}>
             <Button
+              // The CONTINUING confirm: while present and enabled, Enter
+              // activates it in preference to plain OK (KB-E2, AC-KB23).
+              confirms="continuing"
               data-testid="dialog-button-next-and-ok"
               loading={saving()}
               onClick={() => void onOkNext()}

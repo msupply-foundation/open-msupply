@@ -9,7 +9,7 @@ import {
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
-import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
@@ -103,17 +103,12 @@ export const RequisitionSidePanel: Component<
         <FieldRow label={t('label.entered-by')}>
           {/* The recorded user's name, a dash when none, an info tooltip with
               their email when known (spec S5). */}
-          <span
-            style={{ display: 'inline-flex', 'align-items': 'center' }}
-            data-testid="entered-by-field"
-          >
-            {props.node.user?.username ?? '—'}
-            <Show when={props.node.user?.email}>
-              {email => (
-                <InfoTooltip label={t('label.entered-by')} text={email()} />
-              )}
-            </Show>
-          </span>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <span>{localisedDate(props.node.createdDatetime)}</span>

@@ -205,6 +205,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
               </Show>
               <Button
                 variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase().kind === 'deleting'}
                 onClick={() => void run()}
@@ -214,8 +215,9 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          {/* The report must be acknowledged: Close is the only way out. */}
-          <Button variant="secondary" onClick={dismissReport}>
+          {/* The report must be acknowledged: Close is the only way out, so it is
+              this state's confirm. */}
+          <Button variant="secondary" confirms="plain" onClick={dismissReport}>
             {t('button.close')}
           </Button>
         </Show>

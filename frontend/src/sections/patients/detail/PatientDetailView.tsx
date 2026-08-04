@@ -26,6 +26,8 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -37,7 +39,10 @@ import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
-import { CustomFieldsEditTab } from '../../../domain/customFields';
+import {
+  CustomFieldsEditTab,
+  EMPTY_FIELD_VALUE,
+} from '../../../domain/customFields';
 import {
   draftEquals,
   emptyDraft,
@@ -130,12 +135,24 @@ const PatientDetailView: Component = () => {
   const validation = createFormValidation(() =>
     patientFieldErrors(edit, codeCheck.taken())
   );
+  // Validation timing at a (re)seed: quiet, as a pristine form should be —
+  // UNLESS the saved record itself already breaks a required rule, which a
+  // patient retrieved from central does when it arrives without a code
+  // (spec/patients rules § editing a patient). Then the form is armed from the
+  // start: the gap is the record's, not something the user has yet to type, and
+  // it has to be filled — typed or generated — before this patient can be saved
+  // again.
+  const armForSeed = (seed: PatientDraft) => {
+    if (isDraftValid(seed)) validation.reset();
+    else validation.arm();
+  };
   createEffect(
     on(node, n => {
       if (n && n.id !== seededId()) {
-        setEdit(seedDraft(n));
+        const seed = seedDraft(n);
+        setEdit(seed);
         setSeededId(n.id);
-        validation.reset();
+        armForSeed(seed);
       }
     })
   );
@@ -160,17 +177,44 @@ const PatientDetailView: Component = () => {
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
   // load only once that surface is shown. Modal state: undefined = closed,
-  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add). `.latest` reads
-  // keep these off the Suspense boundary the patient resource owns.
+  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add).
+  //
+  // Every secondary resource below is read through a `state` GATE, never
+  // `.latest` alone: `.latest` SUSPENDS on a first pending read, and these are
+  // read inside tab panels, which Kobalte unmounts while inactive — so the
+  // first read happens on the tab click. Suspending then would tear down this
+  // whole screen (and detach an open dialog) mid-interaction
+  // (kdd/solid-reactivity-pitfalls › no remounts on interaction). Only the
+  // patient resource above reads suspending: that is the screen's first load,
+  // which has no live user state to lose.
   const [providers] = createResource(
     () => params.storeId,
     fetchInsuranceProviders
   );
-  const hasInsurance = () => (providers.latest ?? []).length > 0;
+  const providerList = () =>
+    providers.state === 'ready' || providers.state === 'refreshing'
+      ? (providers.latest ?? [])
+      : [];
+  const hasInsurance = () => providerList().length > 0;
 
   const [insuranceState, setInsuranceState] = createSignal<{
     policy?: InsurancePolicyFragment;
   }>();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the app-bar button and
+  // the ghost button in the Insurance panel's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge.
+  //
+  // Disabled — and so unlisted in the palette — except on the Insurance tab with
+  // the mutate permission, which is exactly when either control renders. KB-R2's
+  // "unclaimed only where the thing is absent": on the Details tab this screen has
+  // no add action, so nothing here answers the key.
+  createAddAction({
+    name: 'button.add-insurance',
+    run: () => setInsuranceState({}),
+    disabled: () => activeTab() !== 'insurance' || !canMutate(),
+  });
 
   const [policiesData, { refetch: refetchPolicies }] = createResource(
     () =>
@@ -179,7 +223,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchInsurancePolicies
   );
-  const policies = () => policiesData.latest ?? [];
+  const policies = () =>
+    policiesData.state === 'ready' || policiesData.state === 'refreshing'
+      ? (policiesData.latest ?? [])
+      : [];
 
   // Program-module tabs (spec § program-module tabs): Programs / Encounters /
   // Vaccinations, read-only lists gated on the program module. Enrolments load
@@ -198,7 +245,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientProgramEnrolments
   );
-  const enrolments = () => enrolmentsData.latest ?? [];
+  const enrolments = () =>
+    enrolmentsData.state === 'ready' || enrolmentsData.state === 'refreshing'
+      ? (enrolmentsData.latest ?? [])
+      : [];
   const immunisationEnrolments = () =>
     enrolments().filter(e => e.isImmunisationProgram);
 
@@ -213,7 +263,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientEncounters
   );
-  const encounters = () => encountersData.latest ?? [];
+  const encounters = () =>
+    encountersData.state === 'ready' || encountersData.state === 'refreshing'
+      ? (encountersData.latest ?? [])
+      : [];
 
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
@@ -266,8 +319,9 @@ const PatientDetailView: Component = () => {
   const resetDraft = () => {
     const n = node();
     if (!n) return;
-    setEdit(seedDraft(n));
-    validation.reset();
+    const seed = seedDraft(n);
+    setEdit(seed);
+    armForSeed(seed);
   };
 
   // Discard prompt on any leave from a dirty form (spec § patient edit form):
@@ -319,7 +373,7 @@ const PatientDetailView: Component = () => {
   ];
 
   const dobDisplay = (n: NonNullable<ReturnType<typeof node>>) => {
-    if (!n.dateOfBirth) return '—';
+    if (!n.dateOfBirth) return EMPTY_FIELD_VALUE;
     const date = localisedDate(n.dateOfBirth);
     const age = getDisplayAge(n.dateOfBirth);
     return age ? `${date} (${t('label.age')}: ${age})` : date;
@@ -344,6 +398,7 @@ const PatientDetailView: Component = () => {
                     <HeaderButtons>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-insurance-header-button"
                         onClick={() => setInsuranceState({})}
                       >
@@ -366,7 +421,11 @@ const PatientDetailView: Component = () => {
                       variant="field"
                       size="small"
                     >
-                      {n().code}
+                      {/* A dash, never blank space: beside a label, blank reads
+                          as a rendering fault (ui-standards/detail-views §
+                          never-editable fields). A patient retrieved without a
+                          code is the case that gets here. */}
+                      {n().code || '—'}
                     </LabelledValue>
                     <LabelledValue
                       label={t('label.gender')}
@@ -375,7 +434,7 @@ const PatientDetailView: Component = () => {
                     >
                       {(() => {
                         const g = n().gender;
-                        return g ? genderLabel(g) : '—';
+                        return g ? genderLabel(g) : EMPTY_FIELD_VALUE;
                       })()}
                     </LabelledValue>
                     <LabelledValue
@@ -420,27 +479,26 @@ const PatientDetailView: Component = () => {
               <TabPanel value="details">
                 {/* fillBody strips the body's edge padding (so the Log table
                     fills the region); the Details form is a padded, centred,
-                    width-capped measure of its own (ui-standards/detail-views
-                    → detail form). */}
-                <div style={{ padding: 'var(--space-5)' }}>
-                  <ContentContainer size="form">
-                    <Show when={saveError()}>
-                      <Alert severity="error">{saveError()}</Alert>
-                    </Show>
-                    <PatientDetailsForm
-                      storeId={params.storeId}
-                      patientId={params.patientId}
-                      draft={edit}
-                      setField={setField}
-                      disabled={!canMutate()}
-                      errorFor={validation.errorFor}
-                    />
-                    <FormErrorSummary
-                      errors={validation.visible()}
-                      testId="patient-detail-error-summary"
-                    />
-                  </ContentContainer>
-                </div>
+                    width-capped measure of its own — which is exactly what
+                    ContentContainer's `padded` supplies (ui-standards/
+                    detail-views → detail form). */}
+                <ContentContainer size="form" padded>
+                  <Show when={saveError()}>
+                    <Alert severity="error">{saveError()}</Alert>
+                  </Show>
+                  <PatientDetailsForm
+                    storeId={params.storeId}
+                    patientId={params.patientId}
+                    draft={edit}
+                    setField={setField}
+                    disabled={!canMutate()}
+                    errorFor={validation.errorFor}
+                  />
+                  <FormErrorSummary
+                    errors={validation.visible()}
+                    testId="patient-detail-error-summary"
+                  />
+                </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>
                 {/* Read-only program-module lists. Programs + Vaccinations
@@ -509,7 +567,7 @@ const PatientDetailView: Component = () => {
                 storeId={params.storeId}
                 patientId={n().id}
                 patientName={n().name}
-                providers={providers.latest ?? []}
+                providers={providerList()}
                 policy={insuranceState()?.policy}
                 onSaved={() => void refetchPolicies()}
               />

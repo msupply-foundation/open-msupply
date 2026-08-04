@@ -148,6 +148,7 @@ const Body = (props: {
               </Show>
               <Button
                 variant="primary"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -163,7 +164,11 @@ const Body = (props: {
             <OkButton data-testid="dialog-button-ok" onClick={goToCopy} />
           </Match>
           <Match when={phase() === 'error'}>
-            <Button variant="secondary" onClick={props.onClose}>
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={props.onClose}
+            >
               {t('button.close')}
             </Button>
           </Match>

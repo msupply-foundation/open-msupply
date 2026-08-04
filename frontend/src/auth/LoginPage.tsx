@@ -1,7 +1,10 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
+import { submitStateAfter, type SubmitState } from './submitState';
+import { getLastLoginUsername } from '../appData';
 import { serverVersion } from '../api/serverInfo';
+import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
@@ -12,11 +15,6 @@ import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 
-type SubmitState =
-  | { kind: 'idle' }
-  | { kind: 'submitting' }
-  | { kind: 'error'; message: string };
-
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see kdd/page-composition) composed with
 // the real auth flow (login()). The form controls are the library TextField /
@@ -25,8 +23,30 @@ type SubmitState =
 // signal and the app (App.tsx) reacts, continuing to the preserved destination
 // URL (spec, Startup Flow). Document dir/lang is owned once by App.tsx.
 export const LoginPage: Component = () => {
-  const [username, setUsername] = createSignal('');
+  // Spec (Authentication): prefilled from the device's remembered username, so
+  // the returning user only retypes the password. Read once as the signal's
+  // initial value — the page is remounted whenever authUser() clears, so it
+  // re-reads on every return to it, and nothing here needs to be reactive.
+  const remembered = getLastLoginUsername();
+  const [username, setUsername] = createSignal(remembered ?? '');
   const [password, setPassword] = createSignal('');
+  // Spec (S1): focus starts on whichever field still needs typing — the
+  // username when nothing is remembered, the password when the name is already
+  // filled in.
+  //
+  // Handles rather than native `autofocus` (kdd/focus-targets), because this
+  // page mounts a SECOND time: a logout clears authUser() and App.tsx swaps it
+  // back in, in the same document. Native `autofocus` is honoured at most once
+  // per document — the first mount sets the browser's autofocus-processed flag,
+  // and every later one is ignored — so the attribute would silently do nothing
+  // on exactly the path this exists for (log in, log out, come back to a
+  // remembered name with only the password left to type). Verified in Chrome: a
+  // remount's `autofocus` leaves focus on <body>.
+  const usernameField = createFocusTarget();
+  const passwordField = createFocusTarget();
+  onMount(() =>
+    (remembered === undefined ? usernameField : passwordField).focus()
+  );
   const [fieldErrors, setFieldErrors] = createSignal({
     username: '',
     password: '',
@@ -53,12 +73,12 @@ export const LoginPage: Component = () => {
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
-    if (result.kind === 'error') {
-      // Clear the password on a failed login (finding F6 — align with the
-      // current app; a wrong password is re-entered, not left in the field).
-      setPassword('');
-      setSubmitState({ kind: 'error', message: result.message });
-    }
+    // Clear the password only on a rejected login (finding F6 — align with the
+    // current app; a wrong password is re-entered, not left in the field). A
+    // globally-handled failure reached no verdict on it, so it stays and the
+    // same submit can simply be repeated.
+    if (result.kind === 'error') setPassword('');
+    setSubmitState(submitStateAfter(result));
   };
 
   return (
@@ -83,7 +103,7 @@ export const LoginPage: Component = () => {
               name="username"
               data-testid="login-username-input"
               autocomplete="username"
-              autofocus
+              ref={usernameField.ref}
               value={username()}
               error={fieldErrors().username || undefined}
               onInput={e => setUsername(e.currentTarget.value)}
@@ -97,6 +117,7 @@ export const LoginPage: Component = () => {
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
+              ref={passwordField.ref}
               value={password()}
               error={fieldErrors().password || undefined}
               onInput={e => setPassword(e.currentTarget.value)}

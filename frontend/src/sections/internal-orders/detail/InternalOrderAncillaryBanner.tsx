@@ -3,6 +3,8 @@ import { t, tPlural } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Popover } from '../../../ui/elements/feedback/Popover';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { refreshAncillaryItems } from './internalOrderUpdate';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import styles from './InternalOrderAncillaryBanner.module.css';
@@ -54,27 +56,30 @@ export const InternalOrderAncillaryBanner: Component<
 
   return (
     <Show when={show()}>
-      <div class={styles.banner}>
+      <Stack gap="sm">
         <Alert severity="info">
-          <div class={styles.row}>
-            <span class={styles.message}>{message()}</span>
-            <span class={styles.actions}>
+          {/* Message at the inline-start, the action cluster at the end. */}
+          <HStack gap="md" justify="between" wrap>
+            <span>{message()}</span>
+            <HStack gap="sm">
               <Popover
                 trigger={t('button.details')}
                 triggerTestId="ancillary-details-button"
                 placement="bottom-end"
               >
-                <div class={styles.plan}>
+                {/* The plan — one section per bucket, each a stack of item
+                    rows; the module class only caps the popover's measure. */}
+                <Stack gap="sm" class={styles.plan}>
                   <Show when={props.ancillary.toAdd.length > 0}>
                     <span class={styles.planTitle}>
                       {t('label.ancillary-plan-to-add')}
                     </span>
                     <For each={props.ancillary.toAdd}>
                       {delta => (
-                        <div class={styles.planRow}>
+                        <HStack gap="md" justify="between">
                           <span>{`${delta.item.code} ${delta.item.name}`}</span>
                           <span>{`${Math.round(delta.requiredQuantity)} ${delta.item.unitName ?? ''}`}</span>
-                        </div>
+                        </HStack>
                       )}
                     </For>
                   </Show>
@@ -84,7 +89,7 @@ export const InternalOrderAncillaryBanner: Component<
                     </span>
                     <For each={props.ancillary.toUpdate}>
                       {delta => (
-                        <div class={styles.planRow}>
+                        <HStack gap="md" justify="between">
                           <span>{`${delta.item.code} ${delta.item.name}`}</span>
                           <span>
                             {`${t('label.current')} ${Math.round(
@@ -93,11 +98,11 @@ export const InternalOrderAncillaryBanner: Component<
                               delta.requiredQuantity
                             )} ${delta.item.unitName ?? ''}`}
                           </span>
-                        </div>
+                        </HStack>
                       )}
                     </For>
                   </Show>
-                </div>
+                </Stack>
               </Popover>
               <Button
                 variant="secondary"
@@ -107,13 +112,13 @@ export const InternalOrderAncillaryBanner: Component<
               >
                 {needsAdd() ? t('button.add') : t('button.update')}
               </Button>
-            </span>
-          </div>
+            </HStack>
+          </HStack>
         </Alert>
         <Show when={error()}>
           <Alert severity="error">{error()}</Alert>
         </Show>
-      </div>
+      </Stack>
     </Show>
   );
 };

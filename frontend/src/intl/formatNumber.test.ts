@@ -35,6 +35,62 @@ describe('formatNumber', () => {
   });
 });
 
+// Constructing an Intl.NumberFormat is expensive enough to dominate a long
+// list's render (see the comment on formatCache), so the reuse is a behaviour
+// worth holding: these break if a refactor reintroduces per-call construction.
+describe('intlNumberFormat caching', () => {
+  it('reuses one formatter for the same locale and options', () => {
+    expect(intlNumberFormat('en', { maximumFractionDigits: 2 })).toBe(
+      intlNumberFormat('en', { maximumFractionDigits: 2 })
+    );
+    expect(intlNumberFormat('en')).toBe(intlNumberFormat('en'));
+  });
+
+  it('reuses one formatter regardless of the option key order', () => {
+    expect(
+      intlNumberFormat('en', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 2,
+      })
+    ).toBe(
+      intlNumberFormat('en', {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 1,
+      })
+    );
+  });
+
+  it('treats an explicitly-undefined option as absent, as Intl does', () => {
+    expect(intlNumberFormat('en', { minimumFractionDigits: undefined })).toBe(
+      intlNumberFormat('en', {})
+    );
+  });
+
+  it('keeps formatters for different locales and options apart', () => {
+    const en = intlNumberFormat('en', { maximumFractionDigits: 2 });
+    expect(en).not.toBe(intlNumberFormat('fr', { maximumFractionDigits: 2 }));
+    expect(en).not.toBe(intlNumberFormat('en', { maximumFractionDigits: 3 }));
+    // The distinction that matters most: a collision here would render
+    // currency as a bare number.
+    expect(en).not.toBe(
+      intlNumberFormat('en', {
+        maximumFractionDigits: 2,
+        style: 'currency',
+        currency: 'NZD',
+      })
+    );
+  });
+
+  it('still formats correctly through a reused formatter', () => {
+    // Guards the stateless-`.format()` assumption the cache rests on.
+    const format = intlNumberFormat('en', { maximumFractionDigits: 2 });
+    expect(format.format(1234.567)).toBe('1,234.57');
+    expect(format.format(0)).toBe('0');
+    expect(format.format(-1.5)).toBe('-1.5');
+    expect(format.format(1234.567)).toBe('1,234.57');
+  });
+});
+
 describe('parseNumber', () => {
   it('parses Latin-digit strings with grouping', () => {
     expect(parseNumber('1,234.5')).toBe(1234.5);

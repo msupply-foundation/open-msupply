@@ -35,6 +35,9 @@ import {
 import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
@@ -138,8 +141,11 @@ type DetailUrlState = {
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  // Default sort: item name ascending (spec S3 § line table).
-  filter: {},
+  // Default sort: item name ascending (spec S3 § line table). The item search
+  // is the screen's default filter (ui-surface § line-table filters; D91):
+  // seeded present-as-null so its chip is on the bar from the start; stripEmpty
+  // keeps it out of the query until typed.
+  filter: { itemCodeOrName: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -158,12 +164,19 @@ const OutboundDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel: starts CLOSED at every width, NOT on the shared responsive
-  // helper (D90) — the lines table is this screen's work surface and the widest
-  // table in the app, so the panel is opt-in via the app bar's More button
-  // rather than taking a column of it before the user asks. The choice lasts
-  // the visit and isn't persisted, so every arrival starts closed.
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  // Side panel: starts CLOSED at every width (D90) — the lines table is this
+  // screen's work surface and the widest table in the app, so the panel is
+  // opt-in via the app bar's More button rather than taking a column of it
+  // before the user asks. The choice lasts the visit and isn't persisted, so
+  // every arrival starts closed.
+  //
+  // Still the shared helper, with the responsive default switched off, because
+  // it also registers Alt+M / Alt+Shift+M (spec/keyboard KB-R2 — "the screen has
+  // a more-info panel" IS "this helper was called"). A bare createSignal here
+  // left this the one panel answering neither binding.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen({
+    responsive: false,
+  });
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
@@ -469,6 +482,25 @@ const OutboundDetailView: Component = () => {
       lineId: line.id,
     });
   const openAdd = () => setEditState({});
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  //
+  // Gated on `.state`, NOT through `editable()` — that reads `data.latest`, which
+  // suspends on the first pending read, and the palette evaluates every action's
+  // `disabled()` inside its own render (kdd/keyboard-layer § an action's
+  // `disabled` MUST NOT read a suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const current = data.latest;
+      return !current || !isEditable(current.status);
+    },
+  });
 
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
@@ -776,6 +808,7 @@ const OutboundDetailView: Component = () => {
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -799,6 +832,9 @@ const OutboundDetailView: Component = () => {
                         variant="secondary"
                         icon={<InfoIcon />}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -950,6 +986,7 @@ const OutboundDetailView: Component = () => {
                     editable() ? (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >

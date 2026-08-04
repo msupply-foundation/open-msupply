@@ -339,9 +339,15 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   const showCustomerConsumption = () => props.transferred || props.showExtended;
 
   // Target stock (population): the forecasting preference AND a forecast-
-  // carrying line (contract: non-null, non-zero forecastTotalUnits).
+  // carrying line (contract: non-null, non-zero forecastTotalUnits). The
+  // figure rounds to the NEAREST whole unit — not up (spec S4 § read-only
+  // figures), so it bypasses FigureRow's ceil.
   const showTargetPopulation = () =>
     props.showForecast && !!current()?.forecastTotalUnits;
+  const targetPopulationFigure = () =>
+    Math.round(
+      unitsToMode(current()?.forecastTotalUnits ?? 0, entryMode(), packSize())
+    );
 
   // The dose-equivalent caption under the Supply entry (spec S4 § supply
   // entry): the supply as typed, re-expressed in doses.
@@ -438,12 +444,20 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // The representation select's options (spec S4 § supply entry): the item's
   // unit name (falling back to "unit") and pack — the pack option offered
   // where the item has a default pack size. Always rendered, disabling with
-  // the field.
+  // the field. Labels inflect with the entered supply (reference-app parity:
+  // singular at exactly 1, plural otherwise).
   const entryOptions = createMemo(() => {
-    const unit = current()?.unitName ?? t('label.unit');
-    const options = [{ value: 'units', label: unit }];
+    const unitName = current()?.unitName ?? null;
+    const count =
+      unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
+    const options = [
+      { value: 'units', label: modeWord('units', unitName, count) },
+    ];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: t('label.pack') });
+      options.push({
+        value: 'packs',
+        label: modeWord('packs', unitName, count),
+      });
     return options;
   });
 
@@ -468,7 +482,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         ? t('label.days')
         : rowProps.fixed === 'months'
           ? t('label.months')
-          : modeWord(entryMode(), current()?.unitName ?? null);
+          : modeWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
       if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (editable()) {
@@ -651,22 +665,18 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         />
       </Show>
       <Show when={showTargetPopulation()}>
-        {/* Rounded to the NEAREST whole unit — not up (spec S4 § read-only
-            figures), so it bypasses FigureRow's ceil. */}
         <FieldRow label={t('label.target-stock-population')}>
           <div class={styles.figure}>
             <NumberField
               label={t('label.target-stock-population')}
               hideLabel
               disabled
-              endAdornment={modeWord(entryMode(), current()?.unitName ?? null)}
-              value={Math.round(
-                unitsToMode(
-                  current()?.forecastTotalUnits ?? 0,
-                  entryMode(),
-                  packSize()
-                )
+              endAdornment={modeWord(
+                entryMode(),
+                current()?.unitName ?? null,
+                targetPopulationFigure()
               )}
+              value={targetPopulationFigure()}
             />
           </div>
         </FieldRow>
@@ -740,7 +750,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         fallback={
           <ItemSearch
             label={t('label.item')}
-            class={styles.itemField}
+            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
