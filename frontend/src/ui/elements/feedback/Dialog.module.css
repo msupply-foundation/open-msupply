@@ -50,14 +50,25 @@
   --dialog-width: var(--measure-wide);
 }
 
+/* The DEFAULT working width for size="large" — #771's "~900px if the tables fit". A
+   caller whose table is column-heavy overrides it with widthRem, which lands inline on
+   the element and so beats this ("wider if the column set forces it"). Higher specificity
+   than .dialog's 30rem default; the data-width measures never collide, since Dialog omits
+   data-width entirely in large mode. */
+.dialog.large {
+  --dialog-width: 56rem;
+}
+
 /* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
-   line-edit table. A centred card at a fixed working width (not full-bleed — a visible
+   line-edit table. A centred card at its working width (not full-bleed — a visible
    margin of page and scrim frames it on desktop; #771), clamped down on narrow screens.
+   The clamp is what makes a generous widthRem safe: a 76rem workbench is near-full-bleed
+   on a laptop and still a framed card on a large monitor, with no second breakpoint.
    Height is elastic between ~60vh (so a table still has room to be a table) and ~80vh:
    short content makes a short modal, and past the cap the body flex column (already
    bounded) lets a flex-1 child (a DataTable) fill the tall space and scroll internally. */
 .large {
-  width: min(56rem, calc(100vw - 4rem));
+  width: min(var(--dialog-width), calc(100vw - 4rem));
   min-block-size: 60vh;
   max-block-size: 80vh;
 }
