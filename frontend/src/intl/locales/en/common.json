@@ -260,6 +260,8 @@
   "control.search.error.no-document": "Unable to access requested document",
   "control.search.error.no-patient-contact": "No matching patient contact found",
   "control.search.matching-patients": "We've found some existing patients that match the above entered data. Please select from this list if applicable",
+  "control.search.more-matches_one": "1 more match — keep typing to narrow the list",
+  "control.search.more-matches_other": "{{count}} more matches — keep typing to narrow the list",
   "control.search.no-results-label": "No results",
   "control.search.reset-button": "Unlink matched patient",
   "control.search.searching-label": "Searching...",
