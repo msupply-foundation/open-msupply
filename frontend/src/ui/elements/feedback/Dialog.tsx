@@ -152,19 +152,19 @@ export interface DialogProps {
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
    * by widthRem + the viewport cap). The two WORKBENCH sizes are for
-   * content-heavy modals like the line-edit table; both give an elastic height
-   * between ~60vh and ~80vh (#771) and a body that flexes so a scrolling child
-   * (a DataTable) fills the tall space once content passes the height cap, and
-   * both go full-screen below the narrow-viewport line like a `width` measure.
-   * They differ only in width:
-   *  - `'large'` — a centred CARD, 56rem by default and `widthRem` for a wider
-   *    table. The default: #771 removed the old full-bleed because a modal with
-   *    little in it read as an empty workbench.
-   *  - `'full'` — fills the viewport bar a 2rem gutter. For a table too wide to
-   *    be a card at any sane number: the shipment and stocktake line editors
-   *    run to ~20 columns, where narrowing hides columns without removing any
-   *    empty space (the emptiness there is vertical, which the height band
-   *    already handles). `widthRem` is ignored.
+   * content-heavy modals like the line-edit table. Both start at a ~60vh FLOOR
+   * — #771's win: a two-batch item is a short modal, not an empty full-screen
+   * box — and both flex the body so a scrolling child (a DataTable) fills the
+   * tall space once content passes the ceiling, and both go full-screen below
+   * the narrow-viewport line like a `width` measure. They differ in how far
+   * they may GROW:
+   *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
+   *    wider table), ceiling ~80vh so the scrim still frames it top and bottom.
+   *  - `'full'` — a SHEET: fills the viewport in both axes bar a 2rem gutter.
+   *    For a table too wide to be a card at any sane number — the shipment and
+   *    stocktake line editors run to ~20 columns, where narrowing hides columns
+   *    without removing any empty space — and one whose row count wants every
+   *    row it can show before scrolling. `widthRem` is ignored.
    */
   size?: 'auto' | 'large' | 'full';
   /**

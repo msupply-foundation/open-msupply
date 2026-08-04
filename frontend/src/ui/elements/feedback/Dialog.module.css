@@ -66,7 +66,9 @@
    on a laptop and still a framed card on a large monitor, with no second breakpoint.
    Height is elastic between ~60vh (so a table still has room to be a table) and ~80vh:
    short content makes a short modal, and past the cap the body flex column (already
-   bounded) lets a flex-1 child (a DataTable) fill the tall space and scroll internally. */
+   bounded) lets a flex-1 child (a DataTable) fill the tall space and scroll internally.
+   A card keeps the 80vh ceiling so the scrim still frames it top and bottom; `full`
+   below raises it, since a sheet has no frame to preserve. */
 .large {
   width: min(var(--dialog-width), calc(100vw - 4rem));
   min-block-size: 60vh;
@@ -74,13 +76,24 @@
 }
 
 /* size="full" — the workbench at FULL BLEED (Dialog puts .bleed alongside .large, so
-   only the width differs). Drops the width cap entirely: for a ~20-column line table
-   there is no card width that fits, and narrowing only hides columns — #771's empty
-   space was vertical, and .large's height band already answers that. Specificity beats
-   .large's min(), and it sets `width` outright so an inline --dialog-width (a caller's
-   pre-pick widthRem) can't reach it. */
+   only the two caps differ). Drops BOTH of .large's caps to the same 2rem gutter, in
+   both axes:
+
+   Width, because for a ~20-column line table there is no card width that fits, and
+   narrowing only hides columns.
+
+   Height, because .large's 80vh ceiling exists to keep the scrim framing a CARD top and
+   bottom — a sheet has no frame to preserve, and a batch grid that overflows wants every
+   row it can show before it starts scrolling (the pre-#771 modal sat at exactly this
+   height, so a long grid loses nothing to the change). The 60vh FLOOR stays: that is
+   #771's actual win, and it is what keeps a two-batch item a short modal instead of an
+   empty full-screen box.
+
+   Specificity beats .large; width is set outright (not through --dialog-width) so a
+   caller's pre-pick widthRem can't reach it. */
 .dialog.large.bleed {
   width: calc(100vw - 4rem);
+  max-block-size: calc(100vh - 4rem);
 }
 
 /* Flex column so the body fills the fixed height, giving a flex-1 child the room. Scoped to
