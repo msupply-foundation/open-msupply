@@ -53,9 +53,16 @@ export const isReadOnly = (status: PrescriptionStatus): boolean =>
 export const canDeletePrescription = (status: PrescriptionStatus): boolean =>
   status === 'NEW' || status === 'PICKED';
 
-/** Cancel is offered on VERIFIED only (rules § cancellation; AC-X1). */
-export const canCancelPrescription = (status: PrescriptionStatus): boolean =>
-  status === 'VERIFIED';
+/**
+ * Cancel is offered on VERIFIED only, and never on a cancellation reversal
+ * (rules § cancellation; OMS-REG-DIS-04.29/.33). The reversal is itself a
+ * VERIFIED prescription — the item ledger's stock-return row opens it — so the
+ * status alone would offer a cancel the server always refuses.
+ */
+export const canCancelPrescription = (
+  status: PrescriptionStatus,
+  isCancellation: boolean
+): boolean => status === 'VERIFIED' && !isCancellation;
 
 /**
  * The status-change split button's option set: the allowed FORWARD transitions
@@ -127,6 +134,16 @@ export const prescriptionDateOf = (node: {
 export const hasDispensedLines = (
   lines: readonly { type: string }[]
 ): boolean => lines.some(line => line.type === 'STOCK_OUT');
+
+/**
+ * The lines the detail table renders: what was dispensed, plus what a
+ * cancellation reversal returned — the mirror holds the same lines retyped
+ * STOCK_IN, and the item ledger's return movement opens that record
+ * (OMS-REG-DIS-04.33). Prescribed-quantity carriers (UNALLOCATED_STOCK) never
+ * render (AC-Q1).
+ */
+export const isRenderableLine = (line: { type: string }): boolean =>
+  line.type === 'STOCK_OUT' || line.type === 'STOCK_IN';
 
 /**
  * Zero-quantity rows that a status confirmation warns about and the change
