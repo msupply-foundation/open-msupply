@@ -76,6 +76,8 @@ import type { InboundEditFields } from './inboundShipmentEdit';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import { canChangeStatus, isEditable, kindOf } from './inboundShipmentStatus';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
@@ -430,6 +432,23 @@ const InboundShipmentDetailView: Component = () => {
   const openRow = (line: Line) =>
     setEditState({ itemId: line.itemId, lineId: line.id });
   const openAdd = () => setEditState({});
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header SplitButton
+  // and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action — which is
+  // exactly the case a control-owned declaration could not express
+  // (kdd/keyboard-layer decision 3).
+  //
+  // `run` is the plain add, the split button's default option, NOT its
+  // menu-selected value: the binding means "add an item", and the master-list
+  // and internal-order routes have their own gates. `isDisabled()` reads the
+  // `.state`-gated `info()`, so this predicate never suspends the palette.
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => !current() || isDisabled(),
+  });
 
   // "OK & next" (update mode): resolve the next item for the editor to advance
   // to. Owned by the PARENT because the line table is server-paginated — the
@@ -889,6 +908,7 @@ const InboundShipmentDetailView: Component = () => {
                         value="item"
                         testId="add-item-button"
                         menuLabel={t('button.add-item')}
+                        shortcut={ALT_N}
                         onAction={onAddAction}
                       />
                     </Show>
@@ -906,6 +926,9 @@ const InboundShipmentDetailView: Component = () => {
                         variant="secondary"
                         icon={<SidebarIcon />}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -1086,6 +1109,7 @@ const InboundShipmentDetailView: Component = () => {
                     isDisabled() ? undefined : (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >

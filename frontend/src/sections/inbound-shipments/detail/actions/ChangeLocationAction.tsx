@@ -115,6 +115,7 @@ const Body = (
               />
               <Button
                 variant="primary"
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -125,7 +126,9 @@ const Body = (
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

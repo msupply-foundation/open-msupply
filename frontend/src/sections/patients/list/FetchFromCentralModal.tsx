@@ -69,6 +69,7 @@ export const FetchFromCentralModal: Component<
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
@@ -76,6 +77,7 @@ export const FetchFromCentralModal: Component<
             </Button>
             <Button
               icon={<DownloadIcon />}
+              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={() => void retrieve()}
             >
@@ -88,6 +90,7 @@ export const FetchFromCentralModal: Component<
       case 'done':
         return (
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             onClick={() =>
               props.candidate && props.onViewPatient(props.candidate.id)
@@ -100,6 +103,7 @@ export const FetchFromCentralModal: Component<
         return (
           <Button
             variant="secondary"
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >

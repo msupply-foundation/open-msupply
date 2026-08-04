@@ -3,6 +3,7 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
@@ -12,7 +13,12 @@ import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
-import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  HelpIcon,
+  MessageSquareIcon,
+} from '../ui/icons';
 import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './FeedbackShowcase.module.css';
@@ -50,6 +56,9 @@ export const feedbackMetadata: PageMetadata = {
         'compact',
         'inline',
         'chip',
+        'status marker',
+        'inline marker',
+        'glyph',
       ],
     },
     {
@@ -165,6 +174,39 @@ export const FeedbackShowcase = () => {
             <Alert severity="success" compact>
               Verified
             </Alert>
+          </Row>
+
+          <Lead>
+            <strong>StatusMarker.</strong> The same severity vocabulary shrunk
+            to a bare inline glyph beside a value — a table cell's
+            excess-request warning, an option row's emergency flag — where even
+            the compact chip is too heavy. The marker <em>requires</em> its
+            meaning as <code>label</code> (icons alone render{' '}
+            <code>aria-hidden</code>, so a bare toned icon is silent and
+            colour-only); it announces via <code>role="img"</code>, and{' '}
+            <code>icon</code> overrides the severity's default glyph by intent.
+          </Lead>
+          <Row>
+            <Row gap="sm">
+              128
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label="The quantity requested exceeds the suggested quantity"
+              />
+            </Row>
+            <Row gap="sm">
+              Emergency order
+              <StatusMarker severity="warning" label="Emergency" />
+            </Row>
+            <Row gap="sm">
+              Batch B-102
+              <StatusMarker severity="success" label="Allocated" />
+            </Row>
+            <Row gap="sm">
+              Auto-generated
+              <StatusMarker severity="info" label="Created by the system" />
+            </Row>
           </Row>
         </DashboardCard>
 

@@ -11,14 +11,14 @@ import type { Filter } from './FilterBar';
  * Is this filter's chip on the bar?
  *
  * The filter object IS the presentation state: a chip shows iff its key is
- * PRESENT (present-as-null = added but empty). An `alwaysOn` filter shows
- * regardless — a fact of the definition, not of the state — so no URL and no
- * "Clear all" can take it off.
+ * PRESENT (present-as-null = added but empty). That holds for EVERY filter,
+ * default or not — a screen's default filters are keys its default state seeds
+ * (#563), so they are on the bar from the start and come off like any other.
  */
 export const isFilterActive = <G extends object>(
   f: Filter<G>,
   filter: G
-): boolean => !!f.alwaysOn || f.key in filter;
+): boolean => f.key in filter;
 
 /** The chips on the bar, in definition (display) order. */
 export const activeFilters = <G extends object>(
@@ -28,7 +28,7 @@ export const activeFilters = <G extends object>(
 
 /**
  * What the add-filter menu can still offer — whatever is not already a chip.
- * An `alwaysOn` filter is never offered, being permanently active.
+ * A removed default filter is therefore offered back, like any other.
  */
 export const availableFilters = <G extends object>(
   filters: Filter<G>[],
@@ -38,11 +38,12 @@ export const availableFilters = <G extends object>(
 /**
  * Should the bar offer "Clear all"?
  *
- * Only while a user-added chip is on the bar: "Clear all" is for the filters a
- * user adds, so a default (`alwaysOn`) filter never raises it, even holding a
- * value (Aimee, 2026-07-30) — its value is emptied by typing over it.
+ * Whenever a chip is on the bar — and it then takes EVERY chip off, a default
+ * filter's included (#563): a default is a filter the screen starts with, not
+ * one the user is stuck with, so nothing on the bar is exempt from the one
+ * control that clears it.
  */
 export const showsClearAll = <G extends object>(
   filters: Filter<G>[],
   filter: G
-): boolean => activeFilters(filters, filter).some(f => !f.alwaysOn);
+): boolean => activeFilters(filters, filter).length > 0;

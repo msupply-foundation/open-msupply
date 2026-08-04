@@ -1,11 +1,11 @@
 import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
-  flexRender,
   type Cell as TanCell,
   type HeaderContext,
   type Table,
 } from '@tanstack/solid-table';
+import { renderTemplate } from './renderTemplate';
 import { LabelledValue } from '../typography/LabelledValue';
 import { FieldRow } from '../inputs/FieldRow';
 import { BareCheckbox } from '../inputs/BareCheckbox';
@@ -33,10 +33,11 @@ const cellGroup = <T,>(cell: TanCell<T, unknown>): string | undefined =>
 // The column's header text, for a card field label. Our columns' `header` is
 // always a FUNCTION now (columnTypes.ts narrows it to function-only so the text
 // reacts to locale changes — kdd/solid-reactivity-pitfalls §14), so call it the
-// same way HeaderCell.tsx does via flexRender and ColumnSettings.tsx does for
-// its row labels. None of our headers read the context argument, so an empty
-// one is safe. A non-function header (or none) yields no label — the cell then
-// fills its slot unlabelled.
+// same way HeaderCell.tsx does via renderTemplate and ColumnSettings.tsx does
+// for its row labels. None of our headers read the context argument, so an
+// empty one is safe. A non-function header (or none) yields no label — the cell
+// then fills its slot unlabelled. Called from a JSX position (never stored in a
+// local), so the label re-resolves on a locale change like the value does.
 const columnHeaderText = <T,>(
   cell: TanCell<T, unknown>
 ): JSX.Element | undefined => {
@@ -80,7 +81,10 @@ function cellField<T>(
   // (meta.mono) so the monospace font reaches the card too (table view applies
   // it on the <td>). Only the VALUE is wrapped, never the field label.
   const value = () => {
-    const content = flexRender(cell.column.columnDef.cell, cell.getContext());
+    const content = renderTemplate(
+      cell.column.columnDef.cell,
+      cell.getContext()
+    );
     return cell.column.columnDef.meta?.mono ? (
       <span data-mono="">{content}</span>
     ) : (
@@ -96,13 +100,18 @@ function cellField<T>(
       // to carry the id.
       <div data-testid={cellTestId(cell)}>{value()}</div>
     );
-  const label = columnHeaderText(cell);
+  // The label is read as a JSX prop (compiled to a getter), NOT hoisted into a
+  // local — hoisting would resolve it once, outside any tracking scope, and
+  // freeze the card's field labels in the locale that first painted them.
   return isHeader ? (
-    <FieldRow label={label} labelWidth="auto">
+    <FieldRow label={columnHeaderText(cell)} labelWidth="auto">
       {value()}
     </FieldRow>
   ) : (
-    <LabelledValue label={label} data-testid={cellTestId(cell)}>
+    <LabelledValue
+      label={columnHeaderText(cell)}
+      data-testid={cellTestId(cell)}
+    >
       {value()}
     </LabelledValue>
   );

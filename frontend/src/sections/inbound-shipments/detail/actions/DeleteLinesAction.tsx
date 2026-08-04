@@ -96,6 +96,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
               </Show>
               <Button
                 variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
@@ -106,7 +107,11 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <Button variant="secondary" onClick={props.onClose}>
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={props.onClose}
+            >
               {t('button.close')}
             </Button>
           </Match>

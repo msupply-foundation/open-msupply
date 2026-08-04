@@ -32,12 +32,11 @@ import type { NamesFilter } from './namesListLogic';
 const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
   // ─ user-facing
   codeOrName: {
-    alwaysOn: true,
     label: () => t('name.filter.search'),
     render: props => (
       <FilterTextInput
         label={t('name.filter.search')}
-        placeholder={t('name.filter.search-placeholder')}
+        placeholder={t('placeholder.search')}
         // e2e hook: FilterBar supplies `filter-input-codeOrName` (TESTIDS.md).
         testId={props.testId}
         value={props.filter().codeOrName?.like ?? ''}

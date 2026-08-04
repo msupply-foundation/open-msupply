@@ -68,7 +68,11 @@ export const HistoryModal: Component<HistoryModalProps> = props => {
       title={t('heading.recently-prescribed')}
       testId="prescription-history-modal"
       actions={
-        <Button data-testid="dialog-button-ok" onClick={props.onClose}>
+        <Button
+          confirms="plain"
+          data-testid="dialog-button-ok"
+          onClick={props.onClose}
+        >
           {t('button.ok')}
         </Button>
       }
