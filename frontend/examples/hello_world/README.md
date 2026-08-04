@@ -143,11 +143,13 @@ In this repo:
 pnpm build:plugins
 ```
 
-builds every `examples/*` (plus anything in `OMS_PLUGIN_DIRS`), packs
-`dist/bundle.json` — the artifact `remote_server_cli install-plugin-bundle`
-uploads — and writes `dist/frontend_plugins/metadata.json` so the built app can
-load them through its production path. Run it **after** `pnpm build`, which
-empties `dist/`.
+builds every `examples/*` and `plugins/*` (plus anything in `OMS_PLUGIN_DIRS`),
+packs each into its **own** `dist/bundles/<code>.json` — the artifact
+`remote_server_cli install-plugin-bundle` uploads, one per plugin so a server
+only ever gets the plugin you meant — and writes
+`dist/frontend_plugins/metadata.json` so the built app can load them all
+through its production path. Run it **after** `pnpm build`, which empties
+`dist/`.
 
 Out of tree, the same two commands the CLI runs:
 
