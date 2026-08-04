@@ -286,8 +286,10 @@ export const DialogShowcase = () => {
             no card fits: the shipment and stocktake line editors run to ~20
             columns, and the internal-order and requisition editors hold regions
             (a charts row, a three-column figure grid) that cap themselves wider
-            than a card's body. Narrowing those hides content without removing
-            any empty space — the empty space #771 was filed against is
+            than a card's body. All six line editors take it — the prescription
+            one would fit a card, but a user stepping between them should meet
+            one surface shape, not two. Narrowing those hides content without
+            removing any empty space — the empty space #771 was filed against is
             vertical, and the ~60vh floor both sizes share is what answers it.
             Short content makes a short modal; past the height cap the body
             becomes a bounded flex column, so a single tall child (a DataTable
