@@ -1305,7 +1305,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
+      // The heading stays the dialog's accessible name but paints nothing: as a
+      // visible row it spent ~2.5rem of a modal whose working area is the batch
+      // grid, restating a mode the header panel and footer buttons already carry.
+      // The sibling line editors already read this way — requisitions and
+      // internal orders hide theirs too, and inbound's / stocktakes' title slot
+      // is the item selector itself, so none of them paints a text heading (#872).
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
       actionsLead={
         // The footer's message slot, sharing the buttons' row rather than
         // spending one of its own. It states the consequence of Save — the
