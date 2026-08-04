@@ -290,6 +290,8 @@ const PrescriptionsList: Component = () => {
             <ExportPrescriptionsAction
               storeId={params.storeId}
               filter={() => query().filter}
+              customFieldFilter={() => query().cf}
+              customFields={cfDefs}
             />
           </HeaderButtons>
           <Toolbar>
