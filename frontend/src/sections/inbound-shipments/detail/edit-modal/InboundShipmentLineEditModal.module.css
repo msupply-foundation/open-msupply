@@ -22,8 +22,17 @@
   min-inline-size: 0;
 }
 
+/* Unit is wedged between the selector and the header's own action slot, with
+   only the title row's gap on one side and the header's on the other — 16px and
+   12px, which read as crowding rather than as a separate fact. Set it off with
+   the hairline + inset the outbound editor's Available uses, so the two line
+   editors present their read-only header fact the same way, and hold it clear of
+   the Add batch button. */
 .headerUnit {
   flex: 0 0 auto;
+  padding-inline-start: var(--space-4);
+  margin-inline-end: var(--space-2);
+  border-inline-start: 1px solid var(--color-border-value);
 }
 
 .statusDot {
