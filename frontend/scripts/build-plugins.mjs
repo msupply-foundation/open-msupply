@@ -9,7 +9,12 @@
  *      bare, resolved at runtime by the host's import map;
  *   2. packs every plugin into `dist/bundle.json` — the installable server
  *      artifact, byte-for-byte in the format `remote_server_cli
- *      generate-plugin-bundle` produces;
+ *      generate-plugin-bundle` produces. A plugin's BACKEND half
+ *      (`plugins/<dir>/backend`, a BoaJS bundle built by the open-msupply
+ *      client toolchain) is packed VERBATIM from its committed
+ *      `prebuilt/plugin.js` — never rebuilt, re-encoded or reformatted here,
+ *      the same rule as civ-plugins' make-bundle.mjs: the backend half moves
+ *      only when its own build runs;
  *   3. writes `dist/frontend_plugins/metadata.json`, the
  *      `frontendPluginMetadata` discovery response, so the built app can load
  *      them through its production path without a server.
@@ -70,6 +75,63 @@ const readManifest = dir => {
     version: manifest.version ?? '0.0.0',
     types: manifest.omSupplyPlugin.types ?? [],
   };
+};
+
+/*
+ * Backend halves: `plugins/<dir>/backend/package.json` declaring a backend
+ * target, with the shipped artifact committed at `prebuilt/plugin.js`. The row
+ * mirrors the Rust BackendPluginRow — `variant_type` comes from the manifest
+ * (BOA_JS), and the id convention matches the server CLI's
+ * `backend_{code}_{version}`.
+ */
+const readBackendManifest = dir => {
+  const manifestPath = join(dir, 'package.json');
+  if (!existsSync(manifestPath)) return undefined;
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  if (manifest.omSupplyPlugin?.target !== 'backend') return undefined;
+  const prebuilt = join(dir, 'prebuilt/plugin.js');
+  if (!existsSync(prebuilt)) {
+    throw new Error(
+      `${dir}: declares a backend plugin but has no prebuilt/plugin.js — ` +
+        'the backend half is packed verbatim from its committed build ' +
+        '(see plugins/civ/backend/README.md), never built here'
+    );
+  }
+  return {
+    dir,
+    prebuilt,
+    code: manifest.name,
+    version: manifest.version ?? '0.0.0',
+    types: manifest.omSupplyPlugin.types ?? [],
+    variantType: manifest.omSupplyPlugin.variant_type,
+  };
+};
+
+const discoverBackendPlugins = () => {
+  const found = [];
+  if (!existsSync('plugins')) return found;
+  for (const entry of readdirSync('plugins', { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const manifest = readBackendManifest(
+      join('plugins', entry.name, 'backend')
+    );
+    if (manifest) found.push(manifest);
+  }
+  return found;
+};
+
+const packBackendPlugin = plugin => {
+  const bytes = readFileSync(plugin.prebuilt);
+  /* eslint-disable camelcase -- the Rust BackendPluginRow's field names. */
+  return {
+    id: `backend_${plugin.code}_${plugin.version.replaceAll('.', '_')}`,
+    code: plugin.code,
+    version: plugin.version,
+    bundle_base64: bytes.toString('base64'),
+    types: plugin.types,
+    variant_type: plugin.variantType,
+  };
+  /* eslint-enable camelcase */
 };
 
 const discoverPlugins = () => {
@@ -174,7 +236,8 @@ const verifyRoundTrip = rows => {
 };
 
 const plugins = discoverPlugins();
-if (plugins.length === 0) {
+const backendPlugins = discoverBackendPlugins();
+if (plugins.length === 0 && backendPlugins.length === 0) {
   console.warn('[build-plugins] no plugins discovered');
   process.exit(0);
 }
@@ -184,12 +247,22 @@ for (const plugin of plugins) await buildPlugin(plugin);
 const packed = plugins.map(packPlugin);
 verifyRoundTrip(packed.map(p => p.row));
 
+// The same proof for the backend rows: each blob must decode back to the exact
+// committed prebuilt bytes — packing is transport, never transformation.
+const backendRows = backendPlugins.map(packBackendPlugin);
+for (const [i, row] of backendRows.entries()) {
+  const onDisk = readFileSync(backendPlugins[i].prebuilt);
+  if (Buffer.compare(onDisk, Buffer.from(row.bundle_base64, 'base64')) !== 0) {
+    throw new Error(`Round-trip mismatch for ${row.id}`);
+  }
+}
+
 mkdirSync(OUT_DIR, { recursive: true });
 /* eslint-disable camelcase -- Rust PluginBundle's field names. */
 writeFileSync(
   'dist/bundle.json',
   JSON.stringify(
-    { backend_plugins: [], frontend_plugins: packed.map(p => p.row) },
+    { backend_plugins: backendRows, frontend_plugins: packed.map(p => p.row) },
     null,
     2
   )
@@ -211,7 +284,15 @@ for (const { row, meta } of packed) {
       `${(bytes / 1024).toFixed(1)} KB  ${meta.hash.slice(0, 12)}`
   );
 }
+for (const row of backendRows) {
+  const bytes = Buffer.from(row.bundle_base64, 'base64').length;
+  console.info(
+    `[build-plugins] ${row.id}  prebuilt ${row.variant_type}  ` +
+      `${(bytes / 1024).toFixed(1)} KB  verbatim  [${row.types.join(', ')}]`
+  );
+}
 console.info(
-  `[build-plugins] packed ${packed.length}; round-trip verified; ` +
-    'wrote dist/bundle.json + dist/frontend_plugins/metadata.json'
+  `[build-plugins] packed ${packed.length} frontend + ${backendRows.length} ` +
+    'backend; round-trip verified; wrote dist/bundle.json + ' +
+    'dist/frontend_plugins/metadata.json'
 );
