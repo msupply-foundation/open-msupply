@@ -18,6 +18,8 @@ import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../../ui/elements/feedback/StatusMarker';
 import { PlusCircleIcon, AlertTriangleIcon } from '../../../../ui/icons';
 import { NameSearch, type NameOption } from '../../../../domain/name';
 import { CustomerProgramSettings } from './createRequisition.generated';
@@ -284,21 +286,16 @@ export const CreateRequisitionModal: Component<
             setError();
           }}
           renderItem={option => (
-            <span
-              style={{
-                display: 'inline-flex',
-                'align-items': 'center',
-                gap: 'var(--space-2)',
-              }}
-            >
+            <HStack gap="sm">
               {option.label}
               <Show when={isEmergency(option.id)}>
-                <AlertTriangleIcon
-                  style={{ color: 'var(--error-main)' }}
-                  aria-label={t('label.emergency')}
+                <StatusMarker
+                  severity="error"
+                  icon={AlertTriangleIcon}
+                  label={t('label.emergency')}
                 />
               </Show>
-            </span>
+            </HStack>
           )}
           testId="create-program-order-type"
         />

@@ -117,6 +117,7 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
             onClick={props.onClose}
           />
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={selectedIds().length === 0}

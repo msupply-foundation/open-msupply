@@ -6,7 +6,8 @@
 #   2. builds/installs the debug APK (on ONE device) with the WebView pointed
 #      at the dev server
 #   3. sets up the USB tunnels for that device:
-#        adb reverse  device:3005  -> host:3005   (UI, hot reload — vite dev port)
+#        adb reverse  device:$PORT -> host:$PORT  (UI, hot reload — vite dev port,
+#                                                  see DEV_PORT below)
 #        adb reverse  device:8002  -> host:8000   (host-run backend, mode 2)
 #        adb forward  host:18000   -> device:8000 (vite /graphql proxy -> the
 #                                                  on-device server, mode 3)
@@ -44,6 +45,23 @@ fi
 # Embedded-server work: source libremote_server_android.so into
 # android/app/src/main/jniLibs/arm64-v8a/ yourself (gitignored; a fetch
 # script is a planned follow-up) — whatever sits there gets bundled.
+
+# The vite dev port is per checkout, NOT a constant: vite.config.ts locks it
+# from DEV_SERVER_PORT (.env.local, or a real shell variable which wins), and
+# each worktree gets its own (scripts/worktree.sh) — 3005 is only the
+# unconfigured default. Resolve it ONCE here and export it, so the readiness
+# wait, the tunnel and capacitor's server.url all agree with the port vite
+# actually binds. (Hardcoding 3005 against a checkout locked to another port
+# hangs the script forever in the "wait for vite" loop below.)
+DEV_PORT="${DEV_SERVER_PORT:-$(sed -n 's/^[[:space:]]*DEV_SERVER_PORT[[:space:]]*=[[:space:]]*\([^[:space:]#]*\).*/\1/p' .env.local 2>/dev/null | tr -d "\"'" | head -1)}"
+DEV_PORT="${DEV_PORT:-3005}"
+case "$DEV_PORT" in
+  '' | *[!0-9]*)
+    echo "DEV_SERVER_PORT is not a port number: '$DEV_PORT' (shell env, or .env.local)" >&2
+    exit 1
+    ;;
+esac
+export DEV_SERVER_PORT="$DEV_PORT" # read by capacitor.config.ts for server.url
 
 # Resolve the SDK once and EXPORT it: gradle reads ANDROID_HOME (or a
 # gitignored android/local.properties sdk.dir) to find the SDK, and errors with
@@ -87,13 +105,22 @@ if [ -n "$DEVICE_VC" ] && [ -n "$OUR_VC" ] && [ "$DEVICE_VC" -gt "$OUR_VC" ]; th
   exit 1
 fi
 
-# vite in the background unless something already listens on 3005 (this
-# repo's dev port — vite.config.ts)
-if ! nc -z localhost 3005 2>/dev/null; then
+# vite in the background unless something already listens on this checkout's
+# dev port (DEV_PORT above)
+if ! nc -z localhost "$DEV_PORT" 2>/dev/null; then
   pnpm dev &
   VITE_PID=$!
   trap 'kill $VITE_PID 2>/dev/null || true' EXIT
-  until nc -z localhost 3005 2>/dev/null; do sleep 0.3; done
+  echo "Waiting for vite on :$DEV_PORT ..."
+  until nc -z localhost "$DEV_PORT" 2>/dev/null; do
+    # vite dying (strictPort with the port taken, a config error) would
+    # otherwise leave this loop spinning forever
+    kill -0 "$VITE_PID" 2>/dev/null || {
+      echo "vite exited before :$DEV_PORT came up — run 'pnpm dev' to see why." >&2
+      exit 1
+    }
+    sleep 0.3
+  done
 fi
 
 # fail fast on the host backend (mode 2, the default): the app's startup me
@@ -118,7 +145,7 @@ else
   esac
 fi
 
-$ADB -s "$DEVICE" reverse tcp:3005 tcp:3005
+$ADB -s "$DEVICE" reverse "tcp:$DEV_PORT" "tcp:$DEV_PORT"
 $ADB -s "$DEVICE" reverse tcp:8002 tcp:8000 || true
 $ADB -s "$DEVICE" forward tcp:18000 tcp:8000
 
@@ -134,5 +161,5 @@ DEV_ANDROID=1 pnpm exec cap sync android
 # namespace the activity class lives in
 $ADB -s "$DEVICE" shell am start -n "$PKG/org.openmsupply.client.MainActivity"
 
-echo "App launched on $DEVICE against http://localhost:3005 (hot reload). Ctrl-C stops vite."
+echo "App launched on $DEVICE against http://localhost:$DEV_PORT (hot reload). Ctrl-C stops vite."
 wait

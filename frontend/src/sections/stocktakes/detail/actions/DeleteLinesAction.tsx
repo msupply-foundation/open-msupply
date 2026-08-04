@@ -130,6 +130,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
               <Button
                 variant="danger"
                 loading={phase() === 'working'}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >

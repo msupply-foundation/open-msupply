@@ -277,6 +277,7 @@ const RepackContent = (props: {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               disabled={saving()}
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
@@ -286,6 +287,7 @@ const RepackContent = (props: {
             <Button
               icon={<SaveIcon />}
               loading={saving()}
+              confirms="plain"
               disabled={!canSave()}
               data-testid="dialog-button-save"
               onClick={() => void onSave()}

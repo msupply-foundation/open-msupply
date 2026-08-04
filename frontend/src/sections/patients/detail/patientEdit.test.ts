@@ -1,6 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import { setDictionaries, setLocale } from '../../../intl/intl';
+import commonEn from '../../../intl/locales/en/common.json';
 import {
   ageFromDob,
+  ageMonthsAndDays,
   dobFromAge,
   draftEquals,
   emptyDraft,
@@ -250,5 +261,43 @@ describe('draftEquals (dirty tracking)', () => {
     expect(draftEquals(fullDraft(), { ...fullDraft(), phone: 'changed' })).toBe(
       false
     );
+  });
+});
+
+// spec/patients rules § age — DIS-02 `.58`. Last in the file, and the only
+// block with a catalog loaded: the message assertions above read t() answering
+// with its key, which is what an unseeded catalog does.
+describe('ageMonthsAndDays (DIS-02 .58 — under a year reads months and days)', () => {
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 22, 12)); // 2026-07-22, local
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+    setDictionaries({});
+  });
+
+  it('is months and days below a year, where whole years read a bare 0', () => {
+    expect(ageFromDob('2026-05-04')).toBe(0); // what the years box would show
+    expect(ageMonthsAndDays('2026-05-04')).toBe('2 months, 18 days');
+  });
+
+  it('is days alone under a month, and counts a birth today as 0 days', () => {
+    expect(ageMonthsAndDays('2026-07-12')).toBe('10 days');
+    expect(ageMonthsAndDays('2026-07-22')).toBe('0 days');
+  });
+
+  it('is undefined from the first birthday on — the years box takes over', () => {
+    expect(ageMonthsAndDays('2025-07-22')).toBeUndefined(); // exactly 1
+    expect(ageMonthsAndDays('2025-07-23')).toBe('11 months, 29 days');
+    expect(ageMonthsAndDays('1996-07-22')).toBeUndefined();
+  });
+
+  it('is undefined with no date of birth, and for a future one', () => {
+    expect(ageMonthsAndDays(null)).toBeUndefined();
+    expect(ageMonthsAndDays('2027-01-01')).toBeUndefined();
   });
 });

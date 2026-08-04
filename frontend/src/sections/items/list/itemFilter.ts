@@ -1,3 +1,4 @@
+import type { NumberRange } from '@/ui/elements/selectors/FilterBar';
 import type { ItemsVariables } from './items.generated';
 
 // Pure logic for the items list filter (spec/items S1 + rules "list population
@@ -29,8 +30,8 @@ export type AtRisk = 'at-risk' | 'not-at-risk';
 export type ItemsListFilter = {
   codeOrName?: string | null;
   lens?: StockStatusLens | null;
-  minMonthsOfStock?: number | null;
-  maxMonthsOfStock?: number | null;
+  /** One UI range chip; from/to expand to the min/max wire scalars. */
+  monthsOfStock?: NumberRange | null;
   masterListId?: string | null;
   atRisk?: AtRisk | null;
 };
@@ -70,8 +71,9 @@ export const buildItemFilter = (f: ItemsListFilter): WireFilter => {
 
   if (f.codeOrName) filter.codeOrName = { like: f.codeOrName };
   if (f.masterListId) filter.masterListId = { equalTo: f.masterListId };
-  if (f.minMonthsOfStock != null) filter.minMonthsOfStock = f.minMonthsOfStock;
-  if (f.maxMonthsOfStock != null) filter.maxMonthsOfStock = f.maxMonthsOfStock;
+  if (f.monthsOfStock?.from != null)
+    filter.minMonthsOfStock = f.monthsOfStock.from;
+  if (f.monthsOfStock?.to != null) filter.maxMonthsOfStock = f.monthsOfStock.to;
   if (f.atRisk) filter.productsAtRiskOfBeingOutOfStock = f.atRisk === 'at-risk';
 
   return filter;

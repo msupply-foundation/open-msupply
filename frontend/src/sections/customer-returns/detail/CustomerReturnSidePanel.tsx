@@ -8,6 +8,7 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { Text } from '../../../ui/elements/typography/Text';
 import { HStack } from '../../../ui/layout/Stack/HStack';
@@ -20,7 +21,6 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
@@ -105,16 +105,12 @@ export const CustomerReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <HStack gap="sm">
-            <Text variant="body" as="span">
-              {props.node.user?.username ?? '—'}
-            </Text>
-            {/* Info popover on hover — the user's email (the picked-date
-                reason bubble's pattern); no icon when there is no email. */}
-            <Show when={props.node.user?.email}>
-              {email => <InfoTooltip text={email()} label={email()} />}
-            </Show>
-          </HStack>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show

@@ -10,6 +10,8 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_N } from '@/ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -67,6 +69,15 @@ const LocationsList: Component = () => {
   // The S2 modal's opening state — null closed, else create or the clicked
   // row. Mounted fresh per open (<Show> below), so the form seeds once.
   const [editor, setEditor] = createSignal<EditorState | null>(null);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  createAddAction({
+    name: 'label.new-location',
+    run: () => setEditor({ mode: 'create' }),
+  });
 
   // Column config (order/sizing/pinning/visibility), resolved default →
   // global → user and by breakpoint band (kdd/table-state). The spec hides no
@@ -210,6 +221,7 @@ const LocationsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-location-button"
               onClick={() => setEditor({ mode: 'create' })}
             >
@@ -280,6 +292,7 @@ const LocationsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={() => setEditor({ mode: 'create' })}
           >

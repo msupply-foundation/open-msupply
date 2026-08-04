@@ -9,6 +9,7 @@ import {
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -125,7 +126,12 @@ export const PrescriptionSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">

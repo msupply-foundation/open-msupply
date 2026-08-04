@@ -16,6 +16,7 @@ import {
   SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
@@ -234,7 +235,12 @@ export const InboundShipmentSidePanel: Component<
           </FieldRow>
         </Show>
         <FieldRow label={t('label.edited-by')}>
-          <span>{props.node.user?.username ?? '—'}</span>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <span>{localisedDate(props.node.createdDatetime)}</span>

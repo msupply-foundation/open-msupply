@@ -139,12 +139,12 @@ export type FullOutboundVariables = {
 export type FullOutboundResult = {
   invoice: ({
   __typename: "InvoiceNode";
-} & OutboundInfoFragment & {
+} & {
   lines: {
   totalCount: number;
   nodes: Array<OutboundLineFragment>;
 };
-}) | ({
+} & OutboundInfoFragment) | ({
   __typename: "NodeError";
 } & {
   error: {
@@ -609,4 +609,3 @@ export type OutboundStocktakeConflictResult = {
 export const OutboundStocktakeConflict = {
   query: "query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {\n  stocktakes(\n    storeId: $storeId\n    filter: {stocktakeDate: {afterOrEqualTo: $onOrAfter}}\n  ) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
 } as TypedDocument<OutboundStocktakeConflictResult, OutboundStocktakeConflictVariables>;
-

@@ -248,7 +248,7 @@ export const itemsLowStockHref = (
   understockMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    maxMonthsOfStock: understockMonths,
+    monthsOfStock: { to: understockMonths },
   } satisfies ItemsListFilter);
 
 // High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50
@@ -258,7 +258,7 @@ export const itemsHighStockHref = (
   overstockMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    minMonthsOfStock: overstockMonths,
+    monthsOfStock: { from: overstockMonths },
   } satisfies ItemsListFilter);
 
 // Overstocked: months of stock above the over-stock-alert threshold
@@ -269,5 +269,5 @@ export const itemsOverstockedHref = (
   overstockAlertMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    minMonthsOfStock: overstockAlertMonths,
+    monthsOfStock: { from: overstockAlertMonths },
   } satisfies ItemsListFilter);

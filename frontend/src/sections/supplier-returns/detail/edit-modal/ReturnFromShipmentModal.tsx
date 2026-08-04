@@ -244,7 +244,9 @@ const Body = (props: BodyProps): JSX.Element => {
               />
             }
           >
-            {/* Back is a non-standard verb, so a plain (icon-less) Button. */}
+            {/* Back is a non-standard verb, so a plain (icon-less) Button. It
+                steps within the dialog, so it claims NO role: Escape must still
+                cancel the whole dialog. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -257,6 +259,7 @@ const Body = (props: BodyProps): JSX.Element => {
             when={step() === 'reason'}
             fallback={
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}

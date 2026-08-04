@@ -96,6 +96,7 @@ export const DeleteShipmentAction: Component<
               {/* Destructive confirm — danger tone, named for what it does. */}
               <Button
                 variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}

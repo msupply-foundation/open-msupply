@@ -118,7 +118,14 @@ export const UploadHelpDocumentModal: Component<{
       icon={<UploadIcon />}
       testId="upload-help-document-modal"
       actions={
-        <Button variant="secondary" disabled={uploading()} onClick={close}>
+        // Cancel is the only footer action — the upload runs from the drop zone
+        // in the body, so nothing claims `plain` and Enter confirms nothing.
+        <Button
+          variant="secondary"
+          confirms="cancel"
+          disabled={uploading()}
+          onClick={close}
+        >
           {t('button.cancel')}
         </Button>
       }
