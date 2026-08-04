@@ -114,10 +114,26 @@ const discoverBackendPlugins = () => {
   if (!existsSync('plugins')) return found;
   for (const entry of readdirSync('plugins', { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const manifest = readBackendManifest(
-      join('plugins', entry.name, 'backend')
-    );
-    if (manifest) found.push(manifest);
+    const dir = join('plugins', entry.name);
+    const manifest = readBackendManifest(join(dir, 'backend'));
+    if (!manifest) continue;
+    /*
+     * A plugin may ship either half alone — plenty of country plugins are
+     * backend-only (BES, Niger, São Tomé all bundle `frontend_plugins: []`).
+     * But where ONE directory holds both, they are two halves of one plugin
+     * and the code has to match: it is what pairs them into a bundle, routes
+     * the frontend's bridge calls to this backend, and stamps the stored rows.
+     * A typo here would ship two unrelated plugins that silently never talk.
+     */
+    const frontend = readManifest(dir);
+    if (frontend && frontend.code !== manifest.code) {
+      throw new Error(
+        `${dir}: the two halves declare different plugin codes — ` +
+          `"${frontend.code}" (package.json) vs "${manifest.code}" ` +
+          '(backend/package.json). Two halves of one plugin share one code.'
+      );
+    }
+    found.push(manifest);
   }
   return found;
 };
@@ -270,9 +286,12 @@ for (const [i, row] of backendRows.entries()) {
  * install exactly like one, and a bundle never removes a plugin absent from
  * it.
  *
- * The code is also what pairs a plugin's two halves — `plugins/civ` and
- * `plugins/civ/backend` both declare `civ_plugins` — so grouping by it puts
- * both in one bundle, which is the unit that has to be installed together.
+ * The code is also what pairs a plugin's halves where it HAS two —
+ * `plugins/civ` and `plugins/civ/backend` both declare `civ_plugins` — so
+ * grouping by it puts both in one bundle, the unit that has to be installed
+ * together. A plugin with only one half (frontend-only like the examples,
+ * backend-only like BES) simply gets a bundle with one populated list;
+ * nothing here requires a pair.
  */
 const bundles = new Map();
 /* eslint-disable camelcase -- Rust PluginBundle's field names. */
@@ -322,22 +341,12 @@ for (const row of backendRows) {
   );
 }
 for (const [code, bundle] of bundles) {
-  const halves = [
-    `${bundle.frontend_plugins.length} frontend`,
-    `${bundle.backend_plugins.length} backend`,
-  ].join(' + ');
-  console.info(
-    `[build-plugins] ${join(BUNDLE_DIR, `${code}.json`)}  ${halves}`
-  );
-  // A half with no partner means the two package.json `name`s disagree — the
-  // halves would install as unrelated plugins and the bridge would never
-  // route. Cheap to say here, invisible until runtime otherwise.
-  if (bundle.frontend_plugins.length === 0) {
-    console.warn(
-      `[build-plugins] ${code}: backend half with no frontend half — check ` +
-        'the two package.json `name`s match'
-    );
-  }
+  // Either count may be 0: a plugin ships a frontend half, a backend half, or
+  // both, and all three are ordinary.
+  const rows =
+    `${bundle.frontend_plugins.length} frontend + ` +
+    `${bundle.backend_plugins.length} backend`;
+  console.info(`[build-plugins] ${join(BUNDLE_DIR, `${code}.json`)}  ${rows}`);
 }
 console.info(
   `[build-plugins] packed ${packed.length} frontend + ${backendRows.length} ` +
