@@ -14,6 +14,7 @@ import {
   CloseIcon,
   SearchIcon,
 } from '../../icons';
+import { t, tPlural } from '../../../intl';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
@@ -140,9 +141,9 @@ interface ComboboxProps<T> {
   loading?: boolean;
   /**
    * The status text shown when a settled search matched nothing (server mode's
-   * "no matches" state). Defaults to "No matching items"; a caller overrides it
-   * for a domain-specific message — e.g. the patient picker's "No matching
-   * patients".
+   * "no matches" state). Defaults to `control.search.no-results-label` ("No
+   * results"); a caller overrides it — already translated — with a
+   * domain-specific message, e.g. the patient picker's "No matching patients".
    */
   noResultsMessage?: string;
   /**
@@ -411,7 +412,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const emptyMessage = () =>
     (filterText().trim() === ''
       ? (props.emptyQueryMessage ?? props.noResultsMessage)
-      : props.noResultsMessage) ?? 'No matching items';
+      : props.noResultsMessage) ?? t('control.search.no-results-label');
 
   // Resolved once per change and read twice below (test + render).
   const footer = children(() => props.listboxFooter);
@@ -666,7 +667,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <div class={styles.listboxHeader}>{listboxHeader()}</div>
           </Show>
           <Show when={props.loading}>
-            <div class={styles.status}>Loading…</div>
+            <div class={styles.status}>{t('loading')}</div>
           </Show>
           <Show when={!props.loading && noMatches()}>
             <div class={styles.status}>{emptyMessage()}</div>
@@ -682,13 +683,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
               "no more locations" and "too many to show" must not look alike. */}
           <Show when={hiddenMatchCount() > 0}>
             <div class={styles.status}>
-              {`${hiddenMatchCount()} more matches — keep typing to narrow the list`}
+              {tPlural('control.search.more-matches', hiddenMatchCount())}
             </div>
           </Show>
           {/* Server mode: a trailing "loading more" row shown under the list
               while the next page is in flight. */}
           <Show when={props.loadingMore}>
-            <div class={styles.status}>Loading…</div>
+            <div class={styles.status}>{t('loading')}</div>
           </Show>
           {/* Action row under the options (e.g. "Create patient"). Last, so it
               never displaces a result the user is reaching for. Resolved
