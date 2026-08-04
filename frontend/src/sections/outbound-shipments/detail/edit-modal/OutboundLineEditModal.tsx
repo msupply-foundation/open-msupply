@@ -14,6 +14,7 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import {
   CancelButton,
   DialogSaveButton,
@@ -352,9 +353,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Cards, not a table (as the inbound + stocktake line editors), and
-    // manufacturer starts hidden (the old app's defaultHidden) — declared per
-    // band, since bands don't share; the Columns popover restores it.
+    // Cards by DEFAULT (as the inbound + stocktake line editors) — the
+    // DataTable's showCardToggle offers the flip to a table above the compact
+    // breakpoint and setConfig persists it per user (#886). Manufacturer starts
+    // hidden (the old app's defaultHidden) — declared per band, since bands
+    // don't share; the Columns popover restores it.
     defaultConfig: {
       base: { viewMode: 'card', columnVisibility: { manufacturer: false } },
       compact: { viewMode: 'card', columnVisibility: { manufacturer: false } },
@@ -1466,8 +1469,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       </div>
 
       {/* The grid + footer + banners keep their own item gate — the header
-          row above renders its picker item-less in add mode. */}
-      <Show when={item()}>
+          row above renders its picker item-less in add mode. Before a pick, a
+          centred prompt says what the empty body is waiting for (as the
+          stocktake editor's, #884) rather than leaving the modal blank. */}
+      <Show
+        when={item()}
+        fallback={
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-issue')}
+          />
+        }
+      >
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
         <div class={styles.batchGrid}>
@@ -1477,6 +1490,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             rowKey={line => line.id}
             loading={loadingLines()}
             cardGroups={CARD_GROUPS}
+            showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             emptyMessage={t('messages.no-stock-available')}
