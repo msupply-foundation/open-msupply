@@ -74,7 +74,7 @@ export interface AsyncComboboxProps<T> {
   /**
    * Status text shown when a settled search matched nothing — a domain
    * message (e.g. the patient picker's "No matching patients"). Passed through
-   * to the Combobox; defaults there to "No matching items".
+   * to the Combobox; defaults there to a translated "No results".
    */
   noResultsMessage?: string;
   /**
