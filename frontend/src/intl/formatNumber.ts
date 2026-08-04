@@ -3,14 +3,54 @@ import { locale } from './intl';
 
 const MAX_FRACTION_DIGITS = 10;
 
+/*
+ * Constructed formatters, keyed by locale + options — because `new
+ * Intl.NumberFormat(...)` is expensive (it resolves the locale's numbering
+ * data), and every caller below builds one per *value formatted*. Measured on
+ * a Lenovo tablet (2026-08-04, the location-dropdown trace): 2.24s of a 30s
+ * blocked frame was this constructor alone — ~0.45ms × ~5,000 calls, one per
+ * option in a single dropdown. Reuse is safe: an Intl.NumberFormat is
+ * immutable and `.format()` holds no state.
+ *
+ * Keyed on the options sorted by name, so callers spreading options in
+ * different orders still share an entry. Cardinality is bounded by the code,
+ * not the data — option shapes come from call sites (a few fraction-digit and
+ * currency combinations), so the map settles at a few dozen entries.
+ * `plural.ts` caches Intl.PluralRules the same way.
+ */
+const formatCache = new Map<string, Intl.NumberFormat>();
+
+const cacheKey = (
+  numberLocale: string,
+  options?: Intl.NumberFormatOptions
+): string => {
+  if (!options) return numberLocale;
+  // Undefined values are dropped rather than stringified: Intl treats an
+  // explicit `undefined` as absent, so `{minimumFractionDigits: undefined}`
+  // must hit the same entry as `{}` — otherwise `formatNumber`, which always
+  // passes the key through, would miss the cache on every call.
+  const parts = Object.entries(options)
+    .filter(([, value]) => value !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([name, value]) => `${name}=${String(value)}`);
+  return `${numberLocale}|${parts.join('|')}`;
+};
+
 // Intl.NumberFormat keyed by the locale's number override (so digit systems —
 // e.g. Arabic-Indic for `ar` — render correctly rather than defaulting to
 // Latin). This is the single place NumberFormat is constructed for the app.
 export const intlNumberFormat = (
   locale: SupportedLocale,
   options?: Intl.NumberFormatOptions
-): Intl.NumberFormat =>
-  new Intl.NumberFormat(LOCALE_META[locale].numberLocale, options);
+): Intl.NumberFormat => {
+  const numberLocale = LOCALE_META[locale].numberLocale;
+  const key = cacheKey(numberLocale, options);
+  const cached = formatCache.get(key);
+  if (cached) return cached;
+  const format = new Intl.NumberFormat(numberLocale, options);
+  formatCache.set(key, format);
+  return format;
+};
 
 /**
  * Number formatting bound to the current locale (reactive). Returns plain

@@ -17,6 +17,8 @@ import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
@@ -423,6 +425,25 @@ const CustomerReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id, lineId: line.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  //
+  // Gated on `.state`, NOT on `info()` — that reads `data()` and suspends, and
+  // the palette evaluates every action's `disabled()` inside its own render
+  // (kdd/keyboard-layer § an action's disabled MUST NOT read a suspending
+  // source).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || isReturnDisabled(node);
+    },
+  });
+
   // The item / line the modal opens on — narrowed off the union ONCE. Re-reading
   // the accessor inside the JSX would lose the narrowing and need a cast.
   const editItemId = () => {
@@ -583,6 +604,7 @@ const CustomerReturnDetailView: Component = () => {
                       <Show when={!disabled()}>
                         <Button
                           icon={<PlusCircleIcon />}
+                          shortcut={ALT_N}
                           data-testid="add-item-button"
                           onClick={openAdd}
                         >
@@ -608,6 +630,9 @@ const CustomerReturnDetailView: Component = () => {
                         <Button
                           variant="secondary"
                           icon={<SidebarIcon />}
+                          // createSidePanelOpen registers Alt+M; this is the
+                          // control that advertises it (ui-surface S2).
+                          shortcut={ALT_M}
                           data-testid="open-detail-panel-button"
                           onClick={() => setSidePanelOpen(true)}
                         >
@@ -739,6 +764,7 @@ const CustomerReturnDetailView: Component = () => {
                       disabled() ? undefined : (
                         <Button
                           variant="ghost"
+                          shortcut={ALT_N}
                           data-testid="nothing-here-create-button"
                           onClick={openAdd}
                         >

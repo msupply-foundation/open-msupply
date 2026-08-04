@@ -7,8 +7,10 @@ import {
   isFilterActive,
 } from './filterBarLogic';
 
-// A stocktake-detail-shaped filter: a default (alwaysOn) search plus an addable
-// location chip — the #735 arrangement.
+// A stocktake-detail-shaped filter: the item search the screen starts with plus
+// an addable location chip — the #735 arrangement, with the search now a
+// DEFAULT filter by virtue of the page SEEDING its key (#563), so nothing here
+// distinguishes the two definitions.
 type LineFilter = {
   itemCodeOrName?: { like?: string } | null;
   locationId?: { equalTo?: string } | null;
@@ -16,7 +18,6 @@ type LineFilter = {
 
 const search: Filter<LineFilter> = {
   key: 'itemCodeOrName',
-  alwaysOn: true,
   label: () => 'Name',
   render: () => null,
 };
@@ -26,11 +27,13 @@ const location: Filter<LineFilter> = {
   render: () => null,
 };
 const filters = [search, location];
+// What a page seeds as its default state: the search present, but empty.
+const seeded: LineFilter = { itemCodeOrName: null };
 
 const keys = (fs: Filter<LineFilter>[]) => fs.map(f => f.key);
 
 describe('isFilterActive', () => {
-  it('shows an addable chip only while its key is present', () => {
+  it('shows a chip only while its key is present', () => {
     expect(isFilterActive(location, {})).toBe(false);
     // Present-as-null — added but empty — still a chip.
     expect(isFilterActive(location, { locationId: null })).toBe(true);
@@ -39,49 +42,45 @@ describe('isFilterActive', () => {
     );
   });
 
-  it('shows a default filter with no key in the filter at all', () => {
-    // A URL saved before the filter was made default, or one a "Clear all"
-    // stripped: the chip is a fact of the definition, not of the state.
-    expect(isFilterActive(search, {})).toBe(true);
+  it('shows a default filter because its key is SEEDED, not by definition', () => {
+    expect(isFilterActive(search, seeded)).toBe(true);
+    // Removed (or a "Clear all"): the chip goes, like any other (#563).
+    expect(isFilterActive(search, {})).toBe(false);
   });
 });
 
 describe('activeFilters', () => {
-  it('keeps definition order and includes the default on a pristine screen', () => {
-    expect(keys(activeFilters(filters, {}))).toEqual(['itemCodeOrName']);
-    expect(keys(activeFilters(filters, { locationId: null }))).toEqual([
+  it('keeps definition order and shows the seeded default on a pristine screen', () => {
+    expect(keys(activeFilters(filters, seeded))).toEqual(['itemCodeOrName']);
+    expect(
+      keys(activeFilters(filters, { ...seeded, locationId: null }))
+    ).toEqual(['itemCodeOrName', 'locationId']);
+  });
+});
+
+describe('availableFilters', () => {
+  it('does not offer a filter that is already a chip', () => {
+    expect(keys(availableFilters(filters, seeded))).toEqual(['locationId']);
+  });
+
+  it('offers a removed default filter back', () => {
+    expect(keys(availableFilters(filters, {}))).toEqual([
       'itemCodeOrName',
       'locationId',
     ]);
   });
 });
 
-describe('availableFilters', () => {
-  it('never offers a default filter in the add menu', () => {
-    expect(keys(availableFilters(filters, {}))).toEqual(['locationId']);
-  });
-
-  it('drops an addable filter once it is a chip', () => {
-    expect(availableFilters(filters, { locationId: null })).toEqual([]);
-  });
-});
-
 describe('showsClearAll', () => {
-  it('never offers "Clear all" for default filters — empty OR valued', () => {
-    expect(showsClearAll(filters, {})).toBe(false);
-    expect(showsClearAll(filters, { itemCodeOrName: null })).toBe(false);
+  it('offers "Clear all" for ANY chip on the bar — a default filter included', () => {
+    expect(showsClearAll(filters, seeded)).toBe(true);
     expect(showsClearAll(filters, { itemCodeOrName: { like: 'amox' } })).toBe(
-      false
+      true
     );
+    expect(showsClearAll(filters, { locationId: null })).toBe(true);
   });
 
-  it('offers it as soon as a user-added chip exists, valued or not', () => {
-    expect(showsClearAll(filters, { locationId: null })).toBe(true);
-    expect(
-      showsClearAll(filters, {
-        itemCodeOrName: { like: 'amox' },
-        locationId: { equalTo: 'a' },
-      })
-    ).toBe(true);
+  it('offers nothing on an empty bar', () => {
+    expect(showsClearAll(filters, {})).toBe(false);
   });
 });

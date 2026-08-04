@@ -318,15 +318,20 @@ const LineEditContent = (
   const variance = () => requestedUnits() !== suggested();
   const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
-  // A statistic (units) rendered in the active mode with its measure word.
-  const stat = (units: number, roundUp = false): string =>
-    `${formatNumber(statInMode(units, entryMode(), packSize(), doses(), roundUp))} ${modeWord(entryMode(), current()?.unitName ?? null)}`;
+  // A statistic (units) rendered in the active mode with its measure word,
+  // inflected for the figure it suffixes ("1 pack" / "61 packs").
+  const stat = (units: number, roundUp = false): string => {
+    const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
+    return `${formatNumber(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
   // doses is the active mode, the dose equivalent otherwise — rounded whole.
   const otherMeasure = (units: number): string => {
-    if (entryMode() === 'doses')
-      return `${formatNumber(Math.round(units))} ${current()?.unitName ?? t('label.unit')}`;
+    if (entryMode() === 'doses') {
+      const unitCount = Math.round(units);
+      return `${formatNumber(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
+    }
     const doseCount = Math.round(units * doses());
     return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
@@ -413,12 +418,16 @@ const LineEditContent = (
       : undefined;
   });
 
+  // Option labels inflect with the entered quantity (reference-app parity:
+  // singular at exactly 1, plural otherwise — spec S4's "tablets · packs").
   const entryOptions = createMemo(() => {
-    const unit = current()?.unitName ?? t('label.unit');
-    const options = [{ value: 'units', label: unit }];
+    const unitName = current()?.unitName ?? null;
+    const count = requestedDisplay() === 1 ? 1 : 2;
+    const options = [{ value: 'units', label: modeWord('units', unitName, count) }];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: t('label.pack') });
-    if (dosesApply()) options.push({ value: 'doses', label: t('label.dose') });
+      options.push({ value: 'packs', label: modeWord('packs', unitName, count) });
+    if (dosesApply())
+      options.push({ value: 'doses', label: modeWord('doses', unitName, count) });
     return options;
   });
 
@@ -502,7 +511,7 @@ const LineEditContent = (
         fallback={
           <ItemSearch
             label={t('label.item')}
-            class={styles.itemField}
+            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}

@@ -222,7 +222,11 @@ const Body = (props: BodyProps): JSX.Element => {
     }
     if (result.kind === 'error') {
       setSaving(false);
-      setMessage({ severity: 'error', kind: 'save-error', text: result.message });
+      setMessage({
+        severity: 'error',
+        kind: 'save-error',
+        text: result.message,
+      });
       return;
     }
     // Straight to the new return — OK keeps its spinner until the host
@@ -271,6 +275,9 @@ const Body = (props: BodyProps): JSX.Element => {
               />
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog, and the cancel claim is what the
+                palette's Cancel entry and the Escape badge point at. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
@@ -284,6 +291,7 @@ const Body = (props: BodyProps): JSX.Element => {
             fallback={
               <Button
                 variant="primary"
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}

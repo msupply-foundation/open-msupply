@@ -178,6 +178,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   <Button
                     variant="primary"
                     loading={phase() === 'working'}
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     onClick={() => void run()}
                   >
@@ -198,6 +199,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   fallback={
                     <Button
                       variant="secondary"
+                      confirms="plain"
                       data-testid="dialog-button-ok"
                       onClick={close}
                     >

@@ -8,12 +8,12 @@ import {
   SidePanelSection,
   SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
-import { HStack } from '../../../ui/layout/Stack/HStack';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
@@ -163,16 +163,12 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <HStack gap="sm">
-            <Text variant="body" as="span">
-              {props.node.user?.username ?? '—'}
-            </Text>
-            {/* Info popover on hover — the user's email (the picked-date
-                reason bubble's pattern); no icon when there is no email. */}
-            <Show when={props.node.user?.email}>
-              {email => <InfoTooltip text={email()} label={email()} />}
-            </Show>
-          </HStack>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">

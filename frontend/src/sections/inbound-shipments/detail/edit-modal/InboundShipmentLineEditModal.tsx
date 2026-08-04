@@ -24,6 +24,8 @@ import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import {
   DataTable,
   type Column,
@@ -345,9 +347,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (ui/utils/createFocusTarget).
   const topSelector = createFocusTarget();
 
-  // Card-only: default the view to card at every band (compact already forces
-  // card; this extends it to desktop). No showCardToggle on the DataTable, so
-  // there's no way to a table view — the batch grid is always cards.
+  // Cards by default at every band (compact already forces card; this extends
+  // it to desktop). Above the compact breakpoint the DataTable's showCardToggle
+  // offers the flip to a table for anyone who prefers it, and setConfig
+  // persists that choice per user (#886) — so this seed is only the default.
   const tableConfig = createTableConfig({
     tableId: 'inbound-line-edit',
     defaultConfig: { base: { viewMode: 'card' } },
@@ -1296,38 +1299,62 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       minBodyHeightRem={28}
       testId="add-item-modal"
       title={
-        // On a PO-linked shipment, add mode picks a purchase-order line; every
-        // other case (manual add, and update mode) shows the item selector — in
-        // update mode disabled, so add and edit read as the same surface. Items
-        // already on the shipment are NOT filtered out (issue #428). The choice
-        // keys off mode(), not the initial prop, so an exhausted update walk
-        // that drops into add mode unlocks the selector / shows the PO picker.
-        props.purchaseOrderId && mode() === 'add' ? (
-          <Select
-            label={t('label.purchase-order')}
-            testId="purchase-order-line-input"
-            focusTarget={topSelector}
-            value={poLineId()}
-            onValueChange={choosePoLine}
-            options={poLines().map(l => ({
-              value: l.id,
-              label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
-                'label.pack-size'
-              ).toLowerCase()} ${l.requestedPackSize}`,
-            }))}
-          />
-        ) : (
-          <ItemSearch
-            label={t('label.item')}
-            hideLabel
-            storeId={props.storeId}
-            focusTarget={topSelector}
-            value={item()?.id}
-            selectedItem={item() ?? undefined}
-            disabled={mode() === 'update'}
-            onSelect={chooseItem}
-          />
-        )
+        // The selector, and the item's unit beside it — the registry's dialog
+        // context row (a read-only labelled fact stating what the dialog acts
+        // on, sized to itself and hugged to the inline-start).
+        <HStack gap="md" align="center">
+          {/* On a PO-linked shipment, add mode picks a purchase-order line;
+              every other case (manual add, and update mode) shows the item
+              selector — in update mode disabled, so add and edit read as the
+              same surface. Items already on the shipment are NOT filtered out
+              (issue #428). The choice keys off mode(), not the initial prop, so
+              an exhausted update walk that drops into add mode unlocks the
+              selector / shows the PO picker. */}
+          <div class={styles.headerPicker}>
+            {props.purchaseOrderId && mode() === 'add' ? (
+              <Select
+                label={t('label.purchase-order')}
+                testId="purchase-order-line-input"
+                focusTarget={topSelector}
+                value={poLineId()}
+                onValueChange={choosePoLine}
+                options={poLines().map(l => ({
+                  value: l.id,
+                  label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
+                    'label.pack-size'
+                  ).toLowerCase()} ${l.requestedPackSize}`,
+                }))}
+              />
+            ) : (
+              <ItemSearch
+                label={t('label.item')}
+                hideLabel
+                width="full"
+                storeId={props.storeId}
+                focusTarget={topSelector}
+                value={item()?.id}
+                selectedItem={item() ?? undefined}
+                disabled={mode() === 'update'}
+                onSelect={chooseItem}
+              />
+            )}
+          </div>
+          {/* Unit is item master data and the denominator for every quantity in
+              the cards below, so it rides the header rather than spending a
+              whole field row of the batch area on one word (#872). */}
+          <Show when={item()?.unitName}>
+            {unitName => (
+              <LabelledValue
+                class={styles.headerUnit}
+                label={t('label.unit')}
+                variant="field"
+                size="small"
+              >
+                {unitName()}
+              </LabelledValue>
+            )}
+          </Show>
+        </HStack>
       }
       ariaLabel={
         mode() === 'update' ? t('label.edit-line') : t('button.add-item')
@@ -1380,15 +1407,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             </Alert>
           }
         >
+          {/* Unit is a labelled fact in the header now, not a field row here. */}
           <>
-            {/* Read-only Unit field, follows the selector (spec S4). */}
-            <Show when={item()?.unitName}>
-              <TextField
-                label={t('label.unit')}
-                value={item()?.unitName ?? ''}
-                disabled
-              />
-            </Show>
             <Show when={hasMismatch()}>
               <Alert severity="warning">
                 {t('messages.received-shipped-mismatch')}
@@ -1399,6 +1419,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               rows={rows()}
               rowKey={b => b.id}
               cardGroups={CARD_GROUPS}
+              showCardToggle
               showFullScreen={false}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}

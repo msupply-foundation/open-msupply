@@ -15,10 +15,20 @@
 # front end, tears everything down. Store-local data (stock) is arranged
 # by e2e/specs/data.setup.ts through the API.
 #
-# The open-msupply checkout (server + reference datafile only — the
-# suites live here) must be on `develop` — the same branch this front end
-# needs generally: the cookie-session auth contract plus the e2e datafile
-# + CLI support.
+# The open-msupply checkout supplies the server + reference datafile only
+# (the suites live here). It needs three specific capabilities, each
+# preflighted below with its own message. A branch name is not the
+# requirement — any branch carrying all three works:
+#
+#   1. The e2e datafile export — server/data/e2e/{export.json,users.txt}.
+#   2. `remote_server_cli initialise-from-export --name --refresh`, the
+#      restore path used here (Action::InitialiseFromExport in
+#      cli/src/cli.rs; --refresh makes the datafile's dates current).
+#   3. Cookie-session auth: the `authToken` query must answer with a
+#      Set-Cookie session cookie and /graphql must accept it, because this
+#      front end sends `credentials: 'same-origin'` and NO Authorization
+#      header (src/api/graphql.ts). A server that only returns a bearer
+#      token leaves every UI step in the suites unauthenticated.
 #
 # Knobs (all optional):
 #   OMS_DIR           open-msupply checkout (default: ../open-msupply)
@@ -49,11 +59,24 @@ if [[ -z "$OMS_DIR" ]]; then
   fi
 fi
 if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
-  echo "OMS_DIR ($OMS_DIR) is not an open-msupply checkout on the develop branch" >&2
-  echo "  git clone https://github.com/msupply-foundation/open-msupply --branch develop" >&2
-  echo "  (or: git -C <checkout> switch develop) — then set OMS_DIR if it isn't ../open-msupply" >&2
+  echo "MISSING DEPENDENCY: the e2e datafile export." >&2
+  echo "  Expected: $OMS_DIR/server/data/e2e/ (export.json + users.txt)" >&2
+  echo "  OMS_DIR does not look like an open-msupply checkout at all, or it is" >&2
+  echo "  on a revision predating the e2e datafile." >&2
+  echo "  git clone https://github.com/msupply-foundation/open-msupply" >&2
+  echo "  — then set OMS_DIR if the checkout isn't ../open-msupply" >&2
   exit 1
 fi
+# Named separately from the directory: a checkout that HAS data/e2e but is
+# missing a file inside it otherwise fails later, inside the CLI, as an
+# opaque serde error.
+for datafile in export.json users.txt; do
+  if [[ ! -f "$OMS_DIR/server/data/e2e/$datafile" ]]; then
+    echo "MISSING DEPENDENCY: $OMS_DIR/server/data/e2e/$datafile" >&2
+    echo "  The e2e datafile export is incomplete — restore it in OMS_DIR." >&2
+    exit 1
+  fi
+done
 OMS_DIR=$(cd "$OMS_DIR" && pwd)
 SERVER_DIR="$OMS_DIR/server"
 # Stack logs get their own dir — Playwright wipes its outputDir
@@ -130,6 +153,20 @@ echo "Building server + CLI (sqlite; a no-op when already built)"
 # Honour CARGO_TARGET_DIR (CI shares a persistent target dir across jobs).
 BIN_DIR="${CARGO_TARGET_DIR:-$SERVER_DIR/target}/debug"
 
+# Dependency 2: the restore path this script drives. Probed rather than
+# assumed, because without --refresh the datafile restores with stale dates
+# and the failure surfaces much later as puzzling assertion failures (dates
+# out of range) rather than as a missing subcommand.
+CLI_HELP=$("$BIN_DIR/remote_server_cli" initialise-from-export --help 2>&1 || true)
+if ! grep -q -- "--refresh" <<<"$CLI_HELP"; then
+  echo "MISSING DEPENDENCY: remote_server_cli initialise-from-export --refresh" >&2
+  echo "  OMS_DIR ($OMS_DIR) builds a CLI without the date-refreshing restore" >&2
+  echo "  path this script uses (Action::InitialiseFromExport in cli/src/cli.rs)." >&2
+  echo "  Its 'initialise-from-export --help' reported:" >&2
+  echo "${CLI_HELP:-  (the subcommand does not exist)}" | sed 's/^/    /' >&2
+  exit 1
+fi
+
 # Pick a free port slot when none was requested: slot n -> server 9930+2n
 # (+1 of it for discovery), FE 3115+n. Seeding the probe order from the
 # checkout path means concurrent worktrees start at different slots even
@@ -193,6 +230,38 @@ done
 if [[ "${STATUS:-}" != "INITIALISED" ]]; then
   echo; echo "Server failed to start:" >&2
   tail -20 "$LOG_DIR/e2e-server.log" >&2
+  exit 1
+fi
+
+# Dependency 3: cookie-session auth. This front end authenticates every
+# request with the session cookie alone (credentials: 'same-origin', no
+# Authorization header — src/api/graphql.ts), so a server that answers
+# authToken WITHOUT a Set-Cookie leaves every UI step logged out. Checked
+# here because the symptom otherwise lands as auth.setup timing out on the
+# app chrome, which reads like a front-end bug.
+# The same credentials the suites use, so this probe can't disagree with them.
+PROBE_USER=${PW_USERNAME:-admin}
+PROBE_PASS=${PW_PASSWORD:-pass}
+AUTH_RESPONSE=$(curl -s -i -m 5 "http://localhost:$SERVER_PORT/graphql" \
+  -H 'Content-Type: application/json' \
+  -d "{\"query\":\"query { authToken(username:\\\"$PROBE_USER\\\",password:\\\"$PROBE_PASS\\\") { __typename } }\"}" \
+  || true)
+# Refused credentials produce no cookie either, so separate the two: only a
+# server that ACCEPTED the login and still sent no cookie lacks the capability.
+if ! grep -q '"__typename":"AuthToken"' <<<"$AUTH_RESPONSE"; then
+  echo "CANNOT AUTHENTICATE: the server refused the e2e credentials." >&2
+  echo "  User '$PROBE_USER' (PW_USERNAME/PW_PASSWORD override the default" >&2
+  echo "  admin/pass) was not accepted, so this is a datafile/credential" >&2
+  echo "  mismatch rather than a missing capability. Server said:" >&2
+  sed -n '/^{/,$p' <<<"$AUTH_RESPONSE" | head -3 | sed 's/^/    /' >&2
+  exit 1
+fi
+if ! grep -qi '^set-cookie:' <<<"$AUTH_RESPONSE"; then
+  echo "MISSING DEPENDENCY: cookie-session auth on the authToken query." >&2
+  echo "  OMS_DIR ($OMS_DIR) accepted the login but sent no Set-Cookie." >&2
+  echo "  This front end sends no Authorization header, so every UI step" >&2
+  echo "  would run unauthenticated (see set_session_cookie in" >&2
+  echo "  graphql/general/src/queries/login.rs)." >&2
   exit 1
 fi
 

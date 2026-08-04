@@ -96,8 +96,11 @@ export type CellSpec = {
   maxSize?: number | null;
 };
 // The standard width (rem) for a short record-number column — a few digits,
-// shared by every "record #" column so they line up and never drift.
-const RECORD_NUMBER_WIDTH = 3.5;
+// shared by every "record #" column so they line up and never drift. The
+// binding constraint is not the digits but the sortable header "Number":
+// 53px of label + the th's ~32px overhead (padding + the reserved sort-arrow
+// slot) — below 5.5rem it breaks mid-word at the floor ("Numbe/r").
+const RECORD_NUMBER_WIDTH = 5.5;
 
 export const CELL_DEF = {
   // Text — the flex-fill "sink" columns.
@@ -117,6 +120,8 @@ export const CELL_DEF = {
   note: { kind: 'shortText' },
   initials: { kind: 'shortText' },
   user: { kind: 'shortText' }, // acting user's username (log / ledger tables)
+  reason: { kind: 'shortText' }, // a line's variance reason (requisitions)
+  approvalComment: { kind: 'shortText' },
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },
   gender: { kind: 'shortText' },
@@ -124,7 +129,9 @@ export const CELL_DEF = {
   phone: { kind: 'shortText' },
   mobile: { kind: 'shortText' },
   unit: { kind: 'shortText' },
-  unitName: { kind: 'shortText', size: 2 },
+  // 3rem fits the header "Unit" — with no floor beyond that, an all-empty
+  // column collapses under the label and clips it to "U n..".
+  unitName: { kind: 'shortText', size: 3 },
   // A VVM status description ("Stage 1") — short text until the Status chip
   // preset exists (see docs/CELL_TYPES.md § Status).
   vvmStatus: { kind: 'shortText' },
@@ -150,15 +157,43 @@ export const CELL_DEF = {
   doses: { kind: 'number' },
   requestedQuantity: { kind: 'number', size: 8 },
   poQuantity: { kind: 'number', size: 7 },
-  remaining: { kind: 'number' },
+  remaining: { kind: 'number', size: 6.5 }, // "Remaining" + sort — one word
   difference: { kind: 'number', size: 7 }, // "Difference"
   unitQuantity: { kind: 'number', size: 5 }, // "Unit quantity"
   balance: { kind: 'number', size: 6 }, // header "Balance" (ledger tables)
-  // Short record numbers (invoice #, stocktake #) — a few digits, tighter than
-  // a generic number; one shared width (RECORD_NUMBER_WIDTH) so they never
-  // drift apart.
+  // Requisition-family numbers — shared by the internal-order and customer-
+  // requisition line tables so the two verticals' columns never drift apart.
+  // Sizes account for the header label where it outgrows the number default
+  // (headers wrap to two lines, so the widest WORD is the constraint).
+  dps: { kind: 'number' }, // "DPS"
+  available: { kind: 'number', size: 6 }, // "Available stock" / "Available"
+  amc: { kind: 'number' }, // "AMC" / "Area AMC"
+  mos: { kind: 'number' }, // "MOS"
+  targetStock: { kind: 'number', size: 7 }, // "Target" / "stock (AMC)" + sort
+  targetStockPopulation: { kind: 'number', size: 7.5 }, // "…(population)"
+  suggested: { kind: 'number', size: 7 }, // "Suggested" / "quantity" + sort
+  requested: { kind: 'number', size: 6.5 }, // "Requested" + sort — one word
+  initialSoh: { kind: 'number', size: 5 }, // "Initial SOH"
+  incoming: { kind: 'number', size: 5.5 }, // "Incoming"
+  outgoing: { kind: 'number', size: 5.5 }, // "Outgoing"
+  losses: { kind: 'number' }, // "Losses"
+  additions: { kind: 'number', size: 6 }, // "Additions"
+  shortExpiry: { kind: 'number', size: 5 }, // "Short expiry"
+  daysOutOfStock: { kind: 'number', size: 5.5 }, // "Days out of stock"
+  ourSoh: { kind: 'number', size: 6.5 }, // "Our stock" / "on hand"
+  customerSoh: { kind: 'number', size: 7.5 }, // "Their avail." / "stock" + sort
+  supplyQuantity: { kind: 'number', size: 5.5 }, // "Units to supply"
+  alreadyIssued: { kind: 'number', size: 5.5 }, // "Issued" + sort
+  approvedQuantity: { kind: 'number', size: 6.5 }, // "Approved units" + sort
+  approvedPacks: { kind: 'number', size: 6 }, // "Approved packs"
+  shipments: { kind: 'number', size: 6 }, // "Shipments" (requisitions list)
+  countRows: { kind: 'number', size: 5 }, // "Number of rows"
+  // Short record numbers (invoice #, stocktake #, requisition #) — a few
+  // digits, tighter than a generic number; one shared width
+  // (RECORD_NUMBER_WIDTH) so they never drift apart.
   invoiceNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   stocktakeNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
+  requisitionNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   // Percentage.
   taxPercentage: { kind: 'percentage' },
   // Currency — "Pack sell price" / "Pack cost price" headers need the room.
@@ -166,6 +201,8 @@ export const CELL_DEF = {
   costPricePerPack: { kind: 'currency', size: 7 },
   totalAfterTax: { kind: 'currency' },
   totalBeforeTax: { kind: 'currency' },
+  pricePerUnit: { kind: 'currency' }, // "Indicative price per unit"
+  indicativePrice: { kind: 'currency' },
   total: { kind: 'currency', size: 4 },
   lineTotal: { kind: 'currency' },
   // Date.

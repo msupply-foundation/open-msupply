@@ -16,12 +16,12 @@ import {
   findLeafByPath,
   lowerNav,
   upperNav,
-  type NavItem,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
-import { hasPermission, isDispensary } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
+import { gateNav } from './navGates';
+import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
 import { resolveStorePath } from '../store/StoreGuardLayout';
@@ -73,29 +73,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const onNavigate = (leaf: NavLeaf) =>
     navigate(`/${params.storeId}/${leaf.to}`);
 
-  // Nav visibility gates — reactive, because they read runtime signals the
-  // static nav model can't. Two concerns, one pass:
-  //  • Dispensary mode (spec/patients AC-G1): the Dispensary group shows only
-  //    in dispensary mode; the patients route guard blocks direct-URL entry
-  //    to match.
-  //  • Central-only destinations (spec/help S2): a `central`-flagged entry
-  //    (Manage › Help documents) shows only on a central server to a server
-  //    admin; the help section's route guard blocks direct-URL entry to match.
+  // Nav visibility gates live in src/nav/navGates.ts, shared with the command
+  // palette so the menu and the palette can never disagree about where the user
+  // can go (spec/keyboard AC-KB4).
   // Memoised so the gated arrays — and the section objects rebuilt when a
   // child is dropped — keep stable references; otherwise MenuBar's <For> would
   // remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const centralAdmin = () => isCentralServer() && hasPermission('SERVER_ADMIN');
-  const visible = (n: { central?: boolean }) => !n.central || centralAdmin();
-  const gateNav = (items: NavItem[]): NavItem[] =>
-    items
-      .filter(item => item.id !== 'dispensary' || isDispensary())
-      .filter(visible)
-      .map(item =>
-        item.children?.some(child => child.central) && !centralAdmin()
-          ? { ...item, children: item.children.filter(visible) }
-          : item
-      );
   const menuUpper = createMemo(() => gateNav(upperNav));
   const menuLower = createMemo(() => gateNav(lowerNav));
 
@@ -161,6 +145,10 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         onLogout={() => setLogoutConfirmOpen(true)}
         isCentralServer={isCentralServer()}
       >
+        <KeyboardHost
+          onSyncOpen={openSync}
+          onLogoutRequest={() => setLogoutConfirmOpen(true)}
+        />
         {props.children}
       </AppShell>
       <Show when={syncEverOpened()}>
