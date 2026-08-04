@@ -278,13 +278,17 @@ export const DialogShowcase = () => {
         >
           <Lead>
             <code>size="large"</code> is a centred card at its working width —
-            56rem by default, or <code>widthRem</code> where a column-heavy
-            table forces wider (the shipment and stocktake line editors take
-            76rem) — whose height is elastic between ~60vh and ~80vh, for
-            content-heavy modals like the stock line editor. Short content makes
-            a short modal; past the height cap the body becomes a bounded flex
-            column, so a single tall child (a DataTable in the app) fills the
-            space and <em>scrolls internally</em> while the header,{' '}
+            56rem by default, or <code>widthRem</code> for a bigger card — whose
+            height is elastic between ~60vh and ~80vh, for content-heavy modals
+            like the stock line editor. Its sibling <code>size="full"</code> is
+            the same box with no width cap (<code>100vw - 4rem</code>), for a
+            line table too wide to be a card at any number: the shipment and
+            stocktake editors run to ~20 columns, where narrowing hides columns
+            without removing any empty space — the empty space #771 was filed
+            against is vertical, and the height band is what answers it. Short
+            content makes a short modal; past the height cap the body becomes a
+            bounded flex column, so a single tall child (a DataTable in the app)
+            fills the space and <em>scrolls internally</em> while the header,{' '}
             <code>footer</code> and <code>actions</code> stay pinned to the
             edges. Below the narrow-viewport line (tablet portrait and phones)
             it goes <strong>full-screen</strong>, edge to edge with no radius —

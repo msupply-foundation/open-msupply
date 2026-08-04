@@ -73,6 +73,16 @@
   max-block-size: 80vh;
 }
 
+/* size="full" — the workbench at FULL BLEED (Dialog puts .bleed alongside .large, so
+   only the width differs). Drops the width cap entirely: for a ~20-column line table
+   there is no card width that fits, and narrowing only hides columns — #771's empty
+   space was vertical, and .large's height band already answers that. Specificity beats
+   .large's min(), and it sets `width` outright so an inline --dialog-width (a caller's
+   pre-pick widthRem) can't reach it. */
+.dialog.large.bleed {
+  width: calc(100vw - 4rem);
+}
+
 /* Flex column so the body fills the fixed height, giving a flex-1 child the room. Scoped to
    [open] — a bare `display: flex` on .large would OVERRIDE the UA's `display: none` for a
    CLOSED <dialog>, making the (always-mounted) dialog's content leak onto the page. Only the
