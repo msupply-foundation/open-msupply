@@ -65,6 +65,10 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
+      // Backend plugin halves: BoaJS code built by the open-msupply client
+      // toolchain, plus its prebuilt shipped artifact — not this repo's lint
+      // domain (plugins/civ/backend/README.md).
+      'plugins/*/backend/**',
     ],
   },
 
