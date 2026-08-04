@@ -24,6 +24,31 @@ type Output = {
   itemCount: number;
 };
 
+/**
+ * Project a statement's columns into the single `json_row` column the host's
+ * `sql` insists on (see `host.d.ts`). Out of tree this is `sqlQuery` from
+ * `@common/utils`; it is inlined here because the trap it hides is the single
+ * most surprising thing about writing a backend plugin — without it the query
+ * fails at runtime, inside the engine, with a Diesel error that names a column
+ * you never wrote.
+ *
+ * The JSON function differs by dialect, which is what `sql_type()` is for.
+ */
+const jsonRows = <K extends string>(
+  fields: readonly K[],
+  statement: string
+): Record<K, unknown>[] => {
+  const jsonObject =
+    sql_type() === 'sqlite' ? 'json_object' : 'json_build_object';
+  const projection = fields
+    .map(field => `'${field}', inner_statement.${field}`)
+    .join(', ');
+  return sql(
+    `SELECT ${jsonObject}(${projection}) AS json_row
+     FROM (${statement}) AS inner_statement`
+  ) as Record<K, unknown>[];
+};
+
 /*
  * A `graphql_query` method receives the calling store and the caller's opaque
  * input, and returns the opaque output. Out of tree this signature comes typed
@@ -50,7 +75,7 @@ const graphqlQuery = ({
    * The count comes back as a string on some drivers, so it is parsed rather
    * than trusted.
    */
-  const [row] = sql('SELECT count(*) AS count FROM item');
+  const [row] = jsonRows(['count'], 'SELECT count(*) AS count FROM item');
   const itemCount = Number(row?.['count'] ?? 0);
 
   log(`hello_backend: ping from store ${storeId}, ${itemCount} items`);
