@@ -15,6 +15,8 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import {
   CancelButton,
   DialogSaveButton,
@@ -1370,103 +1372,122 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* The header row (spec S4, D76): Item picker · Available · Issue +
-          Allocate-in · placeholder notice on ONE wrapping flex row — each
-          piece drops to its own row as space runs out (see the module CSS). */}
-      <div class={styles.headerRow}>
-        {/* The shared server-searched item lookup (spec S4 — the registry's
+      {/* The header row (spec S4, D76): Item picker · Issue + Allocate-in ·
+          Available · placeholder notice on ONE wrapping flex row — each piece
+          drops to its own row as space runs out (see the module CSS). The
+          registry's inset grouping panel holds them, so the cluster reads as one
+          thing the modal acts on rather than four controls loose against the
+          panel (#872). */}
+      <InsetPanel class={styles.headerPanel}>
+        <div class={styles.headerRow}>
+          {/* The shared server-searched item lookup (spec S4 — the registry's
             async catalogue-lookup; no client-side cached cap), locked in
             update mode. `selectedItem` labels the current value when it isn't
             in the search's own paginated results (a row-click open / walk
             advance). Clearing (×) returns to the empty search state — like an
             add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
-        <div class={styles.itemField}>
-          <ItemSearch
-            label={t('label.item')}
-            storeId={props.storeId}
-            disabled={updateMode() || saving()}
-            focusTarget={itemSearch}
-            value={item()?.id}
-            selectedItem={item()}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-            onSelect={option => {
-              if (option)
-                void seedItem({
-                  id: option.id,
-                  code: option.code,
-                  name: option.name,
-                  unitName: option.unitName,
-                  isVaccine: option.isVaccine,
-                  doses: option.doses,
-                });
-              else backToSearch();
-            }}
-          />
-        </div>
-        <Show when={item()}>
-          <span class={styles.available}>
-            {/* Unit name pluralised to the count (old-app parity — English
-                only; getPlural passes other languages through). */}
-            {t('label.available')}: {formatNumber(availableUnits())}{' '}
-            {getPlural(unitName(), availableUnits())}
-          </span>
-          {/* Issue + Allocate-in wrap as a unit. Both controls at the default
-              height — NumberField's "small" (2.25rem) and Select's "sm"
-              (1.75rem — the Pagination scale) don't align with each other. */}
-          <div class={styles.issueGroup}>
-            <NumberField
-              label={t('label.issue')}
-              min={0}
-              data-testid="issue-quantity-input"
-              ref={issueField.ref}
-              value={issueValue()}
-              disabled={saving()}
-              onChange={onIssueChange}
-            />
-            <Select
-              label={t('label.units')}
-              value={allocateInValue()}
-              options={[
-                // The unit option reads as a category — always plural
-                // ("Vials"), the old app's getPlural(unit, 2).
-                { value: 'units', label: getPlural(unitName(), 2) },
-                // The doses lens (AC-AL7): vaccine items under the
-                // manage-vaccines-in-doses preference only.
-                ...(prefs().manageVaccinesInDoses && item()?.isVaccine
-                  ? [{ value: 'doses', label: t('label.doses') }]
-                  : []),
-                ...distinctPackSizes().map(size => ({
-                  value: `packs-${size}`,
-                  label: t('label.packs-of-pack-size', { packSize: size }),
-                })),
-              ]}
-              onValueChange={value => {
-                const next: AllocateUnit =
-                  value === 'units'
-                    ? { kind: 'units' }
-                    : value === 'doses'
-                      ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
-                      : { kind: 'packs', size: Number(value.slice(6)) };
-                switchLensTo(next);
+          <div class={styles.itemField}>
+            <ItemSearch
+              label={t('label.item')}
+              storeId={props.storeId}
+              disabled={updateMode() || saving()}
+              focusTarget={itemSearch}
+              value={item()?.id}
+              selectedItem={item()}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+              onSelect={option => {
+                if (option)
+                  void seedItem({
+                    id: option.id,
+                    code: option.code,
+                    name: option.name,
+                    unitName: option.unitName,
+                    isVaccine: option.isVaccine,
+                    doses: option.doses,
+                  });
+                else backToSearch();
               }}
             />
           </div>
-          {/* Placeholder notice (info) — fills the rest of the header row,
-              matching the old app; shown when a shortfall became a placeholder. */}
-          <Show when={placeholderUnits() > 0}>
-            <div class={styles.placeholderNotice}>
-              <Alert severity="info">
-                {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: formatNumber(
-                    issuedUnits() + placeholderUnits()
-                  ),
-                  placeholderQuantity: formatNumber(placeholderUnits()),
-                })}
-              </Alert>
+          <Show when={item()}>
+            {/* Issue + Allocate-in wrap as a unit. Both controls at the default
+              height — NumberField's "small" (2.25rem) and Select's "sm"
+              (1.75rem — the Pagination scale) don't align with each other. */}
+            <div class={styles.issueGroup}>
+              <NumberField
+                label={t('label.issue')}
+                min={0}
+                data-testid="issue-quantity-input"
+                ref={issueField.ref}
+                value={issueValue()}
+                disabled={saving()}
+                onChange={onIssueChange}
+              />
+              <Select
+                label={t('label.units')}
+                value={allocateInValue()}
+                options={[
+                  // The unit option reads as a category — always plural
+                  // ("Vials"), the old app's getPlural(unit, 2).
+                  { value: 'units', label: getPlural(unitName(), 2) },
+                  // The doses lens (AC-AL7): vaccine items under the
+                  // manage-vaccines-in-doses preference only.
+                  ...(prefs().manageVaccinesInDoses && item()?.isVaccine
+                    ? [{ value: 'doses', label: t('label.doses') }]
+                    : []),
+                  ...distinctPackSizes().map(size => ({
+                    value: `packs-${size}`,
+                    label: t('label.packs-of-pack-size', { packSize: size }),
+                  })),
+                ]}
+                onValueChange={value => {
+                  const next: AllocateUnit =
+                    value === 'units'
+                      ? { kind: 'units' }
+                      : value === 'doses'
+                        ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                        : { kind: 'packs', size: Number(value.slice(6)) };
+                  switchLensTo(next);
+                }}
+              />
             </div>
+            {/* Available follows the two inputs, as the figure they're judged
+              against rather than a preamble to them — set off by a hairline and
+              presented as a labelled value so its label reads exactly like
+              Issue's and Units' (the registry's read-only labelled value at
+              variant="field": read-only reads from the ABSENCE of an input box,
+              never from a different label treatment). #872, Ling's mockup. */}
+            <div class={styles.availableStat}>
+              <LabelledValue label={t('label.available')} variant="field">
+                {/* The value takes an input's height so this label lands on the
+                    same line as Issue's and Units': a labelled value is shorter
+                    than a labelled input, and the row's end-alignment would
+                    otherwise drop its label below theirs. */}
+                <span class={styles.availableValue}>
+                  {/* Unit name pluralised to the count (old-app parity —
+                      English only; getPlural passes other languages through). */}
+                  {formatNumber(availableUnits())}{' '}
+                  {getPlural(unitName(), availableUnits())}
+                </span>
+              </LabelledValue>
+            </div>
+            {/* Placeholder notice (info) — fills the rest of the header row,
+              matching the old app; shown when a shortfall became a placeholder. */}
+            <Show when={placeholderUnits() > 0}>
+              <div class={styles.placeholderNotice}>
+                <Alert severity="info">
+                  {t('messages.placeholder-allocated-units', {
+                    requestedQuantity: formatNumber(
+                      issuedUnits() + placeholderUnits()
+                    ),
+                    placeholderQuantity: formatNumber(placeholderUnits()),
+                  })}
+                </Alert>
+              </div>
+            </Show>
           </Show>
-        </Show>
-      </div>
+        </div>
+      </InsetPanel>
 
       {/* The grid + footer + banners keep their own item gate — the header
           row above renders its picker item-less in add mode. Before a pick, a
