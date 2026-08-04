@@ -25,10 +25,21 @@ Set by how the server loads the bundle
 - Host functions — `sql`, `log`, `use_graphql`, `fetch`, `get_store_preferences`
   and the rest — arrive as **globals**, not imports, and are bound **after** the
   module is evaluated. So a method may call them; module top-level code may
-  not. `src/host.d.ts` declares the two this plugin uses; out of tree they come
+  not. `src/host.d.ts` declares the ones this plugin uses; out of tree they come
   typed from `@common/types`.
+- **`sql` does not return rows keyed by column.** The host deserialises each row
+  as `JsonRawRow { json_row }`, so the statement must project a single column of
+  that name holding a JSON object — and the JSON function differs by dialect
+  (`json_object` on sqlite, `json_build_object` on postgres, hence
+  `sql_type()`). Get it wrong and the query fails _inside the engine at
+  runtime_, with `DIESEL_DESERIALIZATION_ERROR ("Column `json_row` was not
+present in query")` — naming a column you never wrote. `jsonRows` in
+  `src/plugin.ts` does the wrapping; out of tree it is `sqlQuery` from
+  `@common/utils`. (The host carries a TODO to wrap it itself; until then it is
+  the caller's job.) This one is not theoretical — the first live run of this
+  plugin hit exactly that error.
 - Whatever a method returns must survive `JSON` round-tripping — it crosses back
-  into Rust as JSON.
+  into Rust as JSON. A `throw` becomes a GraphQL error carrying the message.
 
 ## Building
 
@@ -48,6 +59,7 @@ resolve, call:
 ```sh
 node --input-type=module -e "
 const mod = await import('./dist/backend_plugins/hello_backend/plugin.js');
+globalThis.sql_type = () => 'sqlite';
 globalThis.sql = () => [{ count: '42' }];
 globalThis.log = console.log;
 console.log(mod.plugins.graphql_query({ store_id: 's1', input: { type: 'ping' } }));

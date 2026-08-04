@@ -15,8 +15,20 @@
  */
 
 declare global {
-  /** Run a read query. Returns one object per row, keyed by column name. */
-  function sql(query: string): [Record<string, unknown>];
+  /**
+   * Run a read query.
+   *
+   * NOT "returns a row per result row, keyed by column". The host deserialises
+   * each row as `JsonRawRow { json_row }`, so the statement MUST project a
+   * single column named `json_row` holding a JSON object — anything else fails
+   * with `DIESEL_DESERIALIZATION_ERROR ("Column `json_row` was not present in
+   * query")`, from inside the method, at runtime. Wrap with `jsonRows` below.
+   * (The host has a TODO to do this wrapping itself; until it does, it is the
+   * caller's job.)
+   */
+  function sql(query: string): Record<string, unknown>[];
+  /** Which dialect the datafile is — the JSON function's name differs. */
+  function sql_type(): 'postgres' | 'sqlite';
   /** Write to the server log — the only observability inside the engine. */
   function log(message: unknown): void;
 }
