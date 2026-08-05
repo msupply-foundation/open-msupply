@@ -1,4 +1,5 @@
 import {
+  createEffect,
   createMemo,
   createSignal,
   lazy,
@@ -7,7 +8,7 @@ import {
   Show,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useLocation, useNavigate, useParams } from '@solidjs/router';
+import { Navigate, useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
@@ -20,7 +21,10 @@ import {
 } from '../ui/layout/AppShell/navModel';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { isCentralServer } from '../api/serverInfo';
-import { gateNav } from './navGates';
+import { reportPermissionDenied } from '../api/graphql';
+import { createMediaQuery } from '../ui/utils/createMediaQuery';
+import { mediaQuery } from '../ui/styles/breakpoints';
+import { deniedPermission, gateNav, mobileNav, routeAccess } from './navGates';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
@@ -70,18 +74,50 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
 
-  const onNavigate = (leaf: NavLeaf) =>
+  // A permission-gated destination stays in the menu, but activating it
+  // refuses instead of navigating: the permission-denied dialog opens, naming
+  // the missing permission, and the user stays where they were
+  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.19).
+  const onNavigate = (leaf: NavLeaf) => {
+    const denied = deniedPermission(leaf);
+    if (denied !== undefined) {
+      reportPermissionDenied([denied]);
+      return;
+    }
     navigate(`/${params.storeId}/${leaf.to}`);
+  };
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4).
+  // can go (spec/keyboard AC-KB4). At phone width the menu narrows further to
+  // the registry's mobile-friendly subset (spec/navigation § mobile-friendly,
+  // D95; OMS-REG-NAV-01.21) — presentation only, routes stay untouched.
   // Memoised so the gated arrays — and the section objects rebuilt when a
   // child is dropped — keep stable references; otherwise MenuBar's <For> would
   // remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => gateNav(upperNav));
-  const menuLower = createMemo(() => gateNav(lowerNav));
+  const isPhone = createMediaQuery(mediaQuery.compact);
+  const menuUpper = createMemo(() =>
+    isPhone() ? mobileNav(gateNav(upperNav)) : gateNav(upperNav)
+  );
+  const menuLower = createMemo(() =>
+    isPhone() ? mobileNav(gateNav(lowerNav)) : gateNav(lowerNav)
+  );
+
+  // The router is the registry's third surface (spec/navigation § one
+  // registry): a capability-gated destination's URL is unreachable — it lands
+  // on the dashboard (D70 generalised; OMS-REG-NAV-01.16) — and a
+  // permission-gated one lands there WITH the permission-denied dialog
+  // (OMS-REG-NAV-01.20). Sections with their own layout guards (patients,
+  // prescriptions, clinicians) keep them; this covers every destination
+  // uniformly, placeholder pages included. Renders under StoreGuardLayout, so
+  // the gates read a settled store context (no flash of a blocked screen).
+  const access = createMemo(() => routeAccess(relativePath() || 'dashboard'));
+  createEffect(() => {
+    const verdict = access();
+    if (verdict.kind === 'forbidden')
+      reportPermissionDenied([verdict.permission]);
+  });
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
@@ -149,7 +185,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           onSyncOpen={openSync}
           onLogoutRequest={() => setLogoutConfirmOpen(true)}
         />
-        {props.children}
+        <Show
+          when={access().kind === 'ok'}
+          fallback={<Navigate href={`/${params.storeId}`} />}
+        >
+          {props.children}
+        </Show>
       </AppShell>
       <Show when={syncEverOpened()}>
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />

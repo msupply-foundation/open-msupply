@@ -382,3 +382,25 @@ The Columns/Settings/Full-screen controls didn't match the current app's functio
 Reuses the OMS-carried `label.reset-column-order` / `label.reset-column-sizes` / `label.reset-pinned-columns` / `label.reset-table-defaults` / `label.show-all-columns` / `label.toggle-density` keys; new `table.edit-columns` / `table.reset-order` / `table.unpin-all`. Verified live (showcase table): tooltips, the columns-3-cog glyph, both popovers' contents, and the reset going grey→red as overrides appear. `pnpm check` green.
 
 The Settings popover also carries a bold **"Settings"** heading and a leading icon per row (matching the current app's `SettingsMenu`): `TransferHorizontal` (reset order), `Eye` (show all), `Reload`/`Refresh01` (reset sizes), `Pin` (reset pinned), `MenuLines`/`Menu01` (toggle density), `Save` (save default), `Refresh`/`Refresh03` (reset to defaults — inherits the row's red). Icons are 1rem, inherit `currentColor`. `table.settings` is now "Settings" (the button tooltip/label + the heading).
+
+### Workbench dialog width — deliberate deviation from the 900px modal standard _(issue #771, 2026-08-04)_
+
+**The standard's figure.** ui-standards gives a large modal ~900px. `Dialog size="large"` takes that as its working width — `56rem` = 896px — replacing the old full-bleed `100vw - 4rem` that #771 was filed against ("lots of empty space").
+
+**Where it doesn't fit, and why we deviate.** #771 anticipated this in the same sentence that set the figure: _"a centred card at a fixed width (~900px if the tables fit, **wider if the stocktake column set forces it**)"_. Three line-edit tables are past that line — and far enough past it that no card width fits, so they take the new `size="full"` rather than a bigger number:
+
+| Line editor                  | Columns            | Size                        |
+| ---------------------------- | ------------------ | --------------------------- |
+| Inbound shipment             | 21                 | **`full`** (`100vw - 4rem`) |
+| Outbound shipment            | 20                 | **`full`**                  |
+| Stocktake                    | 20                 | **`full`**                  |
+| Prescription                 | 9                  | `large` (56rem)             |
+| Internal order / requisition | — (form, no table) | `large` (56rem)             |
+
+The reasoning that settles it: **#771's empty space was VERTICAL.** Its screenshot is a nearly-empty modal in a full-viewport box, and the fix for that is the 60–80vh height band plus the small pre-pick card — both of which `full` keeps. Narrowing the _width_ never removed any of that emptiness on these three, because the table was never the empty part; at 896px a 20-column table simply hides columns on a desktop that has the room, trading #771's complaint for a worse one. An intermediate 76rem was tried first and read as a regression against the pre-#771 app (James, 2026-08-04, comparing the inbound editor on this branch against main side by side) — it is narrower than full-bleed by ~230px at 1512, so it loses columns without buying anything back.
+
+Note the columns are only reachable via the card ⇄ table toggle (#886); all three default to **cards**, where the width buys a wider auto-fit card grid rather than fixing a scroll.
+
+**Mechanism.** `size` gains a third value. `full` is `large` plus a width override — Dialog puts both classes on the element, so the flex column, the height band and the body rules live once, and `.dialog.large.bleed` sets `width: calc(100vw - 4rem)` outright. Below the navOverlay line (1024px) `data-fullscreen` takes over for both, as before. `widthRem` also now sets the working width in `large` (it used to be ignored there), which is the knob for a table that wants a bigger card rather than the full viewport; it stays inert at `full`, where the three line editors use it for their pre-pick search card only.
+
+**Open.** This is a width decision, not a column-fit one — 21 columns still won't all fit at 1448px, so a desktop table view still scrolls horizontally. The lasting fix is fewer default columns in the table view, not a wider box.

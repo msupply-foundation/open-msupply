@@ -1,5 +1,11 @@
 import { generateUUID } from '../../../../uuid';
-import { createSignal, onMount, Show, type Component } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  onMount,
+  Show,
+  type Component,
+} from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -18,6 +24,8 @@ import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import {
   DataTable,
   type Column,
@@ -339,9 +347,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (ui/utils/createFocusTarget).
   const topSelector = createFocusTarget();
 
-  // Card-only: default the view to card at every band (compact already forces
-  // card; this extends it to desktop). No showCardToggle on the DataTable, so
-  // there's no way to a table view — the batch grid is always cards.
+  // Cards by default at every band (compact already forces card; this extends
+  // it to desktop). Above the compact breakpoint the DataTable's showCardToggle
+  // offers the flip to a table for anyone who prefers it, and setConfig
+  // persists that choice per user (#886) — so this seed is only the default.
   const tableConfig = createTableConfig({
     tableId: 'inbound-line-edit',
     defaultConfig: { base: { viewMode: 'card' } },
@@ -718,6 +727,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   const noItemYet = () => !item();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "OK & next" returning to the search keeps the working size, so the
+  // add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || mode() === 'update' || !noItemYet(),
+    false
+  );
 
   // Mismatch warning (spec S4): a manual shipment records what the supplier
   // reported shipping (shippedNumberOfPacks/shippedPackSize) alongside what was
@@ -1269,41 +1287,84 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       open
       dismissable={!saving()}
       onClose={props.onClose}
-      size="large"
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large`: this line table is the app's widest at 21
+      // columns, so there is no card width that fits it. #771's "~900px if
+      // the tables fit" does NOT fit here — narrowing only pushes columns out
+      // of view, and the empty space it was filed against is VERTICAL, which
+      // the workbench's 60-80vh height band already answers. Recorded as a
+      // deliberate deviation from the 900px modal standard in the
+      // DESIGN_STANDARDS ledger.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips — the body flexes to
+      // fill the tall box instead.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
       title={
-        // On a PO-linked shipment, add mode picks a purchase-order line; every
-        // other case (manual add, and update mode) shows the item selector — in
-        // update mode disabled, so add and edit read as the same surface. Items
-        // already on the shipment are NOT filtered out (issue #428). The choice
-        // keys off mode(), not the initial prop, so an exhausted update walk
-        // that drops into add mode unlocks the selector / shows the PO picker.
-        props.purchaseOrderId && mode() === 'add' ? (
-          <Select
-            label={t('label.purchase-order')}
-            testId="purchase-order-line-input"
-            focusTarget={topSelector}
-            value={poLineId()}
-            onValueChange={choosePoLine}
-            options={poLines().map(l => ({
-              value: l.id,
-              label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
-                'label.pack-size'
-              ).toLowerCase()} ${l.requestedPackSize}`,
-            }))}
-          />
-        ) : (
-          <ItemSearch
-            label={t('label.item')}
-            hideLabel
-            storeId={props.storeId}
-            focusTarget={topSelector}
-            value={item()?.id}
-            selectedItem={item() ?? undefined}
-            disabled={mode() === 'update'}
-            onSelect={chooseItem}
-          />
-        )
+        // The selector, and the item's unit beside it — the registry's dialog
+        // context row (a read-only labelled fact stating what the dialog acts
+        // on, sized to itself and hugged to the inline-start).
+        <HStack gap="md" align="center">
+          {/* On a PO-linked shipment, add mode picks a purchase-order line;
+              every other case (manual add, and update mode) shows the item
+              selector — in update mode disabled, so add and edit read as the
+              same surface. Items already on the shipment are NOT filtered out
+              (issue #428). The choice keys off mode(), not the initial prop, so
+              an exhausted update walk that drops into add mode unlocks the
+              selector / shows the PO picker. */}
+          <div class={styles.headerPicker}>
+            {props.purchaseOrderId && mode() === 'add' ? (
+              <Select
+                label={t('label.purchase-order')}
+                testId="purchase-order-line-input"
+                focusTarget={topSelector}
+                value={poLineId()}
+                onValueChange={choosePoLine}
+                options={poLines().map(l => ({
+                  value: l.id,
+                  label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
+                    'label.pack-size'
+                  ).toLowerCase()} ${l.requestedPackSize}`,
+                }))}
+              />
+            ) : (
+              <ItemSearch
+                label={t('label.item')}
+                hideLabel
+                width="full"
+                storeId={props.storeId}
+                focusTarget={topSelector}
+                value={item()?.id}
+                selectedItem={item() ?? undefined}
+                disabled={mode() === 'update'}
+                onSelect={chooseItem}
+              />
+            )}
+          </div>
+          {/* Unit is item master data and the denominator for every quantity in
+              the cards below, so it rides the header rather than spending a
+              whole field row of the batch area on one word (#872). */}
+          <Show when={item()?.unitName}>
+            {unitName => (
+              <LabelledValue
+                class={styles.headerUnit}
+                label={t('label.unit')}
+                variant="field"
+                size="small"
+              >
+                {unitName()}
+              </LabelledValue>
+            )}
+          </Show>
+        </HStack>
       }
       ariaLabel={
         mode() === 'update' ? t('label.edit-line') : t('button.add-item')
@@ -1356,15 +1417,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             </Alert>
           }
         >
+          {/* Unit is a labelled fact in the header now, not a field row here. */}
           <>
-            {/* Read-only Unit field, follows the selector (spec S4). */}
-            <Show when={item()?.unitName}>
-              <TextField
-                label={t('label.unit')}
-                value={item()?.unitName ?? ''}
-                disabled
-              />
-            </Show>
             <Show when={hasMismatch()}>
               <Alert severity="warning">
                 {t('messages.received-shipped-mismatch')}
@@ -1375,6 +1429,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               rows={rows()}
               rowKey={b => b.id}
               cardGroups={CARD_GROUPS}
+              showCardToggle
               showFullScreen={false}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}

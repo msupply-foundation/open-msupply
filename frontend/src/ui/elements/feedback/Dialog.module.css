@@ -33,13 +33,66 @@
   overflow: visible;
 }
 
+/* Width presets (Dialog width="prose|form|wide") — the shared content measures, so a
+   dialog's form sits at the same width as the same form in a page (ContentContainer's
+   `size` names the same three). A class+attribute selector, so it beats the default
+   above; an inline --dialog-width from widthRem still beats BOTH, which is the
+   documented precedence. */
+.dialog[data-width='prose'] {
+  --dialog-width: var(--measure-prose);
+}
+
+.dialog[data-width='form'] {
+  --dialog-width: var(--measure-form);
+}
+
+.dialog[data-width='wide'] {
+  --dialog-width: var(--measure-wide);
+}
+
+/* The DEFAULT working width for size="large" — #771's "~900px if the tables fit". A
+   caller whose table is column-heavy overrides it with widthRem, which lands inline on
+   the element and so beats this ("wider if the column set forces it"). Higher specificity
+   than .dialog's 30rem default; the data-width measures never collide, since Dialog omits
+   data-width entirely in large mode. */
+.dialog.large {
+  --dialog-width: 56rem;
+}
+
 /* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
-   line-edit table. Fills nearly the whole viewport: full width and ~80% height (a ~10%
-   margin top/bottom). Overrides the fixed width; the body flex column (already bounded)
-   plus this fixed height let a flex-1 child (a DataTable) fill the tall space and scroll. */
+   line-edit table. A centred card at its working width (not full-bleed — a visible
+   margin of page and scrim frames it on desktop; #771), clamped down on narrow screens.
+   The clamp is what makes a generous widthRem safe: a 76rem workbench is near-full-bleed
+   on a laptop and still a framed card on a large monitor, with no second breakpoint.
+   Height is elastic between ~60vh (so a table still has room to be a table) and ~80vh:
+   short content makes a short modal, and past the cap the body flex column (already
+   bounded) lets a flex-1 child (a DataTable) fill the tall space and scroll internally.
+   A card keeps the 80vh ceiling so the scrim still frames it top and bottom; `full`
+   below raises it, since a sheet has no frame to preserve. */
 .large {
+  width: min(var(--dialog-width), calc(100vw - 4rem));
+  min-block-size: 60vh;
+  max-block-size: 80vh;
+}
+
+/* size="full" — the workbench at FULL BLEED (Dialog puts .bleed alongside .large, so
+   only the two caps differ). Drops BOTH of .large's caps to the same 2rem gutter, in
+   both axes:
+
+   Width, because for a ~20-column line table there is no card width that fits, and
+   narrowing only hides columns.
+
+   Height, because .large's 80vh ceiling exists to keep the scrim framing a CARD top and
+   bottom — a sheet has no frame to preserve, and a batch grid that overflows wants every
+   row it can show before it starts scrolling (the pre-#771 modal sat at exactly this
+   height, so a long grid loses nothing to the change). The 60vh FLOOR stays: that is
+   #771's actual win, and it is what keeps a two-batch item a short modal instead of an
+   empty full-screen box.
+
+   Specificity beats .large; width is set outright (not through --dialog-width) so a
+   caller's pre-pick widthRem can't reach it. */
+.dialog.large.bleed {
   width: calc(100vw - 4rem);
-  height: calc(100vh - 4rem);
   max-block-size: calc(100vh - 4rem);
 }
 
@@ -116,6 +169,12 @@
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
+  /* Tighter inset than an `auto` dialog's even --space-6. A workbench modal's
+     content IS the screen — a line editor's batch cards, a picker's table — so
+     the block padding is the one part of its chrome that buys nothing, and at
+     --space-6 it spent 4rem of a ~90vh box on empty margin (#872). Inline stays
+     generous: the cards' own edges want room from the panel. */
+  padding: var(--space-4) var(--space-5);
 }
 
 /* No surface means no inset either — the children sit against the dialog box, so
@@ -241,7 +300,6 @@
   justify-content: flex-end;
 }
 
-
 @media (prefers-reduced-motion: no-preference) {
   .dialog[open] {
     animation: content-in 150ms ease;
@@ -302,14 +360,16 @@
 }
 
 /* Full-screen on tablet portrait and phones — driven by data-fullscreen, which
-   Dialog.tsx sets on a size="large" dialog when useIsNavOverlay matches
-   (createMediaQuery reads the navOverlay breakpoint from breakpoints.ts, the
-   single source of truth — reused as the shared "narrow viewport" line). A
-   media query can't read a CSS var, so the cutoff stays in JS as the repo
-   prefers (CLAUDE.md #7); this is the CSS analogue of the "which layout"
-   createMediaQuery branches. Only large ("workbench") modals go full-screen —
-   smaller dialogs stay centred cards (their base width/height caps already fit
-   a tablet-portrait viewport).
+   Dialog.tsx sets on a size="large" dialog OR one sized by a width MEASURE
+   (width="prose|form|wide") when useIsNavOverlay matches (createMediaQuery reads
+   the navOverlay breakpoint from breakpoints.ts, the single source of truth —
+   reused as the shared "narrow viewport" line). A media query can't read a CSS
+   var, so the cutoff stays in JS as the repo prefers (CLAUDE.md #7); this is the
+   CSS analogue of the "which layout" createMediaQuery branches. A default or
+   widthRem dialog stays a centred card (its width cap already fits a
+   tablet-portrait viewport, and a confirmation shouldn't fill the screen) —
+   whereas the form and wide measures are wider than the line itself, so below it
+   they would be edge-to-edge cards clinging to a 1rem margin.
    Higher specificity than .large so these rules override its width/height.
    dvh/dvw track the visible viewport as the mobile browser chrome shows/hides;
    plain 100vh would tuck the actions behind the address bar. */

@@ -156,6 +156,18 @@ export const partitionCustomFields = (
   };
 };
 
+// The tab's two-column split (spec/ui-standards/custom-fields › the tab), shared
+// by the read-only and editable tabs so they lay out identically. The fields are
+// RUNTIME DATA, so the split can't name particular fields: the first half goes
+// down column one and the rest down column two, which means reading down column
+// one then column two preserves the configured order. The taller half LEADS, so
+// an odd count puts the extra field in column one rather than leaving column two
+// longer than the one beside it.
+export const splitIntoColumns = <T>(fields: T[]): [T[], T[]] => {
+  const split = Math.ceil(fields.length / 2);
+  return [fields.slice(0, split), fields.slice(split)];
+};
+
 // The single JSON-scalar boundary: `customFields` is typed `unknown` by codegen
 // (honest for arbitrary JSON). At runtime the server sends a JSON object (a
 // JSON string is also accepted). Narrow it to a plain record here, once.

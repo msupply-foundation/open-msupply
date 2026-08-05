@@ -1,0 +1,15 @@
+{
+  "name": "hello_backend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Reference BACKEND plugin — a graphql_query method running in the server's BoaJS engine. Backend-only: no frontend half.",
+  "omSupplyPlugin": {
+    "//": "Unlike a frontend plugin, `types` is load-bearing: it tells the server which calls to route here. Must match PluginTypes in the backend_plugin_row repository.",
+    "target": "backend",
+    "types": [
+      "graphql_query"
+    ],
+    "variant_type": "BOA_JS"
+  },
+  "main": "plugin.js"
+}

@@ -147,9 +147,7 @@ const draftFromLine = (line: EditorLine): Draft => ({
   reasonId: line.reasonId,
 });
 
-const LineEditContent = (
-  props: RequisitionLineEditModalProps
-): JSX.Element => {
+const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   const [line, setLine] = createSignal<EditorLine | undefined>(
     props.initialLine ? editorLineFromLine(props.initialLine) : undefined
   );
@@ -260,6 +258,16 @@ const LineEditContent = (
   const demandDisabled = () => disabled() || props.transferred;
 
   const current = () => line();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "Save & next" returning to the search keeps the working size, so
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || current() !== undefined,
+    false
+  );
+
   const packSize = () => current()?.defaultPackSize ?? 1;
   const doses = () => current()?.doses ?? 0;
   const suggested = () => current()?.suggestedQuantity ?? 0;
@@ -325,8 +333,7 @@ const LineEditContent = (
   // line (D86) — the reason guard rejects every save of an unreasoned
   // variance line, so the supplying store must be able to satisfy it.
   const variance = () => requestedUnits() !== suggested();
-  const excess = () =>
-    props.showExcess && requestedUnits() - suggested() >= 1;
+  const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
   // The customer AMC/AMD + MOS rows show only on a transfer-linked or
   // extra-fields requisition; AMC is editable only under extra-fields.
@@ -446,12 +453,16 @@ const LineEditContent = (
   // singular at exactly 1, plural otherwise).
   const entryOptions = createMemo(() => {
     const unitName = current()?.unitName ?? null;
-    const count = unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
+    const count =
+      unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
     const options = [
       { value: 'units', label: modeWord('units', unitName, count) },
     ];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: modeWord('packs', unitName, count) });
+      options.push({
+        value: 'packs',
+        label: modeWord('packs', unitName, count),
+      });
     return options;
   });
 
@@ -483,8 +494,7 @@ const LineEditContent = (
           ? t('label.months')
           : modeWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
-      if (rowProps.fixed)
-        return Math.round(rowProps.units * 10) / 10;
+      if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (rowProps.onChange) {
         const raw = unitsToMode(rowProps.units, entryMode(), packSize());
         return Math.round(raw * 100) / 100;
@@ -566,7 +576,10 @@ const LineEditContent = (
         disabled={demandDisabled()}
         onChange={units => patchDraft({ availableStockOnHand: units })}
       />
-      <FigureRow label={t('label.our-soh')} units={current()?.ourStockOnHand ?? 0} />
+      <FigureRow
+        label={t('label.our-soh')}
+        units={current()?.ourStockOnHand ?? 0}
+      />
       <FigureRow label={t('label.suggested')} units={suggested()} />
       <Show when={props.showExtended}>
         <FieldRow label={t('label.reason')}>
@@ -581,9 +594,7 @@ const LineEditContent = (
                 : undefined
             }
             errorTestId="reason-field-error"
-            value={
-              variance() ? (draft()?.reasonId ?? undefined) : undefined
-            }
+            value={variance() ? (draft()?.reasonId ?? undefined) : undefined}
             onChange={reason => patchDraft({ reasonId: reason?.id ?? null })}
           />
         </FieldRow>
@@ -707,7 +718,16 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'large' : 'auto'}
+      // The pre-pick state is a command-palette-shaped card: the standard
+      // create-modal width (the CreateStocktake/CreateInternalOrder family),
+      // and a body tall enough to OWN the open suggestions list — the search
+      // takes initial focus and the combobox opens on focus, so the list is
+      // this state's resting face, and without the reserved height it would
+      // dangle past the card onto the scrim. The popup itself matches its
+      // trigger's width. Both are ignored once the latch flips to large.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="requisition-line-edit-modal"
       // Untitled per the reference — the title stays as the accessible name.
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}

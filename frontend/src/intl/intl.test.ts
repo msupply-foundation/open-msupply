@@ -87,4 +87,17 @@ describe('tPlural', () => {
     expect(tPlural('error.failed-attempts', 0)).toBe('لا محاولات فاشلة');
     expect(tPlural('error.failed-attempts', 3)).toContain('محاولات فاشلة');
   });
+
+  it('renders both forms of the combobox truncation notice', () => {
+    // The Combobox's capped-list row. Its singular form only appears at
+    // EXACTLY one withheld match, so it is easy to ship malformed and never
+    // see; a wrong key name would render as the key itself.
+    setLocale('en');
+    expect(tPlural('control.search.more-matches', 1)).toBe(
+      '1 more match — keep typing to narrow the list'
+    );
+    expect(tPlural('control.search.more-matches', 4900)).toBe(
+      '4900 more matches — keep typing to narrow the list'
+    );
+  });
 });

@@ -33,4 +33,6 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 
 ### Reference-parity primitives — adopt when a real consumer appears, don't pre-build
 
-`WizardStepper`, `ToggleButtonGroup`, `HierarchicalOptionAutocomplete`, content `Skeletons`, `InputModal`, `ListSearch`, linear `InlineProgress`.
+`ToggleButtonGroup`, `HierarchicalOptionAutocomplete`, content `Skeletons`, `InputModal`, `ListSearch`, linear `InlineProgress`.
+
+**Closed:** `WizardStepper` — a real consumer appeared (the patient create wizard's step rail) and the existing determinate progress list (`ui/sync/ProgressList`) already fills the role, which is what the reference app does too (its `WizardStepper` is a thin wrapper over the same `HorizontalStepper` its sync stepper uses). Two open nits, both in `ProgressList` rather than a new component: the active step's marker ring stays the pale tone where the reference paints it the strong one, and the role lives under `ui/sync/` though it now has non-sync consumers.

@@ -14,6 +14,27 @@
  * The dot is decorative — it is `aria-hidden` and the option's text names the
  * state, so nothing rests on colour alone.
  */
+/* The dialog's title row: the selector takes the free width (its value is a
+   "code - name" label, which truncates the moment the box shrink-wraps), and the
+   unit beside it is sized to itself and never gives way. */
+.headerPicker {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* Unit is wedged between the selector and the header's own action slot, with
+   only the title row's gap on one side and the header's on the other — 16px and
+   12px, which read as crowding rather than as a separate fact. Set it off with
+   the hairline + inset the outbound editor's Available uses, so the two line
+   editors present their read-only header fact the same way, and hold it clear of
+   the Add batch button. */
+.headerUnit {
+  flex: 0 0 auto;
+  padding-inline-start: var(--space-4);
+  margin-inline-end: var(--space-2);
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
 .statusDot {
   display: inline-block;
   inline-size: 0.5rem;
