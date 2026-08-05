@@ -404,7 +404,10 @@ mod test {
 
         std::fs::write(dir.join("index.html"), "<html></html>").unwrap();
         // Canonical, so serving's path-traversal check compares like with like.
-        assert_eq!(unpacked_root(&base, "v1.0.0"), Some(dir.canonicalize().unwrap()));
+        assert_eq!(
+            unpacked_root(&base, "v1.0.0"),
+            Some(dir.canonicalize().unwrap())
+        );
     }
 
     fn row(version: &str) -> FrontendBundleRow {
