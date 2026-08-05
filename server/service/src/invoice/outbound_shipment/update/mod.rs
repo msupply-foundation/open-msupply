@@ -1074,7 +1074,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1085,7 +1085,7 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1097,7 +1097,7 @@ mod test {
                 id: "backdate_release_unallocated_line".to_string(),
                 invoice_id: new_outbound().id,
                 number_of_packs: 5.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 ..Default::default()
             }
@@ -1192,7 +1192,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1203,7 +1203,7 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1310,7 +1310,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1321,7 +1321,7 @@ mod test {
                 invoice_id: "echoed_backdate_outbound".to_string(),
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -1490,7 +1490,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -1501,7 +1501,7 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
