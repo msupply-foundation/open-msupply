@@ -31,6 +31,9 @@ pub use self::location::*;
 pub mod master_list;
 pub use self::master_list::*;
 
+pub mod message;
+pub use self::message::*;
+
 pub mod invoice_query;
 pub use self::invoice_query::*;
 

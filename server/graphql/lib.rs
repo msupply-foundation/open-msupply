@@ -51,6 +51,7 @@ use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_message::{MessageMutations, MessageQueries};
 use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
@@ -205,6 +206,7 @@ pub struct Queries(
     pub InvoiceQueries,
     pub InvoiceLineQueries,
     pub LocationQueries,
+    pub MessageQueries,
     pub ColdChainQueries,
     pub StocktakeQueries,
     pub StocktakeLineQueries,
@@ -243,6 +245,7 @@ impl Queries {
             InvoiceQueries,
             InvoiceLineQueries,
             LocationQueries,
+            MessageQueries,
             ColdChainQueries,
             StocktakeQueries,
             StocktakeLineQueries,
@@ -281,6 +284,7 @@ pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
+    pub MessageMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
@@ -313,6 +317,7 @@ impl Mutations {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
+            MessageMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,

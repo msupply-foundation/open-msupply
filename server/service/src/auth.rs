@@ -34,6 +34,9 @@ pub enum Resource {
     // location
     QueryLocation,
     MutateLocation,
+    // message
+    QueryMessage,
+    MutateMessage,
     // sensor
     QuerySensor,
     MutateSensor,
@@ -213,6 +216,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::LocationMutate),
         ]),
     );
+
+    // message
+    // Gated on store access only (this iteration): any user of the active store
+    // can send and read messages. A dedicated MessageMutate permission is a
+    // follow-up (would need seeding, so it is deferred for the demo datafile).
+    map.insert(Resource::QueryMessage, PermissionDSL::HasStoreAccess);
+    map.insert(Resource::MutateMessage, PermissionDSL::HasStoreAccess);
 
     // sensor
     map.insert(

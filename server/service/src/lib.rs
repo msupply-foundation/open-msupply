@@ -63,6 +63,7 @@ pub mod location_type;
 pub mod log_service;
 pub mod login;
 pub mod master_list;
+pub mod message;
 pub mod name;
 pub mod name_property;
 pub mod number;

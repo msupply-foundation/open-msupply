@@ -37,6 +37,7 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    message::{MessageService, MessageServiceTrait},
     name::{NameService, NameServiceTrait},
     plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
@@ -102,6 +103,7 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub message_service: Box<dyn MessageServiceTrait>,
     pub site_service: Box<dyn SiteServiceTrait>,
 
     // Cold chain
@@ -278,6 +280,7 @@ impl ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            message_service: Box::new(MessageService {}),
             site_service: Box::new(SiteService {}),
             sensor_service: Box::new(SensorService {}),
             cold_chain_service: Box::new(ColdChainService {}),

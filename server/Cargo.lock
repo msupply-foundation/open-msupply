@@ -4305,6 +4305,7 @@ dependencies = [
  "graphql_item_bundle",
  "graphql_item_variant",
  "graphql_location",
+ "graphql_message",
  "graphql_plugin",
  "graphql_preference",
  "graphql_printer",
@@ -4691,6 +4692,26 @@ dependencies = [
 
 [[package]]
 name = "graphql_location"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_message"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
