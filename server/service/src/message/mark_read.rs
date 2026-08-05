@@ -3,12 +3,9 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
 use repository::{
     message::Message,
-    message_row::{
-        MessageRecipientRow, MessageRecipientRowRepository, MessageRowRepository,
-    },
+    message_row::{MessageRecipientRow, MessageRecipientRowRepository, MessageRowRepository},
     RepositoryError,
 };
-use util::uuid::uuid;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct MarkMessageRead {
@@ -18,6 +15,10 @@ pub struct MarkMessageRead {
 #[derive(PartialEq, Debug)]
 pub enum MarkMessageReadError {
     MessageDoesNotExist,
+    /// The acting store is not a recipient of this message's group, so it has no
+    /// read state to set. Guards the write path with the same store-scope
+    /// boundary the read path enforces (spec messaging/rules.md › store scope).
+    NotARecipient,
     RecordNotFound,
     DatabaseError(RepositoryError),
 }
@@ -38,30 +39,21 @@ pub fn mark_message_read(
             let recipient_repo = MessageRecipientRowRepository::new(connection);
             let now = Utc::now().naive_utc();
 
-            match recipient_repo
+            // The acting store must already be a recipient of the message's
+            // group — a store can only mark read a message it can see, which is
+            // one it received (or sent). No recipient row → not in the audience,
+            // reject rather than silently creating read state.
+            let existing = recipient_repo
                 .find_one_by_group_and_store(&message.group_id, &ctx.store_id)?
-            {
-                Some(existing) => {
-                    if existing.read_datetime.is_none() {
-                        recipient_repo.upsert_one(&MessageRecipientRow {
-                            read_datetime: Some(now),
-                            ..existing
-                        })?;
-                    }
-                    // already read → no-op (idempotent)
-                }
-                None => {
-                    // Acting store isn't yet a recorded recipient (e.g. an
-                    // all-stores broadcast where the row set is materialised on
-                    // read); record the read against the group.
-                    recipient_repo.upsert_one(&MessageRecipientRow {
-                        id: uuid(),
-                        group_id: message.group_id.clone(),
-                        store_id: ctx.store_id.clone(),
-                        read_datetime: Some(now),
-                    })?;
-                }
+                .ok_or(MarkMessageReadError::NotARecipient)?;
+
+            if existing.read_datetime.is_none() {
+                recipient_repo.upsert_one(&MessageRecipientRow {
+                    read_datetime: Some(now),
+                    ..existing
+                })?;
             }
+            // already read → no-op (idempotent)
 
             get_message(ctx, input.message_id).map_err(MarkMessageReadError::from)
         })

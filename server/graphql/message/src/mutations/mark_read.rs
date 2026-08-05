@@ -78,6 +78,10 @@ fn map_error(error: ServiceError) -> Result<MarkMessageReadErrorInterface> {
                 RecordNotFound,
             ))
         }
+        // A store outside the message's audience trying to mark it read is a
+        // client-side boundary violation (it should never have the id), not a
+        // typed domain error the UI branches on.
+        ServiceError::NotARecipient => BadUserInput(formatted_error),
         ServiceError::RecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
