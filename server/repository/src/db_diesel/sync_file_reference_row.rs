@@ -261,23 +261,37 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     /// Files this site has asked to hold and does not have yet — the background download
     /// queue drained by the file sync driver.
     ///
-    /// Mirrors [`Self::find_all_to_upload`], with one extra condition: a request datetime
-    /// must be set. Without it this would return every reference on the site, since
-    /// references broadcast everywhere and default to `Download`. `InProgress` is
-    /// included so a download interrupted by a restart is resumed rather than stranded.
-    pub fn find_all_to_download(&self) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+    /// Filtered entirely on **local** columns, which is the important difference from
+    /// [`Self::find_all_to_upload`]. `status` deliberately plays no part: it is the
+    /// *origin's* upload state, and it crosses sync. A file published by central arrives
+    /// here already `Done` (central holds the bytes — it must say so, or it would try to
+    /// upload the file to itself), which says nothing about whether *this* site has them.
+    /// Filtering on it would leave the queue permanently empty.
+    ///
+    /// So:
+    /// - `download_requested_datetime` — this site decided it wants the file. Without it
+    ///   this would return every reference on the site, since references broadcast
+    ///   everywhere and default to `Download`.
+    /// - `downloaded_bytes < total_bytes` — we don't have all of it yet. Set to
+    ///   `total_bytes` on success, so a completed file leaves the queue, and to the
+    ///   partial offset on failure, so a resumable download stays in it. Implies
+    ///   `total_bytes > 0`: a reference with no declared size is not background-
+    ///   downloadable (the on-demand path still serves it).
+    /// - `retry_at` — local backoff. Null for a file never attempted.
+    /// - `retries < max_retries` — give up eventually. Also local: the caller owns the cap,
+    ///   since it owns the retry schedule. Without this the queue would spin forever on a
+    ///   file that can never arrive.
+    pub fn find_all_to_download(
+        &self,
+        max_retries: i32,
+    ) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
         let result = sync_file_reference
             .filter(deleted_datetime.is_null())
             .filter(direction.eq(SyncFileDirection::Download))
             .filter(download_requested_datetime.is_not_null())
-            .filter(
-                status
-                    .eq(SyncFileStatus::New)
-                    .or(status.eq(SyncFileStatus::InProgress))
-                    .or(status
-                        .eq(SyncFileStatus::Error)
-                        .and(retry_at.lt(diesel::dsl::now))),
-            )
+            .filter(downloaded_bytes.lt(total_bytes))
+            .filter(retry_at.is_null().or(retry_at.lt(diesel::dsl::now)))
+            .filter(retries.lt(max_retries))
             .order_by(created_datetime.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)
@@ -378,9 +392,12 @@ mod test {
         }
     }
 
+    /// Matches the service layer's MAX_UPLOAD_ATTEMPTS closely enough for these tests.
+    const MAX_RETRIES: i32 = 168;
+
     fn queued_ids(connection: &StorageConnection) -> Vec<String> {
         SyncFileReferenceRowRepository::new(connection)
-            .find_all_to_download()
+            .find_all_to_download(MAX_RETRIES)
             .unwrap()
             .into_iter()
             .map(|r| r.id)
@@ -446,10 +463,15 @@ mod test {
         assert_eq!(first, second);
     }
 
+    /// Queueing is decided by local state only, and specifically **not** by `status`.
+    ///
+    /// This is the bug this test exists to pin: `status` is the origin's upload state and
+    /// it crosses sync, so a file central published arrives here already `Done`. Filtering
+    /// on it left the queue permanently empty and no remote ever downloaded a bundle.
     #[actix_rt::test]
-    async fn download_queue_respects_status_and_retry_schedule() {
+    async fn download_queue_ignores_the_synced_status() {
         let (_, connection, _, _) = setup_all(
-            "download_queue_respects_status_and_retry_schedule",
+            "download_queue_ignores_the_synced_status",
             MockDataInserts::none(),
         )
         .await;
@@ -460,52 +482,84 @@ mod test {
         repo.request_download(&row.id).unwrap();
         let requested = repo.find_one_by_id(&row.id).unwrap().unwrap();
 
-        // Done: nothing more to fetch.
+        // Whatever the origin says about its own upload, we still need the bytes.
+        for synced_status in [
+            SyncFileStatus::New,
+            SyncFileStatus::InProgress,
+            SyncFileStatus::Done,
+            SyncFileStatus::Error,
+        ] {
+            repo.upsert_without_changelog(&SyncFileReferenceRow {
+                status: synced_status.clone(),
+                ..requested.clone()
+            })
+            .unwrap();
+            assert_eq!(
+                queued_ids(&connection),
+                vec![row.id.clone()],
+                "status {:?} must not affect queueing",
+                synced_status
+            );
+        }
+    }
+
+    #[actix_rt::test]
+    async fn download_queue_tracks_local_completion_and_backoff() {
+        let (_, connection, _, _) = setup_all(
+            "download_queue_tracks_local_completion_and_backoff",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+
+        let row = reference(SyncFileDirection::Download);
+        repo.upsert_one(&row).unwrap();
+        repo.request_download(&row.id).unwrap();
+        let requested = repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(queued_ids(&connection), vec![row.id.clone()]);
+
+        // Fully downloaded: leaves the queue.
         repo.upsert_without_changelog(&SyncFileReferenceRow {
-            status: SyncFileStatus::Done,
+            downloaded_bytes: requested.total_bytes,
             ..requested.clone()
         })
         .unwrap();
         assert!(queued_ids(&connection).is_empty());
 
-        // InProgress: included, so a download interrupted by a restart is resumed
-        // rather than stranded.
+        // Partially downloaded: stays queued, so the transfer resumes.
         repo.upsert_without_changelog(&SyncFileReferenceRow {
-            status: SyncFileStatus::InProgress,
+            downloaded_bytes: requested.total_bytes / 2,
             ..requested.clone()
         })
         .unwrap();
         assert_eq!(queued_ids(&connection), vec![row.id.clone()]);
 
-        // Error with a future retry_at: waiting out its backoff.
+        // Backoff not yet elapsed.
         repo.upsert_without_changelog(&SyncFileReferenceRow {
-            status: SyncFileStatus::Error,
             retry_at: Some(chrono::Utc::now().naive_utc() + chrono::Duration::hours(1)),
             ..requested.clone()
         })
         .unwrap();
         assert!(queued_ids(&connection).is_empty());
 
-        // Error with retry_at in the past: due for another attempt.
+        // Backoff elapsed: due for another attempt.
         repo.upsert_without_changelog(&SyncFileReferenceRow {
-            status: SyncFileStatus::Error,
             retry_at: Some(chrono::Utc::now().naive_utc() - chrono::Duration::minutes(1)),
             ..requested.clone()
         })
         .unwrap();
         assert_eq!(queued_ids(&connection), vec![row.id.clone()]);
 
-        // PermanentFailure: given up on, never retried.
+        // Out of attempts: given up on, so the queue doesn't spin on it forever.
         repo.upsert_without_changelog(&SyncFileReferenceRow {
-            status: SyncFileStatus::PermanentFailure,
+            retries: MAX_RETRIES,
             ..requested.clone()
         })
         .unwrap();
         assert!(queued_ids(&connection).is_empty());
 
-        // Soft-deleted rows drop out regardless of status.
+        // Soft-deleted drops out.
         repo.upsert_without_changelog(&SyncFileReferenceRow {
-            status: SyncFileStatus::New,
             deleted_datetime: Some(chrono::Utc::now().naive_utc()),
             ..requested
         })
@@ -544,5 +598,35 @@ mod test {
         // And the direction stays local too, so a bundle we asked for keeps being a
         // download rather than flipping to an upload.
         assert_eq!(merged.direction, SyncFileDirection::Download);
+    }
+
+    /// What a remote actually receives: central publishes the bundle's file reference with
+    /// status Done (it must, or central tries to upload the file to itself), and `status`
+    /// crosses the v7 wire. So the remote's copy is Done before it has any bytes.
+    #[actix_rt::test]
+    async fn a_reference_that_arrived_as_done_is_still_downloadable() {
+        let (_, connection, _, _) = setup_all(
+            "a_reference_that_arrived_as_done_is_still_downloadable",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+
+        // Exactly the row shape a remote ends up with after pulling central's reference:
+        // synced status Done + total_bytes, no local bytes yet.
+        let row = SyncFileReferenceRow {
+            status: SyncFileStatus::Done,
+            downloaded_bytes: 0,
+            total_bytes: 1024,
+            ..reference(SyncFileDirection::Download)
+        };
+        repo.upsert_one(&row).unwrap();
+        repo.request_download(&row.id).unwrap();
+
+        assert_eq!(
+            queued_ids(&connection),
+            vec![row.id.clone()],
+            "a requested bundle whose bytes are not here yet must be queued"
+        );
     }
 }

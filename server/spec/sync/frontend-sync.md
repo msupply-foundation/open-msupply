@@ -187,9 +187,25 @@ Deliberately out of scope, each worth its own issue:
 
 ## Open questions
 
+- **A JSON manifest in the dist, rather than `VERSION.txt`** — the preferred direction, to settle
+  before more metadata accretes. Today the server reads the bundle's version by hand-parsing the
+  `version:` line out of `VERSION.txt`, which the front-end release workflow writes (and which is
+  also served at `/VERSION.txt`, where the login footer reads it). That is fine for one field and
+  poor for several, and several are coming: the plugin-API version pair the server-side plugin gate
+  needs (below), a compatibility claim the bundle makes about the server rather than one central
+  stamps on its behalf, and eventually whatever a bundle would have to declare for per-site
+  targeting. A JSON manifest is typed, nests, extends without inventing parsing rules, and matches
+  the pin file (`frontend-version.json`) which is already JSON.
+
+  Two constraints on the change: it needs the front-end repo to emit the manifest, and
+  `VERSION.txt` has an existing consumer (the login/init footer), so a manifest either supplements
+  it or that consumer moves at the same time.
 - Does the server-side plugin gate need the dist to declare its `plugin_api_version` /
-  `plugin_api_min_supported` (in `VERSION.txt` or a manifest)? Until it does, only the existing
-  client-side gate is live.
+  `plugin_api_min_supported`? Until it does, only the existing client-side gate is live. Best
+  carried by the manifest above rather than by adding lines to `VERSION.txt`.
 - Packaging currently discards the dist zip after unpacking (`build/fetch-frontend.js`). Central
-  needs the zip to publish it — retain it during packaging, or reconstruct it?
-- How many previous versions to retain, and what triggers the cleanup?
+  needs the zip to publish it — retain it during packaging, or reconstruct it? (Currently central
+  re-zips its own `frontend_dir`, so this is only a question if we want the published sha256 to
+  match the front-end release's own sidecar.)
+- How many previous versions to retain, and what triggers the cleanup? (Currently two, pruned on
+  activation.)

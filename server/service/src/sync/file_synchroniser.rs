@@ -163,7 +163,7 @@ impl FileSynchroniser {
         let ctx = self.service_provider.basic_context()?;
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
 
-        let queued = sync_file_repo.find_all_to_download()?;
+        let queued = sync_file_repo.find_all_to_download(MAX_UPLOAD_ATTEMPTS)?;
         let Some(sync_file_reference) = queued.first() else {
             return Ok(0);
         };
@@ -190,9 +190,21 @@ impl FileSynchroniser {
                 .find_one_by_id(&sync_file_reference.id)?
                 .unwrap_or_else(|| sync_file_reference.clone());
 
-            let update = if current.retries >= MAX_UPLOAD_ATTEMPTS {
+            // Bytes already on disk are kept, so record how far we got — the next attempt
+            // resumes from there, and the queue uses this to tell "incomplete" from "done".
+            let downloaded = self
+                .static_file_service
+                .partial_download_offset(sync_file_reference) as i32;
+            let retries_after = current.retries + 1;
+
+            // Mark the give-up *on* the attempt that exhausts the budget, not after it:
+            // `find_all_to_download` stops returning the row once retries reaches the cap,
+            // so a later pass would never run to record it and the row would just go quiet.
+            let update = if retries_after >= MAX_UPLOAD_ATTEMPTS {
                 SyncFileReferenceRow {
                     status: SyncFileStatus::PermanentFailure,
+                    retries: retries_after,
+                    downloaded_bytes: downloaded,
                     ..current
                 }
             } else {
@@ -203,14 +215,9 @@ impl FileSynchroniser {
                     ));
                 SyncFileReferenceRow {
                     status: SyncFileStatus::Error,
-                    retries: current.retries + 1,
+                    retries: retries_after,
                     retry_at: Some(retry_at),
-                    // Bytes already on disk are kept, so record how far we got — the
-                    // next attempt resumes from there.
-                    downloaded_bytes: self
-                        .static_file_service
-                        .partial_download_offset(sync_file_reference)
-                        as i32,
+                    downloaded_bytes: downloaded,
                     ..current
                 }
             };
