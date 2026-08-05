@@ -1,6 +1,7 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
 import { navConfig, type NavItem } from '../nav/navConfig';
-import { gateNav } from '../nav/navGates';
+import { deniedPermission, gateNav } from '../nav/navGates';
+import { reportPermissionDenied } from '../api/graphql';
 import { ALT_D, type Shortcut } from '../ui/utils/shortcuts';
 
 /*
@@ -24,14 +25,14 @@ import { ALT_D, type Shortcut } from '../ui/utils/shortcuts';
 const paletteDestinations = (): {
   name: NonNullable<NavItem['cmdkKey']>;
   path: string;
+  permission?: NavItem['permission'];
 }[] =>
-  // gateNav identifies a section by `id`; navConfig's identity IS its path.
-  gateNav(navConfig.map(item => ({ ...item, id: item.path })))
+  gateNav(navConfig)
     .flatMap(item => [item, ...(item.children ?? [])])
     .flatMap(item =>
       item.cmdkKey === undefined
         ? []
-        : [{ name: item.cmdkKey, path: item.path }]
+        : [{ name: item.cmdkKey, path: item.path, permission: item.permission }]
     );
 
 /**
@@ -62,6 +63,17 @@ export const createNavActions = (
     return createAction({
       name: destination.name,
       ...(shortcut ? { shortcut } : {}),
-      run: () => navigate(destination.path),
+      // A permission-gated destination is listed but refuses at run time, the
+      // same refusal as the menu (spec/navigation § permission gates, D94) —
+      // checked when fired, not at registration, so a permission granted after
+      // login is honoured without re-registering.
+      run: () => {
+        const denied = deniedPermission(destination);
+        if (denied !== undefined) {
+          reportPermissionDenied([denied]);
+          return;
+        }
+        navigate(destination.path);
+      },
     });
   });

@@ -1,32 +1,63 @@
-// The navigation tree, mirroring the reference host app (Site.tsx + the section
-// Nav components). One source of truth: the left menu renders from it, the
-// router generates a route per destination from it, and the command palette
-// lists the destinations carrying a `cmdkKey`.
+// The navigation destination registry (spec/navigation › behaviours — the
+// registry tables there are the source of truth this file transcribes). One
+// source: the left menu renders from it, the router generates a route per
+// destination from it, and the command palette lists the destinations carrying
+// a `cmdkKey`.
 //
 // Paths are relative to the store root (/{storeId}). A section's own `path` is
 // a landing destination; its `children` are the inner sub-menu entries.
 //
 // Labels are i18n keys, not English (kdd/type-safety: LocaleKey is derived from
-// the catalog, so a typo or an un-added key stops compiling). Every renderer
+// the catalog, so a typo or an un-added key stops compiling); each key is the
+// one spec/navigation cites from the reference app's call sites. Every renderer
 // that shows a destination — MenuBar, Breadcrumb, EntryPage title, the command
 // palette — resolves the key with t() at render time, so every surface
 // re-translates on a language switch.
 
 import type { LocaleKey } from '../intl';
+import type { UserPermission } from '../store/storeContext';
+
+/**
+ * The capability-gate vocabulary (spec/navigation › the gate vocabulary). A
+ * gate names a condition of the STORE, DEPLOYMENT, or SERVER — when it fails,
+ * the function isn't available here at all, so the destination is absent from
+ * every surface and its route is unreachable (D70). Contrast `permission`
+ * below. The runtime predicate for each name lives in navGates (this file
+ * stays a plain declarative tree).
+ */
+export type NavCapability =
+  | 'dispensary'
+  | 'programModule'
+  | 'vaccineModule'
+  | 'procurement'
+  | 'central'
+  | 'centralAdmin';
 
 export type NavItem = {
   labelKey: LocaleKey;
   path: string;
   children?: NavItem[];
   /**
-   * Central-server-only destination: shown in the menu — and its route reached
-   * — only on a central server to a server admin (spec/help S2). Absent
-   * elsewhere; the section's own route guard blocks direct-URL entry to match.
-   * The gate reads runtime signals, so it lives in navGates; this flag just
-   * declares the intent in the one source of truth and is threaded through
-   * navModel to the presentation leaf.
+   * Capability gate (spec/navigation › capability gates). A section's gate
+   * applies to all its children; a child's gate composes with its section's
+   * (Programs › Immunizations = central AND vaccineModule). Absent = always
+   * available.
    */
-  central?: boolean;
+  gate?: NavCapability;
+  /**
+   * The user permission the destination's primary read requires
+   * (spec/navigation › permission gates, values per its contract). Failing it
+   * does NOT hide the entry — the store has the function, so the user should
+   * see it — but activating it (menu, palette, or direct URL) refuses with the
+   * permission-denied dialog instead of navigating (D94).
+   */
+  permission?: UserPermission;
+  /**
+   * Offered at phone width (spec/navigation › mobile-friendly, D95). Absent =
+   * withheld from the phone menu until the destination's screens are made
+   * phone-ready; flipping this one flag is the whole change.
+   */
+  mobileFriendly?: true;
   /**
    * The command palette's name for this destination (spec/keyboard ui-surface
    * S1 § Action names). A separate key from `labelKey` because the palette
@@ -49,26 +80,34 @@ export const navConfig: NavItem[] = [
     path: 'replenishment',
     children: [
       {
-        labelKey: 'label.purchase-orders',
+        labelKey: 'purchase-order',
         path: 'replenishment/purchase-order',
+        gate: 'procurement',
+        permission: 'PURCHASE_ORDER_QUERY',
       },
       {
         labelKey: 'internal-order',
         path: 'replenishment/internal-order',
+        permission: 'REQUISITION_QUERY',
         cmdkKey: 'cmdk.goto-internal-order',
       },
       {
         labelKey: 'inbound-shipment',
         path: 'replenishment/inbound-shipment',
+        permission: 'INBOUND_SHIPMENT_QUERY',
+        mobileFriendly: true,
         cmdkKey: 'cmdk.goto-inbound',
       },
       {
         labelKey: 'supplier-returns',
         path: 'replenishment/supplier-return',
+        permission: 'SUPPLIER_RETURN_QUERY',
       },
       {
         labelKey: 'r-and-r-forms',
         path: 'replenishment/r-and-r-forms',
+        gate: 'programModule',
+        permission: 'RNR_FORM_QUERY',
       },
       {
         labelKey: 'suppliers',
@@ -84,6 +123,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'stock',
         path: 'inventory/stock',
+        permission: 'STOCK_LINE_QUERY',
         cmdkKey: 'cmdk.goto-stock',
       },
       {
@@ -94,11 +134,13 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'stocktakes',
         path: 'inventory/stocktakes',
+        permission: 'STOCKTAKE_QUERY',
         cmdkKey: 'cmdk.goto-stocktakes',
       },
       {
-        labelKey: 'label.stock-movement',
+        labelKey: 'stock-movement',
         path: 'inventory/stock-movement',
+        permission: 'STOCK_LINE_QUERY',
       },
     ],
   },
@@ -109,16 +151,19 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'customer-requisition',
         path: 'distribution/customer-requisition',
+        permission: 'REQUISITION_QUERY',
         cmdkKey: 'cmdk.goto-customer-requisition',
       },
       {
         labelKey: 'outbound-shipment',
         path: 'distribution/outbound-shipment',
+        permission: 'OUTBOUND_SHIPMENT_QUERY',
         cmdkKey: 'cmdk.goto-outbound',
       },
       {
         labelKey: 'customer-returns',
         path: 'distribution/customer-return',
+        permission: 'CUSTOMER_RETURN_QUERY',
       },
       {
         labelKey: 'customers',
@@ -130,45 +175,62 @@ export const navConfig: NavItem[] = [
   {
     labelKey: 'dispensary',
     path: 'dispensary',
+    gate: 'dispensary',
     children: [
       {
         labelKey: 'patients',
         path: 'dispensary/patients',
+        permission: 'PATIENT_QUERY',
         cmdkKey: 'cmdk.goto-patients',
       },
       {
         labelKey: 'prescriptions',
         path: 'dispensary/prescription',
+        permission: 'PRESCRIPTION_QUERY',
         cmdkKey: 'cmdk.goto-prescriptions',
       },
-      { labelKey: 'encounter', path: 'dispensary/encounter' },
+      {
+        labelKey: 'encounter',
+        path: 'dispensary/encounter',
+        gate: 'programModule',
+      },
       { labelKey: 'clinicians', path: 'dispensary/clinicians' },
     ],
   },
   {
     labelKey: 'cold-chain',
     path: 'cold-chain',
+    gate: 'vaccineModule',
     children: [
       {
         labelKey: 'equipment',
         path: 'cold-chain/equipment',
+        permission: 'ASSET_QUERY',
+        mobileFriendly: true,
         cmdkKey: 'cmdk.goto-cold-chain-equipment',
       },
       {
         labelKey: 'monitoring',
         path: 'cold-chain/monitoring',
+        permission: 'SENSOR_QUERY',
         cmdkKey: 'cmdk.goto-cold-chain-monitoring',
       },
-      { labelKey: 'sensors', path: 'cold-chain/sensors' },
+      {
+        labelKey: 'sensors',
+        path: 'cold-chain/sensors',
+        permission: 'SENSOR_QUERY',
+      },
     ],
   },
   {
     labelKey: 'programs',
     path: 'programs',
+    gate: 'central',
     children: [
       {
         labelKey: 'label.programs-immunisations',
-        path: 'programs/immunisation-programs',
+        path: 'programs/immunisations',
+        gate: 'vaccineModule',
       },
     ],
   },
@@ -176,14 +238,18 @@ export const navConfig: NavItem[] = [
     labelKey: 'catalogue',
     path: 'catalogue',
     children: [
-      { labelKey: 'assets', path: 'catalogue/assets' },
+      {
+        labelKey: 'assets',
+        path: 'catalogue/assets',
+        permission: 'ASSET_QUERY',
+      },
       {
         labelKey: 'items',
         path: 'catalogue/items',
         cmdkKey: 'cmdk.goto-items',
       },
       {
-        labelKey: 'label.master-lists',
+        labelKey: 'master-lists',
         path: 'catalogue/master-lists',
         cmdkKey: 'cmdk.goto-master-lists',
       },
@@ -192,32 +258,52 @@ export const navConfig: NavItem[] = [
   {
     labelKey: 'manage',
     path: 'manage',
+    gate: 'central',
     children: [
       { labelKey: 'stores', path: 'manage/stores' },
       {
         labelKey: 'indicators-demographics',
         path: 'manage/indicators-demographics',
+        gate: 'vaccineModule',
       },
       {
         labelKey: 'global-preferences',
         path: 'manage/global-preferences',
       },
-      { labelKey: 'manage-equipment', path: 'manage/equipment' },
+      {
+        labelKey: 'manage-equipment',
+        path: 'manage/equipment',
+        gate: 'vaccineModule',
+      },
       { labelKey: 'campaigns', path: 'manage/campaigns' },
-      { labelKey: 'sites', path: 'manage/sites' },
-      { labelKey: 'reports', path: 'manage/reports' },
-      { labelKey: 'sync-message', path: 'manage/sync-message' },
-      { labelKey: 'plugins', path: 'manage/plugins' },
+      {
+        labelKey: 'custom-fields',
+        path: 'manage/custom-fields',
+        gate: 'centralAdmin',
+      },
+      { labelKey: 'sites', path: 'manage/sites', gate: 'centralAdmin' },
+      { labelKey: 'reports', path: 'manage/reports', gate: 'centralAdmin' },
+      {
+        labelKey: 'sync-message',
+        path: 'manage/sync-message',
+        gate: 'centralAdmin',
+      },
+      { labelKey: 'plugins', path: 'manage/plugins', gate: 'centralAdmin' },
       {
         labelKey: 'help-documents',
         path: 'manage/help-documents',
-        central: true,
+        gate: 'centralAdmin',
       },
     ],
   },
-  { labelKey: 'reports', path: 'reports', cmdkKey: 'cmdk.goto-reports' },
-  { labelKey: 'settings', path: 'settings' },
-  { labelKey: 'help', path: 'help' },
+  {
+    labelKey: 'reports',
+    path: 'reports',
+    permission: 'REPORT',
+    cmdkKey: 'cmdk.goto-reports',
+  },
+  { labelKey: 'settings', path: 'settings', mobileFriendly: true },
+  { labelKey: 'help', path: 'help', mobileFriendly: true },
 ];
 
 // Flattened list of every destination (sections + inner entries) — used to
