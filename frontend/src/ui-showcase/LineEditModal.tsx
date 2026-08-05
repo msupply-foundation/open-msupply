@@ -1,5 +1,11 @@
 import { generateUUID } from '../uuid';
-import { createSignal, Show, type Component, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  Show,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
@@ -282,6 +288,14 @@ const Body: Component<LineEditModalProps> = props => {
 
   // The current item (mutable in add mode as the user picks/clears one).
   const [item, setItem] = createSignal<EditItem | null>(props.item);
+
+  // Working-size latch (#771), matching the real editors: open small in add
+  // mode (just the search), grow ONCE when the first item is picked, never
+  // shrink back. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || initialMode === 'update' || item() !== null,
+    false
+  );
   // The pack size a new batch starts at — the opened item's, then the picked
   // item's default once one is chosen.
   const [packSizeSeed, setPackSizeSeed] = createSignal(
@@ -729,7 +743,16 @@ const Body: Component<LineEditModalProps> = props => {
     <Dialog
       open
       onClose={props.onClose}
-      size="large"
+      size={workingSize() ? 'large' : 'auto'}
+      // The pre-pick state is a command-palette-shaped card: the standard
+      // create-modal width (the CreateStocktake/CreateInternalOrder family),
+      // and a body tall enough to OWN the open suggestions list — the search
+      // takes initial focus and the combobox opens on focus, so the list is
+      // this state's resting face, and without the reserved height it would
+      // dangle past the card onto the scrim. The popup itself matches its
+      // trigger's width. Both are ignored once the latch flips to large.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="line-edit-modal"
       // The title (item selector + its "Unit: …" helper text) is taller than
       // the Add batch button, so top-align the header row.

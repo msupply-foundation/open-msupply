@@ -14,6 +14,9 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import {
   CancelButton,
   DialogSaveButton,
@@ -352,9 +355,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Cards, not a table (as the inbound + stocktake line editors), and
-    // manufacturer starts hidden (the old app's defaultHidden) — declared per
-    // band, since bands don't share; the Columns popover restores it.
+    // Cards by DEFAULT (as the inbound + stocktake line editors) — the
+    // DataTable's showCardToggle offers the flip to a table above the compact
+    // breakpoint and setConfig persists it per user (#886). Manufacturer starts
+    // hidden (the old app's defaultHidden) — declared per band, since bands
+    // don't share; the Columns popover restores it.
     defaultConfig: {
       base: { viewMode: 'card', columnVisibility: { manufacturer: false } },
       compact: { viewMode: 'card', columnVisibility: { manufacturer: false } },
@@ -871,6 +876,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const updateMode = () => mode() === 'update';
 
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "OK & next" returning to the search keeps the working size, so the
+  // add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || item() !== undefined,
+    false
+  );
+
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       // "Will be used in auto-allocation": the AUTO-fillable predicate
@@ -1298,11 +1312,56 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large`: this line table is 20 columns wide, so there is
+      // no card width that fits it. #771's "~900px if the tables fit" does
+      // NOT fit here — narrowing only pushes columns out of view, and the
+      // empty space it was filed against is VERTICAL, which the workbench's
+      // 60-80vh height band already answers. Recorded as a deliberate
+      // deviation from the 900px modal standard in the DESIGN_STANDARDS
+      // ledger.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips — the body flexes to
+      // fill the tall box instead.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
+      // The heading stays the dialog's accessible name but paints nothing: as a
+      // visible row it spent ~2.5rem of a modal whose working area is the batch
+      // grid, restating a mode the header panel and footer buttons already carry.
+      // The sibling line editors already read this way — requisitions and
+      // internal orders hide theirs too, and inbound's / stocktakes' title slot
+      // is the item selector itself, so none of them paints a text heading (#872).
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
       actionsLead={
-        <Show when={errorMessage()}>
+        // The footer's message slot, sharing the buttons' row rather than
+        // spending one of its own. It states the consequence of Save — the
+        // running total and any placeholder — and yields to a save rejection
+        // while there is one, which is the more urgent thing to read (#872).
+        <Show
+          when={errorMessage()}
+          fallback={
+            <Show when={item()}>
+              <HStack gap="md">
+                <span>
+                  {t('label.placeholder')}: {formatNumber(placeholderUnits())}
+                </span>
+                <span>
+                  {t('label.total-units')}:{' '}
+                  {formatNumber(issuedUnits() + placeholderUnits())}
+                </span>
+              </HStack>
+            </Show>
+          }
+        >
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
       }
@@ -1348,107 +1407,136 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* The header row (spec S4, D76): Item picker · Available · Issue +
-          Allocate-in · placeholder notice on ONE wrapping flex row — each
-          piece drops to its own row as space runs out (see the module CSS). */}
-      <div class={styles.headerRow}>
-        {/* The shared server-searched item lookup (spec S4 — the registry's
+      {/* The header row (spec S4, D76): Item picker · Issue + Allocate-in ·
+          Available · placeholder notice on ONE wrapping flex row — each piece
+          drops to its own row as space runs out (see the module CSS). The
+          registry's inset grouping panel holds them, so the cluster reads as one
+          thing the modal acts on rather than four controls loose against the
+          panel (#872). */}
+      <InsetPanel class={styles.headerPanel}>
+        <div class={styles.headerRow}>
+          {/* The shared server-searched item lookup (spec S4 — the registry's
             async catalogue-lookup; no client-side cached cap), locked in
             update mode. `selectedItem` labels the current value when it isn't
             in the search's own paginated results (a row-click open / walk
             advance). Clearing (×) returns to the empty search state — like an
             add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
-        <div class={styles.itemField}>
-          <ItemSearch
-            label={t('label.item')}
-            storeId={props.storeId}
-            disabled={updateMode() || saving()}
-            focusTarget={itemSearch}
-            value={item()?.id}
-            selectedItem={item()}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-            onSelect={option => {
-              if (option)
-                void seedItem({
-                  id: option.id,
-                  code: option.code,
-                  name: option.name,
-                  unitName: option.unitName,
-                  isVaccine: option.isVaccine,
-                  doses: option.doses,
-                });
-              else backToSearch();
-            }}
-          />
-        </div>
-        <Show when={item()}>
-          <span class={styles.available}>
-            {/* Unit name pluralised to the count (old-app parity — English
-                only; getPlural passes other languages through). */}
-            {t('label.available')}: {formatNumber(availableUnits())}{' '}
-            {getPlural(unitName(), availableUnits())}
-          </span>
-          {/* Issue + Allocate-in wrap as a unit. Both controls at the default
-              height — NumberField's "small" (2.25rem) and Select's "sm"
-              (1.75rem — the Pagination scale) don't align with each other. */}
-          <div class={styles.issueGroup}>
-            <NumberField
-              label={t('label.issue')}
-              min={0}
-              data-testid="issue-quantity-input"
-              ref={issueField.ref}
-              value={issueValue()}
-              disabled={saving()}
-              onChange={onIssueChange}
-            />
-            <Select
-              label={t('label.units')}
-              value={allocateInValue()}
-              options={[
-                // The unit option reads as a category — always plural
-                // ("Vials"), the old app's getPlural(unit, 2).
-                { value: 'units', label: getPlural(unitName(), 2) },
-                // The doses lens (AC-AL7): vaccine items under the
-                // manage-vaccines-in-doses preference only.
-                ...(prefs().manageVaccinesInDoses && item()?.isVaccine
-                  ? [{ value: 'doses', label: t('label.doses') }]
-                  : []),
-                ...distinctPackSizes().map(size => ({
-                  value: `packs-${size}`,
-                  label: t('label.packs-of-pack-size', { packSize: size }),
-                })),
-              ]}
-              onValueChange={value => {
-                const next: AllocateUnit =
-                  value === 'units'
-                    ? { kind: 'units' }
-                    : value === 'doses'
-                      ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
-                      : { kind: 'packs', size: Number(value.slice(6)) };
-                switchLensTo(next);
+          <div class={styles.itemField}>
+            <ItemSearch
+              label={t('label.item')}
+              storeId={props.storeId}
+              disabled={updateMode() || saving()}
+              focusTarget={itemSearch}
+              value={item()?.id}
+              selectedItem={item()}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+              onSelect={option => {
+                if (option)
+                  void seedItem({
+                    id: option.id,
+                    code: option.code,
+                    name: option.name,
+                    unitName: option.unitName,
+                    isVaccine: option.isVaccine,
+                    doses: option.doses,
+                  });
+                else backToSearch();
               }}
             />
           </div>
-          {/* Placeholder notice (info) — fills the rest of the header row,
-              matching the old app; shown when a shortfall became a placeholder. */}
-          <Show when={placeholderUnits() > 0}>
-            <div class={styles.placeholderNotice}>
-              <Alert severity="info">
-                {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: formatNumber(
-                    issuedUnits() + placeholderUnits()
-                  ),
-                  placeholderQuantity: formatNumber(placeholderUnits()),
-                })}
-              </Alert>
+          <Show when={item()}>
+            {/* Issue + Allocate-in wrap as a unit. Both controls at the default
+              height — NumberField's "small" (2.25rem) and Select's "sm"
+              (1.75rem — the Pagination scale) don't align with each other. */}
+            <div class={styles.issueGroup}>
+              <NumberField
+                label={t('label.issue')}
+                min={0}
+                data-testid="issue-quantity-input"
+                ref={issueField.ref}
+                value={issueValue()}
+                disabled={saving()}
+                onChange={onIssueChange}
+              />
+              <Select
+                label={t('label.units')}
+                value={allocateInValue()}
+                options={[
+                  // The unit option reads as a category — always plural
+                  // ("Vials"), the old app's getPlural(unit, 2).
+                  { value: 'units', label: getPlural(unitName(), 2) },
+                  // The doses lens (AC-AL7): vaccine items under the
+                  // manage-vaccines-in-doses preference only.
+                  ...(prefs().manageVaccinesInDoses && item()?.isVaccine
+                    ? [{ value: 'doses', label: t('label.doses') }]
+                    : []),
+                  ...distinctPackSizes().map(size => ({
+                    value: `packs-${size}`,
+                    label: t('label.packs-of-pack-size', { packSize: size }),
+                  })),
+                ]}
+                onValueChange={value => {
+                  const next: AllocateUnit =
+                    value === 'units'
+                      ? { kind: 'units' }
+                      : value === 'doses'
+                        ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                        : { kind: 'packs', size: Number(value.slice(6)) };
+                  switchLensTo(next);
+                }}
+              />
             </div>
+            {/* Available follows the two inputs, as the figure they're judged
+              against rather than a preamble to them — set off by a hairline and
+              presented as a labelled value so its label reads exactly like
+              Issue's and Units' (the registry's read-only labelled value at
+              variant="field": read-only reads from the ABSENCE of an input box,
+              never from a different label treatment). #872, Ling's mockup. */}
+            <div class={styles.availableStat}>
+              <LabelledValue label={t('label.available')} variant="field">
+                {/* The value takes an input's height so this label lands on the
+                    same line as Issue's and Units': a labelled value is shorter
+                    than a labelled input, and the row's end-alignment would
+                    otherwise drop its label below theirs. */}
+                <span class={styles.availableValue}>
+                  {/* Unit name pluralised to the count (old-app parity —
+                      English only; getPlural passes other languages through). */}
+                  {formatNumber(availableUnits())}{' '}
+                  {getPlural(unitName(), availableUnits())}
+                </span>
+              </LabelledValue>
+            </div>
+            {/* Placeholder notice (info) — fills the rest of the header row,
+              matching the old app; shown when a shortfall became a placeholder. */}
+            <Show when={placeholderUnits() > 0}>
+              <div class={styles.placeholderNotice}>
+                <Alert severity="info">
+                  {t('messages.placeholder-allocated-units', {
+                    requestedQuantity: formatNumber(
+                      issuedUnits() + placeholderUnits()
+                    ),
+                    placeholderQuantity: formatNumber(placeholderUnits()),
+                  })}
+                </Alert>
+              </div>
+            </Show>
           </Show>
-        </Show>
-      </div>
+        </div>
+      </InsetPanel>
 
       {/* The grid + footer + banners keep their own item gate — the header
-          row above renders its picker item-less in add mode. */}
-      <Show when={item()}>
+          row above renders its picker item-less in add mode. Before a pick, a
+          centred prompt says what the empty body is waiting for (as the
+          stocktake editor's, #884) rather than leaving the modal blank. */}
+      <Show
+        when={item()}
+        fallback={
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-issue')}
+          />
+        }
+      >
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
         <div class={styles.batchGrid}>
@@ -1458,6 +1546,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             rowKey={line => line.id}
             loading={loadingLines()}
             cardGroups={CARD_GROUPS}
+            showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             emptyMessage={t('messages.no-stock-available')}
@@ -1467,19 +1556,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </div>
 
         {/* Everything below the grid shares one vertical rhythm — the Stack's
-            gap replaces the per-block margins. */}
+            gap replaces the per-block margins. The running total that used to
+            lead this stack now rides the footer's message slot. */}
         <Stack gap="sm">
-          {/* Grid footer: placeholder + running total (spec S4). */}
-          <HStack gap="md" justify="end">
-            <span>
-              {t('label.placeholder')}: {formatNumber(placeholderUnits())}
-            </span>
-            <span>
-              {t('label.total-units')}:{' '}
-              {formatNumber(issuedUnits() + placeholderUnits())}
-            </span>
-          </HStack>
-
           {/* Stacked warning banners (spec S4 § warnings). */}
           <For each={warnings()}>
             {message => <Alert severity="warning">{message}</Alert>}

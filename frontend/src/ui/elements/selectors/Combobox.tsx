@@ -14,15 +14,38 @@ import {
   CloseIcon,
   SearchIcon,
 } from '../../icons';
+import { t, tPlural } from '../../../intl';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
+import { visibleOptions, type VisibleOptions } from './comboboxLogic';
 import styles from './Combobox.module.css';
 
 // Server-mode infinite scroll: fetch the next page once the listbox is scrolled
 // to within this many px of the bottom (a small lead so the next page is on its
 // way before the user hits the very end).
 const NEXT_PAGE_THRESHOLD_PX = 100;
+
+/*
+ * Client mode: how many matching options are MOUNTED at once (see
+ * `visibleOptions`). Every option is a live component — Kobalte's ListboxItem
+ * plus the caller's `renderItem` — so mount cost is linear in the number shown,
+ * and Kobalte does not virtualise.
+ *
+ * Measured on a Lenovo tablet (2026-08-04): a whole-store location picker
+ * mounted ~5,000 options and blocked the main thread for 30 SECONDS on one tap
+ * — 21s building the option trees, then 9s of floating-ui measuring the
+ * resulting 43,000-node popup, every measurement a forced layout. The work is
+ * wasted either way: this is a type-to-search field, and nobody scrolls past
+ * the first screenful.
+ *
+ * 100 is chosen to be far past what anyone scrolls while staying cheap to
+ * mount. The cap applies to MATCHES, not to the head of `items`, so typing
+ * still reaches an option four thousand rows down; when it bites, the listbox
+ * says so rather than silently ending the list. A caller with a genuinely
+ * scroll-through list can raise it via `maxVisibleOptions`.
+ */
+const DEFAULT_MAX_VISIBLE_OPTIONS = 100;
 
 interface ComboboxProps<T> {
   label: string;
@@ -60,6 +83,15 @@ interface ComboboxProps<T> {
    * (Kobalte's model), unlike the prototype's whole-list filter.
    */
   filter?: (item: T, input: string) => boolean;
+  /**
+   * Client mode: how many MATCHING options to mount at once (default 100 —
+   * see DEFAULT_MAX_VISIBLE_OPTIONS for why there is a cap at all). Beyond the
+   * cap the listbox shows a "keep typing to narrow" row reporting the total, so
+   * the list never just stops without saying why. Raise it for a list meant to
+   * be scrolled end-to-end rather than searched; `Infinity` mounts everything
+   * (the pre-cap behaviour). Ignored in server mode, where the caller pages.
+   */
+  maxVisibleOptions?: number;
   /**
    * Per-option disabled predicate — the option is listed (visible for context,
    * rendered dimmed) but not selectable, e.g. an on-hold customer. Maps to
@@ -109,9 +141,9 @@ interface ComboboxProps<T> {
   loading?: boolean;
   /**
    * The status text shown when a settled search matched nothing (server mode's
-   * "no matches" state). Defaults to "No matching items"; a caller overrides it
-   * for a domain-specific message — e.g. the patient picker's "No matching
-   * patients".
+   * "no matches" state). Defaults to `control.search.no-results-label` ("No
+   * results"); a caller overrides it — already translated — with a
+   * domain-specific message, e.g. the patient picker's "No matching patients".
    */
   noResultsMessage?: string;
   /**
@@ -340,12 +372,38 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     return current && input === props.itemToString(current) ? '' : input;
   };
 
+  /*
+   * Client mode: the matching options, capped at maxVisibleOptions, plus the
+   * total that matched (see comboboxLogic for the filter-then-cap ordering, and
+   * DEFAULT_MAX_VISIBLE_OPTIONS for why there's a cap).
+   *
+   * Filtering HERE, as well as in Kobalte's `defaultFilter` below (which
+   * re-applies the same predicate to the capped list, harmlessly), is what lets
+   * the cap count matches rather than raw rows. Server mode never caps — the
+   * caller has already filtered and pages the rest in.
+   */
+  const shown = createMemo<VisibleOptions<T>>(() => {
+    if (serverMode()) return { items: props.items, total: props.items.length };
+    const text = filterText();
+    return visibleOptions(
+      props.items,
+      item => matches(item, text),
+      props.maxVisibleOptions ?? DEFAULT_MAX_VISIBLE_OPTIONS
+    );
+  });
+
+  // How many matches the cap is holding back — 0 when it isn't biting. Drives
+  // the notice under the options, so a truncated list always says so.
+  const hiddenMatchCount = () => {
+    if (serverMode() || props.loading) return 0;
+    const { items, total } = shown();
+    return total - items.length;
+  };
+
   // Server mode: the caller already filtered, so "no matches" = an empty list
-  // (once loading settles). Client mode: nothing passes the local filter.
+  // (once loading settles). Client mode: nothing passed the local filter.
   const noMatches = createMemo(() =>
-    serverMode()
-      ? props.items.length === 0
-      : props.items.every(item => !matches(item, filterText()))
+    serverMode() ? props.items.length === 0 : shown().total === 0
   );
 
   // The empty-list copy splits in two (see emptyQueryMessage): nothing typed
@@ -354,7 +412,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const emptyMessage = () =>
     (filterText().trim() === ''
       ? (props.emptyQueryMessage ?? props.noResultsMessage)
-      : props.noResultsMessage) ?? 'No matching items';
+      : props.noResultsMessage) ?? t('control.search.no-results-label');
 
   // Resolved once per change and read twice below (test + render).
   const footer = children(() => props.listboxFooter);
@@ -391,11 +449,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     return pin ? keyOf(pin) : undefined;
   };
 
-  // The options Kobalte sees: the caller's rows plus the pin above. While
-  // loading we show no options EXCEPT that pin (so the label survives a
-  // refetch).
+  // The options Kobalte sees: the caller's rows (client mode: matching and
+  // capped — see visibleOptions) plus the pin above. While loading we show no
+  // options EXCEPT that pin (so the label survives a refetch). The pin is added
+  // after the cap, never subject to it: it is in the collection so the current
+  // selection RESOLVES to a label, and capping it out would blank the field.
   const options = createMemo<T[]>(() => {
-    const base = props.loading ? [] : props.items;
+    const base = props.loading ? [] : shown().items;
     const pin = pinned();
     return pin ? [pin, ...base] : base;
   });
@@ -607,7 +667,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <div class={styles.listboxHeader}>{listboxHeader()}</div>
           </Show>
           <Show when={props.loading}>
-            <div class={styles.status}>Loading…</div>
+            <div class={styles.status}>{t('loading')}</div>
           </Show>
           <Show when={!props.loading && noMatches()}>
             <div class={styles.status}>{emptyMessage()}</div>
@@ -618,10 +678,18 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             class={styles.listbox}
             onScroll={serverMode() ? onListboxScroll : undefined}
           />
+          {/* The cap is biting (see DEFAULT_MAX_VISIBLE_OPTIONS): say so, with
+              the number withheld, so the list is never seen to just stop —
+              "no more locations" and "too many to show" must not look alike. */}
+          <Show when={hiddenMatchCount() > 0}>
+            <div class={styles.status}>
+              {tPlural('control.search.more-matches', hiddenMatchCount())}
+            </div>
+          </Show>
           {/* Server mode: a trailing "loading more" row shown under the list
               while the next page is in flight. */}
           <Show when={props.loadingMore}>
-            <div class={styles.status}>Loading…</div>
+            <div class={styles.status}>{t('loading')}</div>
           </Show>
           {/* Action row under the options (e.g. "Create patient"). Last, so it
               never displaces a result the user is reaching for. Resolved
