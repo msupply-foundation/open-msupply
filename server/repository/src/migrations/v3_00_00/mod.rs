@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_changelog_dedup_cursor_key_type;
 mod add_custom_field_sort_order;
 mod add_frontend_bundle_table;
+mod add_frontend_bundle_version_unique;
 mod add_invoice_custom_fields;
 mod add_is_standalone_central_pg_enum;
 mod add_item_custom_fields;
@@ -101,6 +102,8 @@ impl Migration for V3_00_00 {
             Box::new(add_sync_batch_size_key_value_store::Migrate),
             Box::new(add_frontend_bundle_table::Migrate),
             Box::new(add_sync_file_download_request::Migrate),
+            // Must follow add_frontend_bundle_table.
+            Box::new(add_frontend_bundle_version_unique::Migrate),
         ]
     }
 }

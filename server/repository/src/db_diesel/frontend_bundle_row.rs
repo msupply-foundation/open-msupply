@@ -257,6 +257,45 @@ mod test {
         assert_eq!(repo.find_one_by_id(&row.id), Ok(None));
     }
 
+    /// A version identifies at most one bundle. Publishing keys its "already published?"
+    /// guard on this, and a bundle unpacks to a directory named after its version, so two
+    /// rows sharing one would make the guard ambiguous and collide on disk.
+    #[actix_rt::test]
+    async fn frontend_bundle_version_is_unique() {
+        let (_, connection, _, _) =
+            setup_all("frontend_bundle_version_is_unique", MockDataInserts::none()).await;
+        let repo = FrontendBundleRowRepository::new(&connection);
+
+        let first = test_row();
+        repo.upsert_one(&first).unwrap();
+
+        // A different bundle claiming the same version is refused by the database, not
+        // merely avoided by the call sites that happen to check first.
+        let duplicate = FrontendBundleRow {
+            id: uuid(),
+            ..first.clone()
+        };
+        assert!(
+            repo.upsert_one(&duplicate).is_err(),
+            "a second bundle with version {} should not be insertable",
+            first.version
+        );
+
+        // Re-upserting the *same* bundle is still fine — that is the idempotent path
+        // publishing and sync integration both rely on.
+        repo.upsert_one(&first).unwrap();
+
+        // And the version is reusable once the original is gone.
+        repo.delete(&first.id).unwrap();
+        repo.upsert_one(&duplicate).unwrap();
+        assert_eq!(
+            repo.find_one_by_version(&first.version)
+                .unwrap()
+                .map(|b| b.id),
+            Some(duplicate.id)
+        );
+    }
+
     #[actix_rt::test]
     async fn frontend_bundle_writes_changelog_on_upsert_and_delete() {
         let (_, connection, _, _) = setup_all(
