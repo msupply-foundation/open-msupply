@@ -59,7 +59,11 @@ import {
   prescriptionPreferences,
 } from '../../../store/storeContext';
 import { storeNameOf } from '../../../auth/authContext';
-import { asPrescriptionStatus, isReadOnly } from '../prescriptionStatus';
+import {
+  asPrescriptionStatus,
+  isReadOnly,
+  isRenderableLine,
+} from '../prescriptionStatus';
 import {
   PrescriptionDetail,
   LabelPrinterSettings,
@@ -185,11 +189,12 @@ const PrescriptionDetailView: Component = () => {
   const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
   const disabled = () => isReadOnly(status());
 
-  // The dispensed rows — carriers (prescribed-quantity holders) never render
-  // as lines (AC-Q1); ordered by item then batch for a stable read.
+  // The rendered rows — carriers never render (AC-Q1), a cancellation
+  // reversal's returned lines do (isRenderableLine); ordered by item then
+  // batch for a stable read.
   const rows = createMemo((): Line[] =>
     (info()?.lines.nodes ?? [])
-      .filter(line => line.type === 'STOCK_OUT')
+      .filter(isRenderableLine)
       .slice()
       .sort(
         (a, b) =>

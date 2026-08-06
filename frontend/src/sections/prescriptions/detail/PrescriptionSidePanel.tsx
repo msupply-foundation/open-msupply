@@ -284,10 +284,13 @@ export const PrescriptionSidePanel: Component<
               {t('label.delete')}
             </Button>
           </Show>
-          {/* Cancel — VERIFIED only; the permission gate withholds with its
-              explanation through the affordance (AC-X4). Danger tone: voiding
-              a verified prescription is destructive. */}
-          <Show when={canCancelPrescription(status())}>
+          {/* Cancel — VERIFIED only, never on a cancellation reversal; the
+              permission gate withholds with its explanation through the
+              affordance (AC-X4). Danger tone: voiding a verified prescription
+              is destructive. */}
+          <Show
+            when={canCancelPrescription(status(), props.node.isCancellation)}
+          >
             <Button
               variant="danger"
               icon={<MinusCircleIcon />}
