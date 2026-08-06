@@ -725,6 +725,7 @@ const PrescriptionDetailView: Component = () => {
                 initialItemId={state.itemId}
                 initialItem={state.item}
                 existingItemIds={existingItemIds()}
+                programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
                 onSaved={() => void refetch()}
               />

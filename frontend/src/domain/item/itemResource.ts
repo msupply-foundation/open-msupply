@@ -91,12 +91,18 @@ export const fetchItemById = async (
 };
 
 export const itemPageFetcher =
-  (storeId: string, excludeItemIds: () => string[], pageSize: number) =>
+  (
+    storeId: string,
+    excludeItemIds: () => string[],
+    pageSize: number,
+    masterListId?: () => string | undefined
+  ) =>
   async (
     search: string,
     offset: number
   ): Promise<Page<ItemOption> | undefined> => {
     const exclude = excludeItemIds();
+    const scopedList = masterListId?.();
     const result = await graphqlFetch(ItemsWithStock, {
       storeId,
       filter: {
@@ -105,6 +111,7 @@ export const itemPageFetcher =
         isVisible: true,
         ...(search ? { codeOrName: { like: search } } : {}),
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
+        ...(scopedList ? { masterListId: { equalTo: scopedList } } : {}),
       },
       // Sort by item name ascending — stable across pages so infinite scroll
       // doesn't reshuffle rows as new pages append.
