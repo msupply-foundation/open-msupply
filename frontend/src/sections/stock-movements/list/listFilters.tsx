@@ -24,9 +24,9 @@ export type StockMovementFilter = NonNullable<
  * map's key order is the toolbar's display order. Built once at module load;
  * labels are lazy accessors so a language switch re-labels in place.
  *
- * Exposed set per spec/stock-movements/ui-surface.md S1 § filters: Number
- * (the default chip — seeded in the list's DEFAULT_STATE), Status, Created
- * by, Created range.
+ * Exposed set per spec/stock-movements/ui-surface.md S1 § filters: Number,
+ * Status (the default chip — seeded in the list's DEFAULT_STATE; D96),
+ * Created by, Created range.
  */
 const FILTERS: Filter<StockMovementFilter>[] =
   constructFilters<StockMovementFilter>({
