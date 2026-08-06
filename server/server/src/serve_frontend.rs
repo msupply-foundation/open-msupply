@@ -10,6 +10,10 @@ use service::{frontend_bundle::ActiveFrontendBundle, settings::Settings};
 use std::path::{Path, PathBuf};
 
 const INDEX: &str = "index.html";
+/// Version marker inside every front-end dist, served at `/VERSION.txt` so a deployed
+/// version stays inspectable — and so a running client can tell when the served bundle has
+/// been swapped underneath it (front-end sync, #12622).
+const VERSION_FILE: &str = "VERSION.txt";
 const CACHE_MAX_AGE: u32 = 365 * 60 * 60 * 24; // 1 year
 
 /// Read a frontend asset, preferring a synced bundle over the packaged baseline.
@@ -79,12 +83,18 @@ fn old_ui_frontend_root(settings: &Settings) -> Option<PathBuf> {
     frontend_root(settings)?.join("old-ui").canonicalize().ok()
 }
 
-/// Cache-control for a frontend asset by path. The index and translation files
-/// can change so we don't want to cache them; everything else is static and
-/// cached for a year. (config.js technically shouldn't change either but if it
-/// did we'd want to pick it up immediately, hence no-cache on index.)
+/// Cache-control for a frontend asset by path. The index, the version marker and the
+/// translation files can change so we don't want to cache them; everything else is static
+/// and cached for a year. (config.js technically shouldn't change either but if it did we'd
+/// want to pick it up immediately, hence no-cache on index.)
+///
+/// `VERSION.txt` is the one clients poll to notice the served bundle has been swapped, and
+/// it is *the same URL* across bundles — unlike the content-hashed assets, there is no new
+/// URL to force a refetch. Cached for a year it would answer with the version that was live
+/// when the client first asked, defeating both the polling and the "deployed versions stay
+/// inspectable" intent it was published for.
 fn cache_control_for(path: &str) -> header::CacheControl {
-    if path == INDEX {
+    if path == INDEX || path == VERSION_FILE {
         header::CacheControl(vec![header::CacheDirective::NoCache])
     } else if path.starts_with("locales/") {
         // Translation json files: cached in local storage in the frontend and
@@ -356,6 +366,56 @@ mod test {
             body
         );
         assert!(!body.contains("NEW index"));
+    }
+
+    /// The version marker must not be cached. It is the one URL a client polls to notice
+    /// the served bundle has been swapped, and unlike the content-hashed assets it keeps
+    /// the same URL across bundles — so there is no new URL to force a refetch. A long
+    /// cache would pin a client to whatever version was live when it first asked.
+    #[actix_web::test]
+    async fn version_file_is_not_cached() {
+        let dir = TempDir::new().unwrap();
+        write_dist(dir.path(), "NEW");
+        fs::write(dir.path().join("VERSION.txt"), "version: v1.2.3\n").unwrap();
+
+        let settings = settings_with(dir.path());
+        let app = test::init_service(
+            App::new()
+                .app_data(Data::new(settings))
+                .app_data(Data::new(ActiveFrontendBundle::new()))
+                .configure(config_serve_frontend),
+        )
+        .await;
+
+        let resp = test::call_service(
+            &app,
+            test::TestRequest::get().uri("/VERSION.txt").to_request(),
+        )
+        .await;
+        let cache = resp
+            .headers()
+            .get("cache-control")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        assert!(cache.contains("no-cache"), "got {}", cache);
+        assert!(body_string(resp).await.contains("v1.2.3"));
+
+        // Content-hashed assets keep their long cache — a new bundle gives them new URLs.
+        let resp = test::call_service(
+            &app,
+            test::TestRequest::get().uri("/assets/x.js").to_request(),
+        )
+        .await;
+        let cache = resp
+            .headers()
+            .get("cache-control")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        assert!(cache.contains("max-age=31536000"), "got {}", cache);
     }
 
     #[actix_web::test]
