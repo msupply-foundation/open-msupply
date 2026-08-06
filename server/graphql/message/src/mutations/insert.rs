@@ -70,6 +70,9 @@ pub struct InsertMessageInput {
     /// Required when kind = BY_RECORD (the transfer id); forbidden when GLOBAL.
     pub record_id: Option<String>,
     pub record_kind: Option<String>,
+    /// The counterpart record on the recipient's side (spec messaging › related
+    /// records) — lets each store open its own record from the message.
+    pub linked_record_id: Option<String>,
 }
 
 impl InsertMessageInput {
@@ -81,6 +84,7 @@ impl InsertMessageInput {
             recipients,
             record_id,
             record_kind,
+            linked_record_id,
         } = self;
         InsertMessage {
             id,
@@ -89,6 +93,7 @@ impl InsertMessageInput {
             recipients: recipients.to_domain(),
             record_id,
             record_kind,
+            linked_record_id,
         }
     }
 }

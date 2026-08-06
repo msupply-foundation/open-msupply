@@ -65,3 +65,4 @@ load_test/
 
 # frontend build artifacts
 frontend/
+target-pg/

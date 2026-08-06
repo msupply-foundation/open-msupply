@@ -135,6 +135,13 @@ impl MessageNode {
         &self.row().record_id
     }
 
+    /// The counterpart record on the recipient's side of the transfer, so each
+    /// store can open ITS OWN record from a message (spec messaging › related
+    /// records). Null for a global message or an unpaired record.
+    pub async fn linked_record_id(&self) -> &Option<String> {
+        &self.row().linked_record_id
+    }
+
     pub async fn record_kind(&self) -> &Option<String> {
         &self.row().record_kind
     }

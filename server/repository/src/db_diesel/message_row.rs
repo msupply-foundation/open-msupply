@@ -20,6 +20,7 @@ table! {
         sent_datetime -> Timestamp,
         record_kind -> Nullable<Text>,
         record_id -> Nullable<Text>,
+        linked_record_id -> Nullable<Text>,
     }
 }
 
@@ -76,7 +77,14 @@ pub struct MessageRow {
     pub sent_by_user_id: String,
     pub sent_datetime: NaiveDateTime,
     pub record_kind: Option<String>,
+    /// The record this message is about, on the SENDER's side of the transfer.
     pub record_id: Option<String>,
+    /// The counterpart record on the recipient's side (the linked requisition /
+    /// linked shipment), so each store can open its OWN record from a message —
+    /// see spec messaging › related records. Populated by the sender at compose
+    /// time (it knows both sides); null for a global message or an unpaired
+    /// record.
+    pub linked_record_id: Option<String>,
 }
 
 #[derive(

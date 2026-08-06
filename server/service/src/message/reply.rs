@@ -110,7 +110,15 @@ pub fn generate(
         sent_by_user_id: replier_user_id.to_string(),
         sent_datetime: now,
         record_kind: replied_to.record_kind.clone(),
-        record_id: replied_to.record_id.clone(),
+        // A reply flips sender ⇄ recipient, so the record sides flip too: the
+        // replier's own record is the original's linked (recipient) side, and
+        // the linked side becomes the original's record. Keeps the invariant
+        // "record_id is on THIS message's sender's side" (spec › related records).
+        record_id: replied_to
+            .linked_record_id
+            .clone()
+            .or_else(|| replied_to.record_id.clone()),
+        linked_record_id: replied_to.record_id.clone(),
     };
 
     (group, recipient, message)

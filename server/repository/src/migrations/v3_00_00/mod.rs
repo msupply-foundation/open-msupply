@@ -8,6 +8,7 @@ mod add_is_standalone_central_pg_enum;
 mod add_item_custom_fields;
 mod add_legacy_goods_received_link_fields;
 mod add_merge_sync_message_processor_cursor_pg_enum;
+mod add_message_linked_record_id;
 mod add_message_tables;
 mod add_name_custom_fields;
 mod add_site_is_multi_device_pg_enum;
@@ -82,6 +83,7 @@ impl Migration for V3_00_00 {
             Box::new(seed_sync_request_user_tables::Migrate),
             Box::new(add_legacy_goods_received_link_fields::Migrate),
             Box::new(add_message_tables::Migrate),
+            Box::new(add_message_linked_record_id::Migrate),
             Box::new(create_custom_field::Migrate),
             Box::new(add_name_custom_fields::Migrate),
             Box::new(add_item_custom_fields::Migrate),

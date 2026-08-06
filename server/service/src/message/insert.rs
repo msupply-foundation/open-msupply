@@ -31,6 +31,9 @@ pub struct InsertMessage {
     /// The transfer id a by-record message is about (required when kind = BY_RECORD).
     pub record_id: Option<String>,
     pub record_kind: Option<String>,
+    /// The counterpart record on the recipient's side (spec messaging › related
+    /// records) — the sender supplies it so each store can open its own record.
+    pub linked_record_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -168,6 +171,7 @@ pub fn generate(
         sent_datetime: now,
         record_kind: input.record_kind,
         record_id: input.record_id,
+        linked_record_id: input.linked_record_id,
     };
 
     (group, recipients, message)
