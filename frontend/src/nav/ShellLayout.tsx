@@ -29,6 +29,7 @@ import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
 import { resolveStorePath } from '../store/StoreGuardLayout';
+import { reloadForUpdate, updateAvailable } from '../appUpdate';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
 // not with the shell (each vertical is its own lazy chunk).
@@ -162,6 +163,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setStoreEditOpen(true);
   };
 
+  // Update prompt (spec/chrome § update prompt, OMS-REG-FTR-02.15/.16): the
+  // footer cell only OFFERS the reload — reloading discards anything the user
+  // is part-way through, so a confirm gates it. Cancel leaves the session
+  // untouched and the cell stays; the app never reloads on its own.
+  const [updateConfirmOpen, setUpdateConfirmOpen] = createSignal(false);
+
   return (
     <>
       <AppShell
@@ -180,6 +187,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         email={authUser()?.email}
         onLogout={() => setLogoutConfirmOpen(true)}
         isCentralServer={isCentralServer()}
+        updateAvailable={updateAvailable()}
+        onUpdateClick={() => setUpdateConfirmOpen(true)}
       >
         <KeyboardHost
           onSyncOpen={openSync}
@@ -201,6 +210,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         title={t('heading.logout-confirm')}
         message={t('messages.logout-confirm')}
         onConfirm={() => void logout()}
+      />
+      <ConfirmDialog
+        open={updateConfirmOpen()}
+        onClose={() => setUpdateConfirmOpen(false)}
+        title={t('label.new-version-available')}
+        message={t('messages.new-version-reload-confirm')}
+        confirmLabel={t('button.refresh')}
+        onConfirm={reloadForUpdate}
       />
       <Show when={storeEditEverOpened()}>
         <StoreEditorModal

@@ -45,6 +45,13 @@ export const PRINT_LABEL_TEST_URL = '/print/label-test';
 // path is exercised against a real server.
 export const FRONTEND_PLUGINS_URL = '/frontend_plugins';
 
+// The served bundle's release manifest (spec/startup/contract.md § App
+// version): plain text, `version:`/`package:`/`commit:` lines, written by the
+// release pipeline at the dist root so it always names the ACTIVE bundle.
+// Deliberately NOT proxied in dev — the update watch that polls it is a dev
+// no-op (src/appUpdate.ts).
+export const VERSION_URL = '/VERSION.txt';
+
 export const DEFAULT_SYNC_INTERVAL_SECONDS = 300;
 // The current app's status-poll cadence (spec/sync-modal contract: ~2 s
 // while the surface is open and the live channel is down).
