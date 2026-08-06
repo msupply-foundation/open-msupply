@@ -1,0 +1,102 @@
+# The campaign register (spec/campaigns contract.md § listing campaigns).
+#
+# `campaigns` is the vertical's ONLY read — there is no single-campaign query,
+# and `CampaignsResponse` is a single-member union (CampaignConnector), so a
+# read failure is necessarily a top-level error and there is no error member to
+# select.
+#
+# `sort` is sent on EVERY read and always carries EXACTLY ONE entry: with no
+# sort the repository falls back to `id` ascending (not name), and a multi-entry
+# list silently resolves to its LAST entry. Both are recorded wire traps in
+# contract.md.
+#
+# `filter` is deliberately NOT a variable: `CampaignFilterInput.name` declares
+# `like` but the resolver ignores it, so the register offers no search or filter
+# at all (contract.md § backend gaps) and there is nothing for the client to
+# send. `storeId` is required but AUTHORISES only — it does not scope (the
+# campaign table has no store column), so it must never be read as a filter.
+query campaigns(
+  $storeId: String!
+  $sort: [CampaignSortInput!]
+  $page: PaginationInput
+) {
+  campaigns(storeId: $storeId, sort: $sort, page: $page) {
+    ... on CampaignConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        startDate
+        endDate
+      }
+    }
+  }
+}
+
+# Create AND edit — one mutation, no insert/update split (contract.md §
+# creating and editing a campaign). The id is CLIENT-supplied (a generated uuid
+# on create, the existing id on edit) and the server writes the row whole: every
+# field travels every time, so an omitted date CLEARS the stored one rather than
+# leaving it unchanged.
+#
+# Success is a bare `CampaignNode` (not a wrapper), so it is detected by
+# __typename. `UpsertCampaignErrorInterface` is implemented by
+# UniqueValueViolation / InternalError / DatabaseError only, and only the
+# interface's own `description` is selected: `UniqueValueViolation.field` is
+# deliberately NOT selected, because its `UniqueValueKey` can only ever be `name`
+# for this input (the campaign row has no other unique value), and naming that
+# member in an inline fragment makes codegen collapse the whole error type onto
+# it — the duplicate-name rejection is identified by `__typename` instead.
+#
+# The out-of-order-dates rejection has NO typed member: it arrives as a
+# top-level `Bad user input` whose `extensions.details` is "InvalidDates", which
+# is why the caller opts into returnGraphqlErrors.
+mutation upsertCampaign($input: UpsertCampaignInput!) {
+  centralServer {
+    campaign {
+      upsertCampaign(input: $input) {
+        __typename
+        ... on CampaignNode {
+          id
+          name
+          startDate
+          endDate
+        }
+        ... on UpsertCampaignError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Soft-delete one campaign (contract.md § deleting a campaign). There is NO bulk
+# operation, so deleting a selection is n independent calls with no surrounding
+# transaction — partial success is the contract, not an exception.
+#
+# `DeleteCampaignErrorInterface` is implemented by RecordNotFound and
+# DatabaseError only: there is deliberately no in-use error to declare, because
+# no in-use guard exists. RecordNotFound covers both a second delete of the same
+# campaign and an id that never existed.
+mutation deleteCampaign($input: DeleteCampaignInput!) {
+  centralServer {
+    campaign {
+      deleteCampaign(input: $input) {
+        __typename
+        ... on DeleteCampaignSuccess {
+          id
+        }
+        ... on DeleteCampaignError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
