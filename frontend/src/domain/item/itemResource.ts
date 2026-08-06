@@ -91,7 +91,15 @@ export const fetchItemById = async (
 };
 
 export const itemPageFetcher =
-  (storeId: string, excludeItemIds: () => string[], pageSize: number) =>
+  (
+    storeId: string,
+    excludeItemIds: () => string[],
+    pageSize: number,
+    // Narrow to items with stock on hand (the stock-movement line editor's
+    // item search — spec/stock-movements/ui-surface.md S3). Omitted = every
+    // item, today's behaviour for every other caller.
+    hasStockOnHand?: boolean
+  ) =>
   async (
     search: string,
     offset: number
@@ -103,6 +111,7 @@ export const itemPageFetcher =
         type: { equalTo: 'STOCK' },
         isActive: true,
         isVisible: true,
+        ...(hasStockOnHand !== undefined ? { hasStockOnHand } : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
       },
