@@ -106,6 +106,15 @@ describe('OMS-REG-SMV-09.11/.12/.13 — quantity bounds', () => {
     expect(packsInBounds(1, 30)).toBe(true);
     expect(packsInBounds(2.5, 30)).toBe(true);
   });
+
+  // A pack size of 1,000 leaves holdings like 1.003 available packs, so the
+  // ceiling is exact to more than two decimals. The editor's field once capped
+  // entry at 2 dp, which rounded 1.003 to 1.00 and made moving the WHOLE line
+  // impossible — its decimalLimit has to carry the batch's own precision.
+  it('accepts a ceiling carrying more than two decimals', () => {
+    expect(packsInBounds(1.003, 1.003)).toBe(true);
+    expect(packsInBounds(1.0031, 1.003)).toBe(false);
+  });
 });
 
 describe('save gate (ui-surface § S3)', () => {

@@ -390,7 +390,12 @@ export const StockMovementLineEditModal: Component<
                 data-testid="packs-to-move-input"
                 min={1}
                 max={batch().availableNumberOfPacks}
-                decimalLimit={2}
+                // Pack counts carry the batch's own precision (OMS f64), so a
+                // tighter cap here would round the seeded full-available value
+                // and make the upper bound unreachable — 1.003 available could
+                // only ever be typed as 1.00, so a whole line couldn't move
+                // (OMS-REG-SMV-09.11). Match OMS's 10-dp room.
+                decimalLimit={10}
                 value={packs()}
                 helperText={t('messages.move-all-or-partial', {
                   max: formatNumber(batch().availableNumberOfPacks),
