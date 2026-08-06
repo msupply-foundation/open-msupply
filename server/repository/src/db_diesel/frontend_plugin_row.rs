@@ -62,6 +62,7 @@ table! {
       entry_point -> Text,
       types -> Text,
       files -> Text,
+      plugin_api_version -> Nullable<Integer>,
   }
 }
 
@@ -80,6 +81,15 @@ pub struct FrontendPluginRow {
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
     pub files: FrontendPluginFiles,
+    /// The plugin-API integer this bundle was built against, or `None` for the
+    /// React/module-federation bundles which declare none — `None` means "old
+    /// UI only" (see `get_frontend_plugins_metadata`).
+    ///
+    /// `serde(default)` is what keeps sync backwards compatible in both
+    /// directions: a site that predates the column ignores the extra field on
+    /// the wire, and a row pushed without it arrives here as `None`.
+    #[serde(default)]
+    pub plugin_api_version: Option<i32>,
 }
 pub struct FrontendPluginRowRepository<'a> {
     connection: &'a StorageConnection,
