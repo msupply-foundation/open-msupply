@@ -37,6 +37,7 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
+import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
@@ -84,6 +85,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'dispensary/prescription': prescriptionsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
+  'manage/sites': sitesRoutes,
   help: helpRoutes,
   'manage/help-documents': helpDocumentsRoutes,
 };
