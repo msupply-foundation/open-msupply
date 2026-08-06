@@ -47,6 +47,7 @@ import { Button } from './ui/elements/buttons/Button';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
 import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
+import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
 import styles from './ui/styles/shared.module.css';
 
@@ -129,9 +130,15 @@ export const App: Component = () => {
     void runStartup();
     const stopTracking = startActivityTracking();
     const stopStaleBundleWatch = startStaleBundleWatch();
+    // The served-bundle watch runs for the app's whole life, pre-session
+    // included — the prompt itself only surfaces in the shell's bottom bar
+    // (spec/chrome § update prompt), but a change noticed on the login screen
+    // shows the moment the bar exists.
+    const stopUpdateWatch = startUpdateWatch();
     onCleanup(() => {
       stopTracking();
       stopStaleBundleWatch();
+      stopUpdateWatch();
     });
   });
 
