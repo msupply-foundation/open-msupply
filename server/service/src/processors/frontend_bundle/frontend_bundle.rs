@@ -3,7 +3,7 @@ use repository::{ChangelogRow, ChangelogTableName, KeyType};
 
 use crate::{
     cursor_controller::CursorType,
-    frontend_bundle::{best_usable_bundle, request_bundle_download},
+    frontend_bundle::{best_usable_bundle, request_bundle_download, DownloadRequest},
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
 };
@@ -49,19 +49,21 @@ impl Processor for RequestFrontendBundleDownload {
             return Ok(Some("No usable bundle for this server version".to_string()));
         };
 
-        let requested = request_bundle_download(ctx, &best)?;
-
-        Ok(Some(if requested {
-            format!(
+        Ok(Some(match request_bundle_download(ctx, &best)? {
+            DownloadRequest::Queued => format!(
                 "Requested download of bundle {} (for server {})",
                 best.version, best.server_version
-            )
-        } else {
-            // Not a failure: reconcile will pick it up once the reference lands.
-            format!(
+            ),
+            // Central, reacting to a bundle it published itself.
+            DownloadRequest::AuthoredHere => format!(
+                "Bundle {} was published here; no download needed",
+                best.version
+            ),
+            // Not a failure: reconcile asks again once the reference lands.
+            DownloadRequest::NoFileReference => format!(
                 "Bundle {} has no file reference yet; reconcile will request it",
                 best.version
-            )
+            ),
         }))
     }
 

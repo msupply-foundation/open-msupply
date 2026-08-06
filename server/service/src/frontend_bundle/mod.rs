@@ -249,18 +249,28 @@ pub fn best_usable_bundle(
     Ok(best)
 }
 
+/// Outcome of asking for a bundle's bytes.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum DownloadRequest {
+    /// Queued for the file sync driver to fetch.
+    Queued,
+    /// This site produced the bytes, so there is nothing to fetch. Central publishing its
+    /// own bundle lands here.
+    AuthoredHere,
+    /// The bundle record arrived ahead of its file reference — they are separate changelog
+    /// rows and can land in different pull batches. Not an error; the next reconcile asks
+    /// again.
+    NoFileReference,
+}
+
 /// Mark a bundle's bytes as wanted, putting them in the background download queue.
 ///
 /// Idempotent, so it is safe for both callers (the changelog processor, for promptness, and
 /// [`reconcile_active_bundle`], as the guarantee) to call it repeatedly.
-///
-/// `false` means the bundle's file reference hasn't arrived yet — the record and the
-/// reference are separate changelog rows and can land in different pull batches. Not an
-/// error: the next reconcile requests it.
 pub(crate) fn request_bundle_download(
     ctx: &ServiceContext,
     bundle: &FrontendBundleRow,
-) -> Result<bool, RepositoryError> {
+) -> Result<DownloadRequest, RepositoryError> {
     let file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
 
     let Some(reference) = file_repo
@@ -268,11 +278,20 @@ pub(crate) fn request_bundle_download(
         .into_iter()
         .find(|r| r.table_name == FRONTEND_BUNDLE_TABLE)
     else {
-        return Ok(false);
+        return Ok(DownloadRequest::NoFileReference);
     };
 
+    // Central publishes with direction Upload, meaning "these bytes originate here". The
+    // download queue filters on direction, so a marker set here could never be acted on —
+    // but it would still be written, and both callers would announce a download that is
+    // never going to happen. Central logging "Requested download of bundle X" for a bundle
+    // it just published itself is confusing enough to be worth this guard.
+    if reference.direction == SyncFileDirection::Upload {
+        return Ok(DownloadRequest::AuthoredHere);
+    }
+
     file_repo.request_download(&reference.id)?;
-    Ok(true)
+    Ok(DownloadRequest::Queued)
 }
 
 /// Decide which bundle this server should be serving and make it so.
@@ -317,8 +336,8 @@ pub fn reconcile_active_bundle(
             // before the file reference has arrived, whereas this runs at startup and
             // after every download pass until the bundle is actually here.
             match request_bundle_download(ctx, &best) {
-                Ok(true) => {}
-                Ok(false) => log::debug!(
+                Ok(DownloadRequest::Queued) | Ok(DownloadRequest::AuthoredHere) => {}
+                Ok(DownloadRequest::NoFileReference) => log::debug!(
                     "Front-end bundle {} has no file reference yet",
                     best.version
                 ),
@@ -1083,7 +1102,10 @@ mod test {
         FrontendBundleRowRepository::new(&ctx.connection)
             .upsert_one(&bundle)
             .unwrap();
-        assert!(!request_bundle_download(ctx, &bundle).unwrap());
+        assert_eq!(
+            request_bundle_download(ctx, &bundle).unwrap(),
+            DownloadRequest::NoFileReference
+        );
 
         // The reference arrives later, with no further bundle-record change behind it.
         let file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
@@ -1119,6 +1141,41 @@ mod test {
             vec![reference.id],
             "reconcile must queue the bundle the processor could not"
         );
+    }
+
+    /// Central publishes its own bundle, so it holds the bytes already. Asking to download
+    /// them would stamp a marker the queue can never act on (it filters on direction) and
+    /// make central log a download it is never going to perform.
+    #[actix_rt::test]
+    async fn a_bundle_published_here_is_not_queued_for_download() {
+        let context = setup_all_and_service_provider(
+            "a_bundle_published_here_is_not_queued_for_download",
+            MockDataInserts::none(),
+        )
+        .await;
+        let ctx = &context.service_context;
+
+        let dist_dir = tempfile::tempdir().unwrap();
+        let base_dir = tempfile::tempdir().unwrap();
+        write_dist(dist_dir.path(), "v1.0.0");
+        let settings = settings_for(&context, dist_dir.path(), base_dir.path());
+
+        let bundle = publish_from_frontend_dir(ctx, &settings)
+            .unwrap()
+            .row()
+            .clone();
+
+        assert_eq!(
+            request_bundle_download(ctx, &bundle).unwrap(),
+            DownloadRequest::AuthoredHere
+        );
+
+        // Nothing queued, and no marker left behind on central's own reference.
+        let file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+        assert!(file_repo.find_all_to_download(100).unwrap().is_empty());
+        assert!(file_repo.find_all_by_record_id(&bundle.id).unwrap()[0]
+            .download_requested_datetime
+            .is_none());
     }
 
     #[actix_rt::test]
