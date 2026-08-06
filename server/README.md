@@ -26,6 +26,21 @@ the result in `server/frontend/old-ui`, where a server run from `server/` serves
 it. Packaging does the same two steps itself, since each pipeline copies to its
 own destination.
 
+### Getting both UIs in place locally
+
+From the repo root:
+
+```sh
+yarn fetch-frontend          # new FE (the pin) -> server/frontend
+cd client && yarn build:old-ui   # old UI -> server/frontend/old-ui
+```
+
+`fetch-frontend` defaults to the public B2 mirror, so it needs no GitHub token
+even though the FE repo is private; the pin's `sha256` is enforced either way.
+Note it **replaces** `server/frontend` wholesale, and that directory is
+gitignored — so it is shared across every branch in your checkout, not per
+branch.
+
 ### Pinned frontend dist (new FE at `/`)
 
 The new frontend lives in a separate repo,
