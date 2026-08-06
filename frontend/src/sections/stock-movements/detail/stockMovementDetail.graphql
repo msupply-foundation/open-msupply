@@ -1,0 +1,87 @@
+fragment StockMovementInfo on StockRelocationNode {
+  id
+  stockMovementNumber
+  status
+  createdDatetime
+  confirmedDatetime
+  finalisedDatetime
+  comment
+  lineCount
+  user {
+    username
+    email
+  }
+}
+
+fragment StockMovementLine on StockRelocationLineNode {
+  id
+  stockLineId
+  numberOfPacks
+  sourceLocation {
+    id
+    code
+  }
+  destinationLocation {
+    id
+    code
+  }
+  stockLine {
+    id
+    itemId
+    itemName
+    batch
+    expiryDate
+    packSize
+    totalNumberOfPacks
+    item {
+      id
+      code
+    }
+  }
+}
+
+query StockMovementDetail($storeId: String!, $id: String!) {
+  stockRelocation(storeId: $storeId, id: $id) {
+    __typename
+    ... on StockRelocationNode {
+      ...StockMovementInfo
+      lines {
+        nodes {
+          ...StockMovementLine
+        }
+      }
+    }
+    ... on RecordNotFound {
+      description
+    }
+  }
+}
+
+mutation UpdateStockMovement($storeId: String!, $input: UpdateStockRelocationInput!) {
+  updateStockRelocation(storeId: $storeId, input: $input) {
+    __typename
+    ... on StockRelocationNode {
+      ...StockMovementInfo
+    }
+    ... on UpdateStockRelocationError {
+      error {
+        __typename
+        description
+        ... on NotEnoughStock {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+      }
+    }
+  }
+}
+
+mutation DeleteStockMovement($storeId: String!, $input: DeleteStockRelocationInput!) {
+  deleteStockRelocation(storeId: $storeId, input: $input) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
