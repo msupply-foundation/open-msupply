@@ -62,12 +62,15 @@ type StockMovementsListState = {
   first: number;
 };
 
-// Default sort: created, newest first (ui-surface S1 § columns). The Number
-// filter is the DEFAULT chip (ui-surface S1 § filters) — seeded present-but-
-// empty (null), FilterBar's "added but empty" marker, so the chip shows
-// without constraining the query (stripEmpty drops it from the wire).
+// Default sort: created, newest first (ui-surface S1 § columns). The STATUS
+// filter is the DEFAULT chip (ui-surface S1 § filters; D96 — reviewing a
+// store's movements starts from "what still needs attention", where the
+// number filter's exact match only helps someone who knows the number) —
+// seeded present-but-empty (null), FilterBar's "added but empty" marker, so
+// the chip shows without constraining the query (stripEmpty drops it from the
+// wire).
 const DEFAULT_STATE: StockMovementsListState = {
-  filter: { stockMovementNumber: null },
+  filter: { status: null },
   sort: [{ key: 'createdDatetime', desc: true }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
