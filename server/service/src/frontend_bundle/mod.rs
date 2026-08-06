@@ -202,6 +202,25 @@ pub fn set_active(
     Ok(updated)
 }
 
+/// Parse a version string that may carry the front end's `v` tag prefix.
+///
+/// The front-end repo releases tags like `v0.0.231`, and that string is what lands in
+/// `frontend_bundle.version`. `Version::from_str` splits on `.` and parses each part as a
+/// number, so a leading `v` makes the **major** component fail to parse and silently
+/// become 0 (`unwrap_or(0)`). Every v-prefixed version would then compare as major 0,
+/// which breaks ordering across major versions: `v1.0.0` parses as `0.0.0` and would rank
+/// *below* `v0.0.231`'s `0.0.231`, so the front end's move to 1.0.0 would look like a
+/// downgrade and no site would advance to it.
+///
+/// Stripping the prefix at the point of comparison keeps the stored string faithful to the
+/// real release tag, rather than normalising it on the way in and having the record
+/// disagree with the tag, `VERSION.txt` and the unpack directory. It also leaves shared
+/// `Version::from_str` alone — migrations, reports and plugins are all unprefixed, and
+/// that parser is load-bearing for migration ordering.
+pub(crate) fn parse_version(raw: &str) -> Version {
+    Version::from_str(raw.strip_prefix(['v', 'V']).unwrap_or(raw))
+}
+
 /// The bundle this site should be running: of those that are active and compatible with
 /// this server, the highest version.
 ///
@@ -223,9 +242,9 @@ pub fn best_usable_bundle(
         .into_iter()
         .filter(|bundle| bundle.is_active)
         .filter(|bundle| {
-            Version::from_str(&bundle.server_version).is_compatible_by_major_and_minor(&app_version)
+            parse_version(&bundle.server_version).is_compatible_by_major_and_minor(&app_version)
         })
-        .max_by(|a, b| Version::from_str(&a.version).cmp(&Version::from_str(&b.version)));
+        .max_by(|a, b| parse_version(&a.version).cmp(&parse_version(&b.version)));
 
     Ok(best)
 }
@@ -887,6 +906,81 @@ mod test {
                 .and_hms_opt(9, 0, 0)
                 .unwrap(),
         }
+    }
+
+    #[test]
+    fn parse_version_tolerates_the_front_end_tag_prefix() {
+        // The front-end repo releases `v`-prefixed tags, and that string is what lands in
+        // frontend_bundle.version. Version::from_str parses each dot-separated part as a
+        // number and falls back to 0 on failure, so a leading `v` silently zeroes the
+        // *major* component.
+        assert_eq!(parse_version("v1.2.3"), Version::from_str("1.2.3"));
+        assert_eq!(parse_version("V1.2.3"), Version::from_str("1.2.3"));
+        assert_eq!(parse_version("1.2.3"), Version::from_str("1.2.3"));
+
+        // The case that matters, and the one that is imminent: the front end moving from
+        // the 0.0.x line to 1.0.0. Parsed naively, `v1.0.0` becomes 0.0.0 and ranks below
+        // `v0.0.231`'s 0.0.231 — the new release would look like a downgrade and no site
+        // would take it.
+        assert!(
+            parse_version("v1.0.0") > parse_version("v0.0.231"),
+            "the move to 1.0.0 must not read as a downgrade"
+        );
+        assert!(parse_version("v2.0.0") > parse_version("v1.10.0"));
+    }
+
+    /// Ordering must hold across a major-version boundary with the real tag format.
+    #[actix_rt::test]
+    async fn selection_orders_v_prefixed_versions_correctly() {
+        let context = setup_all_and_service_provider(
+            "selection_orders_v_prefixed_versions_correctly",
+            MockDataInserts::none(),
+        )
+        .await;
+        let connection = &context.service_context.connection;
+        let repo = FrontendBundleRowRepository::new(connection);
+        let this_server = Version::from_package_json().to_string();
+
+        // Exactly the shape of a real pin: the 0.0.x line, then the move to 1.0.0.
+        repo.upsert_one(&bundle_row("v0.0.231", &this_server, true))
+            .unwrap();
+        repo.upsert_one(&bundle_row("v1.0.0", &this_server, true))
+            .unwrap();
+
+        assert_eq!(
+            best_usable_bundle(connection).unwrap().map(|b| b.version),
+            Some("v1.0.0".to_string())
+        );
+    }
+
+    /// A `v`-prefixed server_version (possible via manual upload, where an admin types it)
+    /// must not zero its major component and silently pass or fail the compatibility check
+    /// for the wrong reason.
+    #[actix_rt::test]
+    async fn compatibility_tolerates_a_v_prefixed_server_version() {
+        let context = setup_all_and_service_provider(
+            "compatibility_tolerates_a_v_prefixed_server_version",
+            MockDataInserts::none(),
+        )
+        .await;
+        let connection = &context.service_context.connection;
+        let repo = FrontendBundleRowRepository::new(connection);
+
+        let app_version = Version::from_package_json();
+        let future_server = format!("v{}.0.0", app_version.major + 1);
+
+        // Built for a newer server, written with the prefix: still must be rejected.
+        repo.upsert_one(&bundle_row("v9.0.0", &future_server, true))
+            .unwrap();
+        assert_eq!(best_usable_bundle(connection).unwrap(), None);
+
+        // Built for this server, with the prefix: accepted.
+        repo.upsert_one(&bundle_row("v1.0.0", &format!("v{}", app_version), true))
+            .unwrap();
+        assert_eq!(
+            best_usable_bundle(connection).unwrap().map(|b| b.version),
+            Some("v1.0.0".to_string())
+        );
     }
 
     #[actix_rt::test]

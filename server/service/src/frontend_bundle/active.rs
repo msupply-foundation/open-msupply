@@ -271,7 +271,7 @@ pub fn prune_unpacked(base_dir: &str, keep_first: Option<&str>, known: &[Fronten
         known
             .iter()
             .find(|b| dir_name_for(&b.version).ok().as_deref() == Some(name.as_str()))
-            .map(|b| repository::migrations::Version::from_str(&b.version))
+            .map(|b| super::parse_version(&b.version))
     };
     present.sort_by(|a, b| rank(b).cmp(&rank(a)));
 
