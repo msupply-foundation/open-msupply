@@ -77,6 +77,20 @@ export const dialogMetadata: PageMetadata = {
       searchTerms: ['wide', 'edit lines', 'size large'],
     },
     {
+      id: 'dialog-sizes',
+      title: 'All sizes × screen width',
+      searchTerms: [
+        'responsive',
+        'full screen',
+        'fullscreen',
+        'tablet',
+        'size full',
+        'sheet',
+        'breakpoint',
+        'matrix',
+      ],
+    },
+    {
       id: 'dialog-store-selector',
       title: 'Store selector',
       searchTerms: ['store', 'blocking', 'choose'],
@@ -100,6 +114,18 @@ export const DialogShowcase = () => {
     ]);
   const [storeOpen, setStoreOpen] = createSignal(false);
   const [chosen, setChosen] = createSignal('');
+  // Which sizing option the all-sizes matrix card has open (undefined = closed).
+  const [sizeDemo, setSizeDemo] = createSignal<
+    'default' | 'rem' | 'prose' | 'form' | 'wide' | 'large' | 'full'
+  >();
+  const demoMeasure = () => {
+    const d = sizeDemo();
+    return d === 'prose' || d === 'form' || d === 'wide' ? d : undefined;
+  };
+  const demoSize = () => {
+    const d = sizeDemo();
+    return d === 'large' || d === 'full' ? d : undefined;
+  };
 
   return (
     <ContentContainer size="form" align="start">
@@ -344,6 +370,112 @@ export const DialogShowcase = () => {
                 )}
               </For>
             </div>
+          </Dialog>
+        </DashboardCard>
+
+        <DashboardCard
+          id="dialog-sizes"
+          title="All sizes × screen width — the responsive matrix"
+        >
+          <Lead>
+            Every sizing option in one place, for checking the responsive rule
+            (spec ui-standards › components › Modal dialog). A dialog's size
+            picks its frame <strong>above</strong> the narrow-viewport line
+            (breakpoints.ts › navOverlay, 1024px): <code>default</code> and{' '}
+            <code>widthRem</code> are centred cards at their number, a{' '}
+            <code>width</code> measure is a card at the shared measure,{' '}
+            <code>size="large"</code> is a 56rem working card, and{' '}
+            <code>size="full"</code> is a sheet filling the viewport bar a 2rem
+            gutter. <strong>Below</strong> the line, the page-sized options —
+            the three measures and both workbench sizes — expand to true full
+            screen: 100vw × 100vh, no margin, no radius (#918);{' '}
+            <code>default</code> and <code>widthRem</code> stay centred cards,
+            since a confirmation was never wide enough to feel cramped. Resize
+            the window across 1024px <em>with a dialog open</em> and watch it
+            flip live.
+          </Lead>
+          <Row>
+            <Button variant="secondary" onClick={() => setSizeDemo('default')}>
+              default
+            </Button>
+            <Button variant="secondary" onClick={() => setSizeDemo('rem')}>
+              widthRem={'{34}'}
+            </Button>
+            <For each={['prose', 'form', 'wide'] as const}>
+              {measure => (
+                <Button
+                  variant="secondary"
+                  onClick={() => setSizeDemo(measure)}
+                >
+                  width="{measure}"
+                </Button>
+              )}
+            </For>
+            <For each={['large', 'full'] as const}>
+              {size => (
+                <Button variant="secondary" onClick={() => setSizeDemo(size)}>
+                  size="{size}"
+                </Button>
+              )}
+            </For>
+          </Row>
+          <Dialog
+            open={sizeDemo() !== undefined}
+            onClose={() => setSizeDemo(undefined)}
+            title={`Dialog — ${
+              demoSize()
+                ? `size="${demoSize() ?? ''}"`
+                : demoMeasure()
+                  ? `width="${demoMeasure() ?? ''}"`
+                  : sizeDemo() === 'rem'
+                    ? 'widthRem={34}'
+                    : 'default'
+            }`}
+            width={demoMeasure()}
+            widthRem={sizeDemo() === 'rem' ? 34 : undefined}
+            size={demoSize()}
+            actions={
+              <>
+                <CancelButton onClick={() => setSizeDemo(undefined)} />
+                <DialogSaveButton onClick={() => setSizeDemo(undefined)} />
+              </>
+            }
+          >
+            {/* Workbench sizes get tall line-list content (their reason to
+                exist); the card sizes get the two-column form. */}
+            <Show
+              when={demoSize()}
+              fallback={
+                <FormColumns>
+                  <FormColumn>
+                    <FormSection title="Patient details">
+                      <TextField label="First name" width="full" />
+                      <TextField label="Last name" width="full" />
+                    </FormSection>
+                  </FormColumn>
+                  <FormColumn>
+                    <FormSection title="Contact">
+                      <TextField label="Address" width="full" />
+                      <TextField label="Phone" width="full" />
+                    </FormSection>
+                  </FormColumn>
+                </FormColumns>
+              }
+            >
+              <div class={styles.workbench}>
+                <For each={WORKBENCH_ROWS}>
+                  {line => (
+                    <div class={styles.workbenchRow}>
+                      <span class={styles.workbenchCode}>{line.code}</span>
+                      <span class={styles.workbenchName}>{line.name}</span>
+                      <span class={styles.workbenchPacks}>
+                        {line.packs} packs
+                      </span>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </Show>
           </Dialog>
         </DashboardCard>
 

@@ -90,8 +90,12 @@
    empty full-screen box.
 
    Specificity beats .large; width is set outright (not through --dialog-width) so a
-   caller's pre-pick widthRem can't reach it. */
-.dialog.large.bleed {
+   caller's pre-pick widthRem can't reach it. Guarded off data-fullscreen: three classes
+   outrank .dialog[data-fullscreen]'s two selectors, so without the :not() these caps
+   would beat the full-screen width/height below the narrow-viewport line — pinned
+   top-left by fullscreen's margin:0, the whole 4rem gutter landed on the right/bottom
+   edge (#918's tablet gap). */
+.dialog.large.bleed:not([data-fullscreen]) {
   width: calc(100vw - 4rem);
   max-block-size: calc(100vh - 4rem);
 }
