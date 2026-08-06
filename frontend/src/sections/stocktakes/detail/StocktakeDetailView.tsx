@@ -208,13 +208,13 @@ const StocktakeDetailView: Component = () => {
         // Hidden by default (the user reveals them via the column-visibility
         // control) — the spec's "hidden by default" set for the detail line
         // table (spec/stocktakes S3), which mirrors OMS's defaultHideOnMobile
-        // columns. Snapshot / Counted / Difference / Reason / Comment stay
-        // visible. Gated columns (dosesPerUnit / donor) only appear in the
-        // table at all when their store preference is on; this sets their
-        // initial visibility once present.
+        // columns, minus Location, which stays visible so stock placement is
+        // seen without reconfiguring. Snapshot / Counted / Difference / Reason
+        // / Comment stay visible. Gated columns (dosesPerUnit / donor) only
+        // appear in the table at all when their store preference is on; this
+        // sets their initial visibility once present.
         columnVisibility: {
           manufactureDate: false,
-          location: false,
           itemUnit: false,
           packSize: false,
           dosesPerUnit: false,
