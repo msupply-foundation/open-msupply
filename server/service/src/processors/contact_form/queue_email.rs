@@ -171,6 +171,7 @@ fn create_email(
         subject,
         html_body: html_body.clone(),
         text_body: html2text(&html_body),
+        attachment_paths: vec![],
     };
 
     Ok(email)

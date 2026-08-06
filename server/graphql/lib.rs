@@ -527,6 +527,7 @@ async fn graphql_ws(
                 data.insert(RequestUserData {
                     auth_token,
                     override_user_id: None,
+                    client_ip: None,
                 });
             }
             Ok(data)
@@ -631,6 +632,7 @@ impl ExecuteGraphql for PluginExecuteGraphql {
             .data(RequestUserData {
                 override_user_id: Some(override_user_id.to_string()),
                 auth_token: None,
+                client_ip: None,
             });
         let response = self.0.operational.execute(request).await;
         // Response is either success with data field populated or error with errors field populated

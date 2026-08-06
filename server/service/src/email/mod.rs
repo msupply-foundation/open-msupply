@@ -20,11 +20,13 @@ use crate::settings::MailSettings;
 pub mod enqueue;
 pub mod send;
 
-pub static MAX_RETRIES: i32 = 3;
-pub static RETRY_DELAY_SECS: u64 = 900; // 15 mins - Doubles each retry
+pub static RETRY_DELAY_SECS: u64 = 900; // 15 mins - Doubles each retry...
+pub static MAX_RETRY_DELAY_SECS: u64 = 3600; // ...capped at 60 mins (retries indefinitely until online)
 pub static TIMEOUT_MS: u64 = 30_000; // 30 seconds
 
 pub trait EmailServiceTrait: Send + Sync {
+    fn is_configured(&self) -> bool;
+
     fn test_connection(&self) -> Result<bool, EmailServiceError>;
 
     fn send_queued_emails(&self, ctx: &ServiceContext) -> Result<usize, EmailServiceError>;
@@ -102,6 +104,10 @@ impl EmailService {
 }
 
 impl EmailServiceTrait for EmailService {
+    fn is_configured(&self) -> bool {
+        self.service.is_some()
+    }
+
     fn test_connection(&self) -> Result<bool, EmailServiceError> {
         match &self.service {
             None => Err(EmailServiceError::NotConfigured),
@@ -137,6 +143,12 @@ impl EmailServiceTrait for EmailService {
 
         for mut email in queued_emails {
             let email_clone = email.clone();
+            // JSON array of file paths; a missing/unparseable value means no attachments
+            let attachment_paths: Vec<String> = email_clone
+                .attachment_paths
+                .as_deref()
+                .and_then(|paths| serde_json::from_str(paths).ok())
+                .unwrap_or_default();
             let result = send_email(
                 &mail_service.mailer,
                 mail_service.from.clone(),
@@ -144,6 +156,7 @@ impl EmailServiceTrait for EmailService {
                 email_clone.subject,
                 email_clone.html_body,
                 email_clone.text_body,
+                &attachment_paths,
             );
 
             match result {
@@ -160,19 +173,7 @@ impl EmailServiceTrait for EmailService {
                     // Failed to send
                     email.updated_at = Utc::now().naive_utc();
 
-                    if email.retries >= MAX_RETRIES {
-                        log::error!(
-                            "Failed to send email {} to {} after {} retries - {:?}",
-                            email.id,
-                            email.to_address,
-                            MAX_RETRIES,
-                            send_error
-                        );
-                        email.error = Some(format!(
-                            "Failed to send email after {MAX_RETRIES} retries - {send_error:?}"
-                        ));
-                        email.status = EmailQueueStatus::Failed;
-                    } else if send_error.is_permanent() {
+                    if send_error.is_permanent() {
                         log::error!(
                             "Permanently failed to send email {} to {}",
                             email.id,
@@ -181,21 +182,24 @@ impl EmailServiceTrait for EmailService {
                         email.error = Some(format!("{send_error:?}"));
                         email.status = EmailQueueStatus::Failed;
                     } else {
-                        log::error!(
-                            "Temporarily failed to send email {} to {} - {:?}",
+                        // Transient failure (e.g. offline): retry indefinitely, with the
+                        // delay doubling per retry up to a cap, so queued emails are sent
+                        // once connectivity returns
+                        log::warn!(
+                            "Temporarily failed to send email {} to {} (retry {}) - {:?}",
                             email.id,
                             email.to_address,
+                            email.retries,
                             send_error
                         );
                         email.error = Some(format!("{send_error:?}"));
                         email.status = EmailQueueStatus::Errored;
 
-                        email.retry_at = Some(
-                            Utc::now().naive_utc()
-                                + Duration::from_secs(
-                                    RETRY_DELAY_SECS * u64::pow(2, email.retries as u32),
-                                ),
-                        );
+                        let delay_secs = RETRY_DELAY_SECS
+                            .saturating_mul(2u64.saturating_pow(email.retries.clamp(0, 16) as u32))
+                            .min(MAX_RETRY_DELAY_SECS);
+                        email.retry_at =
+                            Some(Utc::now().naive_utc() + Duration::from_secs(delay_secs));
                         email.retries += 1;
                     }
 
@@ -216,6 +220,127 @@ impl EmailServiceTrait for EmailService {
         log::debug!("Sent {sent_count} emails");
 
         Ok(sent_count)
+    }
+}
+
+#[cfg(test)]
+mod retry_test {
+    use super::*;
+    use crate::email::enqueue::{enqueue_email, EnqueueEmailData};
+    use crate::ledger_fix::ledger_fix_driver::LedgerFixTrigger;
+    use crate::processors::ProcessorsTrigger;
+    use crate::service_provider::ServiceProvider;
+    use crate::settings::MailSettings;
+    use crate::subscription::SubscriptionTriggerHandle;
+    use crate::sync::synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger};
+    use repository::email_queue_row::EmailQueueRow;
+    use repository::mock::MockDataInserts;
+    use repository::test_db::setup_all;
+
+    fn dead_smtp_service_provider(
+        connection_manager: repository::StorageConnectionManager,
+    ) -> ServiceProvider {
+        // Nothing listens on this port: sends fail with a transient
+        // (connection) error, simulating an offline server
+        ServiceProvider::new_with_triggers(
+            connection_manager,
+            ProcessorsTrigger::new_void(),
+            SyncTrigger::new_void(),
+            LedgerFixTrigger::new_void(),
+            SiteIsInitialisedTrigger::new_void(),
+            Some(MailSettings {
+                port: 19999,
+                host: "localhost".to_string(),
+                starttls: false,
+                username: "".to_string(),
+                password: "".to_string(),
+                from: "no-reply@msupply.foundation".to_string(),
+                interval: 1,
+            }),
+            None,
+            SubscriptionTriggerHandle::new_void(),
+            crate::sync::settings::BatchSize::default(),
+            false,
+            false,
+        )
+    }
+
+    #[actix_rt::test]
+    async fn transient_send_errors_retry_indefinitely() {
+        let (_, _, connection_manager, _) = setup_all(
+            "transient_send_errors_retry_indefinitely",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = dead_smtp_service_provider(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let repo = EmailQueueRowRepository::new(&ctx.connection);
+
+        let email = enqueue_email(
+            &ctx.connection,
+            EnqueueEmailData {
+                to_address: "support@example.com".to_string(),
+                subject: "subject".to_string(),
+                html_body: "<p>body</p>".to_string(),
+                text_body: "body".to_string(),
+                attachment_paths: vec![],
+            },
+        )
+        .unwrap();
+
+        // First attempt: transient failure -> Errored with a future retry_at
+        assert!(service_provider.email_service.send_queued_emails(&ctx).is_err());
+        let row = repo.find_one_by_id(&email.id).unwrap().unwrap();
+        assert_eq!(row.status, EmailQueueStatus::Errored);
+        assert_eq!(row.retries, 1);
+        assert!(row.retry_at.unwrap() > Utc::now().naive_utc());
+
+        // Far past the old 3-retry cap: still retries (never Failed), delay capped
+        let many_retries = EmailQueueRow {
+            retries: 50,
+            retry_at: Some(Utc::now().naive_utc() - chrono::Duration::seconds(1)),
+            ..row
+        };
+        repo.upsert_one(&many_retries).unwrap();
+
+        assert!(service_provider.email_service.send_queued_emails(&ctx).is_err());
+        let row = repo.find_one_by_id(&email.id).unwrap().unwrap();
+        assert_eq!(row.status, EmailQueueStatus::Errored);
+        assert_eq!(row.retries, 51);
+        let delay = row.retry_at.unwrap() - Utc::now().naive_utc();
+        assert!(delay.num_seconds() <= MAX_RETRY_DELAY_SECS as i64 + 60);
+    }
+
+    #[actix_rt::test]
+    async fn permanent_send_errors_fail_immediately() {
+        let (_, _, connection_manager, _) = setup_all(
+            "permanent_send_errors_fail_immediately",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = dead_smtp_service_provider(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let repo = EmailQueueRowRepository::new(&ctx.connection);
+
+        // Unparseable address -> permanent error -> Failed on the first attempt
+        let email = enqueue_email(
+            &ctx.connection,
+            EnqueueEmailData {
+                to_address: "not-an-email".to_string(),
+                subject: "subject".to_string(),
+                html_body: "<p>body</p>".to_string(),
+                text_body: "body".to_string(),
+                attachment_paths: vec![],
+            },
+        )
+        .unwrap();
+
+        assert!(service_provider.email_service.send_queued_emails(&ctx).is_err());
+        let row = repo.find_one_by_id(&email.id).unwrap().unwrap();
+        assert_eq!(row.status, EmailQueueStatus::Failed);
+        assert_eq!(row.retries, 0);
     }
 }
 
@@ -251,6 +376,8 @@ mod email_test {
                 from: "no-reply@msupply.foundation".to_string(),
                 interval: 1,
             }),
+            None,
+            crate::subscription::SubscriptionTriggerHandle::new_void(),
         );
         let email_service = service_provider.email_service;
         let test = email_service.test_connection().unwrap();

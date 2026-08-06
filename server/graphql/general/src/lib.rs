@@ -43,6 +43,10 @@ use mutations::{
     },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
+    bug_report::{insert_bug_report, InsertBugReportInput, InsertBugReportResponse},
+    support_email::{
+        update_support_email, UpdateSupportEmailInput, UpdateSupportEmailResponse,
+    },
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
     update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
@@ -465,6 +469,12 @@ impl GeneralQueries {
         label_printer_settings(ctx)
     }
 
+    /// Configured support email for bug reports, null when unset (the server
+    /// falls back to the built-in support address)
+    pub async fn support_email(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        support_email(ctx)
+    }
+
     pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
         name_properties(ctx)
     }
@@ -625,6 +635,26 @@ impl GeneralMutations {
         input: LabelPrinterSettingsInput,
     ) -> Result<UpdateLabelPrinterSettingsResponse> {
         update_label_printer_settings(ctx, input)
+    }
+
+    pub async fn update_support_email(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateSupportEmailInput,
+    ) -> Result<UpdateSupportEmailResponse> {
+        update_support_email(ctx, input)
+    }
+
+    /// Captures a bug report (description + metadata + screenshot + server
+    /// logs + optional database snapshot) and queues it as an email to the
+    /// configured support address
+    pub async fn insert_bug_report(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertBugReportInput,
+    ) -> Result<InsertBugReportResponse> {
+        insert_bug_report(ctx, &store_id, input)
     }
 
     pub async fn update_name_properties(

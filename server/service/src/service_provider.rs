@@ -31,7 +31,9 @@ use crate::{
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
+    bug_report::BugReportServiceTrait,
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
+    support_email_service::SupportEmailServiceTrait,
     ledger_fix::ledger_fix_driver::LedgerFixTrigger,
     localisations::LocalisationsService,
     location::{LocationService, LocationServiceTrait},
@@ -177,6 +179,10 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    // Support email (bug reports)
+    pub support_email_service: Box<dyn SupportEmailServiceTrait>,
+    // Bug report
+    pub bug_report_service: Box<dyn BugReportServiceTrait>,
     // Demographic
     pub demographic_service: Box<dyn DemographicServiceTrait>,
     // Vaccine Course
@@ -329,6 +335,10 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            support_email_service: Box::new(
+                crate::support_email_service::SupportEmailService {},
+            ),
+            bug_report_service: Box::new(crate::bug_report::BugReportService {}),
             name_service: Box::new(NameService {}),
             demographic_service: Box::new(crate::demographic::DemographicService {}),
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),

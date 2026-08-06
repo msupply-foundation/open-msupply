@@ -43,6 +43,7 @@ pub trait ContextExt {
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
     fn get_override_user_id(&self) -> Option<String>;
+    fn get_client_ip(&self) -> Option<String>;
     fn self_request(&self) -> Option<&BoxedSelfRequest>;
     fn get_settings(&self) -> &Settings;
     fn get_validated_plugins(&self) -> &Mutex<ValidatedPluginBucket>;
@@ -77,6 +78,11 @@ impl<'a> ContextExt for Context<'a> {
             .and_then(|d| d.override_user_id.to_owned())
     }
 
+    fn get_client_ip(&self) -> Option<String> {
+        self.data_opt::<RequestUserData>()
+            .and_then(|d| d.client_ip.to_owned())
+    }
+
     fn get_settings(&self) -> &Settings {
         self.data_unchecked::<Data<Settings>>()
     }
@@ -104,6 +110,8 @@ pub struct RequestUserData {
     // Used for self execution of graphql queries for plugins
     pub override_user_id: Option<String>,
     pub auth_token: Option<String>,
+    // IP the request came from, as seen by the server (respects X-Forwarded-For)
+    pub client_ip: Option<String>,
 }
 
 /// Extracts the session token from the request. Reads `Authorization: Bearer …` first (used by
@@ -117,9 +125,16 @@ pub fn auth_data_from_request(http_req: &HttpRequest, cookie_suffix: &str) -> Re
         .and_then(|header| header.strip_prefix("Bearer ").map(|t| t.to_string()))
         .or_else(|| session_cookie_value(http_req, cookie_suffix));
 
+    let connection_info = http_req.connection_info();
+    let client_ip = connection_info
+        .realip_remote_addr()
+        .map(str::to_string)
+        .or(http_req.peer_addr().map(|addr| addr.to_string()));
+
     RequestUserData {
         auth_token,
         override_user_id: None,
+        client_ip,
     }
 }
 

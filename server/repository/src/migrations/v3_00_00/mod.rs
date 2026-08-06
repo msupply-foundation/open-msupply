@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_changelog_dedup_cursor_key_type;
 mod add_custom_field_sort_order;
+mod add_email_queue_attachment_paths;
 mod add_invoice_custom_fields;
 mod add_is_standalone_central_pg_enum;
 mod add_item_custom_fields;
@@ -13,6 +14,7 @@ mod add_site_is_multi_device_pg_enum;
 mod add_site_multi_device;
 mod add_site_sync_metadata;
 mod add_site_sync_version;
+mod add_support_email_key_value_store;
 mod add_sync_batch_size_key_value_store;
 mod add_sync_log_v7;
 mod add_sync_log_v7_reference;
@@ -97,6 +99,8 @@ impl Migration for V3_00_00 {
             Box::new(add_site_is_multi_device_pg_enum::Migrate),
             Box::new(add_site_sync_metadata::Migrate),
             Box::new(add_sync_batch_size_key_value_store::Migrate),
+            Box::new(add_email_queue_attachment_paths::Migrate),
+            Box::new(add_support_email_key_value_store::Migrate),
         ]
     }
 }

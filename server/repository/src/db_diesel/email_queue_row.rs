@@ -18,6 +18,7 @@ table! {
         retries -> Integer,
         error -> Nullable<Text>,
         retry_at -> Nullable<Timestamp>,
+        attachment_paths -> Nullable<Text>,
     }
 }
 
@@ -49,6 +50,8 @@ pub struct EmailQueueRow {
     pub retries: i32,
     pub error: Option<String>,
     pub retry_at: Option<NaiveDateTime>,
+    /// JSON array of absolute file paths to attach when sending
+    pub attachment_paths: Option<String>,
 }
 
 pub struct EmailQueueRowRepository<'a> {

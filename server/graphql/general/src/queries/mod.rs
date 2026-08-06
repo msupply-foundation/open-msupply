@@ -58,6 +58,8 @@ pub use self::plugin::*;
 pub mod currency;
 pub mod label_printer_settings;
 pub use self::label_printer_settings::*;
+pub mod support_email;
+pub use self::support_email::*;
 pub mod pricing;
 pub use self::pricing::*;
 pub mod reason_option;

@@ -13,6 +13,8 @@ pub struct EnqueueEmailData {
     pub subject: String,
     pub html_body: String,
     pub text_body: String,
+    /// Absolute paths of files to attach when the email is sent
+    pub attachment_paths: Vec<String>,
 }
 
 pub fn enqueue_email(
@@ -20,6 +22,14 @@ pub fn enqueue_email(
     email: EnqueueEmailData,
 ) -> Result<EmailQueueRow, EmailServiceError> {
     let repo = EmailQueueRowRepository::new(connection);
+
+    let attachment_paths = match email.attachment_paths.is_empty() {
+        true => None,
+        false => Some(
+            serde_json::to_string(&email.attachment_paths)
+                .map_err(|e| EmailServiceError::GenericError(e.to_string()))?,
+        ),
+    };
 
     let email_queue_row = EmailQueueRow {
         id: uuid(),
@@ -34,6 +44,7 @@ pub fn enqueue_email(
         updated_at: Utc::now().naive_utc(),
         status: EmailQueueStatus::Queued,
         retry_at: None,
+        attachment_paths,
     };
 
     repo.upsert_one(&email_queue_row)

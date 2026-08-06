@@ -67,6 +67,7 @@ pub enum KeyType {
     SettingsDisplayCustomTheme,
     SettingsDisplayCustomThemeHash,
     SettingsLabelPrinter,
+    SettingsSupportEmail,
 
     LogLevel,
     LogDirectory,

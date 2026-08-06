@@ -1,5 +1,4 @@
 use service::service_provider::ServiceProvider;
-use service::sync::CentralServerConfig;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::task::JoinHandle;
@@ -20,8 +19,9 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_
     loop {
         interval.tick().await;
         log::debug!("Processing Scheduled Tasks");
-        if CentralServerConfig::is_central_server() {
-            // Email sending is only supported on the central server
+        if service_provider.email_service.is_configured() {
+            // Any server with mail settings configured sends its own queue
+            // (e.g. bug report emails); central additionally queues contact forms
             let send_emails = service_provider
                 .email_service
                 .send_queued_emails(&service_context);

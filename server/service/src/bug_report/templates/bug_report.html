@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block content %}
+
+<h4>Bug Report</h4>
+<p style="font-size: 14px; line-height: 160%">
+  User: {{username}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Submitted at: {{submission_time}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Store: {{store_name}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Site ID: {% if site_id %}{{site_id}}{% else %}-{% endif %}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Site name: {% if site_name %}{{site_name}}{% else %}-{% endif %}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Sync URL: {% if sync_url %}{{sync_url}}{% else %}-{% endif %}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Server version: {{server_version}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  App version: {% if app_version %}{{app_version}}{% else %}-{% endif %}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  App type: {% if platform %}{{platform}}{% else %}-{% endif %}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  IP address: {% if client_ip %}{{client_ip}}{% else %}-{% endif %}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Attachments: {% if attachments %}{{ attachments | join(sep=", ") }}{% else %}none{% endif %}
+</p>
+{% if not_attached %}
+<p style="font-size: 14px; line-height: 160%">
+  <strong>Too large to attach — stored on the reporting server:</strong>
+</p>
+{% for file in not_attached %}
+<p style="font-size: 13px; line-height: 160%">{{file}}</p>
+{% endfor %}
+{% endif %}
+
+<br></br>
+
+<p style="line-height: 160%">Description:</p>
+<p style="line-height: 160%">
+  <em> {{description}} </em>
+</p>
+
+{% endblock content %}

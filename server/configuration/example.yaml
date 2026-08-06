@@ -69,7 +69,7 @@
 #   backup_dir: "~/Documents/omSupply_backup"
 #   pg_bin_dir: "/Applications/Postgres.app/Contents/Versions/16/bin"  # Optional
 #   max_number_of_backups: 10  # Optional, defaults to unlimited
-# mail: # required on Open mSupply Central Server only
+# mail: # any server with mail configured sends its own email queue (e.g. bug reports); required on Central for contact forms
 #   host: "localhost"
 #   #1025 is the default port for mailhog (https://github.com/mailhog/MailHog)
 #   port: "1025"

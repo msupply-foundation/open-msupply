@@ -59,6 +59,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                         subject,
                         html_body,
                         text_body,
+                        attachment_paths: vec![],
                     },
                 )
                 .map_err(|e| string_to_js_error(&format!("{e:?}")))?;
