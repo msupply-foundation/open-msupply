@@ -161,10 +161,14 @@ export interface DialogProps {
    *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
    *    wider table), ceiling ~80vh so the scrim still frames it top and bottom.
    *  - `'full'` — a SHEET: fills the viewport in both axes bar a 2rem gutter.
-   *    For a table too wide to be a card at any sane number — the shipment and
+   *    For content no card width fits: a table too wide (the shipment and
    *    stocktake line editors run to ~20 columns, where narrowing hides columns
-   *    without removing any empty space — and one whose row count wants every
-   *    row it can show before scrolling. `widthRem` is ignored.
+   *    without removing any empty space), a region that caps itself wider than
+   *    a card's body (the internal-order editor's 64rem charts row, the
+   *    requisition editor's three-column figure grid), or a row count that
+   *    wants every row it can show before scrolling. Also the right choice for
+   *    a modal hosting a PLUGIN SLOT: what a deployment contributes there is
+   *    not ours to measure, so no card width is safe. `widthRem` is ignored.
    */
   size?: 'auto' | 'large' | 'full';
   /**

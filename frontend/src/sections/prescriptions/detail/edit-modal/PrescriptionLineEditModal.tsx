@@ -635,14 +635,23 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   return (
     <Dialog
       open
-      size={workingSize() ? 'large' : 'auto'}
-      // The pre-pick state is a command-palette-shaped card: the standard
-      // create-modal width (the CreateStocktake/CreateInternalOrder family),
-      // and a body tall enough to OWN the open suggestions list — the search
-      // takes initial focus and the combobox opens on focus, so the list is
-      // this state's resting face, and without the reserved height it would
-      // dangle past the card onto the scrim. The popup itself matches its
-      // trigger's width. Both are ignored once the latch flips to large.
+      size={workingSize() ? 'full' : 'auto'}
+      // `full` for CONSISTENCY, not because this one is cramped (James,
+      // 2026-08-04): its 9-column table does fit a card, unlike the other five
+      // line editors. But a user moving between the shipment, stocktake,
+      // internal-order, requisition and prescription editors meets one surface
+      // shape rather than two — and "line editors are sheets" is a rule worth
+      // more than a per-modal win here. Recorded in the DESIGN_STANDARDS
+      // ledger so the next reader doesn't "correct" it back by measuring.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips.
       widthRem={44}
       minBodyHeightRem={28}
       initialFocus={

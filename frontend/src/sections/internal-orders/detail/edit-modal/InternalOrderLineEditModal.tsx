@@ -423,11 +423,19 @@ const LineEditContent = (
   const entryOptions = createMemo(() => {
     const unitName = current()?.unitName ?? null;
     const count = requestedDisplay() === 1 ? 1 : 2;
-    const options = [{ value: 'units', label: modeWord('units', unitName, count) }];
+    const options = [
+      { value: 'units', label: modeWord('units', unitName, count) },
+    ];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: modeWord('packs', unitName, count) });
+      options.push({
+        value: 'packs',
+        label: modeWord('packs', unitName, count),
+      });
     if (dosesApply())
-      options.push({ value: 'doses', label: modeWord('doses', unitName, count) });
+      options.push({
+        value: 'doses',
+        label: modeWord('doses', unitName, count),
+      });
     return options;
   });
 
@@ -461,14 +469,28 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size={workingSize() ? 'large' : 'auto'}
-      // The pre-pick state is a command-palette-shaped card: the standard
-      // create-modal width (the CreateStocktake/CreateInternalOrder family),
-      // and a body tall enough to OWN the open suggestions list — the search
-      // takes initial focus and the combobox opens on focus, so the list is
-      // this state's resting face, and without the reserved height it would
-      // dangle past the card onto the scrim. The popup itself matches its
-      // trigger's width. Both are ignored once the latch flips to large.
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large` — but for a different reason than the shipment
+      // editors' column count. This one's CONTEXT CHARTS want the room: the
+      // charts region caps itself at 64rem so the pair sits side by side
+      // (.charts in the CSS module, matching the original app's layout), which
+      // a 56rem card can never give it — the body is ~53rem, so the two ~29rem
+      // charts stack and the whole editor reads cramped. `full` puts the cap
+      // back in reach; the region's own max-inline-size + auto margins keep it
+      // a centred block rather than letting it sprawl.
+      //
+      // The PLUGIN SLOT below the form settles it independently: what a
+      // deployment contributes there is not ours to measure (CIV's panel is a
+      // six-column table), so no card width is safe for every site.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips.
       widthRem={44}
       minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"

@@ -78,8 +78,10 @@
   gap: var(--space-4);
   margin-block-start: var(--space-4);
   /* Cap the region and centre it as a cohesive block, so the charts don't
-     sprawl across the full-width large modal (they'd read as uncentered). Wide
-     enough for the two ~29rem charts + gap + padding side by side. */
+     sprawl across the full-bleed modal (they'd read as uncentered). Wide enough
+     for the two ~29rem charts + gap + padding side by side — which is why this
+     editor takes Dialog's `size="full"` rather than the 56rem `large` card:
+     a ~53rem body can't reach this cap, so the pair would stack (#771). */
   inline-size: 100%;
   max-inline-size: 64rem;
   margin-inline: auto;
