@@ -232,21 +232,31 @@ pub(crate) fn parse_version(raw: &str) -> Version {
 /// There is no upper bound, matching `is_compatible_by_major_and_minor` everywhere else: a
 /// server 4.0 release is expected to ship a 4.0-compatible front end, so the newest
 /// compatible bundle is the right one. `is_active` is the manual override when it isn't.
-pub fn best_usable_bundle(
+pub fn usable_bundles(
     connection: &StorageConnection,
-) -> Result<Option<FrontendBundleRow>, RepositoryError> {
+) -> Result<Vec<FrontendBundleRow>, RepositoryError> {
     let app_version = Version::from_package_json();
 
-    let best = FrontendBundleRowRepository::new(connection)
+    let mut bundles: Vec<FrontendBundleRow> = FrontendBundleRowRepository::new(connection)
         .all()?
         .into_iter()
         .filter(|bundle| bundle.is_active)
         .filter(|bundle| {
             parse_version(&bundle.server_version).is_compatible_by_major_and_minor(&app_version)
         })
-        .max_by(|a, b| parse_version(&a.version).cmp(&parse_version(&b.version)));
+        .collect();
 
-    Ok(best)
+    // Newest first.
+    bundles.sort_by(|a, b| parse_version(&b.version).cmp(&parse_version(&a.version)));
+    Ok(bundles)
+}
+
+/// The newest bundle this site could run — the one worth downloading. Serving picks from
+/// [`usable_bundles`] instead, because the newest is not necessarily *here* yet.
+pub fn best_usable_bundle(
+    connection: &StorageConnection,
+) -> Result<Option<FrontendBundleRow>, RepositoryError> {
+    Ok(usable_bundles(connection)?.into_iter().next())
 }
 
 /// Outcome of asking for a bundle's bytes.
@@ -304,9 +314,12 @@ pub(crate) fn request_bundle_download(
 /// bytes are downloaded and verified, serve it; otherwise serve the installer-shipped
 /// baseline in `frontend_dir`.
 ///
-/// A bundle that is the best candidate but not yet usable does **not** fall back to an
-/// older synced bundle: the older one keeps serving until the new one is genuinely ready,
-/// which is what makes activation a swap rather than a gap.
+/// "Downloaded and verified" is part of the filter, not an afterthought: the newest
+/// *candidate* is not necessarily the newest one that is actually here. A bundle still in
+/// flight — or one that can never arrive, because its bytes were withdrawn or fail their
+/// checksum — must not mask an older bundle that is unpacked and ready, or the site sits on
+/// the packaged baseline while a good bundle goes unused. The newest candidate is still
+/// requested for download on every pass, so the site catches up as soon as it can.
 pub fn reconcile_active_bundle(
     ctx: &ServiceContext,
     settings: &Settings,
@@ -315,8 +328,9 @@ pub fn reconcile_active_bundle(
     let base_dir = &settings.server.base_dir;
     let all = FrontendBundleRowRepository::new(&ctx.connection).all()?;
     let previous = active.get();
+    let candidates = usable_bundles(&ctx.connection)?;
 
-    let Some(best) = best_usable_bundle(&ctx.connection)? else {
+    let Some(best) = candidates.first() else {
         // Nothing usable — serve the baseline. This is also the withdrawal path: central
         // clears is_active and the site drops back.
         if previous.is_some() {
@@ -327,59 +341,88 @@ pub fn reconcile_active_bundle(
         return Ok(None);
     };
 
-    // Already unpacked (e.g. from a previous run) — nothing to do but point at it.
-    let root = match active::unpacked_root(base_dir, &best.version) {
-        Some(root) => root,
-        None => {
-            // Not unpacked, so we need its bytes. Make sure they're queued — this is the
-            // guarantee, not the changelog processor: a trigger fires once and can fire
-            // before the file reference has arrived, whereas this runs at startup and
-            // after every download pass until the bundle is actually here.
-            match request_bundle_download(ctx, &best) {
-                Ok(DownloadRequest::Queued) | Ok(DownloadRequest::AuthoredHere) => {}
-                Ok(DownloadRequest::NoFileReference) => log::debug!(
-                    "Front-end bundle {} has no file reference yet",
-                    best.version
-                ),
-                Err(error) => log::error!(
-                    "Could not queue front-end bundle {} for download: {}",
-                    best.version,
-                    format_error(&error)
-                ),
-            }
+    // Always chase the newest candidate, whether or not it is the one we can serve today.
+    // This is the guarantee that the bytes get requested, not the changelog processor: a
+    // trigger fires once and can fire before the file reference has arrived, whereas this
+    // runs at startup and after every download pass until the bundle is actually here.
+    match request_bundle_download(ctx, best) {
+        Ok(DownloadRequest::Queued) | Ok(DownloadRequest::AuthoredHere) => {}
+        Ok(DownloadRequest::NoFileReference) => {
+            log::debug!(
+                "Front-end bundle {} has no file reference yet",
+                best.version
+            )
+        }
+        Err(error) => log::error!(
+            "Could not queue front-end bundle {} for download: {}",
+            best.version,
+            format_error(&error)
+        ),
+    }
 
-            let file_service = match StaticFileService::new(base_dir) {
-                Ok(service) => service,
-                Err(error) => {
-                    log::error!("Cannot access static files: {:#}", error);
-                    return Ok(previous);
-                }
-            };
-
-            match active::verify_and_unpack(&ctx.connection, &file_service, base_dir, &best) {
-                Ok(root) => root,
-                Err(active::ActivateBundleError::NotDownloaded { version }) => {
-                    // Expected: the record arrived before its bytes. The download queue
-                    // is working on it and this runs again when it lands.
-                    log::debug!("Front-end bundle {version} is not downloaded yet");
-                    return Ok(previous);
-                }
-                Err(error) => {
-                    // A checksum failure or a bad archive. Keep serving whatever we were
-                    // serving; a broken candidate must not take the UI down.
-                    log::error!(
-                        "Could not activate front-end bundle {}: {}",
-                        best.version,
-                        format_error(&error)
-                    );
-                    return Ok(previous);
-                }
-            }
+    let file_service = match StaticFileService::new(base_dir) {
+        Ok(service) => service,
+        Err(error) => {
+            log::error!("Cannot access static files: {:#}", error);
+            return Ok(previous);
         }
     };
 
+    // Serve the newest candidate that is actually *here*, which is not always the newest
+    // candidate. A bundle whose bytes have not arrived — or cannot, because its file was
+    // withdrawn or fails its checksum — must not mask an older one that is downloaded,
+    // verified and ready: doing so strands the site on the packaged baseline while a
+    // perfectly good bundle sits unpacked on disk.
+    let mut serving = None;
+    for candidate in &candidates {
+        if let Some(root) = active::unpacked_root(base_dir, &candidate.version) {
+            serving = Some((candidate, root));
+            break;
+        }
+
+        match active::verify_and_unpack(&ctx.connection, &file_service, base_dir, candidate) {
+            Ok(root) => {
+                serving = Some((candidate, root));
+                break;
+            }
+            Err(active::ActivateBundleError::NotDownloaded { version }) => {
+                // Expected while the bytes are in flight; try the next-newest.
+                log::debug!("Front-end bundle {version} is not downloaded yet");
+            }
+            Err(error) => {
+                // A checksum failure or a bad archive. Skip it — a broken candidate must
+                // not take the UI down, nor block a good older one.
+                log::error!(
+                    "Could not activate front-end bundle {}: {}",
+                    candidate.version,
+                    format_error(&error)
+                );
+            }
+        }
+    }
+
+    let Some((best_available, root)) = serving else {
+        if previous.is_some() {
+            log::info!(
+                "No front-end bundle is ready yet; serving the packaged baseline while {} downloads",
+                best.version
+            );
+        }
+        active.set(None);
+        active::prune_unpacked(base_dir, None, &all);
+        return Ok(None);
+    };
+
+    if best_available.version != best.version {
+        log::info!(
+            "Serving front-end bundle {} while the newer {} is still being fetched",
+            best_available.version,
+            best.version
+        );
+    }
+
     let bundle = ActiveBundle {
-        version: best.version.clone(),
+        version: best_available.version.clone(),
         root,
     };
 
@@ -387,7 +430,7 @@ pub fn reconcile_active_bundle(
         log::info!(
             "Serving front-end bundle {} (built for server {})",
             bundle.version,
-            best.server_version
+            best_available.server_version
         );
     }
     active.set(Some(bundle.clone()));
@@ -1176,6 +1219,72 @@ mod test {
         assert!(file_repo.find_all_by_record_id(&bundle.id).unwrap()[0]
             .download_requested_datetime
             .is_none());
+    }
+
+    /// Reproduces what real two-server testing hit: a remote had v0.0.232 downloaded and
+    /// unpacked, but served the packaged baseline instead, because a newer v1.0.0 record
+    /// existed whose bytes it did not have. The unavailable newest must not mask a ready
+    /// older one.
+    #[actix_rt::test]
+    async fn an_unavailable_newer_bundle_does_not_mask_a_ready_older_one() {
+        let context = setup_all_and_service_provider(
+            "an_unavailable_newer_bundle_does_not_mask_a_ready_older_one",
+            MockDataInserts::none(),
+        )
+        .await;
+        let ctx = &context.service_context;
+
+        let dist_dir = tempfile::tempdir().unwrap();
+        let base_dir = tempfile::tempdir().unwrap();
+        write_dist(dist_dir.path(), "v0.0.232");
+        let settings = settings_for(&context, dist_dir.path(), base_dir.path());
+        let active = ActiveFrontendBundle::new();
+
+        // A bundle that is here: published locally, so its bytes are on disk.
+        publish_from_frontend_dir(ctx, &settings).unwrap();
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &active)
+                .unwrap()
+                .map(|b| b.version),
+            Some("v0.0.232".to_string())
+        );
+
+        // A newer record arrives with no bytes — the state a remote is in between the
+        // record syncing and the download completing (or forever, if it never can).
+        FrontendBundleRowRepository::new(&ctx.connection)
+            .upsert_one(&bundle_row(
+                "v1.0.0",
+                &Version::from_package_json().to_string(),
+                true,
+            ))
+            .unwrap();
+        assert_eq!(
+            best_usable_bundle(&ctx.connection)
+                .unwrap()
+                .map(|b| b.version),
+            Some("v1.0.0".to_string()),
+            "v1.0.0 is the newest candidate"
+        );
+
+        // ...but v0.0.232 keeps serving, rather than dropping to the baseline.
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &active)
+                .unwrap()
+                .map(|b| b.version),
+            Some("v0.0.232".to_string()),
+            "a ready bundle must keep serving while a newer one is unavailable"
+        );
+
+        // And from cold — no cached previous value to fall back on, which is the case
+        // that actually stranded the remote on its baseline.
+        let cold = ActiveFrontendBundle::new();
+        assert_eq!(
+            reconcile_active_bundle(ctx, &settings, &cold)
+                .unwrap()
+                .map(|b| b.version),
+            Some("v0.0.232".to_string()),
+            "a restart must still find the ready bundle"
+        );
     }
 
     #[actix_rt::test]
