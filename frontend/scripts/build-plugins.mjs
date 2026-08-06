@@ -24,7 +24,13 @@
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
  *   - entry_point = the dist file whose name starts with the plugin code;
  *   - files starting with "main" or containing "LICENSE" are skipped;
- *   - id = `frontend_{code}_{version with dots as underscores}`;
+ *   - id = `frontend_{code}_{version with dots as underscores}` — and since a
+ *     server now keeps every compatible version of a code rather than only the
+ *     highest, this id is also what its file route is keyed on, so two builds
+ *     of one plugin must never share it;
+ *   - plugin_api_version = the SDK's PLUGIN_API_VERSION, the integer that
+ *     tells a server this is a NEW-UI bundle (a null one is offered to the old
+ *     React UI only);
  *   - hash = sha256 over the files sorted by name, name bytes then content
  *     bytes, hex — the server computes this at bind time and the client appends
  *     it as `?v=`.
@@ -41,6 +47,7 @@ import {
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { build } from 'vite';
+import { PLUGIN_API_VERSION } from '../src/plugin-sdk/apiVersion.ts';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
 import { backendPluginViteConfig } from '../vite/backendPluginBuild.ts';
 
@@ -260,6 +267,23 @@ const packPlugin = plugin => {
     entry_point: entryPoint,
     types: plugin.types,
     files,
+    /*
+     * The second compatibility axis: which HOST can load this bundle, as
+     * against `version`'s which SERVER can serve it. Taken from the SDK the
+     * plugin was just built against rather than from its manifest, so it is
+     * true by construction and cannot drift from the integer the module
+     * declares at runtime.
+     *
+     * A server that has this column offers a null-API bundle to the old React
+     * UI only, so emitting it is what keeps this bundle out of that UI's hands
+     * — and, conversely, omitting it would be a claim to BE a React bundle.
+     *
+     * Not overridable per plugin, deliberately. `examples/api_too_new`
+     * declares 999 in its MODULE and so packs a row that disagrees with it,
+     * which is the point: the row gets it past the server's gate and into the
+     * loader, which is the gate that fixture exists to exercise.
+     */
+    plugin_api_version: PLUGIN_API_VERSION,
   };
   /* eslint-enable camelcase */
 
@@ -268,6 +292,10 @@ const packPlugin = plugin => {
     hasher.update(Buffer.from(file.file_name, 'utf8'));
     hasher.update(Buffer.from(file.file_content_base64, 'base64'));
   }
+  // `path` here describes the STATIC dist layout this script writes
+  // (`{code}/{entry}`), which is why it no longer matches what a server
+  // returns: a server holds several bundles per code and addresses them by row
+  // id, whereas one dist directory holds exactly one build of each.
   const meta = {
     code: plugin.code,
     path: `${plugin.code}/${entryPoint}`,

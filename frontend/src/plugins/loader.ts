@@ -1,6 +1,9 @@
 import { graphqlFetch } from '../api/graphql';
 import { registerPluginTranslations } from '../intl';
-import { PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
+import {
+  PLUGIN_API_MIN_SUPPORTED,
+  PLUGIN_API_VERSION,
+} from '../plugin-sdk/apiVersion';
 import { pluginBundleUrl } from './bundleUrl';
 import {
   pluginDiagnostics,
@@ -171,7 +174,14 @@ export const loadPlugins = async (deps: LoadPluginsDeps): Promise<void> => {
  */
 const appDeps: LoadPluginsDeps = {
   fetchMetadata: async () => {
-    const result = await graphqlFetch(FrontendPluginMetadata, {});
+    // Declare our plugin-API pair, so the server answers with the bundles this
+    // host can load. Sending nothing is not neutral: it is how the old React
+    // UI — served by the same backend at `/old-ui/` — identifies itself, and
+    // would get us its bundles.
+    const result = await graphqlFetch(FrontendPluginMetadata, {
+      pluginApiVersion: PLUGIN_API_VERSION,
+      pluginApiMinSupported: PLUGIN_API_MIN_SUPPORTED,
+    });
     return result.kind === 'success'
       ? result.data.frontendPluginMetadata
       : undefined;

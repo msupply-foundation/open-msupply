@@ -4,8 +4,22 @@
 #
 # Unauthenticated and store-agnostic on the server, so the loader may run it as
 # soon as a session exists and never has to wait for store context.
-query frontendPluginMetadata {
-  frontendPluginMetadata {
+#
+# The two arguments are how this host declares which bundles it can load — the
+# same integers the loader gates on locally. One server serves both hosts at
+# once (this app at `/`, the old React UI at `/old-ui/`), so it cannot work
+# that out per server: a client that sends nothing is taken to BE the old UI
+# and is answered with the bundles that declare no plugin API. Sending ours is
+# what stops us being offered a React bundle we would fetch, evaluate, and only
+# then refuse.
+query frontendPluginMetadata(
+  $pluginApiVersion: Int
+  $pluginApiMinSupported: Int
+) {
+  frontendPluginMetadata(
+    pluginApiVersion: $pluginApiVersion
+    pluginApiMinSupported: $pluginApiMinSupported
+  ) {
     code
     path
     hash
