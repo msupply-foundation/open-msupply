@@ -9,6 +9,10 @@ use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &str = "frontend_plugin";
 
+// Deliberately WITHOUT `plugin_api_version`: this is the shape every row
+// installed before the column existed still has on the wire, and it must keep
+// translating — arriving as `None`, which is what marks a bundle as loadable
+// by the old UI only.
 const FRONTEND_PLUGIN: (&str, &str) = (
     "frontend_plugin",
     r#"{
@@ -24,6 +28,24 @@ const FRONTEND_PLUGIN: (&str, &str) = (
     }"#,
 );
 
+// The other direction: a bundle built for the new front end declares the
+// plugin API it was built against.
+const FRONTEND_PLUGIN_WITH_API_VERSION: (&str, &str) = (
+    "frontend_plugin_with_api_version",
+    r#"{
+        "id":  "frontend_plugin_with_api_version",
+        "entry_point": "first_one.js",
+        "code": "code",
+        "types": ["plugin_type"],
+        "files": [ {
+            "file_name": "first_one.js",
+            "file_content_base64": "base64stuffhere"
+        }],
+        "version": "3.0.0",
+        "plugin_api_version": 1
+    }"#,
+);
+
 fn frontend_plugin() -> FrontendPluginRow {
     FrontendPluginRow {
         id: FRONTEND_PLUGIN.0.to_string(),
@@ -35,15 +57,28 @@ fn frontend_plugin() -> FrontendPluginRow {
             file_content_base64: "base64stuffhere".to_string(),
         }]),
         version: "1.0.0".to_string(),
+        plugin_api_version: None,
+    }
+}
+
+fn frontend_plugin_with_api_version() -> FrontendPluginRow {
+    FrontendPluginRow {
+        id: FRONTEND_PLUGIN_WITH_API_VERSION.0.to_string(),
+        version: "3.0.0".to_string(),
+        plugin_api_version: Some(1),
+        ..frontend_plugin()
     }
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_upsert(
-        TABLE_NAME,
-        FRONTEND_PLUGIN,
-        frontend_plugin(),
-    )]
+    vec![
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, FRONTEND_PLUGIN, frontend_plugin()),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            FRONTEND_PLUGIN_WITH_API_VERSION,
+            frontend_plugin_with_api_version(),
+        ),
+    ]
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {

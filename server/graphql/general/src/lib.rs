@@ -404,8 +404,14 @@ impl GeneralQueries {
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,
+        #[graphql(desc = "The plugin API this client provides; omit if it declares none (old UI)")]
+        plugin_api_version: Option<i32>,
+        #[graphql(
+            desc = "The oldest plugin API this client accepts; defaults to pluginApiVersion"
+        )]
+        plugin_api_min_supported: Option<i32>,
     ) -> Result<Vec<FrontendPluginMetadataNode>> {
-        frontend_plugin_metadata(ctx)
+        frontend_plugin_metadata(ctx, plugin_api_version, plugin_api_min_supported)
     }
 
     pub async fn currencies(

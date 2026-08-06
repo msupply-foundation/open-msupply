@@ -8779,6 +8779,11 @@ export type QueriesFormSchemasArgs = {
   sort?: InputMaybe<Array<FormSchemaSortInput>>;
 };
 
+export type QueriesFrontendPluginMetadataArgs = {
+  pluginApiMinSupported?: InputMaybe<Scalars['Int']['input']>;
+  pluginApiVersion?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type QueriesGenerateCustomerReturnLinesArgs = {
   input: GenerateCustomerReturnLinesInput;
   storeId: Scalars['String']['input'];
