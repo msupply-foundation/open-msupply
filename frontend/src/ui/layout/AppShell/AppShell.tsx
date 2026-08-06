@@ -6,7 +6,13 @@ import {
   type Component,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { HomeIcon, CentralIcon, EditIcon, type IconProps } from '../../icons';
+import {
+  HomeIcon,
+  CentralIcon,
+  EditIcon,
+  SyncIcon,
+  type IconProps,
+} from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
@@ -90,6 +96,17 @@ export interface AppShellProps {
   email?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
+  /**
+   * The server is serving a newer front-end bundle than the running build
+   * (spec/chrome § update prompt) — shows the bottom bar's "new version
+   * available" cell. Derived by the host's update watch (src/appUpdate.ts).
+   */
+  updateAvailable?: boolean;
+  /**
+   * Activating the update cell. The host owns what follows (confirm, then
+   * reload) — without it the cell never renders, so it is never a dead button.
+   */
+  onUpdateClick?: () => void;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
    *  From the isCentralServer global, queried unauthenticated at startup. */
   isCentralServer?: boolean;
@@ -268,6 +285,20 @@ export const AppShell = (props: AppShellProps) => {
                     testId="footer-store-edit"
                   />
                   <span class={styles.footerSpacer} aria-hidden="true" />
+                  {/* Update prompt (spec/chrome § update prompt,
+                    OMS-REG-FTR-02.14): a quiet, persistent cell while the
+                    served bundle differs from the running build; activating it
+                    hands off to the host, which confirms before reloading. Its
+                    divider goes with it, so nothing dangles while it's away. */}
+                  <Show when={props.updateAvailable && props.onUpdateClick}>
+                    <FooterCell
+                      icon={SyncIcon}
+                      label={t('label.new-version-available')}
+                      onClick={props.onUpdateClick}
+                      testId="footer-update-available"
+                    />
+                    <span class={styles.footerDivider} aria-hidden="true" />
+                  </Show>
                   <UserMenu
                     username={props.username}
                     displayName={props.displayName}

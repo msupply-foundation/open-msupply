@@ -18,6 +18,12 @@ export interface ItemSearchProps {
    */
   excludeItemIds?: string[];
   /**
+   * Restrict results to items on this master list. A program shares its
+   * master list's id, so a program-scoped picker (e.g. a prescription with a
+   * program assigned) passes the program id here directly.
+   */
+  masterListId?: string;
+  /**
    * The currently-selected item's id (controlled). Shows that item as the
    * value while still allowing a new search — e.g. the picked item stays in
    * the picker after selection so it can be swapped for another.
@@ -94,7 +100,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     props.storeId,
     () => props.excludeItemIds ?? [],
     PAGE_SIZE,
-    props.hasStockOnHand
+    () => props.hasStockOnHand,
+    () => props.masterListId
   );
 
   // Remember the last full option the user picked. Once an item is selected the
