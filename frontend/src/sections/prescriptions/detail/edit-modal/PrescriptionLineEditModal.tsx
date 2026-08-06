@@ -93,6 +93,13 @@ export interface PrescriptionLineEditModalProps {
   initialItem?: { id: string; code: string; name: string };
   /** Items already dispensed — excluded from the add-mode picker (FL3). */
   existingItemIds: string[];
+  /**
+   * The prescription's assigned program, if any — scopes the add-mode item
+   * picker to the program's master list (rules.md: choosing a program scopes
+   * the item catalogue offered when dispensing). A program shares its master
+   * list's id, so it feeds the picker's masterListId filter directly.
+   */
+  programId?: string;
   onClose: () => void;
   /** A save landed — the detail refetches. */
   onSaved: () => void;
@@ -732,6 +739,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               return props.initialItem;
             })()}
             excludeItemIds={props.existingItemIds}
+            masterListId={props.programId}
             disabled={isEdit}
             onSelect={item => {
               if (!item) return;
