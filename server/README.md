@@ -17,7 +17,14 @@ the `old-ui` subdirectory of `frontend_dir`, when present — by convention, not
 configuration, so every deployment gets the same URL. When the subdirectory
 doesn't exist nothing is mounted at `/old-ui/` and root serving is unaffected.
 The old UI must be built with its `publicPath`/router base set to `/old-ui/`
-(see the client's `PUBLIC_PATH` build variable).
+(see the client's `PUBLIC_PATH` build variable) — it fixes the asset URLs and the
+router base at build time, so a bundle built for `/` cannot be relocated by
+copying it.
+
+For local development, `yarn build:old-ui` in `client/` does that build and puts
+the result in `server/frontend/old-ui`, where a server run from `server/` serves
+it. Packaging does the same two steps itself, since each pipeline copies to its
+own destination.
 
 ### Pinned frontend dist (new FE at `/`)
 
