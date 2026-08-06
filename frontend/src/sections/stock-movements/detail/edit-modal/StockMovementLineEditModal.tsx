@@ -322,7 +322,17 @@ export const StockMovementLineEditModal: Component<
             renderItem={o => <span>{candidateLabel(o)}</span>}
             value={selectedBatch()?.stockLineId}
             onChange={onPickBatch}
-            placeholder={
+            // The two empty-state messages belong to the EMPTY DROPDOWN, not
+            // the input's placeholder (ui-surface S3 — "no candidates"):
+            // every candidate already added vs. the item having no available
+            // stock at all. The Combobox shows them only when the list is
+            // actually empty.
+            emptyQueryMessage={
+              candidates().length && !options().length
+                ? t('messages.all-batches-added')
+                : t('messages.no-stock-available')
+            }
+            noResultsMessage={
               candidates().length && !options().length
                 ? t('messages.all-batches-added')
                 : t('messages.no-stock-available')
