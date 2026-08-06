@@ -133,7 +133,15 @@ enum PluginDescription {
         variant_type: PluginVariantType,
     },
     #[serde(rename = "frontend")]
-    FrontEnd { types: FrontendPluginTypes },
+    FrontEnd {
+        types: FrontendPluginTypes,
+        /// The plugin API the bundle was built against. Absent for the
+        /// React/module-federation plugins, which have no such contract — and
+        /// absent is meaningful: the server offers those bundles to the old UI
+        /// only.
+        #[serde(default)]
+        plugin_api_version: Option<i32>,
+    },
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -249,9 +257,17 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
             types,
             variant_type,
         } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root, version)?,
-        PluginDescription::FrontEnd { types } => {
-            bundle_frontend_plugin(bundle, code, types, plugin_root, version)?
-        }
+        PluginDescription::FrontEnd {
+            types,
+            plugin_api_version,
+        } => bundle_frontend_plugin(
+            bundle,
+            code,
+            types,
+            plugin_root,
+            version,
+            plugin_api_version,
+        )?,
     }
 
     Ok(())
@@ -291,6 +307,7 @@ fn bundle_frontend_plugin(
     types: FrontendPluginTypes,
     plugin_root: &Path,
     version: String,
+    plugin_api_version: Option<i32>,
 ) -> Result<(), Error> {
     // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
     // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
@@ -355,6 +372,7 @@ fn bundle_frontend_plugin(
         files: FrontendPluginFiles(files),
         types,
         version,
+        plugin_api_version,
     });
 
     Ok(())

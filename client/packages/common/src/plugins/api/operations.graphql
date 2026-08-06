@@ -1,3 +1,9 @@
+# Deliberately argument-less. `frontendPluginMetadata` now takes an optional
+# plugin-API pair, and sending NOTHING is this UI's identity: the server reads
+# a caller that declares no plugin API as this one, and answers with the
+# React/module-federation bundles — the only ones we can load. The new
+# SolidJS front end, served by the same backend at `/`, sends its pair and gets
+# its own. Passing arguments here would hand us ESM bundles we cannot evaluate.
 query frontendPluginMetadata {
   frontendPluginMetadata {
     code
