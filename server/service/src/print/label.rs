@@ -153,6 +153,26 @@ pub fn print_prescription_label(
     printer.send_string(payload, Mode::Print)
 }
 
+// The largest raw label payload accepted from a client. A design that embeds a
+// bitmap logo as `^GF` runs to tens of kilobytes (the asset label's logo above
+// is ~6 KB on its own), so the cap is generous — it exists only to stop an
+// unbounded body being held in memory and pushed at the printer, not to police
+// label size.
+pub const MAX_RAW_LABEL_BYTES: usize = 1024 * 1024;
+
+// Send client-composed ZPL straight to the configured printer, for the label
+// designer (Settings > Devices). Deliberately NOT run through
+// `sanitise_fd_field`: the payload is a whole label, so `^`, `~` and `\` are
+// its command prefixes rather than data, and escaping them here would corrupt
+// every command. Per-field escaping is the designer's job — its `escapeFieldData`
+// is a port of `sanitise_fd_field`, applied to each `^FD` payload before the
+// label is assembled. The address dialled is always the store's stored printer
+// setting; a client never supplies one.
+pub fn print_raw_label(settings: LabelPrinterSettingNode, zpl: String) -> Result<String> {
+    let printer = Jetdirect::new(settings.address, settings.port);
+    printer.send_string(zpl, Mode::Print)
+}
+
 pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string("~HS".to_string(), Mode::Sgd)

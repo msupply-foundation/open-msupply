@@ -7,8 +7,8 @@ use serde::Deserialize;
 use service::{
     auth_data::AuthData,
     print::label::{
-        host_status, print_asset_label, print_prescription_label, AssetLabelData,
-        PrescriptionLabelData,
+        host_status, print_asset_label, print_prescription_label, print_raw_label, AssetLabelData,
+        PrescriptionLabelData, MAX_RAW_LABEL_BYTES,
     },
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
@@ -141,6 +141,69 @@ pub async fn get_label_prescription(
     let response = serde_json::json!({ "zpl": zpl });
 
     HttpResponse::Ok().body(serde_json::to_string_pretty(&response).unwrap())
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RawLabelData {
+    zpl: String,
+}
+
+// Print a label composed by the client — the label designer in Settings >
+// Devices, which generates the whole ZPL document rather than filling in one of
+// the fixed layouts above. The printer address is never taken from the request:
+// like every other route here it comes from the store's stored printer
+// settings, so this cannot be used to reach an arbitrary host.
+//
+// This handler never logs the payload, but that is not a guarantee it stays out
+// of the logs: the shared jetdirect transport logs the whole command at DEBUG,
+// so a site running at debug level ends up with label content in its log file. A
+// designed label carries whatever the user put on it, which for a dispensing
+// label includes a patient's name.
+pub async fn print_label_raw(
+    request: HttpRequest,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    data: web::Json<RawLabelData>,
+) -> HttpResponse {
+    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    match auth_result {
+        Ok(_) => (),
+        Err(error) => {
+            log::error!("Authentication error printing raw label: {error:?}");
+            let formatted_error = format!("{error:#?}");
+            return HttpResponse::Unauthorized().body(formatted_error);
+        }
+    }
+
+    let zpl = data.into_inner().zpl;
+    if zpl.trim().is_empty() {
+        return HttpResponse::BadRequest().body("No label to print");
+    }
+    if zpl.len() > MAX_RAW_LABEL_BYTES {
+        log::error!("Raw label rejected: {} bytes", zpl.len());
+        return HttpResponse::PayloadTooLarge().body("Label is too large to print");
+    }
+
+    let settings = match get_printer_settings(service_provider) {
+        Ok(settings) => settings,
+        Err(error) => {
+            log::error!("Error getting printer settings: {error}");
+            return HttpResponse::InternalServerError()
+                .body(format!("Error getting printer settings: {error}"));
+        }
+    };
+
+    match print_raw_label(settings, zpl) {
+        Ok(_) => {
+            log::info!("Raw label printed successfully");
+            HttpResponse::Ok().body("Label printed")
+        }
+        Err(err) => {
+            log::error!("Error printing raw label: {err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
+    }
 }
 
 pub async fn test_printer(service_provider: Data<ServiceProvider>) -> HttpResponse {
