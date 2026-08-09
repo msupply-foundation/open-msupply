@@ -57,7 +57,7 @@ import {
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
-import { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
+import { ForecastCalculationDisplay } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
@@ -280,6 +280,16 @@ const LineEditContent = (
   const disabled = () => !props.editable;
 
   const current = () => line();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "Save & next" returning to the search keeps the working size, so
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || current() !== undefined,
+    false
+  );
+
   const packSize = () => current()?.defaultPackSize ?? 1;
   const doses = () => current()?.doses ?? 0;
   const suggested = () => current()?.suggestedQuantity ?? 0;
@@ -308,15 +318,20 @@ const LineEditContent = (
   const variance = () => requestedUnits() !== suggested();
   const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
-  // A statistic (units) rendered in the active mode with its measure word.
-  const stat = (units: number, roundUp = false): string =>
-    `${formatNumber(statInMode(units, entryMode(), packSize(), doses(), roundUp))} ${modeWord(entryMode(), current()?.unitName ?? null)}`;
+  // A statistic (units) rendered in the active mode with its measure word,
+  // inflected for the figure it suffixes ("1 pack" / "61 packs").
+  const stat = (units: number, roundUp = false): string => {
+    const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
+    return `${formatNumber(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
   // doses is the active mode, the dose equivalent otherwise — rounded whole.
   const otherMeasure = (units: number): string => {
-    if (entryMode() === 'doses')
-      return `${formatNumber(Math.round(units))} ${current()?.unitName ?? t('label.unit')}`;
+    if (entryMode() === 'doses') {
+      const unitCount = Math.round(units);
+      return `${formatNumber(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
+    }
     const doseCount = Math.round(units * doses());
     return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
@@ -403,12 +418,24 @@ const LineEditContent = (
       : undefined;
   });
 
+  // Option labels inflect with the entered quantity (reference-app parity:
+  // singular at exactly 1, plural otherwise — spec S4's "tablets · packs").
   const entryOptions = createMemo(() => {
-    const unit = current()?.unitName ?? t('label.unit');
-    const options = [{ value: 'units', label: unit }];
+    const unitName = current()?.unitName ?? null;
+    const count = requestedDisplay() === 1 ? 1 : 2;
+    const options = [
+      { value: 'units', label: modeWord('units', unitName, count) },
+    ];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: t('label.pack') });
-    if (dosesApply()) options.push({ value: 'doses', label: t('label.dose') });
+      options.push({
+        value: 'packs',
+        label: modeWord('packs', unitName, count),
+      });
+    if (dosesApply())
+      options.push({
+        value: 'doses',
+        label: modeWord('doses', unitName, count),
+      });
     return options;
   });
 
@@ -442,7 +469,30 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large` — but for a different reason than the shipment
+      // editors' column count. This one's CONTEXT CHARTS want the room: the
+      // charts region caps itself at 64rem so the pair sits side by side
+      // (.charts in the CSS module, matching the original app's layout), which
+      // a 56rem card can never give it — the body is ~53rem, so the two ~29rem
+      // charts stack and the whole editor reads cramped. `full` puts the cap
+      // back in reach; the region's own max-inline-size + auto margins keep it
+      // a centred block rather than letting it sprawl.
+      //
+      // The PLUGIN SLOT below the form settles it independently: what a
+      // deployment contributes there is not ours to measure (CIV's panel is a
+      // six-column table), so no card width is safe for every site.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"
       // Untitled per spec S4 — the title stays as the accessible name only.
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
@@ -483,7 +533,7 @@ const LineEditContent = (
         fallback={
           <ItemSearch
             label={t('label.item')}
-            class={styles.itemField}
+            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}

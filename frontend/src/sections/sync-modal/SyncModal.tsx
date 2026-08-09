@@ -163,6 +163,32 @@ export const SyncModal: Component<{
       closeButton
       widthRem={36}
       testId="sync-modal"
+      // No confirm semantics: Sync Now is a trigger, not a Save — Enter from
+      // the (buttonless) body must not start a sync run.
+      enterConfirms={false}
+      // Action row, centred — in the Dialog's actions slot so it sticks to the
+      // modal's bottom edge like every other modal's buttons.
+      actions={
+        <>
+          <Button
+            variant="primary"
+            icon={<SyncIcon />}
+            loading={busy()}
+            onClick={() => void onSyncNow()}
+          >
+            {t('button.sync-now')}
+          </Button>
+          <Show when={hasPermission('SERVER_ADMIN')}>
+            <Button
+              variant="secondary"
+              icon={<SettingsIcon />}
+              onClick={onSettings}
+            >
+              {t('settings')}
+            </Button>
+          </Show>
+        </>
+      }
     >
       <div class={styles.content}>
         {/* Status band: the precedence status line above the phase list. */}
@@ -245,27 +271,6 @@ export const SyncModal: Component<{
             </Alert>
           )}
         </Show>
-
-        {/* Action row, centred. */}
-        <div class={styles.actions}>
-          <Button
-            variant="primary"
-            icon={<SyncIcon />}
-            loading={busy()}
-            onClick={() => void onSyncNow()}
-          >
-            {t('button.sync-now')}
-          </Button>
-          <Show when={hasPermission('SERVER_ADMIN')}>
-            <Button
-              variant="secondary"
-              icon={<SettingsIcon />}
-              onClick={onSettings}
-            >
-              {t('settings')}
-            </Button>
-          </Show>
-        </div>
       </div>
     </Dialog>
   );

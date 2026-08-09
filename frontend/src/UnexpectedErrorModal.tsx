@@ -52,7 +52,13 @@ const PermissionDenied: Component<{ permissions: string[] }> = props => {
       icon={<LockIcon />}
       description={description()}
       actions={
-        <Button variant="secondary" onClick={clearForbiddenError}>
+        // The single OK is this dialog's confirm, so Enter clears the notice
+        // (spec/keyboard KB-E2).
+        <Button
+          variant="secondary"
+          confirms="plain"
+          onClick={clearForbiddenError}
+        >
           {t('button.ok')}
         </Button>
       }
@@ -68,6 +74,14 @@ const UnexpectedError: Component = () => (
     title={t('error.something-wrong')}
     icon={<AlertCircleIcon />}
     description={unexpectedError()}
+    /*
+     * No submit key here (spec/keyboard KB-E2's "a dialog MAY opt out of
+     * Enter-to-confirm entirely"). Both actions are full-page navigations and
+     * neither is "the" confirm — Try again reloads, Dashboard leaves — so a
+     * stray Enter must not pick one. Declared rather than left implicit, so this
+     * reads as a decision rather than a forgotten claim.
+     */
+    enterConfirms={false}
     actions={
       <>
         <Button

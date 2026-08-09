@@ -36,7 +36,7 @@ const FILTERS: Filter<LocationFilter>[] = constructFilters<LocationFilter>({
       <FilterTextInput
         label={t('label.name')}
         testId={props.testId}
-        placeholder={t('label.name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().name?.like ?? ''}
         // Blank box → null, never { like: '' }: an empty `like` would wrongly
         // match (the server treats "" as a real substring).
@@ -52,7 +52,7 @@ const FILTERS: Filter<LocationFilter>[] = constructFilters<LocationFilter>({
       <FilterTextInput
         label={t('label.code')}
         testId={props.testId}
-        placeholder={t('label.code')}
+        placeholder={t('placeholder.search')}
         value={props.filter().code?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ code: value ? { like: value } : null })

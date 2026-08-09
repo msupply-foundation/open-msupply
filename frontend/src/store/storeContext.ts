@@ -215,6 +215,33 @@ const isDispensary = (): boolean => {
   return store?.storeMode === 'DISPENSARY';
 };
 
+// Whether the entered store has the vaccine (cold-chain) module enabled
+// (StorePreferenceNode.vaccineModule). Gates the cold-chain DESTINATIONS — the
+// menu's Cold chain section and the palette's cold-chain entries (spec/keyboard
+// AC-KB4) — which is the legitimate kind of module gate: it gates the place
+// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule as
+// the other gates, so a gated destination never flashes in before the preference
+// is known. Reactive — a post-sync refetch re-gates in place.
+const hasVaccineModule = (): boolean =>
+  storeContext()?.storePreferences?.vaccineModule ?? false;
+
+// Whether the entered store has the program module enabled
+// (StorePreferenceNode.omProgramModule). Gates the R&R Forms and Encounters
+// DESTINATIONS (spec/navigation › registry) the same way hasVaccineModule
+// gates cold chain — the destination kind of module gate KB-R2 sanctions.
+// patientPreferences reads the same field for the patient detail's program
+// surfaces; this accessor is the nav's. Safe default OFF while unresolved.
+const hasProgramModule = (): boolean =>
+  storeContext()?.storePreferences?.omProgramModule ?? false;
+
+// Whether the entered store has the procurement function enabled
+// (PreferencesNode.useProcurementFunctionality). Gates the Purchase Orders
+// DESTINATION (spec/navigation › registry); inboundShipmentPreferences reads
+// the same field for the from-PO creation option. Safe default OFF while
+// unresolved.
+const hasProcurement = (): boolean =>
+  storeContext()?.preferences?.useProcurementFunctionality ?? false;
+
 // The NAME of the store the user has currently entered — the prefix source for
 // a generated patient code (spec/patients § generating a code). Read off the
 // me/login response's store list, the same place `isDispensary` reads
@@ -259,6 +286,9 @@ export {
   patientPreferences,
   prescriptionPreferences,
   isDispensary,
+  hasVaccineModule,
+  hasProgramModule,
+  hasProcurement,
   hasPermission,
 };
 export type { UserPermission };

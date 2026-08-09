@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../../elements/accordion/Accordion';
+import { ALT_SHIFT_M } from '../../utils/shortcuts';
 import styles from './SidePanel.module.css';
 
 export interface SidePanelProps {
@@ -22,6 +23,12 @@ export interface SidePanelProps {
   onClose?: () => void;
   /** The panel's content — a stack of <SidePanelSection>s, page-owned. */
   children: JSX.Element;
+  /**
+   * The panel element. `Page` binds a focus target here so that when the panel
+   * takes over the viewport in overlay mode, focus moves INTO it rather than
+   * staying parked behind the trap (spec/keyboard KB-X2).
+   */
+  ref?: (el: HTMLElement) => void;
 }
 
 /*
@@ -37,7 +44,11 @@ export interface SidePanelProps {
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside
+    ref={el => props.ref?.(el)}
     class={styles.panel}
+    // Programmatically focusable so Page can move focus into the panel when it
+    // becomes an overlay; never a Tab stop of its own (KB-T1 allows only 0/-1).
+    tabindex="-1"
     data-testid="detail-panel"
     aria-label={props.label ?? 'Details'}
   >
@@ -47,6 +58,11 @@ export const SidePanel = (props: SidePanelProps) => (
         <IconButton
           label={t('button.close')}
           icon={<CloseIcon />}
+          // createSidePanelOpen (beside this file) registers Alt+Shift+M as
+          // "hide the more-info panel"; this button is the control that
+          // advertises it, the mirror of the app bar's More carrying Alt+M
+          // (ui-surface S2 lists both sides of the pair).
+          shortcut={ALT_SHIFT_M}
           onClick={props.onClose}
         />
       )}

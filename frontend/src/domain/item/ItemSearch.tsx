@@ -18,6 +18,12 @@ export interface ItemSearchProps {
    */
   excludeItemIds?: string[];
   /**
+   * Restrict results to items on this master list. A program shares its
+   * master list's id, so a program-scoped picker (e.g. a prescription with a
+   * program assigned) passes the program id here directly.
+   */
+  masterListId?: string;
+  /**
    * The currently-selected item's id (controlled). Shows that item as the
    * value while still allowing a new search — e.g. the picked item stays in
    * the picker after selection so it can be swapped for another.
@@ -47,8 +53,18 @@ export interface ItemSearchProps {
    * that focuses this picker after an action (e.g. a dialog opening on it).
    */
   focusTarget?: FocusTarget;
+  /**
+   * Offer only items with stock on hand (server-side ItemFilterInput
+   * .hasStockOnHand) — the stock-movement line editor's item search.
+   */
+  hasStockOnHand?: boolean;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
+  /**
+   * Max-width cap, the shared input vocabulary — passed through to the
+   * combobox (`full` = fill the container, e.g. a line editor's item row).
+   */
+  width?: 'compact' | 'short' | 'long' | 'full';
 }
 
 // One option row: "code - name" at the inline-start, "{total} Units" at the
@@ -83,7 +99,9 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
   const fetchPage = itemPageFetcher(
     props.storeId,
     () => props.excludeItemIds ?? [],
-    PAGE_SIZE
+    PAGE_SIZE,
+    () => props.hasStockOnHand,
+    () => props.masterListId
   );
 
   // Remember the last full option the user picked. Once an item is selected the
@@ -121,6 +139,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       error={props.error}
       required={props.required}
       class={props.class}
+      width={props.width}
       placeholder={props.placeholder}
       // Every ItemSearch IS the contract's item search — the fixed id is
       // stamped here (like ConfirmDialog's confirmation-modal), not per call

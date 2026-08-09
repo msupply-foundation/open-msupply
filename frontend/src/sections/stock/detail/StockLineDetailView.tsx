@@ -32,6 +32,7 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -43,7 +44,7 @@ import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
@@ -202,7 +203,7 @@ const StockLineDetailView: Component = () => {
   // this view's boundary and tear the rendered form down again — and the same
   // read runs after an adjust/repack refetch, with a modal potentially open
   // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `loading`
-  // below still gives LocationSelect its spinner.
+  // below still gives LocationVolumeSelect its spinner.
   const locations = () =>
     locationsForItem(
       allLocations.state === 'ready' || allLocations.state === 'refreshing'
@@ -347,6 +348,36 @@ const StockLineDetailView: Component = () => {
     !!line()?.item.isVaccine &&
     (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry);
 
+  /*
+   * Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7): the VVM tab's
+   * New status entry, which is the only add this screen offers. The control lives
+   * in VvmHistoryPanel and carries `shortcut={ALT_N}` for its badge; the SCREEN
+   * declares the action, as everywhere else.
+   *
+   * Disabled — and so unlisted in the palette — unless the VVM tab is both offered
+   * and showing, with the permission the control itself requires. KB-R2's
+   * "unclaimed only where the thing is absent": on the Details, Log and Ledger tabs
+   * this screen has no add action.
+   *
+   * Gated on `.state` rather than through `showVvmTab()`, which reads
+   * `data.latest` and suspends on the first pending read — the palette evaluates
+   * every action's `disabled()` in its own render (kdd/keyboard-layer).
+   */
+  createAddAction({
+    name: 'button.new-status-entry',
+    run: () => setVvmEntry({}),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return (
+        activeTab() !== 'vvm' ||
+        !node?.item.isVaccine ||
+        !prefs().manageVvmStatusForStock ||
+        !hasPermission('VIEW_AND_EDIT_VVM_STATUS')
+      );
+    },
+  });
+
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(showVvmTab() ? [{ value: 'vvm', label: t('label.vvm-status') }] : []),
@@ -355,7 +386,6 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('inventory') },
     { label: t('stock'), onClick: onCancelOrClose },
     { label: l.itemName },
   ];
@@ -583,12 +613,24 @@ const StockLineDetailView: Component = () => {
 
                       <FormColumn>
                         <FormSection title={t('heading.storage-and-pack')}>
-                          <LocationSelect
+                          <LocationVolumeSelect
                             label={t('label.location')}
                             locations={locations()}
                             loading={allLocations.loading}
                             value={edit.location?.id}
                             placeholder={t('label.none')}
+                            // This field PLACES stock, so "Available" is
+                            // measured against what's being placed — the DRAFT
+                            // volume per pack (what the user is editing), not
+                            // the saved figure (spec/stock/rules.md › location
+                            // fields).
+                            requiredVolume={
+                              (edit.volumePerPack ?? 0) * l().totalNumberOfPacks
+                            }
+                            // The SAVED location, not the draft one: once the
+                            // user picks elsewhere, where the stock actually
+                            // still sits must stay offered under "Available".
+                            originalLocationId={l().location?.id}
                             onChange={loc =>
                               setEdit(
                                 'location',

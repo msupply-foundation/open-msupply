@@ -62,7 +62,6 @@ const SupplierDetailPage: Component = () => {
   ];
 
   const crumbs = () => [
-    { label: t('nav.replenishment') },
     { label: t('nav.replenishment.suppliers'), onClick: backToList },
     // The leaf is the page <h1>, so it states which of the three states the
     // page is in — never "Loading…" for a record that will never arrive.

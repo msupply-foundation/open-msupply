@@ -1,7 +1,7 @@
 import { t } from '../../../intl';
 import {
   FilterSelect,
-  FilterNumberInput,
+  FilterNumberRange,
   FilterTextInput,
   constructFilters,
   type Filter,
@@ -37,7 +37,7 @@ export const buildItemsFilters = (
       render: props => (
         <FilterTextInput
           label={t('label.code-or-name')}
-          placeholder={t('placeholder.enter-an-item-code-or-name')}
+          placeholder={t('placeholder.search')}
           // e2e hook: FilterBar supplies `filter-input-codeOrName`
           // (TESTIDS.md).
           testId={props.testId}
@@ -51,10 +51,10 @@ export const buildItemsFilters = (
       ),
     },
     lens: {
-      label: () => t('label.in-stock'),
+      label: () => t('label.stock-level'),
       render: props => (
         <FilterSelect
-          label={t('label.in-stock')}
+          label={t('label.stock-level')}
           testId={props.testId}
           value={props.filter().lens ?? ''}
           options={[
@@ -74,28 +74,23 @@ export const buildItemsFilters = (
         />
       ),
     },
-    minMonthsOfStock: {
-      label: () => t('label.min-mos'),
+    monthsOfStock: {
+      label: () => t('label.months-of-stock'),
       render: props => (
-        <FilterNumberInput
-          label={t('label.min-mos')}
+        <FilterNumberRange
+          fromLabel={t('label.min-mos')}
+          toLabel={t('label.max-mos')}
           testId={props.testId}
-          value={props.filter().minMonthsOfStock ?? undefined}
+          decimalLimit={2}
+          value={props.filter().monthsOfStock ?? {}}
           onChange={value =>
-            props.setPartialFilter({ minMonthsOfStock: value ?? null })
-          }
-        />
-      ),
-    },
-    maxMonthsOfStock: {
-      label: () => t('label.max-mos'),
-      render: props => (
-        <FilterNumberInput
-          label={t('label.max-mos')}
-          testId={props.testId}
-          value={props.filter().maxMonthsOfStock ?? undefined}
-          onChange={value =>
-            props.setPartialFilter({ maxMonthsOfStock: value ?? null })
+            props.setPartialFilter({
+              // Both sides empty → null, FilterBar's "added but empty" marker.
+              monthsOfStock:
+                value.from === undefined && value.to === undefined
+                  ? null
+                  : value,
+            })
           }
         />
       ),

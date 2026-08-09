@@ -14,6 +14,9 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import {
   CancelButton,
   DialogSaveButton,
@@ -22,18 +25,27 @@ import {
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import styles from './OutboundLineEditModal.module.css';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import {
   DataTable,
+  type CardGroup,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
+import { Table } from '../../../../ui/elements/table/Table';
 import {
-  getExpiryDateCell,
+  getCellDefinition,
   getFlagCell,
   getNumberCell,
-  getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { CheckIcon, InfoIcon } from '../../../../ui/icons';
+import {
+  CheckIcon,
+  InfoIcon,
+  MessageSquareIcon,
+  StockIcon,
+} from '../../../../ui/icons';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -109,10 +121,14 @@ const VariantInfoTable = (props: {
     when={props.variants.length > 0}
     fallback={<p>{t('messages.no-item-variants')}</p>}
   >
-    <table class={styles.variantTable}>
+    {/* The registry's STATIC SUB-TABLE role: a short, fixed row set inside
+        another surface (this popover), where a DataTable's toolbar chrome would
+        outweigh the content. The shell owns the row look; cell treatment is its
+        data-attribute contract, not our own classes. */}
+    <Table label={t('label.item-variant')}>
       <thead>
         <tr>
-          <th />
+          <th data-check aria-label={t('label.selected')} />
           <th>{t('label.name')}</th>
           <th>{t('label.manufacturer')}</th>
           <Show when={props.isVaccine}>
@@ -126,7 +142,7 @@ const VariantInfoTable = (props: {
             const selected = variant.id === props.selectedId;
             return (
               <tr aria-current={selected ? 'true' : undefined}>
-                <td class={styles.variantMarker}>
+                <td data-check>
                   <Show when={selected}>
                     <span
                       role="img"
@@ -138,18 +154,49 @@ const VariantInfoTable = (props: {
                   </Show>
                 </td>
                 <td>{variant.name}</td>
-                <td>{variant.manufacturer?.name ?? ''}</td>
+                <td data-muted>{variant.manufacturer?.name ?? ''}</td>
                 <Show when={props.isVaccine}>
-                  <td>{variant.vvmType ?? ''}</td>
+                  <td data-muted>{variant.vvmType ?? ''}</td>
                 </Show>
               </tr>
             );
           }}
         </For>
       </tbody>
-    </table>
+    </Table>
   </Show>
 );
+
+// The batch grid presents as CARDS, not a table (the createTableConfig default
+// below) — the same shape as the inbound and stocktake line editors. Batch is
+// the card HEADER identity (meta.headerPosition), so it isn't itself a body
+// group; the issue quantity and the stock context it's judged against sit in the
+// always-shown batch panel, with pricing and ancillary detail behind
+// disclosures. Group keys/labels/icons match the sibling editors exactly, so one
+// card vocabulary reads the same across every line editor.
+type GroupKey = 'batch' | 'pricing' | 'other';
+const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
+  {
+    key: 'batch',
+    labelKey: 'label.batch',
+    icon: () => <StockIcon />,
+    panel: true,
+  },
+  {
+    key: 'pricing',
+    labelKey: 'label.pricing',
+    icon: () => <InfoIcon />,
+    panel: true,
+    disclosure: 'closed',
+  },
+  {
+    key: 'other',
+    labelKey: 'heading.other',
+    icon: () => <MessageSquareIcon />,
+    panel: true,
+    disclosure: 'closed',
+  },
+];
 
 export type LineEditItem = {
   id: string;
@@ -308,11 +355,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Manufacturer starts hidden (the old app's defaultHidden) — declared per
-    // band, since bands don't share; the Columns popover restores it.
+    // Cards by DEFAULT (as the inbound + stocktake line editors) — the
+    // DataTable's showCardToggle offers the flip to a table above the compact
+    // breakpoint and setConfig persists it per user (#886). Manufacturer starts
+    // hidden (the old app's defaultHidden) — declared per band, since bands
+    // don't share; the Columns popover restores it.
     defaultConfig: {
-      base: { columnVisibility: { manufacturer: false } },
-      compact: { columnVisibility: { manufacturer: false } },
+      base: { viewMode: 'card', columnVisibility: { manufacturer: false } },
+      compact: { viewMode: 'card', columnVisibility: { manufacturer: false } },
     },
   });
   const prefs = () => outboundShipmentPreferences();
@@ -826,7 +876,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const updateMode = () => mode() === 'update';
 
-  const columns = (): Column<DraftLine, never>[] => [
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "OK & next" returning to the search keeps the working size, so the
+  // add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || item() !== undefined,
+    false
+  );
+
+  const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       // "Will be used in auto-allocation": the AUTO-fillable predicate
       // (unconditional expired/VVM exclusion + pack-size match under the
@@ -841,12 +900,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // freezes at its first value.
       c: { id: 'canAllocate' },
       // getSize() is a min-width floor (auto layout) — without this the
-      // header-less tick column gets the 150px default and reads as a gap.
-      size: 36,
+      // header-less tick column gets the default and reads as a gap. Authored
+      // in rem like the shared column config, converted for TanStack.
+      size: remToPx(2.25),
       header: () => '',
       // Blank in the grid, but NAMED in the Columns popover (the old app's
-      // header-string / empty-Header split).
+      // header-string / empty-Header split). On a CARD it's a header badge, not
+      // a body field: a bare marker with no label of its own.
       meta: {
+        headerPosition: 'badge',
         columnSettingsLabel: () => t('description.used-in-auto-allocation'),
       },
       cell: info => (
@@ -865,6 +927,20 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'batch' },
       header: () => t('label.batch'),
+      // The card's identity field, captioned "Batch" — a header field is
+      // unlabelled by default, so opt the label in. Structural (the card
+      // identity), so keep it out of the Columns popover. Read-only here, unlike
+      // the inbound editor's typed batch code: an outbound line issues from an
+      // EXISTING stock batch, so the code is the batch's, not the user's.
+      //
+      // The meta rides as getCellDefinition's second argument, NOT a sibling
+      // `meta:` key — the spread returns its own `meta` and would overwrite one
+      // declared beside it (which is exactly how this card lost its header).
+      ...getCellDefinition('batch', {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      }),
       // A batch backed by an ITEM VARIANT carries an info marker beside its
       // name — click reveals the item's variants with this batch's marked
       // (spec S4 § batch grid), matching the old app's variant-info icon.
@@ -896,7 +972,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
-      ...getExpiryDateCell(),
+      cardGroup: 'batch',
+      ...getCellDefinition('expiryDate'),
     },
     // Vaccine items only, under either VVM preference (spec § S4 batch grid;
     // only vaccine stock carries a VVM status). An EDITABLE status picker —
@@ -910,7 +987,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
-            size: 170,
+            cardGroup: 'batch',
+            // An editable picker, so wider than the read-only vvmStatus preset.
+            size: remToPx(10.625),
             cell: info => {
               const line = info.row.original;
               return (
@@ -924,7 +1003,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 />
               );
             },
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
@@ -933,12 +1012,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'campaign',
       },
       // Wide enough that the two-word header doesn't wrap mid-word.
-      size: 200,
+      size: remToPx(12.5),
       header: () => t('label.campaign'),
+      cardGroup: 'other',
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       header: () => t('label.location'),
+      cardGroup: 'batch',
+      ...getCellDefinition('location'),
     },
     ...(prefs().allowTrackingOfStockByDonor
       ? [
@@ -948,7 +1030,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               id: 'donor',
             },
             header: () => t('label.donor'),
-          } as Column<DraftLine, never>,
+            cardGroup: 'other',
+            // No CELL_DEF key — a donor name is free text like a manufacturer.
+            ...getCellDefinition('manufacturer'),
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
@@ -957,11 +1042,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'manufacturer',
       },
       header: () => t('label.manufacturer'),
+      cardGroup: 'other',
+      ...getCellDefinition('manufacturer'),
     },
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
-      ...getCurrencyCell(),
+      cardGroup: 'pricing',
+      ...getCellDefinition('sellPricePerPack'),
     },
     // Foreign-currency pack price (old-app parity): external customers under
     // the issue-in-foreign-currency store preference — the home price
@@ -977,6 +1065,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               id: 'foreignCurrencySellPricePerPack',
             },
             header: () => t('label.fc-sell-price'),
+            cardGroup: 'pricing',
             meta: { align: 'right' },
             cell: info =>
               props.currencyCode
@@ -991,13 +1080,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     maximumFractionDigits: 2,
                   })
                 : '',
-          } as Column<DraftLine, never>,
+            size: remToPx(9),
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
-      ...getNumberCell(),
+      cardGroup: 'batch',
+      ...getCellDefinition('packSize'),
     },
     // Doses-per-unit context, under the DOSES lens only (the old app's
     // includeColumn: dosesView — the preference alone previously showed it
@@ -1007,8 +1098,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit-name', { unit: unitName() }),
-            ...getNumberCell(),
-          } as Column<DraftLine, never>,
+            cardGroup: 'batch',
+            ...getCellDefinition('dosesPerUnit'),
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
     {
@@ -1025,7 +1117,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
       header: () =>
         dosesView() ? t('label.in-store-doses') : t('label.in-store'),
+      cardGroup: 'batch',
       ...getNumberCell(),
+      // No CELL_DEF key — "In store (doses)" is the binding constraint.
+      size: remToPx(7),
     },
     {
       // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
@@ -1048,7 +1143,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         dosesView()
           ? t('label.available-doses')
           : t('label.available-in-packs'),
-      ...getNumberCell(),
+      cardGroup: 'batch',
+      ...getCellDefinition('availablePacks'),
     },
     {
       // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available —
@@ -1057,7 +1153,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       c: { key: 'numberOfPacks' },
       header: () =>
         dosesView() ? t('label.doses-issued') : t('label.pack-quantity-issued'),
-      meta: { align: 'right' },
+      cardGroup: 'batch',
+      // The preset's width + right alignment; the editable cell overrides its
+      // renderer below. "Pack quantity issued" needs more than the key's width.
+      ...getCellDefinition('numberOfPacks'),
+      size: remToPx(8),
       cell: info => {
         const line = info.row.original;
         const label = dosesView()
@@ -1103,7 +1203,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         dosesView()
           ? t('label.pack-quantity-issued')
           : t('label.units-issued', { unit: getPlural(unitName(), 2) }),
+      cardGroup: 'batch',
       meta: { align: 'right' },
+      // No CELL_DEF key — the "{unit} issued" header is the binding constraint.
+      size: remToPx(8),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1128,7 +1231,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'receivedNumberOfPacks' },
             header: () => t('label.packs-received'),
-            meta: { align: 'right' },
+            cardGroup: 'other',
+            ...getCellDefinition('receivedNumberOfPacks'),
             cell: info => {
               const line = info.row.original;
               return (
@@ -1144,11 +1248,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 />
               );
             },
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never, GroupKey>,
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
-            meta: { align: 'right' },
+            cardGroup: 'other',
+            ...getCellDefinition('difference'),
             cell: info => {
               const line = info.row.original;
               return (
@@ -1164,7 +1269,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </>
               );
             },
-          } as Column<DraftLine, never>,
+          } satisfies Column<DraftLine, never, GroupKey>,
         ]),
     {
       // Volume this batch's issue occupies (old-app parity): volume-per-pack
@@ -1172,7 +1277,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // in place (see the canAllocate note above).
       c: { id: 'volume' },
       header: () => t('label.volume'),
+      cardGroup: 'other',
       meta: { align: 'right' },
+      // No CELL_DEF key — the "Volume (m³)" header is the binding constraint.
+      size: remToPx(6),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1193,7 +1301,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'onHold',
       },
       header: () => t('label.on-hold'),
-      ...getFlagCell(t('label.on-hold')),
+      // A row-level status flag — the card's badge slot, like the inbound
+      // editor's own status badge.
+      ...getFlagCell(t('label.on-hold'), { headerPosition: 'badge' }),
     },
   ];
 
@@ -1202,11 +1312,56 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large`: this line table is 20 columns wide, so there is
+      // no card width that fits it. #771's "~900px if the tables fit" does
+      // NOT fit here — narrowing only pushes columns out of view, and the
+      // empty space it was filed against is VERTICAL, which the workbench's
+      // 60-80vh height band already answers. Recorded as a deliberate
+      // deviation from the 900px modal standard in the DESIGN_STANDARDS
+      // ledger.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips — the body flexes to
+      // fill the tall box instead.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
+      // The heading stays the dialog's accessible name but paints nothing: as a
+      // visible row it spent ~2.5rem of a modal whose working area is the batch
+      // grid, restating a mode the header panel and footer buttons already carry.
+      // The sibling line editors already read this way — requisitions and
+      // internal orders hide theirs too, and inbound's / stocktakes' title slot
+      // is the item selector itself, so none of them paints a text heading (#872).
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
       actionsLead={
-        <Show when={errorMessage()}>
+        // The footer's message slot, sharing the buttons' row rather than
+        // spending one of its own. It states the consequence of Save — the
+        // running total and any placeholder — and yields to a save rejection
+        // while there is one, which is the more urgent thing to read (#872).
+        <Show
+          when={errorMessage()}
+          fallback={
+            <Show when={item()}>
+              <HStack gap="md">
+                <span>
+                  {t('label.placeholder')}: {formatNumber(placeholderUnits())}
+                </span>
+                <span>
+                  {t('label.total-units')}:{' '}
+                  {formatNumber(issuedUnits() + placeholderUnits())}
+                </span>
+              </HStack>
+            </Show>
+          }
+        >
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
       }
@@ -1252,107 +1407,136 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </>
       }
     >
-      {/* The header row (spec S4, D76): Item picker · Available · Issue +
-          Allocate-in · placeholder notice on ONE wrapping flex row — each
-          piece drops to its own row as space runs out (see the module CSS). */}
-      <div class={styles.headerRow}>
-        {/* The shared server-searched item lookup (spec S4 — the registry's
+      {/* The header row (spec S4, D76): Item picker · Issue + Allocate-in ·
+          Available · placeholder notice on ONE wrapping flex row — each piece
+          drops to its own row as space runs out (see the module CSS). The
+          registry's inset grouping panel holds them, so the cluster reads as one
+          thing the modal acts on rather than four controls loose against the
+          panel (#872). */}
+      <InsetPanel class={styles.headerPanel}>
+        <div class={styles.headerRow}>
+          {/* The shared server-searched item lookup (spec S4 — the registry's
             async catalogue-lookup; no client-side cached cap), locked in
             update mode. `selectedItem` labels the current value when it isn't
             in the search's own paginated results (a row-click open / walk
             advance). Clearing (×) returns to the empty search state — like an
             add-mode item switch, unsaved edits are discarded (OMS-REG-DIST-03.33). */}
-        <div class={styles.itemField}>
-          <ItemSearch
-            label={t('label.item')}
-            storeId={props.storeId}
-            disabled={updateMode() || saving()}
-            focusTarget={itemSearch}
-            value={item()?.id}
-            selectedItem={item()}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-            onSelect={option => {
-              if (option)
-                void seedItem({
-                  id: option.id,
-                  code: option.code,
-                  name: option.name,
-                  unitName: option.unitName,
-                  isVaccine: option.isVaccine,
-                  doses: option.doses,
-                });
-              else backToSearch();
-            }}
-          />
-        </div>
-        <Show when={item()}>
-          <span class={styles.available}>
-            {/* Unit name pluralised to the count (old-app parity — English
-                only; getPlural passes other languages through). */}
-            {t('label.available')}: {formatNumber(availableUnits())}{' '}
-            {getPlural(unitName(), availableUnits())}
-          </span>
-          {/* Issue + Allocate-in wrap as a unit. Both controls at the default
-              height — NumberField's "small" (2.25rem) and Select's "sm"
-              (1.75rem — the Pagination scale) don't align with each other. */}
-          <div class={styles.issueGroup}>
-            <NumberField
-              label={t('label.issue')}
-              min={0}
-              data-testid="issue-quantity-input"
-              ref={issueField.ref}
-              value={issueValue()}
-              disabled={saving()}
-              onChange={onIssueChange}
-            />
-            <Select
-              label={t('label.units')}
-              value={allocateInValue()}
-              options={[
-                // The unit option reads as a category — always plural
-                // ("Vials"), the old app's getPlural(unit, 2).
-                { value: 'units', label: getPlural(unitName(), 2) },
-                // The doses lens (AC-AL7): vaccine items under the
-                // manage-vaccines-in-doses preference only.
-                ...(prefs().manageVaccinesInDoses && item()?.isVaccine
-                  ? [{ value: 'doses', label: t('label.doses') }]
-                  : []),
-                ...distinctPackSizes().map(size => ({
-                  value: `packs-${size}`,
-                  label: t('label.packs-of-pack-size', { packSize: size }),
-                })),
-              ]}
-              onValueChange={value => {
-                const next: AllocateUnit =
-                  value === 'units'
-                    ? { kind: 'units' }
-                    : value === 'doses'
-                      ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
-                      : { kind: 'packs', size: Number(value.slice(6)) };
-                switchLensTo(next);
+          <div class={styles.itemField}>
+            <ItemSearch
+              label={t('label.item')}
+              storeId={props.storeId}
+              disabled={updateMode() || saving()}
+              focusTarget={itemSearch}
+              value={item()?.id}
+              selectedItem={item()}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+              onSelect={option => {
+                if (option)
+                  void seedItem({
+                    id: option.id,
+                    code: option.code,
+                    name: option.name,
+                    unitName: option.unitName,
+                    isVaccine: option.isVaccine,
+                    doses: option.doses,
+                  });
+                else backToSearch();
               }}
             />
           </div>
-          {/* Placeholder notice (info) — fills the rest of the header row,
-              matching the old app; shown when a shortfall became a placeholder. */}
-          <Show when={placeholderUnits() > 0}>
-            <div class={styles.placeholderNotice}>
-              <Alert severity="info">
-                {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: formatNumber(
-                    issuedUnits() + placeholderUnits()
-                  ),
-                  placeholderQuantity: formatNumber(placeholderUnits()),
-                })}
-              </Alert>
+          <Show when={item()}>
+            {/* Issue + Allocate-in wrap as a unit. Both controls at the default
+              height — NumberField's "small" (2.25rem) and Select's "sm"
+              (1.75rem — the Pagination scale) don't align with each other. */}
+            <div class={styles.issueGroup}>
+              <NumberField
+                label={t('label.issue')}
+                min={0}
+                data-testid="issue-quantity-input"
+                ref={issueField.ref}
+                value={issueValue()}
+                disabled={saving()}
+                onChange={onIssueChange}
+              />
+              <Select
+                label={t('label.units')}
+                value={allocateInValue()}
+                options={[
+                  // The unit option reads as a category — always plural
+                  // ("Vials"), the old app's getPlural(unit, 2).
+                  { value: 'units', label: getPlural(unitName(), 2) },
+                  // The doses lens (AC-AL7): vaccine items under the
+                  // manage-vaccines-in-doses preference only.
+                  ...(prefs().manageVaccinesInDoses && item()?.isVaccine
+                    ? [{ value: 'doses', label: t('label.doses') }]
+                    : []),
+                  ...distinctPackSizes().map(size => ({
+                    value: `packs-${size}`,
+                    label: t('label.packs-of-pack-size', { packSize: size }),
+                  })),
+                ]}
+                onValueChange={value => {
+                  const next: AllocateUnit =
+                    value === 'units'
+                      ? { kind: 'units' }
+                      : value === 'doses'
+                        ? { kind: 'doses', dosesPerUnit: item()?.doses ?? 1 }
+                        : { kind: 'packs', size: Number(value.slice(6)) };
+                  switchLensTo(next);
+                }}
+              />
             </div>
+            {/* Available follows the two inputs, as the figure they're judged
+              against rather than a preamble to them — set off by a hairline and
+              presented as a labelled value so its label reads exactly like
+              Issue's and Units' (the registry's read-only labelled value at
+              variant="field": read-only reads from the ABSENCE of an input box,
+              never from a different label treatment). #872, Ling's mockup. */}
+            <div class={styles.availableStat}>
+              <LabelledValue label={t('label.available')} variant="field">
+                {/* The value takes an input's height so this label lands on the
+                    same line as Issue's and Units': a labelled value is shorter
+                    than a labelled input, and the row's end-alignment would
+                    otherwise drop its label below theirs. */}
+                <span class={styles.availableValue}>
+                  {/* Unit name pluralised to the count (old-app parity —
+                      English only; getPlural passes other languages through). */}
+                  {formatNumber(availableUnits())}{' '}
+                  {getPlural(unitName(), availableUnits())}
+                </span>
+              </LabelledValue>
+            </div>
+            {/* Placeholder notice (info) — fills the rest of the header row,
+              matching the old app; shown when a shortfall became a placeholder. */}
+            <Show when={placeholderUnits() > 0}>
+              <div class={styles.placeholderNotice}>
+                <Alert severity="info">
+                  {t('messages.placeholder-allocated-units', {
+                    requestedQuantity: formatNumber(
+                      issuedUnits() + placeholderUnits()
+                    ),
+                    placeholderQuantity: formatNumber(placeholderUnits()),
+                  })}
+                </Alert>
+              </div>
+            </Show>
           </Show>
-        </Show>
-      </div>
+        </div>
+      </InsetPanel>
 
       {/* The grid + footer + banners keep their own item gate — the header
-          row above renders its picker item-less in add mode. */}
-      <Show when={item()}>
+          row above renders its picker item-less in add mode. Before a pick, a
+          centred prompt says what the empty body is waiting for (as the
+          stocktake editor's, #884) rather than leaving the modal blank. */}
+      <Show
+        when={item()}
+        fallback={
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-issue')}
+          />
+        }
+      >
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
             disabled (AC-AL2 / AC-AL8). */}
         <div class={styles.batchGrid}>
@@ -1361,6 +1545,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             rows={draftRows()}
             rowKey={line => line.id}
             loading={loadingLines()}
+            cardGroups={CARD_GROUPS}
+            showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             emptyMessage={t('messages.no-stock-available')}
@@ -1369,52 +1555,28 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           />
         </div>
 
-        {/* Grid footer: placeholder + running total (spec S4). */}
-        <div
-          style={{
-            display: 'flex',
-            'justify-content': 'end',
-            gap: 'var(--space-4)',
-            'margin-block-start': 'var(--space-2)',
-          }}
-        >
-          <span>
-            {t('label.placeholder')}: {formatNumber(placeholderUnits())}
-          </span>
-          <span>
-            {t('label.total-units')}:{' '}
-            {formatNumber(issuedUnits() + placeholderUnits())}
-          </span>
-        </div>
+        {/* Everything below the grid shares one vertical rhythm — the Stack's
+            gap replaces the per-block margins. The running total that used to
+            lead this stack now rides the footer's message slot. */}
+        <Stack gap="sm">
+          {/* Stacked warning banners (spec S4 § warnings). */}
+          <For each={warnings()}>
+            {message => <Alert severity="warning">{message}</Alert>}
+          </For>
 
-        {/* Stacked warning banners (spec S4 § warnings). */}
-        <Show when={warnings().length > 0}>
-          <div
-            style={{
-              display: 'flex',
-              'flex-direction': 'column',
-              gap: 'var(--space-2)',
-              'margin-block-start': 'var(--space-2)',
-            }}
-          >
-            <For each={warnings()}>
-              {message => <Alert severity="warning">{message}</Alert>}
-            </For>
-          </div>
-        </Show>
+          {/* Zero-allocation second confirmation (spec S4 § save). */}
+          <Show when={zeroConfirm()}>
+            <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
+          </Show>
 
-        {/* Zero-allocation second confirmation (spec S4 § save). */}
-        <Show when={zeroConfirm()}>
-          <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
-        </Show>
-
-        {/* A zero-packs line's VVM change won't survive the save — its own
-            distinct confirmation, taking precedence (spec S4 § save). */}
-        <Show when={vvmConfirm()}>
-          <Alert severity="warning">
-            {t('messages.unsaved-outbound-vvm-status')}
-          </Alert>
-        </Show>
+          {/* A zero-packs line's VVM change won't survive the save — its own
+              distinct confirmation, taking precedence (spec S4 § save). */}
+          <Show when={vvmConfirm()}>
+            <Alert severity="warning">
+              {t('messages.unsaved-outbound-vvm-status')}
+            </Alert>
+          </Show>
+        </Stack>
       </Show>
     </Dialog>
   );

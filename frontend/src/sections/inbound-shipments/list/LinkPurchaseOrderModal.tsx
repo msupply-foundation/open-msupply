@@ -97,7 +97,10 @@ export const LinkPurchaseOrderModal: Component<
           />
           {/* Linking a PO is mandatory — both disabled until a row is picked;
               the choice is only whether to seed the shipment's lines. Their own
-              verbs, so plain Buttons rather than the standard dialog three. */}
+              verbs, so plain Buttons rather than the standard dialog three. The
+              with-lines variant is the primary, so it takes the confirm role;
+              this one is an alternative and claims none, so Enter cannot pick
+              the narrower outcome by accident. */}
           <Button
             variant="secondary"
             data-testid="dialog-button-add-no-lines"
@@ -108,6 +111,7 @@ export const LinkPurchaseOrderModal: Component<
             {t('button.add-with-no-lines')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-add-all-lines"
             disabled={!selectedId()}
             loading={props.busy}

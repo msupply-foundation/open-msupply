@@ -13,6 +13,8 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -225,6 +227,21 @@ const CustomerReturnsList: Component = () => {
     setCreateOpen(true);
   };
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge.
+  //
+  // Never disabled, because the control never is: `onNewReturn` owns the
+  // preference and permission gates and reports each in its own way (a notice,
+  // or the global permission-denied modal). The key reaching the same handler
+  // is the point — a shortcut that silently did nothing where the button
+  // explains itself would be a worse answer than no shortcut.
+  createAddAction({
+    name: 'button.new-return',
+    run: onNewReturn,
+  });
+
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
@@ -295,6 +312,7 @@ const CustomerReturnsList: Component = () => {
             >
               <ColourTagPicker
                 colour={row.colour ?? null}
+                variant="row"
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
@@ -347,10 +365,7 @@ const CustomerReturnsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('distribution') },
-    { label: t('customer-returns') },
-  ];
+  const crumbs = () => [{ label: t('customer-returns') }];
 
   return (
     <Page
@@ -361,6 +376,7 @@ const CustomerReturnsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-return-button"
               onClick={onNewReturn}
             >
@@ -435,6 +451,7 @@ const CustomerReturnsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={onNewReturn}
           >
@@ -469,17 +486,26 @@ const CustomerReturnsList: Component = () => {
         open={createOpen()}
         onClose={() => setCreateOpen(false)}
       />
-      {/* The manual-returns-disabled notice (OMS-REG-DIST-07.18): an info-only dialog in
-          place of the create flow while the store preference is on. */}
-      <Dialog
-        open={disabledNoticeOpen()}
-        onClose={() => setDisabledNoticeOpen(false)}
-        title={t('button.new-return')}
-        description={t('messages.manual-returns-preferences-disabled')}
-        // The standard, icon-less dialog acknowledgement (D55) — this notice
-        // confirms nothing and saves nothing, so OK is the right label.
-        actions={<OkButton onClick={() => setDisabledNoticeOpen(false)} />}
-      />
+      {/* The manual-returns-disabled notice (OMS-REG-DIST-07.18): an info-only
+          dialog in place of the create flow while the store preference is on.
+          Mounted only while open (kdd/action-modal) — a closed-but-mounted
+          Dialog leaves its shared `dialog-button-ok` id in the DOM. */}
+      <Show when={disabledNoticeOpen()}>
+        <Dialog
+          open
+          onClose={() => setDisabledNoticeOpen(false)}
+          title={t('button.new-return')}
+          description={t('messages.manual-returns-preferences-disabled')}
+          // The standard, icon-less dialog acknowledgement (D55) — this notice
+          // confirms nothing and saves nothing, so OK is the right label.
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setDisabledNoticeOpen(false)}
+            />
+          }
+        />
+      </Show>
     </Page>
   );
 };

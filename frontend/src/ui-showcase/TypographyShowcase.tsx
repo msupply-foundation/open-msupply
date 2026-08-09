@@ -2,6 +2,7 @@ import { For } from 'solid-js';
 import { MemoryRouter, Route } from '@solidjs/router';
 import { Text, type TextVariant } from '../ui/elements/typography/Text';
 import { RecordLink } from '../ui/elements/typography/RecordLink';
+import { UserLabel } from '../ui/elements/typography/UserLabel';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
@@ -95,6 +96,18 @@ export const typographyMetadata: PageMetadata = {
       id: 'typography-record-link',
       title: 'RecordLink',
       searchTerms: ['link', 'related', 'record', 'kind', 'tone', 'po', 'io'],
+    },
+    {
+      id: 'typography-user-label',
+      title: 'UserLabel',
+      searchTerms: [
+        'user',
+        'entered by',
+        'edited by',
+        'email',
+        'tooltip',
+        'audit',
+      ],
     },
   ],
 };
@@ -319,6 +332,38 @@ export const TypographyShowcase = () => (
             )}
           />
         </MemoryRouter>
+      </DashboardCard>
+
+      <DashboardCard
+        id="typography-user-label"
+        title="UserLabel — a recorded user with their email"
+      >
+        <Lead>
+          The "Entered by" / "Edited by" row every detail side panel shows: the
+          recorded user's name, with their email behind the shared info marker
+          — hover or tap the icon. No email, no icon; no user, a dash.{' '}
+          <code>label</code> names the field the icon details (its accessible
+          name). Font and weight inherit from the surrounding context, like any
+          value text.
+        </Lead>
+        <div class={styles.headingStack}>
+          <div class={styles.headingRow}>
+            <UserLabel
+              username="demo"
+              email="demo@msupply.foundation"
+              label="Entered by"
+            />
+            <span class={styles.meta}>name + email → info marker</span>
+          </div>
+          <div class={styles.headingRow}>
+            <UserLabel username="stock.taker" label="Entered by" />
+            <span class={styles.meta}>no email → no icon</span>
+          </div>
+          <div class={styles.headingRow}>
+            <UserLabel label="Entered by" />
+            <span class={styles.meta}>no user → a dash</span>
+          </div>
+        </div>
       </DashboardCard>
     </Stack>
   </ContentContainer>

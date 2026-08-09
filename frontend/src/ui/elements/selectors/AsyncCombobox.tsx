@@ -61,6 +61,8 @@ export interface AsyncComboboxProps<T> {
   /** Control size, forwarded to the Combobox — `small` for a header field
    * cluster's compact row (see ui/layout/Header/HeaderToolbar). */
   size?: 'default' | 'small';
+  /** Width cap — the Combobox's own vocabulary (default `long`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -72,7 +74,7 @@ export interface AsyncComboboxProps<T> {
   /**
    * Status text shown when a settled search matched nothing — a domain
    * message (e.g. the patient picker's "No matching patients"). Passed through
-   * to the Combobox; defaults there to "No matching items".
+   * to the Combobox; defaults there to a translated "No results".
    */
   noResultsMessage?: string;
   /**
@@ -229,6 +231,7 @@ export const AsyncCombobox = <T,>(
       helperText={props.helperText}
       clearable={props.clearable}
       size={props.size}
+      width={props.width}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}

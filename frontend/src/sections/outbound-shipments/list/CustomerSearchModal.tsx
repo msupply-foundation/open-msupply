@@ -6,8 +6,7 @@ import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import { InsertOutboundShipment } from './outboundShipments.generated';
 
@@ -86,14 +85,13 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
       // Room for the lookup's open listbox inside the dialog.
       minBodyHeightRem={24}
       actions={
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        // Cancel is the only footer action — choosing a customer from the list
+        // is this dialog's confirm, and Enter there belongs to the picker
+        // (KB-E1).
+        <CancelButton
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
+        />
       }
     >
       <NameSearch

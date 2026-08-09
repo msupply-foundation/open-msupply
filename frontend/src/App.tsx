@@ -14,12 +14,14 @@ import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
 import { fetchServerInfo } from './api/serverInfo';
+import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
+import { stockMovementsRoutes } from './sections/stock-movements';
 import { customersRoutes, suppliersRoutes } from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
@@ -28,6 +30,7 @@ import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
 import { internalOrdersRoutes } from './sections/internal-orders';
+import { requisitionsRoutes } from './sections/requisitions';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
@@ -40,13 +43,22 @@ import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
+import { Alert } from './ui/elements/feedback/Alert';
+import { Button } from './ui/elements/buttons/Button';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
 import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
+import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
 import styles from './ui/styles/shared.module.css';
 
-type Phase = 'loading' | 'initialisation' | 'operational';
+// 'failed' is what the loading phase becomes once a startup pass cannot
+// complete (spec, Startup sequence): the loading state claims the app is
+// starting, and once it can't, saying so with a way to re-run is the only
+// honest thing left. Without it a failed pass sat on a bare "Loading…" for good
+// — reachable in practice by dismissing the permission-denied modal, whose OK
+// is a dismiss.
+type Phase = 'loading' | 'failed' | 'initialisation' | 'operational';
 
 // Nav destinations that have a real, implemented section
 // (kdd/explicit-composition: one traceable place to see which sections are
@@ -56,6 +68,7 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 const sectionRoutes: Record<string, () => JSX.Element> = {
   dashboard: dashboardRoutes,
   'inventory/stocktakes': stocktakesRoutes,
+  'inventory/stock-movement': stockMovementsRoutes,
   'distribution/customers': customersRoutes,
   'replenishment/suppliers': suppliersRoutes,
   'inventory/locations': locationsRoutes,
@@ -63,6 +76,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'replenishment/supplier-return': supplierReturnsRoutes,
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
+  'distribution/customer-requisition': requisitionsRoutes,
   'replenishment/internal-order': internalOrdersRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
   'catalogue/items': itemsRoutes,
@@ -91,26 +105,42 @@ export const App: Component = () => {
     // Server role resolves alongside the status check so the phase-visibility
     // matrix (spec/sync-modal) is answerable before either surface renders;
     // re-running startup re-reads it (initialising as central changes it).
+    // Site branding rides along for the same reason: the login and
+    // initialisation screens are themed, so it must land before they render.
     const [status] = await Promise.all([
       graphqlFetch(InitialisationStatus, {}),
       fetchServerInfo(),
+      fetchDisplaySettings(),
     ]);
-    if (status.kind !== 'success') return;
+    // The failure itself is described by the global modal; this pass just can't
+    // continue, so it ends on the startup-failed surface offering to re-run.
+    if (status.kind !== 'success') {
+      setPhase('failed');
+      return;
+    }
     if (status.data.initialisationStatus.status !== 'INITIALISED') {
       setPhase('initialisation');
       return;
     }
-    // A failed check is handled globally; stay in the loading phase.
+    // checkAuth() is false only when the check neither settled nor came back
+    // unauthenticated — a globally handled failure, so the same dead end.
     if (await checkAuth()) setPhase('operational');
+    else setPhase('failed');
   };
 
   onMount(() => {
     void runStartup();
     const stopTracking = startActivityTracking();
     const stopStaleBundleWatch = startStaleBundleWatch();
+    // The served-bundle watch runs for the app's whole life, pre-session
+    // included — the prompt itself only surfaces in the shell's bottom bar
+    // (spec/chrome § update prompt), but a change noticed on the login screen
+    // shows the moment the bar exists.
+    const stopUpdateWatch = startUpdateWatch();
     onCleanup(() => {
       stopTracking();
       stopStaleBundleWatch();
+      stopUpdateWatch();
     });
   });
 
@@ -128,6 +158,24 @@ export const App: Component = () => {
         <Match when={phase() === 'loading'}>
           <div class={styles.page}>
             <p>{t('loading')}</p>
+          </div>
+        </Match>
+        {/* Spec S7: the error's description belongs to the global modal, so this
+            surface only states that startup failed and offers to re-run it — in
+            place, since there is no entered state to preserve with a reload. */}
+        <Match when={phase() === 'failed'}>
+          <div class={styles.page}>
+            <div class={styles.card}>
+              <Alert severity="error" testId="startup-failed">
+                {t('error.startup-failed')}
+              </Alert>
+              <Button
+                data-testid="startup-retry"
+                onClick={() => void runStartup()}
+              >
+                {t('button.retry')}
+              </Button>
+            </div>
           </div>
         </Match>
         <Match when={phase() === 'initialisation'}>

@@ -22,9 +22,11 @@ import {
   FilterDateRange,
   FilterMultiSelect,
   FilterNumberInput,
+  FilterNumberRange,
   FilterSelect,
   FilterTextInput,
   type Filter,
+  type NumberRange,
 } from '../ui/elements/selectors/FilterBar';
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
@@ -108,6 +110,9 @@ const itemFilter = (item: DemoItem, input: string) => {
 interface InvoiceFilter {
   otherPartyName?: string | null;
   invoiceNumber?: number | null;
+  // The UI pair, not a wire operator — a real vertical maps { from, to } onto
+  // its own scalar keys (see FilterNumberRange).
+  packCount?: NumberRange | null;
   theirReference?: string | null;
   item?: string | null;
   status?: string | null;
@@ -127,11 +132,13 @@ interface InvoiceFilter {
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
+    // A DEFAULT filter — seeded present-as-null in the filter signal below;
+    // nothing on the definition says so (#563).
     label: () => 'Name',
     render: props => (
       <FilterTextInput
         label="Name"
-        placeholder="Search by name"
+        placeholder="Search..."
         testId={props.testId}
         value={props.filter().otherPartyName ?? ''}
         onInput={value =>
@@ -146,11 +153,29 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterNumberInput
         label="Invoice number"
-        placeholder="Invoice number"
+        placeholder="Search..."
         testId={props.testId}
         value={props.filter().invoiceNumber ?? undefined}
         onChange={value =>
           props.setPartialFilter({ invoiceNumber: value ?? null })
+        }
+      />
+    ),
+  },
+  {
+    key: 'packCount',
+    label: () => 'Pack count',
+    render: props => (
+      <FilterNumberRange
+        fromLabel="Pack count from"
+        toLabel="Pack count to"
+        testId={props.testId}
+        value={props.filter().packCount ?? {}}
+        onChange={value =>
+          props.setPartialFilter({
+            packCount:
+              value.from === undefined && value.to === undefined ? null : value,
+          })
         }
       />
     ),
@@ -210,7 +235,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
     render: props => (
       <FilterCombobox
         label="Item"
-        placeholder="Item"
+        placeholder="Search..."
         items={ITEMS}
         itemToString={i => `${i.code} — ${i.name}`}
         itemToValue={i => i.code}
@@ -305,6 +330,9 @@ export const SelectorsShowcase = () => {
   // multi-select `statuses` both start present, so the bar shows both the
   // FilterSelect and FilterMultiSelect controls in their chip habitat on load.
   const [filters, setFilters] = createSignal<InvoiceFilter>({
+    // A DEFAULT filter is exactly this: a key seeded present-as-null, so its
+    // chip is on the bar from the start and is otherwise ordinary (#563).
+    otherPartyName: null,
     status: 'new',
     statuses: ['allocated', 'picked'],
   });
@@ -583,6 +611,12 @@ export const SelectorsShowcase = () => {
             in GraphQL-native shape — destined for URL query params once routing
             lands, so filtered views become shareable.
           </Lead>
+          <Note>
+            <strong>Name</strong> is a <em>default filter</em>: the page seeds
+            its key (present-as-<code>null</code>) in the filter it starts with,
+            so the chip is on the bar from the first render — and is an
+            ordinary, removable chip from there.
+          </Note>
           <FilterBar
             filters={DEMO_FILTERS}
             filter={filters()}
