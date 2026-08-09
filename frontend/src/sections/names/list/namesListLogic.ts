@@ -52,9 +52,9 @@ export type NamesListState = {
 };
 
 // Default: sorted name ascending (rules › sorting), first page of 20. The
-// name/code search chip is seeded present-as-null so it shows on a pristine
-// list (AC-N13) — the same always-shown pattern as the patient list; stripEmpty
-// drops the empty search from the query until the user types.
+// name/code search is the list's default filter (D25's always-present search,
+// AC-N13): seeded present-as-null so its chip shows on a pristine list;
+// stripEmpty drops it from the query until the user types.
 export const DEFAULT_STATE: NamesListState = {
   filter: { codeOrName: null },
   sort: [{ key: 'name', desc: false }],

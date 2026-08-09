@@ -8,6 +8,8 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import {
   DataTable,
@@ -109,6 +111,20 @@ const InboundShipmentsList: Component = () => {
     'manual' | 'fromPurchaseOrder'
   >();
   const prefs = () => inboundShipmentPreferences();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the three controls that can trigger it (the plain New
+  // button, the procurement split button, and the ghost button in the table's
+  // empty slot — only two ever render at a time); each carries
+  // `shortcut={ALT_N}` for its badge, none owns the action.
+  //
+  // `run` is the manual create, which is the plain button's action and the
+  // split button's default option. The from-a-purchase-order route keeps its
+  // own control.
+  createAddAction({
+    name: 'button.new-shipment',
+    run: () => setCreateMode('manual'),
+  });
 
   const tableConfig = createTableConfig({
     tableId: 'inbound-shipments',
@@ -238,7 +254,7 @@ const InboundShipmentsList: Component = () => {
       // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: () => t('label.name'),
+      header: () => t('label.supplier'),
       ...getCellDefinition('otherPartyName', {
         headerPosition: 'primary',
         wrapLines: 2,
@@ -359,10 +375,7 @@ const InboundShipmentsList: Component = () => {
     ...customFieldColumns<Row, SortKey>(cfDefs(), row => row.customFields),
   ];
 
-  const crumbs = () => [
-    { label: t('replenishment') },
-    { label: t('inbound-shipment') },
-  ];
+  const crumbs = () => [{ label: t('inbound-shipment') }];
 
   return (
     <Page
@@ -379,6 +392,7 @@ const InboundShipmentsList: Component = () => {
               fallback={
                 <Button
                   icon={<PlusCircleIcon />}
+                  shortcut={ALT_N}
                   data-testid="new-shipment-button"
                   onClick={() => setCreateMode('manual')}
                 >
@@ -390,6 +404,7 @@ const InboundShipmentsList: Component = () => {
                 icon={<PlusCircleIcon />}
                 testId="new-shipment-button"
                 menuLabel={t('button.new-shipment')}
+                shortcut={ALT_N}
                 options={[
                   { value: 'manual', label: t('button.new-shipment') },
                   {
@@ -436,6 +451,7 @@ const InboundShipmentsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={() => setCreateMode('manual')}
           >

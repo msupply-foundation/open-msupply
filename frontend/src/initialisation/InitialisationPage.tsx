@@ -24,7 +24,7 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
-import { MSupplyGuyLogo } from '../ui/icons';
+import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
   DEFAULT_SYNC_INTERVAL_SECONDS,
@@ -205,9 +205,17 @@ export const InitialisationPage: Component<{
         batchSize: values().batchSize,
       },
     });
-    // Failures are handled globally; stay in the submitting phase. The
+    // Failures are handled globally, so no error is shown here — but the
+    // submitting state MUST be released (spec, Unexpected API errors), or all
+    // four inputs stay disabled behind a permanent "Initialising…" and the only
+    // escape is a reload that wipes the URL, site name and password just typed.
+    // Nothing was started, so this is the same unlocked, button-reverts-to-
+    // Initialise state as a pre-start sync error (OMS-REG-LGN-03.11/.17). The
     // expected sync errors below come back as union variants on success.
-    if (result.kind !== 'success') return;
+    if (result.kind !== 'success') {
+      setSubmitting(false);
+      return;
+    }
     const { initialiseSite } = result.data;
     if (initialiseSite.__typename === 'SyncSettingsNode') {
       setSubmitting(false);
@@ -229,11 +237,19 @@ export const InitialisationPage: Component<{
 
   // Spec: on error the button becomes retry, calling the manual sync mutation.
   // Only reachable once syncStarted — inputs stay locked.
+  //
+  // The error is cleared only once a run has actually started. Clearing it up
+  // front made a failed manualSync self-destructive: showRetry() went false (no
+  // error) while busy() went true, so the Retry button was replaced by a
+  // disabled "Initialising…" with nothing watching for status — the recovery
+  // control gone while nothing was running (spec, Initialisation § retry).
   const retry = async () => {
-    setSyncError(undefined);
+    setSubmitting(true);
     const result = await graphqlFetch(ManualSync, {});
-    // Failures are handled globally; stay in the submitting phase.
-    if (result.kind === 'success') watchProgress();
+    setSubmitting(false);
+    if (result.kind !== 'success') return;
+    setSyncError(undefined);
+    watchProgress();
   };
 
   const showRetry = () => syncStarted() && syncError() != null;
@@ -262,7 +278,7 @@ export const InitialisationPage: Component<{
             aria-label={t('button.initialise')}
             onSubmit={submit}
           >
-            <MSupplyGuyLogo class={styles.logo} />
+            <AppLogo class={styles.logo} />
             <TextField
               label={t('label.settings-url')}
               width="full"
@@ -345,8 +361,11 @@ export const InitialisationPage: Component<{
                   </Button>
                 }
               >
-                <Button onClick={() => void retry()}>
-                  {t('button.retry')}
+                {/* Disabled while the retry call is in flight so it can't be
+                    double-submitted; the error stays visible behind it
+                    (OMS-REG-LGN-03.15). */}
+                <Button onClick={() => void retry()} disabled={submitting()}>
+                  {submitting() ? t('button.initialising') : t('button.retry')}
                 </Button>
               </Show>
             </div>

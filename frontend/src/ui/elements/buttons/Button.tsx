@@ -1,6 +1,15 @@
 import { children, Show, splitProps, type JSX } from 'solid-js';
 import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
+import { ShortcutBadge } from '../keyboard/ShortcutBadge';
+import {
+  ALT_S,
+  ESCAPE,
+  ariaKeyshortcuts,
+  type Shortcut,
+} from '../../utils/shortcuts';
+import { createConfirmClaim } from './createConfirmClaim';
+import type { ConfirmRole } from '../feedback/dialogConfirm';
 import styles from './Button.module.css';
 
 /*
@@ -47,6 +56,34 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * out even if that default flips.
    */
   collapsible?: boolean;
+  /**
+   * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
+   * drives both the accessible name of the binding (`aria-keyshortcuts`) and
+   * the hint badge revealed while Alt or Ctrl is held, so the two can never
+   * drift apart (AC-KB15).
+   *
+   * The button does NOT dispatch the key — the screen registers the action
+   * (`createAction` / `createAddAction`) and the dispatcher runs it. That
+   * split is deliberate: a screen may render two controls for one action (the
+   * inbound and internal-order details each have a header SplitButton AND a
+   * ghost button in the table's empty slot), and the action's `run` is often
+   * broader than one button's click (kdd/keyboard-layer).
+   */
+  shortcut?: Shortcut;
+  /**
+   * This button's role in a surrounding `<Dialog>`'s footer, which is how the
+   * dialog knows what `Enter` should activate (spec/keyboard KB-E2) and what to
+   * contribute to the command palette while it is open.
+   *
+   * The four `StandardButtons` set this for you — prefer those. Set it by hand
+   * only for a confirm with a BESPOKE LABEL, which D55 says must stay a plain
+   * `<Button>` rather than become a mislabelled standard one: _Create_,
+   * _Delete lines_, _Apply_, _Next step_.
+   *
+   * Read once at setup: a button does not change its footer role at runtime.
+   * Outside a `<Dialog>` it does nothing.
+   */
+  confirms?: ConfirmRole;
 }
 
 /*
@@ -68,7 +105,46 @@ export const Button = (props: ButtonProps) => {
     'type',
     'disabled',
     'onPointerDown',
+    'shortcut',
+    'confirms',
+    // Applied explicitly below: Solid only compiles `ref` specially when it is
+    // a STATIC attribute, so a ref arriving through `{...rest}` would be
+    // silently dropped. The dialog confirm-claim depends on getting the
+    // element.
+    'ref',
   ]);
+  // The footer-role claim, if this button declares one. Registers on mount and
+  // releases on cleanup, so a <Show>-gated Save & next hands its role back when
+  // the gate closes.
+  const confirmClaim = createConfirmClaim(() => local.confirms, props);
+
+  /*
+   * The binding this button advertises. Derived from the claimed ROLE where
+   * the role implies one, so claiming the role IS declaring the binding and
+   * there is no second prop to forget:
+   *
+   *   plain  → Alt+S, the dialog tier's Save (KB-1). The <Dialog> registers
+   *   that
+   *            binding against whichever button holds this role, so a bespoke
+   *            confirm (_Create_, _Delete lines_) advertises it too.
+   *   cancel → Escape, which the UA's close request already performs.
+   *
+   * An explicit `shortcut` still wins, for a control whose binding is nothing
+   * to do with a dialog footer (the shared add control's Alt+N).
+   *
+   * Only when the role was actually CLAIMED, which needs a surrounding
+   * <Dialog>. A CancelButton in a page form declares `confirms="cancel"` like
+   * every other one, but nothing there answers Escape — advertising it on the
+   * badge and in `aria-keyshortcuts` would be telling the user, and assistive
+   * technology, about a key that does nothing.
+   */
+  const shortcut = (): Shortcut | undefined => {
+    if (local.shortcut) return local.shortcut;
+    if (!confirmClaim.claimed) return undefined;
+    if (local.confirms === 'plain') return ALT_S;
+    if (local.confirms === 'cancel') return ESCAPE;
+    return undefined;
+  };
   const ripple = createRipple();
   // JSX-element props are lazy getters: each is read twice below (the <Show>
   // test + the insertion), and raw reads would create the passed element twice
@@ -78,6 +154,11 @@ export const Button = (props: ButtonProps) => {
 
   return (
     <button
+      ref={el => {
+        confirmClaim.ref(el);
+        if (typeof local.ref === 'function')
+          (local.ref as (e: HTMLButtonElement) => void)(el);
+      }}
       type={local.type ?? 'button'}
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
       data-variant={local.variant ?? 'primary'}
@@ -88,6 +169,13 @@ export const Button = (props: ButtonProps) => {
       }
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
+      // The ARIA grammar, not the platform spelling — the badge renders the
+      // human form from the same value (KB-M1, AC-KB15).
+      aria-keyshortcuts={shortcut() ? ariaKeyshortcuts(shortcut()!) : undefined}
+      // The badge positions itself against this button; `.button` is already
+      // `position: relative` for the ripple, so it is already the positioning
+      // context. It is also `overflow: hidden` for the same reason, which is
+      // why the badge sits just INSIDE the corner rather than outside it.
       onPointerDown={event => {
         if (local.loading) return;
         ripple.onPointerDown(event);
@@ -109,6 +197,9 @@ export const Button = (props: ButtonProps) => {
       </Show>
       <Show when={label()}>
         <span class={styles.label}>{label()}</span>
+      </Show>
+      <Show when={shortcut()}>
+        {shortcut => <ShortcutBadge shortcut={shortcut()} />}
       </Show>
       <Ripple ripples={ripple.ripples()} onDone={ripple.dismiss} />
     </button>

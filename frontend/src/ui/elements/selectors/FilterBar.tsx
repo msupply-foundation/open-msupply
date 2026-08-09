@@ -24,6 +24,11 @@ import {
 } from '../inputs/dateTimeConvert';
 import { DateTimeField } from '../inputs/DateTimeField';
 import { Combobox } from './Combobox';
+import {
+  activeFilters,
+  availableFilters,
+  showsClearAll,
+} from './filterBarLogic';
 import styles from './FilterBar.module.css';
 
 /*
@@ -150,6 +155,8 @@ interface FilterBarProps<
 interface GroupOps<G extends object> {
   active: () => Filter<G>[];
   available: () => Filter<G>[];
+  /** Does this group put the bar's "Clear all" on screen? */
+  showsClearAll: () => boolean;
   add: (f: Filter<G>) => void;
   remove: (f: Filter<G>) => void;
   reset: () => void;
@@ -168,16 +175,18 @@ const groupOps = <G extends object>(
   onChange: (g: G) => void,
   focusTarget: (key: string) => FocusTarget
 ): GroupOps<G> => {
-  const isActive = (f: Filter<G>) => f.key in filter();
   const without = (key: keyof G & string): G => {
     const { [key]: _omit, ...rest } = filter();
     return rest as G; // erase the omitted optional key; the value is a filter object
   };
   return {
-    active: () => filters().filter(isActive),
-    available: () => filters().filter(f => !isActive(f)),
+    active: () => activeFilters(filters(), filter()),
+    available: () => availableFilters(filters(), filter()),
+    showsClearAll: () => showsClearAll(filters(), filter()),
     add: f => onChange({ ...filter(), [f.key]: null }),
     remove: f => onChange(without(f.key)),
+    // Drops every key, a seeded default filter's included — "Clear all" takes
+    // every chip off the bar (#563), leaving just the add-filter trigger.
     reset: () => {
       let next = filter();
       for (const f of filters()) {
@@ -204,12 +213,14 @@ const groupOps = <G extends object>(
  *
  * State model (see kdd/page-composition): the caller's filter object IS the
  * state, in GraphQL-native shape. A chip is shown iff its key is PRESENT on
- * the filter (present-as-`null` = added but empty). Adding writes `null`,
- * removing deletes the key, editing goes through the field's own control via
- * setPartialFilter. Chip visibility therefore lives in the (URL-backed)
- * filter, so a restored state re-opens its chips — no local presentation
- * signal to seed. The page strips null/empty keys before querying
- * (stripEmpty).
+ * the filter (present-as-`null` = added but empty) — no exceptions, so a
+ * screen's DEFAULT filters are simply keys seeded present-as-null in its
+ * default state, and are removable and clearable like any other (#563;
+ * filterBarLogic.ts holds these rules). Adding writes `null`, removing deletes
+ * the key, editing goes through the field's own control via setPartialFilter.
+ * Chip visibility therefore lives in the (URL-backed) filter, so a restored
+ * state re-opens its chips — no local presentation signal to seed. The page
+ * strips null/empty keys before querying (stripEmpty).
  */
 // A menu entry, types erased at the render edge so one dropdown lists both
 // groups' addable filters.
@@ -298,9 +309,6 @@ export const FilterBar = <
     return items;
   };
 
-  const anyActive = () =>
-    main.active().length > 0 || (extraOps()?.active().length ?? 0) > 0;
-
   const resetAll = () => {
     main.reset();
     extraOps()?.reset();
@@ -348,9 +356,17 @@ export const FilterBar = <
       </Show>
 
       {/* Bar-level "Clear all" (ui-standards § tables → filtering) — a plain
-          text button, shown only while any filter (either group) is active. */}
-      <Show when={anyActive()}>
-        <button type="button" class={styles.clearAll} onClick={resetAll}>
+          text button, on screen while either group holds ANY chip, and taking
+          them all off (showsClearAll / reset). */}
+      <Show when={main.showsClearAll() || extraOps()?.showsClearAll()}>
+        <button
+          type="button"
+          class={styles.clearAll}
+          // As on a chip's ✕: taking the caret out of an editor shrinks it and
+          // shifts this button mid-press, losing the click.
+          onMouseDown={e => e.preventDefault()}
+          onClick={resetAll}
+        >
           {t('label.clear-all-filters')}
         </button>
       </Show>
@@ -391,7 +407,9 @@ export const NotChipEditor = (props: { children: JSX.Element }) => (
   </ChipFocusContext.Provider>
 );
 
-// Chip chrome: label + the field's control + a remove button.
+// Chip chrome: label + the field's control + the remove ×. The ✕ is the pill's
+// one affordance and it means REMOVE (DESIGN_STANDARDS unit 9) — every chip
+// carries it, a seeded default filter's included (#563).
 const FilterChip = (props: {
   label: string;
   onRemove: () => void;
@@ -409,7 +427,12 @@ const FilterChip = (props: {
       type="button"
       class={styles.remove}
       aria-label={t('label.clear-filter-detail', { name: props.label })}
-      onClick={props.onRemove}
+      // Keep the caret where it is while the button is pressed: the editor
+      // shrinks to its text when it loses the caret, which slides this button
+      // out from under the pointer, and the release then lands elsewhere — no
+      // click, so the chip just seemed to collapse instead of going (#563).
+      onMouseDown={e => e.preventDefault()}
+      onClick={() => props.onRemove()}
     >
       <CloseIcon />
     </button>
@@ -616,6 +639,91 @@ export const FilterNumberInput = (props: {
         max={props.max}
         value={props.value}
         onChange={commit}
+      />
+    </span>
+  );
+};
+
+/** A number range as From/To bounds, either side optional — see
+ * FilterNumberRange. */
+export interface NumberRange {
+  from?: number;
+  to?: number;
+}
+
+/**
+ * A number-RANGE filter — FilterNumberInput's dual-box sibling: two
+ * NumberFields (From/To) on one chip pill, composed like FilterDateTimeRange
+ * (– separator; From takes the chip's focus target). The schema has no
+ * number-range operator, so the value is a plain `{ from, to }` pair each
+ * vertical maps onto its own wire keys (e.g. min/max months of stock).
+ *
+ * Commits are DEBOUNCED like FilterNumberInput, through ONE timer over a
+ * merged draft — so a From edit still pending when To is typed in rides into
+ * the same commit, not overwritten.
+ *
+ * An inverted pair never commits: the flush emits it ORDERED (swapped) —
+ * the range calendar's semantics (corvu swaps an earlier second pick), so
+ * entry order doesn't matter. Not NumberField min/max cross-bounds: a
+ * reactive bound re-runs its constraint reformat per keystroke, wiping
+ * mid-entry text.
+ */
+export const FilterNumberRange = (props: {
+  value: NumberRange;
+  onChange: (value: NumberRange) => void;
+  fromLabel: string;
+  toLabel: string;
+  /** `data-testid` stem for the two inputs (FilterBar supplies
+   *  `filter-input-<key>`), stamped as `<testId>-from` / `<testId>-to`. */
+  testId?: string;
+  /** Max decimal places; 0 (default) = integers only. */
+  decimalLimit?: number;
+  /** Lower bound (default 0). */
+  min?: number;
+  /** Upper bound. */
+  max?: number;
+}) => {
+  const chipFocus = useChipFocus();
+  // The uncommitted pair; undefined = nothing pending.
+  let draft: NumberRange | undefined;
+  const commit = createDebounced((value: NumberRange) => {
+    const { from, to } = value;
+    props.onChange(
+      from !== undefined && to !== undefined && from > to
+        ? { from: to, to: from }
+        : value
+    );
+    draft = undefined;
+  }, 300);
+  const update = (patch: NumberRange) => {
+    draft = { ...(draft ?? props.value), ...patch };
+    commit(draft);
+  };
+  return (
+    <span class={`${styles.bareField} ${styles.numberRange}`}>
+      <NumberField
+        label={props.fromLabel}
+        hideLabel
+        size="small"
+        data-testid={props.testId && `${props.testId}-from`}
+        ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
+        decimalLimit={props.decimalLimit}
+        min={props.min}
+        max={props.max}
+        value={props.value.from}
+        onChange={from => update({ from })}
+      />
+      <span aria-hidden="true">–</span>
+      <NumberField
+        label={props.toLabel}
+        hideLabel
+        size="small"
+        data-testid={props.testId && `${props.testId}-to`}
+        decimalLimit={props.decimalLimit}
+        min={props.min}
+        max={props.max}
+        value={props.value.to}
+        onChange={to => update({ to })}
       />
     </span>
   );

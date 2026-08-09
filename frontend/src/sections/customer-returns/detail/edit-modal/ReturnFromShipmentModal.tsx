@@ -10,6 +10,7 @@ import {
   CancelButton,
   DialogSaveButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
+import { createFocusTargets } from '../../../../ui/utils/createFocusTarget';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
 import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
@@ -99,12 +100,23 @@ const Body = (props: BodyProps): JSX.Element => {
     })
   );
   const [message, setMessage] = createSignal<
-    { severity: 'error' | 'warning'; text: string } | undefined
+    | {
+        severity: 'error' | 'warning';
+        text: string;
+        /** Test hook: which block this is (e2e/TESTIDS.md). */
+        kind: 'pack-size' | 'zero-quantity' | 'save-error';
+      }
+    | undefined
   >();
 
   const tableConfig = createTableConfig({
     tableId: 'customer-return-from-shipment-edit',
   });
+
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
 
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
   // step message.
@@ -131,16 +143,16 @@ const Body = (props: BodyProps): JSX.Element => {
     // is the global unexpected-error modal's (spec: Unexpected API Errors) —
     // stay in the loading phase behind it rather than showing an empty grid.
     if (result.kind !== 'success') return;
-    setDraft(
-      reconcile(
-        seedDrafts(
-          result.data.generateCustomerReturnLines.nodes,
-          new Set<string>()
-        ),
-        { key: 'id' }
-      )
+    const seeded = seedDrafts(
+      result.data.generateCustomerReturnLines.nodes,
+      new Set<string>()
     );
+    setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
+    // The first quantity field is what this dialog opens for. Armed, not
+    // applied: the request lands as the grid attaches
+    // (ui/utils/createFocusTarget).
+    quantityFields.focus(seeded[0]?.id ?? '');
   };
 
   onMount(() => void loadDrafts());
@@ -155,6 +167,7 @@ const Body = (props: BodyProps): JSX.Element => {
     if (verdict === 'invalid-pack-size') {
       setMessage({
         severity: 'error',
+        kind: 'pack-size',
         text: t('messages.alert-invalid-pack-size'),
       });
       return false;
@@ -162,6 +175,7 @@ const Body = (props: BodyProps): JSX.Element => {
     if (verdict === 'no-quantity') {
       setMessage({
         severity: 'error',
+        kind: 'zero-quantity',
         text: t('messages.alert-zero-return-quantity'),
       });
       return false;
@@ -173,6 +187,17 @@ const Body = (props: BodyProps): JSX.Element => {
     if (!gateStep1()) return;
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(reasonStepLines(draft.slice())[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const onOk = async () => {
@@ -197,7 +222,11 @@ const Body = (props: BodyProps): JSX.Element => {
     }
     if (result.kind === 'error') {
       setSaving(false);
-      setMessage({ severity: 'error', text: result.message });
+      setMessage({
+        severity: 'error',
+        kind: 'save-error',
+        text: result.message,
+      });
       return;
     }
     // Straight to the new return — OK keeps its spinner until the host
@@ -217,7 +246,18 @@ const Body = (props: BodyProps): JSX.Element => {
       title={t('heading.return-items')}
       actionsLead={
         <Show when={message()}>
-          {m => <Alert severity={m().severity}>{m().text}</Alert>}
+          {m => (
+            <Alert
+              severity={m().severity}
+              testId={
+                m().kind === 'save-error'
+                  ? 'save-error-alert'
+                  : `${m().kind}-alert`
+              }
+            >
+              {m().text}
+            </Alert>
+          )}
         </Show>
       }
       // The footer (ui-surface S4 § layout): Cancel (step 1) / Back (step 2) ·
@@ -235,13 +275,13 @@ const Body = (props: BodyProps): JSX.Element => {
               />
             }
           >
+            {/* Back steps within the dialog, so it claims NO role: Escape must
+                still cancel the whole dialog, and the cancel claim is what the
+                palette's Cancel entry and the Escape badge point at. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -251,6 +291,7 @@ const Body = (props: BodyProps): JSX.Element => {
             fallback={
               <Button
                 variant="primary"
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}
@@ -314,7 +355,7 @@ const Body = (props: BodyProps): JSX.Element => {
         when={step() === 'reason'}
         fallback={
           <DataTable
-            columns={quantityColumns(update)}
+            columns={quantityColumns(update, quantityFields)}
             rows={draft.filter(() => true)}
             rowKey={line => line.id}
             loading={loadingLines()}
@@ -327,7 +368,7 @@ const Body = (props: BodyProps): JSX.Element => {
         }
       >
         <DataTable
-          columns={reasonColumns(update)}
+          columns={reasonColumns(update, reasonFields)}
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}

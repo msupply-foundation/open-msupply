@@ -93,6 +93,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
               {label => (
                 <Button
                   variant="secondary"
+                  confirms="cancel"
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
@@ -117,12 +118,20 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
                   a standard button owns both its label and its tone, so
                   neither can be overridden on one. When only the TONE is
                   bespoke the label still comes from the standard vocabulary,
-                  so a danger OK reads identically — just red. */}
+                  so a danger OK reads identically — just red.
+
+                  It claims `plain` like every other confirm, INCLUDING a danger
+                  one: KB-E2 makes Enter activate "the dialog's confirming
+                  action" with no exception for a destructive verb, and the
+                  reference vertical's danger confirms answer it. A
+                  ConfirmDialog-based delete and a hand-built one therefore
+                  behave alike. */}
               <Match
                 when={props.confirmLabel || props.confirmVariant === 'danger'}
               >
                 <Button
                   variant={props.confirmVariant ?? 'primary'}
+                  confirms="plain"
                   data-testid="confirmation-modal-ok"
                   onClick={confirm}
                 >

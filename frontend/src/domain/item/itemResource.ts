@@ -91,20 +91,36 @@ export const fetchItemById = async (
 };
 
 export const itemPageFetcher =
-  (storeId: string, excludeItemIds: () => string[], pageSize: number) =>
+  (
+    storeId: string,
+    excludeItemIds: () => string[],
+    pageSize: number,
+    // Narrow to items with stock on hand (the stock-movement line editor's
+    // item search — spec/stock-movements/ui-surface.md S3). Omitted = every
+    // item, today's behaviour for every other caller.
+    hasStockOnHand?: () => boolean | undefined,
+    // Restrict to one master list — the program-scoped prescription picker
+    // (issue #928); a program shares its master list's id. Omitted = the whole
+    // visible catalogue.
+    masterListId?: () => string | undefined
+  ) =>
   async (
     search: string,
     offset: number
   ): Promise<Page<ItemOption> | undefined> => {
     const exclude = excludeItemIds();
+    const stockOnHand = hasStockOnHand?.();
+    const scopedList = masterListId?.();
     const result = await graphqlFetch(ItemsWithStock, {
       storeId,
       filter: {
         type: { equalTo: 'STOCK' },
         isActive: true,
         isVisible: true,
+        ...(stockOnHand !== undefined ? { hasStockOnHand: stockOnHand } : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
+        ...(scopedList ? { masterListId: { equalTo: scopedList } } : {}),
       },
       // Sort by item name ascending — stable across pages so infinite scroll
       // doesn't reshuffle rows as new pages append.

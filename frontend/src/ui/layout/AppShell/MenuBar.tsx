@@ -1,10 +1,7 @@
 import { For, Match, Show, Switch, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import {
-  MSupplyGuyLogo,
-  ChevronDownIcon,
-  AlertTriangleIcon,
-} from '../../icons';
+import { ChevronDownIcon, AlertTriangleIcon } from '../../icons';
+import { AppLogo } from '../../branding/AppLogo';
 import { Badge } from '../../elements/feedback/Badge';
 import { t } from '../../../intl';
 import {
@@ -40,6 +37,13 @@ interface MenuBarProps {
   syncBadge?: NavBadge;
   /** Dim the Sync entry's icon while the latest run is errored. */
   syncIconDimmed?: boolean;
+  /**
+   * Unreachable by keyboard and assistive tech while a page's slide-over panel
+   * has taken over the viewport (spec/keyboard KB-X2/AC-KB17). The shell sets
+   * it; the menu bar renders outside the `Page` that owns the panel, so the
+   * panel cannot mark it inert itself.
+   */
+  inert?: boolean;
 }
 
 /*
@@ -270,6 +274,7 @@ export const MenuBar = (props: MenuBarProps) => {
       fallback={
         <nav
           class={styles.menuBar}
+          inert={props.inert}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
           data-testid="drawer"
           aria-expanded={!props.nav.railCollapsed()}
@@ -288,7 +293,7 @@ export const MenuBar = (props: MenuBarProps) => {
               }
               aria-expanded={!props.nav.railCollapsed()}
             >
-              <MSupplyGuyLogo class={styles.logo} />
+              <AppLogo class={styles.logo} />
             </button>
           </div>
           <NavLists
@@ -310,12 +315,13 @@ export const MenuBar = (props: MenuBarProps) => {
       />
       <nav
         class={styles.overlayPanel}
+        inert={props.inert}
         data-open={props.nav.overlayOpen() ? 'true' : 'false'}
         aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
         <div class={styles.logoArea}>
-          <MSupplyGuyLogo class={styles.logo} />
+          <AppLogo class={styles.logo} />
         </div>
         <NavLists
           upper={props.upper}

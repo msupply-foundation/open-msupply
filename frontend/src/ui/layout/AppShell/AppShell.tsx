@@ -6,12 +6,23 @@ import {
   type Component,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { HomeIcon, CentralIcon, EditIcon, type IconProps } from '../../icons';
+import {
+  HomeIcon,
+  CentralIcon,
+  EditIcon,
+  SyncIcon,
+  type IconProps,
+} from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
 import { UserMenu } from './UserMenu';
-import { ShellNavContext, ShellFullScreenContext } from './shellContext';
+import {
+  ShellNavContext,
+  ShellFullScreenContext,
+  ShellOverlayContext,
+} from './shellContext';
 import {
   upperNav,
   lowerNav,
@@ -85,6 +96,17 @@ export interface AppShellProps {
   email?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
+  /**
+   * The server is serving a newer front-end bundle than the running build
+   * (spec/chrome § update prompt) — shows the bottom bar's "new version
+   * available" cell. Derived by the host's update watch (src/appUpdate.ts).
+   */
+  updateAvailable?: boolean;
+  /**
+   * Activating the update cell. The host owns what follows (confirm, then
+   * reload) — without it the cell never renders, so it is never a dead button.
+   */
+  onUpdateClick?: () => void;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
    *  From the isCentralServer global, queried unauthenticated at startup. */
   isCentralServer?: boolean;
@@ -152,6 +174,10 @@ export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false);
   const [overlayOpen, setOverlayOpen] = createSignal(false);
   const [fullScreen, setFullScreen] = createSignal(false);
+  // A page's slide-over panel is covering the viewport (KB-X2). Set by Page
+  // through ShellOverlayContext, because the regions that must go inert live
+  // here, outside the Page.
+  const [panelOverlay, setPanelOverlay] = createSignal(false);
   const isOverlay = useIsNavOverlay();
 
   // Menu nav model — the app's own navModel by default; a host (the showcase)
@@ -169,6 +195,15 @@ export const AppShell = (props: AppShellProps) => {
     closeOverlay: () => setOverlayOpen(false),
   };
 
+  // "Navigation show/hide" in the command palette (spec/keyboard ui-surface S1 §
+  // Commands, `cmdk.drawer-toggle`) — name-only, no shortcut.
+  //
+  // Registered HERE rather than passed in, because the shell owns the rail's
+  // collapsed state. Same structural rule as createSidePanelOpen owning Alt+M
+  // (KB-R2): an action is created where the thing it acts on lives, so it cannot
+  // be registered for a screen that has no such thing.
+  createAction({ name: 'cmdk.drawer-toggle', run: nav.toggleRail });
+
   // Leaving overlay mode (e.g. widening the window) shouldn't strand an open
   // off-canvas panel — close it so the docked rail shows cleanly.
   createEffect(() => {
@@ -181,95 +216,116 @@ export const AppShell = (props: AppShellProps) => {
 
   return (
     <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
-      <ShellFullScreenContext.Provider
-        value={{ isFullScreen: fullScreen, setFullScreen }}
-      >
-        <div class={styles.shell}>
-          {/* Full-screen (Open mSupply's host-level mode): the menu bar and the orange
+      <ShellOverlayContext.Provider value={{ setPanelOverlay }}>
+        <ShellFullScreenContext.Provider
+          value={{ isFullScreen: fullScreen, setFullScreen }}
+        >
+          <div class={styles.shell}>
+            {/* Full-screen (Open mSupply's host-level mode): the menu bar and the orange
               app footer hide so the page content fills the viewport. The page's own
               header hides too (see Page); its content + footer stay. */}
-          <Show when={!fullScreen()}>
-            <MenuBar
-              nav={nav}
-              isOverlay={isOverlay()}
-              upper={menuUpper()}
-              lower={menuLower()}
-              selectedId={props.selected.id}
-              // The Sync entry opens the modal in place — never navigates
-              // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it
-              // applies only when the host wired onSyncOpen: one that didn't
-              // (the showcase) may use the same id as an ordinary destination.
-              onSelect={leaf => {
-                const openSync =
-                  leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
-                if (openSync) openSync();
-                else props.onNavigate(leaf);
-              }}
-              syncBadge={props.syncBadge}
-              syncIconDimmed={props.syncIconDimmed}
-            />
-          </Show>
-          <div class={styles.main}>
-            <div class={styles.content}>{props.children}</div>
+            {/* Inert while a page's slide-over covers the viewport (KB-X2/
+              AC-KB17) — these regions sit OUTSIDE the Page, so the panel cannot
+              reach them itself. */}
+            <Show when={!fullScreen()}>
+              <MenuBar
+                inert={panelOverlay()}
+                nav={nav}
+                isOverlay={isOverlay()}
+                upper={menuUpper()}
+                lower={menuLower()}
+                selectedId={props.selected.id}
+                // The Sync entry opens the modal in place — never navigates
+                // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it
+                // applies only when the host wired onSyncOpen: one that didn't
+                // (the showcase) may use the same id as an ordinary destination.
+                onSelect={leaf => {
+                  const openSync =
+                    leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
+                  if (openSync) openSync();
+                  else props.onNavigate(leaf);
+                }}
+                syncBadge={props.syncBadge}
+                syncIconDimmed={props.syncIconDimmed}
+              />
+            </Show>
+            <div class={styles.main}>
+              <div class={styles.content}>{props.children}</div>
 
-            {/* Bottom bar (spec chrome › bottom bar), left to right: the store
+              {/* Bottom bar (spec chrome › bottom bar), left to right: the store
                 selector (routes to the store-selection screen), the store Edit
                 cell, a spacer, the signed-in user (menu: logout), then the
                 language selector. The store name is shown as text, so the store
                 colour is never the sole active-store indicator (colour
                 independence / D14). Hidden in full-screen mode, like the menu
                 bar. */}
-            <Show when={!fullScreen()}>
-              <footer
-                class={styles.footer}
-                data-testid="app-footer"
-                data-central={props.isCentralServer ? '' : undefined}
-              >
-                <FooterCell
-                  icon={HomeIcon}
-                  label={props.storeName}
-                  onClick={props.onStoreClick}
-                  testId="store-selector-trigger"
-                />
-                {/* Store Edit, beside the store name (spec/settings
+              <Show when={!fullScreen()}>
+                <footer
+                  class={styles.footer}
+                  inert={panelOverlay()}
+                  data-testid="app-footer"
+                  data-central={props.isCentralServer ? '' : undefined}
+                >
+                  <FooterCell
+                    icon={HomeIcon}
+                    label={props.storeName}
+                    onClick={props.onStoreClick}
+                    testId="store-selector-trigger"
+                  />
+                  {/* Store Edit, beside the store name (spec/settings
                     OMS-REG-SET-05.17). Activating it opens the store editor on
                     its Properties tab (.18) — that editor isn't built here yet,
                     so until a host wires `onStoreEdit` the cell renders in
                     FooterCell's static (non-interactive) form rather than as a
                     button that does nothing. */}
-                <FooterCell
-                  icon={EditIcon}
-                  label={t('label.edit')}
-                  onClick={props.onStoreEdit}
-                  testId="footer-store-edit"
-                />
-                <span class={styles.footerSpacer} aria-hidden="true" />
-                <UserMenu
-                  username={props.username}
-                  displayName={props.displayName}
-                  email={props.email}
-                  onLogout={props.onLogout}
-                />
-                <span class={styles.footerDivider} aria-hidden="true" />
-                <LanguageSelector
-                  language={locale()}
-                  onSelect={v => void changeLanguage(v)}
-                  testId="language-selector"
-                />
-                {/* Central-server cell: only on a central server (its divider
-                    goes with it, so nothing dangles on a remote site). */}
-                <Show when={props.isCentralServer}>
-                  <span class={styles.footerDivider} aria-hidden="true" />
                   <FooterCell
-                    icon={CentralIcon}
-                    label={t('label.central-server')}
+                    icon={EditIcon}
+                    label={t('label.edit')}
+                    onClick={props.onStoreEdit}
+                    testId="footer-store-edit"
                   />
-                </Show>
-              </footer>
-            </Show>
+                  <span class={styles.footerSpacer} aria-hidden="true" />
+                  {/* Update prompt (spec/chrome § update prompt,
+                    OMS-REG-FTR-02.14): a quiet, persistent cell while the
+                    served bundle differs from the running build; activating it
+                    hands off to the host, which confirms before reloading. Its
+                    divider goes with it, so nothing dangles while it's away. */}
+                  <Show when={props.updateAvailable && props.onUpdateClick}>
+                    <FooterCell
+                      icon={SyncIcon}
+                      label={t('label.new-version-available')}
+                      onClick={props.onUpdateClick}
+                      testId="footer-update-available"
+                    />
+                    <span class={styles.footerDivider} aria-hidden="true" />
+                  </Show>
+                  <UserMenu
+                    username={props.username}
+                    displayName={props.displayName}
+                    email={props.email}
+                    onLogout={props.onLogout}
+                  />
+                  <span class={styles.footerDivider} aria-hidden="true" />
+                  <LanguageSelector
+                    language={locale()}
+                    onSelect={v => void changeLanguage(v)}
+                    testId="language-selector"
+                  />
+                  {/* Central-server cell: only on a central server (its divider
+                    goes with it, so nothing dangles on a remote site). */}
+                  <Show when={props.isCentralServer}>
+                    <span class={styles.footerDivider} aria-hidden="true" />
+                    <FooterCell
+                      icon={CentralIcon}
+                      label={t('label.central-server')}
+                    />
+                  </Show>
+                </footer>
+              </Show>
+            </div>
           </div>
-        </div>
-      </ShellFullScreenContext.Provider>
+        </ShellFullScreenContext.Provider>
+      </ShellOverlayContext.Provider>
     </ShellNavContext.Provider>
   );
 };

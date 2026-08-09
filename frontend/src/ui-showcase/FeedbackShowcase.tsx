@@ -3,6 +3,7 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
@@ -12,7 +13,12 @@ import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
-import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  HelpIcon,
+  MessageSquareIcon,
+} from '../ui/icons';
 import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './FeedbackShowcase.module.css';
@@ -50,6 +56,9 @@ export const feedbackMetadata: PageMetadata = {
         'compact',
         'inline',
         'chip',
+        'status marker',
+        'inline marker',
+        'glyph',
       ],
     },
     {
@@ -166,6 +175,39 @@ export const FeedbackShowcase = () => {
               Verified
             </Alert>
           </Row>
+
+          <Lead>
+            <strong>StatusMarker.</strong> The same severity vocabulary shrunk
+            to a bare inline glyph beside a value — a table cell's
+            excess-request warning, an option row's emergency flag — where even
+            the compact chip is too heavy. The marker <em>requires</em> its
+            meaning as <code>label</code> (icons alone render{' '}
+            <code>aria-hidden</code>, so a bare toned icon is silent and
+            colour-only); it announces via <code>role="img"</code>, and{' '}
+            <code>icon</code> overrides the severity's default glyph by intent.
+          </Lead>
+          <Row>
+            <Row gap="sm">
+              128
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label="The quantity requested exceeds the suggested quantity"
+              />
+            </Row>
+            <Row gap="sm">
+              Emergency order
+              <StatusMarker severity="warning" label="Emergency" />
+            </Row>
+            <Row gap="sm">
+              Batch B-102
+              <StatusMarker severity="success" label="Allocated" />
+            </Row>
+            <Row gap="sm">
+              Auto-generated
+              <StatusMarker severity="info" label="Created by the system" />
+            </Row>
+          </Row>
         </DashboardCard>
 
         <DashboardCard
@@ -253,9 +295,22 @@ export const FeedbackShowcase = () => {
             tap. Pass it to an input's <code>labelInfo</code> slot to explain a
             field (below), or drop it inline beside any term.
           </Lead>
+          <Lead>
+            <code>tone</code> sets the marker's emphasis. The default grey suits
+            a marker beside a label — the label carries the weight, and the icon
+            brightens on hover. <code>primary</code> is the standing brand-toned
+            mark for one that stands alone in a muted row (dashboard stats,
+            where the current app renders it that way): it doesn't brighten, it
+            tints its own background on hover instead.
+          </Lead>
           <div class={styles.popoverRow}>
             <span>Standalone: </span>
             <InfoTooltip text="The number of local (home) currency units per one PO currency unit." />
+            <span>Primary tone: </span>
+            <InfoTooltip
+              tone="primary"
+              text="The standing brand-toned marker — as used on a dashboard stat."
+            />
           </div>
           <TextField
             label="Currency rate"

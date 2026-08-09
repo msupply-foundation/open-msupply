@@ -12,7 +12,14 @@
  * loader's job; until a catalogue is registered, `t()` renders the namespaced
  * key — visible, never blank (spec/i18n/behaviours.md § translating text).
  */
-import { t, tPlural, type LocaleKey } from '../intl';
+import {
+  getCurrencyInfo,
+  homeCurrency,
+  locale,
+  t,
+  tPlural,
+  type LocaleKey,
+} from '../intl';
 
 export interface PluginIntl {
   /** Translate one of the plugin's keys, interpolating `{{ tokens }}`. */
@@ -47,8 +54,25 @@ export {
   isRtl,
   formatNumber,
   round,
+  roundTo,
   localisedDate,
   localisedTime,
   localisedDateTime,
 } from '../intl';
 export type { SupportedLocale } from '../intl';
+
+/*
+ * The entered store's currency precision, as one accessor.
+ *
+ * The host's own currency layer takes three inputs (the store's home currency,
+ * the active locale, and a display style) to produce symbol + side + decimals;
+ * a plugin needs only the decimals, and should not have to know how the host
+ * resolves them. Any plugin doing money arithmetic needs it: a figure it
+ * STORES or compares must be rounded to the currency, and hard-coding 2 is
+ * wrong for the zero-decimal currencies this product actually runs on (XOF in
+ * Côte d'Ivoire, among others). Reactive — it reads `homeCurrency()` and
+ * `locale()`, so a store switch or a language change reaches a plugin's
+ * arithmetic without the plugin subscribing to anything.
+ */
+export const currencyDecimals = (): number =>
+  getCurrencyInfo(homeCurrency(), locale()).decimals;

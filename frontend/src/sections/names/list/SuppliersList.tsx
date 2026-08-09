@@ -16,10 +16,7 @@ const SuppliersList: Component = () => {
       role="supplier"
       scope="supplier"
       tableId="names-suppliers"
-      crumbs={() => [
-        { label: t('nav.replenishment') },
-        { label: t('nav.replenishment.suppliers') },
-      ]}
+      crumbs={() => [{ label: t('nav.replenishment.suppliers') }]}
       onRowClick={row => navigate(supplierDetailPath(params.storeId, row.id))}
     />
   );

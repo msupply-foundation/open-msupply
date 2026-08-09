@@ -1,6 +1,5 @@
 import { graphqlFetch } from '../../../../api/graphql';
-import { t, tPlural } from '../../../../intl';
-import { formatNumber, round } from '../../../../intl/formatNumber';
+import { getPlural, t, tPlural } from '../../../../intl';
 import {
   InternalOrderItemStats,
   AddInternalOrderLine,
@@ -16,70 +15,10 @@ import type { InternalOrderLineFragment } from '../internalOrderDetail.generated
 // only re-expresses the display.
 export type EntryMode = 'units' | 'packs' | 'doses';
 
-// One course-and-demographic group of a line's stored population forecast —
-// the shape the server serialises into RequisitionLineNode.vaccineCourses
-// (contract › Population-based forecasting), consumed by the editor's
-// calculation display (AC-PF7). The client parses this; it never writes it.
-export type VaccineCourse = {
-  /**
-   * Pre-formatted "<course> (<demographic>)"; empty parens for a
-   * demographic-less course.
-   */
-  courseTitle: string;
-  numberOfDoses: number;
-  coverageRate: number;
-  targetPopulation: number;
-  wastageRate: number;
-  lossFactor: number;
-  annualTargetDoses: number;
-  bufferStockMonths: number;
-  supplyPeriodMonths: number;
-  dosesPerUnit: number;
-  forecastDoses: number;
-  forecastUnits: number;
-};
-
-// Parse a line's stored vaccineCourses JSON into its per-course breakdown. A
-// null, empty, or unparseable string yields no courses (the display then falls
-// back to the ordinary charts).
-export const parseVaccineCourses = (json: string | null): VaccineCourse[] => {
-  if (!json) return [];
-  try {
-    const parsed = JSON.parse(json);
-    return Array.isArray(parsed) ? (parsed as VaccineCourse[]) : [];
-  } catch {
-    return [];
-  }
-};
-
-// One arithmetic step of the calculation display: its figures substituted into
-// the formula, then the emphasised result (AC-PF7). The step's title and
-// formula wording are static locale keys held by the display component; this
-// pure function owns only the arithmetic so it can be tested against the AC's
-// exact figures. Rounding mirrors the reference: the loss factor to 3 dp, the
-// two dose totals to 2 dp, the units result the ceil of the stored total.
-export type ForecastStep = { substitution: string; result: string };
-
-export const forecastSteps = (
-  course: VaccineCourse
-): [ForecastStep, ForecastStep, ForecastStep] => [
-  {
-    // 1. Annual target doses = target population × doses × (coverage/100) ×
-    // loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
-    result: `= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`,
-  },
-  {
-    // 2. Forecast doses = annual/12 × (supply period + buffer stock months).
-    substitution: `(${round(course.annualTargetDoses, 2)} / 12) × (${formatNumber(course.supplyPeriodMonths)} + ${formatNumber(course.bufferStockMonths)})`,
-    result: `= ${round(course.forecastDoses, 2)} ${t('label.doses').toLowerCase()}`,
-  },
-  {
-    // 3. Forecast units = forecast doses ÷ doses per unit (result rounded up).
-    substitution: `${round(course.forecastDoses, 2)} / ${formatNumber(course.dosesPerUnit)}`,
-    result: `= ${formatNumber(Math.ceil(course.forecastUnits))} ${t('label.units').toLowerCase()}`,
-  },
-];
+// The population-forecast breakdown (VaccineCourse, parseVaccineCourses,
+// forecastSteps) is the shared module at src/domain/forecast — both
+// requisition verticals' editors consume it.
+import { parseVaccineCourses, type VaccineCourse } from '../../../../domain/forecast';
 
 // The editor's working line — the same shape whether it comes from an existing
 // line (edit mode: the stored figures) or an add-mode item preview (the item's
@@ -177,15 +116,20 @@ export const statInMode = (
 };
 
 // The active mode's measure word — the item's unit name (falling back to
-// "unit") / "pack" / "dose", pluralised for the dose word.
+// "unit") / "pack" / "dose", inflected for the count it suffixes (spec S4
+// — "e.g. 61 packs"). An item's own unit name inflects via getPlural
+// (reference-app parity — English only; other languages pass through
+// unchanged).
 export const modeWord = (
   mode: EntryMode,
   unitName: string | null,
   count = 2
 ): string => {
-  if (mode === 'packs') return t('label.packs');
+  if (mode === 'packs') return tPlural('label.packs-plural', count);
   if (mode === 'doses') return tPlural('label.doses-plural', count);
-  return unitName ?? t('label.unit');
+  return unitName
+    ? getPlural(unitName, count)
+    : tPlural('label.units-plural', count);
 };
 
 // The store's default entry mode (AC-LN18): packs where the store orders in

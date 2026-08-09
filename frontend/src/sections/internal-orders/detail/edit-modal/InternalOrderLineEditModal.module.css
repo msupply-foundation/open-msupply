@@ -52,14 +52,6 @@
   padding-inline: var(--space-2);
 }
 
-/* The item picker fills the modal's full width (the combobox otherwise caps at
-   its long max-width, leaving it half-width in the large modal). The doubled
-   class outranks the component's own max-width rule. */
-.itemField.itemField {
-  max-inline-size: 100%;
-  inline-size: 100%;
-}
-
 /* The requested number + entry-mode select fill the row's full width, split
    evenly — so they're evenly spaced when the panel is wide (two columns) and
    scale down together when it's narrow (three columns). Both controls are
@@ -86,8 +78,10 @@
   gap: var(--space-4);
   margin-block-start: var(--space-4);
   /* Cap the region and centre it as a cohesive block, so the charts don't
-     sprawl across the full-width large modal (they'd read as uncentered). Wide
-     enough for the two ~29rem charts + gap + padding side by side. */
+     sprawl across the full-bleed modal (they'd read as uncentered). Wide enough
+     for the two ~29rem charts + gap + padding side by side — which is why this
+     editor takes Dialog's `size="full"` rather than the 56rem `large` card:
+     a ~53rem body can't reach this cap, so the pair would stack (#771). */
   inline-size: 100%;
   max-inline-size: 64rem;
   margin-inline: auto;

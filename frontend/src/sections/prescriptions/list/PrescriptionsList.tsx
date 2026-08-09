@@ -11,6 +11,8 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
@@ -27,6 +29,7 @@ import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -98,6 +101,15 @@ const PrescriptionsList: Component = () => {
     useUrlQueryState<PrescriptionsListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  createAddAction({
+    name: 'button.new-prescription',
+    run: () => setCreateOpen(true),
+  });
 
   const tableConfig = createTableConfig({
     tableId: 'prescriptions',
@@ -193,23 +205,20 @@ const PrescriptionsList: Component = () => {
       cell: info => {
         const row = info.row.original;
         return (
-          <Show
-            when={!isReadOnly(rowStatus(row))}
-            fallback={
-              <>
-                <ColourTagDot colour={row.colour ?? null} />
-                {row.otherPartyName}
-              </>
-            }
-          >
-            <ColourTagPicker
-              colour={row.colour ?? null}
-              variant="row"
-              label={t('label.color')}
-              onSelect={colour => void saveColour(row, colour)}
-            />
-            {row.otherPartyName}
-          </Show>
+          <HStack gap="sm">
+            <Show
+              when={!isReadOnly(rowStatus(row))}
+              fallback={<ColourTagDot colour={row.colour ?? null} />}
+            >
+              <ColourTagPicker
+                colour={row.colour ?? null}
+                variant="row"
+                label={t('label.color')}
+                onSelect={colour => void saveColour(row, colour)}
+              />
+            </Show>
+            <span>{row.otherPartyName}</span>
+          </HStack>
         );
       },
       meta: { headerPosition: 'primary' },
@@ -261,10 +270,7 @@ const PrescriptionsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('dispensary') },
-    { label: t('prescriptions') },
-  ];
+  const crumbs = () => [{ label: t('prescriptions') }];
 
   return (
     <Page
@@ -275,6 +281,7 @@ const PrescriptionsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-prescription-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -283,6 +290,8 @@ const PrescriptionsList: Component = () => {
             <ExportPrescriptionsAction
               storeId={params.storeId}
               filter={() => query().filter}
+              customFieldFilter={() => query().cf}
+              customFields={cfDefs}
             />
           </HeaderButtons>
           <Toolbar>
@@ -339,6 +348,7 @@ const PrescriptionsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={() => setCreateOpen(true)}
           >

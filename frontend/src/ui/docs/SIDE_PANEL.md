@@ -115,6 +115,19 @@ SidePanel label=… onClose=…                       ← <aside>, sticky header
 </SidePanelSubheading>
 ```
 
+**Entered by / Edited by** — the recorded user, via `UserLabel` (never hand-rolled: the name renders a dash when there is no user, and the email — when known — sits behind the shared info affordance; `label` is the row's own field label so the icon's accessible name says which row it details):
+
+```tsx
+<FieldRow label={t('label.entered-by')}>
+  <UserLabel
+    username={node.user?.username}
+    email={node.user?.email}
+    label={t('label.entered-by')}
+    testId="entered-by-field"
+  />
+</FieldRow>
+```
+
 **Comment** — always multi-line:
 
 ```tsx

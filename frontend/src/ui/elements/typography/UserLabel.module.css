@@ -1,0 +1,6 @@
+/* The name and the info marker share one inline box so the icon centres on the
+   text's own line; the icon's spacing is InfoTooltip's own inline-start gap. */
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+}

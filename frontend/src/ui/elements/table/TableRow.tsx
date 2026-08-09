@@ -1,12 +1,12 @@
 import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
-  flexRender,
   type Cell as TanCell,
   type Column as TanColumn,
   type Row as TanRow,
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
+import { renderTemplate } from './renderTemplate';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
@@ -191,9 +191,11 @@ export function TableRow<T>(props: {
                 ...props.pinnedStyle(cell.column),
               }}
             >
-              {/* Just flexRender the column's cell — TanStack's merged default cell renders the
-                  leaf value (a column's custom `cell` overrides). */}
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {/* Just render the column's cell — TanStack's merged default cell renders the
+                  leaf value (a column's custom `cell` overrides). renderTemplate, not
+                  TanStack's flexRender: the latter untracks the call, freezing every
+                  locale-derived value (numbers, dates, money) until a reload. */}
+              {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
             </td>
           </Show>
         )}

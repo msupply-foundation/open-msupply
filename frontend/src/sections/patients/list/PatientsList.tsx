@@ -7,18 +7,20 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getDateCell,
+  getCellDefinition,
   getFlagCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { getChipListCell } from '../../../ui/elements/table/ChipListCell';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
@@ -82,6 +84,18 @@ const PatientsList: Component = () => {
   // Create/edit affordances are gated on patient-mutate permission (AC-E1);
   // hidden when absent (spec/patients cross-cutting).
   const canMutate = () => hasPermission('PATIENT_MUTATE');
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge. Gated on the same permission that hides
+  // both, and on nothing else — KB-R2's "gated on the thing it acts on being
+  // present".
+  createAddAction({
+    name: 'button.new-patient',
+    run: () => setCreateOpen(true),
+    disabled: () => !canMutate(),
+  });
 
   const tableConfig = createTableConfig({
     tableId: 'patients',
@@ -162,38 +176,48 @@ const PatientsList: Component = () => {
       n.programEnrolmentId ? `${n.type} (${n.programEnrolmentId})` : n.type
     );
 
+  // Cell-type presets carry each column's rendering AND its width
+  // (ui/docs/CELL_TYPES.md): getCellDefinition where the shared CELL_DEF map
+  // has the key, an explicit helper + a call-site `size` where it doesn't
+  // (the flag and chip-list cells, which need an argument).
   const columns = (): Column<PatientRow, SortKey>[] => [
     {
       c: { key: 'code' },
       sortKey: 'code',
       header: () => t('label.patient-id'),
-      meta: { headerPosition: 'primary' },
+      ...getCellDefinition('code', { headerPosition: 'primary' }),
     },
     {
       c: { key: 'code2' },
       sortKey: 'code2',
       header: () => t('label.patient-nuic'),
+      ...getCellDefinition('code2'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       c: { key: 'firstName' },
       sortKey: 'firstName',
       header: () => t('label.first-name'),
+      ...getCellDefinition('firstName'),
     },
     {
       c: { key: 'lastName' },
       sortKey: 'lastName',
       header: () => t('label.last-name'),
+      ...getCellDefinition('lastName'),
     },
     {
+      // The preset is spread FIRST so the label cell overrides its (absent)
+      // renderer while keeping the short-text width.
       c: { key: 'gender' },
       sortKey: 'gender',
       header: () => t('label.gender'),
+      ...getCellDefinition('gender'),
       cell: info => {
         const g = info.getValue<PatientRow['gender']>();
         return g ? genderLabel(g) : '';
@@ -203,11 +227,12 @@ const PatientsList: Component = () => {
       c: { key: 'dateOfBirth' },
       sortKey: 'dateOfBirth',
       header: () => t('label.date-of-birth'),
-      ...getDateCell(),
+      ...getCellDefinition('dateOfBirth'),
     },
     {
       c: { key: 'nextOfKinName' },
       header: () => t('label.next-of-kin'),
+      ...getCellDefinition('nextOfKinName'),
     },
     ...(patientPreferences().programModule
       ? [
@@ -218,6 +243,8 @@ const PatientsList: Component = () => {
             },
             header: () => t('label.program-enrolments'),
             ...getChipListCell<PatientRow>(),
+            // The chip-list kind's default width (KIND_WIDTH.chipList).
+            size: remToPx(12),
           } satisfies Column<PatientRow, SortKey>,
         ]
       : []),
@@ -225,6 +252,8 @@ const PatientsList: Component = () => {
       c: { key: 'isDeceased' },
       header: () => t('label.deceased'),
       ...getFlagCell(t('label.deceased')),
+      // A marker cell is narrow; the header word is the binding constraint.
+      size: remToPx(5.5),
     },
     // Configured custom-field columns — not sortable; value chosen by kind
     // (option → resolved name, number/date → localised).
@@ -246,6 +275,7 @@ const PatientsList: Component = () => {
             <Show when={canMutate()}>
               <Button
                 icon={<PlusCircleIcon />}
+                shortcut={ALT_N}
                 data-testid="new-patient-button"
                 onClick={() => setCreateOpen(true)}
               >
@@ -257,21 +287,6 @@ const PatientsList: Component = () => {
               filter={() => query().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            {/* One filter menu: the default patient filters + the patient
-                scope's configured custom-field filters as the bar's second
-                group (spec/patients rules § list; ui-surface). */}
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
     >
@@ -283,11 +298,28 @@ const PatientsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        // One filter menu, in the table's OWN toolbar — never the page header
+        // (ui-standards/tables § Toolbar, binding). The default patient
+        // filters plus the patient scope's configured custom-field filters as
+        // the bar's second group (spec/patients rules § list).
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         emptyMessage={t('error.no-patients')}
         empty={
           <Show when={canMutate()}>
             <Button
               variant="ghost"
+              shortcut={ALT_N}
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -297,6 +329,7 @@ const PatientsList: Component = () => {
         }
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        configIsDefault={tableConfig.isConfigDefault()}
         onSaveGlobalDefault={
           tableConfig.canSaveGlobalDefault()
             ? tableConfig.saveGlobalTableConfig

@@ -103,12 +103,12 @@ const FILTERS: Filter<InboundListFilter>[] =
   constructFilters<InboundListFilter>({
     // ─ user-facing, in display order ────────────────────────────────────────
     otherPartyName: {
-      label: () => t('label.name'),
+      label: () => t('label.supplier'),
       render: props => (
         <FilterTextInput
-          label={t('label.name')}
+          label={t('label.supplier')}
           testId={props.testId}
-          placeholder={t('label.name')}
+          placeholder={t('placeholder.search')}
           value={props.filter().otherPartyName?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -124,7 +124,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterNumberInput
           label={t('label.invoice-number')}
           testId={props.testId}
-          placeholder={t('label.invoice-number')}
+          placeholder={t('placeholder.search')}
           value={props.filter().invoiceNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({
@@ -182,7 +182,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterTextInput
           label={t('label.reference')}
           testId={props.testId}
-          placeholder={t('label.reference')}
+          placeholder={t('placeholder.search')}
           value={props.filter().theirReference?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -200,7 +200,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterNumberInput
           label={t('label.linked-order')}
           testId={props.testId}
-          placeholder={t('label.linked-order')}
+          placeholder={t('placeholder.search')}
           value={props.filter().linkedOrderNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({

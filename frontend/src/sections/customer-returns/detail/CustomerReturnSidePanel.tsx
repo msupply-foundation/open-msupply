@@ -8,6 +8,7 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { Text } from '../../../ui/elements/typography/Text';
 import { HStack } from '../../../ui/layout/Stack/HStack';
@@ -20,14 +21,14 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  CustomerReturnDetail,
+  CustomerReturnForCopy,
   type CustomerReturnInfoFragment,
 } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
+import { returnKind } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/customer-returns/ui-surface.md S3 § side panel):
@@ -78,13 +79,15 @@ export const CustomerReturnSidePanel: Component<
   };
 
   // The WHOLE return — header, every line, and the linked records — for the
-  // copy action (controls § copy to clipboard). This panel is handed the info
-  // node alone, so copy re-reads the detail query, whose nested `lines`
-  // connector takes no page argument and so carries the complete line set. A
+  // copy action (controls § copy to clipboard). Its OWN operation, not the
+  // screen's: customerReturnDetail is header-only and the line table holds one
+  // server-paginated page, and the standard requires copy to make an
+  // unpaginated read rather than serialise the page on screen. The nested
+  // `lines` connector takes no page argument, so it carries the complete set. A
   // fetch failure routes to the global error modal; a NodeError (not expected
   // from a screen showing the record) copies nothing.
   const loadFullReturn = async () => {
-    const result = await graphqlFetch(CustomerReturnDetail, {
+    const result = await graphqlFetch(CustomerReturnForCopy, {
       storeId: params.storeId,
       id: props.node.id,
     });
@@ -102,16 +105,12 @@ export const CustomerReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <HStack gap="sm">
-            <Text variant="body" as="span">
-              {props.node.user?.username ?? '—'}
-            </Text>
-            {/* Info popover on hover — the user's email (the picked-date
-                reason bubble's pattern); no icon when there is no email. */}
-            <Show when={props.node.user?.email}>
-              {email => <InfoTooltip text={email()} label={email()} />}
-            </Show>
-          </HStack>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show
@@ -171,6 +170,7 @@ export const CustomerReturnSidePanel: Component<
                 </Show>
               </Text>
               <RecordLink
+                testId="originating-shipment-link"
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
@@ -179,6 +179,23 @@ export const CustomerReturnSidePanel: Component<
           )}
         </Show>
       </SidePanelSection>
+
+      {/* Transport details — transfer returns only (ui-surface S3 § side panel),
+          read-only: the transport reference is written by the transfer-creation
+          process and no return surface edits it. Same section as the shipment
+          verticals'; a return carries no shipping method or expected-delivery
+          date, so the reference is the whole section. */}
+      <Show when={returnKind(props.node) === 'transfer'}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+          collapsible
+        >
+          <FieldRow label={t('label.transport-reference')}>
+            <span>{props.node.transportReference ?? '—'}</span>
+          </FieldRow>
+        </SidePanelSection>
+      </Show>
 
       {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
           return, danger tone — Delete buttons are danger app-wide, Carl
@@ -202,14 +219,19 @@ export const CustomerReturnSidePanel: Component<
         </SidePanelActions>
       </SidePanelSection>
 
-      <ConfirmDialog
-        open={deleteConfirm()}
-        onClose={() => setDeleteConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural('messages.confirm-delete-returns', 1)}
-        confirmVariant="danger"
-        onConfirm={() => void runDelete()}
-      />
+      {/* Mounted only while open (kdd/action-modal) — see the status footer's
+          hold confirm: a closed dialog keeps its `confirmation-modal` + footer
+          ids matchable. */}
+      <Show when={deleteConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setDeleteConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={tPlural('messages.confirm-delete-returns', 1)}
+          confirmVariant="danger"
+          onConfirm={() => void runDelete()}
+        />
+      </Show>
 
       {/* An unexpected delete rejection (not a permission block, which routes to
           the global modal) — surfaced here rather than swallowed. */}
@@ -221,7 +243,12 @@ export const CustomerReturnSidePanel: Component<
           title={t('error.something-wrong')}
           description={deleteError()}
           // The standard, icon-less acknowledgement (D55).
-          actions={<OkButton onClick={() => setDeleteError(undefined)} />}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setDeleteError(undefined)}
+            />
+          }
         />
       </Show>
     </>

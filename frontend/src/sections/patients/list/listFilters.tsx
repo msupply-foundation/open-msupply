@@ -37,7 +37,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.first-name')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-first-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().firstName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ firstName: value ? { like: value } : null })
@@ -51,7 +51,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.last-name')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-last-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().lastName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ lastName: value ? { like: value } : null })
@@ -66,7 +66,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.patient-id')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-identifier')}
+        placeholder={t('placeholder.search')}
         value={props.filter().identifier?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ identifier: value ? { like: value } : null })
@@ -117,7 +117,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.next-of-kin')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().nextOfKinName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -135,7 +135,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.program-enrolment')}
         testId={props.testId}
-        placeholder={t('label.program-enrolment')}
+        placeholder={t('placeholder.search')}
         value={props.filter().programEnrolmentName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({

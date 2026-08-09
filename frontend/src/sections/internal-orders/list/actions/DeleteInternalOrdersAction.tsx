@@ -4,7 +4,8 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInternalOrders } from '../internalOrders.generated';
 
 export interface DeleteInternalOrdersActionProps {
@@ -123,7 +124,9 @@ const Body = (
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={tPlural('messages.confirm-delete-internal-orders', count)}>
+        <Switch
+          fallback={tPlural('messages.confirm-delete-internal-orders', count)}
+        >
           {/* Blocked: a non-Draft (or disabled-store) order is in the selection
               — explain why, and never submit (AC-D3). */}
           <Match when={phase() === 'blocked'}>
@@ -141,17 +144,11 @@ const Body = (
             // Delete.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -163,11 +160,7 @@ const Body = (
         >
           {/* Blocked / error: nothing to submit — a single Close. */}
           <Match when={phase() === 'blocked' || phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              onClick={props.onClose}
-            >
+            <Button variant="secondary" confirms="plain" onClick={props.onClose}>
               {t('button.close')}
             </Button>
           </Match>

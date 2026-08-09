@@ -6,12 +6,15 @@ import { FormColumns } from '../ui/layout/Form/FormColumns';
 import { FormColumn } from '../ui/layout/Form/FormColumn';
 import { FormSection } from '../ui/layout/Form/FormSection';
 import { FormRow } from '../ui/layout/Form/FormRow';
+import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { DateField } from '../ui/elements/inputs/DateField';
 import {
   AnatomyTree,
   FormPreview,
   Intro,
   Lead,
+  Note,
   SectionTOC,
   type AnatomyNode,
 } from './common';
@@ -58,6 +61,12 @@ const ANATOMY: AnatomyNode[] = [
                           {
                             name: 'FormRow',
                             note: 'the two-up rows — opt-in pairing',
+                            children: [
+                              {
+                                name: 'FormRowItem',
+                                note: 'a weighted slot — opt-in, one item',
+                              },
+                            ],
                           },
                         ],
                       },
@@ -106,6 +115,18 @@ export const formLayoutMetadata: PageMetadata = {
       id: 'form-layout-row',
       title: 'FormRow',
       searchTerms: ['row', 'two up', 'inline', 'pair'],
+    },
+    {
+      id: 'form-layout-row-item',
+      title: 'FormRowItem',
+      searchTerms: [
+        'form row item',
+        'weight',
+        'fr',
+        'share',
+        'min width',
+        'pinned',
+      ],
     },
   ],
 };
@@ -189,12 +210,24 @@ export const FormLayoutShowcase = () => (
           A titled group of fields: a neutral bold heading with a hairline rule,
           then a vertical stack of its children. Fields sit directly inside the
           section, one per line at full width — that's the default; pairing is
-          opt-in via <code>FormRow</code> (next card). <code>headingLevel</code>{' '}
-          sets the heading <em>rank</em> only (<code>h2</code> default,{' '}
-          <code>h3</code> for a sub-group nested inside another section — like
-          Inventory adjustments inside Supply Chain on the{' '}
-          <a href="#/showcase/forms">Detail form page</a>); the size never
-          changes, the document outline does.
+          opt-in via <code>FormRow</code> (next card).
+        </Lead>
+        <Lead>
+          Rank and treatment are <strong>separate</strong> inputs.{' '}
+          <code>headingLevel</code> sets the document-outline <em>rank</em> (
+          <code>h2</code> default, <code>h3</code> when the surface around it
+          already owns the h2); <code>heading</code> picks the{' '}
+          <em>treatment</em> — <code>group</code> (ruled) or{' '}
+          <code>subgroup</code> (quieter: smaller, no rule). The treatment
+          defaults from the rank, so name both only where they diverge: a
+          section that is a top-level group of its surface but must take h3
+          because that surface's title holds the h2 wants{' '}
+          <code>headingLevel="h3" heading="group"</code> — the prescription line
+          editor's dialog does exactly this. A genuine sub-group nested inside
+          another section (Inventory adjustments inside Supply Chain on the{' '}
+          <a href="#/showcase/forms">Detail form page</a>) needs only{' '}
+          <code>headingLevel="h3"</code>, whose default treatment is already{' '}
+          <code>subgroup</code>.
         </Lead>
         <FormPreview>
           <FormSection title="Batch & Dates">
@@ -204,6 +237,29 @@ export const FormLayoutShowcase = () => (
               width="full"
               placeholder="Scan or enter barcode"
             />
+          </FormSection>
+        </FormPreview>
+        <Note>
+          The three treatments, so the difference is visible: a default{' '}
+          <code>h2</code> group, the same group forced to <code>h3</code> for
+          the outline while keeping the ruled treatment, and a genuine{' '}
+          <code>h3</code> sub-group. Note the third reads quieter than its own
+          field labels — correct for a sub-group, wrong for a group, which is
+          why the two inputs are separate.
+        </Note>
+        <FormPreview>
+          <FormSection title="Group (h2, default)">
+            <TextField label="Batch number" width="full" />
+          </FormSection>
+          <FormSection
+            title="Group at h3 (heading=group)"
+            headingLevel="h3"
+            heading="group"
+          >
+            <TextField label="Batch number" width="full" />
+          </FormSection>
+          <FormSection title="Sub-group (h3, default)" headingLevel="h3">
+            <TextField label="Batch number" width="full" />
           </FormSection>
         </FormPreview>
       </DashboardCard>
@@ -220,6 +276,9 @@ export const FormLayoutShowcase = () => (
           (default <code>10rem</code>, so a pair stacks near 21rem of available
           width) the row wraps to stacked — resize to watch. Pure arrangement:
           the controls keep their own look and fill the slot the row hands them.
+          An item whose data needs more (or less) room than its neighbours' opts
+          into a share of its own by wrapping in <code>FormRowItem</code> (next
+          card); equal shares stay the default.
         </Lead>
         <FormPreview>
           <FormSection title="Pricing">
@@ -227,6 +286,53 @@ export const FormLayoutShowcase = () => (
             <FormRow>
               <TextField label="Cost price" width="full" />
               <TextField label="Sell price" width="full" />
+            </FormRow>
+          </FormSection>
+        </FormPreview>
+      </DashboardCard>
+
+      <DashboardCard
+        id="form-layout-row-item"
+        title="FormRowItem — the opt-in weighted slot"
+      >
+        <Lead>
+          One item of a <code>FormRow</code>, wrapped to declare its own share:
+          a field's width follows its <em>data</em>, never the field count, so
+          equal shares only hold while the fields carry comparably long data.{' '}
+          <code>weight</code> is that share of the whole row — the design
+          standard's <code>fr</code>, because the slot's flex basis is{' '}
+          <code>0</code> and the row's <em>entire</em> width distributes in
+          proportion, not just what's left once every item has taken a basis.{' '}
+          <code>1</code> is the equal share; below, Manufacturer at{' '}
+          <code>2</code> takes twice Batch number's <code>1</code>, and Expiry
+          is <code>{'weight={0}'}</code> — pinned to its floor, handing every
+          spare pixel to its siblings, which is what a fixed-format value that
+          can never use more room wants. <code>minWidth</code> is that floor
+          (overriding <code>minItemWidth</code> for this slot alone), and it
+          also decides who gives up width as the row narrows, and the floors'
+          sum is the wrap point: keep a row's
+          floors summing to no more than the unweighted row's would —{' '}
+          <code>10rem</code> inherited + <code>7rem</code> + <code>9rem</code> ={' '}
+          <code>26rem</code> here, against three × <code>10rem</code> — or the
+          row wraps <em>earlier</em> than it used to and the form grows a line.
+          Opt-in per item, as <code>FormRow</code> is per row: anything left
+          unwrapped keeps the equal share, and most rows want exactly that. The
+          header field cluster — a patient name beside a formatted date — is
+          where a weight earns its keep, demoed on the{' '}
+          <a href="#/showcase/header">Header page</a>.
+        </Lead>
+        <FormPreview>
+          <FormSection title="Batch & Expiry">
+            <FormRow>
+              <FormRowItem weight={2}>
+                <TextField label="Manufacturer" width="full" />
+              </FormRowItem>
+              <FormRowItem weight={1} minWidth="7rem">
+                <TextField label="Batch number" width="full" />
+              </FormRowItem>
+              <FormRowItem weight={0} minWidth="9rem">
+                <DateField label="Expiry" width="full" value="2027-03-31" />
+              </FormRowItem>
             </FormRow>
           </FormSection>
         </FormPreview>

@@ -16,7 +16,13 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
@@ -30,11 +36,13 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import {
-  getCommentCell,
-  getCurrencyCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+  FilterBar,
+  FilterTextInput,
+  constructFilters,
+  type Filter,
+} from '../../../ui/elements/selectors/FilterBar';
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -59,8 +67,11 @@ import {
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
-import { StoreOwnName, InternalOrderIndicators } from './indicators.generated';
-import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
+import { StoreOwnName } from './indicators.generated';
+import {
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
 import {
   saveInternalOrderFields,
   addInternalOrderFromMasterList,
@@ -71,7 +82,7 @@ import {
   type HeaderEditFields,
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
-import { InternalOrderLogTab } from './InternalOrderLogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
@@ -79,7 +90,7 @@ import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrd
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
 import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
-import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
+import { MasterListPickerModal } from '../../../domain/masterList';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
@@ -116,10 +127,43 @@ type SortKey =
   | 'suggested'
   | 'requested';
 
+// The line filter, shaped like the wire filter the server-paginated lines
+// read will take (itemCodeOrName.like — see the interim note above), so the
+// client-side match swaps to the server filter without a state change.
+type LineFilter = { itemCodeOrName?: { like: string } | null };
+
+// The line table's filters (ui-standards § tables → filtering): the item
+// code/name search — the same chip the stocktake detail table keeps to hand.
+// Client-side for now, so no debounce.
+const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
+  itemCodeOrName: {
+    label: () => t('label.code-or-name'),
+    render: props => (
+      <FilterTextInput
+        label={t('label.code-or-name')}
+        placeholder={t('placeholder.search')}
+        testId={props.testId}
+        debounceMs={0}
+        value={props.filter().itemCodeOrName?.like ?? ''}
+        onInput={value =>
+          props.setPartialFilter({
+            itemCodeOrName: value ? { like: value } : null,
+          })
+        }
+      />
+    ),
+  },
+});
+
 const InternalOrderDetailView: Component = () => {
   const params = useParams<{ storeId: string; orderId: string }>();
   const navigate = useNavigate();
-  const [itemFilter, setItemFilter] = createSignal('');
+  // The item search is the screen's default filter (ui-standards § tables →
+  // filtering): seeded present-as-null so its chip is on the bar from the
+  // start; the client-side match ignores it until typed.
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({
+    itemCodeOrName: null,
+  });
   const [hideOverMin, setHideOverMin] = createSignal(false);
   // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar.
@@ -140,6 +184,11 @@ const InternalOrderDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+  // Narrowed once, so the editor's initialLine needs no cast (kdd/type-safety).
+  const editorInitialLine = () => {
+    const entry = editorLine();
+    return entry?.mode === 'edit' ? entry.line : undefined;
+  };
   // The Add split button's remembered choice (its primary half reflects the
   // last-picked option, spec S3 § page actions).
   const [addChoice, setAddChoice] = createSignal('item');
@@ -155,8 +204,14 @@ const InternalOrderDetailView: Component = () => {
   const tableConfig = createTableConfig({
     tableId: 'internal-order-detail',
     defaultConfig: {
+      // Comment + code are pinned inline-start so the row stays identifiable
+      // (and its comment reachable) as the wide column set scrolls.
+      base: {
+        columnPinning: { left: [COL.comment, COL.code] },
+      },
       compact: {
         viewMode: 'card',
+        columnPinning: { left: [COL.comment, COL.code] },
         columnVisibility: {
           [COL.unit]: false,
           [COL.dps]: false,
@@ -248,7 +303,7 @@ const InternalOrderDetailView: Component = () => {
 
   const [indicators] = createResource(indicatorVariables, async serialised => {
     const result = await graphqlFetch(
-      InternalOrderIndicators,
+      ProgramIndicatorValues,
       JSON.parse(serialised)
     );
     if (result.kind !== 'success') return undefined;
@@ -331,6 +386,28 @@ const InternalOrderDetailView: Component = () => {
     if (choice === 'master-list') setMasterListPickerOpen(true);
     else setEditorLine({ mode: 'add' });
   };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header SplitButton
+  // and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action.
+  //
+  // `run` is the single-item add, the split button's default option — not its
+  // current menu selection, which may be the master-list picker. Same gate as
+  // both controls (canAddLines), but reached through `.state` rather than
+  // `info()`: that one reads `data.latest`, which suspends on the first pending
+  // read, and the palette evaluates every action's `disabled()` in its own
+  // render (kdd/keyboard-layer § an action's `disabled` MUST NOT read a
+  // suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditorLine({ mode: 'add' }),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || !isOrderEditable(node) || !!node.program;
+    },
+  });
 
   // The confirmed master-list bulk add (AC-LN7/LN8): add, then refetch the
   // page; a rejection replaces the confirmation with a notice.
@@ -426,7 +503,7 @@ const InternalOrderDetailView: Component = () => {
     const node = info();
     if (!node) return [];
     let lines = node.lines.nodes;
-    const f = itemFilter().trim().toLowerCase();
+    const f = (lineFilter().itemCodeOrName?.like ?? '').trim().toLowerCase();
     if (f)
       lines = lines.filter(
         l =>
@@ -461,7 +538,6 @@ const InternalOrderDetailView: Component = () => {
     `${Math.round(value)}${doseSuffix(line, value)}`;
 
   const crumbs = (node: InternalOrderInfoFragment) => [
-    { label: t('replenishment') },
     {
       label: t('internal-order'),
       onClick: () =>
@@ -474,30 +550,30 @@ const InternalOrderDetailView: Component = () => {
     {
       c: { key: COL.comment },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       c: { accessor: line => line.item.code, id: COL.code },
       sortKey: 'code',
       header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: COL.name },
       sortKey: 'name',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      // The text "sink" column: its width floor plus no growth cap lets it
+      // absorb the slack the narrow numeric columns leave behind.
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       // An ancillary line carries an "Ancillary of …" flag naming its
       // principal item(s) (AC-A8); a non-ancillary line shows a plain name.
       cell: info => {
         const line = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          <HStack gap="sm">
             {line.itemName}
             <Show when={line.ancillaryParents.length > 0}>
               <InfoTooltip
@@ -507,13 +583,14 @@ const InternalOrderDetailView: Component = () => {
                   .join(', ')}`}
               />
             </Show>
-          </span>
+          </HStack>
         );
       },
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: COL.unit },
       header: () => t('label.unit'),
+      ...getCellDefinition('unitName'),
     },
     // Doses per unit — gated on the vaccine-doses preference; a dash for
     // non-vaccine items.
@@ -525,7 +602,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.dosesPerUnit,
             },
             header: () => t('label.doses-per-unit'),
-            ...getNumberCell(),
+            ...getCellDefinition('dosesPerUnit'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -533,7 +610,7 @@ const InternalOrderDetailView: Component = () => {
       c: { accessor: line => line.item.defaultPackSize, id: COL.dps },
       sortKey: 'dps',
       header: () => t('label.dps'),
-      ...getNumberCell(),
+      ...getCellDefinition('dps'),
     },
     {
       c: {
@@ -542,7 +619,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
-      ...getNumberCell(),
+      ...getCellDefinition('available'),
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
@@ -553,13 +630,13 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
-      ...getNumberCell(),
+      ...getCellDefinition('amc'),
     },
     {
       c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
-      ...getNumberCell(),
+      ...getCellDefinition('mos'),
     },
     {
       c: {
@@ -568,7 +645,7 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
-      ...getNumberCell(),
+      ...getCellDefinition('targetStock'),
     },
     // Target stock (population) — gated on the forecasting preference; the
     // stored forecast rounded up, zero on a forecast-less line.
@@ -581,7 +658,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.targetStockPopulation,
             },
             header: () => t('label.target-stock-population'),
-            ...getNumberCell(),
+            ...getCellDefinition('targetStockPopulation'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -593,7 +670,7 @@ const InternalOrderDetailView: Component = () => {
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
-      ...getNumberCell(),
+      ...getCellDefinition('suggested'),
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
@@ -605,25 +682,24 @@ const InternalOrderDetailView: Component = () => {
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
-      meta: { align: 'right' },
+      // The preset's width + right alignment; the custom cell below overrides
+      // its number formatting (the value is pre-formatted with a dose suffix).
+      ...getCellDefinition('requested'),
       cell: info => {
         const line = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          // justify="end" keeps the number at the cell's inline-end, where the
+          // preset's right alignment put it before the marker joined it.
+          <HStack gap="sm" justify="end">
             <Show when={isExcess(line)}>
-              <AlertTriangleIcon
-                style={{ color: 'var(--error-main)' }}
-                aria-label={t('label.requested')}
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label={t('messages.requested-exceeds-suggested')}
               />
             </Show>
             {numWithDoses(line, line.requestedQuantity)}
-          </span>
+          </HStack>
         );
       },
     },
@@ -636,7 +712,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.pricePerUnit,
             },
             header: () => t('label.indicative-price-per-unit'),
-            ...getCurrencyCell(),
+            ...getCellDefinition('pricePerUnit'),
           },
           {
             c: {
@@ -645,7 +721,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.indicativePrice,
             },
             header: () => t('label.indicative-price'),
-            ...getCurrencyCell(),
+            ...getCellDefinition('indicativePrice'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -659,7 +735,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.initialSoh,
             },
             header: () => t('label.initial-stock-on-hand'),
-            ...getNumberCell(),
+            ...getCellDefinition('initialSoh'),
           },
           {
             c: {
@@ -667,7 +743,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.incoming,
             },
             header: () => t('label.incoming'),
-            ...getNumberCell(),
+            ...getCellDefinition('incoming'),
           },
           {
             c: {
@@ -675,7 +751,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.outgoing,
             },
             header: () => t('label.outgoing'),
-            ...getNumberCell(),
+            ...getCellDefinition('outgoing'),
           },
           {
             c: {
@@ -683,7 +759,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.losses,
             },
             header: () => t('label.losses'),
-            ...getNumberCell(),
+            ...getCellDefinition('losses'),
           },
           {
             c: {
@@ -691,7 +767,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.additions,
             },
             header: () => t('label.additions'),
-            ...getNumberCell(),
+            ...getCellDefinition('additions'),
           },
           {
             c: {
@@ -699,7 +775,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.shortExpiry,
             },
             header: () => t('label.short-expiry'),
-            ...getNumberCell(),
+            ...getCellDefinition('shortExpiry'),
           },
           {
             c: {
@@ -707,33 +783,29 @@ const InternalOrderDetailView: Component = () => {
               id: COL.daysOutOfStock,
             },
             header: () => t('label.days-out-of-stock'),
-            ...getNumberCell(),
+            ...getCellDefinition('daysOutOfStock'),
           },
           {
             c: { accessor: l => l.reason?.reason ?? '', id: COL.reason },
             header: () => t('label.reason'),
+            ...getCellDefinition('reason'),
             // A send's reasons backstop flags every offending line's Reason
             // cell (AC-R3): a red alert beside the (usually empty) reason text.
             cell: info => {
               const line = info.row.original;
               return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    'align-items': 'center',
-                    gap: 'var(--space-1)',
-                  }}
-                >
+                <HStack gap="sm">
                   <Show when={reasonFlaggedIds().has(line.id)}>
-                    <AlertTriangleIcon
-                      style={{ color: 'var(--error-main)' }}
-                      aria-label={t(
+                    <StatusMarker
+                      severity="error"
+                      icon={AlertTriangleIcon}
+                      label={t(
                         'error.reasons-not-provided-program-requisition'
                       )}
                     />
                   </Show>
                   {line.reason?.reason ?? ''}
-                </span>
+                </HStack>
               );
             },
           },
@@ -748,7 +820,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.approvedPacks,
             },
             header: () => t('label.approved-packs'),
-            ...getNumberCell(),
+            ...getCellDefinition('approvedPacks'),
           },
           {
             c: {
@@ -756,6 +828,7 @@ const InternalOrderDetailView: Component = () => {
               id: COL.approvalComment,
             },
             header: () => t('label.approval-comment'),
+            ...getCellDefinition('approvalComment'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -945,6 +1018,7 @@ const InternalOrderDetailView: Component = () => {
                     disabledTitle={t('error.cannot-add-items-to-requisition')}
                     value={addChoice()}
                     onValueChange={setAddChoice}
+                    shortcut={ALT_N}
                     onAction={onAddAction}
                     options={[
                       { value: 'item', label: t('button.add-item') },
@@ -975,13 +1049,39 @@ const InternalOrderDetailView: Component = () => {
                       variant="secondary"
                       icon={<SidebarIcon />}
                       data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it (ui-surface S2).
+                      shortcut={ALT_M}
                       onClick={() => setSidePanelOpen(true)}
                     >
                       {t('button.more')}
                     </Button>
                   </Show>
                 </HeaderButtons>
-                <Toolbar>
+                {/* The header field cluster (ui-standards → HeaderToolbar):
+                    each field labelled above its small control, sharing the
+                    row per its FormRowItem weight and wrapping as a unit. The
+                    read-only notices ride the cluster's end as compact chips —
+                    persistent low-urgency context that shouldn't cost a
+                    content row (Alert `compact`; the customer-returns kind
+                    banner's pattern). Both can show; each wraps to its own
+                    line when the row can't hold it. */}
+                <HeaderToolbar
+                  alert={
+                    <>
+                      <Show when={node().otherParty.store?.isDisabled}>
+                        <Alert severity="info" compact>
+                          {t('info.cannot-edit-disabled-store')}
+                        </Alert>
+                      </Show>
+                      <Show when={isProgram()}>
+                        <Alert severity="info" compact>
+                          {t('info.cannot-edit-program-requisition')}
+                        </Alert>
+                      </Show>
+                    </>
+                  }
+                >
                   <InternalOrderToolbar
                     storeId={params.storeId}
                     node={node()}
@@ -996,19 +1096,24 @@ const InternalOrderDetailView: Component = () => {
                     onChangeTarget={changeTarget}
                     hideOverMin={hideOverMin()}
                     onHideOverMinChange={setHideOverMin}
-                    itemFilter={itemFilter()}
-                    onItemFilterChange={setItemFilter}
                   />
-                  {/* The ancillary banner claims its own full-width row beneath
-                      the toolbar block (spec S3 § toolbar). */}
-                  <InternalOrderAncillaryBanner
-                    storeId={params.storeId}
-                    requisitionId={node().id}
-                    ancillary={node().ancillaryState}
-                    editable={editable()}
-                    onRefreshed={() => void refetch()}
-                  />
-                </Toolbar>
+                </HeaderToolbar>
+                {/* The ancillary banner keeps its own full-width row beneath
+                    the cluster (spec S3 § toolbar): it carries CONTROLS
+                    (Details popover + Add/Update + inline error), which the
+                    alert chip slot is not documented for — its final home is
+                    the one open operator decision (ui-migration-report.md). */}
+                <Show when={editable() && node().ancillaryState.state !== 'NONE'}>
+                  <Toolbar>
+                    <InternalOrderAncillaryBanner
+                      storeId={params.storeId}
+                      requisitionId={node().id}
+                      ancillary={node().ancillaryState}
+                      editable={editable()}
+                      onRefreshed={() => void refetch()}
+                    />
+                  </Toolbar>
+                </Show>
               </Header>
             }
             contentFooter={
@@ -1079,6 +1184,15 @@ const InternalOrderDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={lineFilters}
+                      filter={lineFilter()}
+                      onChange={setLineFilter}
+                    />
+                  }
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
@@ -1092,7 +1206,7 @@ const InternalOrderDetailView: Component = () => {
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={
-                    itemFilter().trim()
+                    (lineFilter().itemCodeOrName?.like ?? '').trim()
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
@@ -1104,6 +1218,7 @@ const InternalOrderDetailView: Component = () => {
                     canAddLines() ? (
                       <Button
                         variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={() => setEditorLine({ mode: 'add' })}
                       >
@@ -1134,14 +1249,17 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InternalOrderLogTab
+                {/* The shared activity-log surface; oldest first per AC-AL1
+                    (spec S3 § Log tab). */}
+                <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
+                  order="oldest-first"
                 />
               </TabPanel>
               <Show when={showIndicators()}>
                 <TabPanel value="indicators">
-                  <InternalOrderIndicatorsTab
+                  <ProgramIndicatorsTab
                     storeId={params.storeId}
                     nodes={indicatorNodes()}
                     editable={editable()}
@@ -1168,11 +1286,7 @@ const InternalOrderDetailView: Component = () => {
               showExcess={showExcess()}
               showExtended={showExtended()}
               orderInPacks={orderInPacks()}
-              initialLine={
-                editorLine()?.mode === 'edit'
-                  ? (editorLine() as { mode: 'edit'; line: Line }).line
-                  : undefined
-              }
+              initialLine={editorInitialLine()}
               nextLine={resolveNextLine}
               findLineForItem={findLineForItem}
               // The info-panel slot's other half (§ S8 › editor region): the

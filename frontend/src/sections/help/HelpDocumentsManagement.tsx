@@ -143,7 +143,7 @@ const HelpDocumentsManagement: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('manage') }, { label: t('help-documents') }];
+  const crumbs = () => [{ label: t('help-documents') }];
 
   const uploadButton = () => (
     <Button icon={<PlusCircleIcon />} onClick={() => setUploadOpen(true)}>
