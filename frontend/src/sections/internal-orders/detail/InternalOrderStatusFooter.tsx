@@ -190,12 +190,14 @@ export const InternalOrderStatusFooter: Component<
               }
             >
               <Match when={phase() === 'empty'}>
-                <Alert severity="warning">
+                <Alert severity="warning" testId="send-error">
                   {t('messages.cant-send-order')}
                 </Alert>
               </Match>
               <Match when={phase() === 'error'}>
-                <Alert severity="error">{errorMessage()}</Alert>
+                <Alert severity="error" testId="send-error">
+                  {errorMessage()}
+                </Alert>
               </Match>
             </Switch>
           }

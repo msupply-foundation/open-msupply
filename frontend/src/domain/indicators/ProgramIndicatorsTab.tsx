@@ -57,6 +57,11 @@ const IndicatorCellInput: Component<{
   };
   onCleanup(() => clearTimeout(timer));
 
+  // Locale-stable test hook, keyed by the cell's header (e2e/TESTIDS.md):
+  // "Value" → indicator-input-value.
+  const testId = () =>
+    `indicator-input-${props.cell.label.toLowerCase().replace(/\s+/g, '-')}`;
+
   return (
     <FieldRow label={props.cell.label}>
       <Show
@@ -67,6 +72,7 @@ const IndicatorCellInput: Component<{
             hideLabel
             width="full"
             autofocus={props.autofocus}
+            data-testid={testId()}
             value={value()}
             disabled={props.disabled}
             error={error()}
@@ -78,6 +84,7 @@ const IndicatorCellInput: Component<{
           label={props.cell.label}
           hideLabel
           autofocus={props.autofocus}
+          data-testid={testId()}
           value={value() === '' ? undefined : Number(value())}
           disabled={props.disabled}
           error={error()}

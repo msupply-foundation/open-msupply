@@ -75,6 +75,8 @@ export interface ReasonSelectProps {
   required?: boolean;
   /** `data-testid` for the error message — forwarded to the Combobox. */
   errorTestId?: string;
+  /** `data-testid` for the text input — forwarded to the Combobox. */
+  inputTestId?: string;
   placeholder?: string;
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
@@ -103,6 +105,7 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     error={props.error}
     required={props.required}
     errorTestId={props.errorTestId}
+    inputTestId={props.inputTestId}
     placeholder={props.placeholder}
     focusTarget={props.focusTarget}
     onChange={r => props.onChange(r)}
