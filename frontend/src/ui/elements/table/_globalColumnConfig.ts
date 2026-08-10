@@ -192,6 +192,7 @@ export const CELL_DEF = {
   // digits, tighter than a generic number; one shared width
   // (RECORD_NUMBER_WIDTH) so they never drift apart.
   invoiceNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
+  stockMovementNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   stocktakeNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   requisitionNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   // Percentage.

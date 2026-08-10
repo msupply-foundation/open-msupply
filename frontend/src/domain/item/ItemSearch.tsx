@@ -53,6 +53,11 @@ export interface ItemSearchProps {
    * that focuses this picker after an action (e.g. a dialog opening on it).
    */
   focusTarget?: FocusTarget;
+  /**
+   * Offer only items with stock on hand (server-side ItemFilterInput
+   * .hasStockOnHand) — the stock-movement line editor's item search.
+   */
+  hasStockOnHand?: boolean;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
   /**
@@ -95,6 +100,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     props.storeId,
     () => props.excludeItemIds ?? [],
     PAGE_SIZE,
+    () => props.hasStockOnHand,
     () => props.masterListId
   );
 

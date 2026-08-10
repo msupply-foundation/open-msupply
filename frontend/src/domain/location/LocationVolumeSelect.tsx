@@ -45,11 +45,19 @@ export interface LocationVolumeSelectProps {
    * The location the stock being placed is **already in**, where that differs
    * from this field's own value — a repack's origin line, say. It always passes
    * the "Available" filter: its volumeUsed already counts the volume being
-   * moved, so measuring that volume against its headroom double-counts. Omit
+   * moved, so measuring that volume double-counts. Omit
    * where the field's value IS the current location (the line editors), or
    * where the stock isn't anywhere yet (new stock).
    */
   originalLocationId?: string;
+  /**
+   * Disable an option **in place**, labelled with the reason — return the
+   * short reason text ("On hold", "Source location") for a disabled option,
+   * undefined for an enabled one. Disabled-in-place beats filtering out where
+   * the rule must stay visible (a stock movement's destination picker); the
+   * fullness filter still narrows independently of it.
+   */
+  itemDisabledReason?: (l: LocationWithVolume) => string | undefined;
 }
 
 /*
@@ -139,20 +147,31 @@ export const LocationVolumeSelect = (
       placeholder={props.placeholder}
       focusTarget={props.focusTarget}
       onChange={l => props.onChange(l)}
+      itemDisabled={
+        props.itemDisabledReason
+          ? l => props.itemDisabledReason!(l) !== undefined
+          : undefined
+      }
       // Let the popup grow past a narrow line-editor cell so a location's
       // code + name (and % used) stay readable rather than truncating to the
       // field width.
       matchTriggerWidth={false}
       listboxHeader={filterHeader}
-      renderItem={l => (
-        <span class={styles.option}>
-          <span class={styles.optionLabel}>
-            <span class={styles.code}>{l.code}</span>
-            <span class={styles.name}>{l.name}</span>
+      renderItem={l => {
+        const reason = props.itemDisabledReason?.(l);
+        return (
+          <span class={styles.option}>
+            <span class={styles.optionLabel}>
+              <span class={styles.code}>{l.code}</span>
+              <span class={styles.name}>
+                {l.name}
+                {reason ? ` (${reason})` : ''}
+              </span>
+            </span>
+            <span class={styles.percentUsed}>{percentUsedLabel(l)}</span>
           </span>
-          <span class={styles.percentUsed}>{percentUsedLabel(l)}</span>
-        </span>
-      )}
+        );
+      }}
     />
   );
 };
