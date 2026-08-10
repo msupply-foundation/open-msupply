@@ -116,6 +116,9 @@ export const AdditionalInfoSection: FC<AdditionalInfoSectionProps> = ({
           disabled={isDisabled}
           onChange={e => update({ comment: e.target.value })}
           value={comment ?? ''}
+          slotProps={{
+            htmlInput: { 'data-testid': 'comment-field' },
+          }}
         />
       </Grid>
     </DetailPanelSection>
@@ -126,11 +129,12 @@ const RelatedDocumentsRow: FC<{
   label: string;
   to: string;
   value?: number | null;
-}> = ({ label, to, value }) => (
+  testId?: string;
+}> = ({ label, to, value, testId }) => (
   <PanelRow>
     <PanelLabel>{label}</PanelLabel>
     <PanelField>
-      <Link to={to}>{`#${value}`}</Link>
+      <Link to={to} data-testid={testId}>{`#${value}`}</Link>
     </PanelField>
   </PanelRow>
 );
@@ -198,6 +202,7 @@ export const RelatedDocumentsSection: FC<RelatedDocumentsSectionProps> = ({
               <RelatedDocumentsRow
                 key={shipment.id}
                 label={t('label.shipment')}
+                testId="fulfilling-shipment-link"
                 value={shipment.invoiceNumber}
                 to={
                   inbound
@@ -226,6 +231,7 @@ export const RelatedDocumentsSection: FC<RelatedDocumentsSectionProps> = ({
               <RelatedDocumentsRow
                 key={createdFromRequisition?.id}
                 label={t('label.created-from-requisition')}
+                testId="created-from-requisition-link"
                 value={createdFromRequisition?.requisitionNumber}
                 to={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
