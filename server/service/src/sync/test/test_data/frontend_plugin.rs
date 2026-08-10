@@ -1,6 +1,6 @@
 use repository::{
     FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow, FrontendPluginRowDelete,
-    FrontendPluginTypes,
+    FrontendPluginTypes, HostRuntime, LEGACY_HOST_RUNTIME, LEGACY_PLUGIN_API_VERSION,
 };
 use serde_json::json;
 
@@ -9,10 +9,11 @@ use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &str = "frontend_plugin";
 
-// Deliberately WITHOUT `plugin_api_version`: this is the shape every row
-// installed before the column existed still has on the wire, and it must keep
-// translating — arriving as `None`, which is what marks a bundle as loadable
-// by the old UI only.
+// Deliberately WITHOUT `host_runtime` or `plugin_api_version`: this is the
+// shape every row installed before the columns existed still has on the wire,
+// and it must keep translating — arriving as `react` at API 0, which is a true
+// description of it, since no bundle for any other runtime could exist before
+// the fields did.
 const FRONTEND_PLUGIN: (&str, &str) = (
     "frontend_plugin",
     r#"{
@@ -28,12 +29,12 @@ const FRONTEND_PLUGIN: (&str, &str) = (
     }"#,
 );
 
-// The other direction: a bundle built for the new front end declares the
-// plugin API it was built against.
-const FRONTEND_PLUGIN_WITH_API_VERSION: (&str, &str) = (
-    "frontend_plugin_with_api_version",
+// The other direction: a bundle built for a named front end declares both the
+// runtime it targets and where it sits on that runtime's API number line.
+const FRONTEND_PLUGIN_WITH_HOST_RUNTIME: (&str, &str) = (
+    "frontend_plugin_with_host_runtime",
     r#"{
-        "id":  "frontend_plugin_with_api_version",
+        "id":  "frontend_plugin_with_host_runtime",
         "entry_point": "first_one.js",
         "code": "code",
         "types": ["plugin_type"],
@@ -42,6 +43,7 @@ const FRONTEND_PLUGIN_WITH_API_VERSION: (&str, &str) = (
             "file_content_base64": "base64stuffhere"
         }],
         "version": "3.0.0",
+        "host_runtime": "solid",
         "plugin_api_version": 1
     }"#,
 );
@@ -57,15 +59,17 @@ fn frontend_plugin() -> FrontendPluginRow {
             file_content_base64: "base64stuffhere".to_string(),
         }]),
         version: "1.0.0".to_string(),
-        plugin_api_version: None,
+        host_runtime: HostRuntime(LEGACY_HOST_RUNTIME.to_string()),
+        plugin_api_version: LEGACY_PLUGIN_API_VERSION,
     }
 }
 
-fn frontend_plugin_with_api_version() -> FrontendPluginRow {
+fn frontend_plugin_with_host_runtime() -> FrontendPluginRow {
     FrontendPluginRow {
-        id: FRONTEND_PLUGIN_WITH_API_VERSION.0.to_string(),
+        id: FRONTEND_PLUGIN_WITH_HOST_RUNTIME.0.to_string(),
         version: "3.0.0".to_string(),
-        plugin_api_version: Some(1),
+        host_runtime: HostRuntime("solid".to_string()),
+        plugin_api_version: 1,
         ..frontend_plugin()
     }
 }
@@ -75,8 +79,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, FRONTEND_PLUGIN, frontend_plugin()),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
-            FRONTEND_PLUGIN_WITH_API_VERSION,
-            frontend_plugin_with_api_version(),
+            FRONTEND_PLUGIN_WITH_HOST_RUNTIME,
+            frontend_plugin_with_host_runtime(),
         ),
     ]
 }

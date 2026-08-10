@@ -3621,6 +3621,28 @@ export type HelpDocumentNode = {
 
 export type HelpDocumentsResponse = HelpDocumentConnector;
 
+/** What the asking client is, and which plugin bundles it can load. */
+export type HostPluginApiInput = {
+  /**
+   * The oldest plugin API this client still accepts
+   * (`PLUGIN_API_MIN_SUPPORTED`). Bundles below it are not offered.
+   */
+  minSupported: Scalars['Int']['input'];
+  /**
+   * The plugin host runtime this client is: `react` for the old
+   * module-federation UI, `solid` for the current front end. Matched for
+   * exact equality against the bundle's own, and never interpreted by the
+   * server — a new front end simply declares a new name here, and bundles
+   * built for it declare the same one.
+   */
+  runtime: Scalars['String']['input'];
+  /**
+   * The plugin API this client provides (`PLUGIN_API_VERSION`). Bundles
+   * above it are not offered.
+   */
+  version: Scalars['Int']['input'];
+};
+
 export type IdResponse = {
   __typename: 'IdResponse';
   id: Scalars['String']['output'];
@@ -8780,8 +8802,7 @@ export type QueriesFormSchemasArgs = {
 };
 
 export type QueriesFrontendPluginMetadataArgs = {
-  pluginApiMinSupported?: InputMaybe<Scalars['Int']['input']>;
-  pluginApiVersion?: InputMaybe<Scalars['Int']['input']>;
+  host?: InputMaybe<HostPluginApiInput>;
 };
 
 export type QueriesGenerateCustomerReturnLinesArgs = {
