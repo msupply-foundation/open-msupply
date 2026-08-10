@@ -42,6 +42,7 @@ mod reintegrate_items_for_custom_field_options;
 mod reintegrate_label_prefs_for_custom_field_names;
 mod reintegrate_transaction_categories_for_custom_field_options;
 mod remove_add_central_patient_visibility_processor_cursor;
+mod seed_frontend_bundle_processor_cursor;
 mod seed_sync_request_user_tables;
 mod update_changelog_for_sync_v7;
 
@@ -104,6 +105,10 @@ impl Migration for V3_00_00 {
             Box::new(add_sync_file_download_request::Migrate),
             // Must follow add_frontend_bundle_table.
             Box::new(add_frontend_bundle_version_unique::Migrate),
+            // Must follow add_sync_file_download_request, and be a fragment of its own:
+            // Postgres won't let a transaction use an enum value that same transaction
+            // added, and that fragment is what adds FRONTEND_BUNDLE_PROCESSOR_CURSOR.
+            Box::new(seed_frontend_bundle_processor_cursor::Migrate),
         ]
     }
 }

@@ -19,8 +19,8 @@ use tokio::{
 };
 use util::format_error;
 
-const FILE_SYNC_TRANSFER_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between transferring files
-const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to transfer or there was an error, wait a longer before checking again
+const FILE_SYNC_BETWEEN_FILES_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between uploading or downloading files
+const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to upload or download, or there was an error, wait a longer before checking again
 
 pub enum FileSyncMessage {
     Start, // Start sync (could be manual trigger, or automatic on server startup)
@@ -112,12 +112,12 @@ impl FileSyncDriver {
                     // unobserved for up to FILE_SYNC_NO_FILES_DELAY. The match against Ok ignores
                     // sender-dropped errors (which only happen during shutdown).
                     Ok(()) = self.pause_rx.changed() => {},
-                    // OR wait between transferring files
+                    // OR wait between uploading/downloading files
                     _ = async {
                         if files_to_upload == 0 && files_to_download == 0 {
                             tokio::time::sleep(FILE_SYNC_NO_FILES_DELAY).await;
                         } else {
-                            tokio::time::sleep(FILE_SYNC_TRANSFER_DELAY).await;
+                            tokio::time::sleep(FILE_SYNC_BETWEEN_FILES_DELAY).await;
                         }
                     } => {},
                     else => break,
@@ -135,8 +135,9 @@ impl FileSyncDriver {
             // across the await point and the whole `run` future becomes !Send.
             let paused = *self.pause_rx.borrow();
 
-            // If not stopped or paused and we have a central server URL to transfer with
-            // (file bytes only ever transfer remote ↔ central, never on central itself)
+            // If not stopped or paused and we have a central server URL to upload to and
+            // download from (file bytes only ever move remote ↔ central, never on central
+            // itself)
             if !stopped && !paused {
                 if let Some(url) = file_sync_central_url(&service_provider) {
                     files_to_upload = self

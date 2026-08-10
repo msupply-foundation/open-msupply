@@ -33,6 +33,12 @@ use super::{
 };
 
 pub static MAX_UPLOAD_ATTEMPTS: i32 = 7 * 24; // 7 days * 24 hours Retry sending for up to for 1 week before giving up
+// Downloads carry their own budget rather than borrowing the upload one. The two are not the
+// same kind of failure: a failing upload is this site's own data not reaching central, which
+// is worth a long retry; a failing download is something this site merely asked for, and
+// central may legitimately no longer have it. Same value for now — the point is that tuning
+// one can no longer silently retune the other.
+pub static MAX_DOWNLOAD_ATTEMPTS: i32 = 7 * 24;
 pub static RETRY_DELAY_MINUTES: i64 = 15; // Doubles each retry until MAX_RETRY_DELAY_MINUTES
 pub static MAX_RETRY_DELAY_MINUTES: i64 = 60; // 1 hour
 
@@ -163,7 +169,7 @@ impl FileSynchroniser {
         let ctx = self.service_provider.basic_context()?;
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
 
-        let queued = sync_file_repo.find_all_to_download(MAX_UPLOAD_ATTEMPTS)?;
+        let queued = sync_file_repo.find_all_to_download(MAX_DOWNLOAD_ATTEMPTS)?;
         let Some(sync_file_reference) = queued.first() else {
             return Ok(0);
         };
@@ -200,7 +206,7 @@ impl FileSynchroniser {
             // Mark the give-up *on* the attempt that exhausts the budget, not after it:
             // `find_all_to_download` stops returning the row once retries reaches the cap,
             // so a later pass would never run to record it and the row would just go quiet.
-            let update = if retries_after >= MAX_UPLOAD_ATTEMPTS {
+            let update = if retries_after >= MAX_DOWNLOAD_ATTEMPTS {
                 SyncFileReferenceRow {
                     status: SyncFileStatus::PermanentFailure,
                     retries: retries_after,
