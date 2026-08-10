@@ -2,7 +2,7 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use log::{info, warn};
 use repository::{
     BackendPluginRow, FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow,
-    FrontendPluginTypes, PluginTypes, PluginVariantType,
+    FrontendPluginTypes, HostRuntime, PluginTypes, PluginVariantType,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -135,12 +135,14 @@ enum PluginDescription {
     #[serde(rename = "frontend")]
     FrontEnd {
         types: FrontendPluginTypes,
-        /// The plugin API the bundle was built against. Absent for the
-        /// React/module-federation plugins, which have no such contract — and
-        /// absent is meaningful: the server offers those bundles to the old UI
-        /// only.
+        /// The front end this bundle is built for (`react`, `solid`, ...) and
+        /// where it sits on that front end's plugin-API number line. Both
+        /// default to the pre-contract React values, so every plugin manifest
+        /// written before this existed still describes itself correctly.
         #[serde(default)]
-        plugin_api_version: Option<i32>,
+        host_runtime: HostRuntime,
+        #[serde(default)]
+        plugin_api_version: i32,
     },
 }
 #[derive(Deserialize)]
@@ -259,6 +261,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
         } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root, version)?,
         PluginDescription::FrontEnd {
             types,
+            host_runtime,
             plugin_api_version,
         } => bundle_frontend_plugin(
             bundle,
@@ -266,6 +269,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
             types,
             plugin_root,
             version,
+            host_runtime,
             plugin_api_version,
         )?,
     }
@@ -307,7 +311,8 @@ fn bundle_frontend_plugin(
     types: FrontendPluginTypes,
     plugin_root: &Path,
     version: String,
-    plugin_api_version: Option<i32>,
+    host_runtime: HostRuntime,
+    plugin_api_version: i32,
 ) -> Result<(), Error> {
     // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
     // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
@@ -372,6 +377,7 @@ fn bundle_frontend_plugin(
         files: FrontendPluginFiles(files),
         types,
         version,
+        host_runtime,
         plugin_api_version,
     });
 

@@ -54,6 +54,59 @@ pub enum FrontendPluginVariantType {
     BoaJs,
 }
 
+/// The plugin host runtime a bundle targets — which component runtime its
+/// contributions are written against (`react`, `solid`, ...).
+///
+/// The server never interprets the value: discovery compares it for exact
+/// equality against the runtime the asking client declares
+/// (`get_frontend_plugins_metadata`). That is deliberate — a new host can be
+/// introduced, and its bundles served, without a server release teaching the
+/// server its name.
+///
+/// It is a separate field from [`FrontendPluginRow::plugin_api_version`]
+/// because the API integer is only meaningful *within* a runtime: `1` means one
+/// thing to the SolidJS host and would mean something else entirely to a
+/// hypothetical plain-JavaScript one. Runtime picks the number line; the
+/// integer positions the bundle on it.
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct HostRuntime(pub String);
+
+/// The runtime of every bundle that predates the column: the React
+/// module-federation UI served at `/old-ui/`.
+pub const LEGACY_HOST_RUNTIME: &str = "react";
+
+/// The plugin API of every bundle that predates the column — "before the
+/// contract existed". The React bundles have no plugin-API contract at all, and
+/// `0` is how that era is spelled now that the column is NOT NULL.
+///
+/// Frozen, along with [`LEGACY_HOST_RUNTIME`]: no bundle is ever issued at API
+/// `0` again, and every runtime introduced from here on declares a real
+/// integer. That is what keeps `(runtime, plugin_api_version)` a total
+/// description of a bundle's host compatibility, with no arm meaning "legacy".
+pub const LEGACY_PLUGIN_API_VERSION: i32 = 0;
+
+impl Default for HostRuntime {
+    fn default() -> Self {
+        Self(LEGACY_HOST_RUNTIME.to_string())
+    }
+}
+
+impl From<String> for HostRuntime {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+impl From<HostRuntime> for String {
+    fn from(value: HostRuntime) -> Self {
+        value.0
+    }
+}
+
+fn legacy_plugin_api_version() -> i32 {
+    LEGACY_PLUGIN_API_VERSION
+}
+
 table! {
   frontend_plugin (id) {
       id -> Text,
@@ -62,7 +115,8 @@ table! {
       entry_point -> Text,
       types -> Text,
       files -> Text,
-      plugin_api_version -> Nullable<Integer>,
+      host_runtime -> Text,
+      plugin_api_version -> Integer,
   }
 }
 
@@ -81,15 +135,25 @@ pub struct FrontendPluginRow {
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
     pub files: FrontendPluginFiles,
-    /// The plugin-API integer this bundle was built against, or `None` for the
-    /// React/module-federation bundles which declare none — `None` means "old
-    /// UI only" (see `get_frontend_plugins_metadata`).
+    /// Which front end can load this bundle. See [`HostRuntime`].
     ///
-    /// `serde(default)` is what keeps sync backwards compatible in both
-    /// directions: a site that predates the column ignores the extra field on
-    /// the wire, and a row pushed without it arrives here as `None`.
+    /// The serde default is what keeps sync backwards compatible: a row pushed
+    /// by a central that predates the field arrives without it, and every such
+    /// row is by construction a React bundle — the field is introduced before
+    /// any bundle for another runtime can exist.
+    #[diesel(serialize_as = String)]
+    #[diesel(deserialize_as = String)]
     #[serde(default)]
-    pub plugin_api_version: Option<i32>,
+    pub host_runtime: HostRuntime,
+    /// Where on `host_runtime`'s plugin-API number line this bundle sits — the
+    /// same integer the host's own loader gates on. Compared against the pair
+    /// the asking client declares (`get_frontend_plugins_metadata`).
+    ///
+    /// Defaults to [`LEGACY_PLUGIN_API_VERSION`] for the same reason as
+    /// `host_runtime`, and for rows that predate the field the two defaults
+    /// agree: `react` at API `0`.
+    #[serde(default = "legacy_plugin_api_version")]
+    pub plugin_api_version: i32,
 }
 pub struct FrontendPluginRowRepository<'a> {
     connection: &'a StorageConnection,
