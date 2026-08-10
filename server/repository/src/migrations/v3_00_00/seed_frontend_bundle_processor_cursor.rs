@@ -15,13 +15,17 @@ impl MigrationFragment for Migrate {
         // history on first start to reach the only rows it can act on, which are all in the
         // future. Seed it so it starts where the work actually is.
         //
-        // Earliest frontend_bundle row minus one if any exist (so that row is still seen —
-        // the processor's filter is `cursor > stored`), otherwise the current end of the
-        // changelog. The first branch cannot fire on a normal upgrade: the table is created
-        // by `add_frontend_bundle_table` in this same batch, and the changelog-populating
-        // fragments ran before it, so there are no frontend_bundle rows yet. It is here so
-        // the seed stays correct if that ever stops being true, rather than silently
-        // skipping bundles.
+        // Seeding to the current end of the changelog skips no bundle, because at this point
+        // no bundle can have a changelog row yet: `frontend_bundle` is created by
+        // `add_frontend_bundle_table` in this same batch, after the fragments that populate
+        // the changelog for v7 tables.
+        //
+        // A site part-way through an upgrade may well be *holding* a frontend_bundle record —
+        // sync could have put one in its sync buffer before the restart — but a buffered
+        // record is not an integrated one. Integration runs after migrations, and it is
+        // integration that writes the changelog row, which therefore lands beyond this seed
+        // and is picked up normally. The buffer is why "seed to the end" is safe rather than
+        // merely convenient.
         //
         // Kept apart from `add_sync_file_download_request`, which adds the
         // FRONTEND_BUNDLE_PROCESSOR_CURSOR value to the `key_type` enum, because Postgres
@@ -33,10 +37,7 @@ impl MigrationFragment for Migrate {
             INSERT INTO key_value_store (id, value_int)
             SELECT
                 'FRONTEND_BUNDLE_PROCESSOR_CURSOR',
-                COALESCE(
-                    (SELECT MIN(cursor) - 1 FROM changelog WHERE table_name = 'frontend_bundle'),
-                    (SELECT COALESCE(MAX(cursor), 0) FROM changelog)
-                )
+                COALESCE((SELECT MAX(cursor) FROM changelog), 0)
             WHERE NOT EXISTS (
                 SELECT 1 FROM key_value_store WHERE id = 'FRONTEND_BUNDLE_PROCESSOR_CURSOR'
             );
