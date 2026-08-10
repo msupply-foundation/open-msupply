@@ -3,8 +3,11 @@
 import type { TypedDocument } from "../api/graphql";
 
 export type FrontendPluginMetadataVariables = {
-  pluginApiVersion?: number | null;
-  pluginApiMinSupported?: number | null;
+  host?: {
+    runtime: string;
+    version: number;
+    minSupported: number;
+  } | null;
 };
 
 export type FrontendPluginMetadataResult = {
@@ -16,5 +19,5 @@ export type FrontendPluginMetadataResult = {
 };
 
 export const FrontendPluginMetadata = {
-  query: "query frontendPluginMetadata($pluginApiVersion: Int, $pluginApiMinSupported: Int) {\n  frontendPluginMetadata(\n    pluginApiVersion: $pluginApiVersion\n    pluginApiMinSupported: $pluginApiMinSupported\n  ) {\n    code\n    path\n    hash\n  }\n}",
+  query: "query frontendPluginMetadata($host: HostPluginApiInput) {\n  frontendPluginMetadata(host: $host) {\n    code\n    path\n    hash\n  }\n}",
 } as TypedDocument<FrontendPluginMetadataResult, FrontendPluginMetadataVariables>;
