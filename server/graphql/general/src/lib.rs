@@ -404,14 +404,14 @@ impl GeneralQueries {
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "The plugin API this client provides; omit if it declares none (old UI)")]
-        plugin_api_version: Option<i32>,
         #[graphql(
-            desc = "The oldest plugin API this client accepts; defaults to pluginApiVersion"
+            desc = "What this client is and which plugin bundles it can load. \
+                    Omit only from a pre-existing old-UI build: absent means the \
+                    React module-federation UI at plugin API 0."
         )]
-        plugin_api_min_supported: Option<i32>,
+        host: Option<HostPluginApiInput>,
     ) -> Result<Vec<FrontendPluginMetadataNode>> {
-        frontend_plugin_metadata(ctx, plugin_api_version, plugin_api_min_supported)
+        frontend_plugin_metadata(ctx, host)
     }
 
     pub async fn currencies(

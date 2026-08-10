@@ -12,36 +12,63 @@ pub struct FrontendPluginMetadataNode {
     pub hash: String,
 }
 
+/// What the asking client is, and which plugin bundles it can load.
+// One object rather than loose arguments, for two reasons. The three fields are
+// meaningless apart — a runtime without a version says nothing, a version
+// without a runtime says something ambiguous — so requiring them together
+// removes a whole class of half-declared request. And it is where a fourth
+// field goes if this ever needs one, rather than a fourth positional argument
+// on a query that would by then have three.
+#[derive(InputObject)]
+pub struct HostPluginApiInput {
+    /// The plugin host runtime this client is: `react` for the old
+    /// module-federation UI, `solid` for the current front end. Matched for
+    /// exact equality against the bundle's own, and never interpreted by the
+    /// server — a new front end simply declares a new name here, and bundles
+    /// built for it declare the same one.
+    pub runtime: String,
+    /// The plugin API this client provides (`PLUGIN_API_VERSION`). Bundles
+    /// above it are not offered.
+    pub version: i32,
+    /// The oldest plugin API this client still accepts
+    /// (`PLUGIN_API_MIN_SUPPORTED`). Bundles below it are not offered.
+    pub min_supported: i32,
+}
+
 /// The frontend plugins this server will serve to the asking client.
 ///
-/// The arguments are how a client says which plugin bundles it can load, and
-/// both are optional so the wire stays backwards compatible: the old
-/// React/module-federation UI sends neither and is answered with the bundles
-/// that declare no plugin API either — the only ones it can load. The new
-/// front end sends its own `PLUGIN_API_VERSION` / `PLUGIN_API_MIN_SUPPORTED`
-/// and is answered with the bundles whose declared integer is in that range.
+/// The client has to declare itself because the server cannot work it out:
+/// several hosts are served concurrently and permanently by one binary — the
+/// SolidJS front end at `/`, the React UI at the never-synced `/old-ui/`
+/// escape hatch — so the answer differs per request, not per server.
 ///
-/// The client has to declare it because the server cannot work it out: both
-/// hosts are served concurrently and permanently by one binary — the new front
-/// end at `/`, the old UI at the never-synced `/old-ui/` escape hatch — so the
-/// answer differs per request, not per server.
+/// `host` is nullable only for backwards compatibility, and has no live caller:
+/// omitting it means the React UI as it shipped before any of this existed
+/// (`react`, API 0), which is what an in-flight old-UI build sends. Every
+/// client in tree declares itself explicitly.
 pub fn frontend_plugin_metadata(
     ctx: &Context<'_>,
-    plugin_api_version: Option<i32>,
-    plugin_api_min_supported: Option<i32>,
+    host: Option<HostPluginApiInput>,
 ) -> Result<Vec<FrontendPluginMetadataNode>, Error> {
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let host = match host {
+        Some(HostPluginApiInput {
+            runtime,
+            version,
+            min_supported,
+        }) => HostPluginApi {
+            runtime,
+            version,
+            min_supported,
+        },
+        None => HostPluginApi::default(),
+    };
+
     let plugins = service_provider
         .plugin_service
-        .get_frontend_plugins_metadata(
-            &context,
-            &HostPluginApi {
-                version: plugin_api_version,
-                min_supported: plugin_api_min_supported,
-            },
-        )
+        .get_frontend_plugins_metadata(&context, &host)
         .into_iter()
         .map(FrontendPluginMetadataNode::from_domain)
         .collect();

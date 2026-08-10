@@ -8,7 +8,8 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use log::info;
 use repository::{
     migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
-    FrontendPluginRowRepository, PluginType, RepositoryError,
+    FrontendPluginRowRepository, HostRuntime, PluginType, RepositoryError,
+    LEGACY_HOST_RUNTIME, LEGACY_PLUGIN_API_VERSION,
 };
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -78,10 +79,11 @@ pub struct FrontendPluginMetadata {
     pub code: String,
     pub version: Version,
     pub entry_point: String,
-    /// The plugin-API integer the bundle declares, or `None` for the
-    /// React/module-federation bundles which declare none. See
-    /// [`HostPluginApi`] for what `None` means at discovery time.
-    pub plugin_api_version: Option<i32>,
+    /// Which front end can load this bundle, and where on that front end's
+    /// plugin-API number line it sits. Matched against the pair the asking
+    /// client declares — see [`HostPluginApi::accepts`].
+    pub host_runtime: String,
+    pub plugin_api_version: i32,
     /// Hex-encoded SHA-256 of the concatenated file contents — used as a
     /// cache-busting URL token so the browser only refetches when the bundle
     /// actually changes.
@@ -116,41 +118,59 @@ impl FrontendPluginCache {
     }
 }
 
-/// The plugin-API pair a client declares when it asks for the installed set —
-/// the same two integers its own loader gates on.
+/// What a client declares about itself when it asks for the installed set: the
+/// plugin host runtime it is, and the two integers its own loader gates on.
 ///
-/// The server cannot infer this: the old UI (`/old-ui/`) and the new front end
-/// (`/`) are served concurrently and permanently by one binary, so "which host
-/// is asking?" is a property of the request, not of the server.
-#[derive(Clone, Debug, Default)]
+/// The server cannot infer any of it. Several front ends are served
+/// concurrently and permanently by one binary — the SolidJS one at `/`, the
+/// React one at the never-synced `/old-ui/` escape hatch — so "which host is
+/// asking?" is a property of the request, not of the server. Adding a third is
+/// a client-side change plus bundles that name it; nothing here needs to learn
+/// its name.
+#[derive(Clone, Debug)]
 pub struct HostPluginApi {
-    /// The plugin API this host provides. `None` is the old UI, which declares
-    /// none — and is therefore offered only the bundles that declare none
-    /// either.
-    pub version: Option<i32>,
-    /// The oldest plugin API this host still accepts. Defaults to `version`,
-    /// i.e. an unstated floor is read as "exactly what I provide".
-    pub min_supported: Option<i32>,
+    /// The plugin host runtime this client is (`react`, `solid`, ...), matched
+    /// for exact equality against the bundle's own.
+    pub runtime: String,
+    /// The plugin API this host provides. A bundle above it is refused: the
+    /// host cannot provide a surface it does not have.
+    pub version: i32,
+    /// The oldest plugin API this host still accepts. A bundle below it is
+    /// refused: the surface it was built against is gone.
+    pub min_supported: i32,
+}
+
+impl Default for HostPluginApi {
+    /// A caller that declares nothing at all is the React UI as it shipped
+    /// before any of this existed — the only client that was ever allowed not
+    /// to declare. Kept purely so an in-flight old-UI build keeps working; the
+    /// old UI in this repo now sends the triple explicitly.
+    fn default() -> Self {
+        Self {
+            runtime: LEGACY_HOST_RUNTIME.to_string(),
+            version: LEGACY_PLUGIN_API_VERSION,
+            min_supported: LEGACY_PLUGIN_API_VERSION,
+        }
+    }
 }
 
 impl HostPluginApi {
-    /// Whether a host with this pair can load a bundle declaring `declared`.
+    /// Whether this host can load `bundle`.
     ///
-    /// Mirrors the client-side gate (`src/plugins/validate.ts` in
-    /// open-msupply-frontend): refuse above the host's current API, refuse
-    /// below its floor. The two `None` arms are the part that is server-only —
-    /// a null bundle is old-UI-only, and a declaring host is never offered
-    /// one, because it would fetch and evaluate the bundle before finding out
-    /// it cannot use it.
-    fn accepts(&self, declared: Option<i32>) -> bool {
-        match (self.version, declared) {
-            (None, None) => true,
-            (None, Some(_)) => false,
-            (Some(_), None) => false,
-            (Some(host), Some(declared)) => {
-                declared <= host && declared >= self.min_supported.unwrap_or(host)
-            }
-        }
+    /// Runtime first, because the integer is only comparable within a runtime —
+    /// API `1` on the SolidJS number line and API `1` on some future
+    /// plain-JavaScript one are unrelated facts, and comparing them would hand
+    /// a host a bundle whose components it cannot render.
+    ///
+    /// The two integer comparisons then mirror the client-side gate
+    /// (`src/plugins/validate.ts` in open-msupply-frontend) exactly. Applying
+    /// it here as well is not redundant: client-side the bundle has already
+    /// been fetched and evaluated by the time it is refused, and the server
+    /// goes on advertising a plugin nothing can use.
+    fn accepts(&self, bundle: &FrontendPluginMetadata) -> bool {
+        self.runtime == bundle.host_runtime
+            && bundle.plugin_api_version <= self.version
+            && bundle.plugin_api_version >= self.min_supported
     }
 }
 
@@ -203,6 +223,7 @@ fn prepare_frontend_plugin(
         entry_point,
         files,
         version,
+        host_runtime: HostRuntime(host_runtime),
         plugin_api_version,
         ..
     }: FrontendPluginRow,
@@ -241,6 +262,7 @@ fn prepare_frontend_plugin(
             code,
             version,
             entry_point,
+            host_runtime,
             plugin_api_version,
             hash,
         },
@@ -327,7 +349,15 @@ pub trait PluginServiceTrait: Sync + Send {
         let served: Vec<String> = {
             let mut served: Vec<String> = rebuilt
                 .values()
-                .map(|p| format!("{}@{}", p.metadata.code, p.metadata.version))
+                .map(|p| {
+                    format!(
+                        "{}@{} ({} api {})",
+                        p.metadata.code,
+                        p.metadata.version,
+                        p.metadata.host_runtime,
+                        p.metadata.plugin_api_version,
+                    )
+                })
                 .collect();
             served.sort();
             served
@@ -380,6 +410,15 @@ pub trait PluginServiceTrait: Sync + Send {
     /// second bundle of the same code unservable: the loser was gone before
     /// anyone asked, so no filter here could hand it back. Ties on version are
     /// broken by id purely so the answer is stable.
+    ///
+    /// One consequence worth knowing when a host raises its API but keeps its
+    /// floor, so that it accepts two of its own generations at once: (2) ranks
+    /// by the plugin's `version` alone, never by the API integer. A plugin that
+    /// ships `4.0.1` against API 1 and `4.0.0` against API 2 will therefore be
+    /// served its API-1 bundle, which loads with a downlevel warning and is
+    /// almost certainly not what was intended. The rule that avoids it is on
+    /// the publishing side: a plugin's own version line and its API line must
+    /// move forward together.
     fn get_frontend_plugins_metadata(
         &self,
         ctx: &ServiceContext,
@@ -389,7 +428,7 @@ pub trait PluginServiceTrait: Sync + Send {
 
         let mut highest_per_code: HashMap<String, FrontendPluginMetadata> = HashMap::new();
         for metadata in plugins.values().map(|p| &p.metadata) {
-            if !host.accepts(metadata.plugin_api_version) {
+            if !host.accepts(metadata) {
                 continue;
             }
 
@@ -504,7 +543,8 @@ mod test {
         mock::{MockData, MockDataInserts},
         BackendPluginRow, BackendPluginRowRepository, ChangelogCondition, ChangelogRepository,
         ChangelogTableName, CursorAndLimit, FilterBuilder, FrontendPluginFile, FrontendPluginFiles,
-        FrontendPluginRow, FrontendPluginRowRepository, FrontendPluginTypes, PluginType,
+        FrontendPluginRow, FrontendPluginRowRepository, FrontendPluginTypes, HostRuntime,
+        PluginType,
         PluginTypes, RowActionType,
     };
 
@@ -784,9 +824,15 @@ mod test {
         assert!(matches!(err, UninstallPluginError::PluginNotFound));
     }
 
-    /// One bundle of `civ_plugins`, as installed. `plugin_api_version` is the
-    /// axis under test: `None` is a React bundle, `Some(n)` a new-UI one.
-    fn civ_bundle(id: &str, version: &str, plugin_api_version: Option<i32>) -> FrontendPluginRow {
+    /// One bundle of `civ_plugins`, as installed. `(host_runtime,
+    /// plugin_api_version)` is the axis under test — which front end the bundle
+    /// is for, and where on that front end's number line it sits.
+    fn civ_bundle(
+        id: &str,
+        version: &str,
+        host_runtime: &str,
+        plugin_api_version: i32,
+    ) -> FrontendPluginRow {
         FrontendPluginRow {
             id: id.to_string(),
             code: "civ_plugins".to_string(),
@@ -800,7 +846,23 @@ mod test {
                 // Encoded "nothing here"
                 file_content_base64: "bm90aGluZyBoZXJl".to_string(),
             }]),
+            host_runtime: HostRuntime(host_runtime.to_string()),
             plugin_api_version,
+        }
+    }
+
+    /// The two hosts in the field today, and a third that does not exist —
+    /// present to pin down that a runtime the server has never heard of is
+    /// served correctly, and is never crossed with the others.
+    fn react_ui() -> HostPluginApi {
+        HostPluginApi::default()
+    }
+
+    fn solid_ui(version: i32, min_supported: i32) -> HostPluginApi {
+        HostPluginApi {
+            runtime: "solid".to_string(),
+            version,
+            min_supported,
         }
     }
 
@@ -836,17 +898,22 @@ mod test {
         .await;
 
         let repo = FrontendPluginRowRepository::new(&connection);
-        // The React bundle in the field, declaring no plugin API.
-        repo.upsert_one(civ_bundle("react", "1.0.1", None)).unwrap();
-        // The new-UI bundle, numbered on the server's current major so a 2.x
+        // The React bundle in the field, from before the plugin-API contract.
+        repo.upsert_one(civ_bundle("react", "1.0.1", "react", 0))
+            .unwrap();
+        // The SolidJS bundle, numbered on the server's current major so a 2.x
         // server would refuse it outright.
-        repo.upsert_one(civ_bundle("new_ui", "3.0.0", Some(1)))
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid", 1))
             .unwrap();
         // Built against a plugin API no host here provides.
-        repo.upsert_one(civ_bundle("new_ui_future_api", "3.0.1", Some(99)))
+        repo.upsert_one(civ_bundle("solid_future_api", "3.0.1", "solid", 99))
+            .unwrap();
+        // A runtime this server has never heard of, at the same API integer as
+        // the SolidJS bundle — the integer alone must not be enough to match.
+        repo.upsert_one(civ_bundle("vanilla", "3.0.0", "vanilla", 1))
             .unwrap();
         // Built for a server this binary is older than — never servable at all.
-        repo.upsert_one(civ_bundle("too_new_for_server", "99.0.0", Some(1)))
+        repo.upsert_one(civ_bundle("too_new_for_server", "99.0.0", "solid", 1))
             .unwrap();
 
         service_provider
@@ -854,50 +921,47 @@ mod test {
             .reload_frontend_plugins(&service_context)
             .unwrap();
 
-        // The old UI declares nothing, and is answered with the null-API
-        // bundle only — never the ESM one it cannot evaluate, even though the
-        // ESM one is the higher version.
-        let old_ui = HostPluginApi::default();
+        // The React UI is answered with the React bundle only — never the ESM
+        // ones it cannot evaluate, even though they are the higher version.
         assert_eq!(
-            discovered_ids(&service_provider, &service_context, &old_ui),
+            discovered_ids(&service_provider, &service_context, &react_ui()),
             vec!["react".to_string()]
         );
 
-        // The new front end declares its pair and is answered with the bundle
-        // in range — not the React one (null is old-UI-only), and not the one
-        // built against a newer API than it provides.
-        let new_ui = HostPluginApi {
-            version: Some(1),
-            min_supported: Some(1),
-        };
+        // The SolidJS front end declares its runtime and pair and is answered
+        // with the bundle in range: not the React one, not the one built
+        // against a newer API than it provides, and — the point of the
+        // runtime field — not the `vanilla` bundle whose API integer would
+        // otherwise have satisfied the very same comparisons.
         assert_eq!(
-            discovered_ids(&service_provider, &service_context, &new_ui),
-            vec!["new_ui".to_string()]
+            discovered_ids(&service_provider, &service_context, &solid_ui(1, 1)),
+            vec!["solid".to_string()]
         );
 
-        // A host old enough to be below a bundle's declared API gets nothing,
-        // rather than a bundle it would fetch, evaluate and then refuse.
-        let downlevel_ui = HostPluginApi {
-            version: Some(1),
-            min_supported: Some(2),
-        };
+        // And the reverse: a host the server knows nothing about is served its
+        // own bundles, with no server change required to teach it the name.
         assert_eq!(
-            discovered_ids(&service_provider, &service_context, &downlevel_ui),
+            discovered_ids(
+                &service_provider,
+                &service_context,
+                &HostPluginApi {
+                    runtime: "vanilla".to_string(),
+                    version: 1,
+                    min_supported: 1,
+                }
+            ),
+            vec!["vanilla".to_string()]
+        );
+
+        // A host whose floor has risen above a bundle's declared API gets
+        // nothing, rather than a bundle it would fetch, evaluate and refuse.
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, &solid_ui(1, 2)),
             Vec::<String>::new()
         );
 
-        // An omitted floor reads as "exactly what I provide".
-        let no_floor = HostPluginApi {
-            version: Some(1),
-            min_supported: None,
-        };
-        assert_eq!(
-            discovered_ids(&service_provider, &service_context, &no_floor),
-            vec!["new_ui".to_string()]
-        );
-
-        // Both live bundles are addressable, despite sharing an entry filename.
-        for id in ["react", "new_ui"] {
+        // Every live bundle is addressable, despite sharing an entry filename.
+        for id in ["react", "solid", "vanilla"] {
             assert_eq!(
                 service_provider
                     .plugin_service
@@ -945,13 +1009,13 @@ mod test {
         .await;
 
         let repo = FrontendPluginRowRepository::new(&connection);
-        repo.upsert_one(civ_bundle("new_ui_older", "3.0.0", Some(1)))
+        repo.upsert_one(civ_bundle("solid_older", "3.0.0", "solid", 1))
             .unwrap();
-        repo.upsert_one(civ_bundle("new_ui_newer", "3.0.2", Some(1)))
+        repo.upsert_one(civ_bundle("solid_newer", "3.0.2", "solid", 1))
             .unwrap();
-        repo.upsert_one(civ_bundle("react_older", "1.0.0", None))
+        repo.upsert_one(civ_bundle("react_older", "1.0.0", "react", 0))
             .unwrap();
-        repo.upsert_one(civ_bundle("react_newer", "1.0.1", None))
+        repo.upsert_one(civ_bundle("react_newer", "1.0.1", "react", 0))
             .unwrap();
 
         service_provider
@@ -960,23 +1024,12 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            discovered_ids(
-                &service_provider,
-                &service_context,
-                &HostPluginApi::default()
-            ),
+            discovered_ids(&service_provider, &service_context, &react_ui()),
             vec!["react_newer".to_string()]
         );
         assert_eq!(
-            discovered_ids(
-                &service_provider,
-                &service_context,
-                &HostPluginApi {
-                    version: Some(1),
-                    min_supported: Some(1),
-                }
-            ),
-            vec!["new_ui_newer".to_string()]
+            discovered_ids(&service_provider, &service_context, &solid_ui(1, 1)),
+            vec!["solid_newer".to_string()]
         );
     }
 
@@ -997,8 +1050,9 @@ mod test {
         .await;
 
         let repo = FrontendPluginRowRepository::new(&connection);
-        repo.upsert_one(civ_bundle("react", "1.0.1", None)).unwrap();
-        repo.upsert_one(civ_bundle("new_ui", "3.0.0", Some(1)))
+        repo.upsert_one(civ_bundle("react", "1.0.1", "react", 0))
+            .unwrap();
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid", 1))
             .unwrap();
 
         service_provider
@@ -1008,35 +1062,27 @@ mod test {
 
         service_provider
             .plugin_service
-            .uninstall_plugin(&service_context, "new_ui")
+            .uninstall_plugin(&service_context, "solid")
             .unwrap();
         service_provider
             .plugin_service
             .reload_frontend_plugins(&service_context)
             .unwrap();
 
-        let new_ui = HostPluginApi {
-            version: Some(1),
-            min_supported: Some(1),
-        };
         assert_eq!(
-            discovered_ids(&service_provider, &service_context, &new_ui),
+            discovered_ids(&service_provider, &service_context, &solid_ui(1, 1)),
             Vec::<String>::new()
         );
         // The sibling bundle for the other host is untouched.
         assert_eq!(
-            discovered_ids(
-                &service_provider,
-                &service_context,
-                &HostPluginApi::default()
-            ),
+            discovered_ids(&service_provider, &service_context, &react_ui()),
             vec!["react".to_string()]
         );
         assert!(matches!(
             service_provider.plugin_service.get_frontend_plugin_file(
                 &service_context,
                 &FrontendPluginFileRequest {
-                    plugin_id: "new_ui".to_string(),
+                    plugin_id: "solid".to_string(),
                     filename: "civ_plugins.js".to_string(),
                 }
             ),
