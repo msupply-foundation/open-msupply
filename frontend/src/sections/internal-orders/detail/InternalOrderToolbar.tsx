@@ -227,6 +227,7 @@ export const InternalOrderToolbar: Component<
             label={t('label.destination-customer')}
             size="small"
             width="full"
+            inputTestId="customer-search-input"
             storeBacked
             excludeId={props.node.otherPartyId}
             selected={destinationSeed()}
@@ -242,6 +243,7 @@ export const InternalOrderToolbar: Component<
           label={t('label.min-months-of-stock')}
           size="small"
           width="full"
+          testId="min-months-of-stock-select"
           options={thresholdOptions()}
           value={thresholdValue()}
           disabled={fieldsLocked()}
@@ -253,6 +255,7 @@ export const InternalOrderToolbar: Component<
           label={t('label.max-months-of-stock')}
           size="small"
           width="full"
+          testId="max-months-of-stock-select"
           options={targetOptions()}
           value={targetValue()}
           disabled={fieldsLocked()}
