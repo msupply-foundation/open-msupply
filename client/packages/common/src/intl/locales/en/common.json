@@ -590,6 +590,7 @@
   "error.stocktake-snapshot-total-mismatch": "Stocktake cannot be finalised. The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments, prescriptions, or another stocktake. Please delete the line and try again.",
   "error.sync-api-incompatible": "Sync API version is not compatible",
   "error.sync-api-incompatible-hint": "The mSupply Central Server needs to be upgraded to a newer version before you can connect - please contact support@msupply.foundation",
+  "error.sync-file-not-found": "A file could not be found on the central server. It may not have finished uploading yet - sync will retry.",
   "error.sync-v6-api-incompatible": "Sync V6 API version is not compatible",
   "error.sync-v6-api-incompatible-hint": "The Open mSupply Central Server needs to be upgraded to a newer version before you can connect - please contact support@msupply.foundation",
   "error.timeout": "The request to get your location timed out.",
