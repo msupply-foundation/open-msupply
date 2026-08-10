@@ -12,6 +12,8 @@ import {
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { PasswordField } from '@/ui/elements/inputs/PasswordField';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { Text } from '@/ui/elements/typography/Text';
+import { EMPTY_FIELD_VALUE } from '@/domain/customFields';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { PlusCircleIcon } from '@/ui/icons';
@@ -335,7 +337,10 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
           capping its CONTENT (the frame, title row and actions row would stay
           wide around a floating body). Same width cap, the right owner. */}
       <Stack>
-        <FieldRow label={t('label.code')} required={!isEdit}>
+        <FieldRow
+          label={t('label.code')}
+          required={!isEdit && gates().identityEditable}
+        >
           <TextField
             ref={codeField.ref}
             hideLabel
@@ -355,7 +360,10 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
             }
           />
         </FieldRow>
-        <FieldRow label={t('label.name')} required>
+        {/* Required marks an input the user must fill. A read-only editor asks
+            nothing of them, so the asterisk goes with the editability gate
+            rather than sitting on a field they cannot type in. */}
+        <FieldRow label={t('label.name')} required={gates().identityEditable}>
           <TextField
             hideLabel
             label={t('label.name')}
@@ -394,33 +402,32 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
         <Show when={site()}>
           {existing => (
             <>
+              {/* Sync writes both of the rows below and nothing on any screen
+                  edits them, so per D67 they are read-only VALUES — plain text
+                  in the row's value column, no input chrome. (Code/Name above
+                  keep their disabled inputs: those ARE editable in principle,
+                  on a standalone central, and disabled honestly says "not
+                  here".) Empty shows the app-wide dash, never blank. */}
               <FieldRow label={t('label.sync-version')}>
-                <TextField
-                  hideLabel
-                  readonly
-                  label={t('label.sync-version')}
-                  width="full"
-                  data-testid="site-sync-version"
-                  // The RAW marker (V5V6 / V7), not a translated phrase.
-                  value={existing().syncVersion}
-                />
+                {/* The RAW marker (V5V6 / V7), not a translated phrase. */}
+                <Text data-testid="site-sync-version">
+                  {existing().syncVersion}
+                </Text>
               </FieldRow>
               <FieldRow label={t('label.hardware-id')}>
-                {/* The paired device's fingerprint, read-only, with the clear
-                    action at the END of the row — offered only for a
-                    current-flow site that is not this server's own AND that
-                    actually has one to release. The generic horizontal stack is
-                    the registry's own answer for a "value + affordance" row (a
-                    hand-rolled flex row here would be a bespoke look-alike). */}
+                {/* The paired device's fingerprint, with the clear action at the
+                    END of the row — offered only for a current-flow site that is
+                    not this server's own AND that actually has one to release.
+                    The generic horizontal stack is the registry's own answer for
+                    a "value + affordance" row (a hand-rolled flex row here would
+                    be a bespoke look-alike). The action packs against the value
+                    rather than the row's far edge: with no input box filling the
+                    span, an end-justified button reads as unrelated to the id it
+                    releases. */}
                 <HStack>
-                  <TextField
-                    hideLabel
-                    readonly
-                    label={t('label.hardware-id')}
-                    width="full"
-                    data-testid="site-hardware-id"
-                    value={existing().hardwareId ?? ''}
-                  />
+                  <Text data-testid="site-hardware-id">
+                    {existing().hardwareId ?? EMPTY_FIELD_VALUE}
+                  </Text>
                   <Show
                     when={showsClearHardwareId(existing(), props.ownSiteId)}
                   >
