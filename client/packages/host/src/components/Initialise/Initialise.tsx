@@ -48,7 +48,8 @@ export const Initialise = () => {
   const isAndroid = EnvUtils.platform === Platform.Android;
   // Only offer the standalone-central setup in dev (`yarn start`), not in
   // production builds.
-  const showCentralTab = !isAndroid && isCentralServer && !EnvUtils.isProduction();
+  const showCentralTab =
+    !isAndroid && isCentralServer && !EnvUtils.isProduction();
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const nativeClient = useNativeClient();
@@ -105,7 +106,11 @@ export const Initialise = () => {
             justifyContent: 'center',
           })}
         >
-          <Stack spacing={isExtraSmallScreen ? 2 : 3} width="100%" maxWidth={360}>
+          <Stack
+            spacing={isExtraSmallScreen ? 2 : 3}
+            width="100%"
+            maxWidth={360}
+          >
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
@@ -276,7 +281,11 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
               </Box>
             </Collapse>
           </Box>
-          {error && <BoxedErrorWithDetails {...error} />}
+          {/* Full width of the form Stack — the container bounding the inputs
+              and the Initialise button — rather than the component's fixed
+              300px default, which neither matches the inputs nor the panel
+              (open-msupply-frontend#504). */}
+          {error && <BoxedErrorWithDetails {...error} width="100%" />}
           <Box display="flex" justifyContent="flex-end">
             <LoadingButton
               isLoading={isLoading}
