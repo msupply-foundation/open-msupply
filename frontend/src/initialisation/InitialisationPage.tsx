@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { batch, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';
 import {
@@ -17,6 +17,7 @@ import {
   type SyncOverview,
 } from '../sections/sync-modal/syncStatus';
 import { syncErrorSummary } from '../sections/sync-modal/syncErrors';
+import { initialiseStep } from './initialiseRetry';
 import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
@@ -28,6 +29,7 @@ import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
   DEFAULT_SYNC_INTERVAL_SECONDS,
+  INITIALISE_RETRY_INTERVAL_MS,
   SYNC_POLL_INTERVAL_MS,
 } from '../config';
 import { changeLanguage, locale, t } from '../intl';
@@ -60,10 +62,23 @@ export const InitialisationPage: Component<{
   const [syncStarted, setSyncStarted] = createSignal(false);
   const [submitting, setSubmitting] = createSignal(false);
   const [syncError, setSyncError] = createSignal<SyncError>();
+  // Spec (OMS-REG-LGN-03.19): the silent wait for the central server is NOT
+  // an error — the fields stay locked and the button stays busy — so it
+  // cannot ride on syncError(); locked()/busy() hold via submitting() alone.
+  const [waitingForCentral, setWaitingForCentral] = createSignal(false);
   const [overview, setOverview] = createSignal<SyncOverview>();
 
   let disposeWatch: (() => void) | undefined;
-  onCleanup(() => disposeWatch?.());
+  let retryTimer: number | undefined;
+  // Cleanup must make the retry loop INERT, not merely cancel its timer: an
+  // attempt in flight when the page unmounts would resolve afterwards and
+  // start a watch nothing will ever dispose. Checked after every await.
+  let disposed = false;
+  onCleanup(() => {
+    disposed = true;
+    if (retryTimer != null) clearTimeout(retryTimer);
+    disposeWatch?.();
+  });
 
   const handleStatus = (status: SyncStatusFragment | null | undefined) => {
     const next = toSyncOverview(status, {
@@ -189,49 +204,81 @@ export const InitialisationPage: Component<{
     return Object.values(errors).every(message => message === '');
   };
 
+  // One initialise attempt. The user's own submit (retriesUsed 0) keeps the
+  // default global error handling (OMS-REG-LGN-03.17); the silent retries are
+  // background calls — a transport blip mid-wait must not raise the global
+  // modal, whose only recovery is a reload that wipes the URL, site name and
+  // password just typed (spec/startup contract § Initialisation). values() is
+  // read fresh per attempt (the fields are locked, so it cannot change — but a
+  // handler never snapshots state it will re-consult).
+  const attemptInitialise = (retriesUsed: number) =>
+    graphqlFetch(
+      InitialiseSite,
+      {
+        input: {
+          url: values().url,
+          username: values().siteName,
+          password: values().password,
+          // Spec: not user-editable — always the default (OMS-REG-LGN-03.3).
+          intervalSeconds: DEFAULT_SYNC_INTERVAL_SECONDS,
+          batchSize: values().batchSize,
+        },
+      },
+      retriesUsed === 0 ? undefined : { background: true }
+    );
+
+  const waitBeforeRetry = () =>
+    new Promise<void>(resolve => {
+      retryTimer = window.setTimeout(() => {
+        retryTimer = undefined;
+        resolve();
+      }, INITIALISE_RETRY_INTERVAL_MS);
+    });
+
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
     // Spec: the button is always clickable; validation errors show on click.
     if (!validate()) return;
     setSubmitting(true);
     setSyncError(undefined);
-    const result = await graphqlFetch(InitialiseSite, {
-      input: {
-        url: values().url,
-        username: values().siteName,
-        password: values().password,
-        // Spec: not user-editable — always the default (OMS-REG-LGN-03.3).
-        intervalSeconds: DEFAULT_SYNC_INTERVAL_SECONDS,
-        batchSize: values().batchSize,
-      },
-    });
-    // Failures are handled globally, so no error is shown here — but the
-    // submitting state MUST be released (spec, Unexpected API errors), or all
-    // four inputs stay disabled behind a permanent "Initialising…" and the only
-    // escape is a reload that wipes the URL, site name and password just typed.
-    // Nothing was started, so this is the same unlocked, button-reverts-to-
-    // Initialise state as a pre-start sync error (OMS-REG-LGN-03.11/.17). The
-    // expected sync errors below come back as union variants on success.
-    if (result.kind !== 'success') {
-      setSubmitting(false);
-      return;
-    }
-    const { initialiseSite } = result.data;
-    if (initialiseSite.__typename === 'SyncSettingsNode') {
-      setSubmitting(false);
-      setSyncStarted(true);
-      watchProgress();
-    } else {
-      // Spec (OMS-REG-LGN-03.11): initialisation never started, so the button
-      // stays Initialise (not Retry) and the fields unlock for correction.
-      setSubmitting(false);
-      setSyncError({
-        variant:
-          initialiseSite.__typename === 'SyncErrorV7Node'
-            ? initialiseSite.variantV7
-            : initialiseSite.variant,
-        fullError: initialiseSite.fullError,
+
+    // Spec (OMS-REG-LGN-03.18): the one transient sync error — the central
+    // server has not yet prepared this site — is waited out with silent
+    // retries instead of shown; classification and the retry budget are
+    // initialiseStep's (initialiseRetry.ts). Re-entrancy needs no guard: every
+    // input and the submit button are disabled for the whole loop (locked()).
+    let waitingError: SyncError | undefined;
+    for (let retriesUsed = 0; ; retriesUsed++) {
+      const result = await attemptInitialise(retriesUsed);
+      if (disposed) return;
+
+      const step = initialiseStep(result, retriesUsed, waitingError);
+      if (step.kind === 'retry') {
+        // Spec (OMS-REG-LGN-03.19): still not started — hold the lock, show
+        // the waiting notice in place of the error. Setting the same value
+        // again is a no-op, so the notice announces once, not once per retry.
+        waitingError = step.error;
+        setWaitingForCentral(true);
+        await waitBeforeRetry();
+        if (disposed) return;
+        continue;
+      }
+      // The terminal transition runs in an async continuation, which Solid
+      // does not auto-batch — un-batched, setSubmitting(false) lands a frame
+      // before setSyncError(...), flashing an unlocked, errorless form.
+      batch(() => {
+        setWaitingForCentral(false);
+        // Whatever the outcome, the submitting state is released (spec,
+        // Unexpected API errors / OMS-REG-LGN-03.11/.17/.21): a 'released'
+        // step shows nothing of its own (the global modal owns it), a
+        // 'failed' step shows the error with the button back on Initialise,
+        // and a 'started' step hands over to the started state below.
+        setSubmitting(false);
+        if (step.kind === 'started') setSyncStarted(true);
+        else if (step.kind === 'failed') setSyncError(step.error);
       });
+      if (step.kind === 'started') watchProgress();
+      return;
     }
   };
 
@@ -282,6 +329,7 @@ export const InitialisationPage: Component<{
             <TextField
               label={t('label.settings-url')}
               width="full"
+              data-testid="initialise-url-input"
               value={values().url}
               onInput={e => {
                 const url = e.currentTarget.value;
@@ -293,6 +341,7 @@ export const InitialisationPage: Component<{
             <TextField
               label={t('label.settings-username')}
               width="full"
+              data-testid="initialise-site-name-input"
               value={values().siteName}
               onInput={e => {
                 const siteName = e.currentTarget.value;
@@ -304,6 +353,7 @@ export const InitialisationPage: Component<{
             <PasswordField
               label={t('label.settings-password')}
               width="full"
+              data-testid="initialise-password-input"
               value={values().password}
               onInput={e => {
                 const password = e.currentTarget.value;
@@ -334,6 +384,15 @@ export const InitialisationPage: Component<{
                 disabled={locked()}
               />
             </Show>
+            {/* Spec (OMS-REG-LGN-03.19): informational, never an error — the
+                wait is expected and self-healing (D97). Mutually exclusive
+                with the error Alert below: syncError() stays unset for the
+                whole wait. */}
+            <Show when={waitingForCentral()}>
+              <Alert severity="info" testId="initialise-waiting">
+                {t('messages.waiting-for-central-server')}
+              </Alert>
+            </Show>
             <Show when={syncError()}>
               {err => {
                 const errorSummary = () => syncErrorSummary(err().variant);
@@ -342,21 +401,29 @@ export const InitialisationPage: Component<{
                   return h ? t(h) : undefined;
                 };
                 return (
-                  <Alert severity="error">
+                  <Alert severity="error" testId="initialise-error">
                     <div>{t(errorSummary().summary)}</div>
                     <ErrorDetails detail={err().fullError} hint={hintText()} />
                   </Alert>
                 );
               }}
             </Show>
-            <Show when={busy()}>
+            {/* No run exists during the silent wait, so the progress list's
+                "waiting for sync status" fallback would double the waiting
+                notice above — the notice stands in its place (spec S2 §
+                layout). */}
+            <Show when={busy() && !waitingForCentral()}>
               <SyncProgress overview={overview()} />
             </Show>
             <div class={styles.buttonRow}>
               <Show
                 when={showRetry()}
                 fallback={
-                  <Button type="submit" disabled={busy()}>
+                  <Button
+                    type="submit"
+                    disabled={busy()}
+                    data-testid="initialise-button"
+                  >
                     {busy() ? t('button.initialising') : t('button.initialise')}
                   </Button>
                 }
@@ -364,7 +431,11 @@ export const InitialisationPage: Component<{
                 {/* Disabled while the retry call is in flight so it can't be
                     double-submitted; the error stays visible behind it
                     (OMS-REG-LGN-03.15). */}
-                <Button onClick={() => void retry()} disabled={submitting()}>
+                <Button
+                  onClick={() => void retry()}
+                  disabled={submitting()}
+                  data-testid="initialise-button"
+                >
                   {submitting() ? t('button.initialising') : t('button.retry')}
                 </Button>
               </Show>
