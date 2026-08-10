@@ -126,6 +126,8 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("asset_log", "log_datetime"),
         ("asset_log", "created_datetime"),
         ("sync_file_reference", "retry_at"),
+        ("sync_file_reference", "download_requested_datetime"),
+        ("frontend_bundle", "created_datetime"),
         ("migration_fragment_log", "datetime"),
         ("system_log", "datetime"),
         ("email_queue", "created_at"),
