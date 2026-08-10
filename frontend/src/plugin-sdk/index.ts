@@ -17,7 +17,11 @@
  */
 
 // ── Compatibility gate ──────────────────────────────────────────────────────
-export { PLUGIN_API_VERSION, PLUGIN_API_MIN_SUPPORTED } from './apiVersion';
+export {
+  PLUGIN_API_VERSION,
+  PLUGIN_API_MIN_SUPPORTED,
+  HOST_RUNTIME,
+} from './apiVersion';
 
 // ── Slot API ────────────────────────────────────────────────────────────────
 export { definePlugin } from './definePlugin';

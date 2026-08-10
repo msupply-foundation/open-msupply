@@ -28,9 +28,10 @@
  *     server now keeps every compatible version of a code rather than only the
  *     highest, this id is also what its file route is keyed on, so two builds
  *     of one plugin must never share it;
- *   - plugin_api_version = the SDK's PLUGIN_API_VERSION, the integer that
- *     tells a server this is a NEW-UI bundle (a null one is offered to the old
- *     React UI only);
+ *   - host_runtime / plugin_api_version = the SDK's HOST_RUNTIME and
+ *     PLUGIN_API_VERSION, which together say this bundle is for THIS host: a
+ *     server offers it only to a client declaring the same runtime, and then
+ *     only if the integer is in that client's range;
  *   - hash = sha256 over the files sorted by name, name bytes then content
  *     bytes, hex — the server computes this at bind time and the client appends
  *     it as `?v=`.
@@ -47,7 +48,10 @@ import {
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { build } from 'vite';
-import { PLUGIN_API_VERSION } from '../src/plugin-sdk/apiVersion.ts';
+import {
+  HOST_RUNTIME,
+  PLUGIN_API_VERSION,
+} from '../src/plugin-sdk/apiVersion.ts';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
 import { backendPluginViteConfig } from '../vite/backendPluginBuild.ts';
 
@@ -269,20 +273,23 @@ const packPlugin = plugin => {
     files,
     /*
      * The second compatibility axis: which HOST can load this bundle, as
-     * against `version`'s which SERVER can serve it. Taken from the SDK the
-     * plugin was just built against rather than from its manifest, so it is
-     * true by construction and cannot drift from the integer the module
-     * declares at runtime.
+     * against `version`'s which SERVER can serve it. Both taken from the SDK
+     * the plugin was just built against rather than from its manifest, so they
+     * are true by construction and cannot drift from what the module declares
+     * at runtime.
      *
-     * A server that has this column offers a null-API bundle to the old React
-     * UI only, so emitting it is what keeps this bundle out of that UI's hands
-     * — and, conversely, omitting it would be a claim to BE a React bundle.
+     * `host_runtime` is the load-bearing half. A server matches it for exact
+     * equality against the runtime the asking client declares, so it — not the
+     * integer — is what keeps this bundle out of the React UI's hands, and out
+     * of the hands of any future host that happens to number its plugin API
+     * the same way we number ours.
      *
      * Not overridable per plugin, deliberately. `examples/api_too_new`
      * declares 999 in its MODULE and so packs a row that disagrees with it,
      * which is the point: the row gets it past the server's gate and into the
      * loader, which is the gate that fixture exists to exercise.
      */
+    host_runtime: HOST_RUNTIME,
     plugin_api_version: PLUGIN_API_VERSION,
   };
   /* eslint-enable camelcase */
