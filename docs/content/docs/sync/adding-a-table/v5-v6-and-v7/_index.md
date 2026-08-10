@@ -49,7 +49,7 @@ Repo layer (same as the V7-only guide — see it for full code):
 
 | # | File | What you add |
 |---|------|--------------|
-| R1 | `repository/src/migrations/v3_00_00/add_widget_table.rs` *(new)* + `mod.rs` | `CREATE TABLE` (no changelog enum change — v3 made `changelog.table_name` TEXT) |
+| R1 | `repository/src/migrations/v3_00_00/add_widget_table.rs` *(new)* + `mod.rs` | `CREATE TABLE`; PG `ALTER TYPE` |
 | R2 | `repository/src/db_diesel/widget_row.rs` *(new)* + `mod.rs` wiring | row + repository + `Upsert`/`Delete` |
 | R3 | `changelog/changelog.rs` | `Widget` in `ChangelogTableName` |
 | R4 | `changelog/generate_changelog.rs` | `impl WidgetRow { generate_changelog }` |
@@ -404,8 +404,7 @@ cd server
 cargo nextest run test_widget_translation   # the legacy translation test
 cargo nextest run integration_order          # V7 FK order / completeness
 cargo nextest run sync                        # broader legacy sync suite
-cargo build --features postgres               # missing enum arms
-cargo nextest run --features postgres migration_3_00_00   # migrations actually run on PG
+cargo build --features postgres               # missing ALTER TYPE / enum arms
 ```
 
 ## Common mistakes (in addition to the V7 guide's list)
