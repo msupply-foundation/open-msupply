@@ -13,6 +13,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import {
   CancelButton,
   DialogSaveButton,
+  SaveAndNextButton,
 } from '../../../ui/elements/buttons/StandardButtons';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Text } from '../../../ui/elements/typography/Text';
@@ -43,6 +44,12 @@ import {
  * (OMS-REG-SET-05.17/.18): no permission gates OPENING it — permissions govern
  * what is editable inside.
  *
+ * It has a SECOND caller: the central server's facility register (spec/names
+ * § the facility editor), which opens it on any facility on the server rather
+ * than the signed-in store, and adds one footer button — save-and-move-on. The
+ * subject is already a prop (`nameId`), so the register needs nothing else from
+ * this screen; `onSaveAndNext`/`hasNext` below are the whole of the addition.
+ *
  * It edits the store's FACILITY record: name, code, GPS coordinates, and the
  * property values recorded against Configuration's seeded definitions. A save
  * replaces the facility's whole recorded set, so the complete document is sent
@@ -66,6 +73,20 @@ export const StoreEditorModal = (props: {
   /** The store's FACILITY (name) id — the row this editor reads and writes. */
   nameId: string;
   onClose: () => void;
+  /*
+   * The FACILITY REGISTER's extra footer action (spec/names § the facility
+   * editor, `.31`): commit this facility's edits and re-open the editor on the
+   * next row of the list as it currently stands, without closing. Absent on the
+   * footer path, which has no list to walk — the button then isn't rendered at
+   * all. The register resolves "next" from the page of rows it already holds
+   * and calls back with nothing but "move on"; this editor owns only the save.
+   */
+  onSaveAndNext?: () => void;
+  /**
+   * Whether a next row exists. False on the last row of the loaded page, where
+   * save-and-move-on is unavailable (`.32`).
+   */
+  hasNext?: boolean;
 }) => {
   const [draft, setDraft] = createSignal<PropertyDraft>({});
   const [saving, setSaving] = createSignal(false);
@@ -139,7 +160,11 @@ export const StoreEditorModal = (props: {
     value: string | number | boolean | null | undefined
   ) => setDraft(current => setProperty(current, key, value));
 
-  const save = async () => {
+  // `onDone` is what a successful save does next: close (the plain Save), or
+  // move the register on to the next facility with the editor still open. A
+  // FAILED save takes neither path — the modal stays open with the draft
+  // intact and its own inline message (D79), whichever button was pressed.
+  const save = async (onDone: () => void) => {
     setSaving(true);
     setSaveFailed(false);
     // Local error handling (returnGraphqlErrors): a Forbidden or any other
@@ -159,7 +184,7 @@ export const StoreEditorModal = (props: {
       result.kind === 'success' &&
       result.data.updateNameProperties.__typename === 'NameNode'
     ) {
-      props.onClose();
+      onDone();
     } else {
       setSaveFailed(true);
     }
@@ -192,9 +217,21 @@ export const StoreEditorModal = (props: {
             // Nothing editable → a Save that could only no-op or fail
             // (ui-standards › blocked affordances, D79).
             disabled={!canEdit()}
-            onClick={() => void save()}
+            onClick={() => void save(props.onClose)}
             data-testid="dialog-button-save"
           />
+          {/* Register-only: beside Cancel and Save, never instead of them.
+              Disabled on the last row of the loaded page (`.32`). */}
+          <Show when={props.onSaveAndNext}>
+            {onSaveAndNext => (
+              <SaveAndNextButton
+                loading={saving()}
+                disabled={!canEdit() || props.hasNext !== true}
+                onClick={() => void save(onSaveAndNext())}
+                data-testid="dialog-button-save-and-next"
+              />
+            )}
+          </Show>
         </>
       }
     >

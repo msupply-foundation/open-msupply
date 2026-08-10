@@ -22,7 +22,11 @@ import { navDestinations } from './nav/navConfig';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { stockMovementsRoutes } from './sections/stock-movements';
-import { customersRoutes, suppliersRoutes } from './sections/names';
+import {
+  customersRoutes,
+  suppliersRoutes,
+  facilityRegisterRoutes,
+} from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
 import { supplierReturnsRoutes } from './sections/supplier-returns';
@@ -88,6 +92,9 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   settings: settingsRoutes,
   help: helpRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+  // The central server's facility register (spec/names S5) — the third list
+  // over the name entity, under Manage rather than a store-scoped section.
+  'manage/stores': facilityRegisterRoutes,
 };
 
 export const App: Component = () => {
