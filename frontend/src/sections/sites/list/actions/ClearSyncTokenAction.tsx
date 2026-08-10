@@ -41,7 +41,9 @@ export const ClearSyncTokenAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        // Destructive tone: it mutates the server the moment it is confirmed,
+        // outside the editor's Save, and cancelling the editor cannot undo it.
+        variant="danger"
         loading={busy()}
         data-testid="clear-sync-token-button"
         onClick={() => setConfirming(true)}
