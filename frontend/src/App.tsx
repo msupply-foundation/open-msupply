@@ -39,6 +39,7 @@ import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
+import { syncMessageRoutes } from './sections/sync-message';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -88,6 +89,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   settings: settingsRoutes,
   help: helpRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+  'manage/sync-message': syncMessageRoutes,
 };
 
 export const App: Component = () => {

@@ -494,6 +494,7 @@
   "error.label-printer-not-configured": "There is no label printer configured. Please see the Settings > Devices section to configure a label printer.",
   "error.ledger-would-go-below-zero": "This reduction would cause stock to go below zero at some point after the backdated date. Check for stock movements between the backdated date and now.",
   "error.line-combination-error": "Item and pack size combination already exists for item code: {{itemCode}}, and pack size: {{requestedPackSize}}",
+  "error.list-not-refreshed": "This list could not be refreshed — the rows shown are the last ones loaded, not the result of the current filter.",
   "error.login": "Invalid username or password",
   "error.login-support": "Please contact support@msupply.foundation if you are unable to login to your account",
   "error.manufacturer-model-unique": "An item already exists with this manufacturer, model and type",
