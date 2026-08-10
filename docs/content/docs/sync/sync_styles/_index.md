@@ -79,7 +79,6 @@ The split between `Remote` and `RemoteOwned` is about write authority, not routi
 | **OMS-native** | Lives on the v6 transport. |
 | **both** | Tagged for both v5 and v6 (only `Name`). |
 | **v7-only** | Tagged for neither v5 nor v6 — the table has no legacy counterpart, so it only ever travels on v7. |
-| (no v7 tag) | v7 covers every table that has any sync style. |
 
 Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. Filters that pass no transport flag (used by v7) pull every table that has any sync style.
 
