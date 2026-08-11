@@ -57,6 +57,16 @@ export const CustomFieldsEditTab = (props: {
       ? partitionCustomFields(defs, true).tab
       : shownCustomFields(defs);
   };
+  // The tab is empty for two different reasons, and they must not read alike:
+  // the scope configures no shown fields at all, or every one of them is
+  // PROMINENT and so lives in the toolbar above (spec › placement). Saying "No
+  // custom fields defined" in the second case contradicts the fields the user
+  // can see in the header — so name them, and the empty state points at where
+  // they went instead of asserting they exist somewhere.
+  const promotedToHeader = (): CustomFieldDef[] => {
+    if (!props.promoteToToolbar || tabDefs().length > 0) return [];
+    return partitionCustomFields(reader.noSuspense(), true).prominent;
+  };
 
   // The two columns, split the same way the read-only tab splits them
   // (splitIntoColumns — configured order read down column one, then two).
@@ -115,7 +125,15 @@ export const CustomFieldsEditTab = (props: {
         fallback={
           <EmptyState
             data-testid="nothing-here"
-            message={t('messages.no-custom-fields')}
+            message={
+              promotedToHeader().length > 0
+                ? t('messages.custom-fields-in-header', {
+                    fields: promotedToHeader()
+                      .map(def => def.name)
+                      .join(', '),
+                  })
+                : t('messages.no-custom-fields')
+            }
           />
         }
       >

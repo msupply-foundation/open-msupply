@@ -36,6 +36,20 @@
   align-items: center;
 }
 
+/* The row's height is the LABEL's, never the affordance's. An InfoTooltip
+   trigger is taller than the label's line box, and a flex row sized by its
+   tallest child pushes this field's control below its neighbours' — so a field
+   with help text stops lining up in a header cluster or a card row, both of
+   which top-align their items. Giving the affordance zero block-size takes it
+   out of that calculation entirely (it still paints — nothing clips it — and
+   centres on the label's midline), so the field's geometry is identical with
+   and without labelInfo, whatever the label tokens are set to. */
+.labelRow > :not(.label) {
+  display: flex;
+  align-items: center;
+  block-size: 0;
+}
+
 .label {
   /* Shared field-label token — see --field-label-* in tokens.css. */
   font-size: var(--field-label-font-size);
@@ -89,8 +103,8 @@
   /* Fixed at the rows height; longer content scrolls (OMS has no resize grip). */
   resize: none;
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 /* Small: the 13px scale, and the block padding re-derived from the SMALL height
@@ -157,11 +171,5 @@
   .textarea,
   .textarea[data-size='small'] {
     font-size: var(--input-font-touch);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .textarea {
-    transition: none;
   }
 }

@@ -288,6 +288,29 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // Server mode: the caller drives filtering via onInputChange (it refetches
   // `items`), so we disable Kobalte's client-side filter and let it show every
   // item we pass. See the prop docs.
+  // Longer than a listbox-full: below this the whole list is visible at once,
+  // so scanning it is faster than typing at it. Deliberately a rule off the
+  // data rather than a prop — a picker shouldn't have to remember to say how
+  // many things it holds.
+  const SEARCHABLE_MIN_ITEMS = 10;
+
+  // The largest option count this picker has ever offered, LATCHED — never the
+  // current one. Two reasons. A server-backed list narrows as the user types,
+  // and the icon must not blink off the moment a query matches a single row.
+  // And AsyncCombobox defers its first fetch until the first open, so the count
+  // starts at zero and only becomes knowable later.
+  //
+  // Consequence, accepted deliberately: a server-backed picker shows no
+  // magnifier until it has been opened once. Better to withhold the cue than to
+  // assert "this list is worth typing at" about a list we have never seen —
+  // which is what a blanket exemption for server mode did, putting a search
+  // icon on a Manufacturer field holding exactly one name.
+  const [mostOptions, setMostOptions] = createSignal(0);
+  createEffect(() =>
+    setMostOptions(seen => Math.max(seen, props.items.length))
+  );
+  const worthSearching = () => mostOptions() >= SEARCHABLE_MIN_ITEMS;
+
   const serverMode = () => props.onInputChange !== undefined;
 
   const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
@@ -558,9 +581,20 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         class={styles.control}
         data-error={props.error ? '' : undefined}
       >
-        <span class={styles.searchIcon} aria-hidden="true">
-          <SearchIcon />
-        </span>
+        {/* The magnifier's job is to say the list is worth TYPING at — the one
+            thing the chevron alone doesn't convey, since a plain Select looks
+            identical without it. So it renders only where that's true: while
+            the field is EMPTY (once a selection is committed the cue is spent
+            and the value needs the width — a labelled picker was spending ~45%
+            of its box on chrome), and only for a list long enough that
+            filtering beats scanning. On a handful of options the icon is
+            signage for something nobody needs to do. Server-driven lists come
+            in a page at a time, so they always qualify. */}
+        <Show when={selected() === null && worthSearching()}>
+          <span class={styles.searchIcon} aria-hidden="true">
+            <SearchIcon />
+          </span>
+        </Show>
         <KCombobox.Input
           // Both the local ref (the clear button restores focus here) and the
           // caller's focus handle bind to the same input.

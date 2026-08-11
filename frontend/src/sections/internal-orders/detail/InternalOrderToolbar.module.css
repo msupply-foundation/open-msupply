@@ -1,8 +1,0 @@
-/* The hide-over-min switch has no label above it, so at the row's default
-   align-items: start it rides the top edge beside taller labelled fields;
-   centring it in the row reads as belonging to the cluster (operator call,
-   2026-07-31). No FormRow/FormRowItem alignment prop exists, so this is a
-   scoped per-item override (reach-for order tier 4). */
-.switchItem {
-  align-self: center;
-}

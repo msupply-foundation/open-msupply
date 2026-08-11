@@ -49,9 +49,42 @@ Set on each column literal in your `columns()` array. Anything not about the car
 | `meta.hideOnCard`               | `boolean`              | `false`       | Omit the column from **card** view entirely (a table-only column).                                                                                                             |
 | `meta.hideOnTable`              | `boolean`              | `false`       | Omit the column from **table** view entirely (a card-only column).                                                                                                             |
 | `meta.hideFromColumnSettings`   | `boolean`              | `false`       | Keep the column out of the **Columns popover** (stays on screen, just not user show/hide/move/pin). For structural columns — the card identity, a row-actions column.          |
+| `meta.cardWidth`                | `number` (rem)         | — (equal)     | This field's resting width in **card** view, per ui-standards § _Field Widths by Context_ (numeric quantity `7.5`, currency / date `10`, location `8.75`). See below.          |
 | `meta.align` / `meta.wrapLines` | —                      | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                   |
 
 `getCellDefinition(key, meta?)` merges its second argument into the column's `meta`, so card flags ride along with a preset: `...getCellDefinition('numberOfPacks', { headerPosition: 'badge', showLabel: true })`.
+
+### Field widths (`meta.cardWidth`)
+
+A group's fields default to **equal auto-fit tracks** — fine for a list card's handful of read-only values, wasteful on a wide editor card. `repeat(N, 1fr)` is only right when every field holds comparably long data: give a 1-digit _Difference_ the same box as a manufacturer name and both are wrong. Declaring `meta.cardWidth` switches **that group** to a grid template sized by the **data**, per [ux-testing/header-field-width.html](https://msupply-foundation.github.io/ux-testing/header-field-width.html). Two forms:
+
+| Form                   | Track                          | For                                                                                                 |
+| ---------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `7.5` (a number, rem)  | `7.5rem` — fixed               | a **formatted scalar** with a known longest value: numeric quantity `7.5`, currency `10`, date `10` |
+| `{ min, max, weight }` | `minmax(<min>rem, <weight>fr)` | **free text / name lookups** of unpredictable length                                                |
+
+```ts
+{ ...getCellDefinition('numberOfPacks', { cardWidth: 7.5 }) }                     // fixed
+{ c: { id: 'location' },     meta: { cardWidth: { min: 9,  max: 17, weight: 1.2 } } }
+{ c: { id: 'manufacturer' }, meta: { cardWidth: { min: 11, max: 20, weight: 1.4 } } }
+```
+
+**`fr` is a share of the leftover.** Once every fixed track and every column gap is paid for, what remains is split between the weighted tracks in their declared ratio. So weight expresses **expected data length**, not importance: `"Serum Institute of India Pvt. Ltd."` outweighs `"A1-03"`. Doubling every weight changes nothing — only the ratio counts.
+
+**`max` is a GROUP ceiling, not a per-field one.** An `fr` share has no maximum of its own, so on a wide card it would keep growing past anything the value can use. The `max` values are summed with the fixed tracks and gaps into a `max-inline-size` on the grid: past that width the row stops growing and the slack becomes trailing space. Capping each field _inside_ its own track was tried first and is wrong — the track kept growing while the field stopped, leaving the remainder as a hole in the MIDDLE of the row (visibly, a gap between Location and Manufacturer).
+
+**Below the template's own minima it reverts.** An explicit grid doesn't wrap, so `FieldFlow` measures the available width against the sum of the track minima plus gaps and flips back to the equal auto-fit tracks, which do. The threshold is computed from the group's own declarations — so it follows conditional columns automatically — rather than a breakpoint literal, because a container query's condition can't reference a custom property.
+
+**The shell.** A width-declaring group renders inside a `container-type: inline-size` wrapper. That isn't decoration: a grid's track minima count toward its min-content width, so without containment a 75rem template widens the whole DataTable and the table scrolls sideways instead of the fields reflowing. It also gives the observer a width that holds still while the template inside it is swapped. An unsized group keeps exactly the DOM it had before.
+
+Two notes on the reference doc:
+
+- It gives **`8.5rem` for a date**, measured as the intrinsic width of a native `<input type="date">`. Our `DateField` is a text input carrying the full `DD MMM YYYY` placeholder plus a calendar trigger, and clips to `DD MMM YY'` at that width — so dates take **`10rem`** here.
+- It **rejects letting the row wrap** as a source of width. That rule protects a fixed-height page header; a card body must wrap, which is what the narrow fallback is for.
+
+**Body labels use the dense scale.** A card body field renders its caption through `LabelledValue size="small"` (0.8125rem — ui-standards § inputs' `.field-label--small`). At the 14px default the caption sat a step _larger_ than a `size="small"` control's 13px text, i.e. above the value it captions. The card's identity row (`headerPosition: 'primary'`, a `FieldRow`) deliberately keeps the full-size label — it reads as the card's heading.
+
+Distinct from the top-level `size` / `maxSize`, which are TanStack's drag-resizable **table** column widths.
 
 ## Table-level API
 

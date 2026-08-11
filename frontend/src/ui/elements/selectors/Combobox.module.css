@@ -58,8 +58,8 @@
   border-radius: var(--input-radius);
   background: var(--bg-white);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .control:focus-within {
@@ -84,6 +84,11 @@
   background: var(--bg-disabled);
 }
 
+/* The leading magnifier says "you can type here to search" — the one thing the
+   chevron alone doesn't tell you, since a Select looks the same without it. It
+   renders only while the field is EMPTY (see Combobox.tsx): that is exactly
+   when the cue is useful and when there is no value competing for the width,
+   and a committed selection needs every pixel it can get. */
 .searchIcon {
   display: inline-flex;
   margin-inline-start: var(--input-padding-x);
@@ -97,6 +102,7 @@
   min-width: 0;
   height: 100%;
   padding-inline: var(--space-2);
+  padding-inline-start: var(--input-padding-x);
   border: none;
   background: transparent;
   color: var(--text-body);
@@ -119,43 +125,57 @@
   color: var(--text-disabled);
 }
 
+/* Clear and chevron share ONE slot (ux-testing/header-field-width.html § "Clear
+   and chevron share a slot"): they are never both needed — with no value there
+   is nothing to clear, and with a value the chevron is the less urgent of the
+   two. Two icon boxes flanking the value cost width the value could use; in a
+   dense row a labelled picker earns one. Identical box so the swap below costs
+   no layout shift, and no inline padding of its own — the icon is centred in
+   the slot, which is what that padding was doing. */
 .clear,
 .toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  inline-size: 1.75rem;
   height: 100%;
-  padding-inline: var(--space-2);
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--gray-dark);
   cursor: pointer;
 }
 
+/* The clear affordance keeps its OWN slot beside the chevron rather than
+   replacing it on hover. Swapping the two put a destructive control on the
+   pixel a benign one occupied a moment earlier — aim for the chevron, land on
+   ✕, lose the selection, with no undo — and it relies on hover, which a tablet
+   doesn't have. Muted at rest so it reads as secondary to the value; the
+   chevron stays put, so the control never stops looking like a combobox. */
 .clear {
   font-size: 1rem;
   color: var(--gray-main);
 }
 
-.clear:hover {
-  color: var(--text-body);
-}
-
-/* Disabled field: the clear button stays visible but dimmed and inert (the
-   field is read-only, so its value can't be cleared). */
+/* Disabled field: the clear button stays inert and dimmed (the field is
+   read-only, so its value can't be cleared). */
 .clear:disabled {
   opacity: var(--disabled-opacity);
   cursor: default;
 }
 
-.toggle {
-  padding-inline-end: var(--space-3);
+/* Brought up to full strength once the field is engaged. Last, so it
+   out-specifies the resting rules above without descending-specificity
+   juggling. */
+.clear:hover,
+.control:focus-within .clear {
+  color: var(--text-body);
 }
 
 .toggleIcon {
   display: inline-flex;
   font-size: 1.25rem;
-  transition: transform 150ms ease;
+  transition: transform var(--motion-base) ease;
 }
 
 /* A caller's trailing action (see the endAction prop) — same shape as
@@ -355,7 +375,7 @@
   field-sizing: content;
   min-inline-size: 2.5rem;
   max-inline-size: 16rem;
-  transition: min-inline-size 0.15s ease;
+  transition: min-inline-size var(--motion-base) ease;
 }
 
 .field[data-borderless] .input:focus {
