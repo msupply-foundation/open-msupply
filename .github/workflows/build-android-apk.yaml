@@ -90,7 +90,7 @@ jobs:
 
       - name: Build Android App
         working-directory: client
-        run: yarn android:build:release
+        run: RUSTUP_TOOLCHAIN="${{ steps.rust_toolchain.outputs.channel }}" yarn android:build:release
         env:
           NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
           # Update this version when upgrading the NDK version on the self-hosted machine
