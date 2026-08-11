@@ -281,11 +281,7 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
               </Box>
             </Collapse>
           </Box>
-          {/* Full width of the form Stack — the container bounding the inputs
-              and the Initialise button — rather than the component's fixed
-              300px default, which neither matches the inputs nor the panel
-              (open-msupply-frontend#504). */}
-          {error && <BoxedErrorWithDetails {...error} width="100%" />}
+          {error && <BoxedErrorWithDetails {...error} />}
           <Box display="flex" justifyContent="flex-end">
             <LoadingButton
               isLoading={isLoading}
