@@ -1044,6 +1044,16 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
+/* The shell around a width-declaring group's grid (CardView's FieldFlow).
+   Size containment does two jobs: it stops the declared template's track minima
+   counting toward the card's min-content width — without it a 75rem template
+   widens the whole DataTable and the table scrolls sideways instead of the
+   fields reflowing — and it gives the observer a width that holds still while
+   the template inside it is swapped. */
+.cardFieldsShell {
+  container-type: inline-size;
+}
+
 /* --- Card body groups ------------------------------------------------------- */
 
 /* A body group's block (non-disclosure): its optional caption then its field

@@ -59,6 +59,26 @@ Brand/UX conflicts that need a human ruling before implementation. Each is resol
 
 ## Ledger
 
+### Dense editor cards — field widths, read-only values, picker chrome _(inbound line editor, 2026-08-11)_
+
+Worked out on the inbound-shipment line-edit modal (`src/sections/inbound-shipments/detail/edit-modal/`), but every decision lands in the shared `DataTable` card model or in `Combobox`, so it applies to any dense editor card. Mechanics and the per-column API: [`CARD_TABLE_MODEL.md`](./CARD_TABLE_MODEL.md) § Field widths.
+
+**Adopted from the site — "Field Widths by Context" (`#field-widths`), via the weighted-columns lever in [header-field-width.html](https://msupply-foundation.github.io/ux-testing/header-field-width.html).** A card group can declare a grid template instead of equal auto-fit tracks: a fixed `rem` track per formatted scalar (numeric quantity 7.5, currency 10), and `minmax(<min>rem, <weight>fr)` per free-text/lookup field, so the leftover lands in proportion to expected data length rather than being split evenly over fields that can't use it. Measured effect on the inbound editor: Location's usable text room 106px → 175px, and every field on one row down to a 1366 laptop.
+
+**Deviation — dates take `10rem`, not the site's `8.5rem`.** That figure is the intrinsic width of a native `<input type="date">`. Our `DateField` is a text input carrying the full `DD MMM YYYY` placeholder plus a calendar trigger, and clips to `DD MMM YY'` at 8.5rem. Fixed track either way; only the control's chrome differs.
+
+**Deviation — a computed value in a dense entry row is DE-BOXED, not greyed.** The site's forms section says "read-only fields are greyed (muted fill, no active border) but keep the same size and position as editable fields… Computed values are read-only." Both treatments were built and compared. `disabled` means "an input you can't use _right now_" — which is exactly what a PO-locked Cost price is in the same row; a Difference or a Line total is arithmetic and is never typed under any state, so the same grey conflates two things the receiver needs to tell apart. It also costs on the scan: in a row you tab through typing numbers, boxes mean "type here". Follows [`kdd/form-layout`](../../../kdd/form-layout/draft-kdd.md) ("read-only-vs-editable reads from the ABSENCE of an input box") and the outbound line editor's Available figure, which already does this among its Issue inputs. ⚠️ **Conflicts with the site — needs Carl's ruling** on which source wins app-wide.
+
+**A discrepancy earns weight, not colour.** A non-zero Difference goes one step to `--weight-medium`; zero and "nothing shipped yet" stay regular. Colour was tried (the mismatch Alert's own severity, mixed 40% into `--text-body` for AA — measured 8.96:1) and **rejected on review**: a severity hue on a single number in a dense row read as an error state rather than as a value worth noticing. Weight is also the accessible channel — nothing rides on hue — and the figure carries an explicit `+` on an over-receipt so direction survives greyscale.
+
+**Picker chrome — clear and chevron each keep a slot.** The reference doc's "clear and chevron share a slot" (swap on hover/focus) was implemented and **reverted**: it puts a destructive control on the pixel a benign one occupied a moment earlier — aim for the chevron, land on ✕, lose the selection with no undo — and it depends on hover, which the tablet form factor doesn't have. Both slots tightened to 1.75rem with no inline padding instead; the ✕ is muted at rest and brightens on hover/`:focus-within`.
+
+**Leading magnifier only where the list is worth typing at.** It renders when the field is EMPTY _and_ the picker has offered ≥10 options (latched on the largest count seen, so a server-backed list narrowing to one row can't blink it off). Its job is to say the list is searchable — the one thing the chevron alone doesn't convey, since a plain `Select` looks identical without it — so on a handful of options it is signage for something nobody needs to do, and once a value is committed the cue is spent while the value needs the width. Consequence, accepted: a server-backed picker shows none until first opened, because `AsyncCombobox` defers its first fetch.
+
+**Card body labels take the dense scale.** Body fields render their caption through `LabelledValue size="small"` (0.8125rem — the site's `.field-label--small`). At the 14px default the caption sat a step _larger_ than a `size="small"` control's 13px text. The card's identity row keeps the full-size label — it reads as the card's heading.
+
+⚠️ **Open: the site's `.field-label` weight has moved again.** It now reads `font-weight: 400`; the 2026-07-22 entry below recorded the spec at **500**, and we deliberately went to **600** on 2026-07-30 (see that entry). So the site and this repo have moved in opposite directions since the last reconciliation. Not actioned — a re-reconciliation call for Carl, not a drift to silently correct.
+
 One subsection per reconciled standards section. Fill it as step 7 of the loop. Format per section:
 
 - A short prose note on scope + any deviations we chose (with the reason).

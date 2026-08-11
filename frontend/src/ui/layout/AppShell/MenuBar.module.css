@@ -20,8 +20,10 @@
   block-size: 100%;
   overflow: hidden;
   /* L1 chrome (tokens.css § "Warm stone"): the rail is the persistent frame, so
-     it reads as the frame — white against the canvas the page sits on, rather
-     than a grey panel beside a white page.
+     it reads as the frame — white, with the canvas the page sits on stepping
+     down from it, rather than a grey panel beside a white page. (Not the old
+     cool --bg-drawer, whose #f2f2f5 landed at the canvas's own lightness in a
+     different hue; not a darker rail either — tried and reverted.)
 
      Square corners, full bleed, and NO drop shadow — the boundary is the fill
      step against the canvas plus this hairline, which is what L1 chrome is
@@ -29,14 +31,14 @@
      drawer, which was a raised CARD over the page; chrome is not a card. A
      shadow claims elevation, and the ladder puts chrome and content on the same
      plane — only L3 (modal, flyout, popover) floats. With the rail lifting too,
-     the flyout's own shadow stopped reading as "above everything". */
+     the flyout's own shadow stopped reading as "above everything".
+
+     NB the hairline carries this edge alone wherever a filling table runs
+     alongside it: the shell's canvas gutter and the table's own inline-start
+     border have both since gone, so there is no fill step there — only above and
+     below the table, where the canvas shows. */
   background: var(--surface-chrome);
   border-inline-end: 1px solid var(--surface-edge);
-  transition: inline-size 200ms ease;
-  background: var(--bg-drawer);
-  border-start-end-radius: var(--radius-md);
-  border-end-end-radius: var(--radius-md);
-  box-shadow: var(--shadow-drawer);
   transition: inline-size var(--motion-slow) ease;
 }
 
@@ -80,8 +82,8 @@
   font-size: 1rem;
   cursor: pointer;
   transition:
-    background 120ms ease,
-    color 120ms ease;
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .railToggle:hover {
