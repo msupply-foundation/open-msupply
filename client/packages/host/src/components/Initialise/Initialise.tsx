@@ -48,8 +48,7 @@ export const Initialise = () => {
   const isAndroid = EnvUtils.platform === Platform.Android;
   // Only offer the standalone-central setup in dev (`yarn start`), not in
   // production builds.
-  const showCentralTab =
-    !isAndroid && isCentralServer && !EnvUtils.isProduction();
+  const showCentralTab = !isAndroid && isCentralServer && !EnvUtils.isProduction();
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const nativeClient = useNativeClient();
@@ -106,11 +105,7 @@ export const Initialise = () => {
             justifyContent: 'center',
           })}
         >
-          <Stack
-            spacing={isExtraSmallScreen ? 2 : 3}
-            width="100%"
-            maxWidth={360}
-          >
+          <Stack spacing={isExtraSmallScreen ? 2 : 3} width="100%" maxWidth={360}>
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
