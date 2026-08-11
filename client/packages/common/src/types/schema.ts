@@ -3651,6 +3651,13 @@ export type IndicatorColumnNode = {
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
+  /**
+   * The cell's effective type — this column's configured type, falling back
+   * to its line's where the column declares none (`var` in mSupply). This is
+   * the type an edit is validated against, so it is the one to render an
+   * input from. Null where neither declares a type: an edit is then not
+   * type-checked at all.
+   */
   valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
@@ -3679,6 +3686,11 @@ export type IndicatorLineRowNode = {
   isActive: Scalars['Boolean']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  /**
+   * The line's own configured type, null where it declares none (`var` in
+   * mSupply). A CELL's type is its column's `valueType`, which already
+   * resolves the fallback to this one.
+   */
   valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
