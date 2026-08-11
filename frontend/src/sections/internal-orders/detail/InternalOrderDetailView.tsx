@@ -546,6 +546,18 @@ const InternalOrderDetailView: Component = () => {
     { label: String(node.requisitionNumber) },
   ];
 
+  // Details | Documents | Log | (gated) Indicators (spec S3 § tabs). An
+  // accessor, so the labels re-translate on a language switch and the gated
+  // Indicators tab appears as its gate resolves.
+  const tabs = () => [
+    { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
+    { value: 'log', label: t('label.log') },
+    ...(showIndicators()
+      ? [{ value: 'indicators', label: t('label.indicators') }]
+      : []),
+  ];
+
   const hostColumns = (): Column<Line, SortKey>[] => [
     {
       c: { key: COL.comment },
@@ -979,86 +991,93 @@ const InternalOrderDetailView: Component = () => {
         }
       >
         {node => (
-          <Page
-            fillBody
-            sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('heading.details')}
-            onSidePanelClose={() => setSidePanelOpen(false)}
-            sidePanelContent={
-              <InternalOrderSidePanel
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                isProgram={isProgram()}
-                showApproval={showApproval()}
-                showPricing={showPricing()}
-                showSourceLink={showSourceLink()}
-                edit={edit}
-                onSaveField={patch => void saveField(patch)}
-                onDeleted={() =>
-                  navigate(`/${params.storeId}/replenishment/internal-order`, {
-                    replace: true,
-                  })
-                }
-              />
-            }
-            header={
-              <Header>
-                <Breadcrumb crumbs={crumbs(node())} />
-                <HeaderButtons>
-                  {/* Add — a split of Add item (line editor) and Add from
+          // The <Tabs> root wraps the Page from outside (its display: contents
+          // keeps the flex chain intact): the strip renders in the Header, the
+          // panels in the body.
+          <Tabs defaultValue="details">
+            <Page
+              fillBody
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.details')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <InternalOrderSidePanel
+                  storeId={params.storeId}
+                  node={node()}
+                  editable={editable()}
+                  isProgram={isProgram()}
+                  showApproval={showApproval()}
+                  showPricing={showPricing()}
+                  showSourceLink={showSourceLink()}
+                  edit={edit}
+                  onSaveField={patch => void saveField(patch)}
+                  onDeleted={() =>
+                    navigate(
+                      `/${params.storeId}/replenishment/internal-order`,
+                      {
+                        replace: true,
+                      }
+                    )
+                  }
+                />
+              }
+              header={
+                <Header>
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  <HeaderButtons>
+                    {/* Add — a split of Add item (line editor) and Add from
                       master list (S7 picker). Shown always but DISABLED on
                       program orders (their item set is fixed at creation) and
                       on read-only orders, with a reason tooltip (AC-LN1 —
                       "disable with an explanation", not hide). */}
-                  <SplitButton
-                    icon={<PlusCircleIcon />}
-                    testId="add-item-button"
-                    disabled={!canAddLines()}
-                    disabledTitle={t('error.cannot-add-items-to-requisition')}
-                    value={addChoice()}
-                    onValueChange={setAddChoice}
-                    shortcut={ALT_N}
-                    onAction={onAddAction}
-                    options={[
-                      { value: 'item', label: t('button.add-item') },
-                      {
-                        value: 'master-list',
-                        label: t('button.add-from-master-list'),
-                      },
-                    ]}
-                  />
-                  {/* Use suggested quantities — fills every zero-requested line
+                    <SplitButton
+                      icon={<PlusCircleIcon />}
+                      testId="add-item-button"
+                      disabled={!canAddLines()}
+                      disabledTitle={t('error.cannot-add-items-to-requisition')}
+                      value={addChoice()}
+                      onValueChange={setAddChoice}
+                      shortcut={ALT_N}
+                      onAction={onAddAction}
+                      options={[
+                        { value: 'item', label: t('button.add-item') },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                      ]}
+                    />
+                    {/* Use suggested quantities — fills every zero-requested line
                       with its suggestion (AC-Q1). Available on program orders,
                       so gated on editability alone (not canAddLines); disabled
                       on read-only orders (AC-Q2). */}
-                  <UseSuggestedQuantitiesAction
-                    storeId={params.storeId}
-                    orderId={node().id}
-                    disabled={!editable()}
-                    onApplied={() => void refetch()}
-                  />
-                  {/* Export/Print — a read, offered on every status (AC-PR1). */}
-                  <ExportPrintInternalOrderAction
-                    orderId={node().id}
-                    seedArgs={reportSeedArgs()}
-                  />
-                  {/* More — reopens the side panel; shown only while closed. */}
-                  <Show when={!sidePanelOpen()}>
-                    <Button
-                      variant="secondary"
-                      icon={<SidebarIcon />}
-                      data-testid="open-detail-panel-button"
-                      // createSidePanelOpen registers Alt+M; this is the
-                      // control that advertises it (ui-surface S2).
-                      shortcut={ALT_M}
-                      onClick={() => setSidePanelOpen(true)}
-                    >
-                      {t('button.more')}
-                    </Button>
-                  </Show>
-                </HeaderButtons>
-                {/* The header field cluster (ui-standards → HeaderToolbar):
+                    <UseSuggestedQuantitiesAction
+                      storeId={params.storeId}
+                      orderId={node().id}
+                      disabled={!editable()}
+                      onApplied={() => void refetch()}
+                    />
+                    {/* Export/Print — a read, offered on every status (AC-PR1). */}
+                    <ExportPrintInternalOrderAction
+                      orderId={node().id}
+                      seedArgs={reportSeedArgs()}
+                    />
+                    {/* More — reopens the side panel; shown only while closed. */}
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<SidebarIcon />}
+                        data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  {/* The header field cluster (ui-standards → HeaderToolbar):
                     each field labelled above its small control, sharing the
                     row per its FormRowItem weight and wrapping as a unit. The
                     read-only notices ride the cluster's end as compact chips —
@@ -1066,119 +1085,113 @@ const InternalOrderDetailView: Component = () => {
                     content row (Alert `compact`; the customer-returns kind
                     banner's pattern). Both can show; each wraps to its own
                     line when the row can't hold it. */}
-                <HeaderToolbar
-                  alert={
-                    <>
-                      <Show when={node().otherParty.store?.isDisabled}>
-                        <Alert severity="info" compact>
-                          {t('info.cannot-edit-disabled-store')}
-                        </Alert>
-                      </Show>
-                      <Show when={isProgram()}>
-                        <Alert severity="info" compact>
-                          {t('info.cannot-edit-program-requisition')}
-                        </Alert>
-                      </Show>
-                    </>
-                  }
-                >
-                  <InternalOrderToolbar
-                    storeId={params.storeId}
-                    node={node()}
-                    editable={editable()}
-                    isProgram={isProgram()}
-                    showDestination={showDestination()}
-                    edit={edit}
-                    onChangeSupplier={changeSupplier}
-                    supplierError={supplierError()}
-                    onChangeDestination={changeDestination}
-                    onChangeThreshold={changeThreshold}
-                    onChangeTarget={changeTarget}
-                    hideOverMin={hideOverMin()}
-                    onHideOverMinChange={setHideOverMin}
-                  />
-                </HeaderToolbar>
-                {/* The ancillary banner keeps its own full-width row beneath
+                  <HeaderToolbar
+                    alert={
+                      <>
+                        <Show when={node().otherParty.store?.isDisabled}>
+                          <Alert severity="info" compact>
+                            {t('info.cannot-edit-disabled-store')}
+                          </Alert>
+                        </Show>
+                        <Show when={isProgram()}>
+                          <Alert severity="info" compact>
+                            {t('info.cannot-edit-program-requisition')}
+                          </Alert>
+                        </Show>
+                      </>
+                    }
+                  >
+                    <InternalOrderToolbar
+                      storeId={params.storeId}
+                      node={node()}
+                      editable={editable()}
+                      isProgram={isProgram()}
+                      showDestination={showDestination()}
+                      edit={edit}
+                      onChangeSupplier={changeSupplier}
+                      supplierError={supplierError()}
+                      onChangeDestination={changeDestination}
+                      onChangeThreshold={changeThreshold}
+                      onChangeTarget={changeTarget}
+                      hideOverMin={hideOverMin()}
+                      onHideOverMinChange={setHideOverMin}
+                    />
+                  </HeaderToolbar>
+                  {/* The ancillary banner keeps its own full-width row beneath
                     the cluster (spec S3 § toolbar): it carries CONTROLS
                     (Details popover + Add/Update + inline error), which the
                     alert chip slot is not documented for — its final home is
                     the one open operator decision (ui-migration-report.md). */}
-                <Show when={editable() && node().ancillaryState.state !== 'NONE'}>
-                  <Toolbar>
-                    <InternalOrderAncillaryBanner
+                  <Show
+                    when={editable() && node().ancillaryState.state !== 'NONE'}
+                  >
+                    <Toolbar>
+                      <InternalOrderAncillaryBanner
+                        storeId={params.storeId}
+                        requisitionId={node().id}
+                        ancillary={node().ancillaryState}
+                        editable={editable()}
+                        onRefreshed={() => void refetch()}
+                      />
+                    </Toolbar>
+                  </Show>
+                  {/* The tab strip is the Header's LAST child, so it claims the
+                    header's bottom edge (ui/docs/PAGES.md § tabs — the <Tabs>
+                    root wraps the Page frame from outside). */}
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                // Selection action bar while lines are selected (AC-LN15);
+                // otherwise the order's status footer. Matches OMS, which swaps
+                // the whole footer on selection. A program order's checkboxes are
+                // disabled (no delete offered — D32), so nothing selects there
+                // and this bar only ever appears on a general order.
+                <Show
+                  when={selectedIds().length > 0}
+                  fallback={
+                    <InternalOrderStatusFooter
                       storeId={params.storeId}
-                      requisitionId={node().id}
-                      ancillary={node().ancillaryState}
+                      node={node()}
                       editable={editable()}
-                      onRefreshed={() => void refetch()}
+                      requiresAuthorisation={requiresAuth()}
+                      onSent={onSent}
+                      onReasonsNotProvided={ids =>
+                        setReasonFlaggedIds(new Set(ids))
+                      }
                     />
-                  </Toolbar>
-                </Show>
-              </Header>
-            }
-            contentFooter={
-              // Selection action bar while lines are selected (AC-LN15);
-              // otherwise the order's status footer. Matches OMS, which swaps
-              // the whole footer on selection. A program order's checkboxes are
-              // disabled (no delete offered — D32), so nothing selects there
-              // and this bar only ever appears on a general order.
-              <Show
-                when={selectedIds().length > 0}
-                fallback={
-                  <InternalOrderStatusFooter
-                    storeId={params.storeId}
-                    node={node()}
-                    editable={editable()}
-                    requiresAuthorisation={requiresAuth()}
-                    onSent={onSent}
-                    onReasonsNotProvided={ids =>
-                      setReasonFlaggedIds(new Set(ids))
-                    }
-                  />
-                }
-              >
-                <ContentFooter>
-                  <strong data-testid="selected-rows-count">
-                    {selectedIds().length} {t('label.selected')}
-                  </strong>
-                  {/* On a read-only order the click explains why it can't
+                  }
+                >
+                  <ContentFooter>
+                    <strong data-testid="selected-rows-count">
+                      {selectedIds().length} {t('label.selected')}
+                    </strong>
+                    {/* On a read-only order the click explains why it can't
                       proceed rather than confirming (AC-LN16); the whole-order
                       delete is refused server-side regardless. onDeleted clears
                       the selection (unmounting this bar) and refetches. */}
-                  <DeleteLinesAction
-                    storeId={params.storeId}
-                    selectedIds={selectedIds}
-                    canDelete={editable}
-                    onDeleted={() => {
-                      setSelectedIds([]);
-                      void refetch();
-                    }}
-                  />
-                  <ContentFooterActions>
-                    <Button
-                      variant="secondary"
-                      icon={<MinusCircleIcon />}
-                      onClick={() => setSelectedIds([])}
-                    >
-                      {t('label.clear-selection')}
-                    </Button>
-                  </ContentFooterActions>
-                </ContentFooter>
-              </Show>
-            }
-          >
-            {/* Details | Documents | Log | (gated) Indicators (spec S3 § tabs). */}
-            <Tabs defaultValue="details">
-              <TabList
-                tabs={[
-                  { value: 'details', label: t('label.details') },
-                  { value: 'documents', label: t('label.documents') },
-                  { value: 'log', label: t('label.log') },
-                  ...(showIndicators()
-                    ? [{ value: 'indicators', label: t('label.indicators') }]
-                    : []),
-                ]}
-              />
+                    <DeleteLinesAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      canDelete={editable}
+                      onDeleted={() => {
+                        setSelectedIds([]);
+                        void refetch();
+                      }}
+                    />
+                    <ContentFooterActions>
+                      <Button
+                        variant="secondary"
+                        icon={<MinusCircleIcon />}
+                        onClick={() => setSelectedIds([])}
+                      >
+                        {t('label.clear-selection')}
+                      </Button>
+                    </ContentFooterActions>
+                  </ContentFooter>
+                </Show>
+              }
+            >
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
@@ -1267,73 +1280,73 @@ const InternalOrderDetailView: Component = () => {
                   />
                 </TabPanel>
               </Show>
-            </Tabs>
 
-            {/* The line editor (S4) — add mode (general orders) or edit mode
+              {/* The line editor (S4) — add mode (general orders) or edit mode
                 (a clicked line). A committed save refetches the line table. */}
-            <InternalOrderLineEditModal
-              open={!!editorLine()}
-              onClose={() => setEditorLine(undefined)}
-              storeId={params.storeId}
-              requisitionId={node().id}
-              minMonths={node().minMonthsOfStock}
-              maxMonths={node().maxMonthsOfStock}
-              editable={editable()}
-              canAdd={canAddLines()}
-              showDoses={showDoses()}
-              showPricing={showPricing()}
-              showForecast={showForecast()}
-              showExcess={showExcess()}
-              showExtended={showExtended()}
-              orderInPacks={orderInPacks()}
-              initialLine={editorInitialLine()}
-              nextLine={resolveNextLine}
-              findLineForItem={findLineForItem}
-              // The info-panel slot's other half (§ S8 › editor region): the
-              // order as the SDK's published view. A prop getter, so a header
-              // save or a status change reaches an open panel in place.
-              order={toInternalOrderView(node(), editable())}
-              infoPanelContributions={infoPanelContributions}
-              onCommitted={() => {
-                // A line edit may have supplied a missing reason — drop the
-                // send-backstop flags so they don't linger stale (AC-R3).
-                setReasonFlaggedIds(new Set<string>());
-                void refetch();
-              }}
-            />
-
-            {/* Add from master list (S7): the picker, then an are-you-sure
-                confirmation, then the bulk add. */}
-            <MasterListPickerModal
-              open={masterListPickerOpen()}
-              onClose={() => setMasterListPickerOpen(false)}
-              storeId={params.storeId}
-              onSelect={list => {
-                setMasterListPickerOpen(false);
-                setPendingMasterList(list);
-              }}
-            />
-            <Show when={pendingMasterList()}>
-              <ConfirmDialog
-                open
-                title={t('heading.are-you-sure')}
-                message={t('messages.confirm-add-from-master-list')}
-                onConfirm={() => void confirmAddFromMasterList()}
-                onClose={() => setPendingMasterList(undefined)}
+              <InternalOrderLineEditModal
+                open={!!editorLine()}
+                onClose={() => setEditorLine(undefined)}
+                storeId={params.storeId}
+                requisitionId={node().id}
+                minMonths={node().minMonthsOfStock}
+                maxMonths={node().maxMonthsOfStock}
+                editable={editable()}
+                canAdd={canAddLines()}
+                showDoses={showDoses()}
+                showPricing={showPricing()}
+                showForecast={showForecast()}
+                showExcess={showExcess()}
+                showExtended={showExtended()}
+                orderInPacks={orderInPacks()}
+                initialLine={editorInitialLine()}
+                nextLine={resolveNextLine}
+                findLineForItem={findLineForItem}
+                // The info-panel slot's other half (§ S8 › editor region): the
+                // order as the SDK's published view. A prop getter, so a header
+                // save or a status change reaches an open panel in place.
+                order={toInternalOrderView(node(), editable())}
+                infoPanelContributions={infoPanelContributions}
+                onCommitted={() => {
+                  // A line edit may have supplied a missing reason — drop the
+                  // send-backstop flags so they don't linger stale (AC-R3).
+                  setReasonFlaggedIds(new Set<string>());
+                  void refetch();
+                }}
               />
-            </Show>
-            <Show when={masterListError()}>
-              {message => (
+
+              {/* Add from master list (S7): the picker, then an are-you-sure
+                confirmation, then the bulk add. */}
+              <MasterListPickerModal
+                open={masterListPickerOpen()}
+                onClose={() => setMasterListPickerOpen(false)}
+                storeId={params.storeId}
+                onSelect={list => {
+                  setMasterListPickerOpen(false);
+                  setPendingMasterList(list);
+                }}
+              />
+              <Show when={pendingMasterList()}>
                 <ConfirmDialog
                   open
-                  title={t('error.something-wrong')}
-                  message={message()}
-                  onConfirm={() => setMasterListError(undefined)}
-                  onClose={() => setMasterListError(undefined)}
+                  title={t('heading.are-you-sure')}
+                  message={t('messages.confirm-add-from-master-list')}
+                  onConfirm={() => void confirmAddFromMasterList()}
+                  onClose={() => setPendingMasterList(undefined)}
                 />
-              )}
-            </Show>
-          </Page>
+              </Show>
+              <Show when={masterListError()}>
+                {message => (
+                  <ConfirmDialog
+                    open
+                    title={t('error.something-wrong')}
+                    message={message()}
+                    onConfirm={() => setMasterListError(undefined)}
+                    onClose={() => setMasterListError(undefined)}
+                  />
+                )}
+              </Show>
+            </Page>
+          </Tabs>
         )}
       </Show>
     </Suspense>
