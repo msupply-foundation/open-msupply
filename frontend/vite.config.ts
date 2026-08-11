@@ -59,23 +59,23 @@ const appVersion = (): string => {
 // /frontend_plugins) can be exercised against a running server.
 const backendProxy = (proxyTarget: string) => ({
   '/graphql': { target: proxyTarget, ws: true, changeOrigin: true },
-  '/custom-translations': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/custom-translations': { target: proxyTarget, changeOrigin: true },
   '/files': { target: proxyTarget, changeOrigin: true },
   // Sync-file store (upload/download/delete of record documents, e.g. an
   // inbound shipment's attachments) — a REST endpoint, not GraphQL.
-  '/sync_files': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/sync_files': { target: proxyTarget, changeOrigin: true },
   // Dispensing-label printing (prescriptions) — a REST endpoint.
-  '/print': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/print': { target: proxyTarget, changeOrigin: true },
   // Staged report/plugin upload (POST /upload → {file_id}).
-  '/upload': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/upload': { target: proxyTarget, changeOrigin: true },
   // Plugin JS bundles served out of the datafile.
-  '/frontend_plugins': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/frontend_plugins': { target: proxyTarget, changeOrigin: true },
   // Berlinger fridge-tag / Q-tag sensor log import (cold chain).
-  '/fridge-tag': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/fridge-tag': { target: proxyTarget, changeOrigin: true },
   // Cold Chain mobile-app API.
-  '/coldchain': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/coldchain': { target: proxyTarget, changeOrigin: true },
   // Support tools.
-  '/support': { target: 'https://faster-oms.msupply.org:8000', changeOrigin: true },
+  '/support': { target: proxyTarget, changeOrigin: true },
 });
 
 export default defineConfig(({ mode }) => {
@@ -83,7 +83,7 @@ export default defineConfig(({ mode }) => {
   // shell variable still wins over the file.
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env };
   const lockedPort = env.DEV_SERVER_PORT;
-  const proxyTarget = env.GRAPHQL_PROXY_TARGET || 'https://faster-oms.msupply.org:8000';
+  const proxyTarget = env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000';
   return {
     // devPluginsPlugin is the author dev loop (vite/devPlugins.ts): it only
     // enumerates plugin sources when SERVING — in a build it resolves its
