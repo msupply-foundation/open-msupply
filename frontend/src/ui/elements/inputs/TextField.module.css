@@ -70,8 +70,8 @@
   font-size: var(--text-sm);
   line-height: 1.3;
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 /* Small (ui-standards Size Variations): denser height AND a 13px text/label
@@ -137,8 +137,8 @@
   border-radius: var(--input-radius);
   background: var(--bg-white);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .inputWrap[data-adorned][data-size='small'] {
@@ -265,12 +265,5 @@
 
   .inputWrap[data-adorned] .input {
     min-height: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .input,
-  .inputWrap[data-adorned] {
-    transition: none;
   }
 }

@@ -2,22 +2,23 @@ import { createSignal, type Component } from 'solid-js';
 import { Show } from 'solid-js';
 import { t, tPlural } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
-import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
-import { Select, type SelectOption } from '../../../ui/elements/selectors/Select';
+import {
+  Select,
+  type SelectOption,
+} from '../../../ui/elements/selectors/Select';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
-import styles from './InternalOrderToolbar.module.css';
 
 // The detail header's field cluster (spec/internal-orders S3 § toolbar),
 // rendered as the children of the page's <HeaderToolbar>: each field carries
 // its own label above a small control, and the cluster's FormRow shares the
 // row per each field's FormRowItem weight — the name lookups take the larger
-// shares, the MOS selects cap at what a "N months" value needs, and the
-// hide-over-min switch pins to its own width (ui/docs/PAGES.md § header field
-// cluster). The item filter lives in the line table's own toolbar
+// shares and the MOS selects cap at what a "N months" value needs
+// (ui/docs/PAGES.md § header field cluster). The item filter and the
+// hide-stock-over-minimum narrowing live in the line table's own toolbar
 // (ui-standards § tables → filtering), not here. The read-only info notices
 // are the VIEW's (they render beneath the cluster, pending the header-notice
 // treatment decision).
@@ -45,12 +46,6 @@ export interface InternalOrderToolbarProps {
   /** MOS threshold / target changes (each already confirmed here). */
   onChangeThreshold: (months: number) => void;
   onChangeTarget: (months: number) => void;
-  /**
-   * Hide-stock-over-minimum switch — a client-side line filter (see the
-   * detail view's interim note on the missing server-paginated line query).
-   */
-  hideOverMin: boolean;
-  onHideOverMinChange: (value: boolean) => void;
 }
 
 // The MOS selects offer 1…6 months (label.number-months); the threshold also
@@ -124,14 +119,16 @@ export const InternalOrderToolbar: Component<
     ...MONTH_VALUES.map(n => ({
       value: String(n),
       label: tPlural('label.number-months', n),
-      disabled: props.node.maxMonthsOfStock > 0 && n > props.node.maxMonthsOfStock,
+      disabled:
+        props.node.maxMonthsOfStock > 0 && n > props.node.maxMonthsOfStock,
     })),
   ];
   const targetOptions = (): SelectOption[] =>
     MONTH_VALUES.map(n => ({
       value: String(n),
       label: tPlural('label.number-months', n),
-      disabled: props.node.minMonthsOfStock > 0 && n < props.node.minMonthsOfStock,
+      disabled:
+        props.node.minMonthsOfStock > 0 && n < props.node.minMonthsOfStock,
     }));
 
   const onThresholdChange = (value: string) => {
@@ -262,18 +259,6 @@ export const InternalOrderToolbar: Component<
           onValueChange={onTargetChange}
         />
       </FormRowItem>
-      {/* The switch pins to its own width (weight 0) and hands the spare to
-          the lookups — a toggle has no use for a share of the row — and
-          centres vertically against its taller labelled siblings. */}
-      <FormRowItem weight={0} minWidth="13rem" class={styles.switchItem}>
-        <ToggleSwitch
-          label={t('label.hide-stock-over-minimum')}
-          checked={props.hideOverMin}
-          onChange={props.onHideOverMinChange}
-          testId="hide-over-minimum-switch"
-        />
-      </FormRowItem>
-
       {/* MOS-change confirmation (recalculates suggestions — AC-H2). A closed
           <dialog> renders nothing, so it costs the cluster's row no slot. */}
       <ConfirmDialog

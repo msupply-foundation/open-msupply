@@ -633,6 +633,43 @@ export function DataTable<T, K extends string, G extends string = never>(
     });
   };
 
+  // A header label clamps to two lines (.thText), and a label that needs more
+  // loses its tail. Chromium does NOT paint the line-clamp ellipsis under
+  // `text-align: end`, so on a right-aligned (numeric) column that loss is
+  // SILENT — "Target stock (AMC)" renders as "Target stock" with no marker of
+  // any kind. Start/centre headers ellipsise correctly, and neither
+  // `text-overflow: ellipsis` nor `block-ellipsis: auto` overrides the
+  // end-aligned case (all four measured 2026-08-11), so there is no CSS-only
+  // fix: the truncated headers have to be found and stamped.
+  //
+  // data-clipped flips the label to start alignment, where the ellipsis DOES
+  // paint (see DataTable.module.css), and `title` hands back the full label on
+  // hover — the same native hover-reveal a clipped body cell gets
+  // (revealIfClipped in TableRow.tsx). Screen readers were never affected: the
+  // full label stays in the DOM either way, so this is purely a sighted-user
+  // repair.
+  //
+  // Measured with the other layout facts because a resize drag, a hidden
+  // column, or a density change is exactly what turns clipping on and off. The
+  // work is bounded to ONE header row (not the body), and the attributes it
+  // writes change no widths, so it can't feed the observer that calls it.
+  const markClippedHeaders = () => {
+    const headerRow = scrollBox?.querySelector('thead tr');
+    if (!headerRow) return; // card view / pre-mount
+    for (const cell of [...headerRow.children] as HTMLElement[]) {
+      const label = cell.querySelector<HTMLElement>(`.${styles.thText}`);
+      if (!label) continue; // the leading select cell carries no label
+      // The clamp hides whole LINES, so an over-long label overflows vertically.
+      if (label.scrollHeight > label.clientHeight) {
+        cell.dataset.clipped = 'true';
+        cell.title = label.textContent ?? '';
+      } else {
+        delete cell.dataset.clipped;
+        cell.removeAttribute('title');
+      }
+    }
+  };
+
   // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
   // TanStack can offer — getStart('left') / getAfter('right') — sum the
   // CONFIGURED sizes, and under our auto table layout a column's `size` is only
@@ -709,6 +746,7 @@ export function DataTable<T, K extends string, G extends string = never>(
   const remeasure = () => {
     syncHiddenEdges();
     measurePinnedOffsets();
+    markClippedHeaders();
   };
 
   // Scrolling isn't the only thing that moves these — hiding a column, dragging

@@ -5,11 +5,12 @@ import { submitStateAfter, type SubmitState } from './submitState';
 import { getLastLoginUsername } from '../appData';
 import { serverVersion } from '../api/serverInfo';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
+import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { ArrowRightIcon } from '../ui/icons';
+import { ArrowRightIcon, ClockIcon } from '../ui/icons';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -55,6 +56,9 @@ export const LoginPage: Component = () => {
     kind: 'idle',
   });
 
+  // Only decides WHERE the version line renders — see versionLine() below.
+  const compact = useIsCompact();
+
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {
     const state = submitState();
@@ -81,20 +85,55 @@ export const LoginPage: Component = () => {
     setSubmitState(submitStateAfter(result));
   };
 
+  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version and
+  // — once the startup pass has fetched it, never as a placeholder — the
+  // server's, on one line at the bottom of the page's left half.
+  //
+  // ONE element, rendered either in the hero or, below the compact breakpoint
+  // where the hero doesn't render at all, in the panel. Never both, so
+  // `login-version` stays a single match; a CSS-only move is impossible
+  // because a child of the hidden hero is hidden with it (CLAUDE.md #7 — a
+  // breakpoint decides which element renders).
+  const versionLine = (placement: string) => (
+    <p class={`${styles.versionBar} ${placement}`} data-testid="login-version">
+      <span>
+        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+      </span>
+      <Show when={serverVersion()}>
+        <span>
+          <strong>{t('label.version-server')}</strong> {serverVersion()}
+        </span>
+      </Show>
+    </p>
+  );
+
   return (
     <div class={styles.page}>
       <section class={styles.hero} aria-label={t('label.about-open-msupply')}>
         <h1 class={styles.heroHeading}>{t('login.heading')}</h1>
         <p class={styles.heroBody}>{t('login.body')}</p>
+        <Show when={!compact()}>{versionLine(styles.versionBarHero)}</Show>
       </section>
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
-            class={styles.form}
-            aria-label={t('button.login')}
+            class={`${styles.form} ${styles.loginForm}`}
+            aria-labelledby="login-heading"
             onSubmit={submit}
           >
+            {/* The form's heading, and its accessible name via aria-labelledby
+                — the login form had no heading of its own before, so nothing
+                named this landmark's content to a screen reader. Not displayed:
+                the logo below and the hero's statement already carry the page's
+                visible identity. h2, not h1, because the hero's brand statement
+                is the page's h1 and this is the top of a region within it — a
+                plain element rather than the Text primitive, since an invisible
+                heading has no type style to set. First in the form so it is
+                read before the fields it names. */}
+            <h2 id="login-heading" class={styles.srOnly}>
+              {t('login.form-heading')}
+            </h2>
             <AppLogo class={styles.logo} />
             <TextField
               label={t('heading.username')}
@@ -128,9 +167,13 @@ export const LoginPage: Component = () => {
                 {submitError()}
               </Alert>
             </Show>
-            <div class={styles.buttonRow}>
+            {/* The primary action spans the form column, with both secondary
+                controls directly beneath it rather than in a page footer —
+                they belong to the login decision, not to the page. */}
+            <div class={styles.submitGroup}>
               <Button
                 type="submit"
+                class={styles.submitButton}
                 icon={<ArrowRightIcon />}
                 iconPosition="end"
                 data-testid="login-button"
@@ -138,41 +181,35 @@ export const LoginPage: Component = () => {
               >
                 {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
+              <div class={styles.loginActions}>
+                {/* Sibling old UI, served at the server root /old-ui/
+                    (dual-frontend transition — one cookie session spans both).
+                    A plain anchor for a full document navigation, NOT router
+                    navigation: it's a different app. The href is root-relative
+                    on purpose — /old-ui/ is a sibling of this app's BASE_URL
+                    mount, never nested under it (e.g. the /spec demo track
+                    still points at the root /old-ui/). Shaped like the language
+                    trigger opposite it, but still a link — see
+                    `.secondaryAction`. */}
+                <a
+                  class={styles.secondaryAction}
+                  href="/old-ui/"
+                  data-testid="login-switch-to-old-ui"
+                >
+                  <ClockIcon class={styles.secondaryActionIcon} />
+                  {t('login.use-old-interface')}
+                </a>
+                <div class={styles.languageAction}>
+                  <LanguageSelector
+                    language={locale()}
+                    onSelect={v => void changeLanguage(v)}
+                  />
+                </div>
+              </div>
             </div>
           </form>
         </div>
-        <footer class={styles.panelFooter}>
-          {/* Sibling old UI, served at the server root /old-ui/ (dual-frontend
-              transition — one cookie session spans both). A plain anchor for a
-              full document navigation, NOT router navigation: it's a different
-              app. The href is root-relative on purpose — /old-ui/ is a sibling
-              of this app's BASE_URL mount, never nested under it (e.g. the /spec
-              demo track still points at the root /old-ui/). Centered above the
-              version, matching the initialisation screen's Save-log link. */}
-          <a
-            class={styles.switchLink}
-            href="/old-ui/"
-            data-testid="login-switch-to-old-ui"
-          >
-            {t('login.switch-to-old-ui')}
-          </a>
-          <p class={styles.version} data-testid="login-version">
-            <strong>{t('label.app-version')}</strong> {APP_VERSION}
-          </p>
-          {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has
-              fetched it — never a placeholder. */}
-          <Show when={serverVersion()}>
-            <p class={styles.version}>
-              <strong>{t('label.server-version')}</strong> {serverVersion()}
-            </p>
-          </Show>
-          <div class={styles.languageRow}>
-            <LanguageSelector
-              language={locale()}
-              onSelect={v => void changeLanguage(v)}
-            />
-          </div>
-        </footer>
+        <Show when={compact()}>{versionLine(styles.versionBarPanel)}</Show>
       </main>
     </div>
   );
