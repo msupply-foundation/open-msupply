@@ -2549,6 +2549,7 @@
   "messages.created-clinician": "Successfully created clinician",
   "messages.created-new-vaccine-course": "Successfully created vaccine course",
   "messages.currency-rate-info": "The number of local (home) currency units per one PO currency unit. For example, if local is NZD and PO is USD, a rate of 1.6 means 1 USD = 1.6 NZD.",
+  "messages.custom-fields-in-header": "This record's custom fields are shown in the header above: {{fields}}",
   "messages.custom-fields-saved": "Custom fields saved",
   "messages.customer-not-found": "Unable to find a customer with that ID.",
   "messages.custom-translations-editing-language": "Editing custom translations for: {{language}}. Switch language using the selector at the bottom of the screen to edit another language.",
