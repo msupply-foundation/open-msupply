@@ -38,7 +38,10 @@ export function initialiseI18n({
   // Served with frontend bundle
   // Electron `main` window translations should be served with relative path
   // for electron, the preloaded script path is `file://:` we don't get a valid API_HOST url until we connect to the server and re-initialise the window
-  const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
+  // For web the locales live under the build-time base path (Environment.PUBLIC_PATH,
+  // '/' by default, '/old-ui/' for the sub-path build) so they resolve alongside the bundle.
+  const localesBase = isElectron ? './' : Environment.PUBLIC_PATH;
+  const defaultTranslationsLoadPath = `${localesBase}locales/{{lng}}/{{ns}}.json`;
 
   // Served from backend, on electron we use a dummy but valid url https://localhost:8000 which shouldn't actually be used.
   // The `lng` query param lets the backend return language-specific custom

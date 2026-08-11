@@ -40,6 +40,7 @@ export const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-prescription-button"
           Icon={<PlusCircleIcon />}
           label={t('button.new-prescription')}
           onClick={modalController.toggleOn}

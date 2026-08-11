@@ -81,6 +81,7 @@ export const InventoryAdjustmentModal = ({
       contentProps={{ sx: { paddingTop: 0 } }}
       slideAnimation={false}
       title={t('title.stock-adjustment')}
+      testId="adjust-modal"
       okButton={
         <DialogButton variant="ok" disabled={saveDisabled} onClick={save} />
       }

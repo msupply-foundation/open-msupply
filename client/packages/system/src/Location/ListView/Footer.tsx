@@ -62,6 +62,7 @@ export const FooterComponent = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: showDeleteConfirmation,
+      testId: 'delete-lines-button',
     },
   ];
 
@@ -79,7 +80,7 @@ export const FooterComponent = ({
           {deleteErrors.length > 0 && (
             <AlertModal
               message={
-                <ul>
+                <ul data-testid="location-in-use">
                   {deleteErrors.map(({ locationName, message }) => (
                     <li key={locationName}>
                       {locationName}: {message}

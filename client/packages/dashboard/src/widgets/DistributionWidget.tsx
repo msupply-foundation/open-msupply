@@ -66,6 +66,7 @@ export const DistributionWidget = ({
       isLoading={outbound.isLoading}
       title={t('heading.shipments')}
       panelContext={outboundShipmentsPanelContext}
+      testId="dashboard-panel-distribution.shipments"
       stats={[
         {
           label: t('label.have-not-shipped'),
@@ -81,6 +82,7 @@ export const DistributionWidget = ({
             })
             .build(),
           statContext: `${outboundShipmentsPanelContext}-not-shipped`,
+          testId: 'dashboard-stat-distribution.shipments.not-shipped',
         },
       ]}
       link={RouteBuilder.create(AppRoute.Distribution)
@@ -94,6 +96,7 @@ export const DistributionWidget = ({
       isLoading={requisition.isLoading}
       title={t('customer-requisition')}
       panelContext={customerRequisitionsPanelContext}
+      testId="dashboard-panel-distribution.customer-requisition"
       stats={[
         {
           label: t('label.new'),
@@ -103,23 +106,26 @@ export const DistributionWidget = ({
             .addQuery({ status: RequisitionNodeStatus.New })
             .build(),
           statContext: `${customerRequisitionsPanelContext}-new`,
+          testId: 'dashboard-stat-distribution.customer-requisition.new',
         },
         ...(omProgramModule
           ? [
-            {
-              label: t('label.emergency'),
-              value: formatNumber.round(requisition?.stats?.emergency),
-              link: RouteBuilder.create(AppRoute.Distribution)
-                .addPart(AppRoute.CustomerRequisition)
-                .addQuery({ isEmergency: true })
-                .addQuery({ status: RequisitionNodeStatus.New })
-                .build(),
-              statContext: `${customerRequisitionsPanelContext}-emergency`,
-              alertFlag:
-                !!requisition.stats?.emergency &&
-                requisition.stats?.emergency > 0,
-            },
-          ]
+              {
+                label: t('label.emergency'),
+                value: formatNumber.round(requisition?.stats?.emergency),
+                link: RouteBuilder.create(AppRoute.Distribution)
+                  .addPart(AppRoute.CustomerRequisition)
+                  .addQuery({ isEmergency: true })
+                  .addQuery({ status: RequisitionNodeStatus.New })
+                  .build(),
+                statContext: `${customerRequisitionsPanelContext}-emergency`,
+                testId:
+                  'dashboard-stat-distribution.customer-requisition.emergency',
+                alertFlag:
+                  !!requisition.stats?.emergency &&
+                  requisition.stats?.emergency > 0,
+              },
+            ]
           : []),
       ]}
       link={RouteBuilder.create(AppRoute.Distribution)
@@ -155,7 +161,7 @@ export const DistributionWidget = ({
           }}
         />
       ) : null}
-      <Widget title={t('distribution')}>
+      <Widget title={t('distribution')} testId="dashboard-widget-distribution">
         <Grid
           container
           justifyContent="flex-start"
@@ -175,6 +181,7 @@ export const DistributionWidget = ({
               Icon={<PlusCircleIcon />}
               label={t('button.new-outbound-shipment')}
               onClick={handleClick}
+              data-testid="dashboard-create-distribution"
             />
           </Grid>
         </Grid>

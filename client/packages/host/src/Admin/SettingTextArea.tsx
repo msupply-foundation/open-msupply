@@ -23,6 +23,11 @@ interface SettingTextAreaProps {
   infoText?: string;
   title: string;
   visible: boolean;
+  /**
+   * Base for deterministic e2e hooks: `${testId}-toggle` (switch),
+   * `${testId}-editor` (textarea), `${testId}-save` (save button).
+   */
+  testId?: string;
 }
 
 export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
@@ -33,6 +38,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
   infoText,
   title,
   visible,
+  testId,
 }) => {
   const t = useTranslation();
   const [value, setValue] = React.useState(defaultValue);
@@ -52,8 +58,13 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
     <>
       <Setting
         infoText={infoText}
+        infoTestId={testId ? `${testId}-info` : undefined}
         component={
-          <Switch checked={value.enabled} onChange={onToggleChecked} />
+          <Switch
+            checked={value.enabled}
+            onChange={onToggleChecked}
+            testId={testId ? `${testId}-toggle` : undefined}
+          />
         }
         icon={icon}
         title={title}
@@ -73,6 +84,9 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               value={value.text}
               maxRows={10}
               minRows={10}
+              inputProps={
+                testId ? { 'data-testid': `${testId}-editor` } : undefined
+              }
               style={{ padding: '0 0 0 50px' }}
               slotProps={{
                 input: {
@@ -92,6 +106,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               variant="contained"
               sx={{ fontSize: '12px' }}
               onClick={() => onSave(value)}
+              data-testid={testId ? `${testId}-save` : undefined}
             />
           </Grid>
         </Grid>

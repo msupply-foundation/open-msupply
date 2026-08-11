@@ -142,7 +142,8 @@ const StatusChangeButtonContent = ({
       }
     }
     // Let plugins block the transition (e.g. require a discrepancy reason).
-    for (const validate of plugins.inboundShipment?.validateStatusChange ?? []) {
+    for (const validate of plugins.inboundShipment?.validateStatusChange ??
+      []) {
       const message = validate(data, selectedOption.value);
       if (message) return error(message)();
     }
@@ -152,6 +153,7 @@ const StatusChangeButtonContent = ({
 
   return (
     <SplitButton
+      testId="status-change-button"
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}

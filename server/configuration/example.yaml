@@ -26,6 +26,8 @@
 #   # Directory the web frontend is served from, relative to the working directory.
 #   # Debug builds fall back to client/packages/host/dist when this doesn't exist.
 #   frontend_dir: "frontend"
+#   # The legacy ("old UI") frontend is served under /old-ui/ from the old-ui
+#   # subdirectory of frontend_dir, when present (by convention - not configurable).
 # sync:
 #   # url/username/password_sha256/interval_seconds are all-or-nothing: set them all, or omit them
 #   # all to carry only flags (e.g. on a central server). A partial set is a startup error.
@@ -79,6 +81,7 @@
 #   interval: 60 # in seconds
 # features:
 #   stock_movement: true
+#   enable_multi_device_site: true # central server only; enables the multi-device toggle on the Sites screen
 # changelog_partition: # postgres-only; controls partitioning of the changelog table
 #   partition_size: 5000000      # cursor values per partition
 #   lookahead: 30000000          # number of insertable records headroom for changelog; also the lower bound — yaml values below this are clamped up

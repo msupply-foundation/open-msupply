@@ -7,6 +7,7 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
+pub mod download_file;
 pub mod get_token;
 pub mod patient_data_for_site;
 pub mod patient_search;

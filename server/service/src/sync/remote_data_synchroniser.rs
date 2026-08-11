@@ -96,6 +96,12 @@ impl RemoteDataSynchroniser {
     /// gate the POST on live worker status (`site_status`), not the persisted `initialisation_status`:
     /// a crashed worker leaves status stuck at `started`, and gating on liveness lets it self-heal on
     /// the next cycle while still avoiding a duplicate POST when a worker is genuinely running.
+    ///
+    /// Known compatibility gap: this liveness gating only helps clients running this code. An old
+    /// (pre-#12068) OMS client treats `/sync/v5/initialise` returning as "queue ready" (the previous
+    /// blocking semantics) and will pull before the queue exists if talking to an upgraded,
+    /// asynchronously-behaving 4D central - that can only be closed by 4D-side version gating (see
+    /// 4D PR msupply-foundation/msupply#18406), not from here.
     pub(crate) async fn request_initialisation(
         &self,
         _site_info: &SiteInfoV5,
@@ -147,7 +153,7 @@ impl RemoteDataSynchroniser {
             let site_info = match self.sync_api_v5.get_site_info().await {
                 Ok(info) => info,
                 // Transient poll failures don't affect the worker; retry until the stall timeout.
-                Err(error) if error.is_connection() || error.is_unknown() => {
+                Err(error) if error.is_transient() => {
                     log::warn!(
                         "Polling central site info failed (will retry): {:#?}",
                         error
@@ -172,12 +178,27 @@ impl RemoteDataSynchroniser {
                 InitialisationStatus::New | InitialisationStatus::Started => {}
             }
 
-            let worker_alive = matches!(
-                self.sync_api_v5.get_site_status().await?.code,
-                SiteStatusCodeV5::InitialisationInProgress
-                    | SiteStatusCodeV5::SyncIsRunning
-                    | SiteStatusCodeV5::IntegrationInProgress
-            );
+            let worker_alive = match self.sync_api_v5.get_site_status().await {
+                Ok(status) => matches!(
+                    status.code,
+                    SiteStatusCodeV5::InitialisationInProgress
+                        | SiteStatusCodeV5::SyncIsRunning
+                        | SiteStatusCodeV5::IntegrationInProgress
+                ),
+                // Transient poll failures don't affect the worker; retry until the stall timeout,
+                // same as the get_site_info poll above.
+                Err(error) if error.is_transient() => {
+                    log::warn!(
+                        "Polling central site status failed (will retry): {:#?}",
+                        error
+                    );
+                    if last_progress.elapsed() >= stall_timeout {
+                        return Err(WaitForInitialisationError::TimeoutReached);
+                    }
+                    continue;
+                }
+                Err(error) => return Err(error.into()),
+            };
 
             let queue_length = site_info.queue_length.unwrap_or(0);
             let progressing =
@@ -238,7 +259,12 @@ impl RemoteDataSynchroniser {
                 match self.sync_api_v5.get_queued_records(batch_size).await {
                     Ok(batch) => break batch,
                     Err(error) if error.is_central_busy() => {
-                        self.sync_api_v5.wait_until_central_idle().await?;
+                        self.sync_api_v5
+                            .wait_until_central_idle(
+                                CENTRAL_BUSY_POLL_PERIOD_SECONDS,
+                                CENTRAL_BUSY_TIMEOUT_SECONDS,
+                            )
+                            .await?;
                     }
                     Err(error) => return Err(error.into()),
                 }
@@ -328,7 +354,12 @@ impl RemoteDataSynchroniser {
                 // (legacy central gates sync per-site). Cursor hasn't advanced, so wait
                 // for idle then rebuild this batch.
                 Err(error) if error.is_central_busy() => {
-                    self.sync_api_v5.wait_until_central_idle().await?;
+                    self.sync_api_v5
+                        .wait_until_central_idle(
+                            CENTRAL_BUSY_POLL_PERIOD_SECONDS,
+                            CENTRAL_BUSY_TIMEOUT_SECONDS,
+                        )
+                        .await?;
                     continue;
                 }
                 Err(error) => return Err(error.into()),
@@ -364,11 +395,20 @@ impl RemoteDataSynchroniser {
             }
             first_check = false;
 
-            let response = self.sync_api_v5.get_site_status().await?;
-
-            if response.code == SiteStatusCodeV5::Idle {
-                info!("Central server operation finished");
-                break;
+            match self.sync_api_v5.get_site_status().await {
+                Ok(response) if response.code == SiteStatusCodeV5::Idle => {
+                    info!("Central server operation finished");
+                    break;
+                }
+                Ok(_) => {}
+                // Transient poll failures don't mean the operation failed; retry until timeout.
+                Err(error) if error.is_transient() => {
+                    log::warn!(
+                        "Polling central site status failed (will retry): {:#?}",
+                        error
+                    );
+                }
+                Err(error) => return Err(error.into()),
             }
 
             let elapsed = start.elapsed().unwrap_or(timeout);
@@ -532,6 +572,31 @@ mod test {
         assert_matches!(result, Err(WaitForInitialisationError::TimeoutReached));
     }
 
+    /// A transient (connection) failure polling central must not abort the wait outright - it
+    /// should be tolerated and retried until the stall timeout, same as a genuine stall.
+    /// (Old behaviour: a bare `?` on the failing poll would return `Err` immediately here, on the
+    /// very first iteration, well before the 1s stall timeout below - this is the regression this
+    /// PR followup fixes. No mock server is registered at all, so every poll - both `get_site_info`
+    /// and `get_site_status` - hits a real connection-refused error.)
+    #[actix_rt::test]
+    async fn test_wait_for_initialisation_tolerates_transient_poll_errors() {
+        let result = synchroniser("http://localhost:9999")
+            .wait_for_initialisation(0, 1)
+            .await;
+        assert_matches!(result, Err(WaitForInitialisationError::TimeoutReached));
+    }
+
+    /// Same regression as above, isolated to the `get_site_status` poll specifically:
+    /// `wait_for_sync_operation` only ever calls `get_site_status`, so a transient failure here
+    /// can only be tolerated by the fix in that function's own match arm, not by `get_site_info`'s.
+    #[actix_rt::test]
+    async fn test_wait_for_sync_operation_tolerates_transient_poll_errors() {
+        let result = synchroniser("http://localhost:9999")
+            .wait_for_sync_operation(0, 1)
+            .await;
+        assert_matches!(result, Err(WaitForSyncOperationError::TimeoutReached));
+    }
+
     /// No live worker (idle) -> `request_initialisation` re-POSTs `/sync/v5/initialise`.
     /// (POST is made to return a non-tolerated error so the call returns immediately.)
     #[actix_rt::test]
@@ -583,7 +648,7 @@ mod test {
         .await;
 
         assert!(result.is_err(), "should still be waiting, not returned");
-        post.assert_hits(0); // no duplicate POST while a worker is running
+        post.assert_calls(0); // no duplicate POST while a worker is running
     }
 
     fn dummy_site_info() -> SiteInfoV5 {

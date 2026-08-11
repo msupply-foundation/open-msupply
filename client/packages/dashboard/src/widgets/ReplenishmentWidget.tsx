@@ -108,6 +108,7 @@ export const ReplenishmentWidget = ({
       isLoading={inboundInternal.isLoading}
       title={t('inbound-shipment')}
       panelContext={inboundInternalPanelContext}
+      testId="dashboard-panel-replenishment.inbound"
       stats={[
         {
           label: t('label.today'),
@@ -120,6 +121,7 @@ export const ReplenishmentWidget = ({
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-today`,
+          testId: 'dashboard-stat-replenishment.inbound.today',
         },
         {
           label: t('label.this-week'),
@@ -132,6 +134,7 @@ export const ReplenishmentWidget = ({
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-this-week`,
+          testId: 'dashboard-stat-replenishment.inbound.this-week',
         },
         {
           label: t('label.inbound-not-delivered'),
@@ -144,6 +147,7 @@ export const ReplenishmentWidget = ({
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-not-delivered`,
+          testId: 'dashboard-stat-replenishment.inbound.not-delivered',
         },
       ]}
       link={RouteBuilder.create(AppRoute.Replenishment)
@@ -159,6 +163,7 @@ export const ReplenishmentWidget = ({
             isLoading={inboundExternal.isLoading}
             title={t('dashboard.inbound-shipment-external')}
             panelContext={inboundExternalPanelContext}
+            testId="dashboard-panel-replenishment.inbound-external"
             stats={[
               {
                 label: t('label.today'),
@@ -171,6 +176,7 @@ export const ReplenishmentWidget = ({
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-today`,
+                testId: 'dashboard-stat-replenishment.inbound-external.today',
               },
               {
                 label: t('label.this-week'),
@@ -183,6 +189,8 @@ export const ReplenishmentWidget = ({
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-this-week`,
+                testId:
+                  'dashboard-stat-replenishment.inbound-external.this-week',
               },
               {
                 label: t('label.inbound-not-delivered'),
@@ -195,6 +203,8 @@ export const ReplenishmentWidget = ({
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-not-delivered`,
+                testId:
+                  'dashboard-stat-replenishment.inbound-external.not-delivered',
               },
             ]}
             link={RouteBuilder.create(AppRoute.Replenishment)
@@ -211,6 +221,7 @@ export const ReplenishmentWidget = ({
       isLoading={internalOrder.isLoading}
       title={t('internal-order')}
       panelContext={internalOrdersPanelContext}
+      testId="dashboard-panel-replenishment.internal-order"
       stats={[
         {
           label: t('label.draft'),
@@ -220,6 +231,7 @@ export const ReplenishmentWidget = ({
             .addQuery({ status: RequisitionNodeStatus.Draft })
             .build(),
           statContext: `${internalOrdersPanelContext}-new`,
+          testId: 'dashboard-stat-replenishment.internal-order.draft',
         },
       ]}
       link={RouteBuilder.create(AppRoute.Replenishment)
@@ -255,7 +267,10 @@ export const ReplenishmentWidget = ({
           }}
         />
       ) : null}
-      <Widget title={t('replenishment')}>
+      <Widget
+        title={t('replenishment')}
+        testId="dashboard-widget-replenishment"
+      >
         <Grid
           container
           justifyContent="flex-start"
@@ -275,6 +290,7 @@ export const ReplenishmentWidget = ({
               Icon={<PlusCircleIcon />}
               label={t('button.new-inbound-shipment')}
               onClick={handleClick}
+              data-testid="dashboard-create-replenishment"
             />
           </Grid>
         </Grid>

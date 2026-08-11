@@ -71,6 +71,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
             debouncedUpdate({ comment: e.target.value });
           }}
           value={commentBuffer}
+          inputProps={{ 'data-testid': 'comment-field' }}
         />
       </Grid>
     </DetailPanelSection>

@@ -52,7 +52,9 @@ const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
 
   const queryFn = async () => {
     const query = await locationApi.locations({
-      first: first ?? 1000,
+      // Stopgap for large warehouses until location search is server-side,
+      // see https://github.com/msupply-foundation/open-msupply/issues/12500
+      first: first ?? 5000,
       offset: offset ?? 0,
       sort: toSortInput(sortBy),
       filter: filterBy,

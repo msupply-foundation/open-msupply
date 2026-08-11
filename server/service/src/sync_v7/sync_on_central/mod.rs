@@ -23,8 +23,10 @@ use crate::{
         settings::SYNC_V5_VERSION,
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
+    static_files::{StaticFile, StaticFileService},
     sync_v7::{
         api::{
+            download_file,
             get_token::{GetTokenInput, GetTokenOutput},
             patient_data_for_site, patient_search, pull, push,
             status::{self},
@@ -306,6 +308,47 @@ fn validate(
     }
 
     Ok((site, ctx))
+}
+
+/// Validate v7 bearer-token site auth for endpoints living outside this module's
+/// route scope (e.g. the tus file upload in the server crate). Same checks as
+/// every v7 endpoint; local to central's DB, no legacy server involved.
+pub fn validate_v7_site_auth(
+    service_provider: &ServiceProvider,
+    common: &Common,
+) -> Result<SiteRow, SyncError> {
+    validate(service_provider, common).map(|(site, _)| site)
+}
+
+/// Serve file bytes to a remote site over the v7 (bearer-token) transport. The v6
+/// equivalent is `sync::sync_on_central::download_file`; only auth differs — the
+/// on-disk lookup is shared via `StaticFileService::open_sync_file`.
+pub async fn download_file(
+    service_provider: Arc<ServiceProvider>,
+    common: Common,
+    input: download_file::Input,
+    base_dir: String,
+) -> Result<(actix_files::NamedFile, StaticFile), SyncError> {
+    tokio::task::spawn_blocking(move || {
+        let (_site, _ctx) = validate(&service_provider, &common)?;
+
+        log::info!(
+            "Sending file to v7 remote site for table: {}, record: {}, file: {}",
+            input.table_name,
+            input.record_id,
+            input.id
+        );
+
+        let map_err = |e: anyhow::Error| SyncError::Other(format!("{e:#}"));
+        let service = StaticFileService::new(&base_dir).map_err(map_err)?;
+        let file_id = input.id;
+        service
+            .open_sync_file(input.table_name, input.record_id, &file_id)
+            .map_err(map_err)?
+            .ok_or_else(|| SyncError::SyncFileNotFound(file_id.clone()))
+    })
+    .await
+    .map_err(join_error)?
 }
 
 pub async fn site_status(

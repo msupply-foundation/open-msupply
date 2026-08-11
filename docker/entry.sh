@@ -9,9 +9,9 @@ if [ ! -s /etc/machine-id ]; then
     cat /proc/sys/kernel/random/uuid > /etc/machine-id
 fi
 
-# Whey MSUPPLY_NO_TEST_DB_TEMPLATE ?
-# Initialise uses testdb to setup database and migrated it, by default we create templates
-# which allows for faster testing, but requires finding workspace
+# Why MSUPPLY_NO_TEST_DB_TEMPLATE ?
+# Initialise uses testdb to setup database and migrated it, by default we create
+# templates which allows for faster testing, but requires finding workspace
 
 # If command line argument exists then just run cli
 if [ $# -gt 0 ]; then

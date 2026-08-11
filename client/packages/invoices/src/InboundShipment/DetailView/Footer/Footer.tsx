@@ -169,24 +169,28 @@ export const FooterComponent = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
+      testId: 'delete-lines-button',
     },
     {
       label: t('button.change-campaign-or-program'),
       icon: <ArrowRightIcon />,
       onClick: handleCampaignClick,
       shouldShrink: false,
+      testId: 'change-campaign-button',
     },
     {
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,
       onClick: onZeroQuantities,
       shouldShrink: false,
+      testId: 'zero-quantity-button',
     },
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(),
       shouldShrink: false,
+      testId: 'return-lines-button',
     },
   ];
   if (showLineStatus) {
@@ -195,16 +199,19 @@ export const FooterComponent = ({
         label: t('button.approve'),
         icon: <CheckIcon />,
         onClick: () => changeLineStatus('approve'),
+        testId: 'approve-lines-button',
       },
       {
         label: t('button.reject'),
         icon: <CloseIcon />,
         onClick: () => changeLineStatus('reject'),
+        testId: 'reject-lines-button',
       },
       {
         label: t('button.pending'),
         icon: <ClockIcon />,
         onClick: () => changeLineStatus('pending'),
+        testId: 'pending-lines-button',
       },
     ]);
   }

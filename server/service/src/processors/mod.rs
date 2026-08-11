@@ -16,6 +16,8 @@ use self::transfer::{
 };
 use general_processor::{process_records, ProcessorError};
 
+// Processor currently disabled (not constructed in ProcessorType::get_processors), see #12547
+#[allow(dead_code, unused_imports)]
 mod assign_prescription_number;
 mod assign_requisition_number;
 mod contact_form;

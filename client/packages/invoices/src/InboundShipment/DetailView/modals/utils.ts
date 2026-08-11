@@ -39,7 +39,9 @@ const createDraftInboundLine = ({
       ? seed.sellPricePerPack
       : itemStoreProperties?.defaultSellPricePerPack ||
         (defaultPricePerUnit ?? 0) * defaultPackSize,
-    costPricePerPack: 0,
+    costPricePerPack: seed
+      ? seed.costPricePerPack
+      : (itemStoreProperties?.defaultSellPricePerPack ?? 0),
     numberOfPacks: 0,
     isCreated: !seed,
     expiryDate,

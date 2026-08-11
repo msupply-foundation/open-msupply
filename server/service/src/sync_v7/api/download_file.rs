@@ -1,0 +1,83 @@
+use repository::{syncv7::SyncError, SyncFileReferenceRow};
+use serde::{Deserialize, Serialize};
+use util::{format_error, with_retries, RetrySeconds};
+
+use super::SyncApiV7;
+use crate::static_files::{StaticFile, StaticFileService};
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Input {
+    pub id: String,
+    pub table_name: String,
+    pub record_id: String,
+}
+
+static ROUTE: &str = "download_file";
+
+impl SyncApiV7 {
+    /// Download file bytes from central, streaming them into local static file storage.
+    /// Unlike the JSON `op` endpoints, a success response here is a raw byte stream;
+    /// errors come back as a non-2xx status with a JSON-serialized `SyncError` body.
+    pub async fn download_file(
+        &self,
+        static_file_service: &StaticFileService,
+        sync_file: &SyncFileReferenceRow,
+    ) -> Result<StaticFile, SyncError> {
+        let url = self
+            .url
+            .join("central/sync_v7/")
+            .unwrap()
+            .join(ROUTE)
+            .unwrap();
+
+        let input = Input {
+            id: sync_file.id.clone(),
+            table_name: sync_file.table_name.clone(),
+            record_id: sync_file.record_id.clone(),
+        };
+        let auth_headers = self.auth_headers.clone();
+
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client
+                .post(url.clone())
+                .headers(auth_headers.clone())
+                .json(&input)
+        })
+        .await;
+
+        let response = match result {
+            Ok(response) => response,
+            Err(error) => {
+                let formatted_error = format_error(&error);
+                if error.is_connect() {
+                    return Err(SyncError::ConnectionError {
+                        url: url.to_string(),
+                        e: formatted_error,
+                    });
+                }
+                return Err(SyncError::Other(formatted_error));
+            }
+        };
+
+        if !response.status().is_success() {
+            let response_text = response
+                .text()
+                .await
+                .map_err(|e| SyncError::Other(format_error(&e)))?;
+
+            let error = serde_json::from_str::<SyncError>(&response_text).unwrap_or_else(|e| {
+                SyncError::ParsingError {
+                    e: format_error(&e),
+                    response_text,
+                }
+            });
+            return Err(error);
+        }
+
+        static_file_service
+            .download_file_in_chunks(sync_file, response)
+            .await
+            .map_err(|e| SyncError::Other(format!("Failed to store downloaded file: {e:#}")))
+    }
+}

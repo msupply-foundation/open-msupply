@@ -64,16 +64,49 @@ Non-release tags are typically created automatically by the nightly build proces
 
 Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
 
-| Tag                          | Example                   | When built        |
-| ---------------------------- | ------------------------- | ----------------- |
-| `v{version}-{db}-{arch}`     | `v2.8.0-sqlite-amd64`     | All tags          |
-| `v{version}-{db}-{arch}-dev` | `v2.8.0-sqlite-amd64-dev` | Release tags only |
+| Tag                          | Example                     | When built / repointed             |
+| ---------------------------- | --------------------------- | ---------------------------------- |
+| `v{version}-{db}-{arch}`     | `v2.8.0-sqlite-amd64`       | All tags                           |
+| `v{version}-{db}-{arch}-dev` | `v2.8.0-sqlite-amd64-dev`   | Release tags only                  |
+| `latest[-{db}]`              | `latest`, `latest-postgres` | Repointed on every release tag     |
+| `latest-develop[-{db}]`      | `latest-develop`            | Repointed on every develop nightly |
+| `latest-rc[-{db}]`           | `latest-rc-postgres`        | Repointed on every RC nightly      |
 
 Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64 on release tags.
 
+The `latest*` floating tags always point at **amd64** images, and the bare tags (`latest`, `latest-develop`, `latest-rc`) are the **sqlite** flavour. If more than one RC branch (or more than one develop-family branch) receives commits on the same day, the nightly build tags each of them and the shared floating tag ends up on whichever build pushed last.
+
+### Auto-updating demo/test servers (Watchtower)
+
+The floating tags make it easy to run a demo or test server that always tracks the latest develop build. Example `docker-compose.yml` using [Watchtower](https://containrrr.dev/watchtower/) to poll Docker Hub and restart the container when `latest-develop` moves:
+
+```yaml
+services:
+  omsupply:
+    image: msupplyfoundation/omsupply:latest-develop
+    restart: unless-stopped
+    ports:
+      - "9000:8000"
+    volumes:
+      # Directory mount; the SQLite file inside must be named
+      # omsupply-database.sqlite (see "Running the images" below)
+      - ./database:/database
+
+  watchtower:
+    image: containrrr/watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true # delete superseded images after updating
+      - WATCHTOWER_POLL_INTERVAL=3600 # check for a new image every hour (seconds)
+```
+
+Floating tags are amd64-only. Nightly develop builds may include schema migrations that cannot be rolled back — treat the `/database` volume as disposable on servers tracking `latest-develop`.
+
 ### Docker Hub cleanup
 
-A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images are always kept. Non-release images older than 30 days (configurable) are deleted.
+A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images and the floating `latest*` tags are always kept. Non-release images older than 30 days (configurable) are deleted.
 
 The cleanup script can also be run locally:
 

@@ -70,9 +70,13 @@ pub struct GeneralQueries;
 
 #[Object]
 impl GeneralQueries {
-    #[allow(non_snake_case)]
-    pub async fn apiVersion(&self) -> String {
+    pub async fn api_version(&self) -> String {
         env!("CARGO_PKG_VERSION").to_string()
+    }
+
+    /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
+    pub async fn server_version(&self) -> String {
+        repository::migrations::raw_app_version()
     }
 
     /// Authenticate with username + password. Issues an opaque session token, returned both in
@@ -683,6 +687,11 @@ impl InitialisationQueries {
     /// Available without authorisation/authentication
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
+    pub async fn server_version(&self) -> String {
+        repository::migrations::raw_app_version()
     }
 }
 /// Auth is not checked during initialisation stage

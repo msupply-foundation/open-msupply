@@ -84,6 +84,7 @@ export const PatientSearchInput = ({
     <Box width={`${width}px`} display="flex" alignItems="center">
       <Autocomplete
         autoFocus={autoFocus}
+        inputTestId="patient-search-input"
         options={options}
         disabled={disabled}
         clearable={false}

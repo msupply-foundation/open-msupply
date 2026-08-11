@@ -59,6 +59,7 @@ export const ItemDetailAndStats = ({
           originalValue={availableNumberOfPacks}
           variation={variation}
           label={t('label.available-packs')}
+          testId="adjust-tile-available"
           isHistorical={historicalAvailableNumberOfPacks != null}
           isLoading={isLoading}
         />
@@ -66,6 +67,7 @@ export const ItemDetailAndStats = ({
           originalValue={totalNumberOfPacks}
           variation={variation}
           label={t('label.packs-on-hand')}
+          testId="adjust-tile-total"
           isHistorical={historicalTotalNumberOfPacks != null}
           isLoading={isLoading}
         />
@@ -95,17 +97,20 @@ const AdjustmentStats = ({
   label,
   isHistorical,
   isLoading,
+  testId,
 }: {
   originalValue: number;
   variation: number;
   label: string;
   isHistorical?: boolean;
   isLoading?: boolean;
+  testId?: string;
 }) => {
   const t = useTranslation();
 
   return (
     <Box
+      data-testid={testId}
       sx={{
         backgroundColor: 'background.secondary',
         padding: '1em',

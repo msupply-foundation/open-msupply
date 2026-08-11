@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
+    stocktake::{check_stocktake_exist_for_update, check_stocktake_not_finalised},
     validate::check_store_id_matches,
 };
 
@@ -15,7 +15,11 @@ pub fn validate(
     store_id: &str,
     input: &UpdateStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLine>, bool), UpdateStocktakeError> {
-    let existing = match check_stocktake_exist(connection, &input.id)? {
+    // Take a row-level lock on the stocktake (as the first operation in the transaction) so that
+    // two users finalising the same stocktake concurrently are serialised: the second transaction
+    // blocks here until the first commits, then re-reads the now-finalised status below and is
+    // rejected with CannotEditFinalised, having performed no writes.
+    let existing = match check_stocktake_exist_for_update(connection, &input.id)? {
         Some(existing) => existing,
         None => return Err(UpdateStocktakeError::StocktakeDoesNotExist),
     };

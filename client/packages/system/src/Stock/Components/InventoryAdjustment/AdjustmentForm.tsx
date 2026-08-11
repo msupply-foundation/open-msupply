@@ -77,6 +77,7 @@ export const AdjustmentForm = ({
           }}
         >
           <InventoryAdjustmentDirectionInput
+            data-testid="adjust-direction"
             value={draft.adjustmentType}
             onChange={adjustmentType => {
               const type = adjustmentType ?? AdjustmentTypeInput.Addition;
@@ -98,6 +99,7 @@ export const AdjustmentForm = ({
           <Typography sx={{ alignSelf: 'center' }}>{t('label.by')}</Typography>
           <NumericTextInput
             id="by"
+            data-testid="adjust-amount"
             width="unset"
             decimalLimit={2}
             value={draft.adjustment}
@@ -133,6 +135,7 @@ export const AdjustmentForm = ({
               }
               maxDate={new Date()}
               minDate={minDate}
+              textFieldTestId="adjust-date"
             />
           </Box>
         </Box>
@@ -145,6 +148,7 @@ export const AdjustmentForm = ({
 
         <ReasonOptionsSearchInput
           id="reason"
+          data-testid="adjust-reason"
           disabled={draft.adjustment === 0}
           onChange={reason => setDraft(state => ({ ...state, reason }))}
           value={draft.reason}

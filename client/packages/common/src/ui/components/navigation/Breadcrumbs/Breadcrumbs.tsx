@@ -96,6 +96,12 @@ export const Breadcrumbs = ({
 
   return (
     <MuiBreadcrumbs
+      // MUI renders a <nav> but leaves it unnamed; the WAI-ARIA breadcrumb
+      // pattern names the landmark so it's distinguishable from the app
+      // drawer's <nav>. The deterministic e2e suites locate the breadcrumb
+      // by this accessible name (open-msupply-frontend e2e/TESTIDS.md §
+      // non-testid hooks).
+      aria-label={t('label.breadcrumb')}
       sx={{
         fontSize: '16px',
         color: theme => theme.typography.body1.color,

@@ -9,6 +9,7 @@ import {
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
+  MuiLink,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
@@ -16,6 +17,15 @@ import { LoginLayout } from './LoginLayout';
 import { LoginStoreSelectorPanel } from './LoginStoreSelectorPanel';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
+
+// Build-time base path (webpack DefinePlugin literal; see config.ts). Compared
+// directly — not via Environment.PUBLIC_PATH — so the minifier can constant-fold
+// the check: in a default build DefinePlugin substitutes '/', the "Try the new
+// UI" link's condition becomes statically false, and the whole link is
+// dead-code-eliminated. Only the dual-frontend build (PUBLIC_PATH=/old-ui/)
+// emits it. A cross-module property read (Environment.PUBLIC_PATH) is NOT
+// statically reducible, so it would ship the link in every build.
+declare const PUBLIC_PATH: string;
 
 export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
@@ -210,15 +220,35 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
           data-testid="login-button"
         />
       }
+      TryNewUiLink={
+        // Dual-frontend packaging serves this (old) client at a subpath while
+        // the new frontend lives at '/'. Only then does linking to '/' make
+        // sense. Full document navigation (a plain anchor, not the router) so
+        // the browser loads the new frontend at the origin root. See the
+        // PUBLIC_PATH declaration above for why the check is dead-code-friendly.
+        PUBLIC_PATH !== '/' && (
+          <MuiLink
+            href="/"
+            underline="hover"
+            variant="body2"
+            color="secondary"
+            data-testid="try-new-ui-link"
+          >
+            {t('login.try-new-ui')}
+          </MuiLink>
+        )
+      }
       ErrorMessage={
         error &&
         loginError.error !== '' && (
-          <BoxedErrorWithDetails
-            details={error.detail || ''}
-            error={loginError.error}
-            hint={loginError.hint}
-            width="100%"
-          />
+          <div data-testid="login-error" style={{ width: '100%' }}>
+            <BoxedErrorWithDetails
+              details={error.detail || ''}
+              error={loginError.error}
+              hint={loginError.hint}
+              width="100%"
+            />
+          </div>
         )
       }
       onLogin={async () => {

@@ -18,6 +18,8 @@ diesel_json_type! {
             id: String,
             table: ChangelogTableName
         },
+        #[error("Sync file not found on central server: {0}")]
+        SyncFileNotFound(String),
         #[error("Sync V7 version mismatch, central: {central}, remote: {remote}")]
         SyncVersionMismatch { central: Version, remote: Version },
         #[error("Not a central server")]

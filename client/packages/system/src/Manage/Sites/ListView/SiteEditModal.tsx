@@ -1,3 +1,6 @@
+// Disable camelcase should be removed once enable_multi_device_site feature flag is removed from the central server's configuration. See issue #12522.
+/* eslint-disable camelcase */
+
 import React from 'react';
 import {
   useTranslation,
@@ -14,6 +17,8 @@ import {
   useConfirmationModal,
   SyncVersionNode,
   Switch,
+  Tooltip,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
@@ -64,6 +69,10 @@ export const SiteEditModal = ({
   const isExisting = !isNew;
   const { data: syncSettings } = useSync.settings.syncSettings();
   const currentSiteId = syncSettings?.syncSiteId;
+  // Multi-device sync is not ready for general use (some data, e.g. stock, does
+  // not sync), so the toggle is gated behind the `enable_multi_device_site`
+  // feature flag in the central server's configuration. See issue #12522.
+  const { enable_multi_device_site } = useFeatureFlags();
   // Hardware id / token are only safe to clear once the site has transitioned to
   // v7 (legacy v5/v6 sites still manage these via 4D). See issue #11784.
   const isV7 = syncVersion === SyncVersionNode.V7;
@@ -239,13 +248,25 @@ export const SiteEditModal = ({
               labelWidth="130px"
               Input={
                 <Box display="flex" justifyContent="flex-end" flex={1}>
-                  <Switch
-                    checked={isMultiDevice}
-                    onChange={() => confirmSetMultiDevice()}
-                    // Don't allow a multi device site to become a single device site again
-                    // TODO: Need to implement re-syncing of skipped changelog entries - #12401
-                    disabled={isMultiDevice}
-                  />
+                  <Tooltip
+                    title={
+                      !isMultiDevice && !enable_multi_device_site
+                        ? t('messages.multi-device-requires-flag')
+                        : ''
+                    }
+                  >
+                    {/* span wrapper so the tooltip still fires over a disabled Switch */}
+                    <span>
+                      <Switch
+                        checked={isMultiDevice}
+                        onChange={() => confirmSetMultiDevice()}
+                        // Don't allow a multi device site to become a single device site again
+                        // TODO: Need to implement re-syncing of skipped changelog entries - #12401
+                        // Also disabled unless the enable_multi_device_site feature flag is set - #12522
+                        disabled={isMultiDevice || !enable_multi_device_site}
+                      />
+                    </span>
+                  </Tooltip>
                 </Box>
               }
             />

@@ -65,6 +65,7 @@ export const Footer: FC<FooterProps> = ({
               }
               startIcon={<SaveIcon />}
               shouldShrink={false}
+              data-testid="save-button"
             />
           </Box>
         </Box>

@@ -76,6 +76,11 @@ export const DateFilter = ({
 
   const componentProps = {
     label: name,
+    // Locale-stable handle for e2e; a ranged filter needs one id per end,
+    // since both halves share the same urlParameter.
+    textFieldTestId: `filter-input-${filterDefinition.testId ?? urlParameter}${
+      range ? `-${range}` : ''
+    }`,
     value,
     width: width ? width : FILTER_WIDTH,
     onChange: handleChange,

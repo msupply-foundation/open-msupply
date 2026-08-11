@@ -146,6 +146,7 @@ export const NewStockLineModal = ({
       height={575}
       slideAnimation={false}
       title={t('title.stock-line-details')}
+      testId="new-stock-modal"
       okButton={
         <DialogButton variant="ok" disabled={isDisabled} onClick={save} />
       }

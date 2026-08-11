@@ -108,6 +108,7 @@ export const LabelPrinterSettings = () => {
                 checked={isUsb ?? false}
                 onChange={(_, checked) => setIsUsb(checked)}
                 color="primary"
+                testId="print-via-usb"
               />
             }
             title={t('settings.print-via-usb')}
@@ -128,6 +129,7 @@ export const LabelPrinterSettings = () => {
           <BasicTextInput
             value={draft.address}
             onChange={event => onChange({ address: event.target.value })}
+            slotProps={{ htmlInput: { 'data-testid': 'printer-address' } }}
           />
         }
         title={t('settings.printer-address')}
@@ -138,6 +140,7 @@ export const LabelPrinterSettings = () => {
             value={draft.port}
             noFormatting
             onChange={port => onChange({ port })}
+            slotProps={{ htmlInput: { 'data-testid': 'printer-port' } }}
           />
         }
         title={t('settings.printer-port')}
@@ -148,6 +151,9 @@ export const LabelPrinterSettings = () => {
             value={draft.labelHeight}
             onChange={labelHeight => {
               if (labelHeight !== undefined) onChange({ labelHeight });
+            }}
+            slotProps={{
+              htmlInput: { 'data-testid': 'printer-label-height' },
             }}
           />
         }
@@ -160,6 +166,7 @@ export const LabelPrinterSettings = () => {
             onChange={labelWidth => {
               if (labelWidth !== undefined) onChange({ labelWidth });
             }}
+            slotProps={{ htmlInput: { 'data-testid': 'printer-label-width' } }}
           />
         }
         title={t('settings.printer-label-width')}
@@ -171,6 +178,7 @@ export const LabelPrinterSettings = () => {
           onClick={test}
           disabled={isInvalid}
           label={t('button.test')}
+          data-testid="printer-test"
         />
         <ButtonWithIcon
           Icon={<SaveIcon />}
@@ -178,6 +186,7 @@ export const LabelPrinterSettings = () => {
           variant="contained"
           onClick={save}
           disabled={isInvalid}
+          data-testid="printer-save"
         />
       </Box>
     </>

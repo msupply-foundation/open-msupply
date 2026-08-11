@@ -24,6 +24,28 @@ describe('Breadcrumbs', () => {
 
     expect(queryByText(/distribution/i)).not.toBeInTheDocument();
   });
+  it('Renders as a navigation landmark named Breadcrumb', () => {
+    const { getByRole } = render(
+      <TestingProvider>
+        <TestingRouter
+          initialEntries={[
+            RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.OutboundShipment)
+              .build(),
+          ]}
+        >
+          <Route path="*" element={<Breadcrumbs />}></Route>
+        </TestingRouter>
+      </TestingProvider>
+    );
+
+    // The e2e suites locate the breadcrumb by this accessible name to tell
+    // it apart from the app drawer's <nav>.
+    expect(
+      getByRole('navigation', { name: /breadcrumb/i })
+    ).toBeInTheDocument();
+  });
+
   it('Renders the names of all the routes from the URL, excluding the first', () => {
     const { getByText } = render(
       <TestingProvider>

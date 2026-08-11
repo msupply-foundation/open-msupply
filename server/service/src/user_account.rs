@@ -8,6 +8,7 @@ use util::uuid::uuid;
 
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
 use log::{error, warn};
+use std::collections::{HashMap, HashSet};
 
 pub struct CreateUserAccount {
     pub username: String,
@@ -55,7 +56,14 @@ impl<'a> UserAccountService<'a> {
         UserAccountService { connection }
     }
 
-    /// Deletes existing user and replaces the user with the provided data
+    /// Reconciles the user's account row, store joins and (non-context)
+    /// permissions with the provided data, writing only deltas: new or changed
+    /// rows are upserted, rows absent from the input are deleted, identical
+    /// rows are left untouched so no changelog row is written. The previous
+    /// delete-all-then-reinsert wrote ~2 changelog rows per permission on
+    /// every login even when nothing changed, and — because permission ids are
+    /// deterministic — manufactured the stale delete → re-create changelog
+    /// pairs behind #12610 (see #12612).
     pub fn upsert_user(
         &self,
         user: UserAccountRow,
@@ -67,26 +75,88 @@ impl<'a> UserAccountService<'a> {
                 let user_store_repo = UserStoreJoinRowRepository::new(con);
                 let permission_repo = UserPermissionRowRepository::new(con);
 
-                let permissions_to_delete = UserPermissionRepository::new(con).query_by_filter(
-                    UserPermissionFilter::new()
-                        .user_id(EqualFilter::equal_to(user.id.to_string()))
-                        .has_context(false),
-                )?;
-                for permission in permissions_to_delete {
-                    permission_repo.delete(&permission.id)?;
+                // Context permissions are managed by sync, not the login flow —
+                // left untouched, as before (has_context(false)).
+                let existing_permissions: HashMap<String, UserPermissionRow> =
+                    UserPermissionRepository::new(con)
+                        .query_by_filter(
+                            UserPermissionFilter::new()
+                                .user_id(EqualFilter::equal_to(user.id.to_string()))
+                                .has_context(false),
+                        )?
+                        .into_iter()
+                        .map(|p| (p.id.clone(), p))
+                        .collect();
+                let incoming_permission_ids: HashSet<&str> = stores_permissions
+                    .iter()
+                    .flat_map(|s| &s.permissions)
+                    .map(|p| p.id.as_str())
+                    .collect();
+                for id in existing_permissions
+                    .keys()
+                    .filter(|id| !incoming_permission_ids.contains(id.as_str()))
+                {
+                    // A genuine revocation — the Delete changelog must sync.
+                    permission_repo.delete(id)?;
                 }
-                user_store_repo.delete_by_user_id(&user.id)?;
-                user_repo.upsert_one(&user)?;
+
+                // Store joins absent from the input are removed. Like the
+                // previous wholesale delete this writes no changelog — store
+                // join removals don't sync (tracked in #12612).
+                let existing_joins: HashMap<String, UserStoreJoinRow> = user_store_repo
+                    .find_many_by_user_id(&user.id)?
+                    .into_iter()
+                    .map(|j| (j.id.clone(), j))
+                    .collect();
+                let incoming_join_ids: HashSet<&str> = stores_permissions
+                    .iter()
+                    .map(|s| s.user_store_join.id.as_str())
+                    .collect();
+                for id in existing_joins
+                    .keys()
+                    .filter(|id| !incoming_join_ids.contains(id.as_str()))
+                {
+                    user_store_repo.delete_by_id(id)?;
+                }
+
+                // The user row is rewritten only on material change.
+                // `last_successful_sync` is stamped by the caller on every
+                // login and is local bookkeeping only, so it is excluded from
+                // the comparison; the caller keeps `hashed_password` stable
+                // while the password is unchanged (see `update_user`).
+                let existing_user = user_repo.find_one_by_id(&user.id)?;
+                let user_unchanged = existing_user.as_ref().is_some_and(|existing| {
+                    UserAccountRow {
+                        last_successful_sync: existing.last_successful_sync,
+                        ..user.clone()
+                    } == *existing
+                });
+                if !user_unchanged {
+                    user_repo.upsert_one(&user)?;
+                }
 
                 for store in stores_permissions {
+                    let join_changed = existing_joins.get(&store.user_store_join.id)
+                        != Some(&store.user_store_join);
+                    let changed_permissions: Vec<&UserPermissionRow> = store
+                        .permissions
+                        .iter()
+                        .filter(|p| existing_permissions.get(&p.id) != Some(*p))
+                        .collect();
+                    if !join_changed && changed_permissions.is_empty() {
+                        continue;
+                    }
+
                     // The list may contain stores we don't know about; try to insert the store
                     // in a sub-transaction and ignore the store when there is an error
                     // Note: Postgres requires this to run in a sub-transaction because it aborts
                     // the whole tx when encounter an error.
                     let sub_result = con.transaction_sync_etc(
                         |_| {
-                            user_store_repo.upsert_one(&store.user_store_join)?;
-                            for permission in &store.permissions {
+                            if join_changed {
+                                user_store_repo.upsert_one(&store.user_store_join)?;
+                            }
+                            for permission in &changed_permissions {
                                 permission_repo.upsert_one(permission)?;
                             }
                             Ok(())
@@ -368,5 +438,204 @@ mod user_account_test {
             result,
             Err(VerifyPasswordError::UsernameDoesNotExist)
         ));
+    }
+
+    // ---- upsert_user reconciliation (#12612) ----
+
+    use repository::{
+        ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
+        RowActionType,
+    };
+
+    fn reconcile_user() -> UserAccountRow {
+        UserAccountRow {
+            id: "reconcile_user".to_string(),
+            username: "reconcile_user".to_string(),
+            // Stable across calls, as update_user keeps the stored hash while
+            // the password is unchanged.
+            hashed_password: "stable_hash".to_string(),
+            email: None,
+            language: Default::default(),
+            first_name: None,
+            last_name: None,
+            phone_number: None,
+            job_title: None,
+            // Stamped fresh on every login by update_user — excluded from
+            // upsert_user's change detection.
+            last_successful_sync: Some(chrono::Utc::now().naive_utc()),
+            is_active: true,
+        }
+    }
+
+    fn permission(id: &str, permission: PermissionType) -> UserPermissionRow {
+        UserPermissionRow {
+            id: id.to_string(),
+            user_id: reconcile_user().id,
+            store_id: Some("store_a".to_string()),
+            permission,
+            context_id: None,
+        }
+    }
+
+    fn store_a_permissions(permissions: Vec<UserPermissionRow>) -> Vec<StorePermissions> {
+        vec![StorePermissions {
+            user_store_join: UserStoreJoinRow {
+                id: "reconcile_join_a".to_string(),
+                user_id: reconcile_user().id,
+                store_id: "store_a".to_string(),
+                is_default: true,
+            },
+            permissions,
+        }]
+    }
+
+    fn both_permissions() -> Vec<UserPermissionRow> {
+        vec![
+            permission("reconcile_p1", PermissionType::StoreAccess),
+            permission("reconcile_p2", PermissionType::InboundShipmentMutate),
+        ]
+    }
+
+    /// Changelog rows written after `mark`.
+    fn changelogs_after(connection: &StorageConnection, mark: u64) -> Vec<ChangelogRow> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: mark as i64,
+                    limit: 1000,
+                },
+            )
+            .unwrap()
+            .rows
+    }
+
+    #[actix_rt::test]
+    async fn upsert_user_idempotent_writes_no_changelog() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_idempotent_writes_no_changelog",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(reconcile_user(), store_a_permissions(both_permissions()))
+            .unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        // Same data again (fresh last_successful_sync, as every login stamps).
+        service
+            .upsert_user(reconcile_user(), store_a_permissions(both_permissions()))
+            .unwrap();
+
+        assert_eq!(
+            changelogs_after(&connection, mark),
+            vec![],
+            "an unchanged login must write no changelog rows"
+        );
+    }
+
+    #[actix_rt::test]
+    async fn upsert_user_deletes_only_removed_permissions() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_deletes_only_removed_permissions",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(reconcile_user(), store_a_permissions(both_permissions()))
+            .unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        // p2 revoked.
+        service
+            .upsert_user(
+                reconcile_user(),
+                store_a_permissions(vec![permission("reconcile_p1", PermissionType::StoreAccess)]),
+            )
+            .unwrap();
+
+        let new_rows = changelogs_after(&connection, mark);
+        assert_eq!(new_rows.len(), 1);
+        assert_eq!(new_rows[0].table_name, ChangelogTableName::UserPermission);
+        assert_eq!(new_rows[0].record_id, "reconcile_p2");
+        assert_eq!(new_rows[0].row_action, RowActionType::Delete);
+
+        let remaining = UserPermissionRepository::new(&connection)
+            .query_by_filter(
+                UserPermissionFilter::new()
+                    .user_id(EqualFilter::equal_to(reconcile_user().id)),
+            )
+            .unwrap();
+        assert_eq!(remaining.len(), 1);
+        assert_eq!(remaining[0].id, "reconcile_p1");
+    }
+
+    #[actix_rt::test]
+    async fn upsert_user_upserts_only_changed_rows() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_upserts_only_changed_rows",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(reconcile_user(), store_a_permissions(both_permissions()))
+            .unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        // The join flips is_default and p1 changes permission; p2 and the user
+        // row are untouched.
+        let mut changed = store_a_permissions(vec![
+            permission("reconcile_p1", PermissionType::OutboundShipmentMutate),
+            permission("reconcile_p2", PermissionType::InboundShipmentMutate),
+        ]);
+        changed[0].user_store_join.is_default = false;
+        service.upsert_user(reconcile_user(), changed).unwrap();
+
+        let mut new_rows = changelogs_after(&connection, mark);
+        new_rows.sort_by_key(|r| r.record_id.clone());
+        assert_eq!(new_rows.len(), 2);
+        assert_eq!(new_rows[0].table_name, ChangelogTableName::UserStoreJoin);
+        assert_eq!(new_rows[0].record_id, "reconcile_join_a");
+        assert_eq!(new_rows[0].row_action, RowActionType::Upsert);
+        assert_eq!(new_rows[1].table_name, ChangelogTableName::UserPermission);
+        assert_eq!(new_rows[1].record_id, "reconcile_p1");
+        assert_eq!(new_rows[1].row_action, RowActionType::Upsert);
+    }
+
+    #[actix_rt::test]
+    async fn upsert_user_writes_user_row_only_when_changed() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_writes_user_row_only_when_changed",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(reconcile_user(), store_a_permissions(both_permissions()))
+            .unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        service
+            .upsert_user(
+                UserAccountRow {
+                    email: Some("changed@example.com".to_string()),
+                    ..reconcile_user()
+                },
+                store_a_permissions(both_permissions()),
+            )
+            .unwrap();
+
+        let new_rows = changelogs_after(&connection, mark);
+        assert_eq!(new_rows.len(), 1);
+        assert_eq!(new_rows[0].table_name, ChangelogTableName::UserAccount);
+        assert_eq!(new_rows[0].record_id, "reconcile_user");
+        assert_eq!(new_rows[0].row_action, RowActionType::Upsert);
     }
 }

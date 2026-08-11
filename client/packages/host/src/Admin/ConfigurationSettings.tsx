@@ -44,6 +44,7 @@ export const ConfigurationSettings = () => {
           <BaseButton
             onClick={handleClick('gaps')}
             disabled={dataLoading || isLoading}
+            data-testid="initialise-gaps"
             title={t('tooltip.re-initialise-in-language', {
               language: currentLanguage,
             })}
@@ -62,6 +63,7 @@ export const ConfigurationSettings = () => {
           <BaseButton
             onClick={handleClick('forecasting')}
             disabled={dataLoading || isLoading}
+            data-testid="initialise-forecasting"
             title={t('tooltip.re-initialise-in-language', {
               language: currentLanguage,
             })}
@@ -75,7 +77,10 @@ export const ConfigurationSettings = () => {
       <Setting
         title={t('label.configure-supply-level')}
         component={
-          <BaseButton onClick={handleSupplyModalClick}>
+          <BaseButton
+            onClick={handleSupplyModalClick}
+            data-testid="configure-supply-levels"
+          >
             {t('label.edit')}
           </BaseButton>
         }

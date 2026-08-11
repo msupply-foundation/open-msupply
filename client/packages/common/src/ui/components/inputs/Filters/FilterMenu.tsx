@@ -25,12 +25,25 @@ export interface FilterDefinitionCommon {
   name: string;
   urlParameter: string;
   isDefault?: boolean;
+  /**
+   * Overrides the `filter-option-*` / `filter-input-*` test-id stem, which
+   * otherwise derives from `urlParameter` (or, for a group, its name).
+   *
+   * The cross-front-end e2e suites locate filters by these ids, so the id is a
+   * shared contract rather than an implementation detail. A nested filter's
+   * `urlParameter` carries its GraphQL path (`location.codeOrName`), which the
+   * other front end has no reason to match; set this to the filter's own name
+   * so both sides agree. See `e2e/TESTIDS.md` in open-msupply-frontend.
+   */
+  testId?: string;
 }
 
 export interface GroupFilterDefinition {
   type: 'group';
   name: string;
   elements: FilterDefinition[];
+  /** See `FilterDefinitionCommon.testId`. */
+  testId?: string;
 }
 
 export type FilterDefinition =
@@ -135,9 +148,10 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
                   : option.value.urlParameter
               }
               testId={`filter-option-${
-                option.value.type === 'group'
+                option.value.testId ??
+                (option.value.type === 'group'
                   ? option.value.name.toLowerCase().replace(/\s+/g, '-')
-                  : option.value.urlParameter
+                  : option.value.urlParameter)
               }`}
               onClick={() => handleSelect(option.value)}
               label={option.label}
@@ -166,7 +180,11 @@ const FilterMenuItem = ({
   label: string;
   testId?: string;
 }) => (
-  <DropdownMenuItem data-testid={testId} onClick={onClick} sx={{ fontSize: 14 }}>
+  <DropdownMenuItem
+    data-testid={testId}
+    onClick={onClick}
+    sx={{ fontSize: 14 }}
+  >
     {label}
   </DropdownMenuItem>
 );

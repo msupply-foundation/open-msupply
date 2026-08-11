@@ -6,10 +6,12 @@
   "private": true,
   "scripts": {
     "android:build:debug": "yarn build && yarn workspace @openmsupply-client/android build:debug",
-    "android:build:release": "yarn build && yarn workspace @openmsupply-client/android build:release",
+    "android:build:release": "PUBLIC_PATH=/old-ui/ yarn build && yarn workspace @openmsupply-client/android build:release",
     "android:build:server": "yarn build && yarn workspace @openmsupply-client/android build:server",
     "android:run": "npx cap run android",
     "build": "yarn workspace @openmsupply-client/host build",
+    "//build:old-ui": "Builds this client as the legacy UI and puts it where a locally-run server serves it (/old-ui/). PUBLIC_PATH must be set at build time — it fixes the asset URLs and the router base, so a bundle built for / cannot be relocated by copying. Mirrors what packaging does (build/mac/build.sh, dockerise.yaml, build-windows-installers.yaml, android:build:release), which each copy to their own destination.",
+    "build:old-ui": "PUBLIC_PATH=/old-ui/ yarn build && mkdir -p ../server/frontend && rm -rf ../server/frontend/old-ui && cp -R packages/host/dist ../server/frontend/old-ui",
     "build-stats": "yarn workspace @openmsupply-client/host build-stats",
     "build-storybook": "storybook build",
     "compile-full": "yarn workspaces foreach -A --parallel --exclude open-msupply --exclude openmsupply-client --exclude @openmsupply-client/android --exclude standard_reports --exclude standard_forms run tsc",

@@ -67,8 +67,7 @@ const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   // Query still loading — don't render children yet, but don't logout either
   if (!data?.data) return null;
 
-  if (data.data.status == InitialisationStatusType.Initialised)
-    return children;
+  if (data.data.status == InitialisationStatusType.Initialised) return children;
 
   // Server is not initialised — wipe locally cached auth so the route guard sends the user to
   // /login. Skip the server-side logout: PreInit renders outside the Router (so useNavigate is
@@ -119,6 +118,14 @@ EnvUtils.deviceInfo.then(info => {
   }
 });
 
+// Router base path derived from the build-time publicPath ('/' by default, so
+// no basename in the default build). React Router expects it without a trailing
+// slash, so strip it for anything other than the root.
+const basename =
+  Environment.PUBLIC_PATH === '/'
+    ? undefined
+    : Environment.PUBLIC_PATH.replace(/\/$/, '');
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
@@ -154,7 +161,8 @@ const router = createBrowserRouter(
         </ErrorBoundary>
       }
     />
-  )
+  ),
+  { basename }
 );
 
 initialiseI18n();

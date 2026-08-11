@@ -27,11 +27,13 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           label={t('button.repack')}
           Icon={<StockIcon />}
           onClick={openRepack}
+          data-testid="repack-button"
         />
         <ButtonWithIcon
           label={t('button.adjust')}
           Icon={<BarChartIcon />}
           onClick={openAdjust}
+          data-testid="adjust-button"
         />
       </Grid>
     </AppBarButtonsPortal>

@@ -96,6 +96,7 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
       title={t('heading.recently-prescribed')}
       width={900}
       height={600}
+      testId="prescription-history-modal"
       okButton={<DialogButton variant="ok" onClick={onClose} />}
     >
       <MaterialTable table={table} />

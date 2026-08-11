@@ -27,6 +27,7 @@ export const FooterComponent = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+      testId: 'delete-lines-button',
     },
   ];
 

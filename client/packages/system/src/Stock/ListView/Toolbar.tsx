@@ -46,6 +46,8 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
           type: 'enum',
           name: t('label.master-list'),
           urlParameter: 'masterList.id',
+          // Shared e2e id: the filter's own name, not its GraphQL path.
+          testId: 'masterList',
           options: masterLists.nodes.map(ml => ({
             label: ml.name,
             value: ml.id,
@@ -73,11 +75,16 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       type: 'text',
       name: t('label.location'),
       urlParameter: 'location.codeOrName',
+      // Shared e2e id: the filter's own name, not its GraphQL path.
+      testId: 'location',
       placeholder: t('placeholder.search-by-location-code-or-name'),
     },
     {
       type: 'group',
       name: t('label.expiry'),
+      // Shared e2e id: the group entry would otherwise derive from the
+      // translated group name, which the other front end cannot match.
+      testId: 'expiryDate',
       elements: [
         {
           type: 'date',

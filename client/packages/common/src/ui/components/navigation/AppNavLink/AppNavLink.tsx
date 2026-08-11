@@ -121,6 +121,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             role="link"
             aria-label={text}
             title={text}
+            data-testid={`nav-${to}`}
             onClick={handleClick}
           />
         )

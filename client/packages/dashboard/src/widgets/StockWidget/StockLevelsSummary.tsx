@@ -46,7 +46,7 @@ export const StockLevelsSummary = ({
 
   useEffect(() => {
     queryClient.invalidateQueries({
-      queryKey: [DASHBOARD, ITEMS]
+      queryKey: [DASHBOARD, ITEMS],
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -64,6 +64,7 @@ export const StockLevelsSummary = ({
       isLoading={isLoading}
       title={t('heading.stock-levels')}
       panelContext={panelContext}
+      testId="dashboard-panel-inventory.stock-levels"
       stats={[
         ...(outOfStockProducts
           ? [
@@ -79,6 +80,8 @@ export const StockLevelsSummary = ({
                   })
                   .build(),
                 statContext: `${panelContext}-out-of-stock-products`,
+                testId:
+                  'dashboard-stat-inventory.stock-levels.out-of-stock-recently-used',
               },
             ]
           : []),
@@ -92,6 +95,7 @@ export const StockLevelsSummary = ({
             })
             .build(),
           statContext: `${panelContext}-items-no-stock`,
+          testId: 'dashboard-stat-inventory.stock-levels.out-of-stock',
         },
         ...(lowStockAlert
           ? [
@@ -111,6 +115,7 @@ export const StockLevelsSummary = ({
                   })
                   .build(),
                 statContext: `${panelContext}-products-at-risk-of-stockout`,
+                testId: 'dashboard-stat-inventory.stock-levels.at-risk',
                 infoTooltip: t('messages.products-at-risk-of-stock-out-info', {
                   num: lowStockAlert,
                 }),
@@ -130,6 +135,7 @@ export const StockLevelsSummary = ({
             })
             .build(),
           statContext: `${panelContext}-low-stock-items`,
+          testId: 'dashboard-stat-inventory.stock-levels.low-stock',
         },
         ...(overStockAlert
           ? [
@@ -145,6 +151,7 @@ export const StockLevelsSummary = ({
                   })
                   .build(),
                 statContext: `${panelContext}-overstocked-products`,
+                testId: 'dashboard-stat-inventory.stock-levels.overstocked',
               },
             ]
           : []),
@@ -161,6 +168,7 @@ export const StockLevelsSummary = ({
             })
             .build(),
           statContext: `${panelContext}-over-six-months-stock`,
+          testId: 'dashboard-stat-inventory.stock-levels.high-stock',
         },
         {
           label: t('label.total-items', {
@@ -171,6 +179,7 @@ export const StockLevelsSummary = ({
             .addPart(AppRoute.Items)
             .build(),
           statContext: `${panelContext}-total-items`,
+          testId: 'dashboard-stat-inventory.stock-levels.total-items',
         },
       ]}
       link={RouteBuilder.create(AppRoute.Inventory)
