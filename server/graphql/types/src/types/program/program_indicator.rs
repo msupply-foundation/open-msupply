@@ -190,8 +190,6 @@ impl IndicatorLineRowNode {
     /// The line's own configured type, null where it declares none (`var` in
     /// mSupply). A CELL's type is its column's `valueType`, which already
     /// resolves the fallback to this one.
-    // Reported as configured: `unwrap_or_default()` here answered Number for a
-    // `var` line, which no caller could tell from a line genuinely typed Number.
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
         self.line
             .value_type
@@ -209,10 +207,6 @@ impl IndicatorColumnNode {
         IndicatorColumnNode { column, line }
     }
 
-    // Answering the column's RAW type here (`unwrap_or_default()`, i.e. Number)
-    // made a `var` column on a text line indistinguishable from a genuinely
-    // numeric one, so clients gave it a numeric input for a cell
-    // `update_indicator_value` accepts text into.
     fn effective_value_type(&self) -> Option<IndicatorValueTypeNode> {
         indicator_value_type(&self.line, &self.column)
             .clone()
