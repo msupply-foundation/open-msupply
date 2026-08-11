@@ -12,6 +12,7 @@ import {
   Switch,
 } from 'solid-js';
 import type { JSX } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import {
   createSolidTable,
   functionalUpdate,
@@ -201,6 +202,23 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  unaffected.
    */
   showFullScreen?: boolean;
+  /**
+   * Render the toolbar's CONTROL CLUSTER (view toggle · Columns · Settings ·
+   * full screen) into this element instead of the table's own toolbar row — for
+   * a host that already has a chrome row of its own and shouldn't pay a second
+   * one. The line-editor modals use it to lift the controls onto the dialog's
+   * header beside "Add batch"; without it the toolbar spends a whole row on
+   * three icons a few pixels above the cards.
+   *
+   * The controls stay part of THIS table (same reactive owner, same popovers) —
+   * they're only painted elsewhere, via a Portal. With no filters to show, the
+   * toolbar row then renders nothing at all.
+   *
+   * Pass the element from a `ref` SIGNAL (`ref={setSlot}` … `controlsMount={
+   * slot()}`), not a plain variable: the mount point attaches after this table
+   * first renders, so a non-reactive read is `undefined` forever.
+   */
+  controlsMount?: HTMLElement;
 
   /**
    * Minimum height, in rem, for the table (its `.root`). Without it the table's
@@ -633,6 +651,43 @@ export function DataTable<T, K extends string, G extends string = never>(
     });
   };
 
+  // A header label clamps to two lines (.thText), and a label that needs more
+  // loses its tail. Chromium does NOT paint the line-clamp ellipsis under
+  // `text-align: end`, so on a right-aligned (numeric) column that loss is
+  // SILENT — "Target stock (AMC)" renders as "Target stock" with no marker of
+  // any kind. Start/centre headers ellipsise correctly, and neither
+  // `text-overflow: ellipsis` nor `block-ellipsis: auto` overrides the
+  // end-aligned case (all four measured 2026-08-11), so there is no CSS-only
+  // fix: the truncated headers have to be found and stamped.
+  //
+  // data-clipped flips the label to start alignment, where the ellipsis DOES
+  // paint (see DataTable.module.css), and `title` hands back the full label on
+  // hover — the same native hover-reveal a clipped body cell gets
+  // (revealIfClipped in TableRow.tsx). Screen readers were never affected: the
+  // full label stays in the DOM either way, so this is purely a sighted-user
+  // repair.
+  //
+  // Measured with the other layout facts because a resize drag, a hidden
+  // column, or a density change is exactly what turns clipping on and off. The
+  // work is bounded to ONE header row (not the body), and the attributes it
+  // writes change no widths, so it can't feed the observer that calls it.
+  const markClippedHeaders = () => {
+    const headerRow = scrollBox?.querySelector('thead tr');
+    if (!headerRow) return; // card view / pre-mount
+    for (const cell of [...headerRow.children] as HTMLElement[]) {
+      const label = cell.querySelector<HTMLElement>(`.${styles.thText}`);
+      if (!label) continue; // the leading select cell carries no label
+      // The clamp hides whole LINES, so an over-long label overflows vertically.
+      if (label.scrollHeight > label.clientHeight) {
+        cell.dataset.clipped = 'true';
+        cell.title = label.textContent ?? '';
+      } else {
+        delete cell.dataset.clipped;
+        cell.removeAttribute('title');
+      }
+    }
+  };
+
   // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
   // TanStack can offer — getStart('left') / getAfter('right') — sum the
   // CONFIGURED sizes, and under our auto table layout a column's `size` is only
@@ -709,6 +764,7 @@ export function DataTable<T, K extends string, G extends string = never>(
   const remeasure = () => {
     syncHiddenEdges();
     measurePinnedOffsets();
+    markClippedHeaders();
   };
 
   // Scrolling isn't the only thing that moves these — hiding a column, dragging
@@ -801,6 +857,171 @@ export function DataTable<T, K extends string, G extends string = never>(
     return (pinning?.left?.length ?? 0) + (pinning?.right?.length ?? 0) > 0;
   };
 
+  // The toolbar's icon-control cluster — the inline loading spinner, the card
+  // Sort control, the view toggle, Columns, Settings and full screen. A
+  // FUNCTION, not a stored element: it renders either in the table's own
+  // toolbar or (controlsMount) portalled into the host's chrome row, and a
+  // shared element node can only live in one place. Exactly one call renders.
+  // Whether the toolbar ROW renders at all. With the controls lifted into a
+  // host's chrome (controlsMount) and no filters to show, it doesn't — and the
+  // table then loses the hairline that row carried along its bottom edge, which
+  // is what separated the header from whatever sits above it. The seam moves to
+  // the table area instead (see .root[data-no-toolbar] in the CSS).
+  const hasToolbar = () => !!filters() || !props.controlsMount;
+
+  const controls = (): JSX.Element => (
+    <div class={styles.toolbarControls}>
+      {/* Loading indicator — a small inline spinner just to the LEFT of the
+            icon controls while a fetch runs AND rows are already showing (a
+            refetch on filter/sort/page — keepPreviousData keeps the rows
+            put). Signals "updating" without blanking or remounting the table
+            (#160/#196). Initial load (no rows yet) uses the centred spinner
+            below instead, so the two never show together. */}
+      <Show when={props.loading && table.getRowModel().rows.length > 0}>
+        <span class={styles.toolbarLoading}>
+          <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
+        </span>
+      </Show>
+      {/* Sort control — card view only (no clickable headers there): a
+            labelled popover showing the active sort field + direction, listing
+            the sortable columns. Calls the same onSort as a header click. */}
+      <Show when={showSortControl()}>
+        <Popover
+          placement="bottom-end"
+          triggerClass={styles.sortTrigger}
+          triggerTestId="table-sort"
+          triggerLabel={t('table.sort')}
+          closeOnClickInside
+          class={styles.controlPopover}
+          trigger={
+            <>
+              <span class={styles.sortTriggerLabel}>
+                {activeSortColumn()
+                  ? columnLabel(activeSortColumn()!)
+                  : t('table.sort')}
+              </span>
+              {/* Same direction glyph as the table header's sort indicator
+                    (↓ desc / ↑ asc, .sortIndicator), pushed to the pill's
+                    trailing edge (justify-content) regardless of label width. */}
+              <Show when={props.sort}>
+                <span class={styles.sortIndicator} aria-hidden="true">
+                  {props.sort!.desc ? '↓' : '↑'}
+                </span>
+              </Show>
+            </>
+          }
+        >
+          <div class={styles.sortMenu}>
+            <For each={sortableColumns()}>
+              {col => (
+                <button
+                  type="button"
+                  class={styles.sortMenuItem}
+                  data-testid={`table-sort-${col.sortKey}`}
+                  data-active={props.sort?.key === col.sortKey ? '' : undefined}
+                  onClick={() => chooseSort(col.sortKey!)}
+                >
+                  <span>{columnLabel(col)}</span>
+                  <Show when={props.sort?.key === col.sortKey}>
+                    <span class={styles.sortIndicator} aria-hidden="true">
+                      {props.sort!.desc ? '↓' : '↑'}
+                    </span>
+                  </Show>
+                </button>
+              )}
+            </For>
+          </div>
+        </Popover>
+      </Show>
+      {/* View toggle — a single Card-view control matching the other icon
+            controls (no border): grey when in table view, blue when card view
+            is active; clicking flips between the two. Above the compact
+            breakpoint only (below it the table is always card, so it's
+            hidden). Opt-in per table (showCardToggle) and needs setConfig to
+            persist the choice. */}
+      <Show when={props.showCardToggle && !isCompact() && props.setConfig}>
+        <button
+          type="button"
+          class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
+          data-testid="table-view-toggle"
+          aria-pressed={viewMode() === 'card'}
+          aria-label={t('table.view-cards')}
+          title={t('table.view-cards')}
+          onClick={() =>
+            props.setConfig?.(
+              'viewMode',
+              viewMode() === 'card' ? 'table' : 'card'
+            )
+          }
+        >
+          <CardViewIcon />
+        </button>
+      </Show>
+      {/* Columns — the per-column panel (show / move / pin;
+            ui-standards § tables → column management: one predictable place,
+            headers stay clean). Only when the page wired config controls
+            (setConfig present); otherwise there's nothing to configure. */}
+      <Show when={props.setConfig}>
+        <Popover
+          placement="bottom-end"
+          trigger={<Columns3CogIcon />}
+          triggerLabel={t('table.edit-columns')}
+          triggerProps={{ title: t('table.edit-columns') }}
+          triggerClass={styles.controlButton}
+          class={styles.controlPopover}
+        >
+          <ColumnSettings
+            table={table}
+            setConfig={props.setConfig}
+            viewMode={viewMode()}
+          />
+        </Popover>
+      </Show>
+      {/* Settings — table-wide settings (the Density radio, Reset table to
+            default, save-as-global-default), split from the per-column panel
+            per the spec's two-control toolbar. */}
+      <Show when={props.setConfig}>
+        <Popover
+          placement="bottom-end"
+          trigger={<SettingsIcon />}
+          triggerLabel={t('table.settings')}
+          triggerProps={{ title: t('table.settings') }}
+          triggerClass={styles.controlButton}
+          class={styles.controlPopover}
+        >
+          <TableSettings
+            table={table}
+            config={props.config}
+            density={viewDensity()}
+            setConfig={props.setConfig}
+            onReset={resetConfig}
+            resetDisabled={props.configIsDefault}
+            orderChanged={columnOrderChanged()}
+            anyColumnHidden={anyColumnHidden()}
+            anyColumnSized={anyColumnSized()}
+            anyColumnPinned={anyColumnPinned()}
+            onSaveGlobalDefault={props.onSaveGlobalDefault}
+          />
+        </Popover>
+      </Show>
+      {/* Full-screen — a shell-level mode (hides menu/footer). Not every host can host it
+            (e.g. a table inside a modal), so a caller opts out with showFullScreen={false};
+            the card-switch + columns/settings controls above still render. */}
+      <Show when={props.showFullScreen !== false}>
+        <button
+          type="button"
+          class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
+          aria-label={t('table.toggle-full-screen')}
+          data-testid="table-fullscreen"
+          title={t('table.toggle-full-screen')}
+          onClick={() => setFullScreen(!fullScreen())}
+        >
+          {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
+        </button>
+      </Show>
+    </div>
+  );
+
   return (
     // data-datatable: a stable, un-hashed styling hook so a fill-body page can
     // full-bleed the table from its own CSS module (Page.module.css) — a
@@ -813,175 +1034,32 @@ export function DataTable<T, K extends string, G extends string = never>(
           ? { 'min-block-size': `${props.minBodyRem}rem` }
           : undefined
       }
+      data-no-toolbar={hasToolbar() ? undefined : ''}
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
           inline-end. Outside the scroll region, so it never scrolls with the
           table content and doesn't collide with the scroll box's rounded
-          border. */}
-      <div class={styles.toolbar}>
-        {/* Filter bar slot — the page's <FilterBar>, living WITH the table
-            (ui-standards § tables → filtering), not in the page header. Pure
-            placement: filter state stays page-owned. */}
-        <Show when={filters()}>
-          <div class={styles.toolbarFilters}>{filters()}</div>
-        </Show>
-        {/* The control cluster — the toolbar's controls, held at the inline-end
-            by its own auto margin. Wraps to its own line under the filters at
-            narrow widths (.toolbar is flex-wrap). */}
-        <div class={styles.toolbarControls}>
-          {/* Loading indicator — a small inline spinner just to the LEFT of the
-              icon controls while a fetch runs AND rows are already showing (a
-              refetch on filter/sort/page — keepPreviousData keeps the rows
-              put). Signals "updating" without blanking or remounting the table
-              (#160/#196). Initial load (no rows yet) uses the centred spinner
-              below instead, so the two never show together. */}
-          <Show when={props.loading && table.getRowModel().rows.length > 0}>
-            <span class={styles.toolbarLoading}>
-              <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
-            </span>
+          border. Skipped entirely when the controls are mounted elsewhere
+          (controlsMount) and there are no filters — an empty bar would spend a
+          row, and its bottom hairline would draw a line under nothing. */}
+      <Show when={hasToolbar()}>
+        <div class={styles.toolbar}>
+          {/* Filter bar slot — the page's <FilterBar>, living WITH the table
+              (ui-standards § tables → filtering), not in the page header. Pure
+              placement: filter state stays page-owned. */}
+          <Show when={filters()}>
+            <div class={styles.toolbarFilters}>{filters()}</div>
           </Show>
-          {/* Sort control — card view only (no clickable headers there): a
-              labelled popover showing the active sort field + direction, listing
-              the sortable columns. Calls the same onSort as a header click. */}
-          <Show when={showSortControl()}>
-            <Popover
-              placement="bottom-end"
-              triggerClass={styles.sortTrigger}
-              triggerTestId="table-sort"
-              triggerLabel={t('table.sort')}
-              closeOnClickInside
-              class={styles.controlPopover}
-              trigger={
-                <>
-                  <span class={styles.sortTriggerLabel}>
-                    {activeSortColumn()
-                      ? columnLabel(activeSortColumn()!)
-                      : t('table.sort')}
-                  </span>
-                  {/* Same direction glyph as the table header's sort indicator
-                      (↓ desc / ↑ asc, .sortIndicator), pushed to the pill's
-                      trailing edge (justify-content) regardless of label width. */}
-                  <Show when={props.sort}>
-                    <span class={styles.sortIndicator} aria-hidden="true">
-                      {props.sort!.desc ? '↓' : '↑'}
-                    </span>
-                  </Show>
-                </>
-              }
-            >
-              <div class={styles.sortMenu}>
-                <For each={sortableColumns()}>
-                  {col => (
-                    <button
-                      type="button"
-                      class={styles.sortMenuItem}
-                      data-testid={`table-sort-${col.sortKey}`}
-                      data-active={
-                        props.sort?.key === col.sortKey ? '' : undefined
-                      }
-                      onClick={() => chooseSort(col.sortKey!)}
-                    >
-                      <span>{columnLabel(col)}</span>
-                      <Show when={props.sort?.key === col.sortKey}>
-                        <span class={styles.sortIndicator} aria-hidden="true">
-                          {props.sort!.desc ? '↓' : '↑'}
-                        </span>
-                      </Show>
-                    </button>
-                  )}
-                </For>
-              </div>
-            </Popover>
-          </Show>
-          {/* View toggle — a single Card-view control matching the other icon
-              controls (no border): grey when in table view, blue when card view
-              is active; clicking flips between the two. Above the compact
-              breakpoint only (below it the table is always card, so it's
-              hidden). Opt-in per table (showCardToggle) and needs setConfig to
-              persist the choice. */}
-          <Show when={props.showCardToggle && !isCompact() && props.setConfig}>
-            <button
-              type="button"
-              class={`${styles.controlButton} ${viewMode() === 'card' ? styles.controlButtonActive : ''}`}
-              data-testid="table-view-toggle"
-              aria-pressed={viewMode() === 'card'}
-              aria-label={t('table.view-cards')}
-              title={t('table.view-cards')}
-              onClick={() =>
-                props.setConfig?.(
-                  'viewMode',
-                  viewMode() === 'card' ? 'table' : 'card'
-                )
-              }
-            >
-              <CardViewIcon />
-            </button>
-          </Show>
-          {/* Columns — the per-column panel (show / move / pin;
-              ui-standards § tables → column management: one predictable place,
-              headers stay clean). Only when the page wired config controls
-              (setConfig present); otherwise there's nothing to configure. */}
-          <Show when={props.setConfig}>
-            <Popover
-              placement="bottom-end"
-              trigger={<Columns3CogIcon />}
-              triggerLabel={t('table.edit-columns')}
-              triggerProps={{ title: t('table.edit-columns') }}
-              triggerClass={styles.controlButton}
-              class={styles.controlPopover}
-            >
-              <ColumnSettings
-                table={table}
-                setConfig={props.setConfig}
-                viewMode={viewMode()}
-              />
-            </Popover>
-          </Show>
-          {/* Settings — table-wide settings (the Density radio, Reset table to
-              default, save-as-global-default), split from the per-column panel
-              per the spec's two-control toolbar. */}
-          <Show when={props.setConfig}>
-            <Popover
-              placement="bottom-end"
-              trigger={<SettingsIcon />}
-              triggerLabel={t('table.settings')}
-              triggerProps={{ title: t('table.settings') }}
-              triggerClass={styles.controlButton}
-              class={styles.controlPopover}
-            >
-              <TableSettings
-                table={table}
-                config={props.config}
-                density={viewDensity()}
-                setConfig={props.setConfig}
-                onReset={resetConfig}
-                resetDisabled={props.configIsDefault}
-                orderChanged={columnOrderChanged()}
-                anyColumnHidden={anyColumnHidden()}
-                anyColumnSized={anyColumnSized()}
-                anyColumnPinned={anyColumnPinned()}
-                onSaveGlobalDefault={props.onSaveGlobalDefault}
-              />
-            </Popover>
-          </Show>
-          {/* Full-screen — a shell-level mode (hides menu/footer). Not every host can host it
-              (e.g. a table inside a modal), so a caller opts out with showFullScreen={false};
-              the card-switch + columns/settings controls above still render. */}
-          <Show when={props.showFullScreen !== false}>
-            <button
-              type="button"
-              class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
-              aria-label={t('table.toggle-full-screen')}
-              data-testid="table-fullscreen"
-              title={t('table.toggle-full-screen')}
-              onClick={() => setFullScreen(!fullScreen())}
-            >
-              {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
-            </button>
-          </Show>
+          <Show when={!props.controlsMount}>{controls()}</Show>
         </div>
-      </div>
+      </Show>
+      {/* Controls lifted into the host's own chrome row (see controlsMount).
+          A Portal, so they keep this table's reactive owner and context —
+          the popovers and the view toggle behave identically there. */}
+      <Show when={props.controlsMount}>
+        {mount => <Portal mount={mount()}>{controls()}</Portal>}
+      </Show>
       {/* tableArea fills the remaining height between the toolbar and the
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}

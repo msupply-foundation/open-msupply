@@ -1,0 +1,144 @@
+/*
+ * The collapsed rail's flyout — the raised surface a section's children (or a
+ * leaf's label) appear on. Native popover, so the top layer handles stacking:
+ * no z-index, no portal, and the rail's own overflow cannot clip it. The UA
+ * centres [popover] like a dialog (fixed + inset 0 + margin auto); inset and
+ * margin are reset here and NavFlyout writes top/left from measured geometry.
+ */
+
+.flyout {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  min-inline-size: 12.5rem;
+  max-inline-size: 17rem;
+  padding: var(--space-1);
+  /* L3 raised (tokens.css § "Warm stone"): white on the shell, lifted by its
+     shadow. The outline is the structural edge rather than the app-wide hairline
+     — the panel opens over the rail's own white chrome, where a near-white
+     border has nothing to sit against. */
+  border: 1px solid var(--surface-edge);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  /* A raised surface owns its own text weight — it must not inherit the bold
+     of the active rail button that opened it. */
+  font-weight: var(--weight-regular);
+}
+
+/* The leaf variant is a bare label, so it wraps the text rather than holding a
+   list to a menu width. */
+.flyout[data-variant='tip'] {
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flyout:popover-open {
+    animation: flyout-in 130ms ease;
+  }
+}
+
+@keyframes flyout-in {
+  from {
+    opacity: 0;
+    transform: translateX(-0.375rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The panel opens to the physical left in RTL, so it slides in from the other
+   side. */
+:dir(rtl) .flyout:popover-open {
+  animation-name: flyout-in-rtl;
+}
+
+@keyframes flyout-in-rtl {
+  from {
+    opacity: 0;
+    transform: translateX(0.375rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Section heading ---------------------------------------------------- */
+/* The section name the children belong to — the rail can't show it while
+   collapsed, so the flyout carries it. */
+.title {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --- Destination rows --------------------------------------------------- */
+.item {
+  display: block;
+  inline-size: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  /* The rail's row shape, so a flyout row reads as the same kind of thing —
+     and the system's item radius, matching every other menu row (UserMenu,
+     LanguageSelector, Combobox). Deliberately a step tighter than the panel
+     around it: an item repeating its container's curve crowds the corners. */
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* The one well allowed inside a raised surface (L2− sunken) — the same hover
+   step the rail's own rows use, so a row reads identically either side of the
+   flyout's edge. */
+.item:hover {
+  background: var(--surface-sunken);
+}
+
+.item:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* The rail's own selected treatment: brand tint, bold, and a dot — with the
+   label left at --text-body, since brand-coloured text on this tint falls short
+   of the AA floor (see MenuBar's selected row). */
+.item[data-selected='true'] {
+  background: color-mix(in srgb, var(--primary-main) 16%, transparent);
+  color: var(--text-body);
+  font-weight: var(--weight-bold);
+}
+
+/* Second, non-colour cue for the current destination (colour independence). */
+.item[data-selected='true']::before {
+  content: '';
+  display: inline-block;
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  margin-inline-end: var(--space-2);
+  border-radius: 50%;
+  background: var(--primary-main);
+  vertical-align: middle;
+}
+
+.tipLabel {
+  display: block;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}

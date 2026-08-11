@@ -75,6 +75,16 @@
   inline-size: min(17.8125rem, 85vw);
 }
 
+/* Login only (initialisation keeps the 40px rhythm — it has four fields plus
+   an advanced disclosure, so its longer column needs the separation). At two
+   fields the original spacing read as drift rather than grouping: the username
+   INPUT sat further from the password LABEL than that label sat from its own
+   input, so the pairs stopped reading as pairs. --space-5 keeps a clear break
+   between fields while binding each label to its input. */
+.loginForm {
+  gap: var(--space-5);
+}
+
 .logo {
   inline-size: 100%;
   /* Cap at the current app's 285×180 desktop logo box; the form is the same
@@ -91,6 +101,96 @@
 .buttonRow {
   display: flex;
   justify-content: flex-end;
+}
+
+/* --- Login's action group ---------------------------------------------
+   Login only (initialisation keeps .buttonRow). The primary action spans the
+   whole form column, with the two secondary controls tucked directly under it
+   — the old-UI switch at the inline start, the language selector at the
+   inline end. They are ONE form child so the form's 2.5rem rhythm applies
+   above the group rather than between the button and the controls that belong
+   with it. */
+.submitGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.submitButton {
+  inline-size: 100%;
+}
+
+/* The small inline padding keeps both controls' hover/focus boxes clear of the
+   button's edges rather than flush with them. Wraps on a long language name;
+   `.languageAction` keeps the selector at the inline end when it does.
+
+   Type scale and tone are set HERE, once, because both controls already
+   inherit them — the selector's trigger is `font: inherit; color: inherit`
+   and `.secondaryAction` matches it — so the pair can never drift apart.
+   --text-xs is the same token Button's `size="small"` uses, so these read at
+   the library's small-control size; --text-secondary is the dark grey the
+   library already uses for supporting text. */
+.loginActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.languageAction {
+  margin-inline-start: auto;
+}
+
+/* The old-UI switch, shaped like the language selector's trigger beside it.
+   Still an <a>: it is a real document navigation to the sibling app, so it
+   keeps link semantics (middle-click, open in new tab, copy link) — only the
+   look is borrowed. Tint and ring derive from currentColor, exactly as the
+   selector's trigger does, so both sit on the light panel with one rule.
+   Padding matches the trigger's rather than the small Button's, because these
+   two sit side by side and must agree with each other first. */
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit; /* the pair's shared tone — see .loginActions */
+  font: inherit;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondaryAction:hover {
+  background: color-mix(in srgb, currentcolor 15%, transparent);
+}
+
+.secondaryAction:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: -0.125rem;
+}
+
+.secondaryActionIcon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+/* The form's heading (and, via aria-labelledby, its accessible name), carried
+   for the document outline and assistive technology only. Out of flow, so it
+   costs the form's flex rhythm nothing. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .panelFooter {
@@ -110,6 +210,48 @@
   padding-inline-end: var(--space-4);
   font-size: var(--text-sm);
   color: var(--text-secondary); /* not the original's opacity 0.4 — see top */
+}
+
+/* --- Login's version line ---------------------------------------------
+   Both version strings on ONE line, at the bottom of the page's left half.
+   Small and quiet: reference information, not part of the login task. No
+   colour of its own — inside the hero it inherits --login-hero-text (white),
+   which is the whole point of putting it there. */
+.versionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+/* Pinned near the bottom of the VIEWPORT rather than flowing after the hero
+   copy, which `justify-content: flex-end` would leave floating one 7% padding
+   band above the page bottom. Fixed, not absolute, so a short viewport whose
+   hero copy overflows can't carry this line off-screen with it; the hero's 7%
+   bottom padding is what keeps the copy clear of it.
+   Both insets are percentages of the page's inline size — and so is the hero's
+   own `padding: 0 5%`, since percentage padding resolves against the
+   CONTAINING BLOCK's inline size (.page), never the element's. So the start
+   inset is the same 5% the copy above is indented by, not half of it. The end
+   inset stops the line at the hero's content edge (the hero ends at 50%, plus
+   its 5% padding) rather than letting a long pair of versions run under the
+   light form panel, where the hero's white would be invisible. */
+.versionBarHero {
+  position: fixed;
+  inset-block-end: var(--space-4); /* 1rem */
+  inset-inline: 5% 55%;
+}
+
+/* Compact: the hero doesn't render at all, so the line moves into the panel
+   and takes the panel's text colour — the hero's white would be invisible
+   there. Which of the two renders is decided in JS (CLAUDE.md #7), so only
+   one exists at a time and `login-version` stays a single match. */
+.versionBarPanel {
+  align-self: flex-start;
+  padding-inline-start: var(--space-4);
+  padding-block-end: var(--space-4);
+  color: var(--text-secondary);
 }
 
 /* The language selector sits at the bottom-right of the footer on both the

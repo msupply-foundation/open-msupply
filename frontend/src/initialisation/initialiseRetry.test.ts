@@ -9,7 +9,7 @@ import { initialiseStep } from './initialiseRetry';
 
 /*
  * The initialisation screen's silent wait for the central server
- * (spec/startup rules § Initialisation, D97; `OMS-REG-LGN-03.18`–`.21`, and
+ * (spec/startup rules § Initialisation, D98; `OMS-REG-LGN-03.18`–`.21`, and
  * the pre-start paths `.11`/`.17` it must not disturb).
  *
  * The load-bearing cases are the two boundaries. ONLY the one transient kind

@@ -46,10 +46,10 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background 140ms ease,
-    color 140ms ease,
-    border-color 140ms ease,
-    box-shadow 140ms ease;
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 /* --- Sizes ------------------------------------------------------------ */
@@ -197,7 +197,7 @@
   z-index: 0;
   background: var(--secondary-main);
   opacity: 0;
-  transition: opacity 140ms ease;
+  transition: opacity var(--motion-fast) ease;
   pointer-events: none;
 }
 
@@ -235,23 +235,13 @@
   border: 2px solid color-mix(in srgb, currentcolor 30%, transparent);
   border-block-start-color: currentcolor;
   border-radius: 50%;
-  animation: button-spin 700ms linear infinite;
+  /* --motion-spin slows under reduced motion rather than stopping — a frozen
+     ring reads as a hung action (tokens.css). */
+  animation: button-spin var(--motion-spin) linear infinite;
 }
 
 @keyframes button-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button,
-  .icon,
-  .button[data-variant='ghost']::before {
-    transition: none;
-  }
-
-  .spinner {
-    animation-duration: 2s;
   }
 }
