@@ -39,6 +39,7 @@ import {
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import {
   FilterBar,
+  FilterCheckbox,
   FilterTextInput,
   constructFilters,
   type Filter,
@@ -69,6 +70,7 @@ import {
 import { InternalOrderDetailContext } from './detailContext.generated';
 import { StoreOwnName } from './indicators.generated';
 import {
+  applySavedIndicatorValue,
   ProgramIndicatorsTab,
   ProgramIndicatorValues,
 } from '../../../domain/indicators';
@@ -128,13 +130,18 @@ type SortKey =
   | 'requested';
 
 // The line filter, shaped like the wire filter the server-paginated lines
-// read will take (itemCodeOrName.like — see the interim note above), so the
-// client-side match swaps to the server filter without a state change.
-type LineFilter = { itemCodeOrName?: { like: string } | null };
+// read will take (itemCodeOrName.like, hideOverMinimum — see the interim note
+// above), so the client-side match swaps to the server filter without a state
+// change.
+type LineFilter = {
+  itemCodeOrName?: { like: string } | null;
+  hideOverMinimum?: boolean | null;
+};
 
 // The line table's filters (ui-standards § tables → filtering): the item
-// code/name search — the same chip the stocktake detail table keeps to hand.
-// Client-side for now, so no debounce.
+// code/name search — the same chip the stocktake detail table keeps to hand —
+// and the hide-stock-over-minimum narrowing. Client-side for now, so no
+// debounce.
 const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
   itemCodeOrName: {
     label: () => t('label.code-or-name'),
@@ -153,18 +160,36 @@ const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
       />
     ),
   },
+  hideOverMinimum: {
+    label: () => t('label.hide-stock-over-minimum'),
+    render: props => (
+      <FilterCheckbox
+        // The chip's own label names the fact, so the bare pill checkbox —
+        // ticking narrows to the lines still under their reorder threshold;
+        // unticked writes null (the chip stays, added-but-empty), since
+        // there is no "show only over minimum" filter.
+        label={t('label.hide-stock-over-minimum')}
+        testId={props.testId}
+        checked={props.filter().hideOverMinimum === true}
+        onChange={checked =>
+          props.setPartialFilter({ hideOverMinimum: checked ? true : null })
+        }
+      />
+    ),
+  },
 });
 
 const InternalOrderDetailView: Component = () => {
   const params = useParams<{ storeId: string; orderId: string }>();
   const navigate = useNavigate();
-  // The item search is the screen's default filter (ui-standards § tables →
-  // filtering): seeded present-as-null so its chip is on the bar from the
-  // start; the client-side match ignores it until typed.
+  // The item search and hide-over-minimum are the screen's default filters
+  // (ui-standards § tables → filtering): seeded present-as-null so their chips
+  // are on the bar from the start; the client-side match ignores each until
+  // typed / ticked.
   const [lineFilter, setLineFilter] = createSignal<LineFilter>({
     itemCodeOrName: null,
+    hideOverMinimum: null,
   });
-  const [hideOverMin, setHideOverMin] = createSignal(false);
   // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
   // a non-empty selection swaps the status footer for the bulk-action bar.
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
@@ -301,14 +326,26 @@ const InternalOrderDetailView: Component = () => {
     };
   };
 
-  const [indicators] = createResource(indicatorVariables, async serialised => {
-    const result = await graphqlFetch(
-      ProgramIndicatorValues,
-      JSON.parse(serialised)
+  const [indicators, { mutate: mutateIndicators }] = createResource(
+    indicatorVariables,
+    async serialised => {
+      const result = await graphqlFetch(
+        ProgramIndicatorValues,
+        JSON.parse(serialised)
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.programIndicators.nodes;
+    }
+  );
+  // A saved indicator cell goes straight back into the fetched nodes (no
+  // refetch → no remount, as the header edits do): the tab's inputs start from
+  // what they are handed, so without this the next mount of a cell — stepping
+  // to another line, re-entering the tab — would show the pre-edit figure
+  // (#957).
+  const onIndicatorSaved = (valueId: string, value: string) =>
+    mutateIndicators(prev =>
+      prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-    if (result.kind !== 'success') return undefined;
-    return result.data.programIndicators.nodes;
-  });
   const indicatorNodes = () =>
     indicators.state === 'ready' || indicators.state === 'refreshing'
       ? (indicators.latest ?? [])
@@ -510,7 +547,7 @@ const InternalOrderDetailView: Component = () => {
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
-    if (hideOverMin()) {
+    if (lineFilter().hideOverMinimum === true) {
       const months = monthsThreshold(node);
       lines = lines.filter(
         l =>
@@ -1113,8 +1150,6 @@ const InternalOrderDetailView: Component = () => {
                       onChangeDestination={changeDestination}
                       onChangeThreshold={changeThreshold}
                       onChangeTarget={changeTarget}
-                      hideOverMin={hideOverMin()}
-                      onHideOverMinChange={setHideOverMin}
                     />
                   </HeaderToolbar>
                   {/* The ancillary banner keeps its own full-width row beneath
@@ -1219,7 +1254,8 @@ const InternalOrderDetailView: Component = () => {
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={
-                    (lineFilter().itemCodeOrName?.like ?? '').trim()
+                    (lineFilter().itemCodeOrName?.like ?? '').trim() ||
+                    lineFilter().hideOverMinimum === true
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
@@ -1277,6 +1313,7 @@ const InternalOrderDetailView: Component = () => {
                     nodes={indicatorNodes()}
                     editable={editable()}
                     showCustomerBreakdown={showCustomerBreakdown()}
+                    onSaved={onIndicatorSaved}
                   />
                 </TabPanel>
               </Show>
