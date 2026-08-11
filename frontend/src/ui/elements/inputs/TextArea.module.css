@@ -89,8 +89,8 @@
   /* Fixed at the rows height; longer content scrolls (OMS has no resize grip). */
   resize: none;
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 /* Small: the 13px scale, and the block padding re-derived from the SMALL height
@@ -157,11 +157,5 @@
   .textarea,
   .textarea[data-size='small'] {
     font-size: var(--input-font-touch);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .textarea {
-    transition: none;
   }
 }

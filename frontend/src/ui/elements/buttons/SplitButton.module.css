@@ -52,8 +52,8 @@
   font-weight: var(--weight-medium);
   cursor: pointer;
   transition:
-    background 140ms ease,
-    color 140ms ease;
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 /* Touch pointers: match the Button's tap-target growth (same token, same
@@ -109,7 +109,8 @@
   border: 2px solid color-mix(in srgb, currentcolor 30%, transparent);
   border-block-start-color: currentcolor;
   border-radius: 50%;
-  animation: split-button-spin 700ms linear infinite;
+  /* Slows, never stops, under reduced motion — see --motion-spin in tokens.css. */
+  animation: split-button-spin var(--motion-spin) linear infinite;
 }
 
 @keyframes split-button-spin {
@@ -222,16 +223,5 @@
 @media (pointer: coarse) {
   .item {
     min-height: var(--touch-target);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .main,
-  .caret {
-    transition: none;
-  }
-
-  .spinner {
-    animation-duration: 2s;
   }
 }

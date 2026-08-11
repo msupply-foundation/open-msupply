@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "preview:showcase": "vite preview --config vite.showcase.config.ts",
     "css:types": "tcm --pattern '**/*.module.css' src",
-    "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-min-browser.mjs",
+    "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-reduced-motion.mjs && node scripts/check-min-browser.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

@@ -20,9 +20,9 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 /* Size — the box + the icon within it. */
@@ -103,11 +103,5 @@
   .iconButton {
     min-inline-size: var(--touch-target);
     min-block-size: var(--touch-target);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .iconButton {
-    transition: none;
   }
 }

@@ -83,7 +83,7 @@
 
 .step[data-state='active'] .circle {
   color: var(--tone-dark);
-  animation: progress-pulse 2s infinite;
+  animation: progress-pulse var(--motion-pulse) infinite;
 }
 
 .step[data-state='completed'] .circle {
@@ -149,6 +149,10 @@
   }
 }
 
+/* A looping animation can't be zeroed (0s would pin it to one keyframe), so
+   --motion-pulse is excluded from the reduce block in tokens.css and stopped
+   here instead. Safe to stop outright, unlike the Spinner: the active step is
+   also marked by its tone and by the .srOnly status text above. */
 @media (prefers-reduced-motion: reduce) {
   .step[data-state='active'] .circle {
     animation: none;
