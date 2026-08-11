@@ -43,7 +43,6 @@ export const CreateRequisitionModal = ({
     isOpen,
     onClose,
     disableBackdrop: false,
-    testId: 'create-internal-order-modal',
   });
   const noSuppliers = programSettings?.every(
     setting => setting.suppliers.length === 0
@@ -78,6 +77,7 @@ export const CreateRequisitionModal = ({
 
   return (
     <Modal
+      testId="create-internal-order-modal"
       height={700}
       width={700}
       slideAnimation={false}
