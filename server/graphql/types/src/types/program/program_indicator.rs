@@ -13,7 +13,10 @@ use repository::{
     EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueRow, ProgramIndicatorFilter,
     ProgramIndicatorSort, ProgramIndicatorSortField,
 };
-use service::requisition::program_indicator::query::{IndicatorLine, ProgramIndicator};
+use service::requisition::{
+    common::indicator_value_type,
+    program_indicator::query::{IndicatorLine, ProgramIndicator},
+};
 
 use super::{
     program_node::ProgramNode, requisition_indicator_info::CustomerIndicatorInformationNode,
@@ -152,7 +155,7 @@ impl IndicatorLineNode {
             .columns
             .clone()
             .into_iter()
-            .map(|column| IndicatorColumnNode::from_domain(column, self.line.line.id.clone()))
+            .map(|column| IndicatorColumnNode::from_domain(column, self.line.line.clone()))
             .collect()
     }
 }
@@ -184,10 +187,16 @@ impl IndicatorLineRowNode {
         self.line.line_number
     }
 
+    /// The line's own configured type, null where it declares none (`var` in
+    /// mSupply). A CELL's type is its column's `valueType`, which already
+    /// resolves the fallback to this one.
+    // Reported as configured: `unwrap_or_default()` here answered Number for a
+    // `var` line, which no caller could tell from a line genuinely typed Number.
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
-        Some(IndicatorValueTypeNode::from(
-            self.line.value_type.clone().unwrap_or_default(),
-        ))
+        self.line
+            .value_type
+            .clone()
+            .map(IndicatorValueTypeNode::from)
     }
 
     pub async fn is_active(&self) -> bool {
@@ -196,14 +205,26 @@ impl IndicatorLineRowNode {
 }
 
 impl IndicatorColumnNode {
-    pub fn from_domain(column: IndicatorColumnRow, line_id: String) -> IndicatorColumnNode {
-        IndicatorColumnNode { column, line_id }
+    pub fn from_domain(column: IndicatorColumnRow, line: IndicatorLineRow) -> IndicatorColumnNode {
+        IndicatorColumnNode { column, line }
+    }
+
+    // Answering the column's RAW type here (`unwrap_or_default()`, i.e. Number)
+    // made a `var` column on a text line indistinguishable from a genuinely
+    // numeric one, so clients gave it a numeric input for a cell
+    // `update_indicator_value` accepts text into.
+    fn effective_value_type(&self) -> Option<IndicatorValueTypeNode> {
+        indicator_value_type(&self.line, &self.column)
+            .clone()
+            .map(IndicatorValueTypeNode::from)
     }
 }
 
 pub struct IndicatorColumnNode {
     pub column: IndicatorColumnRow,
-    pub line_id: String,
+    /// The column's own line — its id addresses the stored value, and its
+    /// configured type is the fallback behind `value_type` below.
+    pub line: IndicatorLineRow,
 }
 
 #[Object]
@@ -216,10 +237,13 @@ impl IndicatorColumnNode {
         &self.column.id
     }
 
+    /// The cell's effective type — this column's configured type, falling back
+    /// to its line's where the column declares none (`var` in mSupply). This is
+    /// the type an edit is validated against, so it is the one to render an
+    /// input from. Null where neither declares a type: an edit is then not
+    /// type-checked at all.
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
-        Some(IndicatorValueTypeNode::from(
-            self.column.value_type.clone().unwrap_or_default(),
-        ))
+        self.effective_value_type()
     }
 
     pub async fn column_number(&self) -> i32 {
@@ -236,7 +260,7 @@ impl IndicatorColumnNode {
         let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
         let result = loader
             .load_one(IndicatorValueLoaderInput::new(
-                &self.line_id,
+                &self.line.id,
                 &self.column.id,
                 &period_id,
                 &store_id,
@@ -282,5 +306,66 @@ impl IndicatorValueNode {
 impl IndicatorValueNode {
     pub fn from_domain(value: IndicatorValueRow) -> IndicatorValueNode {
         IndicatorValueNode { value }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::IndicatorValueType;
+
+    fn line(value_type: Option<IndicatorValueType>) -> IndicatorLineRow {
+        IndicatorLineRow {
+            id: "line".to_string(),
+            value_type,
+            ..Default::default()
+        }
+    }
+
+    fn column(value_type: Option<IndicatorValueType>) -> IndicatorColumnRow {
+        IndicatorColumnRow {
+            id: "column".to_string(),
+            value_type,
+            ..Default::default()
+        }
+    }
+
+    // What the `valueType` field answers (the resolver delegates to it).
+    fn value_type_of(
+        column_type: Option<IndicatorValueType>,
+        line_type: Option<IndicatorValueType>,
+    ) -> Option<IndicatorValueTypeNode> {
+        IndicatorColumnNode::from_domain(column(column_type), line(line_type))
+            .effective_value_type()
+    }
+
+    /// The cell's effective type is reported, not the column's raw one: a `var`
+    /// column takes its line's type (what an edit is validated against), and
+    /// only a cell typed nowhere answers null.
+    #[test]
+    fn column_value_type_falls_back_to_its_line() {
+        use IndicatorValueType::{Number, String as Text};
+
+        // The column's own type wins wherever it has one.
+        assert_eq!(
+            value_type_of(Some(Number), Some(Text)),
+            Some(IndicatorValueTypeNode::Number)
+        );
+        assert_eq!(
+            value_type_of(Some(Text), Some(Number)),
+            Some(IndicatorValueTypeNode::String)
+        );
+        // A `var` column takes the line's — the case that used to report the
+        // enum default (Number) and earn a numeric input on a text line.
+        assert_eq!(
+            value_type_of(None, Some(Text)),
+            Some(IndicatorValueTypeNode::String)
+        );
+        assert_eq!(
+            value_type_of(None, Some(Number)),
+            Some(IndicatorValueTypeNode::Number)
+        );
+        // Typed nowhere: null, and the update validates nothing either.
+        assert_eq!(value_type_of(None, None), None);
     }
 }
