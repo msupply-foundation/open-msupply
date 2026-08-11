@@ -94,6 +94,9 @@ export interface AppShellProps {
   /** The signed-in user's email address, shown in the user popup
    *  (OMS-REG-FTR-01.4). Absent when the user record records none. */
   email?: string | null;
+  /** The signed-in user's job title, the subtitle under the display name in the
+   *  user popup. Absent when the user record records none. */
+  jobTitle?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
   /**
@@ -303,6 +306,7 @@ export const AppShell = (props: AppShellProps) => {
                     username={props.username}
                     displayName={props.displayName}
                     email={props.email}
+                    jobTitle={props.jobTitle}
                     onLogout={props.onLogout}
                   />
                   <span class={styles.footerDivider} aria-hidden="true" />

@@ -185,6 +185,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         username={username()}
         displayName={userDisplayName()}
         email={authUser()?.email}
+        jobTitle={authUser()?.jobTitle}
         onLogout={() => setLogoutConfirmOpen(true)}
         isCentralServer={isCentralServer()}
         updateAvailable={updateAvailable()}
