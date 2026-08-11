@@ -32,6 +32,7 @@ export const ListSearch = <T,>({
   getOptionDisabled,
   loading = false,
   testId,
+  getOptionTestId,
 }: ListSearchProps<T>): JSX.Element => {
   const { height } = useWindowDimensions();
 
@@ -56,6 +57,7 @@ export const ListSearch = <T,>({
         optionKey={optionKey}
         height={listViewHeight}
         getOptionDisabled={getOptionDisabled}
+        getOptionTestId={getOptionTestId}
       />
     </BasicModal>
   );
