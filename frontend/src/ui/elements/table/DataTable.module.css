@@ -1054,6 +1054,44 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   container-type: inline-size;
 }
 
+/* Declared field widths (opt-in, ColumnMeta.cardWidth — see CardView's
+   FieldFlow). Equal auto-fit tracks give every field the same box, so a 1-digit
+   Difference is padded to a manufacturer name's width and a wide row runs out
+   of line before its last field. A group whose columns declare widths supplies
+   its own template instead: fixed `rem` tracks for the formatted scalars, and
+   an `fr` share per free-text field, so the width left over once the fixed
+   tracks and gaps are paid for is split in the declared ratio rather than
+   evenly (ux-testing/header-field-width.html § weighted columns). */
+.cardFields[data-field-widths] {
+  /* Both declared here (with the unsized defaults as fallbacks) so they're
+     known custom properties to the value-no-unknown-custom-properties check —
+     CardView overrides them inline per group from the columns' meta.cardWidth. */
+  --card-field-cols: repeat(auto-fit, minmax(10rem, 1fr));
+  --card-field-max: none;
+
+  grid-template-columns: var(--card-field-cols);
+
+  /* The group's ceiling: past the width at which every track is at its declared
+     max, the row stops growing and the slack becomes trailing space. Capping
+     the GRID rather than each field keeps the tracks proportional — a per-field
+     cap left its track's remainder as a hole mid-row. */
+  max-inline-size: var(--card-field-max);
+}
+
+/* Below the sum of the template's own minima an explicit grid would overflow
+   the card rather than wrap, so CardView measures and flips this on: back to
+   the equal auto-fit tracks, which do wrap. */
+.cardFields[data-field-widths][data-narrow] {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+/* Every field may shrink inside its track: a grid item's automatic minimum is
+   its content's min-width, which for an input is its intrinsic size, and that
+   would push the row past the card. */
+.cardFields[data-field-widths] > * {
+  min-inline-size: 0;
+}
+
 /* --- Card body groups ------------------------------------------------------- */
 
 /* A body group's block (non-disclosure): its optional caption then its field
