@@ -290,6 +290,55 @@
   --measure-form: 58rem; /* ~928px — a comfortable two-column form */
   --measure-prose: 40rem; /* ~640px — single-column reading text */
   --measure-wide: 80rem; /* ~1280px — wide dashboards / dense forms */
+
+  /* --- Motion (durations) ----------------------------------------------
+     EVERY transition/animation duration and delay in the app reads one of
+     these — no component writes a literal one (enforced by
+     scripts/check-reduced-motion.mjs). That is what makes
+     `prefers-reduced-motion` a property of the token layer rather than ~25
+     hand-written media blocks that a new component silently forgets: the
+     reduce block at the end of this file zeroes the decorative durations
+     once, app-wide. Timing FUNCTIONS stay per-component (they carry no
+     accessibility meaning).
+
+     Three decorative tiers, by what actually moves. Delays pair with the
+     tier they're sequencing (e.g. a panel's `visibility` delay uses
+     --motion-slow so it can never drift from the travel it waits on). */
+  /* @motion-decorative:start */
+  --motion-fast: 120ms; /* in-place state feedback: colour, border, shadow, opacity */
+  --motion-base: 150ms; /* small movement or an entry: chevron, dialog/popover in */
+  --motion-slow: 200ms; /* real travel: drawer, side panel, tab indicator, scrim */
+  --motion-ripple: 480ms; /* the one-shot click ripple (ui/utils/createRipple) */
+  /* @motion-decorative:end */
+
+  /* Looping indicators are NOT decorative — they're the only signal that work
+     is still in flight, and a frozen one reads as a hung app. So they're
+     excluded from the reduce block above and each owner decides in its own
+     module whether reduced motion slows or stops it (Spinner and the button
+     spinners slow via the override below; ProgressList's pulse stops, since
+     its step state is also carried by colour and icon). Zeroing an infinite
+     duration is never the answer — it pins the element to one keyframe. */
+  --motion-spin: 700ms; /* indeterminate spinner ring */
+  --motion-pulse: 2s; /* sync-progress active-step pulse */
+}
+
+/*
+ * Reduced motion (WCAG 2.2 SC 2.3.3, CLAUDE.md principle #9). One block for
+ * the whole app: decorative motion collapses to zero so state changes land
+ * instantly, and the spinners drop to a slow crawl rather than stopping.
+ *
+ * Zero — not `transition: none` — on purpose: a 0s transition/animation still
+ * fires `transitionend`/`animationend`, so anything sequencing off those (the
+ * ripple's self-dismissal) keeps working instead of leaking.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0s;
+    --motion-base: 0s;
+    --motion-slow: 0s;
+    --motion-ripple: 0s;
+    --motion-spin: 2s;
+  }
 }
 
 /*

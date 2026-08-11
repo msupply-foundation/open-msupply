@@ -51,19 +51,6 @@
      cell must reopen exactly this much room for it (.td[data-frozen-edge]) — if
      the two drifted apart the shadow would come back cropped. */
   --table-frozen-shadow: 0.5rem;
-
-  /* Row background fade (ui-standards § tables: transition background
-     0.15s on body rows) — carried by the cells, which paint the hover
-     wash / selection tint. A custom property rather than a transition
-     override so reduced-motion zeroes it without a higher-specificity
-     rule. */
-  --table-bg-fade: 0.15s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .root {
-    --table-bg-fade: 0s;
-  }
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -134,11 +121,12 @@
   padding-block: var(--space-3);
   border-block-end: 1px solid var(--color-divider);
 
-  /* Inline padding is ALIGNMENT-AWARE (see the .th[data-align] rules below):
-     the content-side padding matches the body cell so header text lines up
-     with its column, the free side is trimmed. --th-pad-inline is that matched
-     value, defaulted here and set per density in the density block. */
+  /* The header's two inline paddings — the CONTENT side (= the body cell's, so
+     header text lines up with its column; set per density below) and the FREE
+     side (a minimum gutter, see the .th rule). The gutter does NOT scale with
+     density: it's a separation floor, not part of the density rhythm. */
   --th-pad-inline: var(--space-4);
+  --th-pad-free: var(--space-2);
 
   background: var(--bg-toolbar);
   color: var(--text-body);
@@ -202,7 +190,7 @@
   background: transparent;
   /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
      rule on .root — so no separate reduced-motion block is needed here. */
-  transition: background var(--table-bg-fade);
+  transition: background var(--motion-base);
 }
 
 /* Blue on hover AND while resizing — the spec draws no grey stage and no
@@ -242,7 +230,7 @@
   max-width: var(--table-cell-max-grow);
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background-color var(--table-bg-fade);
+  transition: background-color var(--motion-base);
 }
 
 /* The one body cell that must NOT clip absolutely: a frozen block's outer edge
@@ -374,21 +362,42 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   text-align: center;
 }
 
-/* Header inline padding aligns the header text with the body content below it,
-   while trimming the "free" side so labels get room (Carl 2026-07-24). Left
-   headers pad the START (= --th-pad-inline, the body cell's inline padding) and
-   zero the END; right headers mirror it so numbers line up at the end; centre
-   headers stay symmetric. The fixed leading select cell keeps its own box. */
+/* Header inline padding, per side, by what that side has to do:
+
+     CONTENT side  --th-pad-inline  = the BODY cell's inline padding at this
+                                      density, so the header text lines up with
+                                      the column it names.
+     FREE side     --th-pad-free    = a minimum gutter. Nothing aligns on this
+                                      side (it's the ragged edge), so it only
+                                      has to keep the label off its neighbour.
+
+   Which side is which follows the alignment: start-aligned headers align at the
+   start, end-aligned ones mirror it, and centre-aligned headers align on their
+   CENTRE — so both of their sides are free, and staying symmetric keeps the
+   centring at any value.
+
+   The free side is small but never ZERO (it was, until 2026-08-11): at zero a
+   long label runs flush to the cell edge and butts against the neighbouring
+   column. Full body padding on both sides is the other extreme — correct-looking
+   but it charges every column the gutter twice, which on a 20-column requisition
+   came to +100px of table width.
+
+   Both rules are written with LOGICAL padding against the logical alignment, so
+   the whole geometry mirrors itself under RTL with nothing to restate — verified
+   in العربية: every header lines up at 0px and the sort slot lands on the right
+   side of its label in both directions.
+
+   The fixed leading select cell keeps its own box (checkbox centring). */
 .th:not(.selectCell) {
-  padding-inline: var(--th-pad-inline) 0;
+  padding-inline: var(--th-pad-inline) var(--th-pad-free);
 }
 
 .th[data-align='right']:not(.selectCell) {
-  padding-inline: 0 var(--th-pad-inline);
+  padding-inline: var(--th-pad-free) var(--th-pad-inline);
 }
 
 .th[data-align='center']:not(.selectCell) {
-  padding-inline: var(--space-1);
+  padding-inline: var(--th-pad-free);
 }
 
 .thLabel {
@@ -400,7 +409,23 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 }
 
 /* Header text — wraps up to 2 lines then ellipsises. min-width:0 lets it shrink so the
-   clamp engages inside the flex row rather than overflowing. */
+   clamp engages inside the flex row rather than overflowing.
+
+   break-word, NOT anywhere (Carl 2026-08-11): the two differ in their min-content
+   contribution, and that difference is what keeps a column from squeezing its own
+   name. `anywhere` lets a break happen at any character, so the element's min-content
+   width collapses to ONE CHARACTER — table auto-layout then feels no pressure to give
+   the column room, and a header that would fit whole gets chopped mid-word ("Requested"
+   rendered as "Requeste / d" at 104px). `break-word` breaks only a word that cannot fit
+   on a line of its own and leaves min-content at the LONGEST WORD, so auto-layout floors
+   the column there and the same header lays out on one line at 107px. Both still break
+   a genuinely over-long word, so nothing spills horizontally.
+
+   A label that needs more than 2 lines at its column's width still clips — and note
+   the clip is currently SILENT on right-aligned (numeric) headers: Chromium does not
+   paint the line-clamp ellipsis under `text-align: end` (start/centre are fine, and
+   neither text-overflow nor block-ellipsis overrides it). Marking + hover-revealing
+   those is a separate follow-up. */
 .thText {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -408,7 +433,7 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   line-clamp: 2;
   min-width: 0;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* Header label is a flex row, so align it with justify-content (data-align lives on the
@@ -419,6 +444,18 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 
 .th[data-align='center'] .thLabel {
   justify-content: center;
+}
+
+/* A header whose label DIDN'T fit its two lines — data-clipped is stamped by
+   DataTable's markClippedHeaders (see the rationale there). Only right-aligned
+   headers need the flip: Chromium refuses to paint the line-clamp ellipsis under
+   `text-align: end`, so those headers were dropping their tail with no marker at
+   all, while start/centre ones already ellipsised correctly and are left alone.
+   The clipped label goes start-aligned, which is what makes the ellipsis appear
+   — and reads as its own cue that something is cut, backed by the `title`
+   hover-reveal. Placed after the base .thText so specificity stays ascending. */
+.th[data-align='right'][data-clipped] .thText {
+  text-align: start;
 }
 
 /* Sort indicator (ui-standards § tables .sort-arrow) — a RESERVED slot on every
@@ -432,6 +469,22 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   font-size: 1.125rem;
   line-height: 1;
   text-align: center;
+}
+
+/* On a RIGHT-aligned column the reserved slot has to sit on the START side of the
+   label instead (Carl 2026-08-11). Rendered after the text — which is right for a
+   left-aligned header — it lands BETWEEN the label and the cell's padded end edge,
+   pushing the header text 16px (the --space-3 slot + its --space-1 margin) clear of
+   the very numbers it names. Measured across a program requisition: every sortable
+   right-aligned header sat 16px off, while the non-sortable ones on the same row
+   landed dead on their column — which is what identifies the slot, not the padding,
+   as the cause. Flipping the visual order restores the alignment AND keeps the slot
+   reserved, so toggling a sort still shifts nothing. Order may diverge from DOM
+   order freely here: the indicator is aria-hidden and aria-sort on the th carries
+   the semantics. The margin flips with it, staying between slot and text. */
+.th[data-align='right'] .sortIndicator {
+  order: -1;
+  margin-inline: 0 var(--space-1);
 }
 
 /* A clickable row (list → detail, or detail → edit modal); only when
@@ -467,7 +520,7 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   border-block-end: 1px solid var(--color-divider);
   text-align: center;
   padding: var(--space-2) var(--space-1);
-  transition: background-color var(--table-bg-fade);
+  transition: background-color var(--motion-base);
 }
 
 /* Placement of the BareCheckbox in a selection cell: centred by margin.
@@ -596,10 +649,10 @@ tr[data-row-state='disabled'] > .selectCell {
    sits generously centred in the floor (vertical-align: middle), while a
    header that WRAPS to two lines grows from the small padding instead of
    ballooning to floor-plus-full-padding. Same block-size-as-minimum model
-   as .td. Inline padding is alignment-aware (the .th[data-align] rules above):
-   each density sets --th-pad-inline to the BODY cell's inline padding, applied
-   to the header's content side (start for left, end for right) so the header
-   text lines up with its column; the free side is zeroed to give labels room.
+   as .td. For inline padding each density sets --th-pad-inline to its own BODY
+   cell's inline padding, which the .th rules above apply to the header's CONTENT
+   side, so header text lines up with its column at every density (the free side
+   takes the density-independent --th-pad-free gutter).
    The leading select th keeps its own fixed box (checkbox centring). */
 .table[data-density='compact'] .td {
   block-size: 2.5rem; /* 40px */
@@ -721,7 +774,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      so it eases in with the table's own fade token, which reduced motion
      zeroes. */
   opacity: 0;
-  transition: opacity var(--table-bg-fade);
+  transition: opacity var(--motion-base);
 }
 
 [data-frozen-edge='left']::after {

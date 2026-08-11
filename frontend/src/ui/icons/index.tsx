@@ -533,6 +533,22 @@ export const UserIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Envelope — the user popup's email row. */
+export const MailIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M2.5 7.5C2.5 5.84315 3.84315 4.5 5.5 4.5H18.5C20.1569 4.5 21.5 5.84315 21.5 7.5V16.5C21.5 18.1569 20.1569 19.5 18.5 19.5H5.5C3.84315 19.5 2.5 18.1569 2.5 16.5V7.5Z" />
+    <path d="M3.5 8L10.2 12.4C11.3 13.1 12.7 13.1 13.8 12.4L20.5 8" />
+  </Stroke>
+);
+
+/* Power symbol — the logout action (the current app's PowerIcon). */
+export const PowerIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 2.5V11.5" />
+    <path d="M6.34 6.34A8 8 0 1 0 17.66 6.34" />
+  </Stroke>
+);
+
 /* Hugeicons: Globe02Icon */
 export const TranslateIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
