@@ -182,7 +182,7 @@ export const FileList = ({
                 <Box width={40} display="flex" justifyContent="center">
                   {showRemove && (
                     <IconButton
-                      data-testid="document-remove-button"
+                      testId="document-remove-button"
                       onClick={() => removeFile(file.name, file.id, recordId)}
                       icon={
                         <XCircleIcon
