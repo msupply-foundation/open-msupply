@@ -298,9 +298,13 @@
   color: var(--error-main);
 }
 
+/* The glyph takes the error text's own colour (inherited from .error) — it is
+   part of the error line, not a caution of its own. It used to be
+   --color-warning, which rendered an amber triangle above red text and read as
+   a second, milder severity sitting on the same message. */
 .errorIcon {
   font-size: 0.875em;
-  color: var(--color-warning);
+  color: inherit;
   flex-shrink: 0;
 }
 
