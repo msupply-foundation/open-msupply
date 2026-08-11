@@ -24,6 +24,13 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/elements/accordion/Accordion';
+import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
@@ -52,7 +59,6 @@ export const InitialisationPage: Component<{
     siteName: '',
     password: '',
   });
-  const [showAdvanced, setShowAdvanced] = createSignal(false);
   // Spec: distinct from submitting — sync has actually begun (the mutation
   // started it, or the page resumed into INITIALISING). A sync error before
   // this is true means initialisation never started, so Retry (which re-runs
@@ -252,6 +258,9 @@ export const InitialisationPage: Component<{
     watchProgress();
   };
 
+  // Only decides WHERE the version line renders — see versionLine() below.
+  const compact = useIsCompact();
+
   const showRetry = () => syncStarted() && syncError() != null;
   // Spec: fields lock while the request is in flight, and stay locked for the
   // whole time sync has actually started (including a watched-sync error —
@@ -261,6 +270,29 @@ export const InitialisationPage: Component<{
   const locked = () => submitting() || syncStarted();
   const busy = () => locked() && syncError() == null;
 
+  // Spec (App version, OMS-REG-LGN-03.18–.20): the running build's version and
+  // — once the startup pass has fetched it, never as a placeholder — the
+  // server's, on one line at the bottom of the page's left half. Same line, and
+  // same reasoning, as the login page's.
+  //
+  // ONE element, rendered either in the hero or, below the compact breakpoint
+  // where the hero doesn't render at all, in the panel. Never both, so
+  // `init-version` stays a single match; a CSS-only move is impossible because
+  // a child of the hidden hero is hidden with it (CLAUDE.md #7 — a breakpoint
+  // decides which element renders).
+  const versionLine = (placement: string) => (
+    <p class={`${styles.versionBar} ${placement}`} data-testid="init-version">
+      <span>
+        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+      </span>
+      <Show when={serverVersion()}>
+        <span>
+          <strong>{t('label.version-server')}</strong> {serverVersion()}
+        </span>
+      </Show>
+    </p>
+  );
+
   return (
     <div class={styles.page}>
       <section
@@ -269,15 +301,29 @@ export const InitialisationPage: Component<{
       >
         <h1 class={styles.heroHeading}>{t('initialise.heading')}</h1>
         <p class={styles.heroBody}>{t('initialise.body')}</p>
+        <Show when={!compact()}>{versionLine(styles.versionBarHero)}</Show>
       </section>
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
             class={styles.form}
-            aria-label={t('button.initialise')}
+            aria-labelledby="initialise-heading"
             onSubmit={submit}
           >
+            {/* The form's heading, and its accessible name via aria-labelledby
+                — the form previously named itself after its button, which told
+                a screen-reader user what the control does, not what the region
+                is. Not displayed: the logo below and the hero's welcome already
+                carry the page's visible identity. h2, not h1, because the
+                hero's welcome is the page's h1 and this is the top of a region
+                within it — a plain element rather than the Text primitive,
+                since an invisible heading has no type style to set. First in
+                the form so it is read before the fields it names (matching the
+                login page). */}
+            <h2 id="initialise-heading" class={styles.srOnly}>
+              {t('initialise.form-heading')}
+            </h2>
             <AppLogo class={styles.logo} />
             <TextField
               label={t('label.settings-url')}
@@ -312,28 +358,37 @@ export const InitialisationPage: Component<{
               error={fieldErrors().password || undefined}
               disabled={locked()}
             />
-            <button
-              type="button"
-              class={pageStyles.advancedToggle}
-              onClick={() => setShowAdvanced(previous => !previous)}
-            >
-              {showAdvanced()
-                ? t('label.hide-advanced-options')
-                : t('label.show-advanced-options')}
-            </button>
-            <Show when={showAdvanced()}>
-              <NumberField
-                label={t('label.settings-batch-size')}
-                helperText={t('label.settings-batch-size-helper')}
-                width="full"
-                min={1}
-                value={values().batchSize}
-                onChange={batchSize =>
-                  setValues(previous => ({ ...previous, batchSize }))
-                }
-                disabled={locked()}
-              />
-            </Show>
+            {/* The batch-size override behind the library disclosure
+                (OMS-REG-LGN-03.9/.21) — collapsed by default, `collapsible` so
+                a second activation closes it again, and uncontrolled: nothing
+                on this page reads the open state, so a signal here would only
+                duplicate what Kobalte already tracks. One fixed label whichever
+                way it sits: the rotating chevron and aria-expanded carry the
+                state, so a label that also flipped would say it twice.
+                h3 — under the form's own h2 heading above. Kobalte unmounts the
+                closed content, but `values()` holds the batch size, so
+                collapsing after typing one still submits it (as the previous
+                <Show> did). */}
+            <Accordion collapsible>
+              <AccordionItem value="advanced-options">
+                <AccordionTrigger as="h3" class={pageStyles.advancedTrigger}>
+                  {t('label.advanced-options')}
+                </AccordionTrigger>
+                <AccordionContent class={pageStyles.advancedContent}>
+                  <NumberField
+                    label={t('label.settings-batch-size')}
+                    helperText={t('label.settings-batch-size-helper')}
+                    width="full"
+                    min={1}
+                    value={values().batchSize}
+                    onChange={batchSize =>
+                      setValues(previous => ({ ...previous, batchSize }))
+                    }
+                    disabled={locked()}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             <Show when={syncError()}>
               {err => {
                 const errorSummary = () => syncErrorSummary(err().variant);
@@ -352,11 +407,19 @@ export const InitialisationPage: Component<{
             <Show when={busy()}>
               <SyncProgress overview={overview()} />
             </Show>
-            <div class={styles.buttonRow}>
+            {/* The primary action spans the form column, with the secondary
+                controls directly beneath it rather than in a page footer —
+                they belong to this setup, not to the page (the login page's
+                grouping). */}
+            <div class={styles.submitGroup}>
               <Show
                 when={showRetry()}
                 fallback={
-                  <Button type="submit" disabled={busy()}>
+                  <Button
+                    type="submit"
+                    class={styles.submitButton}
+                    disabled={busy()}
+                  >
                     {busy() ? t('button.initialising') : t('button.initialise')}
                   </Button>
                 }
@@ -364,40 +427,37 @@ export const InitialisationPage: Component<{
                 {/* Disabled while the retry call is in flight so it can't be
                     double-submitted; the error stays visible behind it
                     (OMS-REG-LGN-03.15). */}
-                <Button onClick={() => void retry()} disabled={submitting()}>
+                <Button
+                  class={styles.submitButton}
+                  onClick={() => void retry()}
+                  disabled={submitting()}
+                >
                   {submitting() ? t('button.initialising') : t('button.retry')}
                 </Button>
               </Show>
+              <div class={styles.formActions}>
+                {/* Android only: save the embedded server's log for support
+                    before initialisation completes (issue #519.5). Renders
+                    nothing on the web — on which the row holds the language
+                    selector alone, pinned to its inline end either way. Shaped
+                    like the language trigger beside it, the same pairing the
+                    login page's old-UI switch has. */}
+                <SaveServerLogLink
+                  class={styles.secondaryAction}
+                  iconClass={styles.secondaryActionIcon}
+                  noticeClass={styles.actionNotice}
+                />
+                <div class={styles.languageAction}>
+                  <LanguageSelector
+                    language={locale()}
+                    onSelect={v => void changeLanguage(v)}
+                  />
+                </div>
+              </div>
             </div>
           </form>
         </div>
-        <footer class={styles.panelFooter}>
-          {/* Android only: save the embedded server's log for support before
-              initialisation completes (issue #519.5). Renders nothing on the
-              web. Styled as the footer's secondary text link (like the login
-              screen's old-UI link), centered above the version. */}
-          <SaveServerLogLink
-            class={styles.switchLink}
-            noticeClass={styles.footerNotice}
-          />
-          <p class={styles.version}>
-            <strong>{t('label.app-version')}</strong> {APP_VERSION}
-          </p>
-          {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has
-              fetched it — pre-initialisation that also needs a server carrying
-              open-msupply#12566. */}
-          <Show when={serverVersion()}>
-            <p class={styles.version}>
-              <strong>{t('label.server-version')}</strong> {serverVersion()}
-            </p>
-          </Show>
-          <div class={styles.languageRow}>
-            <LanguageSelector
-              language={locale()}
-              onSelect={v => void changeLanguage(v)}
-            />
-          </div>
-        </footer>
+        <Show when={compact()}>{versionLine(styles.versionBarPanel)}</Show>
       </main>
     </div>
   );
