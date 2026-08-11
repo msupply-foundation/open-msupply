@@ -67,22 +67,20 @@
 }
 
 /* The logo (285px in the original) sets the column width, like the original's
-   intrinsically-sized form; 85vw keeps it inside narrow viewports. */
+   intrinsically-sized form; 85vw keeps it inside narrow viewports.
+
+   --space-5, not the original's 40px Stack rhythm: at that spacing a field's
+   INPUT sat further from the NEXT field's label than that label sat from its
+   own input, so the pairs stopped reading as pairs. --space-5 keeps a clear
+   break between fields while binding each label to its input. Initialisation
+   needs it more than login, not less — three fields plus a disclosure, an
+   error panel and a progress list is the column that actually risks running
+   past the fold. */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem; /* original: Stack spacing 5 = 40px */
-  inline-size: min(17.8125rem, 85vw);
-}
-
-/* Login only (initialisation keeps the 40px rhythm — it has four fields plus
-   an advanced disclosure, so its longer column needs the separation). At two
-   fields the original spacing read as drift rather than grouping: the username
-   INPUT sat further from the password LABEL than that label sat from its own
-   input, so the pairs stopped reading as pairs. --space-5 keeps a clear break
-   between fields while binding each label to its input. */
-.loginForm {
   gap: var(--space-5);
+  inline-size: min(17.8125rem, 85vw);
 }
 
 .logo {
@@ -98,18 +96,13 @@
   align-self: center;
 }
 
-.buttonRow {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* --- Login's action group ---------------------------------------------
-   Login only (initialisation keeps .buttonRow). The primary action spans the
-   whole form column, with the two secondary controls tucked directly under it
-   — the old-UI switch at the inline start, the language selector at the
-   inline end. They are ONE form child so the form's 2.5rem rhythm applies
-   above the group rather than between the button and the controls that belong
-   with it. */
+/* --- The action group -------------------------------------------------
+   Both screens. The primary action spans the whole form column, with the
+   secondary controls tucked directly under it — the screen's own secondary
+   action at the inline start (login: the old-UI switch; initialisation: the
+   Android save-log button), the language selector at the inline end. They are
+   ONE form child so the form's rhythm applies above the group rather than
+   between the button and the controls that belong with it. */
 .submitGroup {
   display: flex;
   flex-direction: column;
@@ -130,7 +123,7 @@
    --text-xs is the same token Button's `size="small"` uses, so these read at
    the library's small-control size; --text-secondary is the dark grey the
    library already uses for supporting text. */
-.loginActions {
+.formActions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -144,13 +137,15 @@
   margin-inline-start: auto;
 }
 
-/* The old-UI switch, shaped like the language selector's trigger beside it.
-   Still an <a>: it is a real document navigation to the sibling app, so it
-   keeps link semantics (middle-click, open in new tab, copy link) — only the
-   look is borrowed. Tint and ring derive from currentColor, exactly as the
-   selector's trigger does, so both sit on the light panel with one rule.
-   Padding matches the trigger's rather than the small Button's, because these
-   two sit side by side and must agree with each other first. */
+/* The screen's secondary action, shaped like the language selector's trigger
+   beside it. Login's is an <a>: a real document navigation to the sibling app,
+   so it keeps link semantics (middle-click, open in new tab, copy link) —
+   only the look is borrowed; initialisation's save-log is a <button>, and the
+   button chrome reset below is what lets the two look identical. Tint and ring
+   derive from currentColor, exactly as the selector's trigger does, so both
+   sit on the light panel with one rule. Padding matches the trigger's rather
+   than the small Button's, because these two sit side by side and must agree
+   with each other first. */
 .secondaryAction {
   display: inline-flex;
   align-items: center;
@@ -159,20 +154,29 @@
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: inherit; /* the pair's shared tone — see .loginActions */
+  color: inherit; /* the pair's shared tone — see .formActions */
   font: inherit;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 }
 
-.secondaryAction:hover {
-  background: color-mix(in srgb, currentcolor 15%, transparent);
-}
-
 .secondaryAction:focus-visible {
   outline: 2px solid currentcolor;
   outline-offset: -0.125rem;
+}
+
+/* Busy (the save-log write in flight): the DOM disabled attribute already
+   blocks activation, this only shows it. */
+.secondaryAction:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Last, and :not(:disabled) — a disabled control must not light up under the
+   pointer (stylelint wants the ascending specificity, hence the order). */
+.secondaryAction:not(:disabled):hover {
+  background: color-mix(in srgb, currentcolor 15%, transparent);
 }
 
 .secondaryActionIcon {
@@ -193,30 +197,31 @@
   white-space: nowrap;
 }
 
-.panelFooter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  inline-size: 100%;
-  padding-block-end: var(--space-4);
-}
-
-.version {
-  display: flex;
-  gap: var(--space-2);
+/* Success/error notice under the save-log button (issue #519.5), a member of
+   the action group rather than a line of its own: `order` puts it after both
+   controls and the full basis forces it onto its own wrapped row, so the
+   button and the language selector keep sharing the first one. Severity
+   carries via the text colour token — the message itself also says which it
+   is, so colour is never the only signal. */
+.actionNotice {
+  order: 1;
+  flex-basis: 100%;
   margin: 0;
-  align-self: flex-end;
-  padding-inline-end: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--text-secondary); /* not the original's opacity 0.4 — see top */
 }
 
-/* --- Login's version line ---------------------------------------------
+.actionNotice[data-severity='success'] {
+  color: var(--success-main);
+}
+
+.actionNotice[data-severity='error'] {
+  color: var(--error-main);
+}
+
+/* --- The version line -------------------------------------------------
    Both version strings on ONE line, at the bottom of the page's left half.
-   Small and quiet: reference information, not part of the login task. No
-   colour of its own — inside the hero it inherits --login-hero-text (white),
-   which is the whole point of putting it there. */
+   Small and quiet: reference information, not part of the login or setup
+   task. No colour of its own — inside the hero it inherits --login-hero-text
+   (white), which is the whole point of putting it there. */
 .versionBar {
   display: flex;
   flex-wrap: wrap;
@@ -246,7 +251,7 @@
 /* Compact: the hero doesn't render at all, so the line moves into the panel
    and takes the panel's text colour — the hero's white would be invisible
    there. Which of the two renders is decided in JS (CLAUDE.md #7), so only
-   one exists at a time and `login-version` stays a single match. */
+   one exists at a time and the version testid stays a single match. */
 .versionBarPanel {
   align-self: flex-start;
   padding-inline-start: var(--space-4);
@@ -254,71 +259,12 @@
   color: var(--text-secondary);
 }
 
-/* The language selector sits at the bottom-right of the footer on both the
-   login and initialisation screens (issue #519 — consistent placement). The
-   selector component owns its own look; this wrapper only positions it, with
-   the same trailing inset as the version line so their right edges align. */
-.languageRow {
-  align-self: flex-end;
-  padding-inline-end: var(--space-4);
-}
-
-/* Unobtrusive text link in the footer (the sibling old-UI link on login, the
-   Save-log link on initialisation). Secondary tone so it never competes with
-   the primary button; underlined so it reads as a link without relying on
-   colour alone. Button chrome is reset so a <button> using it matches an <a>. */
-.switchLink {
-  align-self: center;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.switchLink:hover,
-.switchLink:focus-visible {
-  color: var(--primary-main);
-}
-
-.switchLink:focus-visible {
-  outline: 2px solid var(--primary-main);
-  outline-offset: 0.125rem;
-}
-
-.switchLink[disabled] {
-  cursor: default;
-  opacity: 0.6;
-}
-
-/* Save-log success/error notice under the link (issue #519.5). Centered under
-   the footer column; severity carries via the text colour token. */
-.footerNotice {
-  align-self: center;
-  margin: 0;
-  max-inline-size: 22rem;
-  font-size: var(--text-sm);
-  text-align: center;
-}
-
-.footerNotice[data-severity='success'] {
-  color: var(--success-main);
-}
-
-.footerNotice[data-severity='error'] {
-  color: var(--error-main);
-}
-
 /* Short viewports (landscape tablets/phones): the constraint is vertical — the
-   full-size logo pushes the footer off-screen. Shrink it so the whole form +
-   footer fit without scrolling. Matches the current app, which drops its login
-   logo from 285×180 to 155×90 on small screens; 9.6875rem keeps the 19:12 box
-   (155×90). Keyed on height, not width, because a landscape tablet is wide but
-   short — a width breakpoint would miss it. */
+   full-size logo pushes the button and the controls under it off-screen. Shrink
+   it so the whole form fits without scrolling. Matches the current app, which
+   drops its login logo from 285×180 to 155×90 on small screens; 9.6875rem
+   keeps the 19:12 box (155×90). Keyed on height, not width, because a landscape
+   tablet is wide but short — a width breakpoint would miss it. */
 @media (max-height: 50rem) {
   .logo {
     inline-size: 9.6875rem;

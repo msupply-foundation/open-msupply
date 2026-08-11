@@ -118,7 +118,7 @@ export const LoginPage: Component = () => {
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
-            class={`${styles.form} ${styles.loginForm}`}
+            class={styles.form}
             aria-labelledby="login-heading"
             onSubmit={submit}
           >
@@ -181,7 +181,7 @@ export const LoginPage: Component = () => {
               >
                 {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
-              <div class={styles.loginActions}>
+              <div class={styles.formActions}>
                 {/* Sibling old UI, served at the server root /old-ui/
                     (dual-frontend transition — one cookie session spans both).
                     A plain anchor for a full document navigation, NOT router
