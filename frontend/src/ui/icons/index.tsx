@@ -101,6 +101,25 @@ export const ChevronsUpIcon = (props: IconProps) => (
   </Stroke>
 );
 
+// The sidebar collapse/expand pair — a double chevron pointing at the edge the
+// rail moves towards. Directional, so both mirror in RTL (where the rail sits
+// on the inline-end): data-flip-rtl, like ChevronLeft/Right.
+/* Hugeicons: ArrowLeftDoubleIcon */
+export const ChevronsLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M18.5 6C18.5 6 12.5 10.4189 12.5 12C12.5 13.5812 18.5 18 18.5 18" />
+    <path d="M11.5 6C11.5 6 5.5 10.4189 5.5 12C5.5 13.5812 11.5 18 11.5 18" />
+  </Stroke>
+);
+
+/* Hugeicons: ArrowRightDoubleIcon */
+export const ChevronsRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M5.5 6C5.5 6 11.5 10.4189 11.5 12C11.5 13.5812 5.5 18 5.5 18" />
+    <path d="M12.5 6C12.5 6 18.5 10.4189 18.5 12C18.5 13.5812 12.5 18 12.5 18" />
+  </Stroke>
+);
+
 /* Hugeicons: Search01Icon */
 export const SearchIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
