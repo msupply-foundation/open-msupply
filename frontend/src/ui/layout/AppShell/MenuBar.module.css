@@ -33,6 +33,11 @@
   background: var(--surface-chrome);
   border-inline-end: 1px solid var(--surface-edge);
   transition: inline-size 200ms ease;
+  background: var(--bg-drawer);
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
+  box-shadow: var(--shadow-drawer);
+  transition: inline-size var(--motion-slow) ease;
 }
 
 .menuBar[data-open='false'] {
@@ -218,7 +223,7 @@
   inline-size: 1rem;
   font-size: 1rem;
   color: var(--gray-main);
-  transition: transform 150ms ease;
+  transition: transform var(--motion-base) ease;
 }
 
 .sectionChevron[data-open='false'] {
@@ -363,7 +368,7 @@
      — floating over the scrim, where the shadow does the separating. */
   background: var(--surface-chrome);
   transform: translateX(var(--hide-x));
-  transition: transform 220ms ease;
+  transition: transform var(--motion-slow) ease;
 }
 
 :dir(rtl) .overlayPanel {
@@ -385,7 +390,7 @@
   background: var(--overlay-scrim);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 220ms ease;
+  transition: opacity var(--motion-slow) ease;
 }
 
 .scrim[data-open='true'] {

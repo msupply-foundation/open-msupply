@@ -12,6 +12,7 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 - [ ] **Showcase** — add a real demo (the component itself, no showcase-only chrome) to the relevant showcase page, and register it in the page metadata / TOC.
 - [ ] **Sibling docs/comments** — update anything that referenced the gap (e.g. `Stack`'s doc comment once `HStack` existed).
 - [ ] **KDD** — if there's a real rejected alternative, write/extend a `kdd/` entry.
+- [ ] **Motion** — any transition/animation reads a `--motion-*` token, never a literal duration ([STYLING.md § Motion check](./STYLING.md#motion-check-step-6)); that is what makes `prefers-reduced-motion` hold without the component writing a media query.
 - [ ] `pnpm check` green.
 
 ## Open follow-ups (#550 audit)

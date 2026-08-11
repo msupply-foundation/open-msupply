@@ -58,8 +58,8 @@
   border-radius: var(--input-radius);
   background: var(--bg-white);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .control:focus-within {
@@ -155,7 +155,7 @@
 .toggleIcon {
   display: inline-flex;
   font-size: 1.25rem;
-  transition: transform 150ms ease;
+  transition: transform var(--motion-base) ease;
 }
 
 /* A caller's trailing action (see the endAction prop) — same shape as
@@ -355,7 +355,7 @@
   field-sizing: content;
   min-inline-size: 2.5rem;
   max-inline-size: 16rem;
-  transition: min-inline-size 0.15s ease;
+  transition: min-inline-size var(--motion-base) ease;
 }
 
 .field[data-borderless] .input:focus {
