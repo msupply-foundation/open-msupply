@@ -21,8 +21,8 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    border-color 140ms ease,
-    background 140ms ease;
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
 }
 
 /* The real (visually hidden) checkbox input — semantics + focus live here;
@@ -66,8 +66,8 @@
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
   transition:
-    background 140ms ease,
-    border-color 140ms ease;
+    background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
 }
 
 .check {
@@ -75,7 +75,7 @@
   block-size: 0.875rem;
   color: var(--primary-contrast);
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity var(--motion-fast) ease;
 }
 
 .button[data-checked] .box {
@@ -93,12 +93,4 @@
 
 .label {
   line-height: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button,
-  .box,
-  .check {
-    transition: none;
-  }
 }

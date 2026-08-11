@@ -91,15 +91,17 @@
 @media (min-width: 1024px) {
   .panelSlot {
     transition:
-      inline-size 200ms ease-out,
+      inline-size var(--motion-slow) ease-out,
       visibility 0s;
   }
 
+  /* The visibility DELAY is the same token as the travel it waits on, so the
+     two can never drift (and both collapse together under reduced motion). */
   .panelSlot[data-closed] {
     inline-size: 0;
     transition:
-      inline-size 200ms ease-out,
-      visibility 0s 200ms;
+      inline-size var(--motion-slow) ease-out,
+      visibility 0s var(--motion-slow);
   }
 }
 
@@ -122,12 +124,12 @@
   }
 
   .panelSlot > * {
-    transition: transform 200ms ease-out;
+    transition: transform var(--motion-slow) ease-out;
     will-change: transform;
   }
 
   .panelSlot[data-closed] {
-    transition: visibility 0s 200ms;
+    transition: visibility 0s var(--motion-slow);
   }
 
   .panelSlot[data-closed] > * {
@@ -146,7 +148,7 @@
     background: var(--overlay-scrim);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 200ms ease-out;
+    transition: opacity var(--motion-slow) ease-out;
   }
 
   .scrim[data-open='true'] {
@@ -168,14 +170,6 @@
   .panelSlot > * {
     inline-size: 100%;
     border-inline-start: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .panelSlot,
-  .panelSlot > *,
-  .scrim {
-    transition: none;
   }
 }
 

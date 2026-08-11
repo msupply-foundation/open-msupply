@@ -51,19 +51,6 @@
      cell must reopen exactly this much room for it (.td[data-frozen-edge]) — if
      the two drifted apart the shadow would come back cropped. */
   --table-frozen-shadow: 0.5rem;
-
-  /* Row background fade (ui-standards § tables: transition background
-     0.15s on body rows) — carried by the cells, which paint the hover
-     wash / selection tint. A custom property rather than a transition
-     override so reduced-motion zeroes it without a higher-specificity
-     rule. */
-  --table-bg-fade: 0.15s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .root {
-    --table-bg-fade: 0s;
-  }
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -202,7 +189,7 @@
   background: transparent;
   /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
      rule on .root — so no separate reduced-motion block is needed here. */
-  transition: background var(--table-bg-fade);
+  transition: background var(--motion-base);
 }
 
 /* Blue on hover AND while resizing — the spec draws no grey stage and no
@@ -242,7 +229,7 @@
   max-width: var(--table-cell-max-grow);
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background-color var(--table-bg-fade);
+  transition: background-color var(--motion-base);
 }
 
 /* The one body cell that must NOT clip absolutely: a frozen block's outer edge
@@ -467,7 +454,7 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   border-block-end: 1px solid var(--color-divider);
   text-align: center;
   padding: var(--space-2) var(--space-1);
-  transition: background-color var(--table-bg-fade);
+  transition: background-color var(--motion-base);
 }
 
 /* Placement of the BareCheckbox in a selection cell: centred by margin.
@@ -721,7 +708,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      so it eases in with the table's own fade token, which reduced motion
      zeroes. */
   opacity: 0;
-  transition: opacity var(--table-bg-fade);
+  transition: opacity var(--motion-base);
 }
 
 [data-frozen-edge='left']::after {
