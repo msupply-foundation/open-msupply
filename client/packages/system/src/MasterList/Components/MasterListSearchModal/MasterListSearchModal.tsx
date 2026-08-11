@@ -38,6 +38,7 @@ export const MasterListSearchModal = ({
       title={t('master-lists')}
       optionKey="name"
       testId={testId}
+      getOptionTestId={masterList => `master-list-row-${masterList.id}`}
       onChange={(
         _,
         masterList: MasterListRowFragment | MasterListRowFragment[] | null
