@@ -304,14 +304,15 @@
   justify-content: flex-end;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .dialog[open] {
-    animation: content-in 150ms ease;
-  }
+/* Entry only (native <dialog> has no exit hook we rely on). No reduced-motion
+   media query here — --motion-base is zeroed in tokens.css, which lands the
+   dialog and its backdrop at their end state immediately. */
+.dialog[open] {
+  animation: content-in var(--motion-base) ease;
+}
 
-  .dialog[open]::backdrop {
-    animation: overlay-in 150ms ease;
-  }
+.dialog[open]::backdrop {
+  animation: overlay-in var(--motion-base) ease;
 }
 
 @keyframes overlay-in {

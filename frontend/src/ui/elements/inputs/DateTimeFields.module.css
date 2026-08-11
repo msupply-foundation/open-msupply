@@ -68,8 +68,8 @@
   background: var(--bg-white);
   color: var(--text-body);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .control[data-size='small'] {
@@ -407,10 +407,4 @@
 
 .rangeClear:hover {
   background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .control {
-    transition: none;
-  }
 }

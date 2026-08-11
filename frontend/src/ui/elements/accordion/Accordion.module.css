@@ -71,7 +71,7 @@
 .chevron {
   flex-shrink: 0;
   color: var(--gray-dark);
-  transition: transform 140ms ease;
+  transition: transform var(--motion-fast) ease;
 }
 
 /* Disabled convention matches Button: cursor reverts to default, label + icon
@@ -103,11 +103,11 @@
 }
 
 .content[data-expanded] {
-  animation: accordion-open 200ms ease;
+  animation: accordion-open var(--motion-slow) ease;
 }
 
 .content[data-closed] {
-  animation: accordion-close 200ms ease;
+  animation: accordion-close var(--motion-slow) ease;
 }
 
 @keyframes accordion-open {
@@ -134,11 +134,12 @@
   padding: 0 0 var(--space-3);
 }
 
+/* The one place a zeroed --motion-slow isn't enough: Kobalte gates the closing
+   content's unmount on the exit animation, and it takes the `animation-name:
+   none` path to skip that wait entirely. Removing the animation (rather than
+   running it for 0s) keeps reduced motion on the code path the collapse is
+   already proven against. The chevron above needs nothing — its token zeroes. */
 @media (prefers-reduced-motion: reduce) {
-  .chevron {
-    transition: none;
-  }
-
   .content[data-expanded],
   .content[data-closed] {
     animation: none;

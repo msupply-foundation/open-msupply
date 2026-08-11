@@ -155,7 +155,7 @@
   field-sizing: content;
   min-inline-size: 2.5rem;
   max-inline-size: 16rem;
-  transition: min-inline-size 0.15s ease;
+  transition: min-inline-size var(--motion-base) ease;
 }
 
 .input:focus {
@@ -210,12 +210,6 @@
    it with a literal token) — same out-specify trick as the div frames. */
 .bareField input:focus {
   border-color: transparent;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .input {
-    transition: none;
-  }
 }
 
 /* Round remove button on each chip (inside the pill; hover = neutral wash,
