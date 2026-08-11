@@ -100,14 +100,22 @@
      these as `surface`/`border` members with no recipe, because the warmth
      cannot be mixed out of the cool page/body anchors; a site that recolours
      `surface.page` sets its canvas explicitly. */
-  --surface-canvas: #f3f1ee;
+  /* NB the canvas is NEUTRAL (chroma 0), not the study's warm-stone #f3f1ee —
+     Carl's call, 2026-08-11: warm stone everywhere else, a plain grey ground.
+     It also runs 2/255 lighter, so the step down from white content is slightly
+     shallower than the study's ~4%. The rest of the ladder keeps the 85° hue,
+     which means the edge, shadow and scrim inks below are warm against a neutral
+     ground — deliberate, and the thing to revisit first if the shell ever looks
+     tinted-by-accident rather than tinted-on-purpose. */
+  --surface-canvas: #f5f5f5;
   --surface-chrome: #fff;
   /* A well sinks to the CANVAS — the same value, deliberately, not a near-miss.
-     Held one step lighter (#f7f6f2) it sat 4/255 from the canvas, and the two
-     met on screen wherever a table's header band showed above the canvas gutter:
-     1.04:1 apart reads as a smudge or a seam, never as two levels. Distinct
-     roles in themeRecipes either way, so a site can still pull them apart. */
-  --surface-sunken: #f3f1ee;
+     Held one step lighter it sat 4/255 from the canvas, and the two met on screen
+     wherever a table's header band showed above the canvas gutter: 1.04:1 apart
+     reads as a smudge or a seam, never as two levels. Tracks the canvas, so it
+     moved with it to neutral. Distinct roles in themeRecipes either way, so a
+     site can still pull them apart. */
+  --surface-sunken: #f5f5f5;
   /* Structural hairline where chrome meets canvas (the study's --edge-strong),
      for the boundaries a fill step alone can't carry: the footer's top edge,
      the flyout's outline. */
