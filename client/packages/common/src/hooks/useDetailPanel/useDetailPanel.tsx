@@ -61,6 +61,7 @@ export const useDetailPanel = (): DetailPanel => {
       Icon={<SidebarIcon />}
       label={t('button.more')}
       onClick={open}
+      data-testid="open-detail-panel-button"
     />
   );
 
