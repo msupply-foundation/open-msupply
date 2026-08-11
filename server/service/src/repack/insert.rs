@@ -7,7 +7,7 @@ use repository::{
     ActivityLogRowRepository, ActivityLogType, EqualFilter, Invoice, InvoiceFilter,
     InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
     LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
-    StockLineRowRepository,
+    StockLineRowRepository, StorageConnection,
 };
 
 #[derive(Default)]
@@ -16,6 +16,7 @@ pub struct InsertRepack {
     pub number_of_packs: f64,
     pub new_pack_size: f64,
     pub new_location_id: Option<String>,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -37,54 +38,81 @@ pub fn insert_repack(
         .connection
         .transaction_sync(|connection| {
             let stock_line = validate(connection, &ctx.store_id, &input)?;
-            let GenerateRepack {
-                repack_invoice,
-                repack_invoice_lines,
-                stock_lines,
-                location_movement,
-                activity_log,
-            } = generate(ctx, stock_line, input)?;
-
-            let stock_line_repo = StockLineRowRepository::new(connection);
-
-            for line in stock_lines.clone() {
-                stock_line_repo.upsert_one(&line)?;
-            }
-
-            let invoice_repo = InvoiceRowRepository::new(connection);
-            invoice_repo.upsert_one(&repack_invoice)?;
-
-            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
-            for line in repack_invoice_lines {
-                invoice_line_repo.upsert_one(&line)?;
-            }
-
-            if let Some(movement) = location_movement {
-                LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
-            }
-
-            ActivityLogRowRepository::new(connection).insert_one(&activity_log)?;
-            // log changes to old stock line too
-            activity_log_entry_with_diff(
-                ctx,
-                ActivityLogType::Repack,
-                Some(stock_lines[0].id.clone()),
-                None::<&StockLineRow>,
-                &stock_lines[1],
-            )?;
-
-            InvoiceRepository::new(connection)
-                .query_by_filter(
-                    InvoiceFilter::new()
-                        .id(EqualFilter::equal_to(repack_invoice.id.to_string()))
-                        .store_id(EqualFilter::equal_to(ctx.store_id.to_string())),
-                )?
-                .pop()
-                .ok_or(InsertRepackError::NewlyCreatedInvoiceDoesNotExist)
+            insert_repack_from_stock_line(ctx, connection, stock_line, input)
         })
         .map_err(|error| error.to_inner_error())?;
 
-    Ok(result)
+    Ok(result.invoice)
+}
+
+pub(crate) struct RepackStockLineResult {
+    pub invoice: Invoice,
+    pub new_stock_line_id: String,
+}
+
+/// Persists a repack: updated source + new stock line, repack invoice + lines,
+/// optional location movement and activity logs.
+/// Validation is the caller's responsibility: insert_repack runs repack validation,
+/// while stock relocation runs its own line validation (which allows fractional packs).
+/// Must be called within a transaction.
+pub(crate) fn insert_repack_from_stock_line(
+    ctx: &ServiceContext,
+    connection: &StorageConnection,
+    stock_line: StockLine,
+    input: InsertRepack,
+) -> Result<RepackStockLineResult, InsertRepackError> {
+    let GenerateRepack {
+        repack_invoice,
+        repack_invoice_lines,
+        stock_lines,
+        location_movement,
+        activity_log,
+    } = generate(ctx, stock_line, input)?;
+
+    // generate() contract: stock_lines[0] = updated source, stock_lines[1] = new line
+    let new_stock_line_id = stock_lines[1].id.clone();
+
+    let stock_line_repo = StockLineRowRepository::new(connection);
+
+    for line in stock_lines.clone() {
+        stock_line_repo.upsert_one(&line)?;
+    }
+
+    let invoice_repo = InvoiceRowRepository::new(connection);
+    invoice_repo.upsert_one(&repack_invoice)?;
+
+    let invoice_line_repo = InvoiceLineRowRepository::new(connection);
+    for line in repack_invoice_lines {
+        invoice_line_repo.upsert_one(&line)?;
+    }
+
+    if let Some(movement) = location_movement {
+        LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
+    }
+
+    ActivityLogRowRepository::new(connection).insert_one(&activity_log)?;
+    // log changes to old stock line too
+    activity_log_entry_with_diff(
+        ctx,
+        ActivityLogType::Repack,
+        Some(stock_lines[0].id.clone()),
+        None::<&StockLineRow>,
+        &stock_lines[1],
+    )?;
+
+    let invoice = InvoiceRepository::new(connection)
+        .query_by_filter(
+            InvoiceFilter::new()
+                .id(EqualFilter::equal_to(repack_invoice.id.to_string()))
+                .store_id(EqualFilter::equal_to(ctx.store_id.to_string())),
+        )?
+        .pop()
+        .ok_or(InsertRepackError::NewlyCreatedInvoiceDoesNotExist)?;
+
+    Ok(RepackStockLineResult {
+        invoice,
+        new_stock_line_id,
+    })
 }
 
 impl From<RepositoryError> for InsertRepackError {

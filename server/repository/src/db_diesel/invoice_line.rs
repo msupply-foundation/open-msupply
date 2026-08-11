@@ -9,6 +9,7 @@ use crate::{
     diesel_macros::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
         apply_sort_asc_nulls_last, apply_sort_no_case, apply_string_filter,
+        apply_string_or_filter,
     },
     repository_error::RepositoryError,
     DateFilter, EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow,
@@ -28,6 +29,7 @@ table! {
         service_total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
         foreign_currency_total_after_tax -> Nullable<Double>,
+        total_volume -> Double,
     }
 }
 
@@ -43,6 +45,10 @@ pub struct PricingRow {
     pub service_total_after_tax: f64,
     pub tax_percentage: Option<f64>,
     pub foreign_currency_total_after_tax: Option<f64>,
+    /// Whole-invoice volume total over stock lines (same line set as the
+    /// stock totals) — the detail-view footer roll-up, which the client can
+    /// no longer sum itself once lines are server-paginated.
+    pub total_volume: f64,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -78,6 +84,7 @@ pub struct InvoiceLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub invoice_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
+    pub item_code_or_name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<InvoiceLineType>>,
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
@@ -121,6 +128,11 @@ impl InvoiceLineFilter {
 
     pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
         self.item_id = Some(filter);
+        self
+    }
+
+    pub fn item_code_or_name(mut self, filter: StringFilter) -> Self {
+        self.item_code_or_name = Some(filter);
         self
     }
 
@@ -338,6 +350,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             store_id,
             invoice_id,
             item_id,
+            item_code_or_name,
             r#type,
             location_id,
             requisition_id,
@@ -359,6 +372,16 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             manufacture_date,
         } = f;
 
+        // Matches on item code OR name (the item table is already inner-joined
+        // for the ItemCode/ItemName sorts) — same shape as ItemFilter's
+        // code_or_name. MUST be applied FIRST: or_filter ORs against the
+        // query's entire existing where clause, so this pair only groups as
+        // (code OR name) while the clause is still empty; every later filter
+        // then ANDs onto it (the item.rs code_or_name convention).
+        if item_code_or_name.is_some() {
+            apply_string_filter!(query, item_code_or_name.clone(), item::code);
+            apply_string_or_filter!(query, item_code_or_name, item::name);
+        }
         apply_equal_filter!(query, id, invoice_line::id);
         apply_equal_filter!(query, store_id, invoice::store_id);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
@@ -463,6 +486,11 @@ impl InvoiceLine {
                     .map(|tax| price + (price * tax / 100.0))
                     .unwrap_or(price)
             }),
+            total_volume: if is_stock {
+                row.number_of_packs * row.volume_per_pack
+            } else {
+                0.0
+            },
         }
     }
 }

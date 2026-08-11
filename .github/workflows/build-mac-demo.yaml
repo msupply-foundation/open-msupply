@@ -23,7 +23,7 @@ name: Build mac demo
 jobs:
   build_and_test:
     name: Build mac demo
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 30
     env:
       RUSTFLAGS: '--cfg recursion_limit_256'
@@ -41,8 +41,22 @@ jobs:
           # Don't auto-cache via packageManager: it runs the global yarn 1
           # before corepack is enabled (#12508)
           package-manager-cache: false
+      - name: Mint token for the frontend repo
+        uses: actions/create-github-app-token@v3
+        id: fe-token
+        with:
+          client-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
       - name: Build
         run: ./build/mac/build.sh ${{ inputs.architecture }} ${{ inputs.includeDemoData }}
+        env:
+          # build/mac/build.sh fetches the pinned new FE via build/fetch-frontend.js —
+          # see server/README.md 'Serving front-end'. Empty vars are ignored.
+          FRONTEND_FETCH_TOKEN: ${{ steps.fe-token.outputs.token }}
+          FRONTEND_DIST_URL: ${{ vars.FRONTEND_DIST_URL }}
+          FRONTEND_DIST_SHA256: ${{ vars.FRONTEND_DIST_SHA256 }}
       # Upload artifact would remove +x (execute) permission and attributes from files when zipping
       # thus need to manually zip (unfortunately it would be double zipped)
       - name: Get Name and Zip

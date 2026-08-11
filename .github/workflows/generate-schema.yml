@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -48,3 +48,14 @@ jobs:
 
       - name: Run tests
         run: cd ./client && yarn test:codegen
+
+      # test:codegen runs `yarn generate`, which rewrites the generated types in
+      # place. Anything it changes is drift between the server schema and the
+      # checked-in output, so fail here rather than leaving it for whoever next
+      # regenerates for an unrelated reason (#12643).
+      - name: Check generated types are up to date
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::Generated GraphQL types are out of date. Run 'yarn generate' in ./client and commit the result."
+            exit 1
+          fi

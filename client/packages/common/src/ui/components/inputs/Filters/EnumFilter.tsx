@@ -22,9 +22,19 @@ export const EnumFilter: FC<{
   filterDefinition: EnumFilterDefinition;
 }> = ({ filterDefinition }) => {
   const { urlParameter, options, name, isMultiSelect } = filterDefinition;
+  // The e2e test-id stem, which may be overridden away from urlParameter.
+  const testIdStem = filterDefinition.testId ?? urlParameter;
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const rawValue = urlQuery[urlParameter] as string | undefined;
+
+  // Stamp each option with filter-option-<value> so e2e can pick a value.
+  // Test ids only, no behaviour change: Select's defaultRenderOption applies
+  // option.testId, and the multi-select renderOption reads the same field.
+  const optionsWithTestIds = options.map(option => ({
+    ...option,
+    testId: `filter-option-${option.value}`,
+  }));
 
   if (isMultiSelect) {
     const selectedValues = rawValue ? String(rawValue).split(',') : [];
@@ -39,8 +49,8 @@ export const EnumFilter: FC<{
 
     return (
       <Select
-        data-testid={`filter-input-${urlParameter}`}
-        options={options}
+        data-testid={`filter-input-${testIdStem}`}
+        options={optionsWithTestIds}
         label={name}
         value={selectedValues}
         sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
@@ -48,7 +58,7 @@ export const EnumFilter: FC<{
           <MenuItem
             key={option.value}
             value={option.value}
-            data-testid={`filter-option-${option.value}`}
+            data-testid={option.testId}
           >
             <Checkbox checked={selectedValues.includes(String(option.value))} />
             <ListItemText primary={option.label} />
@@ -83,8 +93,8 @@ export const EnumFilter: FC<{
 
   return (
     <Select
-      data-testid={`filter-input-${urlParameter}`}
-      options={options}
+      data-testid={`filter-input-${testIdStem}`}
+      options={optionsWithTestIds}
       placeholder={name}
       sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
       label={name}

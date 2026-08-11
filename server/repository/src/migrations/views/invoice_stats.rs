@@ -30,7 +30,8 @@ impl ViewMigrationFragment for ViewMigration {
                         COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
                         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
                         COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
-                        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
+                        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax,
+                        COALESCE(SUM(invoice_line.number_of_packs * invoice_line.volume_per_pack) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS total_volume
                     FROM
                         invoice_line
                     GROUP BY
@@ -53,7 +54,8 @@ impl ViewMigrationFragment for ViewMigration {
                         COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
                         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
                         COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
-                        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
+                        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax,
+                        COALESCE(SUM(invoice_line.number_of_packs * invoice_line.volume_per_pack) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS total_volume
                     FROM
                         invoice_line
                     GROUP BY

@@ -19,6 +19,8 @@ interface SearchBarProps {
   expandOnFocus?: boolean;
   autoFocus?: boolean;
   width?: string;
+  /** data-testid stamped on the underlying <input> */
+  inputTestId?: string;
 }
 
 const EndAdornment = ({
@@ -59,6 +61,7 @@ export const SearchBar = ({
   searchIconButtonLabel = '',
   autoFocus = false,
   width = '220px',
+  inputTestId,
 }: SearchBarProps) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
@@ -106,6 +109,7 @@ export const SearchBar = ({
       <BasicTextInput
         autoFocus={autoFocus}
         slotProps={{
+          htmlInput: inputTestId ? { 'data-testid': inputTestId } : undefined,
           input: {
             endAdornment: (
               <EndAdornment

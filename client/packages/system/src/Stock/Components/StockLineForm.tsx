@@ -139,7 +139,11 @@ export const StockLineForm = ({
       <Grid container direction="column">
         {isInvalidLocation && (
           <Grid container justifyContent="center">
-            <Alert severity="warning" sx={{ maxWidth: 800 }}>
+            <Alert
+              severity="warning"
+              sx={{ maxWidth: 800 }}
+              data-testid="invalid-location-warning"
+            >
               {t('messages.stock-location-invalid')}
             </Alert>
           </Grid>
@@ -198,6 +202,7 @@ export const StockLineForm = ({
               <Grid container flex={1} flexDirection="column" gap={1}>
                 <StyledInputRow
                   label={t('label.pack-quantity')}
+                  testId="field-pack-quantity"
                   Input={
                     <NumericTextInput
                       autoFocus
@@ -217,6 +222,7 @@ export const StockLineForm = ({
                   <>
                     <StyledInputRow
                       label={t('label.available-packs')}
+                      testId="field-available-packs"
                       Input={
                         <NumericTextInput
                           autoFocus
@@ -238,6 +244,7 @@ export const StockLineForm = ({
                   <>
                     <StyledInputRow
                       label={t('label.available-soh')}
+                      testId="field-available-stock"
                       Input={
                         <NumericTextInput
                           autoFocus
@@ -255,6 +262,7 @@ export const StockLineForm = ({
                     />
                     <StyledInputRow
                       label={t('label.soh')}
+                      testId="field-soh"
                       Input={
                         <NumericTextInput
                           autoFocus
@@ -274,6 +282,7 @@ export const StockLineForm = ({
                 )}
                 <StyledInputRow
                   label={t('label.cost-price')}
+                  testId="field-cost-price"
                   Input={
                     <CurrencyInput
                       autoFocus={!packEditable}
@@ -286,6 +295,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.sell-price')}
+                  testId="field-sell-price"
                   Input={
                     <CurrencyInput
                       value={draft.sellPricePerPack}
@@ -297,6 +307,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.batch')}
+                  testId="field-batch"
                   Input={
                     <BufferedTextInput
                       value={draft.batch ?? ''}
@@ -306,6 +317,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.barcode')}
+                  testId="field-barcode"
                   Input={
                     <Box
                       display="flex"
@@ -344,6 +356,7 @@ export const StockLineForm = ({
                 {isNewModal && (
                   <StyledInputRow
                     label={t('label.reason')}
+                    testId="field-reason"
                     Input={
                       <ReasonOptionsSearchInput
                         width={INPUT_WIDTH}
@@ -357,6 +370,7 @@ export const StockLineForm = ({
                 )}
                 <StyledInputRow
                   label={t('label.manufacture-date')}
+                  testId="field-manufacture-date"
                   Input={
                     <DateTimePickerInput
                       value={DateUtils.getNaiveDate(draft.manufactureDate)}
@@ -379,6 +393,7 @@ export const StockLineForm = ({
               <Grid container flex={1} flexDirection="column" gap={1}>
                 <StyledInputRow
                   label={t('label.pack-size')}
+                  testId="field-pack-size"
                   Input={
                     <NumericTextInput
                       disabled={!packEditable}
@@ -403,6 +418,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.expiry')}
+                  testId="field-expiry-date"
                   Input={
                     <ExpiryDateInput
                       value={DateUtils.getNaiveDate(draft.expiryDate)}
@@ -415,6 +431,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.on-hold')}
+                  testId="field-on-hold"
                   Input={
                     <Checkbox
                       checked={draft.onHold}
@@ -425,6 +442,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.location')}
+                  testId="field-location"
                   Input={
                     <LocationSearchInput
                       autoFocus={false}
@@ -446,6 +464,7 @@ export const StockLineForm = ({
                 />
                 <StyledInputRow
                   label={t('label.volume-per-pack')}
+                  testId="field-volume-per-pack"
                   Input={
                     <NumericTextInput
                       width={160}
@@ -458,6 +477,7 @@ export const StockLineForm = ({
                 {!packEditable && (
                   <StyledInputRow
                     label={t('label.total-volume')}
+                    testId="field-total-volume"
                     Input={
                       <NumericTextInput
                         disabled
@@ -473,6 +493,7 @@ export const StockLineForm = ({
                 )}
                 <StyledInputRow
                   label={t('label.manufacturer')}
+                  testId="field-manufacturer"
                   Input={
                     <ManufacturerSearchInput
                       value={draft.manufacturer ?? null}
@@ -495,6 +516,7 @@ export const StockLineForm = ({
                 {showVVMStatus && (
                   <StyledInputRow
                     label={t('label.vvm-status')}
+                    testId="field-vvm-status"
                     Input={
                       <VVMStatusSearchInput
                         selected={draft?.vvmStatus ?? null}
@@ -509,6 +531,7 @@ export const StockLineForm = ({
                 {preferences.allowTrackingOfStockByDonor && (
                   <StyledInputRow
                     label={t('label.donor')}
+                    testId="field-donor"
                     Input={
                       <DonorSearchInput
                         donorId={draft.donor?.id ?? null}
@@ -521,6 +544,7 @@ export const StockLineForm = ({
                 )}
                 <StyledInputRow
                   label={t('label.campaign')}
+                  testId="field-campaign-or-program"
                   Input={
                     <CampaignOrProgramSelector
                       campaignId={draft.campaign?.id}
