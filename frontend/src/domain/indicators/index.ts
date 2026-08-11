@@ -6,5 +6,5 @@
 // runs the ProgramIndicatorValues query itself (its reporting identity —
 // customerNameId — differs per side) and hands the nodes in.
 export { ProgramIndicatorsTab } from './ProgramIndicatorsTab';
-export { type IndicatorNode } from './indicators';
+export { applySavedIndicatorValue, type IndicatorNode } from './indicators';
 export { ProgramIndicatorValues } from './indicators.generated';

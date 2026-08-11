@@ -1,15 +1,23 @@
-/* The Indicators tab's two-pane layout (spec S3 § Indicators tab): a narrow
-   line list on the inline-start, the cell editor filling the rest; they stack
-   on narrow viewports. */
+/* The Indicators tab's two-pane layout (spec S3 § Indicators tab): the line
+   list on the inline-start, the selected line's form filling the rest; they
+   stack on narrow viewports. Both panes are FormSections, so the tab reads as
+   one sectioned form page — the shape the custom-fields tab and the stock /
+   patient detail forms use. */
 .tab {
   display: flex;
-  gap: var(--space-4);
-  align-items: flex-start;
   flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: flex-start;
 }
 
+/* Narrow enough that the form keeps the room, wide enough that a `code - name`
+   entry usually sits on one line (it wraps within the row when it doesn't). */
 .lines {
-  flex: 0 0 14rem;
+  flex: 0 1 18rem;
+  min-inline-size: 13rem;
+}
+
+.lineList {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -17,73 +25,44 @@
   overflow-y: auto;
 }
 
+/* A selectable row, the app's nav-item shape: rounded, quiet until hovered.
+   The selection is carried by weight and the current-item marker as well as
+   the tint (never colour alone). */
 .lineButton {
-  text-align: start;
   padding: var(--space-2) var(--space-3);
   border: none;
+  border-radius: var(--radius-md);
   background: transparent;
-  border-radius: 0.25rem;
-  cursor: pointer;
   color: var(--text-body);
   font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
 }
 
 .lineButton:hover {
   background: var(--gray-pale);
 }
 
+.lineButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .lineButton[data-selected] {
-  background: color-mix(in srgb, var(--primary-main) 12%, transparent);
+  background: color-mix(in srgb, var(--primary-main) 10%, transparent);
+  color: var(--primary-main);
   font-weight: var(--weight-bold);
 }
 
 .editor {
-  flex: 1 1 20rem;
+  flex: 1 1 24rem;
   min-inline-size: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
 }
 
-.caption {
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-/* The breakdown carries a column per displayed cell (up to ~9), so it can
-   outgrow the editor pane. Tighter type + padding fit the common case; any
-   residual width scrolls inside this box, never the page. */
-.customerScroll {
-  inline-size: 100%;
-  overflow-x: auto;
-}
-
-.customerTable {
-  inline-size: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-}
-
-.customerTable th,
-.customerTable td {
-  text-align: start;
-  padding: var(--space-1) var(--space-2);
-  border-block-end: 1px solid var(--gray-light);
-  white-space: nowrap;
-}
-
-/* Number-typed indicator columns: right-aligned with tabular figures, header
-   included (ui-standards § tables › data-type alignment) — same data-align
-   convention as the shared DataTable. */
-.customerTable th[data-align='right'],
-.customerTable td[data-align='right'] {
-  text-align: end;
-  font-variant-numeric: tabular-nums;
-}
-
-.nav {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-block-start: var(--space-2);
+/* The cell rows keep the form measure — two FormColumns at their own basis —
+   so an input stays a field, not a banner, however wide the screen. The
+   breakdown table below is free to use the full pane. */
+.fields {
+  max-inline-size: 45.5rem;
 }
