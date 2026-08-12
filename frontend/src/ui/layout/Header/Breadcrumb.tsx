@@ -6,6 +6,15 @@ import styles from './Breadcrumb.module.css';
 export interface Crumb {
   label: string;
   /**
+   * A marker for THIS crumb, rendered immediately before its label — the
+   * record-kind glyph a screen's own surface calls for (the inbound shipment
+   * detail's truck/house before the shipment number). Distinct from the trail's
+   * leading `icon`, which is the section, not the record. The page tones it
+   * (icons paint with `currentColor`); it is decorative, so it stays
+   * `aria-hidden` and the leaf's <h1> keeps the label as its accessible name.
+   */
+  icon?: JSX.Element;
+  /**
    * Link target for ancestor crumbs (navigate back up the trail). The last
    * crumb is the current page and always renders as plain text, so its `to`
    * is ignored. Until routing is decided these are plain hrefs (the
@@ -72,6 +81,13 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                 </li>
               </Show>
               <li class={styles.crumb}>
+                {/* The crumb's own marker, before its label — outside the
+                    link/heading so it never joins their accessible name. */}
+                <Show when={crumb.icon}>
+                  <span class={styles.crumbIcon} aria-hidden="true">
+                    {crumb.icon}
+                  </span>
+                </Show>
                 <Show
                   when={(crumb.to || crumb.onClick) && !isLast(index())}
                   fallback={

@@ -26,7 +26,7 @@ import {
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { HomeIcon, PlusCircleIcon, TruckIcon } from '../../../ui/icons';
+import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
@@ -58,6 +58,7 @@ import {
   scopeOf,
 } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
+import { SupplierKindIcon } from '../SupplierKindIcon';
 import {
   customFieldDefinitions,
   customFieldColumns,
@@ -66,7 +67,6 @@ import {
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
-import styles from './InboundShipmentsList.module.css';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -277,11 +277,7 @@ const InboundShipmentsList: Component = () => {
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
-            {supplierIsStore(row) ? (
-              <HomeIcon class={styles.kindInternal} />
-            ) : (
-              <TruckIcon class={styles.kindExternal} />
-            )}
+            <SupplierKindIcon isStore={supplierIsStore(row)} />
             <span>{row.otherPartyName}</span>
           </HStack>
         );
