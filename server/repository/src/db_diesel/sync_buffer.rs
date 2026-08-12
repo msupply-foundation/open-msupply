@@ -405,16 +405,6 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(())
     }
 
-    /// Point lookup by cursor (the PK). Used by tests to assert per-row
-    /// integration outcomes.
-    pub fn find_one_by_cursor(&self, cursor: i32) -> Result<Option<SyncBufferRow>, RepositoryError> {
-        let result = sync_buffer::table
-            .filter(sync_buffer::cursor.eq(cursor))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
-
     /// Returns the most recent (highest cursor) row matching the record_id, across both
     /// pending and integrated rows.
     ///
