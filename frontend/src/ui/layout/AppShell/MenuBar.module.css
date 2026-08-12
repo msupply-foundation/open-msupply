@@ -18,7 +18,10 @@
   flex-shrink: 0;
   inline-size: var(--drawer-width);
   block-size: 100%;
-  overflow: hidden;
+  /* NOT clipped: the toggle straddles the inline-end border, so half of it sits
+     outside this box. The clipping that matters — labels spilling while the rail
+     narrows — moves to .scroll's overflow-x. */
+  overflow: visible;
   /* L1 chrome (tokens.css § "Warm stone"): the rail is the persistent frame, so
      it reads as the frame — white, with the canvas the page sits on stepping
      down from it, rather than a grey panel beside a white page. (Not the old
@@ -46,16 +49,11 @@
   inline-size: var(--drawer-closed-width);
 }
 
-/* --- Logo + rail toggle ------------------------------------------------- */
-/* The rail's head: brand mark leading, collapse toggle at the inline-end.
-   Collapsed, the mark stands down (below) and the toggle takes the whole head
-   to itself. */
+/* --- Logo ---------------------------------------------------------------- */
+/* The mark has the head to itself here — the toggle lives on the rail's edge,
+   so nothing competes with it and it KEEPS ITS PLACE when the rail narrows,
+   which the head-mounted alternative cannot do at 5rem. */
 .logoArea {
-  /* Positioning context for the toggle, which is taken OUT of the flow below so
-     the mark centres on the rail itself rather than on the space left beside a
-     button — otherwise it drifts by half the button's width and reads as
-     almost-centred, which is worse than either. */
-  position: relative;
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -138,7 +136,9 @@
   flex: 1;
   flex-direction: column;
   min-block-size: 0; /* allow the flex child to shrink below content height so it scrolls */
-  overflow-y: auto;
+  /* x clips (the rail itself cannot, with the toggle on its edge); y scrolls
+     when the two lists outgrow the rail. */
+  overflow: hidden auto;
   scrollbar-width: none;
 }
 
@@ -260,41 +260,45 @@
   transform: rotate(90deg);
 }
 
-/* The collapse toggle, in the rail's head. A compact icon button rather than a
-   row: it costs no vertical space here, and beside the mark (or alone, on the
-   collapsed rail) it is already the second thing the eye meets — noticeable by
-   position, so it need not be loud. --text-secondary is 7:1: readable, and
-   below the destinations' 16:1, because it is furniture rather than a place you
-   can go. */
+/* The collapse toggle: a disc centred ON the rail's inline-end border.
+   Low in the head rather than centred on it — centred put the disc level with
+   the page title (the app header's band runs 0-65), the largest thing it would
+   be competing with; sitting at the head's end clears that rule. */
 .railToggle {
   position: absolute;
-  inset-inline-end: var(--space-3);
-  /* On the mark's OPTICAL centre, not its box centre. The figure's weight is
-     its head, hat and raised arm; the legs trail thin below, so centring on the
-     bounding box (y 45) sits the toggle level with its knees and reads low.
-     1.625rem lands it at y 40. Not higher: at the page title's line (y 33) it
-     detaches from the mark entirely — and that line is not a fixture anyway,
-     sitting at y 32 on a list screen but y 71 on a detail one. */
-  inset-block-start: 1.625rem;
+  inset-inline-end: -0.75rem;
+  inset-block-start: calc(var(--logo-area-height) - 0.75rem);
+  z-index: 1;
   display: inline-flex;
-  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
   padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text-secondary);
-  font-size: 1.125rem;
+  /* A faint ring — the edge token thinned toward the chrome behind it. With no
+     ring the disc's white bleeds into the rail on one side and bulges into the
+     canvas on the other, reading as a smear rather than a control; at full
+     --surface-edge it is a second edge, as dark as the hairline it interrupts.
+     The FILL has to stay either way: it is what breaks that hairline. Drop it
+     and the 1px line runs straight through the glyph (rendered and checked). */
+  border: 1px solid
+    color-mix(in srgb, var(--surface-edge) 55%, var(--surface-chrome));
+  border-radius: 50%;
+  background: var(--surface-chrome);
+  /* --gray-main is the floor, not a preference: 3.1:1 on white, just past WCAG
+     2.2 SC 1.4.11's 3:1 for a control that has to be findable. */
+  color: var(--gray-main);
+  font-size: 0.75rem;
   cursor: pointer;
+  transform: translateY(-50%);
   transition:
     background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
     color var(--motion-fast) ease;
 }
 
 .railToggle:hover {
+  border-color: var(--surface-edge);
   background: var(--surface-sunken);
   color: var(--text-body);
 }
@@ -302,6 +306,17 @@
 .railToggle:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* The hit area, grown past what the disc draws — 1.5rem is EXACTLY SC 2.5.8's
+   24x24 floor. Asymmetric: it grows into the RAIL, not into the page, where a
+   uniform ring reached within 5px of the page title and would swallow clicks
+   aimed just short of it. 34x40, still well past the floor. */
+.railToggle::before {
+  content: '';
+  position: absolute;
+  inset-block: -0.5rem;
+  inset-inline: -0.5rem -0.125rem;
 }
 
 .navButton[data-active='true'] .icon {
@@ -348,29 +363,10 @@
    the Dashboard entry below goes where the mark went, and a 5rem rail cannot
    hold a centred mark and a button both — which is what defeated every earlier
    attempt to put the toggle up here. */
-/* The mark stands down and the toggle takes the head. Keeping both was tried:
-   side by side they fit only with the mark at 2.25rem, which is too small to
-   read as a brand; stacked, the toggle drops 25px on every press. A 5rem rail
-   holds one of them properly, and the toggle is the one that has work to do
-   here — the Dashboard entry below goes where the mark went. */
-.menuBar[data-open='false'] .logoButton,
+/* The mark STAYS on the collapsed rail — the whole point of putting the toggle
+   on the edge. It comes down to 2.75rem to sit comfortably in 5rem. */
 .menuBar[data-open='false'] .logo {
-  display: none;
-}
-
-.menuBar[data-open='false'] .logoArea {
-  justify-content: center;
-  padding-inline: 0;
-}
-
-/* Centred on the rail, and on the SAME LINE it holds expanded. Pinned to the
-   inline-end it would sit 13px off the centre of an 80px rail; dropped back into
-   the flow it would centre horizontally but re-centre vertically too, landing 5px
-   below where it was — the jump this whole arrangement exists to avoid. Staying
-   absolute keeps the block offset above; auto inline margins do the centring. */
-.menuBar[data-open='false'] .railToggle {
-  inset-inline: 0;
-  margin-inline: auto;
+  block-size: 2.75rem;
 }
 
 .menuBar[data-open='false'] .label,
