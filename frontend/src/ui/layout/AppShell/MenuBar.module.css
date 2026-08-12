@@ -260,20 +260,22 @@
   transform: rotate(90deg);
 }
 
-/* The collapse toggle: a disc centred ON the rail's inline-end border, halfway
-   down it.
-   A disc on this edge is always beside SOMETHING the page drew — the page
-   region begins flush at the rail, so there is no margin for it to hang in. Up
-   in the head it was level with the page title (13px from it, the largest text
-   on the screen); lower in the head, level with the toolbar. Halfway down, its
-   neighbours are table rows: quiet, repetitive, and nothing the eye is hunting
-   for. It also stops borrowing the head's alignment and takes the rail's own
-   midpoint instead — a grip in the middle of the edge you pull, which is where
-   a handle belongs. */
+/* The collapse toggle: a disc centred ON the rail's inline-end border, up in the
+   head — inside the app bar's band, so it reads as part of the top chrome
+   rather than floating halfway down an edge.
+   Its line is the MARK's optical centre (y 40; the figure's weight is head, hat
+   and raised arm, so the box centre at 45 reads low), which is rail-owned — the
+   page header's own height is not a fixture to align to, running 65px on a list
+   screen and 159px on a detail one.
+   The trade, measured: it sits ~13px from the page title, because the page
+   region begins flush at the rail and the disc's overhang has no margin to hang
+   in. Halfway down the rail its neighbours were quieter, but it was then the
+   only thing in the rail not at the top, and people look for chrome controls
+   there. */
 .railToggle {
   position: absolute;
   inset-inline-end: -0.75rem;
-  inset-block-start: 50%;
+  inset-block-start: 2.5rem;
   z-index: 1;
   display: inline-flex;
   align-items: center;
@@ -410,7 +412,7 @@
   content: '';
   position: absolute;
   inset-inline-start: 0;
-  inset-block-start: 50%;
+  inset-block-start: 2.5rem;
   inline-size: 0.1875rem;
   block-size: 1.375rem;
   border-radius: var(--radius-sm);
