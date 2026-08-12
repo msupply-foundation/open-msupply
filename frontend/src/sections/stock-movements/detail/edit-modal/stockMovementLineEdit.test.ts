@@ -10,7 +10,7 @@ import {
 } from './stockMovementLineEdit';
 import type { DraftStockMovementLineFragment } from './stockMovementDraftLines.generated';
 
-// Anchors: spec/stock-movements/cases/OMS-REG-SMV-09.
+// Anchors: spec/stock-movements/cases/OMS-REG-SMV-10.
 //   .8  — batch picker excludes batches already on the movement
 //   .9  — a location-held batch option is disabled, labelled on hold
 //   .10/.14 — the batch's current location is not a valid destination
@@ -40,7 +40,7 @@ const candidate = (
   ...over,
 });
 
-describe('OMS-REG-SMV-09.8 — already-added batches are excluded', () => {
+describe('OMS-REG-SMV-10.8 — already-added batches are excluded', () => {
   it('withholds candidates whose batch is already on the movement', () => {
     const kept = excludeAddedBatches(
       [candidate(), candidate({ id: 'sl2', stockLineId: 'sl2' })],
@@ -55,7 +55,7 @@ describe('OMS-REG-SMV-09.8 — already-added batches are excluded', () => {
   });
 });
 
-describe('OMS-REG-SMV-09.9 — held-location candidates disable, labelled', () => {
+describe('OMS-REG-SMV-10.9 — held-location candidates disable, labelled', () => {
   it('disables only on a held LOCATION — a held batch stays selectable', () => {
     expect(isCandidateDisabled(candidate({ onHold: true }))).toBe(false);
     expect(
@@ -87,7 +87,7 @@ describe('OMS-REG-SMV-09.9 — held-location candidates disable, labelled', () =
   });
 });
 
-describe('OMS-REG-SMV-09.10/.14 — destination must differ from source', () => {
+describe('OMS-REG-SMV-10.10/.14 — destination must differ from source', () => {
   it('rejects the current location and requires one at all', () => {
     expect(destinationDiffersFromSource('locB2', candidate())).toBe(false);
     expect(destinationDiffersFromSource(undefined, candidate())).toBe(false);
@@ -95,7 +95,7 @@ describe('OMS-REG-SMV-09.10/.14 — destination must differ from source', () => 
   });
 });
 
-describe('OMS-REG-SMV-09.11/.12/.13 — quantity bounds', () => {
+describe('OMS-REG-SMV-10.11/.12/.13 — quantity bounds', () => {
   it('caps at AVAILABLE packs, not total', () => {
     expect(packsInBounds(30, 30)).toBe(true);
     expect(packsInBounds(31, 30)).toBe(false); // total is 40; available caps
