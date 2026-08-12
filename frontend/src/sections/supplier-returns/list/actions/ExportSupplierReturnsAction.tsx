@@ -16,7 +16,8 @@ import { supplierReturnsToCsv } from '../supplierReturnsToCsv';
 
 export interface ExportSupplierReturnsActionProps {
   storeId: string;
-  /** The list's current filter (type-pinned to SUPPLIER_RETURN) — the export
+  /** The list's current filter (the type pin is the query's own top-level
+   * `type` argument, not part of this filter) — the export
    *  matches it across all pages. */
   filter: () => SupplierReturnsVariables['filter'];
 }
