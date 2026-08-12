@@ -494,6 +494,14 @@ export const MenuBar = (props: MenuBarProps) => {
           aria-expanded={!props.nav.railCollapsed()}
           aria-label={t('label.menu')}
         >
+          {/* Brand mark and toggle share the rail's head: the mark leads, the
+              toggle sits at the inline-end beside it. Collapsed, the mark gives
+              its place up to the toggle (CSS hides it) — the pattern bud.app and
+              navbar.gallery use, and the one arrangement where the toggle costs
+              no row, collides with nothing, and is the most visible thing on the
+              rail exactly when the rail is hardest to read.
+              Losing the mark on the rail costs no route home: the Dashboard
+              entry directly below it goes to the same place. */}
           <div class={styles.logoArea}>
             <Show
               when={props.onHome}
@@ -509,6 +517,22 @@ export const MenuBar = (props: MenuBarProps) => {
                 <AppLogo class={styles.logo} />
               </button>
             </Show>
+            <button
+              type="button"
+              class={styles.railToggle}
+              data-testid="drawer-toggle"
+              onClick={props.nav.toggleRail}
+              aria-label={
+                props.nav.railCollapsed()
+                  ? t('button.open-the-menu')
+                  : t('button.close-the-menu')
+              }
+              aria-expanded={!props.nav.railCollapsed()}
+            >
+              {/* One glyph for both states: it names the panel it toggles, not
+                  a direction, so there is nothing to flip. */}
+              <SidebarIcon />
+            </button>
           </div>
           <NavLists
             upper={props.upper}
@@ -531,41 +555,6 @@ export const MenuBar = (props: MenuBarProps) => {
               is adjacent to the thing it controls, in the icon column so it
               never reaches into the page, and in the one part of the rail
               nothing else wants. */}
-          <div class={styles.railToggleRow}>
-            {/* Built ON .navButton, not beside it: a bare icon here measured
-                3.13:1 against nav labels at 16:1 and read as a stray mark,
-                left-adrift in the expanded rail with no label to justify its
-                alignment — and it was the only collapse control a touch device
-                had, since the edge below is pointer-only. As a row it inherits
-                every nav row's geometry, its label alignment, and its
-                collapsed-rail behaviour (label hidden, icon centred) by
-                construction rather than by copied numbers.
-                It stays subordinate to the destinations above it in colour
-                (--text-secondary, not the destinations' ink and not the nav's
-                orange icons): a row, but not a place you can go. */}
-            <button
-              type="button"
-              class={`${styles.navButton} ${styles.railToggle}`}
-              data-testid="drawer-toggle"
-              onClick={props.nav.toggleRail}
-              aria-label={
-                props.nav.railCollapsed()
-                  ? t('button.open-the-menu')
-                  : t('button.close-the-menu')
-              }
-              aria-expanded={!props.nav.railCollapsed()}
-            >
-              {/* One glyph for both states: it names the panel it toggles, not
-                  a direction, so there is nothing to flip. */}
-              <span class={styles.icon}>
-                <SidebarIcon />
-              </span>
-              <span class={styles.chevronSlot} aria-hidden="true" />
-              {/* Expanded, the action is always "collapse" — the label needs no
-                  state, and collapsed it is hidden like every other row's. */}
-              <span class={styles.label}>{t('button.close-the-menu')}</span>
-            </button>
-          </div>
           {/* The rail's edge is a second explicit toggle (Linear's affordance).
               A click, so D3 is untouched — that rule forbids reacting to HOVER,
               and what hover does here is light the strip up, advertising the

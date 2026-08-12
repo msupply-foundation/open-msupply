@@ -47,12 +47,16 @@
 }
 
 /* --- Logo + rail toggle ------------------------------------------------- */
+/* The rail's head: brand mark leading, collapse toggle at the inline-end.
+   Collapsed, the mark stands down (below) and the toggle takes the whole head
+   to itself. */
 .logoArea {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   block-size: var(--logo-area-height);
+  padding-inline: var(--space-4) var(--space-3);
 }
 
 /* The mark as a link home (the app's chrome convention), when the host wires
@@ -252,35 +256,39 @@
   transform: rotate(90deg);
 }
 
-/* --- Rail toggle (foot of the rail) ------------------------------------- */
-/* The row's own padding matches the nav lists', so the button lines up with
-   every row above it; the block padding is the only space it costs beyond the
-   40px row itself. */
-.railToggleRow {
-  flex-shrink: 0;
-  padding-inline: var(--space-2);
-  padding-block-end: var(--space-1);
-}
-
-/* Everything geometric comes from .navButton — height, padding, radius, the
-   collapsed-rail centring, the label hiding. This adds only the demotion:
-   subordinate ink for both glyph and label, since it is furniture rather than
-   a destination. --text-secondary is 6.9:1 (the destinations are 16:1, and the
-   bare glyph this replaces was 3.13:1). */
+/* The collapse toggle, in the rail's head. A compact icon button rather than a
+   row: it costs no vertical space here, and beside the mark (or alone, on the
+   collapsed rail) it is already the second thing the eye meets — noticeable by
+   position, so it need not be loud. --text-secondary is 7:1: readable, and
+   below the destinations' 16:1, because it is furniture rather than a place you
+   can go. */
 .railToggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
   color: var(--text-secondary);
-}
-
-.railToggle .icon {
-  color: var(--text-secondary);
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .railToggle:hover {
+  background: var(--surface-sunken);
   color: var(--text-body);
 }
 
-.railToggle:hover .icon {
-  color: var(--text-body);
+.railToggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .navButton[data-active='true'] .icon {
@@ -323,8 +331,18 @@
 }
 
 /* --- Collapsed (icon-only) rail ---------------------------------------- */
+/* The mark stands down and the toggle takes the head. Nothing here is a loss:
+   the Dashboard entry below goes where the mark went, and a 5rem rail cannot
+   hold a centred mark and a button both — which is what defeated every earlier
+   attempt to put the toggle up here. */
+.menuBar[data-open='false'] .logoButton,
 .menuBar[data-open='false'] .logo {
-  block-size: 2.75rem;
+  display: none;
+}
+
+.menuBar[data-open='false'] .logoArea {
+  justify-content: center;
+  padding-inline: 0;
 }
 
 .menuBar[data-open='false'] .label,
