@@ -11,6 +11,7 @@ use crate::{
 use super::validate::*;
 use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::*;
+use std::collections::{HashMap, HashSet};
 use thiserror::Error;
 use util::{datetime_now, format_error};
 
@@ -328,6 +329,32 @@ fn validate_translate_integrate_inner<'a>(
     let repo = SyncBufferRepository::new(connection);
 
     let integration_tables: Vec<&str> = INTEGRATION_ORDER.iter().map(|t| t.as_ref()).collect();
+
+    // Latest-wins pre-pass (#12610): only the newest pending row per
+    // (table_name, record_id) integrates in this run. Older rows — e.g. a
+    // stale Delete that arrived in an earlier pull batch than its re-create
+    // Upsert — are marked Ignored here; the upserts-then-deletes phase split
+    // below would otherwise apply them out of arrival order and a stale
+    // delete would wipe the newer record.
+    let keys = repo.pending_keys(
+        source_site_id,
+        SyncVersion::V7,
+        reference_id,
+        &integration_tables,
+    )?;
+    let key_refs: Vec<(&str, &str, i32)> = keys
+        .iter()
+        .map(|k| (k.table_name.as_str(), k.record_id.as_str(), k.cursor))
+        .collect();
+    for cursor in superseded_cursors(&key_refs) {
+        write_sync_buffer_ignored(
+            connection,
+            cursor,
+            datetime_now(),
+            "Superseded by a newer sync buffer row for the same record",
+        )?;
+    }
+
     let mut total = repo.count_pending(
         source_site_id,
         SyncVersion::V7,
@@ -433,13 +460,27 @@ pub(crate) fn validate_translate_integrate_in_memory(
     rows: &[SyncBufferRow],
     sync_context: SyncContext,
 ) -> Result<(), RepositoryError> {
+    // Latest-wins, mirroring `validate_translate_integrate_inner`'s pre-pass:
+    // rows here carry the central changelog cursor, so the highest cursor per
+    // (table_name, record_id) is the record's latest state. Superseded rows
+    // are simply skipped — nothing is persisted for this path.
+    let key_refs: Vec<(&str, &str, i32)> = rows
+        .iter()
+        .map(|r| (r.table_name.as_str(), r.record_id.as_str(), r.cursor))
+        .collect();
+    let superseded: HashSet<i32> = superseded_cursors(&key_refs).into_iter().collect();
+
     connection
         .transaction_sync(|con| -> Result<(), RepositoryError> {
             let by_table_action = |table: &ChangelogTableName, action: SyncAction| {
                 let table_name = table.to_string();
                 let mut filtered: Vec<&SyncBufferRow> = rows
                     .iter()
-                    .filter(|r| r.table_name == table_name && r.action == action)
+                    .filter(|r| {
+                        r.table_name == table_name
+                            && r.action == action
+                            && !superseded.contains(&r.cursor)
+                    })
                     .collect();
                 match action {
                     SyncAction::Delete => filtered.sort_by_key(|r| std::cmp::Reverse(r.cursor)),
@@ -477,4 +518,320 @@ pub(crate) fn validate_translate_integrate_in_memory(
             Ok(())
         })
         .map_err(|e| e.to_inner_error())
+}
+
+/// Cursors of rows superseded by a higher-cursor row for the same
+/// (table_name, record_id). The buffer cursor is DB arrival order — monotone
+/// with the source's changelog order — so the highest cursor is the record's
+/// latest state and older rows must not be applied (#12610).
+fn superseded_cursors(keys: &[(&str, &str, i32)]) -> Vec<i32> {
+    let mut max_by_key: HashMap<(&str, &str), i32> = HashMap::new();
+    for (table_name, record_id, cursor) in keys {
+        max_by_key
+            .entry((table_name, record_id))
+            .and_modify(|max| *max = (*max).max(*cursor))
+            .or_insert(*cursor);
+    }
+    keys.iter()
+        .filter(|(table_name, record_id, cursor)| *cursor < max_by_key[&(*table_name, *record_id)])
+        .map(|(_, _, cursor)| *cursor)
+        .collect()
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::sync::ActiveStoresOnSite;
+    use repository::{
+        mock::{mock_store_a, mock_user_account_a, MockDataInserts},
+        test_db::setup_all,
+    };
+
+    /// Matches `mock_store_a().site_id`, making store_a active on this site.
+    const SITE_ID: i32 = 100;
+    const SOURCE_SITE_ID: i32 = 1;
+
+    async fn setup(name: &str, inserts: MockDataInserts) -> StorageConnection {
+        let (_, connection, _, _) = setup_all(name, inserts).await;
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(SITE_ID))
+            .unwrap();
+        connection
+    }
+
+    fn buffer_row(record_id: &str, action: SyncAction, data: serde_json::Value) -> SyncBufferRowInsert {
+        SyncBufferRowInsert {
+            record_id: record_id.to_string(),
+            table_name: "unit".to_string(),
+            action,
+            data: SyncRecordData(data),
+            sync_version: SyncVersion::V7,
+            source_site_id: SOURCE_SITE_ID,
+            ..Default::default()
+        }
+    }
+
+    fn unit_data(id: &str) -> serde_json::Value {
+        serde_json::to_value(UnitRow {
+            id: id.to_string(),
+            name: id.to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap()
+    }
+
+    fn integrate(connection: &StorageConnection, reference_id: Option<&str>) {
+        let active_stores = ActiveStoresOnSite::get(connection).unwrap();
+        validate_translate_integrate(
+            connection,
+            None,
+            SOURCE_SITE_ID,
+            reference_id,
+            SyncContext::Remote {
+                is_initialising: true,
+                active_stores,
+                is_multi_device: false,
+            },
+            true,
+        )
+        .unwrap();
+    }
+
+    /// The buffer row at `cursor` (the PK). The buffer holds a handful of rows
+    /// in these tests, so filtering `get_all` is cheaper than a bespoke query.
+    fn buffer_at_cursor(connection: &StorageConnection, cursor: i32) -> SyncBufferRow {
+        SyncBufferRepository::new(connection)
+            .get_all()
+            .unwrap()
+            .into_iter()
+            .find(|row| row.cursor == cursor)
+            .unwrap_or_else(|| panic!("no sync buffer row at cursor {}", cursor))
+    }
+
+    fn buffer_result(
+        connection: &StorageConnection,
+        cursor: i32,
+    ) -> (Option<IntegrationResult>, Option<String>) {
+        let row = buffer_at_cursor(connection, cursor);
+        (row.integration_result, row.integration_error)
+    }
+
+    #[actix_rt::test]
+    async fn integrate_marks_stale_delete_superseded() {
+        // The #12610 shape: a stale Delete arrives in an earlier batch than the
+        // record's re-create Upsert. The delete must be superseded, not applied
+        // after the upsert.
+        let connection =
+            setup("integrate_marks_stale_delete_superseded", MockDataInserts::none()).await;
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[
+                buffer_row("u1", SyncAction::Delete, serde_json::json!({})),
+                buffer_row("u1", SyncAction::Upsert, unit_data("u1")),
+            ])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        let unit = UnitRowRepository::new(&connection)
+            .find_one_by_id("u1")
+            .unwrap()
+            .expect("unit must exist after integration");
+        // Without the pre-pass the delete phase runs last and soft-deletes it.
+        assert!(unit.is_active);
+
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Ignored));
+        assert!(error.unwrap().contains("Superseded"));
+        let (result, _) = buffer_result(&connection, 2);
+        assert_eq!(result, Some(IntegrationResult::Success));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_upsert_then_delete_still_deletes() {
+        // The record's latest action is the Delete — the older Upsert is
+        // superseded and the record must not exist afterwards.
+        let connection = setup(
+            "integrate_upsert_then_delete_still_deletes",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[
+                buffer_row("u1", SyncAction::Upsert, unit_data("u1")),
+                buffer_row("u1", SyncAction::Delete, serde_json::json!({})),
+            ])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id("u1")
+                .unwrap(),
+            None
+        );
+        let (result, _) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Ignored));
+        let (result, _) = buffer_result(&connection, 2);
+        assert_eq!(result, Some(IntegrationResult::Success));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_distinct_records_unaffected() {
+        let connection = setup(
+            "integrate_distinct_records_unaffected",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[
+                buffer_row("u1", SyncAction::Upsert, unit_data("u1")),
+                buffer_row("u2", SyncAction::Delete, serde_json::json!({})),
+            ])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert!(UnitRowRepository::new(&connection)
+            .find_one_by_id("u1")
+            .unwrap()
+            .is_some());
+        let (result, _) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success));
+        let (result, _) = buffer_result(&connection, 2);
+        assert_eq!(result, Some(IntegrationResult::Success));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_does_not_supersede_across_reference_ids() {
+        // Supersession is scoped to the rows a run will actually process: a
+        // reference-scoped row must not be superseded by (or supersede) a
+        // NULL-reference row.
+        let connection = setup(
+            "integrate_does_not_supersede_across_reference_ids",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[
+                buffer_row("u1", SyncAction::Delete, serde_json::json!({})),
+                SyncBufferRowInsert {
+                    reference_id: Some("ref-1".to_string()),
+                    ..buffer_row("u1", SyncAction::Upsert, unit_data("u1"))
+                },
+            ])
+            .unwrap();
+
+        // NULL-reference run processes only the delete.
+        integrate(&connection, None);
+        let (result, _) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success));
+        assert!(!buffer_at_cursor(&connection, 2).is_integrated);
+
+        // The reference run then integrates its own upsert.
+        integrate(&connection, Some("ref-1"));
+        let (result, _) = buffer_result(&connection, 2);
+        assert_eq!(result, Some(IntegrationResult::Success));
+        assert!(UnitRowRepository::new(&connection)
+            .find_one_by_id("u1")
+            .unwrap()
+            .is_some());
+    }
+
+    #[actix_rt::test]
+    async fn integrate_user_permission_delete_recreate() {
+        // High-fidelity #12610 reproduction: user_permission is hard-deleted,
+        // uses deterministic ids, and is Remote-authored (store-scoped).
+        let connection = setup(
+            "integrate_user_permission_delete_recreate",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+
+        let permission = UserPermissionRow {
+            id: "perm1".to_string(),
+            user_id: mock_user_account_a().id,
+            store_id: Some(mock_store_a().id),
+            ..Default::default()
+        };
+        let row = |action: SyncAction, data: serde_json::Value| SyncBufferRowInsert {
+            store_id: Some(mock_store_a().id),
+            table_name: "user_permission".to_string(),
+            ..buffer_row("perm1", action, data)
+        };
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[
+                row(SyncAction::Delete, serde_json::json!({})),
+                row(SyncAction::Upsert, serde_json::to_value(&permission).unwrap()),
+            ])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert!(UserPermissionRowRepository::new(&connection)
+            .find_one_by_id("perm1")
+            .unwrap()
+            .is_some());
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Ignored));
+        assert!(error.unwrap().contains("Superseded"));
+    }
+
+    #[actix_rt::test]
+    async fn in_memory_integration_applies_latest_wins() {
+        let connection = setup(
+            "in_memory_integration_applies_latest_wins",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let row = |cursor: i32, action: SyncAction, data: serde_json::Value| SyncBufferRow {
+            cursor,
+            record_id: "u1".to_string(),
+            table_name: "unit".to_string(),
+            action,
+            data: SyncRecordData(data),
+            sync_version: SyncVersion::V7,
+            source_site_id: SOURCE_SITE_ID,
+            ..Default::default()
+        };
+
+        let active_stores = ActiveStoresOnSite::get(&connection).unwrap();
+        validate_translate_integrate_in_memory(
+            &connection,
+            &[
+                row(1, SyncAction::Delete, serde_json::json!({})),
+                row(2, SyncAction::Upsert, unit_data("u1")),
+            ],
+            SyncContext::PatientLookup { active_stores },
+        )
+        .unwrap();
+
+        let unit = UnitRowRepository::new(&connection)
+            .find_one_by_id("u1")
+            .unwrap()
+            .expect("unit must exist after in-memory integration");
+        assert!(unit.is_active);
+    }
+
+    #[test]
+    fn superseded_cursors_picks_max_per_key() {
+        let keys = [
+            ("unit", "u1", 1),
+            ("unit", "u1", 5),
+            ("unit", "u1", 3),
+            ("unit", "u2", 2),
+            // Same record_id in a different table is an independent key.
+            ("item", "u1", 4),
+        ];
+        let mut superseded = superseded_cursors(&keys);
+        superseded.sort();
+        assert_eq!(superseded, vec![1, 3]);
+    }
 }
