@@ -42,7 +42,7 @@ export interface ProgressStep {
 // so a multi-day run folds into hours rather than being dropped.
 const elapsedLabel = (startedAt: string, endMs: number): string => {
   const startMs = new Date(startedAt).getTime();
-  if (!Number.isFinite(startMs)) return '';
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return '';
   const totalSeconds = Math.floor(Math.max(0, endMs - startMs) / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -130,8 +130,12 @@ export const ProgressList = (props: {
 
   // Live clock for the in-flight step's elapsed time — ticking only while a
   // step is actually running and the run hasn't failed (on error the elapsed
-  // freezes at the failure point, as the current app's does).
-  const [now, setNow] = createSignal(Date.now());
+  // freezes at the failure point, as the current app's does). Starts at a 0
+  // sentinel — no elapsed shows until the clock's first tick: mounted AFTER
+  // the failure (a reload), the failure moment is unknowable, and anchoring
+  // to the mount time would show wall-time since the phase started instead of
+  // how long it ran.
+  const [now, setNow] = createSignal(0);
   const running = createMemo(() =>
     props.steps.some(step => step.started && !step.finished)
   );
@@ -157,13 +161,17 @@ export const ProgressList = (props: {
           // The step's elapsed time: the in-flight step's runs against the
           // live clock (to its finish stamp once that arrives); a completed
           // step's is final, and omitted when its finish stamp never came —
-          // progression-completed, so its true end is unknown.
+          // progression-completed, so its true end is unknown. The in-flight
+          // step's is also omitted while the clock holds its 0 sentinel (the
+          // run failed before this mounted — see the clock above).
           const elapsed = () => {
             const { startedAt, finishedAt } = step();
             if (startedAt == null) return '';
             if (finishedAt != null)
               return elapsedLabel(startedAt, new Date(finishedAt).getTime());
-            return state() === 'active' ? elapsedLabel(startedAt, now()) : '';
+            return state() === 'active' && now() > 0
+              ? elapsedLabel(startedAt, now())
+              : '';
           };
           // 0–1 fill for the in-flight marker's progress ring; unset when the
           // step isn't countable (the ring then stays the plain pale track).
