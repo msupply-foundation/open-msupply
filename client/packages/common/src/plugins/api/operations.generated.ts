@@ -30,9 +30,7 @@ export type PluginGraphqlQueryQuery = {
 
 export const FrontendPluginMetadataDocument = gql`
   query frontendPluginMetadata {
-    frontendPluginMetadata(
-      host: { runtime: "react", version: 0, minSupported: 0 }
-    ) {
+    frontendPluginMetadata(hostRuntime: "react") {
       code
       path
       hash

@@ -405,13 +405,14 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         #[graphql(
-            desc = "What this client is and which plugin bundles it can load. \
-                    Omit only from a pre-existing old-UI build: absent means the \
-                    React module-federation UI at plugin API 0."
+            desc = "Which front end this client is (`react`, `solid`, ...), so it \
+                    is served only the bundles it can load. Omit only from a \
+                    pre-existing old-UI build: absent means the React \
+                    module-federation UI."
         )]
-        host: Option<HostPluginApiInput>,
+        host_runtime: Option<String>,
     ) -> Result<Vec<FrontendPluginMetadataNode>> {
-        frontend_plugin_metadata(ctx, host)
+        frontend_plugin_metadata(ctx, host_runtime)
     }
 
     pub async fn currencies(
