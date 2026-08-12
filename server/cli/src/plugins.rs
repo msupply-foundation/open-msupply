@@ -370,8 +370,19 @@ fn bundle_frontend_plugin(
 
     let version_id = str::replace(&version, ".", "_");
 
+    // The id carries the runtime as well as the code and version, because one
+    // plugin ships a bundle per host and they can share a version number: a
+    // React and a SolidJS civ_plugins 3.0.0 are two rows, and an id of
+    // code+version alone would make the second install silently upsert over the
+    // first. It stays derived rather than random so that re-packing and
+    // re-installing an unchanged code/runtime/version replaces its row instead
+    // of adding a second one — install is a blind upsert, so the primary key is
+    // the only thing standing in for a uniqueness check, and two rows tied on
+    // version leave discovery breaking the tie on the id itself.
+    let runtime_id = str::replace(&host_runtime.0, ".", "_");
+
     bundle.frontend_plugins.push(FrontendPluginRow {
-        id: format!("frontend_{code}_{version_id}"),
+        id: format!("frontend_{code}_{runtime_id}_{version_id}"),
         code,
         entry_point,
         files: FrontendPluginFiles(files),
