@@ -3048,6 +3048,8 @@
   "outbound-shipment": "Outbound Shipments",
   "outbound-shipments": "Outbound Shipments",
   "outstanding-lines": "Outstanding lines",
+  "pagination.count_one": "1 item",
+  "pagination.count_other": "{{count}} items",
   "pagination.first": "First page",
   "pagination.go-to-page": "Go to page {{ page }}",
   "pagination.label": "Pagination",

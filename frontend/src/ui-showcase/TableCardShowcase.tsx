@@ -1358,6 +1358,52 @@ const PaginationDemo = () => {
   );
 };
 
+// The `conditional` footer's three states stacked, each over a fixed row count
+// so the state is the thing on show: 0 rows renders nothing at all (its label
+// stands alone), 8 rows the count alone, 38 the full bar. Paging within the
+// last one stays on the full bar — the row count decides the state, not where
+// you are in it.
+const ConditionalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">0 rows — no footer</Text>
+        <Pagination
+          offset={0}
+          pageSize={20}
+          total={0}
+          conditional
+          onOffsetChange={() => {}}
+          onPageSizeChange={() => {}}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">8 rows — the count alone</Text>
+        <Pagination
+          offset={0}
+          pageSize={20}
+          total={8}
+          conditional
+          onOffsetChange={() => {}}
+          onPageSizeChange={() => {}}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">38 rows — the full bar</Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          conditional
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+    </Stack>
+  );
+};
+
 // Mask the shell's full-screen context for this teaching page so every demo
 // table's full-screen button falls back to DataTable's standalone path — a
 // fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
@@ -1527,9 +1573,22 @@ export const TableCardShowcase = () => (
             parent owns <code>offset</code>/<code>pageSize</code> (bound for URL
             params); the component is pure presentation over them and resets to
             the first page on a size change. Below 480px the selector and number
-            slots collapse to <code>‹ ›</code> + the range.
+            slots collapse to <code>‹ ›</code> + the page position and the
+            range.
           </Lead>
           <PaginationDemo />
+          <Lead>
+            Pass <code>conditional</code> and the bar earns its space instead of
+            standing as fixed chrome (spec/ui-standards § tables → pagination):
+            nothing at all with no rows, the row count alone at the footer's
+            inline start while everything fits one page, the full bar once there
+            is a second page. The rows-per-page selector survives the count
+            state only where a smaller offered size would split the set — it is
+            the only way back to a pager. The host drops the footer band with
+            the pager in the zero state (DataTable does this from{' '}
+            <code>paginationState</code>), so no empty strip is left behind.
+          </Lead>
+          <ConditionalPaginationDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>
