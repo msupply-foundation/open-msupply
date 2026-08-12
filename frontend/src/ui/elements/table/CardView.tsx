@@ -358,6 +358,12 @@ export function CardView<T, G extends string>(props: {
   enableSelection: boolean;
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
+  /**
+   * Semantic text tone (see DataTable's rowTone) — in card view the tone
+   * paints the card's IDENTITY title only (a whole-card repaint would
+   * recolour field labels and controls). Stamps data-tone on the card row.
+   */
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.
@@ -391,6 +397,7 @@ export function CardView<T, G extends string>(props: {
           <tr
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
             data-selected={row.getIsSelected() ? '' : undefined}
+            data-tone={props.rowTone?.(row.original)}
             data-testid="table-row"
             // The row's key, exactly as table view stamps it (TableRow), so a
             // caller can address one row in the DOM in either rendering.

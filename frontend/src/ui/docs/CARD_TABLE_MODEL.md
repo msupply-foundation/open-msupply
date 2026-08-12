@@ -98,7 +98,7 @@ Passed to `<DataTable>`.
 | `enableSelection`      | `boolean`                                        | Adds the leading selection checkbox to both views.                                                                                                                                           |
 | `onRowClick`           | `(row) => void`                                  | Click-through on a row/card. Disclosure and inline-editing controls stop propagation so they don't trigger it.                                                                               |
 | `rowState`             | `(row) => 'verified' \| 'warning' \| 'disabled'` | The row's **background** tint, mapped from the row's own facts — see [Row states & backgrounds](#row-states--backgrounds). **Table view only.**                                              |
-| `rowTone`              | `(row) => 'info' \| 'error'`                     | The row's **text** colour (info / error) — same section. **Table view only.**                                                                                                                |
+| `rowTone`              | `(row) => 'info' \| 'warning' \| 'error'`        | The row's **text** colour (info / warning / error) — same section. Table view paints the whole row's text; card view the card's **identity title** only.                                     |
 
 ### `CardGroup<T, G>`
 
@@ -150,7 +150,13 @@ Hover deepens whichever tint is showing by a couple of points; `disabled` stays 
 
 ### `rowTone` — the text colour
 
-`rowTone={(row) => 'info' | 'error' | undefined}` is the orthogonal **text-colour** channel (not a background): `info` paints the row's text in the action-blue tone (a record awaiting an action — a placeholder / uncounted line), `error` in the error tone (a line the server refused). It composes on top of any `rowState` background.
+`rowTone={(row) => 'info' | 'warning' | 'error' | undefined}` is the orthogonal **text-colour** channel (not a background): `info` paints the row's text in the action-blue tone (a record awaiting an action — a placeholder / uncounted line), `warning` in the warning tone (a record needing attention before it can proceed — an outbound line issued from a held batch, spec D102), `error` in the error tone (a line the server refused). It composes on top of any `rowState` background. In table view the tone paints the whole row's text (surviving the disabled muting); in card view it paints the card's **identity title** only — a whole-card repaint would recolour field labels and controls — and a `'warning'` / `'error'` card additionally gets a matching (amber / red) border + very faint shadow, which survive selection. Never colour alone: a tone restates a fact some cell already states in words.
+
+### Flag cells in the badge slot
+
+A `getFlagCell` check is anonymous by design in table view — its column header names it. In a card's **badge** slot there is no header, so two flags on one card render as identical bare checks (a held batch read as auto-ticked). Flag cells therefore carry a `data-flag-label` span that the CSS reveals **only inside `.cardBadge`**: check + label in card view, bare check in table view. A bespoke flag cell (e.g. the outbound editor's auto-allocation tick) opts in by rendering the same `data-flag` / `data-flag-label` structure. Body-slot card flags don't need it — they get a `LabelledValue` caption like any body field.
+
+Flags may also carry a semantic **tone** (`getFlagCell(label, meta, tone)` → `data-flag-tone`), applied in the card badge only: `'success'` (an affirmative flag — the auto-allocation tick) tints the check + label green; `'warning'` (On hold, amber) and `'error'` (Expired, red) are caution flags — tinted **and check-dropped**, since a check connotes a positive state: the word stands alone. Table view is untouched in every case. A flag that only makes sense as a card badge (the Expired badge — table view has a reddened date cell instead) sets `hideOnTable` + `hideFromColumnSettings`.
 
 ### What a dev writes
 

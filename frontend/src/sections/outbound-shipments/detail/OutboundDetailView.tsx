@@ -30,6 +30,7 @@ import {
 import {
   formatCurrencyCell,
   getCellDefinition,
+  getFlagCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
@@ -40,6 +41,7 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -113,6 +115,19 @@ import {
 // lines are their own small read (the S5 editor + side-panel rows).
 
 type Line = OutboundLineFragment;
+
+// A held line — its batch, or the batch's location, on hold — cannot be
+// issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
+// first: warning-tone row text + a check in the On-hold flag column
+// (OMS-REG-DIST-03.37, D102 — the flag carries the fact, the tone only
+// restates it).
+const lineOnHold = (line: Line): boolean =>
+  !!line.stockLine?.onHold || !!line.location?.onHold;
+
+// Calendar-expired line (D103) — the card's error tone + Expired badge; in
+// table view the Expiry-date cell's own reddening carries it.
+const lineExpired = (line: Line): boolean =>
+  !!line.expiryDate && isExpired(line.expiryDate);
 
 // Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
 // HARD cap, so a column sitting at it can't be dragged wider at all. The shared
@@ -615,6 +630,38 @@ const OutboundDetailView: Component = () => {
         ...uncapped(getCellDefinition<Line>('batch')),
       },
       {
+        // On-hold flag, right beside the batch it qualifies (spec § line
+        // table col 4) — the same check the line editor's grid carries
+        // (OMS-REG-DIST-03.37, D102): the hold is a stock-line fact, so the
+        // column makes it scannable where the batch is read; the row's
+        // warning tone restates it.
+        c: { accessor: lineOnHold, id: 'onHold' },
+        header: () => t('label.on-hold'),
+        // A row-level status flag — the card's badge slot, like the line
+        // editor's own flag.
+        ...getFlagCell(
+          t('label.on-hold'),
+          { headerPosition: 'badge' },
+          'warning'
+        ),
+      },
+      {
+        // Expired flag, CARD-ONLY (D103): the table's Expiry-date cell
+        // reddens under its header; a card buries that in the body, so the
+        // badge puts the word in the card corner, with the row's error tone.
+        c: { accessor: lineExpired, id: 'expired' },
+        header: () => t('label.expired'),
+        ...getFlagCell(
+          t('label.expired'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error'
+        ),
+      },
+      {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry-date'),
@@ -714,7 +761,7 @@ const OutboundDetailView: Component = () => {
         ...getCellDefinition('sellPricePerPack'),
       },
       {
-        // Pack sell price × packs, BEFORE tax (spec § line table col 16) —
+        // Pack sell price × packs, BEFORE tax (spec § line table col 17) —
         // not the line's totalAfterTax.
         c: {
           accessor: line =>
@@ -982,9 +1029,20 @@ const OutboundDetailView: Component = () => {
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
                   // Placeholder lines read in the info tone — whole-row blue
-                  // text, matching the current app (ui-surface S3 line table).
+                  // text, matching the current app; held lines in the warning
+                  // tone, expired lines in the error tone — each beside its
+                  // words (the flag badges; in table view the bold red
+                  // Expiry-date cell) (ui-surface S3 line table,
+                  // OMS-REG-DIST-03.37/.38, D102/D103). Hold outranks expiry
+                  // (the server-enforced bar).
                   rowTone={line =>
-                    line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
+                    line.type === 'UNALLOCATED_STOCK'
+                      ? 'info'
+                      : lineOnHold(line)
+                        ? 'warning'
+                        : lineExpired(line)
+                          ? 'error'
+                          : undefined
                   }
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
