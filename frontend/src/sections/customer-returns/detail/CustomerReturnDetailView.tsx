@@ -46,7 +46,11 @@ import {
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -98,8 +102,6 @@ type Line = CustomerReturnLineFragment;
 // ones (Total quantity, Line total) simply omit `sortKey` (spec contract §
 // backend gaps).
 type SortKey = NonNullable<CustomerReturnLinesVariables['sort']>[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): sort + pagination in the one
 // `?query=` JSON param, so a sorted/paged table is shareable and survives a

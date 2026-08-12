@@ -32,7 +32,11 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   CustomerReturns,
@@ -61,8 +65,6 @@ import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 // (OMS-REG-DIST-07.12/.13); bulk Delete on selection (.40). "New return" opens
 // the customer selection (S2) — gated by the disable-manual-returns preference,
 // which is a UI-only affordance gate (OMS-REG-DIST-07.18).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ReturnRow = Extract<
   CustomerReturnsResult['invoices'],

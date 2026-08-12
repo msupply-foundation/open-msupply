@@ -27,7 +27,11 @@ import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '@/list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import { Stocktakes, StocktakeCount } from './stocktakes.generated';
 import type {
@@ -48,8 +52,6 @@ import {
 // ContentFooter), so the page owns no CSS. The table itself is the shared
 // TanStack-driven DataTable (server sort, selection, pagination, full-screen).
 // Spec: spec/stocktakes (S1) + spec/ui-standards/{list-views,tables}.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type StocktakeRow = StocktakesResult['stocktakes']['nodes'][number];
 

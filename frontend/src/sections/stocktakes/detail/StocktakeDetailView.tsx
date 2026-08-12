@@ -71,7 +71,11 @@ import {
 } from '@/domain/location';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '@/list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '@/list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
@@ -125,8 +129,6 @@ const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
 // isStocktakeDisabled).
 const isDisabled = (node: StocktakeInfoFragment) =>
   node.status !== 'NEW' || node.isLocked;
-
-const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is shareable

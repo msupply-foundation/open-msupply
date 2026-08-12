@@ -44,7 +44,11 @@ import { remToPx } from '../../../ui/utils/rem';
 import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -119,8 +123,6 @@ type Line = InboundLineFragment;
 type SortKey = NonNullable<
   InboundShipmentLinesVariables['sort']
 >[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type DetailUrlState = {
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;

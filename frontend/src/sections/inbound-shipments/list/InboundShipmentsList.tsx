@@ -28,7 +28,11 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -75,8 +79,6 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 // never-throwing query method; the resource is keyed on the SERIALISED
 // variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type Row = InboundRowFragment;
 type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];

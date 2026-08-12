@@ -29,7 +29,11 @@ import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '@/list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import { hasPermission } from '@/store/storeContext';
 import { reportPermissionDenied } from '@/api/graphql';
@@ -47,8 +51,6 @@ import { DeleteStockMovementsAction } from './actions';
 // the standard list screen: URL-backed filter/sort/pagination, the shared
 // DataTable, and an IMMEDIATE create (no dialog — one action inserts an empty
 // movement and navigates straight to its detail).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type MovementRow = StockMovementsResult['stockRelocations']['nodes'][number];
 
