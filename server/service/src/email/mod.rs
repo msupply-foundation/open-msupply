@@ -223,7 +223,7 @@ impl EmailServiceTrait for EmailService {
 #[cfg(feature = "email-tests")]
 mod email_test {
 
-    use crate::ledger_fix::ledger_fix_driver::LedgerFixTrigger;
+    use crate::ledger_fix::ledger_check::LedgerCheckTrigger;
     use crate::processors::ProcessorsTrigger;
     use crate::service_provider::ServiceProvider;
     use crate::settings::MailSettings;
@@ -240,7 +240,7 @@ mod email_test {
             connection_manager,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
-            LedgerFixTrigger::new_void(),
+            LedgerCheckTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             Some(MailSettings {
                 port: 1025,

@@ -379,8 +379,9 @@ pub(crate) fn run_post_sync_triggers(
 ) {
     if !was_initialised {
         service_provider.site_is_initialised_trigger.trigger();
-        // Trigger ledger fix after initialisation
-        service_provider.ledger_fix_trigger.trigger();
+        // Legacy mSupply migration is the single richest source of ledger discrepancies, so
+        // check as soon as the site is set up rather than waiting for the next scheduled scan.
+        service_provider.ledger_check_trigger.trigger();
     }
 
     ctx.processors_trigger

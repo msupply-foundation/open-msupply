@@ -62,7 +62,8 @@ pub mod android {
                 standalone_admin_password: None,
                 workers: None,
                 inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
-                token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                token_refresh_interval_seconds:
+                    service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 // The app shell copies its APK-bundled web UI here on startup,
                 // before starting the server (see MainActivity.copyFrontendAssets).
                 // The bundle nests the transition ("old UI") build under old-ui/,
@@ -96,6 +97,11 @@ pub mod android {
             features: None,
             changelog_partition: None,
             changelog_dedup: None,
+            // Never stop the server from here. The server runs in a background thread (below),
+            // so a panic kills only that thread while the Java side still believes the server is
+            // up, and stopServer's `off_switch.send(()).unwrap()` then panics inside a JNI call.
+            // Discrepancies still reach the log and the system log.
+            ledger_check: Some(service::settings::LedgerCheckSettings::warn_only_defaults()),
         };
 
         logging_init(settings.logging.clone(), None);

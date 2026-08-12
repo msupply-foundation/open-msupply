@@ -24,6 +24,7 @@ pub struct Settings {
     pub features: Option<HashMap<String, bool>>,
     pub changelog_partition: Option<ChangelogPartitionSettings>,
     pub changelog_dedup: Option<ChangelogDedupSettings>,
+    pub ledger_check: Option<LedgerCheckSettings>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -133,6 +134,7 @@ pub fn test_settings(
         features,
         changelog_partition: None,
         changelog_dedup: None,
+        ledger_check: None,
     }
 }
 
@@ -437,9 +439,98 @@ impl TimeWindow {
     }
 }
 
+/// yaml-bound config for the periodic stock line ledger consistency check
+/// (`service::ledger_fix::ledger_check`).
+///
+/// The defaults differ by build profile, because the two audiences need opposite things: a debug
+/// build checks every 30 seconds and stops the server, so whoever broke the ledger finds out
+/// immediately; a release build checks daily and just logs, feeding the system log stream that
+/// #9552's support report is built on. Both halves are overridable here.
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct LedgerCheckSettings {
+    /// Runs in every build profile by default. `APP__LEDGER_CHECK__ENABLED=false` also works.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Absent means 30 seconds in a debug build, a day in a release build. `Option` because with
+    /// a plain `#[serde(default)]` there is no way to tell "absent" from an explicit value.
+    #[serde(default)]
+    interval: Option<IntervalSettings>,
+    /// Log the discrepancy and carry on, instead of stopping the server. Absent means "only in
+    /// release builds". Set it in a debug build for contexts where a panic is worse than a silent
+    /// bug: Android (a panic kills the server thread while the Java side still thinks the server
+    /// is up), the Windows service (the SCM only sees a crash, error 1067), and databases restored
+    /// from customer data, which routinely carry pre-existing discrepancies.
+    #[serde(default)]
+    warn_only: Option<bool>,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+const DEBUG_LEDGER_CHECK_INTERVAL_SECS: u64 = 30;
+const RELEASE_LEDGER_CHECK_INTERVAL_HOURS: u64 = 24;
+
+impl Default for LedgerCheckSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            interval: None,
+            warn_only: None,
+        }
+    }
+}
+
+impl LedgerCheckSettings {
+    /// How long between scheduled scans. Short in a debug build so a developer finds out
+    /// immediately; daily in a release build, which is the cadence #9552's report expects.
+    pub fn interval(&self) -> IntervalSettings {
+        self.interval.clone().unwrap_or(if is_develop() {
+            IntervalSettings {
+                hours: 0,
+                mins: 0,
+                secs: DEBUG_LEDGER_CHECK_INTERVAL_SECS,
+            }
+        } else {
+            IntervalSettings {
+                hours: RELEASE_LEDGER_CHECK_INTERVAL_HOURS,
+                mins: 0,
+                secs: 0,
+            }
+        })
+    }
+
+    /// Whether a discrepancy is logged (release) or stops the server (debug).
+    pub fn warn_only(&self) -> bool {
+        self.warn_only.unwrap_or(!is_develop())
+    }
+
+    /// Defaults, but never stops the server whatever the build profile. Used by the Android
+    /// entry point, and worth setting on any database known to be already inconsistent.
+    pub fn warn_only_defaults() -> Self {
+        Self {
+            warn_only: Some(true),
+            ..Default::default()
+        }
+    }
+
+    /// Test constructor: an explicit interval, everything else defaulted.
+    #[cfg(test)]
+    pub(crate) fn every(interval: std::time::Duration) -> Self {
+        Self {
+            interval: Some(IntervalSettings {
+                hours: 0,
+                mins: 0,
+                secs: interval.as_secs(),
+            }),
+            ..Default::default()
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::ChangelogDedupSettings;
+    use super::{is_develop, ChangelogDedupSettings, LedgerCheckSettings};
     use chrono::NaiveTime;
 
     #[test]
@@ -460,5 +551,49 @@ mod test {
         let result: Result<ChangelogDedupSettings, _> =
             serde_yaml::from_str("time_window:\n  from: \"2pm\"\n  to: \"05:00\"");
         assert!(result.is_err());
+    }
+
+    /// The whole point of the split: a developer gets a fast crash, a production site gets a
+    /// daily log entry. Both come from the same component, so the defaults have to diverge here.
+    #[test]
+    fn ledger_check_defaults_differ_by_build_profile() {
+        let settings = LedgerCheckSettings::default();
+
+        assert!(settings.enabled, "must run in every build profile");
+        if is_develop() {
+            assert_eq!(settings.interval().as_duration().as_secs(), 30);
+            assert!(!settings.warn_only(), "a debug build must stop the server");
+        } else {
+            assert_eq!(settings.interval().as_duration().as_secs(), 24 * 60 * 60);
+            assert!(settings.warn_only(), "a release build must only log");
+        }
+    }
+
+    /// A section that sets one field must not silently reset the others to non-profile defaults.
+    #[test]
+    fn ledger_check_partial_yaml_keeps_the_other_defaults() {
+        let from_yaml: LedgerCheckSettings = serde_yaml::from_str("warn_only: true").unwrap();
+
+        assert!(from_yaml.enabled);
+        assert!(from_yaml.warn_only());
+        assert_eq!(
+            from_yaml.interval().as_duration(),
+            LedgerCheckSettings::default().interval().as_duration()
+        );
+    }
+
+    #[test]
+    fn ledger_check_yaml_overrides_the_build_profile() {
+        let off: LedgerCheckSettings = serde_yaml::from_str("enabled: false").unwrap();
+        assert!(!off.enabled);
+
+        // A release build can be made to crash, and a debug build to only log
+        let crashing: LedgerCheckSettings = serde_yaml::from_str("warn_only: false").unwrap();
+        assert!(!crashing.warn_only());
+        assert!(LedgerCheckSettings::warn_only_defaults().warn_only());
+
+        let slow: LedgerCheckSettings =
+            serde_yaml::from_str("interval:\n  hours: 2\n  mins: 30\n  secs: 0").unwrap();
+        assert_eq!(slow.interval().as_duration().as_secs(), 2 * 3600 + 30 * 60);
     }
 }

@@ -31,17 +31,26 @@ We understand that some ledger problems will sneak through (even with our best e
 - Implement a strategy of timely awareness of ledger discrepancies
 - Strategy to fix ledger discrepancies in as much of a safe manner as possible
 
-Logic in this section of our codebase is related to fix and notify.
+**The automated fixes were removed** (commit `5aba1886f9`). Nothing in the codebase repairs a ledger any more — what remains is detection and notification. The [States and Fixes](#states-and-fixes) taxonomy below is kept as reference: it is still the best guide to *why* a given stock line is broken, and each entry describes the repair that used to be attempted.
 
-### Ledger driver
+### Ledger check
 
-There is a scheduler that would attempt to run, in the background
+`service::ledger_fix::ledger_check` is the single component that runs the discrepancy scan. It behaves differently by build profile, because the two audiences need opposite things:
 
-- Once a day
-- After initialisation
-- After upgrade to this version
+| | Development build | Release build |
+| --- | --- | --- |
+| Interval | 30 seconds | Once a day |
+| On finding a discrepancy | **Stops the server** | Logs, and writes a system log |
 
-This scheduler will try to find ledger discrepancies and then fix them. Scheduler last execution period is stored in key value store. Detailed logging for each stock line ledger fix would be added to normal file/console log and system log (to be synced to omSupply central), notifications can be made to support and dev team via system log (dashboard/notify)
+Stopping the server in development is deliberate — see [#12582](https://github.com/msupply-foundation/open-msupply/issues/12582). Ledger bugs are cheap to diagnose seconds after the request that caused them and very expensive months later; the bug fixed in [#12578](https://github.com/msupply-foundation/open-msupply/pull/12578) went undetected across four major releases.
+
+The release-build system log (`SystemLogType::LedgerFixError`) syncs to omSupply central, and [#9552](https://github.com/msupply-foundation/open-msupply/issues/9552) builds a support-facing daily report from that stream — so the daily cadence and the log row are load-bearing.
+
+It also runs once immediately after site initialisation, since legacy mSupply migration is the single richest source of discrepancies. Last execution is stored in the key value store, so a site that restarts more often than its interval still gets checked, and doesn't rescan on every boot. Scans are skipped while a sync is in progress (mid-integration states are legitimately inconsistent) and when the changelog cursor hasn't moved.
+
+Everything is overridable via the `ledger_check` section of the server yaml — see `configuration/example.yaml`. In particular `warn_only: true` turns a development build into the release behaviour, which is what you want on a database restored from customer data, since those routinely carry pre-existing discrepancies and would otherwise refuse to run.
+
+For tests, `service::test_helpers::assert_stock_line_ledger_consistent` asserts the same rule for a single stock line. Use it in tests that move stock around. It is deliberately per stock line rather than a blanket check — much of the shared mock data has pack counts with no matching movements and so is "broken" by this definition.
 
 ### Find Ledger Discrepancies
 
@@ -52,11 +61,13 @@ This operations should be quick and efficient, using partition sql introduced in
 
 ### Fix Ledger discrepancies
 
+> **Historical.** This describes the fix pipeline as it was before commit `5aba1886f9` removed it. No code does this today. Recover the implementations with `git show 5aba1886f9^:server/service/src/ledger_fix/fixes/<file>`.
+
 Each stock line will go through a series of fixes based on know invalid 'states' of ledger. After each fix a ledger discrepancy check is performed, if ledger is not yet fixed the next fix is attempted.
 
 ### States and Fixes
 
-In the order of execution (this order is important).
+In the order of execution (this order is important). The `state` of each entry is still an accurate description of a way a ledger can be broken, and is the most useful thing to read when diagnosing a discrepancy; the `fix` is what used to be attempted.
 
 #### Delete - remove_unused_orphan_stock_lines
 
@@ -124,13 +135,15 @@ Some unknown use case where final running balance and total and available + rese
 
 ## IMPORTANT
 
+> **Historical**, as above — these caveats are why the fixes were removed, and why any future attempt to reinstate them needs to weigh them again.
+
 Some changes will affect the user, we are trying to keep this to a minimum and most times ledger fixes will have an impact on just the historic reporting. However some times total is adjusted, user may see different in total for item from previous hour/day, in some case this will cause stock line to be 'resurrected', and in even a worse case it will be 'resurrected' but with all balance reserved, this will mean it will not be adjustable unless un-reserved(finding all outbound shipment where stock is reserved and removing stock from those or 'picking/shipping' those outbounds).
 
 This is captured in carry over issue, alongside some improvements to existing logic + future goals
 
 ### Tips and Ticks
 
-To re-run ledger fix, you can empty key value store value for 'last ledger fix run' and then restart the app, ledger fix scheduler fix tries to run 5 seconds after startup and then hourly (always checking last ledger fix run, to not run more then once a day)
+To force the check to run now on a release build, empty the key value store value for 'last ledger fix run' and restart. On a development build the interval is 30 seconds, so just wait.
 
 A good way to investigate ledger fixes is to get a remote database, run a view to find ledger problems, export to excel and start investigating one line at a time with `stock_line_ledger` view. We also found that looking at activity log was helpful (at least in finding the double picked issue). Pay attention to stock_line_id uuids(), all caps = mSupply, lower case = mSupply mobile, the ones with dashes are omSupply.
 

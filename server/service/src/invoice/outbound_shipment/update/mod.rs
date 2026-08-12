@@ -239,7 +239,8 @@ mod test {
         mock::{
             mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
             mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
+            mock_outbound_shipment_picked, mock_store_a, mock_store_c,
+            test_helpers::make_movements, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
@@ -254,6 +255,7 @@ mod test {
         },
         invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,
+        test_helpers::assert_stock_line_ledger_consistent,
         NullableUpdate,
     };
 
@@ -1172,6 +1174,9 @@ mod test {
                 invoice_id: new_outbound().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
+                // Matching the stock line, so the reserved quantity in units is 2 not 0 -
+                // the ledger rules work in units, so a defaulted pack_size hides the reservation
+                pack_size: 1.0,
                 item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
@@ -1198,11 +1203,18 @@ mod test {
                 stock_lines: vec![stock_line()],
                 invoice_lines: vec![invoice_line(), unallocated_line()],
                 ..Default::default()
-            },
+            }
+            // A received inbound accounting for the 10 packs on hand, so the stock line's ledger
+            // adds up and `assert_stock_line_ledger_consistent` below is meaningful. Without it
+            // the packs come from nowhere and the ledger can never balance.
+            .join(make_movements(stock_line(), vec![(1, 10)])),
         )
         .await;
 
         enable_backdating(&connection, 30);
+
+        // Precondition: 8 available + 2 reserved by the New invoice = 10 total = ledger balance
+        assert_stock_line_ledger_consistent(&connection, &stock_line().id);
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -1249,6 +1261,11 @@ mod test {
                 ..stock_line()
             }
         );
+
+        // The regression this test exists for (#12574): before the fix the line was deleted
+        // without releasing its reserved stock, leaving available at 8 with nothing in the
+        // ledger to account for the missing 2 - which is exactly what this catches.
+        assert_stock_line_ledger_consistent(&connection, &stock_line().id);
     }
 
     // A line carrying a VVM status log: the log references the invoice line by a foreign

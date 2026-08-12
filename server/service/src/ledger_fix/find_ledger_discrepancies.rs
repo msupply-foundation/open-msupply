@@ -16,22 +16,26 @@ pub enum FindStockLineLedgerDiscrepanciesError {
     GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
 }
 
-pub(super) fn find_stock_line_ledger_discrepancies(
+pub(crate) fn find_stock_line_ledger_discrepancies(
     connection: &StorageConnection,
     stock_line_id: Option<&str>,
 ) -> Result</* stock line ids */ Vec<String>, FindStockLineLedgerDiscrepanciesError> {
-    let active_stores = ActiveStoresOnSite::get(connection)?;
-
     // Filters
     let (stock_line, stock_line_id) = match stock_line_id {
         Some(id) => (None, Some(EqualFilter::equal_to(id.to_string()))),
-        None => (
-            Some(
-                StockLineFilter::new()
-                    .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
-            ),
-            None,
-        ),
+        None => {
+            // Only the all-stores scan needs the site's stores. Checking a single stock line
+            // must keep working before the site is initialised (tests, targeted checks),
+            // where `ActiveStoresOnSite::get` errors with `SiteIdNotSet`.
+            let active_stores = ActiveStoresOnSite::get(connection)?;
+            (
+                Some(
+                    StockLineFilter::new()
+                        .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
+                ),
+                None,
+            )
+        }
     };
 
     let filter = StockLineLedgerDiscrepancyFilter {
@@ -170,5 +174,37 @@ mod test {
         assert!(!stock_line_ids.contains(&"correct".to_string()));
         assert!(!stock_line_ids.contains(&"correct_with_some_allocated_not_picked".to_string()));
         assert!(!stock_line_ids.contains(&"negative_balance_non_active_store".to_string()));
+    }
+
+    /// Checking one stock line must not need the site id - it's used before the site is
+    /// initialised (and from tests), where `ActiveStoresOnSite::get` errors with `SiteIdNotSet`.
+    #[actix_rt::test]
+    async fn find_stock_line_ledger_discrepancies_for_one_stock_line_without_site_id() {
+        let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
+            "find_stock_line_ledger_discrepancies_for_one_stock_line_without_site_id",
+            MockDataInserts::none().names().stores().units().items(),
+            mock_data(),
+        )
+        .await;
+
+        // Note: SettingsSyncSiteId is deliberately not set
+
+        assert_eq!(
+            find_stock_line_ledger_discrepancies(&connection, Some("total_not_matched")).unwrap(),
+            vec!["total_not_matched".to_string()]
+        );
+        assert_eq!(
+            find_stock_line_ledger_discrepancies(&connection, Some("correct")).unwrap(),
+            Vec::<String>::new()
+        );
+        // Store scoping doesn't apply on the targeted path
+        assert_eq!(
+            find_stock_line_ledger_discrepancies(
+                &connection,
+                Some("negative_balance_non_active_store")
+            )
+            .unwrap(),
+            vec!["negative_balance_non_active_store".to_string()]
+        );
     }
 }

@@ -41,7 +41,7 @@ use service::{
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
-    ledger_fix::ledger_fix_driver::LedgerFixDriver,
+    ledger_fix::ledger_check::LedgerCheck,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
@@ -151,7 +151,8 @@ pub async fn start_server(
     // Cloning as the trigger is also used to start file sync once the site is initialised
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone());
 
-    let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
+    let (ledger_check_trigger, ledger_check) =
+        LedgerCheck::init(settings.ledger_check.clone().unwrap_or_default());
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
@@ -177,7 +178,7 @@ pub async fn start_server(
         connection_manager.clone(),
         processors_trigger,
         sync_trigger,
-        ledger_fix_trigger,
+        ledger_check_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
         Some(settings.clone()),
@@ -316,7 +317,6 @@ pub async fn start_server(
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
-    let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     let closure_settings = settings.clone();
@@ -559,6 +559,9 @@ pub async fn start_server(
         service_provider.clone().into_inner(),
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
     );
+    // Unlike the other tasks, in a debug build this one is *meant* to stop the server when it
+    // finds a problem. See service::ledger_fix::ledger_check.
+    let ledger_check_task = ledger_check.run(service_provider.clone().into_inner());
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
@@ -569,7 +572,9 @@ pub async fn start_server(
             status_log.log("Server received request to stop with off switch");
         },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
-          _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
+        // Unreachable: disabled parks on `pending`, enabled loops forever, and in a debug build
+        // a discrepancy panics inside the future rather than resolving it.
+        _ = ledger_check_task => unreachable!("Ledger consistency check unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),

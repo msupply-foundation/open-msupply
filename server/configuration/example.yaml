@@ -98,3 +98,18 @@
 #     from: "02:00"
 #     to: "05:00"
 #   batch_size: 50000            # changelog rows deleted per committed batch
+# ledger_check: # periodically checks that stock line ledgers add up
+##   Defaults differ by build profile, and the whole section can be omitted:
+##     debug build   - every 30 seconds, and a discrepancy STOPS THE SERVER
+##     release build - once a day, and a discrepancy is logged + written to the system log
+##                     (which syncs to central; support reporting is built on that stream)
+#   enabled: true                # runs in both profiles by default; APP__LEDGER_CHECK__ENABLED also works
+#   interval:                    # omit for the profile default (30 seconds / 24 hours)
+#     hours: 0
+#     mins: 0
+#     secs: 30
+##   Log the discrepancy and carry on instead of stopping the server. Omit for the profile default
+##   (off in debug, on in release). Set it in a debug build for the Windows service (the SCM only
+##   sees a crash, error 1067) and for a database restored from customer data, which will
+##   typically already have discrepancies and so would never start
+#   warn_only: false
