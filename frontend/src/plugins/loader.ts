@@ -161,26 +161,38 @@ export const loadPlugins = async (deps: LoadPluginsDeps): Promise<void> => {
   await Promise.allSettled(metadata.map(entry => loadOne(entry, deps)));
 };
 
+/**
+ * Discovery against the server.
+ *
+ * Unauthenticated and store-agnostic, so it needs nothing but a reachable
+ * backend; a non-success result is a plugin-less app, not an error screen
+ * (graphqlFetch has already routed infra failures to the global surfaces).
+ *
+ * Named and exported rather than inlined into `appDeps` below because it is
+ * the ONE place the host runtime reaches the wire, and a wrong value there
+ * fails silently: the server rejects the query, discovery reports failure, and
+ * the app runs plugin-less — indistinguishable from a server with no plugins
+ * installed. Its own test pins the variable.
+ */
+export const fetchPluginMetadata = async (): Promise<
+  readonly PluginMetadataEntry[] | undefined
+> => {
+  // Declare what we are, so the server answers with the bundles this host can
+  // load. Sending nothing is not neutral: it means the React UI — served by
+  // the same backend at `/old-ui/` — and would get us its bundles.
+  const result = await graphqlFetch(FrontendPluginMetadata, {
+    hostRuntime: HOST_RUNTIME,
+  });
+  return result.kind === 'success'
+    ? result.data.frontendPluginMetadata
+    : undefined;
+};
+
 /*
  * The app's real dependencies.
- *
- * Discovery is unauthenticated and store-agnostic on the server, so it needs
- * nothing but a reachable backend; a non-success result is a plugin-less app,
- * not an error screen (graphqlFetch has already routed infra failures to the
- * global surfaces).
  */
 const appDeps: LoadPluginsDeps = {
-  fetchMetadata: async () => {
-    // Declare what we are, so the server answers with the bundles this host
-    // can load. Sending nothing is not neutral: it means the React UI — served
-    // by the same backend at `/old-ui/` — and would get us its bundles.
-    const result = await graphqlFetch(FrontendPluginMetadata, {
-      hostRuntime: HOST_RUNTIME,
-    });
-    return result.kind === 'success'
-      ? result.data.frontendPluginMetadata
-      : undefined;
-  },
+  fetchMetadata: fetchPluginMetadata,
   // @vite-ignore: the URL is discovered at runtime, so Vite must not try to
   // resolve or pre-bundle it. Shared specifiers inside the bundle
   // (`solid-js`, `@openmsupply/plugin-sdk`) resolve through the host's import

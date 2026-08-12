@@ -38,11 +38,13 @@ export const SUPPORT_DATABASE_URL = '/support/database';
 export const PRINT_LABEL_TEST_URL = '/print/label-test';
 
 // Installed frontend-plugin bundles (spec/plugins/contract.md § discovery &
-// loading): the server serves each at `<this>/{path}`, where `path` is the
-// `code/entry` the discovery query reports. Immutable-cached, so the content
-// hash rides as a `?v=` token (src/plugins/bundleUrl.ts). Proxied to the
-// backend in dev AND in preview (see vite.config.ts) — the plugin production
-// path is exercised against a real server.
+// loading): the server serves each at `<this>/{path}`, where `path` is what
+// the discovery query reports, used verbatim. It is keyed on the plugin ROW
+// id rather than its code, because a server can hold a bundle of one code per
+// host and their entry files commonly share a name. Immutable-cached, so the
+// content hash rides as a `?v=` token (src/plugins/bundleUrl.ts). Proxied to
+// the backend in dev AND in preview (see vite.config.ts) — the plugin
+// production path is exercised against a real server.
 export const FRONTEND_PLUGINS_URL = '/frontend_plugins';
 
 // The served bundle's release manifest (spec/startup/contract.md § App

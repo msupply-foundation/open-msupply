@@ -17,11 +17,11 @@
  */
 
 // ── Compatibility gate ──────────────────────────────────────────────────────
-export {
-  PLUGIN_API_VERSION,
-  PLUGIN_API_MIN_SUPPORTED,
-  HOST_RUNTIME,
-} from './apiVersion';
+// HOST_RUNTIME is deliberately NOT re-exported: it is host machinery, read by
+// the loader and the pack step from './apiVersion' directly, and a plugin has
+// no use for it — a bundle runs in exactly one host, and cannot choose or
+// claim which (spec/plugins/rules.md § compatibility gates).
+export { PLUGIN_API_VERSION, PLUGIN_API_MIN_SUPPORTED } from './apiVersion';
 
 // ── Slot API ────────────────────────────────────────────────────────────────
 export { definePlugin } from './definePlugin';
