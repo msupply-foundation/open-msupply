@@ -368,6 +368,7 @@
   --motion-base: 150ms; /* small movement or an entry: chevron, dialog/popover in */
   --motion-slow: 200ms; /* real travel: drawer, side panel, tab indicator, scrim */
   --motion-ripple: 480ms; /* the one-shot click ripple (ui/utils/createRipple) */
+  --motion-sweep: 600ms; /* one-shot sheen along a newly filled progress connector */
   /* @motion-decorative:end */
 
   /* Looping indicators are NOT decorative — they're the only signal that work
@@ -396,6 +397,7 @@
     --motion-base: 0s;
     --motion-slow: 0s;
     --motion-ripple: 0s;
+    --motion-sweep: 0s;
     --motion-spin: 2s;
   }
 }
