@@ -1,6 +1,6 @@
 use repository::{
     FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow, FrontendPluginRowDelete,
-    FrontendPluginTypes, HostRuntime, LEGACY_HOST_RUNTIME, LEGACY_PLUGIN_API_VERSION,
+    FrontendPluginTypes, HostRuntime, LEGACY_HOST_RUNTIME,
 };
 use serde_json::json;
 
@@ -9,11 +9,10 @@ use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &str = "frontend_plugin";
 
-// Deliberately WITHOUT `host_runtime` or `plugin_api_version`: this is the
-// shape every row installed before the columns existed still has on the wire,
-// and it must keep translating — arriving as `react` at API 0, which is a true
-// description of it, since no bundle for any other runtime could exist before
-// the fields did.
+// Deliberately WITHOUT `host_runtime`: this is the shape every row installed
+// before the column existed still has on the wire, and it must keep translating
+// — arriving as `react`, which is a true description of it, since no bundle for
+// any other runtime could exist before the field did.
 const FRONTEND_PLUGIN: (&str, &str) = (
     "frontend_plugin",
     r#"{
@@ -29,8 +28,8 @@ const FRONTEND_PLUGIN: (&str, &str) = (
     }"#,
 );
 
-// The other direction: a bundle built for a named front end declares both the
-// runtime it targets and where it sits on that runtime's API number line.
+// The other direction: a bundle built for a named front end declares the
+// runtime it targets.
 const FRONTEND_PLUGIN_WITH_HOST_RUNTIME: (&str, &str) = (
     "frontend_plugin_with_host_runtime",
     r#"{
@@ -43,8 +42,7 @@ const FRONTEND_PLUGIN_WITH_HOST_RUNTIME: (&str, &str) = (
             "file_content_base64": "base64stuffhere"
         }],
         "version": "3.0.0",
-        "host_runtime": "solid",
-        "plugin_api_version": 1
+        "host_runtime": "solid"
     }"#,
 );
 
@@ -60,7 +58,6 @@ fn frontend_plugin() -> FrontendPluginRow {
         }]),
         version: "1.0.0".to_string(),
         host_runtime: HostRuntime(LEGACY_HOST_RUNTIME.to_string()),
-        plugin_api_version: LEGACY_PLUGIN_API_VERSION,
     }
 }
 
@@ -69,7 +66,6 @@ fn frontend_plugin_with_host_runtime() -> FrontendPluginRow {
         id: FRONTEND_PLUGIN_WITH_HOST_RUNTIME.0.to_string(),
         version: "3.0.0".to_string(),
         host_runtime: HostRuntime("solid".to_string()),
-        plugin_api_version: 1,
         ..frontend_plugin()
     }
 }
