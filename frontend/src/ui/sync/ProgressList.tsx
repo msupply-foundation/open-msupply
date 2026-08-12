@@ -1,6 +1,7 @@
 import { createMemo, Index, Show, type Component } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { AlertTriangleIcon, type IconProps } from '../icons';
+import { Popover } from '../elements/feedback/Popover';
 import { t } from '../../intl';
 import styles from './ProgressList.module.css';
 
@@ -57,6 +58,13 @@ const stepStatus = (state: StepState, errored: boolean): string => {
  * progress / done / error) derived from the SAME progression state as the
  * styling — the errored step's alert glyph and colour are only its visual
  * echo (the marker circle is aria-hidden).
+ *
+ * One count, on the in-flight step (D100): the done/total count renders
+ * beneath the in-flight step only; a completed step's final count is a hover/
+ * focus popover on its marker (which becomes a button — the count also rides
+ * its accessible name, so the figure is never hover-only). Pending markers
+ * stay plain spans. The step columns are equal-width regardless of content
+ * (issue #971 — content-sized columns made the circles shift as digits grew).
  */
 export const ProgressList = (props: {
   steps: ProgressStep[];
@@ -95,6 +103,27 @@ export const ProgressList = (props: {
               ? t('label.sync-progress', { done, total })
               : '';
           };
+          const marker = () => (
+            <span class={styles.circle} aria-hidden="true">
+              <Show
+                when={!errored() && step().icon}
+                fallback={
+                  <Show
+                    when={errored()}
+                    fallback={
+                      // No icon: the marker shows the step's number (the
+                      // current app's prepare step).
+                      <span class={styles.number}>{index + 1}</span>
+                    }
+                  >
+                    <AlertTriangleIcon />
+                  </Show>
+                }
+              >
+                {icon => <Dynamic component={icon()} />}
+              </Show>
+            </span>
+          );
           return (
             <li
               class={styles.step}
@@ -102,27 +131,30 @@ export const ProgressList = (props: {
               data-error={errored() || undefined}
               aria-current={state() === 'active' ? 'step' : undefined}
             >
-              <span class={styles.circle} aria-hidden="true">
-                <Show
-                  when={!errored() && step().icon}
-                  fallback={
-                    <Show
-                      when={errored()}
-                      fallback={
-                        // No icon: the marker shows the step's number (the
-                        // current app's prepare step).
-                        <span class={styles.number}>{index + 1}</span>
-                      }
-                    >
-                      <AlertTriangleIcon />
-                    </Show>
-                  }
+              <Show
+                when={state() === 'completed' && count()}
+                fallback={marker()}
+              >
+                <Popover
+                  openOnHover
+                  placement="top"
+                  trigger={marker()}
+                  triggerLabel={t('label.step-progress', {
+                    label: step().label,
+                    // count() gates the branch, so done/total are present.
+                    done: step().done ?? 0,
+                    total: step().total ?? 0,
+                  })}
+                  triggerClass={styles.markerButton}
+                  class={styles.countBubble}
                 >
-                  {icon => <Dynamic component={icon()} />}
-                </Show>
-              </span>
+                  <p class={styles.countBubbleText}>{count()}</p>
+                </Popover>
+              </Show>
               <span class={styles.label}>{step().label}</span>
-              <span class={styles.count}>{count()}</span>
+              <span class={styles.count}>
+                {state() === 'active' ? count() : ''}
+              </span>
               <span class={styles.srOnly}>
                 {stepStatus(state(), errored())}
               </span>
