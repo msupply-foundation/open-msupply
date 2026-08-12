@@ -62,6 +62,12 @@ export interface AppShellProps {
    * the same id.
    */
   onSyncOpen?: () => void;
+  /**
+   * Activating the brand mark — chrome's conventional route home. Optional for
+   * the same reason as the cells above: a host that doesn't wire it gets a
+   * plain mark rather than a button that does nothing.
+   */
+  onHome?: () => void;
   /** The Sync entry's status badge (spec/chrome § sync indicator). */
   syncBadge?: NavBadge;
   /** Dim the Sync entry's icon while the latest run is errored. */
@@ -238,6 +244,7 @@ export const AppShell = (props: AppShellProps) => {
                 upper={menuUpper()}
                 lower={menuLower()}
                 selectedId={props.selected.id}
+                onHome={props.onHome}
                 // The Sync entry opens the modal in place — never navigates
                 // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it
                 // applies only when the host wired onSyncOpen: one that didn't
