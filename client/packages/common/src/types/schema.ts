@@ -4810,6 +4810,15 @@ export enum InstalledPluginKindType {
 export type InstalledPluginNode = {
   __typename: 'InstalledPluginNode';
   code: Scalars['String']['output'];
+  /**
+   * Which front end a frontend bundle is for (`react`, `solid`, ...). Null
+   * on backend plugins, which have no host.
+   *
+   * One plugin ships a bundle per front end and the two can share a code and
+   * a version, so without this the list shows one line twice and there is
+   * nothing to tell an admin which of the pair they are about to uninstall.
+   */
+  hostRuntime?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   kind: InstalledPluginKindType;
   types: Array<Scalars['String']['output']>;
