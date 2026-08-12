@@ -135,14 +135,11 @@ enum PluginDescription {
     #[serde(rename = "frontend")]
     FrontEnd {
         types: FrontendPluginTypes,
-        /// The front end this bundle is built for (`react`, `solid`, ...) and
-        /// where it sits on that front end's plugin-API number line. Both
-        /// default to the pre-contract React values, so every plugin manifest
-        /// written before this existed still describes itself correctly.
+        /// The front end this bundle is built for (`react`, `solid`, ...).
+        /// Defaults to React, so every plugin manifest written before this
+        /// existed still describes itself correctly.
         #[serde(default)]
         host_runtime: HostRuntime,
-        #[serde(default)]
-        plugin_api_version: i32,
     },
 }
 #[derive(Deserialize)]
@@ -262,16 +259,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
         PluginDescription::FrontEnd {
             types,
             host_runtime,
-            plugin_api_version,
-        } => bundle_frontend_plugin(
-            bundle,
-            code,
-            types,
-            plugin_root,
-            version,
-            host_runtime,
-            plugin_api_version,
-        )?,
+        } => bundle_frontend_plugin(bundle, code, types, plugin_root, version, host_runtime)?,
     }
 
     Ok(())
@@ -312,7 +300,6 @@ fn bundle_frontend_plugin(
     plugin_root: &Path,
     version: String,
     host_runtime: HostRuntime,
-    plugin_api_version: i32,
 ) -> Result<(), Error> {
     // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
     // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
@@ -389,7 +376,6 @@ fn bundle_frontend_plugin(
         types,
         version,
         host_runtime,
-        plugin_api_version,
     });
 
     Ok(())

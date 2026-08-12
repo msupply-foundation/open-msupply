@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::ContextExt;
-use service::plugin::{FrontendPluginMetadata, HostPluginApi};
+use service::plugin::{asking_host_or_legacy, FrontendPluginMetadata};
 
 #[derive(PartialEq, Debug, SimpleObject)]
 pub struct FrontendPluginMetadataNode {
@@ -12,63 +12,30 @@ pub struct FrontendPluginMetadataNode {
     pub hash: String,
 }
 
-/// What the asking client is, and which plugin bundles it can load.
-// One object rather than loose arguments, for two reasons. The three fields are
-// meaningless apart — a runtime without a version says nothing, a version
-// without a runtime says something ambiguous — so requiring them together
-// removes a whole class of half-declared request. And it is where a fourth
-// field goes if this ever needs one, rather than a fourth positional argument
-// on a query that would by then have three.
-#[derive(InputObject)]
-pub struct HostPluginApiInput {
-    /// The plugin host runtime this client is: `react` for the old
-    /// module-federation UI, `solid` for the current front end. Matched for
-    /// exact equality against the bundle's own, and never interpreted by the
-    /// server — a new front end simply declares a new name here, and bundles
-    /// built for it declare the same one.
-    pub runtime: String,
-    /// The plugin API this client provides (`PLUGIN_API_VERSION`). Bundles
-    /// above it are not offered.
-    pub version: i32,
-    /// The oldest plugin API this client still accepts
-    /// (`PLUGIN_API_MIN_SUPPORTED`). Bundles below it are not offered.
-    pub min_supported: i32,
-}
-
 /// The frontend plugins this server will serve to the asking client.
 ///
-/// The client has to declare itself because the server cannot work it out:
-/// several hosts are served concurrently and permanently by one binary — the
-/// SolidJS front end at `/`, the React UI at the never-synced `/old-ui/`
-/// escape hatch — so the answer differs per request, not per server.
+/// The client has to say which front end it is, because the server cannot work
+/// it out: several hosts are served concurrently and permanently by one binary
+/// — the SolidJS front end at `/`, the React UI at the never-synced `/old-ui/`
+/// escape hatch — so the answer differs per request, not per server. Whether a
+/// bundle is new enough is a different question and is not asked here: that is
+/// the plugin's `version` against the server's, settled when the bundle is
+/// loaded.
 ///
-/// `host` is nullable only for backwards compatibility, and has no live caller:
-/// omitting it means the React UI as it shipped before any of this existed
-/// (`react`, API 0), which is what an in-flight old-UI build sends. Every
-/// client in tree declares itself explicitly.
+/// `host_runtime` is nullable only for backwards compatibility, and has no live
+/// caller: omitting it means the React UI as it shipped before any of this
+/// existed, which is what an in-flight old-UI build sends. Every client in tree
+/// declares itself explicitly.
 pub fn frontend_plugin_metadata(
     ctx: &Context<'_>,
-    host: Option<HostPluginApiInput>,
+    host_runtime: Option<String>,
 ) -> Result<Vec<FrontendPluginMetadataNode>, Error> {
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let host = match host {
-        Some(HostPluginApiInput {
-            runtime,
-            version,
-            min_supported,
-        }) => HostPluginApi {
-            runtime,
-            version,
-            min_supported,
-        },
-        None => HostPluginApi::default(),
-    };
-
     let plugins = service_provider
         .plugin_service
-        .get_frontend_plugins_metadata(&context, &host)
+        .get_frontend_plugins_metadata(&context, &asking_host_or_legacy(host_runtime))
         .into_iter()
         .map(FrontendPluginMetadataNode::from_domain)
         .collect();
