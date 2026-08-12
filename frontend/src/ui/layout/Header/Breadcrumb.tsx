@@ -1,5 +1,6 @@
 import { children, For, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
+import { useShellSection } from '../AppShell/shellContext';
 import styles from './Breadcrumb.module.css';
 
 export interface Crumb {
@@ -21,7 +22,12 @@ export interface Crumb {
 }
 
 export interface BreadcrumbProps {
-  /** Leading section icon, painted brand orange (e.g. the nav group's icon). */
+  /**
+   * Leading icon, painted brand orange. Optional because inside the app shell
+   * the trail already shows the current route's SECTION glyph (the nav group's
+   * icon — see the shell-section bridge below); pass one only to override that
+   * with a screen-specific glyph.
+   */
   icon?: JSX.Element;
   /** The trail, root first, current page last. The page owns this data. */
   crumbs: Crumb[];
@@ -38,9 +44,16 @@ export interface BreadcrumbProps {
  */
 export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1;
+  // The nav group's glyph for the current route, supplied by the shell — every
+  // page in the shell shows one without asking (shellContext › ShellSection).
+  const section = useShellSection();
+  const sectionIcon = () => {
+    const Icon = section?.icon();
+    return Icon ? <Icon /> : undefined;
+  };
   // Resolved once — a JSX prop read twice builds two element trees
   // (kdd/solid-reactivity-pitfalls §3).
-  const icon = children(() => props.icon);
+  const icon = children(() => props.icon ?? sectionIcon());
 
   return (
     <nav class={styles.breadcrumb} aria-label={t('label.breadcrumb')}>

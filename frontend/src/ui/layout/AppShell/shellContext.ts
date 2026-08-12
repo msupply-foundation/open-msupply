@@ -1,4 +1,10 @@
-import { createContext, useContext, type Accessor } from 'solid-js';
+import {
+  createContext,
+  useContext,
+  type Accessor,
+  type Component,
+} from 'solid-js';
+import type { IconProps } from '../../icons';
 
 export interface ShellNav {
   /** True when the menu bar is the off-canvas overlay (narrow viewports). */
@@ -34,6 +40,29 @@ export const useFullScreen = () => useContext(ShellFullScreenContext);
 export const ShellNavContext = createContext<ShellNav>();
 
 export const useShellNav = () => useContext(ShellNavContext);
+
+/*
+ * Second bridge of the same kind, for the other end of the header strip: the
+ * nav group a screen sits under is never a crumb, its glyph takes the
+ * breadcrumb's leading-icon slot instead (spec/ui-standards › layout, page
+ * regions) — and that group is a fact about the ROUTE, which only the routed
+ * shell knows. So the shell derives it (ShellLayout, from navModel's section
+ * icons) and every page's Breadcrumb picks it up, rather than each of the ~35
+ * pages hard-coding its own section's glyph and drifting from the menu.
+ *
+ * A page that needs a different glyph still wins: an explicit `icon` prop
+ * overrides this (the inbound-shipment detail screen's record-kind truck). A
+ * Breadcrumb outside any shell (the showcase) has no provider and shows the
+ * icon it was given, or none.
+ */
+export interface ShellSection {
+  /** The current route's section glyph, undefined outside the nav tree. */
+  icon: Accessor<Component<IconProps> | undefined>;
+}
+
+export const ShellSectionContext = createContext<ShellSection>();
+
+export const useShellSection = () => useContext(ShellSectionContext);
 
 /*
  * A page's slide-over panel has taken over the viewport, so every shell region

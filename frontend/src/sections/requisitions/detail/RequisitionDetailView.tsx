@@ -41,7 +41,6 @@ import {
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
-  TruckIcon,
 } from '@/ui/icons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
@@ -935,7 +934,9 @@ const RequisitionDetailView: Component = () => {
               }
               header={
                 <Header>
-                  <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
+                  {/* The Distribution truck (ui-surface S3) rides the shell's
+                      section glyph — see RequisitionsList. */}
+                  <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
                     {/* Add — a split of Add item (the line editor, S4) and Add
                       from master list (the shared S7 picker). The whole
