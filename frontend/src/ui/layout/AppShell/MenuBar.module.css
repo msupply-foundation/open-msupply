@@ -51,12 +51,16 @@
    Collapsed, the mark stands down (below) and the toggle takes the whole head
    to itself. */
 .logoArea {
+  /* Positioning context for the toggle, which is taken OUT of the flow below so
+     the mark centres on the rail itself rather than on the space left beside a
+     button — otherwise it drifts by half the button's width and reads as
+     almost-centred, which is worse than either. */
+  position: relative;
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   block-size: var(--logo-area-height);
-  padding-inline: var(--space-4) var(--space-3);
 }
 
 /* The mark as a link home (the app's chrome convention), when the host wires
@@ -263,6 +267,15 @@
    below the destinations' 16:1, because it is furniture rather than a place you
    can go. */
 .railToggle {
+  position: absolute;
+  inset-inline-end: var(--space-3);
+  /* On the mark's OPTICAL centre, not its box centre. The figure's weight is
+     its head, hat and raised arm; the legs trail thin below, so centring on the
+     bounding box (y 45) sits the toggle level with its knees and reads low.
+     1.625rem lands it at y 40. Not higher: at the page title's line (y 33) it
+     detaches from the mark entirely — and that line is not a fixture anyway,
+     sitting at y 32 on a list screen but y 71 on a detail one. */
+  inset-block-start: 1.625rem;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -335,6 +348,11 @@
    the Dashboard entry below goes where the mark went, and a 5rem rail cannot
    hold a centred mark and a button both — which is what defeated every earlier
    attempt to put the toggle up here. */
+/* The mark stands down and the toggle takes the head. Keeping both was tried:
+   side by side they fit only with the mark at 2.25rem, which is too small to
+   read as a brand; stacked, the toggle drops 25px on every press. A 5rem rail
+   holds one of them properly, and the toggle is the one that has work to do
+   here — the Dashboard entry below goes where the mark went. */
 .menuBar[data-open='false'] .logoButton,
 .menuBar[data-open='false'] .logo {
   display: none;
@@ -343,6 +361,16 @@
 .menuBar[data-open='false'] .logoArea {
   justify-content: center;
   padding-inline: 0;
+}
+
+/* Centred on the rail, and on the SAME LINE it holds expanded. Pinned to the
+   inline-end it would sit 13px off the centre of an 80px rail; dropped back into
+   the flow it would centre horizontally but re-centre vertically too, landing 5px
+   below where it was — the jump this whole arrangement exists to avoid. Staying
+   absolute keeps the block offset above; auto inline margins do the centring. */
+.menuBar[data-open='false'] .railToggle {
+  inset-inline: 0;
+  margin-inline: auto;
 }
 
 .menuBar[data-open='false'] .label,
