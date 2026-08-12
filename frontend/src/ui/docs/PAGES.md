@@ -10,6 +10,7 @@ How to build a page in `src/pages/`. Copy the closest recipe and go: [`pages/Hom
 - Pages own **no CSS**. No `.module.css` in `src/pages/` (`npm run check` fails the build if you add one). If a page seems to need CSS, a library component or token is missing — raise it.
 - **One `<AppShell>` per host**, not per page. The shell owns the menu + orange footer; pages swap inside it.
 - The page's **`<h1>` is the breadcrumb leaf** — never render another `h1`.
+- A page **does not pass the breadcrumb's section icon**: inside the shell, `Breadcrumb` shows the current route's nav-group glyph on its own (`ShellLayout` → `shellContext`'s `ShellSection` bridge). Pass `icon` only to override it with a record-**kind** glyph the screen's `ui-surface.md` calls for.
 - A **detail page's header fields** (supplier, references, dates, status, settings toggles) go in a **`<HeaderToolbar>`**, never a hand-rolled `<Toolbar>` — it enforces the field-row layout so every detail header reads the same (see [Header field cluster](#header-field-cluster)).
 - Run **`npm run check`** when done.
 

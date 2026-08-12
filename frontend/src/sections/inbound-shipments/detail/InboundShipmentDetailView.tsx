@@ -900,6 +900,9 @@ const InboundShipmentDetailView: Component = () => {
               }
               header={
                 <Header>
+                  {/* Overrides the shell's Replenishment section glyph with
+                      the record-KIND icon this screen is spec'd to show
+                      (ui-surface S3: "shipment number, kind icon"). */}
                   <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
                   <HeaderButtons>
                     <Show when={!isDisabled()}>
