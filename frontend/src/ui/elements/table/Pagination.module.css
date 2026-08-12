@@ -23,6 +23,15 @@
   color: var(--text-secondary);
 }
 
+/* The count face (the conditional footer's single-page state — see
+   Pagination.tsx `conditional`): the row count alone, at the bar's INLINE
+   START rather than the full bar's inline-end cluster. Nothing here navigates,
+   so there is no right-hand cluster to align to, and a lone number floating at
+   the far end reads as a stray. */
+.countOnly {
+  justify-content: flex-start;
+}
+
 /* The range "1–20 of 38" — body tone against the quiet bar text, and
    tabular-nums so the digits keep constant width while paging (the spec's
    .mrt-page-range). No bold (unit 10 — the old emphasised summary is
@@ -111,14 +120,30 @@
   font-weight: var(--weight-semibold);
 }
 
+/* Page position "1 / 8" — the narrow-screen stand-in for the number slots.
+   Hidden at every width where those slots render (they say the same thing,
+   better); the media query below turns it on as they go. */
+.position {
+  display: none;
+  padding-inline: var(--space-1);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* ≤480px (spec § pagination responsive): the pager collapses to prev/next +
    the range — the rows-per-page selector and the NUMBER slots hide (the
    .numberSlot class rides on the first/middle/last buttons and the
-   current-page pill; the arrows keep only themselves). The page size stays
-   whatever was last chosen (default 20). */
+   current-page pill; the arrows keep only themselves), with the page position
+   taking the slots' place between the arrows. The page size stays whatever was
+   last chosen (default 20). */
 @media (max-width: 480px) {
   .pageSize,
   .numberSlot {
     display: none;
+  }
+
+  .position {
+    display: inline-block;
   }
 }

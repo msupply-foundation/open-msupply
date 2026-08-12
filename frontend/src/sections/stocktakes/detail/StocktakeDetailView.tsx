@@ -1092,6 +1092,12 @@ const StocktakeDetailView: Component = () => {
                     onOffsetChange: offset => setQuery({ ...query(), offset }),
                     onPageSizeChange: first =>
                       setQuery({ ...query(), first, offset: 0 }),
+                    // The footer earns its space (ui-standards § tables →
+                    // pagination). It matters most here: the status footer
+                    // below is always present, so a pager over a stocktake
+                    // with no lines is a second bar of chrome navigating
+                    // nowhere.
+                    conditional: true,
                   }}
                 />
               </TabPanel>

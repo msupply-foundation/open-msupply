@@ -67,6 +67,7 @@ import { ContentFooterActions } from '../../layout/ContentFooter/ContentFooterAc
 import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
+import { paginationState } from './paginationState';
 import { isRtl, t } from '../../../intl';
 import styles from './DataTable.module.css';
 
@@ -374,6 +375,13 @@ export function DataTable<T, K extends string, G extends string = never>(
   const selectedCount = () => props.selectedIds?.length ?? 0;
   const selectionBarActive = () =>
     props.selectionActions !== undefined && selectedCount() > 0;
+
+  // Is there a pager to show? Always, when `pagination` is passed — except in a
+  // `conditional` pager's zero-row state, where the bar is dropped whole (see
+  // the footer below, and Pagination's `paginationState`).
+  const paginationVisible = () =>
+    props.pagination !== undefined &&
+    paginationState(props.pagination) !== 'hidden';
 
   // --- Column config ⇄ the page's resolved config
   // (order/sizing/pinning/visibility) --- Each field mirrors props.config into
@@ -1279,8 +1287,14 @@ export function DataTable<T, K extends string, G extends string = never>(
                              (`selectionActions`) + Clear.
           State stays page-owned (kdd/table-state) — only the controls render
           here. Pages not yet migrated (no selectionActions) keep their own
-          Page-level selection footer and this bar just shows the pager. */}
-      <Show when={props.pagination || selectionBarActive()}>
+          Page-level selection footer and this bar just shows the pager.
+          A `conditional` pager (spec/ui-standards § tables → pagination) can
+          also ask for NO footer at all — its zero-row state — and the bar goes
+          with it: the band's border and padding are drawn here, so leaving it
+          behind would show an empty strip where the pager used to be. A live
+          selection still brings the bar back (it is the selection's own
+          face). */}
+      <Show when={paginationVisible() || selectionBarActive()}>
         <ContentFooter
           class={styles.tableFooter}
           testId={selectionBarActive() ? 'actions-footer' : 'table-footer'}
@@ -1288,7 +1302,7 @@ export function DataTable<T, K extends string, G extends string = never>(
           <Show
             when={selectionBarActive()}
             fallback={
-              <Show when={props.pagination}>
+              <Show when={paginationVisible()}>
                 {/* Spread the LIVE prop object (not a <Show>-accessor
                     snapshot): the page recreates props.pagination whenever
                     offset/total change, and a JSX spread of props.pagination
