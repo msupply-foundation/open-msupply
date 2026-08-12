@@ -6,7 +6,6 @@ import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
-import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -169,19 +168,6 @@ const SitesList: Component = () => {
               </Button>
             </Show>
           </HeaderButtons>
-          {/* This screen's ONE filter sits in the app bar's page-content region,
-              not in the table toolbar (ui-surface S1 § layout deviations): it is
-              always present, not an addable chip, so there is no filter menu.
-              Debounced per inputs § server-bound input and carried in the URL. */}
-          <Toolbar>
-            <FilterTextInput
-              label={t('label.name')}
-              placeholder={t('placeholder.search-by-name')}
-              testId="filter-input-name"
-              value={nameSearchValue(query().filter)}
-              onInput={onSearch}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -222,6 +208,15 @@ const SitesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={row => setEditor({ mode: 'edit', site: row })}
+        filters={
+          <FilterTextInput
+            label={t('label.name')}
+            placeholder={t('placeholder.search-by-name')}
+            testId="filter-input-name"
+            value={nameSearchValue(query().filter)}
+            onInput={onSearch}
+          />
+        }
         // OMS-FUN-SYC-002.10 — empty (including filtered-to-nothing) shows the
         // shared empty state in place of the table, and offers NO create
         // affordance: creating is gated on deployment mode, and a server that
