@@ -27,6 +27,7 @@ import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import { Stocktakes, StocktakeCount } from './stocktakes.generated';
 import type {
@@ -97,8 +98,10 @@ const StocktakesList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StocktakesListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal owns its own form + create logic; the list just toggles
   // it open. On a successful create it navigates away to the new stocktake's
@@ -419,7 +422,10 @@ const StocktakesList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       {/* Mounted only while open: the modal's resources (locations + the

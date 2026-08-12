@@ -22,6 +22,7 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { stockPreferences } from '../../../store/storeContext';
 import {
@@ -94,7 +95,10 @@ const lineValue = (l: Row) => l.totalNumberOfPacks * l.costPricePerPack;
 const StockList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<StockListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StockListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
 
@@ -440,7 +444,10 @@ const StockList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <NewStockModal

@@ -25,6 +25,7 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { hasPermission, patientPreferences } from '../../../store/storeContext';
 import { genderLabel } from '../../../domain/patient';
@@ -77,8 +78,10 @@ const DEFAULT_STATE: PatientsListState = {
 const PatientsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<PatientsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<PatientsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [createOpen, setCreateOpen] = createSignal(false);
 
   // Create/edit affordances are gated on patient-mutate permission (AC-E1);
@@ -340,7 +343,10 @@ const PatientsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CreatePatientModal

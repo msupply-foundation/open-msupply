@@ -19,6 +19,7 @@ import {
 } from '../../../ui/elements/selectors/FilterBar';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import {
   ItemLedger,
   type ItemLedgerResult,
@@ -240,7 +241,10 @@ export const ItemLedgerPanel: Component<{
   itemId: string;
 }> = props => {
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<LedgerState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<LedgerState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const filters = buildLedgerFilters();
 
   // Column config (order/sizing/pinning/visibility/density), resolved default →
@@ -441,7 +445,10 @@ export const ItemLedgerPanel: Component<{
         pageSize: query().first,
         total: totalCount(),
         onOffsetChange: offset => setQuery({ ...query(), offset }),
-        onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        onPageSizeChange: first => {
+          rememberPageSize(first);
+          setQuery({ ...query(), first, offset: 0 });
+        },
       }}
     />
   );

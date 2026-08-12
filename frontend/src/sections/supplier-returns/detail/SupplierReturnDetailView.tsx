@@ -42,6 +42,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import {
   getCellDefinition,
   getNumberCell,
@@ -124,8 +125,10 @@ const SupplierReturnDetailView: Component = () => {
   const navigate = useNavigate();
   // Sort + pagination are URL-backed in one `?query=` param (spec rules §
   // server-paginated line table).
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [supplierError, setSupplierError] = createSignal<string | undefined>();
   // Line selection (transient UI, like every other detail screen's): drives the
@@ -706,6 +709,7 @@ const SupplierReturnDetailView: Component = () => {
                         setSelectedIds([]);
                       },
                       onPageSizeChange: first => {
+                        rememberPageSize(first);
                         setQuery({ ...query(), first, offset: 0 });
                         setSelectedIds([]);
                       },

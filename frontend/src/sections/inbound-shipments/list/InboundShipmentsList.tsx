@@ -28,6 +28,7 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -103,7 +104,10 @@ const DEFAULT_STATE: ListState = {
 const InboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal: plain manual create, or the from-a-purchase-order flow
   // (offered only when the store's procurement preference is on).
@@ -507,7 +511,10 @@ const InboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CreateInboundShipmentModal
