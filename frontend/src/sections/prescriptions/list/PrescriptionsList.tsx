@@ -7,7 +7,6 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -294,18 +293,6 @@ const PrescriptionsList: Component = () => {
               customFields={cfDefs}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -341,6 +328,18 @@ const PrescriptionsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         // Read-only rows take the disabled state — de-emphasised but legible
         // and clickable (AC-L3); matches the outbound list post table-styling.
         rowState={row => (isReadOnly(rowStatus(row)) ? 'disabled' : undefined)}
