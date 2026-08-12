@@ -439,6 +439,34 @@ impl TimeWindow {
     }
 }
 
+/// What the ledger check does when it finds a discrepancy.
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum LedgerCheckMode {
+    /// Stop the server on any discrepancy. The default in debug builds, and the point of
+    /// #12582 - a ledger bug is cheap to diagnose now and expensive in six months.
+    Stop,
+    /// Stop the server only for stock lines that were consistent when the server started.
+    /// The fallback for a database you inherited rather than broke: a copy of customer data
+    /// typically has discrepancies nobody can fix (see the ledger_fix docs), which under
+    /// `stop` would prevent the server starting at all. Regressions you introduce still stop
+    /// it; the pre-existing set is listed at startup and then ignored.
+    StopOnNew,
+    /// Never stop the server; log and write a system log. The default in release builds, where
+    /// that system log is the stream #9552's support report is built on. Also the right setting
+    /// where a panic is worse than a silent bug: Android (a panic kills the server thread while
+    /// the Java side still thinks the server is up) and the Windows service (the SCM only sees
+    /// a crash, error 1067).
+    Warn,
+}
+
+impl LedgerCheckMode {
+    /// Whether the server is ever stopped in this mode.
+    pub fn stops_the_server(&self) -> bool {
+        !matches!(self, LedgerCheckMode::Warn)
+    }
+}
+
 /// yaml-bound config for the periodic stock line ledger consistency check
 /// (`service::ledger_fix::ledger_check`).
 ///
@@ -455,13 +483,10 @@ pub struct LedgerCheckSettings {
     /// a plain `#[serde(default)]` there is no way to tell "absent" from an explicit value.
     #[serde(default)]
     interval: Option<IntervalSettings>,
-    /// Log the discrepancy and carry on, instead of stopping the server. Absent means "only in
-    /// release builds". Set it in a debug build for contexts where a panic is worse than a silent
-    /// bug: Android (a panic kills the server thread while the Java side still thinks the server
-    /// is up), the Windows service (the SCM only sees a crash, error 1067), and databases restored
-    /// from customer data, which routinely carry pre-existing discrepancies.
+    /// Absent means `stop` in a debug build and `warn` in a release build. See `LedgerCheckMode`;
+    /// `stop-on-new` is the one to reach for on a database that is already inconsistent.
     #[serde(default)]
-    warn_only: Option<bool>,
+    mode: Option<LedgerCheckMode>,
 }
 
 fn default_true() -> bool {
@@ -476,7 +501,7 @@ impl Default for LedgerCheckSettings {
         Self {
             enabled: true,
             interval: None,
-            warn_only: None,
+            mode: None,
         }
     }
 }
@@ -500,37 +525,42 @@ impl LedgerCheckSettings {
         })
     }
 
-    /// Whether a discrepancy is logged (release) or stops the server (debug).
-    pub fn warn_only(&self) -> bool {
-        self.warn_only.unwrap_or(!is_develop())
+    /// What happens on a discrepancy - stop the server (debug) or just log it (release).
+    pub fn mode(&self) -> LedgerCheckMode {
+        self.mode.unwrap_or(if is_develop() {
+            LedgerCheckMode::Stop
+        } else {
+            LedgerCheckMode::Warn
+        })
     }
 
     /// Defaults, but never stops the server whatever the build profile. Used by the Android
-    /// entry point, and worth setting on any database known to be already inconsistent.
-    pub fn warn_only_defaults() -> Self {
+    /// entry point.
+    pub fn warn_only() -> Self {
         Self {
-            warn_only: Some(true),
+            mode: Some(LedgerCheckMode::Warn),
             ..Default::default()
         }
     }
 
-    /// Test constructor: an explicit interval, everything else defaulted.
+    /// Test constructor: an explicit mode and interval.
     #[cfg(test)]
-    pub(crate) fn every(interval: std::time::Duration) -> Self {
+    pub(crate) fn for_test(mode: LedgerCheckMode, interval: std::time::Duration) -> Self {
         Self {
+            enabled: true,
             interval: Some(IntervalSettings {
                 hours: 0,
                 mins: 0,
                 secs: interval.as_secs(),
             }),
-            ..Default::default()
+            mode: Some(mode),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{is_develop, ChangelogDedupSettings, LedgerCheckSettings};
+    use super::{is_develop, ChangelogDedupSettings, LedgerCheckMode, LedgerCheckSettings};
     use chrono::NaiveTime;
 
     #[test]
@@ -562,20 +592,21 @@ mod test {
         assert!(settings.enabled, "must run in every build profile");
         if is_develop() {
             assert_eq!(settings.interval().as_duration().as_secs(), 30);
-            assert!(!settings.warn_only(), "a debug build must stop the server");
+            assert_eq!(settings.mode(), LedgerCheckMode::Stop);
         } else {
             assert_eq!(settings.interval().as_duration().as_secs(), 24 * 60 * 60);
-            assert!(settings.warn_only(), "a release build must only log");
+            assert_eq!(settings.mode(), LedgerCheckMode::Warn);
         }
+        assert!(settings.mode().stops_the_server() == is_develop());
     }
 
     /// A section that sets one field must not silently reset the others to non-profile defaults.
     #[test]
     fn ledger_check_partial_yaml_keeps_the_other_defaults() {
-        let from_yaml: LedgerCheckSettings = serde_yaml::from_str("warn_only: true").unwrap();
+        let from_yaml: LedgerCheckSettings = serde_yaml::from_str("mode: warn").unwrap();
 
         assert!(from_yaml.enabled);
-        assert!(from_yaml.warn_only());
+        assert_eq!(from_yaml.mode(), LedgerCheckMode::Warn);
         assert_eq!(
             from_yaml.interval().as_duration(),
             LedgerCheckSettings::default().interval().as_duration()
@@ -588,12 +619,34 @@ mod test {
         assert!(!off.enabled);
 
         // A release build can be made to crash, and a debug build to only log
-        let crashing: LedgerCheckSettings = serde_yaml::from_str("warn_only: false").unwrap();
-        assert!(!crashing.warn_only());
-        assert!(LedgerCheckSettings::warn_only_defaults().warn_only());
+        let crashing: LedgerCheckSettings = serde_yaml::from_str("mode: stop").unwrap();
+        assert_eq!(crashing.mode(), LedgerCheckMode::Stop);
+        assert_eq!(
+            LedgerCheckSettings::warn_only().mode(),
+            LedgerCheckMode::Warn
+        );
 
         let slow: LedgerCheckSettings =
             serde_yaml::from_str("interval:\n  hours: 2\n  mins: 30\n  secs: 0").unwrap();
         assert_eq!(slow.interval().as_duration().as_secs(), 2 * 3600 + 30 * 60);
+    }
+
+    /// The mode names are the yaml surface, so they are part of the config contract.
+    #[test]
+    fn ledger_check_mode_yaml_names_are_kebab_case() {
+        let parse = |yaml: &str| {
+            serde_yaml::from_str::<LedgerCheckSettings>(yaml)
+                .unwrap()
+                .mode()
+        };
+
+        assert_eq!(parse("mode: stop"), LedgerCheckMode::Stop);
+        assert_eq!(parse("mode: stop-on-new"), LedgerCheckMode::StopOnNew);
+        assert_eq!(parse("mode: warn"), LedgerCheckMode::Warn);
+
+        assert!(serde_yaml::from_str::<LedgerCheckSettings>("mode: nonsense").is_err());
+        // stop-on-new still stops the server, just not for pre-existing discrepancies
+        assert!(LedgerCheckMode::StopOnNew.stops_the_server());
+        assert!(!LedgerCheckMode::Warn.stops_the_server());
     }
 }

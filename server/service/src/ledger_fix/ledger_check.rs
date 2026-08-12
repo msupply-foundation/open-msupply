@@ -15,10 +15,14 @@
 //!   which syncs to the central server. #9552 builds a support-facing daily report on that stream,
 //!   so the cadence and the log row are load-bearing - don't make them conditional.
 //!
-//! Both halves are yaml-overridable (`ledger_check` in `configuration/local.yaml`): `warn_only`
-//! turns a development build into the release behaviour, which is what you want on a database
-//! restored from customer data, since those routinely carry pre-existing discrepancies and would
-//! otherwise refuse to run. See `service::settings::LedgerCheckSettings`.
+//! Both halves are yaml-overridable (`ledger_check` in `configuration/local.yaml`). The third
+//! mode, `stop-on-new`, exists for the case those two don't cover: a database you inherited
+//! rather than broke. A copy of customer data typically carries discrepancies nobody can fix -
+//! legacy mSupply migration, the old cancellation bug, one site had ~6k - which under `stop`
+//! would stop the server on the first scan, and under `warn` would give up catching regressions
+//! entirely. `stop-on-new` treats whatever was broken at the first scan as the starting state and
+//! stops the server only for stock lines that break after it. See
+//! `service::settings::LedgerCheckMode`.
 //!
 //! This replaced `LedgerFixDriver`, which ran the same scan but no longer fixed anything - the
 //! repair strategies were deleted in 5aba1886f9.
@@ -43,7 +47,7 @@ use crate::{
         find_stock_line_ledger_discrepancies, FindStockLineLedgerDiscrepanciesError,
     },
     service_provider::{ServiceContext, ServiceProvider},
-    settings::LedgerCheckSettings,
+    settings::{LedgerCheckMode, LedgerCheckSettings},
     sync::GetActiveStoresOnSiteError,
 };
 
@@ -63,6 +67,11 @@ pub struct LedgerCheck {
     /// doesn't re-print its whole ledger every interval. Deliberately does *not* gate the system
     /// log - #9552 needs one row per run, and the daily release interval is the throttle there.
     reported: HashSet<String>,
+    /// `StopOnNew` only: stock lines already broken when this process first looked, which are
+    /// therefore not anyone's fault this session. `None` until that first scan completes -
+    /// distinguishing "nothing was broken" from "haven't looked yet", which matters because the
+    /// first scans of a fresh server are all skips.
+    baseline: Option<HashSet<String>>,
 }
 
 #[derive(Clone)]
@@ -88,6 +97,17 @@ pub(crate) enum ScanOutcome {
     Discrepancies(Vec</* stock line ids */ String>),
 }
 
+/// What [`LedgerCheck::triage`] concluded about a scan's discrepancies.
+#[derive(Debug, PartialEq)]
+pub(crate) enum Triage {
+    /// `StopOnNew`, first scan: this is what "already broken" means from now on.
+    Baselined,
+    /// Nothing to escalate - already escalated, or pre-existing.
+    NothingNew,
+    /// Stock lines this session is answerable for.
+    Escalate(Vec<String>),
+}
+
 impl LedgerCheck {
     pub fn init(settings: LedgerCheckSettings) -> (LedgerCheckTrigger, LedgerCheck) {
         // Single-element channel, so at most one check can be pending at a time.
@@ -100,6 +120,7 @@ impl LedgerCheck {
                 receiver,
                 last_cursor: None,
                 reported: HashSet::new(),
+                baseline: None,
             },
         )
     }
@@ -171,10 +192,11 @@ impl LedgerCheck {
         log::info!(
             "Ledger consistency check enabled, every {}s; a discrepancy will {}",
             base_interval.as_secs(),
-            if self.settings.warn_only() {
-                "be logged"
-            } else {
-                "STOP THE SERVER"
+            match self.settings.mode() {
+                LedgerCheckMode::Stop => "STOP THE SERVER",
+                LedgerCheckMode::StopOnNew =>
+                    "STOP THE SERVER, unless the stock line was already broken at startup",
+                LedgerCheckMode::Warn => "be logged",
             }
         );
 
@@ -327,49 +349,97 @@ impl LedgerCheck {
         }
     }
 
-    /// Record the evidence, then stop the server unless `warn_only`.
-    async fn report(&mut self, service_provider: &ServiceProvider, discrepancies: Vec<String>) {
-        // Only dump the full ledger for stock lines not already dumped this run of the process.
-        // Replacing the set (rather than extending) means a line that is fixed and later broken
-        // again is dumped again.
-        let unreported: Vec<String> = discrepancies
+    /// Decide what this session is answerable for. Separated from [`Self::report`] so the
+    /// baseline logic can be tested without a test having to survive a panic.
+    fn triage(&mut self, discrepancies: &[String]) -> Triage {
+        // In StopOnNew the first completed scan defines "already broken", and nothing in that set
+        // is treated as this session's fault. Taking the baseline at the first scan rather than at
+        // startup is deliberate: the early scans of a fresh server are all skips (site not
+        // initialised), so there is no earlier moment at which the answer is known.
+        if self.settings.mode() == LedgerCheckMode::StopOnNew && self.baseline.is_none() {
+            self.baseline = Some(discrepancies.iter().cloned().collect());
+            return Triage::Baselined;
+        }
+
+        // Only escalate stock lines not already escalated this run of the process. Replacing the
+        // set (rather than extending) means a line that is fixed and later broken again is
+        // escalated again.
+        let previously_reported =
+            std::mem::replace(&mut self.reported, discrepancies.iter().cloned().collect());
+
+        let culprits = discrepancies
             .iter()
-            .filter(|id| !self.reported.contains(*id))
+            .filter(|id| !previously_reported.contains(*id))
+            .filter(|id| match &self.baseline {
+                Some(baseline) => !baseline.contains(*id),
+                None => true,
+            })
             .cloned()
-            .collect();
-        self.reported = discrepancies.iter().cloned().collect();
+            .collect::<Vec<_>>();
 
-        let detail = match service_provider.basic_context() {
-            Ok(ctx) => {
-                // Always written, never deduplicated: this row syncs to central and #9552 builds
-                // a support-facing daily report from it, which needs one row per run. The release
-                // interval (a day) is what keeps it from being noisy.
-                let summary = format!(
-                    "Ledger consistency check found {} stock line(s) with discrepancies: {:?}",
-                    discrepancies.len(),
-                    discrepancies
-                );
-                if let Err(error) =
-                    system_log(&ctx.connection, SystemLogType::LedgerFixError, &summary)
-                {
-                    log::error!("Ledger consistency check: failed to write system log: {error:?}");
-                }
+        if culprits.is_empty() {
+            Triage::NothingNew
+        } else {
+            Triage::Escalate(culprits)
+        }
+    }
 
-                describe_discrepancies(&ctx, &unreported)
-            }
+    /// Record the evidence, then decide whether to stop the server.
+    async fn report(&mut self, service_provider: &ServiceProvider, discrepancies: Vec<String>) {
+        let ctx = match service_provider.basic_context() {
+            Ok(ctx) => Some(ctx),
             Err(error) => {
-                format!("(could not read stock line detail, DB context unavailable: {error:?})")
+                log::error!(
+                    "Ledger consistency check: found {} discrepancies but could not read detail, \
+                     DB context unavailable: {error:?}",
+                    discrepancies.len()
+                );
+                None
             }
         };
 
-        if self.settings.warn_only() {
-            if unreported.is_empty() {
-                // Same stock lines as last time; the system log above is the ongoing signal.
+        // Always written, never deduplicated and never filtered by the baseline: this row syncs
+        // to central and #9552 builds a support-facing daily report from it, which needs one row
+        // per run to tell "still broken" from "was broken once". The release interval (a day) is
+        // what keeps it from being noisy.
+        if let Some(ctx) = &ctx {
+            let summary = format!(
+                "Ledger consistency check found {} stock line(s) with discrepancies: {:?}",
+                discrepancies.len(),
+                discrepancies
+            );
+            if let Err(error) = system_log(&ctx.connection, SystemLogType::LedgerFixError, &summary)
+            {
+                log::error!("Ledger consistency check: failed to write system log: {error:?}");
+            }
+        }
+
+        let culprits = match self.triage(&discrepancies) {
+            // Nothing new: either the same stock lines as last time, or all pre-existing. The
+            // system log above is the ongoing signal.
+            Triage::NothingNew => return,
+            Triage::Baselined => {
+                log::warn!(
+                    "Ledger consistency check: {} stock line(s) were ALREADY inconsistent when \
+                     this server started, and will be ignored from now on (mode: stop-on-new). \
+                     The server will still stop if anything else breaks.\n{}",
+                    discrepancies.len(),
+                    summarise_ids(&discrepancies)
+                );
                 return;
             }
+            Triage::Escalate(culprits) => culprits,
+        };
+
+        let detail = match &ctx {
+            Some(ctx) => describe_discrepancies(ctx, &culprits),
+            None => "(stock line detail unavailable)".to_string(),
+        };
+
+        if !self.settings.mode().stops_the_server() {
             log::error!(
                 "Ledger inconsistency detected - {} stock line(s)\n{}",
-                unreported.len(),
+                culprits.len(),
                 detail
             );
             return;
@@ -383,9 +453,10 @@ impl LedgerCheck {
                  server/repository/src/migrations/views/stock_line_ledger_discrepancy.rs\n\
                  This check runs every {}s, so the cause is most likely in what the server did\n\
                  since the previous check - see the request log above.\n\
-                 To keep working on an already-inconsistent database, set\n\
-                 `ledger_check: {{ warn_only: true }}` in server/configuration/local.yaml.",
-                discrepancies.len(),
+                 If this database was already inconsistent before you touched it, set\n\
+                 `ledger_check: {{ mode: stop-on-new }}` in server/configuration/local.yaml to\n\
+                 ignore the pre-existing set but still catch anything you break.",
+                culprits.len(),
                 detail,
                 self.settings.interval().as_duration().as_secs(),
             )
@@ -405,6 +476,21 @@ impl LedgerCheckTrigger {
             sender: mpsc::channel(1).0,
         }
     }
+}
+
+/// Ids on one line, truncated. The baseline on a copy of customer data can run to thousands of
+/// stock lines (one site had ~6k), and a wall of ids buries the count that actually matters.
+fn summarise_ids(ids: &[String]) -> String {
+    const MAX_LISTED: usize = 20;
+
+    if ids.len() <= MAX_LISTED {
+        return format!("  {}", ids.join(", "));
+    }
+    format!(
+        "  {}, ... and {} more",
+        ids[..MAX_LISTED].join(", "),
+        ids.len() - MAX_LISTED
+    )
 }
 
 /// Stock line state plus its ledger rows, for each offending stock line. A bare id sends whoever
@@ -526,7 +612,11 @@ mod test {
     /// Zero interval, so the "checked recently" gate never fires and each test controls exactly
     /// which gate it is exercising.
     fn check() -> LedgerCheck {
-        LedgerCheck::init(LedgerCheckSettings::every(Duration::from_secs(0))).1
+        check_in(LedgerCheckMode::Stop)
+    }
+
+    fn check_in(mode: LedgerCheckMode) -> LedgerCheck {
+        LedgerCheck::init(LedgerCheckSettings::for_test(mode, Duration::from_secs(0))).1
     }
 
     struct SyncingStatusService;
@@ -677,6 +767,116 @@ mod test {
         );
     }
 
+    // -- mode: stop-on-new -----------------------------------------------------------------
+    //
+    // The fallback for a database that was already inconsistent before anyone touched it.
+
+    fn ids(ids: &[&str]) -> Vec<String> {
+        ids.iter().map(|id| id.to_string()).collect()
+    }
+
+    /// The whole point of the mode: inherited breakage is absorbed once, and anything that breaks
+    /// afterwards still stops the server.
+    #[test]
+    fn stop_on_new_absorbs_the_starting_state_but_not_later_breakage() {
+        let mut check = check_in(LedgerCheckMode::StopOnNew);
+
+        // First scan of a dirty database - this is the starting state, not anyone's fault
+        assert_eq!(
+            check.triage(&ids(&["dirty_a", "dirty_b"])),
+            Triage::Baselined
+        );
+
+        // Same lines still broken: nothing to say
+        assert_eq!(
+            check.triage(&ids(&["dirty_a", "dirty_b"])),
+            Triage::NothingNew
+        );
+
+        // A new one appears alongside them - only the new one is escalated
+        assert_eq!(
+            check.triage(&ids(&["dirty_a", "dirty_b", "broke_just_now"])),
+            Triage::Escalate(ids(&["broke_just_now"]))
+        );
+    }
+
+    /// A clean database in this mode must behave exactly like `stop`.
+    #[test]
+    fn stop_on_new_on_a_clean_database_escalates_the_first_discrepancy() {
+        let mut check = check_in(LedgerCheckMode::StopOnNew);
+
+        // First scan finds nothing, so the baseline is empty
+        assert_eq!(check.triage(&[]), Triage::Baselined);
+
+        assert_eq!(
+            check.triage(&ids(&["broke_just_now"])),
+            Triage::Escalate(ids(&["broke_just_now"]))
+        );
+    }
+
+    /// A pre-existing line that gets fixed and then breaks again is still pre-existing. Tracking
+    /// it as new would punish someone for fixing something.
+    #[test]
+    fn stop_on_new_keeps_ignoring_a_baselined_line_that_recurs() {
+        let mut check = check_in(LedgerCheckMode::StopOnNew);
+
+        assert_eq!(check.triage(&ids(&["dirty_a"])), Triage::Baselined);
+        assert_eq!(check.triage(&[]), Triage::NothingNew);
+        assert_eq!(check.triage(&ids(&["dirty_a"])), Triage::NothingNew);
+    }
+
+    /// The other two modes must not baseline anything - `stop` escalates from the very first scan.
+    #[test]
+    fn stop_and_warn_modes_do_not_baseline() {
+        for mode in [LedgerCheckMode::Stop, LedgerCheckMode::Warn] {
+            let mut check = check_in(mode);
+
+            assert_eq!(
+                check.triage(&ids(&["dirty_a"])),
+                Triage::Escalate(ids(&["dirty_a"])),
+                "{:?} must escalate the first discrepancy it sees",
+                mode
+            );
+            assert!(
+                check.baseline.is_none(),
+                "{:?} must not take a baseline",
+                mode
+            );
+        }
+    }
+
+    /// Escalating the same line every interval would bury the log, in every mode.
+    #[test]
+    fn a_line_is_escalated_once_then_stays_quiet_until_it_recurs() {
+        let mut check = check_in(LedgerCheckMode::Warn);
+
+        assert_eq!(
+            check.triage(&ids(&["broken"])),
+            Triage::Escalate(ids(&["broken"]))
+        );
+        assert_eq!(check.triage(&ids(&["broken"])), Triage::NothingNew);
+
+        // Fixed, then broken again - worth saying a second time
+        assert_eq!(check.triage(&[]), Triage::NothingNew);
+        assert_eq!(
+            check.triage(&ids(&["broken"])),
+            Triage::Escalate(ids(&["broken"]))
+        );
+    }
+
+    /// A baseline on a copy of customer data can run to thousands of ids.
+    #[test]
+    fn summarise_ids_truncates_a_long_list() {
+        let few = ids(&["a", "b"]);
+        assert_eq!(summarise_ids(&few), "  a, b");
+
+        let many: Vec<String> = (0..25).map(|i| format!("line_{i}")).collect();
+        let summary = summarise_ids(&many);
+        assert!(summary.contains("line_0, line_1"), "{}", summary);
+        assert!(summary.contains("and 5 more"), "{}", summary);
+        assert!(!summary.contains("line_20"), "{}", summary);
+    }
+
     /// The release cadence is a day, and servers restart. Persisting the last run is what stops a
     /// restart-heavy site from never completing an interval - and what stops it rescanning on
     /// every boot.
@@ -686,7 +886,11 @@ mod test {
         set_site_id(&ctx);
 
         // A day between scheduled scans, as in a release build
-        let mut check = LedgerCheck::init(LedgerCheckSettings::every(Duration::from_secs(86400))).1;
+        let mut check = LedgerCheck::init(LedgerCheckSettings::for_test(
+            LedgerCheckMode::Stop,
+            Duration::from_secs(86400),
+        ))
+        .1;
         assert_eq!(
             check
                 .run_once(&ctx.service_provider, RunReason::Scheduled)
@@ -697,8 +901,11 @@ mod test {
         break_the_ledger(&ctx);
 
         // Restarted process: fresh in-memory state, but the persisted run is minutes old
-        let mut restarted =
-            LedgerCheck::init(LedgerCheckSettings::every(Duration::from_secs(86400))).1;
+        let mut restarted = LedgerCheck::init(LedgerCheckSettings::for_test(
+            LedgerCheckMode::Stop,
+            Duration::from_secs(86400),
+        ))
+        .1;
         assert_eq!(
             restarted
                 .run_once(&ctx.service_provider, RunReason::Scheduled)

@@ -40,7 +40,7 @@ We understand that some ledger problems will sneak through (even with our best e
 | | Development build | Release build |
 | --- | --- | --- |
 | Interval | 30 seconds | Once a day |
-| On finding a discrepancy | **Stops the server** | Logs, and writes a system log |
+| Mode | `stop` — **stops the server** | `warn` — logs, and writes a system log |
 
 Stopping the server in development is deliberate — see [#12582](https://github.com/msupply-foundation/open-msupply/issues/12582). Ledger bugs are cheap to diagnose seconds after the request that caused them and very expensive months later; the bug fixed in [#12578](https://github.com/msupply-foundation/open-msupply/pull/12578) went undetected across four major releases.
 
@@ -48,7 +48,20 @@ The release-build system log (`SystemLogType::LedgerFixError`) syncs to omSupply
 
 It also runs once immediately after site initialisation, since legacy mSupply migration is the single richest source of discrepancies. Last execution is stored in the key value store, so a site that restarts more often than its interval still gets checked, and doesn't rescan on every boot. Scans are skipped while a sync is in progress (mid-integration states are legitimately inconsistent) and when the changelog cursor hasn't moved.
 
-Everything is overridable via the `ledger_check` section of the server yaml — see `configuration/example.yaml`. In particular `warn_only: true` turns a development build into the release behaviour, which is what you want on a database restored from customer data, since those routinely carry pre-existing discrepancies and would otherwise refuse to run.
+Everything is overridable via the `ledger_check` section of the server yaml — see `configuration/example.yaml`.
+
+#### Working on a database that's already broken
+
+Neither default suits a copy of customer data. Those carry discrepancies nobody can fix (see [States and Fixes](#states-and-fixes) below — one site had ~6k), so `stop` prevents the server starting at all, and `warn` gives up catching regressions.
+
+The third mode, **`stop-on-new`**, is for exactly that: the first completed scan defines the starting state, and the server stops only for stock lines that break *after* it. Whatever was already broken is listed at startup and then ignored.
+
+```yaml
+ledger_check:
+  mode: stop-on-new
+```
+
+Two things to know about it. The baseline is per-process and deliberately not persisted, so it means "since this server started", and a restart re-baselines against whatever is broken *then* — including anything you just broke. That's why the ignored set is logged loudly at every startup: read it. And the system log is never filtered by the baseline, so support reporting still sees the true state.
 
 For tests, `service::test_helpers::assert_stock_line_ledger_consistent` asserts the same rule for a single stock line. Use it in tests that move stock around. It is deliberately per stock line rather than a blanket check — much of the shared mock data has pack counts with no matching movements and so is "broken" by this definition.
 

@@ -101,7 +101,7 @@ pub mod android {
             // so a panic kills only that thread while the Java side still believes the server is
             // up, and stopServer's `off_switch.send(()).unwrap()` then panics inside a JNI call.
             // Discrepancies still reach the log and the system log.
-            ledger_check: Some(service::settings::LedgerCheckSettings::warn_only_defaults()),
+            ledger_check: Some(service::settings::LedgerCheckSettings::warn_only()),
         };
 
         logging_init(settings.logging.clone(), None);
