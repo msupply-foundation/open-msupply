@@ -532,9 +532,20 @@ export const MenuBar = (props: MenuBarProps) => {
               never reaches into the page, and in the one part of the rail
               nothing else wants. */}
           <div class={styles.railToggleRow}>
+            {/* Built ON .navButton, not beside it: a bare icon here measured
+                3.13:1 against nav labels at 16:1 and read as a stray mark,
+                left-adrift in the expanded rail with no label to justify its
+                alignment — and it was the only collapse control a touch device
+                had, since the edge below is pointer-only. As a row it inherits
+                every nav row's geometry, its label alignment, and its
+                collapsed-rail behaviour (label hidden, icon centred) by
+                construction rather than by copied numbers.
+                It stays subordinate to the destinations above it in colour
+                (--text-secondary, not the destinations' ink and not the nav's
+                orange icons): a row, but not a place you can go. */}
             <button
               type="button"
-              class={styles.railToggle}
+              class={`${styles.navButton} ${styles.railToggle}`}
               data-testid="drawer-toggle"
               onClick={props.nav.toggleRail}
               aria-label={
@@ -546,7 +557,13 @@ export const MenuBar = (props: MenuBarProps) => {
             >
               {/* One glyph for both states: it names the panel it toggles, not
                   a direction, so there is nothing to flip. */}
-              <SidebarIcon />
+              <span class={styles.icon}>
+                <SidebarIcon />
+              </span>
+              <span class={styles.chevronSlot} aria-hidden="true" />
+              {/* Expanded, the action is always "collapse" — the label needs no
+                  state, and collapsed it is hidden like every other row's. */}
+              <span class={styles.label}>{t('button.close-the-menu')}</span>
             </button>
           </div>
           {/* The rail's edge is a second explicit toggle (Linear's affordance).
