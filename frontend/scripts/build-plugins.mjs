@@ -24,14 +24,14 @@
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
  *   - entry_point = the dist file whose name starts with the plugin code;
  *   - files starting with "main" or containing "LICENSE" are skipped;
- *   - id = `frontend_{code}_{version with dots as underscores}` — and since a
- *     server now keeps every compatible version of a code rather than only the
- *     highest, this id is also what its file route is keyed on, so two builds
- *     of one plugin must never share it;
- *   - host_runtime / plugin_api_version = the SDK's HOST_RUNTIME and
- *     PLUGIN_API_VERSION, which together say this bundle is for THIS host: a
- *     server offers it only to a client declaring the same runtime, and then
- *     only if the integer is in that client's range;
+ *   - id = `frontend_{code}_{host_runtime}_{version with dots as underscores}`
+ *     — the runtime is in there because one plugin ships a bundle per host and
+ *     the two can share a version, and install is a blind upsert, so an id of
+ *     code+version alone would make the second bundle silently overwrite the
+ *     first on the primary key. It is also what the file route is keyed on now
+ *     that a server keeps every compatible version of a code;
+ *   - host_runtime = the SDK's HOST_RUNTIME, which says this bundle is for THIS
+ *     host: a server offers it only to a client declaring the same runtime;
  *   - hash = sha256 over the files sorted by name, name bytes then content
  *     bytes, hex — the server computes this at bind time and the client appends
  *     it as `?v=`.
@@ -48,10 +48,7 @@ import {
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { build } from 'vite';
-import {
-  HOST_RUNTIME,
-  PLUGIN_API_VERSION,
-} from '../src/plugin-sdk/apiVersion.ts';
+import { HOST_RUNTIME } from '../src/plugin-sdk/apiVersion.ts';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
 import { backendPluginViteConfig } from '../vite/backendPluginBuild.ts';
 
@@ -263,9 +260,10 @@ const packPlugin = plugin => {
   }
 
   const versionId = plugin.version.replaceAll('.', '_');
+  const runtimeId = HOST_RUNTIME.replaceAll('.', '_');
   /* eslint-disable camelcase -- the Rust FrontendPluginRow's field names. */
   const row = {
-    id: `frontend_${plugin.code}_${versionId}`,
+    id: `frontend_${plugin.code}_${runtimeId}_${versionId}`,
     code: plugin.code,
     version: plugin.version,
     entry_point: entryPoint,
@@ -273,24 +271,26 @@ const packPlugin = plugin => {
     files,
     /*
      * The second compatibility axis: which HOST can load this bundle, as
-     * against `version`'s which SERVER can serve it. Both taken from the SDK
-     * the plugin was just built against rather than from its manifest, so they
-     * are true by construction and cannot drift from what the module declares
-     * at runtime.
+     * against `version`'s which SERVER can serve it. Taken from the SDK the
+     * plugin was just built against rather than from its manifest, so it is
+     * true by construction and cannot drift from what the module declares at
+     * runtime.
      *
-     * `host_runtime` is the load-bearing half. A server matches it for exact
-     * equality against the runtime the asking client declares, so it — not the
-     * integer — is what keeps this bundle out of the React UI's hands, and out
-     * of the hands of any future host that happens to number its plugin API
-     * the same way we number ours.
+     * A server matches it for exact equality against the runtime the asking
+     * client declares, and never orders it — a bundle exporting Solid
+     * components cannot be rendered by a React host whichever of the two is
+     * newer, and both hosts run under one server version for the whole
+     * rollout, so nothing on the version line can separate them.
      *
-     * Not overridable per plugin, deliberately. `examples/api_too_new`
-     * declares 999 in its MODULE and so packs a row that disagrees with it,
-     * which is the point: the row gets it past the server's gate and into the
-     * loader, which is the gate that fixture exists to exercise.
+     * The plugin-API integer is NOT packed alongside it. That gate is
+     * module-side and stays there (spec/plugins/sdk-contract.md § versioning):
+     * `examples/api_too_new` declares 999 in its MODULE and is refused by the
+     * loader after the bundle evaluates, which is the gate that fixture exists
+     * to exercise.
+     *
+     * Not overridable per plugin, deliberately.
      */
     host_runtime: HOST_RUNTIME,
-    plugin_api_version: PLUGIN_API_VERSION,
   };
   /* eslint-enable camelcase */
 
