@@ -303,6 +303,20 @@ tr[data-tone='info'] > .td {
   color: var(--info-main);
 }
 
+/* 'warning' = a row needing attention before it can proceed (e.g. an outbound
+   line issued from a held batch — spec D102). Text only, like 'info'; the
+   fact itself is stated in words by a cell (never colour alone). */
+tr[data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+/* 'error' = a row in an error state (an expired batch — spec D103; a
+   server-refused bulk line). The expired row's bold red Expiry-date cell is
+   the words the tone restates. */
+tr[data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 /* Disabled rows: cursor follows TRUE interactivity — not-allowed only
    where a click does nothing; clickable read-only rows (spec AC-L3:
    they still open) keep the pointer. The grey fill + muted text live
@@ -687,6 +701,19 @@ tr[data-row-state='disabled'] > .selectCell {
   --th-pad-inline: 1.25rem; /* = body spacious inline padding */
 }
 
+/* A row both disabled and toned (a held or expired batch in a line editor's
+   grid — spec D102/D103) keeps the disabled grey fill but reads in its tone:
+   the state is WHY the row is disabled, so the tone must survive the muting.
+   Sits after the density block (higher specificity than its .td rules — the
+   lint's ascending order). */
+tr[data-row-state='disabled'][data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+tr[data-row-state='disabled'][data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 tr[data-selected]:not([data-row-state]) > .td,
 tr[data-selected]:not([data-row-state]) > .selectCell {
   background: color-mix(
@@ -956,6 +983,21 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
+/* A warning-toned card (rowTone 'warning' — a held batch): amber border + a
+   very faint amber lift, so the card reads at a glance in the deck. After the
+   selected rule (same specificity): the hold is a durable fact of the record,
+   so its border survives transient selection (selection keeps its fill). An
+   error-toned card (an expired batch) gets the same treatment in red. */
+.cardRow[data-tone='warning'] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--warning-main) 50%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--warning-main) 35%, transparent);
+}
+
+.cardRow[data-tone='error'] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--error-main) 50%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--error-main) 35%, transparent);
+}
+
 /* Header: selection checkbox, identity title and badge on one row, vertically
    centred so the checkbox, the identity's colour dot / icon / name and the badge
    all line up (the identity is single-line; a future code-beneath would move
@@ -1006,6 +1048,28 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   min-width: 0;
 }
 
+/* Card view's row tone (rowTone): the tone paints the card's IDENTITY title
+   only — a whole-card repaint would recolour field labels and controls. The
+   fact itself is stated in words by a cell (never colour alone). */
+.cardRow[data-tone='info'] .cardPrimary {
+  color: var(--info-main);
+}
+
+.cardRow[data-tone='warning'] .cardPrimary {
+  color: var(--warning-main);
+}
+
+.cardRow[data-tone='error'] .cardPrimary {
+  color: var(--error-main);
+}
+
+/* A toned identity's mono VALUE follows the tone — the `.card [data-mono]`
+   muting (issue #614) would otherwise pin it grey and the tone would only
+   ever reach the caption. */
+.cardRow[data-tone] .cardPrimary [data-mono] {
+  color: inherit;
+}
+
 .cardBadge {
   display: flex;
   align-items: center;
@@ -1013,6 +1077,55 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      duplicate + delete buttons); harmless for a single chip. */
   gap: var(--space-1);
   flex-shrink: 0;
+}
+
+/* Flag cells (getFlagCell + the line editors' auto-allocation tick). In table
+   view the check stands alone — its column header names it — so the label
+   span stays hidden. In a card's BADGE slot there is no header, and two flags
+   on one card read as the same anonymous check (a held batch looked
+   auto-ticked), so the flag shows its label beside the check there. */
+[data-flag-label] {
+  display: none;
+}
+
+.cardBadge [data-flag] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.cardBadge [data-flag] [data-flag-label] {
+  display: inline;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Toned flags (getFlagCell's tone / data-flag-tone), card badges only —
+   table view keeps the neutral check under its named header. 'success' =
+   an affirmative flag (will auto-allocate): green check + label. 'warning'
+   (on hold, amber) and 'error' (expired, red) = caution flags: tinted, and
+   the CHECK is dropped — a check connotes a positive state, so the word
+   stands alone. */
+.cardBadge [data-flag][data-flag-tone='success'] {
+  color: var(--success-main);
+}
+
+.cardBadge [data-flag][data-flag-tone='warning'] {
+  color: var(--warning-main);
+}
+
+.cardBadge [data-flag][data-flag-tone='error'] {
+  color: var(--error-main);
+}
+
+.cardBadge [data-flag][data-flag-tone] [data-flag-label] {
+  color: inherit;
+}
+
+.cardBadge [data-flag][data-flag-tone='warning'] > :not([data-flag-label]),
+.cardBadge [data-flag][data-flag-tone='error'] > :not([data-flag-label]) {
+  display: none;
 }
 
 /* Card body — divided from the header by a hairline (ui-standards

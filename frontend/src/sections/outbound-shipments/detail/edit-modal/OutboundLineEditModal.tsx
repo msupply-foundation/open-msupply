@@ -68,6 +68,7 @@ import {
   barReasons,
   clampManualPacks,
   deriveIssueWarnings,
+  isExpired,
   rowHasAllocatableStock,
   distributeIssue,
   fillOrderCompare,
@@ -568,6 +569,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds.has(line.id);
   const rowDisabled = (line: DraftLine): boolean =>
     isBarred(line) || isNonAllocatable(line);
+  // Calendar-expired batch (D103) — the card's error tone + Expired badge.
+  // Display-only; the bar predicates own the preference/threshold logic.
+  const lineExpired = (line: DraftLine): boolean =>
+    !!line.expiryDate && isExpired(line.expiryDate);
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
@@ -914,7 +919,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
           <Popover
-            trigger={<CheckIcon />}
+            // data-flag/-label: bare check in the grid; on a card badge the
+            // label shows beside it, or this tick and the On-hold flag read
+            // as the same anonymous check (see DataTable.module.css § flag
+            // cells).
+            trigger={
+              <span data-flag data-flag-tone="success">
+                <CheckIcon />
+                <span data-flag-label aria-hidden="true">
+                  {t('description.used-in-auto-allocation')}
+                </span>
+              </span>
+            }
             triggerLabel={t('description.used-in-auto-allocation')}
             openOnHover
             placement="top"
@@ -1303,7 +1319,27 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: () => t('label.on-hold'),
       // A row-level status flag — the card's badge slot, like the inbound
       // editor's own status badge.
-      ...getFlagCell(t('label.on-hold'), { headerPosition: 'badge' }),
+      ...getFlagCell(
+        t('label.on-hold'),
+        { headerPosition: 'badge' },
+        'warning'
+      ),
+    },
+    {
+      // Expired flag, CARD-ONLY (D103): the grid already reddens the Expiry
+      // date cell under its header, but a card buries that in the body — the
+      // badge puts the word in the card corner, with the row's error tone.
+      c: { accessor: lineExpired, id: 'expired' },
+      header: () => t('label.expired'),
+      ...getFlagCell(
+        t('label.expired'),
+        {
+          headerPosition: 'badge',
+          hideOnTable: true,
+          hideFromColumnSettings: true,
+        },
+        'error'
+      ),
     },
   ];
 
@@ -1549,6 +1585,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+            // A held batch reads in the warning tone, an expired one in the
+            // error tone — the same indications as its detail-table row
+            // (OMS-REG-DIST-03.37/.38, D102/D103); the flag badges carry the
+            // words. Survives the disabled muting (the state is why the row
+            // is disabled). Hold outranks expiry: it is the server-enforced
+            // bar.
+            rowTone={line =>
+              line.stockLineOnHold || line.location?.onHold
+                ? 'warning'
+                : lineExpired(line)
+                  ? 'error'
+                  : undefined
+            }
             emptyMessage={t('messages.no-stock-available')}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}

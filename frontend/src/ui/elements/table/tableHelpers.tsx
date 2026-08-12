@@ -14,7 +14,7 @@ import {
   type CellSpec,
 } from './_globalColumnConfig';
 import { remToPx } from '../../utils/rem';
-import { differenceInMonths } from 'date-fns';
+import { differenceInCalendarDays, differenceInMonths } from 'date-fns';
 import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -145,8 +145,19 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
     if (!value) return '';
     const almostExpired =
       differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+    // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
+    // stable across the day) steps up from the near-expiry red to red + bold.
+    const expired = differenceInCalendarDays(new Date(value), new Date()) <= 0;
     return (
-      <span class={almostExpired ? styles.expiring : undefined}>
+      <span
+        class={
+          expired
+            ? `${styles.expiring} ${styles.expired}`
+            : almostExpired
+              ? styles.expiring
+              : undefined
+        }
+      >
         {localisedDate(value)}
       </span>
     );
@@ -166,13 +177,35 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // parity) — so the caller passes the label (e.g. t('label.deceased')).
 export const getFlagCell = <T,>(
   label: string,
-  meta?: Meta
+  meta?: Meta,
+  /**
+   * Semantic tone for the CARD badge (table view is untouched — the check
+   * stands under its named header there): 'success' tints the check + label
+   * green; 'warning' (amber) and 'error' (red) tint AND drop the check — a
+   * check connotes a positive state, so a caution flag shows its word alone.
+   * Untoned flags keep the neutral check + label.
+   */
+  tone?: 'success' | 'warning' | 'error'
 ): CellFragment<T> => ({
   meta: { align: 'center', ...meta },
+  // data-flag/-label: in table view the check stands alone under its column
+  // header; in a card's BADGE slot the header is gone and two flags are
+  // indistinguishable checks, so the label shows beside the check there
+  // (CSS-gated — see DataTable.module.css § flag cells). A body-slot card
+  // flag keeps its LabelledValue caption instead.
   cell: info =>
     info.getValue<boolean>() ? (
-      <span role="img" aria-label={label} title={label}>
+      <span
+        data-flag
+        data-flag-tone={tone}
+        role="img"
+        aria-label={label}
+        title={label}
+      >
         <CheckIcon />
+        <span data-flag-label aria-hidden="true">
+          {label}
+        </span>
       </span>
     ) : (
       ''
