@@ -156,6 +156,14 @@ pub struct InstalledPlugin {
     pub version: String,
     pub kind: InstalledPluginKind,
     pub types: Vec<String>,
+    /// Which front end this bundle is for — `None` for backend plugins, which
+    /// have no host.
+    ///
+    /// Present so the two rows that are now normal — one code, one version, a
+    /// React bundle and a SolidJS one — are distinguishable to whoever is
+    /// deciding which to uninstall. Without it the list shows one line twice,
+    /// and delete is a guess against an id it does not display.
+    pub host_runtime: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -256,6 +264,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 types: row.types.0.iter().filter_map(|t| {
                     serde_json::to_value(t).ok().and_then(|v| v.as_str().map(ToString::to_string))
                 }).collect(),
+                host_runtime: None,
             });
         }
 
@@ -267,6 +276,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 version: row.version,
                 kind: InstalledPluginKind::Frontend,
                 types: row.types.0,
+                host_runtime: Some(row.host_runtime.0),
             });
         }
 
@@ -549,6 +559,7 @@ mod test {
             code: "my_frontend_plugin".to_string(),
             version: "2.0.0".to_string(),
             types: FrontendPluginTypes(vec!["report".to_string(), "dashboard".to_string()]),
+            host_runtime: HostRuntime("solid".to_string()),
             ..Default::default()
         };
         FrontendPluginRowRepository::new(&connection)
@@ -575,6 +586,9 @@ mod test {
             backend.types,
             vec!["average_monthly_consumption", "get_consumption"]
         );
+        // A backend plugin has no host, and says so rather than borrowing the
+        // frontend default.
+        assert_eq!(backend.host_runtime, None);
 
         let frontend = &plugins[1];
         assert_eq!(frontend.id, "frontend-1");
@@ -582,6 +596,42 @@ mod test {
         assert_eq!(frontend.version, "2.0.0");
         assert_eq!(frontend.kind, InstalledPluginKind::Frontend);
         assert_eq!(frontend.types, vec!["report", "dashboard"]);
+        assert_eq!(frontend.host_runtime.as_deref(), Some("solid"));
+    }
+
+    /// The listing exists to be acted on — its rows are what an admin picks
+    /// from when uninstalling. Two bundles of one plugin can share a code AND a
+    /// version, so the host fields are the only thing that tells the pair
+    /// apart.
+    #[actix_rt::test]
+    async fn installed_plugins_distinguishes_bundles_of_one_code() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "installed_plugins_distinguishes_bundles_of_one_code",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(civ_bundle("react", "3.0.0", "react"))
+            .unwrap();
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid"))
+            .unwrap();
+
+        let mut plugins = service_provider
+            .plugin_service
+            .installed_plugins(&service_context)
+            .unwrap();
+        plugins.sort_by(|a, b| a.id.cmp(&b.id));
+
+        // Same code, same version — every other listed field is identical.
+        let runtimes: Vec<Option<&str>> = plugins.iter().map(|p| p.host_runtime.as_deref()).collect();
+        assert_eq!(runtimes, vec![Some("react"), Some("solid")]);
     }
 
     #[actix_rt::test]
