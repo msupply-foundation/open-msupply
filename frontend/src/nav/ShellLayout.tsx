@@ -177,6 +177,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}
+        /* The brand mark goes home — the store root, which IS the dashboard
+           (see relativePath above, where an empty path resolves to it). The
+           conventional job for a logo in app chrome, and the reason it is not
+           wired to the rail toggle instead. */
+        onHome={() => navigate(`/${params.storeId}`)}
         syncBadge={syncIndicator.badge()}
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
