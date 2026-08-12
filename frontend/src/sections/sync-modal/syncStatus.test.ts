@@ -202,6 +202,29 @@ describe('toSyncOverview — phase list with progress (SYNC-03.19, .20)', () => 
     expect(wait?.total).toBeUndefined();
   });
 
+  it('carries the phase timestamps through for the elapsed display', () => {
+    const steps = toSyncOverview(
+      v7({
+        push: {
+          started: '2026-01-01T00:00:00Z',
+          finished: '2026-01-01T00:00:12Z',
+          total: null,
+          done: null,
+        },
+        pull: phase({ done: 5, total: 10 }),
+      }),
+      MODAL
+    )?.steps;
+    expect(steps?.find(s => s.label === 'sync-status.push')).toMatchObject({
+      startedAt: '2026-01-01T00:00:00Z',
+      finishedAt: '2026-01-01T00:00:12Z',
+    });
+    // An unfinished phase carries its start stamp and no finish stamp.
+    const pull = steps?.find(s => s.label === 'sync-status.pull');
+    expect(pull?.startedAt).toBe('2026-01-01T00:00:00Z');
+    expect(pull?.finishedAt).toBeUndefined();
+  });
+
   it('a known total with no done yet reads 0 / N', () => {
     const pull = toSyncOverview(
       v7({ pull: phase({ total: 10, done: null }) }),

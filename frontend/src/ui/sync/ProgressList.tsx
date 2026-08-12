@@ -1,4 +1,12 @@
-import { createMemo, Index, Show, type Component } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  Index,
+  onCleanup,
+  Show,
+  type Component,
+} from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { AlertTriangleIcon, type IconProps } from '../icons';
 import { Popover } from '../elements/feedback/Popover';
@@ -15,11 +23,39 @@ export interface ProgressStep {
   done?: number;
   total?: number;
   /**
+   * When the step started/finished — enables the per-step elapsed time: the
+   * in-flight step's ticks against a live clock, a completed step's rides its
+   * popover (omitted when its `finishedAt` never arrived — a step completed
+   * by progression has no true end stamp).
+   */
+  startedAt?: string;
+  finishedAt?: string;
+  /**
    * Marker glyph, by intent (a push icon, a pull icon…). Empty circle when
    * omitted.
    */
   icon?: Component<IconProps>;
 }
+
+// Compact elapsed label, the current app's decomposition: exact seconds under
+// a minute, "Xm Ys" under an hour, then "Xh 0Ym" — computed from milliseconds
+// so a multi-day run folds into hours rather than being dropped.
+const elapsedLabel = (startedAt: string, endMs: number): string => {
+  const startMs = new Date(startedAt).getTime();
+  if (!Number.isFinite(startMs)) return '';
+  const totalSeconds = Math.floor(Math.max(0, endMs - startMs) / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0)
+    return t('label.elapsed-hours-minutes', {
+      hours,
+      minutes: String(minutes).padStart(2, '0'),
+    });
+  if (minutes > 0)
+    return t('label.elapsed-minutes-seconds', { minutes, seconds });
+  return t('label.elapsed-seconds', { seconds });
+};
 
 type StepState = 'completed' | 'active' | 'pending';
 
@@ -59,10 +95,11 @@ const stepStatus = (state: StepState, errored: boolean): string => {
  * styling — the errored step's alert glyph and colour are only its visual
  * echo (the marker circle is aria-hidden).
  *
- * One count, on the in-flight step (D100): the done/total count renders
- * beneath the in-flight step only; a completed step's final count is a hover/
- * focus popover on its marker (which becomes a button — the count also rides
- * its accessible name, so the figure is never hover-only). Pending markers
+ * One count, on the in-flight step (D100): the done/total count — and the
+ * step's elapsed time, ticking against a live clock — render beneath the
+ * in-flight step only; a completed step's final count and duration are a
+ * hover/focus popover on its marker (which becomes a button — both also ride
+ * its accessible name, so the figures are never hover-only). Pending markers
  * stay plain spans. The step columns are equal-width regardless of content
  * (issue #971 — content-sized columns made the circles shift as digits grew).
  */
@@ -91,6 +128,20 @@ export const ProgressList = (props: {
     return 'pending';
   };
 
+  // Live clock for the in-flight step's elapsed time — ticking only while a
+  // step is actually running and the run hasn't failed (on error the elapsed
+  // freezes at the failure point, as the current app's does).
+  const [now, setNow] = createSignal(Date.now());
+  const running = createMemo(() =>
+    props.steps.some(step => step.started && !step.finished)
+  );
+  createEffect(() => {
+    if (!running() || props.error === true) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    onCleanup(() => clearInterval(id));
+  });
+
   return (
     <ol class={styles.list} data-variant={props.variant ?? 'primary'}>
       <Index each={props.steps}>
@@ -103,8 +154,38 @@ export const ProgressList = (props: {
               ? t('label.sync-progress', { done, total })
               : '';
           };
+          // The step's elapsed time: the in-flight step's runs against the
+          // live clock (to its finish stamp once that arrives); a completed
+          // step's is final, and omitted when its finish stamp never came —
+          // progression-completed, so its true end is unknown.
+          const elapsed = () => {
+            const { startedAt, finishedAt } = step();
+            if (startedAt == null) return '';
+            if (finishedAt != null)
+              return elapsedLabel(startedAt, new Date(finishedAt).getTime());
+            return state() === 'active' ? elapsedLabel(startedAt, now()) : '';
+          };
+          // 0–1 fill for the in-flight marker's progress ring; unset when the
+          // step isn't countable (the ring then stays the plain pale track).
+          const ringProgress = () => {
+            const { done, total } = step();
+            return state() === 'active' &&
+              done != null &&
+              total != null &&
+              total > 0
+              ? Math.min(done / total, 1)
+              : undefined;
+          };
           const marker = () => (
-            <span class={styles.circle} aria-hidden="true">
+            <span
+              class={styles.circle}
+              aria-hidden="true"
+              style={
+                ringProgress() != null
+                  ? { '--ring-progress': String(ringProgress()) }
+                  : undefined
+              }
+            >
               <Show
                 when={!errored() && step().icon}
                 fallback={
@@ -132,28 +213,50 @@ export const ProgressList = (props: {
               aria-current={state() === 'active' ? 'step' : undefined}
             >
               <Show
-                when={state() === 'completed' && count()}
+                when={state() === 'completed' && (count() || elapsed())}
                 fallback={marker()}
               >
                 <Popover
                   openOnHover
-                  placement="top"
+                  placement="bottom"
                   trigger={marker()}
-                  triggerLabel={t('label.step-progress', {
-                    label: step().label,
-                    // count() gates the branch, so done/total are present.
-                    done: step().done ?? 0,
-                    total: step().total ?? 0,
-                  })}
+                  triggerLabel={
+                    count()
+                      ? elapsed()
+                        ? t('label.step-progress-elapsed', {
+                            label: step().label,
+                            // count() gates this arm: done/total are present.
+                            done: step().done ?? 0,
+                            total: step().total ?? 0,
+                            elapsed: elapsed(),
+                          })
+                        : t('label.step-progress', {
+                            label: step().label,
+                            done: step().done ?? 0,
+                            total: step().total ?? 0,
+                          })
+                      : t('label.step-elapsed', {
+                          label: step().label,
+                          elapsed: elapsed(),
+                        })
+                  }
                   triggerClass={styles.markerButton}
                   class={styles.countBubble}
                 >
-                  <p class={styles.countBubbleText}>{count()}</p>
+                  <Show when={count()}>
+                    <p class={styles.countBubbleText}>{count()}</p>
+                  </Show>
+                  <Show when={elapsed()}>
+                    <p class={styles.countBubbleText}>{elapsed()}</p>
+                  </Show>
                 </Popover>
               </Show>
               <span class={styles.label}>{step().label}</span>
               <span class={styles.count}>
                 {state() === 'active' ? count() : ''}
+              </span>
+              <span class={styles.elapsed}>
+                {state() === 'active' ? elapsed() : ''}
               </span>
               <span class={styles.srOnly}>
                 {stepStatus(state(), errored())}
