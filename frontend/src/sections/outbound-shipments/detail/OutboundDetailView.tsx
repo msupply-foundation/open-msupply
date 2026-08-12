@@ -43,6 +43,7 @@ import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
@@ -156,8 +157,10 @@ const OutboundDetailView: Component = () => {
   const navigate = useNavigate();
   // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
   // nav) in one `?query=` param. Thin accessors over that single query.
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
@@ -1011,6 +1014,7 @@ const OutboundDetailView: Component = () => {
                       setSelectedIds([]);
                     },
                     onPageSizeChange: first => {
+                      rememberPageSize(first);
                       setQuery({ ...query(), first, offset: 0 });
                       setSelectedIds([]);
                     },

@@ -14,6 +14,7 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Items, type ItemsVariables } from './items.generated';
 import { ItemPreferences } from '../itemPreferences.generated';
 import { ItemMasterLists } from './itemMasterLists.generated';
@@ -72,7 +73,10 @@ const DEFAULT_STATE: ItemsListState = {
 const ItemsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ItemsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ItemsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
 
   const tableConfig = createTableConfig({ tableId: 'items' });
 
@@ -255,7 +259,10 @@ const ItemsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

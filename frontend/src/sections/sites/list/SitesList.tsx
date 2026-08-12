@@ -14,6 +14,7 @@ import { DataTable, type SortState } from '@/ui/elements/table/DataTable';
 import { createTableConfig } from '@/api/createTableConfig';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { Sites, SiteDeployment } from './sites.generated';
 import {
   DEFAULT_STATE,
@@ -51,7 +52,10 @@ import { DeleteSitesAction } from './actions/DeleteSitesAction';
 type SiteRowType = SiteRow;
 
 const SitesList: Component = () => {
-  const { query, setQuery } = useUrlQueryState<SitesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<SitesListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The editor's opening state, or undefined when closed. Mounted only while
   // open (a <Show> below), so its own resources — the site's assigned stores —
@@ -237,7 +241,10 @@ const SitesList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <Show when={editor()}>

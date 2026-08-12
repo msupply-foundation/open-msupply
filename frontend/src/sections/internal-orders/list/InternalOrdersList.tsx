@@ -27,6 +27,7 @@ import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   InternalOrders,
@@ -91,7 +92,10 @@ const InternalOrdersList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Create-flow state: the modal, the recent-stocktake warning gate, and the
   // in-flight stocktake check that decides between them (spec S2 / AC-C5).
@@ -497,7 +501,10 @@ const InternalOrdersList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>
