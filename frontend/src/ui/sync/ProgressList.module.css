@@ -1,10 +1,12 @@
 /*
- * Horizontal stepper look, faithful to the current app's HorizontalStepper:
+ * Horizontal stepper look, based on the current app's HorizontalStepper:
  * a circled icon marker per step, thick connector lines meeting the circles'
- * outer edges, label + done/total count beneath, and a pulse on the in-flight
- * marker. Geometry (30px circle, 3px border, 4px connector) is kept in rem
- * except the border hairlines, mirroring the reference constants so the
- * connectors stay centred on the circles.
+ * outer edges, label beneath, and a pulse on the in-flight marker — with the
+ * D100 emphasis model: the connector fill stops at the last completed step
+ * (the run-in to the in-flight step stays pale), and only the in-flight step
+ * shows its count. Geometry (30px circle, 3px border, 4px connector) is kept
+ * in rem except the border hairlines, mirroring the reference constants so
+ * the connectors stay centred on the circles.
  *
  * The tone variables map the semantic variant to palette tokens (never
  * colour-named): primary = brand, secondary = the initialisation screen's
@@ -13,7 +15,12 @@
  */
 
 .list {
-  --tone-light: var(--primary-light);
+  /* The unfilled track/border shade. The palette's own light shade
+     (--primary-light) is barely lighter than main, so an unreached segment
+     would read as filled — tint the main tone toward the surface instead,
+     landing at the same paleness the secondary variant gets from its
+     pale-grey token. */
+  --tone-light: color-mix(in srgb, var(--primary-main) 30%, var(--bg-white));
   --tone-main: var(--primary-main);
   --tone-dark: var(--primary-dark);
 
@@ -40,6 +47,12 @@
 .step {
   position: relative;
   flex: 1;
+  /* Equal columns whatever the content: flex-basis 0 shares the row evenly
+     only if no step's min-content size exceeds its share — a long nowrap
+     count would otherwise widen its column and shift every circle as the
+     digits grow (issue #971). A count wider than the column overflows it,
+     staying centred (align-items below). */
+  min-inline-size: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -59,11 +72,21 @@
   background: var(--tone-light);
 }
 
-/* A segment belongs to the step it arrives at: it fills once that step has
-   been reached; the run-out to a pending step stays pale. */
-.step[data-state='active']::before,
+/* A segment belongs to the step it arrives at: it fills once that step is
+   COMPLETED; the run-in to the in-flight step and the run-out to pending
+   steps stay pale, so the fill reads "done up to here" (D100). */
 .step[data-state='completed']::before {
   background: var(--tone-main);
+}
+
+/* The marker's popover trigger (a completed step with a count): the Popover
+   trigger reset does the rest; the round radius keeps the focus ring on the
+   circle, and the raise matches .circle's so the ring paints over the
+   connector. */
+.markerButton {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
 }
 
 /* The circled marker. Sits above the connector. */
@@ -116,11 +139,24 @@
   color: var(--error-main);
 }
 
-/* Done/total under the label; always rendered so rows keep an even height. */
+/* Done/total under the in-flight step's label (D100). The span renders on
+   every step (empty elsewhere) so rows keep an even height. */
 .count {
   min-block-size: 1em;
   font-size: var(--text-xs);
   color: var(--tone-muted-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A completed step's count bubble (the marker's hover/focus popover). */
+.countBubble {
+  padding: var(--space-2) var(--space-3);
+}
+
+.countBubbleText {
+  margin: 0;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

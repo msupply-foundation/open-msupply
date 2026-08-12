@@ -64,7 +64,16 @@ export const progressMetadata: PageMetadata = {
     {
       id: 'progress-sync',
       title: 'Sync progress',
-      searchTerms: ['sync', 'push', 'pull', 'integrate', 'done', 'total'],
+      searchTerms: [
+        'sync',
+        'push',
+        'pull',
+        'integrate',
+        'done',
+        'total',
+        'count',
+        'popover',
+      ],
     },
   ],
 };
@@ -181,15 +190,20 @@ export const ProgressShowcase = () => (
         <Lead>
           The sync surfaces' phase list (<code>ui/sync</code>) is the same
           stepper with a marker <code>icon</code> per phase (a step without one
-          shows its number) and a <code>done</code>/<code>total</code> count
-          beneath. <code>variant</code> picks the tone (primary = the sync
-          modal, secondary = initialisation); <code>error</code> flags the
-          in-flight step. Steps are position-keyed (<code>&lt;Index&gt;</code>)
-          and update in place, so consumers can rebuild the step objects on
-          every status tick. Both demos are genuine phase sets: the v7
-          operational modal, and a v5/v6 remote-site initialisation (which never
-          pushes; its <em>Prepare</em> step has no icon, so it shows its
-          number).
+          shows its number) and <strong>one</strong> <code>done</code>/
+          <code>total</code> count — beneath the in-flight step only, so the
+          live number is the only one on the row and the columns never shift as
+          digits grow. A completed step's final count is a hover/focus popover
+          on its marker (hover or Tab to one below). The connectors into
+          not-yet-completed steps take the pale tone, so the filled track stops
+          at the last completed step. <code>variant</code> picks the tone
+          (primary = the sync modal, secondary = initialisation);{' '}
+          <code>error</code> flags the in-flight step. Steps are position-keyed
+          (<code>&lt;Index&gt;</code>) and update in place, so consumers can
+          rebuild the step objects on every status tick. Both demos are genuine
+          phase sets: the v7 operational modal, and a v5/v6 remote-site
+          initialisation (which never pushes; its <em>Prepare</em> step has no
+          icon, so it shows its number).
         </Lead>
         <Stack gap="lg">
           <ProgressList
@@ -199,6 +213,8 @@ export const ProgressShowcase = () => (
                 icon: ChevronsUpIcon,
                 started: true,
                 finished: true,
+                done: 120,
+                total: 120,
               },
               {
                 label: 'Waiting for integration',

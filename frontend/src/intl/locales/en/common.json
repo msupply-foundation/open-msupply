@@ -1939,6 +1939,7 @@
   "label.status-not-given": "Not given",
   "label.status-pending": "Pending",
   "label.statushistory": "Status history",
+  "label.step-progress": "{{ label }}: {{ done }} / {{ total }}",
   "label.stock-level": "Stock level",
   "label.stock-line-option": "{{batch}} · pack size {{packSize}} · {{packs}} packs · location {{location}}",
   "label.stock-movement": "Stock movement",
