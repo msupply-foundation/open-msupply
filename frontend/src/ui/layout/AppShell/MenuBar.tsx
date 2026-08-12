@@ -517,22 +517,6 @@ export const MenuBar = (props: MenuBarProps) => {
                 <AppLogo class={styles.logo} />
               </button>
             </Show>
-            <button
-              type="button"
-              class={styles.railToggle}
-              data-testid="drawer-toggle"
-              onClick={props.nav.toggleRail}
-              aria-label={
-                props.nav.railCollapsed()
-                  ? t('button.open-the-menu')
-                  : t('button.close-the-menu')
-              }
-              aria-expanded={!props.nav.railCollapsed()}
-            >
-              {/* One glyph for both states: it names the panel it toggles, not
-                  a direction, so there is nothing to flip. */}
-              <SidebarIcon />
-            </button>
           </div>
           <NavLists
             upper={props.upper}
@@ -545,16 +529,29 @@ export const MenuBar = (props: MenuBarProps) => {
             syncBadge={props.syncBadge}
             syncIconDimmed={props.syncIconDimmed}
           />
-          {/* The rail's collapse toggle, at the foot of the rail (spec/chrome
+          {/* The rail's collapse toggle — a disc straddling the rail's own
+              inline-end border, the handle-on-the-border pattern (spec/chrome
               § sidebar: an explicit toggle only, never hover — D3).
-              Position is the point: this is furniture, pressed once and then
-              left alone for weeks, so it belongs LAST in reading order rather
-              than first. Every earlier spot gave it rank it had not earned —
-              beside the brand mark, or leading the app bar on the page title's
-              line, where it was the first thing read on the screen. Down here it
-              is adjacent to the thing it controls, in the icon column so it
-              never reaches into the page, and in the one part of the rail
-              nothing else wants. */}
+              Anchored to the RAIL rather than to the head, so it rides the edge
+              it moves: it travels with that edge through the width transition
+              instead of jumping the gap. Costing no row and living outside the
+              head is what lets the brand mark keep its place at BOTH widths
+              here — the trade this alternative makes against the head-mounted
+              version, which has to hide the mark on a 5rem rail. */}
+          <button
+            type="button"
+            class={styles.railToggle}
+            data-testid="drawer-toggle"
+            onClick={props.nav.toggleRail}
+            aria-label={
+              props.nav.railCollapsed()
+                ? t('button.open-the-menu')
+                : t('button.close-the-menu')
+            }
+            aria-expanded={!props.nav.railCollapsed()}
+          >
+            <SidebarIcon />
+          </button>
           {/* The rail's edge is a second explicit toggle (Linear's affordance).
               A click, so D3 is untouched — that rule forbids reacting to HOVER,
               and what hover does here is light the strip up, advertising the
