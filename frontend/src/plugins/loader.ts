@@ -1,10 +1,6 @@
 import { graphqlFetch } from '../api/graphql';
 import { registerPluginTranslations } from '../intl';
-import {
-  HOST_RUNTIME,
-  PLUGIN_API_MIN_SUPPORTED,
-  PLUGIN_API_VERSION,
-} from '../plugin-sdk/apiVersion';
+import { HOST_RUNTIME, PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
 import { pluginBundleUrl } from './bundleUrl';
 import {
   pluginDiagnostics,
@@ -179,11 +175,7 @@ const appDeps: LoadPluginsDeps = {
     // can load. Sending nothing is not neutral: it means the React UI — served
     // by the same backend at `/old-ui/` — and would get us its bundles.
     const result = await graphqlFetch(FrontendPluginMetadata, {
-      host: {
-        runtime: HOST_RUNTIME,
-        version: PLUGIN_API_VERSION,
-        minSupported: PLUGIN_API_MIN_SUPPORTED,
-      },
+      hostRuntime: HOST_RUNTIME,
     });
     return result.kind === 'success'
       ? result.data.frontendPluginMetadata
