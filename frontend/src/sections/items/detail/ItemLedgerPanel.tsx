@@ -19,7 +19,11 @@ import {
 } from '../../../ui/elements/selectors/FilterBar';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import {
   ItemLedger,
   type ItemLedgerResult,
@@ -54,7 +58,6 @@ type LedgerRow = ItemLedgerResult['itemLedger']['nodes'][number];
 // Nested, the whole filter object survives as one value and both work.
 type LedgerState = { filter: LedgerFilter; offset: number; first: number };
 
-const DEFAULT_PAGE_SIZE = 20;
 // `datetime: null` SEEDS the date-time chip so it is on the bar from the first
 // render with no menu step — this app's way of expressing the reference app's
 // `isDefault: true` on that filter. A null bound never reaches the query, and

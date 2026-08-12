@@ -43,7 +43,11 @@ import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
@@ -125,8 +129,6 @@ const uncapped = <T,>({
 // sort on (VVM, unit, doses, quantities, prices, received/difference, volume —
 // spec contract § detail line table) simply omit `sortKey`.
 type SortKey = NonNullable<OutboundLinesVariables['sort']>[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is

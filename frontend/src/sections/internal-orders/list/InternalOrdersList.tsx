@@ -27,7 +27,11 @@ import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   InternalOrders,
@@ -59,8 +63,6 @@ import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
 // the single never-throwing query method; the resource is keyed on the
 // SERIALISED variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls). The page owns no CSS.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type Row = InternalOrderRowFragment;
 

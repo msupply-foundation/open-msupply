@@ -42,7 +42,11 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import {
   getCellDefinition,
   getNumberCell,
@@ -89,8 +93,6 @@ type Line = SupplierReturnLineFragment;
 // The line table's sort keys, taken from the generated variables so a schema
 // change is a compile error rather than a silently-ignored sort.
 type SortKey = NonNullable<SupplierReturnLinesVariables['sort']>[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): sort + pagination in the one
 // `?query=` JSON param, so a sorted/paged table is shareable and survives a

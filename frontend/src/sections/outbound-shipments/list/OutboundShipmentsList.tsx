@@ -29,7 +29,11 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   OutboundShipments,
@@ -59,8 +63,6 @@ import {
 // CSV export, read-only rows de-emphasised. Composition mirrors the reference
 // list (StocktakesList): URL-backed state, serialised resource source, library
 // components only, no CSS.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 

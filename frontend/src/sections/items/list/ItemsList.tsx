@@ -14,7 +14,11 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { Items, type ItemsVariables } from './items.generated';
 import { ItemPreferences } from '../itemPreferences.generated';
 import { ItemMasterLists } from './itemMasterLists.generated';
@@ -41,8 +45,6 @@ import {
 // (Page / Header / Toolbar / FilterBar / DataTable) so the page owns no CSS.
 // The UI filter vocabulary (lens etc.) maps to the wire filter via
 // buildItemFilter (see itemFilter.ts).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ItemsListState = {
   filter: ItemsListFilter;

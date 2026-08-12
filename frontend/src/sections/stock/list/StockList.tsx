@@ -22,7 +22,11 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { stockPreferences } from '../../../store/storeContext';
 import {
@@ -52,8 +56,6 @@ import { ExportStockAction } from './actions/ExportStockAction';
 //
 // The grouped-by-item view is deferred this iteration (spec/stock DIVERGENCES
 // D63) — the list is the flat stock-line list only.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type Row = StockLineRowFragment;
 

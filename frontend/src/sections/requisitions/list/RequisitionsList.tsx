@@ -27,7 +27,11 @@ import { PlusCircleIcon } from '@/ui/icons';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import { useUrlQueryState } from '@/list/urlQueryState';
-import { initialPageSize, rememberPageSize } from '@/list/pageSize';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import {
   Requisitions,
@@ -60,8 +64,6 @@ import { CreateOrderAction } from './create/CreateOrderAction';
 // never-throwing query method; the resource is keyed on the SERIALISED
 // variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls). The page owns no CSS.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type Row = RequisitionRowFragment;
 
