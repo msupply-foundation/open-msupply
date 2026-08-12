@@ -1033,8 +1033,10 @@ const OutboundDetailView: Component = () => {
                   // tone, expired lines in the error tone — each beside its
                   // words (the flag badges; in table view the bold red
                   // Expiry-date cell) (ui-surface S3 line table,
-                  // OMS-REG-DIST-03.37/.38, D102/D103). Hold outranks expiry
-                  // (the server-enforced bar).
+                  // OMS-REG-DIST-03.37/.38, D102/D103). Precedence is pinned
+                  // by .38: placeholder outranks everything (the row stays
+                  // info; only the Expiry-date cell reddens/bolds), and hold
+                  // outranks expiry (the server-enforced bar).
                   rowTone={line =>
                     line.type === 'UNALLOCATED_STOCK'
                       ? 'info'
