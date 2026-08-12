@@ -13,7 +13,7 @@
 //!    regressions where the pause-default-true initial state leaves the driver
 //!    silently dormant.
 //! 2. `pause_mid_upload_via_real_sync` — once the driver is mid-upload, the test
-//!    fires `sync_trigger.trigger(None)`. `SynchroniserDriver::sync()` pauses
+//!    fires `sync_trigger.trigger()`. `SynchroniserDriver::sync()` pauses
 //!    file sync, runs a V5 cycle, unpauses. The upload chunk loop observes the
 //!    pause at the next ACK, the file synchroniser persists the chunk-aligned
 //!    offset on disk, the driver re-enters via the watch's `changed()` arm after
@@ -161,7 +161,7 @@ mod tests {
             config: _,
             synchroniser,
         } = create_site("file_sync_baseline_driver", vec![]).await;
-        synchroniser.sync(None).await.unwrap();
+        synchroniser.sync().await.unwrap();
 
         let upstream = central_upstream_addr();
         let proxy =
@@ -204,7 +204,7 @@ mod tests {
             config: _,
             synchroniser,
         } = create_site("file_sync_pause_mid_driver", vec![]).await;
-        synchroniser.sync(None).await.unwrap();
+        synchroniser.sync().await.unwrap();
 
         let upstream = central_upstream_addr();
         let proxy =
@@ -232,13 +232,13 @@ mod tests {
 
         // Now fire a real sync. SynchroniserDriver::sync() will:
         //   1. file_sync_trigger.pause()
-        //   2. Synchroniser::sync(None) against the mock — near-instant
+        //   2. Synchroniser::sync() against the mock — near-instant
         //   3. file_sync_trigger.unpause()
         // The upload's chunk loop returns `Paused` between chunks, the file
         // synchroniser persists `uploaded_bytes = bytes_uploaded` without a
         // status change (so it stays re-pickup-able), and the FileSyncDriver
         // re-enters via the watch arm and continues.
-        drivers.sync_trigger.trigger(None);
+        drivers.sync_trigger.trigger();
 
         let trace = UploadTrace::record(
             &context.connection,
@@ -291,9 +291,9 @@ mod tests {
             config: _,
             synchroniser,
         } = create_site("file_sync_unpause_latency_driver", vec![]).await;
-        // Required so `is_initialised` returns true and the driver enters its
-        // full `select!` rather than only awaiting Start.
-        synchroniser.sync(None).await.unwrap();
+        // Required so `is_initialised` returns true and the driver enters its full
+        // `select!` immediately, rather than polling the not-initialised branch.
+        synchroniser.sync().await.unwrap();
 
         // File-sync-only variant: we don't want a background SynchroniserDriver
         // firing pause/unpause cycles during the measurement.
@@ -370,7 +370,7 @@ mod tests {
             config: _,
             synchroniser,
         } = create_site("file_sync_bad_internet", vec![]).await;
-        synchroniser.sync(None).await.unwrap();
+        synchroniser.sync().await.unwrap();
 
         let upstream = central_upstream_addr();
         let proxy =
@@ -397,7 +397,7 @@ mod tests {
         let sync_trigger = drivers.sync_trigger.clone();
         let churn = tokio::spawn(async move {
             for _ in 0..30 {
-                sync_trigger.trigger(None);
+                sync_trigger.trigger();
                 tokio::time::sleep(Duration::from_millis(750)).await;
             }
         });
