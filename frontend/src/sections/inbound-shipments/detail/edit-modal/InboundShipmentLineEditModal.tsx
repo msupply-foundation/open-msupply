@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { t } from '../../../../intl';
+import { formatNumber, getPlural, t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -31,14 +31,15 @@ import {
   type Column,
   type CardGroup,
 } from '../../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  formatCurrencyCell,
+  getNumberCell,
+} from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import {
   CopyIcon,
   InfoIcon,
-  MessageSquareIcon,
   PlusCircleIcon,
-  StockIcon,
   TrashIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
@@ -133,10 +134,11 @@ export interface InboundShipmentLineEditModalProps {
 // batch's received detail. A modal over the detail view, editing ALL of one
 // item's batches at once — each batch is one row / one card. Like the stocktake
 // line editor (kdd/stocktake-line-editing), the body is the grouped DataTable:
-// ONE column set gives two faces — tabs (Batch / Pricing / Other) in table
-// view, sections in card view. Add mode opens on an item search (manual/
-// transfer) or a purchase-order-line picker (PO-linked — a line must cite one);
-// edit mode loads the item's existing lines. Each open is a fresh mount (keyed
+// ONE column set gives two faces — columns in table view, sections in card
+// view (the primary receiving panel, then the "Pricing & additional info"
+// disclosure). Add mode opens on an item search (manual/transfer) or a
+// purchase-order-line picker (PO-linked — a line must cite one); edit
+// mode loads the item's existing lines. Each open is a fresh mount (keyed
 // Show) so state never leaks between items. "OK & next" advances to the next
 // item on the shipment (edit mode) or resets to add-another (add mode).
 type DraftBatch = {
@@ -253,30 +255,26 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   sellOverridden: true,
 });
 
-// The card body groups (matching the stocktake editor). This modal is card-only
-// (no table view — see the createTableConfig default below): batch is the
-// always-shown primary panel; pricing and other are collapsed disclosures.
-// Batch is the card HEADER identity (meta.headerPosition), so it isn't itself a
-// body group.
-type GroupKey = 'batch' | 'pricing' | 'other';
+// The card body groups. This modal is card-only (no table view — see the
+// createTableConfig default below), and follows the reference design
+// (ux-testing/inbound_shipments_modal.html): TWO groups, not three. `batch` is
+// the always-shown primary receiving panel — carrying everything the receiver
+// touches on arrival, Location included — and it is UNLABELLED (the reference's
+// primary zone has no caption, and the card's own header field already reads
+// "Batch"). Everything that arrives pre-filled or is confirm-only collapses
+// into the single "Pricing & additional info" disclosure — the former separate
+// Pricing and Other groups merged. Batch is the card HEADER identity
+// (meta.headerPosition), so it isn't itself a body group.
+type GroupKey = 'batch' | 'pricing';
 const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
   {
     key: 'batch',
-    labelKey: 'label.batch',
-    icon: () => <StockIcon />,
     panel: true,
   },
   {
     key: 'pricing',
-    labelKey: 'label.pricing',
+    labelKey: 'label.pricing-additional-info',
     icon: () => <InfoIcon />,
-    panel: true,
-    disclosure: 'closed',
-  },
-  {
-    key: 'other',
-    labelKey: 'heading.other',
-    icon: () => <MessageSquareIcon />,
     panel: true,
     disclosure: 'closed',
   },
@@ -340,6 +338,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // row id — where a row-click open, an advance, or a new batch lands focus.
   // The handle waits for the row to attach, so no load gate is needed here.
   const batchFields = createFocusTargets();
+
+  // The dialog-header slot the DataTable portals its toolbar controls into
+  // (DataTable.controlsMount). A ref SIGNAL, not a plain variable: the header
+  // renders before the table, so the table must re-read this once the element
+  // attaches.
+  const [tableControls, setTableControls] = createSignal<HTMLDivElement>();
 
   // The add-mode top selector — the item search, or the PO-line picker on a
   // PO-linked shipment. ONE handle for both: only one of them is mounted at a
@@ -575,6 +579,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
+  // "2,000 Tablets" — the units the entered packs come to, shown under Packs
+  // received. Empty (not "0") when there is nothing to say yet, so a fresh
+  // batch carries no noise; the unit name inflects with the count the way every
+  // other line editor does (getPlural — English only by design, intlUtils).
+  const unitsHint = (b: DraftBatch): string => {
+    const units = b.numberOfPacks * b.packSize;
+    if (!units) return '';
+    const unit = item()?.unitName;
+    return unit
+      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${getPlural(unit, units)}`
+      : formatNumber(units, { maximumFractionDigits: 2 });
+  };
+
   // Seed on mount: a row open (update mode) loads its item — focusing the
   // clicked batch; an add open starts in the item-search state, focusing the
   // selector. On a PO-linked shipment the order's lines are fetched too (needed
@@ -783,31 +800,124 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'numberOfPacks' },
       header: () => t('label.packs-received'),
       cardGroup: 'batch',
-      ...getNumberCell(),
+      ...getNumberCell({ cardWidth: 7.5 }),
       cell: info => {
         const b = info.row.original;
         return (
-          <NumberField
-            ref={batchFields.ref(b.id)}
-            label={t('label.packs-received')}
-            hideLabel
-            size="small"
-            value={b.numberOfPacks}
-            min={0}
-            // Packs are received in fractions (a part-full pack) —
-            // numberOfPacks is Float on the wire; match the reference 2-dp room
-            // (spec S4).
-            decimalLimit={2}
-            onChange={v => updateBatch(b.id, 'numberOfPacks', v ?? 0)}
-          />
+          <>
+            <NumberField
+              ref={batchFields.ref(b.id)}
+              label={t('label.packs-received')}
+              hideLabel
+              size="small"
+              width="full"
+              value={b.numberOfPacks}
+              min={0}
+              // Packs are received in fractions (a part-full pack) —
+              // numberOfPacks is Float on the wire; match the reference 2-dp
+              // room (spec S4).
+              decimalLimit={2}
+              onChange={v => updateBatch(b.id, 'numberOfPacks', v ?? 0)}
+            />
+            {/* Units received, as a HINT under the packs figure rather than a
+                field of its own (reference design). It is packs × pack size —
+                derived, never typed — so a whole labelled input for it cost the
+                row ~140px that the fields either side of it needed. Rendered
+                unconditionally (empty when there's nothing to say) so the row
+                height is constant and typing never makes the card jump. */}
+            <span class={styles.unitsHint}>{unitsHint(b)}</span>
+          </>
         );
       },
     },
+    // Packs shipped, and the Difference it implies, sit immediately beside
+    // Packs received — the comparison the receiver is actually making
+    // (reference design). Supplier-declared quantities are manual-shipment only
+    // (spec S4); they also feed the received-vs-shipped mismatch warning.
+    ...(!props.purchaseOrderId
+      ? [
+          {
+            c: { id: 'shippedNumberOfPacks' },
+            header: () => t('label.shipped-number-of-packs'),
+            cardGroup: 'batch',
+            ...getNumberCell({ cardWidth: 7.5 }),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <NumberField
+                  label={t('label.shipped-number-of-packs')}
+                  hideLabel
+                  size="small"
+                  width="full"
+                  value={b.shippedNumberOfPacks}
+                  min={0}
+                  decimalLimit={2}
+                  onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
+                />
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+          // Difference (computed) — shipped minus received, the SAME direction
+          // the detail table's Difference column reports (H6), so the two never
+          // disagree in sign. Blank until the supplier's shipped figure is
+          // entered; there is nothing to compare against before that.
+          {
+            c: { id: 'difference' },
+            header: () => t('label.difference'),
+            cardGroup: 'batch',
+            // A read-only VALUE, not a disabled input — the absence of a box
+            // is what says read-only (kdd/form-layout, and the outbound line
+            // editor's Available figure does the same beside its Issue
+            // fields). `disabled` means "an input you can't use right now",
+            // which is what a locked Cost price is; a difference is arithmetic
+            // and is never typed, so greying it conflates the two. Sized to the
+            // input row so the columns still line up.
+            ...getNumberCell({ cardWidth: 5 }),
+            cell: info => {
+              const b = info.row.original;
+              // A getter, not a hoisted const: read inside JSX it stays
+              // tracked, so the figure and its tone follow the draft store as
+              // the receiver types (kdd/solid-reactivity-pitfalls).
+              const diff = () =>
+                b.shippedNumberOfPacks === undefined
+                  ? undefined
+                  : b.shippedNumberOfPacks - b.numberOfPacks;
+              return (
+                <span
+                  class={styles.statValue}
+                  // Weight, and only when there IS a discrepancy. The card
+                  // already says "computed, not typed" by having no box, so a
+                  // permanent emphasis would restate that; what nothing else
+                  // says per-batch is WHICH batch is out — the mismatch Alert
+                  // sits above all the cards and can't name one. Zero and "no
+                  // figure yet" stay regular, because they are non-events.
+                  data-signal={diff() ? '' : undefined}
+                >
+                  {/* Nothing shipped recorded yet ⇒ nothing to compare
+                      against. An em dash rather than blank, matching every
+                      other read-only "no value" in the vertical (the side
+                      panel's Currency / Shipping method / Transport ref). */}
+                  {diff() === undefined
+                    ? '—'
+                    : // An explicit + on an over-receipt (a negative
+                      // already carries its own sign), so the direction of the
+                      // discrepancy reads without any colour doing the work.
+                      // The mismatch Alert above the cards carries the alarm;
+                      // this stays a figure among figures.
+                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
+                        maximumFractionDigits: 2,
+                      })}`}
+                </span>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'packSize' },
       header: () => t('label.received-pack-size'),
       cardGroup: 'batch',
-      ...getNumberCell(),
+      ...getNumberCell({ cardWidth: 8.75 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -815,6 +925,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.received-pack-size')}
             hideLabel
             size="small"
+            width="full"
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
@@ -828,36 +939,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
-    // Packs shipped / Shipped pack size — supplier-declared quantities (spec
-    // S4, manual only). Feed the received-vs-shipped mismatch warning and the
-    // detail table's Difference column (H6).
+    // Shipped pack size follows the received one so the two pack sizes read as
+    // a pair (manual shipments only, like Packs shipped above).
     ...(!props.purchaseOrderId
       ? [
-          {
-            c: { id: 'shippedNumberOfPacks' },
-            header: () => t('label.shipped-number-of-packs'),
-            cardGroup: 'batch',
-            ...getNumberCell(),
-            cell: info => {
-              const b = info.row.original;
-              return (
-                <NumberField
-                  label={t('label.shipped-number-of-packs')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedNumberOfPacks}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
-                />
-              );
-            },
-          } satisfies Column<DraftBatch, never, GroupKey>,
           {
             c: { id: 'shippedPackSize' },
             header: () => t('label.shipped-pack-size'),
             cardGroup: 'batch',
-            ...getNumberCell(),
+            ...getNumberCell({ cardWidth: 8.75 }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -865,6 +955,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   label={t('label.shipped-pack-size')}
                   hideLabel
                   size="small"
+                  width="full"
                   value={b.shippedPackSize}
                   min={0}
                   decimalLimit={2}
@@ -875,34 +966,104 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
-    // Units received (computed) — packs received × pack size (spec S4).
+    // Units received (spec S4) is NOT a field — it rides as the hint under
+    // Packs received (see that column). It stays a TABLE column, though: table
+    // view has no room for a hint under a cell, and a column there costs the
+    // card nothing.
     {
-      c: { id: 'unitsReceived' },
+      c: {
+        accessor: b => b.numberOfPacks * b.packSize,
+        id: 'unitsReceived',
+      },
       header: () =>
         t('label.units-received', {
           unit: item()?.unitName ?? t('label.units'),
         }),
+      // hideOnCard rides INSIDE getNumberCell's meta argument — a `meta:` field
+      // of our own would be overwritten by the spread that follows it, which is
+      // exactly what put a stray "Tab received" above the card's panel.
+      ...getNumberCell({ hideOnCard: true }),
+    },
+    {
+      c: { key: 'expiryDate' },
+      header: () => t('label.expiry'),
       cardGroup: 'batch',
-      ...getNumberCell(),
+      meta: { cardWidth: 10 },
       cell: info => {
         const b = info.row.original;
         return (
-          <NumberField
-            label={t('label.units-received', {
-              unit: item()?.unitName ?? t('label.units'),
-            })}
+          <DateField
+            label={t('label.expiry')}
             hideLabel
             size="small"
-            value={b.numberOfPacks * b.packSize}
-            // Fractional packs/sizes make the product fractional too; show 2 dp
-            // rather than rounding the read-only units to a whole number.
-            decimalLimit={2}
-            disabled
+            value={b.expiryDate}
+            onChange={v => updateBatch(b.id, 'expiryDate', v)}
           />
         );
       },
     },
-    // Auth status (Batch tab) — the line's authorisation state, editable when
+    // Location rides the PRIMARY panel, not the disclosure (reference design):
+    // where the stock is put away is decided at the moment of receipt, so the
+    // receiver needs it in front of them alongside expiry — not one click down.
+    {
+      c: { id: 'location' },
+      header: () => t('label.location'),
+      cardGroup: 'batch',
+      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <LocationVolumeSelect
+            label={t('label.location')}
+            hideLabel
+            size="small"
+            locations={props.locations}
+            value={b.locationId ?? undefined}
+            requiredVolume={b.volumePerPack * b.numberOfPacks}
+            onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
+          />
+        );
+      },
+    },
+    // Manufacturer (spec S4) — a name lookup, manufacturer role. Primary panel
+    // too (reference design): it arrives pre-filled and is confirm-only, but it
+    // is part of what the receiver checks off the delivery against.
+    {
+      c: { id: 'manufacturer' },
+      header: () => t('label.manufacturer'),
+      cardGroup: 'batch',
+      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NameSearch
+            label={t('label.manufacturer')}
+            hideLabel
+            size="small"
+            storeId={props.storeId}
+            role="manufacturer"
+            selected={
+              b.manufacturerId
+                ? ({
+                    id: b.manufacturerId,
+                    name: b.manufacturerName ?? '',
+                    code: '',
+                    isSupplier: false,
+                    isDonor: false,
+                    isOnHold: false,
+                    isStore: false,
+                  } satisfies NameOption)
+                : undefined
+            }
+            onSelect={m => {
+              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
+              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
+            }}
+          />
+        );
+      },
+    },
+    // Auth status — the line's authorisation state, editable when
     // the store requires authorisation of PO-linked shipments (spec ui-surface
     // col 16 / S4 per-batch fields). The same change is available in bulk from
     // the detail table's row-selection Approve/Reject/Pending actions. AC-E6
@@ -917,18 +1078,20 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'authStatus' },
             header: () => t('label.auth-status'),
             cardGroup: 'batch',
+            meta: { cardWidth: 10 },
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
-              // a fixed three-value list). Default size + hideLabel keeps it in
-              // line with the neighbouring per-batch fields, and the coloured
-              // option dots — which a native <option> can't render — read the
-              // state at a glance. A brand-new line can't carry a status on
-              // insert (the server assigns Pending), so it stays read-only.
+              // a fixed three-value list). size="small" matches the neighbouring
+              // per-batch fields' height, and the coloured option dots — which a
+              // native <option> can't render — read the state at a glance. A
+              // brand-new line can't carry a status on insert (the server
+              // assigns Pending), so it stays read-only.
               return (
                 <Select
                   label={t('label.auth-status')}
                   hideLabel
+                  size="small"
                   value={b.status ?? 'PENDING'}
                   disabled={b.isNew}
                   options={[
@@ -966,12 +1129,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'batch',
-            ...getNumberCell(),
+            ...getNumberCell({ cardWidth: 7.5 }),
             cell: () => (
               <NumberField
                 label={t('label.doses-per-unit')}
                 hideLabel
                 size="small"
+                width="full"
                 value={item()?.doses ?? 0}
                 disabled
               />
@@ -979,23 +1143,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
-    {
-      c: { key: 'expiryDate' },
-      header: () => t('label.expiry'),
-      cardGroup: 'batch',
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <DateField
-            label={t('label.expiry')}
-            hideLabel
-            value={b.expiryDate}
-            onChange={v => updateBatch(b.id, 'expiryDate', v)}
-          />
-        );
-      },
-    },
-    // VVM status (Batch tab) — gated by the manage-VVM preference AND a vaccine
+    // VVM status — gated by the manage-VVM preference AND a vaccine
     // item (VVM applies to vaccines only, spec AC-PG1 / M1).
     ...(props.prefs.vvm && item()?.isVaccine
       ? [
@@ -1003,12 +1151,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
+            meta: { cardWidth: 10 },
             cell: info => {
               const b = info.row.original;
               return (
                 <VvmStatusSelect
                   label={t('label.vvm-status')}
                   hideLabel
+                  size="small"
                   value={b.vvmStatusId ?? undefined}
                   onChange={s =>
                     updateBatch(b.id, 'vvmStatusId', s?.id ?? null)
@@ -1023,7 +1173,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell(),
+      ...getNumberCell({ cardWidth: 10 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1031,6 +1181,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.pack-cost-price')}
             hideLabel
             size="small"
+            width="full"
             value={b.costPricePerPack}
             disabled={props.costLocked}
             onChange={v => changeCost(b.id, v ?? 0)}
@@ -1042,7 +1193,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell(),
+      ...getNumberCell({ cardWidth: 10 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1050,6 +1201,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.pack-sell-price')}
             hideLabel
             size="small"
+            width="full"
             value={b.sellPricePerPack}
             onChange={v => changeSell(b.id, v ?? 0)}
           />
@@ -1061,68 +1213,33 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'lineTotal' },
       header: () => t('label.line-total'),
       cardGroup: 'pricing',
-      ...getNumberCell(),
+      // A read-only value, like Difference — packs × cost price is derived,
+      // never typed.
+      ...getNumberCell({ cardWidth: 5 }),
       cell: info => {
         const b = info.row.original;
         return (
-          <CurrencyField
-            label={t('label.line-total')}
-            hideLabel
-            size="small"
-            value={b.numberOfPacks * b.costPricePerPack}
-            disabled
-          />
+          <span class={styles.statValue}>
+            {formatCurrencyCell(b.numberOfPacks * b.costPricePerPack)}
+          </span>
         );
       },
     },
-    {
-      c: { id: 'location' },
-      header: () => t('label.location'),
-      cardGroup: 'other',
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <LocationVolumeSelect
-            label={t('label.location')}
-            hideLabel
-            locations={props.locations}
-            value={b.locationId ?? undefined}
-            requiredVolume={b.volumePerPack * b.numberOfPacks}
-            onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
-          />
-        );
-      },
-    },
-    {
-      c: { key: 'manufactureDate' },
-      header: () => t('label.manufacture-date'),
-      cardGroup: 'other',
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <DateField
-            label={t('label.manufacture-date')}
-            hideLabel
-            value={b.manufactureDate}
-            max={localTodayIso()}
-            onChange={v => updateBatch(b.id, 'manufactureDate', v)}
-          />
-        );
-      },
-    },
-    // Donor (Other tab) — gated by the donor-tracking preference.
+    // Donor — gated by the donor-tracking preference.
     ...(props.prefs.donor
       ? [
           {
             c: { id: 'donor' },
             header: () => t('label.donor'),
-            cardGroup: 'other',
+            cardGroup: 'pricing',
+            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               return (
                 <NameSearch
                   label={t('label.donor')}
                   hideLabel
+                  size="small"
                   storeId={props.storeId}
                   role="donor"
                   selected={
@@ -1148,53 +1265,21 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
-    // Manufacturer (Other tab, spec S4) — a name lookup, manufacturer role.
-    {
-      c: { id: 'manufacturer' },
-      header: () => t('label.manufacturer'),
-      cardGroup: 'other',
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <NameSearch
-            label={t('label.manufacturer')}
-            hideLabel
-            storeId={props.storeId}
-            role="manufacturer"
-            selected={
-              b.manufacturerId
-                ? ({
-                    id: b.manufacturerId,
-                    name: b.manufacturerName ?? '',
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
-                  } satisfies NameOption)
-                : undefined
-            }
-            onSelect={m => {
-              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
-              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
-            }}
-          />
-        );
-      },
-    },
-    // Campaign/program (Other tab, spec S4) — a single picker; a campaign and a
+    // Campaign/program (spec S4) — a single picker; a campaign and a
     // program are mutually exclusive on the line, so choosing one clears the
     // other (the select routes the choice to the right wire field).
     {
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
-      cardGroup: 'other',
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
       cell: info => {
         const b = info.row.original;
         return (
           <CampaignOrProgramSelect
             label={t('label.campaign')}
             hideLabel
+            size="small"
             storeId={props.storeId}
             itemId={item()?.id ?? ''}
             campaignId={b.campaignId ?? undefined}
@@ -1207,12 +1292,31 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
-    // Volume per pack (Other tab, spec S4).
+    {
+      c: { key: 'manufactureDate' },
+      header: () => t('label.manufacture-date'),
+      cardGroup: 'pricing',
+      meta: { cardWidth: 10 },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <DateField
+            label={t('label.manufacture-date')}
+            hideLabel
+            size="small"
+            value={b.manufactureDate}
+            max={localTodayIso()}
+            onChange={v => updateBatch(b.id, 'manufactureDate', v)}
+          />
+        );
+      },
+    },
+    // Volume per pack (spec S4).
     {
       c: { id: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
-      cardGroup: 'other',
-      ...getNumberCell(),
+      cardGroup: 'pricing',
+      ...getNumberCell({ cardWidth: 10 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1221,6 +1325,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             decimalLimit={10}
             size="small"
+            width="full"
             value={b.volumePerPack}
             min={0}
             onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
@@ -1231,7 +1336,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     {
       c: { key: 'note' },
       header: () => t('label.note'),
-      cardGroup: 'other',
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1239,6 +1345,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.note')}
             hideLabel
             size="small"
+            width="full"
             value={b.note}
             onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}
           />
@@ -1320,7 +1427,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               (issue #428). The choice keys off mode(), not the initial prop, so
               an exhausted update walk that drops into add mode unlocks the
               selector / shows the PO picker. */}
-          <div class={styles.headerPicker}>
+          <div
+            class={styles.headerPicker}
+            classList={{
+              [styles.headerPickerBounded ?? '']: workingSize(),
+            }}
+          >
             {props.purchaseOrderId && mode() === 'add' ? (
               <Select
                 label={t('label.purchase-order')}
@@ -1351,13 +1463,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           </div>
           {/* Unit is item master data and the denominator for every quantity in
               the cards below, so it rides the header rather than spending a
-              whole field row of the batch area on one word (#872). */}
+              whole field row of the batch area on one word (#872). Laid out
+              INLINE: stacked, "Unit" over a one-word value cost the header a
+              second line for a single word, which pushed the whole card down. */}
           <Show when={item()?.unitName}>
             {unitName => (
               <LabelledValue
                 class={styles.headerUnit}
                 label={t('label.unit')}
                 variant="field"
+                layout="inline"
                 size="small"
               >
                 {unitName()}
@@ -1370,15 +1485,25 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         mode() === 'update' ? t('label.edit-line') : t('button.add-item')
       }
       headerActions={
-        <Show when={!noItemYet()}>
-          <Button
-            icon={<PlusCircleIcon />}
-            data-testid="add-batch-button"
-            onClick={addBatch}
-          >
-            {t('label.add-batch')}
-          </Button>
-        </Show>
+        <>
+          {/* The table's own controls (card/table view · Columns · Settings),
+              lifted onto this row by DataTable's controlsMount — they sat in a
+              toolbar of their own a few pixels above the cards, spending a
+              whole row of a modal whose vertical space is the scarce axis.
+              Inline-start of Add batch: view/column plumbing before the action
+              that changes the data. Empty (and invisible) until an item is
+              picked, since the table only exists then. */}
+          <div ref={setTableControls} class={styles.headerTableControls} />
+          <Show when={!noItemYet()}>
+            <Button
+              icon={<PlusCircleIcon />}
+              data-testid="add-batch-button"
+              onClick={addBatch}
+            >
+              {t('label.add-batch')}
+            </Button>
+          </Show>
+        </>
       }
       actionsLead={
         <Show when={errorMessage()}>
@@ -1424,17 +1549,20 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 {t('messages.received-shipped-mismatch')}
               </Alert>
             </Show>
-            <DataTable
-              columns={columns()}
-              rows={rows()}
-              rowKey={b => b.id}
-              cardGroups={CARD_GROUPS}
-              showCardToggle
-              showFullScreen={false}
-              config={tableConfig.config()}
-              setConfig={tableConfig.setConfig}
-              emptyMessage={t('label.add-batch')}
-            />
+            <div class={styles.cards}>
+              <DataTable
+                columns={columns()}
+                rows={rows()}
+                rowKey={b => b.id}
+                cardGroups={CARD_GROUPS}
+                showCardToggle
+                showFullScreen={false}
+                config={tableConfig.config()}
+                setConfig={tableConfig.setConfig}
+                controlsMount={tableControls()}
+                emptyMessage={t('label.add-batch')}
+              />
+            </div>
           </>
         </Show>
       </Show>

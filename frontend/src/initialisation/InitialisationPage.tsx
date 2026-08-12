@@ -1,12 +1,14 @@
-import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { batch, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';
 import {
   InitialisationStatus,
+  InitialiseAsCentralServer,
   InitialiseSite,
   LatestSyncStatus,
   ManualSync,
   SyncInfoUpdated,
+  type InitialiseAsCentralServerResult,
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
@@ -17,6 +19,7 @@ import {
   type SyncOverview,
 } from '../sections/sync-modal/syncStatus';
 import { syncErrorSummary } from '../sections/sync-modal/syncErrors';
+import { initialiseStep } from './initialiseRetry';
 import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
@@ -24,10 +27,13 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
+import { Tabs, TabList, TabPanel } from '../ui/elements/tabs/Tabs';
+import { isAndroid } from '../platform';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import {
   DEFAULT_SYNC_INTERVAL_SECONDS,
+  INITIALISE_RETRY_INTERVAL_MS,
   SYNC_POLL_INTERVAL_MS,
 } from '../config';
 import { changeLanguage, locale, t } from '../intl';
@@ -60,10 +66,23 @@ export const InitialisationPage: Component<{
   const [syncStarted, setSyncStarted] = createSignal(false);
   const [submitting, setSubmitting] = createSignal(false);
   const [syncError, setSyncError] = createSignal<SyncError>();
+  // Spec (OMS-REG-LGN-03.19): the silent wait for the central server is NOT
+  // an error — the fields stay locked and the button stays busy — so it
+  // cannot ride on syncError(); locked()/busy() hold via submitting() alone.
+  const [waitingForCentral, setWaitingForCentral] = createSignal(false);
   const [overview, setOverview] = createSignal<SyncOverview>();
 
   let disposeWatch: (() => void) | undefined;
-  onCleanup(() => disposeWatch?.());
+  let retryTimer: number | undefined;
+  // Cleanup must make the retry loop INERT, not merely cancel its timer: an
+  // attempt in flight when the page unmounts would resolve afterwards and
+  // start a watch nothing will ever dispose. Checked after every await.
+  let disposed = false;
+  onCleanup(() => {
+    disposed = true;
+    if (retryTimer != null) clearTimeout(retryTimer);
+    disposeWatch?.();
+  });
 
   const handleStatus = (status: SyncStatusFragment | null | undefined) => {
     const next = toSyncOverview(status, {
@@ -189,49 +208,81 @@ export const InitialisationPage: Component<{
     return Object.values(errors).every(message => message === '');
   };
 
+  // One initialise attempt. The user's own submit (retriesUsed 0) keeps the
+  // default global error handling (OMS-REG-LGN-03.17); the silent retries are
+  // background calls — a transport blip mid-wait must not raise the global
+  // modal, whose only recovery is a reload that wipes the URL, site name and
+  // password just typed (spec/startup contract § Initialisation). values() is
+  // read fresh per attempt (the fields are locked, so it cannot change — but a
+  // handler never snapshots state it will re-consult).
+  const attemptInitialise = (retriesUsed: number) =>
+    graphqlFetch(
+      InitialiseSite,
+      {
+        input: {
+          url: values().url,
+          username: values().siteName,
+          password: values().password,
+          // Spec: not user-editable — always the default (OMS-REG-LGN-03.3).
+          intervalSeconds: DEFAULT_SYNC_INTERVAL_SECONDS,
+          batchSize: values().batchSize,
+        },
+      },
+      retriesUsed === 0 ? undefined : { background: true }
+    );
+
+  const waitBeforeRetry = () =>
+    new Promise<void>(resolve => {
+      retryTimer = window.setTimeout(() => {
+        retryTimer = undefined;
+        resolve();
+      }, INITIALISE_RETRY_INTERVAL_MS);
+    });
+
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
     // Spec: the button is always clickable; validation errors show on click.
     if (!validate()) return;
     setSubmitting(true);
     setSyncError(undefined);
-    const result = await graphqlFetch(InitialiseSite, {
-      input: {
-        url: values().url,
-        username: values().siteName,
-        password: values().password,
-        // Spec: not user-editable — always the default (OMS-REG-LGN-03.3).
-        intervalSeconds: DEFAULT_SYNC_INTERVAL_SECONDS,
-        batchSize: values().batchSize,
-      },
-    });
-    // Failures are handled globally, so no error is shown here — but the
-    // submitting state MUST be released (spec, Unexpected API errors), or all
-    // four inputs stay disabled behind a permanent "Initialising…" and the only
-    // escape is a reload that wipes the URL, site name and password just typed.
-    // Nothing was started, so this is the same unlocked, button-reverts-to-
-    // Initialise state as a pre-start sync error (OMS-REG-LGN-03.11/.17). The
-    // expected sync errors below come back as union variants on success.
-    if (result.kind !== 'success') {
-      setSubmitting(false);
-      return;
-    }
-    const { initialiseSite } = result.data;
-    if (initialiseSite.__typename === 'SyncSettingsNode') {
-      setSubmitting(false);
-      setSyncStarted(true);
-      watchProgress();
-    } else {
-      // Spec (OMS-REG-LGN-03.11): initialisation never started, so the button
-      // stays Initialise (not Retry) and the fields unlock for correction.
-      setSubmitting(false);
-      setSyncError({
-        variant:
-          initialiseSite.__typename === 'SyncErrorV7Node'
-            ? initialiseSite.variantV7
-            : initialiseSite.variant,
-        fullError: initialiseSite.fullError,
+
+    // Spec (OMS-REG-LGN-03.18): the one transient sync error — the central
+    // server has not yet prepared this site — is waited out with silent
+    // retries instead of shown; classification and the retry budget are
+    // initialiseStep's (initialiseRetry.ts). Re-entrancy needs no guard: every
+    // input and the submit button are disabled for the whole loop (locked()).
+    let waitingError: SyncError | undefined;
+    for (let retriesUsed = 0; ; retriesUsed++) {
+      const result = await attemptInitialise(retriesUsed);
+      if (disposed) return;
+
+      const step = initialiseStep(result, retriesUsed, waitingError);
+      if (step.kind === 'retry') {
+        // Spec (OMS-REG-LGN-03.19): still not started — hold the lock, show
+        // the waiting notice in place of the error. Setting the same value
+        // again is a no-op, so the notice announces once, not once per retry.
+        waitingError = step.error;
+        setWaitingForCentral(true);
+        await waitBeforeRetry();
+        if (disposed) return;
+        continue;
+      }
+      // The terminal transition runs in an async continuation, which Solid
+      // does not auto-batch — un-batched, setSubmitting(false) lands a frame
+      // before setSyncError(...), flashing an unlocked, errorless form.
+      batch(() => {
+        setWaitingForCentral(false);
+        // Whatever the outcome, the submitting state is released (spec,
+        // Unexpected API errors / OMS-REG-LGN-03.11/.17/.21): a 'released'
+        // step shows nothing of its own (the global modal owns it), a
+        // 'failed' step shows the error with the button back on Initialise,
+        // and a 'started' step hands over to the started state below.
+        setSubmitting(false);
+        if (step.kind === 'started') setSyncStarted(true);
+        else if (step.kind === 'failed') setSyncError(step.error);
       });
+      if (step.kind === 'started') watchProgress();
+      return;
     }
   };
 
@@ -261,6 +312,296 @@ export const InitialisationPage: Component<{
   const locked = () => submitting() || syncStarted();
   const busy = () => locked() && syncError() == null;
 
+  // ——— Central-server initialisation (spec § initialisation, issue #895) ———
+  //
+  // A central server initialises against the LEGACY mSupply central with the
+  // same form (only the URL label changes, OMS-REG-LGN-03.22). A
+  // non-production, non-Android build additionally offers the standalone mode
+  // (.23) — the server carries no signal for which kind of central it should
+  // be, so the choice is the operator's. import.meta.env.PROD mirrors the
+  // current app's production gate on the same chooser.
+  type InitMode = 'legacy-sync' | 'standalone';
+  const [mode, setMode] = createSignal<InitMode>('legacy-sync');
+  const showModeChoice = () =>
+    isCentralServer() && !isAndroid() && !import.meta.env.PROD;
+
+  type StandaloneError = Extract<
+    InitialiseAsCentralServerResult['initialiseAsCentralServer'],
+    { __typename: 'InitialiseAsCentralServerError' }
+  >['error'];
+  const [standaloneValues, setStandaloneValues] = createSignal({
+    storeName: '',
+    username: '',
+    password: '',
+  });
+  const [standaloneFieldErrors, setStandaloneFieldErrors] = createSignal({
+    storeName: '',
+    username: '',
+    password: '',
+  });
+  const [standaloneSubmitting, setStandaloneSubmitting] = createSignal(false);
+  const [standaloneError, setStandaloneError] = createSignal<StandaloneError>();
+  // The chooser stays visible but inert while either mode has work in flight
+  // (or a run has started) — hiding it would drop the strip mid-submit.
+  const modeLocked = () => locked() || standaloneSubmitting();
+
+  const validateStandalone = (): boolean => {
+    const current = standaloneValues();
+    const errors = {
+      storeName:
+        current.storeName.trim() === '' ? t('error.store-name-required') : '',
+      username:
+        current.username.trim() === '' ? t('error.username-required') : '',
+      password: current.password === '' ? t('error.password-required') : '',
+    };
+    setStandaloneFieldErrors(errors);
+    return Object.values(errors).every(message => message === '');
+  };
+
+  const submitStandalone = async (event: SubmitEvent) => {
+    event.preventDefault();
+    // Spec: always clickable; per-field validation on click (.24).
+    if (!validateStandalone()) return;
+    setStandaloneSubmitting(true);
+    setStandaloneError(undefined);
+    const result = await graphqlFetch(InitialiseAsCentralServer, {
+      input: {
+        storeName: standaloneValues().storeName.trim(),
+        adminUsername: standaloneValues().username.trim(),
+        adminPassword: standaloneValues().password,
+      },
+    });
+    if (disposed) return;
+    if (result.kind !== 'success') {
+      // Hardware-id / database failures arrive as top-level GraphQL errors,
+      // not union members (contract § initialisation wire trap): the global
+      // modal owns them — release the busy state, show nothing of our own.
+      setStandaloneSubmitting(false);
+      return;
+    }
+    const outcome = result.data.initialiseAsCentralServer;
+    if (outcome.__typename === 'StandaloneCentralInitialisedNode') {
+      // Spec (.25): completion is immediate — the store and admin user exist,
+      // initialisationStatus is already INITIALISED and no sync ever runs.
+      // Hand back to startup, which re-checks everything and lands on login.
+      props.onComplete();
+      return;
+    }
+    // Async continuation — batch so the unlock and the error land in one
+    // frame (never an unlocked, errorless flash).
+    batch(() => {
+      setStandaloneSubmitting(false);
+      setStandaloneError(outcome.error);
+    });
+  };
+
+  // The legacy-sync form — every non-central server's only form, the default
+  // mode on a central one (OMS-REG-LGN-03.22). A closure component so its two
+  // placements (bare, and as the chooser's first tab panel) share the page's
+  // signals; only one renders at a time.
+  const LegacySyncForm = (formProps: { withLogo?: boolean }) => (
+    <form
+      class={styles.form}
+      aria-label={t('button.initialise')}
+      onSubmit={submit}
+    >
+      <Show when={formProps.withLogo}>
+        <AppLogo class={styles.logo} />
+      </Show>
+      <TextField
+        // Spec (.22): a central server initialises against the LEGACY mSupply
+        // central — same field, same submission, different name.
+        label={
+          isCentralServer()
+            ? t('label.settings-legacy-url')
+            : t('label.settings-url')
+        }
+        width="full"
+        data-testid="initialise-url-input"
+        value={values().url}
+        onInput={e => {
+          const url = e.currentTarget.value;
+          setValues(previous => ({ ...previous, url }));
+        }}
+        error={fieldErrors().url || undefined}
+        disabled={locked()}
+      />
+      <TextField
+        label={t('label.settings-username')}
+        width="full"
+        data-testid="initialise-site-name-input"
+        value={values().siteName}
+        onInput={e => {
+          const siteName = e.currentTarget.value;
+          setValues(previous => ({ ...previous, siteName }));
+        }}
+        error={fieldErrors().siteName || undefined}
+        disabled={locked()}
+      />
+      <PasswordField
+        label={t('label.settings-password')}
+        width="full"
+        data-testid="initialise-password-input"
+        value={values().password}
+        onInput={e => {
+          const password = e.currentTarget.value;
+          setValues(previous => ({ ...previous, password }));
+        }}
+        error={fieldErrors().password || undefined}
+        disabled={locked()}
+      />
+      <button
+        type="button"
+        class={pageStyles.advancedToggle}
+        onClick={() => setShowAdvanced(previous => !previous)}
+      >
+        {showAdvanced()
+          ? t('label.hide-advanced-options')
+          : t('label.show-advanced-options')}
+      </button>
+      <Show when={showAdvanced()}>
+        <NumberField
+          label={t('label.settings-batch-size')}
+          helperText={t('label.settings-batch-size-helper')}
+          width="full"
+          min={1}
+          value={values().batchSize}
+          onChange={batchSize =>
+            setValues(previous => ({ ...previous, batchSize }))
+          }
+          disabled={locked()}
+        />
+      </Show>
+      {/* Spec (OMS-REG-LGN-03.19): informational, never an error — the
+          wait is expected and self-healing (D98). Mutually exclusive
+          with the error Alert below: syncError() stays unset for the
+          whole wait. */}
+      <Show when={waitingForCentral()}>
+        <Alert severity="info" testId="initialise-waiting">
+          {t('messages.waiting-for-central-server')}
+        </Alert>
+      </Show>
+      <Show when={syncError()}>
+        {err => {
+          const errorSummary = () => syncErrorSummary(err().variant);
+          const hintText = () => {
+            const h = errorSummary().hint;
+            return h ? t(h) : undefined;
+          };
+          return (
+            <Alert severity="error" testId="initialise-error">
+              <div>{t(errorSummary().summary)}</div>
+              <ErrorDetails detail={err().fullError} hint={hintText()} />
+            </Alert>
+          );
+        }}
+      </Show>
+      {/* No run exists during the silent wait, so the progress list's
+          "waiting for sync status" fallback would double the waiting
+          notice above — the notice stands in its place (spec S2 §
+          layout). */}
+      <Show when={busy() && !waitingForCentral()}>
+        <SyncProgress overview={overview()} />
+      </Show>
+      <div class={styles.buttonRow}>
+        <Show
+          when={showRetry()}
+          fallback={
+            <Button
+              type="submit"
+              disabled={busy()}
+              data-testid="initialise-button"
+            >
+              {busy() ? t('button.initialising') : t('button.initialise')}
+            </Button>
+          }
+        >
+          {/* Disabled while the retry call is in flight so it can't be
+              double-submitted; the error stays visible behind it
+              (OMS-REG-LGN-03.15). */}
+          <Button
+            onClick={() => void retry()}
+            disabled={submitting()}
+            data-testid="initialise-button"
+          >
+            {submitting() ? t('button.initialising') : t('button.retry')}
+          </Button>
+        </Show>
+      </div>
+    </form>
+  );
+
+  // The standalone-central form (the chooser's second tab, OMS-REG-LGN-03
+  // .24–.26): store name + admin credentials, no sync settings — success
+  // completes initialisation immediately (spec S2 § standalone panel).
+  const StandaloneCentralForm = () => (
+    <form
+      class={styles.form}
+      aria-label={t('initialise.central-standalone')}
+      onSubmit={submitStandalone}
+    >
+      <TextField
+        label={t('label.store-name')}
+        width="full"
+        data-testid="initialise-store-name-input"
+        value={standaloneValues().storeName}
+        onInput={e => {
+          const storeName = e.currentTarget.value;
+          setStandaloneValues(previous => ({ ...previous, storeName }));
+        }}
+        error={standaloneFieldErrors().storeName || undefined}
+        disabled={standaloneSubmitting()}
+      />
+      <p class={pageStyles.sectionHeading}>{t('heading.admin-user')}</p>
+      <TextField
+        label={t('heading.username')}
+        width="full"
+        data-testid="initialise-admin-username-input"
+        value={standaloneValues().username}
+        onInput={e => {
+          const username = e.currentTarget.value;
+          setStandaloneValues(previous => ({ ...previous, username }));
+        }}
+        error={standaloneFieldErrors().username || undefined}
+        disabled={standaloneSubmitting()}
+      />
+      <PasswordField
+        label={t('heading.password')}
+        width="full"
+        data-testid="initialise-admin-password-input"
+        value={standaloneValues().password}
+        onInput={e => {
+          const password = e.currentTarget.value;
+          setStandaloneValues(previous => ({ ...previous, password }));
+        }}
+        error={standaloneFieldErrors().password || undefined}
+        disabled={standaloneSubmitting()}
+      />
+      {/* Spec (.26): only the structured union error is shown here — anything
+          else already raised the global modal (contract § wire trap). */}
+      <Show when={standaloneError()}>
+        {err => (
+          <Alert severity="error" testId="initialise-standalone-error">
+            {err().description}
+          </Alert>
+        )}
+      </Show>
+      <div class={styles.buttonRow}>
+        {/* Plain "Initialise", matching the legacy-sync tab — the active tab
+            already says which kind (D99; the current app spells it out). */}
+        <Button
+          type="submit"
+          disabled={standaloneSubmitting()}
+          data-testid="initialise-standalone-button"
+        >
+          {standaloneSubmitting()
+            ? t('button.initialising')
+            : t('button.initialise')}
+        </Button>
+      </div>
+    </form>
+  );
+
   return (
     <div class={styles.page}>
       <section
@@ -273,103 +614,42 @@ export const InitialisationPage: Component<{
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
-          <form
-            class={styles.form}
-            aria-label={t('button.initialise')}
-            onSubmit={submit}
-          >
-            <AppLogo class={styles.logo} />
-            <TextField
-              label={t('label.settings-url')}
-              width="full"
-              value={values().url}
-              onInput={e => {
-                const url = e.currentTarget.value;
-                setValues(previous => ({ ...previous, url }));
-              }}
-              error={fieldErrors().url || undefined}
-              disabled={locked()}
-            />
-            <TextField
-              label={t('label.settings-username')}
-              width="full"
-              value={values().siteName}
-              onInput={e => {
-                const siteName = e.currentTarget.value;
-                setValues(previous => ({ ...previous, siteName }));
-              }}
-              error={fieldErrors().siteName || undefined}
-              disabled={locked()}
-            />
-            <PasswordField
-              label={t('label.settings-password')}
-              width="full"
-              value={values().password}
-              onInput={e => {
-                const password = e.currentTarget.value;
-                setValues(previous => ({ ...previous, password }));
-              }}
-              error={fieldErrors().password || undefined}
-              disabled={locked()}
-            />
-            <button
-              type="button"
-              class={pageStyles.advancedToggle}
-              onClick={() => setShowAdvanced(previous => !previous)}
-            >
-              {showAdvanced()
-                ? t('label.hide-advanced-options')
-                : t('label.show-advanced-options')}
-            </button>
-            <Show when={showAdvanced()}>
-              <NumberField
-                label={t('label.settings-batch-size')}
-                helperText={t('label.settings-batch-size-helper')}
-                width="full"
-                min={1}
-                value={values().batchSize}
-                onChange={batchSize =>
-                  setValues(previous => ({ ...previous, batchSize }))
-                }
-                disabled={locked()}
-              />
-            </Show>
-            <Show when={syncError()}>
-              {err => {
-                const errorSummary = () => syncErrorSummary(err().variant);
-                const hintText = () => {
-                  const h = errorSummary().hint;
-                  return h ? t(h) : undefined;
-                };
-                return (
-                  <Alert severity="error">
-                    <div>{t(errorSummary().summary)}</div>
-                    <ErrorDetails detail={err().fullError} hint={hintText()} />
-                  </Alert>
-                );
-              }}
-            </Show>
-            <Show when={busy()}>
-              <SyncProgress overview={overview()} />
-            </Show>
-            <div class={styles.buttonRow}>
-              <Show
-                when={showRetry()}
-                fallback={
-                  <Button type="submit" disabled={busy()}>
-                    {busy() ? t('button.initialising') : t('button.initialise')}
-                  </Button>
+          {/* Spec (OMS-REG-LGN-03.23): the mode chooser exists only on a
+              central server in a non-production, non-Android build —
+              everywhere else the legacy-sync form stands alone. */}
+          <Show when={showModeChoice()} fallback={<LegacySyncForm withLogo />}>
+            <div class={styles.form}>
+              <AppLogo class={styles.logo} />
+              <Tabs
+                value={mode()}
+                onValueChange={value =>
+                  setMode(value === 'standalone' ? 'standalone' : 'legacy-sync')
                 }
               >
-                {/* Disabled while the retry call is in flight so it can't be
-                    double-submitted; the error stays visible behind it
-                    (OMS-REG-LGN-03.15). */}
-                <Button onClick={() => void retry()} disabled={submitting()}>
-                  {submitting() ? t('button.initialising') : t('button.retry')}
-                </Button>
-              </Show>
+                <TabList
+                  label={t('initialise.mode-label')}
+                  tabs={[
+                    {
+                      value: 'legacy-sync',
+                      label: t('initialise.legacy-sync'),
+                      disabled: modeLocked(),
+                    },
+                    {
+                      value: 'standalone',
+                      label: t('initialise.central-standalone'),
+                      disabled: modeLocked(),
+                    },
+                  ]}
+                />
+                <TabPanel value="legacy-sync">
+                  <LegacySyncForm />
+                </TabPanel>
+                <TabPanel value="standalone">
+                  <StandaloneCentralForm />
+                </TabPanel>
+              </Tabs>
             </div>
-          </form>
+          </Show>
         </div>
         <footer class={styles.panelFooter}>
           {/* Android only: save the embedded server's log for support before

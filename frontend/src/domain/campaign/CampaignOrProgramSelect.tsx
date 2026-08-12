@@ -38,6 +38,11 @@ export interface CampaignOrProgramSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /**
+   * Control size, forwarded to the Combobox — `small` matches the compact
+   * inputs a dense row (a line editor's batch card) puts beside it.
+   */
+  size?: 'default' | 'small';
 }
 
 /*
@@ -96,6 +101,7 @@ export const CampaignOrProgramSelect = (
     <Combobox<Option>
       label={props.label}
       hideLabel={props.hideLabel}
+      size={props.size}
       items={options()}
       loading={campaignsResource.loading() || programs.loading}
       itemToString={o => o.node.name}

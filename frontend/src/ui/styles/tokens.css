@@ -58,7 +58,12 @@
   --bg-group-main: #f2f2f5;
   --bg-group-dark: #e2e2e9;
   --bg-icon: #e5eeff;
-  --bg-input: #f2f2f5;
+  /* Read-only field fill — its only consumers are TextField's two [readonly]
+     rules. Same light neutral as --bg-disabled (see the note there): read-only
+     and disabled are both INERT states, so they sit at one lightness and at
+     chroma 0, off the surface ladder's hue. Kept as its own token because the
+     two states are tuned independently (read-only keeps full text contrast). */
+  --bg-input: #f6f6f6;
 
   /* Floating/elevated surfaces (buttons, menus, dialogs, popups). Same as the
      content surface in light — the shadow does the lifting — but overridden
@@ -70,6 +75,44 @@
      off it. Cards themselves stay --surface-raised. Dark: darker than the card
      so the same figure/ground holds. */
   --table-card-surface: #f4f5f7;
+
+  /* --- App shell surface ladder — "Warm stone" -------------------------
+     The shell's figure/ground, from the UX surface study (ux-testing
+     nav-collapsed-flyout-mockup-light.html § "App shell background & section
+     definition"). Warm stone is hue 85° — 48° off the brand accent, the same
+     family as TMF beige #d9d5cc — held at the same OkLab lightness as the
+     study's cool-slate default, so only hue and chroma move and every contrast
+     figure in it still holds.
+
+     THREE FILLS, NO MORE. Canvas (L0) behind everything; chrome (L1) for the
+     persistent frame — nav rail, footer bar; content (L2, --bg-white) for the
+     thing the user came for; sunken (L2−) as the ONE well allowed inside
+     chrome or content; --surface-raised (above) as L3, floating over the shell.
+     A fourth level of fill means the layout is wrong, not the palette.
+
+     The governing rule is "the canvas is the separator": chrome and content are
+     both white and must never touch — a canvas gutter always sits between them,
+     which is why neither needs a hairline to be found. Specify the fill step,
+     not the hairline: a 1px near-white rule is invisible on the cheap clinic
+     monitors this runs on, a ~4% luminance step survives.
+
+     Themable but deliberately NOT derived — branding/themeRecipes.ts lists
+     these as `surface`/`border` members with no recipe, because the warmth
+     cannot be mixed out of the cool page/body anchors; a site that recolours
+     `surface.page` sets its canvas explicitly. */
+  --surface-canvas: #f3f1ee;
+  --surface-chrome: #fff;
+  /* A well sinks to the CANVAS — the same value, deliberately, not a near-miss.
+     Held one step lighter (#f7f6f2) it sat 4/255 from the canvas, and the two
+     met on screen wherever a table's header band showed above the canvas gutter:
+     1.04:1 apart reads as a smudge or a seam, never as two levels. Tracks the
+     canvas. Distinct roles in themeRecipes either way, so a site can still pull
+     them apart. */
+  --surface-sunken: #f3f1ee;
+  /* Structural hairline where chrome meets canvas (the study's --edge-strong),
+     for the boundaries a fill step alone can't carry: the footer's top edge,
+     the flyout's outline. */
+  --surface-edge: #e1ddd4;
 
   /* text (theme.ts → typography + palette.form) */
   --text-body: #1c1c28; /* body1 / th */
@@ -85,7 +128,18 @@
      a unit instead use --disabled-opacity (defined just after the theme
      contract, since it's not a colour). */
   --text-disabled: #7a7b90;
-  --bg-disabled: #f2f2f5;
+  /* A LIGHT, NEUTRAL well — not a grey slab, and not a warm one. Two things were
+     wrong with the old #f2f2f5: it sat 13/255 under white, making a disabled
+     field the heaviest box inside a card, and it was on the cool line, pulling
+     against the ladder. The fix for the weight is the lightness (9/255 here);
+     the fix for the clash is NOT to warm it — a disabled fill is a STATE, not a
+     rung of the surface ladder, and at chroma 0 it reads as inert, which is
+     exactly what disabled means. This is the study's own neutral-grey palette at
+     the same OkLab lightness as its warm-stone well: stone's value, no hue.
+     Deliberately its own literal, not var(--surface-sunken) — a state fill and a
+     ladder rung are different jobs, and the table header row shouldn't move when
+     disabled fields are tuned. */
+  --bg-disabled: #f6f6f6;
 
   /* header / drawer mixins (theme.ts → mixins) */
   --header-bg: #fafafc;
@@ -112,7 +166,10 @@
     0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04);
   --shadow-4:
     0 12px 24px 0 rgba(96, 97, 112, 0.16), 0 4px 8px 0 rgba(40, 41, 61, 0.3);
-  --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
+  /* The rail's shadow onto the canvas, inked in the warm-stone shadow colour
+     (the study's --sh-* family): a cool grey shadow over a warm canvas reads as
+     a filter applied to the page rather than as a decision. */
+  --shadow-drawer: 4px 0 16px 0 rgba(60, 54, 42, 0.18);
   /* A frozen table column's shadow onto the content scrolling under it. A COLOUR,
      not a box-shadow: it's painted as a gradient strip (one continuous shadow
      down the whole column — a real box-shadow per cell scallops at every row
@@ -123,8 +180,10 @@
   --focus-ring: 0 0 0 0.1875rem rgba(62, 123, 250, 0.25); /* action blue (#3e7bfa) */
   --focus-ring-error: 0 0 0 0.1875rem rgba(230, 53, 53, 0.2);
 
-  /* Scrim behind the mobile nav overlay / modals */
-  --overlay-scrim: rgba(28, 28, 40, 0.45);
+  /* Scrim behind the mobile nav overlay / modals — warm-stone ink, for the same
+     reason as --shadow-drawer above. Alpha unchanged; the study's 0.48 belongs
+     to its modal fix, not to the palette. */
+  --overlay-scrim: rgba(44, 41, 33, 0.45);
 
   /* Shipment-status colours (StatusChip dot + tint). Demo values carried from
      the RnD prototype's STATUS_META — swap for the design team's palette when
@@ -309,6 +368,7 @@
   --motion-base: 150ms; /* small movement or an entry: chevron, dialog/popover in */
   --motion-slow: 200ms; /* real travel: drawer, side panel, tab indicator, scrim */
   --motion-ripple: 480ms; /* the one-shot click ripple (ui/utils/createRipple) */
+  --motion-sweep: 600ms; /* one-shot sheen along a newly filled progress connector */
   /* @motion-decorative:end */
 
   /* Looping indicators are NOT decorative — they're the only signal that work
@@ -337,6 +397,7 @@
     --motion-base: 0s;
     --motion-slow: 0s;
     --motion-ripple: 0s;
+    --motion-sweep: 0s;
     --motion-spin: 2s;
   }
 }
@@ -434,6 +495,19 @@
   /* Recessed card-list surface — darker than the raised card so the same
      figure/ground reads in dark. */
   --table-card-surface: #1b1b24;
+
+  /* App shell surface ladder — cool-neutral in dark, on the study's own advice:
+     re-hued to 85° at these lightnesses a warm neutral reads as brown, and a
+     brown surface looks like a rendering fault (almost nobody sees both themes
+     in one session, so the two need not share a hue). Inverted like the rest of
+     the dark scale: canvas is the DARKEST rung, chrome sits above it, and the
+     sunken well sits above chrome — a well has to read LIGHTER here, as
+     --drawer-hover-bg already does. Four rungs, each its own step:
+     #16161d → #191921 → #21212b (content) → #2b2b3a (raised). */
+  --surface-canvas: #16161d;
+  --surface-chrome: #191921;
+  --surface-sunken: #21212b;
+  --surface-edge: #33333f;
 
   /* Elevation via near-BLACK shadows. The light theme's grey shadows are
      lighter than a dark surface, so they read as a glow — black reads as depth.

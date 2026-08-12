@@ -21,6 +21,18 @@
   gap: var(--input-field-gap);
 }
 
+/* layout="inline" — label and value on ONE line, baseline-aligned so the two
+   type sizes sit on a shared reading line rather than centred against each
+   other. Overrides the stacked direction AND the variant gap (a horizontal gap
+   wants the label→value spacing of a row, not of a stack), so it comes after
+   both and out-specifies [data-variant] with its own attribute selector. Wraps
+   rather than overflowing if the value turns out long — see the prop's note. */
+.field[data-layout='inline'] {
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
 /* The label is the SHARED field-label token — byte-for-byte the same as the
    input components' `.label` (TextField/TextArea/DateField), so a read-only
    labelled value and an editable input read identically side by side (Carl
