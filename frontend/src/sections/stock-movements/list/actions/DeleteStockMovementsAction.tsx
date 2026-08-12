@@ -20,7 +20,7 @@ export interface DeleteStockMovementsActionProps {
 // the batch is ALL-OR-NOTHING with no per-id results (contract § deletion):
 // one finalised movement in the selection refuses the whole delete as a
 // single untyped top-level error, so on failure we show OUR translated
-// refusal (rules § deletion / OMS-REG-SMV-09.28/.30), selection kept.
+// refusal (rules § deletion / OMS-REG-SMV-10.28/.30), selection kept.
 // Success closes the dialog — closure is the confirmation (D21).
 type Phase = 'confirm' | 'deleting' | 'error';
 
